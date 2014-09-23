@@ -18,6 +18,8 @@ bh.*.log
 *.PPT
 *.sas7bdat
 *.SAS7BDAT
+*.sas7bcat
+*.SAS7BCAT
 *.bak
 *.BAK
 *.xpt
