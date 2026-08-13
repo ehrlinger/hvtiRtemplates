@@ -9,8 +9,8 @@ corpus_manifest()
 \value{
 A data frame with one row per corpus file: `file` (full path),
   `prefix` (analysis prefix, `NA` where the name does not carry one),
-  `folder` (study folder), `kind` (`"sas"`, `"r"`, `"assets"` or `"docs"`)
-  and `bytes`.
+  `folder` (study folder), `kind` (always `"sas"` -- the corpus was
+  reduced to SAS source only ahead of public release) and `bytes`.
 }
 \description{
 The corpus is the SAS template library and the legacy R-family templates as

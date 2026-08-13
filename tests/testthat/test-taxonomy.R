@@ -7,15 +7,25 @@ test_that("hvti_taxonomy() has the expected shape", {
   expect_true(all(nzchar(tx$description)))
 })
 
-test_that("every taxonomy folder exists somewhere in the corpus", {
-  # Checked across the whole corpus, not just corpus/sas: the `documents`
-  # folder holds only .doc/.Rnw/.qmd templates and has no SAS files at all,
-  # so a sas-only check would fail on a correct taxonomy.
+test_that("every corpus folder is documented in the taxonomy", {
+  # The corpus was reduced to SAS only for public release, and the SAS-only
+  # corpus does not sample every folder the taxonomy documents -- notably
+  # `documents` (the "ar" / Analysis report row), which held only
+  # .doc/.Rnw/.qmd templates and never had a SAS file. That is expected: the
+  # taxonomy records the group's analysis-prefix system, which is real
+  # whether or not this corpus snapshot happens to touch every part of it, so
+  # the taxonomy is not required to be a subset of the corpus's folders.
+  #
+  # The direction worth enforcing is the other one: every folder a corpus
+  # file actually lives in must appear in the taxonomy, so a template landing
+  # somewhere undocumented fails the build instead of going unnoticed. Do not
+  # flip this back to "every taxonomy folder is in the corpus" -- that
+  # direction breaks any time the corpus is a proper subset of the taxonomy,
+  # which is expected, not a bug.
   tx <- hvti_taxonomy()
-  root <- system.file("corpus", package = "hvtiRtemplates")
-  skip_if(root == "", "corpus not installed")
-  dirs <- basename(list.dirs(root, full.names = TRUE, recursive = TRUE))
-  expect_true(all(unique(tx$folder) %in% dirs))
+  m <- corpus_manifest()
+  skip_if(nrow(m) == 0, "corpus not installed")
+  expect_true(all(unique(m$folder) %in% tx$folder))
 })
 
 test_that("every prefix-shaped field in the corpus is classified", {

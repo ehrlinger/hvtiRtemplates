@@ -2,24 +2,21 @@ test_that("corpus_manifest() describes every corpus file", {
   m <- corpus_manifest()
   expect_s3_class(m, "data.frame")
   expect_named(m, c("file", "prefix", "folder", "kind", "bytes"))
-  expect_gt(nrow(m), 400)
+  expect_equal(nrow(m), 240)
   expect_true(all(m$bytes > 0))
-  expect_true(all(m$kind %in% c("sas", "r", "assets", "docs")))
+  expect_true(all(m$kind %in% c("sas")))
 })
 
 test_that("corpus file counts match the recorded import", {
-  # 242 SAS and 126 R-family imported in Task 4. Task 6 removed 2 SAS and 3 R
-  # files whose names marked them superseded, then restored one of the three:
-  # tp.lp.propen.cov_balance_old.R turned out to target a different study
-  # (aortic/pericardial/ischemia/2010) from its sibling (mitral/degeneration/
-  # complex), making it a distinct instantiation rather than an older draft.
-  # It is back under the name tp.lp.propen.cov_balance_ischemia2010.R.
+  # The corpus was reduced to SAS only for public release: a filter-repo pass
+  # purged inst/corpus/r, inst/corpus/assets and inst/corpus/docs from every
+  # commit, along with the file that carried patient data. 240 SAS templates
+  # remain.
   #
-  # These numbers are the point of the test: a partial copy or a silent
-  # deletion fails the build rather than looking like a smaller corpus.
+  # This number is the point of the test: a partial copy or a silent deletion
+  # fails the build rather than looking like a smaller corpus.
   m <- corpus_manifest()
   expect_equal(sum(m$kind == "sas"), 240)
-  expect_equal(sum(m$kind == "r"), 124)
 })
 
 test_that("corpus_path() resolves a known file", {
@@ -70,10 +67,11 @@ test_that("corpus_manifest() derives prefix and folder correctly", {
 
   # A file nested deeper than one level: folder must still be the study folder,
   # not the subdirectory.
-  deep <- m[basename(m$file) == "tp.dp.QOL_boxplot.R", ]
+  deep <- m[basename(m$file) == "tp.bd.data.ccf.heart.sas", ]
   expect_equal(nrow(deep), 1)
-  expect_equal(deep$folder, "graphs")
+  expect_equal(deep$folder, "datasets")
 
-  # A name that does not carry an analysis prefix must yield NA, not a guess.
-  expect_true(all(is.na(m$prefix[basename(m$file) == "references.bib"])))
+  # A name that does not carry an analysis prefix must yield NA, not a guess:
+  # "echo_readin" is 11 characters, too long to be a prefix field.
+  expect_true(all(is.na(m$prefix[basename(m$file) == "tp.echo_readin.sas"])))
 })
