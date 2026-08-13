@@ -17,3 +17,15 @@ test_that("every template prefix is in the taxonomy", {
   tl <- template_list()
   expect_true(all(tl$prefix %in% hvti_taxonomy()$prefix))
 })
+
+test_that(".prefix_of() derives a prefix for template-style names, not just tp.-marked ones", {
+  # inst/templates/ has no .qmd files yet, so template_list() can't exercise
+  # this; test the shared helper directly instead. A template named exactly
+  # "<prefix>.qmd" is one shape, but the corpus convention is
+  # "tp.<prefix>.<rest>", and a bare "<prefix>.<rest>.<ext>" (no "tp." marker)
+  # must resolve the same way -- all three must agree.
+  expect_equal(hvtiRtemplates:::.prefix_of("hz.qmd"), "hz")
+  expect_equal(hvtiRtemplates:::.prefix_of("tp.hz.dead.qmd"), "hz")
+  expect_equal(hvtiRtemplates:::.prefix_of("hz.dead.R"), "hz")
+  expect_true(is.na(hvtiRtemplates:::.prefix_of("noprefix")))
+})

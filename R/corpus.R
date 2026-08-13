@@ -41,13 +41,22 @@ corpus_manifest <- function() {
   )
 }
 
-# tp.<prefix>.<rest> -- returns NA for anything not matching that shape.
-# Prefixes are short; a long second field means the name is not prefixed.
+# Shared prefix-derivation helper, used by both corpus_manifest() and
+# template_list() -- there is exactly one implementation of this rule.
+#
+# Corpus files carry an optional "tp." marker: tp.<prefix>.<rest>. Supported
+# templates never carry that marker: <prefix>.<rest> (e.g. "hz.qmd") or
+# <prefix>.<rest>.<rest> (e.g. "tp.hz.dead.qmd", "hz.dead.R"). Both shapes are
+# handled: an initial "tp" field is dropped if present, then the next field is
+# taken as the prefix. Prefixes are short; a long candidate field, or a name
+# with no further field after "tp"/the leading field, means the name does not
+# carry a prefix and this returns NA.
 .prefix_of <- function(name) {
   p <- strsplit(name, ".", fixed = TRUE)[[1L]]
-  if (length(p) < 3L || !identical(p[[1L]], "tp")) return(NA_character_)
-  if (nchar(p[[2L]]) > 5L) return(NA_character_)
-  p[[2L]]
+  if (length(p) >= 1L && identical(p[[1L]], "tp")) p <- p[-1L]
+  if (length(p) < 2L) return(NA_character_)
+  if (nchar(p[[1L]]) > 5L) return(NA_character_)
+  p[[1L]]
 }
 
 #' Path to a file in the reference corpus

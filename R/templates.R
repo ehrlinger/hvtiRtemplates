@@ -18,12 +18,13 @@ template_list <- function() {
     character(0)
   }
   name <- sub("[.]qmd$", "", basename(files))
+  prefix <- vapply(basename(files), .prefix_of, character(1), USE.NAMES = FALSE)
   tx <- hvti_taxonomy()
 
   data.frame(
     name   = name,
-    prefix = name,
-    folder = tx$folder[match(name, tx$prefix)],
+    prefix = prefix,
+    folder = tx$folder[match(prefix, tx$prefix)],
     file   = files,
     stringsAsFactors = FALSE
   )
