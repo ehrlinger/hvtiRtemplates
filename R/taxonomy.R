@@ -75,5 +75,5 @@ hvti_taxonomy <- function() {
 #' @examples
 #' hvti_non_prefixes()
 hvti_non_prefixes <- function() {
-  c("plots", "ppt", "PPTs", "test", "pp")
+  c("plots", "ppt", "PPTs", "test", "pp", "ref", "refs")
 }
