@@ -54,3 +54,26 @@ test_that("prefix classification covers files that lack the tp. marker", {
                info = paste("unclassified prefix-shaped field(s):",
                             paste(unclassified, collapse = ", ")))
 })
+
+test_that("corpus_manifest() derives prefix and folder correctly", {
+  # Shape assertions cannot catch a wrong derivation -- these can. tp.hz.dead.sas
+  # is a stable landmark: it is the hazard-fit template, it lives in
+  # distributions/, and it is what the R hz template reproduces.
+  m <- corpus_manifest()
+  skip_if(nrow(m) == 0, "corpus not installed")
+
+  row <- m[basename(m$file) == "tp.hz.dead.sas", ]
+  expect_equal(nrow(row), 1)
+  expect_equal(row$prefix, "hz")
+  expect_equal(row$folder, "distributions")
+  expect_equal(row$kind, "sas")
+
+  # A file nested deeper than one level: folder must still be the study folder,
+  # not the subdirectory.
+  deep <- m[basename(m$file) == "tp.dp.QOL_boxplot.R", ]
+  expect_equal(nrow(deep), 1)
+  expect_equal(deep$folder, "graphs")
+
+  # A name that does not carry an analysis prefix must yield NA, not a guess.
+  expect_true(all(is.na(m$prefix[basename(m$file) == "references.bib"])))
+})
