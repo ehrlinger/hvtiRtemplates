@@ -10,13 +10,15 @@ specification.
 renv::install("ehrlinger/hvtiRtemplates")
 ```
 
+This repository is private; installing it requires GitHub access to the repo.
+
 ## What is here
 
 | Directory | Status | Contents |
 |---|---|---|
 | `inst/templates/` | **supported** | R job templates. Empty until stage 3. |
 | `inst/corpus/` | reference only | 433 legacy SAS and R templates |
-| `inst/macros/` | reference only | 496 SAS macro library files, history from 2014 |
+| `inst/macros/` | reference only | 495 SAS macro library files, history from 2014 |
 
 The distinction is load-bearing. `inst/templates/` is tested and maintained;
 `inst/corpus/` and `inst/macros/` are a citable record of what the R templates
