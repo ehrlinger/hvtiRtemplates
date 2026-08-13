@@ -5,3 +5,4 @@
 ^LICENSE\.md$
 ^docs$
 ^_pkgdown\.yml$
+^\.superpowers$
