@@ -22,6 +22,14 @@ corpus_manifest <- function() {
   rel <- substring(files, nchar(root) + 2L)
   parts <- strsplit(rel, "/", fixed = TRUE)
 
+  # Files at the corpus root (e.g. inst/corpus/README.md) describe the corpus
+  # itself, not a corpus entry -- they carry no kind subdirectory and are
+  # excluded rather than misclassified.
+  nested <- lengths(parts) > 1L
+  files <- files[nested]
+  rel <- rel[nested]
+  parts <- parts[nested]
+
   data.frame(
     file   = files,
     prefix = vapply(basename(files), .prefix_of, character(1), USE.NAMES = FALSE),
