@@ -23,6 +23,17 @@ OWNER["hm"] = "temporal_hazard"
 OWNER["mp"] = "hvtiPlotR"
 OWNER["vars_base_only"] = "hvtiRdatasets"
 
+# The bootstrap model-building family. One owner rather than a split by model
+# type, because a shared engine exists: bootstrap.summary.sas is reached from
+# all four model prefixes and bootstrap.clusters.sas from three. Splitting
+# bh -> temporal_hazard and bl -> hvtiPropensityScores would push that engine
+# into hvtiRutilities as "shared", separating a resampling engine from every
+# model it serves. bc is included though no template currently reaches it.
+# mm/gm/nm are NOT included -- they are model families, not bootstrap, and
+# remain owner-undetermined in the canonicalization spec.
+for _p in ("bh", "bl", "bc", "bn", "br", "bq"):
+    OWNER[_p] = "hvtiRbootstrap"
+
 # Explicit file-level overrides, for destinations a human decides on grounds the
 # call graph cannot see. Each carries a reason and is reported as tier
 # "override" so it never looks like a derived result. Keep this list short: an
