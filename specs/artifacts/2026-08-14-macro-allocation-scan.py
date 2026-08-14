@@ -34,6 +34,11 @@ symdel symexist length index trim left right cmpres superq qsysfunc sysget sysca
 return abort window display goto to by while until do_over""".split())
 calls = lambda t: {n.lower() for n in CALL.findall(strip(t)) if n.lower() not in KW}
 
+# A call resolves to a definition in the SAME file when one exists. Without
+# this, a file calling a helper it defines itself (phcurv9.sas calls %numobs,
+# which it defines) links to every other file defining that name. 117 of 272
+# names are multiply defined, and this invented a phcurv9 <-> usmatchd cycle
+# that does not exist in the source.
 def bodies(txt):                      # FIX 3: per-%macro body, not per-file
     out, stack = [], []
     for m in TOK.finditer(txt):
@@ -74,7 +79,8 @@ for f in sorted(glob.glob(f"{TPL_ROOT}/*/templates/*.sas")):
 owners = {b: set(v) for b, v in seed.items()}
 deps = collections.defaultdict(set)          # file -> seeded files that need it
 for b in list(owners):
-    stack = list(fincs[b] | {x for n in fcalls[b] for x in name2file.get(n, ())})
+    stack = list(fincs[b] | {x for n in fcalls[b] - fdefs[b]
+                             for x in name2file.get(n, ())})
     seen = set()
     while stack:
         nb = stack.pop()
@@ -83,7 +89,8 @@ for b in list(owners):
         deps[nb].add(b)          # record for ALL files, seeded or not: a seeded
                                  # file can still be a dependency of another
                                  # package's file, and a port needs to see that
-        stack += list(fincs[nb] | {x for n in fcalls[nb] for x in name2file.get(n, ())})
+        stack += list(fincs[nb] | {x for n in fcalls[nb] - fdefs[nb]
+                                   for x in name2file.get(n, ())})
 
 alloc = collections.defaultdict(list); blocked = collections.Counter(); detail = {}
 for b in sorted(fdefs):
