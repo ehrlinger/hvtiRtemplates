@@ -87,39 +87,46 @@ operationally: shared is a computed property of the call graph, not a judgement.
 | Destination | Files |
 |---|---|
 | `hvtiRtables` | 17 |
-| `temporal_hazard` | 16 |
+| `temporal_hazard` | 13 |
 | `hvtiRutilities` (shared) | 12 |
 | `hvtiRdatasets` | 8 |
 | `hvtiPlotR` | 6 |
-| **Allocated** | **59** |
+| `hvtiRlifetables` (override) | 5 |
+| **Allocated** | **61** |
 | Travels with a dependent | 5 |
 | Blocked on an unowned prefix | 36 |
-| Corpus-only | 80 |
+| Corpus-only | 78 |
 | **Total** | **180** |
 
-### `hvtiRtables` (17 files, 35 macros)
+### `hvtiRtables` (17)
 
 `desc_tab.sas`, `desc_tab_02132012.sas`, `desc_tab_2012.sas`, `desc_tabma.sas`, `lr_trend.sas`, `std_coef.05012015.sas`, `std_coef.sas`, `std_coef_04252013.sas`, `std_dif.sas`, `std_dif_TEST.sas`, `std_dif_TESTma.sas`, `std_dif_wt.sas`, `std_dif_wt_vars.sas`, `std_difma.sas`, `summarytable.sas`, `summarytable_noempty.sas`, `summarytable_old.sas`
 
-### `temporal_hazard` (14)
+### `temporal_hazard` (13)
 
-`CR_CIF_CP_variance.sas`, `bootstrap-test.models_wts.sas`, `bootstrap.models_wts.sas`, `cindex_hazard.sas`, `cindex_hazard_tvc.sas`, `hazplot.sas`, `hazplot02252013.sas`, `hazplot10242003.sas`, `hazplot_cltest.sas`, `markov.sas`, `nelsont.sas`, `usmatchd.sas`, `usmatchd10172003.sas`, `usmatchd84.sas`
+`CR_CIF_CP_variance.sas`, `bootstrap-test.models_wts.sas`, `bootstrap.models_wts.sas`, `cindex_hazard.sas`, `cindex_hazard_tvc.sas`, `haz_to_mi.sas`, `hazplot.sas`, `hazplot02252013.sas`, `hazplot10242003.sas`, `hazplot_cltest.sas`, `markov.sas`, `mi_to_haz.sas`, `nelsont.sas`
 
 ### `hvtiRutilities` - shared (12)
 
 `decomposition.sas`, `decomposition_JR.sas`, `kaplan.int.sas`, `kaplan_jr.sas`, `nelsonl.sas`, `plot.sas`, `plot_8.sas`, `plot_emf.sas`, `plotjoan.sas`, `repeat.sas`, `repeat.testmacro.sas`, `repeated.sas`
 
-### `hvtiRdatasets` (6)
+### `hvtiRdatasets` (8)
 
-`Copy of dist.sas`, `dist.sas`, `gmatch.sas`, `lgtphcurv9.sas`, `phcurv9.sas`, `repeated_txt.sas`
+`Copy of dist.sas`, `dist.sas`, `gmatch.sas`, `lgtphcurv9.sas`, `phcurv9.sas`, `repeated_txt.sas`, `stddiff.sas`, `trends.test.sas`
 
-### `hvtiPlotR` (5)
+### `hvtiPlotR` (6)
 
-`logistc.sas`, `logistc_p.sas`, `logistc_sts.sas`, `logit_nominal.sas`, `logit_ord.sas`
+`logistc.sas`, `logistc_p.sas`, `logistc_sts.sas`, `logit_nominal.sas`, `logit_ord.sas`, `mxpredc.sas`
 
-### Travels with a dependent (9)
+### `hvtiRlifetables` - override (5)
 
-`japanmatchd2015.sas`, `logit_ord.no_trans.sas`, `logit_ord.tr_log.sas`, `mw_var.sas`, `stddiffci.sas`, `trends.sas`, `usmtch08.sas`, `vmatch.sas`, `wt_mtch_boot_sd.sas`
+`uslife.sas`, `usmatchd.sas`, `usmatchd10172003.sas`, `usmatchd84.sas`, `usmtch08.sas`
+
+Not derived from call sites: see Decision 4.
+
+### Travels with a dependent (5)
+
+`mw_var.sas`, `stddiffci.sas`, `trends.sas`, `vmatch.sas`, `wt_mtch_boot_sd.sas`
 
 ## Validation
 
@@ -174,7 +181,7 @@ What unblocks them is an **owner decision, not more evidence** - the call-site
 data is already complete. `bn` is the notable case: 10 templates carry that
 prefix and it appears in no version of the map.
 
-## Corpus-only files (80)
+## Corpus-only files (78)
 
 They stay in `hvtiRtemplates` as reference and are allocated nowhere.
 
@@ -241,29 +248,48 @@ an artifact type or an analysis stage; `ls` maps to a *methodology* spanning
 both. If more prefixes turn out to be methodology-shaped, the map wants a second
 axis rather than more owners.
 
-## Open question - `usmatchd.sas` is allocated but already being replaced
+## Decision 4 - explicit file-level overrides, and `usmatchd` goes to `hvtiRlifetables`
 
-The rule allocates `usmatchd.sas` (and its `usmatchd84`/`usmatchd10172003`
-variants) to `temporal_hazard`. Meanwhile `hvtiRlifetables` was scaffolded on
-2026-08-13 specifically to replace `%usmatchd` with an R implementation, and its
-design spec records that `survival::survexp.usr` was tested across twelve
-vintage x interpolation combinations and **cannot** substitute (max |S|
-difference 0.09-0.11 in every combination, with an age tilt no vintage removes;
-the reason is structural - `%usmatchd` evaluates a stored parametric three-phase
-hazard fit on the age axis, so there is no table on the R side to compare).
+Prefix ownership derives a destination from who *calls* a macro. It cannot see a
+decision already taken elsewhere - that a macro is being **replaced** rather than
+ported, and that the replacement lives in a specific package.
 
-So the allocation and the in-flight work disagree about where `%usmatchd` ends
-up. This is a **porting** question the allocation cannot settle: a macro that is
-being *replaced* rather than *ported* does not need a destination package at
-all, and would be better classified corpus-only. Flagged rather than resolved,
-because it depends on whether `hvtiRlifetables` ships as its own package or
-folds into `temporal_hazard`.
+`%usmatchd` is that case. The rule sent `usmatchd.sas`, `usmatchd84.sas` and
+`usmatchd10172003.sas` to `temporal_hazard` (named by `hs` templates) and left
+`usmtch08.sas` corpus-only. But `hvtiRlifetables` was scaffolded on 2026-08-13
+specifically to reimplement `%usmatchd` in R, and vendors all four variants in
+its `data-raw/sas/`.
+
+So the map carries a short `FILE_OVERRIDE` table: a destination plus a required
+**reason**, applied after the tier logic and reported as `tier: "override"` with
+the reason in the entry, so an override never looks like a derived result. All
+four variants go to `hvtiRlifetables`.
+
+**Keep the list short.** An override is an admission the rule does not cover a
+case, not a way to edit the map by hand. The current list has one entry class.
+
+**All five variants, including `uslife.sas`.** An earlier revision of this spec
+claimed `uslife.sas` "defines no macros" and left it corpus-only. That was wrong:
+it defines `%MACRO USLIFE`, 337 lines, missed because the check that produced the
+claim was case-sensitive against a corpus that writes `%MACRO` in upper case.
+`%USLIFE` is "US Life Table 1984" - the same `OVERALL`/`SEX`/`RACE`/`SEXRACE`
+strata modes as `%usmatchd`, and `hvtiRlifetables`'s own handoff counts it as one
+of the five `%usmatchd` variants it vendors. It moves with them.
+
+**The override adds no dependency.** `usmatchd.sas` has no `%inc`, defines
+`numobs` and `usmatchd`, and its only non-local call is `%hazpred` - the
+`PROC HAZPRED` engine `hvtiRlifetables` already plans to wrap. Earlier revisions
+reported it needing `dist.sas`, `phcurv9.sas` and `lgtphcurv9.sas`; those edges
+were artifacts of the multiply-defined `%numobs` name and are gone.
+
+Note that `hvtiRlifetables` has no git remote as of this date, so this
+destination names a package that exists locally only.
 
 ## Open decisions for the maintainer
 
 1. Owners for the blocked prefixes. Each is a one-line addition that re-derives
    the map.
-2. Whether to scan study directories, converting the 80 corpus-only files from
+2. Whether to scan study directories, converting the 78 corpus-only files from
    "no evidence" to a real classification. Needs access to study trees and
    raises PHI-adjacent path questions, so it is out of scope here.
 3. Whether `hvtiRtemplates` should re-vendor the corpus. Its README describes
