@@ -47,8 +47,11 @@ The design rule is **bind late, to something versioned**. Late binding is right;
 SAS could not make it safe because there was no version to pin. `renv.lock`
 supplies that, so a study can use the latest while working and pin it on filing.
 
-See `analyses/R_hazard/docs/specs/2026-08-13-templates-and-provenance-design.md`
-in the AVR/LV-function survival study for the full design.
+In practice a study declares `hvtiRtemplates` in its `renv.lock`, resolves a
+template through `template_path("hz")` instead of copying one into the study
+folder, and pins the version when results are filed. The lock file is then the
+answer to "what produced this?" — the question the SAS arrangement could not
+answer, because `%inc` had nothing to pin.
 
 ## API
 
