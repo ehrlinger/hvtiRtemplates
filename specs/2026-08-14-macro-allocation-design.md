@@ -92,9 +92,9 @@ operationally: shared is a computed property of the call graph, not a judgement.
 | `hvtiRdatasets` | 8 |
 | `hvtiPlotR` | 6 |
 | **Allocated** | **59** |
-| Travels with a dependent | 9 |
+| Travels with a dependent | 5 |
 | Blocked on an unowned prefix | 36 |
-| Corpus-only | 76 |
+| Corpus-only | 80 |
 | **Total** | **180** |
 
 ### `hvtiRtables` (17 files, 35 macros)
@@ -139,23 +139,21 @@ A name-level rule gets `plot.sas`'s helpers wrong; resolving ownership through
 ## Cross-package dependencies
 
 The map records `needed_by` for every file, so a port can see what it will pull
-from another package. There are 39 file-level cross-package dependencies, spanning 6 distinct
-package pairs. The ones that matter most:
+from another package. 19 file-level dependencies span 3 package pairs, and the
+graph is **acyclic**:
 
-- `summarytable.sas` (`hvtiRtables`) needs `stddiff.sas` (`hvtiRdatasets`).
-- `hazplot.sas` (`temporal_hazard`) needs `kaplan.int.sas` and `nelsonl.sas`
-  (`hvtiRutilities`).
-- `usmatchd.sas` (`temporal_hazard`) needs `dist.sas`, `phcurv9.sas` and
-  `lgtphcurv9.sas` (`hvtiRdatasets`).
+```
+hvtiRtables     -> hvtiRdatasets     (summarytable.sas needs stddiff.sas)
+hvtiRdatasets   -> hvtiRutilities
+temporal_hazard -> hvtiRutilities
+```
 
-**One pair is circular** and must be resolved before either side is ported,
-because R packages cannot have circular `Imports`:
-
-- `hvtiRdatasets` <-> `temporal_hazard`
-
-Resolution is a porting decision, not an allocation one: either the cycle is an
-artifact of SAS files bundling several concerns, or the two belong in the same
-package. Recorded here so it is discovered before the port, not during it.
+**Name resolution prefers a definition in the same file.** 117 of 272 macro
+names are defined in more than one file, so a file calling a helper it defines
+itself would otherwise link to every other definer. That artifact invented a
+`phcurv9.sas` <-> `usmatchd.sas` cycle - `phcurv9.sas` contains no reference to
+`usmatchd` at all; both merely define `%numobs`. Resolving locally first removed
+it along with 20 other false edges.
 
 ## Deferred - prefixes without an owner
 
@@ -176,7 +174,7 @@ What unblocks them is an **owner decision, not more evidence** - the call-site
 data is already complete. `bn` is the notable case: 10 templates carry that
 prefix and it appears in no version of the map.
 
-## Corpus-only files (76)
+## Corpus-only files (80)
 
 They stay in `hvtiRtemplates` as reference and are allocated nowhere.
 
@@ -205,11 +203,67 @@ replacing it. That spec stays authoritative for templates and for the
 `tp.<prefix>` to package map; this covers macros, the half it never addressed,
 and adds one prefix owner (`dc`) to its table.
 
+## Open question - does `ls` need its own package?
+
+`ls` blocks two files, and they cannot be allocated correctly under the current
+package set:
+
+- `STStable.sas` - "Observed no. (%), Expected no. (%), Obsd/Expd Ratio (68%
+  bs-CI), (95% bs-CI), and chi-square GOF p-values for all nine STS outcomes",
+  bootstrap percentile CIs.
+- `ExpdObsdPlot.sas` - "predicted vs. observed plot with density curve and
+  binned estimates for STS".
+
+Together they are one methodology - external risk-model calibration against the
+Society of Thoracic Surgeons model - that emits both a table and a figure. The
+templates are substantial (326 and 91 lines), so this is not a stub.
+
+The spec's own principle is that a component moves as a unit, and no existing
+destination can take it: `hvtiRtables` takes the table but not the plot,
+`hvtiPlotR` the reverse, and `hvtiRutilities` is for shared primitives rather
+than domain analyses (tier 2 does not apply - only one prefix names these).
+
+Two defensible resolutions, and the choice turns on a fact this spec cannot
+establish:
+
+1. **A separate package.** Justified if STS calibration work is expected to grow
+   - other risk models, more outcomes, recalibration. The estate has precedent:
+   `hvtiRlifetables` was scaffolded for essentially one macro.
+2. **Fold into the modeling package** once that owner is named. STS calibration
+   is model validation, and it already shares bootstrap-CI machinery with the
+   `bh`/`bl`/`bn` family. Costs no new release surface.
+
+If STS work is static at these two macros, (2) is the cheaper answer; a package
+carries the full release gate for two functions.
+
+**`ls` is also the case that tests the abstraction.** Every other prefix maps to
+an artifact type or an analysis stage; `ls` maps to a *methodology* spanning
+both. If more prefixes turn out to be methodology-shaped, the map wants a second
+axis rather than more owners.
+
+## Open question - `usmatchd.sas` is allocated but already being replaced
+
+The rule allocates `usmatchd.sas` (and its `usmatchd84`/`usmatchd10172003`
+variants) to `temporal_hazard`. Meanwhile `hvtiRlifetables` was scaffolded on
+2026-08-13 specifically to replace `%usmatchd` with an R implementation, and its
+design spec records that `survival::survexp.usr` was tested across twelve
+vintage x interpolation combinations and **cannot** substitute (max |S|
+difference 0.09-0.11 in every combination, with an age tilt no vintage removes;
+the reason is structural - `%usmatchd` evaluates a stored parametric three-phase
+hazard fit on the age axis, so there is no table on the R side to compare).
+
+So the allocation and the in-flight work disagree about where `%usmatchd` ends
+up. This is a **porting** question the allocation cannot settle: a macro that is
+being *replaced* rather than *ported* does not need a destination package at
+all, and would be better classified corpus-only. Flagged rather than resolved,
+because it depends on whether `hvtiRlifetables` ships as its own package or
+folds into `temporal_hazard`.
+
 ## Open decisions for the maintainer
 
 1. Owners for the blocked prefixes. Each is a one-line addition that re-derives
    the map.
-2. Whether to scan study directories, converting the 76 corpus-only files from
+2. Whether to scan study directories, converting the 80 corpus-only files from
    "no evidence" to a real classification. Needs access to study trees and
    raises PHI-adjacent path questions, so it is out of scope here.
 3. Whether `hvtiRtemplates` should re-vendor the corpus. Its README describes
