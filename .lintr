@@ -1,0 +1,17 @@
+# House lint configuration.
+#
+# line_length 135 rather than lintr's 80. The sibling packages raise it to
+# 100-120 for aligned-argument calls; this one needs more for a different
+# reason. `hvti_taxonomy()` is a data table written as code -- 42 rows of
+# prefix / name / folder / description, column-aligned so the prefix system
+# can be read down the page. Wrapping it to 80 would destroy the alignment,
+# which is the only thing that makes 42 rows legible. The widest row is 132
+# characters; 135 leaves a little room without inviting drift.
+#
+# Everything else is lintr's default and IS enforced -- commas, infix spaces,
+# braces, semicolons, object naming, object usage, trailing blank lines.
+# In particular commas_linter stays on: it caught two taxonomy rows whose
+# column alignment had slipped, which is exactly the defect it exists for.
+linters: linters_with_defaults(
+    line_length_linter = line_length_linter(135L)
+  )
