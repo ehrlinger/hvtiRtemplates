@@ -5,8 +5,8 @@
 #' belongs in.
 #'
 #' This is data rather than documentation on purpose. The same table lived in a
-#' README and drifted from the corpus it described; as a function it is checked
-#' by the test suite against the files actually present.
+#' README and drifted from the files it described; as a function it is checked
+#' by the test suite against the templates actually present.
 #'
 #' @return A data frame with columns `prefix`, `name`, `folder`, `description`.
 #' @export
@@ -64,11 +64,11 @@ hvti_taxonomy <- function() {
 
 #' Second fields that are not analysis prefixes
 #'
-#' Some corpus files are named `tp.<word>.<ext>` where `<word>` is a utility
-#' name rather than an analysis prefix — `tp.plots.sas`, `tp.PPTs.R`. They are
-#' listed here so the test suite can tell "not a prefix" apart from "a prefix
-#' nobody documented". Without this distinction the taxonomy either fills with
-#' non-prefixes or stops catching real omissions.
+#' Some file names lead with a utility name rather than an analysis prefix —
+#' `plots`, `PPTs`. They are listed here so the test suite can tell "not a
+#' prefix" apart from "a prefix nobody documented". Without this distinction
+#' the taxonomy either fills with non-prefixes or stops catching real
+#' omissions.
 #'
 #' @return A character vector.
 #' @export

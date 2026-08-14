@@ -1,8 +1,7 @@
 # hvtiRtemplates
 
 Versioned analysis job templates for the HVTI CORR group at the Cleveland
-Clinic, plus the legacy SAS template corpus and macro library as a reference
-specification.
+Clinic.
 
 ## Install
 
@@ -10,22 +9,29 @@ specification.
 renv::install("ehrlinger/hvtiRtemplates")
 ```
 
-This repository is currently private. The corpus was reduced to SAS source
-and the identified records once present in the imported macro history were
-purged via `git filter-repo` (see `inst/corpus/README.md`), so it is suitable
-for public release. Installing it requires GitHub access to the repo.
-
 ## What is here
 
 | Directory | Status | Contents |
 |---|---|---|
 | `inst/templates/` | **supported** | R job templates. Empty until stage 3. |
-| `inst/corpus/` | reference only | 240 legacy SAS templates |
-| `inst/macros/` | reference only | 495 SAS macro library files, history from 2014 |
 
-The distinction is load-bearing. `inst/templates/` is tested and maintained;
-`inst/corpus/` and `inst/macros/` are a citable record of what the R templates
-reproduce, and nothing more.
+Everything the package installs is supported: tested, maintained, and intended
+to be run. There is no reference-only material.
+
+## There is no SAS corpus here
+
+During development this repository also carried the legacy SAS template corpus
+(240 files) and the SAS macro library (495 files, with history imported from
+2014) as a reference specification. Both were removed before release, and every
+path was purged from every commit with `git filter-repo` — they are not
+recoverable from this repository's history by design.
+
+Two consequences worth stating plainly. Parity work against the SAS originals
+needs a source outside this repository; the institutional SAS licence expires
+2026-09-29, so plan accordingly. And a result filed before the migration still
+cannot say what produced it — that was already true, because `%inc` bound late
+to a mutable directory with no version, and removing the corpus neither creates
+nor worsens that gap.
 
 ## Why this package exists
 
@@ -51,5 +57,4 @@ in the AVR/LV-function survival study for the full design.
 | `hvti_taxonomy()` | the analysis prefix table: prefix, name, folder, description |
 | `template_list()` | supported templates: name, prefix, folder, file |
 | `template_path(name)` | path to one supported template |
-| `corpus_manifest()` | every reference-corpus file: file, prefix, folder, kind, bytes |
-| `corpus_path(...)` | path to one reference-corpus file |
+| `hvti_non_prefixes()` | leading name fields that are utilities, not analysis prefixes |

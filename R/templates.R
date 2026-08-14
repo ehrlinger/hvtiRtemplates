@@ -1,7 +1,7 @@
 #' List the supported R job templates
 #'
-#' Unlike [corpus_manifest()], these templates are supported: they render, they
-#' are tested, and they are the intended starting point for a new analysis job.
+#' These templates are supported: they render, they are tested, and they are
+#' the intended starting point for a new analysis job.
 #'
 #' Returns zero rows until the templates are added in stage 3 of the
 #' templates-and-provenance design.
@@ -47,4 +47,21 @@ template_path <- function(name) {
          call. = FALSE)
   }
   tl$file[[i]]
+}
+
+# Prefix-derivation helper for template file names.
+#
+# Supported templates are named <prefix>.<rest> ("hz.qmd") or
+# <prefix>.<rest>.<rest> ("hz.dead.qmd"). Legacy names additionally carried a
+# leading "tp." marker ("tp.hz.dead.sas"); that field is dropped if present so
+# an older name still resolves. The next field is then taken as the prefix.
+# Prefixes are short, so a long candidate field -- or a name with no further
+# field after the leading one -- means the name carries no prefix, and this
+# returns NA.
+.prefix_of <- function(name) {
+  p <- strsplit(name, ".", fixed = TRUE)[[1L]]
+  if (length(p) >= 1L && identical(p[[1L]], "tp")) p <- p[-1L]
+  if (length(p) < 2L) return(NA_character_)
+  if (nchar(p[[1L]]) > 5L) return(NA_character_)
+  p[[1L]]
 }

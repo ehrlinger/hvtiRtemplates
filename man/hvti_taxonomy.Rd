@@ -16,8 +16,8 @@ belongs in.
 }
 \details{
 This is data rather than documentation on purpose. The same table lived in a
-README and drifted from the corpus it described; as a function it is checked
-by the test suite against the files actually present.
+README and drifted from the files it described; as a function it is checked
+by the test suite against the templates actually present.
 }
 \examples{
 head(hvti_taxonomy())

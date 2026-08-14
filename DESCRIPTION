@@ -1,8 +1,8 @@
 Package: hvtiRtemplates
 Type: Package
-Title: Analysis Job Templates and the Legacy SAS Corpus for the HVTI CORR Group
+Title: Analysis Job Templates for the HVTI CORR Group
 Version: 1.0.0
-Date: 2026-08-13
+Date: 2026-08-14
 Authors@R: c(
     person(
       "John", "Ehrlinger",
@@ -17,9 +17,9 @@ URL: https://github.com/ehrlinger/hvtiRtemplates
 BugReports: https://github.com/ehrlinger/hvtiRtemplates/issues
 Description: Versioned analysis job templates for the clinical investigations
   statistics group within The Heart \& Vascular Institute at the Cleveland
-  Clinic. Also carries the legacy SAS template corpus and SAS macro library as
-  a reference specification, so that the behaviour reproduced by the R
-  templates has a citable source under version control.
+  Clinic. Provides the analysis-prefix taxonomy the group organises jobs by,
+  and resolves a template name to an installed file, so that a study binds to
+  a versioned template rather than to a copy.
 Depends:
     R (>= 4.1.0)
 Suggests:

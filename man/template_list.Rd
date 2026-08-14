@@ -10,8 +10,8 @@ template_list()
 A data frame with columns `name`, `prefix`, `folder` and `file`.
 }
 \description{
-Unlike [corpus_manifest()], these templates are supported: they render, they
-are tested, and they are the intended starting point for a new analysis job.
+These templates are supported: they render, they are tested, and they are
+the intended starting point for a new analysis job.
 }
 \details{
 Returns zero rows until the templates are added in stage 3 of the
