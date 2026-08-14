@@ -30,8 +30,8 @@ decides an allocation.
 python3 specs/artifacts/2026-08-14-macro-allocation-scan.py
 ```
 
-It reads `~/Documents/macro.library` and `~/Documents/template/*/templates`
-directly, and must: this package deliberately removed and purged the SAS corpus
+It reads `~/Documents/macro.library/*.sas` and
+`~/Documents/template/*/templates/*.sas` directly, and must: this package deliberately removed and purged the SAS corpus
 before release (see "There is no SAS corpus here" in the top-level README), so
 there is no in-repo copy to scan. Those live paths are outside version control,
 and the institutional SAS licence expires 2026-09-29.
