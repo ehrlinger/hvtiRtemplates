@@ -91,11 +91,11 @@ operationally: shared is a computed property of the call graph, not a judgement.
 | `hvtiRutilities` (shared) | 12 |
 | `hvtiRdatasets` | 8 |
 | `hvtiPlotR` | 6 |
-| `hvtiRlifetables` (override) | 4 |
-| **Allocated** | **60** |
+| `hvtiRlifetables` (override) | 5 |
+| **Allocated** | **61** |
 | Travels with a dependent | 5 |
 | Blocked on an unowned prefix | 36 |
-| Corpus-only | 79 |
+| Corpus-only | 78 |
 | **Total** | **180** |
 
 ### `hvtiRtables` (17)
@@ -118,9 +118,9 @@ operationally: shared is a computed property of the call graph, not a judgement.
 
 `logistc.sas`, `logistc_p.sas`, `logistc_sts.sas`, `logit_nominal.sas`, `logit_ord.sas`, `mxpredc.sas`
 
-### `hvtiRlifetables` - override (4)
+### `hvtiRlifetables` - override (5)
 
-`usmatchd.sas`, `usmatchd10172003.sas`, `usmatchd84.sas`, `usmtch08.sas`
+`uslife.sas`, `usmatchd.sas`, `usmatchd10172003.sas`, `usmatchd84.sas`, `usmtch08.sas`
 
 Not derived from call sites: see Decision 4.
 
@@ -181,7 +181,7 @@ What unblocks them is an **owner decision, not more evidence** - the call-site
 data is already complete. `bn` is the notable case: 10 templates carry that
 prefix and it appears in no version of the map.
 
-## Corpus-only files (79)
+## Corpus-only files (78)
 
 They stay in `hvtiRtemplates` as reference and are allocated nowhere.
 
@@ -268,9 +268,13 @@ four variants go to `hvtiRlifetables`.
 **Keep the list short.** An override is an admission the rule does not cover a
 case, not a way to edit the map by hand. The current list has one entry class.
 
-**Not swept in:** `uslife.sas` defines no macros - it is a data/setup script that
-`hvtiRlifetables` vendors as an *input*, not a macro to port. It stays
-corpus-only.
+**All five variants, including `uslife.sas`.** An earlier revision of this spec
+claimed `uslife.sas` "defines no macros" and left it corpus-only. That was wrong:
+it defines `%MACRO USLIFE`, 337 lines, missed because the check that produced the
+claim was case-sensitive against a corpus that writes `%MACRO` in upper case.
+`%USLIFE` is "US Life Table 1984" - the same `OVERALL`/`SEX`/`RACE`/`SEXRACE`
+strata modes as `%usmatchd`, and `hvtiRlifetables`'s own handoff counts it as one
+of the five `%usmatchd` variants it vendors. It moves with them.
 
 **The override adds no dependency.** `usmatchd.sas` has no `%inc`, defines
 `numobs` and `usmatchd`, and its only non-local call is `%hazpred` - the
@@ -285,7 +289,7 @@ destination names a package that exists locally only.
 
 1. Owners for the blocked prefixes. Each is a one-line addition that re-derives
    the map.
-2. Whether to scan study directories, converting the 79 corpus-only files from
+2. Whether to scan study directories, converting the 78 corpus-only files from
    "no evidence" to a real classification. Needs access to study trees and
    raises PHI-adjacent path questions, so it is out of scope here.
 3. Whether `hvtiRtemplates` should re-vendor the corpus. Its README describes
