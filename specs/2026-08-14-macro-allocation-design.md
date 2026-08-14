@@ -292,6 +292,10 @@ destination names a package that exists locally only.
 2. Whether to scan study directories, converting the 78 corpus-only files from
    "no evidence" to a real classification. Needs access to study trees and
    raises PHI-adjacent path questions, so it is out of scope here.
-3. Whether `hvtiRtemplates` should re-vendor the corpus. Its README describes
-   `inst/corpus` and `inst/macros` as the citable record, but neither is present
-   in any branch, so this evidence reads live paths outside version control.
+3. Whether parity work needs a versioned corpus source. The scan reads
+   `~/Documents/macro.library/*.sas` and `~/Documents/template/*/templates/*.sas`
+   - live paths outside version control. That is by design, not a gap:
+   `hvtiRtemplates` deliberately removed and purged the SAS corpus before release
+   (2026-08-14), and its README says so. But the institutional SAS licence
+   expires 2026-09-29, which bounds the window for re-running this scan against
+   the originals.
