@@ -13,7 +13,8 @@ Authors@R: c(
 Maintainer: John Ehrlinger <john.ehrlinger@gmail.com>
 License: GPL (>= 3)
 Encoding: UTF-8
-URL: https://github.com/ehrlinger/hvtiRtemplates
+URL: https://github.com/ehrlinger/hvtiRtemplates,
+    https://ehrlinger.github.io/hvtiRtemplates/
 BugReports: https://github.com/ehrlinger/hvtiRtemplates/issues
 Description: Versioned analysis job templates for the clinical investigations
   statistics group within The Heart \& Vascular Institute at the Cleveland
