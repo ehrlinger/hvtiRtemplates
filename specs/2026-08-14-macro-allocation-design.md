@@ -120,6 +120,12 @@ operationally: shared is a computed property of the call graph, not a judgement.
 
 ## What this allocates
 
+The tables and per-package lists below are a convenience copy of
+`specs/artifacts/2026-08-14-macro-allocation.json`. **The JSON is
+authoritative** - if the two ever disagree, the JSON is right and the prose is
+stale. Re-run the scan and re-sync rather than editing a count by hand.
+
+
 | Destination | Files |
 |---|---|
 | `hvtiRtables` | 17 |
@@ -147,9 +153,9 @@ operationally: shared is a computed property of the call graph, not a judgement.
 
 `CR_CIF_CP_variance.sas`, `bootstrap-test.models_wts.sas`, `bootstrap.models_wts.sas`, `cindex_hazard.sas`, `cindex_hazard_tvc.sas`, `haz_to_mi.sas`, `hazplot.sas`, `hazplot02252013.sas`, `hazplot10242003.sas`, `hazplot_cltest.sas`, `markov.sas`, `mi_to_haz.sas`, `nelsont.sas`
 
-### `hvtiRutilities` - shared (12)
+### `hvtiRutilities` - shared (13)
 
-`decomposition.sas`, `decomposition_JR.sas`, `kaplan.int.sas`, `kaplan_jr.sas`, `nelsonl.sas`, `plot.sas`, `plot_8.sas`, `plot_emf.sas`, `plotjoan.sas`, `repeat.sas`, `repeat.testmacro.sas`, `repeated.sas`
+`bootstrap.summary.sas`, `decomposition.sas`, `decomposition_JR.sas`, `kaplan.int.sas`, `kaplan_jr.sas`, `nelsonl.sas`, `plot.sas`, `plot_8.sas`, `plot_emf.sas`, `plotjoan.sas`, `repeat.sas`, `repeat.testmacro.sas`, `repeated.sas`
 
 ### `hvtiRdatasets` (8)
 

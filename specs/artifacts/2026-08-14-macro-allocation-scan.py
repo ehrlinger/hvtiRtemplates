@@ -24,11 +24,18 @@ OWNER["mp"] = "hvtiPlotR"
 OWNER["vars_base_only"] = "hvtiRdatasets"
 
 # The bootstrap model-building family. One owner rather than a split by model
-# type, because a shared engine exists: bootstrap.summary.sas is reached from
-# all four model prefixes and bootstrap.clusters.sas from three. Splitting
-# bh -> temporal_hazard and bl -> hvtiPropensityScores would push that engine
-# into hvtiRutilities as "shared", separating a resampling engine from every
-# model it serves. bc is included though no template currently reaches it.
+# type (bh -> temporal_hazard, bl -> hvtiPropensityScores), because the prefixes
+# are entangled: bootstrap.clusters.sas is reached from bh, bl and br, so a
+# split would push it into hvtiRutilities as tier-2 "shared" -- a resampling
+# engine separated from every model it serves. Splitting also buys little: bh
+# alone unblocks 7 files, any other single prefix one or zero.
+#
+# NOTE bootstrap.summary.sas lands in hvtiRutilities REGARDLESS of this
+# decision, and correctly: its prefixes are ac, bh, bl, bq, br, and ac is
+# actuarial (temporal_hazard). It is shared beyond the bootstrap family, so
+# tier 2 applies on its own merits. Do not read its placement as evidence
+# against one-owner -- bootstrap.clusters.sas is the file this decision saved.
+# bc is included though no template currently reaches it.
 # mm/gm/nm are NOT included -- they are model families, not bootstrap, and
 # remain owner-undetermined in the canonicalization spec.
 for _p in ("bh", "bl", "bc", "bn", "br", "bq"):
