@@ -67,6 +67,42 @@ utility - the same error by another route. Dependencies are classified
 
 Other unmapped prefixes are deliberately left unowned - see Deferred.
 
+## Decision 5 - the bootstrap family goes to a new package, `hvtiRbootstrap`
+
+`bh` (bootstrap hazard), `bl` (bootstrap logistic), `bc` (bootstrap Cox), `bn`
+(bootstrap CIs for binary/continuous/ordinal via mixed models), `br`
+(linear-regression bagging) and `bq` (quantile-regression bagging) all go to one
+new package. This unblocks 32 of the 36 files that were blocked.
+
+**Why one owner rather than a split by model type.** The natural per-prefix homes
+look obvious - `bh` to `temporal_hazard` (which already owns `hz`/`hs`, and `bh`
+builds on the HZ fit), `bl` to `hvtiPropensityScores` (which already owns `lm`,
+logistic and propensity). But the prefixes are entangled: `bootstrap.clusters.sas`
+is reached from `bh`, `bl` and `br`, and `bootstrap.summary.sas` from four model
+prefixes. Splitting would push that shared machinery into `hvtiRutilities` as
+tier 2, separating a resampling engine from every model it serves.
+
+The split also buys almost nothing on its own: owning `bh` alone unblocks 7
+files; owning any other single prefix unblocks one or zero.
+
+**One file did not follow, and the rule was right.** `bootstrap.summary.sas`
+still lands in `hvtiRutilities`, because its prefixes are
+`ac, bh, bl, bq, br` - `ac` is actuarial, owned by `temporal_hazard`. It is
+shared *beyond* the bootstrap family, so tier 2 applies correctly. The
+shared-engine argument held for `bootstrap.clusters.sas`, whose prefixes are all
+bootstrap, and was wrong in detail for `bootstrap.summary.sas`. Recorded rather
+than smoothed over: the summariser is used by non-bootstrap actuarial work too,
+which is a fact about the corpus worth knowing before the port.
+
+**`mm`, `gm` and `nm` are NOT included.** They are model families rather than
+bootstrap, they block no file today, and they remain owner-undetermined in the
+canonicalization spec. `bc` is included though no template currently reaches it,
+because it is the same method on a third model type.
+
+**The package does not exist yet.** This records where the port belongs; creating
+`hvtiRbootstrap` is separate work. The name is a one-line change in the scan
+while nothing depends on it.
+
 ## The rule
 
 Applied to each of the 180 macro files:
@@ -84,17 +120,24 @@ operationally: shared is a computed property of the call graph, not a judgement.
 
 ## What this allocates
 
+The tables and per-package lists below are a convenience copy of
+`specs/artifacts/2026-08-14-macro-allocation.json`. **The JSON is
+authoritative** - if the two ever disagree, the JSON is right and the prose is
+stale. Re-run the scan and re-sync rather than editing a count by hand.
+
+
 | Destination | Files |
 |---|---|
 | `hvtiRtables` | 17 |
+| `hvtiRbootstrap` | 31 |
 | `temporal_hazard` | 13 |
-| `hvtiRutilities` (shared) | 12 |
+| `hvtiRutilities` (shared) | 13 |
 | `hvtiRdatasets` | 8 |
 | `hvtiPlotR` | 6 |
 | `hvtiRlifetables` (override) | 5 |
-| **Allocated** | **61** |
+| **Allocated** | **93** |
 | Travels with a dependent | 5 |
-| Blocked on an unowned prefix | 36 |
+| Blocked on an unowned prefix | 4 |
 | Corpus-only | 78 |
 | **Total** | **180** |
 
@@ -102,13 +145,17 @@ operationally: shared is a computed property of the call graph, not a judgement.
 
 `desc_tab.sas`, `desc_tab_02132012.sas`, `desc_tab_2012.sas`, `desc_tabma.sas`, `lr_trend.sas`, `std_coef.05012015.sas`, `std_coef.sas`, `std_coef_04252013.sas`, `std_dif.sas`, `std_dif_TEST.sas`, `std_dif_TESTma.sas`, `std_dif_wt.sas`, `std_dif_wt_vars.sas`, `std_difma.sas`, `summarytable.sas`, `summarytable_noempty.sas`, `summarytable_old.sas`
 
+### `hvtiRbootstrap` (31)
+
+`bl_ord.ci.sas`, `bl_ord.delta_ci.sas`, `bl_ord.norm.ci.sas`, `bl_ord.perc.ci.sas`, `bn.binary.prev.ci.unique.sas`, `bn.mixed.ci.binary.sas`, `bn.mixed.ci.binary_gr.sas`, `bn.mixed.ci.continuous.sas`, `bn.mixed.ci.continuous_gr.sas`, `bn.mixed.ci.ordinal.gr.sas`, `bn.mixed.ci.ordinal.sas`, `bootstrap.clusters.sas`, `bootstrap.hazard.grid.sas`, `bootstrap.hazard.sas`, `bootstrap.hazard101703.sas`, `bootstrap.hazard_CP_2evnt.sas`, `bootstrap.hazard_CP_2evnt_jr.sas`, `bootstrap.hazard_CP_3evnt_ph.sas`, `bootstrap.hazard_jr.sas`, `bootstrap.hazard_jr1.sas`, `bootstrap.hazard_p.sas`, `bootstrap.hazard_tvc.sas`, `bootstrap.logistic.prediction.sas`, `bootstrap.models.asa.sas`, `bootstrap.models.quant.sas`, `bootstrap.models.sas`, `bootstrap.models.test.sas`, `bootstrap_models_asahp.sas`, `logitlasso.sas`, `tp.bh.hazard_CP_2evnt_mixed.sas`, `tp.bootstrap.hazard_CP_2evnt.sas`
+
 ### `temporal_hazard` (13)
 
 `CR_CIF_CP_variance.sas`, `bootstrap-test.models_wts.sas`, `bootstrap.models_wts.sas`, `cindex_hazard.sas`, `cindex_hazard_tvc.sas`, `haz_to_mi.sas`, `hazplot.sas`, `hazplot02252013.sas`, `hazplot10242003.sas`, `hazplot_cltest.sas`, `markov.sas`, `mi_to_haz.sas`, `nelsont.sas`
 
-### `hvtiRutilities` - shared (12)
+### `hvtiRutilities` - shared (13)
 
-`decomposition.sas`, `decomposition_JR.sas`, `kaplan.int.sas`, `kaplan_jr.sas`, `nelsonl.sas`, `plot.sas`, `plot_8.sas`, `plot_emf.sas`, `plotjoan.sas`, `repeat.sas`, `repeat.testmacro.sas`, `repeated.sas`
+`bootstrap.summary.sas`, `decomposition.sas`, `decomposition_JR.sas`, `kaplan.int.sas`, `kaplan_jr.sas`, `nelsonl.sas`, `plot.sas`, `plot_8.sas`, `plot_emf.sas`, `plotjoan.sas`, `repeat.sas`, `repeat.testmacro.sas`, `repeated.sas`
 
 ### `hvtiRdatasets` (8)
 
@@ -164,22 +211,16 @@ it along with 20 other false edges.
 
 ## Deferred - prefixes without an owner
 
-36 files are blocked, concentrated in:
+4 files remain blocked, on two prefixes, and each needs an individual
+call rather than a family decision:
 
-| Prefix | Files blocked |
-|---|---|
-| `bh` | 22 |
-| `bn` | 16 |
-| `bl` | 13 |
-| `br` | 7 |
-| `ls` | 2 |
-| `bq` | 2 |
-| `hm` | 2 |
-| `rp` | 2 |
+| Prefix | Files | What they are |
+|---|---|---|
+| `ls` | `STStable.sas`, `ExpdObsdPlot.sas` | STS risk-model calibration - see the open question below |
+| `rp` | `linregm.sas`, `linregm_jr.sas` | `rp` looks like a plot prefix by pattern, but these are linear-regression engines |
 
-What unblocks them is an **owner decision, not more evidence** - the call-site
-data is already complete. `bn` is the notable case: 10 templates carry that
-prefix and it appears in no version of the map.
+`mm`, `gm` and `nm` remain owner-undetermined in the canonicalization spec. They
+block nothing today, so no decision is forced.
 
 ## Corpus-only files (78)
 
