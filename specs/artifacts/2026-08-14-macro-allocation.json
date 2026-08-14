@@ -1,0 +1,3110 @@
+{
+  "counts": {
+    "macro_files": 180,
+    "macro_names": 272,
+    "templates": 229,
+    "allocated": 54,
+    "blocked": 41,
+    "travels_with_dependent": 9,
+    "corpus_only": 76
+  },
+  "by_destination": {
+    "_blocked": [
+      "ExpdObsdPlot.sas",
+      "STStable.sas",
+      "bl_ord.ci.sas",
+      "bl_ord.delta_ci.sas",
+      "bl_ord.norm.ci.sas",
+      "bl_ord.perc.ci.sas",
+      "bn.binary.prev.ci.unique.sas",
+      "bn.mixed.ci.binary.sas",
+      "bn.mixed.ci.binary_gr.sas",
+      "bn.mixed.ci.continuous.sas",
+      "bn.mixed.ci.continuous_gr.sas",
+      "bn.mixed.ci.ordinal.gr.sas",
+      "bn.mixed.ci.ordinal.sas",
+      "bootstrap.clusters.sas",
+      "bootstrap.hazard.grid.sas",
+      "bootstrap.hazard.sas",
+      "bootstrap.hazard101703.sas",
+      "bootstrap.hazard_CP_2evnt.sas",
+      "bootstrap.hazard_CP_2evnt_jr.sas",
+      "bootstrap.hazard_CP_3evnt_ph.sas",
+      "bootstrap.hazard_jr.sas",
+      "bootstrap.hazard_jr1.sas",
+      "bootstrap.hazard_p.sas",
+      "bootstrap.hazard_tvc.sas",
+      "bootstrap.logistic.prediction.sas",
+      "bootstrap.models.asa.sas",
+      "bootstrap.models.quant.sas",
+      "bootstrap.models.sas",
+      "bootstrap.models.test.sas",
+      "bootstrap.summary.sas",
+      "bootstrap_models_asahp.sas",
+      "haz_to_mi.sas",
+      "linregm.sas",
+      "linregm_jr.sas",
+      "logitlasso.sas",
+      "mi_to_haz.sas",
+      "mxpredc.sas",
+      "stddiff.sas",
+      "tp.bh.hazard_CP_2evnt_mixed.sas",
+      "tp.bootstrap.hazard_CP_2evnt.sas",
+      "trends.test.sas"
+    ],
+    "_corpus-only": [
+      "ADJSURV.sas",
+      "CR_compare_CIF.sas",
+      "CR_compare_CP.sas",
+      "CR_compare_CP_old.sas",
+      "CR_compare_CP_test_AT.sas",
+      "Copy of dist_complete.sas",
+      "Copy of dist_incomplete.sas",
+      "Copy of dydx.sas",
+      "CorrTable.sas",
+      "ROCplot.sas",
+      "areakey.sas",
+      "areakey_b.sas",
+      "autoexec.sas",
+      "autoexec_wmf.sas",
+      "baseoutnoformat.2000.sas",
+      "bl.fixed.sample2.sas",
+      "bl_genmod.sas",
+      "bootstrap.clusters.example.sas",
+      "bootstrap.summary.example.sas",
+      "boxplots.sas",
+      "brier.sas",
+      "bs_sens_spec_cl.sas",
+      "cvirfmts.sas",
+      "density_ci.simulation.sas",
+      "dist_complete.sas",
+      "dist_incomplete.sas",
+      "duke.cad.index.sas",
+      "dydx.sas",
+      "dydx.test.sas",
+      "echo.readin.sas",
+      "format_01.sas",
+      "format_TF.sas",
+      "hlmrsq.sas",
+      "hp.test.612.sas",
+      "ice.sas",
+      "kaplan_tvc.sas",
+      "kaplan_tvc_woci.sas",
+      "lm.cprobs.example.sas",
+      "loadredcapdata.sas",
+      "lvfunction.sas",
+      "markov.test.sas",
+      "match.sas",
+      "matchgr.example.opcab.sas",
+      "matchgr.sas",
+      "matchgrd.original.sas",
+      "mixcorr_normal.sas",
+      "nelson2.sas",
+      "nelsonb.sas",
+      "nelsong.sas",
+      "nlmm800.sas",
+      "nlmm800e.sas",
+      "np_ice.sas",
+      "np_ice2.sas",
+      "plot.example.sas",
+      "plot.samplelines.sas",
+      "pred_sts_models.sas",
+      "pred_sts_models_12042017.sas",
+      "pred_sts_models_v2017.sas",
+      "pred_sts_models_v2017_112322.sas",
+      "readin.sas",
+      "readin_101903.sas",
+      "repeat.test.sas",
+      "repeat.text.sas",
+      "sens_spec.sas",
+      "sens_spec.test.sas",
+      "sens_spec.testbegg.sas",
+      "sgpie.sas",
+      "std_coef2.sas",
+      "std_dif_4groups.sas",
+      "univariate.quartile3.sas",
+      "uslife.sas",
+      "xls2sas.sas",
+      "xls2sas_MA.sas",
+      "xmacro.sas",
+      "zscore_uk.example.sas",
+      "zscore_uk.sas"
+    ],
+    "_travels-with-dependent": [
+      "japanmatchd2015.sas",
+      "logit_ord.no_trans.sas",
+      "logit_ord.tr_log.sas",
+      "mw_var.sas",
+      "stddiffci.sas",
+      "trends.sas",
+      "usmtch08.sas",
+      "vmatch.sas",
+      "wt_mtch_boot_sd.sas"
+    ],
+    "hvtiPlotR": [
+      "logistc.sas",
+      "logistc_p.sas",
+      "logistc_sts.sas",
+      "logit_nominal.sas",
+      "logit_ord.sas"
+    ],
+    "hvtiRdatasets": [
+      "Copy of dist.sas",
+      "dist.sas",
+      "gmatch.sas",
+      "lgtphcurv9.sas",
+      "phcurv9.sas",
+      "repeated_txt.sas"
+    ],
+    "hvtiRtables": [
+      "desc_tab.sas",
+      "desc_tab_02132012.sas",
+      "desc_tab_2012.sas",
+      "desc_tabma.sas",
+      "lr_trend.sas",
+      "std_coef.05012015.sas",
+      "std_coef.sas",
+      "std_coef_04252013.sas",
+      "std_dif.sas",
+      "std_dif_TEST.sas",
+      "std_dif_TESTma.sas",
+      "std_dif_wt.sas",
+      "std_dif_wt_vars.sas",
+      "std_difma.sas",
+      "summarytable.sas",
+      "summarytable_noempty.sas",
+      "summarytable_old.sas"
+    ],
+    "hvtiRutilities": [
+      "decomposition.sas",
+      "decomposition_JR.sas",
+      "kaplan.int.sas",
+      "kaplan_jr.sas",
+      "nelsonl.sas",
+      "plot.sas",
+      "plot_8.sas",
+      "plot_emf.sas",
+      "plotjoan.sas",
+      "repeat.sas",
+      "repeat.testmacro.sas",
+      "repeated.sas"
+    ],
+    "temporal_hazard": [
+      "CR_CIF_CP_variance.sas",
+      "bootstrap-test.models_wts.sas",
+      "bootstrap.models_wts.sas",
+      "cindex_hazard.sas",
+      "cindex_hazard_tvc.sas",
+      "hazplot.sas",
+      "hazplot02252013.sas",
+      "hazplot10242003.sas",
+      "hazplot_cltest.sas",
+      "markov.sas",
+      "nelsont.sas",
+      "usmatchd.sas",
+      "usmatchd10172003.sas",
+      "usmatchd84.sas"
+    ]
+  },
+  "blocked_by_prefix": {
+    "bh": 22,
+    "bn": 16,
+    "bl": 13,
+    "br": 7,
+    "ls": 2,
+    "bq": 2,
+    "hm": 2,
+    "rp": 2,
+    "vars_base_only": 2,
+    "mp": 1
+  },
+  "unknown_prefixes": {
+    "bn": 10,
+    "nm": 6,
+    "bh": 5,
+    "bl": 4,
+    "gm": 3,
+    "br": 2,
+    "hm": 2,
+    "ls": 2,
+    "imputsub": 2,
+    "lg": 2,
+    "rg": 2,
+    "plots": 2,
+    "rp": 2,
+    "bq": 1,
+    "mm": 1,
+    "bd_sgroups": 1,
+    "echo_readin": 1,
+    "mult_imput": 1,
+    "mult_imput_mcmc": 1,
+    "stxxxx_dwpull": 1,
+    "stxxx_snapshotpull": 1,
+    "stxxxx_ccfpull": 1,
+    "vars_base_only": 1,
+    "test": 1,
+    "cd": 1,
+    "export": 1,
+    "import": 1,
+    "mp": 1
+  },
+  "files": {
+    "ADJSURV.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "adjsurv"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "CR_CIF_CP_variance.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "ce"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "cifcp",
+        "skkip"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "CR_compare_CIF.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "compcif"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "CR_compare_CP.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "compcp"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "CR_compare_CP_old.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "compcp"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "CR_compare_CP_test_AT.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "compcp"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "Copy of dist.sas": {
+      "destination": "hvtiRdatasets",
+      "tier": "single-owner",
+      "prefixes": [
+        "bd"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "dist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "Copy of dist_complete.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "distcomp"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "Copy of dist_incomplete.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "distincp"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "Copy of dydx.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "dydx"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "CorrTable.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "ExpdObsdPlot.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "ls"
+      ],
+      "unowned_prefixes": [
+        "ls"
+      ],
+      "macros": [
+        "expdobsdplot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "ROCplot.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "rocplot"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "STStable.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "ls"
+      ],
+      "unowned_prefixes": [
+        "ls"
+      ],
+      "macros": [
+        "getref",
+        "stsratiopval",
+        "ststable"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "areakey.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "areakey"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "areakey_b.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "areakey_b"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "autoexec.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "autoexec_wmf.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "baseoutnoformat.2000.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "baseout"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "bl.fixed.sample2.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "bl_genmod.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "bl_gen"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "bl_ord.ci.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bn"
+      ],
+      "macros": [
+        "blord",
+        "break",
+        "dcom",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bl_ord.delta_ci.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bn"
+      ],
+      "macros": [
+        "bl_delci",
+        "mrg1",
+        "mrg2",
+        "mrg3"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bl_ord.norm.ci.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bn"
+      ],
+      "macros": [
+        "blord",
+        "break",
+        "dcom",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bl_ord.perc.ci.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bn"
+      ],
+      "macros": [
+        "blord",
+        "break",
+        "dcom",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bn.binary.prev.ci.unique.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bl",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bl",
+        "bn"
+      ],
+      "macros": [
+        "bnprev",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bn.mixed.ci.binary.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bl",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bl",
+        "bn"
+      ],
+      "macros": [
+        "bnprev",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bn.mixed.ci.binary_gr.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bl",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bl",
+        "bn"
+      ],
+      "macros": [
+        "bnprev",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bn.mixed.ci.continuous.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bn"
+      ],
+      "macros": [
+        "bnmnr",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bn.mixed.ci.continuous_gr.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bn"
+      ],
+      "macros": [
+        "bnmnr_gr",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bn.mixed.ci.ordinal.gr.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bl",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bl",
+        "bn"
+      ],
+      "macros": [
+        "bnprev",
+        "mrg0",
+        "mrg1",
+        "mrg2",
+        "mrg3"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bn.mixed.ci.ordinal.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bl",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bl",
+        "bn"
+      ],
+      "macros": [
+        "bnprev",
+        "mrg0",
+        "mrg1",
+        "mrg2"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap-test.models_wts.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "ac"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "botregwt",
+        "skkip"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.clusters.example.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "bootstrap.clusters.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bl",
+        "br"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bl",
+        "br"
+      ],
+      "macros": [
+        "cluster"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.hazard.grid.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh"
+      ],
+      "unowned_prefixes": [
+        "bh"
+      ],
+      "macros": [
+        "hazboot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.hazard.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh"
+      ],
+      "unowned_prefixes": [
+        "bh"
+      ],
+      "macros": [
+        "hazboot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.hazard101703.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh"
+      ],
+      "unowned_prefixes": [
+        "bh"
+      ],
+      "macros": [
+        "hazboot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.hazard_CP_2evnt.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bn"
+      ],
+      "macros": [
+        "hazbootcp",
+        "hazbtcp",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.hazard_CP_2evnt_jr.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bn"
+      ],
+      "macros": [
+        "hazbootcp",
+        "hazbtcp",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.hazard_CP_3evnt_ph.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bn"
+      ],
+      "macros": [
+        "hazbootcp",
+        "hazbtcp",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.hazard_jr.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh"
+      ],
+      "unowned_prefixes": [
+        "bh"
+      ],
+      "macros": [
+        "hazboot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.hazard_jr1.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh"
+      ],
+      "unowned_prefixes": [
+        "bh"
+      ],
+      "macros": [
+        "hazboot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.hazard_p.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh"
+      ],
+      "unowned_prefixes": [
+        "bh"
+      ],
+      "macros": [
+        "hazboot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.hazard_tvc.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh"
+      ],
+      "unowned_prefixes": [
+        "bh"
+      ],
+      "macros": [
+        "hazboot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.logistic.prediction.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bl",
+        "br"
+      ],
+      "unowned_prefixes": [
+        "bl",
+        "br"
+      ],
+      "macros": [
+        "bootreg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.models.asa.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bl",
+        "br"
+      ],
+      "unowned_prefixes": [
+        "bl",
+        "br"
+      ],
+      "macros": [
+        "bootreg",
+        "skkip"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.models.quant.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bq"
+      ],
+      "unowned_prefixes": [
+        "bq"
+      ],
+      "macros": [
+        "bootqr"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.models.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bl",
+        "br"
+      ],
+      "unowned_prefixes": [
+        "bl",
+        "br"
+      ],
+      "macros": [
+        "bootreg",
+        "skkip"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.models.test.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bl",
+        "br"
+      ],
+      "unowned_prefixes": [
+        "bl",
+        "br"
+      ],
+      "macros": [
+        "bootreg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.models_wts.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "ac"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "botregwt",
+        "skkip"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap.summary.example.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "bootstrap.summary.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "ac",
+        "bh",
+        "bl",
+        "bq",
+        "br"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bl",
+        "bq",
+        "br"
+      ],
+      "macros": [
+        "sumboot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "bootstrap_models_asahp.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bl",
+        "br"
+      ],
+      "unowned_prefixes": [
+        "bl",
+        "br"
+      ],
+      "macros": [
+        "bootreg",
+        "skkip"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "boxplots.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "brier.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "brier"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "bs_sens_spec_cl.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "bootsens"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "cindex_hazard.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "cind_haz"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "cindex_hazard_tvc.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "cind_haz"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "cvirfmts.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "decomposition.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "bn",
+        "nd",
+        "nm",
+        "np"
+      ],
+      "unowned_prefixes": [
+        "bn",
+        "nm"
+      ],
+      "macros": [
+        "decompos"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "decomposition_JR.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "bd",
+        "bn",
+        "nd",
+        "nm",
+        "np",
+        "vars",
+        "vars_base_only"
+      ],
+      "unowned_prefixes": [
+        "bn",
+        "nm",
+        "vars_base_only"
+      ],
+      "macros": [
+        "decompos",
+        "ex",
+        "ln"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "density_ci.simulation.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "desc_tab.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "callfreq",
+        "cdfs1",
+        "combo",
+        "congytab",
+        "congytab82",
+        "contab",
+        "contab82",
+        "desc_tab",
+        "edt",
+        "edt1",
+        "edt2",
+        "edt3",
+        "edt3a",
+        "edt4",
+        "freq",
+        "freq1",
+        "freq_tab",
+        "freq_tab82",
+        "frgy_tab",
+        "frgy_tab82",
+        "reorder",
+        "reorder2",
+        "reorder3",
+        "reorder4",
+        "sans",
+        "stdz",
+        "trunc",
+        "tx"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "desc_tab_02132012.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "callfreq",
+        "cdfs1",
+        "combo",
+        "congytab",
+        "congytab82",
+        "contab",
+        "contab82",
+        "desc_tab",
+        "edt",
+        "edt1",
+        "edt2",
+        "edt3",
+        "edt3a",
+        "edt4",
+        "freq",
+        "freq1",
+        "freq_tab",
+        "freq_tab82",
+        "frgy_tab",
+        "frgy_tab82",
+        "reorder",
+        "reorder2",
+        "reorder3",
+        "reorder4",
+        "sans",
+        "stdz",
+        "trunc",
+        "tx"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "desc_tab_2012.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "callfreq",
+        "cdfs1",
+        "combo",
+        "congytab",
+        "congytab82",
+        "contab",
+        "contab82",
+        "desc_tab",
+        "edt",
+        "edt1",
+        "edt2",
+        "edt3",
+        "edt3a",
+        "edt4",
+        "freq",
+        "freq1",
+        "freq_tab",
+        "freq_tab82",
+        "frgy_tab",
+        "frgy_tab82",
+        "reorder",
+        "reorder2",
+        "reorder3",
+        "reorder4",
+        "sans",
+        "stdz",
+        "trunc",
+        "tx"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "desc_tabma.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "callfreq",
+        "cdfs1",
+        "combo",
+        "congytab",
+        "congytab82",
+        "contab",
+        "contab82",
+        "desc_tab",
+        "edt",
+        "edt1",
+        "edt2",
+        "edt3",
+        "edt3a",
+        "edt4",
+        "freq",
+        "freq1",
+        "freq_tab",
+        "freq_tab82",
+        "frgy_tab",
+        "frgy_tab82",
+        "reorder",
+        "reorder2",
+        "reorder3",
+        "reorder4",
+        "sans",
+        "stdz",
+        "trunc",
+        "tx"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "dist.sas": {
+      "destination": "hvtiRdatasets",
+      "tier": "single-owner",
+      "prefixes": [
+        "bd"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "dist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "dist_complete.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "distcomp"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "dist_incomplete.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "distincp"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "duke.cad.index.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "vescode"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "dydx.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "dydx"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "dydx.test.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "echo.readin.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "skip"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "format_01.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "form01",
+        "loop"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "format_TF.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "formtf",
+        "loop"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "gmatch.sas": {
+      "destination": "hvtiRdatasets",
+      "tier": "single-owner",
+      "prefixes": [
+        "bd"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "gmatch",
+        "greedy",
+        "max1"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "haz_to_mi.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "hm"
+      ],
+      "unowned_prefixes": [
+        "hm"
+      ],
+      "macros": [
+        "haz_to_mi"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "hazplot.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "hazplot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "hazplot02252013.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "hazplot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "hazplot10242003.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "hazplot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "hazplot_cltest.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "hazplot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "hlmrsq.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "hlmrsq"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "hp.test.612.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "plots"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "ice.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "ice",
+        "xchkdefv",
+        "xice"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "japanmatchd2015.sas": {
+      "destination": null,
+      "tier": "travels-with-dependent",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "jpmatchd",
+        "numobs"
+      ],
+      "seeded": false,
+      "needed_by": [
+        "lgtphcurv9.sas",
+        "phcurv9.sas",
+        "usmatchd.sas",
+        "usmatchd10172003.sas",
+        "usmatchd84.sas"
+      ]
+    },
+    "kaplan.int.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "ce",
+        "hp",
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "kaplan"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "kaplan_jr.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "ce",
+        "hp",
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "kaplan"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "kaplan_tvc.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "kap_tvc"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "kaplan_tvc_woci.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "kap_tvc"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "lgtphcurv9.sas": {
+      "destination": "hvtiRdatasets",
+      "tier": "single-owner",
+      "prefixes": [
+        "bd"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "axisspec",
+        "dist",
+        "errm1",
+        "lgrpargs",
+        "lgtphcurv9",
+        "lmakespl",
+        "lstep8",
+        "mknowinout",
+        "numargs",
+        "numobs",
+        "psplerr",
+        "pstep8",
+        "varindat",
+        "vls1",
+        "vls1i",
+        "vls1p",
+        "vls2",
+        "vls2i",
+        "vls2p"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "linregm.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "rp"
+      ],
+      "unowned_prefixes": [
+        "rp"
+      ],
+      "macros": [
+        "linregm"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "linregm_jr.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "rp"
+      ],
+      "unowned_prefixes": [
+        "rp"
+      ],
+      "macros": [
+        "linregm"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "lm.cprobs.example.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "lmmodel1",
+        "lmmodel2",
+        "skip"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "loadredcapdata.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "findit",
+        "loadredcapdata"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "logistc.sas": {
+      "destination": "hvtiPlotR",
+      "tier": "single-owner",
+      "prefixes": [
+        "gp",
+        "lp"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "logistc"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "logistc_p.sas": {
+      "destination": "hvtiPlotR",
+      "tier": "single-owner",
+      "prefixes": [
+        "gp",
+        "lp"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "logistc"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "logistc_sts.sas": {
+      "destination": "hvtiPlotR",
+      "tier": "single-owner",
+      "prefixes": [
+        "gp",
+        "lp"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "logistc"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "logit_nominal.sas": {
+      "destination": "hvtiPlotR",
+      "tier": "single-owner",
+      "prefixes": [
+        "lp"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "lgt_nom"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "logit_ord.no_trans.sas": {
+      "destination": null,
+      "tier": "travels-with-dependent",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "break",
+        "dcom1",
+        "dcom2",
+        "f",
+        "g",
+        "ord_ci2",
+        "probest"
+      ],
+      "seeded": false,
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
+    },
+    "logit_ord.sas": {
+      "destination": "hvtiPlotR",
+      "tier": "single-owner",
+      "prefixes": [
+        "gp",
+        "lp"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "break",
+        "dcom1",
+        "dcom2",
+        "f",
+        "g",
+        "ord_ci",
+        "probest"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "logit_ord.tr_log.sas": {
+      "destination": null,
+      "tier": "travels-with-dependent",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "break",
+        "dcom1",
+        "dcom2",
+        "f",
+        "g",
+        "ord_ci1",
+        "probest"
+      ],
+      "seeded": false,
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
+    },
+    "logitlasso.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bl"
+      ],
+      "unowned_prefixes": [
+        "bl"
+      ],
+      "macros": [
+        "logitlasso",
+        "skip"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "lr_trend.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "lrtrend"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "lvfunction.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "markov.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "ce"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "greenwod",
+        "sample"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "markov.test.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "match.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "dij",
+        "greedy",
+        "lbls",
+        "match",
+        "max1",
+        "max2",
+        "optimal",
+        "vbles"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "matchgr.example.opcab.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "matchgr.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "greedmtch",
+        "initcc",
+        "match",
+        "skip",
+        "sortcc"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "matchgrd.original.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "greedmtch",
+        "initcc",
+        "match",
+        "skip",
+        "sortcc"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "mi_to_haz.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "hm"
+      ],
+      "unowned_prefixes": [
+        "hm"
+      ],
+      "macros": [
+        "mi_to_haz"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "mixcorr_normal.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "mixcorr"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "mw_var.sas": {
+      "destination": null,
+      "tier": "travels-with-dependent",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "mw_var"
+      ],
+      "seeded": false,
+      "needed_by": [
+        "summarytable.sas",
+        "summarytable_noempty.sas",
+        "summarytable_old.sas"
+      ]
+    },
+    "mxpredc.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "mp"
+      ],
+      "unowned_prefixes": [
+        "mp"
+      ],
+      "macros": [
+        "mxpredc"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "nelson2.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelson2"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "nelsonb.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelsonb"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "nelsong.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelsong"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "nelsonl.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "hp",
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelsonl"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "nelsont.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "ac"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelsont"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "nlmm800.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "appdel",
+        "append",
+        "apploop",
+        "appnd",
+        "baseinfo",
+        "debug",
+        "getbc",
+        "init",
+        "iterate",
+        "merge",
+        "mixed",
+        "nlin",
+        "nlinmix",
+        "numder",
+        "pseudoder"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "nlmm800e.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "np_ice.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "np_ice"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "np_ice2.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "np_ice"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "phcurv9.sas": {
+      "destination": "hvtiRdatasets",
+      "tier": "single-owner",
+      "prefixes": [
+        "bd"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "axisspec",
+        "dist",
+        "errm1",
+        "lgrpargs",
+        "lgtphcurv9",
+        "lmakespl",
+        "lstep8",
+        "mknowinout",
+        "numargs",
+        "numobs",
+        "psplerr",
+        "pstep8",
+        "varindat",
+        "vls1",
+        "vls1i",
+        "vls1p",
+        "vls2",
+        "vls2i",
+        "vls2p"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "plot.example.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "plots"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "plot.samplelines.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "plot.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "cd",
+        "ce",
+        "cp",
+        "dc",
+        "dp",
+        "gp",
+        "hp",
+        "hs",
+        "lp",
+        "ls",
+        "mp",
+        "np",
+        "rp"
+      ],
+      "unowned_prefixes": [
+        "cd",
+        "ls",
+        "mp",
+        "rp"
+      ],
+      "macros": [
+        "_by",
+        "_id",
+        "_label",
+        "_plot",
+        "_scan_",
+        "_uscan_",
+        "adj_symb",
+        "axis",
+        "bld_anno",
+        "bldano_c",
+        "bounds",
+        "bounds1",
+        "connect",
+        "dummy",
+        "goption",
+        "labl_pos",
+        "plot",
+        "set_size",
+        "token"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "plot_8.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "cd",
+        "ce",
+        "cp",
+        "dc",
+        "dp",
+        "gp",
+        "hp",
+        "hs",
+        "lp",
+        "ls",
+        "mp",
+        "np",
+        "rp"
+      ],
+      "unowned_prefixes": [
+        "cd",
+        "ls",
+        "mp",
+        "rp"
+      ],
+      "macros": [
+        "_by",
+        "_id",
+        "_label",
+        "_plot",
+        "_scan_",
+        "_uscan_",
+        "adj_symb",
+        "axis",
+        "bld_anno",
+        "bldano_c",
+        "bounds",
+        "bounds1",
+        "connect",
+        "dummy",
+        "goption",
+        "labl_pos",
+        "plot",
+        "set_size",
+        "token"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "plot_emf.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "cd",
+        "ce",
+        "cp",
+        "dc",
+        "dp",
+        "gp",
+        "hp",
+        "hs",
+        "lp",
+        "ls",
+        "mp",
+        "np",
+        "rp"
+      ],
+      "unowned_prefixes": [
+        "cd",
+        "ls",
+        "mp",
+        "rp"
+      ],
+      "macros": [
+        "_by",
+        "_id",
+        "_label",
+        "_plot",
+        "_scan_",
+        "_uscan_",
+        "adj_symb",
+        "axis",
+        "bld_anno",
+        "bldano_c",
+        "bounds",
+        "bounds1",
+        "connect",
+        "dummy",
+        "goption",
+        "labl_pos",
+        "plot",
+        "set_size",
+        "token"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "plotjoan.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "cd",
+        "ce",
+        "cp",
+        "dc",
+        "dp",
+        "gp",
+        "hp",
+        "hs",
+        "lp",
+        "ls",
+        "mp",
+        "np",
+        "rp"
+      ],
+      "unowned_prefixes": [
+        "cd",
+        "ls",
+        "mp",
+        "rp"
+      ],
+      "macros": [
+        "_by",
+        "_id",
+        "_label",
+        "_plot",
+        "_scan_",
+        "_uscan_",
+        "adj_symb",
+        "axis",
+        "bld_anno",
+        "bldano_c",
+        "bounds",
+        "bounds1",
+        "connect",
+        "dummy",
+        "goption",
+        "labl_pos",
+        "plot",
+        "set_size",
+        "token"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "pred_sts_models.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "stspred"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "pred_sts_models_12042017.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "stspred"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "pred_sts_models_v2017.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "stspred"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "pred_sts_models_v2017_112322.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "stspred"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "readin.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "skip"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "readin_101903.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "skip"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "repeat.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "bd",
+        "hp",
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "repeat"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "repeat.test.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "model",
+        "skip"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "repeat.testmacro.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "bd",
+        "hp",
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "repeat"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "repeat.text.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "skip"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "repeated.sas": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "bd",
+        "hp",
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "inline",
+        "repeat",
+        "skip"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "repeated_txt.sas": {
+      "destination": "hvtiRdatasets",
+      "tier": "single-owner",
+      "prefixes": [
+        "bd"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "repeatxt"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "sens_spec.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "sens"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "sens_spec.test.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "skip"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "sens_spec.testbegg.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "skip"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "sgpie.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "sgpie"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "std_coef.05012015.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "std_cof"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "std_coef.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "std_cof"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "std_coef2.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "std_cof2"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "std_coef_04252013.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "std_cof"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "std_dif.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "std_dif"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "std_dif_4groups.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "std_df4g"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "std_dif_TEST.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "std_dif"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "std_dif_TESTma.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "std_dif"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "std_dif_wt.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "std_dif"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "std_dif_wt_vars.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "var_sdif"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "std_difma.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "std_dif"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "stddiff.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "vars",
+        "vars_base_only"
+      ],
+      "unowned_prefixes": [
+        "vars_base_only"
+      ],
+      "macros": [
+        "inv",
+        "stddiff"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "stddiffci.sas": {
+      "destination": null,
+      "tier": "travels-with-dependent",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "skip",
+        "stddiffci"
+      ],
+      "seeded": false,
+      "needed_by": [
+        "summarytable.sas",
+        "summarytable_noempty.sas",
+        "summarytable_old.sas"
+      ]
+    },
+    "summarytable.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "newlist",
+        "summarytable",
+        "vexist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "summarytable_noempty.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "newlist",
+        "summarytable",
+        "vexist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "summarytable_old.sas": {
+      "destination": "hvtiRtables",
+      "tier": "single-owner",
+      "prefixes": [
+        "dc"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "newlist",
+        "summarytable",
+        "vexist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "tp.bh.hazard_CP_2evnt_mixed.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bn"
+      ],
+      "macros": [
+        "hazbtcp",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "tp.bootstrap.hazard_CP_2evnt.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bh",
+        "bn"
+      ],
+      "unowned_prefixes": [
+        "bh",
+        "bn"
+      ],
+      "macros": [
+        "hazbtcp",
+        "mrg"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "trends.sas": {
+      "destination": null,
+      "tier": "travels-with-dependent",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "trends"
+      ],
+      "seeded": false,
+      "needed_by": [
+        "trends.test.sas"
+      ]
+    },
+    "trends.test.sas": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "bd",
+        "vars",
+        "vars_base_only"
+      ],
+      "unowned_prefixes": [
+        "vars_base_only"
+      ],
+      "macros": [
+        "ln",
+        "skip"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "univariate.quartile3.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "myquant"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "uslife.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "uslife"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "usmatchd.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "numobs",
+        "usmatchd"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "usmatchd10172003.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "numobs",
+        "usmatchd"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "usmatchd84.sas": {
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "numobs",
+        "usmatchd"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "usmtch08.sas": {
+      "destination": null,
+      "tier": "travels-with-dependent",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "numobs",
+        "usmtch08"
+      ],
+      "seeded": false,
+      "needed_by": [
+        "lgtphcurv9.sas",
+        "phcurv9.sas",
+        "usmatchd.sas",
+        "usmatchd10172003.sas",
+        "usmatchd84.sas"
+      ]
+    },
+    "vmatch.sas": {
+      "destination": null,
+      "tier": "travels-with-dependent",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "doit",
+        "doit2",
+        "vmatch"
+      ],
+      "seeded": false,
+      "needed_by": [
+        "Copy of dist.sas",
+        "dist.sas",
+        "lgtphcurv9.sas",
+        "phcurv9.sas",
+        "usmatchd.sas",
+        "usmatchd10172003.sas",
+        "usmatchd84.sas"
+      ]
+    },
+    "wt_mtch_boot_sd.sas": {
+      "destination": null,
+      "tier": "travels-with-dependent",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "mw_var"
+      ],
+      "seeded": false,
+      "needed_by": [
+        "summarytable.sas",
+        "summarytable_noempty.sas",
+        "summarytable_old.sas"
+      ]
+    },
+    "xls2sas.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "xls2sas"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "xls2sas_MA.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "xls2sas"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "xmacro.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "hello",
+        "indexc",
+        "rep",
+        "statement",
+        "uprep",
+        "whatever",
+        "xbug",
+        "xbugdo",
+        "xbylist",
+        "xchkdata",
+        "xchkdef",
+        "xchkdsn",
+        "xchkech",
+        "xchkend",
+        "xchkeq",
+        "xchkerr",
+        "xchkint",
+        "xchkkey",
+        "xchklist",
+        "xchkmiss",
+        "xchkname",
+        "xchknum",
+        "xchkone",
+        "xchkuint",
+        "xchkvar",
+        "xconcat",
+        "xdelete",
+        "xdo_by",
+        "xdo_obs",
+        "xdsinfo",
+        "xecho",
+        "xend_by",
+        "xend_obs",
+        "xeq",
+        "xerrmisc",
+        "xerrset",
+        "xfloat",
+        "xinit",
+        "xlag",
+        "xlagfq",
+        "xlagfqi",
+        "xlagfqr",
+        "xlagi",
+        "xlagr",
+        "xmacinc",
+        "xmain",
+        "xmerge",
+        "xname",
+        "xnobs",
+        "xnoisy",
+        "xnotes",
+        "xnvar",
+        "xput",
+        "xquiet",
+        "xrepstr",
+        "xreptok",
+        "xscan",
+        "xsubstr",
+        "xterm",
+        "xverify",
+        "xvfreq",
+        "xvlist",
+        "xvweight",
+        "xxbug"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "zscore_uk.example.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "zscore_uk.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "zuk"
+      ],
+      "seeded": false,
+      "needed_by": []
+    }
+  }
+}
