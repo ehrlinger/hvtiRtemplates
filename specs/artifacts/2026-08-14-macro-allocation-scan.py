@@ -23,6 +23,21 @@ OWNER["hm"] = "temporal_hazard"
 OWNER["mp"] = "hvtiPlotR"
 OWNER["vars_base_only"] = "hvtiRdatasets"
 
+# Explicit file-level overrides, for destinations a human decides on grounds the
+# call graph cannot see. Each carries a reason and is reported as tier
+# "override" so it never looks like a derived result. Keep this list short: an
+# override is an admission the rule does not cover a case, not a way to edit the
+# map by hand.
+FILE_OVERRIDE = {
+    b: ("hvtiRlifetables",
+        "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to "
+        "reimplement %usmatchd in R and vendors this file in data-raw/sas. "
+        "Prefix ownership sends it to temporal_hazard because hs templates "
+        "name it, but the port has a different destination.")
+    for b in ("usmatchd.sas", "usmatchd84.sas", "usmatchd10172003.sas",
+              "usmtch08.sas")
+}
+
 strip = lambda s: re.sub(r'^\s*\*[^;]*;', ' ',
                         re.sub(r'/\*.*?\*/', ' ', s, flags=re.S), flags=re.M)
 CALL = re.compile(r'%([A-Za-z_][A-Za-z0-9_]*)\s*[\(;]')
@@ -97,7 +112,8 @@ for b in sorted(fdefs):
     pres = owners.get(b, set())
     known = {OWNER[p] for p in pres if p in OWNER}
     unk   = sorted(p for p in pres if p not in OWNER)
-    if   not pres and b in deps:  dest = None; tier = "travels-with-dependent"
+    if   b in FILE_OVERRIDE:      dest, why = FILE_OVERRIDE[b]; tier = "override"
+    elif not pres and b in deps:  dest = None; tier = "travels-with-dependent"
     elif not pres:                dest = None; tier = "corpus-only"
     elif unk and not known:       dest = None; tier = "blocked"
     elif len(known) == 1 and not unk: dest = next(iter(known)); tier = "single-owner"
@@ -107,6 +123,7 @@ for b in sorted(fdefs):
         for p in unk: blocked[p] += 1
     alloc[dest or ("_" + tier)].append(b)
     detail[b] = {"destination": dest, "tier": tier,
+                 **({"override_reason": FILE_OVERRIDE[b][1]} if b in FILE_OVERRIDE else {}),
                  "prefixes": sorted(pres), "unowned_prefixes": unk,
                  "macros": sorted(fdefs[b]), "seeded": b in seed,
                  "needed_by": sorted(deps.get(b, ()))}

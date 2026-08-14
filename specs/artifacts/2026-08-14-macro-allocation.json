@@ -3,10 +3,10 @@
     "macro_files": 180,
     "macro_names": 272,
     "templates": 229,
-    "allocated": 59,
+    "allocated": 60,
     "blocked": 36,
     "travels_with_dependent": 5,
-    "corpus_only": 80
+    "corpus_only": 79
   },
   "by_destination": {
     "_blocked": [
@@ -122,7 +122,6 @@
       "std_dif_4groups.sas",
       "univariate.quartile3.sas",
       "uslife.sas",
-      "usmtch08.sas",
       "xls2sas.sas",
       "xls2sas_MA.sas",
       "xmacro.sas",
@@ -153,6 +152,12 @@
       "repeated_txt.sas",
       "stddiff.sas",
       "trends.test.sas"
+    ],
+    "hvtiRlifetables": [
+      "usmatchd.sas",
+      "usmatchd10172003.sas",
+      "usmatchd84.sas",
+      "usmtch08.sas"
     ],
     "hvtiRtables": [
       "desc_tab.sas",
@@ -200,10 +205,7 @@
       "hazplot_cltest.sas",
       "markov.sas",
       "mi_to_haz.sas",
-      "nelsont.sas",
-      "usmatchd.sas",
-      "usmatchd10172003.sas",
-      "usmatchd84.sas"
+      "nelsont.sas"
     ]
   },
   "blocked_by_prefix": {
@@ -2910,8 +2912,9 @@
       "needed_by": []
     },
     "usmatchd.sas": {
-      "destination": "temporal_hazard",
-      "tier": "single-owner",
+      "destination": "hvtiRlifetables",
+      "tier": "override",
+      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to temporal_hazard because hs templates name it, but the port has a different destination.",
       "prefixes": [
         "hs"
       ],
@@ -2924,8 +2927,9 @@
       "needed_by": []
     },
     "usmatchd10172003.sas": {
-      "destination": "temporal_hazard",
-      "tier": "single-owner",
+      "destination": "hvtiRlifetables",
+      "tier": "override",
+      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to temporal_hazard because hs templates name it, but the port has a different destination.",
       "prefixes": [
         "hs"
       ],
@@ -2938,8 +2942,9 @@
       "needed_by": []
     },
     "usmatchd84.sas": {
-      "destination": "temporal_hazard",
-      "tier": "single-owner",
+      "destination": "hvtiRlifetables",
+      "tier": "override",
+      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to temporal_hazard because hs templates name it, but the port has a different destination.",
       "prefixes": [
         "hs"
       ],
@@ -2952,8 +2957,9 @@
       "needed_by": []
     },
     "usmtch08.sas": {
-      "destination": null,
-      "tier": "corpus-only",
+      "destination": "hvtiRlifetables",
+      "tier": "override",
+      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to temporal_hazard because hs templates name it, but the port has a different destination.",
       "prefixes": [],
       "unowned_prefixes": [],
       "macros": [
