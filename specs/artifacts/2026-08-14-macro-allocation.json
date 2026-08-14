@@ -3,8 +3,8 @@
     "macro_files": 180,
     "macro_names": 272,
     "templates": 229,
-    "allocated": 61,
-    "blocked": 36,
+    "allocated": 93,
+    "blocked": 4,
     "travels_with_dependent": 5,
     "corpus_only": 78
   },
@@ -12,40 +12,8 @@
     "_blocked": [
       "ExpdObsdPlot.sas",
       "STStable.sas",
-      "bl_ord.ci.sas",
-      "bl_ord.delta_ci.sas",
-      "bl_ord.norm.ci.sas",
-      "bl_ord.perc.ci.sas",
-      "bn.binary.prev.ci.unique.sas",
-      "bn.mixed.ci.binary.sas",
-      "bn.mixed.ci.binary_gr.sas",
-      "bn.mixed.ci.continuous.sas",
-      "bn.mixed.ci.continuous_gr.sas",
-      "bn.mixed.ci.ordinal.gr.sas",
-      "bn.mixed.ci.ordinal.sas",
-      "bootstrap.clusters.sas",
-      "bootstrap.hazard.grid.sas",
-      "bootstrap.hazard.sas",
-      "bootstrap.hazard101703.sas",
-      "bootstrap.hazard_CP_2evnt.sas",
-      "bootstrap.hazard_CP_2evnt_jr.sas",
-      "bootstrap.hazard_CP_3evnt_ph.sas",
-      "bootstrap.hazard_jr.sas",
-      "bootstrap.hazard_jr1.sas",
-      "bootstrap.hazard_p.sas",
-      "bootstrap.hazard_tvc.sas",
-      "bootstrap.logistic.prediction.sas",
-      "bootstrap.models.asa.sas",
-      "bootstrap.models.quant.sas",
-      "bootstrap.models.sas",
-      "bootstrap.models.test.sas",
-      "bootstrap.summary.sas",
-      "bootstrap_models_asahp.sas",
       "linregm.sas",
-      "linregm_jr.sas",
-      "logitlasso.sas",
-      "tp.bh.hazard_CP_2evnt_mixed.sas",
-      "tp.bootstrap.hazard_CP_2evnt.sas"
+      "linregm_jr.sas"
     ],
     "_corpus-only": [
       "ADJSURV.sas",
@@ -142,6 +110,39 @@
       "logit_ord.sas",
       "mxpredc.sas"
     ],
+    "hvtiRbootstrap": [
+      "bl_ord.ci.sas",
+      "bl_ord.delta_ci.sas",
+      "bl_ord.norm.ci.sas",
+      "bl_ord.perc.ci.sas",
+      "bn.binary.prev.ci.unique.sas",
+      "bn.mixed.ci.binary.sas",
+      "bn.mixed.ci.binary_gr.sas",
+      "bn.mixed.ci.continuous.sas",
+      "bn.mixed.ci.continuous_gr.sas",
+      "bn.mixed.ci.ordinal.gr.sas",
+      "bn.mixed.ci.ordinal.sas",
+      "bootstrap.clusters.sas",
+      "bootstrap.hazard.grid.sas",
+      "bootstrap.hazard.sas",
+      "bootstrap.hazard101703.sas",
+      "bootstrap.hazard_CP_2evnt.sas",
+      "bootstrap.hazard_CP_2evnt_jr.sas",
+      "bootstrap.hazard_CP_3evnt_ph.sas",
+      "bootstrap.hazard_jr.sas",
+      "bootstrap.hazard_jr1.sas",
+      "bootstrap.hazard_p.sas",
+      "bootstrap.hazard_tvc.sas",
+      "bootstrap.logistic.prediction.sas",
+      "bootstrap.models.asa.sas",
+      "bootstrap.models.quant.sas",
+      "bootstrap.models.sas",
+      "bootstrap.models.test.sas",
+      "bootstrap_models_asahp.sas",
+      "logitlasso.sas",
+      "tp.bh.hazard_CP_2evnt_mixed.sas",
+      "tp.bootstrap.hazard_CP_2evnt.sas"
+    ],
     "hvtiRdatasets": [
       "Copy of dist.sas",
       "dist.sas",
@@ -179,6 +180,7 @@
       "summarytable_old.sas"
     ],
     "hvtiRutilities": [
+      "bootstrap.summary.sas",
       "decomposition.sas",
       "decomposition_JR.sas",
       "kaplan.int.sas",
@@ -209,28 +211,18 @@
     ]
   },
   "blocked_by_prefix": {
-    "bh": 22,
-    "bn": 16,
-    "bl": 13,
-    "br": 7,
     "ls": 2,
-    "bq": 2,
     "rp": 2
   },
   "unknown_prefixes": {
-    "bn": 10,
     "nm": 6,
-    "bh": 5,
-    "bl": 4,
     "gm": 3,
-    "br": 2,
     "ls": 2,
     "imputsub": 2,
     "lg": 2,
     "rg": 2,
     "plots": 2,
     "rp": 2,
-    "bq": 1,
     "mm": 1,
     "bd_sgroups": 1,
     "echo_readin": 1,
@@ -484,16 +476,13 @@
       "needed_by": []
     },
     "bl_ord.ci.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "blord",
         "break",
@@ -504,14 +493,12 @@
       "needed_by": []
     },
     "bl_ord.delta_ci.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bn"
       ],
-      "unowned_prefixes": [
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bl_delci",
         "mrg1",
@@ -522,16 +509,13 @@
       "needed_by": []
     },
     "bl_ord.norm.ci.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "blord",
         "break",
@@ -542,16 +526,13 @@
       "needed_by": []
     },
     "bl_ord.perc.ci.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "blord",
         "break",
@@ -562,18 +543,14 @@
       "needed_by": []
     },
     "bn.binary.prev.ci.unique.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bl",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bl",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bnprev",
         "mrg"
@@ -582,18 +559,14 @@
       "needed_by": []
     },
     "bn.mixed.ci.binary.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bl",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bl",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bnprev",
         "mrg"
@@ -602,18 +575,14 @@
       "needed_by": []
     },
     "bn.mixed.ci.binary_gr.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bl",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bl",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bnprev",
         "mrg"
@@ -622,16 +591,13 @@
       "needed_by": []
     },
     "bn.mixed.ci.continuous.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bnmnr",
         "mrg"
@@ -640,16 +606,13 @@
       "needed_by": []
     },
     "bn.mixed.ci.continuous_gr.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bnmnr_gr",
         "mrg"
@@ -658,16 +621,13 @@
       "needed_by": []
     },
     "bn.mixed.ci.ordinal.gr.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bl",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bl",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bnprev",
         "mrg0",
@@ -679,16 +639,13 @@
       "needed_by": []
     },
     "bn.mixed.ci.ordinal.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bl",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bl",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bnprev",
         "mrg0",
@@ -722,18 +679,14 @@
       "needed_by": []
     },
     "bootstrap.clusters.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bl",
         "br"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bl",
-        "br"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "cluster"
       ],
@@ -741,14 +694,12 @@
       "needed_by": []
     },
     "bootstrap.hazard.grid.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh"
       ],
-      "unowned_prefixes": [
-        "bh"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazboot"
       ],
@@ -756,14 +707,12 @@
       "needed_by": []
     },
     "bootstrap.hazard.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh"
       ],
-      "unowned_prefixes": [
-        "bh"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazboot"
       ],
@@ -771,14 +720,12 @@
       "needed_by": []
     },
     "bootstrap.hazard101703.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh"
       ],
-      "unowned_prefixes": [
-        "bh"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazboot"
       ],
@@ -786,16 +733,13 @@
       "needed_by": []
     },
     "bootstrap.hazard_CP_2evnt.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazbootcp",
         "hazbtcp",
@@ -805,16 +749,13 @@
       "needed_by": []
     },
     "bootstrap.hazard_CP_2evnt_jr.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazbootcp",
         "hazbtcp",
@@ -824,16 +765,13 @@
       "needed_by": []
     },
     "bootstrap.hazard_CP_3evnt_ph.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazbootcp",
         "hazbtcp",
@@ -843,14 +781,12 @@
       "needed_by": []
     },
     "bootstrap.hazard_jr.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh"
       ],
-      "unowned_prefixes": [
-        "bh"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazboot"
       ],
@@ -858,14 +794,12 @@
       "needed_by": []
     },
     "bootstrap.hazard_jr1.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh"
       ],
-      "unowned_prefixes": [
-        "bh"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazboot"
       ],
@@ -873,14 +807,12 @@
       "needed_by": []
     },
     "bootstrap.hazard_p.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh"
       ],
-      "unowned_prefixes": [
-        "bh"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazboot"
       ],
@@ -888,14 +820,12 @@
       "needed_by": []
     },
     "bootstrap.hazard_tvc.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh"
       ],
-      "unowned_prefixes": [
-        "bh"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazboot"
       ],
@@ -903,16 +833,13 @@
       "needed_by": []
     },
     "bootstrap.logistic.prediction.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bl",
         "br"
       ],
-      "unowned_prefixes": [
-        "bl",
-        "br"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bootreg"
       ],
@@ -920,16 +847,13 @@
       "needed_by": []
     },
     "bootstrap.models.asa.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bl",
         "br"
       ],
-      "unowned_prefixes": [
-        "bl",
-        "br"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bootreg",
         "skkip"
@@ -938,14 +862,12 @@
       "needed_by": []
     },
     "bootstrap.models.quant.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bq"
       ],
-      "unowned_prefixes": [
-        "bq"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bootqr"
       ],
@@ -953,16 +875,13 @@
       "needed_by": []
     },
     "bootstrap.models.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bl",
         "br"
       ],
-      "unowned_prefixes": [
-        "bl",
-        "br"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bootreg",
         "skkip"
@@ -971,16 +890,13 @@
       "needed_by": []
     },
     "bootstrap.models.test.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bl",
         "br"
       ],
-      "unowned_prefixes": [
-        "bl",
-        "br"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bootreg"
       ],
@@ -1011,8 +927,8 @@
       "needed_by": []
     },
     "bootstrap.summary.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRutilities",
+      "tier": "shared",
       "prefixes": [
         "ac",
         "bh",
@@ -1020,12 +936,7 @@
         "bq",
         "br"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bl",
-        "bq",
-        "br"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "sumboot"
       ],
@@ -1033,16 +944,13 @@
       "needed_by": []
     },
     "bootstrap_models_asahp.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bl",
         "br"
       ],
-      "unowned_prefixes": [
-        "bl",
-        "br"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "bootreg",
         "skkip"
@@ -1126,7 +1034,6 @@
         "np"
       ],
       "unowned_prefixes": [
-        "bn",
         "nm"
       ],
       "macros": [
@@ -1156,7 +1063,6 @@
         "vars_base_only"
       ],
       "unowned_prefixes": [
-        "bn",
         "nm"
       ],
       "macros": [
@@ -1866,14 +1772,12 @@
       "needed_by": []
     },
     "logitlasso.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bl"
       ],
-      "unowned_prefixes": [
-        "bl"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "logitlasso",
         "skip"
@@ -2825,16 +2729,13 @@
       "needed_by": []
     },
     "tp.bh.hazard_CP_2evnt_mixed.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazbtcp",
         "mrg"
@@ -2843,16 +2744,13 @@
       "needed_by": []
     },
     "tp.bootstrap.hazard_CP_2evnt.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRbootstrap",
+      "tier": "single-owner",
       "prefixes": [
         "bh",
         "bn"
       ],
-      "unowned_prefixes": [
-        "bh",
-        "bn"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "hazbtcp",
         "mrg"

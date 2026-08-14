@@ -1,0 +1,39 @@
+# Fails when the allocation spec's prose disagrees with the generated map.
+#
+# The map is authoritative and the spec's tables are a convenience copy. That
+# copy drifted three times on 2026-08-14 -- each time a count was hand-synced in
+# one place and not another, and each time a reviewer caught it rather than CI.
+# This makes the agreement mechanical.
+#
+# It does NOT re-run the scan. Regenerating the map needs ~/Documents/macro.library
+# and ~/Documents/template, which are outside version control and absent on a
+# runner. That step stays local; this is what CI can honestly enforce.
+name: spec-counts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'specs/**'
+      - '.github/workflows/spec-counts.yaml'
+  pull_request:
+    paths:
+      - 'specs/**'
+      - '.github/workflows/spec-counts.yaml'
+
+permissions: read-all
+
+jobs:
+  spec-counts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Spec prose agrees with the generated map
+        run: python3 specs/artifacts/check-spec-counts.py
