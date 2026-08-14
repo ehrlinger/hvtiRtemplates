@@ -35,7 +35,7 @@ FILE_OVERRIDE = {
         "Prefix ownership sends it to temporal_hazard because hs templates "
         "name it, but the port has a different destination.")
     for b in ("usmatchd.sas", "usmatchd84.sas", "usmatchd10172003.sas",
-              "usmtch08.sas")
+              "usmtch08.sas", "uslife.sas")
 }
 
 strip = lambda s: re.sub(r'^\s*\*[^;]*;', ' ',
@@ -123,7 +123,7 @@ for b in sorted(fdefs):
         for p in unk: blocked[p] += 1
     alloc[dest or ("_" + tier)].append(b)
     detail[b] = {"destination": dest, "tier": tier,
-                 **({"override_reason": FILE_OVERRIDE[b][1]} if b in FILE_OVERRIDE else {}),
+                 **({"override_reason": why} if tier == "override" else {}),
                  "prefixes": sorted(pres), "unowned_prefixes": unk,
                  "macros": sorted(fdefs[b]), "seeded": b in seed,
                  "needed_by": sorted(deps.get(b, ()))}
