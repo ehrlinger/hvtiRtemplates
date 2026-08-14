@@ -1,7 +1,6 @@
-# hvtiRtemplates
 Version: 1.0.0
 
-## hvtiRtemplates 1.0.0
+# hvtiRtemplates 1.0.0
 
 * Initial release.
 
@@ -18,7 +17,7 @@ Version: 1.0.0
   rather than analysis prefixes, which is what lets the test suite tell "not a
   prefix" apart from "a prefix nobody documented".
 
-### Provenance
+## Provenance
 
 During development this repository also carried the legacy SAS template corpus
 (240 files) and the SAS macro library (495 files, with history imported from
