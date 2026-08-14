@@ -87,13 +87,13 @@ operationally: shared is a computed property of the call graph, not a judgement.
 | Destination | Files |
 |---|---|
 | `hvtiRtables` | 17 |
-| `temporal_hazard` | 14 |
+| `temporal_hazard` | 16 |
 | `hvtiRutilities` (shared) | 12 |
-| `hvtiRdatasets` | 6 |
-| `hvtiPlotR` | 5 |
-| **Allocated** | **54** |
+| `hvtiRdatasets` | 8 |
+| `hvtiPlotR` | 6 |
+| **Allocated** | **59** |
 | Travels with a dependent | 9 |
-| Blocked on an unowned prefix | 41 |
+| Blocked on an unowned prefix | 36 |
 | Corpus-only | 76 |
 | **Total** | **180** |
 
@@ -136,9 +136,30 @@ A name-level rule gets `plot.sas`'s helpers wrong; resolving ownership through
 `%inc` gets `usmatchd.sas` wrong; propagating ownership to dependencies gets
 `usmatchd.sas` wrong again. Only all three decisions together satisfy all three.
 
+## Cross-package dependencies
+
+The map records `needed_by` for every file, so a port can see what it will pull
+from another package. There are 39 file-level cross-package dependencies, spanning 6 distinct
+package pairs. The ones that matter most:
+
+- `summarytable.sas` (`hvtiRtables`) needs `stddiff.sas` (`hvtiRdatasets`).
+- `hazplot.sas` (`temporal_hazard`) needs `kaplan.int.sas` and `nelsonl.sas`
+  (`hvtiRutilities`).
+- `usmatchd.sas` (`temporal_hazard`) needs `dist.sas`, `phcurv9.sas` and
+  `lgtphcurv9.sas` (`hvtiRdatasets`).
+
+**One pair is circular** and must be resolved before either side is ported,
+because R packages cannot have circular `Imports`:
+
+- `hvtiRdatasets` <-> `temporal_hazard`
+
+Resolution is a porting decision, not an allocation one: either the cycle is an
+artifact of SAS files bundling several concerns, or the two belong in the same
+package. Recorded here so it is discovered before the port, not during it.
+
 ## Deferred - prefixes without an owner
 
-41 files are blocked, concentrated in:
+36 files are blocked, concentrated in:
 
 | Prefix | Files blocked |
 |---|---|

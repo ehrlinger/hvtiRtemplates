@@ -14,6 +14,14 @@ for p in "hp np lp dp fp cp gp".split(): OWNER[p] = "hvtiPlotR"
 for p in "lm cm pm rm".split():          OWNER[p] = "hvtiPropensityScores"
 for p in "ac hz hs nd ce".split():       OWNER[p] = "temporal_hazard"
 OWNER["dc"] = "hvtiRtables"
+# Tier A - prefixes the map omitted from families it already assigns.
+# hm: the template README defines it as the hazard model built on the HZ fit,
+#     and hz/hs already go to temporal_hazard.
+# mp: mixed-model plot; every other *p plot prefix is already hvtiPlotR.
+# vars_base_only: a variant of vars, already mapped to hvtiRdatasets.
+OWNER["hm"] = "temporal_hazard"
+OWNER["mp"] = "hvtiPlotR"
+OWNER["vars_base_only"] = "hvtiRdatasets"
 
 strip = lambda s: re.sub(r'^\s*\*[^;]*;', ' ',
                         re.sub(r'/\*.*?\*/', ' ', s, flags=re.S), flags=re.M)
@@ -72,7 +80,9 @@ for b in list(owners):
         nb = stack.pop()
         if nb in seen or nb == b: continue
         seen.add(nb)
-        if nb not in owners: deps[nb].add(b)
+        deps[nb].add(b)          # record for ALL files, seeded or not: a seeded
+                                 # file can still be a dependency of another
+                                 # package's file, and a port needs to see that
         stack += list(fincs[nb] | {x for n in fcalls[nb] for x in name2file.get(n, ())})
 
 alloc = collections.defaultdict(list); blocked = collections.Counter(); detail = {}

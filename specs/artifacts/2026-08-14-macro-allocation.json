@@ -3,8 +3,8 @@
     "macro_files": 180,
     "macro_names": 272,
     "templates": 229,
-    "allocated": 54,
-    "blocked": 41,
+    "allocated": 59,
+    "blocked": 36,
     "travels_with_dependent": 9,
     "corpus_only": 76
   },
@@ -41,16 +41,11 @@
       "bootstrap.models.test.sas",
       "bootstrap.summary.sas",
       "bootstrap_models_asahp.sas",
-      "haz_to_mi.sas",
       "linregm.sas",
       "linregm_jr.sas",
       "logitlasso.sas",
-      "mi_to_haz.sas",
-      "mxpredc.sas",
-      "stddiff.sas",
       "tp.bh.hazard_CP_2evnt_mixed.sas",
-      "tp.bootstrap.hazard_CP_2evnt.sas",
-      "trends.test.sas"
+      "tp.bootstrap.hazard_CP_2evnt.sas"
     ],
     "_corpus-only": [
       "ADJSURV.sas",
@@ -146,7 +141,8 @@
       "logistc_p.sas",
       "logistc_sts.sas",
       "logit_nominal.sas",
-      "logit_ord.sas"
+      "logit_ord.sas",
+      "mxpredc.sas"
     ],
     "hvtiRdatasets": [
       "Copy of dist.sas",
@@ -154,7 +150,9 @@
       "gmatch.sas",
       "lgtphcurv9.sas",
       "phcurv9.sas",
-      "repeated_txt.sas"
+      "repeated_txt.sas",
+      "stddiff.sas",
+      "trends.test.sas"
     ],
     "hvtiRtables": [
       "desc_tab.sas",
@@ -195,11 +193,13 @@
       "bootstrap.models_wts.sas",
       "cindex_hazard.sas",
       "cindex_hazard_tvc.sas",
+      "haz_to_mi.sas",
       "hazplot.sas",
       "hazplot02252013.sas",
       "hazplot10242003.sas",
       "hazplot_cltest.sas",
       "markov.sas",
+      "mi_to_haz.sas",
       "nelsont.sas",
       "usmatchd.sas",
       "usmatchd10172003.sas",
@@ -213,10 +213,7 @@
     "br": 7,
     "ls": 2,
     "bq": 2,
-    "hm": 2,
-    "rp": 2,
-    "vars_base_only": 2,
-    "mp": 1
+    "rp": 2
   },
   "unknown_prefixes": {
     "bn": 10,
@@ -225,7 +222,6 @@
     "bl": 4,
     "gm": 3,
     "br": 2,
-    "hm": 2,
     "ls": 2,
     "imputsub": 2,
     "lg": 2,
@@ -241,12 +237,10 @@
     "stxxxx_dwpull": 1,
     "stxxx_snapshotpull": 1,
     "stxxxx_ccfpull": 1,
-    "vars_base_only": 1,
     "test": 1,
     "cd": 1,
     "export": 1,
-    "import": 1,
-    "mp": 1
+    "import": 1
   },
   "files": {
     "ADJSURV.sas": {
@@ -329,7 +323,13 @@
         "dist"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "lgtphcurv9.sas",
+        "phcurv9.sas",
+        "usmatchd.sas",
+        "usmatchd10172003.sas",
+        "usmatchd84.sas"
+      ]
     },
     "Copy of dist_complete.sas": {
       "destination": null,
@@ -505,7 +505,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bl_ord.delta_ci.sas": {
       "destination": null,
@@ -523,7 +540,10 @@
         "mrg3"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas"
+      ]
     },
     "bl_ord.norm.ci.sas": {
       "destination": null,
@@ -543,7 +563,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bl_ord.perc.ci.sas": {
       "destination": null,
@@ -563,7 +600,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bn.binary.prev.ci.unique.sas": {
       "destination": null,
@@ -583,7 +637,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bn.mixed.ci.binary.sas": {
       "destination": null,
@@ -603,7 +674,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bn.mixed.ci.binary_gr.sas": {
       "destination": null,
@@ -623,7 +711,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bn.mixed.ci.continuous.sas": {
       "destination": null,
@@ -641,7 +746,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bn.mixed.ci.continuous_gr.sas": {
       "destination": null,
@@ -659,7 +781,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bn.mixed.ci.ordinal.gr.sas": {
       "destination": null,
@@ -680,7 +819,10 @@
         "mrg3"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.delta_ci.sas",
+        "bn.mixed.ci.ordinal.sas"
+      ]
     },
     "bn.mixed.ci.ordinal.sas": {
       "destination": null,
@@ -700,7 +842,10 @@
         "mrg2"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.delta_ci.sas",
+        "bn.mixed.ci.ordinal.gr.sas"
+      ]
     },
     "bootstrap-test.models_wts.sas": {
       "destination": "temporal_hazard",
@@ -806,7 +951,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bootstrap.hazard_CP_2evnt_jr.sas": {
       "destination": null,
@@ -825,7 +987,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bootstrap.hazard_CP_3evnt_ph.sas": {
       "destination": null,
@@ -844,7 +1023,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "bootstrap.hazard_jr.sas": {
       "destination": null,
@@ -1137,7 +1333,25 @@
         "decompos"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "decomposition_JR.sas": {
       "destination": "hvtiRutilities",
@@ -1153,8 +1367,7 @@
       ],
       "unowned_prefixes": [
         "bn",
-        "nm",
-        "vars_base_only"
+        "nm"
       ],
       "macros": [
         "decompos",
@@ -1162,7 +1375,25 @@
         "ln"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "density_ci.simulation.sas": {
       "destination": null,
@@ -1211,7 +1442,15 @@
         "tx"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "desc_tab_02132012.sas",
+        "desc_tab_2012.sas",
+        "desc_tabma.sas",
+        "std_dif.sas",
+        "std_dif_TEST.sas",
+        "std_dif_TESTma.sas",
+        "std_difma.sas"
+      ]
     },
     "desc_tab_02132012.sas": {
       "destination": "hvtiRtables",
@@ -1251,7 +1490,15 @@
         "tx"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "desc_tab.sas",
+        "desc_tab_2012.sas",
+        "desc_tabma.sas",
+        "std_dif.sas",
+        "std_dif_TEST.sas",
+        "std_dif_TESTma.sas",
+        "std_difma.sas"
+      ]
     },
     "desc_tab_2012.sas": {
       "destination": "hvtiRtables",
@@ -1291,7 +1538,15 @@
         "tx"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "desc_tab.sas",
+        "desc_tab_02132012.sas",
+        "desc_tabma.sas",
+        "std_dif.sas",
+        "std_dif_TEST.sas",
+        "std_dif_TESTma.sas",
+        "std_difma.sas"
+      ]
     },
     "desc_tabma.sas": {
       "destination": "hvtiRtables",
@@ -1331,7 +1586,15 @@
         "tx"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "desc_tab.sas",
+        "desc_tab_02132012.sas",
+        "desc_tab_2012.sas",
+        "std_dif.sas",
+        "std_dif_TEST.sas",
+        "std_dif_TESTma.sas",
+        "std_difma.sas"
+      ]
     },
     "dist.sas": {
       "destination": "hvtiRdatasets",
@@ -1344,7 +1607,13 @@
         "dist"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "lgtphcurv9.sas",
+        "phcurv9.sas",
+        "usmatchd.sas",
+        "usmatchd10172003.sas",
+        "usmatchd84.sas"
+      ]
     },
     "dist_complete.sas": {
       "destination": null,
@@ -1450,14 +1719,12 @@
       "needed_by": []
     },
     "haz_to_mi.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
       "prefixes": [
         "hm"
       ],
-      "unowned_prefixes": [
-        "hm"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "haz_to_mi"
       ],
@@ -1583,7 +1850,12 @@
         "kaplan"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "hazplot.sas",
+        "hazplot02252013.sas",
+        "hazplot10242003.sas",
+        "hazplot_cltest.sas"
+      ]
     },
     "kaplan_jr.sas": {
       "destination": "hvtiRutilities",
@@ -1599,7 +1871,12 @@
         "kaplan"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "hazplot.sas",
+        "hazplot02252013.sas",
+        "hazplot10242003.sas",
+        "hazplot_cltest.sas"
+      ]
     },
     "kaplan_tvc.sas": {
       "destination": null,
@@ -1652,7 +1929,12 @@
         "vls2p"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "phcurv9.sas",
+        "usmatchd.sas",
+        "usmatchd10172003.sas",
+        "usmatchd84.sas"
+      ]
     },
     "linregm.sas": {
       "destination": null,
@@ -1721,7 +2003,25 @@
         "logistc"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "logistc_p.sas": {
       "destination": "hvtiPlotR",
@@ -1735,7 +2035,25 @@
         "logistc"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "logistc_sts.sas": {
       "destination": "hvtiPlotR",
@@ -1749,7 +2067,25 @@
         "logistc"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "logit_nominal.sas": {
       "destination": "hvtiPlotR",
@@ -1817,7 +2153,24 @@
         "probest"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "logit_ord.tr_log.sas": {
       "destination": null,
@@ -1973,14 +2326,12 @@
       "needed_by": []
     },
     "mi_to_haz.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "temporal_hazard",
+      "tier": "single-owner",
       "prefixes": [
         "hm"
       ],
-      "unowned_prefixes": [
-        "hm"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "mi_to_haz"
       ],
@@ -2014,14 +2365,12 @@
       ]
     },
     "mxpredc.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiPlotR",
+      "tier": "single-owner",
       "prefixes": [
         "mp"
       ],
-      "unowned_prefixes": [
-        "mp"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "mxpredc"
       ],
@@ -2074,7 +2423,13 @@
         "nelsonl"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "hazplot.sas",
+        "hazplot02252013.sas",
+        "hazplot10242003.sas",
+        "hazplot_cltest.sas",
+        "repeated.sas"
+      ]
     },
     "nelsont.sas": {
       "destination": "temporal_hazard",
@@ -2174,7 +2529,12 @@
         "vls2p"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "lgtphcurv9.sas",
+        "usmatchd.sas",
+        "usmatchd10172003.sas",
+        "usmatchd84.sas"
+      ]
     },
     "plot.example.sas": {
       "destination": null,
@@ -2218,7 +2578,6 @@
       "unowned_prefixes": [
         "cd",
         "ls",
-        "mp",
         "rp"
       ],
       "macros": [
@@ -2243,7 +2602,12 @@
         "token"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "plot_8.sas",
+        "plot_emf.sas",
+        "plotjoan.sas",
+        "trends.test.sas"
+      ]
     },
     "plot_8.sas": {
       "destination": "hvtiRutilities",
@@ -2267,7 +2631,6 @@
       "unowned_prefixes": [
         "cd",
         "ls",
-        "mp",
         "rp"
       ],
       "macros": [
@@ -2292,7 +2655,12 @@
         "token"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "plot.sas",
+        "plot_emf.sas",
+        "plotjoan.sas",
+        "trends.test.sas"
+      ]
     },
     "plot_emf.sas": {
       "destination": "hvtiRutilities",
@@ -2316,7 +2684,6 @@
       "unowned_prefixes": [
         "cd",
         "ls",
-        "mp",
         "rp"
       ],
       "macros": [
@@ -2341,7 +2708,12 @@
         "token"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "plot.sas",
+        "plot_8.sas",
+        "plotjoan.sas",
+        "trends.test.sas"
+      ]
     },
     "plotjoan.sas": {
       "destination": "hvtiRutilities",
@@ -2365,7 +2737,6 @@
       "unowned_prefixes": [
         "cd",
         "ls",
-        "mp",
         "rp"
       ],
       "macros": [
@@ -2390,7 +2761,12 @@
         "token"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "plot.sas",
+        "plot_8.sas",
+        "plot_emf.sas",
+        "trends.test.sas"
+      ]
     },
     "pred_sts_models.sas": {
       "destination": null,
@@ -2728,21 +3104,23 @@
       "needed_by": []
     },
     "stddiff.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRdatasets",
+      "tier": "single-owner",
       "prefixes": [
         "vars",
         "vars_base_only"
       ],
-      "unowned_prefixes": [
-        "vars_base_only"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "inv",
         "stddiff"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "summarytable.sas",
+        "summarytable_noempty.sas",
+        "summarytable_old.sas"
+      ]
     },
     "stddiffci.sas": {
       "destination": null,
@@ -2773,7 +3151,10 @@
         "vexist"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "summarytable_noempty.sas",
+        "summarytable_old.sas"
+      ]
     },
     "summarytable_noempty.sas": {
       "destination": "hvtiRtables",
@@ -2788,7 +3169,10 @@
         "vexist"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "summarytable.sas",
+        "summarytable_old.sas"
+      ]
     },
     "summarytable_old.sas": {
       "destination": "hvtiRtables",
@@ -2803,7 +3187,10 @@
         "vexist"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "summarytable.sas",
+        "summarytable_noempty.sas"
+      ]
     },
     "tp.bh.hazard_CP_2evnt_mixed.sas": {
       "destination": null,
@@ -2821,7 +3208,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bootstrap.hazard_CP_2evnt.sas"
+      ]
     },
     "tp.bootstrap.hazard_CP_2evnt.sas": {
       "destination": null,
@@ -2839,7 +3243,24 @@
         "mrg"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.delta_ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas",
+        "bn.binary.prev.ci.unique.sas",
+        "bn.mixed.ci.binary.sas",
+        "bn.mixed.ci.binary_gr.sas",
+        "bn.mixed.ci.continuous.sas",
+        "bn.mixed.ci.continuous_gr.sas",
+        "bn.mixed.ci.ordinal.gr.sas",
+        "bn.mixed.ci.ordinal.sas",
+        "bootstrap.hazard_CP_2evnt.sas",
+        "bootstrap.hazard_CP_2evnt_jr.sas",
+        "bootstrap.hazard_CP_3evnt_ph.sas",
+        "logit_ord.sas",
+        "tp.bh.hazard_CP_2evnt_mixed.sas"
+      ]
     },
     "trends.sas": {
       "destination": null,
@@ -2855,16 +3276,14 @@
       ]
     },
     "trends.test.sas": {
-      "destination": null,
-      "tier": "blocked",
+      "destination": "hvtiRdatasets",
+      "tier": "single-owner",
       "prefixes": [
         "bd",
         "vars",
         "vars_base_only"
       ],
-      "unowned_prefixes": [
-        "vars_base_only"
-      ],
+      "unowned_prefixes": [],
       "macros": [
         "ln",
         "skip"
@@ -2906,7 +3325,12 @@
         "usmatchd"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "lgtphcurv9.sas",
+        "phcurv9.sas",
+        "usmatchd10172003.sas",
+        "usmatchd84.sas"
+      ]
     },
     "usmatchd10172003.sas": {
       "destination": "temporal_hazard",
@@ -2920,7 +3344,12 @@
         "usmatchd"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "lgtphcurv9.sas",
+        "phcurv9.sas",
+        "usmatchd.sas",
+        "usmatchd84.sas"
+      ]
     },
     "usmatchd84.sas": {
       "destination": "temporal_hazard",
@@ -2934,7 +3363,12 @@
         "usmatchd"
       ],
       "seeded": true,
-      "needed_by": []
+      "needed_by": [
+        "lgtphcurv9.sas",
+        "phcurv9.sas",
+        "usmatchd.sas",
+        "usmatchd10172003.sas"
+      ]
     },
     "usmtch08.sas": {
       "destination": null,
