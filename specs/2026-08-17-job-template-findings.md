@@ -5,6 +5,10 @@
 in the `survival` study tree, during a live 25 chunk bootstrap run.
 **Status:** findings and design consequences for stage 3 (`new_job()` and the
 five templates). No code in this package has been changed by this note.
+**Design spec referenced below:** `analyses/R_hazard/docs/specs/2026-08-13-templates-and-provenance-design.md`.
+It lives in the `survival` study tree, **not in this repository**, so its
+section numbers are not resolvable from here; they are cited so the two
+documents can be read side by side by someone who has both.
 
 These are the things that only showed up by running the jobs at real scale.
 Every one of them is a property a template must carry, because the study author
@@ -114,7 +118,7 @@ depend on utilities, never the reverse.
 | `pool_bagging()`, `bagging_chunk_files()`, `bagging_shortfall()` | `R_hazard/R/bagging-pool.R` | method package | Pooling iid bootstrap replicates from restartable chunks is general. Nothing in it is institutional. |
 | `concept_map()`, `prune_to_one_form()`, `selection_crowding()` | `R_hazard/R/pool-prune.R` | **split** (see below) | The algorithm is general; the affix vocabulary is not. |
 | `covariate_audit()`, `covariates_to_numeric()` | `R_hazard/R/covariates.R` | `hvtiRutilities` | These exist because `vars.sas` mean imputes and adds `ms_*` indicators, so 0/1 clinical variables arrive as three level factors. That is an institutional data contract, not a statistical idea. |
-| `r_dir_impurities()` | `R_hazard/R/purity.R` | `hvtiRutilities`, used by both packages | Already specified this way in the design spec section 7. |
+| `r_dir_impurities()` | `R_hazard/R/purity.R` | `hvtiRutilities`, used by both packages | Already specified this way in the design spec, section 7. |
 | `sas_variable_block()` | `R_hazard/R/sas-blocks.R` | this package | It reads a candidate block out of a SAS job. That is corpus handling, which is what this package is for. |
 
 ### The split worth making explicit
