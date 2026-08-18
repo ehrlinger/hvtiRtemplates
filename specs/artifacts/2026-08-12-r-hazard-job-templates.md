@@ -1,12 +1,11 @@
 # R_hazard Job Templates Implementation Plan
 
 > **Migrated 2026-08-18** from `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_hazard/docs/plans/2026-08-12-r-hazard-job-templates.md`.
-> Copied verbatim — nothing below this line was edited, including cross-references.
-> Study folders on the share do not host git, so the design record lives with the
-> package that owns the migration programme. Body references of the form
-> `analyses/*/docs/specs/…` and `analyses/*/docs/plans/…` describe the
-> pre-migration layout; `specs/artifacts/README.md` maps each one to where it
-> now resolves.
+> Cross-references to the other migrated documents have been repointed to their
+> paths in this repository; the text is otherwise unchanged. Study folders on the
+> share do not host git repositories, so the design record lives with the package
+> that owns the migration programme. `specs/artifacts/README.md` records what
+> moved and from where.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -16,7 +15,7 @@
 
 **Tech Stack:** R (>= 4.4), Quarto (`type: default`), `TemporalHazard`, `survival`, `haven`, `testthat`, `knitr`. Optional at runtime: `hvtiRutilities`, `hvtiPlotR`, `numDeriv`.
 
-**Spec:** `analyses/R_hazard/docs/specs/2026-08-11-r-hazard-job-templates-design.md` (commit `86e5b81`)
+**Spec:** `specs/2026-08-11-r-hazard-job-templates-design.md` (commit `86e5b81`)
 
 ## Global Constraints
 
@@ -252,7 +251,7 @@ In `analyses/R_parity/R/run-bagging.R`, change every `R_analysis` to `R_parity`:
 grep -rn 'R_analysis' analyses/ --include='*.R' --include='*.qmd' --include='*.yml' --include='*.md'
 ```
 
-Expected: no output. (The spec's `Predecessor:` line references `analyses/R_parity/docs/specs/...`, which is already correct.)
+Expected: no output. (The spec's `Predecessor:` line references the parity design, which is already correct.)
 
 - [ ] **Step 6: Run the suite and render one stage**
 
@@ -1037,7 +1036,7 @@ Expected: only the `index.qmd` sentence naming `R_parity` as the other project's
 ```bash
 git push -u origin feat/r-hazard-templates
 gh pr create --title "R_hazard: job templates and the R_parity split" --body "$(cat <<'EOF'
-Implements the approved design at `analyses/R_hazard/docs/specs/2026-08-11-r-hazard-job-templates-design.md`.
+Implements the approved design at `specs/2026-08-11-r-hazard-job-templates-design.md`.
 
 Splits `analyses/R_analysis/` into two sibling projects. `R_hazard` does the analysis in R and owns the study's data contract; `R_parity` compares R against stored SAS output and sources that contract from `R_hazard`. The arrow points that way because parity is re-run whenever a defect surfaces or a release needs re-qualifying, so the analysis has to be the layer that stands alone.
 

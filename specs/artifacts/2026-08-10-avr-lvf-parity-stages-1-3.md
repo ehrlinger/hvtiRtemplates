@@ -1,12 +1,11 @@
 # AVR / LV-function TemporalHazard Parity — Stages 1–3 Implementation Plan
 
 > **Migrated 2026-08-18** from `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_parity/docs/plans/2026-08-10-avr-lvf-parity-stages-1-3.md`.
-> Copied verbatim — nothing below this line was edited, including cross-references.
-> Study folders on the share do not host git, so the design record lives with the
-> package that owns the migration programme. Body references of the form
-> `analyses/*/docs/specs/…` and `analyses/*/docs/plans/…` describe the
-> pre-migration layout; `specs/artifacts/README.md` maps each one to where it
-> now resolves.
+> Cross-references to the other migrated documents have been repointed to their
+> paths in this repository; the text is otherwise unchanged. Study folders on the
+> share do not host git repositories, so the design record lives with the package
+> that owns the migration programme. `specs/artifacts/README.md` records what
+> moved and from where.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -16,7 +15,7 @@
 
 **Tech Stack:** R 4.6.0, `TemporalHazard`, `hvtiRutilities`, `haven`, `survival`, `hvtiPlotR`, `testthat` (3rd edition), Quarto, `renv`.
 
-**Spec:** `analyses/R_parity/docs/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
+**Spec:** `specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
 
 ## Global Constraints
 

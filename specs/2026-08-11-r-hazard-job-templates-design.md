@@ -1,17 +1,16 @@
 # R_hazard — job templates for the SAS-to-R hazard migration
 
 > **Migrated 2026-08-18** from `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_hazard/docs/specs/2026-08-11-r-hazard-job-templates-design.md`.
-> Copied verbatim — nothing below this line was edited, including cross-references.
-> Study folders on the share do not host git, so the design record lives with the
-> package that owns the migration programme. Body references of the form
-> `analyses/*/docs/specs/…` and `analyses/*/docs/plans/…` describe the
-> pre-migration layout; `specs/artifacts/README.md` maps each one to where it
-> now resolves.
+> Cross-references to the other migrated documents have been repointed to their
+> paths in this repository; the text is otherwise unchanged. Study folders on the
+> share do not host git repositories, so the design record lives with the package
+> that owns the migration programme. `specs/artifacts/README.md` records what
+> moved and from where.
 
 **Date:** 2026-08-11
 **Status:** Approved design
 **Study:** `/studies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival`
-**Predecessor:** `analyses/R_parity/docs/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
+**Predecessor:** `specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
 
 ---
 
@@ -95,7 +94,7 @@ analyses/
 │   │   ├── bh.template.qmd
 │   │   ├── hm.template.qmd
 │   │   └── hs.template.qmd     # see §4.2 -- capability gap
-│   ├── docs/specs/              # this document
+│   ├── docs/specs/              # design docs; this one now in hvtiRtemplates
 │   ├── 01.ac.dead_JR.qmd        # instantiated jobs
 │   ├── 02.hz.dead_JR.qmd
 │   └── _output/
