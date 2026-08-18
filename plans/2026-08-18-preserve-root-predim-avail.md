@@ -4,7 +4,7 @@
 
 **Goal:** Reproduce the preserve_root `predim_avail` death chain (actuarial → hazard fit → nomogram) in R with `TemporalHazard`, and check every estimate against the committed SAS reference.
 
-**Architecture:** Reusable machinery goes into the package that owns it — readers of `PROC HAZARD` output into `TemporalHazard`, environment and comparison utilities into `hvtiRutilities`, job templates into `hvtiRtemplates`. The study tree holds only a manifest of what to compare plus generated job files. Tasks 1–4 build machinery; 5–8 consume it and produce the parity answer; 9 generalises the job files into templates once two studies have exercised them.
+**Architecture:** Reusable machinery goes into the package that owns it — readers of `PROC HAZARD` output into `TemporalHazard`, environment and comparison utilities into `hvtiRutilities`, job templates into `hvtiRtemplates`. The study tree holds only a manifest of what to compare plus generated job files. Tasks 2–4 build machinery; 5–8 consume it and produce the parity answer; 9 generalises the job files into templates once two studies have exercised them. Task 1 shipped ahead of this plan and is now a verification step plus one open decision.
 
 **Tech Stack:** R (>= 4.1), `TemporalHazard` (>= 1.2.0), `hvtiRutilities`, `haven`, `testthat` (3rd edition), Quarto, `hvtiPlotR`.
 
@@ -56,7 +56,7 @@ predict(object, newdata = NULL,
 
 | Repository | File | Responsibility |
 |---|---|---|
-| `hvtiRutilities` | `R/study-root.R` | locate a study tree with no literal prefix |
+| `hvtiRutilities` | `R/study_paths.R` | locate a study tree with no literal prefix — **already shipped in 1.0.8** |
 | `hvtiRutilities` | `R/preflight.R` | environment audit before any analysis |
 | `hvtiRutilities` | `R/parity-tolerance.R` | the tolerance class table |
 | `hvtiRutilities` | `R/parity-compare.R` | `compare_parity()`, `parity_headline()` |
@@ -69,133 +69,47 @@ predict(object, newdata = NULL,
 
 ---
 
-## Task 1: `study_root()` in hvtiRutilities
+## Task 1: `study_root()` in hvtiRutilities — ALREADY SHIPPED
 
-**Files:**
-- Create: `~/Documents/GitHub/hvtiRutilities/R/study-root.R`
-- Test: `~/Documents/GitHub/hvtiRutilities/tests/testthat/test-study-root.R`
-- Modify: `~/Documents/GitHub/hvtiRutilities/DESCRIPTION` (version), `NEWS.md`
-
-**Interfaces:**
-- Consumes: nothing.
-- Produces: `study_root(start = getwd())` → single character, the absolute study directory. `sas_path(..., start = getwd())` → character path beneath it.
-
-- [ ] **Step 1: Branch**
+**Status (verified 2026-08-18): do not build this.** `study_root()` and `sas_path()`
+are already exported from `hvtiRutilities` **1.0.8** on `main`, in `R/study_paths.R`.
+They arrived with the Stage 1 provenance work, after this plan's first draft was
+written. `sas_path()` is identical to what this task specified.
 
 ```bash
-cd ~/Documents/GitHub/hvtiRutilities && git checkout main && git pull --ff-only
-git checkout -b feat/study-root-preflight
+# Verification, the whole of this task:
+Rscript -e 'stopifnot(all(c("study_root", "sas_path") %in% getNamespaceExports("hvtiRutilities")))'
 ```
 
-- [ ] **Step 2: Write the failing test**
+### ⚠️ Open decision: the shipped root marker is not the one this plan assumed
 
-Create `tests/testthat/test-study-root.R`:
+| | this plan assumed | what shipped (1.0.8) |
+|---|---|---|
+| marker | the four sibling directories `datasets`, `distributions`, `graphs`, `analyses` | `_study.yml`, via `study_root() <- study_config(start)$root` |
+| error names | `datasets, distributions, graphs, analyses` | the absent `_study.yml` |
+| preserve_root today | resolves — all four directories are present | **does not resolve — the tree has no `_study.yml`** |
 
-```r
-test_that("study_root finds the directory holding all four SAS siblings", {
-  root <- withr::local_tempdir()
-  for (d in c("datasets", "distributions", "graphs", "analyses")) {
-    dir.create(file.path(root, d))
-  }
-  deep <- file.path(root, "analyses", "R_hazard", "qmd")
-  dir.create(deep, recursive = TRUE)
+The two markers answer different questions. The structural one asks *does this
+directory look like a SAS study*, and works on any legacy tree untouched. The
+content one asks *was this study deliberately initialised*, and carries the study
+identity, dataset checksum and cohort counts with it — but something must write it
+first.
 
-  expect_equal(normalizePath(study_root(deep)), normalizePath(root))
-})
+**This blocks Task 5 onward, not Tasks 2–4.** Resolve it before Task 5 begins, one
+of two ways:
 
-test_that("study_root errors, naming the markers, when they are absent", {
-  bare <- withr::local_tempdir()
-  expect_error(study_root(bare), "datasets, distributions, graphs, analyses")
-})
+1. **Run `study_init()` against preserve_root**, writing `_study.yml` and
+   `manifest.yaml` at the study root. Matches the shipped design and buys
+   provenance. Costs two new files on the network share, and `study_init()` must be
+   given the `event`/`time` keys (`dead` / `iv_dead` here) because `cohort_counts()`
+   hardcodes them.
+2. **Give `study_root()` a fallback**: prefer `_study.yml`, fall back to the
+   four-directory marker. Leaves the study tree untouched and matches this plan as
+   written. Costs a second resolution rule to maintain, and preserve_root gets no
+   provenance record.
 
-test_that("sas_path joins beneath the study root", {
-  root <- withr::local_tempdir()
-  for (d in c("datasets", "distributions", "graphs", "analyses")) {
-    dir.create(file.path(root, d))
-  }
-  expect_equal(
-    normalizePath(sas_path("datasets", start = root)),
-    normalizePath(file.path(root, "datasets"))
-  )
-})
-```
-
-- [ ] **Step 3: Run the test and confirm it fails**
-
-```bash
-cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="study-root")'
-```
-
-Expected: FAIL — `could not find function "study_root"`.
-
-- [ ] **Step 4: Write the implementation**
-
-Create `R/study-root.R`:
-
-```r
-#' Locate the root of a SAS study tree
-#'
-#' Walks up from `start` until a directory is found containing all four
-#' standard SAS study subdirectories. A study resolves to a different absolute
-#' path on the analysis server than on a workstation mount, so analysis code
-#' must never contain a literal prefix.
-#'
-#' @param start Directory to start from. Defaults to the working directory.
-#' @return Absolute path to the study root, as a single string.
-#' @export
-#' @examples
-#' \donttest{
-#' # From anywhere inside a study tree:
-#' # study_root()
-#' }
-study_root <- function(start = getwd()) {
-  markers <- c("datasets", "distributions", "graphs", "analyses")
-  dir <- normalizePath(start, mustWork = TRUE)
-  repeat {
-    if (all(dir.exists(file.path(dir, markers)))) {
-      return(dir)
-    }
-    parent <- dirname(dir)
-    if (identical(parent, dir)) {
-      stop("study_root(): walked to the filesystem root without finding ",
-           paste(markers, collapse = ", "),
-           " under a common parent. Start from inside the study tree.",
-           call. = FALSE)
-    }
-    dir <- parent
-  }
-}
-
-#' Build a path beneath the study root
-#'
-#' @param ... Path components appended to the study root.
-#' @param start Directory to start the search from.
-#' @return A single character path.
-#' @export
-#' @examples
-#' \donttest{
-#' # sas_path("distributions", "hz.dead.lst")
-#' }
-sas_path <- function(..., start = getwd()) {
-  file.path(study_root(start), ...)
-}
-```
-
-- [ ] **Step 5: Document and re-run the tests**
-
-```bash
-cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtools::test(filter="study-root")'
-```
-
-Expected: 3 PASS, 0 FAIL.
-
-- [ ] **Step 6: Commit**
-
-```bash
-cd ~/Documents/GitHub/hvtiRutilities
-git add R/study-root.R man/study_root.Rd man/sas_path.Rd NAMESPACE tests/testthat/test-study-root.R
-git commit -m "feat: add study_root() and sas_path()"
-```
+Not decided as of 2026-08-18. Whichever is chosen, **the constraint this task
+existed to serve is unchanged**: no literal study path in any R file or `.qmd`.
 
 ---
 
@@ -209,7 +123,14 @@ git commit -m "feat: add study_root() and sas_path()"
 - Consumes: nothing.
 - Produces: `preflight_report(extra = character(0))` → `data.frame` with columns `component` (character), `found` (logical), `version` (character), `notes` (character).
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Branch**
+
+```bash
+cd ~/Documents/GitHub/hvtiRutilities && git checkout main && git pull --ff-only
+git checkout -b feat/preflight-report
+```
+
+- [ ] **Step 2: Write the failing test**
 
 Create `tests/testthat/test-preflight.R`:
 
@@ -239,7 +160,7 @@ test_that("extra packages are appended", {
 })
 ```
 
-- [ ] **Step 2: Run the test and confirm it fails**
+- [ ] **Step 3: Run the test and confirm it fails**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="preflight")'
@@ -247,7 +168,7 @@ cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="prefl
 
 Expected: FAIL — `could not find function "preflight_report"`.
 
-- [ ] **Step 3: Write the implementation**
+- [ ] **Step 4: Write the implementation**
 
 Create `R/preflight.R`:
 
@@ -302,7 +223,7 @@ preflight_report <- function(extra = character(0)) {
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [ ] **Step 5: Run the tests**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtools::test(filter="preflight")'
@@ -310,21 +231,22 @@ cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtoo
 
 Expected: 4 PASS, 0 FAIL.
 
-- [ ] **Step 5: Bump the version and NEWS**
+- [ ] **Step 6: Bump the version and NEWS**
 
-In `DESCRIPTION` change `Version: 1.0.2` to `Version: 1.0.3`. At the top of `NEWS.md`, immediately below the title line, insert:
+In `DESCRIPTION` change `Version: 1.0.8` to `Version: 1.0.9`. `NEWS.md` has no
+title line — its first line is the newest version heading — so insert this at the
+very top of the file, at heading level one to match the entries below it:
 
 ```markdown
-## hvtiRutilities 1.0.3
+# hvtiRutilities 1.0.9
 
-* Added `study_root()` and `sas_path()` — locate a SAS study tree by walking up
-  for its four standard subdirectories, so analysis code carries no literal
-  path prefix.
-* Added `preflight_report()` — environment audit naming every package a
-  hazard-family analysis depends on, including `numDeriv`.
+## New features
+
+- `preflight_report()` — environment audit naming every package a hazard-family
+  analysis depends on, including `numDeriv`.
 ```
 
-- [ ] **Step 6: Full check, then commit**
+- [ ] **Step 7: Full check, then commit**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::check()'
@@ -334,9 +256,9 @@ Expected: 0 errors, 0 warnings. Record any NOTE and confirm it predates this bra
 
 ```bash
 git add R/preflight.R man/preflight_report.Rd NAMESPACE tests/testthat/test-preflight.R DESCRIPTION NEWS.md
-git commit -m "feat: add preflight_report(); bump to 1.0.3"
-git push -u origin feat/study-root-preflight
-gh pr create --title "feat: study_root(), sas_path() and preflight_report()" --body "Environment and path utilities for the SAS-to-R migration, generalised from the lv_function study. See hvtiRtemplates specs/2026-08-18-preserve-root-predim-avail-parity-design.md §3.1."
+git commit -m "feat: add preflight_report(); bump to 1.0.9"
+git push -u origin feat/preflight-report
+gh pr create --title "feat: preflight_report()" --body "Environment audit for the SAS-to-R migration, generalised from the lv_function study. See hvtiRtemplates specs/2026-08-18-preserve-root-predim-avail-parity-design.md §3.1."
 ```
 
 ---
@@ -739,12 +661,14 @@ Expected: 9 PASS, 0 FAIL.
 
 - [ ] **Step 6: Bump, check and commit**
 
-In `DESCRIPTION` set `Version: 1.0.4`. Add to the top of `NEWS.md`:
+In `DESCRIPTION` change `Version: 1.0.9` to `Version: 1.0.10`. Add to the very top of `NEWS.md`:
 
 ```markdown
-## hvtiRutilities 1.0.4
+# hvtiRutilities 1.0.10
 
-* Added `parity_tolerance()`, `compare_parity()` and `parity_headline()` — the
+## New features
+
+- `parity_tolerance()`, `compare_parity()` and `parity_headline()` — the
   comparison half of the SAS parity harness. `compare_parity()` errors when a
   quantity is absent on either side, and reports `PASS` / `DIFFERS` /
   `R_BETTER`.
@@ -753,7 +677,7 @@ In `DESCRIPTION` set `Version: 1.0.4`. Add to the top of `NEWS.md`:
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::check()'
 git add R/parity-tolerance.R R/parity-compare.R man/ NAMESPACE tests/testthat/test-parity.R DESCRIPTION NEWS.md
-git commit -m "feat: add the parity comparison harness; bump to 1.0.4"
+git commit -m "feat: add the parity comparison harness; bump to 1.0.10"
 git push
 ```
 
@@ -769,7 +693,7 @@ git push
 `<study>` is the preserve_root tree. **Never write its absolute path into any file** — every path is built with `sas_path()`.
 
 **Interfaces:**
-- Consumes: `study_root()`, `sas_path()` (Task 1).
+- Consumes: `study_root()`, `sas_path()` (shipped in `hvtiRutilities` 1.0.8; see Task 1 for the unresolved root-marker question, which this task must not proceed past).
 - Produces:
   - `read_preserve_root()` → labelled data frame filtered to `pr_avail == 1`.
   - `add_g_root3(d)` → the same frame with integer column `g_root3`.
