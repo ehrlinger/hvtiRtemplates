@@ -23,7 +23,18 @@ This is not a one-off. Three studies prototype three packages:
 | `cardiac/valves/aortic/replacement/pericardial/resilia` | second wave |
 | `vascular/.../acute/preserve_root` (this one) | second wave |
 
-driving `hvtiRtemplates`, `hvtiRutilities` and `hvtiRlifetables`.
+driving a family of packages. Each study is the forcing function for at least one:
+
+| Package | Role | Driven by |
+|---------|------|-----------|
+| `hvtiRutilities` | common functions — data access, manifests, environment, comparison | all three |
+| `hvtiRtemplates` | job templates, `new_job()`, project scaffolding, SAS corpus | all three |
+| `TemporalHazard` | the models, and the readers for `PROC HAZARD` output | all three |
+| `hvtiRlifetables` | matched US life-table survival (`%usmatchd`) | **preserve_root** |
+| `hvtiRpropensity` | propensity scoring and matched cohorts | **`resilia`** |
+
+`hvtiRpropensity` is a rename of the existing `hvtiPropensityScores` (0.1.0), bringing it
+into the `hvtiR*` family. At 0.1.0 the rename is near its minimum cost.
 
 What this study contributes that `lv_function` could not:
 
@@ -79,7 +90,7 @@ preserve_root/
         ├── R/
         │   └── study.R               # cohort gate, g_root3 derivation, comparison
         │                             # manifest. The ONLY study-specific R here;
-        │                             # everything else comes from hvtiRtemplates.
+        │                             # all machinery comes from the packages (§3.1).
         ├── qmd/
         │   ├── 01-ac-dead_pa.qmd
         │   ├── 02-hz-dead_pa.qmd
@@ -109,8 +120,8 @@ must not be able to corrupt the reference outputs it is validating against.
 ### 3.1 preserve_root is the abstraction exercise
 
 This is the **second** study. `lv_function` built the machinery; this study is where it
-becomes reusable. So the machinery is generalised into `hvtiRtemplates` **as part of
-this work**, and preserve_root consumes it from day one rather than copying it and
+becomes reusable. So the machinery is generalised into the package family **as part of
+this work** — each component into the package it belongs in (§3.1 table) — and preserve_root consumes it from day one rather than copying it and
 hoisting later.
 
 *Two consumers before you abstract* is satisfied, and then some. The rule asks for
@@ -146,23 +157,40 @@ Three consequences for the design:
    the programme real leverage. preserve_root's 5-of-77 caveat in §7.2 stands unchanged
    — a claim earned by one study does not transfer to another.
 
-`resilia`'s matched-cohort analyses are out of scope for all current passes, recorded so
-the interface is not designed in a way that excludes them.
+`resilia`'s matched-cohort analyses (`_match`, `_match_per`, `_match_res`) are the
+forcing function for **`hvtiRpropensity`**, the way `hs.uslife` is for `hvtiRlifetables`
+(§8.1). Out of scope for every current pass, but a package driver rather than merely a
+constraint — and the reason the model-spec and parity interfaces must not assume an
+unmatched, unweighted cohort.
 
 It also matches the upstream plan, whose **stage 4 is "adopt in `R_hazard`"** —
 `lv_function` is expected to retrofit onto the packaged templates. Deferring the
 abstraction would leave both studies on copies with nothing to adopt.
 
-Consumed from `hvtiRtemplates`, not copied:
+**Allocation follows one principle: a component lives with the thing it knows about.**
+The `outhaz` reader knows `PROC HAZARD`'s output format, so it belongs beside the `.lst`
+parsers that already live in `TemporalHazard`. `compare_parity()` knows nothing but
+numbers and tolerances, so it is a common function. A job template knows the shape of a
+job, so it is a template.
 
-| Component | Generalised from | What the study supplies |
-|-----------|------------------|-------------------------|
-| `study_root()` | `lv_function` verbatim — no study content in it | nothing |
-| `preflight_report()` | `lv_function` verbatim | optional extra packages |
-| `ac` / `hz` / `hp` job templates | `lv_function`'s `example-jobs/` | the edited arguments of one call |
-| reference readers | `.lst` parsers + **new `outhaz` reader** (§6.1) | reference file paths |
-| `compare_parity()`, tolerance classes, three-state outcome, headline metric | `lv_function`'s `parity.R` | a comparison manifest: which quantities, which class |
-| `_quarto.yml` conventions, `.gitignore` | `lv_function` | nothing |
+| Component | Home | Generalised from | What the study supplies |
+|-----------|------|------------------|-------------------------|
+| `study_root()` | `hvtiRutilities` | `lv_function`, verbatim | nothing |
+| `preflight_report()` | `hvtiRutilities` | `lv_function`, verbatim | optional extra packages |
+| `compare_parity()`, tolerance classes, three-state outcome, headline metric | `hvtiRutilities` | `lv_function`'s `parity.R` | a comparison manifest |
+| `read_clinical_data()`, `verify_manifest()` | `hvtiRutilities` | already exported | dataset path |
+| `.lst` parsers | `TemporalHazard` | already shipped in `inst/sas-parity/` | reference paths |
+| **`outhaz` reader** | `TemporalHazard` | **new** (§6.1) | reference paths |
+| `ac` / `hz` / `hp` job templates | `hvtiRtemplates` | `lv_function`'s `example-jobs/` | the arguments of one call |
+| `new_job()`, `_quarto.yml` conventions, `.gitignore` | `hvtiRtemplates` | `lv_function` | nothing |
+
+`study_root()` and `preflight_report()` sit beside `verify_manifest()` and
+`read_clinical_data()`, which they already work with — the environment-and-access tier.
+Putting them in a templates package would have split that tier across two libraries for
+no reason.
+
+The `outhaz` reader going to `TemporalHazard` also keeps faith with §6.2: a gap found in
+SAS-output reading is **contributed upstream, not forked into a study or a side package.**
 
 The split is not "generic file versus study file" but **mechanism versus manifest**.
 Every reusable component takes the study's specifics as data. What survives in
@@ -385,6 +413,10 @@ output. It carries, at full double precision:
 
 **`lv_function`'s harness reads `.lst` only.** Using `outhaz` is new here, and it
 changes the tolerance argument rather than merely tightening a number (§6.3).
+
+The reader belongs in `TemporalHazard`, beside the `.lst` parsers in `inst/sas-parity/`:
+both read `PROC HAZARD` output, and `resilia` has 52 such datasets waiting for it
+(§3.1.1). It is contributed upstream, not written as study code.
 
 Reference precedence:
 
@@ -655,18 +687,21 @@ requirements, land it in `hvtiRtemplates`, and have preserve_root consume it
 immediately. The study is the proof the abstraction holds: a component that cannot
 serve both studies is not finished.
 
-Rough order, driven by dependency rather than by phase:
+Rough order, driven by dependency rather than by phase, and grouped by the home each
+component earns under §3.1:
 
-1. `study_root()`, `preflight_report()`, `_quarto.yml` conventions, `.gitignore` —
-   no study content in them, nothing to negotiate.
-2. Reference readers, including the **new `outhaz` reader** (§6.1). Designed against
-   both studies' reference shapes from the start; this is the component that would
-   have been mis-shaped by writing it as study code first.
-3. `compare_parity()`, the tolerance classes of §6.3, the three-state outcome and the
-   headline metric — mechanism in the package, manifest in the study.
-4. The `ac` / `hz` / `hp` job templates, generalised so the study contributes only the
-   arguments of one call (criterion 5) and no study path, title or dataset name
-   (criterion 4).
+1. **`hvtiRutilities`** — `study_root()`, `preflight_report()`. No study content in
+   them, nothing to negotiate, and they join a tier that already exists.
+2. **`TemporalHazard`** — the `outhaz` reader (§6.1), beside the `.lst` parsers.
+   Designed against all three studies' reference shapes from the start; this is the
+   component that would have been mis-shaped by writing it as study code first.
+3. **`hvtiRutilities`** — `compare_parity()`, the tolerance classes of §6.3, the
+   three-state outcome and the headline metric. Mechanism in the package, manifest in
+   the study.
+4. **`hvtiRtemplates`** — the `ac` / `hz` / `hp` job templates, generalised so the study
+   contributes only the arguments of one call (criterion 5) and no study path, title or
+   dataset name (criterion 4), taking an arbitrary fixed/free phase combination
+   (§3.1.1).
 
 Then **upstream stage 4**: retrofit `lv_function` onto the packaged components. Two
 studies on one implementation is the actual success condition; two studies on two
