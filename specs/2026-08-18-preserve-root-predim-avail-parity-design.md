@@ -392,8 +392,8 @@ Free, on the natural scale (reported separately by SAS):
 | `NU` | 1.685784 | 1.6857843769467957 |
 | `MUE` | 0.1022604 | — (derived) |
 | `MUC` | 0.0306439 | — (derived) |
-| `E0` | −2.28023 | −2.28023296061588 |
-| `C0` | −3.48532 | −3.4853216662142557 |
+| `E0` | -2.28023 | -2.28023296061588 |
+| `C0` | -3.48532 | -3.4853216662142557 |
 
 ### 5.3 Convergence and conservation
 
@@ -412,10 +412,16 @@ branch**. `lv_function`'s six-parameter fit never exercised it.
 
 ---
 
-## 6. Parity harness — built in `hvtiRtemplates`
+## 6. Parity harness — split across `TemporalHazard` and `hvtiRutilities`
 
 Three responsibilities, kept separate: read the reference, compare, report.
-All three are package mechanism (§3.1); the study supplies a manifest naming
+
+Per the allocation of §3.1, they do **not** all live in one package. Reading
+`PROC HAZARD` output — the `.lst` parsers and the `outhaz` reader — belongs to
+`TemporalHazard`. Comparison and reporting — `compare_parity()`, the tolerance
+classes, the three-state outcome, the headline metric — are common functions in
+`hvtiRutilities`. Nothing in this harness lives in `hvtiRtemplates`, which owns job
+templates only. All of it is package mechanism; the study supplies a manifest naming
 which quantities to compare and in which tolerance class.
 
 ### 6.1 The reference is not only the `.lst`
@@ -456,9 +462,11 @@ Parsers come from the installed package, never vendored:
 source(system.file("sas-parity", "helper-sas-parity.R", package = "TemporalHazard"))
 ```
 
-with `$TEMPORAL_HAZARD_SRC/tests/testthat/helper-sas-parity.R` as a fallback for a
-machine running an older install beside a checkout, erroring with **both paths named**
-if neither resolves.
+with a fallback for a machine running an older install beside a checkout: the
+environment variable `TEMPORAL_HAZARD_SRC`, read in R as
+`Sys.getenv("TEMPORAL_HAZARD_SRC")` and joined to
+`tests/testthat/helper-sas-parity.R`. If neither route resolves, error with **both
+paths named**.
 
 **Capability is probed, never inferred from a version number.** Upstream renumbering
 means `main` and `dev` both report 1.2.0 — one with the parsers, one without. The
@@ -592,13 +600,13 @@ The substance. Four free parameters, early + constant, CoE on, interval-censored
    question from *"does R agree with SAS"*. Reported alongside, never as the parity
    number.
 3. **`noconserve`** — same data, same model, one flag changed, compared against the
-   second fit block in the same `.lst` (LL = −239.019).
+   second fit block in the same `.lst` (LL = -239.019).
 
 Fit 3 is nearly free and is the most controlled test of the conservation path available
 anywhere in the three studies: identical data, identical model, one flag. `lv_function`
 only got such a pair as an incidental bonus in a deferred stage.
 
-**Compared:** log-likelihood (−239.194 conserve, −239.019 noconserve); `E2 E3 E0 C0`
+**Compared:** log-likelihood (-239.194 conserve, -239.019 noconserve); `E2 E3 E0 C0`
 and their standard errors; natural-scale `THALF NU MUE MUC`; the full 4×4
 variance-covariance matrix; `Number of events conserved = 77`.
 
@@ -673,6 +681,12 @@ fixture** — `estimates/uslife.sas7bdat` over a different study population, aga
 package so far validated on one. That is worth having and is not what this pass is for.
 It gets its own pass once `ac`/`hz`/`hp` land.
 
+**Stage 3 does not depend on any of this.** `graphs/hp.dead_predim_avail.sas` does
+contain an `est.uslife` overlay block, but it sits inside `%macro skkip` — spelled with
+the doubled `k` in the upstream source (`hp.dead_predim_avail.sas:56`), so no `%skkip`
+invocation ever matches it and the block is dead. Reproducing that overlay is not in
+scope for §7.3.
+
 ### 8.2 Other chains in this study
 
 `ac`/`hz`/`hp` variants for `_prt45` and `_prt3grp`; the full-cohort `dead` chain
@@ -689,9 +703,9 @@ and bagging jobs (`hm.dead`, `bh.dead`).
 |---|-----------|
 | 1 | Cohort gate: 291 / 77 events (72 + 5) / 214 censored — **exact**; `g_root3` cells 112 / 89 / 90 — **exact** |
 | 2 | Stage 1 life-table quantities match `.lst` to print precision |
-| 3 | Stage 2 LL matches −239.194 to printed precision; `E2 E3 E0 C0` and `THALF NU` match `outhaz` within optimizer tolerance |
+| 3 | Stage 2 LL matches -239.194 to printed precision; `E2 E3 E0 C0` and `THALF NU` match `outhaz` within optimizer tolerance |
 | 4 | Stage 2 4×4 vcov matches `outhaz` within curvature tolerance |
-| 5 | `noconserve` refit reproduces −239.019 to printed precision |
+| 5 | `noconserve` refit reproduces -239.019 to printed precision |
 | 6 | Stage 3 nomogram survival/hazard and confidence limits match to ~1e-4 |
 | 7 | Every stage reports its max relative discrepancy — **and it is non-zero** |
 | 8 | `.lst` and `outhaz` agree with each other wherever both carry a quantity |
@@ -729,9 +743,9 @@ component earns under §3.1:
    three-state outcome and the headline metric. Mechanism in the package, manifest in
    the study.
 4. **`hvtiRtemplates`** — the `ac` / `hz` / `hp` job templates, generalised so the study
-   contributes only the arguments of one call (criterion 5) and no study path, title or
-   dataset name (criterion 4), taking an arbitrary fixed/free phase combination
-   (§3.1.1).
+   contributes only the arguments of one call, and no study path, title or dataset
+   name — criteria 5 and 4 of the **templates-and-provenance design**, not of §9 below
+   — taking an arbitrary phase structure (§3.1.1).
 
 Then **upstream stage 4**: retrofit `lv_function` onto the packaged components. Two
 studies on one implementation is the actual success condition; two studies on two
