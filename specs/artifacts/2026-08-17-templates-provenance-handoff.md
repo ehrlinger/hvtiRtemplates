@@ -1,12 +1,11 @@
 # Handoff — templates & provenance work
 
 > **Migrated 2026-08-18** from `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_hazard/docs/HANDOFF.md`.
-> Copied verbatim — nothing below this line was edited, including cross-references.
-> Study folders on the share do not host git, so the design record lives with the
-> package that owns the migration programme. Body references of the form
-> `analyses/*/docs/specs/…` and `analyses/*/docs/plans/…` describe the
-> pre-migration layout; `specs/artifacts/README.md` maps each one to where it
-> now resolves.
+> Cross-references to the other migrated documents have been repointed to their
+> paths in this repository; the text is otherwise unchanged. Study folders on the
+> share do not host git repositories, so the design record lives with the package
+> that owns the migration programme. `specs/artifacts/README.md` records what
+> moved and from where.
 
 **Last updated:** 2026-08-13
 **Read this first if you are a new session picking up this work.**
@@ -64,7 +63,7 @@ Dependency direction is fixed: templates → utilities → method packages. Neve
 the reverse. Test for where a function belongs: if it would mean anything
 outside this institution it goes in a method package; if not, `hvtiRutilities`.
 
-**Spec:** `docs/specs/2026-08-13-templates-and-provenance-design.md`
+**Spec:** `specs/2026-08-13-templates-and-provenance-design.md`
 
 ---
 
@@ -89,7 +88,7 @@ outside this institution it goes in a method package; if not, `hvtiRutilities`.
 - 33/33 tests, 0 skips; `R CMD check` Status: OK; 13.3 MB installed
 - `inst/templates/` is empty by design — stage 3 fills it
 
-**Plan:** `docs/plans/2026-08-13-hvtirtemplates-repository.md` (amended in
+**Plan:** `specs/artifacts/2026-08-13-hvtirtemplates-repository.md` (amended in
 flight; the amendments are the interesting part)
 
 ### Stage 1 — what to build
@@ -106,7 +105,7 @@ must be readable in 2035 by someone without R, and two runs must be diffable
 with `diff`. Schema in spec section 5.
 
 **Coupling to check before landing stage 1.** The plan
-(`docs/plans/2026-08-17-hvtirutilities-provenance.md`) has the packaged
+(`specs/artifacts/2026-08-17-hvtirutilities-provenance.md`) has the packaged
 `built_manifest()` emit `sha256` where the per-study one emits `md5`, so that
 one hash algorithm serves both the manifest and the sidecar. `R_hazard`'s
 `R/bagging-pool.R` reads the chunk checksum to decide whether chunks may be
@@ -203,10 +202,10 @@ the one real hit had its column been named anything other than `ccfid`.
 
 | What | Where |
 |---|---|
-| Spec | `analyses/R_hazard/docs/specs/2026-08-13-templates-and-provenance-design.md` |
-| Stage 2 plan | `analyses/R_hazard/docs/plans/2026-08-13-hvtirtemplates-repository.md` |
-| Execution ledger + every decision | `.superpowers/sdd/progress.md` |
-| Earlier R_hazard plan (partly superseded) | `analyses/R_hazard/docs/plans/2026-08-12-r-hazard-job-templates.md` |
+| Spec | `specs/2026-08-13-templates-and-provenance-design.md` |
+| Stage 2 plan | `specs/artifacts/2026-08-13-hvtirtemplates-repository.md` |
+| Execution ledger + every decision | `.superpowers/sdd/progress.md` - a gitignored working-directory artifact, not carried into this repository |
+| Earlier R_hazard plan (partly superseded) | `specs/artifacts/2026-08-12-r-hazard-job-templates.md` |
 | Package repo | `~/Documents/GitHub/hvtiRtemplates` |
 | Macro library (import source) | `~/Documents/macro.library` |
 | Canonical template library (read-only source) | `~/Documents/template` |

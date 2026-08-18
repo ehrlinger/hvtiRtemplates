@@ -1,12 +1,11 @@
 # Stage 1 — Provenance in `hvtiRutilities` Implementation Plan
 
 > **Migrated 2026-08-18** from `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_hazard/docs/plans/2026-08-17-hvtirutilities-provenance.md`.
-> Copied verbatim — nothing below this line was edited, including cross-references.
-> Study folders on the share do not host git, so the design record lives with the
-> package that owns the migration programme. Body references of the form
-> `analyses/*/docs/specs/…` and `analyses/*/docs/plans/…` describe the
-> pre-migration layout; `specs/artifacts/README.md` maps each one to where it
-> now resolves.
+> Cross-references to the other migrated documents have been repointed to their
+> paths in this repository; the text is otherwise unchanged. Study folders on the
+> share do not host git repositories, so the design record lives with the package
+> that owns the migration programme. `specs/artifacts/README.md` records what
+> moved and from where.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -1638,8 +1637,8 @@ No study-specific literal appears in `R/`. Every study value comes from
 Adoption in `R_hazard` (deleting the per-study copies and rewiring the `.qmd`
 files) is Stage 4 and is not in this PR.
 
-Design: `analyses/R_hazard/docs/specs/2026-08-13-templates-and-provenance-design.md`
-Plan: `analyses/R_hazard/docs/plans/2026-08-17-hvtirutilities-provenance.md`
+Design: `specs/2026-08-13-templates-and-provenance-design.md`
+Plan: `specs/artifacts/2026-08-17-hvtirutilities-provenance.md`
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF

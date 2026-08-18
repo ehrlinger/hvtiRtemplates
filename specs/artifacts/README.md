@@ -65,9 +65,12 @@ runner. Regenerating the map stays a local step.
 
 The design and planning documents for the `lv_function/survival` study, copied
 out of the study tree on the network share. Each file carries a `Migrated
-2026-08-18` banner naming its source path; **bodies are verbatim**, so their
-cross-references still describe the pre-migration layout. This table is what
-resolves them.
+2026-08-18` banner naming its source path.
+
+**Cross-references between these documents were repointed** to their paths in
+this repository, so the set resolves against itself from inside the repo rather
+than against a directory layout that is no longer where the documents live.
+Nothing else in the text was changed. This table records where each came from.
 
 **Why these are here rather than on the share.** Study folders on the network
 share do not host git repositories. That is a constraint on where the *record*
@@ -77,7 +80,7 @@ requires the study directory to be under version control. These documents govern
 packages rather than one study, so they live with the package that owns the
 migration programme.
 
-| Referenced in a body as | Now at |
+| Was at, in the study tree | Now at |
 |---|---|
 | `analyses/R_parity/docs/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` | `specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` |
 | `analyses/R_hazard/docs/specs/2026-08-11-r-hazard-job-templates-design.md` | `specs/2026-08-11-r-hazard-job-templates-design.md` |
@@ -88,6 +91,14 @@ migration programme.
 | `analyses/R_hazard/docs/plans/2026-08-17-hvtirutilities-provenance.md` | `specs/artifacts/2026-08-17-hvtirutilities-provenance.md` |
 | `analyses/R_hazard/docs/HANDOFF.md` | `specs/artifacts/2026-08-17-templates-provenance-handoff.md` |
 | `analyses/R_hazard/docs/specs/2026-08-13-hvtirlifetables-design.md` | **not migrated** - see below |
+
+**Three references were deliberately left pointing outward.** The directory
+diagrams in the two designs draw the *study tree on the share*, where
+`docs/specs/` still exists - repointing those would have drawn a layout that has
+never existed anywhere, so only the "this document" comment was corrected. The
+`(commit 86e5b81)` pin in the `R_hazard` templates plan names a commit in the
+study tree's own git, which is not reachable from here and is kept as the
+historical record it is.
 
 **Designs sit at the top level, plans and the handoff sit here.** The three
 designs are the standing record of what was decided. The four plans are the
