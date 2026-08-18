@@ -22,6 +22,7 @@
 - **Survival confidence limits use `conf.type = "logit"`.** `predict.hazard()` defaults to `"log-log"`. (§7.3)
 - **`control$conserve` defaults to `TRUE`.** The `noconserve` comparison must set it explicitly. (§7.2)
 - **`compare_parity()` errors — never warns, never skips — when a requested quantity is absent on either side.** (§6.4)
+- **A `tolerance = 0` literal must be written with 18 significant digits, not 17, and checked.** IEEE754 guarantees a double round-trips through 17, but R's parser does not deliver that here: the 17-digit form of one Task 3 value read back one ULP low and failed its own assertion. Write the literal with `sprintf("%.18g", x)` and confirm `identical(as.numeric(s), x)` before pasting it into a test. This applies to every machine-precision comparison in Tasks 3, 4 and 6–8, and to the reference values quoted in this plan — several of those are 17 digits and are **not** safe to paste.
 - **Tolerances are derived, not tuned.** A failing comparison is diagnosed to a named cause before anything is adjusted. (§6.3, §9)
 
 ## Verified API surface
@@ -263,7 +264,12 @@ gh pr create --title "feat: preflight_report()" --body "Environment audit for th
 
 ---
 
-## Task 3: `hzr_read_outhaz()` in TemporalHazard
+## Task 3: `hzr_read_outhaz()` in TemporalHazard — DONE 2026-08-18
+
+**Shipped as [temporal_hazard #131](https://github.com/ehrlinger/temporal_hazard/pull/131)** (base `dev`), 13 tests, full suite 0 fail / 2049 pass. Two deviations from the steps below, both deliberate:
+
+- **The fixture is synthetic, not cut from `hzdead_pa.sas7bdat`.** The PHI clearance in Step 1 is right as far as it goes — the dataset holds parameters, not patient rows — but `temporal_hazard` is a **public** repository and preserve_root is unpublished. So the layout is reproduced faithfully (17 rows, `NA`-status flag rows, fixed parameters holding zero-filled vcov rows and columns, the two vcov triangles written independently) and the values are invented from reciprocals of irrationals and primes. Generator at `data-raw/outhaz_fixture.R`, which is `.Rbuildignore`d. The parser was verified against the real `.sas7bdat` locally and nothing real was committed. **Tasks 6–8 must apply the same test to anything else they propose to commit.**
+- **The test literals are 18 significant digits, not the 17 written below.** See the new global constraint.
 
 Reads the SAS `outhaz` estimate dataset. It stores converged estimates and the full variance-covariance matrix at double precision, where the `.lst` prints seven figures — so it, not the printout, is the reference for every quantity it carries (§6.1). There are 69 such datasets across the three studies.
 
@@ -276,7 +282,7 @@ Reads the SAS `outhaz` estimate dataset. It stores converged estimates and the f
 - Consumes: nothing.
 - Produces: `hzr_read_outhaz(path)` → named list with elements `estimates` (named numeric), `status` (named integer; 1 free, 0 fixed), `vcov` (numeric matrix over free parameters only, dimnames set), `flags` (named numeric).
 
-- [ ] **Step 1: Branch and build a fixture that contains no PHI**
+- [x] **Step 1: Branch and build a fixture that contains no PHI**
 
 The `outhaz` dataset holds model parameters only — no patient rows — but the fixture is committed, so build it from the study file and verify its contents before writing it.
 
@@ -295,7 +301,7 @@ saveRDS(as.data.frame(d),
         "~/Documents/GitHub/temporal_hazard/inst/extdata/outhaz-fixture.rds")
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `tests/testthat/test-read-outhaz.R`:
 
@@ -336,7 +342,7 @@ test_that("a file that is not an outhaz dataset errors, naming the columns", {
 })
 ```
 
-- [ ] **Step 3: Run the test and confirm it fails**
+- [x] **Step 3: Run the test and confirm it fails**
 
 ```bash
 cd ~/Documents/GitHub/temporal_hazard && Rscript -e 'devtools::test(filter="read-outhaz")'
@@ -344,7 +350,7 @@ cd ~/Documents/GitHub/temporal_hazard && Rscript -e 'devtools::test(filter="read
 
 Expected: FAIL — `could not find function "hzr_read_outhaz"`.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 Create `R/read-outhaz.R`:
 
@@ -404,7 +410,7 @@ hzr_read_outhaz <- function(path) {
 }
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 ```bash
 cd ~/Documents/GitHub/temporal_hazard && Rscript -e 'devtools::document(); devtools::test(filter="read-outhaz")'
@@ -412,7 +418,7 @@ cd ~/Documents/GitHub/temporal_hazard && Rscript -e 'devtools::document(); devto
 
 Expected: 5 PASS, 0 FAIL. If the `vcov` symmetry test fails, print `d[match(free, nm), free]` and check whether SAS wrote the block transposed before changing the tolerance.
 
-- [ ] **Step 6: Commit and open the PR**
+- [x] **Step 6: Commit and open the PR**
 
 ```bash
 cd ~/Documents/GitHub/temporal_hazard
