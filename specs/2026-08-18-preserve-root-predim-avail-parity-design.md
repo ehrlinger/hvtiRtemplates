@@ -48,7 +48,7 @@ What this study contributes that `lv_function` could not:
 
 | | `lv_function` | preserve_root |
 |---|---|---|
-| Model | 6 free params, two-phase Weibull | **4 free params, early + constant** |
+| Model | 6 free params, two-phase Weibull | **4 free params, early + constant** — the only study with a non-Weibull late phase in any executed fit (§3.1.1) |
 | Conservation of events | on, iterative | on, **closed-form branch** |
 | N | 3049 | **291** |
 | Interval-censored events | 3 / 1032 | 5 / 77 |
@@ -133,35 +133,52 @@ except a second copy to reconcile.
 #### 3.1.1 The evidence base
 
 A survey of the three studies, because an interface designed against one of them is an
-accident:
+accident.
+
+**Counted from executed fits in the `.lst` files, not from tokens in the `.sas`
+sources.** This distinction is not pedantry — it reverses the answer. A large share of
+`%hazard` calls sit inside `%macro skip` blocks that never run: `resilia`'s sources
+contain 78 `weibull` and 16 `muc` tokens, but only 12 fits ever executed and **every one
+of them is Weibull**. All 16 `muc` occurrences are in dead exploratory blocks. An
+earlier draft of this section reported the source-token counts and drew the opposite
+conclusion from them.
 
 | | `lv_function` | preserve_root | `resilia` |
 |---|---|---|---|
-| Late phase | Weibull | constant (`muc`) | **both** — 78 `weibull`, 16 `muc` |
-| Fixed/free spread | one combination | one combination | **`fixm` 23×, `fixnu` 34×, `fixeta` 20×** |
-| `icensor` | 1 fit, 3/1032 events | 1 fit, 5/77 events | **47 uses** |
-| Conservation | `conserve` | `conserve` + one pair | **30 `conserve`, 48 `noconserve`** |
-| `outhaz` datasets | present, unused | 1 in scope | **52** |
-| Matched cohorts | — | — | `_match`, `_match_per`, `_match_res` |
+| `hz` `.lst` files | 13 | 12 | 8 |
+| Converged fits | 29 | 24 | 12 |
+| Early + Weibull late | 29 | 5 | 12 |
+| Early + **constant** late | 0 | **10** | 0 |
+| Early only (single phase) | 0 | **9** | 0 |
+| Conservation on / off | 26 / 3 | 15 / **9** | 12 / **0** |
+| Interval censoring declared | **29** | 8 | 7 |
+| `outhaz` estimate datasets | **40** | 17 | 12 |
 | `hs` jobs | **9** | 1 | 0 |
 
-Three consequences for the design:
+Four consequences for the design:
 
-1. **The model-spec interface must take an arbitrary fixed/free combination across both
-   late-phase forms.** This spec describes preserve_root's shape (§5.2); the *package*
-   component must not hard-code it. Two studies would have suggested a two-case switch;
-   `resilia` shows the real space.
-2. **The `outhaz` reader is first-class, not a local nicety.** 52 datasets in `resilia`
-   alone. §6.1 proposed it from a single file; the corpus settles it.
-3. **Interval-censoring evidence comes from `resilia`, not from here.** Its 47 uses give
-   the programme real leverage. preserve_root's 5-of-77 caveat in §7.2 stands unchanged
-   — a claim earned by one study does not transfer to another.
+1. **The model-spec interface must take an arbitrary phase structure, and preserve_root
+   is what proves it.** Its executed fits span three shapes — early + constant (10),
+   early + Weibull (5), and early-only single-phase (9, from the root-reintervention
+   chain). `lv_function` and `resilia` are uniformly early + Weibull across all 41 of
+   their fits between them. **This study is the entire source of phase-structure
+   variety in the programme.**
+2. **preserve_root also carries the conservation evidence.** Nine executed fits run
+   `noconserve` against `lv_function`'s three and `resilia`'s none, on top of the
+   controlled on/off pair of §7.2.
+3. **Interval-censoring evidence comes from `lv_function`**, where all 29 fits declare
+   it, against 8 here. preserve_root's 5-of-77 caveat in §7.2 stands unchanged — a claim
+   earned by one study does not transfer to another.
+4. **The `outhaz` reader is first-class.** 69 genuine `outhaz` datasets across the three
+   studies, `lv_function` holding the most. (Counted by column signature — `_NAME_`,
+   `_EST_`, `_STATUS_` — not by listing `estimates/`, where they are a minority: 40 of
+   116, 17 of 63, 12 of 52.)
 
 `resilia`'s matched-cohort analyses (`_match`, `_match_per`, `_match_res`) are the
-forcing function for **`hvtiRpropensity`**, the way `hs.uslife` is for `hvtiRlifetables`
-(§8.1). Out of scope for every current pass, but a package driver rather than merely a
-constraint — and the reason the model-spec and parity interfaces must not assume an
-unmatched, unweighted cohort.
+forcing function for **`hvtiRpropensity`**, the way the `hs` jobs are for
+`hvtiRlifetables` (§8.1). Out of scope for every current pass, but a package driver
+rather than merely a constraint — and the reason the model-spec and parity interfaces
+must not assume an unmatched, unweighted cohort.
 
 It also matches the upstream plan, whose **stage 4 is "adopt in `R_hazard`"** —
 `lv_function` is expected to retrofit onto the packaged templates. Deferring the
@@ -417,7 +434,8 @@ output. It carries, at full double precision:
 changes the tolerance argument rather than merely tightening a number (§6.3).
 
 The reader belongs in `TemporalHazard`, beside the `.lst` parsers in `inst/sas-parity/`:
-both read `PROC HAZARD` output, and `resilia` has 52 such datasets waiting for it
+both read `PROC HAZARD` output, and there are 69 genuine `outhaz` datasets across
+the three studies waiting for it — 40 in `lv_function`, 17 here, 12 in `resilia`
 (§3.1.1). It is contributed upstream, not written as study code.
 
 Reference precedence:
