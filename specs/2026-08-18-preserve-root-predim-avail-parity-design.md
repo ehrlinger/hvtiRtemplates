@@ -52,7 +52,7 @@ What this study contributes that `lv_function` could not:
 | Conservation of events | on, iterative | on, **closed-form branch** |
 | N | 3049 | **291** |
 | Interval-censored events | 3 / 1032 | 5 / 77 |
-| CoE on/off pair | deferred to stage 5 | **in scope, same `.lst`** |
+| CoE on/off pair | deferred to stage 5 | **not available** — see §5.4 |
 | vcov reference | standard errors only | **full 4×4 matrix, full precision** |
 | `%vars` required | yes — post-`%vars` dataset | **no** (§4) |
 | Numeric reference | `.lst` only | **`outhaz` dataset + `.lst`** (§6.1) |
@@ -410,6 +410,36 @@ If only one scaling parameter, estimation is in closed form.
 That last line matters: with a single scaling parameter, CoE takes its **closed-form
 branch**. `lv_function`'s six-parameter fit never exercised it.
 
+### 5.4 There is no controlled conservation pair here - corrected
+
+An earlier draft of this spec claimed the `.lst` contained a free
+conservation-on/conservation-off pair on identical data, and made it a success
+criterion. **That was wrong, and the error is worth recording because it was caught
+only by parsing the file rather than reading its headings.**
+
+The `.lst` holds three converged fits:
+
+| Fit | Log likelihood | Free params | Conservation | Model |
+|-----|---------------|-------------|--------------|-------|
+| 1 | -239.194 | 4 | **Invoked** | early + constant |
+| 2 | -239.019 | 6 | **Not invoked** | early + constant, **plus a `G_ROOT` covariate in each phase** |
+| 3 | -236.987 | 8 | Not invoked | further covariates |
+
+Fit 2 differs from fit 1 in **two** ways at once - conservation is off *and* it gains
+`G_ROOT` in both phases (`E2 E3 E0 G_ROOT` early, `C0 G_ROOT` constant). The
+-0.175 improvement in log-likelihood confounds the two changes. Grepping for
+`Conservation of events: Not invoked` and pairing it with the nearest log-likelihood
+produces exactly this mistake.
+
+Two consequences:
+
+1. **A `noconserve` refit of the four-parameter model has no SAS reference.** It is
+   still worth running as an R-only sensitivity, and is reported as one.
+2. **Fit 2 is a genuine parity target in its own right** - a six-parameter covariate
+   model, which stages 1-3 otherwise do not exercise at all. It is recorded here as
+   available, and taken up in §7.2 as an optional extension once the four-parameter
+   fit reaches parity.
+
 ---
 
 ## 6. Parity harness — split across `TemporalHazard` and `hvtiRutilities`
@@ -591,7 +621,8 @@ render. The survival numbers are the least interesting part.
 
 The substance. Four free parameters, early + constant, CoE on, interval-censored.
 
-**Three fits, deliberately:**
+**There is no controlled conservation pair in this `.lst`** (§5.4). Two fits, plus
+one R-only sensitivity:
 
 1. **Deterministic** — initialised from the SAS `parms` values. This is the number that
    goes in the parity table.
@@ -705,7 +736,7 @@ and bagging jobs (`hm.dead`, `bh.dead`).
 | 2 | Stage 1 life-table quantities match `.lst` to print precision |
 | 3 | Stage 2 LL matches -239.194 to printed precision; `E2 E3 E0 C0` and `THALF NU` match `outhaz` within optimizer tolerance |
 | 4 | Stage 2 4×4 vcov matches `outhaz` within curvature tolerance |
-| 5 | `noconserve` refit reproduces -239.019 to printed precision |
+| 5 | The `G_ROOT` covariate fit reproduces -239.019 and its 6 parameters (§5.4) |
 | 6 | Stage 3 nomogram survival/hazard and confidence limits match to ~1e-4 |
 | 7 | Every stage reports its max relative discrepancy — **and it is non-zero** |
 | 8 | `.lst` and `outhaz` agree with each other wherever both carry a quantity |
