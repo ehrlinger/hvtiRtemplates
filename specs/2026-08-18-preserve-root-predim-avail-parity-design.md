@@ -30,7 +30,7 @@ driving a family of packages. Each study is the forcing function for at least on
 | `hvtiRutilities` | common functions — data access, manifests, environment, comparison | all three |
 | `hvtiRtemplates` | job templates, `new_job()`, project scaffolding, SAS corpus | all three |
 | `TemporalHazard` | the models, and the readers for `PROC HAZARD` output | all three |
-| `hvtiRlifetables` | matched US life-table survival (`%usmatchd`) | **preserve_root** |
+| `hvtiRlifetables` | matched US reference survival (`%usmatchd`) — **built, 0.1.0** | **`lv_function`** (9 `hs` jobs, and the design), preserve_root (second fixture) |
 | `hvtiRpropensity` | propensity scoring and matched cohorts | **`resilia`** |
 
 `hvtiRpropensity` is a rename of the existing `hvtiPropensityScores` (0.1.0), bringing it
@@ -42,7 +42,7 @@ What this study contributes that `lv_function` could not:
 |---------|-------------|
 | `hvtiRtemplates` | Second consumer of the `ac`/`hz`/`hp` job templates — the one that separates generic scaffolding from study-specific content. You cannot tell which is which with one consumer. |
 | `hvtiRutilities` | A **live, mutable** `built.sas7bdat`, rewritten 2026-06-09. `lv_function`'s dataset was archival; `verify_manifest()` has never faced real drift. |
-| `hvtiRlifetables` | `graphs/hs.uslife.sas` is the **only `hs` reference in any of the three studies**. Out of scope here (§8), recorded so the deferral is informed. |
+| `hvtiRlifetables` | A **second acceptance fixture** — `estimates/uslife.sas7bdat` over a different population, for a package (0.1.0, built) so far validated against `lv_function` alone. Out of scope here (§8.1), recorded so the deferral is informed. |
 
 ### 1.1 Why this is a real second test, not a rerun
 
@@ -143,7 +143,7 @@ accident:
 | Conservation | `conserve` | `conserve` + one pair | **30 `conserve`, 48 `noconserve`** |
 | `outhaz` datasets | present, unused | 1 in scope | **52** |
 | Matched cohorts | — | — | `_match`, `_match_per`, `_match_res` |
-| `hs` jobs | 0 | **1** | 0 |
+| `hs` jobs | **9** | 1 | 0 |
 
 Three consequences for the design:
 
@@ -216,7 +216,9 @@ Two lessons already paid for in `lv_function` come along with the code:
 ### 3.2 There is no repository on the share
 
 **No study folder on the share hosts git.** This is universal across the programme, not
-a preserve_root quirk. `lv_function/survival` contains a `.git` directory; it is
+a preserve_root quirk, and it is not new here — the `hvtiRlifetables` design of
+2026-08-13 already carries it as a global constraint ("NO GIT in the study tree"),
+inherited in turn from the job-templates plan of 2026-08-12. `lv_function/survival` contains a `.git` directory; it is
 vestigial, it should not have been created, and it is not a precedent. Nothing in this
 design depends on it, and no work here writes to it.
 
@@ -634,14 +636,24 @@ and its result is reported as conditional on the stage-2 discrepancy.
 over `age`, `male`, and `other` (non-white), writing `est.uslife` — 6 MB of per-patient
 matched predictions, a far richer reference than its 8 KB `.lst`.
 
-This is the **only `hs` reference across the three prototype studies**, and
-`hvtiRlifetables` does not exist as an installed package. Deferred because it is not a
-porting job: it requires sourcing US decennial life tables by sex and race and shipping
-them as package data, with its own provenance and licensing questions. It gets its own
-pass once `ac`/`hz`/`hp` land.
+**`hvtiRlifetables` is already built.** Version 0.1.0 exports `us_matched()`,
+`us_lifetable_model()` and `us_lifetable_vintages()`, ships `us_lifetable_models.rda`,
+and carries seven test files across two merged PRs. Its design
+(`docs/specs/2026-08-13-hvtirlifetables-design.md` in that repo) is driven by
+**`lv_function`**, which has **nine** `hs.uslife_estimates.*` jobs with `.lst`
+references — against preserve_root's one.
 
-Note `hp.dead_predim_avail.sas` contains an `est.uslife` overlay block, but it sits
-inside `%macro skkip` and is never invoked — so stage 3 does not depend on this.
+Note what that design settled, because an earlier draft of this section assumed the
+opposite: the architecture is **not** a life-table data package. It ships the *fitted
+model parameters* `%usmatchd` evaluates, one set per vintage per stratum, with a thin
+reader and a `predict()`-style wrapper over `TemporalHazard`. The
+sourcing-and-licensing framing was the superseded 2026-08-12 scoping note, not the
+current design.
+
+**What preserve_root contributes is therefore a second, independent acceptance
+fixture** — `estimates/uslife.sas7bdat` over a different study population, against a
+package so far validated on one. That is worth having and is not what this pass is for.
+It gets its own pass once `ac`/`hz`/`hp` land.
 
 ### 8.2 Other chains in this study
 
