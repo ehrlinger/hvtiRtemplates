@@ -77,10 +77,9 @@ preserve_root/
     └── R_hazard/                     # everything we own
         ├── _quarto.yml               # type: default, output-dir: _output
         ├── R/
-        │   ├── read_built.R          # labelled read + cohort gate  (study-specific)
-        │   └── parity.R              # reference readers + compare_parity()
-        │                             # study_root() and preflight_report() are
-        │                             # consumed from hvtiRtemplates, not copied
+        │   └── study.R               # cohort gate, g_root3 derivation, comparison
+        │                             # manifest. The ONLY study-specific R here;
+        │                             # everything else comes from hvtiRtemplates.
         ├── qmd/
         │   ├── 01-ac-dead_pa.qmd
         │   ├── 02-hz-dead_pa.qmd
@@ -107,37 +106,94 @@ SAS sources, so this is a convention rather than a filesystem boundary, and is w
 stating plainly: **the R tree reads its parent, never writes to it.** A failed R run
 must not be able to corrupt the reference outputs it is validating against.
 
-### 3.1 Consumed from `hvtiRtemplates`, not copied
+### 3.1 preserve_root is the abstraction exercise
 
-`study_root()` and `preflight_report()` move into `hvtiRtemplates` before this study
-starts, and preserve_root becomes the **first study to consume them rather than copy
-them**. Both are study-agnostic by construction — there is nothing study-specific in
-either to abstract wrongly — so packaging them does not need a second consumer the way
-the job templates do (§10).
+This is the **second** study. `lv_function` built the machinery; this study is where it
+becomes reusable. So the machinery is generalised into `hvtiRtemplates` **as part of
+this work**, and preserve_root consumes it from day one rather than copying it and
+hoisting later.
 
-Both encode lessons already paid for in `lv_function`:
+*Two consumers before you abstract* is satisfied, and then some. The rule asks for
+examples in hand, not for the second one to be finished. **Three are in hand**, with
+more available if the interface needs them — see §3.1.1, which is the evidence base the
+components are designed against. Waiting until preserve_root is done would add nothing
+except a second copy to reconcile.
+
+#### 3.1.1 The evidence base
+
+A survey of the three studies, because an interface designed against one of them is an
+accident:
+
+| | `lv_function` | preserve_root | `resilia` |
+|---|---|---|---|
+| Late phase | Weibull | constant (`muc`) | **both** — 78 `weibull`, 16 `muc` |
+| Fixed/free spread | one combination | one combination | **`fixm` 23×, `fixnu` 34×, `fixeta` 20×** |
+| `icensor` | 1 fit, 3/1032 events | 1 fit, 5/77 events | **47 uses** |
+| Conservation | `conserve` | `conserve` + one pair | **30 `conserve`, 48 `noconserve`** |
+| `outhaz` datasets | present, unused | 1 in scope | **52** |
+| Matched cohorts | — | — | `_match`, `_match_per`, `_match_res` |
+| `hs` jobs | 0 | **1** | 0 |
+
+Three consequences for the design:
+
+1. **The model-spec interface must take an arbitrary fixed/free combination across both
+   late-phase forms.** This spec describes preserve_root's shape (§5.2); the *package*
+   component must not hard-code it. Two studies would have suggested a two-case switch;
+   `resilia` shows the real space.
+2. **The `outhaz` reader is first-class, not a local nicety.** 52 datasets in `resilia`
+   alone. §6.1 proposed it from a single file; the corpus settles it.
+3. **Interval-censoring evidence comes from `resilia`, not from here.** Its 47 uses give
+   the programme real leverage. preserve_root's 5-of-77 caveat in §7.2 stands unchanged
+   — a claim earned by one study does not transfer to another.
+
+`resilia`'s matched-cohort analyses are out of scope for all current passes, recorded so
+the interface is not designed in a way that excludes them.
+
+It also matches the upstream plan, whose **stage 4 is "adopt in `R_hazard`"** —
+`lv_function` is expected to retrofit onto the packaged templates. Deferring the
+abstraction would leave both studies on copies with nothing to adopt.
+
+Consumed from `hvtiRtemplates`, not copied:
+
+| Component | Generalised from | What the study supplies |
+|-----------|------------------|-------------------------|
+| `study_root()` | `lv_function` verbatim — no study content in it | nothing |
+| `preflight_report()` | `lv_function` verbatim | optional extra packages |
+| `ac` / `hz` / `hp` job templates | `lv_function`'s `example-jobs/` | the edited arguments of one call |
+| reference readers | `.lst` parsers + **new `outhaz` reader** (§6.1) | reference file paths |
+| `compare_parity()`, tolerance classes, three-state outcome, headline metric | `lv_function`'s `parity.R` | a comparison manifest: which quantities, which class |
+| `_quarto.yml` conventions, `.gitignore` | `lv_function` | nothing |
+
+The split is not "generic file versus study file" but **mechanism versus manifest**.
+Every reusable component takes the study's specifics as data. What survives in
+`R/study.R` is the cohort gate of §4.2, the `g_root3` derivation of §7.1, and the
+comparison manifest — declarations, not machinery.
+
+Two lessons already paid for in `lv_function` come along with the code:
 
 - `study_root()` walks up from the working directory until `datasets`,
   `distributions`, `graphs` and `analyses` all appear under one parent. The study
   resolves to `/studies/...` on the RStudio server and to a local mount point on a
   Mac, so **no literal path prefix may appear anywhere in this project.** The analysis
-  will be run on the server. This function is what makes success criterion 4 of the
-  templates-and-provenance design — *"no job `.qmd` contains a study path, study title,
-  or dataset name"* — achievable at all.
+  will be run on the server. This function is what makes success criterion 4 —
+  *"no job `.qmd` contains a study path, study title, or dataset name"* — achievable.
 - `preflight_report()` checks `numDeriv`, which is only a *Suggests* of
   `TemporalHazard` and so is not pulled by `install_github()`. Its absence silently
   costs standard errors on any interval- or left-censored multiphase fit: the analytic
   multiphase Hessian declines for `status ∈ {-1, 2}` by design, the optimizer falls
   back to `numDeriv`, and with `numDeriv` missing `vcov()` returns a bare logical while
   `rcond` and `pd` come back `NA` with nothing naming the cause. **Stage 2 here is
-  interval-censored, so this is a live hazard, not a historical note.** Preflight runs
-  on the server before anything else.
+  interval-censored, so this is a live hazard, not a historical note.**
 
 ### 3.2 There is no repository on the share
 
-The study folders do not host git. That is a constraint on where code lives, not on
-reproducibility, because the templates-and-provenance design already locates
-reproducibility somewhere else:
+**No study folder on the share hosts git.** This is universal across the programme, not
+a preserve_root quirk. `lv_function/survival` contains a `.git` directory; it is
+vestigial, it should not have been created, and it is not a precedent. Nothing in this
+design depends on it, and no work here writes to it.
+
+That is a constraint on where code lives, not on reproducibility, because the
+templates-and-provenance design already locates reproducibility somewhere else:
 
 > **Criterion 1.** A filed result's sidecar names the exact `hvtiRtemplates` and
 > `hvtiRutilities` versions, the R version, every loaded package version, and the
@@ -145,14 +201,14 @@ reproducibility somewhere else:
 > **Criterion 2.** `renv::restore()` from a filed sidecar's lock reproduces that
 > result's numbers.
 
-So a result is reproducible from *package version + dataset checksum + renv lock +
-edited job arguments*, none of which require the study directory to be under version
-control. What lives on the share is generated job `.qmd` files, their rendered output,
-and this study's `read_built.R` and `parity.R` until those stabilise (§10).
+A result is therefore reproducible from *package version + dataset checksum + renv lock
++ edited job arguments*, none of which require the study directory to be under version
+control. §3.1 is what makes this true rather than aspirational: if the machinery lived
+on the share, the share would need a repository.
 
-**This spec therefore lives in the `hvtiRtemplates` repository**, in `specs/`, beside
-the designs that shaped the package. The three prototype studies' design records stay
-together and remain findable by whoever picks up the next one.
+What remains on the share is generated job `.qmd` files, their rendered output, and
+`R/study.R`. **This spec lives in the `hvtiRtemplates` repository**, in `specs/`, beside
+the designs that shaped the package.
 
 ## 4. Data contract
 
@@ -309,9 +365,11 @@ branch**. `lv_function`'s six-parameter fit never exercised it.
 
 ---
 
-## 6. Parity harness (`R/parity.R`)
+## 6. Parity harness — built in `hvtiRtemplates`
 
 Three responsibilities, kept separate: read the reference, compare, report.
+All three are package mechanism (§3.1); the study supplies a manifest naming
+which quantities to compare and in which tolerance class.
 
 ### 6.1 The reference is not only the `.lst`
 
@@ -589,33 +647,39 @@ brittle forced parity.
 
 ## 10. Sequencing
 
-The line between what is packaged now and what waits is drawn by a single test: **is
-there anything study-specific in it that a second consumer could reveal?**
+preserve_root is the second study, so the abstraction happens **with** this work, not
+after it (§3.1). There is no "study first, package second" phase ordering.
 
-**Into `hvtiRtemplates` now** — nothing study-specific to get wrong:
+**One track.** Generalise each component out of `lv_function` against this study's
+requirements, land it in `hvtiRtemplates`, and have preserve_root consume it
+immediately. The study is the proof the abstraction holds: a component that cannot
+serve both studies is not finished.
 
-- `study_root()` and `preflight_report()` (§3.1)
-- the `_quarto.yml` conventions and `.gitignore`, as project scaffolding beside
-  `new_job()`
-- this spec, in `specs/`
+Rough order, driven by dependency rather than by phase:
 
-These have no other home, given §3.2, and packaging them is approved stage-3 work whose
-stated motivation is exactly the version-control constraint this study ran into.
+1. `study_root()`, `preflight_report()`, `_quarto.yml` conventions, `.gitignore` —
+   no study content in them, nothing to negotiate.
+2. Reference readers, including the **new `outhaz` reader** (§6.1). Designed against
+   both studies' reference shapes from the start; this is the component that would
+   have been mis-shaped by writing it as study code first.
+3. `compare_parity()`, the tolerance classes of §6.3, the three-state outcome and the
+   headline metric — mechanism in the package, manifest in the study.
+4. The `ac` / `hz` / `hp` job templates, generalised so the study contributes only the
+   arguments of one call (criterion 5) and no study path, title or dataset name
+   (criterion 4).
 
-**After preserve_root lands** — these are what this study exists to stress-test:
+Then **upstream stage 4**: retrofit `lv_function` onto the packaged components. Two
+studies on one implementation is the actual success condition; two studies on two
+copies is the failure this exercise exists to prevent.
 
-- the `ac`/`hz`/`hp` job templates. *Two consumers before you abstract*: `lv_function`
-  is the first, and only a second reveals which template lines were generic and which
-  were `lv_function`-specific. Copying a template meanwhile is its intended use — the
-  `# EDIT:` markers say so — and is **not** the fork-rot failure mode that §6.2 forbids
-  for parsers.
-- `parity.R`. This study changes it substantially: reading `outhaz` at full double
-  precision, and the `outhaz`-versus-`.lst` tolerance classes of §6.3. Packaging it now
-  would freeze the `.lst`-only design at the moment we are replacing it.
-
-Then land the job templates and `parity.R` with two consumers' evidence behind them.
 Patch bump `1.0.0 → 1.0.1`. `template_list()` already returns a correctly shaped 0-row
 frame (`name`, `prefix`, `folder`, `file`); the plumbing exists, the files do not.
+
+**A note on copying versus forking.** Copying a *template* is its intended use — the
+`# EDIT:` markers say so. Copying a *parser* or a comparison harness is the fork-rot
+failure mode §6.2 forbids, where a divergence shows up as both sides passing. The
+distinction is why templates can be instantiated per study while the harness must have
+exactly one implementation.
 
 **Branch and PR discipline applies to this repository**, which is a real git repository
 — not to the study tree, which is not one. No commits are made on the share.
