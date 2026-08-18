@@ -1257,7 +1257,7 @@ resolving one on the assumption that the macro is knowable.
 
 - [ ] **Step 2: Write the full `README.md`**
 
-```markdown
+````markdown
 # hvtiRtemplates
 
 Versioned analysis job templates for the HVTI CORR group at the Cleveland
@@ -1308,7 +1308,7 @@ in the AVR/LV-function survival study for the full design.
 | `template_path(name)` | path to one supported template |
 | `corpus_manifest()` | every reference-corpus file: file, prefix, folder, kind, bytes |
 | `corpus_path(...)` | path to one reference-corpus file |
-```
+````
 
 - [ ] **Step 3: Exclude the review scratch directory before checking**
 
