@@ -15,7 +15,7 @@ owns the migration programme (§3.2).
 Convert the `predim_avail` death chain from SAS to R with `TemporalHazard`, 1:1, and
 check every estimate against the committed SAS reference output.
 
-This is not a one-off. Three studies prototype three packages:
+This is not a one-off. Three studies prototype the package family:
 
 | Study | Order |
 |-------|-------|
