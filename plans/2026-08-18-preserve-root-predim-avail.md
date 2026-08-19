@@ -918,7 +918,16 @@ Expected: `assert_cohort_gate()` returns invisibly, and the table prints `1: 112
 
 ---
 
-## Task 6: Stage 1 — actuarial
+## Task 6: Stage 1 — actuarial — DONE 2026-08-19
+
+**Parity reached.** The `.lst` parsed to 66 rows, `hzr_kaplan()` produced 66, and the join on time matched all 66 with nothing dropped. **528 comparisons PASS, 0 DIFFERS** (66 times x 8 quantities), plus 5 count comparisons. Headline: *largest relative discrepancy 1.21e-04* across 533 quantities -- non-zero, which is what satisfies criterion 7. The 2026-05-26 reference predating the 2026-06-09 rebuild did not produce a discrepancy on this stage.
+
+Two departures from the steps below, both forced and neither semantic:
+
+- **`status = as.integer(d$dead)`.** `hzr_kaplan()` rejects the raw column with *"'time' and 'status' must be numeric vectors"*: `read_clinical_data()` infers a 0/1 column as logical, which is its documented job, and a logical cannot express the general status coding (`-1`, `0`, `1`, `2`). `iv_dead` needs no coercion. Task 7 is unaffected because it builds `status` arithmetically. A small generality gap worth considering upstream: `hzr_kaplan()` could accept a logical status for the right-censored case.
+- **`dir.create("../_output")` before `saveRDS()`.** Quarto creates `output-dir` when it moves the rendered file, which is after the chunk runs, so the save failed against a directory that did not exist yet. The parity document depends on that `.rds`.
+
+Also note: Quarto preserves the input subdirectory, so the rendered files land at `_output/qmd/01-ac-dead_pa.html` and `_output/parity/01-ac-dead_pa-parity.html`, not at `_output/` directly as the Files list below says.
 
 **Files:**
 - Create: `<study>/analyses/R_hazard/qmd/01-ac-dead_pa.qmd`
@@ -930,7 +939,7 @@ Expected: `assert_cohort_gate()` returns invisibly, and the table prints `1: 112
 
 Stage 1 uses `iv_dead` / `dead` — **right-censored**, a different response from stage 2's interval-censored `iu_dead`/`idead`. A stage-1 pass says nothing about the fitting path.
 
-- [ ] **Step 1: Write the analysis document**
+- [x] **Step 1: Write the analysis document**
 
 `qmd/01-ac-dead_pa.qmd`:
 
@@ -985,7 +994,7 @@ saveRDS(list(overall = km_overall, strata = km_strata),
 ```
 ````
 
-- [ ] **Step 2: Render it**
+- [x] **Step 2: Render it**
 
 ```bash
 cd <study>/analyses/R_hazard && quarto render qmd/01-ac-dead_pa.qmd
@@ -993,7 +1002,7 @@ cd <study>/analyses/R_hazard && quarto render qmd/01-ac-dead_pa.qmd
 
 Expected: renders without error; the gate table shows 112 / 89 / 90.
 
-- [ ] **Step 3: Write the parity document**
+- [x] **Step 3: Write the parity document**
 
 `parity/01-ac-dead_pa-parity.qmd`:
 
@@ -1101,7 +1110,7 @@ cat(parity_headline(rbind(counts, res_ac)))
 ```
 ````
 
-- [ ] **Step 4: Render and inspect**
+- [x] **Step 4: Render and inspect**
 
 ```bash
 cd <study>/analyses/R_hazard && quarto render parity/01-ac-dead_pa-parity.qmd
