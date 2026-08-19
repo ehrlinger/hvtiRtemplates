@@ -1122,7 +1122,45 @@ If it returns zero rows, that is a **finding about parser generality** (§6.2): 
 
 ---
 
-## Task 7: Stage 2 — the hazard fit
+## Task 7: Stage 2 — the hazard fit — BLOCKED 2026-08-19 (documents written and rendering)
+
+**Stage 2 does not reach parity, and will not until [temporal_hazard#136](https://github.com/ehrlinger/temporal_hazard/issues/136) is fixed.** Both documents are written and render; the blocker is named, not worked around.
+
+### The blocker
+
+`TemporalHazard` cannot fit an interval-censored multiphase model. Supplying `time_lower`/`time_upper` -- **even when both equal `time`, which is a mathematical no-op** -- drives the optimizer onto a flat plateau: a positive "objective" where a log-likelihood belongs, a singular Hessian, and `converged = TRUE`.
+
+| call | objective | rcond |
+|---|---|---|
+| vectors, no bounds, status 0/1 | **-237.5761** | 0.0673 |
+| vectors, bounds = `time` (no-op), status 0/1 | 54450.0674 | 0 |
+| vectors, bounds, status 0/1/2 | 50914.3488 | 0 |
+| `Surv(lo, hi, type = "interval2")` formula | 50914.3488 | 0 |
+
+The objective was byte-identical across the full cohort, the cohort with the 5 interval rows dropped, and the cohort with them recoded, while the coefficients ranged -169 to +261 with `control` alone. An objective that does not move when the data move is the response failing to reach the likelihood. Starting at SAS's own optimum did not help. Reproduced on public `avc` data (-210.5006 -> 49325.04) and filed. **Still present on `dev` after #131, which also reports version 1.2.0**, so the version string does not distinguish the builds.
+
+The fits therefore carry the 5 interval-censored deaths as exact events at the interval upper bound -- a different likelihood from SAS's.
+
+### Result
+
+| | |
+|---|---|
+| `.lst` vs `outhaz` cross-check | **4 PASS** -- the two references agree, so no staleness between them |
+| `events_conserved` | PASS, 77 = 77 |
+| MLEs vs `outhaz` | **4 DIFFERS**, as they must: different model |
+| log-likelihood | **NOT COMPARABLE** |
+| headline | largest relative discrepancy 3.05e-01 |
+
+### Corrections to the steps below
+
+- **`logLik()` has no method for class `hazard`.** Only `coef`, `predict`, `print`, `summary`, `vcov` exist. The log-likelihood is `fit$fit$objective`.
+- **`.hzr_read_lst()` returns raw lines**, not a parsed object. `.hzr_parse_sas_lst()` is the parser that returns `$fits`.
+- **`digits` in `compare_parity()` is DECIMAL PLACES, but SAS prints 7 SIGNIFICANT FIGURES.** The plan's flat `digits = 7` asserted a tolerance up to two orders of magnitude too tight and reported the two agreeing references as a disagreement. Derive it per value: `sig - 1 - floor(log10(abs(x)))`. With that, all four cross-checks pass, `THALF` at 4.49e-09 against a 5e-09 interval.
+- **`vcov()` returns a 5x5 including the FIXED parameter as an all-`NA` row and column**, so `rcond()` on it errors and `nrow(v_r) == nrow(v_s)` fails against SAS's 4x4. Read `rcond` and `pd` off `fit$fit`.
+- **R and SAS do not share a parameterization.** `outhaz` is ordered `THALF, NU, E0, C0` with `THALF` natural and `E0`/`C0` logged; R is `early.log_mu, early.log_t_half, early.nu, constant.log_mu`. The elementwise vcov comparison the step below asserts would need a delta-method Jacobian, and is deferred rather than attempted on the wrong fit.
+- **The log-likelihood must not go through `compare_parity()` while the models differ.** All three outcomes presuppose one shared likelihood; the run reported `R_BETTER`, which would read as R finding a better optimum when it had merely been given an easier problem. Reported outside the harness as NOT COMPARABLE and excluded from the headline.
+- **`theta` is positional**: `log(mu_early), log(t_half), nu, m, log(mu_constant)`, and includes the fixed parameter. The working call form also wants `maxit = 2000`.
+- A **guard asserting the objective is negative** is now in the analysis document. A "converged" log-likelihood of +50914 is impossible on its face and would have caught this immediately.
 
 **Files:**
 - Create: `<study>/analyses/R_hazard/qmd/02-hz-dead_pa.qmd`
