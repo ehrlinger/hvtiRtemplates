@@ -141,6 +141,19 @@ runtime note in a script comment goes stale the moment the pool changes.
 
 Quote a runtime **with the pool it was measured on**, or not at all.
 
+### And check what a recorded elapsed time actually wrapped
+
+A runner that stores `elapsed_mins` may have started its clock around one phase
+only. In the study this came from, `elapsed_mins` timed the stepwise call and
+nothing else: reading a 23.8 MB dataset, coercing 255 columns and fitting the
+base model all sat outside it. A stored 3.1 minutes therefore meant a script
+wall time several minutes longer, and quoting the stored number as "how long the
+job takes" set a false expectation that only surfaced when someone watched a
+terminal.
+
+Either wrap the whole script, or name the phase in the field: `stepwise_mins`
+cannot be misread the way `elapsed_mins` can.
+
 ---
 
 ## 4. Rendering and acceptance
