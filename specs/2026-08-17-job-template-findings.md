@@ -5,6 +5,14 @@
 in the `survival` study tree, during a live 25 chunk bootstrap run.
 **Status:** findings and design consequences for stage 3 (`new_job()` and the
 five templates). No code in this package has been changed by this note.
+
+> ⚠️ **PARTLY SUPERSEDED by `2026-08-19-report-design-learnings.md`.** Section 3
+> below recommends that `bh` and `hm` screen the same pool, which was done by
+> pruning both to one form per concept. That was **reversed on 2026-08-18**
+> after measurement showed the pruning deleted informative candidates rather
+> than redundant ones: 16 of 57 removed forms correlate at |r| < 0.9 with the
+> form kept. Read section 1 of the 2026-08-19 note before acting on section 3
+> here. Sections 1, 2, 4 and 5 below stand unchanged.
 **Design spec referenced below:** `specs/2026-08-13-templates-and-provenance-design.md`.
 It was migrated out of the `survival` study tree into this repository on
 2026-08-18, so the section numbers cited here now resolve against a copy that
