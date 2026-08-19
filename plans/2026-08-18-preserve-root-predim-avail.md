@@ -1122,7 +1122,47 @@ If it returns zero rows, that is a **finding about parser generality** (§6.2): 
 
 ---
 
-## Task 7: Stage 2 — the hazard fit — BLOCKED 2026-08-19 (documents written and rendering)
+## Task 7: Stage 2 — the hazard fit — UNBLOCKED 2026-08-19, one item open
+
+**`TemporalHazard` 1.2.1 fixed #136 and the interval-censored model now fits.** Re-run against it, the estimates match SAS to better than 0.4% and the fit is well conditioned (`rcond` 0.02996, `pd TRUE`).
+
+### What #136 actually was
+
+Two defects, and the first corrects this plan's understanding as much as the package's:
+
+- **`time_lower` is an entry time for left truncation, not an interval-censoring lower bound.** The documentation said otherwise. Passing bounds through it left-truncated every subject at its own event time, which is what collapsed the likelihood -- so the "no-op bounds" reproducer was a real failure but not the one it appeared to be. It now warns.
+- **The formula interface mistranslated `Surv()` censoring codes.** `Surv()` uses `0/1/2/3` for right/event/left/interval against this package's `0/1/-1/2`, so left-censored rows were read as interval-censored. A genuine bug, now fixed with a regression test.
+
+**The supported way to express this model is `Surv(lo, hi, type = "interval2")` through the formula interface.** Exact events are `(t, t)`, right-censored `(t, NA)`, interval `(lo, hi)`. Do not use `time_lower`/`time_upper` for interval bounds.
+
+### Result
+
+| quantity | R | SAS | rel diff | outcome |
+|---|---|---|---|---|
+| `.lst` vs `outhaz` x4 | | | <= 3.6e-07 | **PASS** |
+| `events_conserved` | 77 | 77 | 0 | **PASS** |
+| THALF | 0.0122906 | 0.0123366 | 3.73e-03 | DIFFERS |
+| NU | 1.6884775 | 1.6857844 | 1.60e-03 | DIFFERS |
+| E0 | -2.2783753 | -2.2802330 | 8.15e-04 | DIFFERS |
+| C0 | -3.4853966 | -3.4853217 | 2.15e-05 | DIFFERS |
+
+Headline: largest relative discrepancy **3.73e-03**, against 3.05e-01 before the fix. At `mle_printed` tolerance `E0` and `C0` pass and `THALF`/`NU` do not; both tolerances are reported side by side rather than the tight one being loosened, as this plan requires.
+
+### The open item: the log-likelihood
+
+R gives **-268.65** where SAS reports **-239.194**, at essentially the same parameters -- so the two disagree by close to a constant, not about the optimum. It is entirely the 5 interval rows:
+
+| treatment of the 5 rows | log-likelihood |
+|---|---|
+| exact events | -237.576 |
+| interval-censored (R) | -268.650 |
+| SAS | -239.194 |
+
+An interval contribution costs R about 6.2 per row, while SAS sits only 1.62 below the exact-event value. **SAS is therefore not evaluating `log P(interval)` for those rows.** Stable across `conserve` on/off, 1 and 5 starts, and the mathematically equivalent left-censored encoding -- all four give -268.6496 exactly.
+
+This also explains the residual MLE gap. The early-phase parameters move most (`THALF` 3.7e-03, `NU` 1.6e-03, `E0` 8.1e-04) while the late constant `C0` agrees to 2.2e-05, and all 5 interval deaths fall at `t <= 0.002738`, the earliest times in the data. One cause, not two.
+
+Reported outside `compare_parity()`: its three outcomes all presuppose a shared likelihood.
 
 **Stage 2 does not reach parity, and will not until [temporal_hazard#136](https://github.com/ehrlinger/temporal_hazard/issues/136) is fixed.** Both documents are written and render; the blocker is named, not worked around.
 
@@ -1434,7 +1474,11 @@ Expected: `log_likelihood` PASS or `R_BETTER`; MLEs and vcov PASS.
 
 ## Task 8: Stage 3 — nomogram and figures — DONE 2026-08-19 (results conditional on Task 7)
 
-Both documents are written and render; all 13 nomogram rows joined and were compared. **The result is 78 of 78 `DIFFERS`, and that is the expected and correct outcome**, because this stage consumes the stage-2 fit, which is not SAS's model while [temporal_hazard#136](https://github.com/ehrlinger/temporal_hazard/issues/136) stands. Headline: largest relative discrepancy 2.29e-01.
+Both documents are written and render; all 13 nomogram rows joined and were compared.
+
+**Re-run against the fixed stage-2 fit (`TemporalHazard` 1.2.1): 25 PASS / 53 DIFFERS, headline 5.48e-04.** Before the fix it was 78/78 DIFFERS at 2.29e-01, so the nomogram code was never the problem.
+
+What remains is small and structured: the hazard quantities largely pass (8-9 of 13 each), while survival and both its confidence limits differ on all 13 times by a near-constant ~1.7e-04 -- just above the 5e-06 interval that 5 printed decimals allows. That is the residual stage-2 MLE difference propagating, and it should close when the log-likelihood question in Task 7 does.
 
 The **pattern** of the disagreement corroborates the stage-2 diagnosis rather than implicating the nomogram code:
 
