@@ -49,7 +49,7 @@ reaches only **28.2%**. Under pruning only `zexp` would have been offered, which
 scores 16.6%. The concept would have been missed with no diagnostic showing it.
 
 **A threshold does not rescue pruning.** A correlation guard was sized: at
-|r| ≥ 0.90 it restores 16 candidates, at 0.95 restores 26, at 0.99 restores 40 —
+`|r| >= 0.90` it restores 16 candidates, at 0.95 restores 26, at 0.99 restores 40 —
 and 0.99 un-groups `area_int`/`in_arin`, which correlate at 0.9735 and are
 genuinely one concept. There is no gap in the distribution to put a threshold
 in. Any value is a judgement dressed as a measurement.
