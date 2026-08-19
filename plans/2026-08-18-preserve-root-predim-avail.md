@@ -736,7 +736,24 @@ git push
 
 ---
 
-## Task 5: study data contract
+## Task 5: study data contract — DONE 2026-08-19
+
+Three files created under `<study>/analyses/R_hazard/`: `.gitignore`, `_quarto.yml`, `R/study.R`. Nothing committed — the study tree has a `.git`, and the no-commits-on-the-share constraint holds. No literal study path appears in any of them.
+
+**The cohort gate as written below is wrong, and failed on first run.** `n_events <- sum(d$idead == 1)` returned 72, not 77, and dragged `right` to 219. Diagnosed before anything was changed, and the expected counts were **not** adjusted:
+
+| flag | count | |
+|---|---|---|
+| `idead == 1` | 72 | exact deaths only |
+| `ic_dead == 1` | 5 | interval-censored deaths |
+| overlap | 0 | disjoint |
+| union | **77** | row-for-row identical to `dead == 1` |
+
+No missing values in any of the three columns. This plan's own cohort constraint already spells out "77 events (72 uncensored + 5 interval-censored)", so `idead` alone was never the right count — the same union appears in Task 7 as `status %in% c(1, 2)`. The named cause is an arithmetic bug in the gate, not dataset drift, not a wrong `pr_avail` filter, and not a different cohort. Everything independent of the bug matched on the first run: total 291, interval 5, and `g_root3` 112 / 89 / 90, the last from two `.lst` files that agree.
+
+`assert_cohort_gate()` now counts the union and additionally asserts `uncensored = 72`, so a future failure localises itself instead of reporting one wrong total.
+
+**After the fix:** gate passes — total 291, events 77, uncensored 72, interval 5, right 214; `g_root3` 112 / 89 / 90; `dataset_manifest()` pins `built.sas7bdat`, 70430720 bytes, mtime 2026-06-09 16:08:02, md5 `89f6e88abb7d0251a5a297890b375bf8`.
 
 **Files:**
 - Create: `<study>/analyses/R_hazard/R/study.R`
@@ -752,7 +769,7 @@ git push
   - `add_g_root3(d)` → the same frame with integer column `g_root3`.
   - `assert_cohort_gate(d)` → invisibly `TRUE`, or stops.
 
-- [ ] **Step 1: Create the project scaffolding**
+- [x] **Step 1: Create the project scaffolding**
 
 `<study>/analyses/R_hazard/.gitignore`:
 
@@ -804,7 +821,7 @@ execute:
   freeze: false
 ```
 
-- [ ] **Step 2: Write `R/study.R`**
+- [x] **Step 2: Write `R/study.R`**
 
 ```r
 # Study-specific declarations for the preserve_root predim_avail death chain.
@@ -884,7 +901,7 @@ dataset_manifest <- function() {
 }
 ```
 
-- [ ] **Step 3: Run the gate against the real data**
+- [x] **Step 3: Run the gate against the real data**
 
 On the RStudio server, from inside `<study>/analyses/R_hazard/`:
 
