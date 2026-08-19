@@ -1432,7 +1432,25 @@ Expected: `log_likelihood` PASS or `R_BETTER`; MLEs and vcov PASS.
 
 ---
 
-## Task 8: Stage 3 — nomogram and figures
+## Task 8: Stage 3 — nomogram and figures — DONE 2026-08-19 (results conditional on Task 7)
+
+Both documents are written and render; all 13 nomogram rows joined and were compared. **The result is 78 of 78 `DIFFERS`, and that is the expected and correct outcome**, because this stage consumes the stage-2 fit, which is not SAS's model while [temporal_hazard#136](https://github.com/ehrlinger/temporal_hazard/issues/136) stands. Headline: largest relative discrepancy 2.29e-01.
+
+The **pattern** of the disagreement corroborates the stage-2 diagnosis rather than implicating the nomogram code:
+
+| time | quantity | R | SAS | abs diff |
+|---|---|---|---|---|
+| 0.0821 | hazard | 0.135299 | 0.16339 | 0.02809 |
+| 0.2500 | hazard | 0.045771 | 0.05577 | 0.01000 |
+
+The error is largest at the earliest times and in the hazard quantities, and shrinks with time. That is exactly where the 5 interval-censored deaths sit -- their interval is `[0, 0.002738]`, day 0 to day 1 -- so carrying them as exact events perturbs the early hazard most and washes out later. Re-run this stage once #136 is fixed; nothing else here should need to change.
+
+### Corrections to the steps below
+
+- **`predict()` requires the `newdata` column to be named `time`**, not `years`: it errors with *"'newdata' must contain a 'time' column"*. The saved frame still uses `years`, to match the published nomogram's `YEARS`.
+- **`digits = 5` is right here**, unlike Task 7. This `.lst` prints fixed-format to 5 decimal places, so decimal places and the tolerance agree; the significant-figures problem in Task 7 does not arise.
+- **The whole-project `quarto render` in Step 5 does not complete on this share.** It exits with `Directory not empty (os error 66)` while removing Quarto's own `<doc>_files/execute-results` intermediate, and it aborts partway rather than rendering all six. **Render one document at a time** -- that never trips it, and all six outputs are produced and current that way. Noted in `_quarto.yml`. This is a network-share limitation, not a defect in the documents; it is unrelated to the `df-print: paged` problem that comment already warned about, and unrelated to figures.
+- Task 6's join assertion was tightened at the same time: `stopifnot(nrow(j) > 0)` only catches a total failure, while a **partial** join silently shrinks the comparison and every surviving row still passes. It now asserts the join is complete on both sides (66 = 66 = 66).
 
 **Files:**
 - Create: `<study>/analyses/R_hazard/qmd/03-hp-dead_pa.qmd`
@@ -1442,7 +1460,7 @@ Expected: `log_likelihood` PASS or `R_BETTER`; MLEs and vcov PASS.
 - Consumes: `_output/02-hz-fits.rds` (Task 7).
 - Produces: `_output/03-hp-predictions.rds`, a data frame with columns `years`, `digital` (logical), `survival`, `surv_lower`, `surv_upper`, `hazard`, `haz_lower`, `haz_upper`.
 
-- [ ] **Step 1: Write the analysis document**
+- [x] **Step 1: Write the analysis document**
 
 `qmd/03-hp-dead_pa.qmd`:
 
@@ -1526,13 +1544,13 @@ hv_hazard(curves, x_col = "years", estimate_col = "hazard",
 ```
 ````
 
-- [ ] **Step 2: Render, complete the marked chunks, re-render**
+- [x] **Step 2: Render, complete the marked chunks, re-render**
 
 ```bash
 cd <study>/analyses/R_hazard && quarto render qmd/03-hp-dead_pa.qmd
 ```
 
-- [ ] **Step 3: Write the parity document**
+- [x] **Step 3: Write the parity document**
 
 `parity/03-hp-dead_pa-parity.qmd`:
 
@@ -1608,7 +1626,7 @@ cat(parity_headline(res_hp))
 ```
 ````
 
-- [ ] **Step 4: Render, complete, re-render**
+- [x] **Step 4: Render, complete, re-render**
 
 ```bash
 cd <study>/analyses/R_hazard && quarto render parity/03-hp-dead_pa-parity.qmd
@@ -1616,7 +1634,7 @@ cd <study>/analyses/R_hazard && quarto render parity/03-hp-dead_pa-parity.qmd
 
 `.hzr_parse_sas_nomogram()` was confirmed to return 13 rows on this `.lst`, despite it having no `MONTHS` column — the parser gap found in a prior study is fixed. If it returns zero rows, that is a parser-generality finding to fix upstream in `TemporalHazard`, not to work around here.
 
-- [ ] **Step 5: Render the whole project**
+- [x] **Step 5: Render the whole project**
 
 ```bash
 cd <study>/analyses/R_hazard && quarto render
