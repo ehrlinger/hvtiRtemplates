@@ -1122,7 +1122,7 @@ If it returns zero rows, that is a **finding about parser generality** (§6.2): 
 
 ---
 
-## Task 7: Stage 2 — the hazard fit — UNBLOCKED 2026-08-19, one item open
+## Task 7: Stage 2 — the hazard fit — DONE 2026-08-19
 
 **`TemporalHazard` 1.2.1 fixed #136 and the interval-censored model now fits.** Re-run against it, the estimates match SAS to better than 0.4% and the fit is well conditioned (`rcond` 0.02996, `pd TRUE`).
 
@@ -1148,7 +1148,7 @@ Two defects, and the first corrects this plan's understanding as much as the pac
 
 Headline: largest relative discrepancy **3.73e-03**, against 3.05e-01 before the fix. At `mle_printed` tolerance `E0` and `C0` pass and `THALF`/`NU` do not; both tolerances are reported side by side rather than the tight one being loosened, as this plan requires.
 
-### The open item: the log-likelihood
+### RESOLVED: the log-likelihood difference is definitional
 
 R gives **-268.65** where SAS reports **-239.194**, at essentially the same parameters -- so the two disagree by close to a constant, not about the optimum. It is entirely the 5 interval rows:
 
@@ -1160,9 +1160,22 @@ R gives **-268.65** where SAS reports **-239.194**, at essentially the same para
 
 An interval contribution costs R about 6.2 per row, while SAS sits only 1.62 below the exact-event value. **SAS is therefore not evaluating `log P(interval)` for those rows.** Stable across `conserve` on/off, 1 and 5 starts, and the mathematically equivalent left-censored encoding -- all four give -268.6496 exactly.
 
-This also explains the residual MLE gap. The early-phase parameters move most (`THALF` 3.7e-03, `NU` 1.6e-03, `E0` 8.1e-04) while the late constant `C0` agrees to 2.2e-05, and all 5 interval deaths fall at `t <= 0.002738`, the earliest times in the data. One cause, not two.
+**Settled 2026-08-19 by decomposing the likelihood row by row.** The reconstruction reproduces R's objective exactly (-268.6496), so the decomposition is sound, and it gives:
 
-Reported outside `compare_parity()`: its three outcomes all presuppose a shared likelihood.
+| | per row | x5 |
+|---|---|---|
+| R's interval contribution, `log(1 - S(t))` | -3.970273 | -19.851 |
+| what SAS's reported total implies | **+1.920852** | **+9.604** |
+| `log f(t)`, the exact-event density | **+1.919761** | **+9.599** |
+
+**SAS maximises the interval-censored likelihood but reports a log-likelihood in which those 5 rows enter as exact-event densities at the upper bound.** Both directions confirm it:
+
+- SAS's estimates match R's *interval* optimum (`NU` 1.6858 vs 1.6885) and are nowhere near R's exact-event optimum (`NU` 1.171), so SAS did not maximise the exact-event likelihood.
+- Recomposing R's log-likelihood at its own interval optimum with those rows as densities gives **-239.1995** against SAS's **-239.194** -- 0.0055 apart, 2.3e-05 relative, inside what the residual 4e-03 parameter difference explains.
+
+So the two numbers were never a disagreement about the fit; they are different quantities. R reports the objective it actually maximised. The parity document now computes both forms and shows the row-type decomposition, and does not run either through `compare_parity()` -- the `loglik` tolerance floor of 5e-04 presupposes identical parameters.
+
+The residual MLE gap has the same single cause. The early-phase parameters move most (`THALF` 3.7e-03, `NU` 1.6e-03, `E0` 8.1e-04) while the late constant `C0` agrees to 2.2e-05, and all 5 interval deaths fall at `t <= 0.002738`, the earliest times in the data. One cause, not two.
 
 **Stage 2 does not reach parity, and will not until [temporal_hazard#136](https://github.com/ehrlinger/temporal_hazard/issues/136) is fixed.** Both documents are written and render; the blocker is named, not worked around.
 
