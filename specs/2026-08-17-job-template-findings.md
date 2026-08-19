@@ -5,10 +5,11 @@
 in the `survival` study tree, during a live 25 chunk bootstrap run.
 **Status:** findings and design consequences for stage 3 (`new_job()` and the
 five templates). No code in this package has been changed by this note.
-**Design spec referenced below:** `analyses/R_hazard/docs/specs/2026-08-13-templates-and-provenance-design.md`.
-It lives in the `survival` study tree, **not in this repository**, so its
-section numbers are not resolvable from here; they are cited so the two
-documents can be read side by side by someone who has both.
+**Design spec referenced below:** `specs/2026-08-13-templates-and-provenance-design.md`.
+It was migrated out of the `survival` study tree into this repository on
+2026-08-18, so the section numbers cited here now resolve against a copy that
+sits beside this note. It previously lived at
+`analyses/R_hazard/docs/specs/2026-08-13-templates-and-provenance-design.md`.
 
 These are the things that only showed up by running the jobs at real scale.
 Every one of them is a property a template must carry, because the study author
