@@ -23,6 +23,19 @@
 - **`control$conserve` defaults to `TRUE`.** The `noconserve` comparison must set it explicitly. (§7.2)
 - **`compare_parity()` errors — never warns, never skips — when a requested quantity is absent on either side.** (§6.4)
 - **A `tolerance = 0` literal must be written with 18 significant digits, not 17, and checked.** IEEE754 guarantees a double round-trips through 17, but R's parser does not deliver that here: the 17-digit form of one Task 3 value read back one ULP low and failed its own assertion. Write the literal with `sprintf("%.18g", x)` and confirm `identical(as.numeric(s), x)` before pasting it into a test. This applies to every machine-precision comparison in Tasks 3, 4 and 6–8, and to the reference values quoted in this plan — several of those are 17 digits and are **not** safe to paste.
+- **Roxygen in these packages is Rd markup, not markdown.** Neither
+  `hvtiRutilities` nor `TemporalHazard` sets `Roxygen: list(markdown = TRUE)`
+  in `DESCRIPTION`, so backticks, `**bold**`, `*` bullet lists and
+  `[fn()]` links land **literally** in the generated `.Rd` and render as
+  garbage in the help page. **The roxygen blocks quoted throughout this plan
+  are written markdown-style and must be converted** to `\code{}`,
+  `\strong{}`, `\emph{}`, `\itemize{}` and `\link{}` before they are
+  committed. Tasks 2 and 4 both shipped the raw markdown and needed a
+  follow-up commit; review caught it on #60.
+- **Every exported function must be added to `_pkgdown.yml`.** pkgdown errors,
+  rather than warns, on a topic missing from an explicit reference index, and
+  the site build is a required check. Add the topic in the same commit as the
+  function.
 - **Tolerances are derived, not tuned.** A failing comparison is diagnosed to a named cause before anything is adjusted. (§6.3, §9)
 
 ## Verified API surface
