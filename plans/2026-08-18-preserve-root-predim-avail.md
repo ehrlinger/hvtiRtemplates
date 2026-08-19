@@ -82,13 +82,14 @@ written. `sas_path()` is identical to what this task specified.
 Rscript -e 'stopifnot(all(c("study_root", "sas_path") %in% getNamespaceExports("hvtiRutilities")))'
 ```
 
-### ⚠️ Open decision: the shipped root marker is not the one this plan assumed
+### ✅ Resolved 2026-08-19: run `study_init()`; the shipped marker stands
 
 | | this plan assumed | what shipped (1.0.8) |
 |---|---|---|
 | marker | the four sibling directories `datasets`, `distributions`, `graphs`, `analyses` | `_study.yml`, via `study_root() <- study_config(start)$root` |
 | error names | `datasets, distributions, graphs, analyses` | the absent `_study.yml` |
-| preserve_root today | resolves — all four directories are present | **does not resolve — the tree has no `_study.yml`** |
+| preserve_root before 2026-08-19 | resolves — all four directories are present | did not resolve — the tree had no `_study.yml` |
+| preserve_root now | — | **resolves — `_study.yml` written by `study_init()` 2026-08-19** |
 
 The two markers answer different questions. The structural one asks *does this
 directory look like a SAS study*, and works on any legacy tree untouched. The
@@ -96,21 +97,43 @@ content one asks *was this study deliberately initialised*, and carries the stud
 identity, dataset checksum and cohort counts with it — but something must write it
 first.
 
-**This blocks Task 5 onward, not Tasks 2–4.** Resolve it before Task 5 begins, one
-of two ways:
+**Resolved: initialise the study rather than weaken the marker.** `study_init()`
+was run against preserve_root on 2026-08-19
+and `_study.yml` + `manifest.yaml` now sit at the study root. `study_root()` and
+`sas_path()` resolve from `analyses/` and land on real `distributions/*.lst`
+files; **Task 5 is unblocked** and no fallback was added to the package.
 
-1. **Run `study_init()` against preserve_root**, writing `_study.yml` and
-   `manifest.yaml` at the study root. Matches the shipped design and buys
-   provenance. Costs two new files on the network share, and `study_init()` must be
-   given the `event`/`time` keys (`dead` / `iv_dead` here) because `cohort_counts()`
-   hardcodes them.
-2. **Give `study_root()` a fallback**: prefer `_study.yml`, fall back to the
-   four-directory marker. Leaves the study tree untouched and matches this plan as
-   written. Costs a second resolution rule to maintain, and preserve_root gets no
-   provenance record.
+Three things measured during the decision, none of which this task's original
+write-up had right:
 
-Not decided as of 2026-08-18. Whichever is chosen, **the constraint this task
-existed to serve is unchanged**: no literal study path in any R file or `.qmd`.
+- **No study on the share had ever been initialised** — `lv_function/survival`,
+  the tree `study_init()` was designed against, has no `_study.yml` either. The
+  content marker had zero adopters, so this was not preserve_root being the
+  exception. preserve_root is now the first declared study.
+- **The `_study.yml` cohort block is 378 / 115 / 263, not 291 / 77 / 214.**
+  `cohort_counts()` derives from the whole of `built.sas7bdat`, while this
+  plan's cohort is the `pr_avail == 1` subset. Both numbers are true and they
+  answer different questions: study-level identity versus job-level analysable
+  cohort. **The parity gate stays in Task 5's `assert_cohort_gate()`** — do not
+  reach for `assert_cohort()` from the package, which would gate on 378.
+- **`population` was wrong in the source it was copied from.** The SAS header
+  `STUDYPOP = 2009 to 2021`, carried by 349 jobs, does not describe the
+  operative window: `dt_surg` runs 2009-02-10 to 2019-12-23 study-wide and
+  2009-03-20 to 2019-12-23 in the cohort, with `surg_yr` agreeing and no
+  missing values. Nor is it the follow-up window — `dt_fsta` now reaches
+  2023-12-22, because `built.sas7bdat` was rebuilt on 2026-06-09 with extended
+  follow-up. `_study.yml` records the derived **2009 to 2019**. A checksum
+  catches a dataset that moved; nothing catches a description that quietly
+  stopped being true.
+
+The plan's stated reason for passing `event`/`time` to `study_init()` was also
+wrong: `cohort_counts()` does not hardcode them, it reads `cfg$cohort$event`
+and `cfg$cohort$time`. They are passed because `study_init()` writes the very
+manifest that would otherwise supply them.
+
+**The constraint this task existed to serve is unchanged**: no literal study
+path in any R file or `.qmd`.
+
 
 ---
 
@@ -701,7 +724,7 @@ git push
 `<study>` is the preserve_root tree. **Never write its absolute path into any file** — every path is built with `sas_path()`.
 
 **Interfaces:**
-- Consumes: `study_root()`, `sas_path()` (shipped in `hvtiRutilities` 1.0.8; see Task 1 for the unresolved root-marker question, which this task must not proceed past).
+- Consumes: `study_root()`, `sas_path()` (shipped in `hvtiRutilities` 1.0.8; the root-marker question in Task 1 was resolved 2026-08-19 — preserve_root is initialised and this task is unblocked).
 - Produces:
   - `read_preserve_root()` → labelled data frame filtered to `pr_avail == 1`.
   - `add_g_root3(d)` → the same frame with integer column `g_root3`.

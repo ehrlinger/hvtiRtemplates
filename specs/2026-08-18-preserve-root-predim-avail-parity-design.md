@@ -216,8 +216,13 @@ comparison manifest — declarations, not machinery.
 
 Two lessons already paid for in `lv_function` come along with the code:
 
-- `study_root()` walks up from the working directory until `datasets`,
-  `distributions`, `graphs` and `analyses` all appear under one parent. The study
+- `study_root()` walks up from the working directory until it finds the
+  `_study.yml` that `study_init()` writes at the study root — not, as an earlier
+  draft of this document said, until the four sibling directories `datasets`,
+  `distributions`, `graphs` and `analyses` appear under one parent. That
+  structural marker was replaced in `hvtiRutilities` 1.0.8 because it locates a
+  study by its shape and so cannot tell a study root from a copy of one.
+  preserve_root was initialised on 2026-08-19 and resolves. The study
   resolves to `/studies/...` on the RStudio server and to a local mount point on a
   Mac, so **no literal path prefix may appear anywhere in this project.** The analysis
   will be run on the server. This function is what makes success criterion 4 —
