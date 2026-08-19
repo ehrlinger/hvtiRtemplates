@@ -154,6 +154,39 @@ terminal.
 Either wrap the whole script, or name the phase in the field: `stepwise_mins`
 cannot be misread the way `elapsed_mins` can.
 
+### Is it worth converting the input to parquet first?
+
+Decide it by measurement, not by preference. The quantity is **read time x
+number of reads, against total compute**.
+
+Measured on the study this runbook came from: `read_built()` takes **1.3 s** for
+3049 rows x 908 columns from a 22.8 MB `.sas7bdat`. Each of 25 chunks reads it
+once, so the whole 19-hour run spends about **33 seconds** on input. Converting
+would optimise 0.05% of the job, and would add a derived artefact that can go
+stale against a mutable source. Not worth it there.
+
+**That ratio inverts quickly.** Converting SAS datasets over 1 GB to parquet has
+been dramatically faster in this group's experience (John Ehrlinger, 2026-08-19).
+Two things drive it beyond raw size:
+
+- **Re-reads multiply.** A chunked job reads once per chunk, and interactive
+  work re-reads on every iteration. A 60-second read is invisible in a batch job
+  and intolerable in a development loop.
+- **Width matters more than length.** `.sas7bdat` must be read whole. Parquet is
+  columnar, so a job using 250 of 908 columns reads only those. On wide clinical
+  extracts that is the larger win.
+
+**The caveat holds at any size.** A converted copy is a DERIVED artefact, and the
+source here lives on a mutable share that has been rewritten mid-analysis. Key
+the conversion to the source's checksum and refuse to use it when they disagree,
+or the speed is bought with the exact silent-staleness failure the rest of this
+runbook is about.
+
+**Best case: don't convert, emit.** If the dataset builder writes parquet
+directly, the parquet IS the artefact of record and there is no derived copy to
+keep in step. That is the direction `hvtiRdatasets` is taking, and it is worth
+waiting for rather than caching around.
+
 ---
 
 ## 4. Rendering and acceptance
