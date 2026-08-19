@@ -1701,7 +1701,34 @@ Expected: all six documents render. This is the deliverable.
 
 ---
 
-## Task 9: generalise into `hvtiRtemplates`
+## Task 9: generalise into `hvtiRtemplates` — DONE 2026-08-19 (scope reduced)
+
+**Shipped as [hvtiRtemplates #13](https://github.com/ehrlinger/hvtiRtemplates/pull/13)**, version 1.0.1. 6 test expectations passing; `devtools::check()` 0 errors / 0 warnings / 2 NOTEs, both from a pre-existing git worktree under `.claude/worktrees/` that this package's `.Rbuildignore` does not exclude.
+
+### The premise below was wrong, and step 1 caught it
+
+This task opens "Two studies have now exercised these job shapes." They have not. lv_function's `analyses/R_hazard/` holds `01.ac.dead_JR.qmd` and `index.qmd` — **no `hz`, no `hp`**. So `ac` has two consumers and the other two have one each.
+
+**Only `ac` is templated.** `hz` and `hp` are deferred until a second study runs them, which is this plan's own rule ("once two studies have exercised them") applied to what the survey actually found. `inst/templates/README.md` records what is absent and why.
+
+### The two `ac` jobs also diverged architecturally
+
+| | lv_function | preserve_root |
+|---|---|---|
+| lines | 354 | 57 |
+| `EDIT:` markers | 9 | 0 |
+| root resolution | self-locating, standalone-renderable | project `_quarto.yml` |
+| data access | `read_built()`, `assert_cohort()`, `cohort_counts()` | `read_preserve_root()`, `assert_cohort_gate()` |
+
+lv_function's was already written for copying, and is the shape the template took.
+
+### The one substantive generalisation
+
+The cohort section offers two shapes, and the reason traces straight back to Task 1. `_study.yml` records the **study** cohort; a job analysing a filtered subset has a different N, so `assert_cohort()` gates the wrong number and passes while the job runs on a cohort nobody checked. preserve_root is exactly that: study 378/115/263, job 291/77/214. Shape A uses the package data contract; Shape B supplies the job's own filter and gate against the SAS reference.
+
+### Step 6's proof does not fully pass, by design
+
+A regenerated job differs from lv_function's at more than `EDIT:` lines. Beyond EDIT-region content there are four deliberate structural additions: the Shape A/B cohort block, `library(hvtiRutilities)` in setup (the source relied on the study's own `R/read_built.R`), the note that a 0/1 SAS flag arrives as `logical` while `hzr_kaplan()` needs numeric, and error-message wording. The criterion as worded assumes the template is an extraction; this one generalises.
 
 Two studies have now exercised these job shapes. What differs between them is the abstraction information; what is identical is the template.
 
