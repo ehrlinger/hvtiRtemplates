@@ -114,7 +114,9 @@ existed to serve is unchanged**: no literal study path in any R file or `.qmd`.
 
 ---
 
-## Task 2: `preflight_report()` in hvtiRutilities
+## Task 2: `preflight_report()` in hvtiRutilities — DONE 2026-08-19
+
+**Shipped as [hvtiRutilities #60](https://github.com/ehrlinger/hvtiRutilities/pull/60)** (base `main`), 4 tests / 7 expectations passing, `devtools::check()` 0 errors / 0 warnings / 1 NOTE. The NOTE is the untracked `.remember` session-tooling directory, which is not in this diff and fires on any branch of this repository; `.Rbuildignore` does not list it. No deviations from the steps below.
 
 **Files:**
 - Create: `~/Documents/GitHub/hvtiRutilities/R/preflight.R`
@@ -124,14 +126,14 @@ existed to serve is unchanged**: no literal study path in any R file or `.qmd`.
 - Consumes: nothing.
 - Produces: `preflight_report(extra = character(0))` → `data.frame` with columns `component` (character), `found` (logical), `version` (character), `notes` (character).
 
-- [ ] **Step 1: Branch**
+- [x] **Step 1: Branch**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && git checkout main && git pull --ff-only
 git checkout -b feat/preflight-report
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `tests/testthat/test-preflight.R`:
 
@@ -161,7 +163,7 @@ test_that("extra packages are appended", {
 })
 ```
 
-- [ ] **Step 3: Run the test and confirm it fails**
+- [x] **Step 3: Run the test and confirm it fails**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="preflight")'
@@ -169,7 +171,7 @@ cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="prefl
 
 Expected: FAIL — `could not find function "preflight_report"`.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 Create `R/preflight.R`:
 
@@ -224,7 +226,7 @@ preflight_report <- function(extra = character(0)) {
 }
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtools::test(filter="preflight")'
@@ -232,7 +234,7 @@ cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtoo
 
 Expected: 4 PASS, 0 FAIL.
 
-- [ ] **Step 6: Bump the version and NEWS**
+- [x] **Step 6: Bump the version and NEWS**
 
 In `DESCRIPTION` change `Version: 1.0.8` to `Version: 1.0.9`. `NEWS.md` has no
 title line — its first line is the newest version heading — so insert this at the
@@ -247,7 +249,7 @@ very top of the file, at heading level one to match the entries below it:
   analysis depends on, including `numDeriv`.
 ```
 
-- [ ] **Step 7: Full check, then commit**
+- [x] **Step 7: Full check, then commit**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::check()'
