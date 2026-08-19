@@ -455,7 +455,14 @@ gh pr create --base dev --title "feat: hzr_read_outhaz()" --body "Reads outhaz e
 
 ---
 
-## Task 4: `compare_parity()` in hvtiRutilities
+## Task 4: `compare_parity()` in hvtiRutilities — DONE 2026-08-19
+
+**Shipped as [hvtiRutilities #61](https://github.com/ehrlinger/hvtiRutilities/pull/61)**, stacked on #60 because this task's version arithmetic (1.0.9 -> 1.0.10) assumes Task 2 is in place. 9 tests / 17 expectations, `devtools::check()` 0 errors / 0 warnings / 1 NOTE (the `.remember` directory, as in Task 2). Two departures from the steps below, neither semantic:
+
+- **Four lines were wrapped to satisfy the repository's 80-character lint.** The `parity_headline()` format string is reassembled with `paste()` so the string it builds is byte-identical.
+- **`_pkgdown.yml` gains a `SAS Parity` section.** pkgdown errors on any topic missing from an explicit reference index, and the site build is a required check. **This applies to every task in this plan that exports a function from `hvtiRutilities` or `TemporalHazard`** — Task 2 failed its pkgdown check for exactly this reason and needed a follow-up commit. Add the topic to `_pkgdown.yml` in the same commit as the function.
+
+**Open design question, shipped as specified rather than silently changed:** `compare_parity()` selects `R_BETTER` on the quantity *name* (`identical(quantity, "log_likelihood")`) while the tolerance *class* (`"loglik"`) is already a parameter. A caller naming the quantity `"loglik"` would have a real optimizer improvement recorded as `DIFFERS`. Keying on `class` is one line and strictly more robust; not changed without a decision.
 
 **Files:**
 - Create: `~/Documents/GitHub/hvtiRutilities/R/parity-tolerance.R`
@@ -469,7 +476,7 @@ gh pr create --base dev --title "feat: hzr_read_outhaz()" --body "Reads outhaz e
   - `compare_parity(quantity, r, sas, class, source = "lst", digits = NA_integer_)` → one-row `data.frame` with columns `quantity`, `r`, `sas`, `source`, `abs_diff`, `rel_diff`, `rtol`, `atol`, `outcome`.
   - `parity_headline(df)` → single string.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/testthat/test-parity.R`:
 
@@ -539,7 +546,7 @@ test_that("parity_headline flags an all-zero discrepancy as suspicious", {
 })
 ```
 
-- [ ] **Step 2: Run the test and confirm it fails**
+- [x] **Step 2: Run the test and confirm it fails**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="parity")'
@@ -547,7 +554,7 @@ cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="parit
 
 Expected: FAIL — `could not find function "parity_tolerance"`.
 
-- [ ] **Step 3: Write the tolerance table**
+- [x] **Step 3: Write the tolerance table**
 
 Create `R/parity-tolerance.R`:
 
@@ -589,7 +596,7 @@ parity_tolerance <- function(class) {
 }
 ```
 
-- [ ] **Step 4: Write the comparison**
+- [x] **Step 4: Write the comparison**
 
 Create `R/parity-compare.R`:
 
@@ -682,7 +689,7 @@ parity_headline <- function(df) {
 }
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtools::test(filter="parity")'
@@ -690,7 +697,7 @@ cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtoo
 
 Expected: 9 PASS, 0 FAIL.
 
-- [ ] **Step 6: Bump, check and commit**
+- [x] **Step 6: Bump, check and commit**
 
 In `DESCRIPTION` change `Version: 1.0.9` to `Version: 1.0.10`. Add to the very top of `NEWS.md`:
 
