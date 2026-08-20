@@ -11,3 +11,5 @@
 ^\.lintr$
 ^specs$
 ^plans$
+^AGENTS\.md$
+^CLAUDE\.md$

@@ -1,0 +1,121 @@
+# hvtiRtemplates
+
+Analysis job templates for the HVTI CORR group, plus the prefix taxonomy that names them.
+Five exports across three source files: `hvti_taxonomy()`, `hvti_non_prefixes()`,
+`template_list()`, `template_path()` and `new_job()`.
+
+The package is small; the **templates are the product**. `inst/templates/README.md` promises
+that files there are supported and runnable, and that promise is the reason most of the rules
+below exist.
+
+This file is the operational contract and applies in full. It is tool neutral, so Codex and
+any other agent read the same rules. Claude Code affordances live in `CLAUDE.md`, which
+imports this file.
+
+## Definition of done
+
+- `devtools::test()` passes.
+- `devtools::check()` is **0 errors, 0 warnings, 0 notes**. It reached 0/0/0 on 2026-08-20.
+- `devtools::document()` has been run and `man/` and `NAMESPACE` are committed with the
+  source change.
+- A new template renders, and has its own `.lintr` entry — see the rules below.
+
+## The automated gates
+
+| workflow | fails on |
+|---|---|
+| `R-CMD-check.yaml` | `R CMD check` across platforms |
+| `check-manual.yaml` | the PDF manual build |
+| `lint.yaml` | `lintr::lint_package()` |
+| `pkgdown.yaml` | the site build |
+| `spec-counts.yaml` | `python3 specs/artifacts/check-spec-counts.py` — the prose in `specs/` must agree with the generated map. Editing a count in prose without regenerating fails the PR |
+| `test-coverage.yaml` | coverage upload |
+
+## Rules for this repo
+
+- **`_pkgdown.yml` deliberately has NO `reference:` section**, so pkgdown indexes every
+  export automatically and the index cannot drift out of step with `NAMESPACE`. Do not add
+  one.
+  ⚠️ Its sibling `hvtiRutilities` does the **opposite**: an explicit index that *errors* on a
+  missing topic. Two packages, inverted conventions. Do not carry a habit across.
+- **Lines are 135 characters here, not 80.** `.lintr` raises `line_length_linter` because
+  `hvti_taxonomy()` is a data table written as code — 42 column-aligned rows whose alignment
+  is the only thing making them legible. Every other default linter is on and enforced,
+  `commas_linter` included: it has already caught taxonomy rows whose alignment slipped.
+  ⚠️ `hvtiRutilities` enforces 80. Check `.lintr` before assuming a width.
+- **A new template needs its own key in `.lintr`, and the key must be the FILE.** A directory
+  key such as `inst/templates` excludes every linter on that path **wholesale and silently** —
+  six real indentation and brace lints in `ac.qmd` vanished from a clean run that way. Only a
+  file key honours a per-linter list. The friction is deliberate: it forces a decision per
+  template instead of blanket-exempting the directory.
+- **Templates carry no study identifiers.** `test-new-job.R` asserts that no template matches
+  `/studies/`, a study name, or a built-dataset filename. A template that names a study is not
+  a template.
+- **Every study-specific line in a template is marked `EDIT:`.** The markers are the interface;
+  a job still containing one is unfinished. Comments around them should say *why* a choice
+  matters, not merely what to type — several exist because the alternative fails quietly.
+- **A template is only added once two studies have exercised the shape.** `ac` qualifies.
+  `hz` and `hp` are deliberately absent: each exists in exactly one study, and a template
+  extracted from a single example encodes that study's choices as though they were general.
+  `inst/templates/README.md` records what is missing and why.
+- **Templates carry their own `format:` block** rather than inheriting from a project
+  `_quarto.yml`. A file meant to be copied must not depend on the directory it happens to sit
+  in — that is how server-rendered reports ended up with sibling `_files/` trees instead of
+  being self-contained.
+- **Roxygen here is Rd markup, not markdown.** `DESCRIPTION` has no
+  `Roxygen: list(markdown = TRUE)`, so backticks and `**bold**` land literally in the `.Rd`.
+  Use `\code{}`, `\strong{}`, `\emph{}`, `\itemize{}` and `\link{}`.
+- **`testthat` edition 3.** There are snapshot tests under `tests/testthat/_snaps`; review a
+  snapshot diff rather than accepting it reflexively.
+- **This repo holds templates only.** The SAS macro corpus was removed on 2026-08-14 and
+  lives in `~/Documents/macro.library`. Do not reintroduce it here.
+
+## Template naming
+
+A template file is `<prefix>.qmd`, and `.prefix_of()` derives the prefix from the filename.
+It drops a leading legacy `tp.` field if present, and treats a first field longer than five
+characters as "no prefix" and returns `NA`. Prefixes come from `hvti_taxonomy()`. `new_job()`
+writes `<prefix>.<basename>.qmd` and **refuses to overwrite an existing job**, because a job
+file accumulates a study's edits.
+
+## Gotchas
+
+- **`object_usage_linter` can never pass inside `inst/templates/`.** The templates call
+  `TemporalHazard` and `hvtiRutilities`, which are the *study's* dependencies and deliberately
+  absent from `DESCRIPTION`, so CI has no copy and every call reports "no visible global
+  function". That is why the exclusion exists; it is not licence to disable it in `R/`.
+- **`object_name_linter` is excluded for templates on purpose.** `CLEVEL`, `TIME`, `STATUS`,
+  `DERIVED` and friends are SCREAMING_CASE so a study author sees at a glance what to change,
+  and `CLEVEL` carries the name of the SAS macro parameter it replaces. Do not snake_case them.
+- **`commented_code_linter` is excluded for templates on purpose** — commented scaffolding such
+  as `# d <- read_built()` is the template showing its user what to uncomment.
+- ⚠️ **A future `hz` template must not ship `nu = 0` as a starting value** while
+  [temporal_hazard#143](https://github.com/ehrlinger/temporal_hazard/issues/143) is open: the
+  `cdf` phase's `nu -> 0` limit loses the early-phase tail at short half-life, and the affected
+  `mu` silently stops being identified.
+
+## Change discipline
+
+1. **Think before coding.** Do not assume, ask. If the request is ambiguous or a name, path or
+   signature is uncertain, surface the confusion rather than running with a guess.
+2. **Simplicity first.** Write the minimum that solves the stated problem. No speculative
+   abstractions.
+3. **Surgical changes.** Touch only what the task requires. Do not refactor, reformat or
+   re-style adjacent code. Raise nearby problems separately rather than folding them in.
+4. **Goal-driven execution.** State what done looks like before starting, and use tests as the
+   criterion. If no test covers the change, add or propose one.
+
+## Git and versioning
+
+- **Never push to `main`.** Branch, open a PR, let the maintainer merge.
+- Versions are **straight three digits** (`1.0.2`). Never a `.9000` suffix or a fourth digit.
+- **Patch-digit bumps only**, as fixes land. Minor and major are the maintainer's decision.
+- Bump `DESCRIPTION`, refresh its `Date`, and add the matching `NEWS.md` entry in the same
+  commit. `NEWS.md` uses plain `# hvtiRtemplates X.Y.Z` headings — **no `Version:` line**,
+  unlike ggRandomForests, whose version-grep test requires a DCF-style header.
+
+## Prose
+
+Documentation prose — README, roxygen `@description` and `@details`, template narration —
+follows the house voice. Template prose has a second audience: a study author reading it while
+adapting the file, so it must explain the reasoning, not only the mechanics.
