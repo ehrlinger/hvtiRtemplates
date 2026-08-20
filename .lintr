@@ -15,3 +15,37 @@
 linters: linters_with_defaults(
     line_length_linter = line_length_linter(135L)
   )
+# `inst/templates/` is shipped data, not package source, and three default
+# linters are wrong for it.
+#
+# `object_usage_linter` can never pass there: the templates call
+# `TemporalHazard` and `hvtiRutilities`, which are the *study's* dependencies
+# and deliberately absent from DESCRIPTION, so a CI runner has no copy and
+# every call reports "no visible global function". lintr says as much itself --
+# "there is no package called ... This may lead to false positives."
+#
+# `object_name_linter` fires on the templates' edit-here constants -- CLEVEL,
+# TIME, STATUS, DERIVED, INTERNAL_COLS, UNKNOWN. Those are SCREAMING_CASE on
+# purpose, so a study author copying the file sees at a glance what to change,
+# and CLEVEL carries the name of the SAS macro parameter it replaces.
+# snake_case would hide the very thing the template exists to advertise.
+#
+# `commented_code_linter` fires on instructional scaffolding
+# (`# d <- read_built()`) -- the template showing its user what to uncomment.
+#
+# Indentation and braces stay ON here deliberately: a file people copy should
+# be exemplary in its layout.
+#
+# The key is the FILE, not the directory `inst/templates`. A directory key
+# excludes every linter on that path wholesale and silently -- with it, the six
+# real indentation/brace lints in ac.qmd disappeared from a clean run. Only a
+# file key honours the per-linter list. A new template therefore needs its own
+# entry here, which is the right amount of friction: it forces a decision per
+# template rather than blanket-exempting the directory.
+exclusions: list(
+    "inst/templates/ac.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    )
+  )
