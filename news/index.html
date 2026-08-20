@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,8 +39,15 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.2" id="hvtirtemplates-102">hvtiRtemplates 1.0.2<a class="anchor" aria-label="anchor" href="#hvtirtemplates-102"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-1-0-2">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-2"></a></h3>
+<ul><li>
+<code>.Rbuildignore</code> now excludes <code>.claude</code> and <code>.remember</code>, which hold session tooling; <code>.claude</code> can also contain a git worktree. Their contents were raising two NOTEs — hidden files, and non-portable paths over the tarball length limit — neither of which is about the package. <code>.remember</code> was invisible until <code>.claude</code> was excluded, because <code>R CMD check</code> reports every hidden path in one NOTE.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.1" id="hvtirtemplates-101">hvtiRtemplates 1.0.1<a class="anchor" aria-label="anchor" href="#hvtirtemplates-101"></a></h2>
-<p>Version: 1.0.1</p>
 <div class="section level3">
 <h3 id="new-features-1-0-1">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-1"></a></h3>
 <ul><li><p><code><a href="../reference/new_job.html">new_job()</a></code> scaffolds an analysis job from a supported template, naming the file <code>&lt;prefix&gt;.&lt;basename&gt;.qmd</code> and refusing to overwrite an existing job.</p></li>
