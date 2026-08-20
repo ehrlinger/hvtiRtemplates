@@ -44,12 +44,28 @@ PATTERNS=(
 )
 
 status=0
+errfile="$(mktemp)"
+trap 'rm -f "${errfile}"' EXIT
+
 for pat in "${PATTERNS[@]}"; do
-    if hits="$(scan "${pat}")" && [ -n "${hits}" ]; then
-        echo "FAIL: site identifier committed (/${pat}/):"
-        echo "${hits}" | sed 's/^/    /'
-        status=1
-    fi
+    # This file necessarily contains the patterns it guards — scan() excludes it.
+    hits="$(scan "${pat}" 2>"${errfile}")"
+    rc=$?
+    case "${rc}" in
+        0)
+            echo "FAIL: site identifier committed (/${pat}/):"
+            echo "${hits}" | sed 's/^/    /'
+            status=1
+            ;;
+        1)  ;;   # no matches — the good case
+        *)
+            # A scan that errored has NOT proved the tree clean. Treating this
+            # like "no match" is how a guard silently stops guarding.
+            echo "ERROR: scan failed for /${pat}/ (exit ${rc}) — tree NOT verified:"
+            sed 's/^/    /' "${errfile}"
+            status=1
+            ;;
+    esac
 done
 
 [ "${status}" -eq 0 ] && echo "PASS: no site identifiers in tracked files" \
