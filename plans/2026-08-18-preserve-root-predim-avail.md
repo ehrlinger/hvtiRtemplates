@@ -1198,9 +1198,12 @@ That also explains the 70x: the main model has `nu` free and far from 0, so it n
 
 Two candidates were **ruled out** on the way, both recorded in [temporal_hazard#142](https://github.com/ehrlinger/temporal_hazard/issues/142): `fixed = "nu"` does match SAS's `fixnu` (R holds `nu` at exactly 0 and frees the same four parameters), and the `M = -exp(E4)` parameterization difference cannot explain a log-likelihood gap at matching parameter values — it bears on the vcov comparison only.
 
-**Stage 2 does not reach parity, and will not until [temporal_hazard#136](https://github.com/ehrlinger/temporal_hazard/issues/136) is fixed.** Both documents are written and render; the blocker is named, not worked around.
+<details>
+<summary><b>Historical — Task 7 while it was blocked, before TemporalHazard 1.2.1</b> (kept for the diagnosis chain; every current number is in the sections above)</summary>
 
-### The blocker
+**Status at the time: Stage 2 did not reach parity, and could not until #136 was fixed.** Both documents were written and rendering; the blocker was named rather than worked around. Superseded by the result above once 1.2.1 landed.
+
+#### The blocker, as diagnosed before the fix
 
 `TemporalHazard` cannot fit an interval-censored multiphase model. Supplying `time_lower`/`time_upper` -- **even when both equal `time`, which is a mathematical no-op** -- drives the optimizer onto a flat plateau: a positive "objective" where a log-likelihood belongs, a singular Hessian, and `converged = TRUE`.
 
@@ -1215,7 +1218,7 @@ The objective was byte-identical across the full cohort, the cohort with the 5 i
 
 The fits therefore carry the 5 interval-censored deaths as exact events at the interval upper bound -- a different likelihood from SAS's.
 
-### Result
+#### Result before the fix
 
 | | |
 |---|---|
@@ -1224,6 +1227,8 @@ The fits therefore carry the 5 interval-censored deaths as exact events at the i
 | MLEs vs `outhaz` | **4 DIFFERS**, as they must: different model |
 | log-likelihood | **NOT COMPARABLE** |
 | headline | largest relative discrepancy 3.05e-01 |
+
+</details>
 
 ### Corrections to the steps below
 
@@ -1507,9 +1512,9 @@ Expected: `log_likelihood` PASS or `R_BETTER`; MLEs and vcov PASS.
 
 ---
 
-## Task 8: Stage 3 — nomogram and figures — DONE 2026-08-19 (results conditional on Task 7)
+## Task 8: Stage 3 — nomogram and figures — DONE 2026-08-19, re-run against 1.2.1
 
-Both documents are written and render; all 13 nomogram rows joined and were compared.
+Both documents are written and render; all 13 nomogram rows joined and were compared. This stage consumes the stage-2 fit, so its residual tracks Task 7's rather than being independent of it.
 
 **Re-run against the fixed stage-2 fit (`TemporalHazard` 1.2.1): 25 PASS / 53 DIFFERS, headline 5.48e-04.** Before the fix it was 78/78 DIFFERS at 2.29e-01, so the nomogram code was never the problem.
 
