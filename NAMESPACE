@@ -2,5 +2,6 @@
 
 export(hvti_non_prefixes)
 export(hvti_taxonomy)
+export(new_job)
 export(template_list)
 export(template_path)
