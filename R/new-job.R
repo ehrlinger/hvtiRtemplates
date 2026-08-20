@@ -11,7 +11,8 @@
 #' @param basename Job name, appended after the prefix.
 #' @param dir Directory to write into. Created if it does not exist.
 #'
-#' @return The path written, invisibly.
+#' @return The path written, invisibly. Errors if the copy fails, so the
+#'   returned path always names a file that exists.
 #'
 #' @seealso \code{\link{template_list}}, \code{\link{template_path}}
 #'
@@ -34,6 +35,8 @@ new_job <- function(prefix, basename, dir = "qmd") {
     stop("new_job(): '", out, "' already exists; refusing to overwrite.",
          call. = FALSE)
   }
-  file.copy(template_path(prefix), out)
+  if (!file.copy(template_path(prefix), out, overwrite = FALSE)) {
+    stop("new_job(): failed to write '", out, "'.", call. = FALSE)
+  }
   invisible(out)
 }

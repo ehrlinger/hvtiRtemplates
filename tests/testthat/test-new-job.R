@@ -33,3 +33,27 @@ test_that("new_job refuses to overwrite an existing job", {
   new_job("ac", "dead", dir = dir)
   expect_error(new_job("ac", "dead", dir = dir), "already exists")
 })
+
+test_that("new_job errors when the copy fails rather than returning a dead path", {
+  # `file.copy()` reports failure by returning FALSE, not by erroring, so an
+  # unchecked call hands back a path to a file that was never written. Provoke
+  # a real failure by making the target directory read-only.
+  skip_on_os("windows")            # POSIX mode bits do not govern writability
+  skip_if(unname(Sys.info()["user"]) == "root")  # root ignores the mode bits
+
+  dir <- tempfile("newjob-")
+  dir.create(dir, recursive = TRUE)
+  on.exit({
+    Sys.chmod(dir, "700")
+    unlink(dir, recursive = TRUE)
+  }, add = TRUE)
+
+  Sys.chmod(dir, "500")
+  skip_if(file.access(dir, mode = 2) == 0, "directory is still writable")
+
+  # `file.copy()` also warns ("cannot create file ... Permission denied") on its
+  # way to returning FALSE. That warning is useful in real use; here it would
+  # just leave the suite with a WARN, so only the error is under test.
+  expect_error(suppressWarnings(new_job("ac", "dead_ro", dir = dir)),
+               "failed to write")
+})

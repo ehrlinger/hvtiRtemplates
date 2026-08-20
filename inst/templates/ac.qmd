@@ -151,18 +151,23 @@ rng <- function(x) {
   if (!length(x)) c(NA_real_, NA_real_) else range(x)
 }
 
+derived_rows <- function(cat) {
+  src <- DERIVED[[cat]]
+  do.call(rbind, lapply(sort(unique(d[[cat]])), function(k) {
+    v <- d[[src]][d[[cat]] == k]
+    r <- rng(v)
+    data.frame(
+      category = cat, level = k, n = length(v), source = src,
+      src_min = r[1], src_max = r[2], src_missing = sum(is.na(v))
+    )
+  }))
+}
+
 knitr::kable(
-  do.call(rbind, lapply(names(DERIVED), function(cat) {
-    src <- DERIVED[[cat]]
-    do.call(rbind, lapply(sort(unique(d[[cat]])), function(k) {
-      v <- d[[src]][d[[cat]] == k]
-      r <- rng(v)
-      data.frame(category = cat, level = k, n = length(v), source = src,
-                 src_min = r[1], src_max = r[2], src_missing = sum(is.na(v)))
-    }))
-  })),
+  do.call(rbind, lapply(names(DERIVED), derived_rows)),
   row.names = FALSE, digits = 4,
-  caption = "Each derived category against the variable it came from")
+  caption = "Each derived category against the variable it came from"
+)
 ```
 
 **Read the ranges before reading anything below.** They must not overlap between
@@ -276,11 +281,16 @@ km_by <- function(dd, var) {
   }))
 
   src <- rbind(
-    if (length(imp_lv)) data.frame(
-      source = imp_lv, n = vapply(imp_lv, function(l) sum(raw == l, na.rm = TRUE), integer(1)),
-      reason = "mean-imputed level, not an observed value"),
-    if (anyNA(raw)) data.frame(
-      source = "NA", n = sum(is.na(raw)), reason = "missing outright")
+    if (length(imp_lv)) {
+      data.frame(
+        source = imp_lv,
+        n = vapply(imp_lv, function(l) sum(raw == l, na.rm = TRUE), integer(1)),
+        reason = "mean-imputed level, not an observed value"
+      )
+    },
+    if (anyNA(raw)) {
+      data.frame(source = "NA", n = sum(is.na(raw)), reason = "missing outright")
+    }
   )
   attr(out, "unknown_sources") <- if (!is.null(src)) `rownames<-`(src, NULL) else NULL
   out
@@ -290,9 +300,11 @@ km_by <- function(dd, var) {
 report_unknown <- function(fit, var) {
   src <- attr(fit, "unknown_sources")
   if (is.null(src)) return(invisible(NULL))
-  print(knitr::kable(src, row.names = FALSE, caption = paste0(
+  cap <- paste0(
     "What the ", var, " \"", UNKNOWN, "\" stratum is made of -- a missingness ",
-    "group, NOT a clinical subgroup. SAS %KAPLAN drops these rows.")))
+    "group, NOT a clinical subgroup. SAS %KAPLAN drops these rows."
+  )
+  print(knitr::kable(src, row.names = FALSE, caption = cap))
 }
 ```
 
@@ -345,17 +357,21 @@ knitr::kable(data.frame(
 
 ```{r}
 #| label: km-strata
+stratum_row <- function(s) {
+  data.frame(
+    stratum  = s$stratum[1],
+    n        = s$n[1],
+    n_events = sum(s$n_event),
+    setNames(as.list(round(100 * vapply(grid, at_horizon, numeric(1), fit = s), 1)), labs),
+    check.names = FALSE
+  )
+}
+
 # EDIT: your stratification variables.
 for (v in c("cat_a")) {
   fit <- km_by(d, v)
   print(knitr::kable(
-    do.call(rbind, lapply(split(fit, fit$stratum), function(s) data.frame(
-      stratum  = s$stratum[1],
-      n        = s$n[1],
-      n_events = sum(s$n_event),
-      setNames(as.list(round(100 * vapply(grid, at_horizon, numeric(1), fit = s), 1)), labs),
-      check.names = FALSE
-    ))),
+    do.call(rbind, lapply(split(fit, fit$stratum), stratum_row)),
     row.names = FALSE,
     caption = paste0("Survival (%) by ", v)
   ))
