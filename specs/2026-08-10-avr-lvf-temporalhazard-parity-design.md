@@ -666,7 +666,7 @@ risks, in priority order:
 2. **`quarto` CLI presence.** If absent, the stages still run as plain R but the report
    deliverable does not build.
 3. **R version.** 4.6.0 locally; an older server R constrains package availability.
-4. **CRAN mirror.** The lockfile points at `https://lri-ppm00.lerner.ccf.org:4242/cran/latest`,
+4. **CRAN mirror.** The lockfile points at `https://<internal-ppm-host>/cran/latest`,
    an internal mirror — reachable from the server, not necessarily from anywhere else.
 
 ### 9.3 Path portability — a hard requirement
