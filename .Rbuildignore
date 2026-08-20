@@ -6,6 +6,8 @@
 ^docs$
 ^_pkgdown\.yml$
 ^\.superpowers$
+^\.claude$
+^\.remember$
 ^\.lintr$
 ^specs$
 ^plans$
