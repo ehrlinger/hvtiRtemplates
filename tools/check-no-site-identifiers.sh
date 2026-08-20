@@ -14,8 +14,27 @@
 
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 2
-git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
-    echo "not a git worktree — nothing to check" >&2; exit 2; }
+
+# Scan tracked files via `git grep` when git is usable, else fall back to a
+# plain recursive grep over the worktree. Kept identical to the guard in
+# ehrlinger/hazard, where a git-dependent version broke the Windows MSYS2 job:
+# a check that cannot run somewhere is worse than useless. A CI checkout has no
+# untracked files, so the two engines see the same set.
+SELF="tools/check-no-site-identifiers.sh"
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    ENGINE="git"
+else
+    ENGINE="grep"
+    echo "note: git unavailable — scanning the worktree directly" >&2
+fi
+
+scan() {  # $1 = extended regex; prints matches, returns 1 when none
+    if [ "${ENGINE}" = "git" ]; then
+        git grep -nIE "$1" -- ":!${SELF}" 2>/dev/null
+    else
+        grep -rnIE --exclude-dir=.git --exclude="$(basename "${SELF}")" "$1" . 2>/dev/null
+    fi
+}
 
 PATTERNS=(
     'lri-[a-z0-9-]+\.lerner\.ccf\.org'   # internal CCF hosts (PPM, SAS, ...)
@@ -26,8 +45,7 @@ PATTERNS=(
 
 status=0
 for pat in "${PATTERNS[@]}"; do
-    if hits="$(git grep -nIE "${pat}" -- ':!tools/check-no-site-identifiers.sh' 2>/dev/null)" \
-       && [ -n "${hits}" ]; then
+    if hits="$(scan "${pat}")" && [ -n "${hits}" ]; then
         echo "FAIL: site identifier committed (/${pat}/):"
         echo "${hits}" | sed 's/^/    /'
         status=1
