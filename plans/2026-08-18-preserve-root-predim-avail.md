@@ -23,6 +23,19 @@
 - **`control$conserve` defaults to `TRUE`.** The `noconserve` comparison must set it explicitly. (§7.2)
 - **`compare_parity()` errors — never warns, never skips — when a requested quantity is absent on either side.** (§6.4)
 - **A `tolerance = 0` literal must be written with 18 significant digits, not 17, and checked.** IEEE754 guarantees a double round-trips through 17, but R's parser does not deliver that here: the 17-digit form of one Task 3 value read back one ULP low and failed its own assertion. Write the literal with `sprintf("%.18g", x)` and confirm `identical(as.numeric(s), x)` before pasting it into a test. This applies to every machine-precision comparison in Tasks 3, 4 and 6–8, and to the reference values quoted in this plan — several of those are 17 digits and are **not** safe to paste.
+- **Roxygen in these packages is Rd markup, not markdown.** Neither
+  `hvtiRutilities` nor `TemporalHazard` sets `Roxygen: list(markdown = TRUE)`
+  in `DESCRIPTION`, so backticks, `**bold**`, `*` bullet lists and
+  `[fn()]` links land **literally** in the generated `.Rd` and render as
+  garbage in the help page. **The roxygen blocks quoted throughout this plan
+  are written markdown-style and must be converted** to `\code{}`,
+  `\strong{}`, `\emph{}`, `\itemize{}` and `\link{}` before they are
+  committed. Tasks 2 and 4 both shipped the raw markdown and needed a
+  follow-up commit; review caught it on #60.
+- **Every exported function must be added to `_pkgdown.yml`.** pkgdown errors,
+  rather than warns, on a topic missing from an explicit reference index, and
+  the site build is a required check. Add the topic in the same commit as the
+  function.
 - **Tolerances are derived, not tuned.** A failing comparison is diagnosed to a named cause before anything is adjusted. (§6.3, §9)
 
 ## Verified API surface
@@ -82,13 +95,14 @@ written. `sas_path()` is identical to what this task specified.
 Rscript -e 'stopifnot(all(c("study_root", "sas_path") %in% getNamespaceExports("hvtiRutilities")))'
 ```
 
-### ⚠️ Open decision: the shipped root marker is not the one this plan assumed
+### ✅ Resolved 2026-08-19: run `study_init()`; the shipped marker stands
 
 | | this plan assumed | what shipped (1.0.8) |
 |---|---|---|
 | marker | the four sibling directories `datasets`, `distributions`, `graphs`, `analyses` | `_study.yml`, via `study_root() <- study_config(start)$root` |
 | error names | `datasets, distributions, graphs, analyses` | the absent `_study.yml` |
-| preserve_root today | resolves — all four directories are present | **does not resolve — the tree has no `_study.yml`** |
+| preserve_root before 2026-08-19 | resolves — all four directories are present | did not resolve — the tree had no `_study.yml` |
+| preserve_root now | — | **resolves — `_study.yml` written by `study_init()` 2026-08-19** |
 
 The two markers answer different questions. The structural one asks *does this
 directory look like a SAS study*, and works on any legacy tree untouched. The
@@ -96,25 +110,49 @@ content one asks *was this study deliberately initialised*, and carries the stud
 identity, dataset checksum and cohort counts with it — but something must write it
 first.
 
-**This blocks Task 5 onward, not Tasks 2–4.** Resolve it before Task 5 begins, one
-of two ways:
+**Resolved: initialise the study rather than weaken the marker.** `study_init()`
+was run against preserve_root on 2026-08-19
+and `_study.yml` + `manifest.yaml` now sit at the study root. `study_root()` and
+`sas_path()` resolve from `analyses/` and land on real `distributions/*.lst`
+files; **Task 5 is unblocked** and no fallback was added to the package.
 
-1. **Run `study_init()` against preserve_root**, writing `_study.yml` and
-   `manifest.yaml` at the study root. Matches the shipped design and buys
-   provenance. Costs two new files on the network share, and `study_init()` must be
-   given the `event`/`time` keys (`dead` / `iv_dead` here) because `cohort_counts()`
-   hardcodes them.
-2. **Give `study_root()` a fallback**: prefer `_study.yml`, fall back to the
-   four-directory marker. Leaves the study tree untouched and matches this plan as
-   written. Costs a second resolution rule to maintain, and preserve_root gets no
-   provenance record.
+Three things measured during the decision, none of which this task's original
+write-up had right:
 
-Not decided as of 2026-08-18. Whichever is chosen, **the constraint this task
-existed to serve is unchanged**: no literal study path in any R file or `.qmd`.
+- **No study on the share had ever been initialised** — `lv_function/survival`,
+  the tree `study_init()` was designed against, has no `_study.yml` either. The
+  content marker had zero adopters, so this was not preserve_root being the
+  exception. preserve_root is now the first declared study.
+- **The `_study.yml` cohort block is 378 / 115 / 263, not 291 / 77 / 214.**
+  `cohort_counts()` derives from the whole of `built.sas7bdat`, while this
+  plan's cohort is the `pr_avail == 1` subset. Both numbers are true and they
+  answer different questions: study-level identity versus job-level analysable
+  cohort. **The parity gate stays in Task 5's `assert_cohort_gate()`** — do not
+  reach for `assert_cohort()` from the package, which would gate on 378.
+- **`population` was wrong in the source it was copied from.** The SAS header
+  `STUDYPOP = 2009 to 2021`, carried by 349 jobs, does not describe the
+  operative window: `dt_surg` runs 2009-02-10 to 2019-12-23 study-wide and
+  2009-03-20 to 2019-12-23 in the cohort, with `surg_yr` agreeing and no
+  missing values. Nor is it the follow-up window — `dt_fsta` now reaches
+  2023-12-22, because `built.sas7bdat` was rebuilt on 2026-06-09 with extended
+  follow-up. `_study.yml` records the derived **2009 to 2019**. A checksum
+  catches a dataset that moved; nothing catches a description that quietly
+  stopped being true.
+
+The plan's stated reason for passing `event`/`time` to `study_init()` was also
+wrong: `cohort_counts()` does not hardcode them, it reads `cfg$cohort$event`
+and `cfg$cohort$time`. They are passed because `study_init()` writes the very
+manifest that would otherwise supply them.
+
+**The constraint this task existed to serve is unchanged**: no literal study
+path in any R file or `.qmd`.
+
 
 ---
 
-## Task 2: `preflight_report()` in hvtiRutilities
+## Task 2: `preflight_report()` in hvtiRutilities — DONE 2026-08-19
+
+**Shipped as [hvtiRutilities #60](https://github.com/ehrlinger/hvtiRutilities/pull/60)** (base `main`), 4 tests / 7 expectations passing, `devtools::check()` 0 errors / 0 warnings / 1 NOTE. The NOTE is the untracked `.remember` session-tooling directory, which is not in this diff and fires on any branch of this repository; `.Rbuildignore` does not list it. No deviations from the steps below.
 
 **Files:**
 - Create: `~/Documents/GitHub/hvtiRutilities/R/preflight.R`
@@ -124,14 +162,14 @@ existed to serve is unchanged**: no literal study path in any R file or `.qmd`.
 - Consumes: nothing.
 - Produces: `preflight_report(extra = character(0))` → `data.frame` with columns `component` (character), `found` (logical), `version` (character), `notes` (character).
 
-- [ ] **Step 1: Branch**
+- [x] **Step 1: Branch**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && git checkout main && git pull --ff-only
 git checkout -b feat/preflight-report
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `tests/testthat/test-preflight.R`:
 
@@ -161,7 +199,7 @@ test_that("extra packages are appended", {
 })
 ```
 
-- [ ] **Step 3: Run the test and confirm it fails**
+- [x] **Step 3: Run the test and confirm it fails**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="preflight")'
@@ -169,7 +207,7 @@ cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="prefl
 
 Expected: FAIL — `could not find function "preflight_report"`.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 Create `R/preflight.R`:
 
@@ -224,7 +262,7 @@ preflight_report <- function(extra = character(0)) {
 }
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtools::test(filter="preflight")'
@@ -232,7 +270,7 @@ cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtoo
 
 Expected: 4 PASS, 0 FAIL.
 
-- [ ] **Step 6: Bump the version and NEWS**
+- [x] **Step 6: Bump the version and NEWS**
 
 In `DESCRIPTION` change `Version: 1.0.8` to `Version: 1.0.9`. `NEWS.md` has no
 title line — its first line is the newest version heading — so insert this at the
@@ -247,7 +285,7 @@ very top of the file, at heading level one to match the entries below it:
   analysis depends on, including `numDeriv`.
 ```
 
-- [ ] **Step 7: Full check, then commit**
+- [x] **Step 7: Full check, then commit**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::check()'
@@ -430,7 +468,16 @@ gh pr create --base dev --title "feat: hzr_read_outhaz()" --body "Reads outhaz e
 
 ---
 
-## Task 4: `compare_parity()` in hvtiRutilities
+## Task 4: `compare_parity()` in hvtiRutilities — DONE 2026-08-19
+
+**Shipped as [hvtiRutilities #61](https://github.com/ehrlinger/hvtiRutilities/pull/61)**, stacked on #60 because this task's version arithmetic (1.0.9 -> 1.0.10) assumes Task 2 is in place. 9 tests / 17 expectations, `devtools::check()` 0 errors / 0 warnings / 1 NOTE (the `.remember` directory, as in Task 2). Two departures from the steps below, neither semantic:
+
+- **Four lines were wrapped to satisfy the repository's 80-character lint.** The `parity_headline()` format string is reassembled with `paste()` so the string it builds is byte-identical.
+- **`_pkgdown.yml` gains a `SAS Parity` section.** pkgdown errors on any topic missing from an explicit reference index, and the site build is a required check. **This applies to every task in this plan that exports a function from `hvtiRutilities` or `TemporalHazard`** — Task 2 failed its pkgdown check for exactly this reason and needed a follow-up commit. Add the topic to `_pkgdown.yml` in the same commit as the function.
+
+**Corrected after review (Copilot on #61), because the code as written made the headline lie:** `rel_diff` was `NA_real_` whenever the SAS reference was zero, and `parity_headline()` maxes with `na.rm = TRUE`. So `compare_parity("q", r = 5, sas = 0, class = "mle_printed")` returned a row reading `DIFFERS` under a headline reading *"largest relative discrepancy was 0.00e+00"*, with the "exactly zero is a warning sign" sentence appended — the falsifiable claim stating the opposite of the truth on a real failure. `rel_diff` is now `0` on exact agreement at a zero reference and `Inf` otherwise, and `parity_headline()` distinguishes `-Inf` (max of nothing comparable) from `+Inf` (a real discrepancy at a zero reference). `digits` is also validated as a single non-negative whole number; a vector previously reached `if()` and failed with "the condition has length > 1". **The code block below is the pre-review version — treat the shipped package, not this plan, as the reference.**
+
+**Open design question, shipped as specified rather than silently changed:** `compare_parity()` selects `R_BETTER` on the quantity *name* (`identical(quantity, "log_likelihood")`) while the tolerance *class* (`"loglik"`) is already a parameter. A caller naming the quantity `"loglik"` would have a real optimizer improvement recorded as `DIFFERS`. Keying on `class` is one line and strictly more robust; not changed without a decision.
 
 **Files:**
 - Create: `~/Documents/GitHub/hvtiRutilities/R/parity-tolerance.R`
@@ -444,7 +491,7 @@ gh pr create --base dev --title "feat: hzr_read_outhaz()" --body "Reads outhaz e
   - `compare_parity(quantity, r, sas, class, source = "lst", digits = NA_integer_)` → one-row `data.frame` with columns `quantity`, `r`, `sas`, `source`, `abs_diff`, `rel_diff`, `rtol`, `atol`, `outcome`.
   - `parity_headline(df)` → single string.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/testthat/test-parity.R`:
 
@@ -514,7 +561,7 @@ test_that("parity_headline flags an all-zero discrepancy as suspicious", {
 })
 ```
 
-- [ ] **Step 2: Run the test and confirm it fails**
+- [x] **Step 2: Run the test and confirm it fails**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="parity")'
@@ -522,7 +569,7 @@ cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::test(filter="parit
 
 Expected: FAIL — `could not find function "parity_tolerance"`.
 
-- [ ] **Step 3: Write the tolerance table**
+- [x] **Step 3: Write the tolerance table**
 
 Create `R/parity-tolerance.R`:
 
@@ -564,7 +611,7 @@ parity_tolerance <- function(class) {
 }
 ```
 
-- [ ] **Step 4: Write the comparison**
+- [x] **Step 4: Write the comparison**
 
 Create `R/parity-compare.R`:
 
@@ -657,7 +704,7 @@ parity_headline <- function(df) {
 }
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 ```bash
 cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtools::test(filter="parity")'
@@ -665,7 +712,7 @@ cd ~/Documents/GitHub/hvtiRutilities && Rscript -e 'devtools::document(); devtoo
 
 Expected: 9 PASS, 0 FAIL.
 
-- [ ] **Step 6: Bump, check and commit**
+- [x] **Step 6: Bump, check and commit**
 
 In `DESCRIPTION` change `Version: 1.0.9` to `Version: 1.0.10`. Add to the very top of `NEWS.md`:
 
@@ -689,7 +736,24 @@ git push
 
 ---
 
-## Task 5: study data contract
+## Task 5: study data contract — DONE 2026-08-19
+
+Three files created under `<study>/analyses/R_hazard/`: `.gitignore`, `_quarto.yml`, `R/study.R`. Nothing committed — the study tree has a `.git`, and the no-commits-on-the-share constraint holds. No literal study path appears in any of them.
+
+**The cohort gate as written below is wrong, and failed on first run.** `n_events <- sum(d$idead == 1)` returned 72, not 77, and dragged `right` to 219. Diagnosed before anything was changed, and the expected counts were **not** adjusted:
+
+| flag | count | |
+|---|---|---|
+| `idead == 1` | 72 | exact deaths only |
+| `ic_dead == 1` | 5 | interval-censored deaths |
+| overlap | 0 | disjoint |
+| union | **77** | row-for-row identical to `dead == 1` |
+
+No missing values in any of the three columns. This plan's own cohort constraint already spells out "77 events (72 uncensored + 5 interval-censored)", so `idead` alone was never the right count — the same union appears in Task 7 as `status %in% c(1, 2)`. The named cause is an arithmetic bug in the gate, not dataset drift, not a wrong `pr_avail` filter, and not a different cohort. Everything independent of the bug matched on the first run: total 291, interval 5, and `g_root3` 112 / 89 / 90, the last from two `.lst` files that agree.
+
+`assert_cohort_gate()` now counts the union and additionally asserts `uncensored = 72`, so a future failure localises itself instead of reporting one wrong total.
+
+**After the fix:** gate passes — total 291, events 77, uncensored 72, interval 5, right 214; `g_root3` 112 / 89 / 90; `dataset_manifest()` pins `built.sas7bdat`, 70430720 bytes, mtime 2026-06-09 16:08:02, md5 `89f6e88abb7d0251a5a297890b375bf8`.
 
 **Files:**
 - Create: `<study>/analyses/R_hazard/R/study.R`
@@ -699,13 +763,13 @@ git push
 `<study>` is the preserve_root tree. **Never write its absolute path into any file** — every path is built with `sas_path()`.
 
 **Interfaces:**
-- Consumes: `study_root()`, `sas_path()` (shipped in `hvtiRutilities` 1.0.8; see Task 1 for the unresolved root-marker question, which this task must not proceed past).
+- Consumes: `study_root()`, `sas_path()` (shipped in `hvtiRutilities` 1.0.8; the root-marker question in Task 1 was resolved 2026-08-19 — preserve_root is initialised and this task is unblocked).
 - Produces:
   - `read_preserve_root()` → labelled data frame filtered to `pr_avail == 1`.
   - `add_g_root3(d)` → the same frame with integer column `g_root3`.
   - `assert_cohort_gate(d)` → invisibly `TRUE`, or stops.
 
-- [ ] **Step 1: Create the project scaffolding**
+- [x] **Step 1: Create the project scaffolding**
 
 `<study>/analyses/R_hazard/.gitignore`:
 
@@ -757,7 +821,7 @@ execute:
   freeze: false
 ```
 
-- [ ] **Step 2: Write `R/study.R`**
+- [x] **Step 2: Write `R/study.R`**
 
 ```r
 # Study-specific declarations for the preserve_root predim_avail death chain.
@@ -837,7 +901,7 @@ dataset_manifest <- function() {
 }
 ```
 
-- [ ] **Step 3: Run the gate against the real data**
+- [x] **Step 3: Run the gate against the real data**
 
 On the RStudio server, from inside `<study>/analyses/R_hazard/`:
 
@@ -854,7 +918,16 @@ Expected: `assert_cohort_gate()` returns invisibly, and the table prints `1: 112
 
 ---
 
-## Task 6: Stage 1 — actuarial
+## Task 6: Stage 1 — actuarial — DONE 2026-08-19
+
+**Parity reached.** The `.lst` parsed to 66 rows, `hzr_kaplan()` produced 66, and the join on time matched all 66 with nothing dropped. **528 comparisons PASS, 0 DIFFERS** (66 times x 8 quantities), plus 5 count comparisons. Headline: *largest relative discrepancy 1.21e-04* across 533 quantities -- non-zero, which is what satisfies criterion 7. The 2026-05-26 reference predating the 2026-06-09 rebuild did not produce a discrepancy on this stage.
+
+Two departures from the steps below, both forced and neither semantic:
+
+- **`status = as.integer(d$dead)`.** `hzr_kaplan()` rejects the raw column with *"'time' and 'status' must be numeric vectors"*: `read_clinical_data()` infers a 0/1 column as logical, which is its documented job, and a logical cannot express the general status coding (`-1`, `0`, `1`, `2`). `iv_dead` needs no coercion. Task 7 is unaffected because it builds `status` arithmetically. A small generality gap worth considering upstream: `hzr_kaplan()` could accept a logical status for the right-censored case.
+- **`dir.create("../_output")` before `saveRDS()`.** Quarto creates `output-dir` when it moves the rendered file, which is after the chunk runs, so the save failed against a directory that did not exist yet. The parity document depends on that `.rds`.
+
+Also note: Quarto preserves the input subdirectory, so the rendered files land at `_output/qmd/01-ac-dead_pa.html` and `_output/parity/01-ac-dead_pa-parity.html`, not at `_output/` directly as the Files list below says.
 
 **Files:**
 - Create: `<study>/analyses/R_hazard/qmd/01-ac-dead_pa.qmd`
@@ -866,7 +939,7 @@ Expected: `assert_cohort_gate()` returns invisibly, and the table prints `1: 112
 
 Stage 1 uses `iv_dead` / `dead` — **right-censored**, a different response from stage 2's interval-censored `iu_dead`/`idead`. A stage-1 pass says nothing about the fitting path.
 
-- [ ] **Step 1: Write the analysis document**
+- [x] **Step 1: Write the analysis document**
 
 `qmd/01-ac-dead_pa.qmd`:
 
@@ -921,7 +994,7 @@ saveRDS(list(overall = km_overall, strata = km_strata),
 ```
 ````
 
-- [ ] **Step 2: Render it**
+- [x] **Step 2: Render it**
 
 ```bash
 cd <study>/analyses/R_hazard && quarto render qmd/01-ac-dead_pa.qmd
@@ -929,7 +1002,7 @@ cd <study>/analyses/R_hazard && quarto render qmd/01-ac-dead_pa.qmd
 
 Expected: renders without error; the gate table shows 112 / 89 / 90.
 
-- [ ] **Step 3: Write the parity document**
+- [x] **Step 3: Write the parity document**
 
 `parity/01-ac-dead_pa-parity.qmd`:
 
@@ -1037,7 +1110,7 @@ cat(parity_headline(rbind(counts, res_ac)))
 ```
 ````
 
-- [ ] **Step 4: Render and inspect**
+- [x] **Step 4: Render and inspect**
 
 ```bash
 cd <study>/analyses/R_hazard && quarto render parity/01-ac-dead_pa-parity.qmd
@@ -1049,7 +1122,125 @@ If it returns zero rows, that is a **finding about parser generality** (§6.2): 
 
 ---
 
-## Task 7: Stage 2 — the hazard fit
+## Task 7: Stage 2 — the hazard fit — DONE 2026-08-19
+
+**`TemporalHazard` 1.2.1 fixed #136 and the interval-censored model now fits.** Re-run against it, the estimates match SAS to better than 0.4% and the fit is well conditioned (`rcond` 0.02996, `pd TRUE`).
+
+### What #136 actually was
+
+Two defects, and the first corrects this plan's understanding as much as the package's:
+
+- **`time_lower` is an entry time for left truncation, not an interval-censoring lower bound.** The documentation said otherwise. Passing bounds through it left-truncated every subject at its own event time, which is what collapsed the likelihood -- so the "no-op bounds" reproducer was a real failure but not the one it appeared to be. It now warns.
+- **The formula interface mistranslated `Surv()` censoring codes.** `Surv()` uses `0/1/2/3` for right/event/left/interval against this package's `0/1/-1/2`, so left-censored rows were read as interval-censored. A genuine bug, now fixed with a regression test.
+
+**The supported way to express this model is `Surv(lo, hi, type = "interval2")` through the formula interface.** Exact events are `(t, t)`, right-censored `(t, NA)`, interval `(lo, hi)`. Do not use `time_lower`/`time_upper` for interval bounds.
+
+### Result
+
+| quantity | R | SAS | rel diff | outcome |
+|---|---|---|---|---|
+| `.lst` vs `outhaz` x4 | | | <= 3.6e-07 | **PASS** |
+| `events_conserved` | 77 | 77 | 0 | **PASS** |
+| THALF | 0.0122906 | 0.0123366 | 3.73e-03 | DIFFERS |
+| NU | 1.6884775 | 1.6857844 | 1.60e-03 | DIFFERS |
+| E0 | -2.2783753 | -2.2802330 | 8.15e-04 | DIFFERS |
+| C0 | -3.4853966 | -3.4853217 | 2.15e-05 | DIFFERS |
+
+Headline: largest relative discrepancy **3.73e-03**, against 3.05e-01 before the fix. At `mle_printed` tolerance `E0` and `C0` pass and `THALF`/`NU` do not; both tolerances are reported side by side rather than the tight one being loosened, as this plan requires.
+
+### RESOLVED: the log-likelihood difference is definitional
+
+R gives **-268.65** where SAS reports **-239.194**, at essentially the same parameters -- so the two disagree by close to a constant, not about the optimum. It is entirely the 5 interval rows:
+
+| treatment of the 5 rows | log-likelihood |
+|---|---|
+| exact events | -237.576 |
+| interval-censored (R) | -268.650 |
+| SAS | -239.194 |
+
+An interval contribution costs R about 6.2 per row, while SAS sits only 1.62 below the exact-event value. **SAS is therefore not evaluating `log P(interval)` for those rows.** Stable across `conserve` on/off, 1 and 5 starts, and the mathematically equivalent left-censored encoding -- all four give -268.6496 exactly.
+
+**Settled 2026-08-19 by decomposing the likelihood row by row.** The reconstruction reproduces R's objective exactly (-268.6496), so the decomposition is sound, and it gives:
+
+| | per row | x5 |
+|---|---|---|
+| R's interval contribution, `log(1 - S(t))` | -3.970273 | -19.851 |
+| what SAS's reported total implies | **+1.920852** | **+9.604** |
+| `log f(t)`, the exact-event density | **+1.919761** | **+9.599** |
+
+**SAS maximises the interval-censored likelihood but reports a log-likelihood in which those 5 rows enter as exact-event densities at the upper bound.** Both directions confirm it:
+
+- SAS's estimates match R's *interval* optimum (`NU` 1.6858 vs 1.6885) and are nowhere near R's exact-event optimum (`NU` 1.171), so SAS did not maximise the exact-event likelihood.
+- Recomposing R's log-likelihood at its own interval optimum with those rows as densities gives **-239.1995** against SAS's **-239.194** -- 0.0055 apart, 2.3e-05 relative, inside what the residual 4e-03 parameter difference explains.
+
+So the two numbers were never a disagreement about the fit; they are different quantities. R reports the objective it actually maximised. The parity document now computes both forms and shows the row-type decomposition, and does not run either through `compare_parity()` -- the `loglik` tolerance floor of 5e-04 presupposes identical parameters.
+
+The residual MLE gap has the same single cause.
+
+#### Confirmed independently 2026-08-20 on a second SAS reference
+
+`distributions/hz.dead_predim_avail_3grp.lst` is a genuinely independent test: a **different cohort** (SAS's `where g_root3 = 0`, which is this plan's `g_root3 == 1` — n = 112 with 27 events, matching the `.lst` on both counts), a **different model configuration** (`NU` fixed at 0 and `M` free, against the main model's `NU` free and `M` fixed), and **2 interval-censored rows** instead of 5.
+
+| reference | interval form | **density form** | SAS reports |
+|---|---|---|---|
+| main, n=291, 5 interval | off by 29.456 | **off by 0.005** | -239.1940 |
+| 3grp stratum, n=112, 2 interval | off by 11.780 | **off by 0.391** | -91.3489 |
+
+Both recompositions were evaluated by calling `predict()` at the exact times rather than interpolating, and the interval form reproduces R's own objective to five decimals in both cases, so the decomposition itself is verified rather than assumed. Parameters agree with SAS to 3.7e-03 and 5.2e-03 respectively.
+
+✅ **RESOLVED 2026-08-20 — the 3grp residual of 0.391 is a `TemporalHazard` defect, filed as [temporal_hazard#143](https://github.com/ehrlinger/temporal_hazard/issues/143).**
+
+The `cdf` phase's `nu -> 0` limit loses the early-phase tail when the half-life is short. Given SAS's converged shapes **pinned exactly**, R produces a hazard flat at the constant to within 1e-17 across the whole grid, while SAS's own nomogram (`graphs/hp.dead_predim_avail_prt3grp.lst`, PATIENT 1) has the early phase supplying most of the hazard at 30 days and decaying toward the constant over the following year. Against that nomogram R's survival differs by up to **7.6e-03** with a distinct shape — peaking near t = 1 — where the main model's differed by a near-constant 1.7e-04.
+
+That also explains the 70x: the main model has `nu` free and far from 0, so it never enters the affected branch, while the 3grp fit declares `nu = 0 fixnu`.
+
+**Knock-on worth remembering:** with the early phase contributing nothing, its `mu` is **unidentifiable** and nothing says so — the objective is unchanged whether the shapes are pinned at SAS's values or fitted, and the fitted early `mu` drifts 4e-03 while the constant phase's reproduces SAS's to six decimals.
+
+Two candidates were **ruled out** on the way, both recorded in [temporal_hazard#142](https://github.com/ehrlinger/temporal_hazard/issues/142): `fixed = "nu"` does match SAS's `fixnu` (R holds `nu` at exactly 0 and frees the same four parameters), and the `M = -exp(E4)` parameterization difference cannot explain a log-likelihood gap at matching parameter values — it bears on the vcov comparison only.
+
+<details>
+<summary><b>Historical — Task 7 while it was blocked, before TemporalHazard 1.2.1</b> (kept for the diagnosis chain; every current number is in the sections above)</summary>
+
+**Status at the time: Stage 2 did not reach parity, and could not until #136 was fixed.** Both documents were written and rendering; the blocker was named rather than worked around. Superseded by the result above once 1.2.1 landed.
+
+#### The blocker, as diagnosed before the fix
+
+`TemporalHazard` cannot fit an interval-censored multiphase model. Supplying `time_lower`/`time_upper` -- **even when both equal `time`, which is a mathematical no-op** -- drives the optimizer onto a flat plateau: a positive "objective" where a log-likelihood belongs, a singular Hessian, and `converged = TRUE`.
+
+| call | objective | rcond |
+|---|---|---|
+| vectors, no bounds, status 0/1 | **-237.5761** | 0.0673 |
+| vectors, bounds = `time` (no-op), status 0/1 | 54450.0674 | 0 |
+| vectors, bounds, status 0/1/2 | 50914.3488 | 0 |
+| `Surv(lo, hi, type = "interval2")` formula | 50914.3488 | 0 |
+
+The objective was byte-identical across the full cohort, the cohort with the 5 interval rows dropped, and the cohort with them recoded, while the coefficients ranged -169 to +261 with `control` alone. An objective that does not move when the data move is the response failing to reach the likelihood. Starting at SAS's own optimum did not help. Reproduced on public `avc` data (-210.5006 -> 49325.04) and filed. **Still present on `dev` after #131, which also reports version 1.2.0**, so the version string does not distinguish the builds.
+
+The fits therefore carry the 5 interval-censored deaths as exact events at the interval upper bound -- a different likelihood from SAS's.
+
+#### Result before the fix
+
+| | |
+|---|---|
+| `.lst` vs `outhaz` cross-check | **4 PASS** -- the two references agree, so no staleness between them |
+| `events_conserved` | PASS, 77 = 77 |
+| MLEs vs `outhaz` | **4 DIFFERS**, as they must: different model |
+| log-likelihood | **NOT COMPARABLE** |
+| headline | largest relative discrepancy 3.05e-01 |
+
+</details>
+
+### Corrections to the steps below
+
+- **`logLik()` has no method for class `hazard`.** Only `coef`, `predict`, `print`, `summary`, `vcov` exist. The log-likelihood is `fit$fit$objective`.
+- **`.hzr_read_lst()` returns raw lines**, not a parsed object. `.hzr_parse_sas_lst()` is the parser that returns `$fits`.
+- **`digits` in `compare_parity()` is DECIMAL PLACES, but SAS prints 7 SIGNIFICANT FIGURES.** The plan's flat `digits = 7` asserted a tolerance up to two orders of magnitude too tight and reported the two agreeing references as a disagreement. Derive it per value: `sig - 1 - floor(log10(abs(x)))`. With that, all four cross-checks pass, `THALF` at 4.49e-09 against a 5e-09 interval.
+- **`vcov()` returns a 5x5 including the FIXED parameter as an all-`NA` row and column**, so `rcond()` on it errors and `nrow(v_r) == nrow(v_s)` fails against SAS's 4x4. Read `rcond` and `pd` off `fit$fit`.
+- **R and SAS do not share a parameterization.** `outhaz` is ordered `THALF, NU, E0, C0` with `THALF` natural and `E0`/`C0` logged; R is `early.log_mu, early.log_t_half, early.nu, constant.log_mu`. The elementwise vcov comparison the step below asserts would need a delta-method Jacobian, and is deferred rather than attempted on the wrong fit.
+- **SAS parameterizes `m` on a signed log scale; R does not.** Verified 2026-08-20 to 7 significant figures on a 4-parameter fit: the `.lst`'s printed labels relate to the natural block by a plain `exp()` for `E2`->`THALF`, `E0`->`MUE` and `C0`->`MUC`, but by **`-exp(E4)`** for `M`. So SAS optimises `m` as `-exp(E4)`, constraining `m < 0` by construction, while `hazard()` optimises `early.m` naturally and unconstrained — the two optimizers are not searching the same space even when they agree on the model. This is a second reason the vcov comparison needs a Jacobian, and the sign matters. Asked upstream as [temporal_hazard#142](https://github.com/ehrlinger/temporal_hazard/issues/142); the same issue records that `fixed = "nu"` **was** verified equivalent to SAS's `fixnu` (R holds `nu` at exactly 0 and frees the same four parameters), so that candidate is ruled out.
+- **The log-likelihood must not go through `compare_parity()` while the models differ.** All three outcomes presuppose one shared likelihood; the run reported `R_BETTER`, which would read as R finding a better optimum when it had merely been given an easier problem. Reported outside the harness as NOT COMPARABLE and excluded from the headline.
+- **`theta` is positional**: `log(mu_early), log(t_half), nu, m, log(mu_constant)`, and includes the fixed parameter. The working call form also wants `maxit = 2000`.
+- A **guard asserting the objective is negative** is now in the analysis document. A "converged" log-likelihood of +50914 is impossible on its face and would have caught this immediately.
 
 **Files:**
 - Create: `<study>/analyses/R_hazard/qmd/02-hz-dead_pa.qmd`
@@ -1321,7 +1512,29 @@ Expected: `log_likelihood` PASS or `R_BETTER`; MLEs and vcov PASS.
 
 ---
 
-## Task 8: Stage 3 — nomogram and figures
+## Task 8: Stage 3 — nomogram and figures — DONE 2026-08-19, re-run against 1.2.1
+
+Both documents are written and render; all 13 nomogram rows joined and were compared. This stage consumes the stage-2 fit, so its residual tracks Task 7's rather than being independent of it.
+
+**Re-run against the fixed stage-2 fit (`TemporalHazard` 1.2.1): 25 PASS / 53 DIFFERS, headline 5.48e-04.** Before the fix it was 78/78 DIFFERS at 2.29e-01, so the nomogram code was never the problem.
+
+What remains is small and structured: the hazard quantities largely pass (8-9 of 13 each), while survival and both its confidence limits differ on all 13 times by a near-constant ~1.7e-04 -- just above the 5e-06 interval that 5 printed decimals allows. That is the residual stage-2 MLE difference propagating, and it should close when the log-likelihood question in Task 7 does.
+
+The **pattern** of the disagreement corroborates the stage-2 diagnosis rather than implicating the nomogram code:
+
+| time | quantity | R | SAS | abs diff |
+|---|---|---|---|---|
+| 0.0821 | hazard | 0.135299 | 0.16339 | 0.02809 |
+| 0.2500 | hazard | 0.045771 | 0.05577 | 0.01000 |
+
+The error is largest at the earliest times and in the hazard quantities, and shrinks with time. That is exactly where the 5 interval-censored deaths sit -- their interval is `[0, 0.002738]`, day 0 to day 1 -- so carrying them as exact events perturbs the early hazard most and washes out later. Re-run this stage once #136 is fixed; nothing else here should need to change.
+
+### Corrections to the steps below
+
+- **`predict()` requires the `newdata` column to be named `time`**, not `years`: it errors with *"'newdata' must contain a 'time' column"*. The saved frame still uses `years`, to match the published nomogram's `YEARS`.
+- **`digits = 5` is right here**, unlike Task 7. This `.lst` prints fixed-format to 5 decimal places, so decimal places and the tolerance agree; the significant-figures problem in Task 7 does not arise.
+- **The whole-project `quarto render` in Step 5 does not complete on this share.** It exits with `Directory not empty (os error 66)` while removing Quarto's own `<doc>_files/execute-results` intermediate, and it aborts partway rather than rendering all six. **Render one document at a time** -- that never trips it, and all six outputs are produced and current that way. Noted in `_quarto.yml`. This is a network-share limitation, not a defect in the documents; it is unrelated to the `df-print: paged` problem that comment already warned about, and unrelated to figures.
+- Task 6's join assertion was tightened at the same time: `stopifnot(nrow(j) > 0)` only catches a total failure, while a **partial** join silently shrinks the comparison and every surviving row still passes. It now asserts the join is complete on both sides (66 = 66 = 66).
 
 **Files:**
 - Create: `<study>/analyses/R_hazard/qmd/03-hp-dead_pa.qmd`
@@ -1331,7 +1544,7 @@ Expected: `log_likelihood` PASS or `R_BETTER`; MLEs and vcov PASS.
 - Consumes: `_output/02-hz-fits.rds` (Task 7).
 - Produces: `_output/03-hp-predictions.rds`, a data frame with columns `years`, `digital` (logical), `survival`, `surv_lower`, `surv_upper`, `hazard`, `haz_lower`, `haz_upper`.
 
-- [ ] **Step 1: Write the analysis document**
+- [x] **Step 1: Write the analysis document**
 
 `qmd/03-hp-dead_pa.qmd`:
 
@@ -1415,13 +1628,13 @@ hv_hazard(curves, x_col = "years", estimate_col = "hazard",
 ```
 ````
 
-- [ ] **Step 2: Render, complete the marked chunks, re-render**
+- [x] **Step 2: Render, complete the marked chunks, re-render**
 
 ```bash
 cd <study>/analyses/R_hazard && quarto render qmd/03-hp-dead_pa.qmd
 ```
 
-- [ ] **Step 3: Write the parity document**
+- [x] **Step 3: Write the parity document**
 
 `parity/03-hp-dead_pa-parity.qmd`:
 
@@ -1497,7 +1710,7 @@ cat(parity_headline(res_hp))
 ```
 ````
 
-- [ ] **Step 4: Render, complete, re-render**
+- [x] **Step 4: Render, complete, re-render**
 
 ```bash
 cd <study>/analyses/R_hazard && quarto render parity/03-hp-dead_pa-parity.qmd
@@ -1505,7 +1718,7 @@ cd <study>/analyses/R_hazard && quarto render parity/03-hp-dead_pa-parity.qmd
 
 `.hzr_parse_sas_nomogram()` was confirmed to return 13 rows on this `.lst`, despite it having no `MONTHS` column — the parser gap found in a prior study is fixed. If it returns zero rows, that is a parser-generality finding to fix upstream in `TemporalHazard`, not to work around here.
 
-- [ ] **Step 5: Render the whole project**
+- [x] **Step 5: Render the whole project**
 
 ```bash
 cd <study>/analyses/R_hazard && quarto render
@@ -1515,7 +1728,34 @@ Expected: all six documents render. This is the deliverable.
 
 ---
 
-## Task 9: generalise into `hvtiRtemplates`
+## Task 9: generalise into `hvtiRtemplates` — DONE 2026-08-19 (scope reduced)
+
+**Shipped as [hvtiRtemplates #13](https://github.com/ehrlinger/hvtiRtemplates/pull/13)**, version 1.0.1. 6 test expectations passing; `devtools::check()` 0 errors / 0 warnings / 2 NOTEs, both from a pre-existing git worktree under `.claude/worktrees/` that this package's `.Rbuildignore` does not exclude.
+
+### The premise below was wrong, and step 1 caught it
+
+This task opens "Two studies have now exercised these job shapes." They have not. lv_function's `analyses/R_hazard/` holds `01.ac.dead_JR.qmd` and `index.qmd` — **no `hz`, no `hp`**. So `ac` has two consumers and the other two have one each.
+
+**Only `ac` is templated.** `hz` and `hp` are deferred until a second study runs them, which is this plan's own rule ("once two studies have exercised them") applied to what the survey actually found. `inst/templates/README.md` records what is absent and why.
+
+### The two `ac` jobs also diverged architecturally
+
+| | lv_function | preserve_root |
+|---|---|---|
+| lines | 354 | 57 |
+| `EDIT:` markers | 9 | 0 |
+| root resolution | self-locating, standalone-renderable | project `_quarto.yml` |
+| data access | `read_built()`, `assert_cohort()`, `cohort_counts()` | `read_preserve_root()`, `assert_cohort_gate()` |
+
+lv_function's was already written for copying, and is the shape the template took.
+
+### The one substantive generalisation
+
+The cohort section offers two shapes, and the reason traces straight back to Task 1. `_study.yml` records the **study** cohort; a job analysing a filtered subset has a different N, so `assert_cohort()` gates the wrong number and passes while the job runs on a cohort nobody checked. preserve_root is exactly that: study 378/115/263, job 291/77/214. Shape A uses the package data contract; Shape B supplies the job's own filter and gate against the SAS reference.
+
+### Step 6's proof does not fully pass, by design
+
+A regenerated job differs from lv_function's at more than `EDIT:` lines. Beyond EDIT-region content there are four deliberate structural additions: the Shape A/B cohort block, `library(hvtiRutilities)` in setup (the source relied on the study's own `R/read_built.R`), the note that a 0/1 SAS flag arrives as `logical` while `hzr_kaplan()` needs numeric, and error-message wording. The criterion as worded assumes the template is an extraction; this one generalises.
 
 Two studies have now exercised these job shapes. What differs between them is the abstraction information; what is identical is the template.
 
