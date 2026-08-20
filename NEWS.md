@@ -1,5 +1,15 @@
+# hvtiRtemplates 1.0.2
+
+## Bug fixes
+
+- `.Rbuildignore` now excludes `.claude` and `.remember`, which hold session
+  tooling; `.claude` can also contain a git worktree. Their contents were
+  raising two NOTEs — hidden files, and non-portable paths over the tarball
+  length limit — neither of which is about the package. `.remember` was
+  invisible until `.claude` was excluded, because `R CMD check` reports every
+  hidden path in one NOTE.
+
 # hvtiRtemplates 1.0.1
-Version: 1.0.1
 
 ## New features
 
