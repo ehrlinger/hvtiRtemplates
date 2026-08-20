@@ -1175,7 +1175,20 @@ An interval contribution costs R about 6.2 per row, while SAS sits only 1.62 bel
 
 So the two numbers were never a disagreement about the fit; they are different quantities. R reports the objective it actually maximised. The parity document now computes both forms and shows the row-type decomposition, and does not run either through `compare_parity()` -- the `loglik` tolerance floor of 5e-04 presupposes identical parameters.
 
-The residual MLE gap has the same single cause. The early-phase parameters move most (`THALF` 3.7e-03, `NU` 1.6e-03, `E0` 8.1e-04) while the late constant `C0` agrees to 2.2e-05, and all 5 interval deaths fall at `t <= 0.002738`, the earliest times in the data. One cause, not two.
+The residual MLE gap has the same single cause.
+
+#### Confirmed independently 2026-08-20 on a second SAS reference
+
+`distributions/hz.dead_predim_avail_3grp.lst` is a genuinely independent test: a **different cohort** (SAS's `where g_root3 = 0`, which is this plan's `g_root3 == 1` — n = 112 with 27 events, matching the `.lst` on both counts), a **different model configuration** (`NU` fixed at 0 and `M` free, against the main model's `NU` free and `M` fixed), and **2 interval-censored rows** instead of 5.
+
+| reference | interval form | **density form** | SAS reports |
+|---|---|---|---|
+| main, n=291, 5 interval | off by 29.456 | **off by 0.005** | -239.1940 |
+| 3grp stratum, n=112, 2 interval | off by 11.780 | **off by 0.391** | -91.3489 |
+
+Both recompositions were evaluated by calling `predict()` at the exact times rather than interpolating, and the interval form reproduces R's own objective to five decimals in both cases, so the decomposition itself is verified rather than assumed. Parameters agree with SAS to 3.7e-03 and 5.2e-03 respectively.
+
+⚠️ **The 3grp residual of 0.391 is not fully explained.** It is 70x the main model's for a comparable parameter gap, so it is larger than the optimizer difference alone would suggest. Candidates not yet separated: SAS's `fixnu` may not be exactly R's `fixed = "nu"` on a `cdf` phase, and this stratum's early phase is very sharp (`THALF` about one day) with both interval rows sitting on the steepest part of the curve, where a small parameter difference moves the reported value most. The **direction** of the finding is not in doubt — the density form is one to two orders of magnitude closer than the interval form on both references — but the residual should not be quoted as though it were the 0.005 of the main model. The early-phase parameters move most (`THALF` 3.7e-03, `NU` 1.6e-03, `E0` 8.1e-04) while the late constant `C0` agrees to 2.2e-05, and all 5 interval deaths fall at `t <= 0.002738`, the earliest times in the data. One cause, not two.
 
 **Stage 2 does not reach parity, and will not until [temporal_hazard#136](https://github.com/ehrlinger/temporal_hazard/issues/136) is fixed.** Both documents are written and render; the blocker is named, not worked around.
 
