@@ -15,7 +15,8 @@ new_job(prefix, basename, dir = "qmd")
 \item{dir}{Directory to write into. Created if it does not exist.}
 }
 \value{
-The path written, invisibly.
+The path written, invisibly. Errors if the copy fails, so the
+  returned path always names a file that exists.
 }
 \description{
 Copies a supported job template into \code{dir}, named

@@ -1,4 +1,5 @@
 # hvtiRtemplates 1.0.1
+Version: 1.0.1
 
 ## New features
 
@@ -18,8 +19,6 @@
   `hz` and `hp` are deliberately absent: each exists in only one study, and a
   template extracted from a single example encodes that study's choices as
   though they were general.
-
-Version: 1.0.0
 
 # hvtiRtemplates 1.0.0
 
