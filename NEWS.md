@@ -10,7 +10,6 @@
   hidden path in one NOTE.
 
 # hvtiRtemplates 1.0.1
-Version: 1.0.1
 
 ## New features
 
