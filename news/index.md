@@ -1,5 +1,30 @@
 # Changelog
 
+## hvtiRtemplates 1.0.1
+
+Version: 1.0.1
+
+### New features
+
+- [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+  scaffolds an analysis job from a supported template, naming the file
+  `<prefix>.<basename>.qmd` and refusing to overwrite an existing job.
+
+- `inst/templates/ac.qmd` — the first supported job template, for
+  actuarial life tables. It carries its own `format:` block so that a
+  copied job renders standalone, resolves the project root itself so no
+  path needs editing, and marks every study-specific line `EDIT:`.
+
+  The cohort section offers two shapes, because the choice is not
+  cosmetic: a job analysing the whole study uses `assert_cohort()`,
+  while a job analysing a filtered subset must supply its own gate —
+  `_study.yml` records the study cohort, so `assert_cohort()` would pass
+  while the job ran on a cohort nobody checked.
+
+  `hz` and `hp` are deliberately absent: each exists in only one study,
+  and a template extracted from a single example encodes that study’s
+  choices as though they were general.
+
 ## hvtiRtemplates 1.0.0
 
 - Initial release.

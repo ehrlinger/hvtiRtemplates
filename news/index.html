@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,19 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.1" id="hvtirtemplates-101">hvtiRtemplates 1.0.1<a class="anchor" aria-label="anchor" href="#hvtirtemplates-101"></a></h2>
+<p>Version: 1.0.1</p>
+<div class="section level3">
+<h3 id="new-features-1-0-1">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-1"></a></h3>
+<ul><li><p><code><a href="../reference/new_job.html">new_job()</a></code> scaffolds an analysis job from a supported template, naming the file <code>&lt;prefix&gt;.&lt;basename&gt;.qmd</code> and refusing to overwrite an existing job.</p></li>
+<li>
+<p><code>inst/templates/ac.qmd</code> — the first supported job template, for actuarial life tables. It carries its own <code>format:</code> block so that a copied job renders standalone, resolves the project root itself so no path needs editing, and marks every study-specific line <code>EDIT:</code>.</p>
+<p>The cohort section offers two shapes, because the choice is not cosmetic: a job analysing the whole study uses <code>assert_cohort()</code>, while a job analysing a filtered subset must supply its own gate — <code>_study.yml</code> records the study cohort, so <code>assert_cohort()</code> would pass while the job ran on a cohort nobody checked.</p>
+<p><code>hz</code> and <code>hp</code> are deliberately absent: each exists in only one study, and a template extracted from a single example encodes that study’s choices as though they were general.</p>
+</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="hvtirtemplates-100">hvtiRtemplates 1.0.0<a class="anchor" aria-label="anchor" href="#hvtirtemplates-100"></a></h2>
 <ul><li><p>Initial release.</p></li>

@@ -22,6 +22,8 @@ templates-and-provenance design.
 
 ``` r
 template_list()
-#> [1] name   prefix folder file  
-#> <0 rows> (or 0-length row.names)
+#>   name prefix        folder
+#> 1   ac     ac distributions
+#>                                                              file
+#> 1 /home/runner/work/_temp/Library/hvtiRtemplates/templates/ac.qmd
 ```

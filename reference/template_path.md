@@ -22,5 +22,5 @@ The full path, as \`character(1)\`.
 
 ``` r
 try(template_path("hz"))
-#> Error : unknown template: hz. No templates are installed yet.
+#> Error : unknown template: hz. Available: ac
 ```
