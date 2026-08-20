@@ -1188,7 +1188,15 @@ The residual MLE gap has the same single cause.
 
 Both recompositions were evaluated by calling `predict()` at the exact times rather than interpolating, and the interval form reproduces R's own objective to five decimals in both cases, so the decomposition itself is verified rather than assumed. Parameters agree with SAS to 3.7e-03 and 5.2e-03 respectively.
 
-⚠️ **The 3grp residual of 0.391 is not fully explained.** It is 70x the main model's for a comparable parameter gap, so it is larger than the optimizer difference alone would suggest. Candidates not yet separated: SAS's `fixnu` may not be exactly R's `fixed = "nu"` on a `cdf` phase, and this stratum's early phase is very sharp (`THALF` about one day) with both interval rows sitting on the steepest part of the curve, where a small parameter difference moves the reported value most. The **direction** of the finding is not in doubt — the density form is one to two orders of magnitude closer than the interval form on both references — but the residual should not be quoted as though it were the 0.005 of the main model. The early-phase parameters move most (`THALF` 3.7e-03, `NU` 1.6e-03, `E0` 8.1e-04) while the late constant `C0` agrees to 2.2e-05, and all 5 interval deaths fall at `t <= 0.002738`, the earliest times in the data. One cause, not two.
+✅ **RESOLVED 2026-08-20 — the 3grp residual of 0.391 is a `TemporalHazard` defect, filed as [temporal_hazard#143](https://github.com/ehrlinger/temporal_hazard/issues/143).**
+
+The `cdf` phase's `nu -> 0` limit loses the early-phase tail when the half-life is short. Given SAS's converged shapes **pinned exactly**, R produces a hazard flat at the constant to within 1e-17 across the whole grid, while SAS's own nomogram (`graphs/hp.dead_predim_avail_prt3grp.lst`, PATIENT 1) has the early phase supplying most of the hazard at 30 days and decaying toward the constant over the following year. Against that nomogram R's survival differs by up to **7.6e-03** with a distinct shape — peaking near t = 1 — where the main model's differed by a near-constant 1.7e-04.
+
+That also explains the 70x: the main model has `nu` free and far from 0, so it never enters the affected branch, while the 3grp fit declares `nu = 0 fixnu`.
+
+**Knock-on worth remembering:** with the early phase contributing nothing, its `mu` is **unidentifiable** and nothing says so — the objective is unchanged whether the shapes are pinned at SAS's values or fitted, and the fitted early `mu` drifts 4e-03 while the constant phase's reproduces SAS's to six decimals.
+
+Two candidates were **ruled out** on the way, both recorded in [temporal_hazard#142](https://github.com/ehrlinger/temporal_hazard/issues/142): `fixed = "nu"` does match SAS's `fixnu` (R holds `nu` at exactly 0 and frees the same four parameters), and the `M = -exp(E4)` parameterization difference cannot explain a log-likelihood gap at matching parameter values — it bears on the vcov comparison only.
 
 **Stage 2 does not reach parity, and will not until [temporal_hazard#136](https://github.com/ehrlinger/temporal_hazard/issues/136) is fixed.** Both documents are written and render; the blocker is named, not worked around.
 
