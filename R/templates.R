@@ -3,46 +3,52 @@
 #' These templates are supported: they render, they are tested, and they are
 #' the intended starting point for a new analysis job.
 #'
-#' Returns zero rows until the templates are added in stage 3 of the
-#' templates-and-provenance design.
+#' A template is named \code{<NN.MM>-<prefix>.qmd} and lives in the taxonomy
+#' folder it scaffolds into, so \code{folder} and \code{ordinal} are read from
+#' the tree rather than looked up. \code{\link{hvti_taxonomy}} is a cross-check
+#' on that, enforced by the test suite, not a source for it.
 #'
-#' @return A data frame with columns `name`, `prefix`, `folder` and `file`.
+#' @return A data frame with columns \code{name}, \code{prefix}, \code{ordinal},
+#'   \code{folder} and \code{file}.
 #' @export
 #' @examples
 #' template_list()
 template_list <- function() {
   dir <- system.file("templates", package = "hvtiRtemplates")
   files <- if (nzchar(dir)) {
-    list.files(dir, pattern = "[.]qmd$", full.names = TRUE)
+    list.files(dir, pattern = "[.]qmd$", full.names = TRUE, recursive = TRUE)
   } else {
     character(0)
   }
-  name <- sub("[.]qmd$", "", basename(files))
-  prefix <- vapply(basename(files), .prefix_of, character(1), USE.NAMES = FALSE)
-  tx <- hvti_taxonomy()
+  fields <- do.call(rbind, lapply(basename(files), .template_fields))
+  if (is.null(fields)) {
+    fields <- data.frame(ordinal = character(0), prefix = character(0),
+                         stringsAsFactors = FALSE)
+  }
 
   data.frame(
-    name   = name,
-    prefix = prefix,
-    folder = tx$folder[match(prefix, tx$prefix)],
-    file   = files,
+    name    = sub("[.]qmd$", "", basename(files)),
+    prefix  = fields$prefix,
+    ordinal = fields$ordinal,
+    folder  = basename(dirname(files)),
+    file    = files,
     stringsAsFactors = FALSE
   )
 }
 
 #' Path to a supported template
 #'
-#' @param name Template name, e.g. `"hz"`. See [template_list()].
-#' @return The full path, as `character(1)`.
+#' @param prefix Analysis prefix, e.g. \code{"ac"}. See \code{\link{template_list}}.
+#' @return The full path, as \code{character(1)}.
 #' @export
 #' @examples
-#' try(template_path("hz"))
-template_path <- function(name) {
+#' try(template_path("ac"))
+template_path <- function(prefix) {
   tl <- template_list()
-  i <- match(name, tl$name)
+  i <- match(prefix, tl$prefix)
   if (is.na(i)) {
-    stop("unknown template: ", name,
-         if (nrow(tl)) paste0(". Available: ", paste(tl$name, collapse = ", "))
+    stop("unknown template: ", prefix,
+         if (nrow(tl)) paste0(". Available: ", paste(stats::na.omit(tl$prefix), collapse = ", "))
          else ". No templates are installed yet.",
          call. = FALSE)
   }

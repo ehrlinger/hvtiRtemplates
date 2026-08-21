@@ -7,15 +7,18 @@
 template_list()
 }
 \value{
-A data frame with columns `name`, `prefix`, `folder` and `file`.
+A data frame with columns \code{name}, \code{prefix}, \code{ordinal},
+  \code{folder} and \code{file}.
 }
 \description{
 These templates are supported: they render, they are tested, and they are
 the intended starting point for a new analysis job.
 }
 \details{
-Returns zero rows until the templates are added in stage 3 of the
-templates-and-provenance design.
+A template is named \code{<NN.MM>-<prefix>.qmd} and lives in the taxonomy
+folder it scaffolds into, so \code{folder} and \code{ordinal} are read from
+the tree rather than looked up. \code{\link{hvti_taxonomy}} is a cross-check
+on that, enforced by the test suite, not a source for it.
 }
 \examples{
 template_list()
