@@ -17,13 +17,17 @@
 #'
 #' @param prefix Job type: one of the prefixes reported by
 #'   \code{\link{template_list}}.
-#' @param endpoint The endpoint this job analyses, e.g. \code{"dead_pa"}.
+#' @param endpoint The endpoint this job analyses, e.g. \code{"dead_pa"}. Must
+#'   match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
+#'   \code{.} is reserved to the ordinal, so neither may appear here.
 #' @param type The analysis type the job's set belongs to, e.g. \code{"hz"}.
+#'   Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{endpoint}.
 #' @param dir The study root to write into. The taxonomy folder beneath it is
 #'   created if it does not exist.
 #'
-#' @return The path written, invisibly. Errors if the copy fails, so the
-#'   returned path always names a file that exists.
+#' @return The path written, invisibly. On any failure -- including one after
+#'   the copy, while substituting the set markers -- no file is left behind,
+#'   so a returned path always names a complete, correctly-declared job.
 #'
 #' @seealso \code{\link{template_list}}, \code{\link{template_path}}
 #'

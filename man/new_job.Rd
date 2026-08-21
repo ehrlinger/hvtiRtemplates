@@ -10,16 +10,20 @@ new_job(prefix, endpoint, type, dir = ".")
 \item{prefix}{Job type: one of the prefixes reported by
 \code{\link{template_list}}.}
 
-\item{endpoint}{The endpoint this job analyses, e.g. \code{"dead_pa"}.}
+\item{endpoint}{The endpoint this job analyses, e.g. \code{"dead_pa"}. Must
+match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
+\code{.} is reserved to the ordinal, so neither may appear here.}
 
-\item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.}
+\item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.
+Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{endpoint}.}
 
 \item{dir}{The study root to write into. The taxonomy folder beneath it is
 created if it does not exist.}
 }
 \value{
-The path written, invisibly. Errors if the copy fails, so the
-  returned path always names a file that exists.
+The path written, invisibly. On any failure -- including one after
+  the copy, while substituting the set markers -- no file is left behind,
+  so a returned path always names a complete, correctly-declared job.
 }
 \description{
 Copies a supported job template into the taxonomy folder it belongs to,
