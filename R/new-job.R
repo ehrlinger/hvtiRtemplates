@@ -35,6 +35,9 @@
 #' list.files(d, recursive = TRUE)
 #' unlink(d, recursive = TRUE)
 new_job <- function(prefix, endpoint, type, dir = ".") {
+  .check_field("endpoint", endpoint)
+  .check_field("type", type)
+
   tl <- template_list()
   valid <- sort(unique(stats::na.omit(tl$prefix)))
   if (!prefix %in% valid) {
@@ -57,6 +60,23 @@ new_job <- function(prefix, endpoint, type, dir = ".") {
   }
   .set_markers(out, endpoint, type)
   invisible(out)
+}
+
+# `endpoint` and `type` are written straight into the filename, which is
+# `-`-separated with the ordinal's `.` reserved to itself, so neither
+# character may appear in either field. Reject anything else that would
+# produce a filename the naming scheme cannot parse back: not length-1,
+# `NA`, or outside `[A-Za-z0-9_]+` -- which also excludes a leading `../`
+# that would otherwise write outside the taxonomy folder.
+.check_field <- function(arg, value) {
+  ok <- is.character(value) && length(value) == 1L && !is.na(value) &&
+    grepl("^[A-Za-z0-9_]+$", value)
+  if (!ok) {
+    stop("new_job(): `", arg, "` must be a single non-NA string matching ",
+         "'^[A-Za-z0-9_]+$' (it becomes a '-'-separated filename field, so '-' ",
+         "is reserved as the separator and '.' to the ordinal); got ",
+         paste(deparse(value), collapse = ", "), ".", call. = FALSE)
+  }
 }
 
 # Rewrite the template's ENDPOINT/TYPE declarations to the values `new_job()`

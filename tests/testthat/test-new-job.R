@@ -65,6 +65,25 @@ test_that("new_job errors when the template lacks the ENDPOINT/TYPE marker lines
   expect_error(new_job("zz", "dead_pa", "hz", dir = dir), "ENDPOINT")
 })
 
+test_that("new_job rejects endpoint/type shapes that would break the filename", {
+  # `-` is the field separator and `.` is reserved to the ordinal, so neither
+  # may appear in `endpoint` or `type`; both must also be a single non-NA
+  # string. Verified misbehaviour this guards against: "" collapses a field,
+  # NA writes the string "NA" into the path, character(0) recycles silently,
+  # a length-2 vector reaches `if()` and errors opaquely, "dead-pa" adds a
+  # fifth field, and "../esc" escapes the taxonomy folder.
+  dir <- tempfile("newjob-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  expect_error(new_job("ac", "", "hz", dir = dir), "endpoint")
+  expect_error(new_job("ac", "dead_pa", "", dir = dir), "type")
+  expect_error(new_job("ac", NA_character_, "hz", dir = dir), "endpoint")
+  expect_error(new_job("ac", character(0), "hz", dir = dir), "endpoint")
+  expect_error(new_job("ac", c("a", "b"), "hz", dir = dir), "endpoint")
+  expect_error(new_job("ac", "dead-pa", "hz", dir = dir), "endpoint")
+  expect_error(new_job("ac", "../esc", "hz", dir = dir), "endpoint")
+})
+
 test_that("new_job refuses an unknown prefix, naming the valid ones", {
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
