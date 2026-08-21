@@ -46,16 +46,21 @@ suppressPackageStartupMessages({
 })
 ```
 
-<!-- EDIT: the two values below. They name the SET this job belongs to, and
-     every artifact path in the document is computed from them, so no output
-     path below needs editing.
+<!-- The two values below are written by new_job() from the endpoint/type it
+     was called with, which are also the filename's first two fields. They
+     name the SET this job belongs to, and every artifact path in the
+     document is computed from them, so no output path below needs editing.
+
+     Do NOT hand-edit these declarations: the render-time guard below checks
+     them against this file's own name and stops if they disagree. To put
+     this job in a different set, call new_job() again with the new
+     endpoint/type rather than editing this copy in place.
 
      A set is keyed on (endpoint, analysis type), not on the endpoint alone.
      One endpoint is analysed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
      Two sets keyed on `dead_pa` alone would write their life tables to the
-     same file. Both values must match the corresponding fields in this file's
-     own name. -->
+     same file. -->
 
 ```{r}
 #| label: set
