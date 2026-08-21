@@ -108,12 +108,13 @@ file accumulates a study's edits.
 ## Git and versioning
 
 - **Never push to `main`.** Branch, open a PR, let the maintainer merge.
-- **`main` is protected by a GitHub ruleset, and nothing in this repo records that.**
-  A clone shows no trace of it, so it is stated here. The ruleset is named `protect main`,
-  is identical across all twelve hvtiverse repositories, and enforces four rules on the
-  default branch: no deletion, no force-push, pull-request-only, and an **automatic Copilot
-  code review** on every PR. A direct push to `main` is rejected by the server — that is the
-  ruleset, not a local hook, and the fix is to branch, never to force past it.
+- **`main` is protected by a GitHub ruleset, and nothing in this repo records that.** A clone
+  shows no trace of it, so it is stated here. The ruleset is named `protect main`, is
+  identical across all twelve repositories in the HVTI R package family, and enforces four
+  rules on the default branch: no deletion, no force-push, pull-request-only, and an
+  **automatic Copilot code review** on every PR. A direct push to `main` is rejected by the
+  server — that is the ruleset, not a local hook, and the fix is to branch, never to force
+  past it.
   ⚠️ It currently requires **zero approvals**. `require_code_owner_review` is set but inert
   because no repository in the family has a `CODEOWNERS` file, so a PR can merge unreviewed.
   Adding `CODEOWNERS` makes that flag live and changes who can merge what.
