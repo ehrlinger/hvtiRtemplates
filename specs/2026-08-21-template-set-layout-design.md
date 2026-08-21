@@ -54,7 +54,8 @@ beneath them**. Within any folder:
 ├── analyses/       dead_pa-04.01-hm.qmd
 ├── estimates/                                      dead_pa/ac.rds
 ├── graphs/         dead_pa-05.01-hp.qmd            dead_pa/hp-fig1.png
-└── documents/      manuscript.qmd
+├── documents/      manuscript.qmd
+└── parity/         dead_pa-03.01-ac-parity.qmd     dead_pa/ac-diff.csv
 ```
 
 Each folder's shape *follows from* the rule rather than being declared:
@@ -144,6 +145,45 @@ matches the folder the template sits in. Drift becomes a red test rather than a
 discovery. This is the same move that made the taxonomy data instead of a README
 table, and for the same reason: the README table drifted.
 
+### 5.1 Parity jobs
+
+A migration study pairs each job with a comparison job checking the R result
+against the SAS reference. These live in a **top-level `parity/` folder** that
+obeys the same rule as every other — authored files flat, generated comparison
+output under `<endpoint>/`:
+
+```
+parity/   dead_pa-03.01-ac-parity.qmd      dead_pa/ac-diff.csv
+```
+
+**`parity/` is deliberately not a taxonomy folder, and parity is not a prefix.**
+The taxonomy is the vocabulary of templatable job types, and parity is neither
+templatable nor a type:
+
+- **It is a modality of an existing job, not a job.** It is 1:1 with the job it
+  checks and optional — "a future job with no SAS counterpart simply has no file
+  in `parity/`". A prefix names one slot, but a study needs parity of `ac`, of
+  `hz` and of `hp`. One prefix cannot express "parity of X".
+- **It will probably never be templated.** The `preserve_root` design records
+  that `lv_function`'s parity pass "transfers to none of these" — different
+  likelihood branch, conservation path and sample-size regime. `AGENTS.md`'s
+  two-studies gate would never open. Parity jobs are hand-written per study,
+  which makes this a layout convention rather than anything `new_job()` touches.
+- **It is transient.** It exists to retire SAS. Keeping it in one directory
+  makes the eventual cleanup a single delete rather than a sweep across five
+  analysis folders, and keeps migration scaffolding out of the permanent tree.
+
+**A parity job borrows the ordinal of the job it checks** — `dead_pa-03.01-ac-parity`
+against `dead_pa-03.01-ac`, as `preserve_root` already does. So parity adds no row
+to the table in §5. Giving it a seventh major would be actively wrong: parity runs
+interleaved with the chain, immediately after the job it checks, not appended
+after all of them.
+
+**The `-parity` suffix stays**, redundant with the folder name though it is.
+Without it the parity file and its analysis job have identical filenames, and a
+study author has two editor tabs both reading `dead_pa-03.01-ac.qmd` with nothing
+to tell them apart. Same reason the endpoint is in the filename.
+
 ## 6. The endpoint is declared, not derived
 
 A scaffolded job declares its endpoint once, as an `EDIT:` marker near the top,
@@ -194,8 +234,12 @@ Only the layout and naming, applied to the one template that exists.
 exercised today: `inst/templates/` holds only `ac.qmd`, and `hz` and `hp` are
 deliberately absent until a second study has run them. Building the plural now
 would ship an untested multi-job path against templates that do not exist. It
-gets its own spec once they land, which the parity work in progress may make
-soon.
+gets its own spec once they land.
+
+The `preserve_root` work in progress is what opens that gate — but via its
+**analysis** jobs, not its parity pass. `preserve_root` is the second study to
+run `ac`, `hz` and `hp`, which is what satisfies `AGENTS.md`'s two-studies rule.
+Its parity jobs satisfy nothing, for the reasons in §5.1.
 
 ## 9. Open — not decided here
 
@@ -212,13 +256,6 @@ soon.
   `distributions` and `analyses` is covariates. `hz` fits the hazard shape
   unadjusted; `hm` is "risk factor analysis; builds on the HZ fit". `ac` and `hz`
   are the same curve by different machinery, which is why `hp` overlays them.
-- **Where parity jobs live.** `preserve_root` pairs each job with a comparison
-  job — `qmd/01-ac-dead_pa.qmd` beside `parity/01-ac-dead_pa-parity.qmd`.
-  `parity` is not a taxonomy folder, and this design gives it no home. The
-  candidates are a seventh top-level folder following the same rule
-  (`parity/dead_pa-03.01-ac.qmd`), a prefix of its own in the taxonomy, or a
-  suffix colocating it with the job it checks. **This must be settled before the
-  parity set lands**, which is imminent.
 - **`estimates/` is not in the taxonomy.** This design uses it as a first-class
   artifact directory, and `preserve_root`'s tree has one, but `hvti_taxonomy()`
   has no `estimates` row — its six folders are `datasets`, `descriptive`,
