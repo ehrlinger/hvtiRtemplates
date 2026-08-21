@@ -90,3 +90,37 @@ test_that("within a folder, ordinal minors follow taxonomy row order", {
                  info = paste("minors out of taxonomy order in", f))
   }
 })
+
+test_that("the within-folder ordering rule itself can fail, on a synthetic pair", {
+  # The check above is structurally unable to fail while only one template is
+  # installed: order() on a length-1 vector always returns 1, so that assertion
+  # holds regardless of what ordinal or prefix contain. This block exercises the
+  # same rule -- ordinal order must track taxonomy row order -- against a small
+  # hand-built frame standing in for two templates in one folder, so a broken
+  # rule is caught now rather than only once a second `distributions` template
+  # actually lands.
+  tx <- hvti_taxonomy()
+  # `ac` and `hz` are both real `distributions` prefixes; `ac` sits earlier in
+  # hvti_taxonomy() row order, so the expected minor order below is derived from
+  # match(), not hard-coded, and stays correct if the taxonomy is reordered.
+  expected_order <- order(match(c("ac", "hz"), tx$prefix))
+
+  # Shaped like template_list()'s output: two rows standing in for two
+  # `distributions` templates.
+  ok <- data.frame(
+    name    = c("03.01-ac", "03.02-hz"),
+    prefix  = c("ac", "hz"),
+    ordinal = c("03.01", "03.02"),
+    folder  = c("distributions", "distributions"),
+    file    = c("ac.qmd", "hz.qmd"),
+    stringsAsFactors = FALSE
+  )
+  # Positive: minors agree with taxonomy row order.
+  expect_equal(order(ok$ordinal), expected_order)
+
+  # Negative: same two rows, minors swapped so ordinal order contradicts
+  # taxonomy row order -- the rule must detect this, not pass it silently.
+  bad <- ok
+  bad$ordinal <- rev(bad$ordinal)
+  expect_false(identical(order(bad$ordinal), expected_order))
+})
