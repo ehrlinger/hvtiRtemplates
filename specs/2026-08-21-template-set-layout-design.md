@@ -4,6 +4,9 @@
 **Status:** design, approved in outline. No code has been changed by this note.
 **Scope:** stage 1 only — the layout and naming convention, applied to the one
 template that exists. `new_job_set()` is deferred to its own spec.
+**Reach:** §§1–4 and 6–10 are local to this package. **§5.2 is normative for the
+whole hvtiverse** — it fixes where every package ships its parity machinery, and
+it is documented rather than enforced.
 **Supersedes:** nothing. Extends the layout sketch in
 `2026-08-18-preserve-root-predim-avail-parity-design.md` §3.
 
@@ -184,6 +187,54 @@ Without it the parity file and its analysis job have identical filenames, and a
 study author has two editor tabs both reading `dead_pa-03.01-ac.qmd` with nothing
 to tell them apart. Same reason the endpoint is in the filename.
 
+### 5.2 The package side of parity, across the hvtiverse
+
+§5.1 places the parity *jobs*, which live in the study. The parity *machinery* —
+the parsers that read the SAS reference output — lives in whichever package owns
+the functions being checked. Today that is `TemporalHazard`. It will not stay
+that way: parity work is already anticipated against other hvtiverse packages,
+so the shape has to be settled before it is copied rather than after.
+
+**Only `temporal_hazard` implements it today.** A survey of all twelve hvtiverse
+repositories found `inst/sas-parity/` in exactly one of them. The convention
+therefore exists in a single place and is about to be copied eleven times, which
+is the moment to write it down.
+
+**The convention has three parts:**
+
+| part | path | why |
+|---|---|---|
+| the helper | `inst/sas-parity/helper-sas-parity.R` | ships with the installed package |
+| the shim | `tests/testthat/helper-sas-parity.R` | preserves testthat's auto-sourcing |
+| the reach | `system.file("sas-parity", ..., package = "<pkg>")` | how a study or sibling package loads it |
+
+**Why `inst/` and not `tests/`.** `R CMD INSTALL` skips `tests/` unless
+`--install-tests` is passed, so parsers kept there are unreachable after a plain
+`install.packages()` or `remotes::install_github()`. A downstream study checking
+its own SAS output against them had no route short of cloning the repository.
+Everything under `inst/` installs unconditionally. This rationale is currently
+recorded only in the header of `temporal_hazard`'s shim; it is reproduced here
+because it is the part that will otherwise be lost and rediscovered.
+
+**Why the shim rather than sourcing from `inst/` in each test file.** testthat
+auto-sources `tests/testthat/helper-*.R`. Keeping a shim there means test files
+see the parser functions exactly as they did when the parsers lived in `tests/`,
+and no test file had to change when they moved.
+
+**The filename is uniform across packages.** Every package uses
+`helper-sas-parity.R`; `system.file(..., package = )` disambiguates, so there is
+no collision to design around and no per-package naming scheme to remember.
+
+**The folder is `sas-parity`, named for what it compares against.** Not `parity`.
+The reference is SAS, the comparison is transient, and a name that says so ages
+better than one that does not.
+
+**This convention is not enforceable from here.** `hvtiRtemplates` has no reach
+into another repository's CI, so a package can diverge from this section without
+anything going red. That is the same prose-drifts-from-code failure that produced
+`hvti_taxonomy()` and `check-spec-counts.py`, and stating the convention does not
+fix it — see §9.
+
 ## 6. The endpoint is declared, not derived
 
 A scaffolded job declares its endpoint once, as an `EDIT:` marker near the top,
@@ -272,6 +323,12 @@ Its parity jobs satisfy nothing, for the reasons in §5.1.
   misremembered every time, renaming it is cheaper than correcting it — but it
   is a taxonomy edit and a behaviour change for any study already using the
   folder.
+- **§5.2 has no teeth.** The package-side parity convention is documented and
+  unenforced. Options, in ascending cost: a shared reusable workflow each repo
+  calls; a test in `hvtiverse` asserting every member package's parity layout; or
+  a scaffold shipped from here that a package author copies rather than
+  reconstructs. Worth deciding before the second package implements parity, since
+  after that the divergence already exists.
 - **The taxonomy `folder` column conflates two things.** `distributions`,
   `descriptive` and `analyses` classify by analysis *type*; `datasets`,
   `estimates`, `graphs` and `documents` classify by artifact *kind*. Under this
