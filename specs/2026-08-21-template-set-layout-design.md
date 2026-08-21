@@ -37,28 +37,45 @@ The convention real work converged on is the one the package does not produce.
 ## 2. What a template set is
 
 **A template set is an ordered chain of job templates instantiated for one
-endpoint.** The endpoint is the unit a study author works through to completion;
-the order is what makes the workflow reproducible. Everything below follows from
-those two facts.
+(endpoint, analysis type) pair.** The pair is the unit a study author works
+through to completion; the order is what makes the workflow reproducible.
+Everything below follows from those two facts.
+
+**The endpoint alone is not the unit, and this is not a refinement — it is a
+correctness requirement.** One endpoint is analysed by several methods: death by
+parametric hazard (`hz`), death by random-forest survival (`rfs`), death under
+competing risks (`ce`), and longitudinal `rfsrc` work arriving soon. The
+divergent jobs stay distinct because each method has its own prefix. The *shared
+upstream* does not: a death-hazard set and a death-RFS set both begin from the
+same Kaplan-Meier life table, and keyed on endpoint alone both would be
+`dead_pa-03.01-ac.qmd`. Two sets, one filename.
+
+So the type is carried by **every** job in a set, not only by the divergent one.
+This duplicates the shared upstream — `ac` runs once per set rather than once
+per endpoint — which is a real cost, accepted because the alternative makes the
+type field optional and the naming rule conditional. A uniformly named,
+self-contained set is worth one repeated life table.
 
 ## 3. The layout rule
 
 Jobs live under the canonical taxonomy folders, and **never more than one layer
 beneath them**. Within any folder:
 
-> **Authored files sit flat. Generated artifacts sit under `<endpoint>/`.**
+> **Authored files sit flat. Generated artifacts sit under `<set>/`,**
+> where `<set>` is `<endpoint>-<type>`.
 
 ```
 <study_root>/
 ├── _quarto.yml
 ├── datasets/       01.01-bd.qmd                    built.rds
-├── descriptive/    dead_pa-02.01-dc.qmd
-├── distributions/  dead_pa-03.01-ac.qmd   dead_pa-03.02-hz.qmd
-├── analyses/       dead_pa-04.01-hm.qmd
-├── estimates/                                      dead_pa/ac.rds
-├── graphs/         dead_pa-05.01-hp.qmd            dead_pa/hp-fig1.png
+├── descriptive/    dead_pa-hz-02.01-dc.qmd
+├── distributions/  dead_pa-hz-03.01-ac.qmd    dead_pa-hz-03.02-hz.qmd
+│                   dead_pa-rfs-03.01-ac.qmd
+├── analyses/       dead_pa-hz-04.01-hm.qmd    dead_pa-rfs-04.19-rfs.qmd
+├── estimates/                                 dead_pa-hz/ac.rds
+├── graphs/         dead_pa-hz-05.01-hp.qmd    dead_pa-hz/hp-fig1.png
 ├── documents/      manuscript.qmd
-└── parity/         dead_pa-03.01-ac-parity.qmd     dead_pa/ac-diff.csv
+└── parity/         dead_pa-hz-03.01-ac-parity.qmd  dead_pa-hz/ac-diff.csv
 ```
 
 Each folder's shape *follows from* the rule rather than being declared:
@@ -66,7 +83,7 @@ Each folder's shape *follows from* the rule rather than being declared:
 because it holds only artifacts, `graphs/` shows both because it holds both.
 
 **Why the asymmetry is right.** Authored files are few, named, and
-hand-navigated; a study has two or three `.qmd` per endpoint in a folder. Generated
+hand-navigated; a study has two or three `.qmd` per set in a folder. Generated
 artifacts are many, machine-named, and swept; one `hp` job emits a dozen figures.
 An endpoint directory earns its keep at twenty `.png` and costs more than it
 returns at two `.qmd`.
@@ -76,14 +93,14 @@ canonical data used throughout the study; `documents/` holds the deliverable.
 Neither is endpoint-specific, so neither gets the subdivision.
 
 **The set fragments across folders, and that is acceptable**, because the
-ordinal is global to the set rather than per-folder. `dead_pa-05.01-hp.qmd`
-announces itself as a later step than `dead_pa-03.02-hz.qmd` despite sitting in a
+ordinal is global to the set rather than per-folder. `dead_pa-hz-05.01-hp.qmd`
+announces itself as a later step than `dead_pa-hz-03.02-hz.qmd` despite sitting in a
 different directory, and `ls */dead_pa-*` recovers the whole chain in order.
 
 **This preserves the existing root-resolution idiom.** Every authored job is
 exactly one level below the study root, so `ac.qmd`'s
 `.root <- if (file.exists("_quarto.yml")) "." else ".."` still resolves
-correctly and needs no change. Only `estimates/<endpoint>/` is two deep, and
+correctly and needs no change. Only `estimates/<set>/` is two deep, and
 nothing renders from there. An earlier draft of this design nested source by
 endpoint as well; that would have broken the idiom in every template, and
 flattening the source removed the cost entirely.
@@ -93,19 +110,26 @@ flattening the source removed the cost entirely.
 | thing | shape | example |
 |---|---|---|
 | template | `inst/templates/<folder>/<NN.MM>-<prefix>.qmd` | `inst/templates/distributions/03.01-ac.qmd` |
-| scaffolded job | `<folder>/<endpoint>-<NN.MM>-<prefix>.qmd` | `distributions/dead_pa-03.01-ac.qmd` |
-| artifact | `<kind>/<endpoint>/<prefix>.<ext>` | `estimates/dead_pa/ac.rds` |
+| scaffolded job | `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd` | `distributions/dead_pa-hz-03.01-ac.qmd` |
+| artifact | `<kind>/<endpoint>-<type>/<prefix>.<ext>` | `estimates/dead_pa-hz/ac.rds` |
 
-**The endpoint leads the job filename.** In a flat folder holding several
-endpoints, leading with the endpoint keeps each set contiguous under `ls` and
-orders steps within it — recovering in a filename what the endpoint subdirectory
-would otherwise have bought. Leading with the ordinal instead would group by
-workflow stage across endpoints, which answers a question study authors ask less
-often.
+Four fields, `-` separated, with `.` reserved for inside the ordinal:
+**endpoint, type, ordinal, prefix.**
 
-**A template never carries an endpoint.** It is supplied at scaffold time, and
-`AGENTS.md`'s "templates carry no study identifiers" applies to the name as much
-as to the contents.
+**The endpoint leads, the type follows it.** In a flat folder holding several
+sets, leading with the endpoint keeps all of one endpoint's work contiguous under
+`ls`, and the type then splits it by method — recovering in a filename what a
+subdirectory would otherwise have bought. Leading with the type instead would
+group by method across endpoints, which suits building one method over many
+endpoints rather than working an endpoint through to completion.
+
+**The type is a separate field, not joined to the endpoint.** `dead_pa` already
+contains an underscore, so `dead_pa_hz` marks no boundary a reader or a regex can
+find. A `-` delimited field does.
+
+**A template carries neither endpoint nor type.** Both are supplied at scaffold
+time, and `AGENTS.md`'s "templates carry no study identifiers" applies to the name
+as much as to the contents.
 
 ## 5. The ordinal
 
@@ -153,10 +177,10 @@ table, and for the same reason: the README table drifted.
 A migration study pairs each job with a comparison job checking the R result
 against the SAS reference. These live in a **top-level `parity/` folder** that
 obeys the same rule as every other — authored files flat, generated comparison
-output under `<endpoint>/`:
+output under `<set>/`:
 
 ```
-parity/   dead_pa-03.01-ac-parity.qmd      dead_pa/ac-diff.csv
+parity/   dead_pa-hz-03.01-ac-parity.qmd      dead_pa-hz/ac-diff.csv
 ```
 
 **`parity/` is deliberately not a taxonomy folder, and parity is not a prefix.**
@@ -176,15 +200,15 @@ templatable nor a type:
   makes the eventual cleanup a single delete rather than a sweep across five
   analysis folders, and keeps migration scaffolding out of the permanent tree.
 
-**A parity job borrows the ordinal of the job it checks** — `dead_pa-03.01-ac-parity`
-against `dead_pa-03.01-ac`, as `preserve_root` already does. So parity adds no row
+**A parity job borrows the ordinal of the job it checks** — `dead_pa-hz-03.01-ac-parity`
+against `dead_pa-hz-03.01-ac`, as `preserve_root` already does. So parity adds no row
 to the table in §5. Giving it a seventh major would be actively wrong: parity runs
 interleaved with the chain, immediately after the job it checks, not appended
 after all of them.
 
 **The `-parity` suffix stays**, redundant with the folder name though it is.
 Without it the parity file and its analysis job have identical filenames, and a
-study author has two editor tabs both reading `dead_pa-03.01-ac.qmd` with nothing
+study author has two editor tabs both reading `dead_pa-hz-03.01-ac.qmd` with nothing
 to tell them apart. Same reason the endpoint is in the filename.
 
 ### 5.2 The package side of parity, across the hvtiverse
@@ -241,10 +265,12 @@ A scaffolded job declares its endpoint once, as an `EDIT:` marker near the top,
 and computes its artifact paths from it:
 
 ```r
-# EDIT: the endpoint this job analyses. Names the directory its estimates and
-# figures are written to, so no output path below needs editing. Must match the
-# endpoint field in this file's own name.
+# EDIT: the endpoint this job analyses, and the analysis type it belongs to.
+# Together they name the set. Their pair names the directory this job's estimates
+# and figures are written to, so no output path below needs editing. Both must
+# match the corresponding fields in this file's own name.
 ENDPOINT <- "dead_pa"
+TYPE     <- "hz"
 ```
 
 Deriving it from the path instead would be free but fragile — it breaks the
@@ -266,10 +292,12 @@ Only the layout and naming, applied to the one template that exists.
    `tp.`, reject a first field over five characters) exists only because legacy
    names were unstructured. The new name is fully structured, so a regex over
    `^(\d{2})\.(\d{2})-(.+)$` replaces the heuristic and the guesswork with it.
-4. **`new_job()`** — write `<dir>/<folder>/<endpoint>-<NN.MM>-<prefix>.qmd`.
+4. **`new_job()`** — write
+   `<dir>/<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd`, taking `type` as an
+   argument alongside `endpoint`.
    Keep the refusal to overwrite: a job file accumulates a study's edits.
-5. **`ac.qmd`** — add the `ENDPOINT` marker and route outputs through
-   `estimates/<endpoint>/`.
+5. **`ac.qmd`** — add the `ENDPOINT` and `TYPE` markers and route outputs
+   through `estimates/<endpoint>-<type>/`.
 6. **`.lintr`** — the file key becomes
    `inst/templates/distributions/03.01-ac.qmd`. It must stay a file key: a
    directory key excludes every linter on the path wholesale and silently.
