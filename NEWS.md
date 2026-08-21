@@ -23,10 +23,23 @@
   contained one.
 - The `ac` template declares its set with `ENDPOINT` and `TYPE` markers and
   resolves artifact paths from them, so a scaffolded job needs no output path
-  edited by hand.
+  edited by hand. `new_job()` now substitutes the caller's `endpoint`/`type`
+  into those declarations after copying the template, so a scaffolded job's
+  body agrees with its own filename instead of still naming the template's
+  placeholder set. The template itself checks this at render time — comparing
+  its `ENDPOINT`/`TYPE` declarations against `knitr::current_input()` — and
+  errors if they disagree, because a mismatch resolves `set_path()` into
+  another set's artifact directory silently. The check is a no-op outside a
+  knitr render, so editing the file interactively in RStudio is unaffected.
+- `new_job()` validates `endpoint` and `type`: each must be a single non-`NA`
+  string matching `^[A-Za-z0-9_]+$`, since `-` is the filename's field
+  separator and `.` is reserved to the ordinal. This also rejects a leading
+  `../` that would otherwise escape the taxonomy folder.
 - New tests cross-check every template's ordinal against `hvti_taxonomy()` —
   the major against the folder it sits in, and the minors against row order
-  within that folder.
+  within that folder — and assert that no two templates share a prefix, since
+  `template_path()` and `new_job()` both resolve with `match()`, which takes
+  the first hit silently.
 
 # hvtiRtemplates 1.0.2
 
