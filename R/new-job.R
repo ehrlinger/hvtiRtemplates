@@ -98,13 +98,18 @@ new_job <- function(prefix, endpoint, type, dir = ".") {
 # Each line is required to appear exactly once: a template whose markers moved
 # or were removed must fail loudly here rather than hand back a job that looks
 # scaffolded but silently kept the template's placeholder values.
+#
+# Requires `endpoint` and `type` to already be validated by .check_field():
+# they are interpolated straight into an R string literal with no escaping,
+# so an unvalidated `"` or `\` would emit a syntactically broken job. A future
+# caller (a planned `new_job_set()`) must run .check_field() first too.
 .set_markers <- function(path, endpoint, type) {
   txt <- readLines(path, warn = FALSE)
 
-  i_endpoint <- grep("^ENDPOINT <- ", txt)
+  i_endpoint <- grep("^ENDPOINT\\s+<- ", txt)
   if (length(i_endpoint) != 1L) {
     stop("new_job(): '", path, "' has ", length(i_endpoint), " lines matching ",
-         "'^ENDPOINT <- ', expected exactly 1; cannot substitute the set markers.",
+         "'^ENDPOINT\\\\s+<- ', expected exactly 1; cannot substitute the set markers.",
          call. = FALSE)
   }
   i_type <- grep("^TYPE\\s+<- ", txt)
