@@ -72,11 +72,17 @@ imports this file.
 
 ## Template naming
 
-A template file is `<prefix>.qmd`, and `.prefix_of()` derives the prefix from the filename.
-It drops a leading legacy `tp.` field if present, and treats a first field longer than five
-characters as "no prefix" and returns `NA`. Prefixes come from `hvti_taxonomy()`. `new_job()`
-writes `<prefix>.<basename>.qmd` and **refuses to overwrite an existing job**, because a job
-file accumulates a study's edits.
+A template file is `<NN.MM>-<prefix>.qmd` and lives in the taxonomy folder it scaffolds into
+— e.g. `inst/templates/distributions/03.01-ac.qmd`. `.template_fields()` parses the name by
+pattern, not by splitting on `.`: that character is both a field separator inside the ordinal
+and the extension separator, so a split-based parser cannot tell the two apart. Prefixes come
+from `hvti_taxonomy()`.
+
+`new_job(prefix, endpoint, type, dir)` writes `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd`
+and **refuses to overwrite an existing job**, because a job file accumulates a study's edits.
+`endpoint` and `type` name the `(endpoint, analysis type)` set the job belongs to; both are
+required and both are restricted to `[A-Za-z0-9_]+`, because `-` is the filename's field
+separator and `.` is reserved to the ordinal.
 
 ## Gotchas
 
