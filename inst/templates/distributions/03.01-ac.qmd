@@ -74,7 +74,11 @@ TYPE     <- "hz"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  .fields <- strsplit(sub("[.]qmd$", "", .current), "-", fixed = TRUE)[[1L]]
+  # Quarto knits through an intermediate, so `knitr::current_input()` returns
+  # `...-03.01-ac.rmarkdown` here, not `...-03.01-ac.qmd`. Strip whatever
+  # extension is actually present rather than hard-coding one, so this
+  # doesn't depend on a build-tool detail staying the same.
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
   .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
