@@ -58,7 +58,16 @@ new_job <- function(prefix, endpoint, type, dir = ".") {
   if (!file.copy(tl$file[[i]], out, overwrite = FALSE)) {
     stop("new_job(): failed to write '", out, "'.", call. = FALSE)
   }
+  # A job file named for one set but declaring another is exactly the defect
+  # the marker substitution below exists to prevent, so it must not survive
+  # the failure that produced it. Remove the copy on any error past this
+  # point -- otherwise a retry after a fixed template hits the
+  # refuse-to-overwrite guard above and reports "already exists", pointing at
+  # the wrong cause.
+  ok <- FALSE
+  on.exit(if (!ok) unlink(out), add = TRUE)
   .set_markers(out, endpoint, type)
+  ok <- TRUE
   invisible(out)
 }
 

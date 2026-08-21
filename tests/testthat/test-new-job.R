@@ -63,6 +63,13 @@ test_that("new_job errors when the template lacks the ENDPOINT/TYPE marker lines
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   expect_error(new_job("zz", "dead_pa", "hz", dir = dir), "ENDPOINT")
+
+  # The failure is after the copy, so the defect Finding 1 exists to prevent
+  # -- a job named for one set but declaring the template's placeholder set
+  # -- must not survive: the partially-written file must be gone, not just
+  # the error raised.
+  out <- file.path(dir, "distributions", "dead_pa-hz-01.01-zz.qmd")
+  expect_false(file.exists(out))
 })
 
 test_that("new_job rejects endpoint/type shapes that would break the filename", {
