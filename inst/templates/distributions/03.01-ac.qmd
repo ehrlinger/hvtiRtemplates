@@ -46,6 +46,42 @@ suppressPackageStartupMessages({
 })
 ```
 
+<!-- EDIT: the two values below. They name the SET this job belongs to, and
+     every artifact path in the document is computed from them, so no output
+     path below needs editing.
+
+     A set is keyed on (endpoint, analysis type), not on the endpoint alone.
+     One endpoint is analysed by several methods -- parametric hazard, random
+     forest survival, competing risks -- and those chains share their upstream.
+     Two sets keyed on `dead_pa` alone would write their life tables to the
+     same file. Both values must match the corresponding fields in this file's
+     own name. -->
+
+```{r}
+#| label: set
+ENDPOINT <- "dead_pa"
+TYPE     <- "hz"
+
+# Resolve a path inside this set's artifact directory. `kind` is the artifact
+# folder -- "estimates" for serialized results, "graphs" for figures. The set
+# directory sits one layer under the kind and never two, which is the whole
+# layout rule.
+#
+# Created on first use rather than up front, so a job that writes nothing leaves
+# no empty directories behind.
+set_path <- function(kind, file) {
+  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+
+# EDIT: uncomment to persist a result for a downstream job in this set. An `hz`
+# fit or an `hp` figure reads what `ac` leaves here, and reads it by set, so a
+# job that persists nothing cannot be chained from.
+#
+# saveRDS(fit, set_path("estimates", "ac.rds"))
+```
+
 ## Cohort
 
 <!-- EDIT: this chunk, choosing ONE of the two shapes below.

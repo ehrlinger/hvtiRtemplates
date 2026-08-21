@@ -71,3 +71,15 @@ test_that("new_job errors when the copy fails rather than returning a dead path"
   expect_error(suppressWarnings(new_job("ac", "dead_pa", "hz", dir = dir)),
                "failed to write")
 })
+
+test_that("the ac template declares its set and resolves artifact paths from it", {
+  # The markers are the interface. A job still holding the template's placeholder
+  # values has not been finished, and a template that computes artifact paths
+  # from anything but them would need a path edited by hand -- the mistake the
+  # EDIT markers exist to prevent.
+  txt <- readLines(template_path("ac"), warn = FALSE)
+  expect_true(any(grepl("^ENDPOINT <- ", txt)))
+  expect_true(any(grepl("^TYPE\\s+<- ", txt)))
+  expect_true(any(grepl("set_path <- function\\(kind, file\\)", txt)))
+  expect_true(any(grepl("paste0\\(ENDPOINT, \"-\", TYPE\\)", txt)))
+})
