@@ -84,6 +84,10 @@ and **refuses to overwrite an existing job**, because a job file accumulates a s
 required and both are restricted to `[A-Za-z0-9_]+`, because `-` is the filename's field
 separator and `.` is reserved to the ordinal.
 
+**A template must have exactly one `^ENDPOINT\s+<- ` line and one `^TYPE\s+<- ` line.**
+`new_job()` substitutes both after copying, and hard-stops if either is missing, duplicated, or
+moved — a template that fails this check cannot be scaffolded at all.
+
 ## Gotchas
 
 - **`object_usage_linter` can never pass inside `inst/templates/`.** The templates call

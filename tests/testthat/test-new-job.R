@@ -129,14 +129,25 @@ test_that("new_job errors when the copy fails rather than returning a dead path"
                "failed to write")
 })
 
-test_that("the ac template declares its set and resolves artifact paths from it", {
-  # The markers are the interface. A job still holding the template's placeholder
-  # values has not been finished, and a template that computes artifact paths
-  # from anything but them would need a path edited by hand -- the mistake the
-  # EDIT markers exist to prevent.
+test_that("every template declares ENDPOINT/TYPE markers new_job() can substitute", {
+  # The markers are the interface: new_job() hard-stops for any template
+  # lacking them (see .set_markers()), so the contract has to hold for every
+  # template on disk, not just `ac` -- otherwise the next template to be
+  # added could silently fail to scaffold.
+  tl <- template_list()
+  for (i in seq_len(nrow(tl))) {
+    txt <- readLines(tl$file[[i]], warn = FALSE)
+    label <- paste("template", tl$name[[i]])
+    expect_true(any(grepl("^ENDPOINT\\s+<- ", txt)), label = label)
+    expect_true(any(grepl("^TYPE\\s+<- ", txt)), label = label)
+  }
+})
+
+test_that("the ac template resolves artifact paths from its set markers", {
+  # A template that computes artifact paths from anything but ENDPOINT/TYPE
+  # would need a path edited by hand -- the mistake the markers exist to
+  # prevent.
   txt <- readLines(template_path("ac"), warn = FALSE)
-  expect_true(any(grepl("^ENDPOINT <- ", txt)))
-  expect_true(any(grepl("^TYPE\\s+<- ", txt)))
   expect_true(any(grepl("set_path <- function\\(kind, file\\)", txt)))
   expect_true(any(grepl("paste0\\(ENDPOINT, \"-\", TYPE\\)", txt)))
 })
