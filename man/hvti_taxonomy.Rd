@@ -7,7 +7,9 @@
 hvti_taxonomy()
 }
 \value{
-A data frame with columns `prefix`, `name`, `folder`, `description`.
+A data frame with columns \code{prefix}, \code{name}, \code{folder},
+  \code{description}. \code{prefix} is \code{NA} for the one row that names
+  an artifact kind rather than an analysis type.
 }
 \description{
 The two-letter prefix system inherited from the original CORR analysis
@@ -18,6 +20,13 @@ belongs in.
 This is data rather than documentation on purpose. The same table lived in a
 README and drifted from the files it described; as a function it is checked
 by the test suite against the templates actually present.
+
+\code{folder} names two different things. For most rows it is the analysis
+type's home folder, matched to a job prefix. One row, \code{estimates}, is an
+artifact kind rather than a job type: it holds serialized fits and cached
+results written by one job and read by a later one in the same set, and no
+analysis produces it directly. That row's \code{prefix} is \code{NA}, not a
+string, because there is no prefix to assign it.
 }
 \examples{
 head(hvti_taxonomy())

@@ -3,65 +3,80 @@
 #' These templates are supported: they render, they are tested, and they are
 #' the intended starting point for a new analysis job.
 #'
-#' Returns zero rows until the templates are added in stage 3 of the
-#' templates-and-provenance design.
+#' A template is named \code{<NN.MM>-<prefix>.qmd} and lives in the taxonomy
+#' folder it scaffolds into, so \code{folder} and \code{ordinal} are read from
+#' the tree rather than looked up. \code{\link{hvti_taxonomy}} is a cross-check
+#' on that, enforced by the test suite, not a source for it.
 #'
-#' @return A data frame with columns `name`, `prefix`, `folder` and `file`.
+#' @return A data frame with columns \code{name}, \code{prefix}, \code{ordinal},
+#'   \code{folder} and \code{file}.
 #' @export
 #' @examples
 #' template_list()
 template_list <- function() {
   dir <- system.file("templates", package = "hvtiRtemplates")
   files <- if (nzchar(dir)) {
-    list.files(dir, pattern = "[.]qmd$", full.names = TRUE)
+    list.files(dir, pattern = "[.]qmd$", full.names = TRUE, recursive = TRUE)
   } else {
     character(0)
   }
-  name <- sub("[.]qmd$", "", basename(files))
-  prefix <- vapply(basename(files), .prefix_of, character(1), USE.NAMES = FALSE)
-  tx <- hvti_taxonomy()
+  fields <- do.call(rbind, lapply(basename(files), .template_fields))
+  if (is.null(fields)) {
+    fields <- data.frame(ordinal = character(0), prefix = character(0),
+                         stringsAsFactors = FALSE)
+  }
 
   data.frame(
-    name   = name,
-    prefix = prefix,
-    folder = tx$folder[match(prefix, tx$prefix)],
-    file   = files,
+    name    = sub("[.]qmd$", "", basename(files)),
+    prefix  = fields$prefix,
+    ordinal = fields$ordinal,
+    folder  = basename(dirname(files)),
+    file    = files,
     stringsAsFactors = FALSE
   )
 }
 
 #' Path to a supported template
 #'
-#' @param name Template name, e.g. `"hz"`. See [template_list()].
-#' @return The full path, as `character(1)`.
+#' @param prefix Analysis prefix, e.g. \code{"ac"}. See \code{\link{template_list}}.
+#' @return The full path, as \code{character(1)}.
 #' @export
 #' @examples
-#' try(template_path("hz"))
-template_path <- function(name) {
+#' try(template_path("ac"))
+template_path <- function(prefix) {
   tl <- template_list()
-  i <- match(name, tl$name)
+  i <- match(prefix, tl$prefix)
   if (is.na(i)) {
-    stop("unknown template: ", name,
-         if (nrow(tl)) paste0(". Available: ", paste(tl$name, collapse = ", "))
+    stop("unknown template: ", prefix,
+         if (nrow(tl)) paste0(". Available: ", paste(stats::na.omit(tl$prefix), collapse = ", "))
          else ". No templates are installed yet.",
          call. = FALSE)
   }
   tl$file[[i]]
 }
 
-# Prefix-derivation helper for template file names.
+# Parse a template file name into its fields.
 #
-# Supported templates are named <prefix>.<rest> ("hz.qmd") or
-# <prefix>.<rest>.<rest> ("hz.dead.qmd"). Legacy names additionally carried a
-# leading "tp." marker ("tp.hz.dead.sas"); that field is dropped if present so
-# an older name still resolves. The next field is then taken as the prefix.
-# Prefixes are short, so a long candidate field -- or a name with no further
-# field after the leading one -- means the name carries no prefix, and this
-# returns NA.
-.prefix_of <- function(name) {
-  p <- strsplit(name, ".", fixed = TRUE)[[1L]]
-  if (length(p) >= 1L && identical(p[[1L]], "tp")) p <- p[-1L]
-  if (length(p) < 2L) return(NA_character_)
-  if (nchar(p[[1L]]) > 5L) return(NA_character_)
-  p[[1L]]
+# A template is named `<NN>.<MM>-<prefix>.qmd` -- "03.01-ac.qmd". The name is
+# fully structured, so it is matched by pattern rather than split on separators:
+# `.` is a field separator inside the ordinal AND the extension separator, and a
+# split-based parser cannot tell the two apart. This replaces `.prefix_of()`,
+# whose heuristics (drop a leading "tp.", reject a first field over five
+# characters) existed only because legacy names were unstructured.
+#
+# The two digits either side of the dot are required. The zero-padding is what
+# makes a flat folder sort into run order past nine entries, so an unpadded name
+# is rejected here rather than allowed to sort wrongly later.
+#
+# Returns `ordinal` and `prefix` as NA for a name that does not match, rather
+# than erroring: `template_list()` reports what is on disk, and a stray file
+# should not stop it. The "every template name parses" test in
+# test-templates.R is what turns an unparsed name into a build failure.
+.template_fields <- function(name) {
+  m <- regmatches(name, regexec("^(\\d{2}[.]\\d{2})-(.+)[.]qmd$", name))[[1L]]
+  if (length(m) != 3L) {
+    return(data.frame(ordinal = NA_character_, prefix = NA_character_,
+                      stringsAsFactors = FALSE))
+  }
+  data.frame(ordinal = m[[2L]], prefix = m[[3L]], stringsAsFactors = FALSE)
 }

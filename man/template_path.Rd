@@ -4,17 +4,17 @@
 \alias{template_path}
 \title{Path to a supported template}
 \usage{
-template_path(name)
+template_path(prefix)
 }
 \arguments{
-\item{name}{Template name, e.g. `"hz"`. See [template_list()].}
+\item{prefix}{Analysis prefix, e.g. \code{"ac"}. See \code{\link{template_list}}.}
 }
 \value{
-The full path, as `character(1)`.
+The full path, as \code{character(1)}.
 }
 \description{
 Path to a supported template
 }
 \examples{
-try(template_path("hz"))
+try(template_path("ac"))
 }

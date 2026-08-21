@@ -13,7 +13,7 @@ renv::install("ehrlinger/hvtiRtemplates")
 
 | Directory | Status | Contents |
 |---|---|---|
-| `inst/templates/` | **supported** | R job templates. Empty until stage 3. |
+| `inst/templates/` | **supported** | R job templates. See `inst/templates/README.md` for coverage. |
 
 Everything the package installs is supported: tested, maintained, and intended
 to be run. There is no reference-only material.
@@ -48,7 +48,7 @@ SAS could not make it safe because there was no version to pin. `renv.lock`
 supplies that, so a study can use the latest while working and pin it on filing.
 
 In practice a study declares `hvtiRtemplates` in its `renv.lock`, resolves a
-template through `template_path("hz")` instead of copying one into the study
+template through `template_path("ac")` instead of copying one into the study
 folder, and pins the version when results are filed. The lock file is then the
 answer to "what produced this?" — the question the SAS arrangement could not
 answer, because `%inc` had nothing to pin.
@@ -58,6 +58,7 @@ answer, because `%inc` had nothing to pin.
 | Function | Returns |
 |---|---|
 | `hvti_taxonomy()` | the analysis prefix table: prefix, name, folder, description |
-| `template_list()` | supported templates: name, prefix, folder, file |
-| `template_path(name)` | path to one supported template |
+| `template_list()` | supported templates: name, prefix, ordinal, folder, file |
+| `template_path(prefix)` | path to one supported template |
 | `hvti_non_prefixes()` | leading name fields that are utilities, not analysis prefixes |
+| `new_job(prefix, endpoint, type, dir = ".")` | the scaffolded job's path, invisibly |
