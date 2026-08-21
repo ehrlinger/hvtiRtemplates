@@ -30,7 +30,7 @@ The layout rule is one sentence, and it holds in every folder:
 <study_root>/
 ├── distributions/  dead_pa-hz-03.01-ac.qmd   dead_pa-rfs-03.01-ac.qmd
 ├── estimates/                                dead_pa-hz/ac.rds
-└── graphs/         dead_pa-hz-05.01-hp.qmd   dead_pa-hz/hp-fig1.png
+└── graphs/         dead_pa-hz-06.01-hp.qmd   dead_pa-hz/hp-fig1.png
 ```
 
 **A set is keyed on `(endpoint, analysis type)`, not on the endpoint alone.**

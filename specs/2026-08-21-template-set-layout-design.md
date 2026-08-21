@@ -73,7 +73,7 @@ beneath them**. Within any folder:
 │                   dead_pa-rfs-03.01-ac.qmd
 ├── analyses/       dead_pa-hz-04.01-hm.qmd    dead_pa-rfs-04.19-rfs.qmd
 ├── estimates/                                 dead_pa-hz/ac.rds
-├── graphs/         dead_pa-hz-05.01-hp.qmd    dead_pa-hz/hp-fig1.png
+├── graphs/         dead_pa-hz-06.01-hp.qmd    dead_pa-hz/hp-fig1.png
 ├── documents/      manuscript.qmd
 └── parity/         dead_pa-hz-03.01-ac-parity.qmd  dead_pa-hz/ac-diff.csv
 ```
@@ -93,7 +93,7 @@ canonical data used throughout the study; `documents/` holds the deliverable.
 Neither is endpoint-specific, so neither gets the subdivision.
 
 **The set fragments across folders, and that is acceptable**, because the
-ordinal is global to the set rather than per-folder. `dead_pa-hz-05.01-hp.qmd`
+ordinal is global to the set rather than per-folder. `dead_pa-hz-06.01-hp.qmd`
 announces itself as a later step than `dead_pa-hz-03.02-hz.qmd` despite sitting in a
 different directory, and `ls */dead_pa-*` recovers the whole chain in order.
 
@@ -142,13 +142,24 @@ Both parts zero-padded to two digits.
 | `02` | `descriptive` |
 | `03` | `distributions` |
 | `04` | `analyses` |
-| `05` | `graphs` |
-| `06` | `documents` |
+| `05` | `estimates` |
+| `06` | `graphs` |
+| `07` | `documents` |
+
+`estimates` carries no analysis prefix: it is an artifact kind, not a job type,
+so `hvti_taxonomy()` files its row with `prefix = NA_character_` rather than
+joining it to a template. Its position in this table is still load-bearing — it
+sets the major for `graphs` and `documents` via the same first-appearance rule
+as every other folder — even though nothing ever scaffolds into it directly.
+
+`hs`'s misfiling (§9 in an earlier draft of this spec) is also resolved: it now
+sits in `analyses`, immediately after `hm`, the job it consumes. `hz` stays in
+`distributions` — see the remaining bullet in §9.
 
 **The ordinal is global, not set-relative.** It is fixed per prefix and identical
 in every study, so `03.01` means `ac` everywhere and a reader moving between
 studies reads the same landmarks. The consequence is that scaffolded sets have
-**gaps** — `ac`, `hz`, `hp` produce `03.01`, `03.02`, `05.01`, not `01/02/03` —
+**gaps** — `ac`, `hz`, `hp` produce `03.01`, `03.02`, `06.01`, not `01/02/03` —
 and a gap positively says "no descriptive job here" rather than being silent.
 This is a deliberate divergence from `preserve_root`'s contiguous numbering,
 and it is forced: a set-relative number is not knowable until scaffold time and
@@ -327,24 +338,10 @@ Its parity jobs satisfy nothing, for the reasons in §5.1.
   root rather than `"qmd"`. Written as `1.0.2 → 1.0.3` because `AGENTS.md`
   reserves the minor digit for the maintainer; it is minor-shaped and that call
   is not this spec's to make.
-- **`hs` is misfiled.** `hvti_taxonomy()` files it under `distributions` but
-  describes it as "patient-level survival predictions from the HM model". If it
-  consumes `hm`, it belongs downstream of `analyses`, and its row position
-  breaks the ordinal cross-check in §5. One row, but a taxonomy edit.
 - **`hz` stays in `distributions`.** Reviewed and left alone: the line between
   `distributions` and `analyses` is covariates. `hz` fits the hazard shape
   unadjusted; `hm` is "risk factor analysis; builds on the HZ fit". `ac` and `hz`
   are the same curve by different machinery, which is why `hp` overlays them.
-- **`estimates/` is not in the taxonomy.** This design uses it as a first-class
-  artifact directory, and `preserve_root`'s tree has one, but `hvti_taxonomy()`
-  has no `estimates` row — its six folders are `datasets`, `descriptive`,
-  `distributions`, `analyses`, `graphs`, `documents`. Nothing breaks, because
-  only *source* folders are joined through the taxonomy and
-  `test-taxonomy.R` checks that direction only. But the design depends on a
-  directory the taxonomy does not know exists, which is precisely the drift the
-  taxonomy function was written to prevent. Either add the row or state in
-  `inst/templates/README.md` that artifact kinds are deliberately outside the
-  prefix taxonomy.
 - **The folder is `descriptive`, singular.** Worth flagging because it reads as
   a typo next to `datasets`, `analyses`, `graphs` and `documents`, and was
   written as `descriptives` twice during this design. If it is going to be

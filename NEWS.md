@@ -9,7 +9,7 @@
   set is keyed on `(endpoint, analysis type)`: one endpoint is analysed by
   several methods and those chains share their upstream, so keyed on the
   endpoint alone two sets would write to one filename.
-- `template_path()`'s argument is renamed `name` to `prefix`, which is what it
+- `template_path()`'s argument is renamed from `name` to `prefix`, which is what it
   always matched on.
 - `template_list()` gains an `ordinal` column, and reports `folder` from the
   directory a template sits in rather than by looking its prefix up in
@@ -40,6 +40,13 @@
   within that folder — and assert that no two templates share a prefix, since
   `template_path()` and `new_job()` both resolve with `match()`, which takes
   the first hit silently.
+- `hs` is refiled from `distributions` to `analyses`, immediately after `hm`,
+  the job it actually consumes. `hvti_taxonomy()` gains an `estimates` row for
+  the artifact directory that design already relies on; the row carries no
+  prefix (`NA_character_`), since `estimates` is an artifact kind rather than
+  an analysis type. Its position shifts the folder majors: `graphs` is now
+  `06` and `documents` `07` (`distributions` is unaffected, so `ac` stays
+  `03.01`).
 
 ## Bug fixes
 
