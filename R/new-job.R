@@ -55,5 +55,39 @@ new_job <- function(prefix, endpoint, type, dir = ".") {
   if (!file.copy(tl$file[[i]], out, overwrite = FALSE)) {
     stop("new_job(): failed to write '", out, "'.", call. = FALSE)
   }
+  .set_markers(out, endpoint, type)
   invisible(out)
+}
+
+# Rewrite the template's ENDPOINT/TYPE declarations to the values `new_job()`
+# already put in the filename, so a scaffolded job arrives self-consistent
+# rather than naming one set and declaring another. `set_path()` in the job
+# body resolves from the declarations, not the filename, so a mismatch would
+# silently write into another set's artifact directory -- exactly the
+# collision the (endpoint, type) key exists to prevent.
+#
+# Each line is required to appear exactly once: a template whose markers moved
+# or were removed must fail loudly here rather than hand back a job that looks
+# scaffolded but silently kept the template's placeholder values.
+.set_markers <- function(path, endpoint, type) {
+  txt <- readLines(path, warn = FALSE)
+
+  i_endpoint <- grep("^ENDPOINT <- ", txt)
+  if (length(i_endpoint) != 1L) {
+    stop("new_job(): '", path, "' has ", length(i_endpoint), " lines matching ",
+         "'^ENDPOINT <- ', expected exactly 1; cannot substitute the set markers.",
+         call. = FALSE)
+  }
+  i_type <- grep("^TYPE\\s+<- ", txt)
+  if (length(i_type) != 1L) {
+    stop("new_job(): '", path, "' has ", length(i_type), " lines matching ",
+         "'^TYPE\\\\s+<- ', expected exactly 1; cannot substitute the set markers.",
+         call. = FALSE)
+  }
+
+  # Keep the alignment style of the original lines: TYPE is padded so its
+  # `<-` lines up under ENDPOINT's.
+  txt[[i_endpoint]] <- paste0("ENDPOINT <- \"", endpoint, "\"")
+  txt[[i_type]]     <- paste0("TYPE     <- \"", type, "\"")
+  writeLines(txt, path)
 }

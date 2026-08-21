@@ -32,6 +32,37 @@ test_that("new_job distinguishes two analysis types over one endpoint", {
   b <- new_job("ac", "dead_pa", "rfs", dir = dir)
   expect_false(a == b)
   expect_true(all(file.exists(c(a, b))))
+
+  # Certifying the paths differ is not enough: new_job() writes endpoint/type
+  # into the FILENAME, and a body that still says the template's placeholder
+  # values silently resolves set_path() into the OTHER set's directory. Each
+  # written file's ENDPOINT/TYPE declarations must match its own name.
+  for (path in c(a, b)) {
+    fields <- strsplit(sub("[.]qmd$", "", basename(path)), "-", fixed = TRUE)[[1L]]
+    txt <- readLines(path, warn = FALSE)
+    declared_endpoint <- sub('^ENDPOINT <- "(.*)"$', "\\1", grep("^ENDPOINT <- ", txt, value = TRUE))
+    declared_type     <- sub('^TYPE\\s+<- "(.*)"$', "\\1", grep("^TYPE\\s+<- ", txt, value = TRUE))
+    expect_equal(declared_endpoint, fields[[1L]], label = paste("declared ENDPOINT in", path))
+    expect_equal(declared_type, fields[[2L]], label = paste("declared TYPE in", path))
+  }
+})
+
+test_that("new_job errors when the template lacks the ENDPOINT/TYPE marker lines", {
+  # `.set_markers()` must fail loudly rather than hand back a job that looks
+  # scaffolded but silently kept whatever the fake template happened to say.
+  fake_template <- tempfile("fake-template-", fileext = ".qmd")
+  writeLines(c("---", "title: fake", "---", "no markers here"), fake_template)
+  on.exit(unlink(fake_template), add = TRUE)
+
+  fake_tl <- data.frame(
+    name = "01.01-zz", prefix = "zz", ordinal = "01.01",
+    folder = "distributions", file = fake_template, stringsAsFactors = FALSE
+  )
+  testthat::local_mocked_bindings(template_list = function() fake_tl, .package = "hvtiRtemplates")
+
+  dir <- tempfile("newjob-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  expect_error(new_job("zz", "dead_pa", "hz", dir = dir), "ENDPOINT")
 })
 
 test_that("new_job refuses an unknown prefix, naming the valid ones", {
