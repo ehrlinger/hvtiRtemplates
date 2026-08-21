@@ -759,6 +759,13 @@ The layout rule is one sentence, and it holds in every folder:
 └── graphs/         dead_pa-hz-05.01-hp.qmd   dead_pa-hz/hp-fig1.png
 ```
 
+> **Superseded after this plan was executed:** `hvti_taxonomy()` gained an
+> `estimates` folder row, which shifted `graphs` to major `06` and `documents`
+> to `07`. So an `hp` job is `06.01-hp`, not `05.01-hp`. `distributions` is
+> unchanged, so `ac` is still `03.01`. The diagram above is left as the
+> instruction that was actually issued; `specs/2026-08-21-template-set-layout-design.md`
+> §5 is authoritative.
+
 **A set is keyed on `(endpoint, analysis type)`, not on the endpoint alone.**
 One endpoint is analysed by several methods, and those chains share their
 upstream — a death-hazard set and a death random-forest-survival set both begin
