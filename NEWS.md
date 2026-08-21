@@ -41,6 +41,21 @@
   `template_path()` and `new_job()` both resolve with `match()`, which takes
   the first hit silently.
 
+## Bug fixes
+
+- `new_job()` no longer leaves a copied-but-unsubstituted job file behind when
+  writing the `ENDPOINT`/`TYPE` markers fails. Previously a template whose
+  markers had moved or been removed still left its copy on disk after
+  erroring — a job named for one set but declaring the template's placeholder
+  set, and a retry then hit the refuse-to-overwrite guard and reported
+  "already exists" instead of the actual template problem.
+- The `ac` template's render-time filename guard strips whatever extension
+  `knitr::current_input()` reports instead of a hard-coded `.qmd`. Quarto
+  knits through an intermediate `.rmarkdown` file, so the old pattern never
+  matched under a real render; it happened to be harmless because the stray
+  extension landed on a field the guard does not read, but the fix removes
+  the reliance on that coincidence.
+
 # hvtiRtemplates 1.0.2
 
 ## Bug fixes
