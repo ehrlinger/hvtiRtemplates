@@ -62,6 +62,15 @@ test_that(".template_fields() returns NA for a name it cannot parse", {
   expect_true(is.na(hvtiRtemplates:::.template_fields("README.md")$prefix))
 })
 
+test_that("no two templates share a prefix", {
+  # `template_path()` and `new_job()` both resolve with `match()`, which takes
+  # the first hit silently. Under the old flat layout one directory guaranteed
+  # one file per prefix; a recursive glob does not, so the invariant has to be
+  # asserted rather than assumed.
+  tl <- template_list()
+  expect_false(any(duplicated(stats::na.omit(tl$prefix))))
+})
+
 test_that(".template_fields() rejects an unpadded ordinal", {
   # The zero-padding is what makes `ls` sort a set in run order past nine
   # entries. Accepting "3.1" here would let an unsortable name into the tree
