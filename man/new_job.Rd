@@ -4,30 +4,42 @@
 \alias{new_job}
 \title{Scaffold a new analysis job from a template}
 \usage{
-new_job(prefix, basename, dir = "qmd")
+new_job(prefix, endpoint, type, dir = ".")
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
 \code{\link{template_list}}.}
 
-\item{basename}{Job name, appended after the prefix.}
+\item{endpoint}{The endpoint this job analyses, e.g. \code{"dead_pa"}.}
 
-\item{dir}{Directory to write into. Created if it does not exist.}
+\item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.}
+
+\item{dir}{The study root to write into. The taxonomy folder beneath it is
+created if it does not exist.}
 }
 \value{
 The path written, invisibly. Errors if the copy fails, so the
   returned path always names a file that exists.
 }
 \description{
-Copies a supported job template into \code{dir}, named
-\code{<prefix>.<basename>.qmd}. Refuses to overwrite an existing job: a job
-file accumulates a study's edits, and silently replacing one would discard
-them.
+Copies a supported job template into the taxonomy folder it belongs to,
+named \code{<endpoint>-<type>-<NN.MM>-<prefix>.qmd}. Refuses to overwrite an
+existing job: a job file accumulates a study's edits, and silently replacing
+one would discard them.
+}
+\details{
+A job is identified by four fields. Two come from the template — its
+\code{ordinal} and \code{prefix} — and two from the caller. The pair
+\code{(endpoint, type)} names the \strong{set} the job belongs to, and both
+are required: one endpoint is analysed by several methods, and the jobs those
+chains share would otherwise collide. A death-hazard set and a death
+random-forest-survival set both begin from the same life table, so keyed on
+the endpoint alone both would be written to one filename.
 }
 \examples{
 d <- file.path(tempdir(), "new-job-example")
-new_job("ac", "dead", dir = d)
-list.files(d)
+new_job("ac", "dead_pa", "hz", dir = d)
+list.files(d, recursive = TRUE)
 unlink(d, recursive = TRUE)
 }
 \seealso{

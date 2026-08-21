@@ -1,3 +1,33 @@
+# hvtiRtemplates 1.0.3
+
+## Breaking changes
+
+- `new_job()` now takes `endpoint` and `type` in place of `basename`, and `dir`
+  defaults to the study root rather than `"qmd"`. It writes
+  `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd` — into the taxonomy folder
+  the template belongs to, not a flat `qmd/`. The `type` is required because a
+  set is keyed on `(endpoint, analysis type)`: one endpoint is analysed by
+  several methods and those chains share their upstream, so keyed on the
+  endpoint alone two sets would write to one filename.
+- `template_path()`'s argument is renamed `name` to `prefix`, which is what it
+  always matched on.
+- `template_list()` gains an `ordinal` column, and reports `folder` from the
+  directory a template sits in rather than by looking its prefix up in
+  `hvti_taxonomy()`.
+
+## Improvements
+
+- Templates are named `<NN.MM>-<prefix>.qmd` and live in the taxonomy folder
+  they scaffold into. The name is parsed by pattern rather than by splitting on
+  dots, which the old `.prefix_of()` heuristic could not do once the ordinal
+  contained one.
+- The `ac` template declares its set with `ENDPOINT` and `TYPE` markers and
+  resolves artifact paths from them, so a scaffolded job needs no output path
+  edited by hand.
+- New tests cross-check every template's ordinal against `hvti_taxonomy()` —
+  the major against the folder it sits in, and the minors against row order
+  within that folder.
+
 # hvtiRtemplates 1.0.2
 
 ## Bug fixes
