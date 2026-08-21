@@ -8,7 +8,16 @@
 #' README and drifted from the files it described; as a function it is checked
 #' by the test suite against the templates actually present.
 #'
-#' @return A data frame with columns `prefix`, `name`, `folder`, `description`.
+#' \code{folder} names two different things. For most rows it is the analysis
+#' type's home folder, matched to a job prefix. One row, \code{estimates}, is an
+#' artifact kind rather than a job type: it holds serialized fits and cached
+#' results written by one job and read by a later one in the same set, and no
+#' analysis produces it directly. That row's \code{prefix} is \code{NA}, not a
+#' string, because there is no prefix to assign it.
+#'
+#' @return A data frame with columns \code{prefix}, \code{name}, \code{folder},
+#'   \code{description}. \code{prefix} is \code{NA} for the one row that names
+#'   an artifact kind rather than an analysis type.
 #' @export
 #' @examples
 #' head(hvti_taxonomy())
@@ -22,10 +31,10 @@ hvti_taxonomy <- function() {
     c("rg",    "Regression trends",         "descriptive",   "trend checks for continuous and polytomous outcomes"),
     c("ac",    "Actuarial",                 "distributions", "Kaplan-Meier / non-parametric life table"),
     c("hz",    "Hazard fit",                "distributions", "fits the underlying hazard distribution"),
-    c("hs",    "Hazard setup",              "distributions", "patient-level survival predictions from the HM model"),
     c("cd",    "Cumulative distribution",   "distributions", "cumulative distribution plots; follow-up summaries"),
     c("nd",    "Nonparametric distributions", "distributions", "distribution estimates stratified by group"),
     c("hm",    "Hazard model",              "analyses",      "risk factor analysis; builds on the HZ fit"),
+    c("hs",    "Hazard setup",              "analyses",      "patient-level survival predictions from the HM model"),
     c("mm",    "Mixed model",               "analyses",      "continuous repeated-measures longitudinal analysis"),
     c("gm",    "Generalized model",         "analyses",      "repeated-measures ordinal / count models"),
     c("lm",    "Logistic model",            "analyses",      "logistic regression; propensity score development"),
@@ -41,6 +50,7 @@ hvti_taxonomy <- function() {
     c("rm",    "Regression model",          "analyses",      "linear regression with balancing score"),
     c("cm",    "Cox matching",              "analyses",      "Cox PH with propensity matching / IPTW"),
     c("ls",    "Life table / STS",          "analyses",      "STS observed-versus-predicted analyses"),
+    c(NA_character_, "Estimates", "estimates", "model fits and cached results; written by one job, read by later ones in the set"),
     c("hp",    "Hazard plot",               "graphs",        "overlays actuarial and predicted survival; patient-specific curves"),
     c("mp",    "Mixed model plot",          "graphs",        "individual and population-level trends from MM"),
     c("lp",    "Logistic plot",             "graphs",        "ordinal or binary logistic model results"),
