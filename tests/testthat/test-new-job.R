@@ -4,34 +4,48 @@ test_that("template_list reports the ac job template", {
 })
 
 test_that("every template is free of study identifiers", {
-  for (nm in template_list()$name) {
-    txt <- readLines(template_path(nm), warn = FALSE)
+  tl <- template_list()
+  for (i in seq_len(nrow(tl))) {
+    txt <- readLines(tl$file[[i]], warn = FALSE)
     expect_false(
       any(grepl("/studies/|preserve_root|lv_function|built[.]sas7bdat", txt)),
-      label = paste("template", nm, "carries a study identifier")
+      label = paste("template", tl$name[[i]], "carries a study identifier")
     )
   }
 })
 
-test_that("new_job writes a file and returns its path", {
+test_that("new_job writes into the taxonomy folder with all four fields", {
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  out <- new_job("ac", "dead_pa", dir = dir)
+  out <- new_job("ac", "dead_pa", "hz", dir = dir)
   expect_true(file.exists(out))
-  expect_match(out, "ac[.]dead_pa[.]qmd$")
+  expect_equal(out, file.path(dir, "distributions", "dead_pa-hz-03.01-ac.qmd"))
+})
+
+test_that("new_job distinguishes two analysis types over one endpoint", {
+  # This is the collision the type field exists to prevent. A death-hazard set
+  # and a death-RFS set share the same Kaplan-Meier upstream, so keyed on
+  # endpoint alone both would be `dead_pa-03.01-ac.qmd` -- two sets, one file.
+  dir <- tempfile("newjob-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  a <- new_job("ac", "dead_pa", "hz", dir = dir)
+  b <- new_job("ac", "dead_pa", "rfs", dir = dir)
+  expect_false(a == b)
+  expect_true(all(file.exists(c(a, b))))
 })
 
 test_that("new_job refuses an unknown prefix, naming the valid ones", {
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  expect_error(new_job("zz", "x", dir = dir), "ac")
+  expect_error(new_job("zz", "dead_pa", "hz", dir = dir), "ac")
 })
 
 test_that("new_job refuses to overwrite an existing job", {
+  # A job file accumulates a study's edits; silently replacing one discards them.
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  new_job("ac", "dead", dir = dir)
-  expect_error(new_job("ac", "dead", dir = dir), "already exists")
+  new_job("ac", "dead_pa", "hz", dir = dir)
+  expect_error(new_job("ac", "dead_pa", "hz", dir = dir), "already exists")
 })
 
 test_that("new_job errors when the copy fails rather than returning a dead path", {
@@ -54,6 +68,6 @@ test_that("new_job errors when the copy fails rather than returning a dead path"
   # `file.copy()` also warns ("cannot create file ... Permission denied") on its
   # way to returning FALSE. That warning is useful in real use; here it would
   # just leave the suite with a WARN, so only the error is under test.
-  expect_error(suppressWarnings(new_job("ac", "dead_ro", dir = dir)),
+  expect_error(suppressWarnings(new_job("ac", "dead_pa", "hz", dir = dir)),
                "failed to write")
 })
