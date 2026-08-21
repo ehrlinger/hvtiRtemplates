@@ -1,0 +1,254 @@
+# Template sets: how a study scaffolds a chain of jobs
+
+**Date:** 2026-08-21
+**Status:** design, approved in outline. No code has been changed by this note.
+**Scope:** stage 1 only — the layout and naming convention, applied to the one
+template that exists. `new_job_set()` is deferred to its own spec.
+**Supersedes:** nothing. Extends the layout sketch in
+`2026-08-18-preserve-root-predim-avail-parity-design.md` §3.
+
+---
+
+## 1. The problem
+
+A study does not run one job. It runs a **chain**: for a given endpoint, an
+actuarial life table, then a parametric hazard fit over the same data, then a
+figure overlaying both. `preserve_root` records the shape exactly — `01-ac-dead_pa`,
+`02-hz-dead_pa`, `03-hp-dead_pa`. Three jobs, one endpoint, one order.
+
+The package cannot express that. `new_job()` copies a single file into a flat
+`qmd/` directory and names it `<prefix>.<basename>.qmd`. Nothing records that
+the three files belong together, nothing records which runs first, and the
+ordering that `preserve_root` does carry is hand-typed into filenames.
+
+Three naming conventions are live in the repository today and they disagree:
+
+| source | shape |
+|---|---|
+| `hvti_taxonomy()$folder` | `distributions/`, `graphs/`, … — the legacy SAS binder |
+| `new_job()` | flat `qmd/ac.dead_pa.qmd` |
+| `preserve_root`, in practice | flat `qmd/01-ac-dead_pa.qmd` |
+
+The convention real work converged on is the one the package does not produce.
+
+## 2. What a template set is
+
+**A template set is an ordered chain of job templates instantiated for one
+endpoint.** The endpoint is the unit a study author works through to completion;
+the order is what makes the workflow reproducible. Everything below follows from
+those two facts.
+
+## 3. The layout rule
+
+Jobs live under the canonical taxonomy folders, and **never more than one layer
+beneath them**. Within any folder:
+
+> **Authored files sit flat. Generated artifacts sit under `<endpoint>/`.**
+
+```
+<study_root>/
+├── _quarto.yml
+├── datasets/       01.01-bd.qmd                    built.rds
+├── descriptive/    dead_pa-02.01-dc.qmd
+├── distributions/  dead_pa-03.01-ac.qmd   dead_pa-03.02-hz.qmd
+├── analyses/       dead_pa-04.01-hm.qmd
+├── estimates/                                      dead_pa/ac.rds
+├── graphs/         dead_pa-05.01-hp.qmd            dead_pa/hp-fig1.png
+└── documents/      manuscript.qmd
+```
+
+Each folder's shape *follows from* the rule rather than being declared:
+`distributions/` is flat because it holds only source, `estimates/` is nested
+because it holds only artifacts, `graphs/` shows both because it holds both.
+
+**Why the asymmetry is right.** Authored files are few, named, and
+hand-navigated; a study has two or three `.qmd` per endpoint in a folder. Generated
+artifacts are many, machine-named, and swept; one `hp` job emits a dozen figures.
+An endpoint directory earns its keep at twenty `.png` and costs more than it
+returns at two `.qmd`.
+
+**`datasets/` and `documents/` take no endpoint layer.** `datasets/` holds the
+canonical data used throughout the study; `documents/` holds the deliverable.
+Neither is endpoint-specific, so neither gets the subdivision.
+
+**The set fragments across folders, and that is acceptable**, because the
+ordinal is global to the set rather than per-folder. `dead_pa-05.01-hp.qmd`
+announces itself as a later step than `dead_pa-03.02-hz.qmd` despite sitting in a
+different directory, and `ls */dead_pa-*` recovers the whole chain in order.
+
+**This preserves the existing root-resolution idiom.** Every authored job is
+exactly one level below the study root, so `ac.qmd`'s
+`.root <- if (file.exists("_quarto.yml")) "." else ".."` still resolves
+correctly and needs no change. Only `estimates/<endpoint>/` is two deep, and
+nothing renders from there. An earlier draft of this design nested source by
+endpoint as well; that would have broken the idiom in every template, and
+flattening the source removed the cost entirely.
+
+## 4. Names
+
+| thing | shape | example |
+|---|---|---|
+| template | `inst/templates/<folder>/<NN.MM>-<prefix>.qmd` | `inst/templates/distributions/03.01-ac.qmd` |
+| scaffolded job | `<folder>/<endpoint>-<NN.MM>-<prefix>.qmd` | `distributions/dead_pa-03.01-ac.qmd` |
+| artifact | `<kind>/<endpoint>/<prefix>.<ext>` | `estimates/dead_pa/ac.rds` |
+
+**The endpoint leads the job filename.** In a flat folder holding several
+endpoints, leading with the endpoint keeps each set contiguous under `ls` and
+orders steps within it — recovering in a filename what the endpoint subdirectory
+would otherwise have bought. Leading with the ordinal instead would group by
+workflow stage across endpoints, which answers a question study authors ask less
+often.
+
+**A template never carries an endpoint.** It is supplied at scaffold time, and
+`AGENTS.md`'s "templates carry no study identifiers" applies to the name as much
+as to the contents.
+
+## 5. The ordinal
+
+`NN.MM`: major from the taxonomy folder, minor the next free position within it.
+Both parts zero-padded to two digits.
+
+| major | folder |
+|---|---|
+| `01` | `datasets` |
+| `02` | `descriptive` |
+| `03` | `distributions` |
+| `04` | `analyses` |
+| `05` | `graphs` |
+| `06` | `documents` |
+
+**The ordinal is global, not set-relative.** It is fixed per prefix and identical
+in every study, so `03.01` means `ac` everywhere and a reader moving between
+studies reads the same landmarks. The consequence is that scaffolded sets have
+**gaps** — `ac`, `hz`, `hp` produce `03.01`, `03.02`, `05.01`, not `01/02/03` —
+and a gap positively says "no descriptive job here" rather than being silent.
+This is a deliberate divergence from `preserve_root`'s contiguous numbering,
+and it is forced: a set-relative number is not knowable until scaffold time and
+therefore cannot live in the template's own filename.
+
+**Two-part rather than decade.** An earlier draft assigned decades — `datasets`
+10s, `distributions` 30s — which caps a folder at ten templates. `analyses` has
+twenty prefixes. The two-part form has no ceiling, states the hierarchy on its
+face rather than hiding it in a tens digit, and keeps the property that made
+decades attractive: a new template takes the next free minor and **nothing
+renumbers**.
+
+**Zero-padded because the ordering is the workflow.** Unpadded, `ls` sorts
+`04.10` before `04.2`. A mis-sorted listing of a reproducible chain is a silent
+failure, and one character prevents it.
+
+**The filename is authoritative; the taxonomy is the cross-check.** The ordinal
+lives in exactly one place — the template's name — and a test asserts that the
+ordinals are consistent with `hvti_taxonomy()` row order and that each major
+matches the folder the template sits in. Drift becomes a red test rather than a
+discovery. This is the same move that made the taxonomy data instead of a README
+table, and for the same reason: the README table drifted.
+
+## 6. The endpoint is declared, not derived
+
+A scaffolded job declares its endpoint once, as an `EDIT:` marker near the top,
+and computes its artifact paths from it:
+
+```r
+# EDIT: the endpoint this job analyses. Names the directory its estimates and
+# figures are written to, so no output path below needs editing. Must match the
+# endpoint field in this file's own name.
+ENDPOINT <- "dead_pa"
+```
+
+Deriving it from the path instead would be free but fragile — it breaks the
+moment someone renames a file, and it breaks quietly. Declaring it matches the
+contract the templates already have, where every study-specific value is marked
+rather than inferred, and it extends `ac.qmd`'s existing aim that no path in the
+document needs editing to outputs as well as inputs.
+
+## 7. Stage 1 — what this spec builds
+
+Only the layout and naming, applied to the one template that exists.
+
+1. **Move the template** — `inst/templates/ac.qmd` →
+   `inst/templates/distributions/03.01-ac.qmd`.
+2. **`template_list()`** — glob recursively; derive `folder` from the directory
+   rather than by joining through the taxonomy; add an `ordinal` column parsed
+   from the filename.
+3. **Replace `.prefix_of()`** — its dot-splitting heuristic (drop a leading
+   `tp.`, reject a first field over five characters) exists only because legacy
+   names were unstructured. The new name is fully structured, so a regex over
+   `^(\d{2})\.(\d{2})-(.+)$` replaces the heuristic and the guesswork with it.
+4. **`new_job()`** — write `<dir>/<folder>/<endpoint>-<NN.MM>-<prefix>.qmd`.
+   Keep the refusal to overwrite: a job file accumulates a study's edits.
+5. **`ac.qmd`** — add the `ENDPOINT` marker and route outputs through
+   `estimates/<endpoint>/`.
+6. **`.lintr`** — the file key becomes
+   `inst/templates/distributions/03.01-ac.qmd`. It must stay a file key: a
+   directory key excludes every linter on the path wholesale and silently.
+7. **Tests** — update the `expect_match(out, "ac[.]dead_pa[.]qmd$")` pin, which
+   is a snapshot of the old shape rather than an independent constraint; add the
+   ordinal-vs-taxonomy consistency test from §5.
+8. **`inst/templates/README.md`** — document the layout rule, since it is the
+   file a study author reads before scaffolding anything.
+
+## 8. Deferred
+
+**`new_job_set()`** — the function that instantiates a whole chain. It cannot be
+exercised today: `inst/templates/` holds only `ac.qmd`, and `hz` and `hp` are
+deliberately absent until a second study has run them. Building the plural now
+would ship an untested multi-job path against templates that do not exist. It
+gets its own spec once they land, which the parity work in progress may make
+soon.
+
+## 9. Open — not decided here
+
+- **`new_job()`'s contract breaks twice.** The output path changes, and
+  `basename=` wants to become `endpoint=` with `dir=` defaulting to the study
+  root rather than `"qmd"`. Written as `1.0.2 → 1.0.3` because `AGENTS.md`
+  reserves the minor digit for the maintainer; it is minor-shaped and that call
+  is not this spec's to make.
+- **`hs` is misfiled.** `hvti_taxonomy()` files it under `distributions` but
+  describes it as "patient-level survival predictions from the HM model". If it
+  consumes `hm`, it belongs downstream of `analyses`, and its row position
+  breaks the ordinal cross-check in §5. One row, but a taxonomy edit.
+- **`hz` stays in `distributions`.** Reviewed and left alone: the line between
+  `distributions` and `analyses` is covariates. `hz` fits the hazard shape
+  unadjusted; `hm` is "risk factor analysis; builds on the HZ fit". `ac` and `hz`
+  are the same curve by different machinery, which is why `hp` overlays them.
+- **Where parity jobs live.** `preserve_root` pairs each job with a comparison
+  job — `qmd/01-ac-dead_pa.qmd` beside `parity/01-ac-dead_pa-parity.qmd`.
+  `parity` is not a taxonomy folder, and this design gives it no home. The
+  candidates are a seventh top-level folder following the same rule
+  (`parity/dead_pa-03.01-ac.qmd`), a prefix of its own in the taxonomy, or a
+  suffix colocating it with the job it checks. **This must be settled before the
+  parity set lands**, which is imminent.
+- **`estimates/` is not in the taxonomy.** This design uses it as a first-class
+  artifact directory, and `preserve_root`'s tree has one, but `hvti_taxonomy()`
+  has no `estimates` row — its six folders are `datasets`, `descriptive`,
+  `distributions`, `analyses`, `graphs`, `documents`. Nothing breaks, because
+  only *source* folders are joined through the taxonomy and
+  `test-taxonomy.R` checks that direction only. But the design depends on a
+  directory the taxonomy does not know exists, which is precisely the drift the
+  taxonomy function was written to prevent. Either add the row or state in
+  `inst/templates/README.md` that artifact kinds are deliberately outside the
+  prefix taxonomy.
+- **The folder is `descriptive`, singular.** Worth flagging because it reads as
+  a typo next to `datasets`, `analyses`, `graphs` and `documents`, and was
+  written as `descriptives` twice during this design. If it is going to be
+  misremembered every time, renaming it is cheaper than correcting it — but it
+  is a taxonomy edit and a behaviour change for any study already using the
+  folder.
+- **The taxonomy `folder` column conflates two things.** `distributions`,
+  `descriptive` and `analyses` classify by analysis *type*; `datasets`,
+  `estimates`, `graphs` and `documents` classify by artifact *kind*. Under this
+  design the type-half never surfaces to a user — it is a sort key and nothing
+  more — so the conflation is quieter than it was, but it is still one column
+  doing two jobs. Splitting it is additive and therefore patch-safe; it is not
+  required by anything above.
+
+## 10. Definition of done
+
+- `devtools::test()` passes, including the new ordinal-vs-taxonomy test.
+- `devtools::check()` is 0 errors, 0 warnings, 0 notes.
+- `devtools::document()` run; `man/` and `NAMESPACE` committed with the source.
+- `lintr::lint_package()` clean with the relocated `.lintr` file key.
+- The relocated template still renders.
+- `DESCRIPTION` version and `Date` bumped, with the matching `NEWS.md` entry in
+  the same commit.
