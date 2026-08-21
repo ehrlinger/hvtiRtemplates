@@ -49,19 +49,28 @@ template_path <- function(name) {
   tl$file[[i]]
 }
 
-# Prefix-derivation helper for template file names.
+# Parse a template file name into its fields.
 #
-# Supported templates are named <prefix>.<rest> ("hz.qmd") or
-# <prefix>.<rest>.<rest> ("hz.dead.qmd"). Legacy names additionally carried a
-# leading "tp." marker ("tp.hz.dead.sas"); that field is dropped if present so
-# an older name still resolves. The next field is then taken as the prefix.
-# Prefixes are short, so a long candidate field -- or a name with no further
-# field after the leading one -- means the name carries no prefix, and this
-# returns NA.
-.prefix_of <- function(name) {
-  p <- strsplit(name, ".", fixed = TRUE)[[1L]]
-  if (length(p) >= 1L && identical(p[[1L]], "tp")) p <- p[-1L]
-  if (length(p) < 2L) return(NA_character_)
-  if (nchar(p[[1L]]) > 5L) return(NA_character_)
-  p[[1L]]
+# A template is named `<NN>.<MM>-<prefix>.qmd` -- "03.01-ac.qmd". The name is
+# fully structured, so it is matched by pattern rather than split on separators:
+# `.` is a field separator inside the ordinal AND the extension separator, and a
+# split-based parser cannot tell the two apart. This replaces `.prefix_of()`,
+# whose heuristics (drop a leading "tp.", reject a first field over five
+# characters) existed only because legacy names were unstructured.
+#
+# The two digits either side of the dot are required. The zero-padding is what
+# makes a flat folder sort into run order past nine entries, so an unpadded name
+# is rejected here rather than allowed to sort wrongly later.
+#
+# Returns `ordinal` and `prefix` as NA for a name that does not match, rather
+# than erroring: `template_list()` reports what is on disk, and a stray file
+# should not stop it. `test-taxonomy.R` is what turns an unclassified prefix
+# into a build failure.
+.template_fields <- function(name) {
+  m <- regmatches(name, regexec("^(\\d{2}[.]\\d{2})-(.+)[.]qmd$", name))[[1L]]
+  if (length(m) != 3L) {
+    return(data.frame(ordinal = NA_character_, prefix = NA_character_,
+                      stringsAsFactors = FALSE))
+  }
+  data.frame(ordinal = m[[2L]], prefix = m[[3L]], stringsAsFactors = FALSE)
 }
