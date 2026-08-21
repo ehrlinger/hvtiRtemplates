@@ -71,6 +71,21 @@ test_that("no two templates share a prefix", {
   expect_false(any(duplicated(stats::na.omit(tl$prefix))))
 })
 
+test_that("every installed template's name parses", {
+  # .template_fields() returns NA rather than erroring on a name it cannot
+  # parse, so a stray file does not stop template_list(). But nothing on disk
+  # should actually BE that stray file: an unparseable template name is a real
+  # defect, and letting it through as an NA prefix/ordinal produces three
+  # confusing downstream failures (the taxonomy folder check, the taxonomy
+  # cross-check, and the "every template exists" check) instead of one test
+  # that names the actual problem. This is that one test.
+  tl <- template_list()
+  expect_false(any(is.na(tl$ordinal)),
+               info = "a template file name did not match <NN.MM>-<prefix>.qmd")
+  expect_false(any(is.na(tl$prefix)),
+               info = "a template file name did not match <NN.MM>-<prefix>.qmd")
+})
+
 test_that(".template_fields() rejects an unpadded ordinal", {
   # The zero-padding is what makes `ls` sort a set in run order past nine
   # entries. Accepting "3.1" here would let an unsortable name into the tree

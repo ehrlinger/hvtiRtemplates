@@ -70,8 +70,8 @@ template_path <- function(prefix) {
 #
 # Returns `ordinal` and `prefix` as NA for a name that does not match, rather
 # than erroring: `template_list()` reports what is on disk, and a stray file
-# should not stop it. `test-taxonomy.R` is what turns an unclassified prefix
-# into a build failure.
+# should not stop it. The "every template name parses" test in
+# test-templates.R is what turns an unparsed name into a build failure.
 .template_fields <- function(name) {
   m <- regmatches(name, regexec("^(\\d{2}[.]\\d{2})-(.+)[.]qmd$", name))[[1L]]
   if (length(m) != 3L) {
