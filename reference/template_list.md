@@ -11,19 +11,24 @@ template_list()
 
 ## Value
 
-A data frame with columns \`name\`, \`prefix\`, \`folder\` and \`file\`.
+A data frame with columns `name`, `prefix`, `ordinal`, `folder` and
+`file`.
 
 ## Details
 
-Returns zero rows until the templates are added in stage 3 of the
-templates-and-provenance design.
+A template is named `<NN.MM>-<prefix>.qmd` and lives in the taxonomy
+folder it scaffolds into, so `folder` and `ordinal` are read from the
+tree rather than looked up.
+[`hvti_taxonomy`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md)
+is a cross-check on that, enforced by the test suite, not a source for
+it.
 
 ## Examples
 
 ``` r
 template_list()
-#>   name prefix        folder
-#> 1   ac     ac distributions
-#>                                                              file
-#> 1 /home/runner/work/_temp/Library/hvtiRtemplates/templates/ac.qmd
+#>       name prefix ordinal        folder
+#> 1 03.01-ac     ac   03.01 distributions
+#>                                                                                  file
+#> 1 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.01-ac.qmd
 ```

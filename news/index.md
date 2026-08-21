@@ -1,5 +1,89 @@
 # Changelog
 
+## hvtiRtemplates 1.0.3
+
+### Breaking changes
+
+- [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+  now takes `endpoint` and `type` in place of `basename`, and `dir`
+  defaults to the study root rather than `"qmd"`. It writes
+  `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd` — into the taxonomy
+  folder the template belongs to, not a flat `qmd/`. The `type` is
+  required because a set is keyed on `(endpoint, analysis type)`: one
+  endpoint is analysed by several methods and those chains share their
+  upstream, so keyed on the endpoint alone two sets would write to one
+  filename.
+- [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)’s
+  argument is renamed from `name` to `prefix`, which is what it always
+  matched on.
+- [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+  gains an `ordinal` column, and reports `folder` from the directory a
+  template sits in rather than by looking its prefix up in
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md).
+
+### Improvements
+
+- Templates are named `<NN.MM>-<prefix>.qmd` and live in the taxonomy
+  folder they scaffold into. The name is parsed by pattern rather than
+  by splitting on dots, which the old `.prefix_of()` heuristic could not
+  do once the ordinal contained one.
+- The `ac` template declares its set with `ENDPOINT` and `TYPE` markers
+  and resolves artifact paths from them, so a scaffolded job needs no
+  output path edited by hand.
+  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+  now substitutes the caller’s `endpoint`/`type` into those declarations
+  after copying the template, so a scaffolded job’s body agrees with its
+  own filename instead of still naming the template’s placeholder set.
+  The template itself checks this at render time — comparing its
+  `ENDPOINT`/`TYPE` declarations against
+  [`knitr::current_input()`](https://rdrr.io/pkg/knitr/man/current_input.html)
+  — and errors if they disagree, because a mismatch resolves
+  `set_path()` into another set’s artifact directory silently. The check
+  is a no-op outside a knitr render, so editing the file interactively
+  in RStudio is unaffected.
+- [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+  validates `endpoint` and `type`: each must be a single non-`NA` string
+  matching `^[A-Za-z0-9_]+$`, since `-` is the filename’s field
+  separator and `.` is reserved to the ordinal. This also rejects a
+  leading `../` that would otherwise escape the taxonomy folder.
+- New tests cross-check every template’s ordinal against
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md)
+  — the major against the folder it sits in, and the minors against row
+  order within that folder — and assert that no two templates share a
+  prefix, since
+  [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
+  and
+  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+  both resolve with [`match()`](https://rdrr.io/r/base/match.html),
+  which takes the first hit silently.
+- `hs` is refiled from `distributions` to `analyses`, immediately after
+  `hm`, the job it actually consumes.
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md)
+  gains an `estimates` row for the artifact directory that design
+  already relies on; the row carries no prefix (`NA_character_`), since
+  `estimates` is an artifact kind rather than an analysis type. Its
+  position shifts the folder majors: `graphs` is now `06` and
+  `documents` `07` (`distributions` is unaffected, so `ac` stays
+  `03.01`).
+
+### Bug fixes
+
+- [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+  no longer leaves a copied-but-unsubstituted job file behind when
+  writing the `ENDPOINT`/`TYPE` markers fails. Previously a template
+  whose markers had moved or been removed still left its copy on disk
+  after erroring — a job named for one set but declaring the template’s
+  placeholder set, and a retry then hit the refuse-to-overwrite guard
+  and reported “already exists” instead of the actual template problem.
+- The `ac` template’s render-time filename guard strips whatever
+  extension
+  [`knitr::current_input()`](https://rdrr.io/pkg/knitr/man/current_input.html)
+  reports instead of a hard-coded `.qmd`. Quarto knits through an
+  intermediate `.rmarkdown` file, so the old pattern never matched under
+  a real render; it happened to be harmless because the stray extension
+  landed on a field the guard does not read, but the fix removes the
+  reliance on that coincidence.
+
 ## hvtiRtemplates 1.0.2
 
 ### Bug fixes

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,7 +97,9 @@
 </ul></div>
 <div class="section level2">
 <h2 id="template-naming">Template naming<a class="anchor" aria-label="anchor" href="#template-naming"></a></h2>
-<p>A template file is <code>&lt;prefix&gt;.qmd</code>, and <code>.prefix_of()</code> derives the prefix from the filename. It drops a leading legacy <code>tp.</code> field if present, and treats a first field longer than five characters as “no prefix” and returns <code>NA</code>. Prefixes come from <code><a href="reference/hvti_taxonomy.html">hvti_taxonomy()</a></code>. <code><a href="reference/new_job.html">new_job()</a></code> writes <code>&lt;prefix&gt;.&lt;basename&gt;.qmd</code> and <strong>refuses to overwrite an existing job</strong>, because a job file accumulates a study’s edits.</p>
+<p>A template file is <code>&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code> and lives in the taxonomy folder it scaffolds into — e.g. <code>inst/templates/distributions/03.01-ac.qmd</code>. <code>.template_fields()</code> parses the name by pattern, not by splitting on <code>.</code>: that character is both a field separator inside the ordinal and the extension separator, so a split-based parser cannot tell the two apart. Prefixes come from <code><a href="reference/hvti_taxonomy.html">hvti_taxonomy()</a></code>.</p>
+<p><code>new_job(prefix, endpoint, type, dir)</code> writes <code>&lt;folder&gt;/&lt;endpoint&gt;-&lt;type&gt;-&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code> and <strong>refuses to overwrite an existing job</strong>, because a job file accumulates a study’s edits. <code>endpoint</code> and <code>type</code> name the <code>(endpoint, analysis type)</code> set the job belongs to; both are required and both are restricted to <code>[A-Za-z0-9_]+</code>, because <code>-</code> is the filename’s field separator and <code>.</code> is reserved to the ordinal.</p>
+<p><strong>A template must have exactly one <code>^ENDPOINT\s+&lt;-</code> line and one <code>^TYPE\s+&lt;-</code> line.</strong> <code><a href="reference/new_job.html">new_job()</a></code> substitutes both after copying, and hard-stops if either is missing, duplicated, or moved — a template that fails this check cannot be scaffolded at all.</p>
 </div>
 <div class="section level2">
 <h2 id="gotchas">Gotchas<a class="anchor" aria-label="anchor" href="#gotchas"></a></h2>

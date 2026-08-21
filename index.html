@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +83,7 @@
 <tbody><tr>
 <td><code>inst/templates/</code></td>
 <td><strong>supported</strong></td>
-<td>R job templates. Empty until stage 3.</td>
+<td>R job templates. See <code>inst/templates/README.md</code> for coverage.</td>
 </tr></tbody>
 </table>
 <p>Everything the package installs is supported: tested, maintained, and intended to be run. There is no reference-only material.</p>
@@ -99,7 +99,7 @@
 </h2>
 <p>Study analyses were created by copying template files into a new study folder and editing them. Two things followed: improvements stayed in the study where they were made, and — the problem that actually hurts — a filed result could not say what produced it. SAS bound its analysis logic with <code>%inc kaplan</code>, resolving at run time against a mutable directory with no version, so the <code>.lst</code> filed in 2006 was produced by a <code>kaplan</code> nobody can now identify.</p>
 <p>The design rule is <strong>bind late, to something versioned</strong>. Late binding is right; SAS could not make it safe because there was no version to pin. <code>renv.lock</code> supplies that, so a study can use the latest while working and pin it on filing.</p>
-<p>In practice a study declares <code>hvtiRtemplates</code> in its <code>renv.lock</code>, resolves a template through <code>template_path("hz")</code> instead of copying one into the study folder, and pins the version when results are filed. The lock file is then the answer to “what produced this?” — the question the SAS arrangement could not answer, because <code>%inc</code> had nothing to pin.</p>
+<p>In practice a study declares <code>hvtiRtemplates</code> in its <code>renv.lock</code>, resolves a template through <code>template_path("ac")</code> instead of copying one into the study folder, and pins the version when results are filed. The lock file is then the answer to “what produced this?” — the question the SAS arrangement could not answer, because <code>%inc</code> had nothing to pin.</p>
 </div>
 <div class="section level2">
 <h2 id="api">API<a class="anchor" aria-label="anchor" href="#api"></a>
@@ -120,15 +120,19 @@
 </tr>
 <tr>
 <td><code><a href="reference/template_list.html">template_list()</a></code></td>
-<td>supported templates: name, prefix, folder, file</td>
+<td>supported templates: name, prefix, ordinal, folder, file</td>
 </tr>
 <tr>
-<td><code>template_path(name)</code></td>
+<td><code>template_path(prefix)</code></td>
 <td>path to one supported template</td>
 </tr>
 <tr>
 <td><code><a href="reference/hvti_non_prefixes.html">hvti_non_prefixes()</a></code></td>
 <td>leading name fields that are utilities, not analysis prefixes</td>
+</tr>
+<tr>
+<td><code>new_job(prefix, endpoint, type, dir = ".")</code></td>
+<td>the scaffolded job’s path, invisibly</td>
 </tr>
 </tbody>
 </table>

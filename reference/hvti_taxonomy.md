@@ -12,14 +12,22 @@ hvti_taxonomy()
 
 ## Value
 
-A data frame with columns \`prefix\`, \`name\`, \`folder\`,
-\`description\`.
+A data frame with columns `prefix`, `name`, `folder`, `description`.
+`prefix` is `NA` for the one row that names an artifact kind rather than
+an analysis type.
 
 ## Details
 
 This is data rather than documentation on purpose. The same table lived
 in a README and drifted from the files it described; as a function it is
 checked by the test suite against the templates actually present.
+
+`folder` names two different things. For most rows it is the analysis
+type's home folder, matched to a job prefix. One row, `estimates`, is an
+artifact kind rather than a job type: it holds serialized fits and
+cached results written by one job and read by a later one in the same
+set, and no analysis produces it directly. That row's `prefix` is `NA`,
+not a string, because there is no prefix to assign it.
 
 ## Examples
 

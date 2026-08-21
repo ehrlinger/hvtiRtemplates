@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,34 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.3" id="hvtirtemplates-103">hvtiRtemplates 1.0.3<a class="anchor" aria-label="anchor" href="#hvtirtemplates-103"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-1-0-3">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-0-3"></a></h3>
+<ul><li>
+<code><a href="../reference/new_job.html">new_job()</a></code> now takes <code>endpoint</code> and <code>type</code> in place of <code>basename</code>, and <code>dir</code> defaults to the study root rather than <code>"qmd"</code>. It writes <code>&lt;folder&gt;/&lt;endpoint&gt;-&lt;type&gt;-&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code> — into the taxonomy folder the template belongs to, not a flat <code>qmd/</code>. The <code>type</code> is required because a set is keyed on <code>(endpoint, analysis type)</code>: one endpoint is analysed by several methods and those chains share their upstream, so keyed on the endpoint alone two sets would write to one filename.</li>
+<li>
+<code><a href="../reference/template_path.html">template_path()</a></code>’s argument is renamed from <code>name</code> to <code>prefix</code>, which is what it always matched on.</li>
+<li>
+<code><a href="../reference/template_list.html">template_list()</a></code> gains an <code>ordinal</code> column, and reports <code>folder</code> from the directory a template sits in rather than by looking its prefix up in <code><a href="../reference/hvti_taxonomy.html">hvti_taxonomy()</a></code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="improvements-1-0-3">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-0-3"></a></h3>
+<ul><li>Templates are named <code>&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code> and live in the taxonomy folder they scaffold into. The name is parsed by pattern rather than by splitting on dots, which the old <code>.prefix_of()</code> heuristic could not do once the ordinal contained one.</li>
+<li>The <code>ac</code> template declares its set with <code>ENDPOINT</code> and <code>TYPE</code> markers and resolves artifact paths from them, so a scaffolded job needs no output path edited by hand. <code><a href="../reference/new_job.html">new_job()</a></code> now substitutes the caller’s <code>endpoint</code>/<code>type</code> into those declarations after copying the template, so a scaffolded job’s body agrees with its own filename instead of still naming the template’s placeholder set. The template itself checks this at render time — comparing its <code>ENDPOINT</code>/<code>TYPE</code> declarations against <code><a href="https://rdrr.io/pkg/knitr/man/current_input.html" class="external-link">knitr::current_input()</a></code> — and errors if they disagree, because a mismatch resolves <code>set_path()</code> into another set’s artifact directory silently. The check is a no-op outside a knitr render, so editing the file interactively in RStudio is unaffected.</li>
+<li>
+<code><a href="../reference/new_job.html">new_job()</a></code> validates <code>endpoint</code> and <code>type</code>: each must be a single non-<code>NA</code> string matching <code>^[A-Za-z0-9_]+$</code>, since <code>-</code> is the filename’s field separator and <code>.</code> is reserved to the ordinal. This also rejects a leading <code>../</code> that would otherwise escape the taxonomy folder.</li>
+<li>New tests cross-check every template’s ordinal against <code><a href="../reference/hvti_taxonomy.html">hvti_taxonomy()</a></code> — the major against the folder it sits in, and the minors against row order within that folder — and assert that no two templates share a prefix, since <code><a href="../reference/template_path.html">template_path()</a></code> and <code><a href="../reference/new_job.html">new_job()</a></code> both resolve with <code><a href="https://rdrr.io/r/base/match.html" class="external-link">match()</a></code>, which takes the first hit silently.</li>
+<li>
+<code>hs</code> is refiled from <code>distributions</code> to <code>analyses</code>, immediately after <code>hm</code>, the job it actually consumes. <code><a href="../reference/hvti_taxonomy.html">hvti_taxonomy()</a></code> gains an <code>estimates</code> row for the artifact directory that design already relies on; the row carries no prefix (<code>NA_character_</code>), since <code>estimates</code> is an artifact kind rather than an analysis type. Its position shifts the folder majors: <code>graphs</code> is now <code>06</code> and <code>documents</code> <code>07</code> (<code>distributions</code> is unaffected, so <code>ac</code> stays <code>03.01</code>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-0-3">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-3"></a></h3>
+<ul><li>
+<code><a href="../reference/new_job.html">new_job()</a></code> no longer leaves a copied-but-unsubstituted job file behind when writing the <code>ENDPOINT</code>/<code>TYPE</code> markers fails. Previously a template whose markers had moved or been removed still left its copy on disk after erroring — a job named for one set but declaring the template’s placeholder set, and a retry then hit the refuse-to-overwrite guard and reported “already exists” instead of the actual template problem.</li>
+<li>The <code>ac</code> template’s render-time filename guard strips whatever extension <code><a href="https://rdrr.io/pkg/knitr/man/current_input.html" class="external-link">knitr::current_input()</a></code> reports instead of a hard-coded <code>.qmd</code>. Quarto knits through an intermediate <code>.rmarkdown</code> file, so the old pattern never matched under a real render; it happened to be harmless because the stray extension landed on a field the guard does not read, but the fix removes the reliance on that coincidence.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.2" id="hvtirtemplates-102">hvtiRtemplates 1.0.2<a class="anchor" aria-label="anchor" href="#hvtirtemplates-102"></a></h2>
 <div class="section level3">

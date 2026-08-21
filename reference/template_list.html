@@ -9,7 +9,7 @@ the intended starting point for a new analysis job."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,21 +53,24 @@ the intended starting point for a new analysis job.</p>
 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with columns `name`, `prefix`, `folder` and `file`.</p>
+    <p>A data frame with columns <code>name</code>, <code>prefix</code>, <code>ordinal</code>,
+  <code>folder</code> and <code>file</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Returns zero rows until the templates are added in stage 3 of the
-templates-and-provenance design.</p>
+    <p>A template is named <code>&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code> and lives in the taxonomy
+folder it scaffolds into, so <code>folder</code> and <code>ordinal</code> are read from
+the tree rather than looked up. <code><a href="hvti_taxonomy.html">hvti_taxonomy</a></code> is a cross-check
+on that, enforced by the test suite, not a source for it.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">template_list</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   name prefix        folder</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   ac     ac distributions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                              file</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /home/runner/work/_temp/Library/hvtiRtemplates/templates/ac.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       name prefix ordinal        folder</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 03.01-ac     ac   03.01 distributions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                  file</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.01-ac.qmd</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
