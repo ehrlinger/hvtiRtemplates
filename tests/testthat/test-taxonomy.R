@@ -51,3 +51,42 @@ test_that("the taxonomy and the non-prefix list are disjoint", {
   expect_equal(intersect(hvti_taxonomy()$prefix, hvti_non_prefixes()),
                character(0))
 })
+
+test_that("a template's ordinal major identifies the folder it sits in", {
+  # The major is derived from the taxonomy's own folder order rather than from a
+  # table written out here. A second copy of that mapping would be a second
+  # thing to keep in step, which is the drift hvti_taxonomy() exists to prevent.
+  tl <- template_list()
+  skip_if(nrow(tl) == 0, "no templates installed")
+  order_of <- unique(hvti_taxonomy()$folder)
+  expect_equal(substr(tl$ordinal, 1L, 2L),
+               sprintf("%02d", match(tl$folder, order_of)))
+})
+
+test_that("a template sits in the folder its prefix is filed under", {
+  # template_list() reads `folder` from the directory, so this is a real check
+  # and not a tautology: it catches a template filed somewhere the taxonomy does
+  # not put its prefix.
+  tl <- template_list()
+  skip_if(nrow(tl) == 0, "no templates installed")
+  tx <- hvti_taxonomy()
+  expect_equal(tl$folder, tx$folder[match(tl$prefix, tx$prefix)])
+})
+
+test_that("within a folder, ordinal minors follow taxonomy row order", {
+  # Deliberately per-folder rather than global. Global row order does not work:
+  # `rfsrc`, `rfc`, `rfs` and `nb` are `analyses` rows that sit AFTER the
+  # `documents` row `ar`, so an `rfs` template (major 04) would compare as later
+  # than an `ar` template (major 06) on row order while being earlier on
+  # ordinal. The majors already carry the between-folder ordering; only the
+  # within-folder ordering is left for this check.
+  tl <- template_list()
+  skip_if(nrow(tl) == 0, "no templates installed")
+  tx <- hvti_taxonomy()
+  for (f in unique(tl$folder)) {
+    k <- tl$folder == f
+    expect_equal(order(tl$ordinal[k]),
+                 order(match(tl$prefix[k], tx$prefix)),
+                 info = paste("minors out of taxonomy order in", f))
+  }
+})
