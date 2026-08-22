@@ -67,8 +67,7 @@
 </tr><tr><td><code>pkgdown.yaml</code></td>
 <td>the site build</td>
 </tr><tr><td><code>spec-counts.yaml</code></td>
-<td>
-<code>python3 specs/artifacts/check-spec-counts.py</code> — the prose in <code>specs/</code> must agree with the generated map. Editing a count in prose without regenerating fails the PR</td>
+<td>two checks. <code>check-spec-counts.py</code> — the prose in <code>specs/</code> must agree with the generated map. <code>check-flow-counts.py</code> — every <code>data-check</code> anchored number in the job flow diagrams must agree with the maps they copy from. Editing a count without regenerating fails the PR</td>
 </tr><tr><td><code>test-coverage.yaml</code></td>
 <td>coverage upload</td>
 </tr></tbody></table></div>
