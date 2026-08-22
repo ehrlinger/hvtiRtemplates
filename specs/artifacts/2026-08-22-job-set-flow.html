@@ -1,0 +1,458 @@
+<title>Anatomy of a Job Set</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#fbfaf6; --card:#ffffff; --sunk:#f3f2ea;
+  --ink:#16211f; --ink-2:#4a5551; --ink-3:#77817c;
+  --rule:#d9d8ce; --rule-2:#e9e8df;
+  --job:#2f4b7c;  --job-bg:#eef1f7;
+  --est:#0f6d5d;  --est-bg:#e7f1ee;
+  --data:#8a6d1f; --data-bg:#f6f0df;
+  --out:#7d3a52;  --out-bg:#f6ebef;
+  --warn:#b4441f; --warn-bg:#f9ece6;
+  --shadow:0 1px 2px rgba(22,33,31,.06),0 6px 18px rgba(22,33,31,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121917; --card:#1a2321; --sunk:#151d1b;
+    --ink:#e9ece9; --ink-2:#a9b3ae; --ink-3:#7d8783;
+    --rule:#2d3835; --rule-2:#232d2b;
+    --job:#8fb0e0; --job-bg:#1c2632;
+    --est:#4fc0a6; --est-bg:#152825;
+    --data:#d5b25c; --data-bg:#282316;
+    --out:#dd93ab; --out-bg:#2a1a20;
+    --warn:#eb8a63; --warn-bg:#2c1a13;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121917; --card:#1a2321; --sunk:#151d1b;
+  --ink:#e9ece9; --ink-2:#a9b3ae; --ink-3:#7d8783;
+  --rule:#2d3835; --rule-2:#232d2b;
+  --job:#8fb0e0; --job-bg:#1c2632;
+  --est:#4fc0a6; --est-bg:#152825;
+  --data:#d5b25c; --data-bg:#282316;
+  --out:#dd93ab; --out-bg:#2a1a20;
+  --warn:#eb8a63; --warn-bg:#2c1a13;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.28);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Sans 3",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1240px; margin:0 auto; padding:40px 28px 72px; display:flex; flex-direction:column; gap:40px}
+h1,h2,h3{font-family:Bitter,Georgia,serif; text-wrap:balance; margin:0}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+
+/* ---------- masthead ---------- */
+.mast{display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:36px; align-items:end;
+  border-bottom:2px solid var(--ink); padding-bottom:22px}
+h1{font-size:clamp(34px,4.4vw,50px); font-weight:700; letter-spacing:-.02em; line-height:1.04}
+.standfirst{margin:12px 0 0; color:var(--ink-2); max-width:60ch; font-size:16px}
+.counts{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px}
+.count .n{font-family:Bitter,Georgia,serif; font-size:30px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums}
+.count .l{display:block; margin-top:5px; font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-3)}
+
+/* ---------- section furniture ---------- */
+section{display:flex; flex-direction:column; gap:18px}
+.eyebrow{font-size:11.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--est); font-weight:700}
+h2{font-size:clamp(22px,2.6vw,29px); font-weight:600; letter-spacing:-.012em}
+.lede{margin:0; color:var(--ink-2); max-width:74ch}
+
+/* ---------- legend ---------- */
+.legend{display:flex; flex-wrap:wrap; gap:10px 22px; padding:14px 16px; background:var(--sunk);
+  border:1px solid var(--rule-2); border-radius:3px}
+.key{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-2)}
+.sw{width:11px; height:11px; border-radius:2px; flex:none}
+
+/* ---------- svg frame ---------- */
+.figure{background:var(--card); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow);
+  overflow-x:auto; padding:8px}
+.figure svg{display:block; min-width:940px; width:100%; height:auto}
+figcaption{margin-top:10px; font-size:13px; color:var(--ink-3); max-width:78ch}
+
+/* ---------- tables ---------- */
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); border-radius:3px; background:var(--card)}
+table{border-collapse:collapse; width:100%; min-width:640px; font-size:13.5px}
+th{text-align:left; font-family:"Source Sans 3",sans-serif; font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink-3); font-weight:700;
+  padding:11px 14px; border-bottom:1px solid var(--rule); background:var(--sunk); white-space:nowrap}
+td{padding:10px 14px; border-bottom:1px solid var(--rule-2); vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.mono{font-size:12.5px}
+.ord{font-variant-numeric:tabular-nums; color:var(--est); font-weight:600}
+.was{color:var(--ink-3)}
+
+/* ---------- cards ---------- */
+.grid{display:grid; gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--card); border:1px solid var(--rule); border-left:3px solid var(--edge,var(--rule));
+  border-radius:3px; padding:16px 18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px}
+.card h3{font-size:16.5px; font-weight:600; letter-spacing:-.005em}
+.card p{margin:0; font-size:14px; color:var(--ink-2)}
+.tag{align-self:flex-start; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+  font-weight:700; padding:3px 8px; border-radius:2px}
+.sym{font-size:13px; color:var(--ink-3)}
+.sym code{color:var(--ink); font-size:12.5px}
+
+/* ---------- anatomy strip ---------- */
+.anat{background:var(--card); border:1px solid var(--rule); border-radius:3px; padding:22px 18px;
+  box-shadow:var(--shadow); overflow-x:auto}
+.anat svg{display:block; min-width:660px; width:100%; height:auto}
+
+/* ---------- footnote ---------- */
+.note{border-top:1px solid var(--rule); padding-top:18px; font-size:13px; color:var(--ink-3); max-width:82ch}
+.note strong{color:var(--ink-2)}
+a{color:var(--est)}
+a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--est); outline-offset:2px}
+@media (max-width:860px){ .mast{grid-template-columns:1fr; gap:24px} .counts{gap:12px} }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div>
+    <h1>Anatomy of a Job Set</h1>
+    <p class="standfirst">How one endpoint moves through the CORR analysis binder — which job writes what, which job reads it back, and where the chain is held together by nothing but a hand-typed name. Traced from the SAS study template, not from documentation.</p>
+  </div>
+  <div class="counts">
+    <div class="count"><span class="n">231</span><span class="l">SAS job templates</span></div>
+    <div class="count"><span class="n">79 / 110</span><span class="l">estimates written / read</span></div>
+    <div class="count"><span class="n">13</span><span class="l">true handoff members</span></div>
+  </div>
+</header>
+
+<section>
+  <div>
+    <div class="eyebrow">The chain</div>
+    <h2>One endpoint, one analysis type, nine jobs</h2>
+  </div>
+  <p class="lede">The <code>dead</code> endpoint analysed by parametric hazard. Every job re-reads <code>library.built</code> and re-runs the <code>%vars</code> macro from scratch — there is no in-memory state between jobs. The only thing passed forward is a dataset in <code>estimates/</code>, addressed by name.</p>
+
+  <div class="legend">
+    <span class="key"><span class="sw" style="background:var(--job)"></span> authored job (a <code>.sas</code> you edit)</span>
+    <span class="key"><span class="sw" style="background:var(--data)"></span> built dataset + <code>%vars</code></span>
+    <span class="key"><span class="sw" style="background:var(--est)"></span> <code>estimates/</code> handoff</span>
+    <span class="key"><span class="sw" style="background:var(--out)"></span> filed output</span>
+    <span class="key"><span class="sw" style="background:var(--warn)"></span> hand-carried — no file, no check</span>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 1160 706" role="img" aria-label="Flow diagram of the dead endpoint hazard job set, showing nine jobs reading the built dataset and exchanging datasets through the estimates library">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--est)"/>
+        </marker>
+        <marker id="ahd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--data)"/>
+        </marker>
+        <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--warn)"/>
+        </marker>
+        <marker id="aho" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--out)"/>
+        </marker>
+      </defs>
+
+      <g font-family="'Source Sans 3',sans-serif">
+
+        <!-- column headers -->
+        <text x="118" y="26" font-size="11" letter-spacing="1.4" fill="var(--data)" font-weight="700">DATASETS/</text>
+        <text x="286" y="26" font-size="11" letter-spacing="1.4" fill="var(--job)" font-weight="700">THE JOBS, IN RUN ORDER</text>
+        <text x="700" y="26" font-size="11" letter-spacing="1.4" fill="var(--est)" font-weight="700">ESTIMATES/ — THE HANDOFF STORE</text>
+
+        <!-- folder bands -->
+        <g font-size="10.5" letter-spacing=".9" font-weight="700">
+          <rect x="0" y="44"  width="96" height="112" rx="2" fill="var(--data-bg)"/>
+          <text x="10" y="66"  fill="var(--data)">DATASETS</text>
+          <text x="10" y="80"  font-size="9.5" letter-spacing=".4" font-weight="400" fill="var(--ink-3)">major 01</text>
+
+          <rect x="0" y="162" width="96" height="52" rx="2" fill="var(--job-bg)"/>
+          <text x="10" y="184" fill="var(--job)">DESCRIPTIVE</text>
+          <text x="10" y="198" font-size="9.5" letter-spacing=".4" font-weight="400" fill="var(--ink-3)">major 02</text>
+
+          <rect x="0" y="220" width="96" height="112" rx="2" fill="var(--job-bg)"/>
+          <text x="10" y="242" fill="var(--job)">DISTRIB-</text>
+          <text x="10" y="255" fill="var(--job)">UTIONS</text>
+          <text x="10" y="270" font-size="9.5" letter-spacing=".4" font-weight="400" fill="var(--ink-3)">major 03</text>
+
+          <rect x="0" y="338" width="96" height="52" rx="2" fill="var(--job-bg)"/>
+          <text x="10" y="360" fill="var(--job)">ANALYSES</text>
+          <text x="10" y="374" font-size="9.5" letter-spacing=".4" font-weight="400" fill="var(--ink-3)">major 04</text>
+
+          <rect x="0" y="396" width="96" height="172" rx="2" fill="var(--out-bg)"/>
+          <text x="10" y="418" fill="var(--out)">GRAPHS</text>
+          <text x="10" y="432" font-size="9.5" letter-spacing=".4" font-weight="400" fill="var(--ink-3)">major 06</text>
+        </g>
+
+        <!-- built bus -->
+        <line x1="132" y1="56" x2="132" y2="556" stroke="var(--data)" stroke-width="2"/>
+        <circle cx="132" cy="56" r="4" fill="var(--data)"/>
+        <g font-family="'IBM Plex Mono',monospace" font-size="10.5" fill="var(--data)">
+          <text x="112" y="586" text-anchor="middle" font-family="'Source Sans 3',sans-serif" font-size="10"
+                letter-spacing=".5" fill="var(--ink-3)">read by 98 of 231 jobs</text>
+        </g>
+
+        <!-- jobs -->
+        <g>
+          <!-- 1 bd -->
+          <rect x="160" y="52" width="404" height="44" rx="3" fill="var(--job-bg)" stroke="var(--job)" stroke-width="1"/>
+          <text x="176" y="72" font-family="'IBM Plex Mono',monospace" font-size="13" fill="var(--ink)" font-weight="500">tp.bd.data.master.sas</text>
+          <text x="176" y="87" font-size="11.5" fill="var(--ink-2)">assembles the analytic dataset</text>
+          <text x="548" y="79" font-size="11" text-anchor="end" fill="var(--job)" font-weight="700">bd</text>
+
+          <!-- vars macro -->
+          <rect x="160" y="104" width="404" height="40" rx="3" fill="var(--data-bg)" stroke="var(--data)" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="176" y="122" font-family="'IBM Plex Mono',monospace" font-size="13" fill="var(--ink)" font-weight="500">datasets/vars.sas</text>
+          <text x="176" y="136" font-size="11.5" fill="var(--ink-2)">macro, not a job — <tspan font-family="'IBM Plex Mono',monospace">%inc</tspan>’d and re-run by 168 of 231 jobs</text>
+
+          <!-- 2 dt -->
+          <rect x="160" y="162" width="404" height="44" rx="3" fill="var(--job-bg)" stroke="var(--job)" stroke-width="1"/>
+          <text x="176" y="182" font-family="'IBM Plex Mono',monospace" font-size="13" fill="var(--ink)" font-weight="500">tp.dc.dead.sas</text>
+          <text x="176" y="197" font-size="11.5" fill="var(--ink-2)">Table 1, covariate summaries</text>
+          <text x="548" y="189" font-size="11" text-anchor="end" fill="var(--job)" font-weight="700">dc</text>
+
+          <!-- 3 ac -->
+          <rect x="160" y="220" width="404" height="44" rx="3" fill="var(--job-bg)" stroke="var(--job)" stroke-width="1"/>
+          <text x="176" y="240" font-family="'IBM Plex Mono',monospace" font-size="13" fill="var(--ink)" font-weight="500">tp.ac.dead.sas</text>
+          <text x="176" y="255" font-size="11.5" fill="var(--ink-2)"><tspan font-family="'IBM Plex Mono',monospace">%kaplan</tspan> / <tspan font-family="'IBM Plex Mono',monospace">%nelsont</tspan> — life table. Writes no estimates.</text>
+          <text x="548" y="247" font-size="11" text-anchor="end" fill="var(--job)" font-weight="700">ac</text>
+
+          <!-- 4 hz -->
+          <rect x="160" y="278" width="404" height="44" rx="3" fill="var(--job-bg)" stroke="var(--job)" stroke-width="1"/>
+          <text x="176" y="298" font-family="'IBM Plex Mono',monospace" font-size="13" fill="var(--ink)" font-weight="500">tp.hz.dead.sas</text>
+          <text x="176" y="313" font-size="11.5" fill="var(--ink-2)"><tspan font-family="'IBM Plex Mono',monospace">%hazard</tspan> — shaping only, no covariates</text>
+          <text x="548" y="305" font-size="11" text-anchor="end" fill="var(--job)" font-weight="700">hz</text>
+
+          <!-- 5 hm -->
+          <rect x="160" y="338" width="404" height="44" rx="3" fill="var(--job-bg)" stroke="var(--job)" stroke-width="1"/>
+          <text x="176" y="358" font-family="'IBM Plex Mono',monospace" font-size="13" fill="var(--ink)" font-weight="500">tp.hm.dead.sas</text>
+          <text x="176" y="373" font-size="11.5" fill="var(--ink-2)"><tspan font-family="'IBM Plex Mono',monospace">%hazard</tspan> + covariates, shape held fixed</text>
+          <text x="548" y="365" font-size="11" text-anchor="end" fill="var(--job)" font-weight="700">hm</text>
+
+          <!-- 6 hs -->
+          <rect x="160" y="396" width="404" height="44" rx="3" fill="var(--job-bg)" stroke="var(--job)" stroke-width="1"/>
+          <text x="176" y="416" font-family="'IBM Plex Mono',monospace" font-size="13" fill="var(--ink)" font-weight="500">tp.hs.dead.setup.sas</text>
+          <text x="176" y="431" font-size="11.5" fill="var(--ink-2)"><tspan font-family="'IBM Plex Mono',monospace">%hazpred</tspan> — per-patient survival + expected events</text>
+          <text x="548" y="423" font-size="11" text-anchor="end" fill="var(--job)" font-weight="700">hs</text>
+
+          <!-- 7 hp -->
+          <rect x="160" y="454" width="404" height="44" rx="3" fill="var(--job-bg)" stroke="var(--job)" stroke-width="1"/>
+          <text x="176" y="474" font-family="'IBM Plex Mono',monospace" font-size="13" fill="var(--ink)" font-weight="500">tp.hp.dead.sas</text>
+          <text x="176" y="489" font-size="11.5" fill="var(--ink-2)">overlays the life table on the fitted curve</text>
+          <text x="548" y="481" font-size="11" text-anchor="end" fill="var(--job)" font-weight="700">hp</text>
+
+          <!-- 8 ar -->
+          <rect x="160" y="512" width="404" height="44" rx="3" fill="var(--out-bg)" stroke="var(--out)" stroke-width="1"/>
+          <text x="176" y="532" font-family="'IBM Plex Mono',monospace" font-size="13" fill="var(--ink)" font-weight="500">tp.ar.analysis_report</text>
+          <text x="176" y="547" font-size="11.5" fill="var(--ink-2)">the written report — <tspan font-family="'IBM Plex Mono',monospace">documents/</tspan>, major 07</text>
+          <text x="548" y="539" font-size="11" text-anchor="end" fill="var(--out)" font-weight="700">ar</text>
+        </g>
+
+        <!-- built bus ticks -->
+        <g stroke="var(--data)" stroke-width="1.4" marker-end="url(#ahd)">
+          <line x1="132" y1="184" x2="156" y2="184"/>
+          <line x1="132" y1="242" x2="156" y2="242"/>
+          <line x1="132" y1="300" x2="156" y2="300"/>
+          <line x1="132" y1="360" x2="156" y2="360"/>
+          <line x1="132" y1="418" x2="156" y2="418"/>
+          <line x1="132" y1="476" x2="156" y2="476"/>
+        </g>
+        <!-- bd writes built -->
+        <path d="M160,74 L146,74 L146,58" fill="none" stroke="var(--data)" stroke-width="1.6" marker-end="url(#ahd)"/>
+        <text x="150" y="46" font-size="10" font-family="'IBM Plex Mono',monospace" fill="var(--data)">library.built</text>
+
+        <!-- hz -> hm hand-carried -->
+        <path d="M362,322 L362,338" fill="none" stroke="var(--warn)" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#ahw)"/>
+        <rect x="378" y="318" width="176" height="17" rx="2" fill="var(--warn-bg)"/>
+        <text x="384" y="331" font-size="10.5" fill="var(--warn)" font-weight="700">shaping parms, hand-carried</text>
+
+        <!-- estimates members -->
+        <g>
+          <rect x="700" y="282" width="300" height="36" rx="3" fill="var(--est-bg)" stroke="var(--est)" stroke-width="1"/>
+          <text x="714" y="298" font-family="'IBM Plex Mono',monospace" font-size="12.5" fill="var(--ink)" font-weight="500">est.hzdead</text>
+          <text x="714" y="311" font-size="10.5" fill="var(--ink-2)">(type=haz) — unadjusted fit</text>
+
+          <rect x="700" y="342" width="300" height="36" rx="3" fill="var(--est-bg)" stroke="var(--est)" stroke-width="1"/>
+          <text x="714" y="358" font-family="'IBM Plex Mono',monospace" font-size="12.5" fill="var(--ink)" font-weight="500">est.hmdead</text>
+          <text x="714" y="371" font-size="10.5" fill="var(--ink-2)">(type=haz) — the multivariable model</text>
+
+          <rect x="700" y="400" width="146" height="36" rx="3" fill="var(--est-bg)" stroke="var(--est)" stroke-width="1"/>
+          <text x="712" y="416" font-family="'IBM Plex Mono',monospace" font-size="12" fill="var(--ink)" font-weight="500">est.hsdeadc</text>
+          <text x="712" y="429" font-size="10" fill="var(--ink-2)">cumulative hazard</text>
+
+          <rect x="854" y="400" width="146" height="36" rx="3" fill="var(--est-bg)" stroke="var(--est)" stroke-width="1"/>
+          <text x="866" y="416" font-family="'IBM Plex Mono',monospace" font-size="12" fill="var(--ink)" font-weight="500">est.hsdeadp</text>
+          <text x="866" y="429" font-size="10" fill="var(--ink-2)">patient curves</text>
+
+          <rect x="700" y="458" width="300" height="36" rx="3" fill="var(--out-bg)" stroke="var(--out)" stroke-width="1"/>
+          <text x="714" y="474" font-family="'IBM Plex Mono',monospace" font-size="12.5" fill="var(--ink)" font-weight="500">graphs/hp.dead.cgm</text>
+          <text x="714" y="487" font-size="10.5" fill="var(--ink-2)">filed figure — end of the chain</text>
+
+          <rect x="700" y="220" width="300" height="36" rx="3" fill="none" stroke="var(--rule)" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="714" y="242" font-size="11.5" fill="var(--ink-3)">ac files a printed life table only — no dataset</text>
+        </g>
+
+        <!-- writes (straight) -->
+        <g stroke="var(--est)" stroke-width="1.6" marker-end="url(#ah)">
+          <line x1="564" y1="300" x2="696" y2="300"/>
+          <line x1="564" y1="360" x2="696" y2="360"/>
+          <line x1="564" y1="418" x2="640" y2="418"/>
+        </g>
+        <path d="M640,418 L640,406 L696,406" fill="none" stroke="var(--est)" stroke-width="1.6"/>
+        <path d="M640,418 L640,430 L696,430" fill="none" stroke="var(--est)" stroke-width="1.6"/>
+        <path d="M846,418 L850,418" fill="none" stroke="var(--est)" stroke-width="1.6" marker-end="url(#ah)"/>
+        <g font-size="10" font-weight="700" fill="var(--est)" font-family="'Source Sans 3',sans-serif">
+          <text x="600" y="295">writes</text>
+          <text x="600" y="355">writes</text>
+          <text x="576" y="413">writes</text>
+        </g>
+
+        <!-- hp writes figure -->
+        <line x1="564" y1="476" x2="696" y2="476" stroke="var(--out)" stroke-width="1.6" marker-end="url(#aho)"/>
+
+        <!-- reads: hs <- est.hmdead ; hp <- est.hzdead -->
+        <path d="M700,366 L676,366 L676,424 L568,424" fill="none" stroke="var(--est)" stroke-width="1.6"
+              stroke-dasharray="6 3" marker-end="url(#ah)"/>
+        <path d="M700,306 L660,306 L660,482 L568,482" fill="none" stroke="var(--est)" stroke-width="1.6"
+              stroke-dasharray="6 3" marker-end="url(#ah)"/>
+        <g font-size="10" font-weight="700" fill="var(--est)" font-family="'Source Sans 3',sans-serif">
+          <text x="586" y="440">reads  inhaz=est.hmdead</text>
+          <text x="586" y="498">reads  inhaz=est.hzdead</text>
+        </g>
+
+        <!-- footer note inside figure -->
+        <line x1="0" y1="600" x2="1160" y2="600" stroke="var(--rule)" stroke-width="1"/>
+        <text x="0" y="622" font-size="11.5" fill="var(--ink-3)">
+          Verified against <tspan font-family="'IBM Plex Mono',monospace" fill="var(--ink-2)">~/Documents/template</tspan>. Every solid teal arrow is a literal
+          <tspan font-family="'IBM Plex Mono',monospace" fill="var(--ink-2)">data est.&lt;name&gt;</tspan> or <tspan font-family="'IBM Plex Mono',monospace" fill="var(--ink-2)">inhaz=est.&lt;name&gt;</tspan> in the source.
+        </text>
+        <text x="0" y="642" font-size="11.5" fill="var(--warn)">
+          The one rust arrow is not in any file. It is a number a person copies from the <tspan font-weight="700">hz</tspan> listing into the <tspan font-weight="700">hm</tspan> program.
+        </text>
+        <text x="0" y="668" font-size="11.5" fill="var(--ink-3)">
+          <tspan font-weight="700" fill="var(--ink-2)">Reading the chain:</tspan> ac and hz describe the same curve by different machinery — that is why hp overlays them.
+        </text>
+        <text x="0" y="686" font-size="11.5" fill="var(--ink-3)">
+          hm adds covariates to hz’s shape; hs turns hm into per-patient predictions; hp draws them.
+        </text>
+      </g>
+    </svg>
+  </figure>
+</section>
+
+<section>
+  <div>
+    <div class="eyebrow">Where the chain breaks</div>
+    <h2>Four failure modes, and what each looks like from the outside</h2>
+  </div>
+  <p class="lede">None of these raise an error. That is what makes them worth a diagram — every one of them produces a clean log and a plausible number.</p>
+
+  <div class="grid g2">
+    <div class="card" style="--edge:var(--warn)">
+      <span class="tag" style="background:var(--warn-bg); color:var(--warn)">Silent · most common</span>
+      <h3>The shape went stale</h3>
+      <p><code>hz</code> is re-fitted and the new <code>thalf</code>, <code>nu</code>, <code>m</code> are never re-typed into <code>hm</code>’s <code>fixthalf fixnu fixm</code> parameters. <code>hm</code> still runs, still converges, still reports covariates — against the previous shape.</p>
+      <p class="sym"><strong>Symptom:</strong> <code>hp</code>’s overlay drifts from the life table, and only in one phase.</p>
+    </div>
+
+    <div class="card" style="--edge:var(--est)">
+      <span class="tag" style="background:var(--est-bg); color:var(--est)">Silent</span>
+      <h3>The name points somewhere else</h3>
+      <p>The corpus holds <code>est.hmdead</code>, <code>hmdead1</code>, <code>hmdeada</code>, <code>hmdead_s3la</code>, <code>hmdtn1sn</code> — same prefix, same endpoint, distinguished by suffixes with no rule behind them. <code>inhaz=</code> takes whichever name is typed.</p>
+      <p class="sym"><strong>Symptom:</strong> predictions for the wrong model, correct in form.</p>
+    </div>
+
+    <div class="card" style="--edge:var(--est)">
+      <span class="tag" style="background:var(--est-bg); color:var(--est)">Loud, once you look</span>
+      <h3>Nobody wrote it</h3>
+      <p>Across the template corpus <strong>110 estimates members are read and 79 written</strong>; only <strong>13</strong> carry a handoff between two different jobs. The rest read something the writer left in another study, or write something no job reads back.</p>
+      <p class="sym"><strong>Symptom:</strong> <code>ERROR: File EST.X does not exist</code> — the one honest failure in this list.</p>
+    </div>
+
+    <div class="card" style="--edge:var(--data)">
+      <span class="tag" style="background:var(--data-bg); color:var(--data)">Silent</span>
+      <h3><code>%vars</code> changed underneath</h3>
+      <p><strong>168 of 231</strong> jobs <code>%inc</code> the same <code>datasets/vars.sas</code> and re-derive their variables at run time. Edit it for one job and every job downstream silently changes — but only when it is next re-run.</p>
+      <p class="sym"><strong>Symptom:</strong> two jobs in one set disagree about a variable, and both logs are clean.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div>
+    <div class="eyebrow">The numbering</div>
+    <h2>What the ordinal replaces</h2>
+  </div>
+  <p class="lede">The SAS name says what a job is. It does not say when it runs — run order lives in the folder it sits in, which a reader has to already know. The R name carries both, so a set sorts into run order even when it is scattered across five directories.</p>
+
+  <div class="anat">
+    <svg viewBox="0 0 900 216" role="img" aria-label="Anatomy of a scaffolded job filename, showing the four hyphen-separated fields">
+      <g font-family="'Source Sans 3',sans-serif">
+        <text x="0" y="16" font-size="11" letter-spacing="1.3" fill="var(--ink-3)" font-weight="700">SCAFFOLDED JOB NAME</text>
+        <text x="0" y="62" font-family="'IBM Plex Mono',monospace" font-size="27" font-weight="600">
+          <tspan fill="var(--out)">dead_pa</tspan><tspan fill="var(--ink-3)">-</tspan><tspan fill="var(--out)">hz</tspan><tspan fill="var(--ink-3)">-</tspan><tspan fill="var(--est)">03.01</tspan><tspan fill="var(--ink-3)">-</tspan><tspan fill="var(--job)">ac</tspan><tspan fill="var(--ink-3)">.qmd</tspan>
+        </text>
+
+        <path d="M8,74 L8,96" stroke="var(--out)" stroke-width="1.5"/>
+        <path d="M132,74 L132,96" stroke="var(--out)" stroke-width="1.5"/>
+        <path d="M196,74 L196,120" stroke="var(--est)" stroke-width="1.5"/>
+        <path d="M300,74 L300,144" stroke="var(--job)" stroke-width="1.5"/>
+
+        <text x="8"   y="112" font-size="12.5" fill="var(--out)" font-weight="700">endpoint</text>
+        <text x="70"  y="112" font-size="12" fill="var(--ink-2)">— you supply it</text>
+        <text x="132" y="112" font-size="12.5" fill="var(--out)" font-weight="700" text-anchor="start">type</text>
+
+        <text x="196" y="136" font-size="12.5" fill="var(--est)" font-weight="700">ordinal</text>
+        <text x="252" y="136" font-size="12" fill="var(--ink-2)">— from the template. major 03 = <tspan font-family="'IBM Plex Mono',monospace">distributions/</tspan>, minor 01 = first in it</text>
+
+        <text x="300" y="160" font-size="12.5" fill="var(--job)" font-weight="700">prefix</text>
+        <text x="348" y="160" font-size="12" fill="var(--ink-2)">— from the template. The same two letters the binder has always used</text>
+
+        <line x1="0" y1="180" x2="900" y2="180" stroke="var(--rule)"/>
+        <text x="0" y="200" font-size="12.5" fill="var(--ink-2)">
+          <tspan font-weight="700">The pair <tspan fill="var(--out)">endpoint-type</tspan> is the set key</tspan> — and it is also the directory this job’s estimates and figures are written to:
+          <tspan font-family="'IBM Plex Mono',monospace" fill="var(--est)">estimates/dead_pa-hz/ac.rds</tspan>.
+        </text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Ordinal</th><th>Job today, in the SAS template</th><th>Job tomorrow, scaffolded</th><th>Estimates it writes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="ord">01.01</td><td class="mono was">datasets/tp.bd.data.master.sas</td><td class="mono">datasets/01.01-bd.qmd</td><td class="mono was">datasets/built.rds</td></tr>
+        <tr><td class="ord">02.01</td><td class="mono was">descriptive/tp.dc.dead.sas</td><td class="mono">descriptive/dead_pa-hz-02.01-dc.qmd</td><td class="mono was">—</td></tr>
+        <tr><td class="ord">03.01</td><td class="mono was">distributions/tp.ac.dead.sas</td><td class="mono">distributions/dead_pa-hz-03.01-ac.qmd</td><td class="mono">estimates/dead_pa-hz/ac.rds</td></tr>
+        <tr><td class="ord">03.02</td><td class="mono was">distributions/tp.hz.dead.sas</td><td class="mono">distributions/dead_pa-hz-03.02-hz.qmd</td><td class="mono">estimates/dead_pa-hz/hz.rds</td></tr>
+        <tr><td class="ord">04.01</td><td class="mono was">analyses/tp.hm.dead.sas</td><td class="mono">analyses/dead_pa-hz-04.01-hm.qmd</td><td class="mono">estimates/dead_pa-hz/hm.rds</td></tr>
+        <tr><td class="ord">04.02</td><td class="mono was">graphs/tp.hs.dead.setup.sas</td><td class="mono">analyses/dead_pa-hz-04.02-hs.qmd</td><td class="mono">estimates/dead_pa-hz/hs.rds</td></tr>
+        <tr><td class="ord">06.01</td><td class="mono was">graphs/tp.hp.dead.sas</td><td class="mono">graphs/dead_pa-hz-06.01-hp.qmd</td><td class="mono was">graphs/dead_pa-hz/hp-*.png</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid g2">
+    <div class="card" style="--edge:var(--est)">
+      <h3>Gaps are a statement, not an omission</h3>
+      <p>A set that scaffolds <code>ac</code>, <code>hz</code>, <code>hp</code> produces <code>03.01</code>, <code>03.02</code>, <code>06.01</code> — never <code>01/02/03</code>. The ordinal is fixed per prefix and identical in every study, so <code>03.01</code> means <code>ac</code> everywhere. A missing <code>02.xx</code> positively says <em>no descriptive job in this set</em>.</p>
+    </div>
+    <div class="card" style="--edge:var(--warn)">
+      <h3>One thing to check before we commit</h3>
+      <p><code>hs</code> is filed three different ways right now: the SAS files sit in <code>graphs/templates/</code>, the study README says <code>distributions/</code>, and the R taxonomy has moved it to <code>analyses/</code>, directly after the <code>hm</code> it consumes. The R position is the argued one — but it is the row most worth a second opinion.</p>
+    </div>
+  </div>
+</section>
+
+<p class="note"><strong>How these numbers were produced.</strong> Every count on this page comes from a scan of the 231 <code>.sas</code> templates under <code>~/Documents/template</code>, matching <code>data est.&lt;member&gt;</code> as a write and <code>set</code> / <code>data=</code> / <code>inhaz=</code> <code>est.&lt;member&gt;</code> as a read. One caveat worth stating plainly: the corpus is a <em>library of examples drawn from many different studies</em>, so an unmatched read usually means the writer lives in another study rather than that something is broken. The finding is not that 80 reads are defects — it is that the member name is the only thing joining a writer to a reader, and nothing checks it at either end.</p>
+
+</div>

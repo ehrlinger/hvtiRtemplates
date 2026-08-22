@@ -1,0 +1,276 @@
+<title>Two Sets, One Endpoint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+:root{
+  --paper:#fbfaf6; --card:#ffffff; --sunk:#f3f2ea;
+  --ink:#16211f; --ink-2:#4a5551; --ink-3:#77817c;
+  --rule:#d9d8ce; --rule-2:#e9e8df;
+  --job:#2f4b7c;  --job-bg:#eef1f7;
+  --est:#0f6d5d;  --est-bg:#e7f1ee;
+  --data:#8a6d1f; --data-bg:#f6f0df;
+  --out:#7d3a52;  --out-bg:#f6ebef;
+  --warn:#b4441f; --warn-bg:#f9ece6;
+  --shadow:0 1px 2px rgba(22,33,31,.06),0 6px 18px rgba(22,33,31,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121917; --card:#1a2321; --sunk:#151d1b;
+    --ink:#e9ece9; --ink-2:#a9b3ae; --ink-3:#7d8783;
+    --rule:#2d3835; --rule-2:#232d2b;
+    --job:#8fb0e0; --job-bg:#1c2632;
+    --est:#4fc0a6; --est-bg:#152825;
+    --data:#d5b25c; --data-bg:#282316;
+    --out:#dd93ab; --out-bg:#2a1a20;
+    --warn:#eb8a63; --warn-bg:#2c1a13;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121917; --card:#1a2321; --sunk:#151d1b;
+  --ink:#e9ece9; --ink-2:#a9b3ae; --ink-3:#7d8783;
+  --rule:#2d3835; --rule-2:#232d2b;
+  --job:#8fb0e0; --job-bg:#1c2632;
+  --est:#4fc0a6; --est-bg:#152825;
+  --data:#d5b25c; --data-bg:#282316;
+  --out:#dd93ab; --out-bg:#2a1a20;
+  --warn:#eb8a63; --warn-bg:#2c1a13;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Sans 3",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px; margin:0 auto; padding:40px 28px 72px; display:flex; flex-direction:column; gap:40px}
+h1,h2,h3{font-family:Bitter,Georgia,serif; text-wrap:balance; margin:0}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+.mast{display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:36px; align-items:end;
+  border-bottom:2px solid var(--ink); padding-bottom:22px}
+h1{font-size:clamp(34px,4.4vw,50px); font-weight:700; letter-spacing:-.02em; line-height:1.04}
+.standfirst{margin:12px 0 0; color:var(--ink-2); max-width:60ch; font-size:16px}
+.counts{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px}
+.count .n{font-family:Bitter,Georgia,serif; font-size:30px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums}
+.count .l{display:block; margin-top:5px; font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-3)}
+section{display:flex; flex-direction:column; gap:18px}
+.eyebrow{font-size:11.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--est); font-weight:700}
+h2{font-size:clamp(22px,2.6vw,29px); font-weight:600; letter-spacing:-.012em}
+.lede{margin:0; color:var(--ink-2); max-width:74ch}
+.legend{display:flex; flex-wrap:wrap; gap:10px 22px; padding:14px 16px; background:var(--sunk);
+  border:1px solid var(--rule-2); border-radius:3px}
+.key{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-2)}
+.sw{width:11px; height:11px; border-radius:2px; flex:none}
+.figure{background:var(--card); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow);
+  overflow-x:auto; padding:8px}
+.figure svg{display:block; min-width:920px; width:100%; height:auto}
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); border-radius:3px; background:var(--card); box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; min-width:660px; font-size:13.5px}
+th{text-align:left; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3);
+  font-weight:700; padding:11px 14px; border-bottom:1px solid var(--rule); background:var(--sunk); white-space:nowrap}
+td{padding:10px 14px; border-bottom:1px solid var(--rule-2); vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.mono{font-size:12.5px}
+.grid{display:grid; gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--card); border:1px solid var(--rule); border-left:3px solid var(--edge,var(--rule));
+  border-radius:3px; padding:16px 18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px}
+.card h3{font-size:16.5px; font-weight:600; letter-spacing:-.005em}
+.card p{margin:0; font-size:14px; color:var(--ink-2)}
+.tag{align-self:flex-start; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+  font-weight:700; padding:3px 8px; border-radius:2px}
+.note{border-top:1px solid var(--rule); padding-top:18px; font-size:13px; color:var(--ink-3); max-width:82ch}
+.note strong{color:var(--ink-2)}
+a{color:var(--est)}
+a:focus-visible{outline:2px solid var(--est); outline-offset:2px}
+@media (max-width:860px){ .mast{grid-template-columns:1fr; gap:24px} }
+.setchip{display:inline-flex; align-items:center; gap:7px; font-family:"IBM Plex Mono",monospace;
+  font-size:12.5px; font-weight:600; padding:4px 9px; border-radius:2px}
+.conv{font-variant-numeric:tabular-nums}
+.bad{color:var(--warn); font-weight:600}
+.ok{color:var(--est); font-weight:600}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div>
+    <h1>Two Sets, One Endpoint</h1>
+    <p class="standfirst">Death is analysed by parametric hazard and by random forest survival. Both chains begin from the same life table. That shared upstream is the reason a set cannot be keyed on the endpoint alone — and the reason the same job is deliberately run twice.</p>
+  </div>
+  <div class="counts">
+    <div class="count"><span class="n">4</span><span class="l">naming conventions live today</span></div>
+    <div class="count"><span class="n">1</span><span class="l">job duplicated per set</span></div>
+    <div class="count"><span class="n">0</span><span class="l">checks on any of it</span></div>
+  </div>
+</header>
+
+<section>
+  <div>
+    <div class="eyebrow">The fork</div>
+    <h2>One endpoint, two methods, two sets</h2>
+  </div>
+  <p class="lede">Read down. The two chains are independent below the split — different machinery, different estimates, different figures — but they are not independent above it. Both need the Kaplan&#8211;Meier life table, and it is the same template both times.</p>
+
+  <div class="legend">
+    <span class="key"><span class="sw" style="background:var(--data)"></span> shared data</span>
+    <span class="key"><span class="sw" style="background:var(--job)"></span> authored job</span>
+    <span class="key"><span class="sw" style="background:var(--est)"></span> set artifact directory</span>
+    <span class="key"><span class="sw" style="background:var(--warn)"></span> the collision, if the type is dropped</span>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 1020 690" role="img" aria-label="Two analysis sets on the dead_pa endpoint, sharing an actuarial life table then diverging into a parametric hazard chain and a random forest survival chain">
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--job)"/></marker>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--data)"/></marker>
+        <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--est)"/></marker>
+      </defs>
+      <g font-family="'Source Sans 3',sans-serif">
+
+        <!-- shared data -->
+        <rect x="330" y="24" width="360" height="48" rx="3" fill="var(--data-bg)" stroke="var(--data)"/>
+        <text x="510" y="45" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="14" font-weight="600" fill="var(--ink)">datasets/built.rds</text>
+        <text x="510" y="62" text-anchor="middle" font-size="11.5" fill="var(--ink-2)">one analytic dataset for the whole study — no set layer</text>
+
+        <path d="M420,72 L420,96 L232,96 L232,128" fill="none" stroke="var(--data)" stroke-width="1.6" marker-end="url(#a2)"/>
+        <path d="M600,72 L600,96 L788,96 L788,128" fill="none" stroke="var(--data)" stroke-width="1.6" marker-end="url(#a2)"/>
+
+        <!-- set headers -->
+        <rect x="36" y="128" width="392" height="26" rx="2" fill="var(--est-bg)"/>
+        <text x="48" y="146" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="var(--est)">dead_pa-hz</text>
+        <text x="160" y="146" font-size="12" fill="var(--ink-2)">parametric multiphase hazard</text>
+
+        <rect x="592" y="128" width="392" height="26" rx="2" fill="var(--est-bg)"/>
+        <text x="604" y="146" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="var(--est)">dead_pa-rfs</text>
+        <text x="716" y="146" font-size="12" fill="var(--ink-2)">random forest survival</text>
+<rect x="36" y="166" width="392" height="46" rx="3" fill="var(--data-bg)" stroke="var(--data)"/>
+<text x="50" y="186" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="var(--ink)">dead_pa-hz-03.01-ac.qmd</text>
+<text x="50" y="202" font-size="11.5" fill="var(--ink-2)">Kaplan–Meier life table</text>
+<text x="414" y="194" text-anchor="end" font-size="10" letter-spacing=".6" font-weight="700" fill="var(--data)">SHARED SHAPE</text>
+<path d="M232.0,212 L232.0,228" fill="none" stroke="var(--job)" stroke-width="1.6" marker-end="url(#a1)"/>
+<rect x="36" y="228" width="392" height="46" rx="3" fill="var(--job-bg)" stroke="var(--job)"/>
+<text x="50" y="248" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="var(--ink)">dead_pa-hz-03.02-hz.qmd</text>
+<text x="50" y="264" font-size="11.5" fill="var(--ink-2)">%hazard — shaping, no covariates</text>
+<path d="M232.0,274 L232.0,290" fill="none" stroke="var(--job)" stroke-width="1.6" marker-end="url(#a1)"/>
+<rect x="36" y="290" width="392" height="46" rx="3" fill="var(--job-bg)" stroke="var(--job)"/>
+<text x="50" y="310" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="var(--ink)">dead_pa-hz-04.01-hm.qmd</text>
+<text x="50" y="326" font-size="11.5" fill="var(--ink-2)">covariates on hz’s fixed shape</text>
+<path d="M232.0,336 L232.0,352" fill="none" stroke="var(--job)" stroke-width="1.6" marker-end="url(#a1)"/>
+<rect x="36" y="352" width="392" height="46" rx="3" fill="var(--job-bg)" stroke="var(--job)"/>
+<text x="50" y="372" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="var(--ink)">dead_pa-hz-04.02-hs.qmd</text>
+<text x="50" y="388" font-size="11.5" fill="var(--ink-2)">per-patient predictions</text>
+<path d="M232.0,398 L232.0,414" fill="none" stroke="var(--job)" stroke-width="1.6" marker-end="url(#a1)"/>
+<rect x="36" y="414" width="392" height="46" rx="3" fill="var(--job-bg)" stroke="var(--job)"/>
+<text x="50" y="434" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="var(--ink)">dead_pa-hz-06.01-hp.qmd</text>
+<text x="50" y="450" font-size="11.5" fill="var(--ink-2)">life table overlaid on the fit</text>
+<rect x="592" y="166" width="392" height="46" rx="3" fill="var(--data-bg)" stroke="var(--data)"/>
+<text x="606" y="186" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="var(--ink)">dead_pa-rfs-03.01-ac.qmd</text>
+<text x="606" y="202" font-size="11.5" fill="var(--ink-2)">Kaplan–Meier life table</text>
+<text x="970" y="194" text-anchor="end" font-size="10" letter-spacing=".6" font-weight="700" fill="var(--data)">SHARED SHAPE</text>
+<path d="M788.0,212 L788.0,228" fill="none" stroke="var(--job)" stroke-width="1.6" marker-end="url(#a1)"/>
+<rect x="592" y="228" width="392" height="46" rx="3" fill="var(--job-bg)" stroke="var(--job)"/>
+<text x="606" y="248" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="var(--ink)">dead_pa-rfs-04.19-rfs.qmd</text>
+<text x="606" y="264" font-size="11.5" fill="var(--ink-2)">rfsrc(Surv(iv_dead, dead) ~ .)</text>
+<path d="M788.0,274 L788.0,290" fill="none" stroke="var(--job)" stroke-width="1.6" marker-end="url(#a1)"/>
+<rect x="592" y="290" width="392" height="46" rx="3" fill="var(--job-bg)" stroke="var(--job)"/>
+<text x="606" y="310" font-family="'IBM Plex Mono',monospace" font-size="13" font-weight="600" fill="var(--ink)">dead_pa-rfs-06.14-np.qmd</text>
+<text x="606" y="326" font-size="11.5" fill="var(--ink-2)">VIMP, minimal depth, partial plots</text>
+        <!-- shared-shape tie -->
+        <path d="M428,189 L592,189" fill="none" stroke="var(--data)" stroke-width="1.6" stroke-dasharray="5 3"/>
+        <rect x="436" y="164" width="148" height="18" rx="2" fill="var(--data-bg)"/>
+        <text x="444" y="177" font-size="10.5" font-weight="700" fill="var(--data)">one template, run twice</text>
+
+        <!-- artifact directories -->
+        <rect x="36" y="500" width="392" height="60" rx="3" fill="var(--est-bg)" stroke="var(--est)"/>
+        <text x="50" y="521" font-family="'IBM Plex Mono',monospace" font-size="12.5" font-weight="600" fill="var(--ink)">estimates/dead_pa-hz/</text>
+        <text x="50" y="537" font-family="'IBM Plex Mono',monospace" font-size="11.5" fill="var(--ink-2)">ac.rds  hz.rds  hm.rds  hs.rds</text>
+        <text x="50" y="552" font-family="'IBM Plex Mono',monospace" font-size="11.5" fill="var(--ink-2)">graphs/dead_pa-hz/hp-*.png</text>
+
+        <rect x="592" y="500" width="392" height="60" rx="3" fill="var(--est-bg)" stroke="var(--est)"/>
+        <text x="606" y="521" font-family="'IBM Plex Mono',monospace" font-size="12.5" font-weight="600" fill="var(--ink)">estimates/dead_pa-rfs/</text>
+        <text x="606" y="537" font-family="'IBM Plex Mono',monospace" font-size="11.5" fill="var(--ink-2)">ac.rds  rfs.rds</text>
+        <text x="606" y="552" font-family="'IBM Plex Mono',monospace" font-size="11.5" fill="var(--ink-2)">graphs/dead_pa-rfs/np-*.png</text>
+
+        <path d="M232,476 L232,496" fill="none" stroke="var(--est)" stroke-width="1.6" marker-end="url(#a3)"/>
+        <path d="M788,352 L788,496" fill="none" stroke="var(--est)" stroke-width="1.6" marker-end="url(#a3)"/>
+
+        <!-- the collision -->
+        <line x1="0" y1="592" x2="1020" y2="592" stroke="var(--rule)"/>
+        <rect x="36" y="606" width="948" height="66" rx="3" fill="var(--warn-bg)" stroke="var(--warn)" stroke-dasharray="5 3"/>
+        <text x="52" y="628" font-size="12.5" font-weight="700" fill="var(--warn)">Drop the type field and the two sets become one file.</text>
+        <text x="52" y="647" font-size="12" fill="var(--ink-2)">
+          Both life tables would be <tspan font-family="'IBM Plex Mono',monospace" fill="var(--ink)">distributions/dead_pa-03.01-ac.qmd</tspan>; both would write <tspan font-family="'IBM Plex Mono',monospace" fill="var(--ink)">estimates/dead_pa/ac.rds</tspan>.
+        </text>
+        <text x="52" y="664" font-size="12" fill="var(--ink-2)">
+          Whichever ran last would win, and the other chain would read it without noticing. Nothing about that is detectable from the output.
+        </text>
+      </g>
+    </svg>
+  </figure>
+  <p class="lede"><strong>The accepted cost:</strong> <code>ac</code> runs once per set rather than once per endpoint. One repeated life table buys a set that is self-contained and uniformly named — and it means a set can be deleted, re-run or handed to someone else whole.</p>
+</section>
+
+<section>
+  <div>
+    <div class="eyebrow">Where artifacts go today</div>
+    <h2>Four conventions, all of them in current use</h2>
+  </div>
+  <p class="lede">These are not proposals. Each one is in a file on disk right now, and they disagree about the two questions that matter: what identifies a set, and where its artifacts live.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Where it lives</th><th>What it writes</th><th>Keyed on</th><th>What breaks</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">distributions/tp.hz.dead.sas<br><span style="color:var(--ink-3)">the SAS binder</span></td>
+          <td class="mono">est.hzdead</td>
+          <td>prefix + endpoint, run together with no separator</td>
+          <td>No room for a type. <code>hzdead</code> is already the whole name.</td>
+        </tr>
+        <tr>
+          <td class="mono">analyses/tp.rfsrc.survival.R<br><span style="color:var(--ink-3)">an R script</span></td>
+          <td class="mono">../estimates/rfsrc_surv_jr.rda</td>
+          <td>type + the analyst’s initials</td>
+          <td class="bad">The initials are the only thing separating two people’s runs.</td>
+        </tr>
+        <tr>
+          <td class="mono">analyses/tp.rf.survival.study.qmd<br><span style="color:var(--ink-3)">the current R study template</span></td>
+          <td class="mono">../estimates/rfsrc_survival_20260226/<br>rfsrc_surv_&lt;ver&gt;.rda</td>
+          <td>type + a hand-typed date string</td>
+          <td class="bad">Two endpoints on one day collide. Bump the date and the cache silently rebuilds.</td>
+        </tr>
+        <tr style="background:var(--est-bg)">
+          <td class="mono">the proposed layout</td>
+          <td class="mono">estimates/dead_pa-rfs/rfs.rds</td>
+          <td class="ok">endpoint + type — the set key</td>
+          <td class="ok">Nothing hand-typed. Both fields are already in the job’s own filename.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid g2">
+    <div class="card" style="--edge:var(--est)">
+      <span class="tag" style="background:var(--est-bg); color:var(--est)">Worth keeping</span>
+      <h3>Practice already reached for nesting</h3>
+      <p>The RF study template builds <code>estimates/</code>, <code>graphs/</code> and <code>distributions/</code> subfolders per analysis and caches its forest inside them, rebuilding only when the file is missing. That instinct is right and the design keeps it. Only the folder’s <em>name</em> changes — from a hand-typed date to the set key the filename already carries.</p>
+    </div>
+    <div class="card" style="--edge:var(--warn)">
+      <span class="tag" style="background:var(--warn-bg); color:var(--warn)">Check this one</span>
+      <h3>A generated folder inside a source folder</h3>
+      <p>That same template also creates <code>../distributions/rfsrc_survival_&lt;date&gt;/</code>. Under the proposed rule <code>distributions/</code> holds authored files only, flat — generated output belongs under <code>graphs/</code> or <code>estimates/</code>. Either the rule needs a carve-out or that write needs rehoming, and biostats should say which.</p>
+    </div>
+    <div class="card" style="--edge:var(--est)">
+      <h3>Version the artifact, not the folder</h3>
+      <p><code>rfsrc_surv_&lt;rfsrc_ver&gt;.rda</code> stamps the fitted forest with the package version that produced it — so an <code>rfsrc</code> upgrade invalidates the cache instead of silently reusing it. That is a genuinely good idea and it survives unchanged: the set key names the directory, the version stays on the file.</p>
+    </div>
+    <div class="card" style="--edge:var(--job)">
+      <h3>The ordinals are provisional</h3>
+      <p><code>04.19-rfs</code> and <code>06.14-np</code> above are illustrative — the minor digit is assigned in <code>hvti_taxonomy()</code> row order, and the random-forest rows were appended rather than placed. If the forest family deserves its own block rather than the tail of <code>analyses</code>, now is the moment, because nothing renumbers afterwards.</p>
+    </div>
+  </div>
+</section>
+
+<p class="note"><strong>What is drawn and what is proposed.</strong> The <code>dead_pa-hz</code> chain is traced from the SAS templates and is real. The <code>dead_pa-rfs</code> chain is assembled from the random-forest templates in <code>analyses/templates/</code>, which exist but have never been run as a numbered set — its ordinals are the design’s, not observed. Only <code>ac</code> is templated in <code>hvtiRtemplates</code> today; everything else here is the shape being proposed, which is exactly what is up for debugging.</p>
+
+</div>

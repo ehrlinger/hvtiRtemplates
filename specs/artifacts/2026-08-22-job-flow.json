@@ -1,0 +1,3359 @@
+{
+ "n_jobs": 231,
+ "n_with_prefix": 231,
+ "prefix_counts": {
+  "ac": 12,
+  "bd": 19,
+  "bd_sgroups": 1,
+  "bh": 5,
+  "bl": 4,
+  "bn": 10,
+  "bq": 1,
+  "br": 2,
+  "cd": 1,
+  "ce": 6,
+  "cm": 1,
+  "cp": 1,
+  "dc": 19,
+  "dp": 7,
+  "dt": 1,
+  "echo_readin": 1,
+  "export": 1,
+  "gm": 3,
+  "gp": 5,
+  "hm": 2,
+  "hp": 21,
+  "hs": 10,
+  "hz": 9,
+  "import": 1,
+  "imputsub": 2,
+  "lg": 2,
+  "lm": 13,
+  "lp": 11,
+  "ls": 2,
+  "mm": 1,
+  "mp": 1,
+  "mult_imput": 1,
+  "mult_imput_mcmc": 1,
+  "nd": 10,
+  "nm": 6,
+  "np": 15,
+  "plots": 2,
+  "pm": 1,
+  "rg": 2,
+  "rm": 4,
+  "rp": 2,
+  "stxxx_snapshotpull": 1,
+  "stxxxx_ccfpull": 1,
+  "stxxxx_dwpull": 1,
+  "test": 1,
+  "vars": 7,
+  "vars_base_only": 1
+ },
+ "folder_counts": {
+  "analyses": 55,
+  "datasets": 37,
+  "descriptive": 24,
+  "distributions": 36,
+  "graphs": 79
+ },
+ "n_read_built": 98,
+ "n_vars": 168,
+ "n_members_written": 79,
+ "n_members_read": 110,
+ "n_linked": 30,
+ "n_dangling": 80,
+ "n_orphan": 49,
+ "linked": {
+  "hzdead_ltdfet_c_mtwt": {
+   "w": [
+    "distributions/tp.hz.dead.limited_FET.mtwt.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead.limited_FET.mtwt.sas"
+   ]
+  },
+  "hzdead": {
+   "w": [
+    "distributions/tp.hz.dead.sas"
+   ],
+   "r": [
+    "graphs/tp.ce.states.sas",
+    "graphs/tp.hp.dead.sas",
+    "graphs/tp.hp.dead_with_life_table.sas"
+   ]
+  },
+  "hzrepreint_ltdfet_c_mtwt": {
+   "w": [
+    "distributions/tp.hz.repeated.reint.limited_FET.mtwt.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.repeated.reint.limited_FET.mtwt.sas"
+   ]
+  },
+  "deadc": {
+   "w": [
+    "analyses/tp.bh.bootstrap_bagging_time_varying_covariate.sas",
+    "analyses/tp.bh.hazard_bootstrap_bagging.sas"
+   ],
+   "r": [
+    "analyses/tp.bh.bootstrap_bagging_clustering_summary.sas"
+   ]
+  },
+  "deade": {
+   "w": [
+    "analyses/tp.bh.bootstrap_bagging_time_varying_covariate.sas",
+    "analyses/tp.bh.hazard_bootstrap_bagging.sas"
+   ],
+   "r": [
+    "analyses/tp.bh.bootstrap_bagging_clustering_summary.sas"
+   ]
+  },
+  "deadl": {
+   "w": [
+    "analyses/tp.bh.bootstrap_bagging_time_varying_covariate.sas",
+    "analyses/tp.bh.hazard_bootstrap_bagging.sas"
+   ],
+   "r": [
+    "analyses/tp.bh.bootstrap_bagging_clustering_summary.sas"
+   ]
+  },
+  "_outanm0": {
+   "w": [
+    "analyses/tp.bl.median.cost.matched.boot_ci_anes.sas"
+   ],
+   "r": [
+    "analyses/tp.bl.median.cost.matched.boot_ci_anes.sas"
+   ]
+  },
+  "_outanm1": {
+   "w": [
+    "analyses/tp.bl.median.cost.matched.boot_ci_anes.sas"
+   ],
+   "r": [
+    "analyses/tp.bl.median.cost.matched.boot_ci_anes.sas"
+   ]
+  },
+  "bnprv_avregurg": {
+   "w": [
+    "analyses/tp.bn.binary.avregurg.ci.sas"
+   ],
+   "r": [
+    "analyses/tp.bn.binary.avregurg.ci.sas"
+   ]
+  },
+  "bnmnr_avmgm": {
+   "w": [
+    "analyses/tp.bn.continuous-avmngrad.sas",
+    "analyses/tp.bn.continuous-avmngrad_grp.sas"
+   ],
+   "r": [
+    "analyses/tp.bn.continuous-avmngrad.sas",
+    "analyses/tp.bn.continuous-avmngrad_grp.sas"
+   ]
+  },
+  "bnprv_avrg": {
+   "w": [
+    "analyses/tp.bn.ordinal-avregurg.sas"
+   ],
+   "r": [
+    "analyses/tp.bn.ordinal-avregurg.sas"
+   ]
+  },
+  "bnprv_avrg_reimm": {
+   "w": [
+    "analyses/tp.bn.ordinal-avregurg_grp.sas"
+   ],
+   "r": [
+    "analyses/tp.bn.ordinal-avregurg_grp.sas"
+   ]
+  },
+  "brecho": {
+   "w": [
+    "analyses/tp.br.linear_regression_bagging.sas"
+   ],
+   "r": [
+    "analyses/tp.br.linear_regression_summary.sas"
+   ]
+  },
+  "hmdead": {
+   "w": [
+    "analyses/tp.hm.dead.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead.ideal_multivariable_time_depiction.sas",
+    "graphs/tp.hs.dead.conditional.setup.sas",
+    "graphs/tp.hs.dead.setup.sas"
+   ]
+  },
+  "peml_mul": {
+   "w": [
+    "analyses/tp.nm.afib.binary.sas",
+    "analyses/tp.nm.fev.multivariate.continuous.sas"
+   ],
+   "r": [
+    "graphs/tp.np.afib.mult.avrg_curv.binary.sas",
+    "graphs/tp.np.afib.mult.pt_spec.binary.sas"
+   ]
+  },
+  "pecov_mul_tr2_tmp": {
+   "w": [
+    "analyses/tp.nm.tr.u.multivariate.ordinal.sas"
+   ],
+   "r": [
+    "analyses/tp.nm.tr.u.multivariate.ordinal.sas"
+   ]
+  },
+  "peml_mul_tr2_tmp": {
+   "w": [
+    "analyses/tp.nm.tr.u.multivariate.ordinal.sas"
+   ],
+   "r": [
+    "analyses/tp.nm.tr.u.multivariate.ordinal.sas"
+   ]
+  },
+  "rand_out_tr2_tmp": {
+   "w": [
+    "analyses/tp.nm.tr.u.multivariate.ordinal.sas"
+   ],
+   "r": [
+    "analyses/tp.nm.tr.u.multivariate.ordinal.sas"
+   ]
+  },
+  "hctnr_par": {
+   "w": [
+    "analyses/tp.rm.continuous.balncing_score.sas"
+   ],
+   "r": [
+    "analyses/tp.rm.continuous.balncing_score.sas"
+   ]
+  },
+  "slpv_surv": {
+   "w": [
+    "graphs/tp.hp.dead_s4_sslp6_zval_3d.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead_s4_sslp6_zval_3d.sas"
+   ]
+  },
+  "preddtha": {
+   "w": [
+    "graphs/tp.hs.dead.compare_benefit.setup.sas"
+   ],
+   "r": [
+    "graphs/tp.hs.dead.compare_benefit.setup.sas"
+   ]
+  },
+  "hsdeadc": {
+   "w": [
+    "graphs/tp.hs.dead.conditional.setup.sas",
+    "graphs/tp.hs.dead.setup.sas"
+   ],
+   "r": [
+    "graphs/tp.hs.dead.conditional.setup.sas",
+    "graphs/tp.hs.dead.setup.sas"
+   ]
+  },
+  "hsdeadp": {
+   "w": [
+    "graphs/tp.hs.dead.conditional.setup.sas",
+    "graphs/tp.hs.dead.setup.sas"
+   ],
+   "r": [
+    "graphs/tp.hs.dead.conditional.setup.sas",
+    "graphs/tp.hs.dead.setup.sas"
+   ]
+  },
+  "uslife_age1": {
+   "w": [
+    "graphs/tp.hs.uslife_estimates_generate_stratify_.age.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead.uslife.stratifed.sas",
+    "graphs/tp.hp.dead.uslife.stratify_uses.sas",
+    "graphs/tp.hs.uslife_estimates_generate_stratify_.age.sas"
+   ]
+  },
+  "uslife_age2": {
+   "w": [
+    "graphs/tp.hs.uslife_estimates_generate_stratify_.age.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead.uslife.stratifed.sas",
+    "graphs/tp.hp.dead.uslife.stratify_uses.sas",
+    "graphs/tp.hs.uslife_estimates_generate_stratify_.age.sas"
+   ]
+  },
+  "uslife_age3": {
+   "w": [
+    "graphs/tp.hs.uslife_estimates_generate_stratify_.age.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead.uslife.stratifed.sas",
+    "graphs/tp.hp.dead.uslife.stratify_uses.sas",
+    "graphs/tp.hs.uslife_estimates_generate_stratify_.age.sas"
+   ]
+  },
+  "uslife": {
+   "w": [
+    "graphs/tp.hs.uslife_generates_matched_estimates.sas"
+   ],
+   "r": [
+    "graphs/tp.ce.states_CIF_CP.sas",
+    "graphs/tp.ce.states_CIF_CP_bootstrap_only_archived.sas",
+    "graphs/tp.hp.dead.age_with_population_life_table.sas",
+    "graphs/tp.hp.dead_with_life_table.sas",
+    "graphs/tp.hs.uslife_generates_matched_estimates.sas"
+   ]
+  },
+  "agetrend": {
+   "w": [
+    "graphs/tp.lp.trends.age.sas"
+   ],
+   "r": [
+    "graphs/tp.lp.trends.age.sas"
+   ]
+  },
+  "agetrrpl": {
+   "w": [
+    "graphs/tp.lp.trends.age.sas"
+   ],
+   "r": [
+    "graphs/tp.lp.trends.age.sas"
+   ]
+  },
+  "trends": {
+   "w": [
+    "graphs/tp.lp.trends.polytomous.sas",
+    "graphs/tp.lp.trends.sas"
+   ],
+   "r": [
+    "graphs/tp.lp.trends.polytomous.sas",
+    "graphs/tp.lp.trends.sas"
+   ]
+  }
+ },
+ "dangling": {
+  "pemlind": [
+   "distributions/tp.nd.afib.ivwrist_ind.binary.sas",
+   "graphs/tp.np.tr.ivecho.independence.sas"
+  ],
+  "pemlu": [
+   "distributions/tp.nd.afib.ivwrist_u.binary.sas",
+   "graphs/tp.np.afib.ivwristm.avrg_curv.binary.sas",
+   "graphs/tp.np.afib.ivwristm.pt_spec_phases.binary.sas",
+   "graphs/tp.np.afib.ivwristm.pt_specific.binary.sas"
+  ],
+  "peml_ind_avpkgrm_wt": [
+   "distributions/tp.nd.avpkgrad.ind_mwtw.sas"
+  ],
+  "ndfev1_jr": [
+   "distributions/tp.nd.continuous.mtwt.u.sas"
+  ],
+  "pemlgfr": [
+   "distributions/tp.nd.continuous_NLMM.sas"
+  ],
+  "pemlgfr_i": [
+   "distributions/tp.nd.continuous_NLMM_ind.sas"
+  ],
+  "pemldead_u": [
+   "distributions/tp.nd.dead_cluster.u.sas"
+  ],
+  "rand_out_dead": [
+   "distributions/tp.nd.dead_cluster.u.sas"
+  ],
+  "peml_ind": [
+   "distributions/tp.nd.tr.ivecho.ind.ordinal.sas"
+  ],
+  "peml": [
+   "distributions/tp.nd.tr.ivecho.u.ordinal.sas",
+   "graphs/tp.np.tr.ivecho.average_curv.ordinal.sas",
+   "graphs/tp.np.tr.ivecho.u.phases.sas"
+  ],
+  "blairlk": [
+   "analyses/tp.bl.logistic_bootstrap_bagging_summary.sas"
+  ],
+  "lmout1726": [
+   "analyses/tp.lm.checkpred.sas"
+  ],
+  "hmst_dead": [
+   "graphs/tp.ce.patientx.sas"
+  ],
+  "hmst_trach": [
+   "graphs/tp.ce.patientx.sas"
+  ],
+  "hzstdead": [
+   "graphs/tp.ce.states.sas",
+   "graphs/tp.ce.states_CIF_CP.sas",
+   "graphs/tp.ce.states_CIF_CP_bootstrap_only_archived.sas"
+  ],
+  "hzstptca": [
+   "graphs/tp.ce.states.sas"
+  ],
+  "hzstredo": [
+   "graphs/tp.ce.states.sas"
+  ],
+  "hzreop_jr": [
+   "graphs/tp.ce.states_CIF_CP.sas",
+   "graphs/tp.ce.states_CIF_CP_bootstrap_only_archived.sas"
+  ],
+  "hmdead1": [
+   "graphs/tp.hp.dead.age_on_horizontal_axis.sas"
+  ],
+  "hzdthage": [
+   "graphs/tp.hp.dead.age_with_population_life_table.sas"
+  ],
+  "hzdead_a_avr": [
+   "graphs/tp.hp.dead.life-gained.sas"
+  ],
+  "hzdead_ata_tavr": [
+   "graphs/tp.hp.dead.life-gained.sas"
+  ],
+  "hzdead_atf_tavr": [
+   "graphs/tp.hp.dead.life-gained.sas"
+  ],
+  "hzdead_b_mmgt": [
+   "graphs/tp.hp.dead.life-gained.sas"
+  ],
+  "hzdead_b_tavr": [
+   "graphs/tp.hp.dead.life-gained.sas"
+  ],
+  "hzdead_mtwt_st": [
+   "graphs/tp.hp.dead.matching_weight.sas"
+  ],
+  "hmdtn1sn": [
+   "graphs/tp.hp.dead.n1surg.nodes_as_integers.sas"
+  ],
+  "hzdeadb": [
+   "graphs/tp.hp.dead.stratify_different_hazards.sas"
+  ],
+  "hzdeadm": [
+   "graphs/tp.hp.dead.stratify_different_hazards.sas"
+  ],
+  "hzdeadtk": [
+   "graphs/tp.hp.dead.tkdn.stratified.sas"
+  ],
+  "hzdead_ag1": [
+   "graphs/tp.hp.dead.uslife.stratifed.sas",
+   "graphs/tp.hp.dead.uslife.stratify_uses.sas"
+  ],
+  "hzdead_ag2": [
+   "graphs/tp.hp.dead.uslife.stratifed.sas",
+   "graphs/tp.hp.dead.uslife.stratify_uses.sas"
+  ],
+  "hzdead_ag3": [
+   "graphs/tp.hp.dead.uslife.stratifed.sas",
+   "graphs/tp.hp.dead.uslife.stratify_uses.sas"
+  ],
+  "hmdead_s3la": [
+   "graphs/tp.hp.dead_s3.lvmass_ladiam_3D.sas"
+  ],
+  "hmdead_s4": [
+   "graphs/tp.hp.dead_s4_sslp6_zval_3d.sas"
+  ],
+  "hzrep_1sradmt_los": [
+   "graphs/tp.hp.event.weighted.sas"
+  ],
+  "hmdlvad_modulate_jr": [
+   "graphs/tp.hp.mcs.mod.dead.devseq_nlvlv12.scallop.sas"
+  ],
+  "hzdeadmtchgrp": [
+   "graphs/tp.hp.numtreat.survdiff.matched.sas"
+  ],
+  "hzrep_radmt_los": [
+   "graphs/tp.hp.repeated.event.weighted.sas"
+  ],
+  "hzcecard_ehb": [
+   "graphs/tp.hp.repeated_events.sas"
+  ],
+  "sampl_hmdead_cabg": [
+   "graphs/tp.hs.BRIER.test_sample_cabg.sas"
+  ],
+  "testsampl_hmcens_cabg": [
+   "graphs/tp.hs.BRIER.test_sample_cabg.sas"
+  ],
+  "hmdeada": [
+   "graphs/tp.hs.dead.compare_benefit.setup.sas"
+  ],
+  "lprbldc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprbldl": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprbldlc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprcvac": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprcval": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprcvalc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprdthc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprdthl": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprdthlc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lpribpc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lpribpl": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lpribplc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprmic": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprmil": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprmilc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprrnlc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprrnll": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprrnllc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprrspc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprrspl": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprrsplc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprsepc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprsepl": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "lprseplc": [
+   "graphs/tp.lp.roc.sas"
+  ],
+  "bnprv": [
+   "graphs/tp.np.afib.ivwristm.avrg_curv.binary.sas",
+   "graphs/tp.np.tr.ivecho.independence.sas",
+   "graphs/tp.np.tr.ivecho.u.phases.sas"
+  ],
+  "bnmnr_avpkce": [
+   "graphs/tp.np.avpkgrad_ozak_ind_mtwt.sas"
+  ],
+  "bnmnr_avpkm": [
+   "graphs/tp.np.avpkgrad_ozak_ind_mtwt.sas"
+  ],
+  "peml_avpkgr_ozam": [
+   "graphs/tp.np.avpkgrad_ozak_ind_mtwt.sas"
+  ],
+  "peml_avpkgrm_ce": [
+   "graphs/tp.np.avpkgrad_ozak_ind_mtwt.sas"
+  ],
+  "bnmnr_fevdou": [
+   "graphs/tp.np.fev.double.univariate.continuous.sas",
+   "graphs/tp.np.z0axdpo.continuous.bmi_xaxis.sas"
+  ],
+  "pemlfev_dou": [
+   "graphs/tp.np.fev.double.univariate.continuous.sas"
+  ],
+  "pemlfev_mult": [
+   "graphs/tp.np.fev.multivariate.continuous.sas"
+  ],
+  "bnmnr_fev": [
+   "graphs/tp.np.fev.u.trend.continuous.sas"
+  ],
+  "pemlfev": [
+   "graphs/tp.np.fev.u.trend.continuous.sas"
+  ],
+  "peml_mul_u1": [
+   "graphs/tp.np.po_ar.u_multi.ordinal.sas"
+  ],
+  "peml_icd": [
+   "graphs/tp.np.tr.icdpr.avg_curv.sas"
+  ],
+  "pemlz0axd_bmi2": [
+   "graphs/tp.np.z0axdpo.continuous.bmi_xaxis.sas"
+  ]
+ },
+ "orphan": {
+  "rgrtyp": [
+   "descriptive/tp.rg.trends.polytomous.sas"
+  ],
+  "lpdth": [
+   "descriptive/tp.rg.trends.sas"
+  ],
+  "lpfem": [
+   "descriptive/tp.rg.trends.sas"
+  ],
+  "lpmec": [
+   "descriptive/tp.rg.trends.sas"
+  ],
+  "lpreop": [
+   "descriptive/tp.rg.trends.sas"
+  ],
+  "rgage": [
+   "descriptive/tp.rg.trends.sas"
+  ],
+  "hzdth_mtwt": [
+   "distributions/tp.hz.dead.grp_ext_mtwt.sas"
+  ],
+  "hzdead_ltdfet_mtwt": [
+   "distributions/tp.hz.dead.limited_FET.mtwt.sas"
+  ],
+  "hzdthcls": [
+   "distributions/tp.hz.dead.stratified.sas"
+  ],
+  "hzrep_radmtm3": [
+   "distributions/tp.hz.event.weighted.sas"
+  ],
+  "hzrep_radmtm4": [
+   "distributions/tp.hz.repeated.event.weighted.sas"
+  ],
+  "hzrepreint_ltdfet_mtwt": [
+   "distributions/tp.hz.repeated.reint.limited_FET.mtwt.sas"
+  ],
+  "hzmbinfd_mr": [
+   "distributions/tp.hz.repeated_events.modulated_renewal.sas"
+  ],
+  "hzmbinfd": [
+   "distributions/tp.hz.repeated_events.sas"
+  ],
+  "bhcp_hern": [
+   "analyses/tp.bh.hazard_CP_2evnt.sas"
+  ],
+  "lasso_biperc": [
+   "analyses/tp.bl.lasso.binaryoutcome.sas"
+  ],
+  "blmadisc": [
+   "analyses/tp.bl.logistic_bootstrap_bagging.sas"
+  ],
+  "outanm01": [
+   "analyses/tp.bl.median.cost.matched.boot_ci_anes.sas"
+  ],
+  "bqtrop": [
+   "analyses/tp.bq.quantile_regression_bagging.sas"
+  ],
+  "gmmr01bi_late": [
+   "analyses/tp.gm.mr01_binary_analysis.sas"
+  ],
+  "gmnyha1": [
+   "analyses/tp.gm.nyha_longitudinal_ordinal_analysis.sas"
+  ],
+  "hmdeadsrgp": [
+   "analyses/tp.hm.dead.multiple_imputation.sas"
+  ],
+  "hmdeadsrgp_t2": [
+   "analyses/tp.hm.dead.multiple_imputation.sas"
+  ],
+  "mip": [
+   "analyses/tp.lm.logistic_mult_imput.sas",
+   "analyses/tp.lm.logistic_propensity_score.nomi.sas",
+   "analyses/tp.lm.logistic_propensity_score.sas"
+  ],
+  "lprtyp": [
+   "analyses/tp.lm.logistic_propensity.polytomous.sas"
+  ],
+  "tlmnygrp": [
+   "analyses/tp.lm.logistic_propensity_ordinal.sas"
+  ],
+  "lmmip": [
+   "analyses/tp.lm.logistic_propensity_score.nomi.sas"
+  ],
+  "mvcgrp": [
+   "analyses/tp.lm.mv_compl_longitudinal_ordinal_clogit.sas"
+  ],
+  "mvproc_ivop": [
+   "analyses/tp.lm.mv_compl_longitudinal_ordinal_glogit.sas"
+  ],
+  "mvcgrp_sgn": [
+   "analyses/tp.lm.mv_compl_sgn_longitudinal_ordinal_clogit.sas"
+  ],
+  "lprbchctg": [
+   "analyses/tp.lm.polytomous.propensity_score.sas"
+  ],
+  "prop_strata": [
+   "analyses/tp.lm.polytomous.propensity_score.sas"
+  ],
+  "rbchctg": [
+   "analyses/tp.lm.polytomous.propensity_score.sas"
+  ],
+  "lmsize19": [
+   "analyses/tp.lm.size19.sas"
+  ],
+  "mngr": [
+   "analyses/tp.mm.repeated_continuous_longitudinal_data.sas"
+  ],
+  "pecov_mul_tmp": [
+   "analyses/tp.nm.afib.binary.sas",
+   "analyses/tp.nm.fev.multivariate.continuous.sas"
+  ],
+  "peml_mul_tmp": [
+   "analyses/tp.nm.afib.binary.sas",
+   "analyses/tp.nm.fev.multivariate.continuous.sas"
+  ],
+  "rand_out_tmp": [
+   "analyses/tp.nm.afib.binary.sas",
+   "analyses/tp.nm.fev.multivariate.continuous.sas"
+  ],
+  "pemlfev_mult_jr": [
+   "analyses/tp.nm.fev.multivariate.continuous.sas"
+  ],
+  "peml_tr2_mul": [
+   "analyses/tp.nm.tr.u.multivariate.ordinal.sas"
+  ],
+  "rbc_blnc_fin": [
+   "analyses/tp.pm.count.balncing_score.sas"
+  ],
+  "rbcparms": [
+   "analyses/tp.pm.count.balncing_score.sas"
+  ],
+  "hct_blnc_fin": [
+   "analyses/tp.rm.continuous.balncing_score.sas"
+  ],
+  "rmddead": [
+   "analyses/tp.rm.dead.compare_benefit.sas"
+  ],
+  "gfr72": [
+   "analyses/tp.rm.f3gfr_min_subclassification.sas"
+  ],
+  "zval": [
+   "analyses/tp.rm.lr.mult_imput.z_value.sas"
+  ],
+  "avrg_u": [
+   "graphs/tp.np.po_ar.u_multi.ordinal.sas"
+  ],
+  "lvfc_u": [
+   "graphs/tp.np.po_ar.u_multi.ordinal.sas"
+  ],
+  "morph_u": [
+   "graphs/tp.np.po_ar.u_multi.ordinal.sas"
+  ]
+ },
+ "jobs": {
+  "datasets/tp.bd.SAStoR.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "datasets/tp.bd.SAStoR_2014.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "datasets/tp.bd.SAStoR_old.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "datasets/tp.bd.data.master.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdbase_",
+    "bdevents_",
+    "bdevents_mmddyy",
+    "bdfup_",
+    "bdstat_",
+    "builtpreopecho"
+   ],
+   "vars": false
+  },
+  "datasets/tp.bd.fup.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdfup_mmddyy",
+    "stnum_fup"
+   ],
+   "vars": false
+  },
+  "datasets/tp.bd.fuplist.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": false
+  },
+  "datasets/tp.bd.geoid.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.bd.gmatch_greedy_mayo.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "propen"
+   ],
+   "vars": false
+  },
+  "datasets/tp.bd.mult.imput.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "datasets/tp.bd.mult.imput_mcmc.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "datasets/tp.bd.mult_imput.multiplerecords.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdmult_wrist",
+    "built"
+   ],
+   "vars": true
+  },
+  "datasets/tp.bd.opt_match.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "omatches11",
+    "omatches12",
+    "omatches13",
+    "propen"
+   ],
+   "vars": false
+  },
+  "datasets/tp.bd.permfullcohort.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": false
+  },
+  "datasets/tp.bd.permpairs.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "gmatches_biperc11"
+   ],
+   "vars": false
+  },
+  "datasets/tp.bd.propen.before_after.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bd_main"
+   ],
+   "vars": true
+  },
+  "datasets/tp.bd.repeated.events.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bddevice"
+   ],
+   "vars": true
+  },
+  "datasets/tp.bd.repeated.events.text.readmission.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdmult"
+   ],
+   "vars": false
+  },
+  "datasets/tp.bd.ses.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.bd.snipits.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.bd_sgroups.sas": {
+   "folder": "datasets",
+   "prefix": "bd_sgroups",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.dt.check.sas": {
+   "folder": "datasets",
+   "prefix": "dt",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "datasets/tp.echo_readin.sas": {
+   "folder": "datasets",
+   "prefix": "echo_readin",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "builtpreopecho",
+    "intraopechos",
+    "postopechos",
+    "stnum_echo"
+   ],
+   "vars": false
+  },
+  "datasets/tp.imputsub.sas": {
+   "folder": "datasets",
+   "prefix": "imputsub",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.imputsub.test.sas": {
+   "folder": "datasets",
+   "prefix": "imputsub",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.mult_imput.sas": {
+   "folder": "datasets",
+   "prefix": "mult_imput",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.mult_imput_mcmc.sas": {
+   "folder": "datasets",
+   "prefix": "mult_imput_mcmc",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.stXXXX_dwpull.sas": {
+   "folder": "datasets",
+   "prefix": "stxxxx_dwpull",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.stXXX_snapshotpull.sas": {
+   "folder": "datasets",
+   "prefix": "stxxx_snapshotpull",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": false
+  },
+  "datasets/tp.stxxxx_ccfpull.sas": {
+   "folder": "datasets",
+   "prefix": "stxxxx_ccfpull",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "xxxx"
+   ],
+   "vars": false
+  },
+  "datasets/tp.vars.aorta.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.vars.cabg.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.vars.cadmainpo.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.vars.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.vars.supplemental.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.vars.vlvanatpath.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.vars.vlvrpr.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/tp.vars_base_only.sas": {
+   "folder": "datasets",
+   "prefix": "vars_base_only",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "descriptive/tp.dc.dead.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.general.oldvars.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.general.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.general.testimputing.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bltmain",
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.gfup.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.gfup_121106.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.linear_trends.continuous.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.match.outcomes_paired.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.mtwt.outcomes.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.stdcoef_diff.continuous.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built_multimpt"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.stddif_mtch_mtwt.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.stddiff.summarytable.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.stddiffci.sumtbl.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.table1.mtch_mtwt.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.tables.html_and_rtf.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.tables.ods.2013.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.tables.ods.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.tables0534.ods.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.dc.trends.vsd.loess.sas": {
+   "folder": "descriptive",
+   "prefix": "dc",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.lg.dead.constant.sas": {
+   "folder": "descriptive",
+   "prefix": "lg",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.lg.hdead.sas": {
+   "folder": "descriptive",
+   "prefix": "lg",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.rg.trends.polytomous.sas": {
+   "folder": "descriptive",
+   "prefix": "rg",
+   "writes": [
+    "rgrtyp"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.rg.trends.sas": {
+   "folder": "descriptive",
+   "prefix": "rg",
+   "writes": [
+    "lpdth",
+    "lpfem",
+    "lpmec",
+    "lpreop",
+    "rgage"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "descriptive/tp.test.dc.dead.sas": {
+   "folder": "descriptive",
+   "prefix": "test",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "meta"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.PropotionalHazard_test.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bd_main"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.dead.limited_FET.mtwt.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.dead.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.dead_mtwt.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "builtnsclc"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.dead_uslife.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.event.weighted.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built_all"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.events_with_plots.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.readmissions.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "builtreadmit"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.repeated.event.weighted.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built_all"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.repeated.events.plot.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "builtreadmit"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.repeated.reint.limited_FET.mtwt.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdreint_all",
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ac.repeated_events.sas": {
+   "folder": "distributions",
+   "prefix": "ac",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bddevice"
+   ],
+   "vars": true
+  },
+  "distributions/tp.cd.vars.sas": {
+   "folder": "distributions",
+   "prefix": "cd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.ce.states.multiple_decrement_analysis.sas": {
+   "folder": "distributions",
+   "prefix": "ce",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.dp.afib.ivwrist.binary.sas": {
+   "folder": "distributions",
+   "prefix": "dp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdmult_wrist"
+   ],
+   "vars": true
+  },
+  "distributions/tp.dp.echo.sas": {
+   "folder": "distributions",
+   "prefix": "dp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdpostopecho"
+   ],
+   "vars": true
+  },
+  "distributions/tp.dp.pain_score.ordinal.sas": {
+   "folder": "distributions",
+   "prefix": "dp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bd_pain2"
+   ],
+   "vars": true
+  },
+  "distributions/tp.hz.dead.grp_ext_mtwt.sas": {
+   "folder": "distributions",
+   "prefix": "hz",
+   "writes": [
+    "hzdth_mtwt"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.hz.dead.limited_FET.mtwt.sas": {
+   "folder": "distributions",
+   "prefix": "hz",
+   "writes": [
+    "hzdead_ltdfet_c_mtwt",
+    "hzdead_ltdfet_mtwt"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.hz.dead.sas": {
+   "folder": "distributions",
+   "prefix": "hz",
+   "writes": [
+    "hzdead"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.hz.dead.stratified.sas": {
+   "folder": "distributions",
+   "prefix": "hz",
+   "writes": [
+    "hzdthcls"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.hz.event.weighted.sas": {
+   "folder": "distributions",
+   "prefix": "hz",
+   "writes": [
+    "hzrep_radmtm3"
+   ],
+   "reads": [],
+   "library": [
+    "built_all"
+   ],
+   "vars": true
+  },
+  "distributions/tp.hz.repeated.event.weighted.sas": {
+   "folder": "distributions",
+   "prefix": "hz",
+   "writes": [
+    "hzrep_radmtm4"
+   ],
+   "reads": [],
+   "library": [
+    "built_all"
+   ],
+   "vars": false
+  },
+  "distributions/tp.hz.repeated.reint.limited_FET.mtwt.sas": {
+   "folder": "distributions",
+   "prefix": "hz",
+   "writes": [
+    "hzrepreint_ltdfet_c_mtwt",
+    "hzrepreint_ltdfet_mtwt"
+   ],
+   "reads": [],
+   "library": [
+    "bdreint_all",
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.hz.repeated_events.modulated_renewal.sas": {
+   "folder": "distributions",
+   "prefix": "hz",
+   "writes": [
+    "hzmbinfd_mr"
+   ],
+   "reads": [],
+   "library": [
+    "bddevice"
+   ],
+   "vars": true
+  },
+  "distributions/tp.hz.repeated_events.sas": {
+   "folder": "distributions",
+   "prefix": "hz",
+   "writes": [
+    "hzmbinfd"
+   ],
+   "reads": [],
+   "library": [
+    "bddevice"
+   ],
+   "vars": true
+  },
+  "distributions/tp.nd.AAOCA-test_u.binary.sas": {
+   "folder": "distributions",
+   "prefix": "nd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdmult_wrist"
+   ],
+   "vars": true
+  },
+  "distributions/tp.nd.afib.ivwrist_ind.binary.sas": {
+   "folder": "distributions",
+   "prefix": "nd",
+   "writes": [],
+   "reads": [
+    "pemlind"
+   ],
+   "library": [
+    "bdmult_wrist"
+   ],
+   "vars": true
+  },
+  "distributions/tp.nd.afib.ivwrist_u.binary.sas": {
+   "folder": "distributions",
+   "prefix": "nd",
+   "writes": [],
+   "reads": [
+    "pemlu"
+   ],
+   "library": [
+    "bdmult_wrist"
+   ],
+   "vars": true
+  },
+  "distributions/tp.nd.avpkgrad.ind_mwtw.sas": {
+   "folder": "distributions",
+   "prefix": "nd",
+   "writes": [],
+   "reads": [
+    "peml_ind_avpkgrm_wt"
+   ],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "distributions/tp.nd.continuous.mtwt.u.sas": {
+   "folder": "distributions",
+   "prefix": "nd",
+   "writes": [],
+   "reads": [
+    "ndfev1_jr"
+   ],
+   "library": [
+    "csfev1po"
+   ],
+   "vars": true
+  },
+  "distributions/tp.nd.continuous_NLMM.sas": {
+   "folder": "distributions",
+   "prefix": "nd",
+   "writes": [],
+   "reads": [
+    "pemlgfr"
+   ],
+   "library": [
+    "bdlab"
+   ],
+   "vars": true
+  },
+  "distributions/tp.nd.continuous_NLMM_ind.sas": {
+   "folder": "distributions",
+   "prefix": "nd",
+   "writes": [],
+   "reads": [
+    "pemlgfr_i"
+   ],
+   "library": [
+    "bdlab"
+   ],
+   "vars": true
+  },
+  "distributions/tp.nd.dead_cluster.u.sas": {
+   "folder": "distributions",
+   "prefix": "nd",
+   "writes": [],
+   "reads": [
+    "pemldead_u",
+    "rand_out_dead"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "distributions/tp.nd.tr.ivecho.ind.ordinal.sas": {
+   "folder": "distributions",
+   "prefix": "nd",
+   "writes": [],
+   "reads": [
+    "peml_ind"
+   ],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "distributions/tp.nd.tr.ivecho.u.ordinal.sas": {
+   "folder": "distributions",
+   "prefix": "nd",
+   "writes": [],
+   "reads": [
+    "peml"
+   ],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "analyses/tp.bh.bootstrap_bagging_clustering_summary.sas": {
+   "folder": "analyses",
+   "prefix": "bh",
+   "writes": [],
+   "reads": [
+    "deadc",
+    "deade",
+    "deadl"
+   ],
+   "library": [],
+   "vars": false
+  },
+  "analyses/tp.bh.bootstrap_bagging_time_varying_covariate.sas": {
+   "folder": "analyses",
+   "prefix": "bh",
+   "writes": [
+    "deadc",
+    "deade",
+    "deadl"
+   ],
+   "reads": [],
+   "library": [],
+   "vars": true
+  },
+  "analyses/tp.bh.hazard_CP_2evnt.sas": {
+   "folder": "analyses",
+   "prefix": "bh",
+   "writes": [
+    "bhcp_hern"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.bh.hazard_CP_2evnt_mixed.sas": {
+   "folder": "analyses",
+   "prefix": "bh",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "analyses/tp.bh.hazard_bootstrap_bagging.sas": {
+   "folder": "analyses",
+   "prefix": "bh",
+   "writes": [
+    "deadc",
+    "deade",
+    "deadl"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.bl.lasso.binaryoutcome.sas": {
+   "folder": "analyses",
+   "prefix": "bl",
+   "writes": [
+    "lasso_biperc"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.bl.logistic_bootstrap_bagging.sas": {
+   "folder": "analyses",
+   "prefix": "bl",
+   "writes": [
+    "blmadisc"
+   ],
+   "reads": [],
+   "library": [
+    "bd"
+   ],
+   "vars": true
+  },
+  "analyses/tp.bl.logistic_bootstrap_bagging_summary.sas": {
+   "folder": "analyses",
+   "prefix": "bl",
+   "writes": [],
+   "reads": [
+    "blairlk"
+   ],
+   "library": [],
+   "vars": false
+  },
+  "analyses/tp.bl.median.cost.matched.boot_ci_anes.sas": {
+   "folder": "analyses",
+   "prefix": "bl",
+   "writes": [
+    "_outanm0",
+    "_outanm1",
+    "outanm01"
+   ],
+   "reads": [
+    "_outanm0",
+    "_outanm1"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.bn.binary.avregurg.ci.sas": {
+   "folder": "analyses",
+   "prefix": "bn",
+   "writes": [
+    "bnprv_avregurg"
+   ],
+   "reads": [
+    "bnprv_avregurg"
+   ],
+   "library": [
+    "multecho"
+   ],
+   "vars": false
+  },
+  "analyses/tp.bn.binary.avregurg_mixed.ci.sas": {
+   "folder": "analyses",
+   "prefix": "bn",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "analyses/tp.bn.continuous-avmngrad.mixed.ci.sas": {
+   "folder": "analyses",
+   "prefix": "bn",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "analyses/tp.bn.continuous-avmngrad.sas": {
+   "folder": "analyses",
+   "prefix": "bn",
+   "writes": [
+    "bnmnr_avmgm"
+   ],
+   "reads": [
+    "bnmnr_avmgm"
+   ],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "analyses/tp.bn.continuous-avmngrad_grp.mixed.ci.sas": {
+   "folder": "analyses",
+   "prefix": "bn",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "analyses/tp.bn.continuous-avmngrad_grp.sas": {
+   "folder": "analyses",
+   "prefix": "bn",
+   "writes": [
+    "bnmnr_avmgm"
+   ],
+   "reads": [
+    "bnmnr_avmgm"
+   ],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "analyses/tp.bn.ordinal-avregurg.mixed.ci.sas": {
+   "folder": "analyses",
+   "prefix": "bn",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "analyses/tp.bn.ordinal-avregurg.sas": {
+   "folder": "analyses",
+   "prefix": "bn",
+   "writes": [
+    "bnprv_avrg"
+   ],
+   "reads": [
+    "bnprv_avrg"
+   ],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "analyses/tp.bn.ordinal-avregurg_grp.mixed.ci.sas": {
+   "folder": "analyses",
+   "prefix": "bn",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "analyses/tp.bn.ordinal-avregurg_grp.sas": {
+   "folder": "analyses",
+   "prefix": "bn",
+   "writes": [
+    "bnprv_avrg_reimm"
+   ],
+   "reads": [
+    "bnprv_avrg_reimm"
+   ],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "analyses/tp.bq.quantile_regression_bagging.sas": {
+   "folder": "analyses",
+   "prefix": "bq",
+   "writes": [
+    "bqtrop"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.br.linear_regression_bagging.sas": {
+   "folder": "analyses",
+   "prefix": "br",
+   "writes": [
+    "brecho"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.br.linear_regression_summary.sas": {
+   "folder": "analyses",
+   "prefix": "br",
+   "writes": [],
+   "reads": [
+    "brecho"
+   ],
+   "library": [],
+   "vars": false
+  },
+  "analyses/tp.cm.CoxPH-evnts-propensity-IPTW-mtch-CoxPH.sas": {
+   "folder": "analyses",
+   "prefix": "cm",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.gm.mr01_binary_analysis.sas": {
+   "folder": "analyses",
+   "prefix": "gm",
+   "writes": [
+    "gmmr01bi_late"
+   ],
+   "reads": [],
+   "library": [
+    "bdpoecho"
+   ],
+   "vars": true
+  },
+  "analyses/tp.gm.nyha_longitudinal_ordinal_analysis.sas": {
+   "folder": "analyses",
+   "prefix": "gm",
+   "writes": [
+    "gmnyha1"
+   ],
+   "reads": [],
+   "library": [
+    "bdnyha"
+   ],
+   "vars": true
+  },
+  "analyses/tp.gm.zip_zinb.sas": {
+   "folder": "analyses",
+   "prefix": "gm",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.hm.dead.multiple_imputation.sas": {
+   "folder": "analyses",
+   "prefix": "hm",
+   "writes": [
+    "hmdeadsrgp",
+    "hmdeadsrgp_t2"
+   ],
+   "reads": [],
+   "library": [
+    "built_mulimp_deadsrg"
+   ],
+   "vars": true
+  },
+  "analyses/tp.hm.dead.sas": {
+   "folder": "analyses",
+   "prefix": "hm",
+   "writes": [
+    "hmdead"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.af_po.early.binary.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdmult_imput"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.af_po.late.binary.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdmult_imput"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.checkpred.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [],
+   "reads": [
+    "lmout1726"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.logistic_mult_imput.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [
+    "mip"
+   ],
+   "reads": [],
+   "library": [
+    "built_mip_imput"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.logistic_propensity.polytomous.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [
+    "lprtyp"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.logistic_propensity_ordinal.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [
+    "tlmnygrp"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.logistic_propensity_score.nomi.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [
+    "lmmip",
+    "mip"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.logistic_propensity_score.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [
+    "mip"
+   ],
+   "reads": [],
+   "library": [
+    "built_mip_imput"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.mv_compl_longitudinal_ordinal_clogit.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [
+    "mvcgrp"
+   ],
+   "reads": [],
+   "library": [
+    "built_lc"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.mv_compl_longitudinal_ordinal_glogit.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [
+    "mvproc_ivop"
+   ],
+   "reads": [],
+   "library": [],
+   "vars": true
+  },
+  "analyses/tp.lm.mv_compl_sgn_longitudinal_ordinal_clogit.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [
+    "mvcgrp_sgn"
+   ],
+   "reads": [],
+   "library": [
+    "built_lc"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.polytomous.propensity_score.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [
+    "lprbchctg",
+    "prop_strata",
+    "rbchctg"
+   ],
+   "reads": [],
+   "library": [
+    "built_multimpt"
+   ],
+   "vars": true
+  },
+  "analyses/tp.lm.size19.sas": {
+   "folder": "analyses",
+   "prefix": "lm",
+   "writes": [
+    "lmsize19"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.ls.sts_analyses.sas": {
+   "folder": "analyses",
+   "prefix": "ls",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.ls.sts_observed_predicted.table.sas": {
+   "folder": "analyses",
+   "prefix": "ls",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.mm.repeated_continuous_longitudinal_data.sas": {
+   "folder": "analyses",
+   "prefix": "mm",
+   "writes": [
+    "mngr"
+   ],
+   "reads": [],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "analyses/tp.nm.afib.binary.sas": {
+   "folder": "analyses",
+   "prefix": "nm",
+   "writes": [
+    "pecov_mul_tmp",
+    "peml_mul",
+    "peml_mul_tmp",
+    "rand_out_tmp"
+   ],
+   "reads": [],
+   "library": [
+    "bdmult_imput"
+   ],
+   "vars": true
+  },
+  "analyses/tp.nm.afib_aftype.binary.sas": {
+   "folder": "analyses",
+   "prefix": "nm",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdekg"
+   ],
+   "vars": true
+  },
+  "analyses/tp.nm.fev.double.univariate.continuous.sas": {
+   "folder": "analyses",
+   "prefix": "nm",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "multbuilt"
+   ],
+   "vars": true
+  },
+  "analyses/tp.nm.fev.multivariate.continuous.sas": {
+   "folder": "analyses",
+   "prefix": "nm",
+   "writes": [
+    "pecov_mul_tmp",
+    "peml_mul",
+    "peml_mul_tmp",
+    "pemlfev_mult_jr",
+    "rand_out_tmp"
+   ],
+   "reads": [],
+   "library": [
+    "bdmult_imput_pft"
+   ],
+   "vars": true
+  },
+  "analyses/tp.nm.tr.u.multivariate.ordinal.sas": {
+   "folder": "analyses",
+   "prefix": "nm",
+   "writes": [
+    "pecov_mul_tr2_tmp",
+    "peml_mul_tr2_tmp",
+    "peml_tr2_mul",
+    "rand_out_tr2_tmp"
+   ],
+   "reads": [
+    "pecov_mul_tr2_tmp",
+    "peml_mul_tr2_tmp",
+    "rand_out_tr2_tmp"
+   ],
+   "library": [
+    "bdmult_imput",
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.nm.z0axdpo.continuous.bmi.sas": {
+   "folder": "analyses",
+   "prefix": "nm",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdpostopecho"
+   ],
+   "vars": true
+  },
+  "analyses/tp.pm.count.balncing_score.sas": {
+   "folder": "analyses",
+   "prefix": "pm",
+   "writes": [
+    "rbc_blnc_fin",
+    "rbcparms"
+   ],
+   "reads": [],
+   "library": [
+    "built_multimpt"
+   ],
+   "vars": true
+  },
+  "analyses/tp.rm.continuous.balncing_score.sas": {
+   "folder": "analyses",
+   "prefix": "rm",
+   "writes": [
+    "hct_blnc_fin",
+    "hctnr_par"
+   ],
+   "reads": [
+    "hctnr_par"
+   ],
+   "library": [
+    "built_multimpt"
+   ],
+   "vars": true
+  },
+  "analyses/tp.rm.dead.compare_benefit.sas": {
+   "folder": "analyses",
+   "prefix": "rm",
+   "writes": [
+    "rmddead"
+   ],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "analyses/tp.rm.f3gfr_min_subclassification.sas": {
+   "folder": "analyses",
+   "prefix": "rm",
+   "writes": [
+    "gfr72"
+   ],
+   "reads": [],
+   "library": [
+    "built_multimpt"
+   ],
+   "vars": true
+  },
+  "analyses/tp.rm.lr.mult_imput.z_value.sas": {
+   "folder": "analyses",
+   "prefix": "rm",
+   "writes": [
+    "zval"
+   ],
+   "reads": [],
+   "library": [
+    "built_imput"
+   ],
+   "vars": true
+  },
+  "graphs/tp.ce.comparison_across_age.sas": {
+   "folder": "graphs",
+   "prefix": "ce",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bitaage",
+    "sitaage"
+   ],
+   "vars": false
+  },
+  "graphs/tp.ce.patientx.sas": {
+   "folder": "graphs",
+   "prefix": "ce",
+   "writes": [],
+   "reads": [
+    "hmst_dead",
+    "hmst_trach"
+   ],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.ce.states.sas": {
+   "folder": "graphs",
+   "prefix": "ce",
+   "writes": [],
+   "reads": [
+    "hzdead",
+    "hzstdead",
+    "hzstptca",
+    "hzstredo"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.ce.states_CIF_CP.sas": {
+   "folder": "graphs",
+   "prefix": "ce",
+   "writes": [],
+   "reads": [
+    "hzreop_jr",
+    "hzstdead",
+    "uslife"
+   ],
+   "library": [
+    "built041619",
+    "fstevent_reop"
+   ],
+   "vars": true
+  },
+  "graphs/tp.ce.states_CIF_CP_bootstrap_only_archived.sas": {
+   "folder": "graphs",
+   "prefix": "ce",
+   "writes": [],
+   "reads": [
+    "hzreop_jr",
+    "hzstdead",
+    "uslife"
+   ],
+   "library": [
+    "built041619",
+    "fstevent_reop"
+   ],
+   "vars": true
+  },
+  "graphs/tp.cp.dead.sas": {
+   "folder": "graphs",
+   "prefix": "cp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built_multimpt_imp"
+   ],
+   "vars": false
+  },
+  "graphs/tp.dp.boxplot.rv_index.sas": {
+   "folder": "graphs",
+   "prefix": "dp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.dp.bubbleplot.tvrg_byTV.sas": {
+   "folder": "graphs",
+   "prefix": "dp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.dp.procs.year.sas": {
+   "folder": "graphs",
+   "prefix": "dp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.dp.relative-distribution.sas": {
+   "folder": "graphs",
+   "prefix": "dp",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.export.sas": {
+   "folder": "graphs",
+   "prefix": "export",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.gp.argrg.longitudinal_ordinal.sas": {
+   "folder": "graphs",
+   "prefix": "gp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.gp.mr.ivecho.isch.sas": {
+   "folder": "graphs",
+   "prefix": "gp",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.gp.mr.ivecho.sas": {
+   "folder": "graphs",
+   "prefix": "gp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "bdpoecho"
+   ],
+   "vars": true
+  },
+  "graphs/tp.gp.mr01_binary_model.sas": {
+   "folder": "graphs",
+   "prefix": "gp",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.gp.nyha_longitudinal_model.sas": {
+   "folder": "graphs",
+   "prefix": "gp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.dead.age_on_horizontal_axis.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hmdead1"
+   ],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.hp.dead.age_with_population_life_table.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdthage",
+    "uslife"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.dead.ideal_multivariable_time_depiction.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hmdead"
+   ],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.hp.dead.life-gained.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdead_a_avr",
+    "hzdead_ata_tavr",
+    "hzdead_atf_tavr",
+    "hzdead_b_mmgt",
+    "hzdead_b_tavr"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": false
+  },
+  "graphs/tp.hp.dead.limited_FET.mtwt.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdead_ltdfet_c_mtwt"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.dead.matching_weight.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdead_mtwt_st"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.dead.n1surg.nodes_as_integers.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hmdtn1sn"
+   ],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.hp.dead.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdead"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": false
+  },
+  "graphs/tp.hp.dead.stratify_different_hazards.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdeadb",
+    "hzdeadm"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.dead.tkdn.stratified.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdeadtk"
+   ],
+   "library": [
+    "recon99"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.dead.uslife.stratifed.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdead_ag1",
+    "hzdead_ag2",
+    "hzdead_ag3",
+    "uslife_age1",
+    "uslife_age2",
+    "uslife_age3"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.dead.uslife.stratify_uses.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdead_ag1",
+    "hzdead_ag2",
+    "hzdead_ag3",
+    "uslife_age1",
+    "uslife_age2",
+    "uslife_age3"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.dead_s3.lvmass_ladiam_3D.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hmdead_s3la"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.dead_s4_sslp6_zval_3d.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [
+    "slpv_surv"
+   ],
+   "reads": [
+    "hmdead_s4",
+    "slpv_surv"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.dead_with_life_table.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdead",
+    "uslife"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.event.weighted.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzrep_1sradmt_los"
+   ],
+   "library": [
+    "built_all"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.mcs.mod.dead.devseq_nlvlv12.scallop.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hmdlvad_modulate_jr"
+   ],
+   "library": [
+    "builtmcs"
+   ],
+   "vars": false
+  },
+  "graphs/tp.hp.numtreat.survdiff.matched.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzdeadmtchgrp"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.repeated.event.weighted.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzrep_radmt_los"
+   ],
+   "library": [
+    "built_all"
+   ],
+   "vars": false
+  },
+  "graphs/tp.hp.repeated.reint.limited_FET.mtwt.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzrepreint_ltdfet_c_mtwt"
+   ],
+   "library": [
+    "bdreint_all",
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hp.repeated_events.sas": {
+   "folder": "graphs",
+   "prefix": "hp",
+   "writes": [],
+   "reads": [
+    "hzcecard_ehb"
+   ],
+   "library": [
+    "built",
+    "ce_built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hs.BRIER.test_sample_cabg.sas": {
+   "folder": "graphs",
+   "prefix": "hs",
+   "writes": [],
+   "reads": [
+    "sampl_hmdead_cabg",
+    "testsampl_hmcens_cabg"
+   ],
+   "library": [
+    "sampl_cabg20"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hs.dead.C_Index.sas": {
+   "folder": "graphs",
+   "prefix": "hs",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built_multimpt_final"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hs.dead.compare_benefit.setup.sas": {
+   "folder": "graphs",
+   "prefix": "hs",
+   "writes": [
+    "preddtha"
+   ],
+   "reads": [
+    "hmdeada",
+    "preddtha"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hs.dead.conditional.setup.sas": {
+   "folder": "graphs",
+   "prefix": "hs",
+   "writes": [
+    "hsdeadc",
+    "hsdeadp"
+   ],
+   "reads": [
+    "hmdead",
+    "hsdeadc",
+    "hsdeadp"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hs.dead.conditional.uses_setup.sas": {
+   "folder": "graphs",
+   "prefix": "hs",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hs.dead.procedure.tdepth.sas": {
+   "folder": "graphs",
+   "prefix": "hs",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "aats"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hs.dead.setup.sas": {
+   "folder": "graphs",
+   "prefix": "hs",
+   "writes": [
+    "hsdeadc",
+    "hsdeadp"
+   ],
+   "reads": [
+    "hmdead",
+    "hsdeadc",
+    "hsdeadp"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hs.dead_uses_setup.sas": {
+   "folder": "graphs",
+   "prefix": "hs",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hs.uslife_estimates_generate_stratify_.age.sas": {
+   "folder": "graphs",
+   "prefix": "hs",
+   "writes": [
+    "uslife_age1",
+    "uslife_age2",
+    "uslife_age3"
+   ],
+   "reads": [
+    "uslife_age1",
+    "uslife_age2",
+    "uslife_age3"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.hs.uslife_generates_matched_estimates.sas": {
+   "folder": "graphs",
+   "prefix": "hs",
+   "writes": [
+    "uslife"
+   ],
+   "reads": [
+    "uslife"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.import.sas": {
+   "folder": "graphs",
+   "prefix": "import",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.lp.cov_balance.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "dial_stddif"
+   ],
+   "vars": false
+  },
+  "graphs/tp.lp.lvf.ordinal.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": true
+  },
+  "graphs/tp.lp.mv_approach_ivop_longitudinal.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": true
+  },
+  "graphs/tp.lp.mv_compl_longitudinal_ordinal.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built_lc"
+   ],
+   "vars": true
+  },
+  "graphs/tp.lp.mv_compl_sgn_longitudinal.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built_lc"
+   ],
+   "vars": true
+  },
+  "graphs/tp.lp.mvrpr.age_on_horizontal_axis.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.lp.roc.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [],
+   "reads": [
+    "lprbldc",
+    "lprbldl",
+    "lprbldlc",
+    "lprcvac",
+    "lprcval",
+    "lprcvalc",
+    "lprdthc",
+    "lprdthl",
+    "lprdthlc",
+    "lpribpc",
+    "lpribpl",
+    "lpribplc",
+    "lprmic",
+    "lprmil",
+    "lprmilc",
+    "lprrnlc",
+    "lprrnll",
+    "lprrnllc",
+    "lprrspc",
+    "lprrspl",
+    "lprrsplc",
+    "lprsepc",
+    "lprsepl",
+    "lprseplc"
+   ],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.lp.simple.stratified.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.lp.trends.age.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [
+    "agetrend",
+    "agetrrpl"
+   ],
+   "reads": [
+    "agetrend",
+    "agetrrpl"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.lp.trends.polytomous.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [
+    "trends"
+   ],
+   "reads": [
+    "trends"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.lp.trends.sas": {
+   "folder": "graphs",
+   "prefix": "lp",
+   "writes": [
+    "trends"
+   ],
+   "reads": [
+    "trends"
+   ],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.mp.repeated_continous_longitudinal_data.sas": {
+   "folder": "graphs",
+   "prefix": "mp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.afib.ivwristm.avrg_curv.binary.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "bnprv",
+    "pemlu"
+   ],
+   "library": [
+    "bdmult_wrist",
+    "rand_out"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.afib.ivwristm.pt_spec_phases.binary.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "pemlu"
+   ],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.np.afib.ivwristm.pt_specific.binary.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "pemlu"
+   ],
+   "library": [
+    "rand_out"
+   ],
+   "vars": false
+  },
+  "graphs/tp.np.afib.mult.avrg_curv.binary.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "peml_mul"
+   ],
+   "library": [
+    "bdmult_wrist",
+    "built",
+    "rand_out_mult"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.afib.mult.pt_spec.binary.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "peml_mul"
+   ],
+   "library": [
+    "bdmult_wrist",
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.avpkgrad_ozak_ind_mtwt.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "bnmnr_avpkce",
+    "bnmnr_avpkm",
+    "peml_avpkgr_ozam",
+    "peml_avpkgrm_ce"
+   ],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.fev.double.univariate.continuous.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "bnmnr_fevdou",
+    "pemlfev_dou"
+   ],
+   "library": [
+    "multbuilt"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.fev.multivariate.continuous.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "pemlfev_mult"
+   ],
+   "library": [
+    "multbuilt"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.fev.u.trend.continuous.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "bnmnr_fev",
+    "pemlfev"
+   ],
+   "library": [
+    "multbuilt"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.po_ar.u_multi.ordinal.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [
+    "avrg_u",
+    "lvfc_u",
+    "morph_u"
+   ],
+   "reads": [
+    "peml_mul_u1"
+   ],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.np.tr.icdpr.avg_curv.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "peml_icd"
+   ],
+   "library": [
+    "builtecho",
+    "rand_out_icd"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.tr.ivecho.average_curv.ordinal.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "peml"
+   ],
+   "library": [
+    "bdecho",
+    "rand_out"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.tr.ivecho.independence.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "bnprv",
+    "pemlind"
+   ],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.tr.ivecho.u.phases.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "bnprv",
+    "peml"
+   ],
+   "library": [
+    "bdecho"
+   ],
+   "vars": true
+  },
+  "graphs/tp.np.z0axdpo.continuous.bmi_xaxis.sas": {
+   "folder": "graphs",
+   "prefix": "np",
+   "writes": [],
+   "reads": [
+    "bnmnr_fevdou",
+    "pemlz0axd_bmi2"
+   ],
+   "library": [
+    "bdpostopecho"
+   ],
+   "vars": true
+  },
+  "graphs/tp.plots.sas": {
+   "folder": "graphs",
+   "prefix": "plots",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.plots.unix.sas": {
+   "folder": "graphs",
+   "prefix": "plots",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "graphs/tp.rp.lr.z_value.opyrs.sas": {
+   "folder": "graphs",
+   "prefix": "rp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  },
+  "graphs/tp.rp.trends.sas": {
+   "folder": "graphs",
+   "prefix": "rp",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": true
+  }
+ }
+}
