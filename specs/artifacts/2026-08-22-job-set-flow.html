@@ -122,9 +122,9 @@ a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--est); outline-o
     <p class="standfirst">How one endpoint moves through the CORR analysis binder — which job writes what, which job reads it back, and where the chain is held together by nothing but a hand-typed name. Traced from the SAS study template, not from documentation.</p>
   </div>
   <div class="counts">
-    <div class="count"><span class="n">231</span><span class="l">SAS job templates</span></div>
-    <div class="count"><span class="n">79 / 110</span><span class="l">estimates written / read</span></div>
-    <div class="count"><span class="n">13</span><span class="l">true handoff members</span></div>
+    <div class="count"><span class="n"><span data-check="n_jobs">231</span></span><span class="l">SAS job templates</span></div>
+    <div class="count"><span class="n"><span data-check="n_members_written">79</span> / <span data-check="n_members_read">110</span></span><span class="l">estimates written / read</span></div>
+    <div class="count"><span class="n"><span data-check="n_cross_job">13</span></span><span class="l">true handoff members</span></div>
   </div>
 </header>
 
@@ -196,7 +196,7 @@ a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--est); outline-o
         <circle cx="132" cy="56" r="4" fill="var(--data)"/>
         <g font-family="'IBM Plex Mono',monospace" font-size="10.5" fill="var(--data)">
           <text x="112" y="586" text-anchor="middle" font-family="'Source Sans 3',sans-serif" font-size="10"
-                letter-spacing=".5" fill="var(--ink-3)">read by 98 of 231 jobs</text>
+                letter-spacing=".5" fill="var(--ink-3)">read by <tspan data-check="n_read_built">98</tspan> of <tspan data-check="n_jobs">231</tspan> jobs</text>
         </g>
 
         <!-- jobs -->
@@ -210,7 +210,7 @@ a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--est); outline-o
           <!-- vars macro -->
           <rect x="160" y="104" width="404" height="40" rx="3" fill="var(--data-bg)" stroke="var(--data)" stroke-width="1" stroke-dasharray="4 3"/>
           <text x="176" y="122" font-family="'IBM Plex Mono',monospace" font-size="13" fill="var(--ink)" font-weight="500">datasets/vars.sas</text>
-          <text x="176" y="136" font-size="11.5" fill="var(--ink-2)">macro, not a job — <tspan font-family="'IBM Plex Mono',monospace">%inc</tspan>’d and re-run by 168 of 231 jobs</text>
+          <text x="176" y="136" font-size="11.5" fill="var(--ink-2)">macro, not a job — <tspan font-family="'IBM Plex Mono',monospace">%inc</tspan>’d and re-run by <tspan data-check="n_vars">168</tspan> of <tspan data-check="n_jobs">231</tspan> jobs</text>
 
           <!-- 2 dt -->
           <rect x="160" y="162" width="404" height="44" rx="3" fill="var(--job-bg)" stroke="var(--job)" stroke-width="1"/>
@@ -372,14 +372,14 @@ a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--est); outline-o
     <div class="card" style="--edge:var(--est)">
       <span class="tag" style="background:var(--est-bg); color:var(--est)">Loud, once you look</span>
       <h3>Nobody wrote it</h3>
-      <p>Across the template corpus <strong>110 estimates members are read and 79 written</strong>; only <strong>13</strong> carry a handoff between two different jobs. The rest read something the writer left in another study, or write something no job reads back.</p>
+      <p>Across the template corpus <strong><span data-check="n_members_read">110</span> estimates members are read and <span data-check="n_members_written">79</span> written</strong>; only <strong><span data-check="n_cross_job">13</span></strong> carry a handoff between two different jobs. The rest read something the writer left in another study, or write something no job reads back.</p>
       <p class="sym"><strong>Symptom:</strong> <code>ERROR: File EST.X does not exist</code> — the one honest failure in this list.</p>
     </div>
 
     <div class="card" style="--edge:var(--data)">
       <span class="tag" style="background:var(--data-bg); color:var(--data)">Silent</span>
       <h3><code>%vars</code> changed underneath</h3>
-      <p><strong>168 of 231</strong> jobs <code>%inc</code> the same <code>datasets/vars.sas</code> and re-derive their variables at run time. Edit it for one job and every job downstream silently changes — but only when it is next re-run.</p>
+      <p><strong><span data-check="n_vars">168</span> of <span data-check="n_jobs">231</span></strong> jobs <code>%inc</code> the same <code>datasets/vars.sas</code> and re-derive their variables at run time. Edit it for one job and every job downstream silently changes — but only when it is next re-run.</p>
       <p class="sym"><strong>Symptom:</strong> two jobs in one set disagree about a variable, and both logs are clean.</p>
     </div>
   </div>
@@ -453,6 +453,6 @@ a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--est); outline-o
   </div>
 </section>
 
-<p class="note"><strong>How these numbers were produced.</strong> Every count on this page comes from a scan of the 231 <code>.sas</code> templates under <code>~/Documents/template</code>, matching <code>data est.&lt;member&gt;</code> as a write and <code>set</code> / <code>data=</code> / <code>inhaz=</code> <code>est.&lt;member&gt;</code> as a read. One caveat worth stating plainly: the corpus is a <em>library of examples drawn from many different studies</em>, so an unmatched read usually means the writer lives in another study rather than that something is broken. The finding is not that 80 reads are defects — it is that the member name is the only thing joining a writer to a reader, and nothing checks it at either end.</p>
+<p class="note"><strong>How these numbers were produced.</strong> Every count on this page comes from a scan of the <span data-check="n_jobs">231</span> <code>.sas</code> templates under <code>~/Documents/template</code>, matching <code>data est.&lt;member&gt;</code> as a write and <code>set</code> / <code>data=</code> / <code>inhaz=</code> <code>est.&lt;member&gt;</code> as a read. One caveat worth stating plainly: the corpus is a <em>library of examples drawn from many different studies</em>, so an unmatched read usually means the writer lives in another study rather than that something is broken. The finding is not that <span data-check="n_dangling">80</span> reads are defects — it is that the member name is the only thing joining a writer to a reader, and nothing checks it at either end.</p>
 
 </div>

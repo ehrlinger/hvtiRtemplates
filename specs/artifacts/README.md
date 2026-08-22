@@ -145,6 +145,7 @@ briefing biostats reviews before the layout in
 | `2026-08-22-job-flow.json` | the generated graph |
 | `2026-08-22-prefix-placement-scan.py` | the prefix-placement scan |
 | `2026-08-22-prefix-placement.json` | the generated comparison |
+| `check-flow-counts.py` | CI guard: fails when a diagram's numbers disagree with the maps |
 
 **Reproduce:**
 
@@ -182,11 +183,28 @@ writes a *generated* folder into `distributions/`, which the layout rule says
 holds authored files only. `new_job()` must pick exactly one folder per prefix,
 and picking silently is how the README table drifted in the first place.
 
-**The counts inside the `.html` are a convenience copy of the `.json`,
-hand-synced.** That is the same arrangement that drifted three times in one day
-above, and it is unguarded here - `check-spec-counts.py` covers the allocation
-spec only. Regenerate both maps and re-read the diagrams before trusting a
-number in them.
+**The counts inside the `.html` are a convenience copy of the `.json`, and
+CI holds them to it.** That is the same arrangement that drifted three times in
+one day above, so it gets the same treatment: every checkable number in a
+diagram carries an anchor naming the map key it came from,
+
+```html
+<span  data-check="n_jobs">231</span>          in prose
+<tspan data-check="n_jobs">231</tspan>         inside an SVG label
+```
+
+and `check-flow-counts.py` fails the PR when the two disagree. It also checks
+the prefix-map table row by row, since a renamed or dropped row is drift no
+count would catch. Adding an anchor needs no change to the checker - every
+folder total, prefix total and prefix-in-folder total is already in its
+registry, so `data-check="files_ac"` resolves on its own.
+
+**Some numbers are deliberately unanchored.** The masthead of
+`two-sets-one-endpoint.html` counts naming conventions and missing checks; those
+are readings of the corpus, not scan output, and anchoring them would imply a
+derivation that does not exist. `check-flow-counts.py` reports which map keys
+are quoted nowhere, so the gap between what is derived and what is asserted
+stays visible rather than being assumed.
 
 **The `dead_pa-rfs` chain is proposed, not observed.** Its ordinals
 (`04.19-rfs`, `06.14-np`) are the design's. The random-forest templates exist in

@@ -56,6 +56,17 @@ dangling = {m: v for m, v in readers.items() if m not in writers}
 orphan   = {m: v for m, v in writers.items() if m not in readers}
 linked   = {m: {"w": writers[m], "r": readers[m]} for m in writers if m in readers}
 
+# A member is only a *handoff* when some reader is a different job from every
+# writer. Most linked members are a job writing and re-reading its own dataset
+# within one program, which couples nothing. The diagrams quote the handoff
+# count, not the linked count, so it is computed here rather than by eye.
+cross = {}
+for m, v in linked.items():
+    ws, rs = set(v["w"]), set(v["r"])
+    other = sorted(rs - ws)
+    if other:
+        cross[m] = {"w": sorted(ws), "r": other}
+
 out = {
     "n_jobs": len(jobs),
     "n_with_prefix": sum(1 for d in jobs.values() if d["prefix"]),
@@ -68,6 +79,8 @@ out = {
     "n_members_written": len(writers),
     "n_members_read": len(readers),
     "n_linked": len(linked),
+    "n_cross_job": len(cross),
+    "cross_job": cross,
     "n_dangling": len(dangling),
     "n_orphan": len(orphan),
     "linked": linked,

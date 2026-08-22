@@ -113,12 +113,12 @@ td:first-child code{font-size:13px; font-weight:600}
 <header class="mast">
   <div>
     <h1>Where Every Prefix Lives</h1>
-    <p class="standfirst">Three sources describe the two-letter prefix taxonomy: the folder each file actually sits in, the table in the study README, and <code>hvti_taxonomy()</code> in the R package. This is all 43 rows, checked against all three at once.</p>
+    <p class="standfirst">Three sources describe the two-letter prefix taxonomy: the folder each file actually sits in, the table in the study README, and <code>hvti_taxonomy()</code> in the R package. This is all <span data-check="tax_n_rows">43</span> rows, checked against all three at once.</p>
   </div>
   <div class="counts">
-    <div class="count"><span class="n">38</span><span class="l">rows all three agree on</span></div>
-    <div class="count"><span class="n">2</span><span class="l">rows they disagree on</span></div>
-    <div class="count"><span class="n">30</span><span class="l">names in no taxonomy</span></div>
+    <div class="count"><span class="n"><span data-check="tax_agree">38</span></span><span class="l">rows all three agree on</span></div>
+    <div class="count"><span class="n"><span data-check="tax_disagree">2</span></span><span class="l">rows they disagree on</span></div>
+    <div class="count"><span class="n"><span data-check="tax_extra">30</span></span><span class="l">names in no taxonomy</span></div>
   </div>
 </header>
 
@@ -133,7 +133,7 @@ td:first-child code{font-size:13px; font-weight:600}
     <div class="card" style="--edge:var(--warn)">
       <span class="tag" style="background:var(--warn-bg); color:var(--warn)">Three sources, three answers</span>
       <h3><code>hs</code> — hazard setup</h3>
-      <p>Its 10 files sit in <code>graphs/templates/</code>. The study README says <code>distributions/</code>. <code>hvti_taxonomy()</code> now says <code>analyses/</code>, placed straight after the <code>hm</code> it reads via <code>inhaz=est.hmdead</code>.</p>
+      <p>Its <span data-check="files_hs">10</span> files sit in <code>graphs/templates/</code>. The study README says <code>distributions/</code>. <code>hvti_taxonomy()</code> now says <code>analyses/</code>, placed straight after the <code>hm</code> it reads via <code>inhaz=est.hmdead</code>.</p>
       <p><strong>The case for <code>analyses</code>:</strong> <code>hs</code> fits nothing and draws nothing — it turns a model into per-patient predictions. Its output is a dataset, not a figure. It landed in <code>graphs/</code> because <code>hp</code> is what consumes it.</p>
     </div>
 
@@ -144,9 +144,9 @@ td:first-child code{font-size:13px; font-weight:600}
     </div>
 
     <div class="card" style="--edge:var(--data)">
-      <span class="tag" style="background:var(--data-bg); color:var(--data)">Scattered · 4 prefixes</span>
+      <span class="tag" style="background:var(--data-bg); color:var(--data)">Scattered · <span data-check="tax_scattered">4</span> prefixes</span>
       <h3><code>dp</code> spans three folders</h3>
-      <p>31 files: 22 in <code>graphs/</code>, 6 in <code>descriptive/</code>, 3 in <code>distributions/</code>. <code>ce</code>, <code>cd</code> and <code>ar</code> each straddle two. A prefix that names a folder cannot sit in three of them — a scaffolded job has to go somewhere, and the taxonomy picks one.</p>
+      <p><span data-check="files_dp">31</span> files: <span data-check="files_dp_graphs">22</span> in <code>graphs/</code>, <span data-check="files_dp_descriptive">6</span> in <code>descriptive/</code>, <span data-check="files_dp_distributions">3</span> in <code>distributions/</code>. <code>ce</code>, <code>cd</code> and <code>ar</code> each straddle two. A prefix that names a folder cannot sit in three of them — a scaffolded job has to go somewhere, and the taxonomy picks one.</p>
     </div>
 
     <div class="card" style="--edge:var(--est)">
@@ -160,16 +160,16 @@ td:first-child code{font-size:13px; font-weight:600}
 <section>
   <div>
     <div class="eyebrow">The corpus</div>
-    <h2>313 template files, by folder</h2>
+    <h2><span data-check="files_total">313</span> template files, by folder</h2>
   </div>
   <p class="lede">Counted from <code>*/templates/</code>, excluding <code>archive/</code> subdirectories. The majors run in this order because that is the order a study works through them.</p>
   <div class="chartbox">
-<div class="barrow"><span class="bmaj">01</span><code class="bname">datasets/</code><span class="btrack"><span class="bfill" style="width:40.5%"></span></span><span class="bnum">47</span></div>
-<div class="barrow"><span class="bmaj">02</span><code class="bname">descriptive/</code><span class="btrack"><span class="bfill" style="width:28.4%"></span></span><span class="bnum">33</span></div>
-<div class="barrow"><span class="bmaj">03</span><code class="bname">distributions/</code><span class="btrack"><span class="bfill" style="width:31.0%"></span></span><span class="bnum">36</span></div>
-<div class="barrow"><span class="bmaj">04</span><code class="bname">analyses/</code><span class="btrack"><span class="bfill" style="width:63.8%"></span></span><span class="bnum">74</span></div>
-<div class="barrow"><span class="bmaj">06</span><code class="bname">graphs/</code><span class="btrack"><span class="bfill" style="width:100.0%"></span></span><span class="bnum">116</span></div>
-<div class="barrow"><span class="bmaj">07</span><code class="bname">documents/</code><span class="btrack"><span class="bfill" style="width:6.0%"></span></span><span class="bnum">7</span></div>
+<div class="barrow"><span class="bmaj">01</span><code class="bname">datasets/</code><span class="btrack"><span class="bfill" style="width:40.5%"></span></span><span class="bnum"><span data-check="files_datasets">47</span></span></div>
+<div class="barrow"><span class="bmaj">02</span><code class="bname">descriptive/</code><span class="btrack"><span class="bfill" style="width:28.4%"></span></span><span class="bnum"><span data-check="files_descriptive">33</span></span></div>
+<div class="barrow"><span class="bmaj">03</span><code class="bname">distributions/</code><span class="btrack"><span class="bfill" style="width:31.0%"></span></span><span class="bnum"><span data-check="files_distributions">36</span></span></div>
+<div class="barrow"><span class="bmaj">04</span><code class="bname">analyses/</code><span class="btrack"><span class="bfill" style="width:63.8%"></span></span><span class="bnum"><span data-check="files_analyses">74</span></span></div>
+<div class="barrow"><span class="bmaj">06</span><code class="bname">graphs/</code><span class="btrack"><span class="bfill" style="width:100.0%"></span></span><span class="bnum"><span data-check="files_graphs">116</span></span></div>
+<div class="barrow"><span class="bmaj">07</span><code class="bname">documents/</code><span class="btrack"><span class="bfill" style="width:6.0%"></span></span><span class="bnum"><span data-check="files_documents">7</span></span></div>
   </div>
   <p class="lede"><code>graphs/</code> holds more than a third of everything, which is what the layout rule is responding to: authored files are few and hand-navigated, generated figures are many and swept. That asymmetry is why source stays flat and artifacts get a set directory.</p>
 </section>
@@ -177,7 +177,7 @@ td:first-child code{font-size:13px; font-weight:600}
 <section>
   <div>
     <div class="eyebrow">The full map</div>
-    <h2>All 43 rows, all three sources</h2>
+    <h2>All <span data-check="tax_n_rows">43</span> rows, all three sources</h2>
   </div>
   <p class="lede">Grouped by the folder <code>hvti_taxonomy()</code> assigns, in ordinal order. A folder name in <span class="bad">rust</span> under <em>actually on disk</em> is one that disagrees with the taxonomy.</p>
   <div class="tablewrap">
@@ -246,7 +246,7 @@ td:first-child code{font-size:13px; font-weight:600}
 <section>
   <div>
     <div class="eyebrow">Outside the taxonomy</div>
-    <h2>30 names that lead a file but name no analysis</h2>
+    <h2><span data-check="tax_extra">30</span> names that lead a file but name no analysis</h2>
   </div>
   <p class="lede">These parse as a leading field in <code>tp.&lt;field&gt;.&#8230;</code> but are not prefixes — data pulls, imputation utilities, boosting notebooks, Office templates, manuscript boilerplate. <code>hvti_non_prefixes()</code> exists to keep this distinction, so that &#8220;not a prefix&#8221; stays separable from &#8220;a prefix nobody documented&#8221;.</p>
   <div style="line-height:2"><code class="chip">imputsub</code> <code class="chip">manuscript</code> <code class="chip">plots</code> <code class="chip">pp</code> <code class="chip">age_trends_dataplots_raw</code> <code class="chip">bd_sgroups</code> <code class="chip">boostmlr</code> <code class="chip">boostmtreelongitudinal</code> <code class="chip">boostmtreelongitudinal_w_notes_032423</code> <code class="chip">boostmtreeunivariate</code> <code class="chip">brier_multiphasehazard</code> <code class="chip">complexupset</code> <code class="chip">consortdiagram</code> <code class="chip">consorts</code> <code class="chip">dp_bland_altman_ccc</code> <code class="chip">echo_readin</code> <code class="chip">export</code> <code class="chip">ggpair_plots_histograms</code> <code class="chip">import</code> <code class="chip">mult_imput</code> <code class="chip">mult_imput_mcmc</code> <code class="chip">np_two_yaxis_grid_plots</code> <code class="chip">np_two_yaxis_plots</code> <code class="chip">ppt</code> <code class="chip">report_metadata</code> <code class="chip">stxxx_snapshotpull</code> <code class="chip">stxxxx_ccfpull</code> <code class="chip">stxxxx_dwpull</code> <code class="chip">test</code> <code class="chip">vars_base_only</code></div>

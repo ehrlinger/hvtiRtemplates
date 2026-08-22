@@ -62,6 +62,128 @@
  "n_members_written": 79,
  "n_members_read": 110,
  "n_linked": 30,
+ "n_cross_job": 13,
+ "cross_job": {
+  "hzdead_ltdfet_c_mtwt": {
+   "w": [
+    "distributions/tp.hz.dead.limited_FET.mtwt.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead.limited_FET.mtwt.sas"
+   ]
+  },
+  "hzdead": {
+   "w": [
+    "distributions/tp.hz.dead.sas"
+   ],
+   "r": [
+    "graphs/tp.ce.states.sas",
+    "graphs/tp.hp.dead.sas",
+    "graphs/tp.hp.dead_with_life_table.sas"
+   ]
+  },
+  "hzrepreint_ltdfet_c_mtwt": {
+   "w": [
+    "distributions/tp.hz.repeated.reint.limited_FET.mtwt.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.repeated.reint.limited_FET.mtwt.sas"
+   ]
+  },
+  "deadc": {
+   "w": [
+    "analyses/tp.bh.bootstrap_bagging_time_varying_covariate.sas",
+    "analyses/tp.bh.hazard_bootstrap_bagging.sas"
+   ],
+   "r": [
+    "analyses/tp.bh.bootstrap_bagging_clustering_summary.sas"
+   ]
+  },
+  "deade": {
+   "w": [
+    "analyses/tp.bh.bootstrap_bagging_time_varying_covariate.sas",
+    "analyses/tp.bh.hazard_bootstrap_bagging.sas"
+   ],
+   "r": [
+    "analyses/tp.bh.bootstrap_bagging_clustering_summary.sas"
+   ]
+  },
+  "deadl": {
+   "w": [
+    "analyses/tp.bh.bootstrap_bagging_time_varying_covariate.sas",
+    "analyses/tp.bh.hazard_bootstrap_bagging.sas"
+   ],
+   "r": [
+    "analyses/tp.bh.bootstrap_bagging_clustering_summary.sas"
+   ]
+  },
+  "brecho": {
+   "w": [
+    "analyses/tp.br.linear_regression_bagging.sas"
+   ],
+   "r": [
+    "analyses/tp.br.linear_regression_summary.sas"
+   ]
+  },
+  "hmdead": {
+   "w": [
+    "analyses/tp.hm.dead.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead.ideal_multivariable_time_depiction.sas",
+    "graphs/tp.hs.dead.conditional.setup.sas",
+    "graphs/tp.hs.dead.setup.sas"
+   ]
+  },
+  "peml_mul": {
+   "w": [
+    "analyses/tp.nm.afib.binary.sas",
+    "analyses/tp.nm.fev.multivariate.continuous.sas"
+   ],
+   "r": [
+    "graphs/tp.np.afib.mult.avrg_curv.binary.sas",
+    "graphs/tp.np.afib.mult.pt_spec.binary.sas"
+   ]
+  },
+  "uslife_age1": {
+   "w": [
+    "graphs/tp.hs.uslife_estimates_generate_stratify_.age.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead.uslife.stratifed.sas",
+    "graphs/tp.hp.dead.uslife.stratify_uses.sas"
+   ]
+  },
+  "uslife_age2": {
+   "w": [
+    "graphs/tp.hs.uslife_estimates_generate_stratify_.age.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead.uslife.stratifed.sas",
+    "graphs/tp.hp.dead.uslife.stratify_uses.sas"
+   ]
+  },
+  "uslife_age3": {
+   "w": [
+    "graphs/tp.hs.uslife_estimates_generate_stratify_.age.sas"
+   ],
+   "r": [
+    "graphs/tp.hp.dead.uslife.stratifed.sas",
+    "graphs/tp.hp.dead.uslife.stratify_uses.sas"
+   ]
+  },
+  "uslife": {
+   "w": [
+    "graphs/tp.hs.uslife_generates_matched_estimates.sas"
+   ],
+   "r": [
+    "graphs/tp.ce.states_CIF_CP.sas",
+    "graphs/tp.ce.states_CIF_CP_bootstrap_only_archived.sas",
+    "graphs/tp.hp.dead.age_with_population_life_table.sas",
+    "graphs/tp.hp.dead_with_life_table.sas"
+   ]
+  }
+ },
  "n_dangling": 80,
  "n_orphan": 49,
  "linked": {
