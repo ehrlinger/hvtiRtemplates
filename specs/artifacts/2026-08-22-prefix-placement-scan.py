@@ -33,7 +33,8 @@ for folder in FOLDERS:
 
 # --- B. the study README table ----------------------------------------------
 readme = {}
-txt = open(os.path.join(TPL, "README.md"), errors="replace").read()
+with open(os.path.join(TPL, "README.md"), encoding="utf-8", errors="replace") as fh:
+    txt = fh.read()
 for line in txt.splitlines():
     m = re.match(r"^\|\s*`([a-z]+)`(?:\s*/\s*`([a-z]+)`)?\s*\|.*\|\s*`([a-z]+)/`\s*\|", line)
     if m:
@@ -42,15 +43,14 @@ for line in txt.splitlines():
             readme[m.group(2)] = m.group(3)
 
 # --- C. hvti_taxonomy() ------------------------------------------------------
-tax, taxorder = {}, []
-src = open(os.path.join(REPO, "R", "taxonomy.R"), errors="replace").read()
+taxorder = []
+with open(os.path.join(REPO, "R", "taxonomy.R"), encoding="utf-8", errors="replace") as fh:
+    src = fh.read()
 for m in re.finditer(r'c\(\s*(?:"([a-z]+)"|NA_character_)\s*,\s*"([^"]+)"\s*,\s*"([a-z]+)"\s*,\s*"([^"]+)"',
                      src):
     pfx, nm, folder, desc = m.group(1), m.group(2), m.group(3), m.group(4)
-    key = pfx if pfx else "(none)"
     if pfx == "prefix" and folder == "folder":
         continue
-    tax[key] = folder
     taxorder.append({"prefix": pfx, "name": nm, "folder": folder, "desc": desc})
 
 rows = []

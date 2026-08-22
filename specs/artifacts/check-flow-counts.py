@@ -81,15 +81,21 @@ def registry(flow, pfx):
 
 
 def main():
-    flow = json.load(open(FLOW))
-    pfx = json.load(open(PREFIX))
+    # Encodings are pinned throughout: this runs on a CI runner whose locale
+    # is not ours to choose, and the diagrams carry em dashes and curly
+    # quotes that an ascii default would refuse outright.
+    with open(FLOW, encoding="utf-8") as fh:
+        flow = json.load(fh)
+    with open(PREFIX, encoding="utf-8") as fh:
+        pfx = json.load(fh)
     reg = registry(flow, pfx)
 
     bad, seen, n_anchors = [], set(), 0
 
     for page in PAGES:
         path = os.path.join(HERE, page)
-        html = open(path).read()
+        with open(path, encoding="utf-8") as fh:
+            html = fh.read()
         for _, key, value in ANCHOR.findall(html):
             n_anchors += 1
             seen.add(key)
@@ -100,7 +106,8 @@ def main():
 
     # The taxonomy table is hand-maintained, so check its rows are the map's
     # rows -- a renamed, added or dropped prefix is drift a count would miss.
-    table = open(os.path.join(HERE, "2026-08-22-prefix-map.html")).read()
+    with open(os.path.join(HERE, "2026-08-22-prefix-map.html"), encoding="utf-8") as fh:
+        table = fh.read()
     listed = set(ROW_PREFIX.findall(table))
     mapped = {r["prefix"] for r in pfx["rows"] if r["prefix"]}
     for x in sorted(listed - mapped):

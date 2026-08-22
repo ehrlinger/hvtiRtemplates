@@ -30,7 +30,14 @@ for folder in FOLDERS:
         if not os.path.isfile(p) or not name.lower().endswith(".sas"):
             continue
         try:
-            txt = open(p, errors="replace").read()
+            # Pinned, not left to the locale. Four corpus files carry non-ASCII
+            # bytes in comment prose, and utf-8, cp1252 and ascii each decode
+            # them differently -- the counts happen to survive that today
+            # because the bytes sit away from any pattern, which is luck, not a
+            # guarantee. CI now holds the diagrams to these numbers, so the
+            # scan decodes the same way on every machine by construction.
+            with open(p, encoding="utf-8", errors="replace") as fh:
+                txt = fh.read()
         except OSError:
             continue
         # strip the SAS comment convention *....; lines? keep it simple: keep all.
