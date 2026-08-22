@@ -1,4 +1,7 @@
-# Fails when the allocation spec's prose disagrees with the generated map.
+# Fails when prose or a diagram disagrees with the generated map it copies from.
+#
+# Two checks, one job: they share a trigger, a runner and a rationale, so a
+# second workflow would only duplicate all three.
 #
 # The map is authoritative and the spec's tables are a convenience copy. That
 # copy drifted three times on 2026-08-14 -- each time a count was hand-synced in
@@ -37,3 +40,6 @@ jobs:
 
       - name: Spec prose agrees with the generated map
         run: python3 specs/artifacts/check-spec-counts.py
+
+      - name: Job flow diagrams agree with the generated maps
+        run: python3 specs/artifacts/check-flow-counts.py

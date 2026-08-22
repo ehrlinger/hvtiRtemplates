@@ -1,0 +1,258 @@
+<title>Where Every Prefix Lives</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+:root{
+  --paper:#fbfaf6; --card:#ffffff; --sunk:#f3f2ea;
+  --ink:#16211f; --ink-2:#4a5551; --ink-3:#77817c;
+  --rule:#d9d8ce; --rule-2:#e9e8df;
+  --job:#2f4b7c;  --job-bg:#eef1f7;
+  --est:#0f6d5d;  --est-bg:#e7f1ee;
+  --data:#8a6d1f; --data-bg:#f6f0df;
+  --out:#7d3a52;  --out-bg:#f6ebef;
+  --warn:#b4441f; --warn-bg:#f9ece6;
+  --shadow:0 1px 2px rgba(22,33,31,.06),0 6px 18px rgba(22,33,31,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121917; --card:#1a2321; --sunk:#151d1b;
+    --ink:#e9ece9; --ink-2:#a9b3ae; --ink-3:#7d8783;
+    --rule:#2d3835; --rule-2:#232d2b;
+    --job:#8fb0e0; --job-bg:#1c2632;
+    --est:#4fc0a6; --est-bg:#152825;
+    --data:#d5b25c; --data-bg:#282316;
+    --out:#dd93ab; --out-bg:#2a1a20;
+    --warn:#eb8a63; --warn-bg:#2c1a13;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121917; --card:#1a2321; --sunk:#151d1b;
+  --ink:#e9ece9; --ink-2:#a9b3ae; --ink-3:#7d8783;
+  --rule:#2d3835; --rule-2:#232d2b;
+  --job:#8fb0e0; --job-bg:#1c2632;
+  --est:#4fc0a6; --est-bg:#152825;
+  --data:#d5b25c; --data-bg:#282316;
+  --out:#dd93ab; --out-bg:#2a1a20;
+  --warn:#eb8a63; --warn-bg:#2c1a13;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Sans 3",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px; margin:0 auto; padding:40px 28px 72px; display:flex; flex-direction:column; gap:40px}
+h1,h2,h3{font-family:Bitter,Georgia,serif; text-wrap:balance; margin:0}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+.mast{display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:36px; align-items:end;
+  border-bottom:2px solid var(--ink); padding-bottom:22px}
+h1{font-size:clamp(34px,4.4vw,50px); font-weight:700; letter-spacing:-.02em; line-height:1.04}
+.standfirst{margin:12px 0 0; color:var(--ink-2); max-width:60ch; font-size:16px}
+.counts{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px}
+.count .n{font-family:Bitter,Georgia,serif; font-size:30px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums}
+.count .l{display:block; margin-top:5px; font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-3)}
+section{display:flex; flex-direction:column; gap:18px}
+.eyebrow{font-size:11.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--est); font-weight:700}
+h2{font-size:clamp(22px,2.6vw,29px); font-weight:600; letter-spacing:-.012em}
+.lede{margin:0; color:var(--ink-2); max-width:74ch}
+.legend{display:flex; flex-wrap:wrap; gap:10px 22px; padding:14px 16px; background:var(--sunk);
+  border:1px solid var(--rule-2); border-radius:3px}
+.key{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-2)}
+.sw{width:11px; height:11px; border-radius:2px; flex:none}
+.figure{background:var(--card); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow);
+  overflow-x:auto; padding:8px}
+.figure svg{display:block; min-width:920px; width:100%; height:auto}
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); border-radius:3px; background:var(--card); box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; min-width:660px; font-size:13.5px}
+th{text-align:left; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3);
+  font-weight:700; padding:11px 14px; border-bottom:1px solid var(--rule); background:var(--sunk); white-space:nowrap}
+td{padding:10px 14px; border-bottom:1px solid var(--rule-2); vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.mono{font-size:12.5px}
+.grid{display:grid; gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--card); border:1px solid var(--rule); border-left:3px solid var(--edge,var(--rule));
+  border-radius:3px; padding:16px 18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px}
+.card h3{font-size:16.5px; font-weight:600; letter-spacing:-.005em}
+.card p{margin:0; font-size:14px; color:var(--ink-2)}
+.tag{align-self:flex-start; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+  font-weight:700; padding:3px 8px; border-radius:2px}
+.note{border-top:1px solid var(--rule); padding-top:18px; font-size:13px; color:var(--ink-3); max-width:82ch}
+.note strong{color:var(--ink-2)}
+a{color:var(--est)}
+a:focus-visible{outline:2px solid var(--est); outline-offset:2px}
+@media (max-width:860px){ .mast{grid-template-columns:1fr; gap:24px} }
+
+.bad{color:var(--warn); font-weight:600}
+.ok{color:var(--est); font-weight:600}
+tr.band td{background:var(--sunk); border-bottom:1px solid var(--rule); border-top:1px solid var(--rule);
+  padding:9px 14px; font-size:12px; letter-spacing:.05em}
+tr.band code{font-size:12.5px; font-weight:600; color:var(--ink)}
+.maj{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600;
+  color:var(--est); background:var(--est-bg); padding:2px 6px; border-radius:2px; font-variant-numeric:tabular-nums}
+.scat{display:inline-block; margin-top:3px; font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+  font-weight:700; color:var(--data); background:var(--data-bg); padding:2px 6px; border-radius:2px}
+table{min-width:820px}
+td:first-child code{font-size:13px; font-weight:600}
+.chartbox{background:var(--card); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow);
+  padding:20px 22px; display:flex; flex-direction:column; gap:11px}
+.barrow{display:grid; grid-template-columns:32px 128px 1fr 46px; align-items:center; gap:12px}
+.bmaj{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--est); font-weight:600; font-variant-numeric:tabular-nums}
+.bname{font-size:13px; color:var(--ink)}
+.btrack{height:11px; background:var(--sunk); border-radius:2px; overflow:hidden}
+.bfill{display:block; height:100%; background:var(--job); border-radius:2px}
+.bnum{text-align:right; font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--ink-2); font-variant-numeric:tabular-nums}
+.chip{display:inline-block; font-size:11.5px; background:var(--sunk); border:1px solid var(--rule-2);
+  padding:2px 7px; border-radius:2px; margin:0 3px 5px 0; color:var(--ink-2)}
+@media (max-width:640px){ .barrow{grid-template-columns:28px 96px 1fr 40px; gap:8px} }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div>
+    <h1>Where Every Prefix Lives</h1>
+    <p class="standfirst">Three sources describe the two-letter prefix taxonomy: the folder each file actually sits in, the table in the study README, and <code>hvti_taxonomy()</code> in the R package. This is all <span data-check="tax_n_rows">43</span> rows, checked against all three at once.</p>
+  </div>
+  <div class="counts">
+    <div class="count"><span class="n"><span data-check="tax_agree">38</span></span><span class="l">rows all three agree on</span></div>
+    <div class="count"><span class="n"><span data-check="tax_disagree">2</span></span><span class="l">rows they disagree on</span></div>
+    <div class="count"><span class="n"><span data-check="tax_extra">30</span></span><span class="l">names in no taxonomy</span></div>
+  </div>
+</header>
+
+<section>
+  <div>
+    <div class="eyebrow">Read this first</div>
+    <h2>Four rows need a decision. The rest are settled.</h2>
+  </div>
+  <p class="lede">The table below is long because it is complete. Almost all of it agrees. These are the rows that do not, and they are the ones worth an argument before anything is committed.</p>
+
+  <div class="grid g2">
+    <div class="card" style="--edge:var(--warn)">
+      <span class="tag" style="background:var(--warn-bg); color:var(--warn)">Three sources, three answers</span>
+      <h3><code>hs</code> — hazard setup</h3>
+      <p>Its <span data-check="files_hs">10</span> files sit in <code>graphs/templates/</code>. The study README says <code>distributions/</code>. <code>hvti_taxonomy()</code> now says <code>analyses/</code>, placed straight after the <code>hm</code> it reads via <code>inhaz=est.hmdead</code>.</p>
+      <p><strong>The case for <code>analyses</code>:</strong> <code>hs</code> fits nothing and draws nothing — it turns a model into per-patient predictions. Its output is a dataset, not a figure. It landed in <code>graphs/</code> because <code>hp</code> is what consumes it.</p>
+    </div>
+
+    <div class="card" style="--edge:var(--warn)">
+      <span class="tag" style="background:var(--warn-bg); color:var(--warn)">Disagrees</span>
+      <h3><code>rfs</code> — random forest survival</h3>
+      <p>The taxonomy files it under <code>analyses/</code>. The one file carrying the name is <code>documents/templates/tp.rfs.analysis.Rnw</code> — a report, not an analysis. Either the taxonomy row is right and that file is misnamed, or <code>rfs</code> means two different things.</p>
+    </div>
+
+    <div class="card" style="--edge:var(--data)">
+      <span class="tag" style="background:var(--data-bg); color:var(--data)">Scattered · <span data-check="tax_scattered">4</span> prefixes</span>
+      <h3><code>dp</code> spans three folders</h3>
+      <p><span data-check="files_dp">31</span> files: <span data-check="files_dp_graphs">22</span> in <code>graphs/</code>, <span data-check="files_dp_descriptive">6</span> in <code>descriptive/</code>, <span data-check="files_dp_distributions">3</span> in <code>distributions/</code>. <code>ce</code>, <code>cd</code> and <code>ar</code> each straddle two. A prefix that names a folder cannot sit in three of them — a scaffolded job has to go somewhere, and the taxonomy picks one.</p>
+    </div>
+
+    <div class="card" style="--edge:var(--est)">
+      <span class="tag" style="background:var(--est-bg); color:var(--est)">Documented, never scaffolded</span>
+      <h3><code>estimates</code> has no prefix</h3>
+      <p>It is the one row that names an <em>artifact kind</em> rather than a job type, so its prefix is <code>NA</code> — nothing scaffolds into it. Its position is still load-bearing: it occupies major <code>05</code>, which is what pushes <code>graphs</code> to <code>06</code> and <code>documents</code> to <code>07</code>.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div>
+    <div class="eyebrow">The corpus</div>
+    <h2><span data-check="files_total">313</span> template files, by folder</h2>
+  </div>
+  <p class="lede">Counted from <code>*/templates/</code>, excluding <code>archive/</code> subdirectories. The majors run in this order because that is the order a study works through them.</p>
+  <div class="chartbox">
+<div class="barrow"><span class="bmaj">01</span><code class="bname">datasets/</code><span class="btrack"><span class="bfill" style="width:40.5%"></span></span><span class="bnum"><span data-check="files_datasets">47</span></span></div>
+<div class="barrow"><span class="bmaj">02</span><code class="bname">descriptive/</code><span class="btrack"><span class="bfill" style="width:28.4%"></span></span><span class="bnum"><span data-check="files_descriptive">33</span></span></div>
+<div class="barrow"><span class="bmaj">03</span><code class="bname">distributions/</code><span class="btrack"><span class="bfill" style="width:31.0%"></span></span><span class="bnum"><span data-check="files_distributions">36</span></span></div>
+<div class="barrow"><span class="bmaj">04</span><code class="bname">analyses/</code><span class="btrack"><span class="bfill" style="width:63.8%"></span></span><span class="bnum"><span data-check="files_analyses">74</span></span></div>
+<div class="barrow"><span class="bmaj">06</span><code class="bname">graphs/</code><span class="btrack"><span class="bfill" style="width:100.0%"></span></span><span class="bnum"><span data-check="files_graphs">116</span></span></div>
+<div class="barrow"><span class="bmaj">07</span><code class="bname">documents/</code><span class="btrack"><span class="bfill" style="width:6.0%"></span></span><span class="bnum"><span data-check="files_documents">7</span></span></div>
+  </div>
+  <p class="lede"><code>graphs/</code> holds more than a third of everything, which is what the layout rule is responding to: authored files are few and hand-navigated, generated figures are many and swept. That asymmetry is why source stays flat and artifacts get a set directory.</p>
+</section>
+
+<section>
+  <div>
+    <div class="eyebrow">The full map</div>
+    <h2>All <span data-check="tax_n_rows">43</span> rows, all three sources</h2>
+  </div>
+  <p class="lede">Grouped by the folder <code>hvti_taxonomy()</code> assigns, in ordinal order. A folder name in <span class="bad">rust</span> under <em>actually on disk</em> is one that disagrees with the taxonomy.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th>Prefix</th><th>Name</th><th>hvti_taxonomy()</th><th>Study README</th>
+        <th>Actually on disk</th><th>Verdict</th>
+      </tr></thead>
+      <tbody>
+<tr class="band"><td colspan="6"><span class="maj">01</span>&nbsp;&nbsp;<code>datasets/</code></td></tr>
+<tr><td class="mono"><code>bd</code></td><td>Build</td><td class="mono">datasets</td><td class="mono">datasets</td><td class="mono"><span>datasets</span>&#8202;<span style="color:var(--ink-3)">&#183;24</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>vars</code></td><td>Variables</td><td class="mono">datasets</td><td class="mono">datasets</td><td class="mono"><span>datasets</span>&#8202;<span style="color:var(--ink-3)">&#183;12</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>dt</code></td><td>Data check</td><td class="mono">datasets</td><td class="mono">datasets</td><td class="mono"><span>datasets</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span></td><td><span class="ok">agree</span></td></tr>
+<tr class="band"><td colspan="6"><span class="maj">02</span>&nbsp;&nbsp;<code>descriptive/</code></td></tr>
+<tr><td class="mono"><code>dc</code></td><td>Descriptive</td><td class="mono">descriptive</td><td class="mono">descriptive</td><td class="mono"><span>descriptive</span>&#8202;<span style="color:var(--ink-3)">&#183;21</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>lg</code></td><td>Logit trends</td><td class="mono">descriptive</td><td class="mono">descriptive</td><td class="mono"><span>descriptive</span>&#8202;<span style="color:var(--ink-3)">&#183;2</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>rg</code></td><td>Regression trends</td><td class="mono">descriptive</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span>descriptive</span>&#8202;<span style="color:var(--ink-3)">&#183;2</span></td><td><span class="ok">agree</span></td></tr>
+<tr class="band"><td colspan="6"><span class="maj">03</span>&nbsp;&nbsp;<code>distributions/</code></td></tr>
+<tr><td class="mono"><code>ac</code></td><td>Actuarial</td><td class="mono">distributions</td><td class="mono">distributions</td><td class="mono"><span>distributions</span>&#8202;<span style="color:var(--ink-3)">&#183;12</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>hz</code></td><td>Hazard fit</td><td class="mono">distributions</td><td class="mono">distributions</td><td class="mono"><span>distributions</span>&#8202;<span style="color:var(--ink-3)">&#183;9</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>cd</code></td><td>Cumulative distribution</td><td class="mono">distributions</td><td class="mono">distributions</td><td class="mono"><span>distributions</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span><br><span class="bad">graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span> <span class="scat">scattered</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>nd</code></td><td>Nonparametric distributions</td><td class="mono">distributions</td><td class="mono">distributions</td><td class="mono"><span>distributions</span>&#8202;<span style="color:var(--ink-3)">&#183;10</span></td><td><span class="ok">agree</span></td></tr>
+<tr class="band"><td colspan="6"><span class="maj">04</span>&nbsp;&nbsp;<code>analyses/</code></td></tr>
+<tr><td class="mono"><code>hm</code></td><td>Hazard model</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;2</span></td><td><span class="ok">agree</span></td></tr>
+<tr style="background:var(--warn-bg)"><td class="mono"><code>hs</code></td><td>Hazard setup</td><td class="mono">analyses</td><td class="mono">distributions</td><td class="mono"><span class="bad">graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;10</span></td><td><span class="bad">disagree</span></td></tr>
+<tr><td class="mono"><code>mm</code></td><td>Mixed model</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>gm</code></td><td>Generalized model</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;3</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>lm</code></td><td>Logistic model</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;13</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>bh</code></td><td>Bootstrap hazard</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;5</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>bl</code></td><td>Bootstrap logistic</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;4</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>bc</code></td><td>Bootstrap Cox</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span style="color:var(--ink-3)">—</span></td><td><span style="color:var(--ink-3)">no file</span></td></tr>
+<tr><td class="mono"><code>bn</code></td><td>Bootstrap nonparametric</td><td class="mono">analyses</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;10</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>bq</code></td><td>Bootstrap quantile</td><td class="mono">analyses</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>br</code></td><td>Bootstrap regression</td><td class="mono">analyses</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;2</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>nm</code></td><td>Nonparametric model</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;6</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>rf</code></td><td>Random forest</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;8</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>pm</code></td><td>Propensity model</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>rm</code></td><td>Regression model</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;4</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>cm</code></td><td>Cox matching</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>ls</code></td><td>Life table / STS</td><td class="mono">analyses</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;2</span></td><td><span class="ok">agree</span></td></tr>
+<tr class="band"><td colspan="6"><span class="maj">05</span>&nbsp;&nbsp;<code>estimates/</code></td></tr>
+<tr style="background:var(--est-bg)"><td class="mono"><span style="color:var(--ink-3)">— none —</span></td><td>Estimates</td><td class="mono">estimates</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span style="color:var(--ink-3)">—</span></td><td><span style="color:var(--est);font-weight:600">artifact kind</span></td></tr>
+<tr class="band"><td colspan="6"><span class="maj">06</span>&nbsp;&nbsp;<code>graphs/</code></td></tr>
+<tr><td class="mono"><code>hp</code></td><td>Hazard plot</td><td class="mono">graphs</td><td class="mono">graphs</td><td class="mono"><span>graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;22</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>mp</code></td><td>Mixed model plot</td><td class="mono">graphs</td><td class="mono">graphs</td><td class="mono"><span>graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>lp</code></td><td>Logistic plot</td><td class="mono">graphs</td><td class="mono">graphs</td><td class="mono"><span>graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;15</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>np</code></td><td>Nonparametric plot</td><td class="mono">graphs</td><td class="mono">graphs</td><td class="mono"><span>graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;15</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>dp</code></td><td>Descriptive plot</td><td class="mono">graphs</td><td class="mono">graphs</td><td class="mono"><span>graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;22</span><br><span class="bad">descriptive</span>&#8202;<span style="color:var(--ink-3)">&#183;6</span><br><span class="bad">distributions</span>&#8202;<span style="color:var(--ink-3)">&#183;3</span> <span class="scat">scattered</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>fp</code></td><td>Forest plot</td><td class="mono">graphs</td><td class="mono">graphs</td><td class="mono"><span>graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>gp</code></td><td>Generalized model plot</td><td class="mono">graphs</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span>graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;6</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>cp</code></td><td>Cumulative probability plot</td><td class="mono">graphs</td><td class="mono">graphs</td><td class="mono"><span>graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>ce</code></td><td>Competing events</td><td class="mono">graphs</td><td class="mono">graphs</td><td class="mono"><span>graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;5</span><br><span class="bad">distributions</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span> <span class="scat">scattered</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>rp</code></td><td>Regression plot</td><td class="mono">graphs</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span>graphs</span>&#8202;<span style="color:var(--ink-3)">&#183;3</span></td><td><span class="ok">agree</span></td></tr>
+<tr class="band"><td colspan="6"><span class="maj">07</span>&nbsp;&nbsp;<code>documents/</code></td></tr>
+<tr><td class="mono"><code>ar</code></td><td>Analysis report</td><td class="mono">documents</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span>documents</span>&#8202;<span style="color:var(--ink-3)">&#183;3</span><br><span class="bad">analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span> <span class="scat">scattered</span></td><td><span class="ok">agree</span></td></tr>
+<tr class="band"><td colspan="6"><span class="maj">04</span>&nbsp;&nbsp;<code>analyses/</code></td></tr>
+<tr><td class="mono"><code>rfsrc</code></td><td>Random forest (SRC)</td><td class="mono">analyses</td><td class="mono">analyses</td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;4</span></td><td><span class="ok">agree</span></td></tr>
+<tr><td class="mono"><code>rfc</code></td><td>Random forest classifier</td><td class="mono">analyses</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span style="color:var(--ink-3)">—</span></td><td><span style="color:var(--ink-3)">no file</span></td></tr>
+<tr style="background:var(--warn-bg)"><td class="mono"><code>rfs</code></td><td>Random forest survival</td><td class="mono">analyses</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span class="bad">documents</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span></td><td><span class="bad">disagree</span></td></tr>
+<tr><td class="mono"><code>nb</code></td><td>Notebook</td><td class="mono">analyses</td><td class="mono"><span style="color:var(--ink-3)">not listed</span></td><td class="mono"><span>analyses</span>&#8202;<span style="color:var(--ink-3)">&#183;1</span></td><td><span class="ok">agree</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div>
+    <div class="eyebrow">Outside the taxonomy</div>
+    <h2><span data-check="tax_extra">30</span> names that lead a file but name no analysis</h2>
+  </div>
+  <p class="lede">These parse as a leading field in <code>tp.&lt;field&gt;.&#8230;</code> but are not prefixes — data pulls, imputation utilities, boosting notebooks, Office templates, manuscript boilerplate. <code>hvti_non_prefixes()</code> exists to keep this distinction, so that &#8220;not a prefix&#8221; stays separable from &#8220;a prefix nobody documented&#8221;.</p>
+  <div style="line-height:2"><code class="chip">imputsub</code> <code class="chip">manuscript</code> <code class="chip">plots</code> <code class="chip">pp</code> <code class="chip">age_trends_dataplots_raw</code> <code class="chip">bd_sgroups</code> <code class="chip">boostmlr</code> <code class="chip">boostmtreelongitudinal</code> <code class="chip">boostmtreelongitudinal_w_notes_032423</code> <code class="chip">boostmtreeunivariate</code> <code class="chip">brier_multiphasehazard</code> <code class="chip">complexupset</code> <code class="chip">consortdiagram</code> <code class="chip">consorts</code> <code class="chip">dp_bland_altman_ccc</code> <code class="chip">echo_readin</code> <code class="chip">export</code> <code class="chip">ggpair_plots_histograms</code> <code class="chip">import</code> <code class="chip">mult_imput</code> <code class="chip">mult_imput_mcmc</code> <code class="chip">np_two_yaxis_grid_plots</code> <code class="chip">np_two_yaxis_plots</code> <code class="chip">ppt</code> <code class="chip">report_metadata</code> <code class="chip">stxxx_snapshotpull</code> <code class="chip">stxxxx_ccfpull</code> <code class="chip">stxxxx_dwpull</code> <code class="chip">test</code> <code class="chip">vars_base_only</code></div>
+  <p class="lede">Most are genuinely not analyses. A few are worth a second look — <code>pp</code> and <code>plots</code> appear repeatedly and behave like plotting jobs, and <code>imputsub</code> / <code>mult_imput</code> do real dataset work that <code>vars</code> or <code>bd</code> might reasonably own.</p>
+</section>
+
+<p class="note"><strong>How this was built.</strong> Actual placement comes from walking <code>~/Documents/template/*/templates/</code> and matching <code>tp.&lt;field&gt;.</code> at the head of each filename, all extensions, skipping <code>archive/</code>. The README column is parsed from the prefix table in <code>~/Documents/template/README.md</code>; blanks mean that prefix is not listed there, not that it disagrees. The taxonomy column is parsed from <code>R/taxonomy.R</code>. <strong>One caveat:</strong> a prefix appearing in several folders is normal history, not necessarily an error — the corpus accumulated over decades and files were filed by whoever wrote them. The reason to resolve it now is that <code>new_job()</code> has to pick exactly one folder per prefix, and picking it silently is how the README drifted in the first place.</p>
+
+</div>

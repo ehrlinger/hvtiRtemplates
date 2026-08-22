@@ -1,0 +1,704 @@
+{
+ "rows": [
+  {
+   "prefix": "bd",
+   "name": "Build",
+   "desc": "assembles raw sources into the analytic dataset",
+   "tax": "datasets",
+   "readme": "datasets",
+   "actual": {
+    "datasets": 24
+   },
+   "n_files": 24,
+   "actual_main": "datasets",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "vars",
+   "name": "Variables",
+   "desc": "macro enhancing the dataset with temp vars, imputations, propensity",
+   "tax": "datasets",
+   "readme": "datasets",
+   "actual": {
+    "datasets": 12
+   },
+   "n_files": 12,
+   "actual_main": "datasets",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "dt",
+   "name": "Data check",
+   "desc": "initial QC of the build dataset",
+   "tax": "datasets",
+   "readme": "datasets",
+   "actual": {
+    "datasets": 1
+   },
+   "n_files": 1,
+   "actual_main": "datasets",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "dc",
+   "name": "Descriptive",
+   "desc": "Table 1s, covariate summaries, balance tables",
+   "tax": "descriptive",
+   "readme": "descriptive",
+   "actual": {
+    "descriptive": 21
+   },
+   "n_files": 21,
+   "actual_main": "descriptive",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "lg",
+   "name": "Logit trends",
+   "desc": "variable transformation and linearity checks",
+   "tax": "descriptive",
+   "readme": "descriptive",
+   "actual": {
+    "descriptive": 2
+   },
+   "n_files": 2,
+   "actual_main": "descriptive",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "rg",
+   "name": "Regression trends",
+   "desc": "trend checks for continuous and polytomous outcomes",
+   "tax": "descriptive",
+   "readme": null,
+   "actual": {
+    "descriptive": 2
+   },
+   "n_files": 2,
+   "actual_main": "descriptive",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "ac",
+   "name": "Actuarial",
+   "desc": "Kaplan-Meier / non-parametric life table",
+   "tax": "distributions",
+   "readme": "distributions",
+   "actual": {
+    "distributions": 12
+   },
+   "n_files": 12,
+   "actual_main": "distributions",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "hz",
+   "name": "Hazard fit",
+   "desc": "fits the underlying hazard distribution",
+   "tax": "distributions",
+   "readme": "distributions",
+   "actual": {
+    "distributions": 9
+   },
+   "n_files": 9,
+   "actual_main": "distributions",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "cd",
+   "name": "Cumulative distribution",
+   "desc": "cumulative distribution plots; follow-up summaries",
+   "tax": "distributions",
+   "readme": "distributions",
+   "actual": {
+    "distributions": 1,
+    "graphs": 1
+   },
+   "n_files": 2,
+   "actual_main": "distributions",
+   "verdict": "agree",
+   "scattered": true
+  },
+  {
+   "prefix": "nd",
+   "name": "Nonparametric distributions",
+   "desc": "distribution estimates stratified by group",
+   "tax": "distributions",
+   "readme": "distributions",
+   "actual": {
+    "distributions": 10
+   },
+   "n_files": 10,
+   "actual_main": "distributions",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "hm",
+   "name": "Hazard model",
+   "desc": "risk factor analysis; builds on the HZ fit",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 2
+   },
+   "n_files": 2,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "hs",
+   "name": "Hazard setup",
+   "desc": "patient-level survival predictions from the HM model",
+   "tax": "analyses",
+   "readme": "distributions",
+   "actual": {
+    "graphs": 10
+   },
+   "n_files": 10,
+   "actual_main": "graphs",
+   "verdict": "disagree",
+   "scattered": false
+  },
+  {
+   "prefix": "mm",
+   "name": "Mixed model",
+   "desc": "continuous repeated-measures longitudinal analysis",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 1
+   },
+   "n_files": 1,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "gm",
+   "name": "Generalized model",
+   "desc": "repeated-measures ordinal / count models",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 3
+   },
+   "n_files": 3,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "lm",
+   "name": "Logistic model",
+   "desc": "logistic regression; propensity score development",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 13
+   },
+   "n_files": 13,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "bh",
+   "name": "Bootstrap hazard",
+   "desc": "bootstrap variable selection or fixed-set hazard models",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 5
+   },
+   "n_files": 5,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "bl",
+   "name": "Bootstrap logistic",
+   "desc": "bootstrap variable selection or fixed-set logistic models",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 4
+   },
+   "n_files": 4,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "bc",
+   "name": "Bootstrap Cox",
+   "desc": "bootstrap variable selection or fixed-set Cox models",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {},
+   "n_files": 0,
+   "actual_main": null,
+   "verdict": "absent",
+   "scattered": false
+  },
+  {
+   "prefix": "bn",
+   "name": "Bootstrap nonparametric",
+   "desc": "bootstrap confidence intervals for nonparametric estimates",
+   "tax": "analyses",
+   "readme": null,
+   "actual": {
+    "analyses": 10
+   },
+   "n_files": 10,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "bq",
+   "name": "Bootstrap quantile",
+   "desc": "quantile regression with bagging",
+   "tax": "analyses",
+   "readme": null,
+   "actual": {
+    "analyses": 1
+   },
+   "n_files": 1,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "br",
+   "name": "Bootstrap regression",
+   "desc": "linear regression with bagging",
+   "tax": "analyses",
+   "readme": null,
+   "actual": {
+    "analyses": 2
+   },
+   "n_files": 2,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "nm",
+   "name": "Nonparametric model",
+   "desc": "nonparametric regression models",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 6
+   },
+   "n_files": 6,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "rf",
+   "name": "Random forest",
+   "desc": "random forest and randomForestSRC models",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 8
+   },
+   "n_files": 8,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "pm",
+   "name": "Propensity model",
+   "desc": "count outcome with balancing score",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 1
+   },
+   "n_files": 1,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "rm",
+   "name": "Regression model",
+   "desc": "linear regression with balancing score",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 4
+   },
+   "n_files": 4,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "cm",
+   "name": "Cox matching",
+   "desc": "Cox PH with propensity matching / IPTW",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 1
+   },
+   "n_files": 1,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "ls",
+   "name": "Life table / STS",
+   "desc": "STS observed-versus-predicted analyses",
+   "tax": "analyses",
+   "readme": null,
+   "actual": {
+    "analyses": 2
+   },
+   "n_files": 2,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": null,
+   "name": "Estimates",
+   "desc": "model fits and cached results; written by one job, read by later ones in the set",
+   "tax": "estimates",
+   "readme": null,
+   "actual": {},
+   "n_files": 0,
+   "actual_main": null,
+   "verdict": "artifact-kind",
+   "scattered": false
+  },
+  {
+   "prefix": "hp",
+   "name": "Hazard plot",
+   "desc": "overlays actuarial and predicted survival; patient-specific curves",
+   "tax": "graphs",
+   "readme": "graphs",
+   "actual": {
+    "graphs": 22
+   },
+   "n_files": 22,
+   "actual_main": "graphs",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "mp",
+   "name": "Mixed model plot",
+   "desc": "individual and population-level trends from MM",
+   "tax": "graphs",
+   "readme": "graphs",
+   "actual": {
+    "graphs": 1
+   },
+   "n_files": 1,
+   "actual_main": "graphs",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "lp",
+   "name": "Logistic plot",
+   "desc": "ordinal or binary logistic model results",
+   "tax": "graphs",
+   "readme": "graphs",
+   "actual": {
+    "graphs": 15
+   },
+   "n_files": 15,
+   "actual_main": "graphs",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "np",
+   "name": "Nonparametric plot",
+   "desc": "nonparametric distribution figures",
+   "tax": "graphs",
+   "readme": "graphs",
+   "actual": {
+    "graphs": 15
+   },
+   "n_files": 15,
+   "actual_main": "graphs",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "dp",
+   "name": "Descriptive plot",
+   "desc": "bar, scatter, spaghetti, sankey, bubble plots",
+   "tax": "graphs",
+   "readme": "graphs",
+   "actual": {
+    "descriptive": 6,
+    "distributions": 3,
+    "graphs": 22
+   },
+   "n_files": 31,
+   "actual_main": "graphs",
+   "verdict": "agree",
+   "scattered": true
+  },
+  {
+   "prefix": "fp",
+   "name": "Forest plot",
+   "desc": "odds ratio or hazard ratio forest plots",
+   "tax": "graphs",
+   "readme": "graphs",
+   "actual": {
+    "graphs": 1
+   },
+   "n_files": 1,
+   "actual_main": "graphs",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "gp",
+   "name": "Generalized model plot",
+   "desc": "depicts generalized / longitudinal model results",
+   "tax": "graphs",
+   "readme": null,
+   "actual": {
+    "graphs": 6
+   },
+   "n_files": 6,
+   "actual_main": "graphs",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "cp",
+   "name": "Cumulative probability plot",
+   "desc": "cumulative probability figures",
+   "tax": "graphs",
+   "readme": "graphs",
+   "actual": {
+    "graphs": 1
+   },
+   "n_files": 1,
+   "actual_main": "graphs",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "ce",
+   "name": "Competing events",
+   "desc": "competing risks / multistate figures",
+   "tax": "graphs",
+   "readme": "graphs",
+   "actual": {
+    "distributions": 1,
+    "graphs": 5
+   },
+   "n_files": 6,
+   "actual_main": "graphs",
+   "verdict": "agree",
+   "scattered": true
+  },
+  {
+   "prefix": "rp",
+   "name": "Regression plot",
+   "desc": "regression and balance figures",
+   "tax": "graphs",
+   "readme": null,
+   "actual": {
+    "graphs": 3
+   },
+   "n_files": 3,
+   "actual_main": "graphs",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "ar",
+   "name": "Analysis report",
+   "desc": "the written analysis report",
+   "tax": "documents",
+   "readme": null,
+   "actual": {
+    "analyses": 1,
+    "documents": 3
+   },
+   "n_files": 4,
+   "actual_main": "documents",
+   "verdict": "agree",
+   "scattered": true
+  },
+  {
+   "prefix": "rfsrc",
+   "name": "Random forest (SRC)",
+   "desc": "randomForestSRC survival, regression and classification models",
+   "tax": "analyses",
+   "readme": "analyses",
+   "actual": {
+    "analyses": 4
+   },
+   "n_files": 4,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  },
+  {
+   "prefix": "rfc",
+   "name": "Random forest classifier",
+   "desc": "random forest classification reporting",
+   "tax": "analyses",
+   "readme": null,
+   "actual": {},
+   "n_files": 0,
+   "actual_main": null,
+   "verdict": "absent",
+   "scattered": false
+  },
+  {
+   "prefix": "rfs",
+   "name": "Random forest survival",
+   "desc": "random forest survival analysis reporting",
+   "tax": "analyses",
+   "readme": null,
+   "actual": {
+    "documents": 1
+   },
+   "n_files": 1,
+   "actual_main": "documents",
+   "verdict": "disagree",
+   "scattered": false
+  },
+  {
+   "prefix": "nb",
+   "name": "Notebook",
+   "desc": "boosting notebooks (Boostmtree, BoostMLR)",
+   "tax": "analyses",
+   "readme": null,
+   "actual": {
+    "analyses": 1
+   },
+   "n_files": 1,
+   "actual_main": "analyses",
+   "verdict": "agree",
+   "scattered": false
+  }
+ ],
+ "extra": {
+  "mult_imput_mcmc": {
+   "datasets": 1
+  },
+  "imputsub": {
+   "datasets": 2
+  },
+  "stxxxx_ccfpull": {
+   "datasets": 1
+  },
+  "stxxx_snapshotpull": {
+   "datasets": 1
+  },
+  "vars_base_only": {
+   "datasets": 1
+  },
+  "bd_sgroups": {
+   "datasets": 1
+  },
+  "mult_imput": {
+   "datasets": 1
+  },
+  "stxxxx_dwpull": {
+   "datasets": 1
+  },
+  "echo_readin": {
+   "datasets": 1
+  },
+  "test": {
+   "descriptive": 1
+  },
+  "age_trends_dataplots_raw": {
+   "descriptive": 1
+  },
+  "boostmtreelongitudinal_w_notes_032423": {
+   "analyses": 1
+  },
+  "boostmtreelongitudinal": {
+   "analyses": 1
+  },
+  "boostmlr": {
+   "analyses": 1
+  },
+  "report_metadata": {
+   "analyses": 1
+  },
+  "boostmtreeunivariate": {
+   "analyses": 1
+  },
+  "np_two_yaxis_plots": {
+   "graphs": 1
+  },
+  "pp": {
+   "graphs": 2
+  },
+  "import": {
+   "graphs": 1
+  },
+  "export": {
+   "graphs": 1
+  },
+  "ggpair_plots_histograms": {
+   "graphs": 1
+  },
+  "dp_bland_altman_ccc": {
+   "graphs": 1
+  },
+  "plots": {
+   "graphs": 2
+  },
+  "complexupset": {
+   "graphs": 1
+  },
+  "ppt": {
+   "graphs": 1
+  },
+  "consorts": {
+   "graphs": 1
+  },
+  "np_two_yaxis_grid_plots": {
+   "graphs": 1
+  },
+  "brier_multiphasehazard": {
+   "graphs": 1
+  },
+  "consortdiagram": {
+   "documents": 1
+  },
+  "manuscript": {
+   "documents": 2
+  }
+ },
+ "n_rows": 43,
+ "counts": {
+  "agree": 38,
+  "disagree": 2,
+  "absent": 2,
+  "artifact-kind": 1
+ }
+}
