@@ -157,7 +157,18 @@ python3 specs/artifacts/2026-08-22-prefix-placement-scan.py > specs/artifacts/20
 Both read `~/Documents/template` directly, for the same reason the macro scan
 above does: this package holds no copy of the SAS corpus.
 
-**The finding is not a count.** Across the 231 SAS job templates, `estimates`
+**What counts as the corpus.** Both scans walk the template folders recursively
+and skip any path with an `archive` component, so the corpus is 241 `.sas`
+files: 244 on disk, less the 3 under `archive/`. The rule is a decision, not a
+glob - archives record history rather than current flow, and a file archived by
+*name* while still sitting in a live folder
+(`graphs/templates/tp.ce.states_CIF_CP_bootstrap_only_archived.sas`) is still
+counted, because placement is the thing being measured. The job-flow scan read
+one level deep until 2026-08-24 and saw 231; the 10 files it missed are the
+current `datasets/templates/transplant_mcs/` work, which moved `datasets` from
+37 to 47 and the total from 231 to 241. No handoff count moved - see below.
+
+**The finding is not a count.** Across the 241 SAS job templates, `estimates`
 members are written 79 times and read 110 times, and only 13 carry a handoff
 between two different jobs. Those numbers describe a corpus of examples drawn
 from many studies, so an unmatched read usually means the writer lives in a
@@ -189,8 +200,8 @@ one day above, so it gets the same treatment: every checkable number in a
 diagram carries an anchor naming the map key it came from,
 
 ```html
-<span  data-check="n_jobs">231</span>          in prose
-<tspan data-check="n_jobs">231</tspan>         inside an SVG label
+<span  data-check="n_jobs">241</span>          in prose
+<tspan data-check="n_jobs">241</tspan>         inside an SVG label
 ```
 
 and `check-flow-counts.py` fails the PR when the two disagree. It also checks
