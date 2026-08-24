@@ -62,7 +62,12 @@ for folder in FOLDERS:
             continue
         # strip the SAS comment convention *....; lines? keep it simple: keep all.
         m = PREFIX.match(name)
-        jobs[f"{folder}/{os.path.relpath(p, tdir)}"] = {
+        # Forward slashes, not os.sep: the key is a map identifier that has to
+        # compare equal across machines, not a path to open. Same reason the
+        # encoding is pinned above -- the committed JSON must regenerate
+        # byte-identically wherever it is run.
+        rel = os.path.relpath(p, tdir).replace(os.sep, "/")
+        jobs[f"{folder}/{rel}"] = {
             "folder": folder,
             "prefix": (m.group(1).lower() if m else None),
             "writes": sorted(set(w.lower() for w in WRITE.findall(txt))),
