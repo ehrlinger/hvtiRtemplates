@@ -20,14 +20,34 @@ LIBRARY = re.compile(r"\b(?:set|data\s*=)\s*library\.([A-Za-z0-9_]+)", re.I)
 VARS = re.compile(r"%vars\b", re.I)
 PREFIX = re.compile(r"^tp\.([A-Za-z0-9_]+?)\.", re.I)
 
+
+def sas_files(tdir):
+    """Yield (dirpath, name) for every .sas file under tdir, archives excluded.
+
+    Recursive on purpose. A flat listdir saw one level and missed 13 corpus
+    files, 10 of them the current datasets/templates/transplant_mcs/ work, and
+    it would have missed the next file dropped in a subdirectory just as
+    quietly. Archives are skipped because they record history, not current
+    flow -- the same rule, and the same relpath test, as
+    2026-08-22-prefix-placement-scan.py. Two scans over one corpus must not
+    disagree about what the corpus is.
+    """
+    for dirpath, dirnames, filenames in os.walk(tdir):
+        if "archive" in os.path.relpath(dirpath, tdir).split(os.sep):
+            continue
+        for name in sorted(filenames):
+            if name.lower().endswith(".sas"):
+                yield dirpath, name
+
+
 jobs = {}
 for folder in FOLDERS:
     tdir = os.path.join(ROOT, folder, "templates")
     if not os.path.isdir(tdir):
         continue
-    for name in sorted(os.listdir(tdir)):
-        p = os.path.join(tdir, name)
-        if not os.path.isfile(p) or not name.lower().endswith(".sas"):
+    for dirpath, name in sas_files(tdir):
+        p = os.path.join(dirpath, name)
+        if not os.path.isfile(p):
             continue
         try:
             # Pinned, not left to the locale. Four corpus files carry non-ASCII
@@ -42,7 +62,12 @@ for folder in FOLDERS:
             continue
         # strip the SAS comment convention *....; lines? keep it simple: keep all.
         m = PREFIX.match(name)
-        jobs[f"{folder}/{name}"] = {
+        # Forward slashes, not os.sep: the key is a map identifier that has to
+        # compare equal across machines, not a path to open. Same reason the
+        # encoding is pinned above -- the committed JSON must regenerate
+        # byte-identically wherever it is run.
+        rel = os.path.relpath(p, tdir).replace(os.sep, "/")
+        jobs[f"{folder}/{rel}"] = {
             "folder": folder,
             "prefix": (m.group(1).lower() if m else None),
             "writes": sorted(set(w.lower() for w in WRITE.findall(txt))),

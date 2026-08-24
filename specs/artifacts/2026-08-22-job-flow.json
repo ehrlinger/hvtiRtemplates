@@ -1,9 +1,9 @@
 {
- "n_jobs": 231,
- "n_with_prefix": 231,
+ "n_jobs": 241,
+ "n_with_prefix": 241,
  "prefix_counts": {
   "ac": 12,
-  "bd": 19,
+  "bd": 24,
   "bd_sgroups": 1,
   "bh": 5,
   "bl": 4,
@@ -47,17 +47,17 @@
   "stxxxx_ccfpull": 1,
   "stxxxx_dwpull": 1,
   "test": 1,
-  "vars": 7,
+  "vars": 12,
   "vars_base_only": 1
  },
  "folder_counts": {
   "analyses": 55,
-  "datasets": 37,
+  "datasets": 47,
   "descriptive": 24,
   "distributions": 36,
   "graphs": 79
  },
- "n_read_built": 98,
+ "n_read_built": 103,
  "n_vars": 168,
  "n_members_written": 79,
  "n_members_read": 110,
@@ -1211,6 +1211,98 @@
   "datasets/tp.vars_base_only.sas": {
    "folder": "datasets",
    "prefix": "vars_base_only",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/transplant_mcs/tp.bd.data.ccf.heart.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": false
+  },
+  "datasets/transplant_mcs/tp.bd.data.ccf.lung.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": false
+  },
+  "datasets/transplant_mcs/tp.bd.data.ccf.mcs.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built"
+   ],
+   "vars": false
+  },
+  "datasets/transplant_mcs/tp.bd.data.unos.heart.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built",
+    "thoracic_public_use_data"
+   ],
+   "vars": false
+  },
+  "datasets/transplant_mcs/tp.bd.data.unos.lung.sas": {
+   "folder": "datasets",
+   "prefix": "bd",
+   "writes": [],
+   "reads": [],
+   "library": [
+    "built",
+    "thoracic_public_use_data"
+   ],
+   "vars": false
+  },
+  "datasets/transplant_mcs/tp.vars.ccf.heart.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/transplant_mcs/tp.vars.ccf.lung.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/transplant_mcs/tp.vars.ccf.mcs.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/transplant_mcs/tp.vars.unos.heart.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
+   "writes": [],
+   "reads": [],
+   "library": [],
+   "vars": false
+  },
+  "datasets/transplant_mcs/tp.vars.unos.lung.sas": {
+   "folder": "datasets",
+   "prefix": "vars",
    "writes": [],
    "reads": [],
    "library": [],

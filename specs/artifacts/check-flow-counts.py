@@ -9,8 +9,8 @@ mechanical for the diagrams too.
 
 Every checkable number in the HTML carries its own anchor:
 
-    <span data-check="n_jobs">231</span>          in prose
-    <tspan data-check="n_jobs">231</tspan>        inside an SVG label
+    <span data-check="n_jobs">241</span>          in prose
+    <tspan data-check="n_jobs">241</tspan>        inside an SVG label
 
 so a claim is matched by markup rather than by guessing at prose. Adding a new
 one needs no change here: every folder total, prefix total and prefix-in-folder
