@@ -48,7 +48,7 @@ remaining checkable:
 | interval censoring | yes — dominates the job | **none** |
 | cohort | job-filtered, 291 of 378 | **whole dataset, 512** |
 | cohort gate | Shape B | **Shape A** |
-| `noconserve` reference | none usable | **yes** — see §6 |
+| `noconserve` reference | none usable | ⚠️ **none usable either** — see §6 |
 | nomogram on the target fit | yes, 23 points | **yes, 8 points** |
 
 ### The §6.1 gate — run 2026-08-26, passes 5/5
@@ -160,8 +160,44 @@ phases <- list(
 `DELTA = 0`. With `TAU = GAMMA = ALPHA = 1` the late phase is the pure Weibull
 `G3 = t^eta`. Branch is **Case 2** (`m < 0`, `nu > 0`).
 
-**Targets:** log likelihood **−176.934**, 53 events conserved,
-`Conservation of events: Invoked at each iteration`.
+**Targets — and which question each answers.** Corrected 2026-08-26 after
+running it; an earlier draft promised the deterministic *fit* would reproduce
+SAS's log-likelihood. It does not, and cannot: `hazard(fit = TRUE)`
+re-optimises and moves off SAS's point.
+
+⭐ **The objective agrees; the optimiser improves on SAS.** Evaluated **at
+SAS's own converged estimates, with no refitting**, R reproduces every printed
+log-likelihood:
+
+| fit | R at SAS's θ | SAS | diff |
+|---|---|---|---|
+| overall | −176.933714 | −176.934 | **2.9e-04** |
+| male | −92.915820 | −92.9158 | **2.0e-05** |
+| female | −81.721712 | −81.7217 | **1.2e-05** |
+
+Refit from those same starting values, R instead finds a **higher** likelihood
+than SAS reports (overall −176.842, male −92.545, female −80.385). That is not
+an R defect — it is a statement about where each optimiser stops.
+
+The two must be reported separately, and only the first is a parity number.
+§12 of the parity handoff draws exactly this line: *pinning Λ and h at SAS's
+estimates does not show R's optimiser finds them.* The job reflects this
+split — a blocking `parity-at-sas-estimates` chunk gated at 1e-3, and an
+`optimiser-comparison` chunk that is explicitly not parity.
+
+Two mechanics this cost time to establish: `hazard(fit = FALSE)` leaves
+`$fit$objective` as `NA` ([#144](https://github.com/ehrlinger/temporal_hazard/issues/144)),
+so the objective must be evaluated through the internal
+`.hzr_logl_multiphase()`; and that function returns the **log-likelihood
+directly** (negative for these fits), which must not be negated.
+
+**Conservation:** 53 events, `Conservation of events: Invoked at each
+iteration`. Note the constraint is nearly non-binding on this cohort —
+`Σ Λ(tᵢ)` is 53.00000 with `conserve` on and 53.00073 with it off, so the
+three overall refits report an identical likelihood to six decimals. The job
+prints both sums, because "the control did nothing" and "the control had
+almost nothing to do" are indistinguishable in the likelihood column and mean
+opposite things.
 
 Retained from the exemplar, deliberately:
 
@@ -176,7 +212,8 @@ Retained from the exemplar, deliberately:
 ### What `hz` writes
 
 ```
-estimates/dead-hz/hz.rds   # list(deterministic =, multistart =, noconserve =)
+estimates/dead-hz/hz.rds   # list(deterministic =, multistart =, noconserve =,
+                           #      male =, female =)
 ```
 
 ⚠️ **This shape is provisional.** `hm` ("risk factor analysis; builds on the
@@ -186,16 +223,46 @@ preserve_root's job already saves; it is recorded as a contract so the first
 `hm` port either confirms it or changes it deliberately, rather than
 inheriting an accident. See §8.
 
-## 6. A `noconserve` reference preserve_root cannot provide
+## 6. ⚠️ RETRACTED — maze does NOT provide a clean `noconserve` reference
 
-`hz.dead.lst` carries **two fits**, and fit 2 is
-`Conservation of events: Not invoked` — the same model with conservation off,
-LL **−176.746**.
+**This section claimed the opposite and was wrong. Retracted 2026-08-26.**
 
-preserve_root has no such reference. Its second fit adds a `G_ROOT` covariate
-to both phases and fits six parameters, so its LL confounds two changes at
-once; the job's own text says it "cannot serve as a conservation target". maze
-closes that gap as a side effect of being chosen for other reasons.
+It read: *"`hz.dead.lst` carries two fits, and fit 2 is `Conservation of events:
+Not invoked` — the same model with conservation off, LL −176.746 ... maze
+closes that gap."*
+
+Reading `hz.dead.sas` — which I had not done — shows fit 2 is **not** the same
+model:
+
+```sas
+  proc hazard data=built noconserve p outhaz=outest steepest quasi mi=200
+       condition=14;
+       ...
+       early female;
+       late  female;
+```
+
+It turns conservation off **and adds a `female` covariate to both phases**. Its
+LL therefore confounds two changes at once — which is *exactly* the defect that
+makes preserve_root's fit 2 (which adds `G_ROOT` to both phases) unusable as a
+conservation target. maze has the identical problem, so **−176.746 is not a
+`noconserve` target and must not be quoted as one.**
+
+The claim came from reading the `.lst`'s `Conservation of events: Not invoked`
+line and inferring the rest. §6.3 of the parity handoff already warns against
+exactly this move in a narrower form — *do not trust the `libname`/`set`
+statement to name the dataset* — and the general rule it implies is: **the
+`.lst` tells you what SAS printed, the `.sas` tells you what SAS was asked.
+Read both before characterising a fit.**
+
+**Consequence for the plan:** Task 3 keeps its deterministic and multi-start
+fits and drops the `noconserve` comparison. A genuine `noconserve` reference
+remains unfound in any study examined so far.
+
+**What maze still provides**, unaffected by this retraction: the majority `E+L`
+phase shape, no interval censoring, a Shape A cohort, a clean §6.1 gate, and a
+printed nomogram on the target fit. It remains the right second exemplar; it
+simply does not close the conservation gap as well.
 
 ## 7. Verification — a `parity/` job, not folded into `hp`
 
@@ -284,6 +351,75 @@ This is the one place the design accepts cost for future work: aligning
 preserve_root to the templates is a separate project, and hardcoding Shape A
 here would mean rewriting the gate then.
 
+## 9b. What of the SAS jobs is NOT ported — stated, not implied
+
+A second exemplar is only useful if its gaps are known. These are the parts of
+the four SAS jobs the R chain does **not** reproduce. None is a defect; all are
+undone work, and naming them stops a later reader inferring coverage that does
+not exist.
+
+| SAS feature | where | status |
+|---|---|---|
+| `%hazplot(...)` goodness-of-fit suite | `hz.dead.sas:94` | **no R counterpart.** The R chain checks parity against printed estimates; it runs no GOF diagnostics. |
+| Fit 2 → `est.hzdead_fem` | `hz.dead.sas:110-122` | fitted in R as the `noconserve` sensitivity, but **not** ported as the covariate model it actually is (`early female; late female;`). Nothing reads it. |
+| Nomogram CI columns | `hz.dead.lst` (`_CLLSURV`/`_CLUSURV`, `_CLLHAZ`/`_CLUHAZ`) | **parsed then discarded.** 32 more printed values the parity job reads and does not check. Pinning them would test the variance path, not just Λ and h. |
+| Parity for the `ac` job | `ac.dead.lst` | **none.** The life tables are computed and rendered but never compared against SAS's printed ones. `hz` and `hp` are pinned; `ac` is not. |
+| Confidence bands on the figures | `hp.dead.female.sas` (`_CLLSURV`/`_CLUSURV`, `_CLLHAZ`/`_CLUHAZ`) | **dropped.** The R figures plot point estimates only. SAS also picks specific rows for band display (`if female=0 and number in (264, 252, ...)`), which is not reproduced. |
+| Axis ranges | `hp.dead.female.sas:157-182` | **deliberately different.** SAS uses months 0–24 with survival 80–100% and a linear hazard 0–4 %/month. The R figures run to 36 months and use log-y hazard, because the female fit's trough near month 10 is invisible on a linear 0–4 scale. Units match; scales do not. |
+| Grid resolution | same | 1000 points vs SAS's 1001 (`inc=(max-min)/999.9` then an explicit final point). Immaterial for a smooth curve. |
+
+### RESOLVED 2026-08-26 — SAS stopped short on a shallow ridge, and it does not matter
+
+The question was whether R's refit gaining likelihood from SAS's own start
+means SAS stopped early, or means the two objectives merely coincide at that
+θ. **It is the former, and the gap is statistically meaningless.**
+
+**1. The objectives are the same.** At SAS's θ, five of the six free gradient
+components vanish to ~1e-5; only `early.log_t_half` is materially non-zero
+(−0.133). Five coordinates independently agreeing that SAS is stationary is
+not what two different functions look like.
+
+**2. Conservation is not what holds SAS there.** `Σ Λ(tᵢ) = 53.00000` exactly
+at SAS's θ, so the constraint is satisfied — but decomposing ∇L against ∇g
+shows only **6.4%** of the gradient lies along the constraint direction. SAS's
+point is **not a KKT point**: a likelihood-increasing direction is available
+that conservation does not block.
+
+**3. It is one mode, not two.** Profiling the likelihood along the straight
+line from SAS's θ to R's refit rises **monotonically** with no dip
+(−176.9337 → −176.8420 over nine steps). There is no barrier between them, so
+this is not multimodality — it is one long, gently ascending ridge.
+
+**4. The ridge is nearly flat, and the parameters on it are unidentified.**
+R's standard error for `log_t_half` at SAS's θ is **6.5** — `t_half` is
+essentially undetermined by these data. The whole excursion moves `t_half`
+from 0.9996 to 0.353 and `nu` from 2.55 to 1.54 to buy 0.09 log-likelihood.
+
+**5. So the disagreement is not material.** Every SAS estimate lies well
+inside R's 95% confidence region:
+
+| fit | Δ log-likelihood | 2ΔLL | inside 95% (χ²₆ = 12.59) |
+|---|---|---|---|
+| overall | 0.0920 | 0.18 | ✅ p = 1.00 |
+| male | 0.3705 | 0.74 | ✅ p = 0.99 |
+| female | 1.3364 | 2.67 | ✅ p = 0.85 |
+
+⚠️ **What did NOT settle it, and why.** The obvious test — comparing R's
+Hessian at SAS's θ against the variance-covariance matrix the `.lst` prints —
+**does not discriminate**. SAS's fit runs with `condition=14`, which
+regularises an ill-conditioned Hessian, so its variance path differs from R's
+whether or not the objectives match. R's unconstrained SE for `log_t_half` is
+6.5 against SAS's printed 0.0053, a ratio of 1230 — and projecting out the
+conservation constraint changes it by less than 1e-5, so conservation does not
+explain it either. The conclusion above rests on the gradient, the path
+profile and the confidence region, not on that comparison.
+
+**Consequence for §5.** "The optimiser improves on SAS" is accurate but should
+not be read as a defect on either side. SAS's convergence criterion was met on
+a ridge flat enough that the remaining gain is inside the noise; R's optimiser
+kept walking it. Both land in the same confidence region, and the parity that
+matters — the objective evaluated at SAS's estimates — is exact.
+
 ## 10. Out of scope
 
 - Aligning preserve_root to the taxonomy layout (its own project, sequenced
@@ -324,11 +460,16 @@ follow the same pattern rather than inventing one.
 
 1. `_study.yml` exists in maze and `assert_cohort()` passes on the real data.
 2. All three jobs render from a clean session.
-3. The `hz` deterministic fit reproduces SAS's LL of **−176.934** and conserves
-   **53** events.
-4. The `noconserve` fit reproduces **−176.746**.
-5. `parity/dead-hz-03.02-hz-parity.qmd` reproduces SAS's nomogram at **8/8**
-   points for both `S(t)` and `h(t)`, under the per-column print-precision rule.
+3. The `hz` job reproduces SAS's log-likelihoods **at SAS's own estimates** —
+   overall −176.934, male −92.9158, female −81.7217, each within 1e-3 — and
+   conserves **53** events. The *refits* are reported separately and are not
+   expected to match; on this study they find a higher likelihood.
+4. ~~The `noconserve` fit reproduces −176.746.~~ **Struck** — see §6; that
+   fit adds a `female` covariate and is not a conservation reference.
+5. `parity/dead-hz-03.02-hz-parity.qmd` reproduces SAS's nomograms at **22/22**
+   rows / 30 checks, all exact at the printed precision and needing no
+   tolerance rule: overall `S(t)` 8/8 and `h(t)` 8/8 from `hz.dead.lst`, plus
+   male 7/7 and female 7/7 `S(t)` from `hp.dead.female.lst`.
 6. Every scaffolded filename satisfies the §5 ordinal-vs-folder rule.
 7. `template_list()` in `hvtiRtemplates` is unchanged — this design produces
    *jobs*, not templates. Extraction is the next project, and it now has two

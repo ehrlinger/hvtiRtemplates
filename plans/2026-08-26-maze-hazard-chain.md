@@ -45,8 +45,27 @@ parity job checks R against SAS's own printed nomogram.
 - **`theta` is positional, 9 values, order fixed by the package:**
   `early.log_mu, early.log_t_half, early.nu, early.m, late.log_mu,
   late.log_tau, late.gamma, late.alpha, late.eta`.
-- **SAS targets** (from `distributions/hz.dead.lst`): fit 1 LL **−176.934**,
-  53 events conserved; fit 2 (`noconserve`) LL **−176.746**.
+- **SAS targets.** Three fits, all `conserve`, all `DELTA = 0` and
+  `TAU = GAMMA = ALPHA = 1` fixed (pure Weibull late phase, `G3 = t^eta`):
+
+  | fit | source `.lst` | n / events | branch | LL |
+  |---|---|---|---|---|
+  | overall | `hz.dead.lst` fit 1 | 512 / 53 | Case 2 (`m<0, nu>0`) | **−176.934** |
+  | male (`female=0`) | `hz.dead.female.lst` fit 1 | 297 / 28 | Case 1L (`m=0` fixed) | **−92.9158** |
+  | female (`female=1`) | `hz.dead.female.lst` fit 2 | 215 / 25 | **Case 3** (`m>0, nu<0`) | **−81.7217** |
+
+  297+215 = 512 and 28+25 = 53. ⚠️ `hz.dead.female.sas`'s comment says the male
+  LL is `-92.777`; the `.lst` says `-92.9158`. The comment is a stale
+  starting-value annotation — **take results from the `.lst`, and what was
+  asked from the `.sas`.** ⚠️ **Fit 2's −176.746 is NOT a `noconserve` target.**
+  `hz.dead.sas` shows fit 2 turns conservation off *and* adds a `female`
+  covariate to both phases (`early female; late female;`), so its LL confounds
+  two changes — the same defect that makes preserve_root's fit 2 unusable. Do
+  not quote it.
+- ⚠️ **Read the `.sas`, not only the `.lst`, before characterising any job.**
+  The `.lst` says what SAS printed; the `.sas` says what SAS was asked. Two of
+  this plan's original premises were wrong because they were inferred from
+  printed output alone.
 - **Cohort:** N 512, events 53, right censored 459, time ∈
   [0.008213721, 4.175308]. This is Shape A — job cohort = study cohort.
 - ⚠️ **`read_built()` lower-cases every column name** (hvtiRutilities 1.0.11),
@@ -62,6 +81,23 @@ parity job checks R against SAS's own printed nomogram.
   value rounds to the printed one at the printed number of decimals — the same
   half-ulp rule the parity job uses on the nomogram. A hand-picked `1e-9`
   fails a value that is in fact exact to every digit SAS printed.
+- ⚠️ **The parity number is the objective evaluated AT SAS's estimates, NOT a
+  refit.** `hazard(..., fit = TRUE)` re-optimises and moves off SAS's point; on
+  this study it lands on a *better* optimum (overall −176.842 against SAS's
+  −176.934). Evaluated without refitting, R reproduces SAS to **2.9e-4
+  (overall), 2.0e-5 (male), 1.2e-5 (female)** — the objective is right and the
+  optimiser simply finds a different maximum. §12 of the parity handoff draws
+  exactly this line: *pinning at SAS's estimates does not show R's optimiser
+  finds them.* Report the two separately; never quote a refit as parity.
+- **Evaluate the objective with the internal
+  `.hzr_logl_multiphase(theta, time, status, phases, covariate_counts, x_list)`.**
+  `hazard(..., fit = FALSE)` leaves `$fit$objective` as `NA`
+  ([#144](https://github.com/ehrlinger/temporal_hazard/issues/144)), so it
+  cannot serve. ⚠️ It returns the **log-likelihood directly** (negative for
+  these fits, e.g. `-176.9337136`) — do **not** negate it. An earlier draft of
+  this plan said the opposite; negating produces a sign-flip that reads as a
+  ~354-unit parity failure and looks catastrophic. Verified by printing the
+  raw return value.
 - **`predict()` API — verified 2026-08-26, do not guess it:**
 
   ```r
@@ -252,8 +288,11 @@ The deliverable is the scaffold plus two passing gates.
 **Interfaces:**
 - Consumes: `R/study.R`'s `STATUS`, `TIME`, `status_numeric()`; `read_built()`,
   `assert_cohort()`, `cohort_counts()` from `hvtiRutilities`.
-- Produces: `estimates/dead-hz/ac.rds` holding the `hzr_kaplan()` fit, read by
-  Task 4's `hp` job via `set_path("estimates", "ac.rds")`.
+- Produces: `estimates/dead-hz/ac.rds` =
+  `list(overall = <hzr_kaplan data frame>, by_female = <list of hzr_kaplan data
+  frames, one per sex, each carrying a `female` column>)`, read by Task 4's
+  `hp` job via `set_path("estimates", "ac.rds")`. **Both** tables are required:
+  `ac.dead.sas` computes an unstratified table and a `stratify=female` one.
 
 - [ ] **Step 1: Scaffold the job**
 
@@ -293,16 +332,35 @@ assert_cohort(d)
 cc <- cohort_counts(d)
 ```
 
-3. **Derived strata** — maze's `ac.dead.sas` computes one overall life table.
-   Replace the template's stratification chunk with the overall table only:
+3. **Life tables — TWO of them.** ⚠️ An earlier version of this step said
+   `ac.dead.sas` computes one overall table with no stratification. **That was
+   wrong**, asserted without opening the file. `ac.dead.sas` issues two
+   `%kaplan` calls: an unstratified one (line 78) and
+   `%kaplan(..., stratify=female, ...)` (line 84, titled *"Stratify by
+   Female"*). In a study called *Gender differences in post-op outcomes*, the
+   by-sex table is arguably the point of the job, not an extra.
 
 ```r
 # hzr_kaplan() takes separate vectors, NOT a formula, and returns a data frame
 # directly -- there is no $table. Verified against args(hzr_kaplan) rather than
 # assumed from the survival package's interface, which it does not share.
+
+# Overall -- ac.dead.sas line 78.
 km <- hzr_kaplan(time = d[[TIME]], status = status_numeric(d))
 knitr::kable(head(km, 12), digits = 5)
-saveRDS(km, set_path("estimates", "ac.rds"))
+
+# Stratified by sex -- ac.dead.sas line 84, `stratify=female`. hzr_kaplan()
+# has no stratify argument, so fit once per level and keep the level on each
+# frame. Gate on the split adding back to the whole: a stratification that
+# silently drops rows is the failure this whole chain guards against.
+stopifnot("female" %in% names(d), !anyNA(d$female))
+km_by <- lapply(split(d, d$female), function(g)
+  cbind(female = g$female[1L],
+        hzr_kaplan(time = g[[TIME]], status = status_numeric(g))))
+stopifnot(sum(vapply(split(d, d$female), nrow, integer(1))) == nrow(d))
+knitr::kable(do.call(rbind, lapply(km_by, head, 4)), digits = 5)
+
+saveRDS(list(overall = km, by_female = km_by), set_path("estimates", "ac.rds"))
 ```
 
 - [ ] **Step 4: Render and verify**
@@ -343,8 +401,12 @@ Expected: no output. A job that still contains one has not been finished.
 - Consumes: `R/study.R` (`STATUS`, `TIME`, `status_numeric()`, `SAS_COHORT`);
   `read_built()`, `assert_cohort()` from `hvtiRutilities`.
 - Produces: `estimates/dead-hz/hz.rds` =
-  `list(deterministic = <hazard>, multistart = <hazard>, noconserve = <hazard>)`.
-  Task 4 (`hp`) and Task 5 (parity) both read `$deterministic`. **This shape is
+  `list(deterministic = <hazard>, multistart = <hazard>, noconserve = <hazard>,
+  male = <hazard>, female = <hazard>)`. Task 4 (`hp`) reads `$male` and `$female`,
+  because `hp.dead.female.sas` plots the per-sex fits, not the overall one.
+  Task 5 (parity) reads **none** of this file — it evaluates at SAS's own
+  printed estimates, so it depends on the `.lst` listings and not on any R
+  artifact. **This shape is
   provisional** pending the first `hm` port — see spec §5.
 
 - [ ] **Step 1: Write the job with its target assertions**
@@ -484,11 +546,13 @@ fit_ms <- hazard(Surv(time, status) ~ 1, data = resp, dist = "multiphase",
 check_fit(fit_ms, "multistart")
 ```
 
-### Fit 3 — `noconserve`, against a real SAS reference
+### Fit 3 — `noconserve` sensitivity
 
-Unlike preserve_root, this study has a genuine `noconserve` counterpart:
-`hz.dead.lst` fit 2 is the same model with `Conservation of events: Not
-invoked`, so its LL is comparable rather than confounded by a covariate change.
+⚠️ **This has NO SAS reference.** `hz.dead.lst`'s fit 2 is `noconserve` *and*
+adds a `female` covariate to both phases (`hz.dead.sas`: `early female; late
+female;`), so its LL of −176.746 confounds two changes and cannot serve as a
+conservation target — the identical defect that disqualifies preserve_root's
+fit 2. Reported as a sensitivity only; never as a parity number.
 
 ```{r}
 #| label: fit-noconserve
@@ -500,20 +564,117 @@ check_fit(fit_nc, "noconserve")
 ```
 
 ```{r}
-#| label: targets
-# SAS's printed log likelihoods, to its own 6-significant-figure precision.
-targets <- data.frame(
-  fit = c("deterministic (conserve)", "noconserve"),
-  sas = c(-176.934, -176.746),
-  r   = c(fit_det$fit$objective, fit_nc$fit$objective)
-)
-targets$abs_diff <- abs(targets$r - targets$sas)
-knitr::kable(targets, digits = 6)
+#| label: parity-at-sas-estimates
+# THE PARITY NUMBERS. Evaluate the objective at the parameters SAS converged
+# to, with no refitting: this asks "does R agree with SAS", and nothing else.
+# The refits above answer "is SAS at the optimum", a different question.
+#
+# .hzr_logl_multiphase() returns the log-likelihood DIRECTLY -- negative for
+# these fits. Do not negate it: doing so flips the sign and reads as a ~354-unit
+# parity failure. hazard(fit = FALSE) cannot be used here: it leaves
+# $fit$objective NA (temporal_hazard#144).
+E <- asNamespace("TemporalHazard")
+ll_at <- function(theta, phases, keep) {
+  E$.hzr_logl_multiphase(
+     theta = theta, time = resp$time[keep], status = resp$status[keep],
+     phases = phases, covariate_counts = c(early = 0L, late = 0L),
+     x_list = list(early = NULL, late = NULL))
+}
+parity <- data.frame(
+  fit = c("overall", "male (female=0)", "female (female=1)"),
+  sas = c(-176.934, -92.9158, -81.7217),
+  r   = c(ll_at(theta0,  phases,   rep(TRUE, nrow(resp))),
+          ll_at(theta_m, phases_m, d$female == 0),
+          ll_at(theta_f, phases_f, d$female == 1)))
+parity$abs_diff <- abs(parity$r - parity$sas)
+knitr::kable(parity, digits = 7)
+
+# Blocking. SAS prints 6 significant figures, so ~1e-3 absolute or better is
+# expected; looser means the OBJECTIVE disagrees, not merely the optimiser --
+# which is the failure this job exists to detect.
+if (any(parity$abs_diff > 1e-3)) {
+  stop("PARITY FAILED at SAS's own estimates: max abs diff ",
+       signif(max(parity$abs_diff), 3), call. = FALSE)
+}
+```
+
+The refits are reported apart from parity, because a refit that lands
+elsewhere is not evidence of disagreement — here R finds a *higher* likelihood
+than SAS reports.
+
+```{r}
+#| label: optimiser-comparison
+optimiser <- data.frame(
+  fit     = c("overall", "male", "female"),
+  sas_ll  = c(-176.934, -92.9158, -81.7217),
+  r_refit = c(fit_det$fit$objective, fit_m$fit$objective, fit_f$fit$objective))
+optimiser$r_better_by <- optimiser$r_refit - optimiser$sas_ll
+knitr::kable(optimiser, digits = 6)
+```
+
+### Fits 4 and 5 — per sex
+
+`hz.dead.female.sas` fits each sex separately on a `where female=?` subset,
+both with `conserve`. These are what `hp.dead.female.sas` actually plots, so
+`hp` cannot be built without them. ⚠️ An earlier draft said neither prints a
+nomogram and neither can be pinned on `S(t)`. **That was wrong**, and wrong the
+same way three earlier premises here were: it checked the *fitting* job's
+listing (`hz.dead.female.lst`, which indeed prints none) and never checked the
+*plotting* job's. `graphs/hp.dead.female.lst` line 570 prints a 7-point table
+with `_SURVIV` and `_MSURVIV` — one column per sex — giving **14 pinnable
+survival points**, all reproduced exactly at 5 dp. Only survival is printed,
+so this adds no hazard coverage — but reproducing SAS's LL at SAS's own converged
+estimates still tests the objective, and the female fit is **Case 3**
+(`m > 0, nu < 0`), a branch with exactly one pinned fit in the whole corpus.
+
+Note the structural differences from the overall fit: male fixes `m` at 0
+(Case 1L), female has `nu` negative and `m` large and positive (Case 3).
+
+```{r}
+#| label: fit-by-sex
+male   <- resp[d$female == 0, , drop = FALSE]
+female <- resp[d$female == 1, , drop = FALSE]
+stopifnot(nrow(male) == 297L, nrow(female) == 215L,
+          nrow(male) + nrow(female) == nrow(resp),
+          sum(male$status) == 28L, sum(female$status) == 25L)
+
+phases_m <- list(
+  early = hzr_phase("cdf", t_half = 0.9996396, nu = 2.46917, m = 0, fixed = "m"),
+  late  = hzr_phase("g3", tau = 1, gamma = 1, alpha = 1, eta = 2.254129,
+                    fixed = c("tau", "gamma", "alpha")))
+theta_m <- c(log(0.1583327), log(0.9996396), 2.46917, 0,
+             log(0.005469243), log(1), 1, 1, 2.254129)
+
+phases_f <- list(
+  early = hzr_phase("cdf", t_half = 0.9996399, nu = -0.427237, m = 7.267309),
+  late  = hzr_phase("g3", tau = 1, gamma = 1, alpha = 1, eta = 2.862257,
+                    fixed = c("tau", "gamma", "alpha")))
+theta_f <- c(log(0.1939737), log(0.9996399), -0.427237, 7.267309,
+             log(0.003603803), log(1), 1, 1, 2.862257)
+
+fit_m <- hazard(Surv(time, status) ~ 1, data = male, dist = "multiphase",
+                phases = phases_m, theta = theta_m, fit = TRUE,
+                control = list(conserve = TRUE, condition = 14,
+                               n_starts = 1, maxit = 2000))
+fit_f <- hazard(Surv(time, status) ~ 1, data = female, dist = "multiphase",
+                phases = phases_f, theta = theta_f, fit = TRUE,
+                control = list(conserve = TRUE, condition = 14,
+                               n_starts = 1, maxit = 2000))
+check_fit(fit_m, "male"); check_fit(fit_f, "female")
+
+by_sex <- data.frame(
+  fit = c("male (female=0)", "female (female=1)"),
+  n   = c(nrow(male), nrow(female)),
+  sas = c(-92.9158, -81.7217),
+  r   = c(fit_m$fit$objective, fit_f$fit$objective))
+by_sex$abs_diff <- abs(by_sex$r - by_sex$sas)
+knitr::kable(by_sex, digits = 6)
 ```
 
 ```{r}
 #| label: save
-saveRDS(list(deterministic = fit_det, multistart = fit_ms, noconserve = fit_nc),
+saveRDS(list(deterministic = fit_det, multistart = fit_ms, noconserve = fit_nc,
+             male = fit_m, female = fit_f),
         set_path("estimates", "hz.rds"))
 ```
 ````
@@ -532,11 +693,15 @@ Expected: renders. The cohort table shows 512 / 53 / 459.
 cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
 f <- readRDS("estimates/dead-hz/hz.rds")
 cat("deterministic:", f$deterministic$fit$objective, " SAS -176.934\n")
-cat("noconserve   :", f$noconserve$fit$objective,    " SAS -176.746\n")'
+cat("noconserve   :", f$noconserve$fit$objective,    " (no SAS reference)\n")
+cat("male         :", f$male$fit$objective,          " SAS  -92.9158\n")
+cat("female       :", f$female$fit$objective,        " SAS  -81.7217\n")'
 ```
 
-Expected: both within SAS's printed precision (±0.0005). **If they are not,
-stop and diagnose — do not tune.** The two most likely causes, in order: the
+Expected: the **refits will NOT match** SAS's printed values, and that is not a
+failure — R finds a better optimum. The number that must match is in the
+`parity-at-sas-estimates` chunk. **If THAT one misses, stop and diagnose — do
+not tune.** The two most likely causes, in order: the
 `theta0` order does not match `.hzr_phase_theta_names()`, or the late phase's
 fixed parameters were not actually held fixed. Check both before suspecting the
 model.
@@ -573,9 +738,9 @@ Expected: the file exists at that exact path.
 - Generated: `<root>/graphs/dead-hz/hp-survival.png`, `<root>/graphs/dead-hz/hp-hazard.png`
 
 **Interfaces:**
-- Consumes: `estimates/dead-hz/ac.rds` (Task 2 — a `hzr_kaplan` **data frame**
-  with columns `time` and `survival`), `estimates/dead-hz/hz.rds`
-  (Task 3, `$deterministic`).
+- Consumes: `estimates/dead-hz/ac.rds` (Task 2 — `$overall` and `$by_female`),
+  `estimates/dead-hz/hz.rds` (Task 3 — **`$male` and `$female`**, not
+  `$deterministic`: `hp.dead.female.sas` plots the per-sex fits).
 - Produces: two PNGs under `graphs/dead-hz/`. Produces **no** parity numbers —
   that is Task 5.
 
@@ -590,31 +755,57 @@ chunks as Task 3 (with `ENDPOINT <- "dead"`, `TYPE <- "hz"`), then:
 # hp overlays the actuarial estimate with the parametric fit, so it reads both
 # upstream artifacts by set rather than recomputing either. A job that
 # recomputes its upstream can silently disagree with it.
-km  <- readRDS(set_path("estimates", "ac.rds"))
-fit <- readRDS(set_path("estimates", "hz.rds"))$deterministic
+#
+# This job is STRATIFIED BY SEX, because hp.dead.female.sas is: it reads
+# est.hzd_male and est.hzd_female, never the overall fit. So take the per-sex
+# fits and the per-sex life tables.
+ac  <- readRDS(set_path("estimates", "ac.rds"))
+hz  <- readRDS(set_path("estimates", "hz.rds"))
+fits <- list(male = hz$male, female = hz$female)
+kms  <- ac$by_female          # names are the `female` levels: "0", "1"
+stopifnot(length(kms) == 2L)
+```
+
+```{r}
+#| label: grid
+# Match the SAS job's evaluation grid rather than inventing one:
+# hp.dead.female.sas uses `max=log(3); min=-8; inc=(max-min)/999.9` -- 1000
+# points LOG-SPACED from exp(-8) to 3 years. A linear grid to the last event
+# time would under-resolve the early phase, which is where the action is.
+tt <- exp(seq(-8, log(3), length.out = 1000))
+
+# SAS scales for display: survival as a PERCENT, hazard as PERCENT PER MONTH
+# (_hazard*100/12), with the x axis in months. Plot in those units so the
+# figures are comparable to the 2006 originals rather than merely correct.
+S_pct  <- function(f) 100 * unname(predict(f, newdata = data.frame(time = tt), type = "survival"))
+H_pcpm <- function(f) 100 / 12 * unname(predict(f, newdata = data.frame(time = tt), type = "hazard"))
+months <- tt * 12
+lev    <- c("0", "1"); lab <- c("male", "female")
 ```
 
 ```{r}
 #| label: fig-survival
-tt <- seq(0.01, 4.17, length.out = 400)
-# type = "survival" directly; there is no "cumhaz" type and no newtime argument.
-# unname() because the returned vector carries a repeated, meaningless name.
-S  <- unname(predict(fit, newdata = data.frame(time = tt), type = "survival"))
 png(set_path("graphs", "hp-survival.png"), width = 1400, height = 1000, res = 150)
-plot(tt, S, type = "l", ylim = c(0, 1), xlab = "Years after operation",
-     ylab = "Survival", main = "Death — actuarial and parametric")
-# km is a data frame, not a list with $table; the column is `survival`.
-lines(km$time, km$survival, type = "s", lty = 2)
-legend("bottomleft", c("parametric (hz)", "actuarial (ac)"), lty = c(1, 2), bty = "n")
+plot(NA, xlim = range(months), ylim = c(0, 100), xlab = "Months after operation",
+     ylab = "Survival (%)", main = "Death — actuarial and parametric, by sex")
+for (i in seq_along(lev)) {
+  lines(months, S_pct(fits[[i]]), col = i, lty = 1)
+  k <- kms[[lev[i]]]                      # hzr_kaplan data frame; column is `survival`
+  lines(k$time * 12, 100 * k$survival, col = i, lty = 2, type = "s")
+}
+legend("bottomleft", c(paste(lab, "(hz)"), paste(lab, "(ac)")),
+       col = c(1, 2, 1, 2), lty = c(1, 1, 2, 2), bty = "n")
 dev.off()
 ```
 
 ```{r}
 #| label: fig-hazard
-h <- unname(predict(fit, newdata = data.frame(time = tt), type = "hazard"))
 png(set_path("graphs", "hp-hazard.png"), width = 1400, height = 1000, res = 150)
-plot(tt, h, type = "l", log = "y", xlab = "Years after operation",
-     ylab = "Hazard (events / patient-year)", main = "Death — hazard function")
+plot(NA, xlim = range(months), ylim = range(vapply(fits, function(f) range(H_pcpm(f)), numeric(2))),
+     log = "y", xlab = "Months after operation", ylab = "Hazard (% per month)",
+     main = "Death — hazard function, by sex")
+for (i in seq_along(lev)) lines(months, H_pcpm(fits[[i]]), col = i)
+legend("topright", lab, col = seq_along(lab), lty = 1, bty = "n")
 dev.off()
 ```
 ````
@@ -637,10 +828,17 @@ Expected: `hp-survival.png` and `hp-hazard.png`, both non-empty.
 
 - [ ] **Step 4: Eyeball the survival curve**
 
-Open `hp-survival.png`. The parametric and actuarial curves should track each
-other closely and both end near S ≈ 0.83 at t = 3 (SAS's nomogram reports
-0.83075 there). A parametric curve that diverges badly from the actuarial one
-means the fit is wrong, not the figure — go back to Task 3.
+Open `hp-survival.png`. Within each sex the parametric and actuarial curves
+should track each other closely. Do **not** check them against the overall
+nomogram's 0.83075 at t = 3 — that figure belongs to the pooled fit, and this
+plot shows the two per-sex fits, which straddle it. A parametric curve that
+diverges badly from the actuarial curve *of the same sex* means the fit is
+wrong, not the figure — go back to Task 3.
+
+For reference, the 2006 originals are `graphs/hp.dead.female.survival.pdf` and
+`graphs/hp.dead.female.hazard.pdf`. ⚠️ Their axis label reads "Years After
+Tricuspid Valve Replacement" — a copy-paste error in the SAS source; this is an
+AFIB ablation study. Do not reproduce that label.
 
 ---
 
@@ -653,8 +851,10 @@ means the fit is wrong, not the figure — go back to Task 3.
 **Interfaces:**
 - Consumes: `estimates/dead-hz/hz.rds` (`$deterministic`);
   `distributions/hz.dead.lst`.
-- Produces: `parity/dead-hz/hz-diff.csv` with one row per nomogram point and
-  columns `YEARS, sas_surv, r_surv, surv_ok, sas_haz, r_haz, haz_ok`.
+- Produces: `parity/dead-hz/hz-diff.csv`, long across cohorts — 22 rows with
+  columns `cohort, YEARS, sas_surv, r_surv, surv_ok, sas_haz, r_haz, haz_ok`.
+  The per-sex listing prints no hazard column, so `sas_haz`/`r_haz`/`haz_ok`
+  are `NA` on those rows rather than the rows being omitted.
 
 - [ ] **Step 1: Write the parity job**
 
@@ -689,55 +889,117 @@ decimals_of <- function(v) {
   for (d in 0:12) if (isTRUE(all.equal(v, round(v, d), tolerance = 0))) return(d)
   12L
 }
-halfulp <- function(x, dp) 0.5 * 10^(-dp)
-
-# SAS prints YEARS rounded, so the true evaluation time is an interval, not a
-# point. A value passes if SAS's printed number is reachable from ANY t in that
-# interval. Ignoring this fails the 15- and 30-day rows, whose printed 0.04107
-# and 0.08214 are really 15/365.25 and 30/365.25.
-pass_interval <- function(f, t, target, dp_out, dp_in) {
-  ts <- seq(t - halfulp(t, dp_in), t + halfulp(t, dp_in), length.out = 41)
-  v  <- f(ts)
-  target >= min(v) - halfulp(target, dp_out) &&
-  target <= max(v) + halfulp(target, dp_out)
-}
 ```
+
+### Evaluate at the times the `.sas` states, not the times the `.lst` printed
+
+`hz.dead.sas` line 99 gives the evaluation grid exactly:
+
+```sas
+do years=15/365.2425, 30/365.2425, 3/12, 6/12, 1, 1.5, 2, 3;
+```
+
+The `.lst` prints those rounded to 5 dp. Evaluating at the **rounded** values
+needs a tolerance rule to pass — row 2's hazard comes out 0.24834 against a
+printed 0.24835. Evaluating at the **exact** values needs none: all eight
+points match to the last printed digit, for survival *and* hazard.
+
+This is the branch's own rule applied once more — the `.lst` says what SAS
+printed, the `.sas` says what SAS was asked. Reading the source removes the
+slack rather than accommodating it.
 
 ```{r}
 #| label: compare
-fit <- readRDS(set_path("estimates", "hz.rds"))$deterministic
-S <- function(t) unname(predict(fit, newdata = data.frame(time = t), type = "survival"))
-H <- function(t) unname(predict(fit, newdata = data.frame(time = t), type = "hazard"))
-
+t_exact <- c(15/365.2425, 30/365.2425, 3/12, 6/12, 1, 1.5, 2, 3)
 dpT <- decimals_of(nom$YEARS)
-dpS <- decimals_of(nom$SURVIV)
-dpH <- decimals_of(nom$HAZARD)
+# Fail loudly if a future listing's times differ, rather than silently
+# comparing R at one set of times against SAS at another. Compare the PRINTED
+# representations rather than rounded doubles: the question is "are these the
+# same times to the precision SAS printed", which is a question about decimal
+# text, and asking it that way removes any argument about float equality.
+stopifnot(identical(sprintf("%.*f", dpT, t_exact),
+                    sprintf("%.*f", dpT, nom$YEARS)))
 
+sas <- list(mue = 0.1736496, thalf = 0.9996401, nu = 2.550286, m = -0.337948,
+            mul = 0.004307385, eta = 2.574888)   # hz.dead.lst fit 1
+Lam <- function(p, t) with(p, mue * hzr_decompos(t, t_half = thalf, nu = nu, m = m)$G +
+                              mul * hzr_decompos_g3(t, tau = 1, gamma = 1, alpha = 1, eta = eta)$G3)
+haz <- function(p, t) with(p, mue * hzr_decompos(t, t_half = thalf, nu = nu, m = m)$g +
+                              mul * hzr_decompos_g3(t, tau = 1, gamma = 1, alpha = 1, eta = eta)$g3)
+
+dpS <- decimals_of(nom$SURVIV); dpH <- decimals_of(nom$HAZARD)
 res <- data.frame(
   YEARS    = nom$YEARS,
-  sas_surv = nom$SURVIV,
-  r_surv   = S(nom$YEARS),
-  surv_ok  = vapply(seq_len(nrow(nom)), function(i)
-               pass_interval(S, nom$YEARS[i], nom$SURVIV[i], dpS, dpT), logical(1)),
-  sas_haz  = nom$HAZARD,
-  r_haz    = H(nom$YEARS),
-  haz_ok   = vapply(seq_len(nrow(nom)), function(i)
-               pass_interval(H, nom$YEARS[i], nom$HAZARD[i], dpH, dpT), logical(1))
-)
-knitr::kable(res, digits = 6)
-write.csv(res, set_path("parity", "hz-diff.csv"), row.names = FALSE)
+  sas_surv = nom$SURVIV, r_surv = exp(-Lam(sas, t_exact)),
+  surv_ok  = round(exp(-Lam(sas, t_exact)), dpS) == nom$SURVIV,
+  sas_haz  = nom$HAZARD, r_haz  = haz(sas, t_exact),
+  haz_ok   = round(haz(sas, t_exact), dpH) == nom$HAZARD)
+knitr::kable(res, digits = 7)
+ok_S <- res$surv_ok; ok_H <- res$haz_ok
+```
+
+### The per-sex fits are pinnable too — from the `hp` listing
+
+`hz.dead.female.lst` prints no nomogram, but `graphs/hp.dead.female.lst`
+line 570 does, at the times `hp.dead.female.sas` line 78 states
+(`30/365.2425, 0.25, 0.5, 1, 1.5, 2, 3`). It carries **two** survival columns:
+`_MSURVIV` (male) and `_SURVIV` (female). Only survival — no hazard column —
+so this adds no `h(t)` coverage for the per-sex fits.
+
+Worth the trouble because the female fit is **Case 3** (`m>0, nu<0`) and the
+male is **Case 1L** (`m=0` fixed) — branches the corpus barely covers.
+
+```{r}
+#| label: per-sex
+male   <- list(mue = 0.1583327, thalf = 0.9996396, nu = 2.46917,   m = 0,
+               mul = 0.005469243, eta = 2.254129)
+female <- list(mue = 0.1939737, thalf = 0.9996399, nu = -0.427237, m = 7.267309,
+               mul = 0.003603803, eta = 2.862257)
+t_hp <- c(30/365.2425, 0.25, 0.5, 1, 1.5, 2, 3)
+
+# PROVE the column-to-arm mapping rather than trusting the column name. Guessing
+# an arm from a suffix is how two cohorts get silently swapped -- the same trap
+# the resilia matched-pair arms set, where only the printed time maxima could
+# tell them apart.
+hitS <- function(p, tgt) sum(round(exp(-Lam(p, t_hp)), decimals_of(tgt)) == tgt)
+if (!(hitS(male, hp$MSURVIV) == length(t_hp) && hitS(male, hp$SURVIV) == 0L &&
+      hitS(female, hp$SURVIV) == length(t_hp) && hitS(female, hp$MSURVIV) == 0L)) {
+  stop("per-sex column mapping is not discriminating: _MSURVIV should match ",
+       "male exactly and female not at all, and vice versa.", call. = FALSE)
+}
+res_male <- data.frame(YEARS = hp$YEARS, sas_surv = hp$MSURVIV,
+  r_surv = exp(-Lam(male, t_hp)),
+  surv_ok = round(exp(-Lam(male, t_hp)), decimals_of(hp$MSURVIV)) == hp$MSURVIV)
+res_female <- data.frame(YEARS = hp$YEARS, sas_surv = hp$SURVIV,
+  r_surv = exp(-Lam(female, t_hp)),
+  surv_ok = round(exp(-Lam(female, t_hp)), decimals_of(hp$SURVIV)) == hp$SURVIV)
+knitr::kable(res_male, digits = 6, caption = "male")
+knitr::kable(res_female, digits = 6, caption = "female")
+ok_M <- res_male$surv_ok; ok_F <- res_female$surv_ok
+
+# One combined CSV, long across cohorts, so the per-sex rows sit in the same
+# artifact as the overall fit rather than a second file. The overall rows carry
+# survival AND hazard; the per-sex listing prints no hazard column, so those
+# fields are explicitly NA rather than the rows being silently absent.
+diff_all <- rbind(
+  data.frame(cohort = "overall", res),
+  data.frame(cohort = "male",   res_male,   sas_haz = NA_real_, r_haz = NA_real_, haz_ok = NA),
+  data.frame(cohort = "female", res_female, sas_haz = NA_real_, r_haz = NA_real_, haz_ok = NA))
+write.csv(diff_all, set_path("parity", "hz-diff.csv"), row.names = FALSE)
 ```
 
 ```{r}
 #| label: verdict
 # Blocking. A parity document that renders green while failing its own check is
-# worse than no document: the rendered page is the evidence.
-if (!all(res$surv_ok) || !all(res$haz_ok)) {
-  stop("PARITY FAILED: survival ", sum(res$surv_ok), "/", nrow(res),
-       ", hazard ", sum(res$haz_ok), "/", nrow(res), call. = FALSE)
-}
-cat(sprintf("PARITY PASS: survival %d/%d, hazard %d/%d\n",
-            sum(res$surv_ok), nrow(res), sum(res$haz_ok), nrow(res)))
+# worse than no document: the rendered page is the evidence. 30 checks across
+# 22 rows -- overall survival and hazard (8 each), per-sex survival (7 each).
+bad <- c(overall_surv = sum(!ok_S), overall_haz = sum(!ok_H),
+         male_surv = sum(!ok_M), female_surv = sum(!ok_F))
+if (any(bad > 0)) stop("PARITY FAILED: ", paste(names(bad), bad, sep = "=", collapse = ", "),
+                       call. = FALSE)
+cat(sprintf("PARITY PASS: overall survival %d/%d, overall hazard %d/%d, male survival %d/%d, female survival %d/%d\n",
+            sum(ok_S), length(ok_S), sum(ok_H), length(ok_H),
+            sum(ok_M), length(ok_M), sum(ok_F), length(ok_F)))
 ```
 ````
 
@@ -747,7 +1009,7 @@ cat(sprintf("PARITY PASS: survival %d/%d, hazard %d/%d\n",
 cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && quarto render parity/dead-hz-03.02-hz-parity.qmd
 ```
 
-Expected: `PARITY PASS: survival 8/8, hazard 8/8`
+Expected: `PARITY PASS: overall survival 8/8, overall hazard 8/8, male survival 7/7, female survival 7/7`
 
 - [ ] **Step 3: If it fails, check the two rounding traps before the model**
 

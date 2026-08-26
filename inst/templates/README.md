@@ -47,11 +47,20 @@ The full design, including what was rejected and why, is in
 ## What is not here yet, and why
 
 `hz` (parametric temporal-hazard fit) and `hp` (nomogram and figures) are **not
-templated yet**. Both shapes exist in exactly one study, and a template
-extracted from a single example encodes that study's choices as though they
-were general. They arrive once a second study has run them.
+templated yet**, even though the two-studies gate is now open. `ac`, `hz` and
+`hp` each exist in two studies (`preserve_root` and `maze/atricure/gender`),
+and `maze/atricure/gender`'s run reproduced **its own study's** SAS results
+(not `preserve_root`'s — no cross-study reproduction is claimed or possible):
+log-likelihoods evaluated at SAS's converged estimates matched within 1e-3
+(overall -176.934, male -92.9158, female -81.7217), and SAS's printed
+nomograms matched at **22/22** points — 8 survival and 8 hazard on the overall
+fit, plus 7 survival on each per-sex fit. Template extraction for `hz`/`hp` is
+the next piece of work, not blocked on a study count anymore.
 
-`bh` and `hm` are likewise pending.
+`hm`, `hs` and `bh` remain pending: each exists in only one study
+(`preserve_root` has 1, 1 and 2 jobs respectively — 3, 3 and 6 files, since
+each job carries `.sas`/`.lst`/`.log`; `maze/atricure/gender` has none), so their two-studies gate is still closed. `hs` was missing from
+this list before and is added here — its absence read as "templated".
 
 ## Editing a scaffolded job
 
