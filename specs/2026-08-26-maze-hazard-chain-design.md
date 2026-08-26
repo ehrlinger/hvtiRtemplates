@@ -82,8 +82,9 @@ So the jobs go where `new_job()` puts them:
 | file | origin |
 |---|---|
 | `distributions/dead-hz-03.01-ac.qmd` | `new_job("ac", "dead", "hz")` |
-| `distributions/dead-hz-04.01-hz.qmd` | hand-written — **establishes the `hz` ordinal** |
-| `graphs/dead-hz-06.01-hp.qmd` | hand-written — **establishes the `hp` ordinal** |
+| `distributions/dead-hz-03.02-hz.qmd` | hand-written |
+| `graphs/dead-hz-06.01-hp.qmd` | hand-written |
+| `parity/dead-hz-03.02-hz-parity.qmd` | hand-written — see §7 |
 
 Generated artifacts follow the rule already stated in the templates README —
 authored files flat, generated artifacts under `<endpoint>-<type>/`:
@@ -94,16 +95,35 @@ estimates/dead-hz/hz.rds
 graphs/dead-hz/hp-*.png
 ```
 
-### Ordinals
+### Ordinals — already settled, not a decision for this design
 
-`template_list()` reads the ordinal from the **filename**, not from
-`hvti_taxonomy()`, so no canonical value exists until a template does. `ac` is
-`03.01` and the README's own layout example already shows `hp` at `06.01`, which
-implies the number tracks position in the overall study chain rather than
-position within a folder. `hz` therefore takes **`04.01`**.
+⚠️ **An earlier draft of this spec assigned `hz` the ordinal `04.01` and
+described it as precedent-setting. That was wrong on both counts.**
+`specs/2026-08-21-template-set-layout-design.md` §5 already fixes the scheme:
+the **major comes from the taxonomy folder**, the minor is the next free
+position within it.
 
-This is a precedent-setting decision and is recorded here so the next person
-does not have to re-derive it.
+| major | folder |
+|---|---|
+| `01` | `datasets` |
+| `02` | `descriptive` |
+| `03` | `distributions` |
+| `04` | `analyses` |
+| `05` | `estimates` |
+| `06` | `graphs` |
+| `07` | `documents` |
+
+That spec spells out this exact chain: *"`ac`, `hz`, `hp` produce `03.01`,
+`03.02`, `06.01`"*. So **`hz` is `03.02`** — `04` is `analyses`, and a
+`04.01-hz.qmd` sitting in `distributions/` would fail the ordinal-vs-folder
+test §5 requires. The ordinal is global and fixed per prefix, identical in
+every study; scaffolded sets therefore have deliberate **gaps**, and a gap
+positively says "no job of that type here".
+
+The error came from reading `hp = 06.01` as evidence of a global run-order
+sequence. Both readings explain `ac = 03.01` and `hp = 06.01`; the folder rule
+is the documented one, and it was documented in a file the templates README
+points at directly.
 
 ## 4. Study scaffold
 
@@ -177,9 +197,20 @@ to both phases and fits six parameters, so its LL confounds two changes at
 once; the job's own text says it "cannot serve as a conservation target". maze
 closes that gap as a side effect of being chosen for other reasons.
 
-## 7. Verification
+## 7. Verification — a `parity/` job, not folded into `hp`
 
-Fit 1 prints a nomogram (23 points). The `hp` job overlays R's `S(t)` and
+⚠️ **Also corrected.** An earlier draft put the SAS comparison inside the `hp`
+job. `2026-08-21-template-set-layout-design.md` §5.1 places parity in a
+**top-level `parity/` folder**, borrowing the ordinal of the job it checks with
+a `-parity` suffix: `parity/dead-hz-03.02-hz-parity.qmd`. Parity is a *modality
+of a job, not a job* — 1:1 with what it checks, optional, hand-written per
+study, and transient, since it exists to retire SAS. Keeping it in one folder
+makes the eventual cleanup one delete instead of a sweep.
+
+`hp` therefore produces the nomogram figures; the parity job does the
+comparison.
+
+Fit 1 prints a nomogram (23 points). The parity job overlays R's `S(t)` and
 `h(t)` on SAS's printed values using the same rule as
 `shape-parity-sweep.R`: a point passes if SAS's printed value is reachable
 from **any** `t` within the printed `YEARS` rounding interval, to that
@@ -275,8 +306,9 @@ here would mean rewriting the gate then.
 3. The `hz` deterministic fit reproduces SAS's LL of **−176.934** and conserves
    **53** events.
 4. The `noconserve` fit reproduces **−176.746**.
-5. The `hp` job reproduces SAS's nomogram at **23/23** points for both `S(t)`
-   and `h(t)`, under the per-column print-precision rule.
-6. `template_list()` in `hvtiRtemplates` is unchanged — this design produces
+5. `parity/dead-hz-03.02-hz-parity.qmd` reproduces SAS's nomogram at **23/23**
+   points for both `S(t)` and `h(t)`, under the per-column print-precision rule.
+6. Every scaffolded filename satisfies the §5 ordinal-vs-folder rule.
+7. `template_list()` in `hvtiRtemplates` is unchanged — this design produces
    *jobs*, not templates. Extraction is the next project, and it now has two
    exemplars to intersect.

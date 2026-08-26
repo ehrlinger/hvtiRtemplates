@@ -76,12 +76,20 @@ find /studies -name '*.lst' -path '*/distributions/*' -o -name '*.lst' -path '*/
   -o -name '*.lst' -path '*/graphs/*' -o -name '*.lst' -path '*/descriptive/*'
 ```
 
-then split each basename on the first `.` to get the prefix, and derive the
-study as the path above the taxonomy folder.
+then derive the prefix from each basename and the study from the path above the
+taxonomy folder.
+
+**Extracting the prefix is not "split on the first `.`".** A `tp.` marker
+precedes the real prefix, so `tp.hz.dead.lst` would classify as prefix `tp` —
+which both loses the fact that it is an `hz` template and collides with the
+exclusion rule below. Strip a leading `tp.` **first**, record the file as a
+template, and take the prefix from what remains.
 
 **Requirements, learned the hard way elsewhere:**
 
-- **Exclude `tp.`** — templates, not jobs. Anchor at `^<prefix>[.]`.
+- **Exclude `tp.` from the job counts** — templates, not jobs — but count
+  them separately rather than dropping them silently, per the paragraph above.
+  Anchor at `^<prefix>[.]` once the marker is stripped.
 - **Validate the prefix against `hvti_taxonomy()`** and report unknown ones
   separately rather than dropping them. An unknown prefix is a finding.
 - **Report what is discarded**, by reason and count. A sweep that reports only
