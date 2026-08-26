@@ -851,8 +851,10 @@ AFIB ablation study. Do not reproduce that label.
 **Interfaces:**
 - Consumes: `estimates/dead-hz/hz.rds` (`$deterministic`);
   `distributions/hz.dead.lst`.
-- Produces: `parity/dead-hz/hz-diff.csv` with one row per nomogram point and
-  columns `YEARS, sas_surv, r_surv, surv_ok, sas_haz, r_haz, haz_ok`.
+- Produces: `parity/dead-hz/hz-diff.csv`, long across cohorts — 22 rows with
+  columns `cohort, YEARS, sas_surv, r_surv, surv_ok, sas_haz, r_haz, haz_ok`.
+  The per-sex listing prints no hazard column, so `sas_haz`/`r_haz`/`haz_ok`
+  are `NA` on those rows rather than the rows being omitted.
 
 - [ ] **Step 1: Write the parity job**
 
@@ -909,9 +911,14 @@ slack rather than accommodating it.
 ```{r}
 #| label: compare
 t_exact <- c(15/365.2425, 30/365.2425, 3/12, 6/12, 1, 1.5, 2, 3)
+dpT <- decimals_of(nom$YEARS)
 # Fail loudly if a future listing's times differ, rather than silently
-# comparing R at one set of times against SAS at another.
-stopifnot(identical(round(t_exact, decimals_of(nom$YEARS)), nom$YEARS))
+# comparing R at one set of times against SAS at another. Compare the PRINTED
+# representations rather than rounded doubles: the question is "are these the
+# same times to the precision SAS printed", which is a question about decimal
+# text, and asking it that way removes any argument about float equality.
+stopifnot(identical(sprintf("%.*f", dpT, t_exact),
+                    sprintf("%.*f", dpT, nom$YEARS)))
 
 sas <- list(mue = 0.1736496, thalf = 0.9996401, nu = 2.550286, m = -0.337948,
             mul = 0.004307385, eta = 2.574888)   # hz.dead.lst fit 1
@@ -921,8 +928,14 @@ haz <- function(p, t) with(p, mue * hzr_decompos(t, t_half = thalf, nu = nu, m =
                               mul * hzr_decompos_g3(t, tau = 1, gamma = 1, alpha = 1, eta = eta)$g3)
 
 dpS <- decimals_of(nom$SURVIV); dpH <- decimals_of(nom$HAZARD)
-ok_S <- round(exp(-Lam(sas, t_exact)), dpS) == nom$SURVIV
-ok_H <- round(haz(sas, t_exact),        dpH) == nom$HAZARD
+res <- data.frame(
+  YEARS    = nom$YEARS,
+  sas_surv = nom$SURVIV, r_surv = exp(-Lam(sas, t_exact)),
+  surv_ok  = round(exp(-Lam(sas, t_exact)), dpS) == nom$SURVIV,
+  sas_haz  = nom$HAZARD, r_haz  = haz(sas, t_exact),
+  haz_ok   = round(haz(sas, t_exact), dpH) == nom$HAZARD)
+knitr::kable(res, digits = 7)
+ok_S <- res$surv_ok; ok_H <- res$haz_ok
 ```
 
 ### The per-sex fits are pinnable too — from the `hp` listing
@@ -954,8 +967,25 @@ if (!(hitS(male, hp$MSURVIV) == length(t_hp) && hitS(male, hp$SURVIV) == 0L &&
   stop("per-sex column mapping is not discriminating: _MSURVIV should match ",
        "male exactly and female not at all, and vice versa.", call. = FALSE)
 }
-ok_M <- round(exp(-Lam(male,   t_hp)), decimals_of(hp$MSURVIV)) == hp$MSURVIV
-ok_F <- round(exp(-Lam(female, t_hp)), decimals_of(hp$SURVIV))  == hp$SURVIV
+res_male <- data.frame(YEARS = hp$YEARS, sas_surv = hp$MSURVIV,
+  r_surv = exp(-Lam(male, t_hp)),
+  surv_ok = round(exp(-Lam(male, t_hp)), decimals_of(hp$MSURVIV)) == hp$MSURVIV)
+res_female <- data.frame(YEARS = hp$YEARS, sas_surv = hp$SURVIV,
+  r_surv = exp(-Lam(female, t_hp)),
+  surv_ok = round(exp(-Lam(female, t_hp)), decimals_of(hp$SURVIV)) == hp$SURVIV)
+knitr::kable(res_male, digits = 6, caption = "male")
+knitr::kable(res_female, digits = 6, caption = "female")
+ok_M <- res_male$surv_ok; ok_F <- res_female$surv_ok
+
+# One combined CSV, long across cohorts, so the per-sex rows sit in the same
+# artifact as the overall fit rather than a second file. The overall rows carry
+# survival AND hazard; the per-sex listing prints no hazard column, so those
+# fields are explicitly NA rather than the rows being silently absent.
+diff_all <- rbind(
+  data.frame(cohort = "overall", res),
+  data.frame(cohort = "male",   res_male,   sas_haz = NA_real_, r_haz = NA_real_, haz_ok = NA),
+  data.frame(cohort = "female", res_female, sas_haz = NA_real_, r_haz = NA_real_, haz_ok = NA))
+write.csv(diff_all, set_path("parity", "hz-diff.csv"), row.names = FALSE)
 ```
 
 ```{r}
