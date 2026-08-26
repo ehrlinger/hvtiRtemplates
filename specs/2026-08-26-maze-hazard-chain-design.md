@@ -350,6 +350,41 @@ This is the one place the design accepts cost for future work: aligning
 preserve_root to the templates is a separate project, and hardcoding Shape A
 here would mean rewriting the gate then.
 
+## 9b. What of the SAS jobs is NOT ported — stated, not implied
+
+A second exemplar is only useful if its gaps are known. These are the parts of
+the four SAS jobs the R chain does **not** reproduce. None is a defect; all are
+undone work, and naming them stops a later reader inferring coverage that does
+not exist.
+
+| SAS feature | where | status |
+|---|---|---|
+| `%hazplot(...)` goodness-of-fit suite | `hz.dead.sas:94` | **no R counterpart.** The R chain checks parity against printed estimates; it runs no GOF diagnostics. |
+| Fit 2 → `est.hzdead_fem` | `hz.dead.sas:110-122` | fitted in R as the `noconserve` sensitivity, but **not** ported as the covariate model it actually is (`early female; late female;`). Nothing reads it. |
+| Confidence bands on the figures | `hp.dead.female.sas` (`_CLLSURV`/`_CLUSURV`, `_CLLHAZ`/`_CLUHAZ`) | **dropped.** The R figures plot point estimates only. SAS also picks specific rows for band display (`if female=0 and number in (264, 252, ...)`), which is not reproduced. |
+| Axis ranges | `hp.dead.female.sas:157-182` | **deliberately different.** SAS uses months 0–24 with survival 80–100% and a linear hazard 0–4 %/month. The R figures run to 36 months and use log-y hazard, because the female fit's trough near month 10 is invisible on a linear 0–4 scale. Units match; scales do not. |
+| Grid resolution | same | 1000 points vs SAS's 1001 (`inc=(max-min)/999.9` then an explicit final point). Immaterial for a smooth curve. |
+
+### An open question this exemplar does not settle
+
+Refitting from SAS's own converged estimates gains **+1.34 log-likelihood** on
+the female fit, under the same `conserve` constraint. Point agreement at SAS's
+θ (1.2e-05) plus an improvable gradient of that size is consistent with two
+readings: SAS stopped early, or the two objectives agree at that θ without
+being the same function everywhere. The first is likelier and is what §5
+asserts — but it is an assertion, not a measurement.
+
+**The measurement is available and was not taken.** `hz.dead.female.lst`
+prints standard errors and the full asymptotic variance-covariance matrix.
+Comparing R's Hessian at SAS's θ against that matrix would distinguish the two
+readings directly. Worth doing before this exemplar is used to argue anything
+about optimiser behaviour.
+
+Note also that the "conservation is nearly non-binding" evidence in §5
+(`Σ Λ` 53.00000 vs 53.00073) is measured **at SAS's θ**, not at the refit
+optimum where the two objectives diverge — so it bounds the constraint's
+influence near SAS's point, not everywhere.
+
 ## 10. Out of scope
 
 - Aligning preserve_root to the taxonomy layout (its own project, sequenced
