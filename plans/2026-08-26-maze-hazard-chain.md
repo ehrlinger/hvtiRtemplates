@@ -93,8 +93,11 @@ parity job checks R against SAS's own printed nomogram.
   `.hzr_logl_multiphase(theta, time, status, phases, covariate_counts, x_list)`.**
   `hazard(..., fit = FALSE)` leaves `$fit$objective` as `NA`
   ([#144](https://github.com/ehrlinger/temporal_hazard/issues/144)), so it
-  cannot serve. ⚠️ It returns the **NEGATIVE** log-likelihood — a minimisation
-  objective — so negate before comparing with SAS's printed LL.
+  cannot serve. ⚠️ It returns the **log-likelihood directly** (negative for
+  these fits, e.g. `-176.9337136`) — do **not** negate it. An earlier draft of
+  this plan said the opposite; negating produces a sign-flip that reads as a
+  ~354-unit parity failure and looks catastrophic. Verified by printing the
+  raw return value.
 - **`predict()` API — verified 2026-08-26, do not guess it:**
 
   ```r
@@ -564,11 +567,13 @@ check_fit(fit_nc, "noconserve")
 # to, with no refitting: this asks "does R agree with SAS", and nothing else.
 # The refits above answer "is SAS at the optimum", a different question.
 #
-# .hzr_logl_multiphase() returns the NEGATIVE log-likelihood, so negate it.
-# hazard(fit = FALSE) cannot be used: it leaves $fit$objective NA (#144).
+# .hzr_logl_multiphase() returns the log-likelihood DIRECTLY -- negative for
+# these fits. Do not negate it: doing so flips the sign and reads as a ~354-unit
+# parity failure. hazard(fit = FALSE) cannot be used here: it leaves
+# $fit$objective NA (temporal_hazard#144).
 E <- asNamespace("TemporalHazard")
 ll_at <- function(theta, phases, keep) {
-  -E$.hzr_logl_multiphase(
+  E$.hzr_logl_multiphase(
      theta = theta, time = resp$time[keep], status = resp$status[keep],
      phases = phases, covariate_counts = c(early = 0L, late = 0L),
      x_list = list(early = NULL, late = NULL))
