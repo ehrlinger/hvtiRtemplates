@@ -1,5 +1,22 @@
 # Changelog
 
+## hvtiRtemplates 1.0.4
+
+### Internal
+
+- [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
+  and
+  [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html)
+  now live in `hvtiRutilities` and are re-exported from here. Callers
+  are unaffected — both are still available unqualified from
+  `hvtiRtemplates`. The table is shared vocabulary rather than template
+  machinery, and `hvtiRutilities` is the lower layer, so the dependency
+  now points that way.
+- Added `tests/testthat/test-reexports.R`, which checks
+  [`getNamespaceExports()`](https://rdrr.io/r/base/ns-reflect.html)
+  directly, so a dropped `@export` on a re-export is caught by the suite
+  instead of passing silently.
+
 ## hvtiRtemplates 1.0.3
 
 ### Breaking changes
@@ -19,7 +36,7 @@
 - [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
   gains an `ordinal` column, and reports `folder` from the directory a
   template sits in rather than by looking its prefix up in
-  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md).
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html).
 
 ### Improvements
 
@@ -47,7 +64,7 @@
   separator and `.` is reserved to the ordinal. This also rejects a
   leading `../` that would otherwise escape the taxonomy folder.
 - New tests cross-check every template’s ordinal against
-  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md)
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   — the major against the folder it sits in, and the minors against row
   order within that folder — and assert that no two templates share a
   prefix, since
@@ -58,7 +75,7 @@
   which takes the first hit silently.
 - `hs` is refiled from `distributions` to `analyses`, immediately after
   `hm`, the job it actually consumes.
-  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md)
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   gains an `estimates` row for the artifact directory that design
   already relies on; the row carries no prefix (`NA_character_`), since
   `estimates` is an artifact kind rather than an analysis type. Its
@@ -122,7 +139,7 @@
 
 - Initial release.
 
-- [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md)
+- [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   encodes the group’s analysis-prefix system as data rather than as a
   README, so the test suite checks it against the templates actually
   present instead of letting it drift.
@@ -134,7 +151,7 @@
   versioned template rather than to a copy. Both return empty until
   stage 3 of the templates-and-provenance design adds the templates.
 
-- [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_non_prefixes.md)
+- [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html)
   records the leading name fields that are utilities rather than
   analysis prefixes, which is what lets the test suite tell “not a
   prefix” apart from “a prefix nobody documented”.

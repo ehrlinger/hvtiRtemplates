@@ -2,8 +2,8 @@
 
 Analysis job templates for the HVTI CORR group, plus the prefix taxonomy
 that names them. Five exports across three source files:
-[`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md),
-[`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_non_prefixes.md),
+[`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
+[`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html),
 [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
 [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
 and
@@ -48,7 +48,7 @@ affordances live in `CLAUDE.md`, which imports this file.
   not carry a habit across.
 - **Lines are 135 characters here, not 80.** `.lintr` raises
   `line_length_linter` because
-  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md)
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   is a data table written as code — 42 column-aligned rows whose
   alignment is the only thing making them legible. Every other default
   linter is on and enforced, `commas_linter` included: it has already
@@ -97,7 +97,7 @@ e.g. `inst/templates/distributions/03.01-ac.qmd`. `.template_fields()`
 parses the name by pattern, not by splitting on `.`: that character is
 both a field separator inside the ordinal and the extension separator,
 so a split-based parser cannot tell the two apart. Prefixes come from
-[`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md).
+[`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html).
 
 `new_job(prefix, endpoint, type, dir)` writes
 `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd` and **refuses to

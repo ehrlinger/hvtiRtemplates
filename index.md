@@ -60,8 +60,8 @@ SAS arrangement could not answer, because `%inc` had nothing to pin.
 
 | Function | Returns |
 |----|----|
-| [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_taxonomy.md) | the analysis prefix table: prefix, name, folder, description |
+| [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html) | the analysis prefix table: prefix, name, folder, description |
 | [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md) | supported templates: name, prefix, ordinal, folder, file |
 | `template_path(prefix)` | path to one supported template |
-| [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRtemplates/reference/hvti_non_prefixes.md) | leading name fields that are utilities, not analysis prefixes |
+| [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html) | leading name fields that are utilities, not analysis prefixes |
 | `new_job(prefix, endpoint, type, dir = ".")` | the scaffolded job’s path, invisibly |

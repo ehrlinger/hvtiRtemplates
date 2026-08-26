@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@
 
 <div id="hvtirtemplates" class="section level1">
 
-<p>Analysis job templates for the HVTI CORR group, plus the prefix taxonomy that names them. Five exports across three source files: <code><a href="reference/hvti_taxonomy.html">hvti_taxonomy()</a></code>, <code><a href="reference/hvti_non_prefixes.html">hvti_non_prefixes()</a></code>, <code><a href="reference/template_list.html">template_list()</a></code>, <code><a href="reference/template_path.html">template_path()</a></code> and <code><a href="reference/new_job.html">new_job()</a></code>.</p>
+<p>Analysis job templates for the HVTI CORR group, plus the prefix taxonomy that names them. Five exports across three source files: <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy()</a></code>, <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html" class="external-link">hvti_non_prefixes()</a></code>, <code><a href="reference/template_list.html">template_list()</a></code>, <code><a href="reference/template_path.html">template_path()</a></code> and <code><a href="reference/new_job.html">new_job()</a></code>.</p>
 <p>The package is small; the <strong>templates are the product</strong>. <code>inst/templates/README.md</code> promises that files there are supported and runnable, and that promise is the reason most of the rules below exist.</p>
 <p>This file is the operational contract and applies in full. It is tool neutral, so Codex and any other agent read the same rules. Claude Code affordances live in <code>CLAUDE.md</code>, which imports this file.</p>
 <div class="section level2">
@@ -76,7 +76,7 @@
 <ul><li>
 <strong><code>_pkgdown.yml</code> deliberately has NO <code>reference:</code> section</strong>, so pkgdown indexes every export automatically and the index cannot drift out of step with <code>NAMESPACE</code>. Do not add one. ⚠️ Its sibling <code>hvtiRutilities</code> does the <strong>opposite</strong>: an explicit index that <em>errors</em> on a missing topic. Two packages, inverted conventions. Do not carry a habit across.</li>
 <li>
-<strong>Lines are 135 characters here, not 80.</strong> <code>.lintr</code> raises <code>line_length_linter</code> because <code><a href="reference/hvti_taxonomy.html">hvti_taxonomy()</a></code> is a data table written as code — 42 column-aligned rows whose alignment is the only thing making them legible. Every other default linter is on and enforced, <code>commas_linter</code> included: it has already caught taxonomy rows whose alignment slipped. ⚠️ <code>hvtiRutilities</code> enforces 80. Check <code>.lintr</code> before assuming a width.</li>
+<strong>Lines are 135 characters here, not 80.</strong> <code>.lintr</code> raises <code>line_length_linter</code> because <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy()</a></code> is a data table written as code — 42 column-aligned rows whose alignment is the only thing making them legible. Every other default linter is on and enforced, <code>commas_linter</code> included: it has already caught taxonomy rows whose alignment slipped. ⚠️ <code>hvtiRutilities</code> enforces 80. Check <code>.lintr</code> before assuming a width.</li>
 <li>
 <strong>A new template needs its own key in <code>.lintr</code>, and the key must be the FILE.</strong> A directory key such as <code>inst/templates</code> excludes every linter on that path <strong>wholesale and silently</strong> — six real indentation and brace lints in <code>ac.qmd</code> vanished from a clean run that way. Only a file key honours a per-linter list. The friction is deliberate: it forces a decision per template instead of blanket-exempting the directory.</li>
 <li>
@@ -96,7 +96,7 @@
 </ul></div>
 <div class="section level2">
 <h2 id="template-naming">Template naming<a class="anchor" aria-label="anchor" href="#template-naming"></a></h2>
-<p>A template file is <code>&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code> and lives in the taxonomy folder it scaffolds into — e.g. <code>inst/templates/distributions/03.01-ac.qmd</code>. <code>.template_fields()</code> parses the name by pattern, not by splitting on <code>.</code>: that character is both a field separator inside the ordinal and the extension separator, so a split-based parser cannot tell the two apart. Prefixes come from <code><a href="reference/hvti_taxonomy.html">hvti_taxonomy()</a></code>.</p>
+<p>A template file is <code>&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code> and lives in the taxonomy folder it scaffolds into — e.g. <code>inst/templates/distributions/03.01-ac.qmd</code>. <code>.template_fields()</code> parses the name by pattern, not by splitting on <code>.</code>: that character is both a field separator inside the ordinal and the extension separator, so a split-based parser cannot tell the two apart. Prefixes come from <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy()</a></code>.</p>
 <p><code>new_job(prefix, endpoint, type, dir)</code> writes <code>&lt;folder&gt;/&lt;endpoint&gt;-&lt;type&gt;-&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code> and <strong>refuses to overwrite an existing job</strong>, because a job file accumulates a study’s edits. <code>endpoint</code> and <code>type</code> name the <code>(endpoint, analysis type)</code> set the job belongs to; both are required and both are restricted to <code>[A-Za-z0-9_]+</code>, because <code>-</code> is the filename’s field separator and <code>.</code> is reserved to the ordinal.</p>
 <p><strong>A template must have exactly one <code>^ENDPOINT\s+&lt;-</code> line and one <code>^TYPE\s+&lt;-</code> line.</strong> <code><a href="reference/new_job.html">new_job()</a></code> substitutes both after copying, and hard-stops if either is missing, duplicated, or moved — a template that fails this check cannot be scaffolded at all.</p>
 </div>
