@@ -45,8 +45,19 @@ parity job checks R against SAS's own printed nomogram.
 - **`theta` is positional, 9 values, order fixed by the package:**
   `early.log_mu, early.log_t_half, early.nu, early.m, late.log_mu,
   late.log_tau, late.gamma, late.alpha, late.eta`.
-- **SAS targets** (from `distributions/hz.dead.lst`): fit 1 LL **−176.934**,
-  53 events conserved. ⚠️ **Fit 2's −176.746 is NOT a `noconserve` target.**
+- **SAS targets.** Three fits, all `conserve`, all `DELTA = 0` and
+  `TAU = GAMMA = ALPHA = 1` fixed (pure Weibull late phase, `G3 = t^eta`):
+
+  | fit | source `.lst` | n / events | branch | LL |
+  |---|---|---|---|---|
+  | overall | `hz.dead.lst` fit 1 | 512 / 53 | Case 2 (`m<0, nu>0`) | **−176.934** |
+  | male (`female=0`) | `hz.dead.female.lst` fit 1 | 297 / 28 | Case 1L (`m=0` fixed) | **−92.9158** |
+  | female (`female=1`) | `hz.dead.female.lst` fit 2 | 215 / 25 | **Case 3** (`m>0, nu<0`) | **−81.7217** |
+
+  297+215 = 512 and 28+25 = 53. ⚠️ `hz.dead.female.sas`'s comment says the male
+  LL is `-92.777`; the `.lst` says `-92.9158`. The comment is a stale
+  starting-value annotation — **take results from the `.lst`, and what was
+  asked from the `.sas`.** ⚠️ **Fit 2's −176.746 is NOT a `noconserve` target.**
   `hz.dead.sas` shows fit 2 turns conservation off *and* adds a `female`
   covariate to both phases (`early female; late female;`), so its LL confounds
   two changes — the same defect that makes preserve_root's fit 2 unusable. Do
@@ -373,8 +384,10 @@ Expected: no output. A job that still contains one has not been finished.
 - Consumes: `R/study.R` (`STATUS`, `TIME`, `status_numeric()`, `SAS_COHORT`);
   `read_built()`, `assert_cohort()` from `hvtiRutilities`.
 - Produces: `estimates/dead-hz/hz.rds` =
-  `list(deterministic = <hazard>, multistart = <hazard>, noconserve = <hazard>)`.
-  Task 4 (`hp`) and Task 5 (parity) both read `$deterministic`. **This shape is
+  `list(deterministic = <hazard>, multistart = <hazard>, noconserve = <hazard>,
+  male = <hazard>, female = <hazard>)`. Task 5 (parity) reads `$deterministic`
+  (the only fit with a nomogram); Task 4 (`hp`) reads `$male` and `$female`,
+  because `hp.dead.female.sas` plots the per-sex fits, not the overall one. **This shape is
   provisional** pending the first `hm` port — see spec §5.
 
 - [ ] **Step 1: Write the job with its target assertions**
@@ -546,9 +559,63 @@ targets$abs_diff <- abs(targets$r - targets$sas)
 knitr::kable(targets, digits = 6)
 ```
 
+### Fits 4 and 5 — per sex
+
+`hz.dead.female.sas` fits each sex separately on a `where female=?` subset,
+both with `conserve`. These are what `hp.dead.female.sas` actually plots, so
+`hp` cannot be built without them. Neither prints a nomogram, so neither can be
+pinned on `S(t)`/`h(t)` — but reproducing SAS's LL at SAS's own converged
+estimates still tests the objective, and the female fit is **Case 3**
+(`m > 0, nu < 0`), a branch with exactly one pinned fit in the whole corpus.
+
+Note the structural differences from the overall fit: male fixes `m` at 0
+(Case 1L), female has `nu` negative and `m` large and positive (Case 3).
+
+```{r}
+#| label: fit-by-sex
+male   <- resp[d$female == 0, , drop = FALSE]
+female <- resp[d$female == 1, , drop = FALSE]
+stopifnot(nrow(male) == 297L, nrow(female) == 215L,
+          nrow(male) + nrow(female) == nrow(resp),
+          sum(male$status) == 28L, sum(female$status) == 25L)
+
+phases_m <- list(
+  early = hzr_phase("cdf", t_half = 0.9996396, nu = 2.46917, m = 0, fixed = "m"),
+  late  = hzr_phase("g3", tau = 1, gamma = 1, alpha = 1, eta = 2.254129,
+                    fixed = c("tau", "gamma", "alpha")))
+theta_m <- c(log(0.1583327), log(0.9996396), 2.46917, 0,
+             log(0.005469243), log(1), 1, 1, 2.254129)
+
+phases_f <- list(
+  early = hzr_phase("cdf", t_half = 0.9996399, nu = -0.427237, m = 7.267309),
+  late  = hzr_phase("g3", tau = 1, gamma = 1, alpha = 1, eta = 2.862257,
+                    fixed = c("tau", "gamma", "alpha")))
+theta_f <- c(log(0.1939737), log(0.9996399), -0.427237, 7.267309,
+             log(0.003603803), log(1), 1, 1, 2.862257)
+
+fit_m <- hazard(Surv(time, status) ~ 1, data = male, dist = "multiphase",
+                phases = phases_m, theta = theta_m, fit = TRUE,
+                control = list(conserve = TRUE, condition = 14,
+                               n_starts = 1, maxit = 2000))
+fit_f <- hazard(Surv(time, status) ~ 1, data = female, dist = "multiphase",
+                phases = phases_f, theta = theta_f, fit = TRUE,
+                control = list(conserve = TRUE, condition = 14,
+                               n_starts = 1, maxit = 2000))
+check_fit(fit_m, "male"); check_fit(fit_f, "female")
+
+by_sex <- data.frame(
+  fit = c("male (female=0)", "female (female=1)"),
+  n   = c(nrow(male), nrow(female)),
+  sas = c(-92.9158, -81.7217),
+  r   = c(fit_m$fit$objective, fit_f$fit$objective))
+by_sex$abs_diff <- abs(by_sex$r - by_sex$sas)
+knitr::kable(by_sex, digits = 6)
+```
+
 ```{r}
 #| label: save
-saveRDS(list(deterministic = fit_det, multistart = fit_ms, noconserve = fit_nc),
+saveRDS(list(deterministic = fit_det, multistart = fit_ms, noconserve = fit_nc,
+             male = fit_m, female = fit_f),
         set_path("estimates", "hz.rds"))
 ```
 ````
@@ -567,7 +634,9 @@ Expected: renders. The cohort table shows 512 / 53 / 459.
 cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
 f <- readRDS("estimates/dead-hz/hz.rds")
 cat("deterministic:", f$deterministic$fit$objective, " SAS -176.934\n")
-cat("noconserve   :", f$noconserve$fit$objective,    " (no SAS reference)\n")'
+cat("noconserve   :", f$noconserve$fit$objective,    " (no SAS reference)\n")
+cat("male         :", f$male$fit$objective,          " SAS  -92.9158\n")
+cat("female       :", f$female$fit$objective,        " SAS  -81.7217\n")'
 ```
 
 Expected: both within SAS's printed precision (±0.0005). **If they are not,
@@ -608,9 +677,9 @@ Expected: the file exists at that exact path.
 - Generated: `<root>/graphs/dead-hz/hp-survival.png`, `<root>/graphs/dead-hz/hp-hazard.png`
 
 **Interfaces:**
-- Consumes: `estimates/dead-hz/ac.rds` (Task 2 — a list with `$overall`, a
-  `hzr_kaplan` **data frame** with columns `time` and `survival`, and
-  `$by_female`), `estimates/dead-hz/hz.rds` (Task 3, `$deterministic`).
+- Consumes: `estimates/dead-hz/ac.rds` (Task 2 — `$overall` and `$by_female`),
+  `estimates/dead-hz/hz.rds` (Task 3 — **`$male` and `$female`**, not
+  `$deterministic`: `hp.dead.female.sas` plots the per-sex fits).
 - Produces: two PNGs under `graphs/dead-hz/`. Produces **no** parity numbers —
   that is Task 5.
 
@@ -625,32 +694,57 @@ chunks as Task 3 (with `ENDPOINT <- "dead"`, `TYPE <- "hz"`), then:
 # hp overlays the actuarial estimate with the parametric fit, so it reads both
 # upstream artifacts by set rather than recomputing either. A job that
 # recomputes its upstream can silently disagree with it.
+#
+# This job is STRATIFIED BY SEX, because hp.dead.female.sas is: it reads
+# est.hzd_male and est.hzd_female, never the overall fit. So take the per-sex
+# fits and the per-sex life tables.
 ac  <- readRDS(set_path("estimates", "ac.rds"))
-km  <- ac$overall   # the unstratified table; ac$by_female holds the by-sex split
-fit <- readRDS(set_path("estimates", "hz.rds"))$deterministic
+hz  <- readRDS(set_path("estimates", "hz.rds"))
+fits <- list(male = hz$male, female = hz$female)
+kms  <- ac$by_female          # names are the `female` levels: "0", "1"
+stopifnot(length(kms) == 2L)
+```
+
+```{r}
+#| label: grid
+# Match the SAS job's evaluation grid rather than inventing one:
+# hp.dead.female.sas uses `max=log(3); min=-8; inc=(max-min)/999.9` -- 1000
+# points LOG-SPACED from exp(-8) to 3 years. A linear grid to the last event
+# time would under-resolve the early phase, which is where the action is.
+tt <- exp(seq(-8, log(3), length.out = 1000))
+
+# SAS scales for display: survival as a PERCENT, hazard as PERCENT PER MONTH
+# (_hazard*100/12), with the x axis in months. Plot in those units so the
+# figures are comparable to the 2006 originals rather than merely correct.
+S_pct  <- function(f) 100 * unname(predict(f, newdata = data.frame(time = tt), type = "survival"))
+H_pcpm <- function(f) 100 / 12 * unname(predict(f, newdata = data.frame(time = tt), type = "hazard"))
+months <- tt * 12
+lev    <- c("0", "1"); lab <- c("male", "female")
 ```
 
 ```{r}
 #| label: fig-survival
-tt <- seq(0.01, 4.17, length.out = 400)
-# type = "survival" directly; there is no "cumhaz" type and no newtime argument.
-# unname() because the returned vector carries a repeated, meaningless name.
-S  <- unname(predict(fit, newdata = data.frame(time = tt), type = "survival"))
 png(set_path("graphs", "hp-survival.png"), width = 1400, height = 1000, res = 150)
-plot(tt, S, type = "l", ylim = c(0, 1), xlab = "Years after operation",
-     ylab = "Survival", main = "Death — actuarial and parametric")
-# km is a data frame, not a list with $table; the column is `survival`.
-lines(km$time, km$survival, type = "s", lty = 2)
-legend("bottomleft", c("parametric (hz)", "actuarial (ac)"), lty = c(1, 2), bty = "n")
+plot(NA, xlim = range(months), ylim = c(0, 100), xlab = "Months after operation",
+     ylab = "Survival (%)", main = "Death — actuarial and parametric, by sex")
+for (i in seq_along(lev)) {
+  lines(months, S_pct(fits[[i]]), col = i, lty = 1)
+  k <- kms[[lev[i]]]                      # hzr_kaplan data frame; column is `survival`
+  lines(k$time * 12, 100 * k$survival, col = i, lty = 2, type = "s")
+}
+legend("bottomleft", c(paste(lab, "(hz)"), paste(lab, "(ac)")),
+       col = c(1, 2, 1, 2), lty = c(1, 1, 2, 2), bty = "n")
 dev.off()
 ```
 
 ```{r}
 #| label: fig-hazard
-h <- unname(predict(fit, newdata = data.frame(time = tt), type = "hazard"))
 png(set_path("graphs", "hp-hazard.png"), width = 1400, height = 1000, res = 150)
-plot(tt, h, type = "l", log = "y", xlab = "Years after operation",
-     ylab = "Hazard (events / patient-year)", main = "Death — hazard function")
+plot(NA, xlim = range(months), ylim = range(vapply(fits, function(f) range(H_pcpm(f)), numeric(2))),
+     log = "y", xlab = "Months after operation", ylab = "Hazard (% per month)",
+     main = "Death — hazard function, by sex")
+for (i in seq_along(lev)) lines(months, H_pcpm(fits[[i]]), col = i)
+legend("topright", lab, col = seq_along(lab), lty = 1, bty = "n")
 dev.off()
 ```
 ````
@@ -673,10 +767,17 @@ Expected: `hp-survival.png` and `hp-hazard.png`, both non-empty.
 
 - [ ] **Step 4: Eyeball the survival curve**
 
-Open `hp-survival.png`. The parametric and actuarial curves should track each
-other closely and both end near S ≈ 0.83 at t = 3 (SAS's nomogram reports
-0.83075 there). A parametric curve that diverges badly from the actuarial one
-means the fit is wrong, not the figure — go back to Task 3.
+Open `hp-survival.png`. Within each sex the parametric and actuarial curves
+should track each other closely. Do **not** check them against the overall
+nomogram's 0.83075 at t = 3 — that figure belongs to the pooled fit, and this
+plot shows the two per-sex fits, which straddle it. A parametric curve that
+diverges badly from the actuarial curve *of the same sex* means the fit is
+wrong, not the figure — go back to Task 3.
+
+For reference, the 2006 originals are `graphs/hp.dead.female.survival.pdf` and
+`graphs/hp.dead.female.hazard.pdf`. ⚠️ Their axis label reads "Years After
+Tricuspid Valve Replacement" — a copy-paste error in the SAS source; this is an
+AFIB ablation study. Do not reproduce that label.
 
 ---
 
