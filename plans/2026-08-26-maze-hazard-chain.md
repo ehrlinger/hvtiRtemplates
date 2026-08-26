@@ -614,8 +614,14 @@ knitr::kable(optimiser, digits = 6)
 
 `hz.dead.female.sas` fits each sex separately on a `where female=?` subset,
 both with `conserve`. These are what `hp.dead.female.sas` actually plots, so
-`hp` cannot be built without them. Neither prints a nomogram, so neither can be
-pinned on `S(t)`/`h(t)` — but reproducing SAS's LL at SAS's own converged
+`hp` cannot be built without them. ⚠️ An earlier draft said neither prints a
+nomogram and neither can be pinned on `S(t)`. **That was wrong**, and wrong the
+same way three earlier premises here were: it checked the *fitting* job's
+listing (`hz.dead.female.lst`, which indeed prints none) and never checked the
+*plotting* job's. `graphs/hp.dead.female.lst` line 570 prints a 7-point table
+with `_SURVIV` and `_MSURVIV` — one column per sex — giving **14 pinnable
+survival points**, all reproduced exactly at 5 dp. Only survival is printed,
+so this adds no hazard coverage — but reproducing SAS's LL at SAS's own converged
 estimates still tests the objective, and the female fit is **Case 3**
 (`m > 0, nu < 0`), a branch with exactly one pinned fit in the whole corpus.
 

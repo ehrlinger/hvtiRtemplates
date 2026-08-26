@@ -49,10 +49,12 @@ The full design, including what was rejected and why, is in
 `hz` (parametric temporal-hazard fit) and `hp` (nomogram and figures) are **not
 templated yet**, even though the two-studies gate is now open. `ac`, `hz` and
 `hp` each exist in two studies (`preserve_root` and `maze/atricure/gender`),
-and `maze/atricure/gender`'s run reproduced `preserve_root`'s SAS results:
-log-likelihoods at SAS's converged estimates matched within 1e-3 (overall
--176.934, male -92.9158, female -81.7217), and the printed nomogram matched
-8/8 points for both `S(t)` and `h(t)`. Template extraction for `hz`/`hp` is
+and `maze/atricure/gender`'s run reproduced **its own study's** SAS results
+(not `preserve_root`'s — no cross-study reproduction is claimed or possible):
+log-likelihoods evaluated at SAS's converged estimates matched within 1e-3
+(overall -176.934, male -92.9158, female -81.7217), and SAS's printed
+nomograms matched at **22/22** points — 8 survival and 8 hazard on the overall
+fit, plus 7 survival on each per-sex fit. Template extraction for `hz`/`hp` is
 the next piece of work, not blocked on a study count anymore.
 
 `hm`, `hs` and `bh` remain pending: each exists in only one study
