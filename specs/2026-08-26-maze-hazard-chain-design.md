@@ -374,23 +374,55 @@ not exist.
 under `Stratify by Female`). The table-to-arm mapping is proven rather than
 assumed, as in the `hz` parity job.
 
-**Seven columns agree exactly, at the printed precision, on every row:**
+**Nine columns agree exactly, at the printed precision, on every row:**
 
 | gated | overall | male | female |
 |---|---|---|---|
-| `time`, `n_risk`, `n_censor`, `n_event`, `survival`, `std_err`, `cumhaz` | 350/350 | 189/189 | 175/175 |
+| `time`, `n_risk`, `n_censor`, `n_event`, `survival`, `std_err`, `cumhaz`, `cl_lower`, `cl_upper` | 450/450 | 243/243 | 225/225 |
 
-So the Kaplan–Meier estimate itself, its standard error, and the cumulative
-hazard are exact. **Five columns are not, and are reported rather than gated:**
+⚠️ **Not nine independent confirmations.** `cumhaz` is `−log(survival)` in the
+macro itself, so it is a deterministic function of a column that already
+matched; `n_risk`/`n_censor`/`n_event` are cohort bookkeeping. The independent
+agreements are **`survival`, `std_err`, and now the confidence limits.**
 
-- **`cl_lower` / `cl_upper` — 0/50**, max abs diff 0.027 / 0.018. This is *not*
-  a transform choice: plain, log, log–log and arcsine transforms of SAS's own
-  `CUM_SURV`/`SE_EXACT` were each tried and none reproduces SAS's limits, the
-  best still off by ~0.02. SAS names the column `SE_EXACT` and its intervals
-  are strongly asymmetric (row 1: −0.00335/+0.00123 around 0.99805), which
-  points at an exact/binomial method. **Naming it needs the `%kaplan` macro
-  source** at `!MACROS/kaplan` on the analysis host — not on the SMB mount, so
-  not resolvable from a workstation.
+### ⭐ SAS's life-table confidence limits are a ~68% band, not 95%
+
+The `cl_lower`/`cl_upper` divergence — initially 0/50, and not reproduced by
+plain, log, log–log or arcsine transforms — is now **fully identified** from
+the `%kaplan` source (`/programs/apps/sas/macro.library/kaplan`, lines ~104-108):
+
+```sas
+SI_EXACT = SQRT(VAR_PROD - 1.)*(1./(1. - CUM_SURV));
+CL_LOWER = CUM_SURV/(CUM_SURV+(1.-CUM_SURV)*EXP( T_ALPHA*SI_EXACT));
+CL_UPPER = CUM_SURV/(CUM_SURV+(1.-CUM_SURV)*EXP(-T_ALPHA*SI_EXACT));
+```
+
+Since `SE_EXACT = S·√(VAR_PROD−1)`, `SI_EXACT` reduces to `SE/(S(1−S))` — the
+standard error on the **logit** scale — so the limits are `expit(logit(S) ∓ T·SI)`.
+It was a transform, just not one of the four tried.
+
+**And `T_ALPHA = 1`.** Solved from SAS's own printed output rather than assumed
+(implied 0.999988, sd 0.0007, the scatter being 5-dp printing alone).
+
+**So these columns are ±1 standard error — an approximately 68% band, not a
+95% confidence interval.** The difference is not subtle:
+
+| row 1 | lower | upper |
+|---|---|---|
+| SAS `CL_LOWER`/`CL_UPPER` | 0.99470 | 0.99928 |
+| `hzr_kaplan()` 95% | 0.98627 | 0.99972 |
+
+Reproducing SAS's convention in R gives **50/50 exact** on both limits, so it is
+now gated. `hzr_kaplan()`'s own 95% limits are retained in the report as a
+non-gated column pair, precisely to keep the contrast visible.
+
+⚠️ **This reaches beyond maze.** preserve_root runs the same `%kaplan`, so its
+life tables carry the same ±1 SE bands. Anyone who has read a `CL_LOWER`/
+`CL_UPPER` pair from these listings as a 95% interval — in a figure, a table or
+a manuscript — has read a band roughly half as wide as they thought.
+
+**Two columns still diverge, and are reported rather than gated:**
+
 - **`hazard` / `density` — 19/50**, max abs diff 5.66 / 4.86. An **interval-width
   convention** difference. SAS divides by the backward gap `t_i − t_{i−1}`: at
   row 5, its 0.24872 with `n_risk` 490 and one event implies a width of
@@ -403,11 +435,11 @@ These are **findings, not failures**. The job gates the seven and surfaces the
 five, because a parity document that quietly compared only the passing columns
 would be the failure this whole effort exists to catch.
 
-⚠️ **Consequence worth carrying:** R's `hzr_kaplan()` and SAS's `%kaplan` are
-interchangeable for survival, its SE and cumulative hazard, and **are not
-interchangeable** for confidence limits or the actuarial hazard/density/life
-columns. Anything downstream that consumes those five from either side is
-comparing different quantities.
+⚠️ **Consequence worth carrying:** `hzr_kaplan()` and `%kaplan` agree on
+survival and its standard error. Their confidence limits are **reconcilable but
+not interchangeable** — same estimator, different coverage (±1 SE logit vs 95%)
+— and the actuarial `hazard`/`density`/`life` columns are **not** comparable at
+all without settling the interval-width convention.
 
 ### RESOLVED 2026-08-26 — SAS stopped short on a shallow ridge, and it does not matter
 
