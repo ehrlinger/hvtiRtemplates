@@ -55,8 +55,10 @@ log-likelihoods at SAS's converged estimates matched within 1e-3 (overall
 8/8 points for both `S(t)` and `h(t)`. Template extraction for `hz`/`hp` is
 the next piece of work, not blocked on a study count anymore.
 
-`bh` and `hm` remain pending: each exists in only one study
-(`preserve_root`), so their two-studies gate is still closed.
+`hm`, `hs` and `bh` remain pending: each exists in only one study
+(`preserve_root` has 1, 3 and 6 jobs respectively; `maze/atricure/gender`
+has none), so their two-studies gate is still closed. `hs` was missing from
+this list before and is added here — its absence read as "templated".
 
 ## Editing a scaffolded job
 
