@@ -160,8 +160,44 @@ phases <- list(
 `DELTA = 0`. With `TAU = GAMMA = ALPHA = 1` the late phase is the pure Weibull
 `G3 = t^eta`. Branch is **Case 2** (`m < 0`, `nu > 0`).
 
-**Targets:** log likelihood **−176.934**, 53 events conserved,
-`Conservation of events: Invoked at each iteration`.
+**Targets — and which question each answers.** Corrected 2026-08-26 after
+running it; an earlier draft promised the deterministic *fit* would reproduce
+SAS's log-likelihood. It does not, and cannot: `hazard(fit = TRUE)`
+re-optimises and moves off SAS's point.
+
+⭐ **The objective agrees; the optimiser improves on SAS.** Evaluated **at
+SAS's own converged estimates, with no refitting**, R reproduces every printed
+log-likelihood:
+
+| fit | R at SAS's θ | SAS | diff |
+|---|---|---|---|
+| overall | −176.933714 | −176.934 | **2.9e-04** |
+| male | −92.915820 | −92.9158 | **2.0e-05** |
+| female | −81.721712 | −81.7217 | **1.2e-05** |
+
+Refit from those same starting values, R instead finds a **higher** likelihood
+than SAS reports (overall −176.842, male −92.545, female −80.385). That is not
+an R defect — it is a statement about where each optimiser stops.
+
+The two must be reported separately, and only the first is a parity number.
+§12 of the parity handoff draws exactly this line: *pinning Λ and h at SAS's
+estimates does not show R's optimiser finds them.* The job reflects this
+split — a blocking `parity-at-sas-estimates` chunk gated at 1e-3, and an
+`optimiser-comparison` chunk that is explicitly not parity.
+
+Two mechanics this cost time to establish: `hazard(fit = FALSE)` leaves
+`$fit$objective` as `NA` ([#144](https://github.com/ehrlinger/temporal_hazard/issues/144)),
+so the objective must be evaluated through the internal
+`.hzr_logl_multiphase()`; and that function returns the **log-likelihood
+directly** (negative for these fits), which must not be negated.
+
+**Conservation:** 53 events, `Conservation of events: Invoked at each
+iteration`. Note the constraint is nearly non-binding on this cohort —
+`Σ Λ(tᵢ)` is 53.00000 with `conserve` on and 53.00073 with it off, so the
+three overall refits report an identical likelihood to six decimals. The job
+prints both sums, because "the control did nothing" and "the control had
+almost nothing to do" are indistinguishable in the likelihood column and mean
+opposite things.
 
 Retained from the exemplar, deliberately:
 
@@ -354,8 +390,10 @@ follow the same pattern rather than inventing one.
 
 1. `_study.yml` exists in maze and `assert_cohort()` passes on the real data.
 2. All three jobs render from a clean session.
-3. The `hz` deterministic fit reproduces SAS's LL of **−176.934** and conserves
-   **53** events.
+3. The `hz` job reproduces SAS's log-likelihoods **at SAS's own estimates** —
+   overall −176.934, male −92.9158, female −81.7217, each within 1e-3 — and
+   conserves **53** events. The *refits* are reported separately and are not
+   expected to match; on this study they find a higher likelihood.
 4. ~~The `noconserve` fit reproduces −176.746.~~ **Struck** — see §6; that
    fit adds a `female` covariate and is not a conservation reference.
 5. `parity/dead-hz-03.02-hz-parity.qmd` reproduces SAS's nomogram at **8/8**
