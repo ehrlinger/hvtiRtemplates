@@ -1,3 +1,16 @@
+# hvtiRtemplates 1.0.4
+
+## Internal
+
+- `hvti_taxonomy()` and `hvti_non_prefixes()` now live in `hvtiRutilities`
+  and are re-exported from here. Callers are unaffected — both are still
+  available unqualified from `hvtiRtemplates`. The table is shared
+  vocabulary rather than template machinery, and `hvtiRutilities` is the
+  lower layer, so the dependency now points that way.
+- Added `tests/testthat/test-reexports.R`, which checks `getNamespaceExports()`
+  directly, so a dropped `@export` on a re-export is caught by the suite
+  instead of passing silently.
+
 # hvtiRtemplates 1.0.3
 
 ## Breaking changes

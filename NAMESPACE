@@ -5,3 +5,7 @@ export(hvti_taxonomy)
 export(new_job)
 export(template_list)
 export(template_path)
+importFrom(hvtiRutilities,
+  hvti_non_prefixes,
+  hvti_taxonomy
+)
