@@ -49,7 +49,7 @@ remaining checkable:
 | cohort | job-filtered, 291 of 378 | **whole dataset, 512** |
 | cohort gate | Shape B | **Shape A** |
 | `noconserve` reference | none usable | **yes** — see §6 |
-| nomogram on the target fit | yes | **yes** |
+| nomogram on the target fit | yes, 23 points | **yes, 8 points** |
 
 ### The §6.1 gate — run 2026-08-26, passes 5/5
 
@@ -210,7 +210,17 @@ makes the eventual cleanup one delete instead of a sweep.
 `hp` therefore produces the nomogram figures; the parity job does the
 comparison.
 
-Fit 1 prints a nomogram (23 points). The parity job overlays R's `S(t)` and
+Fit 1 prints a nomogram of **8 points** — `YEARS` = 0.04107, 0.08214, 0.25,
+0.50, 1.00, 1.50, 2.00, 3.00. (An earlier draft said 23; that was carried over
+from the `dm_nodm` and `hz.reop.biop` oracles without checking maze's own
+listing.) Note the leading two are 15 and 30 days: `15/365.25 = 0.04106776`
+and `30/365.25 = 0.08213552`.
+
+⚠️ **This file prints `YEARS` to 5 dp, where the g3 oracles print 4.** That is
+precisely why print precision must be **inferred per column per file** and
+never assumed — the same reason the sweep infers `SURVIV`/`HAZARD` width.
+
+The parity job overlays R's `S(t)` and
 `h(t)` on SAS's printed values using the same rule as
 `shape-parity-sweep.R`: a point passes if SAS's printed value is reachable
 from **any** `t` within the printed `YEARS` rounding interval, to that
@@ -290,14 +300,25 @@ here would mean rewriting the gate then.
 - A job-type inventory sweep across `/studies` (cheap, filename-only, and the
   thing that would have answered §8's table in one lookup instead of by hand).
 
-## 11. Open, to pin during implementation
+## 11. Both open items — RESOLVED 2026-08-26
 
-- The positional order of `theta` for an `E+L` model. preserve_root documents
-  it for `E+C` (`log(mu_early), log(t_half), nu, m, log(mu_constant)`); the
-  `g3` late phase adds `tau, gamma, alpha, eta` and the order must be read from
-  the package, not guessed.
-- Whether the shipped `03.01-ac` template needs any change for a study with no
-  interval censoring.
+**`theta` order for `E+L`.** Read from the package
+(`.hzr_phase_theta_names()`), not guessed:
+
+```
+early.log_mu, early.log_t_half, early.nu, early.m,
+late.log_mu,  late.log_tau,     late.gamma, late.alpha, late.eta
+```
+
+Nine positional values. Note the asymmetry: the late phase logs `mu` and `tau`
+but carries `gamma`, `alpha`, `eta` on the natural scale.
+
+**The `ac` template needs no change.** It already ships the cohort gate as an
+EDIT block offering **Shape A** (`read_built()` + `assert_cohort()`) and
+**Shape B** (job filter + counts from the SAS reference, explicitly *not*
+`assert_cohort()`, because `_study.yml` describes the study rather than the
+job). §9's constraint is therefore already met in `ac`, and the `hz` job should
+follow the same pattern rather than inventing one.
 
 ## 12. Success criteria
 
@@ -306,7 +327,7 @@ here would mean rewriting the gate then.
 3. The `hz` deterministic fit reproduces SAS's LL of **−176.934** and conserves
    **53** events.
 4. The `noconserve` fit reproduces **−176.746**.
-5. `parity/dead-hz-03.02-hz-parity.qmd` reproduces SAS's nomogram at **23/23**
+5. `parity/dead-hz-03.02-hz-parity.qmd` reproduces SAS's nomogram at **8/8**
    points for both `S(t)` and `h(t)`, under the per-column print-precision rule.
 6. Every scaffolded filename satisfies the §5 ordinal-vs-folder rule.
 7. `template_list()` in `hvtiRtemplates` is unchanged — this design produces
