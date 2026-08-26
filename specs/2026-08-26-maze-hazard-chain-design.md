@@ -368,25 +368,57 @@ not exist.
 | Axis ranges | `hp.dead.female.sas:157-182` | **deliberately different.** SAS uses months 0–24 with survival 80–100% and a linear hazard 0–4 %/month. The R figures run to 36 months and use log-y hazard, because the female fit's trough near month 10 is invisible on a linear 0–4 scale. Units match; scales do not. |
 | Grid resolution | same | 1000 points vs SAS's 1001 (`inc=(max-min)/999.9` then an explicit final point). Immaterial for a smooth curve. |
 
-### An open question this exemplar does not settle
+### RESOLVED 2026-08-26 — SAS stopped short on a shallow ridge, and it does not matter
 
-Refitting from SAS's own converged estimates gains **+1.34 log-likelihood** on
-the female fit, under the same `conserve` constraint. Point agreement at SAS's
-θ (1.2e-05) plus an improvable gradient of that size is consistent with two
-readings: SAS stopped early, or the two objectives agree at that θ without
-being the same function everywhere. The first is likelier and is what §5
-asserts — but it is an assertion, not a measurement.
+The question was whether R's refit gaining likelihood from SAS's own start
+means SAS stopped early, or means the two objectives merely coincide at that
+θ. **It is the former, and the gap is statistically meaningless.**
 
-**The measurement is available and was not taken.** `hz.dead.female.lst`
-prints standard errors and the full asymptotic variance-covariance matrix.
-Comparing R's Hessian at SAS's θ against that matrix would distinguish the two
-readings directly. Worth doing before this exemplar is used to argue anything
-about optimiser behaviour.
+**1. The objectives are the same.** At SAS's θ, five of the six free gradient
+components vanish to ~1e-5; only `early.log_t_half` is materially non-zero
+(−0.133). Five coordinates independently agreeing that SAS is stationary is
+not what two different functions look like.
 
-Note also that the "conservation is nearly non-binding" evidence in §5
-(`Σ Λ` 53.00000 vs 53.00073) is measured **at SAS's θ**, not at the refit
-optimum where the two objectives diverge — so it bounds the constraint's
-influence near SAS's point, not everywhere.
+**2. Conservation is not what holds SAS there.** `Σ Λ(tᵢ) = 53.00000` exactly
+at SAS's θ, so the constraint is satisfied — but decomposing ∇L against ∇g
+shows only **6.4%** of the gradient lies along the constraint direction. SAS's
+point is **not a KKT point**: a likelihood-increasing direction is available
+that conservation does not block.
+
+**3. It is one mode, not two.** Profiling the likelihood along the straight
+line from SAS's θ to R's refit rises **monotonically** with no dip
+(−176.9337 → −176.8420 over nine steps). There is no barrier between them, so
+this is not multimodality — it is one long, gently ascending ridge.
+
+**4. The ridge is nearly flat, and the parameters on it are unidentified.**
+R's standard error for `log_t_half` at SAS's θ is **6.5** — `t_half` is
+essentially undetermined by these data. The whole excursion moves `t_half`
+from 0.9996 to 0.353 and `nu` from 2.55 to 1.54 to buy 0.09 log-likelihood.
+
+**5. So the disagreement is not material.** Every SAS estimate lies well
+inside R's 95% confidence region:
+
+| fit | Δ log-likelihood | 2ΔLL | inside 95% (χ²₆ = 12.59) |
+|---|---|---|---|
+| overall | 0.0920 | 0.18 | ✅ p = 1.00 |
+| male | 0.3705 | 0.74 | ✅ p = 0.99 |
+| female | 1.3364 | 2.67 | ✅ p = 0.85 |
+
+⚠️ **What did NOT settle it, and why.** The obvious test — comparing R's
+Hessian at SAS's θ against the variance-covariance matrix the `.lst` prints —
+**does not discriminate**. SAS's fit runs with `condition=14`, which
+regularises an ill-conditioned Hessian, so its variance path differs from R's
+whether or not the objectives match. R's unconstrained SE for `log_t_half` is
+6.5 against SAS's printed 0.0053, a ratio of 1230 — and projecting out the
+conservation constraint changes it by less than 1e-5, so conservation does not
+explain it either. The conclusion above rests on the gradient, the path
+profile and the confidence region, not on that comparison.
+
+**Consequence for §5.** "The optimiser improves on SAS" is accurate but should
+not be read as a defect on either side. SAS's convergence criterion was met on
+a ridge flat enough that the remaining gain is inside the noise; R's optimiser
+kept walking it. Both land in the same confidence region, and the parity that
+matters — the objective evaluated at SAS's estimates — is exact.
 
 ## 10. Out of scope
 
