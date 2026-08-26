@@ -895,9 +895,30 @@ pass_interval <- function(f, t, target, dp_out, dp_in) {
 
 ```{r}
 #| label: compare
-fit <- readRDS(set_path("estimates", "hz.rds"))$deterministic
-S <- function(t) unname(predict(fit, newdata = data.frame(time = t), type = "survival"))
-H <- function(t) unname(predict(fit, newdata = data.frame(time = t), type = "hazard"))
+# ⚠️ Evaluate at SAS's OWN converged estimates, NOT from the refit in hz.rds.
+# The refit moved to a different (better) optimum, and predicting from it misses
+# SAS's printed nomogram by up to 1.54e-03 -- three hundred times the 5e-06
+# half-ulp gate below, so this job would fail its own check. At SAS's
+# parameters the same eight points agree to 4.30e-06 and reproduce every
+# printed value exactly at 5 dp. This is the same lesson as the log-likelihood
+# parity in Task 3, applied to S(t) and h(t): parity is measured at SAS's
+# estimates; where R's optimiser goes is a separate question.
+#
+# Build Lambda(t) from the shipped shape functions rather than through
+# predict(), because there is no supported way to predict from a `hazard`
+# object at supplied parameters -- fit = FALSE leaves the object unusable
+# (temporal_hazard#144). This is exactly the method section 12 of the parity
+# handoff uses.
+sas <- list(mue = 0.1736496, thalf = 0.9996401, nu = 2.550286, m = -0.337948,
+            mul = 0.004307385, eta = 2.574888)   # hz.dead.lst fit 1, natural scale
+Lam <- function(t) with(sas,
+  mue * hzr_decompos(t, t_half = thalf, nu = nu, m = m)$G +
+  mul * hzr_decompos_g3(t, tau = 1, gamma = 1, alpha = 1, eta = eta)$G3)
+haz <- function(t) with(sas,
+  mue * hzr_decompos(t, t_half = thalf, nu = nu, m = m)$g +
+  mul * hzr_decompos_g3(t, tau = 1, gamma = 1, alpha = 1, eta = eta)$g3)
+S <- function(t) exp(-Lam(t))
+H <- function(t) haz(t)
 
 dpT <- decimals_of(nom$YEARS)
 dpS <- decimals_of(nom$SURVIV)
