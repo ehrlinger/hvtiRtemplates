@@ -49,6 +49,23 @@ parity job checks R against SAS's own printed nomogram.
   53 events conserved; fit 2 (`noconserve`) LL **−176.746**.
 - **Cohort:** N 512, events 53, right censored 459, `IV_DEAD` ∈
   [0.008213721, 4.175308]. This is Shape A — job cohort = study cohort.
+- **`predict()` API — verified 2026-08-26, do not guess it.**
+  `predict(object, newdata = NULL, type = c("hazard", "linear_predictor",
+  "survival", "cumulative_hazard"), ...)`. There is **no `newtime`
+  argument** and **no `"cumhaz"` type**. To evaluate at arbitrary times pass
+  `newdata = data.frame(time = tt)`. With no `newdata` it returns one value
+  per training row. The returned vector carries misleading names
+  (`early.log_mu` repeated) — `unname()` it.
+- **`hzr_kaplan()` API — verified 2026-08-26.**
+  `hzr_kaplan(time, status, conf_level = 0.95, event_only = TRUE)` takes
+  **separate vectors, not a formula**, and returns a **data frame** (class
+  `hzr_kaplan`) directly — there is no `$table`. Columns: `time, n_risk,
+  n_event, n_censor, survival, std_err, cl_lower, cl_upper, cumhaz, hazard,
+  density, life`. The survival column is `survival`, not `surv`.
+- ⚠️ **maze carries a stray `.git` too** — `Daily Commit ... 2014`, no remote,
+  135 uncommitted paths, toplevel at the study root. Same trap as
+  preserve_root: a careless `git checkout` there destroys working files. The
+  no-commits-under-`/studies` rule is not preserve_root-specific.
 
 ---
 
@@ -251,8 +268,11 @@ cc <- cohort_counts(d)
    Replace the template's stratification chunk with the overall table only:
 
 ```r
-km <- hzr_kaplan(survival::Surv(d[[TIME]], status_numeric(d)) ~ 1)
-knitr::kable(head(as.data.frame(km$table), 12), digits = 5)
+# hzr_kaplan() takes separate vectors, NOT a formula, and returns a data frame
+# directly -- there is no $table. Verified against args(hzr_kaplan) rather than
+# assumed from the survival package's interface, which it does not share.
+km <- hzr_kaplan(time = d[[TIME]], status = status_numeric(d))
+knitr::kable(head(km, 12), digits = 5)
 saveRDS(km, set_path("estimates", "ac.rds"))
 ```
 
@@ -498,7 +518,8 @@ model.
 cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
 suppressMessages(library(TemporalHazard))
 f <- readRDS("estimates/dead-hz/hz.rds")$deterministic
-cat("events conserved (R):", sum(predict(f, type = "cumhaz")), " SAS: 53\n")'
+# No newdata -> one value per training row, which is exactly sum_i Lambda(t_i).
+cat("events conserved (R):", sum(predict(f, type = "cumulative_hazard")), " SAS: 53\n")'
 ```
 
 Expected: ≈ 53. If `predict()` errors, that is
@@ -523,7 +544,8 @@ Expected: the file exists at that exact path.
 - Generated: `<root>/graphs/dead-hz/hp-survival.png`, `<root>/graphs/dead-hz/hp-hazard.png`
 
 **Interfaces:**
-- Consumes: `estimates/dead-hz/ac.rds` (Task 2), `estimates/dead-hz/hz.rds`
+- Consumes: `estimates/dead-hz/ac.rds` (Task 2 — a `hzr_kaplan` **data frame**
+  with columns `time` and `survival`), `estimates/dead-hz/hz.rds`
   (Task 3, `$deterministic`).
 - Produces: two PNGs under `graphs/dead-hz/`. Produces **no** parity numbers —
   that is Task 5.
@@ -546,18 +568,21 @@ fit <- readRDS(set_path("estimates", "hz.rds"))$deterministic
 ```{r}
 #| label: fig-survival
 tt <- seq(0.01, 4.17, length.out = 400)
-S  <- exp(-predict(fit, newtime = tt, type = "cumhaz"))
+# type = "survival" directly; there is no "cumhaz" type and no newtime argument.
+# unname() because the returned vector carries a repeated, meaningless name.
+S  <- unname(predict(fit, newdata = data.frame(time = tt), type = "survival"))
 png(set_path("graphs", "hp-survival.png"), width = 1400, height = 1000, res = 150)
 plot(tt, S, type = "l", ylim = c(0, 1), xlab = "Years after operation",
      ylab = "Survival", main = "Death — actuarial and parametric")
-lines(km$table$time, km$table$surv, type = "s", lty = 2)
+# km is a data frame, not a list with $table; the column is `survival`.
+lines(km$time, km$survival, type = "s", lty = 2)
 legend("bottomleft", c("parametric (hz)", "actuarial (ac)"), lty = c(1, 2), bty = "n")
 dev.off()
 ```
 
 ```{r}
 #| label: fig-hazard
-h <- predict(fit, newtime = tt, type = "hazard")
+h <- unname(predict(fit, newdata = data.frame(time = tt), type = "hazard"))
 png(set_path("graphs", "hp-hazard.png"), width = 1400, height = 1000, res = 150)
 plot(tt, h, type = "l", log = "y", xlab = "Years after operation",
      ylab = "Hazard (events / patient-year)", main = "Death — hazard function")
@@ -652,8 +677,8 @@ pass_interval <- function(f, t, target, dp_out, dp_in) {
 ```{r}
 #| label: compare
 fit <- readRDS(set_path("estimates", "hz.rds"))$deterministic
-S <- function(t) exp(-predict(fit, newtime = t, type = "cumhaz"))
-H <- function(t) predict(fit, newtime = t, type = "hazard")
+S <- function(t) unname(predict(fit, newdata = data.frame(time = t), type = "survival"))
+H <- function(t) unname(predict(fit, newdata = data.frame(time = t), type = "hazard"))
 
 dpT <- decimals_of(nom$YEARS)
 dpS <- decimals_of(nom$SURVIV)
@@ -792,6 +817,14 @@ shipped template's own Shape B comment, which is not a step to execute.
 defined once in Task 1 and used with those exact names after. `hz.rds` is
 written as `list(deterministic=, multistart=, noconserve=)` in Task 3 and read
 as `$deterministic` in Tasks 4 and 5.
+
+**Pre-flight corrections (2026-08-26):** the first draft of this plan used
+`predict(fit, newtime = tt, type = "cumhaz")` in Tasks 3–5 and a formula
+interface for `hzr_kaplan()` in Task 2. Both APIs were invented rather than
+checked, and every one of those calls would have failed on the first render.
+The signatures above are now verified against the installed package. It also
+asserted maze had no git context; it has a 2014 stray repo, same as
+preserve_root.
 
 **Known risk carried forward:** Tasks 3–5 call `predict()` on a fitted object.
 [temporal_hazard#144](https://github.com/ehrlinger/temporal_hazard/issues/144)
