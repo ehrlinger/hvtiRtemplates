@@ -47,21 +47,45 @@ parity job checks R against SAS's own printed nomogram.
   late.log_tau, late.gamma, late.alpha, late.eta`.
 - **SAS targets** (from `distributions/hz.dead.lst`): fit 1 LL **−176.934**,
   53 events conserved; fit 2 (`noconserve`) LL **−176.746**.
-- **Cohort:** N 512, events 53, right censored 459, `IV_DEAD` ∈
+- **Cohort:** N 512, events 53, right censored 459, time ∈
   [0.008213721, 4.175308]. This is Shape A — job cohort = study cohort.
-- **`predict()` API — verified 2026-08-26, do not guess it.**
-  `predict(object, newdata = NULL, type = c("hazard", "linear_predictor",
-  "survival", "cumulative_hazard"), ...)`. There is **no `newtime`
-  argument** and **no `"cumhaz"` type**. To evaluate at arbitrary times pass
-  `newdata = data.frame(time = tt)`. With no `newdata` it returns one value
-  per training row. The returned vector carries misleading names
-  (`early.log_mu` repeated) — `unname()` it.
-- **`hzr_kaplan()` API — verified 2026-08-26.**
-  `hzr_kaplan(time, status, conf_level = 0.95, event_only = TRUE)` takes
-  **separate vectors, not a formula**, and returns a **data frame** (class
-  `hzr_kaplan`) directly — there is no `$table`. Columns: `time, n_risk,
-  n_event, n_censor, survival, std_err, cl_lower, cl_upper, cumhaz, hazard,
-  density, life`. The survival column is `survival`, not `surv`.
+- ⚠️ **`read_built()` lower-cases every column name** (hvtiRutilities 1.0.11),
+  regardless of the source file's casing. `built.sas7bdat` stores the time
+  column as `IV_DEAD`; anything from `read_built()` only ever has `iv_dead`.
+  So `TIME <- "iv_dead"`, and `study_init(time = "iv_dead")` — the upper-case
+  form makes `study_init()` fail outright and breaks every `d[[TIME]]` lookup.
+  Verified 2026-08-26.
+- **Gate time-range comparisons at the PRINTED precision, not an arbitrary
+  relative tolerance.** SAS printed `0.008213721`; the stored value is
+  `0.008213721021` (rel 2.55e-09), and the max is `4.175308186` against a
+  printed `4.175308` (rel 4.45e-08). The principled check is that the stored
+  value rounds to the printed one at the printed number of decimals — the same
+  half-ulp rule the parity job uses on the nomogram. A hand-picked `1e-9`
+  fails a value that is in fact exact to every digit SAS printed.
+- **`predict()` API — verified 2026-08-26, do not guess it:**
+
+  ```r
+  predict(object,
+          newdata = NULL,
+          type    = c("hazard", "linear_predictor", "survival", "cumulative_hazard"),
+          ...)
+  ```
+
+  There is **no `newtime` argument** and **no `"cumhaz"` type**. To evaluate at
+  arbitrary times pass `newdata = data.frame(time = tt)`. With no `newdata` it
+  returns one value per training row. The returned vector carries misleading
+  names (`early.log_mu` repeated) — `unname()` it.
+- **`hzr_kaplan()` API — verified 2026-08-26:**
+
+  ```r
+  hzr_kaplan(time, status, conf_level = 0.95, event_only = TRUE)
+  ```
+
+  It takes **separate vectors, not a formula**, and returns a **data frame**
+  (class `hzr_kaplan`) directly — there is no `$table`. Columns: `time`,
+  `n_risk`, `n_event`, `n_censor`, `survival`, `std_err`, `cl_lower`,
+  `cl_upper`, `cumhaz`, `hazard`, `density`, `life`. The survival column is
+  `survival`, not `surv`.
 - ⚠️ **maze carries a stray `.git` too** — `Daily Commit ... 2014`, no remote,
   135 uncommitted paths, toplevel at the study root. Same trap as
   preserve_root: a careless `git checkout` there destroys working files. The
@@ -169,7 +193,7 @@ And `<root>/R/study.R`:
 # Coerce in one place rather than at each call site.
 
 STATUS <- "dead"     # event indicator, 0/1
-TIME   <- "IV_DEAD"  # interval (years) to death
+TIME   <- "iv_dead"  # interval (years) to death; read_built() lower-cases
 
 # SAS's own printed cohort for hz.dead.lst fit 1. Kept here so the hz and
 # parity jobs assert against one copy rather than three.
@@ -196,9 +220,14 @@ let a 394-row dataset filtered to 389 stand in for a 389-row job cohort.
 cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
 suppressMessages(library(hvtiRutilities)); for (f in list.files("R", "[.]R$", full.names=TRUE)) source(f)
 d <- read_built(); iv <- d[[TIME]]
-stopifnot(isTRUE(all.equal(min(iv), SAS_TIME_RANGE[1], tolerance = 1e-9)),
-          isTRUE(all.equal(max(iv), SAS_TIME_RANGE[2], tolerance = 1e-6)))
-cat("time-range gate PASS:", min(iv), "-", max(iv), "\n")'
+# Compare at the precision SAS actually printed. round(x, dp) == printed is the
+# same half-ulp rule the parity job applies to the nomogram; an arbitrary
+# relative tolerance either fabricates a failure (1e-9 rejects a value exact to
+# every printed digit) or hides a real one.
+dp <- function(x) { for (d in 0:12) if (isTRUE(all.equal(x, round(x, d), tolerance = 0))) return(d); 12L }
+stopifnot(identical(round(min(iv), dp(SAS_TIME_RANGE[1])), SAS_TIME_RANGE[1]),
+          identical(round(max(iv), dp(SAS_TIME_RANGE[2])), SAS_TIME_RANGE[2]))
+cat("time-range gate PASS:", format(min(iv), digits = 10), "-", format(max(iv), digits = 10), "\n")'
 ```
 
 Expected: `time-range gate PASS: 0.008213721 - 4.175308`
