@@ -81,6 +81,20 @@ parity job checks R against SAS's own printed nomogram.
   value rounds to the printed one at the printed number of decimals — the same
   half-ulp rule the parity job uses on the nomogram. A hand-picked `1e-9`
   fails a value that is in fact exact to every digit SAS printed.
+- ⚠️ **The parity number is the objective evaluated AT SAS's estimates, NOT a
+  refit.** `hazard(..., fit = TRUE)` re-optimises and moves off SAS's point; on
+  this study it lands on a *better* optimum (overall −176.842 against SAS's
+  −176.934). Evaluated without refitting, R reproduces SAS to **2.9e-4
+  (overall), 2.0e-5 (male), 1.2e-5 (female)** — the objective is right and the
+  optimiser simply finds a different maximum. §12 of the parity handoff draws
+  exactly this line: *pinning at SAS's estimates does not show R's optimiser
+  finds them.* Report the two separately; never quote a refit as parity.
+- **Evaluate the objective with the internal
+  `.hzr_logl_multiphase(theta, time, status, phases, covariate_counts, x_list)`.**
+  `hazard(..., fit = FALSE)` leaves `$fit$objective` as `NA`
+  ([#144](https://github.com/ehrlinger/temporal_hazard/issues/144)), so it
+  cannot serve. ⚠️ It returns the **NEGATIVE** log-likelihood — a minimisation
+  objective — so negate before comparing with SAS's printed LL.
 - **`predict()` API — verified 2026-08-26, do not guess it:**
 
   ```r
@@ -545,18 +559,50 @@ check_fit(fit_nc, "noconserve")
 ```
 
 ```{r}
-#| label: targets
-# SAS's printed log likelihoods, to its own 6-significant-figure precision.
-# Only ONE SAS target exists for this model. Fit 2 of the listing is a
-# different model (adds `female` to both phases), so it is deliberately absent
-# from this table -- putting it here would invite the comparison it cannot bear.
-targets <- data.frame(
-  fit = "deterministic (conserve)",
-  sas = -176.934,
-  r   = fit_det$fit$objective
-)
-targets$abs_diff <- abs(targets$r - targets$sas)
-knitr::kable(targets, digits = 6)
+#| label: parity-at-sas-estimates
+# THE PARITY NUMBERS. Evaluate the objective at the parameters SAS converged
+# to, with no refitting: this asks "does R agree with SAS", and nothing else.
+# The refits above answer "is SAS at the optimum", a different question.
+#
+# .hzr_logl_multiphase() returns the NEGATIVE log-likelihood, so negate it.
+# hazard(fit = FALSE) cannot be used: it leaves $fit$objective NA (#144).
+E <- asNamespace("TemporalHazard")
+ll_at <- function(theta, phases, keep) {
+  -E$.hzr_logl_multiphase(
+     theta = theta, time = resp$time[keep], status = resp$status[keep],
+     phases = phases, covariate_counts = c(early = 0L, late = 0L),
+     x_list = list(early = NULL, late = NULL))
+}
+parity <- data.frame(
+  fit = c("overall", "male (female=0)", "female (female=1)"),
+  sas = c(-176.934, -92.9158, -81.7217),
+  r   = c(ll_at(theta0,  phases,   rep(TRUE, nrow(resp))),
+          ll_at(theta_m, phases_m, d$female == 0),
+          ll_at(theta_f, phases_f, d$female == 1)))
+parity$abs_diff <- abs(parity$r - parity$sas)
+knitr::kable(parity, digits = 7)
+
+# Blocking. SAS prints 6 significant figures, so ~1e-3 absolute or better is
+# expected; looser means the OBJECTIVE disagrees, not merely the optimiser --
+# which is the failure this job exists to detect.
+if (any(parity$abs_diff > 1e-3)) {
+  stop("PARITY FAILED at SAS's own estimates: max abs diff ",
+       signif(max(parity$abs_diff), 3), call. = FALSE)
+}
+```
+
+The refits are reported apart from parity, because a refit that lands
+elsewhere is not evidence of disagreement — here R finds a *higher* likelihood
+than SAS reports.
+
+```{r}
+#| label: optimiser-comparison
+optimiser <- data.frame(
+  fit     = c("overall", "male", "female"),
+  sas_ll  = c(-176.934, -92.9158, -81.7217),
+  r_refit = c(fit_det$fit$objective, fit_m$fit$objective, fit_f$fit$objective))
+optimiser$r_better_by <- optimiser$r_refit - optimiser$sas_ll
+knitr::kable(optimiser, digits = 6)
 ```
 
 ### Fits 4 and 5 — per sex
@@ -639,8 +685,10 @@ cat("male         :", f$male$fit$objective,          " SAS  -92.9158\n")
 cat("female       :", f$female$fit$objective,        " SAS  -81.7217\n")'
 ```
 
-Expected: both within SAS's printed precision (±0.0005). **If they are not,
-stop and diagnose — do not tune.** The two most likely causes, in order: the
+Expected: the **refits will NOT match** SAS's printed values, and that is not a
+failure — R finds a better optimum. The number that must match is in the
+`parity-at-sas-estimates` chunk. **If THAT one misses, stop and diagnose — do
+not tune.** The two most likely causes, in order: the
 `theta0` order does not match `.hzr_phase_theta_names()`, or the late phase's
 fixed parameters were not actually held fixed. Check both before suspecting the
 model.
