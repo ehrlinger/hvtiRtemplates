@@ -58,8 +58,8 @@ fit, plus 7 survival on each per-sex fit. Template extraction for `hz`/`hp` is
 the next piece of work, not blocked on a study count anymore.
 
 `hm`, `hs` and `bh` remain pending: each exists in only one study
-(`preserve_root` has 1, 3 and 6 jobs respectively; `maze/atricure/gender`
-has none), so their two-studies gate is still closed. `hs` was missing from
+(`preserve_root` has 1, 1 and 2 jobs respectively — 3, 3 and 6 files, since
+each job carries `.sas`/`.lst`/`.log`; `maze/atricure/gender` has none), so their two-studies gate is still closed. `hs` was missing from
 this list before and is added here — its absence read as "templated".
 
 ## Editing a scaffolded job

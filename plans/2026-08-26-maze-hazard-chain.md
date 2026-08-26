@@ -402,9 +402,11 @@ Expected: no output. A job that still contains one has not been finished.
   `read_built()`, `assert_cohort()` from `hvtiRutilities`.
 - Produces: `estimates/dead-hz/hz.rds` =
   `list(deterministic = <hazard>, multistart = <hazard>, noconserve = <hazard>,
-  male = <hazard>, female = <hazard>)`. Task 5 (parity) reads `$deterministic`
-  (the only fit with a nomogram); Task 4 (`hp`) reads `$male` and `$female`,
-  because `hp.dead.female.sas` plots the per-sex fits, not the overall one. **This shape is
+  male = <hazard>, female = <hazard>)`. Task 4 (`hp`) reads `$male` and `$female`,
+  because `hp.dead.female.sas` plots the per-sex fits, not the overall one.
+  Task 5 (parity) reads **none** of this file — it evaluates at SAS's own
+  printed estimates, so it depends on the `.lst` listings and not on any R
+  artifact. **This shape is
   provisional** pending the first `hm` port — see spec §5.
 
 - [ ] **Step 1: Write the job with its target assertions**
@@ -885,76 +887,89 @@ decimals_of <- function(v) {
   for (d in 0:12) if (isTRUE(all.equal(v, round(v, d), tolerance = 0))) return(d)
   12L
 }
-halfulp <- function(x, dp) 0.5 * 10^(-dp)
-
-# SAS prints YEARS rounded, so the true evaluation time is an interval, not a
-# point. A value passes if SAS's printed number is reachable from ANY t in that
-# interval. Ignoring this fails the 15- and 30-day rows, whose printed 0.04107
-# and 0.08214 are really 15/365.25 and 30/365.25.
-pass_interval <- function(f, t, target, dp_out, dp_in) {
-  ts <- seq(t - halfulp(t, dp_in), t + halfulp(t, dp_in), length.out = 41)
-  v  <- f(ts)
-  target >= min(v) - halfulp(target, dp_out) &&
-  target <= max(v) + halfulp(target, dp_out)
-}
 ```
+
+### Evaluate at the times the `.sas` states, not the times the `.lst` printed
+
+`hz.dead.sas` line 99 gives the evaluation grid exactly:
+
+```sas
+do years=15/365.2425, 30/365.2425, 3/12, 6/12, 1, 1.5, 2, 3;
+```
+
+The `.lst` prints those rounded to 5 dp. Evaluating at the **rounded** values
+needs a tolerance rule to pass — row 2's hazard comes out 0.24834 against a
+printed 0.24835. Evaluating at the **exact** values needs none: all eight
+points match to the last printed digit, for survival *and* hazard.
+
+This is the branch's own rule applied once more — the `.lst` says what SAS
+printed, the `.sas` says what SAS was asked. Reading the source removes the
+slack rather than accommodating it.
 
 ```{r}
 #| label: compare
-# ⚠️ Evaluate at SAS's OWN converged estimates, NOT from the refit in hz.rds.
-# The refit moved to a different (better) optimum, and predicting from it misses
-# SAS's printed nomogram by up to 1.54e-03 -- three hundred times the 5e-06
-# half-ulp gate below, so this job would fail its own check. At SAS's
-# parameters the same eight points agree to 4.30e-06 and reproduce every
-# printed value exactly at 5 dp. This is the same lesson as the log-likelihood
-# parity in Task 3, applied to S(t) and h(t): parity is measured at SAS's
-# estimates; where R's optimiser goes is a separate question.
-#
-# Build Lambda(t) from the shipped shape functions rather than through
-# predict(), because there is no supported way to predict from a `hazard`
-# object at supplied parameters -- fit = FALSE leaves the object unusable
-# (temporal_hazard#144). This is exactly the method section 12 of the parity
-# handoff uses.
+t_exact <- c(15/365.2425, 30/365.2425, 3/12, 6/12, 1, 1.5, 2, 3)
+# Fail loudly if a future listing's times differ, rather than silently
+# comparing R at one set of times against SAS at another.
+stopifnot(identical(round(t_exact, decimals_of(nom$YEARS)), nom$YEARS))
+
 sas <- list(mue = 0.1736496, thalf = 0.9996401, nu = 2.550286, m = -0.337948,
-            mul = 0.004307385, eta = 2.574888)   # hz.dead.lst fit 1, natural scale
-Lam <- function(t) with(sas,
-  mue * hzr_decompos(t, t_half = thalf, nu = nu, m = m)$G +
-  mul * hzr_decompos_g3(t, tau = 1, gamma = 1, alpha = 1, eta = eta)$G3)
-haz <- function(t) with(sas,
-  mue * hzr_decompos(t, t_half = thalf, nu = nu, m = m)$g +
-  mul * hzr_decompos_g3(t, tau = 1, gamma = 1, alpha = 1, eta = eta)$g3)
-S <- function(t) exp(-Lam(t))
-H <- function(t) haz(t)
+            mul = 0.004307385, eta = 2.574888)   # hz.dead.lst fit 1
+Lam <- function(p, t) with(p, mue * hzr_decompos(t, t_half = thalf, nu = nu, m = m)$G +
+                              mul * hzr_decompos_g3(t, tau = 1, gamma = 1, alpha = 1, eta = eta)$G3)
+haz <- function(p, t) with(p, mue * hzr_decompos(t, t_half = thalf, nu = nu, m = m)$g +
+                              mul * hzr_decompos_g3(t, tau = 1, gamma = 1, alpha = 1, eta = eta)$g3)
 
-dpT <- decimals_of(nom$YEARS)
-dpS <- decimals_of(nom$SURVIV)
-dpH <- decimals_of(nom$HAZARD)
+dpS <- decimals_of(nom$SURVIV); dpH <- decimals_of(nom$HAZARD)
+ok_S <- round(exp(-Lam(sas, t_exact)), dpS) == nom$SURVIV
+ok_H <- round(haz(sas, t_exact),        dpH) == nom$HAZARD
+```
 
-res <- data.frame(
-  YEARS    = nom$YEARS,
-  sas_surv = nom$SURVIV,
-  r_surv   = S(nom$YEARS),
-  surv_ok  = vapply(seq_len(nrow(nom)), function(i)
-               pass_interval(S, nom$YEARS[i], nom$SURVIV[i], dpS, dpT), logical(1)),
-  sas_haz  = nom$HAZARD,
-  r_haz    = H(nom$YEARS),
-  haz_ok   = vapply(seq_len(nrow(nom)), function(i)
-               pass_interval(H, nom$YEARS[i], nom$HAZARD[i], dpH, dpT), logical(1))
-)
-knitr::kable(res, digits = 6)
-write.csv(res, set_path("parity", "hz-diff.csv"), row.names = FALSE)
+### The per-sex fits are pinnable too — from the `hp` listing
+
+`hz.dead.female.lst` prints no nomogram, but `graphs/hp.dead.female.lst`
+line 570 does, at the times `hp.dead.female.sas` line 78 states
+(`30/365.2425, 0.25, 0.5, 1, 1.5, 2, 3`). It carries **two** survival columns:
+`_MSURVIV` (male) and `_SURVIV` (female). Only survival — no hazard column —
+so this adds no `h(t)` coverage for the per-sex fits.
+
+Worth the trouble because the female fit is **Case 3** (`m>0, nu<0`) and the
+male is **Case 1L** (`m=0` fixed) — branches the corpus barely covers.
+
+```{r}
+#| label: per-sex
+male   <- list(mue = 0.1583327, thalf = 0.9996396, nu = 2.46917,   m = 0,
+               mul = 0.005469243, eta = 2.254129)
+female <- list(mue = 0.1939737, thalf = 0.9996399, nu = -0.427237, m = 7.267309,
+               mul = 0.003603803, eta = 2.862257)
+t_hp <- c(30/365.2425, 0.25, 0.5, 1, 1.5, 2, 3)
+
+# PROVE the column-to-arm mapping rather than trusting the column name. Guessing
+# an arm from a suffix is how two cohorts get silently swapped -- the same trap
+# the resilia matched-pair arms set, where only the printed time maxima could
+# tell them apart.
+hitS <- function(p, tgt) sum(round(exp(-Lam(p, t_hp)), decimals_of(tgt)) == tgt)
+if (!(hitS(male, hp$MSURVIV) == length(t_hp) && hitS(male, hp$SURVIV) == 0L &&
+      hitS(female, hp$SURVIV) == length(t_hp) && hitS(female, hp$MSURVIV) == 0L)) {
+  stop("per-sex column mapping is not discriminating: _MSURVIV should match ",
+       "male exactly and female not at all, and vice versa.", call. = FALSE)
+}
+ok_M <- round(exp(-Lam(male,   t_hp)), decimals_of(hp$MSURVIV)) == hp$MSURVIV
+ok_F <- round(exp(-Lam(female, t_hp)), decimals_of(hp$SURVIV))  == hp$SURVIV
 ```
 
 ```{r}
 #| label: verdict
 # Blocking. A parity document that renders green while failing its own check is
-# worse than no document: the rendered page is the evidence.
-if (!all(res$surv_ok) || !all(res$haz_ok)) {
-  stop("PARITY FAILED: survival ", sum(res$surv_ok), "/", nrow(res),
-       ", hazard ", sum(res$haz_ok), "/", nrow(res), call. = FALSE)
-}
-cat(sprintf("PARITY PASS: survival %d/%d, hazard %d/%d\n",
-            sum(res$surv_ok), nrow(res), sum(res$haz_ok), nrow(res)))
+# worse than no document: the rendered page is the evidence. 30 checks across
+# 22 rows -- overall survival and hazard (8 each), per-sex survival (7 each).
+bad <- c(overall_surv = sum(!ok_S), overall_haz = sum(!ok_H),
+         male_surv = sum(!ok_M), female_surv = sum(!ok_F))
+if (any(bad > 0)) stop("PARITY FAILED: ", paste(names(bad), bad, sep = "=", collapse = ", "),
+                       call. = FALSE)
+cat(sprintf("PARITY PASS: overall survival %d/%d, overall hazard %d/%d, male survival %d/%d, female survival %d/%d\n",
+            sum(ok_S), length(ok_S), sum(ok_H), length(ok_H),
+            sum(ok_M), length(ok_M), sum(ok_F), length(ok_F)))
 ```
 ````
 
@@ -964,7 +979,7 @@ cat(sprintf("PARITY PASS: survival %d/%d, hazard %d/%d\n",
 cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && quarto render parity/dead-hz-03.02-hz-parity.qmd
 ```
 
-Expected: `PARITY PASS: survival 8/8, hazard 8/8`
+Expected: `PARITY PASS: overall survival 8/8, overall hazard 8/8, male survival 7/7, female survival 7/7`
 
 - [ ] **Step 3: If it fails, check the two rounding traps before the model**
 

@@ -212,7 +212,8 @@ Retained from the exemplar, deliberately:
 ### What `hz` writes
 
 ```
-estimates/dead-hz/hz.rds   # list(deterministic =, multistart =, noconserve =)
+estimates/dead-hz/hz.rds   # list(deterministic =, multistart =, noconserve =,
+                           #      male =, female =)
 ```
 
 ⚠️ **This shape is provisional.** `hm` ("risk factor analysis; builds on the
@@ -361,6 +362,8 @@ not exist.
 |---|---|---|
 | `%hazplot(...)` goodness-of-fit suite | `hz.dead.sas:94` | **no R counterpart.** The R chain checks parity against printed estimates; it runs no GOF diagnostics. |
 | Fit 2 → `est.hzdead_fem` | `hz.dead.sas:110-122` | fitted in R as the `noconserve` sensitivity, but **not** ported as the covariate model it actually is (`early female; late female;`). Nothing reads it. |
+| Nomogram CI columns | `hz.dead.lst` (`_CLLSURV`/`_CLUSURV`, `_CLLHAZ`/`_CLUHAZ`) | **parsed then discarded.** 32 more printed values the parity job reads and does not check. Pinning them would test the variance path, not just Λ and h. |
+| Parity for the `ac` job | `ac.dead.lst` | **none.** The life tables are computed and rendered but never compared against SAS's printed ones. `hz` and `hp` are pinned; `ac` is not. |
 | Confidence bands on the figures | `hp.dead.female.sas` (`_CLLSURV`/`_CLUSURV`, `_CLLHAZ`/`_CLUHAZ`) | **dropped.** The R figures plot point estimates only. SAS also picks specific rows for band display (`if female=0 and number in (264, 252, ...)`), which is not reproduced. |
 | Axis ranges | `hp.dead.female.sas:157-182` | **deliberately different.** SAS uses months 0–24 with survival 80–100% and a linear hazard 0–4 %/month. The R figures run to 36 months and use log-y hazard, because the female fit's trough near month 10 is invisible on a linear 0–4 scale. Units match; scales do not. |
 | Grid resolution | same | 1000 points vs SAS's 1001 (`inc=(max-min)/999.9` then an explicit final point). Immaterial for a smooth curve. |
@@ -431,8 +434,10 @@ follow the same pattern rather than inventing one.
    expected to match; on this study they find a higher likelihood.
 4. ~~The `noconserve` fit reproduces −176.746.~~ **Struck** — see §6; that
    fit adds a `female` covariate and is not a conservation reference.
-5. `parity/dead-hz-03.02-hz-parity.qmd` reproduces SAS's nomogram at **8/8**
-   points for both `S(t)` and `h(t)`, under the per-column print-precision rule.
+5. `parity/dead-hz-03.02-hz-parity.qmd` reproduces SAS's nomograms at **22/22**
+   rows / 30 checks, all exact at the printed precision and needing no
+   tolerance rule: overall `S(t)` 8/8 and `h(t)` 8/8 from `hz.dead.lst`, plus
+   male 7/7 and female 7/7 `S(t)` from `hp.dead.female.lst`.
 6. Every scaffolded filename satisfies the §5 ordinal-vs-folder rule.
 7. `template_list()` in `hvtiRtemplates` is unchanged — this design produces
    *jobs*, not templates. Extraction is the next project, and it now has two
