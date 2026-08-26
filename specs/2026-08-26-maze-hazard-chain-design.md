@@ -48,7 +48,7 @@ remaining checkable:
 | interval censoring | yes — dominates the job | **none** |
 | cohort | job-filtered, 291 of 378 | **whole dataset, 512** |
 | cohort gate | Shape B | **Shape A** |
-| `noconserve` reference | none usable | **yes** — see §6 |
+| `noconserve` reference | none usable | ⚠️ **none usable either** — see §6 |
 | nomogram on the target fit | yes, 23 points | **yes, 8 points** |
 
 ### The §6.1 gate — run 2026-08-26, passes 5/5
@@ -186,16 +186,46 @@ preserve_root's job already saves; it is recorded as a contract so the first
 `hm` port either confirms it or changes it deliberately, rather than
 inheriting an accident. See §8.
 
-## 6. A `noconserve` reference preserve_root cannot provide
+## 6. ⚠️ RETRACTED — maze does NOT provide a clean `noconserve` reference
 
-`hz.dead.lst` carries **two fits**, and fit 2 is
-`Conservation of events: Not invoked` — the same model with conservation off,
-LL **−176.746**.
+**This section claimed the opposite and was wrong. Retracted 2026-08-26.**
 
-preserve_root has no such reference. Its second fit adds a `G_ROOT` covariate
-to both phases and fits six parameters, so its LL confounds two changes at
-once; the job's own text says it "cannot serve as a conservation target". maze
-closes that gap as a side effect of being chosen for other reasons.
+It read: *"`hz.dead.lst` carries two fits, and fit 2 is `Conservation of events:
+Not invoked` — the same model with conservation off, LL −176.746 ... maze
+closes that gap."*
+
+Reading `hz.dead.sas` — which I had not done — shows fit 2 is **not** the same
+model:
+
+```sas
+  proc hazard data=built noconserve p outhaz=outest steepest quasi mi=200
+       condition=14;
+       ...
+       early female;
+       late  female;
+```
+
+It turns conservation off **and adds a `female` covariate to both phases**. Its
+LL therefore confounds two changes at once — which is *exactly* the defect that
+makes preserve_root's fit 2 (which adds `G_ROOT` to both phases) unusable as a
+conservation target. maze has the identical problem, so **−176.746 is not a
+`noconserve` target and must not be quoted as one.**
+
+The claim came from reading the `.lst`'s `Conservation of events: Not invoked`
+line and inferring the rest. §6.3 of the parity handoff already warns against
+exactly this move in a narrower form — *do not trust the `libname`/`set`
+statement to name the dataset* — and the general rule it implies is: **the
+`.lst` tells you what SAS printed, the `.sas` tells you what SAS was asked.
+Read both before characterising a fit.**
+
+**Consequence for the plan:** Task 3 keeps its deterministic and multi-start
+fits and drops the `noconserve` comparison. A genuine `noconserve` reference
+remains unfound in any study examined so far.
+
+**What maze still provides**, unaffected by this retraction: the majority `E+L`
+phase shape, no interval censoring, a Shape A cohort, a clean §6.1 gate, and a
+printed nomogram on the target fit. It remains the right second exemplar; it
+simply does not close the conservation gap as well.
 
 ## 7. Verification — a `parity/` job, not folded into `hp`
 
@@ -326,7 +356,8 @@ follow the same pattern rather than inventing one.
 2. All three jobs render from a clean session.
 3. The `hz` deterministic fit reproduces SAS's LL of **−176.934** and conserves
    **53** events.
-4. The `noconserve` fit reproduces **−176.746**.
+4. ~~The `noconserve` fit reproduces −176.746.~~ **Struck** — see §6; that
+   fit adds a `female` covariate and is not a conservation reference.
 5. `parity/dead-hz-03.02-hz-parity.qmd` reproduces SAS's nomogram at **8/8**
    points for both `S(t)` and `h(t)`, under the per-column print-precision rule.
 6. Every scaffolded filename satisfies the §5 ordinal-vs-folder rule.

@@ -46,7 +46,15 @@ parity job checks R against SAS's own printed nomogram.
   `early.log_mu, early.log_t_half, early.nu, early.m, late.log_mu,
   late.log_tau, late.gamma, late.alpha, late.eta`.
 - **SAS targets** (from `distributions/hz.dead.lst`): fit 1 LL **−176.934**,
-  53 events conserved; fit 2 (`noconserve`) LL **−176.746**.
+  53 events conserved. ⚠️ **Fit 2's −176.746 is NOT a `noconserve` target.**
+  `hz.dead.sas` shows fit 2 turns conservation off *and* adds a `female`
+  covariate to both phases (`early female; late female;`), so its LL confounds
+  two changes — the same defect that makes preserve_root's fit 2 unusable. Do
+  not quote it.
+- ⚠️ **Read the `.sas`, not only the `.lst`, before characterising any job.**
+  The `.lst` says what SAS printed; the `.sas` says what SAS was asked. Two of
+  this plan's original premises were wrong because they were inferred from
+  printed output alone.
 - **Cohort:** N 512, events 53, right censored 459, time ∈
   [0.008213721, 4.175308]. This is Shape A — job cohort = study cohort.
 - ⚠️ **`read_built()` lower-cases every column name** (hvtiRutilities 1.0.11),
@@ -252,8 +260,11 @@ The deliverable is the scaffold plus two passing gates.
 **Interfaces:**
 - Consumes: `R/study.R`'s `STATUS`, `TIME`, `status_numeric()`; `read_built()`,
   `assert_cohort()`, `cohort_counts()` from `hvtiRutilities`.
-- Produces: `estimates/dead-hz/ac.rds` holding the `hzr_kaplan()` fit, read by
-  Task 4's `hp` job via `set_path("estimates", "ac.rds")`.
+- Produces: `estimates/dead-hz/ac.rds` =
+  `list(overall = <hzr_kaplan data frame>, by_female = <list of hzr_kaplan data
+  frames, one per sex, each carrying a `female` column>)`, read by Task 4's
+  `hp` job via `set_path("estimates", "ac.rds")`. **Both** tables are required:
+  `ac.dead.sas` computes an unstratified table and a `stratify=female` one.
 
 - [ ] **Step 1: Scaffold the job**
 
@@ -293,16 +304,35 @@ assert_cohort(d)
 cc <- cohort_counts(d)
 ```
 
-3. **Derived strata** — maze's `ac.dead.sas` computes one overall life table.
-   Replace the template's stratification chunk with the overall table only:
+3. **Life tables — TWO of them.** ⚠️ An earlier version of this step said
+   `ac.dead.sas` computes one overall table with no stratification. **That was
+   wrong**, asserted without opening the file. `ac.dead.sas` issues two
+   `%kaplan` calls: an unstratified one (line 78) and
+   `%kaplan(..., stratify=female, ...)` (line 84, titled *"Stratify by
+   Female"*). In a study called *Gender differences in post-op outcomes*, the
+   by-sex table is arguably the point of the job, not an extra.
 
 ```r
 # hzr_kaplan() takes separate vectors, NOT a formula, and returns a data frame
 # directly -- there is no $table. Verified against args(hzr_kaplan) rather than
 # assumed from the survival package's interface, which it does not share.
+
+# Overall -- ac.dead.sas line 78.
 km <- hzr_kaplan(time = d[[TIME]], status = status_numeric(d))
 knitr::kable(head(km, 12), digits = 5)
-saveRDS(km, set_path("estimates", "ac.rds"))
+
+# Stratified by sex -- ac.dead.sas line 84, `stratify=female`. hzr_kaplan()
+# has no stratify argument, so fit once per level and keep the level on each
+# frame. Gate on the split adding back to the whole: a stratification that
+# silently drops rows is the failure this whole chain guards against.
+stopifnot("female" %in% names(d), !anyNA(d$female))
+km_by <- lapply(split(d, d$female), function(g)
+  cbind(female = g$female[1L],
+        hzr_kaplan(time = g[[TIME]], status = status_numeric(g))))
+stopifnot(sum(vapply(split(d, d$female), nrow, integer(1))) == nrow(d))
+knitr::kable(do.call(rbind, lapply(km_by, head, 4)), digits = 5)
+
+saveRDS(list(overall = km, by_female = km_by), set_path("estimates", "ac.rds"))
 ```
 
 - [ ] **Step 4: Render and verify**
@@ -484,11 +514,13 @@ fit_ms <- hazard(Surv(time, status) ~ 1, data = resp, dist = "multiphase",
 check_fit(fit_ms, "multistart")
 ```
 
-### Fit 3 — `noconserve`, against a real SAS reference
+### Fit 3 — `noconserve` sensitivity
 
-Unlike preserve_root, this study has a genuine `noconserve` counterpart:
-`hz.dead.lst` fit 2 is the same model with `Conservation of events: Not
-invoked`, so its LL is comparable rather than confounded by a covariate change.
+⚠️ **This has NO SAS reference.** `hz.dead.lst`'s fit 2 is `noconserve` *and*
+adds a `female` covariate to both phases (`hz.dead.sas`: `early female; late
+female;`), so its LL of −176.746 confounds two changes and cannot serve as a
+conservation target — the identical defect that disqualifies preserve_root's
+fit 2. Reported as a sensitivity only; never as a parity number.
 
 ```{r}
 #| label: fit-noconserve
@@ -502,10 +534,13 @@ check_fit(fit_nc, "noconserve")
 ```{r}
 #| label: targets
 # SAS's printed log likelihoods, to its own 6-significant-figure precision.
+# Only ONE SAS target exists for this model. Fit 2 of the listing is a
+# different model (adds `female` to both phases), so it is deliberately absent
+# from this table -- putting it here would invite the comparison it cannot bear.
 targets <- data.frame(
-  fit = c("deterministic (conserve)", "noconserve"),
-  sas = c(-176.934, -176.746),
-  r   = c(fit_det$fit$objective, fit_nc$fit$objective)
+  fit = "deterministic (conserve)",
+  sas = -176.934,
+  r   = fit_det$fit$objective
 )
 targets$abs_diff <- abs(targets$r - targets$sas)
 knitr::kable(targets, digits = 6)
@@ -532,7 +567,7 @@ Expected: renders. The cohort table shows 512 / 53 / 459.
 cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
 f <- readRDS("estimates/dead-hz/hz.rds")
 cat("deterministic:", f$deterministic$fit$objective, " SAS -176.934\n")
-cat("noconserve   :", f$noconserve$fit$objective,    " SAS -176.746\n")'
+cat("noconserve   :", f$noconserve$fit$objective,    " (no SAS reference)\n")'
 ```
 
 Expected: both within SAS's printed precision (±0.0005). **If they are not,
@@ -573,9 +608,9 @@ Expected: the file exists at that exact path.
 - Generated: `<root>/graphs/dead-hz/hp-survival.png`, `<root>/graphs/dead-hz/hp-hazard.png`
 
 **Interfaces:**
-- Consumes: `estimates/dead-hz/ac.rds` (Task 2 — a `hzr_kaplan` **data frame**
-  with columns `time` and `survival`), `estimates/dead-hz/hz.rds`
-  (Task 3, `$deterministic`).
+- Consumes: `estimates/dead-hz/ac.rds` (Task 2 — a list with `$overall`, a
+  `hzr_kaplan` **data frame** with columns `time` and `survival`, and
+  `$by_female`), `estimates/dead-hz/hz.rds` (Task 3, `$deterministic`).
 - Produces: two PNGs under `graphs/dead-hz/`. Produces **no** parity numbers —
   that is Task 5.
 
@@ -590,7 +625,8 @@ chunks as Task 3 (with `ENDPOINT <- "dead"`, `TYPE <- "hz"`), then:
 # hp overlays the actuarial estimate with the parametric fit, so it reads both
 # upstream artifacts by set rather than recomputing either. A job that
 # recomputes its upstream can silently disagree with it.
-km  <- readRDS(set_path("estimates", "ac.rds"))
+ac  <- readRDS(set_path("estimates", "ac.rds"))
+km  <- ac$overall   # the unstratified table; ac$by_female holds the by-sex split
 fit <- readRDS(set_path("estimates", "hz.rds"))$deterministic
 ```
 
