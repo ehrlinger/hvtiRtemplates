@@ -142,9 +142,11 @@ Under the study root:
 | `distributions/dead-hz-03.01-ac.qmd` | actuarial life table |
 | `distributions/dead-hz-03.02-hz.qmd` | the parametric fit |
 | `graphs/dead-hz-06.01-hp.qmd` | nomogram figures |
+| `parity/dead-hz-03.01-ac-parity.qmd` | R vs SAS on the printed life tables |
 | `parity/dead-hz-03.02-hz-parity.qmd` | R vs SAS on the printed nomogram |
 | `estimates/dead-hz/{ac,hz}.rds` | generated |
 | `graphs/dead-hz/hp-*.png` | generated |
+| `parity/dead-hz/ac-diff.csv` | generated |
 | `parity/dead-hz/hz-diff.csv` | generated |
 
 ---

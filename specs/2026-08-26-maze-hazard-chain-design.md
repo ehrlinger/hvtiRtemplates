@@ -363,10 +363,51 @@ not exist.
 | `%hazplot(...)` goodness-of-fit suite | `hz.dead.sas:94` | **no R counterpart.** The R chain checks parity against printed estimates; it runs no GOF diagnostics. |
 | Fit 2 → `est.hzdead_fem` | `hz.dead.sas:110-122` | fitted in R as the `noconserve` sensitivity, but **not** ported as the covariate model it actually is (`early female; late female;`). Nothing reads it. |
 | Nomogram CI columns | `hz.dead.lst` (`_CLLSURV`/`_CLUSURV`, `_CLLHAZ`/`_CLUHAZ`) | **parsed then discarded.** 32 more printed values the parity job reads and does not check. Pinning them would test the variance path, not just Λ and h. |
-| Parity for the `ac` job | `ac.dead.lst` | **none.** The life tables are computed and rendered but never compared against SAS's printed ones. `hz` and `hp` are pinned; `ac` is not. |
 | Confidence bands on the figures | `hp.dead.female.sas` (`_CLLSURV`/`_CLUSURV`, `_CLLHAZ`/`_CLUHAZ`) | **dropped.** The R figures plot point estimates only. SAS also picks specific rows for band display (`if female=0 and number in (264, 252, ...)`), which is not reproduced. |
 | Axis ranges | `hp.dead.female.sas:157-182` | **deliberately different.** SAS uses months 0–24 with survival 80–100% and a linear hazard 0–4 %/month. The R figures run to 36 months and use log-y hazard, because the female fit's trough near month 10 is invisible on a linear 0–4 scale. Units match; scales do not. |
 | Grid resolution | same | 1000 points vs SAS's 1001 (`inc=(max-min)/999.9` then an explicit final point). Immaterial for a smooth curve. |
+
+### `ac` parity — added 2026-08-26, and it found a real divergence
+
+`parity/dead-hz-03.01-ac-parity.qmd` compares R's life tables against
+`ac.dead.lst`, across all three tables SAS prints (unstratified, and the two
+under `Stratify by Female`). The table-to-arm mapping is proven rather than
+assumed, as in the `hz` parity job.
+
+**Seven columns agree exactly, at the printed precision, on every row:**
+
+| gated | overall | male | female |
+|---|---|---|---|
+| `time`, `n_risk`, `n_censor`, `n_event`, `survival`, `std_err`, `cumhaz` | 350/350 | 189/189 | 175/175 |
+
+So the Kaplan–Meier estimate itself, its standard error, and the cumulative
+hazard are exact. **Five columns are not, and are reported rather than gated:**
+
+- **`cl_lower` / `cl_upper` — 0/50**, max abs diff 0.027 / 0.018. This is *not*
+  a transform choice: plain, log, log–log and arcsine transforms of SAS's own
+  `CUM_SURV`/`SE_EXACT` were each tried and none reproduces SAS's limits, the
+  best still off by ~0.02. SAS names the column `SE_EXACT` and its intervals
+  are strongly asymmetric (row 1: −0.00335/+0.00123 around 0.99805), which
+  points at an exact/binomial method. **Naming it needs the `%kaplan` macro
+  source** at `!MACROS/kaplan` on the analysis host — not on the SMB mount, so
+  not resolvable from a workstation.
+- **`hazard` / `density` — 19/50**, max abs diff 5.66 / 4.86. An **interval-width
+  convention** difference. SAS divides by the backward gap `t_i − t_{i−1}`: at
+  row 5, its 0.24872 with `n_risk` 490 and one event implies a width of
+  0.008212 — exactly 3 days, which is that gap. R's 0.74615 implies about one
+  day. Where event times are consecutive the widths coincide, which is exactly
+  the 19 rows that do agree.
+- **`life` — 0/50**, max abs diff 0.014; same interval-convention family.
+
+These are **findings, not failures**. The job gates the seven and surfaces the
+five, because a parity document that quietly compared only the passing columns
+would be the failure this whole effort exists to catch.
+
+⚠️ **Consequence worth carrying:** R's `hzr_kaplan()` and SAS's `%kaplan` are
+interchangeable for survival, its SE and cumulative hazard, and **are not
+interchangeable** for confidence limits or the actuarial hazard/density/life
+columns. Anything downstream that consumes those five from either side is
+comparing different quantities.
 
 ### RESOLVED 2026-08-26 — SAS stopped short on a shallow ridge, and it does not matter
 
