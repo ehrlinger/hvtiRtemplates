@@ -47,8 +47,49 @@ parity job checks R against SAS's own printed nomogram.
   late.log_tau, late.gamma, late.alpha, late.eta`.
 - **SAS targets** (from `distributions/hz.dead.lst`): fit 1 LL **−176.934**,
   53 events conserved; fit 2 (`noconserve`) LL **−176.746**.
-- **Cohort:** N 512, events 53, right censored 459, `IV_DEAD` ∈
+- **Cohort:** N 512, events 53, right censored 459, time ∈
   [0.008213721, 4.175308]. This is Shape A — job cohort = study cohort.
+- ⚠️ **`read_built()` lower-cases every column name** (hvtiRutilities 1.0.11),
+  regardless of the source file's casing. `built.sas7bdat` stores the time
+  column as `IV_DEAD`; anything from `read_built()` only ever has `iv_dead`.
+  So `TIME <- "iv_dead"`, and `study_init(time = "iv_dead")` — the upper-case
+  form makes `study_init()` fail outright and breaks every `d[[TIME]]` lookup.
+  Verified 2026-08-26.
+- **Gate time-range comparisons at the PRINTED precision, not an arbitrary
+  relative tolerance.** SAS printed `0.008213721`; the stored value is
+  `0.008213721021` (rel 2.55e-09), and the max is `4.175308186` against a
+  printed `4.175308` (rel 4.45e-08). The principled check is that the stored
+  value rounds to the printed one at the printed number of decimals — the same
+  half-ulp rule the parity job uses on the nomogram. A hand-picked `1e-9`
+  fails a value that is in fact exact to every digit SAS printed.
+- **`predict()` API — verified 2026-08-26, do not guess it:**
+
+  ```r
+  predict(object,
+          newdata = NULL,
+          type    = c("hazard", "linear_predictor", "survival", "cumulative_hazard"),
+          ...)
+  ```
+
+  There is **no `newtime` argument** and **no `"cumhaz"` type**. To evaluate at
+  arbitrary times pass `newdata = data.frame(time = tt)`. With no `newdata` it
+  returns one value per training row. The returned vector carries misleading
+  names (`early.log_mu` repeated) — `unname()` it.
+- **`hzr_kaplan()` API — verified 2026-08-26:**
+
+  ```r
+  hzr_kaplan(time, status, conf_level = 0.95, event_only = TRUE)
+  ```
+
+  It takes **separate vectors, not a formula**, and returns a **data frame**
+  (class `hzr_kaplan`) directly — there is no `$table`. Columns: `time`,
+  `n_risk`, `n_event`, `n_censor`, `survival`, `std_err`, `cl_lower`,
+  `cl_upper`, `cumhaz`, `hazard`, `density`, `life`. The survival column is
+  `survival`, not `surv`.
+- ⚠️ **maze carries a stray `.git` too** — `Daily Commit ... 2014`, no remote,
+  135 uncommitted paths, toplevel at the study root. Same trap as
+  preserve_root: a careless `git checkout` there destroys working files. The
+  no-commits-under-`/studies` rule is not preserve_root-specific.
 
 ---
 
@@ -152,7 +193,7 @@ And `<root>/R/study.R`:
 # Coerce in one place rather than at each call site.
 
 STATUS <- "dead"     # event indicator, 0/1
-TIME   <- "IV_DEAD"  # interval (years) to death
+TIME   <- "iv_dead"  # interval (years) to death; read_built() lower-cases
 
 # SAS's own printed cohort for hz.dead.lst fit 1. Kept here so the hz and
 # parity jobs assert against one copy rather than three.
@@ -179,9 +220,14 @@ let a 394-row dataset filtered to 389 stand in for a 389-row job cohort.
 cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
 suppressMessages(library(hvtiRutilities)); for (f in list.files("R", "[.]R$", full.names=TRUE)) source(f)
 d <- read_built(); iv <- d[[TIME]]
-stopifnot(isTRUE(all.equal(min(iv), SAS_TIME_RANGE[1], tolerance = 1e-9)),
-          isTRUE(all.equal(max(iv), SAS_TIME_RANGE[2], tolerance = 1e-6)))
-cat("time-range gate PASS:", min(iv), "-", max(iv), "\n")'
+# Compare at the precision SAS actually printed. round(x, dp) == printed is the
+# same half-ulp rule the parity job applies to the nomogram; an arbitrary
+# relative tolerance either fabricates a failure (1e-9 rejects a value exact to
+# every printed digit) or hides a real one.
+dp <- function(x) { for (d in 0:12) if (isTRUE(all.equal(x, round(x, d), tolerance = 0))) return(d); 12L }
+stopifnot(identical(round(min(iv), dp(SAS_TIME_RANGE[1])), SAS_TIME_RANGE[1]),
+          identical(round(max(iv), dp(SAS_TIME_RANGE[2])), SAS_TIME_RANGE[2]))
+cat("time-range gate PASS:", format(min(iv), digits = 10), "-", format(max(iv), digits = 10), "\n")'
 ```
 
 Expected: `time-range gate PASS: 0.008213721 - 4.175308`
@@ -251,8 +297,11 @@ cc <- cohort_counts(d)
    Replace the template's stratification chunk with the overall table only:
 
 ```r
-km <- hzr_kaplan(survival::Surv(d[[TIME]], status_numeric(d)) ~ 1)
-knitr::kable(head(as.data.frame(km$table), 12), digits = 5)
+# hzr_kaplan() takes separate vectors, NOT a formula, and returns a data frame
+# directly -- there is no $table. Verified against args(hzr_kaplan) rather than
+# assumed from the survival package's interface, which it does not share.
+km <- hzr_kaplan(time = d[[TIME]], status = status_numeric(d))
+knitr::kable(head(km, 12), digits = 5)
 saveRDS(km, set_path("estimates", "ac.rds"))
 ```
 
@@ -498,7 +547,8 @@ model.
 cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
 suppressMessages(library(TemporalHazard))
 f <- readRDS("estimates/dead-hz/hz.rds")$deterministic
-cat("events conserved (R):", sum(predict(f, type = "cumhaz")), " SAS: 53\n")'
+# No newdata -> one value per training row, which is exactly sum_i Lambda(t_i).
+cat("events conserved (R):", sum(predict(f, type = "cumulative_hazard")), " SAS: 53\n")'
 ```
 
 Expected: ≈ 53. If `predict()` errors, that is
@@ -523,7 +573,8 @@ Expected: the file exists at that exact path.
 - Generated: `<root>/graphs/dead-hz/hp-survival.png`, `<root>/graphs/dead-hz/hp-hazard.png`
 
 **Interfaces:**
-- Consumes: `estimates/dead-hz/ac.rds` (Task 2), `estimates/dead-hz/hz.rds`
+- Consumes: `estimates/dead-hz/ac.rds` (Task 2 — a `hzr_kaplan` **data frame**
+  with columns `time` and `survival`), `estimates/dead-hz/hz.rds`
   (Task 3, `$deterministic`).
 - Produces: two PNGs under `graphs/dead-hz/`. Produces **no** parity numbers —
   that is Task 5.
@@ -546,18 +597,21 @@ fit <- readRDS(set_path("estimates", "hz.rds"))$deterministic
 ```{r}
 #| label: fig-survival
 tt <- seq(0.01, 4.17, length.out = 400)
-S  <- exp(-predict(fit, newtime = tt, type = "cumhaz"))
+# type = "survival" directly; there is no "cumhaz" type and no newtime argument.
+# unname() because the returned vector carries a repeated, meaningless name.
+S  <- unname(predict(fit, newdata = data.frame(time = tt), type = "survival"))
 png(set_path("graphs", "hp-survival.png"), width = 1400, height = 1000, res = 150)
 plot(tt, S, type = "l", ylim = c(0, 1), xlab = "Years after operation",
      ylab = "Survival", main = "Death — actuarial and parametric")
-lines(km$table$time, km$table$surv, type = "s", lty = 2)
+# km is a data frame, not a list with $table; the column is `survival`.
+lines(km$time, km$survival, type = "s", lty = 2)
 legend("bottomleft", c("parametric (hz)", "actuarial (ac)"), lty = c(1, 2), bty = "n")
 dev.off()
 ```
 
 ```{r}
 #| label: fig-hazard
-h <- predict(fit, newtime = tt, type = "hazard")
+h <- unname(predict(fit, newdata = data.frame(time = tt), type = "hazard"))
 png(set_path("graphs", "hp-hazard.png"), width = 1400, height = 1000, res = 150)
 plot(tt, h, type = "l", log = "y", xlab = "Years after operation",
      ylab = "Hazard (events / patient-year)", main = "Death — hazard function")
@@ -652,8 +706,8 @@ pass_interval <- function(f, t, target, dp_out, dp_in) {
 ```{r}
 #| label: compare
 fit <- readRDS(set_path("estimates", "hz.rds"))$deterministic
-S <- function(t) exp(-predict(fit, newtime = t, type = "cumhaz"))
-H <- function(t) predict(fit, newtime = t, type = "hazard")
+S <- function(t) unname(predict(fit, newdata = data.frame(time = t), type = "survival"))
+H <- function(t) unname(predict(fit, newdata = data.frame(time = t), type = "hazard"))
 
 dpT <- decimals_of(nom$YEARS)
 dpS <- decimals_of(nom$SURVIV)
@@ -792,6 +846,14 @@ shipped template's own Shape B comment, which is not a step to execute.
 defined once in Task 1 and used with those exact names after. `hz.rds` is
 written as `list(deterministic=, multistart=, noconserve=)` in Task 3 and read
 as `$deterministic` in Tasks 4 and 5.
+
+**Pre-flight corrections (2026-08-26):** the first draft of this plan used
+`predict(fit, newtime = tt, type = "cumhaz")` in Tasks 3–5 and a formula
+interface for `hzr_kaplan()` in Task 2. Both APIs were invented rather than
+checked, and every one of those calls would have failed on the first render.
+The signatures above are now verified against the installed package. It also
+asserted maze had no git context; it has a 2014 stray repo, same as
+preserve_root.
 
 **Known risk carried forward:** Tasks 3–5 call `predict()` on a fitted object.
 [temporal_hazard#144](https://github.com/ehrlinger/temporal_hazard/issues/144)
