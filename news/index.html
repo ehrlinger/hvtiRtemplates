@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,25 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.5" id="hvtirtemplates-105">hvtiRtemplates 1.0.5<a class="anchor" aria-label="anchor" href="#hvtirtemplates-105"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-1-0-5">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-5"></a></h3>
+<ul><li>
+<strong>An unedited job no longer renders green</strong> (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/27" class="external-link">#27</a>). Templates now carry an <code>edit-guard</code> chunk that scans the rendering file for unresolved <code>EDIT:</code> markers and stops, naming each one. <code>inst/templates/README.md</code> has always said that a job still containing a marker has not been finished; nothing checked it, and the <code>03.01-ac</code> template made the gap concrete — its <code>derive</code> chunk indexed a placeholder column, and an absent column makes <code>!is.na(d$&lt;col&gt;)</code> <code>logical(0)</code>, so every assignment is a <strong>silent no-op</strong>. Every patient stayed in one category, the downstream life tables ran over a single dummy stratum, and the render completed with 12 markers still in the file.</li>
+<li>
+<code>derive_cats()</code> and the <code>DERIVED</code> map now assert that the columns they name are in the data. This is the half a marker scan cannot reach: a placeholder replaced with a mistyped or renamed column leaves no marker behind.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-1-0-5">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-5"></a></h3>
+<ul><li>
+<code>HVTI_TEMPLATE_DRAFT=1</code> renders a partly-worked job anyway. The guard warns instead of stopping and the report carries a DRAFT banner listing the unresolved markers. It is an environment variable rather than a YAML parameter on purpose: a parameter lives in the file, so it would be committed and forgotten, re-opening the hole this closes. <code>1</code>, <code>true</code> and <code>yes</code> enable it; any other value, <code>0</code> included, leaves the guard strict, so a variable set to <code>0</code> meaning “off” cannot switch it off by being non-empty.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="internal-1-0-5">Internal<a class="anchor" aria-label="anchor" href="#internal-1-0-5"></a></h3>
+<ul><li>Two tests over the shipped template sources: every template must carry an <code>edit-guard</code> chunk, and no template may write the marker token as a string literal. The second guards a trap worth naming — Quarto knits through an intermediate and <code><a href="https://rdrr.io/pkg/knitr/man/current_input.html" class="external-link">knitr::current_input()</a></code> returns <em>that</em> file, so the scan reads the guard’s own chunk. A literal <code>grep("&lt;token&gt;", src)</code> matches its own source line and fires on every render, finished or not; a probe found three markers in a file containing two. The token is built with <code><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0()</a></code> instead.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.4" id="hvtirtemplates-104">hvtiRtemplates 1.0.4<a class="anchor" aria-label="anchor" href="#hvtirtemplates-104"></a></h2>
 <div class="section level3">
