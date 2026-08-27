@@ -1,3 +1,41 @@
+# hvtiRtemplates 1.0.5
+
+## Bug fixes
+
+- **An unedited job no longer renders green** (#27). Templates now carry an
+  `edit-guard` chunk that scans the rendering file for unresolved `EDIT:`
+  markers and stops, naming each one. `inst/templates/README.md` has always
+  said that a job still containing a marker has not been finished; nothing
+  checked it, and the `03.01-ac` template made the gap concrete — its `derive`
+  chunk indexed a placeholder column, and an absent column makes
+  `!is.na(d$<col>)` `logical(0)`, so every assignment is a **silent no-op**.
+  Every patient stayed in one category, the downstream life tables ran over a
+  single dummy stratum, and the render completed with 12 markers still in the
+  file.
+- `derive_cats()` and the `DERIVED` map now assert that the columns they name
+  are in the data. This is the half a marker scan cannot reach: a placeholder
+  replaced with a mistyped or renamed column leaves no marker behind.
+
+## New features
+
+- `HVTI_TEMPLATE_DRAFT=1` renders a partly-worked job anyway. The guard warns
+  instead of stopping and the report carries a DRAFT banner listing the
+  unresolved markers. It is an environment variable rather than a YAML
+  parameter on purpose: a parameter lives in the file, so it would be
+  committed and forgotten, re-opening the hole this closes. `1`, `true` and
+  `yes` enable it; any other value, `0` included, leaves the guard strict, so
+  a variable set to `0` meaning "off" cannot switch it off by being non-empty.
+
+## Internal
+
+- Two tests over the shipped template sources: every template must carry an
+  `edit-guard` chunk, and no template may write the marker token as a string
+  literal. The second guards a trap worth naming — Quarto knits through an
+  intermediate and `knitr::current_input()` returns *that* file, so the scan
+  reads the guard's own chunk. A literal `grep("<token>", src)` matches its own
+  source line and fires on every render, finished or not; a probe found three
+  markers in a file containing two. The token is built with `paste0()` instead.
+
 # hvtiRtemplates 1.0.4
 
 ## Internal
