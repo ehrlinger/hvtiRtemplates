@@ -75,21 +75,24 @@ been one lookup.
 > *corpus-wide* — was a generalisation from a sample of two, and it was
 > written into `inst/templates/README.md` as a blocking constraint.
 >
-> `hvtiRutilities::job_census()` over `general` and `vascular` alone —
-> 318,951 files across **250 studies** — measured:
+> `hvtiRutilities::job_census()` over the whole of `/studies` —
+> **2,240,570 files**, run server-side 2026-08-27 — measured:
 >
-> | prefix | claimed | measured (lower bound) |
+> | prefix | claimed | measured |
 > |---|---|---|
-> | `hm` | 1 study | **33 studies** |
-> | `bh` | 1 study | **30 studies** |
-> | `hs` | 1 study | **11 studies** |
+> | `hm` | 1 study | **383 studies** |
+> | `bh` | 1 study | **322 studies** |
+> | `hs` | 1 study | **144 studies** |
 >
-> Lower bounds: `cardiac` and `thoracic` were missing from that run, both
-> having hit the invalid-encoding abort fixed in hvtiRutilities 1.1.3. Only
-> `gm` and `rg` sat at one study.
+> **And the finding is larger than those three rows.** Not one taxonomy
+> prefix anywhere in the corpus sits at a single study — the census's
+> BLOCKED list came back **empty**. The smallest are `bq` at 2 studies and
+> `cp`/`pm` at 5, all past the gate.
 >
-> **The two-studies gate is open for all three.** They are not waiting on a
-> second exemplar and never were.
+> **So the two-studies gate is open for every prefix the taxonomy
+> documents.** Nothing is waiting on a second exemplar, and nothing ever was.
+> The gate was never the constraint on templating; the constraint was that
+> nobody could answer it at corpus scale.
 >
 > The lesson is the one §1 already argues, sharpened: the cost of the
 > hand-count was not the time it took, it was that its *scope* went

@@ -62,17 +62,19 @@ version of this paragraph said each existed in only one study. That was read
 off a comparison of two directories — `preserve_root` and
 `maze/atricure/gender` — and stated as though it held for the corpus.
 
-A corpus census (`hvtiRutilities::job_census()`, 2026-08-27) measured, over
-`general` and `vascular` alone — 318,951 files across 250 studies:
+A corpus census (`hvtiRutilities::job_census()`, 2026-08-27) over the whole of
+`/studies` — **2,240,570 files** across all four top-level trees:
 
-| prefix | claimed | measured (lower bound) |
+| prefix | claimed | measured |
 |---|---|---|
-| `hm` | 1 study | **33 studies** |
-| `bh` | 1 study | **30 studies** |
-| `hs` | 1 study | **11 studies** |
+| `hm` | 1 study | **383 studies** |
+| `bh` | 1 study | **322 studies** |
+| `hs` | 1 study | **144 studies** |
 
-Lower bounds because `cardiac` and `thoracic` were absent from that run. Only
-`gm` and `rg` were genuinely at one study.
+**No taxonomy prefix anywhere in the corpus sits at one study.** The whole
+"BLOCKED" list is empty. The smallest are `bq` at 2 studies and `cp`/`pm` at 5
+— still past the gate. The two-studies gate is open for every prefix the
+taxonomy documents, and nothing is waiting on a second exemplar.
 
 The two-directory counts were accurate about those two directories; the
 inference from them was not. **Do not quote a per-study count as a gate
