@@ -10,6 +10,7 @@ refuses to overwrite an existing job.
 | template | job type | scaffolds into |
 |---|---|---|
 | `distributions/03.01-ac.qmd` | actuarial life tables | `distributions/` |
+| `distributions/03.02-hz.qmd` | multiphase parametric hazard fit | `distributions/` |
 
 A template is named `<NN.MM>-<prefix>.qmd` and lives in the taxonomy folder it
 scaffolds into. The name is the authority: `template_list()` reads the ordinal
@@ -46,16 +47,36 @@ The full design, including what was rejected and why, is in
 
 ## What is not here yet, and why
 
-`hz` (parametric temporal-hazard fit) and `hp` (nomogram and figures) are **not
-templated yet**, even though the two-studies gate is now open. `ac`, `hz` and
-`hp` each exist in two studies (`preserve_root` and `maze/atricure/gender`),
-and `maze/atricure/gender`'s run reproduced **its own study's** SAS results
-(not `preserve_root`'s — no cross-study reproduction is claimed or possible):
-log-likelihoods evaluated at SAS's converged estimates matched within 1e-3
-(overall -176.934, male -92.9158, female -81.7217), and SAS's printed
-nomograms matched at **22/22** points — 8 survival and 8 hazard on the overall
-fit, plus 7 survival on each per-sex fit. Template extraction for `hz`/`hp` is
-the next piece of work, not blocked on a study count anymore.
+`hp` (nomogram and figures), `hm` (multivariable model) and `bh` (bootstrap
+variable selection) are **not templated yet**. `hz` shipped in 1.0.6, extracted
+from three R exemplars — `preserve_root`, `maze/atricure/gender` and
+`lv_function/survival`; see `specs/2026-08-27-hz-template-design.md`.
+
+⚠️ **Two different questions get called "the gate", and they have different
+answers.** The corpus census below counts **SAS** jobs, which answers *will a
+template serve more than one study* — yes, everywhere. The gate's stated reason
+is the other one: *are there two R implementations to generalise from*, since a
+template extracted from a single example encodes that study's choices as though
+they were general. Filtering the same census to its 1,144 `.qmd` rows answers
+that one:
+
+| prefix | studies with an R job |
+|---|---|
+| `ac` | 4 |
+| `hz` | 3 |
+| `hp` | 3 |
+| `bh` | 2 |
+| `hm` | **1** |
+| `hs` | 1 |
+
+That count is a lower bound — the census sees `.qmd` only, so a job written as
+`.R` or `.Rmd` is invisible to it, and the error direction is undercounting.
+
+`hz` was worth extracting on those three because they **disagree**, and the
+disagreements are the template: two seed `theta` from SAS's converged estimates
+while the third seeds neutral shapes with a data-derived time scale, and each is
+correct for its own case. Extracted from either alone, the template would have
+made the other case silently wrong.
 
 `hm`, `hs` and `bh` are **not** blocked by the two-studies gate. An earlier
 version of this paragraph said each existed in only one study. That was read
