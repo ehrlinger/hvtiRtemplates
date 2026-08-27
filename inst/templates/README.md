@@ -12,6 +12,7 @@ refuses to overwrite an existing job.
 | `distributions/03.01-ac.qmd` | actuarial life tables | `distributions/` |
 | `distributions/03.02-hz.qmd` | multiphase parametric hazard fit | `distributions/` |
 | `graphs/06.01-hp.qmd` | nomogram and hazard figures | `graphs/` |
+| `analyses/04.01-hm.qmd` | multivariable hazard model | `analyses/` |
 
 A template is named `<NN.MM>-<prefix>.qmd` and lives in the taxonomy folder it
 scaffolds into. The name is the authority: `template_list()` reads the ordinal
@@ -48,11 +49,18 @@ The full design, including what was rejected and why, is in
 
 ## What is not here yet, and why
 
-`hm` (multivariable model) and `bh` (bootstrap variable selection) are **not
-templated yet**. `hz` shipped in 1.0.6 and `hp` in 1.0.7, each extracted from
-the same three R exemplars — `preserve_root`, `maze/atricure/gender` and
-`lv_function/survival`. See `specs/2026-08-27-hz-template-design.md` and
-`specs/2026-08-27-hp-template-design.md`.
+`bh` (bootstrap variable selection) is **not templated yet**. `hz` shipped in
+1.0.6, `hp` in 1.0.7 and `hm` in 1.0.8; see the design specs dated 2026-08-27.
+
+`hz` and `hp` were each extracted from three R exemplars — `preserve_root`,
+`maze/atricure/gender` and `lv_function/survival`. **`hm` had only one R
+exemplar**, so its second was the SAS job at
+`cardiac/ischemic/cabg/diabetes/surg_factors/dm_nodm`, which is enough for the
+purpose: the gate exists to stop one study's choices being encoded as general,
+and a SAS job states those choices as plainly as an R one. It earned its place
+immediately — it carries a `%deciles` calibration step the R exemplar has no
+equivalent for, and without it the template would have shipped a
+model-selection job that never asks whether the model calibrates.
 
 ⚠️ **Two different questions get called "the gate", and they have different
 answers.** The corpus census below counts **SAS** jobs, which answers *will a

@@ -1,7 +1,7 @@
 Package: hvtiRtemplates
 Type: Package
 Title: Analysis Job Templates for the HVTI CORR Group
-Version: 1.0.7
+Version: 1.0.8
 Date: 2026-08-27
 Authors@R: c(
     person(
@@ -24,7 +24,7 @@ Description: Versioned analysis job templates for the clinical investigations
 Depends:
     R (>= 4.1.0)
 Imports:
-    hvtiRutilities (>= 1.1.1),
+    hvtiRutilities (>= 1.1.4),
     stats
 Remotes:
     ehrlinger/hvtiRutilities

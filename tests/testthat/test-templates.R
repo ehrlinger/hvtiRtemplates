@@ -140,3 +140,49 @@ test_that("no template writes the edit marker token literally", {
                                " -- its guard will match its own source"))
   }
 })
+
+test_that("the hvtiRutilities helpers templates call are declared and exported", {
+  # The trigger this exists for: adding a template that calls a NEWER helper
+  # silently leaves DESCRIPTION's `hvtiRutilities (>= x.y.z)` behind. An install
+  # then satisfies DESCRIPTION and ships a template whose helper does not
+  # exist -- and it fails at RENDER time, in a study, far from the install.
+  #
+  # This cannot check the version bound itself (CI installs the latest, not the
+  # declared minimum). What it does is make the trigger loud: a template that
+  # starts calling a helper outside this list fails here, and whoever adds it
+  # is standing in the right place to ask whether DESCRIPTION needs bumping.
+  declared <- c(
+    "read_built", "study_config", "assert_cohort", "cohort_counts",  # >= 1.0.0
+    "hvti_taxonomy", "sas_path",
+    "sas_variable_block", "covariate_audit", "covariates_to_numeric",
+    "imputed_levels", "pool_collinear_pairs", "selection_crowding",  # >= 1.1.4
+    "concept_map"
+  )
+  skip_if_not_installed("hvtiRutilities")
+  ns <- getNamespaceExports("hvtiRutilities")
+  expect_true(all(declared %in% ns),
+              info = paste("declared but not exported:",
+                           paste(setdiff(declared, ns), collapse = ", ")))
+
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+  used <- character(0)
+  for (f in tl$file) {
+    src <- readLines(f, warn = FALSE)
+    # CODE CHUNKS ONLY. Scanning the whole file matches prose too -- these
+    # templates discuss `read_clinical_data()` in their narrative without
+    # calling it -- and a test that fires on a comment is a test that gets
+    # deleted.
+    fence <- grepl("^```", src)
+    in_chunk <- cumsum(fence) %% 2 == 1 & !fence
+    code <- src[in_chunk]
+    code <- sub("#.*$", "", code)          # and not in a code comment either
+    hits <- gregexpr("[A-Za-z_][A-Za-z0-9_.]*(?=\\()", code, perl = TRUE)
+    calls <- unlist(regmatches(code, hits))
+    used <- c(used, intersect(unique(calls), ns))
+  }
+  expect_true(all(unique(used) %in% declared),
+              info = paste("template calls an hvtiRutilities helper not in the",
+                           "declared list -- check DESCRIPTION's version bound:",
+                           paste(setdiff(unique(used), declared), collapse = ", ")))
+})

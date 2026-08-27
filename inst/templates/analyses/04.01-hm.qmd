@@ -1,0 +1,731 @@
+---
+title: "Multivariable hazard model"
+# Carried in the file rather than inherited from _quarto.yml. A file meant to be
+# COPIED should not depend on settings from the directory it happens to sit in:
+# rendered as a standalone document the project's format block never applies,
+# which is how server-rendered reports end up with sibling _files/ trees instead
+# of being self-contained.
+#
+# NOTE: output-dir is a PROJECT setting and cannot be set here, so the .html
+# lands next to its source. With embed-resources that is a single standalone
+# file, which is the property that actually matters when a report is sent on.
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the SAS job this replaces, and say what its `selection`
+     statement screened: which phases carried candidates, and at what
+     entry/stay levels. -->
+
+Replaces `analyses/<job>.sas`: describe its `PROC HAZARD … selection` call
+here — which covariates were offered to which phase, and at what entry and stay
+levels.
+
+An `hm` job builds the risk-factor model **on top of** the shape parameters the
+`hz` job fitted. The shapes are not re-derived here; they are read. Patient-level
+predictions from this model are an `hs` job and the bootstrap of this screen is
+`bh`; neither belongs here, and **nor does SAS parity** — a parity job borrows
+the ordinal of the job it checks and lives in `parity/`.
+
+```{r}
+#| label: setup
+# This file runs either from the directory it was scaffolded into or from the
+# project root. Resolve which, so that no path in this document needs editing:
+# forgetting one of several ../ paths is the instantiation mistake that would
+# otherwise be easy to make and quiet when made.
+.root <- if (file.exists("_quarto.yml")) "." else ".."
+if (!file.exists(file.path(.root, "_quarto.yml"))) {
+  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
+       "resolved. Render this from the project root or from the job directory.",
+       call. = FALSE)
+}
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(TemporalHazard)
+  library(hvtiRutilities)
+})
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+# The markers in this file name work a study author still has to do, and
+# README.md says a job that still contains one has not been finished. This
+# chunk is what makes that TRUE rather than merely stated.
+#
+# Without it an unedited job renders green over a meaningless analysis. In THIS
+# file the danger is sharper than a wrong number: the unedited entry and stay
+# levels are `hzr_stepwise()`'s defaults, which are LOOSER than the SAS job's,
+# so an unedited screen admits variables the job being reproduced rejected --
+# and reports them as risk factors, in a table that looks exactly like a
+# result.
+#
+# knitr::current_input() is NULL outside a render -- a study author stepping
+# through chunks in RStudio -- and there is no file to scan then, so this is a
+# no-op in that case. Same handling as the `set` guard below, for the same
+# reason.
+#
+# The token is BUILT, not written literally, and that is not stylistic. Quarto
+# knits through an intermediate and current_input() returns THAT file, so the
+# scan reads a copy of this chunk along with everything else: a literal
+# grep("<token>", .src) here matches its own source line, and the guard then
+# fires on every render, finished or not. Measured, not theorised -- a probe
+# found three markers in a file containing two. A guard that cries wolf on a
+# finished job is a guard that gets deleted, which returns us to issue #27.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    # Report the marker TEXT. Line numbers here are the intermediate's, not
+    # this .qmd's, so they need not match what the author sees in an editor.
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
+      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
+      "draft banner. Any other value, including 0, leaves this guard strict."
+    )
+    # Only the documented values enable draft mode. nzchar() alone would treat
+    # HVTI_TEMPLATE_DRAFT=0 as ON, silently downgrading this stop() to a
+    # warning for someone whose shell profile sets it to 0 meaning OFF -- a
+    # switch whose enablement does not mean what it says, which is the same
+    # defect this guard exists to catch. An unrecognised value falls through to
+    # strict on purpose: the author then sees the stop and re-reads the docs,
+    # which is the safe direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+      # The banner is not optional. A draft render that looks like a finished
+      # one is the same defect with an extra step: the warning scrolls past in
+      # a log, while the .html is the artifact that gets sent to someone.
+      warning(.msg, call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, call. = FALSE)
+    }
+  }
+}
+```
+
+<!-- The two values below are written by new_job() from the endpoint/type it
+     was called with, which are also the filename's first two fields. They
+     name the SET this job belongs to, and every artifact path in the
+     document is computed from them, so no output path below needs editing.
+
+     Do NOT hand-edit these declarations: the render-time guard below checks
+     them against this file's own name and stops if they disagree. To put
+     this job in a different set, call new_job() again with the new
+     endpoint/type rather than editing this copy in place.
+
+     A set is keyed on (endpoint, analysis type), not on the endpoint alone.
+     One endpoint is analysed by several methods -- parametric hazard, random
+     forest survival, competing risks -- and those chains share their upstream.
+     Two sets keyed on `dead_pa` alone would write their life tables to the
+     same file. -->
+
+```{r}
+#| label: set
+ENDPOINT <- "dead_pa"
+TYPE     <- "hz"
+
+# `new_job()` writes ENDPOINT/TYPE from the same values it put in this file's
+# name, but a hand-edited declaration can drift from it afterward. set_path()
+# below resolves from the declarations, not the filename, so a drifted
+# declaration would silently write into ANOTHER set's artifact directory --
+# exactly the collision the (endpoint, type) key exists to prevent, re-entered
+# through the body instead of the name.
+#
+# knitr::current_input() is NULL outside a render (a study author running
+# chunks interactively in RStudio), and there is no filename to check against
+# yet, so this is a no-op in that case rather than a spurious error.
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  # Quarto knits through an intermediate, so `knitr::current_input()` returns
+  # `<endpoint>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
+  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
+  # rather than hard-coding one, so this doesn't depend on a build-tool detail
+  # staying the same.
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (endpoint '", .name_endpoint, "', type '",
+         .name_type, "'), but declares ENDPOINT = \"", ENDPOINT, "\", TYPE = \"", TYPE,
+         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
+  }
+}
+
+# Resolve a path inside this set's artifact directory. `kind` is the artifact
+# folder -- "estimates" for serialized results, "graphs" for figures. The set
+# directory sits one layer under the kind and never two, which is the whole
+# layout rule.
+#
+# Created on first use rather than up front, so a job that writes nothing leaves
+# no empty directories behind.
+set_path <- function(kind, file) {
+  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+
+# `hm` reads the `hz` fit through this and writes its own model back, both by
+# set, so a model can never be filed against a different set than the shapes it
+# was built on. The write is in the `save` chunk at the foot of this file.
+```
+## Cohort
+
+<!-- EDIT: this chunk, choosing ONE of the two shapes below.
+
+     The distinction is whether the rows this job analyses are the whole study
+     or a subset of it, and it is not cosmetic. `_study.yml` records the STUDY
+     cohort, derived from the whole built dataset. A job that analyses a
+     filtered subset has a different N, and `assert_cohort()` will gate the
+     wrong number — it will pass while the job runs on a cohort nobody checked.
+
+     Shape A — the job analyses the whole study cohort. Use the package data
+     contract, and the gate is `assert_cohort()`.
+
+     Shape B — the job analyses a filtered subset (an availability flag, a
+     procedure subgroup). `read_built()` still reads the data, but the filter
+     and the gate are the JOB's, and the expected counts come from the SAS
+     reference rather than from `_study.yml`. -->
+
+```{r}
+#| label: cohort
+# ---- Shape A: whole-study cohort ------------------------------------------
+d <- read_built()
+assert_cohort(d)
+cc <- cohort_counts(d)
+
+# ---- Shape B: filtered job cohort -----------------------------------------
+# EDIT: delete Shape A above and uncomment this, supplying the filter and the
+# counts the SAS reference reports. Do NOT reuse assert_cohort(): it checks
+# _study.yml, which describes the whole study and not this job.
+#
+# d <- read_built()
+# d <- d[!is.na(d$<flag>) & d$<flag> == 1, , drop = FALSE]
+# EXPECTED <- list(n = <N>, n_events = <E>, n_censored = <C>)
+# cc <- list(n          = nrow(d),
+#            n_events   = sum(d[[STATUS]] == 1, na.rm = TRUE),
+#            n_censored = nrow(d) - sum(d[[STATUS]] == 1, na.rm = TRUE))
+# if (!identical(lapply(cc, as.integer), lapply(EXPECTED, as.integer))) {
+#   stop("Cohort gate FAILED: expected ", paste(unlist(EXPECTED), collapse = "/"),
+#        ", got ", paste(unlist(cc), collapse = "/"),
+#        ". The analysis must not run on an unreconciled cohort.", call. = FALSE)
+# }
+
+knitr::kable(data.frame(
+  quantity = c("n_analysable", "n_events", "n_censored"),
+  n        = c(cc$n, cc$n_events, cc$n_censored)
+))
+```
+
+A rendered report is itself evidence the gate passed. Report the counts anyway —
+a gate that passes silently tells the reader nothing about what it passed on.
+
+**An event flag that is 0/1 in SAS may arrive as `logical`**, because
+`read_clinical_data()` infers binary columns as logical while `Surv()` requires
+a numeric status. The `as.numeric()` coercions below are not decoration — and
+see the covariate audit above for the same problem on the covariate side, where
+it changes the model rather than erroring.
+```{r}
+#| label: numderiv-gate
+# numDeriv is a Suggests of TemporalHazard, not a hard dependency. Without it,
+# interval- or left-censored multiphase fits SILENTLY produce no standard
+# errors: the fit succeeds, `converged` is TRUE, and vcov() is simply absent.
+# A model with forty covariates and no standard errors is not a smaller result,
+# it is a different one -- so this is a hard stop.
+if (!requireNamespace("numDeriv", quietly = TRUE)) {
+  stop("numDeriv is not installed. Interval-censored multiphase fits will ",
+       "produce no standard errors, and will not tell you so. Install it ",
+       "before reading anything below.", call. = FALSE)
+}
+```
+
+## Covariates
+
+The covariate blocks are **read out of the SAS job**, not transcribed. A
+transcribed list drifts from the job it claims to reproduce and nothing catches
+it. Only the names are taken: the `name=value` coefficients in a block are the
+*other* study's answers and must not be inherited by a copy of it.
+
+```{r}
+#| label: vars
+# EDIT: your time, event and interval-censoring variables -- SAS `time`,
+# `event`, and the flag named by `icensor X=`.
+TIME   <- "iu_dead"
+EVENT  <- "idead"
+
+# EDIT: the SAS job to read the candidate blocks from, and the macro inside it
+# that holds the model. Naming the MACRO matters: a job commonly defines
+# several, and they do not agree.
+#
+# ⚠️ A macro can be defined and never invoked. One real job carries a `%final`
+# whose variable list is another study's variables entirely, pasted in and left
+# there; the `.lst` shows only the macro that ran. Read the `.sas` and check
+# which macro is actually called before naming it here.
+SAS_JOB   <- c("analyses", "hm.dead.sas")
+SAS_MACRO <- "^\\s*%macro\\s+model\\s*;"
+```
+
+```{r}
+#| label: covariates
+sas_lines <- readLines(do.call(sas_path, as.list(SAS_JOB)), warn = FALSE)
+
+# EDIT: your phase-block markers. A SAS hazard model offers candidates per
+# phase, and the blocks need not be identical.
+COVARIATES <- list(
+  early = sas_variable_block(sas_lines, "^\\s*early\\s*$", after = SAS_MACRO,
+                             what = "early covariate block"),
+  late  = sas_variable_block(sas_lines, "^\\s*late\\s*$",  after = SAS_MACRO,
+                             what = "late covariate block")
+)
+
+knitr::kable(data.frame(
+  phase     = names(COVARIATES),
+  n         = vapply(COVARIATES, length, integer(1)),
+  variables = vapply(COVARIATES, paste, character(1), collapse = ", "),
+  row.names = NULL
+))
+```
+
+### What these columns are, before they become covariates
+
+`vars.sas` is commonly called with `%vars(missing=1, impute=1)`: it
+**mean-imputes** missing values and adds a paired `ms_*` indicator, which is
+why `ms_*` variables are themselves covariates in these models. So a 0/1
+clinical variable arrives carrying three distinct values — 0, 1, and the cohort
+mean. One real column's third value is `0.714`, the prevalence of hypertension,
+not any patient's status.
+
+In SAS these are numeric and enter **linearly**. Read into R they arrive as
+**factors**, and a factor in a model formula is dummy-coded — which makes "this
+value was imputed" its own category with its own coefficient. **That is a
+different model, with a different parameter count, and nothing in the output
+would say so.**
+
+```{r}
+#| label: audit
+audit <- covariate_audit(d, unlist(COVARIATES))
+knitr::kable(audit, row.names = FALSE,
+             caption = "Covariate storage and the conversion applied")
+
+# Fail rather than fit a model whose covariates are not what the job specifies.
+if (any(grepl("^ERROR", audit$action))) {
+  stop("covariate_audit() reports ERROR for: ",
+       paste(audit$variable[grepl("^ERROR", audit$action)], collapse = ", "),
+       ". Resolve these before fitting.", call. = FALSE)
+}
+
+dd <- covariates_to_numeric(d, unlist(COVARIATES))
+```
+
+**A factor left as a factor is dummy-coded on purpose** — the right outcome for
+a genuinely categorical variable and the wrong one for a mean-imputed binary.
+The `action` column is where that decision is visible; check it before reading
+any coefficient.
+
+```{r}
+#| label: collinear
+# What concept grouping structurally CANNOT catch. Grouping works on
+# transformations; two candidates that are the same information under unrelated
+# names share no affix relationship and are invisible to it.
+#
+# `male` and `female` are the case that got through a real screen: exact
+# complements, both offered, and 101 of 500 replicates selected BOTH. A design
+# holding both is singular, and nothing in the output said so.
+collinear <- pool_collinear_pairs(dd, unlist(COVARIATES))
+if (nrow(collinear)) {
+  knitr::kable(collinear, row.names = FALSE, digits = 4,
+               caption = "Candidate pairs at |r| >= 0.99")
+} else {
+  knitr::kable(data.frame(result = "no candidate pair reaches |r| = 0.99"))
+}
+```
+
+An exact `complement` is a coding duplicate and one of the pair should simply
+not be a candidate. A high correlation between genuinely different measurements
+is a judgement call about what the model can identify — make it here, not after
+reading a coefficient.
+
+## Phases
+
+```{r}
+#| label: phases
+# The shape values come from the companion hz job, NOT from a literal. This is
+# what "builds on the HZ fit" means concretely: SAS holds the shapes with
+# `fixthalf fixnu fixm fixeta` while it screens covariates.
+hz_art <- readRDS(set_path("estimates", "hz.rds"))
+hz_fit <- hz_art$deterministic
+
+# EDIT: the shape/scale parameter names your phase specification produces.
+# Named explicitly so that anything else in coef() is a covariate -- including
+# a dummy column, which would otherwise be silently counted as a shape.
+SHAPE_PARAMS <- c("early.log_mu", "early.log_t_half", "early.nu", "early.m",
+                  "late.log_mu", "late.log_tau", "late.gamma", "late.alpha",
+                  "late.eta")
+
+# `fixed` is what makes stage 1 stage 1: shapes held, covariates free.
+make_phases <- function(hold_shapes) {
+  p <- hz_art$phases
+  if (!hold_shapes) return(p)
+  lapply(p, function(ph) {
+    ph$fixed <- unique(c(ph$fixed, setdiff(names(ph$par), ph$fixed)))
+    ph
+  })
+}
+knitr::kable(data.frame(
+  parameter = names(coef(hz_fit)),
+  from_hz   = unname(coef(hz_fit))
+), digits = 6, caption = "Shape parameters inherited from the hz job")
+```
+
+## Fitting
+
+### Two stages, and why it is not one
+
+Fitting the shapes and forty covariates together **from a neutral start lands in
+the wrong basin, and reports `converged = TRUE` while doing it.** The stages
+below mirror what the SAS job itself does: it fixes the shapes for selection and
+frees them only for the final fit.
+
+Stage 1 holds the shapes at the `hz` fit and fits the covariates. Stage 2 frees
+the shapes, starting from stage 1. **The comparison is reported, not assumed.**
+
+`n_starts > 1` perturbs its restarts randomly, so the fit is not reproducible
+without a seed. The RNG state is saved and restored, so seeding this document
+does not change random behaviour downstream of it.
+
+```{r}
+#| label: fit
+old_seed <- if (exists(".Random.seed", .GlobalEnv)) .GlobalEnv$.Random.seed else NULL
+set.seed(20260827)   # any fixed value; it must not change between renders
+
+# EDIT: your covariate formula, and conserve = FALSE if the SAS final model
+# carries `noconserve`.
+rhs <- paste(unique(unlist(COVARIATES)), collapse = " + ")
+form <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ ", rhs))
+
+ctl1 <- list(n_starts = 5, maxit = 2000, conserve = FALSE)
+ctl2 <- list(n_starts = 1, maxit = 5000, conserve = FALSE)
+
+stage1 <- suppressWarnings(
+  hazard(form,
+         data = dd,
+         dist = "multiphase",
+         phases = make_phases(TRUE),
+         fit = TRUE,
+         control = ctl1)
+)
+
+stage2 <- suppressWarnings(
+  hazard(form,
+         data = dd,
+         dist = "multiphase",
+         phases = make_phases(FALSE),
+         theta = stage1$fit$theta,
+         fit = TRUE,
+         control = ctl2)
+)
+
+if (!is.null(old_seed)) .GlobalEnv$.Random.seed <- old_seed
+```
+
+```{r}
+#| label: stages
+se_of <- function(f) {
+  v  <- vcov(f)
+  dg <- if (is.matrix(v)) diag(v) else rep(NA_real_, length(coef(f)))
+  # A non-positive-definite Hessian can put NEGATIVE numbers on the diagonal.
+  # sqrt() of one is NaN, which prints as a blank cell and reads as "not
+  # applicable" rather than "this variance is impossible". Make it NA, and
+  # count them.
+  stats::setNames(sqrt(ifelse(is.finite(dg) & dg >= 0, dg, NA_real_)),
+                  names(coef(f)))
+}
+free_of <- function(f) names(coef(f))[!as.logical(f$fit$fixed_mask)]
+
+stages <- data.frame(
+  stage       = c("1: shapes fixed at hz", "2: shapes freed from stage 1"),
+  converged   = c(stage1$fit$converged, stage2$fit$converged),
+  objective   = c(stage1$fit$objective, stage2$fit$objective),
+  # CHARACTER, not numeric: rcond is often ~1e-6 here, and kable's `digits`
+  # rounds a numeric column, so two different condition numbers both print as
+  # "1e-06" and the comparison this table exists for silently disappears.
+  rcond       = format(c(stage1$fit$rcond, stage2$fit$rcond),
+                       digits = 3, scientific = TRUE),
+  pd          = c(stage1$fit$pd, stage2$fit$pd),
+  free_params = c(length(free_of(stage1)), length(free_of(stage2))),
+  free_without_se = c(sum(is.na(se_of(stage1)[free_of(stage1)])),
+                      sum(is.na(se_of(stage2)[free_of(stage2)])))
+)
+knitr::kable(stages, digits = 6)
+
+# Named explicitly rather than left to stopifnot(), whose message is the failed
+# expression. In a rendered report the reader is not looking at this source,
+# and "isTRUE(stage1$fit$converged) is not TRUE" tells them nothing they can
+# act on.
+failed <- stages$stage[!vapply(list(stage1, stage2),
+                               function(f) isTRUE(f$fit$converged), logical(1))]
+if (length(failed)) {
+  stop("These stages did not converge: ", paste(failed, collapse = "; "),
+       ". Every estimate below would be read off a fit that never settled. ",
+       "Check the shape parameters inherited from the hz job, and whether the ",
+       "covariate set is identifiable on this cohort.", call. = FALSE)
+}
+
+cov_names <- setdiff(names(coef(stage1)), SHAPE_PARAMS)
+delta <- abs(coef(stage1)[cov_names] - coef(stage2)[cov_names])
+knitr::kable(data.frame(
+  objective_gain_from_freeing_shapes = stage2$fit$objective - stage1$fit$objective,
+  max_abs_covariate_change           = max(delta),
+  changed_by_more_than_0.01          = sum(delta > 0.01)
+), digits = 6)
+```
+
+**Read the two tables together before choosing which fit to report.** Freeing
+the shapes can gain almost nothing in objective, move no covariate materially,
+and still turn `pd` from `TRUE` to `FALSE` while leaving shape parameters with
+no standard error — in which case the shapes were already at their optimum and
+freeing them buys nothing and costs the covariance.
+
+Reporting stage 1 in that case is a **deliberate divergence** from the SAS
+`%final`, which frees them. It is legitimate when the table above is the
+evidence for it. If `free_without_se` is 0 for stage 2 and `pd` is `TRUE`,
+prefer stage 2.
+
+```{r}
+#| label: reported
+reported <- stage1   # EDIT: stage2 if the table above favours it
+```
+
+## Estimates
+
+```{r}
+#| label: estimates
+cf <- coef(reported)
+se <- se_of(reported)
+cov_names <- setdiff(names(cf), SHAPE_PARAMS)
+
+# The IQR of each covariate AS FITTED -- from dd, after conversion, so it is
+# the spread of the numbers that actually entered the model rather than of the
+# column as stored.
+iqr_of <- function(v) {
+  x <- dd[[sub("^[^.]*[.]", "", v)]]
+  if (is.null(x) || !is.numeric(x)) return(NA_real_)
+  unname(diff(stats::quantile(x, c(0.25, 0.75), na.rm = TRUE)))
+}
+iqr <- vapply(cov_names, iqr_of, numeric(1))
+
+est <- data.frame(
+  parameter = cov_names,
+  estimate  = unname(cf[cov_names]),
+  se        = unname(se[cov_names]),
+  iqr       = unname(iqr),
+  # NA, not 1, on a degenerate IQR: exp(0) is 1 and would read as "no effect"
+  # rather than "this scaling does not apply here".
+  hr_per_iqr = unname(ifelse(is.finite(iqr) & iqr > 0,
+                             exp(cf[cov_names] * iqr), NA_real_)),
+  row.names = NULL
+)
+knitr::kable(est[order(-abs(est$estimate)), ], digits = 6, row.names = FALSE)
+
+missing_se <- sum(is.na(est$se))
+if (missing_se > 0) {
+  knitr::kable(data.frame(
+    warning = paste(missing_se, "covariate(s) have NO standard error.",
+                    "The Hessian is not positive-definite in those directions.")
+  ))
+}
+```
+
+## Selection
+
+The covariates above were taken as given. The SAS job's `%model` macro derives
+them by forward selection, which is a long job and is run from a companion
+script rather than inline.
+
+⚠️ **`hzr_stepwise()`'s defaults are not SAS's.** `slentry = 0.3` and
+`slstay = 0.2` against a typical `sle = 0.1`, `sls = 0.07`. Accepting the R
+defaults runs a **different screen** from the job being reproduced, admits more
+variables, and does not error.
+
+⚠️ **The default `criterion = "score"` has a known defect**
+([temporal_hazard#130](https://github.com/ehrlinger/temporal_hazard/issues/130)):
+it declines the strongest candidates, because the observed information goes
+indefinite at `beta = 0`. Consider `"wald"`, and say which you used.
+
+```{r}
+#| label: selection
+# EDIT: the levels from YOUR .sas `selection` statement, and the path your
+# companion runner writes to.
+SLENTRY   <- 0.1     # SAS sle=
+SLSTAY    <- 0.07    # SAS sls=
+MAX_STEPS <- 50L     # SAS maxsteps=
+sel_rds   <- set_path("estimates", "hm-selection.rds")
+
+if (!file.exists(sel_rds)) {
+  not_run <- data.frame(
+    selection = "not run",
+    how       = paste("Run the companion selection script, which writes",
+                      basename(sel_rds)),
+    slentry   = SLENTRY,
+    slstay    = SLSTAY,
+    max_steps = MAX_STEPS
+  )
+  knitr::kable(not_run)
+} else {
+  sel <- readRDS(sel_rds)
+  summary_tbl <- data.frame(
+    slentry        = sel$slentry,
+    slstay         = sel$slstay,
+    max_steps      = sel$max_steps,
+    steps_taken    = nrow(sel$steps),
+    stopped_on_cap = sel$hit_cap
+  )
+  keep <- intersect(c("step_num", "action", "variable", "phase",
+                      "p_value", "logLik", "n_coef"), names(sel$steps))
+  # print() BOTH. Only the last expression of a block is auto-printed, so a
+  # kable() that is not the final line computes a table and discards it -- the
+  # chunk runs, reports no error, and the table is simply absent.
+  print(knitr::kable(summary_tbl,
+                     caption = "Forward selection, from the companion runner"))
+  print(knitr::kable(sel$steps[, keep], row.names = FALSE, digits = 6,
+                     caption = "Selection path"))
+}
+```
+
+```{r}
+#| label: selection-monotone
+# A forward selection cannot legitimately LOWER the log-likelihood: adding a
+# term to a nested model can only improve the maximised likelihood. If it
+# drops, the post-entry REFIT landed in a worse optimum than the model it
+# started from -- which happens when collinear transformations of one variable
+# enter in succession -- and every step after that is built on it.
+#
+# The screen reports p = 0.000 for those entries either way, so this is the
+# only place a reader would find out.
+if (file.exists(sel_rds)) {
+  sel <- readRDS(sel_rds)
+  # A screen that admitted nothing is a real outcome, not a broken run: it says
+  # no candidate cleared the entry level. Report that and skip the check, since
+  # which.max() on an empty vector is integer(0) and data.frame() then fails
+  # with "arguments imply differing number of rows" -- an error about the
+  # REPORT, in a job whose actual finding is that nothing entered.
+  if (nrow(sel$steps) == 0L) {
+    knitr::kable(data.frame(
+      steps = 0L,
+      note  = paste("No variable entered the model, so there is no path to",
+                    "check. Monotonicity skipped.")
+    ))
+  } else if ("logLik" %in% names(sel$steps)) {
+    dropped <- c(FALSE, diff(sel$steps$logLik) < -1e-6)
+    mono <- data.frame(
+      steps                 = nrow(sel$steps),
+      steps_lowering_loglik = sum(dropped),
+      best_loglik_at_step   = which.max(sel$steps$logLik),
+      loglik_at_last_step   = sel$steps$logLik[nrow(sel$steps)],
+      best_loglik           = max(sel$steps$logLik)
+    )
+    print(knitr::kable(mono, digits = 3,
+                       caption = "Is the selection path monotone?"))
+    if (any(dropped)) {
+      warning("The selection path lowers the log-likelihood at step(s) ",
+              paste(which(dropped), collapse = ", "),
+              ". Those entries left the model worse than before them; the ",
+              "variable list is not a nested improvement and must not be read ",
+              "as one.", call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: selection-crowding
+# How much of the step budget went to a concept the model already had.
+#
+# The monotonicity check above catches the SYMPTOM of collinear forms entering
+# in succession (a log-likelihood that drops). This reports the CAUSE, and it
+# fires whether or not the likelihood misbehaved. A step budget is shared, so a
+# slot spent on a second form of a concept already in the model is a slot no
+# other variable could have -- and when the screen also stopped ON the cap, the
+# two facts together say the model is budget-limited BY REDUNDANCY.
+#
+# Grouping is conservative by construction, so this is a FLOOR: a concept
+# nobody listed is still counted as separate variables. It understates and
+# never overstates.
+if (file.exists(sel_rds)) {
+  sel <- readRDS(sel_rds)
+  al  <- if (is.null(sel$concept_aliases)) character(0) else sel$concept_aliases
+  cr  <- selection_crowding(sel$selected, aliases = al)
+  redundant <- if (nrow(cr)) sum(cr$n_forms) - nrow(cr) else 0L
+  crowding <- data.frame(
+    selected         = length(sel$selected),
+    crowded_concepts = nrow(cr),
+    redundant_slots  = redundant
+  )
+  print(knitr::kable(crowding,
+                     caption = "Concept crowding among the selected covariates"))
+  if (nrow(cr)) print(knitr::kable(cr, row.names = FALSE))
+}
+```
+
+## Calibration
+
+The model's coefficients say which factors matter. **They do not say whether the
+model is right.** The SAS job answers that with `%deciles`: group patients by
+predicted risk and compare observed against expected within each group.
+
+```{r}
+#| label: calibration
+# EDIT: the horizon, in the time unit of TIME. SAS: %deciles(..., time=10).
+DECILE_TIME <- 10
+
+dec <- hzr_deciles(reported, time = DECILE_TIME, groups = 10)
+
+# print(), NOT knitr::kable(). The print method carries the OVERALL chi-square,
+# its degrees of freedom and its p value -- the one number that answers "does
+# this model calibrate" -- and kable() renders only the per-group data frame,
+# dropping it silently.
+print(dec)
+```
+
+A group where observed and expected diverge is a region of risk the model gets
+wrong, and it is invisible in a coefficient table.
+
+```{r}
+#| label: gof
+# The parametric fit against the actuarial estimate over the whole follow-up,
+# rather than at one horizon. This is the nearest available equivalent to the
+# SAS `%check` step, which refits with `maxsteps=0` to compute Q-statistics for
+# factors the screen may have overlooked -- that statistic has no R equivalent
+# yet, so this checks the FIT rather than the omitted variables. Stated, rather
+# than presented as the same thing.
+gof <- hzr_gof(reported)
+knitr::kable(utils::tail(gof[, intersect(c("time", "km_surv", "par_surv",
+                                           "cum_observed", "cum_expected",
+                                           "residual"), names(gof))], 10),
+             row.names = FALSE, digits = 5,
+             caption = "Observed vs parametric, last ten event times")
+```
+
+## Save
+
+```{r}
+#| label: save
+# `hs` builds patient-level predictions from this model and `bh` bootstraps
+# this screen, both by set.
+saveRDS(list(reported = reported, stage1 = stage1, stage2 = stage2,
+             covariates = COVARIATES, audit = audit, deciles = dec),
+        set_path("estimates", "hm.rds"))
+```
