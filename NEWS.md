@@ -1,3 +1,55 @@
+# hvtiRtemplates 1.0.7
+
+## New features
+
+- **`graphs/06.01-hp.qmd`** — the nomogram and hazard figures, replacing a SAS
+  `HAZPRED` job and the figure jobs over it (#8). Scaffold with
+  `new_job("hp", <endpoint>, <type>)`. Design:
+  `specs/2026-08-27-hp-template-design.md`.
+
+  `hp` **reads** its inputs rather than recomputing them — the `ac` life table
+  and the `hz` fit, both by set. A job that recomputes its upstream can
+  silently disagree with it.
+
+  ⚠️ **Two settings are silently wrong if omitted**, both decoded from the
+  `HAZPRED` source during parity work:
+
+  - **`CLEVEL` defaults to `0.68268948`** — one standard deviation, **not**
+    95%. It is exactly `pnorm(1) - pnorm(-1)`. `%kaplan` uses the same
+    convention (`T_ALPHA = 1`), so the `ac` life table's limits are also a ~68%
+    band. That collides in `hp` specifically, because `hp` is where both bands
+    are drawn on one figure: internally consistent, and misread by anyone
+    taking either for 95%. On the same fit and grid the 95% band measures
+    **1.97× the width** of the SAS default. The template labels the coverage in
+    the caption.
+  - **Survival limits are formed on the `logit` scale.** `predict.hazard()`
+    defaults to `"log-log"`, so `conf.type = "logit"` must be passed
+    explicitly. Omitting it does not error — it shifts every limit.
+
+  Two grids, not one, and **two independent horizons**: a sparse irregular
+  **reporting** grid for the nomogram table, and a dense **log-spaced**
+  plotting grid for the curves. Tabulating to 10 years while plotting to 3 is a
+  normal thing to want, and SAS sets its plotting maximum as its own literal —
+  so `t_max` is its own value rather than derived from the reporting grid.
+  `followup-gate` checks both. A linear grid
+  to the last event time under-resolves the early phase, which is where the
+  action is. A wrong grid does not error; it produces a plausible nomogram.
+
+  `followup-gate` warns when either horizon runs past the end of follow-up — a
+  parametric model returns a number at any horizon asked of it, and nothing
+  else marks that as extrapolation. The bound is computed over the **rows the
+  fit used**, because `hz` drops rows missing either time or event and a
+  max() over everything would overstate follow-up, making the guard under-warn.
+
+  `fig-phases` asserts the components sum to `total`, since otherwise it is not
+  a decomposition, and derives the component list from what `predict()` returns
+  rather than naming early/late — so a three-phase model needs no edit.
+
+## Internal
+
+- `.lintr` gains a file entry for the new template, per the note in that file
+  that a directory key would silently disable every linter on the path.
+
 # hvtiRtemplates 1.0.6
 
 ## New features
