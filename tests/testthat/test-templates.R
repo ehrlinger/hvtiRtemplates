@@ -117,12 +117,10 @@ test_that("every template carries an edit-guard chunk", {
 test_that("no template writes the edit marker token literally", {
   # A regression test for a trap that is invisible on inspection. Quarto knits
   # through an intermediate and knitr::current_input() returns THAT file, so a
-  # guard scanning it reads its own chunk too. A guard written the obvious way
-  # --
-  #     grep("<token>", src, fixed = TRUE)
-  # -- matches its own source line and fires on every render, finished or not.
-  # Measured when the guard was written: a probe found three markers in a file
-  # containing two.
+  # guard scanning it reads its own chunk too. A guard that searches for the
+  # token as a bare string literal therefore matches its OWN source line, and
+  # fires on every render, finished or not. Measured when the guard was
+  # written: a probe found three markers in a file containing two.
   #
   # So the token must be constructed, e.g. paste0("ED", "IT", ":"), and no
   # template may contain the literal outside a genuine marker. A genuine marker
