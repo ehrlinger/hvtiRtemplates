@@ -363,10 +363,89 @@ not exist.
 | `%hazplot(...)` goodness-of-fit suite | `hz.dead.sas:94` | **no R counterpart.** The R chain checks parity against printed estimates; it runs no GOF diagnostics. |
 | Fit 2 → `est.hzdead_fem` | `hz.dead.sas:110-122` | fitted in R as the `noconserve` sensitivity, but **not** ported as the covariate model it actually is (`early female; late female;`). Nothing reads it. |
 | Nomogram CI columns | `hz.dead.lst` (`_CLLSURV`/`_CLUSURV`, `_CLLHAZ`/`_CLUHAZ`) | **parsed then discarded.** 32 more printed values the parity job reads and does not check. Pinning them would test the variance path, not just Λ and h. |
-| Parity for the `ac` job | `ac.dead.lst` | **none.** The life tables are computed and rendered but never compared against SAS's printed ones. `hz` and `hp` are pinned; `ac` is not. |
 | Confidence bands on the figures | `hp.dead.female.sas` (`_CLLSURV`/`_CLUSURV`, `_CLLHAZ`/`_CLUHAZ`) | **dropped.** The R figures plot point estimates only. SAS also picks specific rows for band display (`if female=0 and number in (264, 252, ...)`), which is not reproduced. |
 | Axis ranges | `hp.dead.female.sas:157-182` | **deliberately different.** SAS uses months 0–24 with survival 80–100% and a linear hazard 0–4 %/month. The R figures run to 36 months and use log-y hazard, because the female fit's trough near month 10 is invisible on a linear 0–4 scale. Units match; scales do not. |
 | Grid resolution | same | 1000 points vs SAS's 1001 (`inc=(max-min)/999.9` then an explicit final point). Immaterial for a smooth curve. |
+
+### `ac` parity — added 2026-08-26, and it found a real divergence
+
+`parity/dead-hz-03.01-ac-parity.qmd` compares R's life tables against
+`ac.dead.lst`, across all three tables SAS prints (unstratified, and the two
+under `Stratify by Female`). The table-to-arm mapping is proven rather than
+assumed, as in the `hz` parity job.
+
+**All thirteen compared columns now agree exactly, at the printed precision,
+on every row of all three tables:**
+
+| gated | overall | male | female |
+|---|---|---|---|
+| every SAS life-table column | **650/650** | **351/351** | **325/325** |
+
+⚠️ **Not thirteen independent confirmations.** `cumhaz` is `−log(survival)` in
+the macro itself, and `hazard`/`density`/`life`/`mid_int` are deterministic
+functions of `survival` and `time`; `n_risk`/`n_censor`/`n_event` are cohort
+bookkeeping. The independent agreements are **`survival`, `std_err`, and the
+confidence limits** — the rest follow once those hold and the definitions are
+known.
+
+### ⭐ Every divergence was a difference of DEFINITION, not of data
+
+Five columns initially disagreed. Reading `%kaplan`
+(`/programs/apps/sas/macro.library/kaplan`) identified all five, and each then
+reproduced exactly. **None was a disagreement about the data or the estimator's
+correctness — every one was R and SAS computing a differently-defined
+quantity under the same column name.**
+
+**Confidence limits — a ~68% band, not 95%.** The limits are a logit-scale
+interval back-transformed: `SI_EXACT` reduces to `SE/(S(1−S))`, so
+`CL = expit(logit(S) ∓ T_ALPHA·SI)`. It *was* a transform, just not one of the
+four first tried. And **`T_ALPHA = 1`** — solved from SAS's own printed output
+(implied 0.999988, sd 0.0007, the scatter being 5-dp printing alone). So these
+columns are **±1 standard error**:
+
+| row 1 | lower | upper |
+|---|---|---|
+| SAS `CL_LOWER`/`CL_UPPER` | 0.99470 | 0.99928 |
+| `hzr_kaplan()` 95% | 0.98627 | 0.99972 |
+
+⚠️ **This reaches beyond maze.** preserve_root runs the same macro. Anyone who
+has read a `CL_LOWER`/`CL_UPPER` pair from these listings as a 95% interval —
+in a figure, a table or a manuscript — has read a band about half as wide as
+they thought.
+
+**`hazard`, `density`, `life` — interval quantities keyed to the previous
+EVENT row.** From the macro (lines ~112-128), with `LAG_*` advancing only
+inside `IF &EVENT>0`, so censoring-only rows do not move the lag:
+
+```
+Δt      = t_i − t_(previous event row)
+HAZARD  = log(S_prev / S_i) / Δt        # cumulative-hazard increment, NOT d/(n·w)
+DENSITY = (S_prev − S_i) / Δt
+LIFE    = Σ Δt·(3·S_i − S_prev)/2
+```
+
+An earlier hypothesis in this spec called it "an interval-width convention"
+and guessed an actuarial `d/(n·w)` rate. That was close but wrong on both
+counts: the gap skips censoring-only rows, and `HAZARD` is a log-ratio, not a
+rate. Implemented as written, all four reproduce **50/50 exact**.
+
+⚠️ **One trap worth carrying.** These must be computed from **full-precision**
+`survival` and `time`, never from SAS's printed 5-dp columns. Fed the printed
+values, `HAZARD` scores 2/50 — `log(S_prev/S_i)` for two nearly-equal rounded
+numbers amplifies the rounding enormously. The job comments this.
+
+**`hzr_kaplan()`'s own `hazard`/`density`/`life` and 95% limits are retained in
+the report as non-gated columns**, precisely to keep visible that they are
+*different estimators*, not wrong ones.
+
+⚠️ **Consequence worth carrying:** `hzr_kaplan()` and `%kaplan` agree exactly
+on survival and its standard error. Every other column is **reconcilable but
+not interchangeable** — the definitions are now known and reproduce to the last
+printed digit, but the two packages' same-named columns are different
+quantities. Anything that consumes `hazard`, `density`, `life` or the
+confidence limits from one side while comparing against the other is comparing
+different things, and the confidence-limit case additionally differs in
+coverage (±1 SE against 95%).
 
 ### RESOLVED 2026-08-26 — SAS stopped short on a shallow ridge, and it does not matter
 
