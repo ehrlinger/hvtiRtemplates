@@ -1,3 +1,66 @@
+# hvtiRtemplates 1.0.8
+
+## New features
+
+- **`analyses/04.01-hm.qmd`** — the multivariable hazard model, replacing a SAS
+  `PROC HAZARD` job with a `selection` statement (#8). Scaffold with
+  `new_job("hm", <endpoint>, <type>)`. Design:
+  `specs/2026-08-27-hm-template-design.md`. **Requires hvtiRutilities >=
+  1.1.4**, which ships the candidate-pool helpers it calls.
+
+  Unlike `hz` and `hp`, `hm` had only **one** R exemplar, so its second was a
+  SAS job (`.../dm_nodm/analyses/hm.dead.sas`). That is enough for the gate's
+  purpose — it exists to stop one study's choices being encoded as general, and
+  a SAS job states those choices as plainly as an R one does. It earned its
+  place immediately: it carries a **`%deciles` calibration** step the R
+  exemplar has no equivalent for, and `TemporalHazard` already exports
+  `hzr_deciles()` for it. Without the second exemplar the template would have
+  shipped a model-selection job that never asks whether the model calibrates,
+  and nothing in its output would have looked missing.
+
+  ⚠️ **Two traps specific to this job, both silent:**
+
+  - `hzr_stepwise()`'s defaults are **not** SAS's — `slentry = 0.3` /
+    `slstay = 0.2` against a typical `sle = 0.1` / `sls = 0.07`. Accepting the
+    R defaults runs a different screen from the job being reproduced, admits
+    more variables, and does not error. The template sets them from the `.sas`.
+  - The default `criterion = "score"` has a known defect
+    (temporal_hazard#130): it declines the strongest candidates, because the
+    observed information goes indefinite at `beta = 0`.
+
+  Covariates are **read out of the SAS job** with `sas_variable_block()` rather
+  than transcribed, taking only names — a `name=value` block carries the other
+  study's converged answers. `covariate_audit()` then stops the render rather
+  than fitting a model whose covariates are not what the job specifies, and
+  `pool_collinear_pairs()` reports exact complements like `male`/`female`.
+
+  The fit is **two stages**, mirroring what the SAS job does: shapes held at
+  the `hz` fit while covariates are screened, then freed. Fitting both together
+  from a neutral start lands in the wrong basin and reports `converged = TRUE`
+  while doing it. Which stage is reported is an `EDIT:` decision with the
+  evidence table beside it.
+
+  The calibration chunk uses `print(dec)`, **not** `knitr::kable(dec)`: the
+  print method carries the overall chi-square, its degrees of freedom and its
+  p value — the one number that answers "does this model calibrate" — and
+  `kable()` renders only the per-group frame, dropping it silently.
+
+## Bug fixes
+
+- **`specs/2026-08-21-template-set-layout-design.md` §5 corrected.** It said
+  the ordinal minor is "the next free position within it"; the rule that
+  actually reproduces every shipped ordinal is the prefix's **position among
+  its folder's taxonomy rows**. The two agree for everything templated so far
+  and diverge on the third `analyses` template, where next-free would put `bh`
+  before `hs` and fail the within-folder ordering test in `test-taxonomy.R` —
+  a failure whose only fix is renumbering a shipped template, which §5
+  promises never happens.
+
+## Internal
+
+- `.lintr` gains a file entry for the new template, per the note in that file
+  that a directory key would silently disable every linter on the path.
+
 # hvtiRtemplates 1.0.7
 
 ## New features

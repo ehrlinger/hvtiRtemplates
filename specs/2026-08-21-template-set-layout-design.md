@@ -133,8 +133,18 @@ as much as to the contents.
 
 ## 5. The ordinal
 
-`NN.MM`: major from the taxonomy folder, minor the next free position within it.
-Both parts zero-padded to two digits.
+`NN.MM`: major from the taxonomy folder, minor the prefix's **position among
+that folder's rows** in `hvti_taxonomy()`. Both parts zero-padded to two digits.
+
+> **Corrected 2026-08-27.** This read "minor the next free position within it".
+> The two rules agree for everything templated so far — `ac` and `hz` are the
+> 1st and 2nd `distributions` rows, so both give `03.01` and `03.02` — and
+> nothing had caught the difference. They diverge on the **third** `analyses`
+> template: next-free gives `hm`=04.01, `bh`=04.02, `hs`=04.03, and
+> `order(ordinal)` then disagrees with `order(taxonomy row)`, because `hs`
+> precedes `bh` in the taxonomy. That is a red test in `test-taxonomy.R` whose
+> only fix is renumbering a shipped template, which §5 promises never happens.
+> Positional gives `hm`=04.01, `hs`=04.02, `bh`=**04.06** and cannot collide.
 
 | major | folder |
 |---|---|
