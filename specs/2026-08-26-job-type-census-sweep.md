@@ -67,6 +67,38 @@ That table decided a real design question — `hm`/`hs`/`bh` exist in only one
 study, so they cannot be templated yet and must not be stubbed. It should have
 been one lookup.
 
+> ⚠️ **CORRECTED 2026-08-27. That conclusion was wrong, and the sweep this
+> note specifies is what disproved it.**
+>
+> The table above is accurate about the two directories it counted. The
+> inference drawn from it — that `hm`/`hs`/`bh` exist in only one study
+> *corpus-wide* — was a generalisation from a sample of two, and it was
+> written into `inst/templates/README.md` as a blocking constraint.
+>
+> `hvtiRutilities::job_census()` over the whole of `/studies` —
+> **2,240,570 files**, run server-side 2026-08-27 — measured:
+>
+> | prefix | claimed | measured |
+> |---|---|---|
+> | `hm` | 1 study | **383 studies** |
+> | `bh` | 1 study | **322 studies** |
+> | `hs` | 1 study | **144 studies** |
+>
+> **And the finding is larger than those three rows.** Not one taxonomy
+> prefix anywhere in the corpus sits at a single study — the census's
+> BLOCKED list came back **empty**. The smallest are `bq` at 2 studies and
+> `cp`/`pm` at 5, all past the gate.
+>
+> **So the two-studies gate is open for every prefix the taxonomy
+> documents.** Nothing is waiting on a second exemplar, and nothing ever was.
+> The gate was never the constraint on templating; the constraint was that
+> nobody could answer it at corpus scale.
+>
+> The lesson is the one §1 already argues, sharpened: the cost of the
+> hand-count was not the time it took, it was that its *scope* went
+> unrecorded, so a two-directory answer got quoted as a corpus answer. Run
+> `job-census.R /studies` server-side rather than quoting any per-study count.
+
 **Shape of the work.** Filename-only. No parsing, no `.lst` reading, no
 TemporalHazard dependency. Group by `(prefix, study)`, emit a CSV. The rough
 server-side shape:

@@ -57,10 +57,30 @@ nomograms matched at **22/22** points — 8 survival and 8 hazard on the overall
 fit, plus 7 survival on each per-sex fit. Template extraction for `hz`/`hp` is
 the next piece of work, not blocked on a study count anymore.
 
-`hm`, `hs` and `bh` remain pending: each exists in only one study
-(`preserve_root` has 1, 1 and 2 jobs respectively — 3, 3 and 6 files, since
-each job carries `.sas`/`.lst`/`.log`; `maze/atricure/gender` has none), so their two-studies gate is still closed. `hs` was missing from
-this list before and is added here — its absence read as "templated".
+`hm`, `hs` and `bh` are **not** blocked by the two-studies gate. An earlier
+version of this paragraph said each existed in only one study. That was read
+off a comparison of two directories — `preserve_root` and
+`maze/atricure/gender` — and stated as though it held for the corpus.
+
+A corpus census (`hvtiRutilities::job_census()`, 2026-08-27) over the whole of
+`/studies` — **2,240,570 files** across all four top-level trees:
+
+| prefix | claimed | measured |
+|---|---|---|
+| `hm` | 1 study | **383 studies** |
+| `bh` | 1 study | **322 studies** |
+| `hs` | 1 study | **144 studies** |
+
+**No taxonomy prefix anywhere in the corpus sits at one study.** The whole
+"BLOCKED" list is empty. The smallest are `bq` at 2 studies and `cp`/`pm` at 5
+— still past the gate. The two-studies gate is open for every prefix the
+taxonomy documents, and nothing is waiting on a second exemplar.
+
+The two-directory counts were accurate about those two directories; the
+inference from them was not. **Do not quote a per-study count as a gate
+answer** — run `job-census.R /studies` server-side, which is what the gate
+question is for. `hs` was missing from this list before it was corrected, and
+its absence read as "templated".
 
 ## Editing a scaffolded job
 
