@@ -84,9 +84,17 @@ if (!is.null(.cur)) {
       paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
       "\nA job that still contains one has not been finished. Work each ",
       "marker and delete it.\nTo render a partly-worked draft anyway, set ",
-      "HVTI_TEMPLATE_DRAFT=1 -- the report then carries a draft banner."
+      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
+      "draft banner. Any other value, including 0, leaves this guard strict."
     )
-    if (nzchar(Sys.getenv("HVTI_TEMPLATE_DRAFT"))) {
+    # Only the documented values enable draft mode. nzchar() alone would treat
+    # HVTI_TEMPLATE_DRAFT=0 as ON, silently downgrading this stop() to a
+    # warning for someone whose shell profile sets it to 0 meaning OFF -- a
+    # switch whose enablement does not mean what it says, which is the same
+    # defect this guard exists to catch. An unrecognised value falls through to
+    # strict on purpose: the author then sees the stop and re-reads the docs,
+    # which is the safe direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
       # The banner is not optional. A draft render that looks like a finished
       # one is the same defect with an extra step: the warning scrolls past in
       # a log, while the .html is the artifact that gets sent to someone.

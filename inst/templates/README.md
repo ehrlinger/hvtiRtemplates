@@ -104,6 +104,11 @@ To render a partly-worked job while drafting, set `HVTI_TEMPLATE_DRAFT=1`:
 HVTI_TEMPLATE_DRAFT=1 quarto render <endpoint>-<type>-03.01-ac.qmd
 ```
 
+`1`, `true` and `yes` enable it, case-insensitively. **Any other value leaves
+the guard strict**, `0` included — a variable set to `0` meaning "off" must not
+switch the guard off by being non-empty, and an unrecognised value fails toward
+the stop so the author sees it rather than getting a quiet draft.
+
 The guard then warns instead of stopping, **and the report carries a DRAFT
 banner naming the unresolved markers**. The banner is deliberate: a draft render
 that looks like a finished one is the same defect with an extra step, and the

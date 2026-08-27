@@ -22,7 +22,9 @@
   instead of stopping and the report carries a DRAFT banner listing the
   unresolved markers. It is an environment variable rather than a YAML
   parameter on purpose: a parameter lives in the file, so it would be
-  committed and forgotten, re-opening the hole this closes.
+  committed and forgotten, re-opening the hole this closes. `1`, `true` and
+  `yes` enable it; any other value, `0` included, leaves the guard strict, so
+  a variable set to `0` meaning "off" cannot switch it off by being non-empty.
 
 ## Internal
 
