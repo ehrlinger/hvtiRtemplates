@@ -470,7 +470,19 @@ stages <- data.frame(
                       sum(is.na(se_of(stage2)[free_of(stage2)])))
 )
 knitr::kable(stages, digits = 6)
-stopifnot(isTRUE(stage1$fit$converged), isTRUE(stage2$fit$converged))
+
+# Named explicitly rather than left to stopifnot(), whose message is the failed
+# expression. In a rendered report the reader is not looking at this source,
+# and "isTRUE(stage1$fit$converged) is not TRUE" tells them nothing they can
+# act on.
+failed <- stages$stage[!vapply(list(stage1, stage2),
+                               function(f) isTRUE(f$fit$converged), logical(1))]
+if (length(failed)) {
+  stop("These stages did not converge: ", paste(failed, collapse = "; "),
+       ". Every estimate below would be read off a fit that never settled. ",
+       "Check the shape parameters inherited from the hz job, and whether the ",
+       "covariate set is identifiable on this cohort.", call. = FALSE)
+}
 
 cov_names <- setdiff(names(coef(stage1)), SHAPE_PARAMS)
 delta <- abs(coef(stage1)[cov_names] - coef(stage2)[cov_names])
@@ -605,7 +617,18 @@ if (!file.exists(sel_rds)) {
 # only place a reader would find out.
 if (file.exists(sel_rds)) {
   sel <- readRDS(sel_rds)
-  if ("logLik" %in% names(sel$steps)) {
+  # A screen that admitted nothing is a real outcome, not a broken run: it says
+  # no candidate cleared the entry level. Report that and skip the check, since
+  # which.max() on an empty vector is integer(0) and data.frame() then fails
+  # with "arguments imply differing number of rows" -- an error about the
+  # REPORT, in a job whose actual finding is that nothing entered.
+  if (nrow(sel$steps) == 0L) {
+    knitr::kable(data.frame(
+      steps = 0L,
+      note  = paste("No variable entered the model, so there is no path to",
+                    "check. Monotonicity skipped.")
+    ))
+  } else if ("logLik" %in% names(sel$steps)) {
     dropped <- c(FALSE, diff(sel$steps$logLik) < -1e-6)
     mono <- data.frame(
       steps                 = nrow(sel$steps),

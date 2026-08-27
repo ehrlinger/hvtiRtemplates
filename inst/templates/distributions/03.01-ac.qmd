@@ -404,12 +404,8 @@ readable <- function(x) x[, setdiff(names(x), INTERNAL_COLS), drop = FALSE]
 # stratum's curve is NOT a clinical subgroup and must not be read as one. It is
 # a missingness stratum, and a difference between it and the others is evidence
 # about who had the covariate recorded, not about the covariate.
-imputed_levels <- function(x) {
-  lv  <- if (is.factor(x)) levels(x) else unique(as.character(x[!is.na(x)]))
-  num <- suppressWarnings(as.numeric(lv))
-  lv[!is.na(num) & abs(num - round(num)) > 1e-9]
-}
-
+# imputed_levels() is hvtiRutilities' (>= 1.1.4). This file carried a local copy
+# until then; it was identical, so the copy only meant two places to fix.
 UNKNOWN <- "Unknown"
 
 # Stratified fits, one per level, with the level carried on the result so the
