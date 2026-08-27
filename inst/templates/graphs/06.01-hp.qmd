@@ -216,12 +216,19 @@ stopifnot(!is.null(fit), !is.null(km))
      PLOTTING grid: dense and LOG-SPACED, for the curves. SAS uses
        max=log(<max>); min=-8; inc=(max-min)/999.9
      A linear grid to the last event time under-resolves the early phase,
-     which is where the action is. -->
+     which is where the action is.
+
+     ⚠️ The two HORIZONS are independent, and deriving one from the other is a
+     mistake. SAS sets the plotting maximum as its own literal, and a job that
+     tabulates to 10 years while plotting to 3 is a normal thing to want. Tie
+     `t_max` to `max(years)` and editing the table silently redraws every
+     figure over a range nobody chose. -->
 
 ```{r}
 #| label: grid
-years  <- c(30 / 365.2425, 3 / 12, 6 / 12, 1:10)
-t_plot <- exp(seq(-8, log(max(years)), length.out = 1000))
+years <- c(30 / 365.2425, 3 / 12, 6 / 12, 1:10)   # reporting: the table
+t_max <- 3                                        # plotting: the curves
+t_plot <- exp(seq(-8, log(t_max), length.out = 1000))
 ```
 
 ```{r}
@@ -243,16 +250,22 @@ d <- read_built()
 fitted_rows <- !is.na(d[[TIME]]) & !is.na(d[[EVENT]])
 maxfup <- max(as.numeric(d[[TIME]][fitted_rows]))
 
-knitr::kable(data.frame(
-  max_grid_point   = max(years),
-  end_of_follow_up = maxfup,
-  extrapolating    = max(years) > maxfup
-))
+# BOTH horizons are checked. A curve drawn past the end of follow-up is the
+# worse of the two: a table row can be read and discounted one row at a time,
+# while a line looks continuous and supported for its whole length.
+horizons <- data.frame(
+  grid             = c("reporting (table)", "plotting (curves)"),
+  max_horizon      = c(max(years), t_max),
+  end_of_follow_up = maxfup
+)
+horizons$extrapolating <- horizons$max_horizon > maxfup
+knitr::kable(horizons)
 
 # A warning, not a stop: reporting past follow-up is sometimes the deliberate
 # point of a figure. The reader needs to be told, not blocked.
-if (max(years) > maxfup) {
-  warning("The grid extends to ", format(max(years), digits = 4),
+for (i in which(horizons$extrapolating)) {
+  warning("The ", horizons$grid[i], " grid extends to ",
+          format(horizons$max_horizon[i], digits = 4),
           " but follow-up ends at ", format(maxfup, digits = 4),
           ". Points beyond that are extrapolation from the fitted shape, ",
           "not estimates supported by data.", call. = FALSE)

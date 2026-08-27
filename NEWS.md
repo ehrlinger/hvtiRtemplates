@@ -26,12 +26,16 @@
     defaults to `"log-log"`, so `conf.type = "logit"` must be passed
     explicitly. Omitting it does not error — it shifts every limit.
 
-  Two grids, not one: a sparse irregular **reporting** grid for the nomogram
-  table, and a dense **log-spaced** plotting grid for the curves. A linear grid
+  Two grids, not one, and **two independent horizons**: a sparse irregular
+  **reporting** grid for the nomogram table, and a dense **log-spaced**
+  plotting grid for the curves. Tabulating to 10 years while plotting to 3 is a
+  normal thing to want, and SAS sets its plotting maximum as its own literal —
+  so `t_max` is its own value rather than derived from the reporting grid.
+  `followup-gate` checks both. A linear grid
   to the last event time under-resolves the early phase, which is where the
   action is. A wrong grid does not error; it produces a plausible nomogram.
 
-  `followup-gate` warns when the grid runs past the end of follow-up — a
+  `followup-gate` warns when either horizon runs past the end of follow-up — a
   parametric model returns a number at any horizon asked of it, and nothing
   else marks that as extrapolation. The bound is computed over the **rows the
   fit used**, because `hz` drops rows missing either time or event and a
