@@ -30,6 +30,11 @@
   Parity is deliberately **not** in the template: a parity job borrows the
   ordinal of the job it checks and lives in `parity/`.
 
+  The response formula is built **once**, in the `response` chunk, and reused
+  by all three `hazard()` calls, so the Shape A / Shape B choice is made in one
+  place rather than in three literal formulas an author could edit
+  inconsistently.
+
 ## Internal
 
 - `.lintr` gains a file entry for the new template, per the note already in

@@ -57,11 +57,11 @@ suppressPackageStartupMessages({
 # README.md says a job that still contains one has not been finished. This
 # chunk is what makes that TRUE rather than merely stated.
 #
-# Without it an unedited job renders green over a meaningless analysis. The
-# derive chunk below indexes a placeholder column; when that column is absent
-# `!is.na(d$<col>)` is logical(0), and assignment through a zero-length index
-# is a SILENT no-op in R. Every patient keeps the initial category, every
-# stratified estimate is computed over one dummy stratum, and nothing errors.
+# Without it an unedited job renders green over a meaningless analysis. In THIS
+# file the unedited `theta0` is a vector of neutral 1s and the unedited `phases`
+# are all-neutral shapes: that is a well-formed model, so it fits, converges,
+# reports standard errors and saves an .rds for `hp` and `hm` to read. Nothing
+# errors, and nothing in the output says the numbers describe no study.
 #
 # knitr::current_input() is NULL outside a render -- a study author stepping
 # through chunks in RStudio -- and there is no file to scan then, so this is a
@@ -148,9 +148,10 @@ TYPE     <- "hz"
 .current <- knitr::current_input()
 if (!is.null(.current)) {
   # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `...-03.01-ac.rmarkdown` here, not `...-03.01-ac.qmd`. Strip whatever
-  # extension is actually present rather than hard-coding one, so this
-  # doesn't depend on a build-tool detail staying the same.
+  # `<endpoint>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
+  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
+  # rather than hard-coding one, so this doesn't depend on a build-tool detail
+  # staying the same.
   .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
   .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
@@ -383,6 +384,17 @@ stopifnot(all(resp$status %in% c(0, 1)), !anyNA(resp$time))
 # hi   <- ifelse(status_sas == 0, NA,        d$<upper>)
 # resp <- data.frame(lo = lo, hi = hi)
 # knitr::kable(as.data.frame(table(`SAS status` = status_sas)))
+
+# ONE source of truth for the response formula. Every hazard() call below uses
+# it, so the Shape A / Shape B choice above is made once and only once. Three
+# literal formulas would be three chances to edit two of them -- and while the
+# mismatched call usually errors on a missing column, an author who edits all
+# three INCONSISTENTLY gets no such warning.
+surv_formula <- if (all(c("lo", "hi") %in% names(resp))) {
+  Surv(lo, hi, type = "interval2") ~ 1
+} else {
+  Surv(time, status) ~ 1
+}
 ```
 
 ```{r}
@@ -435,9 +447,7 @@ the file alone.
 
 ```{r}
 #| label: fit-deterministic
-# EDIT: the response formula must match the shape chosen above --
-# Surv(time, status) for Shape A, Surv(lo, hi, type = "interval2") for Shape B.
-fit_det <- hazard(Surv(time, status) ~ 1, data = resp, dist = "multiphase",
+fit_det <- hazard(surv_formula, data = resp, dist = "multiphase",
                   phases = phases, theta = theta0, fit = TRUE,
                   control = list(conserve = TRUE, condition = 14,
                                  n_starts = 1, maxit = 2000))
@@ -481,7 +491,7 @@ if (anyDuplicated(probes)) {
        call. = FALSE)
 }
 probe_ll <- vapply(seq_len(nrow(probes)), function(i) {
-  f <- try(hazard(Surv(time, status) ~ 1, data = resp, dist = "multiphase",
+  f <- try(hazard(surv_formula, data = resp, dist = "multiphase",
                   phases = phases, theta = probes[i, ], fit = TRUE,
                   control = list(conserve = TRUE, condition = 14,
                                  n_starts = 1, maxit = 2000)), silent = TRUE)
@@ -508,7 +518,7 @@ confounds the two changes.
 
 ```{r}
 #| label: noconserve
-fit_nc <- hazard(Surv(time, status) ~ 1, data = resp, dist = "multiphase",
+fit_nc <- hazard(surv_formula, data = resp, dist = "multiphase",
                  phases = phases, theta = theta0, fit = TRUE,
                  control = list(conserve = FALSE, condition = 14,
                                 n_starts = 1, maxit = 2000))
