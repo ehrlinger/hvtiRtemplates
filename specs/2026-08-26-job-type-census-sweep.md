@@ -67,6 +67,35 @@ That table decided a real design question — `hm`/`hs`/`bh` exist in only one
 study, so they cannot be templated yet and must not be stubbed. It should have
 been one lookup.
 
+> ⚠️ **CORRECTED 2026-08-27. That conclusion was wrong, and the sweep this
+> note specifies is what disproved it.**
+>
+> The table above is accurate about the two directories it counted. The
+> inference drawn from it — that `hm`/`hs`/`bh` exist in only one study
+> *corpus-wide* — was a generalisation from a sample of two, and it was
+> written into `inst/templates/README.md` as a blocking constraint.
+>
+> `hvtiRutilities::job_census()` over `general` and `vascular` alone —
+> 318,951 files across **250 studies** — measured:
+>
+> | prefix | claimed | measured (lower bound) |
+> |---|---|---|
+> | `hm` | 1 study | **33 studies** |
+> | `bh` | 1 study | **30 studies** |
+> | `hs` | 1 study | **11 studies** |
+>
+> Lower bounds: `cardiac` and `thoracic` were missing from that run, both
+> having hit the invalid-encoding abort fixed in hvtiRutilities 1.1.3. Only
+> `gm` and `rg` sat at one study.
+>
+> **The two-studies gate is open for all three.** They are not waiting on a
+> second exemplar and never were.
+>
+> The lesson is the one §1 already argues, sharpened: the cost of the
+> hand-count was not the time it took, it was that its *scope* went
+> unrecorded, so a two-directory answer got quoted as a corpus answer. Run
+> `job-census.R /studies` server-side rather than quoting any per-study count.
+
 **Shape of the work.** Filename-only. No parsing, no `.lst` reading, no
 TemporalHazard dependency. Group by `(prefix, study)`, emit a CSV. The rough
 server-side shape:

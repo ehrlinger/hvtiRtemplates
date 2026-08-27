@@ -57,10 +57,28 @@ nomograms matched at **22/22** points — 8 survival and 8 hazard on the overall
 fit, plus 7 survival on each per-sex fit. Template extraction for `hz`/`hp` is
 the next piece of work, not blocked on a study count anymore.
 
-`hm`, `hs` and `bh` remain pending: each exists in only one study
-(`preserve_root` has 1, 1 and 2 jobs respectively — 3, 3 and 6 files, since
-each job carries `.sas`/`.lst`/`.log`; `maze/atricure/gender` has none), so their two-studies gate is still closed. `hs` was missing from
-this list before and is added here — its absence read as "templated".
+`hm`, `hs` and `bh` are **not** blocked by the two-studies gate. An earlier
+version of this paragraph said each existed in only one study. That was read
+off a comparison of two directories — `preserve_root` and
+`maze/atricure/gender` — and stated as though it held for the corpus.
+
+A corpus census (`hvtiRutilities::job_census()`, 2026-08-27) measured, over
+`general` and `vascular` alone — 318,951 files across 250 studies:
+
+| prefix | claimed | measured (lower bound) |
+|---|---|---|
+| `hm` | 1 study | **33 studies** |
+| `bh` | 1 study | **30 studies** |
+| `hs` | 1 study | **11 studies** |
+
+Lower bounds because `cardiac` and `thoracic` were absent from that run. Only
+`gm` and `rg` were genuinely at one study.
+
+The two-directory counts were accurate about those two directories; the
+inference from them was not. **Do not quote a per-study count as a gate
+answer** — run `job-census.R /studies` server-side, which is what the gate
+question is for. `hs` was missing from this list before it was corrected, and
+its absence read as "templated".
 
 ## Editing a scaffolded job
 
