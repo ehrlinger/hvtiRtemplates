@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,29 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.7" id="hvtirtemplates-107">hvtiRtemplates 1.0.7<a class="anchor" aria-label="anchor" href="#hvtirtemplates-107"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-0-7">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-7"></a></h3>
+<ul><li>
+<p><strong><code>graphs/06.01-hp.qmd</code></strong> — the nomogram and hazard figures, replacing a SAS <code>HAZPRED</code> job and the figure jobs over it (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold with <code>new_job("hp", &lt;endpoint&gt;, &lt;type&gt;)</code>. Design: <code>specs/2026-08-27-hp-template-design.md</code>.</p>
+<p><code>hp</code> <strong>reads</strong> its inputs rather than recomputing them — the <code>ac</code> life table and the <code>hz</code> fit, both by set. A job that recomputes its upstream can silently disagree with it.</p>
+<p>⚠️ <strong>Two settings are silently wrong if omitted</strong>, both decoded from the <code>HAZPRED</code> source during parity work:</p>
+<ul><li>
+<strong><code>CLEVEL</code> defaults to <code>0.68268948</code></strong> — one standard deviation, <strong>not</strong> 95%. It is exactly <code>pnorm(1) - pnorm(-1)</code>. <code>%kaplan</code> uses the same convention (<code>T_ALPHA = 1</code>), so the <code>ac</code> life table’s limits are also a ~68% band. That collides in <code>hp</code> specifically, because <code>hp</code> is where both bands are drawn on one figure: internally consistent, and misread by anyone taking either for 95%. On the same fit and grid the 95% band measures <strong>1.97× the width</strong> of the SAS default. The template labels the coverage in the caption.</li>
+<li>
+<strong>Survival limits are formed on the <code>logit</code> scale.</strong> <code>predict.hazard()</code> defaults to <code>"log-log"</code>, so <code>conf.type = "logit"</code> must be passed explicitly. Omitting it does not error — it shifts every limit.</li>
+</ul><p>Two grids, not one, and <strong>two independent horizons</strong>: a sparse irregular <strong>reporting</strong> grid for the nomogram table, and a dense <strong>log-spaced</strong> plotting grid for the curves. Tabulating to 10 years while plotting to 3 is a normal thing to want, and SAS sets its plotting maximum as its own literal — so <code>t_max</code> is its own value rather than derived from the reporting grid. <code>followup-gate</code> checks both. A linear grid to the last event time under-resolves the early phase, which is where the action is. A wrong grid does not error; it produces a plausible nomogram.</p>
+<p><code>followup-gate</code> warns when either horizon runs past the end of follow-up — a parametric model returns a number at any horizon asked of it, and nothing else marks that as extrapolation. The bound is computed over the <strong>rows the fit used</strong>, because <code>hz</code> drops rows missing either time or event and a max() over everything would overstate follow-up, making the guard under-warn.</p>
+<p><code>fig-phases</code> asserts the components sum to <code>total</code>, since otherwise it is not a decomposition, and derives the component list from what <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> returns rather than naming early/late — so a three-phase model needs no edit.</p>
+</li>
+</ul></div>
+<div class="section level3">
+<h3 id="internal-1-0-7">Internal<a class="anchor" aria-label="anchor" href="#internal-1-0-7"></a></h3>
+<ul><li>
+<code>.lintr</code> gains a file entry for the new template, per the note in that file that a directory key would silently disable every linter on the path.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.6" id="hvtirtemplates-106">hvtiRtemplates 1.0.6<a class="anchor" aria-label="anchor" href="#hvtirtemplates-106"></a></h2>
 <div class="section level3">
