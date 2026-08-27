@@ -56,11 +56,40 @@
   a failure whose only fix is renumbering a shipped template, which §5
   promises never happens.
 
+- `DESCRIPTION` now requires `hvtiRutilities (>= 1.1.4)`. The old `>= 1.1.1`
+  was correct until this release -- `hz` and `hp` call nothing newer -- so the
+  bound went stale as a side effect of adding a template rather than as an
+  error in its own right. An install satisfying the old bound would have
+  shipped a template whose helpers do not exist, failing at **render** time in
+  a study rather than at install time.
+
+- The `selection-monotone` chunk handles a **zero-step** screen. A screen that
+  admitted nothing is a real outcome -- no candidate cleared the entry level --
+  but `which.max()` on an empty vector is `integer(0)` and the report frame
+  then failed with "arguments imply differing number of rows": an error about
+  the report, in a job whose actual finding is that nothing entered.
+
+- Convergence failure names the stage and what to check, instead of
+  `stopifnot()`'s "isTRUE(stage1$fit$converged) is not TRUE" -- a message that
+  tells a reader of the rendered report nothing they can act on.
+
 ## Internal
 
 - `.lintr` gains a file entry for the new template, per the note in that file
   that a directory key would silently disable every linter on the path.
 
+- New test: the `hvtiRutilities` helpers the templates call must appear in a
+  declared list. It cannot check the version bound directly (CI installs the
+  latest, not the declared minimum), but it makes the **trigger** loud -- a
+  template that starts calling a new helper fails the test, and whoever adds it
+  is standing in the right place to ask whether `DESCRIPTION` needs bumping.
+  The scan reads code chunks only: a test that fires on prose is a test that
+  gets deleted.
+
+- The `03.01-ac` template's local `imputed_levels()` is removed in favour of
+  the `hvtiRutilities` export. The two were identical, and the duplicate
+  arrived only because hvtiRutilities#47 lifted the same function out of the
+  same study.
 # hvtiRtemplates 1.0.7
 
 ## New features
