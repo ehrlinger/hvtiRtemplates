@@ -89,3 +89,27 @@ the markers are placed so that a job which still contains one has not been
 finished. The comments around them record why a choice matters, not merely what
 to type — several exist because the alternative fails quietly rather than
 loudly.
+
+**That property is enforced, not merely stated.** Each template carries an
+`edit-guard` chunk that scans the rendering file and stops if any marker
+remains, listing the ones it found. Until 1.0.5 it was a convention only, and
+an unedited `03.01-ac` rendered green over a meaningless stratification: the
+`derive` chunk indexed a placeholder column, and when a column is absent
+`!is.na(d$<col>)` is `logical(0)`, which makes the assignment a **silent no-op**
+rather than an error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/27)).
+
+To render a partly-worked job while drafting, set `HVTI_TEMPLATE_DRAFT=1`:
+
+```sh
+HVTI_TEMPLATE_DRAFT=1 quarto render <endpoint>-<type>-03.01-ac.qmd
+```
+
+The guard then warns instead of stopping, **and the report carries a DRAFT
+banner naming the unresolved markers**. The banner is deliberate: a draft render
+that looks like a finished one is the same defect with an extra step, and the
+`.html` is what gets sent to someone.
+
+The guard does not catch a marker that was worked *wrongly* — a placeholder
+replaced with a mistyped column name leaves nothing to scan for. That case is
+covered separately, by assertions in `derive_cats()` and against `DERIVED`,
+which fail when a named column is not in the data.

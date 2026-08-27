@@ -46,6 +46,62 @@ suppressPackageStartupMessages({
 })
 ```
 
+```{r}
+#| label: edit-guard
+#| results: asis
+# The markers in this file name work a study author still has to do, and
+# README.md says a job that still contains one has not been finished. This
+# chunk is what makes that TRUE rather than merely stated.
+#
+# Without it an unedited job renders green over a meaningless analysis. The
+# derive chunk below indexes a placeholder column; when that column is absent
+# `!is.na(d$<col>)` is logical(0), and assignment through a zero-length index
+# is a SILENT no-op in R. Every patient keeps the initial category, every
+# stratified estimate is computed over one dummy stratum, and nothing errors.
+#
+# knitr::current_input() is NULL outside a render -- a study author stepping
+# through chunks in RStudio -- and there is no file to scan then, so this is a
+# no-op in that case. Same handling as the `set` guard below, for the same
+# reason.
+#
+# The token is BUILT, not written literally, and that is not stylistic. Quarto
+# knits through an intermediate and current_input() returns THAT file, so the
+# scan reads a copy of this chunk along with everything else: a literal
+# grep("<token>", .src) here matches its own source line, and the guard then
+# fires on every render, finished or not. Measured, not theorised -- a probe
+# found three markers in a file containing two. A guard that cries wolf on a
+# finished job is a guard that gets deleted, which returns us to issue #27.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    # Report the marker TEXT. Line numbers here are the intermediate's, not
+    # this .qmd's, so they need not match what the author sees in an editor.
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
+      "HVTI_TEMPLATE_DRAFT=1 -- the report then carries a draft banner."
+    )
+    if (nzchar(Sys.getenv("HVTI_TEMPLATE_DRAFT"))) {
+      # The banner is not optional. A draft render that looks like a finished
+      # one is the same defect with an extra step: the warning scrolls past in
+      # a log, while the .html is the artifact that gets sent to someone.
+      warning(.msg, call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, call. = FALSE)
+    }
+  }
+}
+```
+
 <!-- The two values below are written by new_job() from the endpoint/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
@@ -183,6 +239,19 @@ decoration.
 #| label: derive
 # EDIT: your study's category derivations, in SAS order.
 derive_cats <- function(d) {
+  # Assert the source columns are present BEFORE deriving. Every condition
+  # below is guarded by !is.na(d$src), and when `src` is absent that guard is
+  # logical(0), so each assignment is a silent no-op: every patient keeps the
+  # initial value, the counts still sum to the cohort, and the render is green
+  # over a single dummy stratum. An absent column must fail here, loudly.
+  .need <- "src_a"                     # EDIT: the source column(s) used below.
+  .miss <- setdiff(.need, names(d))
+  if (length(.miss)) {
+    stop("derive_cats(): source column(s) not in the data: ",
+         paste(.miss, collapse = ", "),
+         ". Edit this chunk for your study before rendering.", call. = FALSE)
+  }
+
   d$cat_a <- 4L
   d$cat_a[!is.na(d$src_a) & d$src_a <  0.00] <- 3L
   d$cat_a[!is.na(d$src_a) & d$src_a < -0.60] <- 2L
@@ -212,6 +281,24 @@ knitr::kable(as.data.frame(table(cat_a = d$cat_a), stringsAsFactors = FALSE))
 
 # EDIT: each derived category and the variable it was derived FROM.
 DERIVED <- c(cat_a = "src_a")
+
+# DERIVED is maintained by hand and can drift from derive_cats() above -- a
+# category renamed there, or a source renamed here. Either way d[[src]] is NULL,
+# every row below comes back empty, and a zero-row table renders quietly beside
+# a derive table showing every patient in one category. The assertion covers
+# both ends: sources must exist in the data, and each derived category must
+# actually have been produced above.
+.miss_src <- setdiff(unname(DERIVED), names(d))
+.miss_cat <- setdiff(names(DERIVED),  names(d))
+if (length(.miss_src) || length(.miss_cat)) {
+  stop("DERIVED does not describe this data. ",
+       if (length(.miss_src))
+         paste0("Source column(s) absent: ", paste(.miss_src, collapse = ", "), ". "),
+       if (length(.miss_cat))
+         paste0("Derived column(s) absent -- not produced by derive_cats(): ",
+                paste(.miss_cat, collapse = ", "), ". "),
+       call. = FALSE)
+}
 
 rng <- function(x) {
   x <- x[!is.na(x)]

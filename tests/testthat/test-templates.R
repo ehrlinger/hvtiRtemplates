@@ -93,3 +93,52 @@ test_that(".template_fields() rejects an unpadded ordinal", {
   expect_true(is.na(hvtiRtemplates:::.template_fields("3.1-ac.qmd")$ordinal))
   expect_true(is.na(hvtiRtemplates:::.template_fields("03.1-ac.qmd")$ordinal))
 })
+
+test_that("every template carries an edit-guard chunk", {
+  # The EDIT: markers are only a convention until something checks them.
+  # README.md claims a job still containing one has not been finished; the
+  # guard chunk in each template is what makes that true. Issue #27: an
+  # unedited job rendered green over a single dummy stratum because the derive
+  # chunk indexed a placeholder column and R treats a zero-length index as a
+  # silent no-op.
+  #
+  # This test is what stops a FUTURE template shipping without the guard.
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+  for (f in tl$file) {
+    src <- readLines(f, warn = FALSE)
+    expect_true(any(grepl("label: edit-guard", src, fixed = TRUE)),
+                info = paste("no edit-guard chunk in", basename(f)))
+    expect_true(any(grepl("HVTI_TEMPLATE_DRAFT", src, fixed = TRUE)),
+                info = paste("edit-guard has no draft escape in", basename(f)))
+  }
+})
+
+test_that("no template writes the edit marker token literally", {
+  # A regression test for a trap that is invisible on inspection. Quarto knits
+  # through an intermediate and knitr::current_input() returns THAT file, so a
+  # guard scanning it reads its own chunk too. A guard written the obvious way
+  # --
+  #     grep("<token>", src, fixed = TRUE)
+  # -- matches its own source line and fires on every render, finished or not.
+  # Measured when the guard was written: a probe found three markers in a file
+  # containing two.
+  #
+  # So the token must be constructed, e.g. paste0("ED", "IT", ":"), and no
+  # template may contain the literal outside a genuine marker. A genuine marker
+  # is followed by prose; the literal inside a grep()/gsub()/pattern argument
+  # is not. This test will look pointless later. It is not: without it the
+  # obvious "cleanup" edit silently makes every finished job unrenderable.
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+  tok <- paste0("ED", "IT", ":")
+  for (f in tl$file) {
+    src <- readLines(f, warn = FALSE)
+    quoted <- grepl(paste0("[\"']", tok), src)
+    expect_false(any(quoted),
+                 info = paste0("template ", basename(f), " contains the marker ",
+                               "token as a string literal at line(s) ",
+                               paste(which(quoted), collapse = ", "),
+                               " -- its guard will match its own source"))
+  }
+})
