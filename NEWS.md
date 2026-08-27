@@ -1,3 +1,42 @@
+# hvtiRtemplates 1.0.6
+
+## New features
+
+- **`distributions/03.02-hz.qmd`** — the multiphase parametric hazard fit,
+  replacing a SAS `PROC HAZARD` job (#8). Scaffold it with
+  `new_job("hz", <endpoint>, <type>)`. Design:
+  `specs/2026-08-27-hz-template-design.md`.
+
+  Extracted from **three** R exemplars — `preserve_root`,
+  `maze/atricure/gender` and `lv_function/survival` — chosen because they
+  disagree. Two seed `theta` from SAS's converged estimates so that any
+  disagreement is about the likelihood rather than about where the search
+  began; the third seeds neutral shapes with the time scale taken from the
+  data, because it has no SAS predecessor to seed from. Both are correct for
+  their own case, so the `start` chunk carries both as Shape A / Shape B, the
+  way the `ac` template's `cohort` chunk already does. From either exemplar
+  alone the template would have made the other case silently wrong.
+
+  Three checks are carried from a single exemplar each, because in every case
+  their absence is silent rather than loud: `numderiv-gate` (without `numDeriv`
+  an interval-censored fit produces **no standard errors and does not say so**
+  — `converged` is `TRUE` and `vcov()` is simply absent); `response-check`
+  (mis-building the response still converges, on a number that is merely
+  wrong); and `conservation-binding` (reporting `Σ Λ(tᵢ)` under both `conserve`
+  settings is the only way to tell "the control did nothing" from "the control
+  had almost nothing to do" — identical in the likelihood column, opposite in
+  meaning).
+
+  Parity is deliberately **not** in the template: a parity job borrows the
+  ordinal of the job it checks and lives in `parity/`.
+
+## Internal
+
+- `.lintr` gains a file entry for the new template, per the note already in
+  that file that a directory key would silently disable every linter on the
+  path. Indentation and brace linting stay **on** for it, and the six lints the
+  first draft produced were fixed rather than exempted.
+
 # hvtiRtemplates 1.0.5
 
 ## Bug fixes

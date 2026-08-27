@@ -47,5 +47,10 @@ exclusions: list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
+    ),
+    "inst/templates/distributions/03.02-hz.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
     )
   )
