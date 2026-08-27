@@ -28,11 +28,13 @@ it.
 ``` r
 template_list()
 #>       name prefix ordinal        folder
-#> 1 03.01-ac     ac   03.01 distributions
-#> 2 03.02-hz     hz   03.02 distributions
-#> 3 06.01-hp     hp   06.01        graphs
+#> 1 04.01-hm     hm   04.01      analyses
+#> 2 03.01-ac     ac   03.01 distributions
+#> 3 03.02-hz     hz   03.02 distributions
+#> 4 06.01-hp     hp   06.01        graphs
 #>                                                                                  file
-#> 1 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.01-ac.qmd
-#> 2 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.02-hz.qmd
-#> 3        /home/runner/work/_temp/Library/hvtiRtemplates/templates/graphs/06.01-hp.qmd
+#> 1      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.01-hm.qmd
+#> 2 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.01-ac.qmd
+#> 3 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.02-hz.qmd
+#> 4        /home/runner/work/_temp/Library/hvtiRtemplates/templates/graphs/06.01-hp.qmd
 ```

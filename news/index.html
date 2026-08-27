@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,9 +39,36 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.0.7" id="hvtirtemplates-107">hvtiRtemplates 1.0.7<a class="anchor" aria-label="anchor" href="#hvtirtemplates-107"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.0.8" id="hvtirtemplates-108">hvtiRtemplates 1.0.8<a class="anchor" aria-label="anchor" href="#hvtirtemplates-108"></a></h2>
 <div class="section level3">
-<h3 id="new-features-1-0-7">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-7"></a></h3>
+<h3 id="new-features-1-0-8">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-8"></a></h3>
+<ul><li>
+<p><strong><code>analyses/04.01-hm.qmd</code></strong> — the multivariable hazard model, replacing a SAS <code>PROC HAZARD</code> job with a <code>selection</code> statement (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold with <code>new_job("hm", &lt;endpoint&gt;, &lt;type&gt;)</code>. Design: <code>specs/2026-08-27-hm-template-design.md</code>. <strong>Requires hvtiRutilities &gt;= 1.1.4</strong>, which ships the candidate-pool helpers it calls.</p>
+<p>Unlike <code>hz</code> and <code>hp</code>, <code>hm</code> had only <strong>one</strong> R exemplar, so its second was a SAS job (<code>.../dm_nodm/analyses/hm.dead.sas</code>). That is enough for the gate’s purpose — it exists to stop one study’s choices being encoded as general, and a SAS job states those choices as plainly as an R one does. It earned its place immediately: it carries a <strong><code>%deciles</code> calibration</strong> step the R exemplar has no equivalent for, and <code>TemporalHazard</code> already exports <code>hzr_deciles()</code> for it. Without the second exemplar the template would have shipped a model-selection job that never asks whether the model calibrates, and nothing in its output would have looked missing.</p>
+<p>⚠️ <strong>Two traps specific to this job, both silent:</strong></p>
+<ul><li>
+<code>hzr_stepwise()</code>’s defaults are <strong>not</strong> SAS’s — <code>slentry = 0.3</code> / <code>slstay = 0.2</code> against a typical <code>sle = 0.1</code> / <code>sls = 0.07</code>. Accepting the R defaults runs a different screen from the job being reproduced, admits more variables, and does not error. The template sets them from the <code>.sas</code>.</li>
+<li>The default <code>criterion = "score"</code> has a known defect (temporal_hazard#130): it declines the strongest candidates, because the observed information goes indefinite at <code>beta = 0</code>.</li>
+</ul><p>Covariates are <strong>read out of the SAS job</strong> with <code>sas_variable_block()</code> rather than transcribed, taking only names — a <code>name=value</code> block carries the other study’s converged answers. <code>covariate_audit()</code> then stops the render rather than fitting a model whose covariates are not what the job specifies, and <code>pool_collinear_pairs()</code> reports exact complements like <code>male</code>/<code>female</code>.</p>
+<p>The fit is <strong>two stages</strong>, mirroring what the SAS job does: shapes held at the <code>hz</code> fit while covariates are screened, then freed. Fitting both together from a neutral start lands in the wrong basin and reports <code>converged = TRUE</code> while doing it. Which stage is reported is an <code>EDIT:</code> decision with the evidence table beside it.</p>
+<p>The calibration chunk uses <code>print(dec)</code>, <strong>not</strong> <code>knitr::kable(dec)</code>: the print method carries the overall chi-square, its degrees of freedom and its p value — the one number that answers “does this model calibrate” — and <code>kable()</code> renders only the per-group frame, dropping it silently.</p>
+</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-0-8">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-8"></a></h3>
+<ul><li><p><strong><code>specs/2026-08-21-template-set-layout-design.md</code> §5 corrected.</strong> It said the ordinal minor is “the next free position within it”; the rule that actually reproduces every shipped ordinal is the prefix’s <strong>position among its folder’s taxonomy rows</strong>. The two agree for everything templated so far and diverge on the third <code>analyses</code> template, where next-free would put <code>bh</code> before <code>hs</code> and fail the within-folder ordering test in <code>test-taxonomy.R</code> — a failure whose only fix is renumbering a shipped template, which §5 promises never happens.</p></li>
+<li><p><code>DESCRIPTION</code> now requires <code>hvtiRutilities (&gt;= 1.1.4)</code>. The old <code>&gt;= 1.1.1</code> was correct until this release – <code>hz</code> and <code>hp</code> call nothing newer – so the bound went stale as a side effect of adding a template rather than as an error in its own right. An install satisfying the old bound would have shipped a template whose helpers do not exist, failing at <strong>render</strong> time in a study rather than at install time.</p></li>
+<li><p>The <code>selection-monotone</code> chunk handles a <strong>zero-step</strong> screen. A screen that admitted nothing is a real outcome – no candidate cleared the entry level – but <code><a href="https://rdrr.io/r/base/which.min.html" class="external-link">which.max()</a></code> on an empty vector is <code>integer(0)</code> and the report frame then failed with “arguments imply differing number of rows”: an error about the report, in a job whose actual finding is that nothing entered.</p></li>
+<li><p>Convergence failure names the stage and what to check, instead of <code><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot()</a></code>’s “isTRUE(stage1<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mi>i</mi><mi>t</mi></mrow><annotation encoding="application/x-tex">fit</annotation></semantics></math>converged) is not TRUE” – a message that tells a reader of the rendered report nothing they can act on.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="internal-1-0-8">Internal<a class="anchor" aria-label="anchor" href="#internal-1-0-8"></a></h3>
+<ul><li><p><code>.lintr</code> gains a file entry for the new template, per the note in that file that a directory key would silently disable every linter on the path.</p></li>
+<li><p>New test: the <code>hvtiRutilities</code> helpers the templates call must appear in a declared list. It cannot check the version bound directly (CI installs the latest, not the declared minimum), but it makes the <strong>trigger</strong> loud – a template that starts calling a new helper fails the test, and whoever adds it is standing in the right place to ask whether <code>DESCRIPTION</code> needs bumping. The scan reads code chunks only: a test that fires on prose is a test that gets deleted.</p></li>
+<li><p>The <code>03.01-ac</code> template’s local <code>imputed_levels()</code> is removed in favour of the <code>hvtiRutilities</code> export. The two were identical, and the duplicate arrived only because hvtiRutilities#47 lifted the same function out of the same study. # hvtiRtemplates 1.0.7</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-1-0-8-1">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-8-1"></a></h3>
 <ul><li>
 <p><strong><code>graphs/06.01-hp.qmd</code></strong> — the nomogram and hazard figures, replacing a SAS <code>HAZPRED</code> job and the figure jobs over it (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold with <code>new_job("hp", &lt;endpoint&gt;, &lt;type&gt;)</code>. Design: <code>specs/2026-08-27-hp-template-design.md</code>.</p>
 <p><code>hp</code> <strong>reads</strong> its inputs rather than recomputing them — the <code>ac</code> life table and the <code>hz</code> fit, both by set. A job that recomputes its upstream can silently disagree with it.</p>
@@ -56,7 +83,7 @@
 </li>
 </ul></div>
 <div class="section level3">
-<h3 id="internal-1-0-7">Internal<a class="anchor" aria-label="anchor" href="#internal-1-0-7"></a></h3>
+<h3 id="internal-1-0-8-1">Internal<a class="anchor" aria-label="anchor" href="#internal-1-0-8-1"></a></h3>
 <ul><li>
 <code>.lintr</code> gains a file entry for the new template, per the note in that file that a directory key would silently disable every linter on the path.</li>
 </ul></div>
