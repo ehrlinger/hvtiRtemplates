@@ -11,6 +11,7 @@ refuses to overwrite an existing job.
 |---|---|---|
 | `distributions/03.01-ac.qmd` | actuarial life tables | `distributions/` |
 | `distributions/03.02-hz.qmd` | multiphase parametric hazard fit | `distributions/` |
+| `graphs/06.01-hp.qmd` | nomogram and hazard figures | `graphs/` |
 
 A template is named `<NN.MM>-<prefix>.qmd` and lives in the taxonomy folder it
 scaffolds into. The name is the authority: `template_list()` reads the ordinal
@@ -47,10 +48,11 @@ The full design, including what was rejected and why, is in
 
 ## What is not here yet, and why
 
-`hp` (nomogram and figures), `hm` (multivariable model) and `bh` (bootstrap
-variable selection) are **not templated yet**. `hz` shipped in 1.0.6, extracted
-from three R exemplars — `preserve_root`, `maze/atricure/gender` and
-`lv_function/survival`; see `specs/2026-08-27-hz-template-design.md`.
+`hm` (multivariable model) and `bh` (bootstrap variable selection) are **not
+templated yet**. `hz` shipped in 1.0.6 and `hp` in 1.0.7, each extracted from
+the same three R exemplars — `preserve_root`, `maze/atricure/gender` and
+`lv_function/survival`. See `specs/2026-08-27-hz-template-design.md` and
+`specs/2026-08-27-hp-template-design.md`.
 
 ⚠️ **Two different questions get called "the gate", and they have different
 answers.** The corpus census below counts **SAS** jobs, which answers *will a
