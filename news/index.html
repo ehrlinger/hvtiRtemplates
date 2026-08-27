@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,24 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.6" id="hvtirtemplates-106">hvtiRtemplates 1.0.6<a class="anchor" aria-label="anchor" href="#hvtirtemplates-106"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-0-6">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-6"></a></h3>
+<ul><li>
+<p><strong><code>distributions/03.02-hz.qmd</code></strong> — the multiphase parametric hazard fit, replacing a SAS <code>PROC HAZARD</code> job (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold it with <code>new_job("hz", &lt;endpoint&gt;, &lt;type&gt;)</code>. Design: <code>specs/2026-08-27-hz-template-design.md</code>.</p>
+<p>Extracted from <strong>three</strong> R exemplars — <code>preserve_root</code>, <code>maze/atricure/gender</code> and <code>lv_function/survival</code> — chosen because they disagree. Two seed <code>theta</code> from SAS’s converged estimates so that any disagreement is about the likelihood rather than about where the search began; the third seeds neutral shapes with the time scale taken from the data, because it has no SAS predecessor to seed from. Both are correct for their own case, so the <code>start</code> chunk carries both as Shape A / Shape B, the way the <code>ac</code> template’s <code>cohort</code> chunk already does. From either exemplar alone the template would have made the other case silently wrong.</p>
+<p>Three checks are carried from a single exemplar each, because in every case their absence is silent rather than loud: <code>numderiv-gate</code> (without <code>numDeriv</code> an interval-censored fit produces <strong>no standard errors and does not say so</strong> — <code>converged</code> is <code>TRUE</code> and <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> is simply absent); <code>response-check</code> (mis-building the response still converges, on a number that is merely wrong); and <code>conservation-binding</code> (reporting <code>Σ Λ(tᵢ)</code> under both <code>conserve</code> settings is the only way to tell “the control did nothing” from “the control had almost nothing to do” — identical in the likelihood column, opposite in meaning).</p>
+<p>Parity is deliberately <strong>not</strong> in the template: a parity job borrows the ordinal of the job it checks and lives in <code>parity/</code>.</p>
+<p>The response formula is built <strong>once</strong>, in the <code>response</code> chunk, and reused by all three <code>hazard()</code> calls, so the Shape A / Shape B choice is made in one place rather than in three literal formulas an author could edit inconsistently.</p>
+</li>
+</ul></div>
+<div class="section level3">
+<h3 id="internal-1-0-6">Internal<a class="anchor" aria-label="anchor" href="#internal-1-0-6"></a></h3>
+<ul><li>
+<code>.lintr</code> gains a file entry for the new template, per the note already in that file that a directory key would silently disable every linter on the path. Indentation and brace linting stay <strong>on</strong> for it, and the six lints the first draft produced were fixed rather than exempted.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.5" id="hvtirtemplates-105">hvtiRtemplates 1.0.5<a class="anchor" aria-label="anchor" href="#hvtirtemplates-105"></a></h2>
 <div class="section level3">
