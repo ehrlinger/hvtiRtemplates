@@ -64,8 +64,8 @@ jobs:
             exit 1
           fi
           # & means "the whole match" to sed, and \ and the | delimiter are
-          # special too. GITHUB_WORKSPACE is /home/runner/work/<repo>/<repo>
-          # on a hosted runner, built from names GitHub restricts to
+          # special too. GITHUB_WORKSPACE on a hosted runner is built from
+          # the owner and repository names, which GitHub restricts to
           # alphanumerics, hyphen, underscore and period, so none of them can
           # appear. Escaping anyway costs one line and removes the need to
           # know that -- and keeps this correct on a self-hosted runner whose
