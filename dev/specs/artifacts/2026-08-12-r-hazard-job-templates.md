@@ -4,7 +4,7 @@
 > Cross-references to the other migrated documents have been repointed to their
 > paths in this repository; the text is otherwise unchanged. Study folders on the
 > share do not host git repositories, so the design record lives with the package
-> that owns the migration programme. `specs/artifacts/README.md` records what
+> that owns the migration programme. `dev/specs/artifacts/README.md` records what
 > moved and from where.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -15,7 +15,7 @@
 
 **Tech Stack:** R (>= 4.4), Quarto (`type: default`), `TemporalHazard`, `survival`, `haven`, `testthat`, `knitr`. Optional at runtime: `hvtiRutilities`, `hvtiPlotR`, `numDeriv`.
 
-**Spec:** `specs/2026-08-11-r-hazard-job-templates-design.md` (commit `86e5b81`)
+**Spec:** `dev/specs/2026-08-11-r-hazard-job-templates-design.md` (commit `86e5b81`)
 
 ## Global Constraints
 
@@ -1036,7 +1036,7 @@ Expected: only the `index.qmd` sentence naming `R_parity` as the other project's
 ```bash
 git push -u origin feat/r-hazard-templates
 gh pr create --title "R_hazard: job templates and the R_parity split" --body "$(cat <<'EOF'
-Implements the approved design at `specs/2026-08-11-r-hazard-job-templates-design.md`.
+Implements the approved design at `dev/specs/2026-08-11-r-hazard-job-templates-design.md`.
 
 Splits `analyses/R_analysis/` into two sibling projects. `R_hazard` does the analysis in R and owns the study's data contract; `R_parity` compares R against stored SAS output and sources that contract from `R_hazard`. The arrow points that way because parity is re-run whenever a defect surfaces or a release needs re-qualifying, so the analysis has to be the layer that stands alone.
 

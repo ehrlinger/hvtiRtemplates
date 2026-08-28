@@ -11,17 +11,28 @@
 # It does NOT re-run the scan. Regenerating the map needs ~/Documents/macro.library
 # and ~/Documents/template, which are outside version control and absent on a
 # runner. That step stays local; this is what CI can honestly enforce.
+# ---------------------------------------------------------------------------
+# The two path filters below and the two `run:` paths must be changed together
+# and in the same commit as any move of dev/specs/. Getting that wrong does not
+# fail the check -- the trigger simply stops matching, the job never starts, and
+# the PR goes green with nothing having been verified. A red check is loud; a
+# check that silently stopped existing is not.
+#
+# check-spec-counts.py finds its target through os.pardir, so artifacts/ has to
+# stay a direct child of the directory holding the design documents. Promoting
+# it to a sibling repoints it one level too high.
+# ---------------------------------------------------------------------------
 name: spec-counts
 
 on:
   push:
     branches: [main]
     paths:
-      - 'specs/**'
+      - 'dev/specs/**'
       - '.github/workflows/spec-counts.yaml'
   pull_request:
     paths:
-      - 'specs/**'
+      - 'dev/specs/**'
       - '.github/workflows/spec-counts.yaml'
 
 permissions: read-all
@@ -39,7 +50,7 @@ jobs:
           python-version: '3.x'
 
       - name: Spec prose agrees with the generated map
-        run: python3 specs/artifacts/check-spec-counts.py
+        run: python3 dev/specs/artifacts/check-spec-counts.py
 
       - name: Job flow diagrams agree with the generated maps
-        run: python3 specs/artifacts/check-flow-counts.py
+        run: python3 dev/specs/artifacts/check-flow-counts.py

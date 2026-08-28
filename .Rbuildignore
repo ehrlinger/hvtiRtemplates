@@ -9,7 +9,6 @@
 ^\.claude$
 ^\.remember$
 ^\.lintr$
-^specs$
-^plans$
+^dev$
 ^AGENTS\.md$
 ^CLAUDE\.md$

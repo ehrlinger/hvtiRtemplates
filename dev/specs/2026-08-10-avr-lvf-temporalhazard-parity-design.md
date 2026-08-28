@@ -4,7 +4,7 @@
 > Cross-references to the other migrated documents have been repointed to their
 > paths in this repository; the text is otherwise unchanged. Study folders on the
 > share do not host git repositories, so the design record lives with the package
-> that owns the migration programme. `specs/artifacts/README.md` records what
+> that owns the migration programme. `dev/specs/artifacts/README.md` records what
 > moved and from where.
 
 **Date:** 2026-08-10

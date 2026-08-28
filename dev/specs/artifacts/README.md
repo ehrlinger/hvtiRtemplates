@@ -1,4 +1,4 @@
-# specs/artifacts/
+# dev/specs/artifacts/
 
 Evidence produced to inform a spec, kept beside the corpus it describes.
 Excluded from the build via `.Rbuildignore`, so nothing here affects
@@ -18,7 +18,7 @@ graph and decides nothing.
 | `check-spec-counts.py` | CI guard: fails when the spec's prose disagrees with the map |
 
 **Why this exists.** The estate-wide allocation map in
-`hvtiRutilities:specs/2026-07-10-sas-macro-canonicalization-design.md` (on the
+`hvtiRutilities:dev/specs/2026-07-10-sas-macro-canonicalization-design.md` (on the
 unmerged `spec/sas-macro-canonicalization` branch) decomposes along the
 `tp.<prefix>` naming convention  -  a *template* convention. Only 3 of the 180
 macro-library files carry a prefix, so **templates are mapped and macros are
@@ -28,7 +28,7 @@ decides an allocation.
 **Reproduce:**
 
 ```
-python3 specs/artifacts/2026-08-14-macro-allocation-scan.py
+python3 dev/specs/artifacts/2026-08-14-macro-allocation-scan.py
 ```
 
 It reads `~/Documents/macro.library/*.sas` and
@@ -52,7 +52,7 @@ of which broke an earlier draft:
 **The map is authoritative; the spec's tables are a convenience copy.** That copy
 drifted three times on 2026-08-14 - a count hand-synced in one place and not
 another, caught each time by a reviewer rather than by CI. `check-spec-counts.py`
-now makes the agreement mechanical and runs on every PR touching `specs/`
+now makes the agreement mechanical and runs on every PR touching `dev/specs/`
 (`.github/workflows/spec-counts.yaml`). It checks the summary table's
 per-destination counts, the tier totals and their reconciliation, and every
 per-package section's heading count *and* the files it actually lists.
@@ -82,14 +82,14 @@ migration programme.
 
 | Was at, in the study tree | Now at |
 |---|---|
-| `analyses/R_parity/docs/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` | `specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` |
-| `analyses/R_hazard/docs/specs/2026-08-11-r-hazard-job-templates-design.md` | `specs/2026-08-11-r-hazard-job-templates-design.md` |
-| `analyses/R_hazard/docs/specs/2026-08-13-templates-and-provenance-design.md` | `specs/2026-08-13-templates-and-provenance-design.md` |
-| `analyses/R_parity/docs/plans/2026-08-10-avr-lvf-parity-stages-1-3.md` | `specs/artifacts/2026-08-10-avr-lvf-parity-stages-1-3.md` |
-| `analyses/R_hazard/docs/plans/2026-08-12-r-hazard-job-templates.md` | `specs/artifacts/2026-08-12-r-hazard-job-templates.md` |
-| `analyses/R_hazard/docs/plans/2026-08-13-hvtirtemplates-repository.md` | `specs/artifacts/2026-08-13-hvtirtemplates-repository.md` |
-| `analyses/R_hazard/docs/plans/2026-08-17-hvtirutilities-provenance.md` | `specs/artifacts/2026-08-17-hvtirutilities-provenance.md` |
-| `analyses/R_hazard/docs/HANDOFF.md` | `specs/artifacts/2026-08-17-templates-provenance-handoff.md` |
+| `analyses/R_parity/docs/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` | `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` |
+| `analyses/R_hazard/docs/specs/2026-08-11-r-hazard-job-templates-design.md` | `dev/specs/2026-08-11-r-hazard-job-templates-design.md` |
+| `analyses/R_hazard/docs/specs/2026-08-13-templates-and-provenance-design.md` | `dev/specs/2026-08-13-templates-and-provenance-design.md` |
+| `analyses/R_parity/docs/plans/2026-08-10-avr-lvf-parity-stages-1-3.md` | `dev/specs/artifacts/2026-08-10-avr-lvf-parity-stages-1-3.md` |
+| `analyses/R_hazard/docs/plans/2026-08-12-r-hazard-job-templates.md` | `dev/specs/artifacts/2026-08-12-r-hazard-job-templates.md` |
+| `analyses/R_hazard/docs/plans/2026-08-13-hvtirtemplates-repository.md` | `dev/specs/artifacts/2026-08-13-hvtirtemplates-repository.md` |
+| `analyses/R_hazard/docs/plans/2026-08-17-hvtirutilities-provenance.md` | `dev/specs/artifacts/2026-08-17-hvtirutilities-provenance.md` |
+| `analyses/R_hazard/docs/HANDOFF.md` | `dev/specs/artifacts/2026-08-17-templates-provenance-handoff.md` |
 | `analyses/R_hazard/docs/specs/2026-08-13-hvtirlifetables-design.md` | **not migrated** - see below |
 
 **Three references were deliberately left pointing outward.** The directory
@@ -134,7 +134,7 @@ Three diagrams tracing how a study actually moves through the taxonomy, drawn
 from the SAS study template rather than from documentation, plus the two scans
 that produced their numbers. They exist to be **argued with**: they are the
 briefing biostats reviews before the layout in
-`specs/2026-08-21-template-set-layout-design.md` is built out past `ac`.
+`dev/specs/2026-08-21-template-set-layout-design.md` is built out past `ac`.
 
 | File | What it is |
 |---|---|
@@ -150,8 +150,8 @@ briefing biostats reviews before the layout in
 **Reproduce:**
 
 ```
-python3 specs/artifacts/2026-08-22-job-flow-scan.py         > specs/artifacts/2026-08-22-job-flow.json
-python3 specs/artifacts/2026-08-22-prefix-placement-scan.py > specs/artifacts/2026-08-22-prefix-placement.json
+python3 dev/specs/artifacts/2026-08-22-job-flow-scan.py         > dev/specs/artifacts/2026-08-22-job-flow.json
+python3 dev/specs/artifacts/2026-08-22-prefix-placement-scan.py > dev/specs/artifacts/2026-08-22-prefix-placement.json
 ```
 
 Both read `~/Documents/template` directly, for the same reason the macro scan

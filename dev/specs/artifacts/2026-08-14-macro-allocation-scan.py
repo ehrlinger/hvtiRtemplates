@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Macro allocation scan. Ownership from named calls; %inc for reachability;
-the FILE is the unit of allocation. See specs/2026-08-14-macro-allocation-design.md."""
+the FILE is the unit of allocation. See dev/specs/2026-08-14-macro-allocation-design.md."""
 import re, os, glob, json, collections
 
 MACRO_DIR = os.path.expanduser("~/Documents/macro.library")

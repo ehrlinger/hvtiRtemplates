@@ -259,7 +259,7 @@ control. §3.1 is what makes this true rather than aspirational: if the machiner
 on the share, the share would need a repository.
 
 What remains on the share is generated job `.qmd` files, their rendered output, and
-`R/study.R`. **This spec lives in the `hvtiRtemplates` repository**, in `specs/`, beside
+`R/study.R`. **This spec lives in the `hvtiRtemplates` repository**, in `dev/specs/`, beside
 the designs that shaped the package.
 
 ## 4. Data contract

@@ -4,7 +4,7 @@
 > Cross-references to the other migrated documents have been repointed to their
 > paths in this repository; the text is otherwise unchanged. Study folders on the
 > share do not host git repositories, so the design record lives with the package
-> that owns the migration programme. `specs/artifacts/README.md` records what
+> that owns the migration programme. `dev/specs/artifacts/README.md` records what
 > moved and from where.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -15,7 +15,7 @@
 
 **Tech Stack:** R 4.6.0, `TemporalHazard`, `hvtiRutilities`, `haven`, `survival`, `hvtiPlotR`, `testthat` (3rd edition), Quarto, `renv`.
 
-**Spec:** `specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
+**Spec:** `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
 
 ## Global Constraints
 

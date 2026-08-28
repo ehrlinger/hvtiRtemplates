@@ -13,7 +13,7 @@ five templates). No code in this package has been changed by this note.
 > than redundant ones: 16 of 57 removed forms correlate at |r| < 0.9 with the
 > form kept. Read section 1 of the 2026-08-19 note before acting on section 3
 > here. Sections 1, 2, 4 and 5 below stand unchanged.
-**Design spec referenced below:** `specs/2026-08-13-templates-and-provenance-design.md`.
+**Design spec referenced below:** `dev/specs/2026-08-13-templates-and-provenance-design.md`.
 It was migrated out of the `survival` study tree into this repository on
 2026-08-18, so the section numbers cited here now resolve against a copy that
 sits beside this note. It previously lived at
