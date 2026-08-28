@@ -32,9 +32,14 @@ TIER_ROWS = {                      # spec table label -> key in counts
 
 
 def main():
-    d = json.load(open(MAP))
+    # Encodings are pinned, as in `check-flow-counts.py`: this runs on a CI
+    # runner whose locale is not ours to choose, and the spec carries em dashes
+    # that an ascii default would refuse outright.
+    with open(MAP, encoding="utf-8") as fh:
+        d = json.load(fh)
     counts, by_dest = d["counts"], d["by_destination"]
-    spec = open(SPEC).read()
+    with open(SPEC, encoding="utf-8") as fh:
+        spec = fh.read()
     bad = []
 
     # 1. summary-table row per destination package
