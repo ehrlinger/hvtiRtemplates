@@ -4,7 +4,7 @@
 > Cross-references to the other migrated documents have been repointed to their
 > paths in this repository; the text is otherwise unchanged. Study folders on the
 > share do not host git repositories, so the design record lives with the package
-> that owns the migration programme. `specs/artifacts/README.md` records what
+> that owns the migration programme. `dev/specs/artifacts/README.md` records what
 > moved and from where.
 
 **Date:** 2026-08-13
@@ -480,7 +480,7 @@ recoverable; a silently unrecorded result is not.
 
 ## 8. What this changes in the in-flight `R_hazard` plan
 
-`specs/artifacts/2026-08-12-r-hazard-job-templates.md` is partly
+`dev/specs/artifacts/2026-08-12-r-hazard-job-templates.md` is partly
 executed on branch `feat/r-hazard-templates`. This design supersedes parts of it.
 
 | Plan element | Change |
