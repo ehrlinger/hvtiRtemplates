@@ -1,5 +1,27 @@
 # Changelog
 
+## hvtiRtemplates 1.0.9
+
+### Documentation
+
+- **Development records moved to `dev/specs/`,** adopting the portfolio
+  convention settled in `ehrlinger/house-style`. The stray top-level
+  `plans/` is gone with it: this repo carried `plans/` *and* `specs/`
+  *and* a `specs/plans/` convention that said plans belonged in neither,
+  which is the drift the new rule exists to stop. All three plans now
+  sit beside the designs they implement, under a shared slug.
+- **`spec-counts.yaml` moved in the same commit.** Its two path filters
+  and two `run:` paths point at `dev/specs/`, and a comment at the top
+  of the file says why they cannot be left behind — a stale path filter
+  does not fail the check, it stops the job from starting, and the PR
+  goes green having verified nothing.
+- `specs/artifacts/` became `dev/specs/artifacts/`, staying nested
+  inside the prose directory because `check-spec-counts.py` resolves its
+  target through `os.pardir`. Both checks were run at the new location
+  and pass unchanged.
+- `inst/templates/README.md` is the one shipped file affected, which is
+  what makes this a patch bump rather than a governance-only change.
+
 ## hvtiRtemplates 1.0.8
 
 ### New features
@@ -8,8 +30,9 @@
   replacing a SAS `PROC HAZARD` job with a `selection` statement
   ([\#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)).
   Scaffold with `new_job("hm", <endpoint>, <type>)`. Design:
-  `specs/2026-08-27-hm-template-design.md`. **Requires hvtiRutilities
-  \>= 1.1.4**, which ships the candidate-pool helpers it calls.
+  `dev/specs/2026-08-27-hm-template-design.md`. **Requires
+  hvtiRutilities \>= 1.1.4**, which ships the candidate-pool helpers it
+  calls.
 
   Unlike `hz` and `hp`, `hm` had only **one** R exemplar, so its second
   was a SAS job (`.../dm_nodm/analyses/hm.dead.sas`). That is enough for
@@ -54,9 +77,9 @@
 
 ### Bug fixes
 
-- **`specs/2026-08-21-template-set-layout-design.md` §5 corrected.** It
-  said the ordinal minor is “the next free position within it”; the rule
-  that actually reproduces every shipped ordinal is the prefix’s
+- **`dev/specs/2026-08-21-template-set-layout-design.md` §5 corrected.**
+  It said the ordinal minor is “the next free position within it”; the
+  rule that actually reproduces every shipped ordinal is the prefix’s
   **position among its folder’s taxonomy rows**. The two agree for
   everything templated so far and diverge on the third `analyses`
   template, where next-free would put `bh` before `hs` and fail the
@@ -109,7 +132,7 @@
   a SAS `HAZPRED` job and the figure jobs over it
   ([\#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)).
   Scaffold with `new_job("hp", <endpoint>, <type>)`. Design:
-  `specs/2026-08-27-hp-template-design.md`.
+  `dev/specs/2026-08-27-hp-template-design.md`.
 
   `hp` **reads** its inputs rather than recomputing them — the `ac` life
   table and the `hz` fit, both by set. A job that recomputes its
@@ -167,7 +190,7 @@
   fit, replacing a SAS `PROC HAZARD` job
   ([\#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)).
   Scaffold it with `new_job("hz", <endpoint>, <type>)`. Design:
-  `specs/2026-08-27-hz-template-design.md`.
+  `dev/specs/2026-08-27-hz-template-design.md`.
 
   Extracted from **three** R exemplars — `preserve_root`,
   `maze/atricure/gender` and `lv_function/survival` — chosen because

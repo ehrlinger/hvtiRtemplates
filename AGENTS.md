@@ -35,7 +35,7 @@ affordances live in `CLAUDE.md`, which imports this file.
 | `check-manual.yaml` | the PDF manual build |
 | `lint.yaml` | [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html) |
 | `pkgdown.yaml` | the site build |
-| `spec-counts.yaml` | two checks. `check-spec-counts.py` — the prose in `specs/` must agree with the generated map. `check-flow-counts.py` — every `data-check` anchored number in the job flow diagrams must agree with the maps they copy from. Editing a count without regenerating fails the PR |
+| `spec-counts.yaml` | two checks. `check-spec-counts.py` — the prose in `dev/specs/` must agree with the generated map. `check-flow-counts.py` — every `data-check` anchored number in the job flow diagrams must agree with the maps they copy from. Editing a count without regenerating fails the PR |
 | `test-coverage.yaml` | coverage upload |
 
 ## Rules for this repo

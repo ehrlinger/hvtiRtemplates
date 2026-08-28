@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,11 +39,25 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.9" id="hvtirtemplates-109">hvtiRtemplates 1.0.9<a class="anchor" aria-label="anchor" href="#hvtirtemplates-109"></a></h2>
+<div class="section level3">
+<h3 id="documentation-1-0-9">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-0-9"></a></h3>
+<ul><li>
+<strong>Development records moved to <code>dev/specs/</code>,</strong> adopting the portfolio convention settled in <code>ehrlinger/house-style</code>. The stray top-level <code>plans/</code> is gone with it: this repo carried <code>plans/</code> <em>and</em> <code>specs/</code> <em>and</em> a <code>specs/plans/</code> convention that said plans belonged in neither, which is the drift the new rule exists to stop. All three plans now sit beside the designs they implement, under a shared slug.</li>
+<li>
+<strong><code>spec-counts.yaml</code> moved in the same commit.</strong> Its two path filters and two <code>run:</code> paths point at <code>dev/specs/</code>, and a comment at the top of the file says why they cannot be left behind — a stale path filter does not fail the check, it stops the job from starting, and the PR goes green having verified nothing.</li>
+<li>
+<code>specs/artifacts/</code> became <code>dev/specs/artifacts/</code>, staying nested inside the prose directory because <code>check-spec-counts.py</code> resolves its target through <code>os.pardir</code>. Both checks were run at the new location and pass unchanged.</li>
+<li>
+<code>inst/templates/README.md</code> is the one shipped file affected, which is what makes this a patch bump rather than a governance-only change.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.8" id="hvtirtemplates-108">hvtiRtemplates 1.0.8<a class="anchor" aria-label="anchor" href="#hvtirtemplates-108"></a></h2>
 <div class="section level3">
 <h3 id="new-features-1-0-8">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-8"></a></h3>
 <ul><li>
-<p><strong><code>analyses/04.01-hm.qmd</code></strong> — the multivariable hazard model, replacing a SAS <code>PROC HAZARD</code> job with a <code>selection</code> statement (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold with <code>new_job("hm", &lt;endpoint&gt;, &lt;type&gt;)</code>. Design: <code>specs/2026-08-27-hm-template-design.md</code>. <strong>Requires hvtiRutilities &gt;= 1.1.4</strong>, which ships the candidate-pool helpers it calls.</p>
+<p><strong><code>analyses/04.01-hm.qmd</code></strong> — the multivariable hazard model, replacing a SAS <code>PROC HAZARD</code> job with a <code>selection</code> statement (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold with <code>new_job("hm", &lt;endpoint&gt;, &lt;type&gt;)</code>. Design: <code>dev/specs/2026-08-27-hm-template-design.md</code>. <strong>Requires hvtiRutilities &gt;= 1.1.4</strong>, which ships the candidate-pool helpers it calls.</p>
 <p>Unlike <code>hz</code> and <code>hp</code>, <code>hm</code> had only <strong>one</strong> R exemplar, so its second was a SAS job (<code>.../dm_nodm/analyses/hm.dead.sas</code>). That is enough for the gate’s purpose — it exists to stop one study’s choices being encoded as general, and a SAS job states those choices as plainly as an R one does. It earned its place immediately: it carries a <strong><code>%deciles</code> calibration</strong> step the R exemplar has no equivalent for, and <code>TemporalHazard</code> already exports <code>hzr_deciles()</code> for it. Without the second exemplar the template would have shipped a model-selection job that never asks whether the model calibrates, and nothing in its output would have looked missing.</p>
 <p>⚠️ <strong>Two traps specific to this job, both silent:</strong></p>
 <ul><li>
@@ -56,7 +70,7 @@
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-1-0-8">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-8"></a></h3>
-<ul><li><p><strong><code>specs/2026-08-21-template-set-layout-design.md</code> §5 corrected.</strong> It said the ordinal minor is “the next free position within it”; the rule that actually reproduces every shipped ordinal is the prefix’s <strong>position among its folder’s taxonomy rows</strong>. The two agree for everything templated so far and diverge on the third <code>analyses</code> template, where next-free would put <code>bh</code> before <code>hs</code> and fail the within-folder ordering test in <code>test-taxonomy.R</code> — a failure whose only fix is renumbering a shipped template, which §5 promises never happens.</p></li>
+<ul><li><p><strong><code>dev/specs/2026-08-21-template-set-layout-design.md</code> §5 corrected.</strong> It said the ordinal minor is “the next free position within it”; the rule that actually reproduces every shipped ordinal is the prefix’s <strong>position among its folder’s taxonomy rows</strong>. The two agree for everything templated so far and diverge on the third <code>analyses</code> template, where next-free would put <code>bh</code> before <code>hs</code> and fail the within-folder ordering test in <code>test-taxonomy.R</code> — a failure whose only fix is renumbering a shipped template, which §5 promises never happens.</p></li>
 <li><p><code>DESCRIPTION</code> now requires <code>hvtiRutilities (&gt;= 1.1.4)</code>. The old <code>&gt;= 1.1.1</code> was correct until this release – <code>hz</code> and <code>hp</code> call nothing newer – so the bound went stale as a side effect of adding a template rather than as an error in its own right. An install satisfying the old bound would have shipped a template whose helpers do not exist, failing at <strong>render</strong> time in a study rather than at install time.</p></li>
 <li><p>The <code>selection-monotone</code> chunk handles a <strong>zero-step</strong> screen. A screen that admitted nothing is a real outcome – no candidate cleared the entry level – but <code><a href="https://rdrr.io/r/base/which.min.html" class="external-link">which.max()</a></code> on an empty vector is <code>integer(0)</code> and the report frame then failed with “arguments imply differing number of rows”: an error about the report, in a job whose actual finding is that nothing entered.</p></li>
 <li><p>Convergence failure names the stage and what to check, instead of <code><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot()</a></code>’s “isTRUE(stage1<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mi>i</mi><mi>t</mi></mrow><annotation encoding="application/x-tex">fit</annotation></semantics></math>converged) is not TRUE” – a message that tells a reader of the rendered report nothing they can act on.</p></li>
@@ -70,7 +84,7 @@
 <div class="section level3">
 <h3 id="new-features-1-0-8-1">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-8-1"></a></h3>
 <ul><li>
-<p><strong><code>graphs/06.01-hp.qmd</code></strong> — the nomogram and hazard figures, replacing a SAS <code>HAZPRED</code> job and the figure jobs over it (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold with <code>new_job("hp", &lt;endpoint&gt;, &lt;type&gt;)</code>. Design: <code>specs/2026-08-27-hp-template-design.md</code>.</p>
+<p><strong><code>graphs/06.01-hp.qmd</code></strong> — the nomogram and hazard figures, replacing a SAS <code>HAZPRED</code> job and the figure jobs over it (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold with <code>new_job("hp", &lt;endpoint&gt;, &lt;type&gt;)</code>. Design: <code>dev/specs/2026-08-27-hp-template-design.md</code>.</p>
 <p><code>hp</code> <strong>reads</strong> its inputs rather than recomputing them — the <code>ac</code> life table and the <code>hz</code> fit, both by set. A job that recomputes its upstream can silently disagree with it.</p>
 <p>⚠️ <strong>Two settings are silently wrong if omitted</strong>, both decoded from the <code>HAZPRED</code> source during parity work:</p>
 <ul><li>
@@ -93,7 +107,7 @@
 <div class="section level3">
 <h3 id="new-features-1-0-6">New features<a class="anchor" aria-label="anchor" href="#new-features-1-0-6"></a></h3>
 <ul><li>
-<p><strong><code>distributions/03.02-hz.qmd</code></strong> — the multiphase parametric hazard fit, replacing a SAS <code>PROC HAZARD</code> job (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold it with <code>new_job("hz", &lt;endpoint&gt;, &lt;type&gt;)</code>. Design: <code>specs/2026-08-27-hz-template-design.md</code>.</p>
+<p><strong><code>distributions/03.02-hz.qmd</code></strong> — the multiphase parametric hazard fit, replacing a SAS <code>PROC HAZARD</code> job (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold it with <code>new_job("hz", &lt;endpoint&gt;, &lt;type&gt;)</code>. Design: <code>dev/specs/2026-08-27-hz-template-design.md</code>.</p>
 <p>Extracted from <strong>three</strong> R exemplars — <code>preserve_root</code>, <code>maze/atricure/gender</code> and <code>lv_function/survival</code> — chosen because they disagree. Two seed <code>theta</code> from SAS’s converged estimates so that any disagreement is about the likelihood rather than about where the search began; the third seeds neutral shapes with the time scale taken from the data, because it has no SAS predecessor to seed from. Both are correct for their own case, so the <code>start</code> chunk carries both as Shape A / Shape B, the way the <code>ac</code> template’s <code>cohort</code> chunk already does. From either exemplar alone the template would have made the other case silently wrong.</p>
 <p>Three checks are carried from a single exemplar each, because in every case their absence is silent rather than loud: <code>numderiv-gate</code> (without <code>numDeriv</code> an interval-censored fit produces <strong>no standard errors and does not say so</strong> — <code>converged</code> is <code>TRUE</code> and <code><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov()</a></code> is simply absent); <code>response-check</code> (mis-building the response still converges, on a number that is merely wrong); and <code>conservation-binding</code> (reporting <code>Σ Λ(tᵢ)</code> under both <code>conserve</code> settings is the only way to tell “the control did nothing” from “the control had almost nothing to do” — identical in the likelihood column, opposite in meaning).</p>
 <p>Parity is deliberately <strong>not</strong> in the template: a parity job borrows the ordinal of the job it checks and lives in <code>parity/</code>.</p>
