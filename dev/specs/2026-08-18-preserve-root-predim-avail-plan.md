@@ -8,7 +8,7 @@
 
 **Tech Stack:** R (>= 4.1), `TemporalHazard` (>= 1.2.0), `hvtiRutilities`, `haven`, `testthat` (3rd edition), Quarto, `hvtiPlotR`.
 
-**Spec:** `specs/2026-08-18-preserve-root-predim-avail-parity-design.md` in this repository. Section references below (§N) are to that document.
+**Spec:** `dev/specs/2026-08-18-preserve-root-predim-avail-parity-design.md` in this repository. Section references below (§N) are to that document.
 
 ## Global Constraints
 
@@ -297,7 +297,7 @@ Expected: 0 errors, 0 warnings. Record any NOTE and confirm it predates this bra
 git add R/preflight.R man/preflight_report.Rd NAMESPACE tests/testthat/test-preflight.R DESCRIPTION NEWS.md
 git commit -m "feat: add preflight_report(); bump to 1.0.9"
 git push -u origin feat/preflight-report
-gh pr create --title "feat: preflight_report()" --body "Environment audit for the SAS-to-R migration, generalised from the lv_function study. See hvtiRtemplates specs/2026-08-18-preserve-root-predim-avail-parity-design.md §3.1."
+gh pr create --title "feat: preflight_report()" --body "Environment audit for the SAS-to-R migration, generalised from the lv_function study. See hvtiRtemplates dev/specs/2026-08-18-preserve-root-predim-avail-parity-design.md §3.1."
 ```
 
 ---

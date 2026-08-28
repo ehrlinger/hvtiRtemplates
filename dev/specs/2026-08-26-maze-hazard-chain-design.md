@@ -99,7 +99,7 @@ graphs/dead-hz/hp-*.png
 
 ⚠️ **An earlier draft of this spec assigned `hz` the ordinal `04.01` and
 described it as precedent-setting. That was wrong on both counts.**
-`specs/2026-08-21-template-set-layout-design.md` §5 already fixes the scheme:
+`dev/specs/2026-08-21-template-set-layout-design.md` §5 already fixes the scheme:
 the **major comes from the taxonomy folder**, the minor is the next free
 position within it.
 

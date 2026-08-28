@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make `hvtiRtemplates` scaffold jobs into the study layout settled in
-`specs/2026-08-21-template-set-layout-design.md` — taxonomy folder, flat authored
+`dev/specs/2026-08-21-template-set-layout-design.md` — taxonomy folder, flat authored
 files, `<endpoint>-<type>-<NN.MM>-<prefix>.qmd`.
 
 **Architecture:** The template's own filename becomes the authoritative source of
@@ -763,7 +763,7 @@ The layout rule is one sentence, and it holds in every folder:
 > `estimates` folder row, which shifted `graphs` to major `06` and `documents`
 > to `07`. So an `hp` job is `06.01-hp`, not `05.01-hp`. `distributions` is
 > unchanged, so `ac` is still `03.01`. The diagram above is left as the
-> instruction that was actually issued; `specs/2026-08-21-template-set-layout-design.md`
+> instruction that was actually issued; `dev/specs/2026-08-21-template-set-layout-design.md`
 > §5 is authoritative.
 
 **A set is keyed on `(endpoint, analysis type)`, not on the endpoint alone.**
@@ -775,7 +775,7 @@ shared upstream runs once per set rather than once per endpoint; the benefit is
 that a set is self-contained and uniformly named.
 
 The full design, including what was rejected and why, is in
-`specs/2026-08-21-template-set-layout-design.md`.
+`dev/specs/2026-08-21-template-set-layout-design.md`.
 ```
 
 - [ ] **Step 2: Add the `NEWS.md` entry**
@@ -866,7 +866,7 @@ git push -u origin spec/template-set-layout
 
 ```bash
 gh pr create --title "Template set layout: scaffold jobs into their taxonomy folder" --body "$(cat <<'BODY'
-Implements stage 1 of `specs/2026-08-21-template-set-layout-design.md`.
+Implements stage 1 of `dev/specs/2026-08-21-template-set-layout-design.md`.
 
 `new_job("ac", "dead_pa", "hz")` now writes
 `distributions/dead_pa-hz-03.01-ac.qmd` rather than `qmd/ac.dead_pa.qmd`. The

@@ -45,7 +45,7 @@ shared upstream runs once per set rather than once per endpoint; the benefit is
 that a set is self-contained and uniformly named.
 
 The full design, including what was rejected and why, is in
-`specs/2026-08-21-template-set-layout-design.md`.
+`dev/specs/2026-08-21-template-set-layout-design.md`.
 
 ## What is not here yet, and why
 

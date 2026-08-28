@@ -4,7 +4,7 @@
 > Cross-references to the other migrated documents have been repointed to their
 > paths in this repository; the text is otherwise unchanged. Study folders on the
 > share do not host git repositories, so the design record lives with the package
-> that owns the migration programme. `specs/artifacts/README.md` records what
+> that owns the migration programme. `dev/specs/artifacts/README.md` records what
 > moved and from where.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -15,7 +15,7 @@
 
 **Tech Stack:** R (>= 4.1.0), `usethis`, `testthat` (3rd edition), `roxygen2`, git, `gh` CLI.
 
-**Spec:** `specs/2026-08-13-templates-and-provenance-design.md`, stage 2 of section 12.
+**Spec:** `dev/specs/2026-08-13-templates-and-provenance-design.md`, stage 2 of section 12.
 
 ## Global Constraints
 
@@ -1296,7 +1296,7 @@ The design rule is **bind late, to something versioned**. Late binding is right;
 SAS could not make it safe because there was no version to pin. `renv.lock`
 supplies that, so a study can use the latest while working and pin it on filing.
 
-See `specs/2026-08-13-templates-and-provenance-design.md`
+See `dev/specs/2026-08-13-templates-and-provenance-design.md`
 in the AVR/LV-function survival study for the full design.
 
 ## API
