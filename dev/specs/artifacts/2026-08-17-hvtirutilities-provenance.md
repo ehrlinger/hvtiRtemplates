@@ -1637,7 +1637,7 @@ No study-specific literal appears in `R/`. Every study value comes from
 Adoption in `R_hazard` (deleting the per-study copies and rewiring the `.qmd`
 files) is Stage 4 and is not in this PR.
 
-Design: `specs/2026-08-13-templates-and-provenance-design.md`
+Design: `dev/specs/2026-08-13-templates-and-provenance-design.md`
 Plan: `specs/artifacts/2026-08-17-hvtirutilities-provenance.md`
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

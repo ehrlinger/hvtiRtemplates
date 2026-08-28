@@ -15,7 +15,7 @@
 
 **Tech Stack:** R (>= 4.4), Quarto (`type: default`), `TemporalHazard`, `survival`, `haven`, `testthat`, `knitr`. Optional at runtime: `hvtiRutilities`, `hvtiPlotR`, `numDeriv`.
 
-**Spec:** `specs/2026-08-11-r-hazard-job-templates-design.md` (commit `86e5b81`)
+**Spec:** `dev/specs/2026-08-11-r-hazard-job-templates-design.md` (commit `86e5b81`)
 
 ## Global Constraints
 
@@ -1036,7 +1036,7 @@ Expected: only the `index.qmd` sentence naming `R_parity` as the other project's
 ```bash
 git push -u origin feat/r-hazard-templates
 gh pr create --title "R_hazard: job templates and the R_parity split" --body "$(cat <<'EOF'
-Implements the approved design at `specs/2026-08-11-r-hazard-job-templates-design.md`.
+Implements the approved design at `dev/specs/2026-08-11-r-hazard-job-templates-design.md`.
 
 Splits `analyses/R_analysis/` into two sibling projects. `R_hazard` does the analysis in R and owns the study's data contract; `R_parity` compares R against stored SAS output and sources that contract from `R_hazard`. The arrow points that way because parity is re-run whenever a defect surfaces or a release needs re-qualifying, so the analysis has to be the layer that stands alone.
 

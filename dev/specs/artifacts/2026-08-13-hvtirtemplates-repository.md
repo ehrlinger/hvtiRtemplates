@@ -15,7 +15,7 @@
 
 **Tech Stack:** R (>= 4.1.0), `usethis`, `testthat` (3rd edition), `roxygen2`, git, `gh` CLI.
 
-**Spec:** `specs/2026-08-13-templates-and-provenance-design.md`, stage 2 of section 12.
+**Spec:** `dev/specs/2026-08-13-templates-and-provenance-design.md`, stage 2 of section 12.
 
 ## Global Constraints
 
@@ -1296,7 +1296,7 @@ The design rule is **bind late, to something versioned**. Late binding is right;
 SAS could not make it safe because there was no version to pin. `renv.lock`
 supplies that, so a study can use the latest while working and pin it on filing.
 
-See `specs/2026-08-13-templates-and-provenance-design.md`
+See `dev/specs/2026-08-13-templates-and-provenance-design.md`
 in the AVR/LV-function survival study for the full design.
 
 ## API

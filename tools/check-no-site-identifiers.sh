@@ -5,7 +5,7 @@
 #
 # WHY: this repository is PUBLIC. Design specs and plans quote real
 # infrastructure while the work is being figured out — the internal Posit
-# Package Manager host reached `specs/` exactly that way. `specs/` is
+# Package Manager host reached `dev/specs/` exactly that way. `dev/` is
 # .Rbuildignore'd, so it never ships in the package and a testthat guard would
 # never see it; the only place this can be caught is CI over the repo.
 #

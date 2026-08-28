@@ -10,7 +10,7 @@
 **Date:** 2026-08-11
 **Status:** Approved design
 **Study:** `/studies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival`
-**Predecessor:** `specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
+**Predecessor:** `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
 
 ---
 

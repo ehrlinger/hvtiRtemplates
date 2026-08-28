@@ -16,7 +16,7 @@ parity job checks R against SAS's own printed nomogram.
 **Tech Stack:** R 4.6.0, Quarto, `TemporalHazard` (≥ 1.2.6), `hvtiRutilities`,
 `hvtiRtemplates`, `survival`, `haven`.
 
-**Spec:** `specs/2026-08-26-maze-hazard-chain-design.md`
+**Spec:** `dev/specs/2026-08-26-maze-hazard-chain-design.md`
 
 ## Global Constraints
 
@@ -33,7 +33,7 @@ parity job checks R against SAS's own printed nomogram.
   R_MakeMissingBinding`.
 - **Never run a recursive traversal over the SMB mount.** Named files only.
   Anything corpus-wide runs server-side.
-- **Ordinals are fixed by** `specs/2026-08-21-template-set-layout-design.md`
+- **Ordinals are fixed by** `dev/specs/2026-08-21-template-set-layout-design.md`
   §5: major from the taxonomy folder (`03` distributions, `04` analyses,
   `06` graphs), minor the next free slot. `ac` = `03.01`, **`hz` = `03.02`**,
   `hp` = `06.01`. A test asserts major-matches-folder.

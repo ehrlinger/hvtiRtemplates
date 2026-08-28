@@ -15,7 +15,7 @@
 
 **Tech Stack:** R 4.6.0, `TemporalHazard`, `hvtiRutilities`, `haven`, `survival`, `hvtiPlotR`, `testthat` (3rd edition), Quarto, `renv`.
 
-**Spec:** `specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
+**Spec:** `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
 
 ## Global Constraints
 

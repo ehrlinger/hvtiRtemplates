@@ -63,7 +63,7 @@ Dependency direction is fixed: templates → utilities → method packages. Neve
 the reverse. Test for where a function belongs: if it would mean anything
 outside this institution it goes in a method package; if not, `hvtiRutilities`.
 
-**Spec:** `specs/2026-08-13-templates-and-provenance-design.md`
+**Spec:** `dev/specs/2026-08-13-templates-and-provenance-design.md`
 
 ---
 
@@ -202,7 +202,7 @@ the one real hit had its column been named anything other than `ccfid`.
 
 | What | Where |
 |---|---|
-| Spec | `specs/2026-08-13-templates-and-provenance-design.md` |
+| Spec | `dev/specs/2026-08-13-templates-and-provenance-design.md` |
 | Stage 2 plan | `specs/artifacts/2026-08-13-hvtirtemplates-repository.md` |
 | Execution ledger + every decision | `.superpowers/sdd/progress.md` - a gitignored working-directory artifact, not carried into this repository |
 | Earlier R_hazard plan (partly superseded) | `specs/artifacts/2026-08-12-r-hazard-job-templates.md` |

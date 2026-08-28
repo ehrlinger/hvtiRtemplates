@@ -18,7 +18,7 @@ graph and decides nothing.
 | `check-spec-counts.py` | CI guard: fails when the spec's prose disagrees with the map |
 
 **Why this exists.** The estate-wide allocation map in
-`hvtiRutilities:specs/2026-07-10-sas-macro-canonicalization-design.md` (on the
+`hvtiRutilities:dev/specs/2026-07-10-sas-macro-canonicalization-design.md` (on the
 unmerged `spec/sas-macro-canonicalization` branch) decomposes along the
 `tp.<prefix>` naming convention  -  a *template* convention. Only 3 of the 180
 macro-library files carry a prefix, so **templates are mapped and macros are
@@ -82,9 +82,9 @@ migration programme.
 
 | Was at, in the study tree | Now at |
 |---|---|
-| `analyses/R_parity/docs/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` | `specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` |
-| `analyses/R_hazard/docs/specs/2026-08-11-r-hazard-job-templates-design.md` | `specs/2026-08-11-r-hazard-job-templates-design.md` |
-| `analyses/R_hazard/docs/specs/2026-08-13-templates-and-provenance-design.md` | `specs/2026-08-13-templates-and-provenance-design.md` |
+| `analyses/R_parity/docs/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` | `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` |
+| `analyses/R_hazard/docs/specs/2026-08-11-r-hazard-job-templates-design.md` | `dev/specs/2026-08-11-r-hazard-job-templates-design.md` |
+| `analyses/R_hazard/docs/specs/2026-08-13-templates-and-provenance-design.md` | `dev/specs/2026-08-13-templates-and-provenance-design.md` |
 | `analyses/R_parity/docs/plans/2026-08-10-avr-lvf-parity-stages-1-3.md` | `specs/artifacts/2026-08-10-avr-lvf-parity-stages-1-3.md` |
 | `analyses/R_hazard/docs/plans/2026-08-12-r-hazard-job-templates.md` | `specs/artifacts/2026-08-12-r-hazard-job-templates.md` |
 | `analyses/R_hazard/docs/plans/2026-08-13-hvtirtemplates-repository.md` | `specs/artifacts/2026-08-13-hvtirtemplates-repository.md` |
@@ -134,7 +134,7 @@ Three diagrams tracing how a study actually moves through the taxonomy, drawn
 from the SAS study template rather than from documentation, plus the two scans
 that produced their numbers. They exist to be **argued with**: they are the
 briefing biostats reviews before the layout in
-`specs/2026-08-21-template-set-layout-design.md` is built out past `ac`.
+`dev/specs/2026-08-21-template-set-layout-design.md` is built out past `ac`.
 
 | File | What it is |
 |---|---|

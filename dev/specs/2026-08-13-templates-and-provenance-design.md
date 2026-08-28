@@ -11,7 +11,7 @@
 **Status:** approved in brainstorming, not yet planned
 **Scope:** institutional — `hvtiRtemplates`, `hvtiRutilities`, and the per-study
 job layout. Consumed by, but larger than, `analyses/R_hazard/`.
-**Predecessor:** `specs/2026-08-11-r-hazard-job-templates-design.md`
+**Predecessor:** `dev/specs/2026-08-11-r-hazard-job-templates-design.md`
 
 ---
 
