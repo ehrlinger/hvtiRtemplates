@@ -261,3 +261,143 @@ if (!is.null(shortfall)) {
       shortfall, "\n:::\n", sep = "")
 }
 ```
+
+## Provenance
+
+```{r}
+#| label: provenance
+# Summarised, not listed: at 25 chunks the joined seed string is a single
+# 270-character cell that wrecks the table. Every seed is in the `seeds` table
+# below, so nothing is lost by compressing it here.
+seeds_cell <- if (is.null(bag$seeds) || length(bag$seeds) <= 3L) {
+  bag$seed
+} else {
+  paste0(length(bag$seeds), " seeds, ",
+         format(min(bag$seeds), scientific = FALSE), "-",
+         format(max(bag$seeds), scientific = FALSE))
+}
+
+knitr::kable(data.frame(
+  n_boot          = bag$n_boot,
+  expected_boot   = EXPECT_BOOT,
+  # 1 for a single run; higher when the screen was pooled from chunks.
+  n_chunks        = if (is.null(bag$n_chunks)) 1L else bag$n_chunks,
+  expected_chunks = EXPECT_CHUNKS,
+  seeds           = seeds_cell,
+  slentry         = bag$slentry,
+  slstay          = bag$slstay,
+  cand_listed     = paste(bag$requested, collapse = " / "),
+  cand_usable     = paste(bag$usable, collapse = " / "),
+  n_rows          = bag$n_rows,
+  # CPU cost, NOT wall clock. boot_pool_chunks() SUMS elapsed across chunks, so
+  # on a chunked run this is the total compute; chunks run in parallel finish in
+  # a fraction of it. Reported in hours because the minutes figure reads as a
+  # wall-clock number and is off by the chunk count.
+  cpu_hours       = round(bag$elapsed_mins / 60, 1),
+  TemporalHazard  = bag$th_version
+), caption = paste("Candidate counts are listed / usable, one per phase.",
+                   "cpu_hours is summed across chunks and is compute cost,",
+                   "not elapsed time."))
+
+knitr::kable(bag$manifest, caption = "Dataset this screen ran against")
+```
+
+```{r}
+#| label: seeds
+#| code-fold: true
+# Every seed, one row per chunk. A repeated seed means repeated replicates,
+# which would count each twice and report a Monte-Carlo error the run does not
+# have. boot_pool_chunks() already refuses duplicates, so this table is
+# corroboration a reader can check rather than the gate itself.
+if (!is.null(bag$seeds) && length(bag$seeds) > 1L) {
+  knitr::kable(data.frame(chunk = seq_along(bag$seeds),
+                          seed  = format(bag$seeds, scientific = FALSE)),
+               row.names = FALSE, caption = "Seed per pooled chunk")
+}
+```
+
+Unlike SAS's `seed = -1`, which seeds from the time of day, this run **is**
+reproducible: same seed, same result. That is a genuine improvement over the job
+being reproduced, not merely a match to it — the original run cannot be
+recovered by anyone, including whoever ran it.
+
+## Candidates that were not screened
+
+Every candidate the job lists but the screen could not use is named here. A
+candidate dropped quietly shrinks the screen without shrinking the reported
+pool, and the frequencies would then be percentages of a denominator nobody
+stated.
+
+```{r}
+#| label: dropped-summary
+# Counts FIRST. The detail table below runs to dozens of rows on a real pool,
+# and a reader who has to scroll it to discover that a whole CLASS of variable
+# was never screened will not discover it.
+if (nrow(bag$dropped) == 0L) {
+  knitr::kable(data.frame(result = "every listed candidate was usable"))
+} else {
+  tab <- table(phase = bag$dropped$phase, reason = bag$dropped$reason)
+  by_reason <- as.data.frame(tab, stringsAsFactors = FALSE)
+  by_reason <- by_reason[by_reason$Freq > 0, ]
+  knitr::kable(by_reason[order(by_reason$phase, -by_reason$Freq), ],
+               row.names = FALSE,
+               caption = "Why listed candidates were not screened, per phase")
+}
+```
+
+```{r}
+#| label: dropped-detail
+#| code-fold: true
+# Folded. The counts above are what a reader must not miss; this is what they
+# consult once a count has raised the question.
+if (nrow(bag$dropped) > 0L) {
+  knitr::kable(bag$dropped[order(bag$dropped$phase, bag$dropped$variable), ],
+               row.names = FALSE,
+               caption = "Every candidate not screened, one row per phase")
+}
+```
+
+```{r}
+#| label: coercion
+# What the runner did to the pool before screening it, reported because these
+# repairs change WHICH VARIABLES COULD BE SELECTED and none of it is visible in
+# a frequency table. Older outputs predate these fields, hence the NULL guards.
+coerced_n <- if (isTRUE(bag$coerce_factors)) length(bag$coerced) else 0L
+knitr::kable(data.frame(
+  factors_coerced_to_numeric = coerced_n,
+  pruned_to_one_form         = isTRUE(bag$prune_to_one_form),
+  candidates_screened        = paste(bag$usable, collapse = " / ")
+), caption = "Pool repairs applied before screening")
+```
+
+::: {.callout-important}
+## Factor-coded binaries decide what the screen can see
+
+`read_built()` returns 0/1 clinical columns as **factors**, because `vars.sas`
+mean-imputes and adds `ms_*` indicators, so a two-level variable arrives as a
+three-level factor. A screen that filters to numeric columns cannot see any of
+them. SAS has no factors, so `%hazboot` screened them all.
+
+Left unrepaired this is not a rounding error. On the study this template was
+extracted from it removed **70 of 230 candidates per phase**, and among them
+were four of the risk factors that study's paper reports. The table above says
+whether your runner coerced them back; if `factors_coerced_to_numeric` is 0 and
+your built dataset came from `vars.sas`, check before reading anything below.
+
+Nothing in a frequency table shows this. The candidates are simply absent, and
+the percentages are honest percentages of whatever remained.
+:::
+
+```{r}
+#| label: interval-note
+# Interval-censored records are treated as right-censored for this stage: the
+# formula interface, which is the only one hzr_bootstrap() can resample, cannot
+# carry interval censoring. Reported rather than left in a comment, because the
+# reader cannot see it anywhere else -- and because for some cohorts it is a
+# large enough fraction to qualify the result.
+knitr::kable(data.frame(
+  rows_screened              = bag$n_rows,
+  interval_censored_as_right = bag$n_interval,
+  pct_of_cohort              = round(100 * bag$n_interval / bag$n_rows, 2)
+), caption = "Interval censoring, and how much of the cohort it affects")
+```
