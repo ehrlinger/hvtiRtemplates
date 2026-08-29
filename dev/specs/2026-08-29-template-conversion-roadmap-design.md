@@ -77,6 +77,58 @@ found **no taxonomy prefix anywhere at a single study**. The smallest are `bq`
 at 2 and `cp`/`pm` at 5. The two-studies gate is open for every prefix, and
 nothing in this roadmap waits on a second exemplar.
 
+**That catalogue has now been retrieved** (2026-08-29). It lives on the share
+in `census-20260827-064249/` beside `job-census.R` — 961 MB across six files.
+Two are copied to `~/Documents/templates/census-20260827/`, deliberately
+outside any git repository: `census-GATE.csv` (3.4 MB, the per-prefix
+aggregate) and `census-R-slice.csv` (18 MB, the R-side rows). The other
+940 MB of per-file rows stay on the share.
+
+A counts-only derivation is committed here as
+`dev/specs/artifacts/2026-08-29-job-census-summary.json` — 42 known prefixes,
+7 non-prefixes, the top 40 unknowns. **No path, study name or other identifier
+appears in it.** `hvtiRtemplates` is a public repository and
+`tests/testthat/test-new-job.R` forbids study identifiers; the raw catalogue is
+2.24 M study paths and must not be committed here.
+
+⚠️ **The two counts in that file measure different things and are not
+interchangeable.** `distinct_studies` counts every extension and is
+SAS-dominated — it answers *how widely used is this job type*. `r_studies`
+counts R-side extensions only — it answers *how much R precedent exists*. Batch
+value reads the first; extraction risk reads the second.
+
+**The lower bound `inst/templates/README.md` acknowledges is now closed.** Its
+published R counts read `.qmd` rows only, and it predicted the error direction
+was undercounting. Measured across `.R`, `.Rmd`, `.rmd`, `.S`, `.Rnw` and `.r`
+as well:
+
+| prefix | README (`.qmd` only) | measured (all R) |
+|---|---|---|
+| `ac` | 4 | **16** |
+| `hz` | 3 | **5** |
+| `hp` | 3 | **16** |
+| `bh` | 2 | 2 |
+| `hm` | 1 | **2** |
+| `hs` | 1 | **7** |
+
+⚠️ **84% of R-side rows for taxonomy prefixes are templates, not jobs** —
+32,226 of 38,282. `job_census()` drops them on two flags (`is_template`, and
+`naming == "template"`); any recount that omits either filter inflates every
+prefix. A first attempt at this table did omit them and produced R-study counts
+exceeding the all-extension totals, which is how the error was caught. **Any
+future recount must reproduce `job-census.R`'s job definition, not invent one.**
+
+Two by-products of the census bear directly on this roadmap:
+
+- an **unknown-prefix bucket of 103,461 rows**, dominated by recurring non-job
+  names (`binder` 1,017 studies, `built` 975, `stat_refs` 957). That bucket is
+  where a `sid`- or `vt`-class prefix surfaces, so §6's new-prefix discovery has
+  a data source rather than only recollection.
+- a **misfiled false-positive class, shipped deliberately** — every R job under
+  `analyses/R_hazard/` reports misfiled, because the taxonomy files `ac`/`hz`
+  under `distributions/` while `hvtiRtemplates` places R jobs under `analyses/`.
+  Both are right by their own rules. See §3.4.
+
 ---
 
 ## 3. Decisions
@@ -125,6 +177,15 @@ Three axes are tangled: package (`rf` vs `rfsrc`), outcome type (`rfc`/`rfs`),
 and fit-versus-report. The prefix is the filename and the filename is the
 ledger key, so this cannot be deferred past naming the first RF template.
 
+⚠️ **The folder half of that is not an RF problem.** The 2026-08-27 census hit
+the same contradiction corpus-wide and recorded it as deferred: the taxonomy
+files `ac`/`hz` under `distributions/`, `hvtiRtemplates` places R jobs under
+`analyses/`, and every R job under `analyses/R_hazard/` reports misfiled as a
+result. `rfc`/`rfs` are one instance of a systemic open question — either the
+taxonomy learns where R jobs live, or the placement rule splits. Settling it
+belongs in its own spec, not inside a family design, and the ML batch should
+not be blocked waiting on it.
+
 **Resolution — outcome axis**, matching how `bh`/`bl`/`bc`/`bn`/`bq`/`br` and
 `pm`/`rm`/`cm` already split:
 
@@ -138,8 +199,26 @@ ledger key, so this cannot be deferred past naming the first RF template.
 | `nb` | boosting notebooks (Boostmtree, BoostMLR) | existing; boosting, not forest |
 | `rf`, `rfsrc` | umbrella rows | **demoted, not templated** |
 
+⚠️ **This renames a convention 131 studies already use, and that cost is
+accepted rather than absent.** The census measures `rfsrc` at 131 studies and
+2,295 jobs — more than `rf` (47), `rfs` (25) and `rfc` (19) combined, twice
+over — and on the R side at 98 exemplar studies against `rf` 42, `rfc` 12,
+`rfs` 10. The corpus is organised on the package axis because `rfsrc` is the
+package people use.
+
+The decision stands on two grounds. First, the existing jobs already carry the
+outcome in field two — `tp.rfsrc.survival.R`, `tp.rfsrc.regression.R`,
+`tp.rfsrc.classification.R` — so the outcome axis is a **rename of a
+distinction already being drawn**, not a new one imposed. Second, one axis per
+family is what `bh`/`bl`/`bc`/`bn`/`bq`/`br` and `pm`/`rm`/`cm` already do, and
+carrying two axes in one family is the defect being fixed.
+
+**The ML family design spec owns the migration story** — what a study that
+writes `rfsrc.survival` today is told to write, and whether `rfsrc` survives as
+an alias. It is not resolved here, and it must not be discovered at naming time.
+
 `sid` is not greenfield: `tp.rf.sidclustering.tuning.R` is already in the
-library. The `rfc`/`rfs` folder contradiction is left to the ML family design
+library, and the census counts `rf` at 42 R exemplar studies. The `rfc`/`rfs` folder contradiction is left to the ML family design
 spec, which is where the evidence for it belongs.
 
 ⚠️ The taxonomy lives in **`hvtiRutilities`**, so adding `rfr`/`sid`/`vt` and
@@ -203,7 +282,8 @@ same as complete, and there is currently no way to say so.
 | `status` | `shipped` · `revisit` · `in-flight` · `queued` · `intake` · `out-of-scope` |
 | `batch` | integer; **provisional past batch 2** and stated as such |
 | `sas_templates` / `r_templates` | counts from §2, scope recorded in the file header |
-| `r_exemplars` | studies with an R job, from `job_census()`. **A lower bound** — the census reads `.qmd` only |
+| `r_exemplars` | studies with an **R** job. **Measured for all 42 prefixes** (§2.3), seeded from `2026-08-29-job-census-summary.json`'s `r_studies`. A genuine `0` (nine prefixes have one) must be distinguishable from "not measured", so an unmeasured prefix serialises as `null`, never `0` |
+| `sas_breadth` | `distinct_studies` from the same file — all extensions, SAS-dominated. Measures batch **value**, where `r_exemplars` measures extraction **risk**. Never conflate them |
 | `upstream` / `downstream` | from `2026-08-22-job-flow.json`'s 13 cross-job edges |
 | `blocked_on` | a named upstream, e.g. `hvtiRdatabuild` or `hvtiRutilities#taxonomy` |
 
@@ -241,15 +321,24 @@ unguarded test would fail every `R CMD check` on the tarball.
 
 ## 6. Intake — the off-catalogue R jobs
 
-Two sources, in this order.
+Three sources, in this order.
+
+**Source 0, the existing census catalogue — ✅ done 2026-08-29.** Retrieved,
+derived and committed as `2026-08-29-job-census-summary.json`; `r_exemplars`
+and `sas_breadth` are measured for all 42 prefixes (§2.3). The 103,454-row
+unknown-prefix bucket is carried in the same file, top 40 by study count, as
+the discovery surface for new prefixes.
 
 **Source 1, the library, runnable today.** The 74 non-archive non-SAS
 templates from §2.1. Local, no mount required. This is the larger and cheaper
 source and it was invisible until this note.
 
-**Source 2, `/studies`, a second pass.** Rerun `job_census()` widened beyond
-`.qmd` to `.R` and `.Rmd`, for jobs that never returned to the library. Blocked
-on server access; does not block source 1.
+**Source 2, a widened `/studies` sweep, last.** Re-run `job_census()` extended
+beyond `.qmd` to `.R` and `.Rmd`, for R jobs that never returned to the library.
+This is the only source that closes the acknowledged lower bound on
+`r_exemplars`, but it is also the most expensive and the least urgent — sources
+0 and 1 between them cover every prefix well enough to order batches. Blocked on
+server access; blocks neither source 0 nor source 1.
 
 Each intake record gets one of four verdicts:
 
@@ -277,10 +366,32 @@ fallback. Highest payoff per unit of work in the whole roadmap.
 **Batch 2** — bootstrap: `bl`, `bc`, `bn`, `bq`, `br`, off `bh`'s design while
 its reasoning is still warm.
 
+⚠️ **Batch 2 has almost no R precedent, and that is a design risk, not a
+detail.** Measured R exemplar studies: `bl` 1, `br` 1, and **`bn`, `bc` and
+`bq` at zero**. `bh` itself has 2. So five of six bootstrap templates will be
+extracted from SAS alone, generalised through one R exemplar's shape. The
+bootstrap family design spec must state which choices are `bh`'s and which are
+general — that distinction has no second R exemplar to check it against, which
+is the exact failure the two-studies gate was written to prevent, arriving by a
+different route.
+
 **Batches 3 and later are provisional**, recorded in the ledger's `batch`
-field and stated as provisional wherever they are rendered. Current provisional
-order: plots (9) → models (8) → machine learning (6) → distributions (2) →
-descriptive (3) → datasets (3) → `ar` (1).
+field and stated as provisional wherever they are rendered. The census now
+gives that order evidence rather than intuition:
+
+| family | breadth (studies) | R exemplars | reading |
+|---|---|---|---|
+| plots | `lp` 636, `dp` 628, `np` 248 | `dp` 398, `lp` 186, `np` 45 | widest R precedent in the corpus; cheapest to extract |
+| descriptive | **`dc` 1010**, `lg` 367, `rg` 45 | `dc` 69, `lg` 0, `rg` 0 | `dc` is the 2nd most used prefix and has **no blocker** |
+| models | `lm` 621, `rm` 174, `nm` 122 | `lm` 10, `rm` 8, `nm` 1 | wide use, thin R precedent |
+| machine learning | `rfsrc` 131, `rf` 47 | `rfsrc` 98, `rf` 42 | R-native; needs the taxonomy PR first |
+| distributions | `nd` 244, `cd` 202 | `cd` 6, `nd` 3 | narrow |
+| datasets | **`bd` 1134**, `vars` 959, `dt` 512 | `bd` 15, `vars` 2, `dt` 0 | widest use in the corpus, blocked |
+
+Current provisional order: plots (9) → descriptive (3) → machine learning (6) →
+models (8) → distributions (2) → datasets (3) → `ar` (1). Descriptive moves
+ahead of models on `dc`'s breadth and its absent blocker; plots leads on having
+the only substantial R precedent outside the shipped set.
 
 Two constraints on that order are firm rather than provisional:
 
@@ -292,6 +403,15 @@ Two constraints on that order are firm rather than provisional:
   job. It cannot be designed before the set it aggregates exists, and it must
   not be scheduled as though it were one more job template.
 
+  ⚠️ **The evidence argues against scheduling it last, and the argument is
+  overruled on dependency rather than dismissed.** `ar` is the 5th most widely
+  used prefix (706 studies, 2,868 jobs) and has **395 R exemplar studies, second
+  only to `dp`'s 398** — more R precedent than every shipped template combined.
+  Nothing but the dependency justifies its position. If `ar` becomes urgent
+  before the roadmap reaches it, the move is a **minimal `ar`** that assembles
+  whatever templates exist and degrades cleanly on the rest, not a reordering of
+  the batches it depends on.
+
 Descriptive and models are cleared to move earlier if ledger evidence favours
 it. Nothing external forces the order: see §8.
 
@@ -300,13 +420,15 @@ it. Nothing external forces the order: see §8.
 ## 8. Risks, and one that was withdrawn
 
 ⚠️ **The "SAS licence expires 2026-09-29" deadline does not apply, and should
-not be reinstated from an older note.** Nine places in `dev/specs/` state that
-date, twice as a load-bearing forcing function. The maintainer confirmed on
-2026-08-29 that the licence runs into **2027**, and that compiled data stays
-readable well beyond it. Correcting those nine statements is tracked
-separately; this roadmap does not depend on the date either way. Every
-template shipped so far was extracted by **reading** SAS source, never by
-running it, and this roadmap plans no reference runs.
+not be reinstated from an older note.** That date appears across `dev/specs/`,
+`README.md` and `NEWS.md`, twice as a load-bearing forcing function. The
+maintainer confirmed on 2026-08-29 that the licence in fact runs to
+**2027-09-29**, and that compiled data stays readable well beyond it. The
+correction is being applied separately, in
+[#44](https://github.com/ehrlinger/hvtiRtemplates/pull/44); this roadmap does
+not depend on the date either way. Every template shipped so far was extracted
+by **reading** SAS source, never by running it, and this roadmap plans no
+reference runs.
 
 Remaining risks:
 
@@ -314,7 +436,8 @@ Remaining risks:
 |---|---|
 | The ML batch blocks on a cross-repo taxonomy PR | `blocked_on` names it; raise the PR before batch planning, not during |
 | Datasets blocks on `hvtiRdatabuild`'s API | scheduled last; `blocked_on` records why, so "last" is not mistaken for "lowest value" |
-| `r_exemplars` is a lower bound | stated in the ledger header and every rendering; intake source 1 narrows it |
+| `r_exemplars` is a lower bound | stated in the ledger header and every rendering; intake sources 0 and 2 narrow it |
+| The 2026-08-27 catalogue is unreachable from a workstation | intake source 0 retrieves or re-runs it; until then 36 prefixes carry `null`, and batch order past batch 2 stays provisional |
 | A shipped template proves incomplete | `revisit` status exists for exactly this; `hp` is the first candidate |
 
 ---

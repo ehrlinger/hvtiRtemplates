@@ -1,0 +1,663 @@
+{
+  "_provenance": {
+    "source": "hvtiRutilities::job_census() via job-census.R, run server-side 2026-08-27 06:42",
+    "corpus": "/studies, all four top-level trees",
+    "files_scanned": 2240570,
+    "raw_output": "/studies/vascular/thoracic-aorta/dissection/ascending/acute/preserve_root/analyses/R_hazard/R/census-20260827-064249/ (961 MB, share-resident)",
+    "raw_files": [
+      "census-ALL.csv 479M",
+      "census-cardiac.csv 305M",
+      "census-thoracic.csv 102M",
+      "census-vascular.csv 59M",
+      "census-general.csv 13M",
+      "census-GATE.csv 3.4M"
+    ],
+    "derived_from": "census-GATE.csv only",
+    "why_aggregate_only": "hvtiRtemplates is a PUBLIC repo and every row of the raw catalogue is a study path. This file carries counts only -- no path, study name or other identifier -- which is what the roadmap ledger needs. See tests/testthat/test-new-job.R for the rule this respects.",
+    "caveat": "distinct_studies/n_jobs/n_files come from census-GATE.csv and count EVERY extension, so they are SAS-dominated: they measure how widely a job type is used, not how much R precedent exists.",
+    "unknown_bucket_truncated_to": 40,
+    "r_counts": {
+      "source": "census-ALL.csv filtered to R-side ext (R, r, Rmd, rmd, qmd, Rnw, S, Rproj), then GATE's own job definition applied: drop is_template==TRUE and naming=='template'.",
+      "why_the_filter_matters": "32,226 of 38,282 R rows for taxonomy prefixes are TEMPLATES, not jobs -- 84%. Counting them inflates every prefix and produced R_studies > total_studies, which is how the error was caught.",
+      "r_jobs_definition": "distinct (study, prefix, folder, stem) tuples, matching job_census()'s n_jobs.",
+      "closes": "the lower bound stated in inst/templates/README.md, whose R counts read .qmd only. Published there: ac 4, hz 3, hp 3, bh 2, hm 1, hs 1. Measured across all R extensions: ac 16, hz 5, hp 16, bh 2, hm 2, hs 7.",
+      "known_impurity": "Rproj (185 rows corpus-wide) is a project file, not a job; left in, effect negligible.",
+      "zero_r_prefixes": [
+        "bc",
+        "bn",
+        "bq",
+        "dt",
+        "gm",
+        "lg",
+        "ls",
+        "pm",
+        "rg"
+      ]
+    }
+  },
+  "known": [
+    {
+      "prefix": "bd",
+      "distinct_studies": 1134,
+      "n_jobs": 8591,
+      "n_files": 21463,
+      "r_studies": 15,
+      "r_jobs": 18
+    },
+    {
+      "prefix": "dc",
+      "distinct_studies": 1010,
+      "n_jobs": 9603,
+      "n_files": 24271,
+      "r_studies": 69,
+      "r_jobs": 108
+    },
+    {
+      "prefix": "vars",
+      "distinct_studies": 959,
+      "n_jobs": 1052,
+      "n_files": 1365,
+      "r_studies": 2,
+      "r_jobs": 2
+    },
+    {
+      "prefix": "ac",
+      "distinct_studies": 756,
+      "n_jobs": 10693,
+      "n_files": 22491,
+      "r_studies": 16,
+      "r_jobs": 20
+    },
+    {
+      "prefix": "ar",
+      "distinct_studies": 706,
+      "n_jobs": 2868,
+      "n_files": 3894,
+      "r_studies": 395,
+      "r_jobs": 1114
+    },
+    {
+      "prefix": "lp",
+      "distinct_studies": 636,
+      "n_jobs": 8108,
+      "n_files": 11777,
+      "r_studies": 186,
+      "r_jobs": 606
+    },
+    {
+      "prefix": "dp",
+      "distinct_studies": 628,
+      "n_jobs": 9180,
+      "n_files": 13698,
+      "r_studies": 398,
+      "r_jobs": 1780
+    },
+    {
+      "prefix": "lm",
+      "distinct_studies": 621,
+      "n_jobs": 2596,
+      "n_files": 6363,
+      "r_studies": 10,
+      "r_jobs": 45
+    },
+    {
+      "prefix": "hz",
+      "distinct_studies": 581,
+      "n_jobs": 4018,
+      "n_files": 11444,
+      "r_studies": 5,
+      "r_jobs": 8
+    },
+    {
+      "prefix": "hp",
+      "distinct_studies": 557,
+      "n_jobs": 13687,
+      "n_files": 30594,
+      "r_studies": 16,
+      "r_jobs": 24
+    },
+    {
+      "prefix": "dt",
+      "distinct_studies": 512,
+      "n_jobs": 813,
+      "n_files": 1501,
+      "r_studies": 0,
+      "r_jobs": 0
+    },
+    {
+      "prefix": "hm",
+      "distinct_studies": 383,
+      "n_jobs": 2392,
+      "n_files": 5954,
+      "r_studies": 2,
+      "r_jobs": 9
+    },
+    {
+      "prefix": "lg",
+      "distinct_studies": 367,
+      "n_jobs": 906,
+      "n_files": 2330,
+      "r_studies": 0,
+      "r_jobs": 0
+    },
+    {
+      "prefix": "bl",
+      "distinct_studies": 352,
+      "n_jobs": 2492,
+      "n_files": 7490,
+      "r_studies": 1,
+      "r_jobs": 1
+    },
+    {
+      "prefix": "bh",
+      "distinct_studies": 322,
+      "n_jobs": 3030,
+      "n_files": 8245,
+      "r_studies": 2,
+      "r_jobs": 5
+    },
+    {
+      "prefix": "np",
+      "distinct_studies": 248,
+      "n_jobs": 8458,
+      "n_files": 18699,
+      "r_studies": 45,
+      "r_jobs": 201
+    },
+    {
+      "prefix": "nd",
+      "distinct_studies": 244,
+      "n_jobs": 3082,
+      "n_files": 9248,
+      "r_studies": 3,
+      "r_jobs": 12
+    },
+    {
+      "prefix": "bn",
+      "distinct_studies": 214,
+      "n_jobs": 1966,
+      "n_files": 3521,
+      "r_studies": 0,
+      "r_jobs": 0
+    },
+    {
+      "prefix": "cd",
+      "distinct_studies": 202,
+      "n_jobs": 1168,
+      "n_files": 2287,
+      "r_studies": 6,
+      "r_jobs": 8
+    },
+    {
+      "prefix": "rm",
+      "distinct_studies": 174,
+      "n_jobs": 785,
+      "n_files": 1895,
+      "r_studies": 8,
+      "r_jobs": 94
+    },
+    {
+      "prefix": "hs",
+      "distinct_studies": 144,
+      "n_jobs": 998,
+      "n_files": 2441,
+      "r_studies": 7,
+      "r_jobs": 11
+    },
+    {
+      "prefix": "ce",
+      "distinct_studies": 131,
+      "n_jobs": 1811,
+      "n_files": 3558,
+      "r_studies": 1,
+      "r_jobs": 1
+    },
+    {
+      "prefix": "rfsrc",
+      "distinct_studies": 131,
+      "n_jobs": 2295,
+      "n_files": 2486,
+      "r_studies": 98,
+      "r_jobs": 631
+    },
+    {
+      "prefix": "nm",
+      "distinct_studies": 122,
+      "n_jobs": 1012,
+      "n_files": 2867,
+      "r_studies": 1,
+      "r_jobs": 1
+    },
+    {
+      "prefix": "br",
+      "distinct_studies": 103,
+      "n_jobs": 802,
+      "n_files": 2483,
+      "r_studies": 1,
+      "r_jobs": 1
+    },
+    {
+      "prefix": "mp",
+      "distinct_studies": 82,
+      "n_jobs": 1278,
+      "n_files": 1926,
+      "r_studies": 4,
+      "r_jobs": 5
+    },
+    {
+      "prefix": "gm",
+      "distinct_studies": 77,
+      "n_jobs": 357,
+      "n_files": 845,
+      "r_studies": 0,
+      "r_jobs": 0
+    },
+    {
+      "prefix": "rp",
+      "distinct_studies": 76,
+      "n_jobs": 785,
+      "n_files": 1685,
+      "r_studies": 5,
+      "r_jobs": 8
+    },
+    {
+      "prefix": "mm",
+      "distinct_studies": 59,
+      "n_jobs": 308,
+      "n_files": 766,
+      "r_studies": 1,
+      "r_jobs": 1
+    },
+    {
+      "prefix": "gp",
+      "distinct_studies": 50,
+      "n_jobs": 608,
+      "n_files": 1269,
+      "r_studies": 2,
+      "r_jobs": 2
+    },
+    {
+      "prefix": "rf",
+      "distinct_studies": 47,
+      "n_jobs": 397,
+      "n_files": 493,
+      "r_studies": 42,
+      "r_jobs": 312
+    },
+    {
+      "prefix": "rg",
+      "distinct_studies": 45,
+      "n_jobs": 77,
+      "n_files": 187,
+      "r_studies": 0,
+      "r_jobs": 0
+    },
+    {
+      "prefix": "cm",
+      "distinct_studies": 35,
+      "n_jobs": 130,
+      "n_files": 338,
+      "r_studies": 2,
+      "r_jobs": 2
+    },
+    {
+      "prefix": "ls",
+      "distinct_studies": 34,
+      "n_jobs": 336,
+      "n_files": 874,
+      "r_studies": 0,
+      "r_jobs": 0
+    },
+    {
+      "prefix": "rfs",
+      "distinct_studies": 25,
+      "n_jobs": 248,
+      "n_files": 277,
+      "r_studies": 10,
+      "r_jobs": 39
+    },
+    {
+      "prefix": "nb",
+      "distinct_studies": 21,
+      "n_jobs": 137,
+      "n_files": 155,
+      "r_studies": 19,
+      "r_jobs": 63
+    },
+    {
+      "prefix": "fp",
+      "distinct_studies": 19,
+      "n_jobs": 126,
+      "n_files": 133,
+      "r_studies": 11,
+      "r_jobs": 20
+    },
+    {
+      "prefix": "rfc",
+      "distinct_studies": 19,
+      "n_jobs": 356,
+      "n_files": 409,
+      "r_studies": 12,
+      "r_jobs": 52
+    },
+    {
+      "prefix": "bc",
+      "distinct_studies": 16,
+      "n_jobs": 129,
+      "n_files": 348,
+      "r_studies": 0,
+      "r_jobs": 0
+    },
+    {
+      "prefix": "cp",
+      "distinct_studies": 5,
+      "n_jobs": 32,
+      "n_files": 67,
+      "r_studies": 1,
+      "r_jobs": 1
+    },
+    {
+      "prefix": "pm",
+      "distinct_studies": 5,
+      "n_jobs": 9,
+      "n_files": 26,
+      "r_studies": 0,
+      "r_jobs": 0
+    },
+    {
+      "prefix": "bq",
+      "distinct_studies": 2,
+      "n_jobs": 18,
+      "n_files": 64,
+      "r_studies": 0,
+      "r_jobs": 0
+    }
+  ],
+  "non_prefix": [
+    {
+      "prefix": "test",
+      "distinct_studies": 636,
+      "n_jobs": 673,
+      "n_files": 705
+    },
+    {
+      "prefix": "ref",
+      "distinct_studies": 507,
+      "n_jobs": 507,
+      "n_files": 508
+    },
+    {
+      "prefix": "refs",
+      "distinct_studies": 495,
+      "n_jobs": 495,
+      "n_files": 505
+    },
+    {
+      "prefix": "pp",
+      "distinct_studies": 143,
+      "n_jobs": 1511,
+      "n_files": 1551
+    },
+    {
+      "prefix": "plots",
+      "distinct_studies": 48,
+      "n_jobs": 49,
+      "n_files": 55
+    },
+    {
+      "prefix": "PPTs",
+      "distinct_studies": 6,
+      "n_jobs": 7,
+      "n_files": 12
+    },
+    {
+      "prefix": "ppt",
+      "distinct_studies": 5,
+      "n_jobs": 9,
+      "n_files": 9
+    }
+  ],
+  "unknown_top": [
+    {
+      "prefix": "binder",
+      "distinct_studies": 1017,
+      "n_jobs": 1018,
+      "n_files": 1019
+    },
+    {
+      "prefix": "built",
+      "distinct_studies": 975,
+      "n_jobs": 1013,
+      "n_files": 1434
+    },
+    {
+      "prefix": "stat_refs",
+      "distinct_studies": 957,
+      "n_jobs": 957,
+      "n_files": 957
+    },
+    {
+      "prefix": "pgm",
+      "distinct_studies": 892,
+      "n_jobs": 1281,
+      "n_files": 1374
+    },
+    {
+      "prefix": "general_cate",
+      "distinct_studies": 509,
+      "n_jobs": 528,
+      "n_files": 551
+    },
+    {
+      "prefix": "general_cont",
+      "distinct_studies": 509,
+      "n_jobs": 524,
+      "n_files": 545
+    },
+    {
+      "prefix": "dates4survival",
+      "distinct_studies": 489,
+      "n_jobs": 489,
+      "n_files": 489
+    },
+    {
+      "prefix": "references",
+      "distinct_studies": 439,
+      "n_jobs": 507,
+      "n_files": 509
+    },
+    {
+      "prefix": "ab",
+      "distinct_studies": 414,
+      "n_jobs": 1025,
+      "n_files": 1060
+    },
+    {
+      "prefix": "Yahoo_recolored",
+      "distinct_studies": 414,
+      "n_jobs": 414,
+      "n_files": 414
+    },
+    {
+      "prefix": "hzdead",
+      "distinct_studies": 396,
+      "n_jobs": 399,
+      "n_files": 429
+    },
+    {
+      "prefix": "RSF_dead_iga_test",
+      "distinct_studies": 364,
+      "n_jobs": 364,
+      "n_files": 365
+    },
+    {
+      "prefix": "GGlp_vol1_ptprofile",
+      "distinct_studies": 363,
+      "n_jobs": 363,
+      "n_files": 363
+    },
+    {
+      "prefix": "GGaf_rythm_data_binary",
+      "distinct_studies": 362,
+      "n_jobs": 362,
+      "n_files": 362
+    },
+    {
+      "prefix": "GGlp_QOL",
+      "distinct_studies": 362,
+      "n_jobs": 362,
+      "n_files": 362
+    },
+    {
+      "prefix": "GGplt_avdiam_tvrg",
+      "distinct_studies": 362,
+      "n_jobs": 362,
+      "n_files": 362
+    },
+    {
+      "prefix": "multipanel_barplot",
+      "distinct_studies": 362,
+      "n_jobs": 362,
+      "n_files": 362
+    },
+    {
+      "prefix": "imputsub",
+      "distinct_studies": 309,
+      "n_jobs": 615,
+      "n_files": 926
+    },
+    {
+      "prefix": "echo",
+      "distinct_studies": 300,
+      "n_jobs": 393,
+      "n_files": 695
+    },
+    {
+      "prefix": "mult_imput",
+      "distinct_studies": 242,
+      "n_jobs": 296,
+      "n_files": 411
+    },
+    {
+      "prefix": "readin",
+      "distinct_studies": 230,
+      "n_jobs": 334,
+      "n_files": 907
+    },
+    {
+      "prefix": "ProjectPlanDataSources",
+      "distinct_studies": 217,
+      "n_jobs": 217,
+      "n_files": 217
+    },
+    {
+      "prefix": "baseline",
+      "distinct_studies": 211,
+      "n_jobs": 214,
+      "n_files": 258
+    },
+    {
+      "prefix": "eGFR_1_CCF_LAB",
+      "distinct_studies": 210,
+      "n_jobs": 210,
+      "n_files": 210
+    },
+    {
+      "prefix": "LVmass_equations",
+      "distinct_studies": 210,
+      "n_jobs": 210,
+      "n_files": 210
+    },
+    {
+      "prefix": "builtpreopecho",
+      "distinct_studies": 194,
+      "n_jobs": 194,
+      "n_files": 212
+    },
+    {
+      "prefix": "postopechos",
+      "distinct_studies": 189,
+      "n_jobs": 189,
+      "n_files": 205
+    },
+    {
+      "prefix": "intraopechos",
+      "distinct_studies": 185,
+      "n_jobs": 185,
+      "n_files": 200
+    },
+    {
+      "prefix": "ProjectPlanDataSources_2016",
+      "distinct_studies": 173,
+      "n_jobs": 173,
+      "n_files": 173
+    },
+    {
+      "prefix": "hmdead",
+      "distinct_studies": 172,
+      "n_jobs": 174,
+      "n_files": 190
+    },
+    {
+      "prefix": "deade",
+      "distinct_studies": 170,
+      "n_jobs": 170,
+      "n_files": 178
+    },
+    {
+      "prefix": "Thumbs",
+      "distinct_studies": 170,
+      "n_jobs": 218,
+      "n_files": 318
+    },
+    {
+      "prefix": "deadl",
+      "distinct_studies": 169,
+      "n_jobs": 169,
+      "n_files": 177
+    },
+    {
+      "prefix": "bdecho",
+      "distinct_studies": 140,
+      "n_jobs": 143,
+      "n_files": 153
+    },
+    {
+      "prefix": "build",
+      "distinct_studies": 138,
+      "n_jobs": 180,
+      "n_files": 398
+    },
+    {
+      "prefix": "propen",
+      "distinct_studies": 120,
+      "n_jobs": 190,
+      "n_files": 198
+    },
+    {
+      "prefix": "finlssdi",
+      "distinct_studies": 117,
+      "n_jobs": 118,
+      "n_files": 121
+    },
+    {
+      "prefix": "redcap",
+      "distinct_studies": 110,
+      "n_jobs": 113,
+      "n_files": 302
+    },
+    {
+      "prefix": "group_cate",
+      "distinct_studies": 105,
+      "n_jobs": 112,
+      "n_files": 117
+    },
+    {
+      "prefix": "EDA_cont_scatterplot",
+      "distinct_studies": 104,
+      "n_jobs": 106,
+      "n_files": 112
+    }
+  ],
+  "unknown_total_rows": 103454
+}
