@@ -54,3 +54,6 @@ jobs:
 
       - name: Job flow diagrams agree with the generated maps
         run: python3 dev/specs/artifacts/check-flow-counts.py
+
+      - name: Roadmap ledger agrees with the templates on disk
+        run: python3 dev/specs/artifacts/check-roadmap-counts.py
