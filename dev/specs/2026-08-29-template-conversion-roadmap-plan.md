@@ -15,6 +15,15 @@ established here.
 **Tech Stack:** Python 3 (stdlib only — `json`, `os`, `re`, `sys`), R with
 testthat edition 3, GitHub Actions.
 
+> ⚠️ **EXECUTED 2026-08-29, and six corrections are marked in place below.**
+> This plan was carried out on `feat/template-conversion-roadmap`
+> ([#47](https://github.com/ehrlinger/hvtiRtemplates/pull/47)). Execution and a
+> whole-branch review found six defects **in this plan**, one of them Critical.
+> Each is marked with a dated `⚠️ CORRECTED` note beside the original text
+> rather than silently rewritten, per this repository's convention. Read the
+> corrections: three of the originals would produce a guard that reports green
+> while checking nothing, and two do not run at all on macOS.
+
 **Design spec:** `dev/specs/2026-08-29-template-conversion-roadmap-design.md`.
 Read it before starting. This plan implements §4 (ledger), §5 (guards) and the
 roadmap document; it implements **no template**.
@@ -28,6 +37,17 @@ roadmap document; it implements **no template**.
   `R CMD check`.
 - **No new package dependency.** The Python guards are stdlib-only; the
   testthat guard uses only what `DESCRIPTION` already declares.
+
+  ⚠️ **CORRECTED 2026-08-29. The second clause is wrong and was overridden
+  during execution.** `tests/testthat/test-roadmap.R` calls
+  `jsonlite::fromJSON()`. Guarding it with `skip_if_not_installed("jsonlite")`
+  is necessary but **not sufficient**: `R CMD check` raises
+  `unstated dependencies in tests` for any package used in tests and not
+  declared, which is a WARNING and so breaks this repo's 0/0/0 gate. `Suggests:`
+  is the correct home for a test-only dependency used behind
+  `skip_if_not_installed()`, and `jsonlite` was added there. The constraint
+  should have read: no new **`Imports`**; a test-only package goes in
+  `Suggests`.
 - **Roxygen here is Rd markup, not markdown** — irrelevant to this plan, which
   adds no roxygen, but do not "fix" any you pass.
 - **Lines are 135 characters** in R (`.lintr`), not 80. Python follows the
@@ -526,6 +546,26 @@ The workflow's existing `paths:` filters already cover `dev/specs/**`, so no
 trigger change is needed. Note the header comment's warning: the path filters
 and the `run:` paths must move together with any move of `dev/specs/`.
 
+⚠️ **CORRECTED 2026-08-29 — this was the plan's most serious defect, and it
+made the guard useless in exactly the case it exists for.** "No trigger change
+is needed" is true of `check-spec-counts.py` and `check-flow-counts.py`, which
+read nothing outside `dev/specs/`. It is **false** of
+`check-roadmap-counts.py`, which reads a second input: `inst/templates/**`. Its
+whole `check_disk()` exists to catch a template landing or vanishing without a
+matching ledger row — and a PR that touches only `inst/templates/` matched
+neither path filter, so the job never started, the drift reached `main`
+unreported, and the red check surfaced later on an unrelated `dev/specs/` PR
+that appeared to have caused it. The guard therefore fired only when the author
+had **already** remembered to update the ledger.
+
+`inst/templates/**` was added to both the `push:` and `pull_request:` filters.
+The workflow's own header comment warns about precisely this failure mode — "the
+trigger simply stops matching, the job never starts, and the PR goes green with
+nothing having been verified" — which this plan then walked into.
+
+**The general lesson: a `paths:` filter must list every input its steps read,
+not every input the workflow is named after.**
+
 - [ ] **Step 7: Commit**
 
 ```bash
@@ -801,6 +841,27 @@ sed -i '' '0,/| `ac` |/s/| `ac` | shipped |/| `ac` | queued |/' dev/specs/2026-0
 python3 dev/specs/artifacts/check-roadmap-counts.py; echo "exit=$?"
 ```
 
+⚠️ **CORRECTED 2026-08-29. Neither of the first two lines runs as written.**
+
+1. `git checkout <file>` fails: at this point in the task the document was
+   created in Step 2 and **not yet committed**, so git has no version to
+   restore. Remove the appended line by hand, or `git stash` nothing — there is
+   nothing tracked to check out.
+2. `sed -i '' '0,/re/s/...'` mixes two dialects. `0,/re/` is a **GNU** range
+   address that BSD/macOS `sed` rejects outright, while the `-i ''` empty-suffix
+   form is BSD-only and GNU `sed` rejects *that*. The command cannot run on
+   either platform. Since `` `ac` `` appears exactly once in the rendered
+   document, a plain unanchored substitution is equivalent and portable:
+
+```bash
+sed -i '' 's/| `ac` | shipped |/| `ac` | queued |/' dev/specs/2026-08-29-template-conversion-roadmap.md
+```
+
+   (still BSD/macOS `-i ''`; on GNU use `sed -i` with no argument.)
+
+**The property being proved is unchanged** — an edit *inside* the markers must
+fail the guard — and it was verified during execution with the portable form.
+
 Expected: exit 1, reporting the tables are not what the ledger renders. Then
 `python3 dev/specs/artifacts/roadmap_render.py` restores it and the guard
 returns 0.
@@ -909,6 +970,13 @@ Expected: `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 3 ]`. If it reports `SKIP 3`, the
 ledger path is wrong — check the working directory assumption in
 `ledger_path()` rather than deleting the skip.
 
+⚠️ **CORRECTED 2026-08-29: the actual count is `PASS 5`.** testthat counts
+**expectations**, not `test_that()` blocks, and the third block's loop over the
+intake rows contributes three on its own. `FAIL 0` and — far more importantly —
+`SKIP 0` are the substantive criteria; the pass total is not. **The `SKIP 3`
+advice above is correct and load-bearing: a skipped guard reports green while
+checking nothing.**
+
 - [ ] **Step 3: Prove the test catches a missing row**
 
 ```bash
@@ -932,6 +1000,25 @@ Rscript -e 'devtools::test(filter = "roadmap")'
 
 Expected: PASS 3.
 
+⚠️ **CORRECTED 2026-08-29. `--force` does NOT restore the ledger, and using it
+here silently corrupts one field.** The seeder rebuilds from its own hardcoded
+`KNOWN_STATUS` table, which carries `"bh": ("in-flight", "04.06")`. On any
+branch where `bh` was hand-corrected — including the one this plan was executed
+on, where `04.06-bh.qmd` is not present — the reseed flips `bh` back and the
+guard then fails on a template that does not exist.
+
+**Restore from git, not from the seeder:**
+
+```bash
+git checkout -- dev/specs/artifacts/2026-08-29-template-roadmap.json
+Rscript -e 'devtools::test(filter = "roadmap")'
+```
+
+Expected: `PASS 5` (see the correction under Step 2). The seeder's docstring now
+carries this warning too. More generally: **the ledger is hand-maintained after
+seeding, so `git` is its restore path — the seeder is not idempotent against
+it.**
+
 - [ ] **Step 4: Run the whole suite**
 
 ```bash
@@ -941,12 +1028,43 @@ Rscript -e 'devtools::test()'
 Expected: `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 93 ]` — the 90 that passed before
 this plan, plus 3.
 
+⚠️ **CORRECTED 2026-08-29: the actual total is `PASS 89`.** Both numbers in that
+sentence were wrong. The baseline is **84**, not 90 — the 90 was measured on a
+branch based on `feat/8-bh-template`, which carries the `bh` template and its
+tests; this plan is executed off `main`, which does not. And the increment is
+**5**, not 3, for the expectation-counting reason under Step 2. 84 + 5 = 89.
+**Quote a baseline with the branch it was measured on, or do not quote it.**
+
 - [ ] **Step 5: Commit**
 
 ```bash
 git add tests/testthat/test-roadmap.R dev/specs/artifacts/2026-08-29-template-roadmap.json
 git commit -m "test(roadmap): assert the ledger's vocabulary matches the taxonomy"
 ```
+
+⚠️ **ADDED 2026-08-29 — this task was incomplete, and the omission made the
+whole guard inert.** The plan stopped at writing the test, assuming it would run
+in CI. It does not. `dev/` is `.Rbuildignore`d, so every CI path —
+`R-CMD-check.yaml` (checks the built tarball) and `test-coverage.yaml`
+(`R CMD INSTALL` then `testInstalledPackage`) — runs where the ledger is
+**absent**, and all three tests hit their `skip_if_not` and report `SKIP 3`. No
+workflow ran `devtools::test()` on the source tree. So the vocabulary guard ran
+only on a developer's laptop, while `NEWS.md` advertised a CI guard.
+
+The `skip_if_not` is still correct — without it the tarball check fails on a
+deliberately-absent file. What was missing is a second place to run:
+
+1. A `require_ledger()` helper replaces the three `skip_if_not(file.exists(...))`
+   calls. It skips as before, **unless `HVTI_ROADMAP_STRICT` is set**, in which
+   case a missing ledger is a hard `stop()`.
+2. `R-CMD-check.yaml` gains a step, on the `ubuntu-latest` / `release` leg only,
+   that runs `testthat::test_local(".", filter = "roadmap", stop_on_failure = TRUE)`
+   against the **source tree** with `HVTI_ROADMAP_STRICT: 1`. That step needs
+   `any::pkgload` added to `setup-r-dependencies`' `extra-packages`.
+
+**The lesson generalises past this plan: a test guarded by `skip_if_not` needs a
+named place where the skip cannot happen, or the guard retires itself silently
+the first time the condition stops holding.**
 
 ---
 
@@ -1025,6 +1143,22 @@ line**:
 `1.0.10`, use `1.0.11`. Check `git log origin/main -1 -- DESCRIPTION` before
 choosing.
 
+✅ **2026-08-29: that is what happened.** #44 merged first and took `1.0.10`, so
+this work shipped as **`1.0.11`**, with the matching `# hvtiRtemplates 1.0.11`
+heading. Every `1.0.10` in Task 4 above should be read as `1.0.11`. This is the
+one place the plan anticipated its own staleness and the check paid for
+itself — **write the check, not the answer, whenever a value depends on merge
+order.**
+
+⚠️ **CORRECTED 2026-08-29: Steps 5 and 6 were deferred, deliberately.** The plan
+put push-and-open-PR inside Task 4, but the execution harness runs a
+whole-branch review *after* the last task. Opening the PR here would have
+published the branch before that review, which found one Critical and four
+Important defects. Task 4 was cut to Steps 1-4 plus the commit; the push and PR
+came after the review and its fixes. **A plan's last task should stop at the
+commit — publishing is a separate decision, taken once the branch has been
+reviewed as a whole.**
+
 - [ ] **Step 5: Commit and open the PR**
 
 ```bash
@@ -1084,3 +1218,33 @@ machinery, not the queue's contents.
 the renderer is underscore-named while every sibling script here is hyphenated.
 Task 2 Step 1 states that up front rather than leaving it to be discovered when
 the import fails.
+
+---
+
+## What execution found (2026-08-29)
+
+The plan ran end to end and produced working machinery, but six of its own
+statements were wrong. They are marked in place above. Grouped by what caused
+them:
+
+| # | defect | root cause |
+|---|---|---|
+| 1 | `paths:` filter did not cover `inst/templates/**`, so the disk guard never fired on the change it exists to catch | reasoned about the workflow's *name*, not its steps' *inputs* |
+| 2 | `test-roadmap.R` never ran in CI; `skip_if_not` made it green-but-inert | assumed a test that passes locally runs everywhere |
+| 3 | `jsonlite` banned from `DESCRIPTION` | conflated `Imports` with `Suggests`; the ban was incompatible with the 0/0/0 gate the same plan requires |
+| 4 | `--force` reseed offered as the ledger's restore path | the seeder is not idempotent against a hand-maintained file |
+| 5 | predicted `PASS 3` / `PASS 93` | testthat counts expectations, not blocks; and a baseline was quoted without its branch |
+| 6 | two verification commands that run on neither macOS nor Linux | `git checkout` on an untracked file; GNU/BSD `sed` dialects mixed in one command |
+
+Defects 1 and 2 share a shape worth naming, because both produced a **guard that
+reports green while checking nothing** — the failure this plan's whole design is
+meant to prevent, reproduced twice inside the plan itself. Neither was caught by
+running the plan; both needed a reviewer asking "when would this *not* fire?"
+
+Two things did work as intended. Task 4 told its reader to *check* which version
+`main` was on rather than asserting one — and that check paid for itself when
+#44 merged first. And every deliberately-break-it-then-restore step caught its
+guard failing correctly before the guard was trusted; without those, defects 1
+and 2 would have had company.
+
+Implementation: [#47](https://github.com/ehrlinger/hvtiRtemplates/pull/47).
