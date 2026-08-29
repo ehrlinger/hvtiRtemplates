@@ -582,10 +582,19 @@ Confirm the markers are present and countable:
 grep -c "EDIT:" inst/templates/graphs/06.02-hs.qmd
 ```
 
-Expected: `6` — the opening prose, cohort, horizons (which marks TIME and
-HORIZONS together), expected-survival, the save, and the one in the copied
-skeleton's set-declaration comment. If you get 5, the TIME marker is missing. **A count of 0 means the
-template ships as if it were finished, which is issue #27 all over again.**
+Expected: **`4`** — the opening prose (Task 1 Step 3), the cohort (Task 1
+Step 4), horizons and TIME (Task 2 Step 1), and the vintage (Task 3 Step 1).
+
+⚠️ **CORRECTED 2026-08-29, before execution.** An earlier draft of this step
+predicted `6` and attributed markers to "the save" and "the copied skeleton's
+set-declaration comment". Neither carries one. The skeleton's only `EDIT:` is
+in the opening prose block at `04.01-hm.qmd:22`, which Task 1 Step 2 **replaces
+wholesale**, so the copy contributes zero. Chasing the wrong number would send
+an implementer hunting markers that do not exist, or adding spurious ones to
+reach it.
+
+**A count of 0 means the template ships as if it were finished, which is
+issue #27 all over again.**
 
 - [ ] **Step 5: Commit**
 
