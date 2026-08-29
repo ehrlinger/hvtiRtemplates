@@ -100,13 +100,14 @@ Screen every form; group only when reading. `hvtiRutilities` exports
 `prune_to_one_form()`, so the wrong move is one function call away and looks
 like tidying.
 
-Measured, on this study: of the 57 forms pruning removed, **16 correlated at
-|r| < 0.9** with the form kept and five below 0.5. `in_zexp` **is** `1/zexp`
-(r = 0.9997 against the reciprocal) yet correlates with `zexp` at only
-**-0.195**, because `zexp` spans 0.038 to 151.9 — over a 4000-fold range a
-value and its reciprocal are different information. The study's published model
-uses `zexp` and `in_zexp` **in the same phase, both significant**
-(z = 4.00 and 2.76): a two-parameter flexible form that pruning forbids.
+Measured, on this study: of the 57 forms pruning removed, **16 correlated
+at |r| < 0.9** with the form kept and five below 0.5. `in_zexp` **is**
+`1/zexp` (r = 0.9997 against the reciprocal) yet correlates with `zexp` at
+only **-0.195**, because `zexp` spans 0.038 to 151.9 — over a 4000-fold
+range a value and its reciprocal are different information. The study's
+published model uses `zexp` and `in_zexp` **in the same phase, both
+significant** (z = 4.00 and 2.76): a two-parameter flexible form that
+pruning forbids.
 
 ### 2. A screen that selected nothing is a failure, not a finding
 
