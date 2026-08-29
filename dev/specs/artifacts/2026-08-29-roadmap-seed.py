@@ -5,13 +5,20 @@ Kept rather than run-and-discarded, for the reason the macro-allocation scan is
 kept: a 42-row table assembled by hand from three sources is wrong in ways
 nobody can see, and a regenerable map can be checked against its sources.
 
-RUN LOCALLY, NOT IN CI. It shells to Rscript for `hvti_taxonomy()` and reads
-`~/Documents/template` for the SAS template counts; neither exists on a runner.
-`check-roadmap-counts.py` is what CI can honestly enforce.
+RUN LOCALLY, NOT IN CI. It shells to Rscript for `hvti_taxonomy()`, which a
+Python CI step has no way to call. `check-roadmap-counts.py` is what CI can
+honestly enforce over the ledger, and `tests/testthat/test-roadmap.R` covers
+the taxonomy agreement from the R side.
 
 After the first run the ledger is HAND-MAINTAINED. Re-running overwrites
 `status`, `batch` and `note`, which are decisions, not measurements -- so it
 refuses to overwrite unless given --force.
+
+-- It also does NOT reproduce the current ledger on a branch where a
+template's status was hand-corrected. KNOWN_STATUS below still carries
+`bh` as in-flight at 04.06, while the ledger has it queued with no ordinal
+because 04.06-bh.qmd is on an unmerged branch. Restore with
+`git checkout -- <ledger>`, not with --force.
 """
 import collections
 import json
