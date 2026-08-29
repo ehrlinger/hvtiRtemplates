@@ -401,3 +401,61 @@ knitr::kable(data.frame(
   pct_of_cohort              = round(100 * bag$n_interval / bag$n_rows, 2)
 ), caption = "Interval censoring, and how much of the cohort it affects")
 ```
+
+## Did the screen actually run?
+
+The check that has to come **before** any frequency is read. A bootstrap that
+never resamples, and a screen that never selects, both produce `n_success` at
+its maximum, `n_failed` at zero, no warning, and a summary table that looks
+exactly like a result.
+
+⚠️ **A screen that selected nothing is a failure, not a finding.** That is worth
+stating flatly, because the artefact it produces is not obviously broken — it is
+a table of variables with perfectly clean numbers beside them.
+
+<!-- EDIT: nothing here, but check your RUNNER against this before trusting any
+     number below. The runner is a study's own script and is not templated, so
+     this is the only place the template can raise it.
+
+     Write the model formula LITERALLY at the runner's call site. Not in a
+     variable, not via as.formula(), not via reformulate(). hzr_bootstrap() and
+     hzr_stepwise() rewrite the stored formula per replicate or per step, and a
+     symbol standing where the formula should be does not survive that rewrite:
+     the refit errors, the error is caught, the step reports nothing accepted,
+     and the screen halts having selected nothing -- with no warning and
+     n_failed = 0. The health table below is what catches it.
+
+     A free parameter must also VARY across resamples. A bootstrap built on the
+     VECTOR interface returns the original fit every replicate, with
+     n_success = 500, n_failed = 0 and no warning. sd_free_base_param is the
+     tell, and the stopifnot() below refuses to continue on it. -->
+
+```{r}
+#| label: health
+reps       <- bag$boot$replicates
+per_rep    <- tapply(reps$parameter, reps$replicate,
+                     function(p) length(setdiff(p, bag$base_params)))
+n_selected <- length(setdiff(unique(reps$parameter), bag$base_params))
+
+knitr::kable(data.frame(
+  n_success                 = bag$boot$n_success,
+  n_failed                  = bag$boot$n_failed,
+  sd_free_base_param        = signif(bag$free_sd, 4),
+  distinct_covariates       = n_selected,
+  replicates_selecting_none = sum(per_rep == 0),
+  median_covars_per_rep     = stats::median(per_rep)
+), caption = "Health of the screen. Read this before any frequency below.")
+
+# Hard stop, not a warning. Both conditions describe a screen whose output is an
+# artefact, and a warning here would scroll past in a log while the .html went
+# on to be read as a result.
+stopifnot(bag$free_sd > 0, n_selected > 0)
+```
+
+`sd_free_base_param` is the spread of a free base parameter across replicates.
+**Zero there means the replicates all returned the original fit** — the refit
+never saw resampled data — and every frequency below would be an artefact.
+
+`replicates_selecting_none` is the companion check: replicates that ran but
+retained nothing. A few are ordinary. All of them means the screen is broken
+rather than strict, and the two failures look identical in a summary table.
