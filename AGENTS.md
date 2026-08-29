@@ -69,10 +69,21 @@ affordances live in `CLAUDE.md`, which imports this file.
   Comments around them should say *why* a choice matters, not merely
   what to type — several exist because the alternative fails quietly.
 - **A template is only added once two studies have exercised the
-  shape.** `ac` qualifies. `hz` and `hp` are deliberately absent: each
-  exists in exactly one study, and a template extracted from a single
-  example encodes that study’s choices as though they were general.
-  `inst/templates/README.md` records what is missing and why.
+  shape.** A template extracted from a single example encodes that
+  study’s choices as though they were general. The second exemplar need
+  not be R: `hm` took a SAS job, which states those choices as plainly
+  as an R port does. ⚠️ **The gate is open for every prefix the taxonomy
+  documents, and nothing is waiting on a second exemplar.** A corpus
+  census
+  ([`hvtiRutilities::job_census()`](https://ehrlinger.github.io/hvtiRutilities/reference/job_census.html),
+  2026-08-27) over all of `/studies` found no prefix anywhere at one
+  study; the smallest are `bq` at 2 and `cp`/`pm` at 5. An earlier
+  version of this rule named `hz` and `hp` as blocked at one study each.
+  That was read off a comparison of two directories and stated as though
+  it held for the corpus; both shipped, in 1.0.6 and 1.0.7. **Do not
+  quote a per-study count as a gate answer** — run the census.
+  `inst/templates/README.md` carries the numbers and the list of what is
+  still untemplated.
 - **Templates carry their own `format:` block** rather than inheriting
   from a project `_quarto.yml`. A file meant to be copied must not
   depend on the directory it happens to sit in — that is how
@@ -130,12 +141,21 @@ scaffolded at all.
 - **`commented_code_linter` is excluded for templates on purpose** —
   commented scaffolding such as `# d <- read_built()` is the template
   showing its user what to uncomment.
-- ⚠️ **A future `hz` template must not ship `nu = 0` as a starting
-  value** while
+- ⚠️ **The `nu = 0` warning that stood here is withdrawn, and should not
+  be reinstated from an older note.** It said a future `hz` template
+  must not ship `nu = 0` while
   [temporal_hazard#143](https://github.com/ehrlinger/temporal_hazard/issues/143)
-  is open: the `cdf` phase’s `nu -> 0` limit loses the early-phase tail
-  at short half-life, and the affected `mu` silently stops being
-  identified.
+  was open. That issue closed COMPLETED on 2026-08-25, in two opposite
+  directions: the tail-divergence half was **retracted in-thread as not
+  a defect** — C case 4 transcribes exactly to R’s Case 2L, `rho`
+  included, and production SAS output reproduces at all 14 nomogram
+  points — and the identifiability half **shipped** in TemporalHazard
+  1.2.5
+  ([temporal_hazard#182](https://github.com/ehrlinger/temporal_hazard/pull/182)),
+  which warns when a phase has effectively left the model.
+  `03.02-hz.qmd` ships `nu = 1` as a neutral `EDIT:` starting value, not
+  as a workaround, and a `nu = 0 fixnu` phase transcribed from a SAS fit
+  is fine.
 
 ## Change discipline
 
