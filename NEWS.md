@@ -1,3 +1,11 @@
+# hvtiRtemplates 1.0.11
+
+* Added the template conversion roadmap: a ledger of all 42 taxonomy prefixes
+  plus three proposed ones, the roadmap document generated from it, and two CI
+  guards that fail when the two disagree or when a row claims a template that
+  is not on disk. Design and reasoning in
+  `dev/specs/2026-08-29-template-conversion-roadmap-design.md`.
+
 # hvtiRtemplates 1.0.10
 
 ## Documentation

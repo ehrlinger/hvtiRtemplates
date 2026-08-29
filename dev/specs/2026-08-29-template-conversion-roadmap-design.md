@@ -1,7 +1,8 @@
 # Template conversion roadmap
 
 **Date:** 2026-08-29
-**Status:** designed, not started
+**Status:** implemented 2026-08-29 — the ledger, renderer and both guards are
+in place. The roadmap itself is `2026-08-29-template-conversion-roadmap.md`.
 **Prompted by:** `bh` reaching implementation with no answer to "and then
 what?" — four templates shipped, thirty-eight prefixes unaccounted for, and
 no record of which come next or why.
