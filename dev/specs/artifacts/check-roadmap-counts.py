@@ -27,8 +27,6 @@ TEMPLATES = os.path.join(REPO, "inst", "templates")
 sys.path.insert(0, HERE)
 import roadmap_render  # noqa: E402  (path set immediately above)
 
-DOC = os.path.join(HERE, os.pardir, "2026-08-29-template-conversion-roadmap.md")
-
 # The ordinal's major field is the taxonomy folder's position, and the two must
 # agree or a template sorts into the wrong run order. Taken from the order of
 # `hvti_taxonomy()`'s folder column, which is stable and is itself asserted in
@@ -55,8 +53,18 @@ FIELDS = ["prefix", "name", "folder", "family", "kind", "status", "ordinal",
 ON_DISK = {"shipped", "revisit", "in-flight"}
 
 
+# A measured zero and an unmeasured field must stay distinguishable: nine
+# prefixes genuinely have no R job, and reading that as "not yet counted"
+# would send someone to re-run a census that already answered. Every count
+# field carries the same risk -- a string here renders into the table
+# verbatim (sas_breadth) or breaks the renderer's sort key (batch) -- so all
+# of them get the same integer-or-null check.
+INT_OR_NULL_FIELDS = ["batch", "sas_breadth", "r_exemplars", "r_jobs"]
+
+
 def check_schema(rows):
     bad = []
+    seen_prefixes = {}
     for i, r in enumerate(rows):
         where = r.get("prefix") or f"row {i}"
         missing = [f for f in FIELDS if f not in r]
@@ -74,12 +82,18 @@ def check_schema(rows):
         if r.get("family") not in roadmap_render.FAMILY_ORDER:
             bad.append(f"`{where}` has family {r.get('family')!r}, "
                        f"not one of {sorted(roadmap_render.FAMILY_ORDER)}")
-        # A measured zero and an unmeasured field must stay distinguishable:
-        # nine prefixes genuinely have no R job, and reading that as "not yet
-        # counted" would send someone to re-run a census that already answered.
-        if r.get("r_exemplars") is not None and not isinstance(r["r_exemplars"], int):
-            bad.append(f"`{where}` has non-integer r_exemplars "
-                       f"{r['r_exemplars']!r}; use null for unmeasured")
+        for field in INT_OR_NULL_FIELDS:
+            v = r.get(field)
+            if v is not None and not isinstance(v, int):
+                bad.append(f"`{where}` has non-integer {field} {v!r}; "
+                           f"use null for unmeasured")
+        prefix = r.get("prefix")
+        if prefix is not None:
+            if prefix in seen_prefixes:
+                bad.append(f"prefix `{prefix}` appears more than once, "
+                           f"at row {seen_prefixes[prefix]} and row {i}")
+            else:
+                seen_prefixes[prefix] = i
     return bad
 
 
@@ -136,7 +150,7 @@ def check_disk(rows):
 
 def check_doc(rows):
     """The document's tables must be exactly what the ledger renders."""
-    with open(DOC, encoding="utf-8") as fh:
+    with open(roadmap_render.DOC, encoding="utf-8") as fh:
         text = fh.read()
     want = roadmap_render.render(rows)
     i, j = text.find(roadmap_render.BEGIN), text.find(roadmap_render.END)

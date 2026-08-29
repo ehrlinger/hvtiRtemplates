@@ -4,7 +4,7 @@
 Two views of the same 45 rows. The family view is how the work is BATCHED; the
 workflow view is what a study can actually RUN end to end. Family batching
 amortises the design spec across a family, but it delivers a cross-cutting
-workflow piecemeal -- propensity matching spans eight prefixes across five
+workflow piecemeal -- propensity matching spans ten prefixes across five
 batches -- so the second view exists to make that visible early rather than at
 batch eight.
 
@@ -94,6 +94,14 @@ def render(rows):
 
 
 def splice(text, body):
+    if BEGIN not in text:
+        raise SystemExit(f"{os.path.basename(DOC)} is missing its {BEGIN!r} "
+                         f"marker; cannot splice in the rendered tables. "
+                         f"Restore the marker before re-running this script.")
+    if END not in text:
+        raise SystemExit(f"{os.path.basename(DOC)} is missing its {END!r} "
+                         f"marker; cannot splice in the rendered tables. "
+                         f"Restore the marker before re-running this script.")
     i, j = text.index(BEGIN), text.index(END) + len(END)
     return text[:i] + body + text[j:]
 
@@ -107,8 +115,9 @@ def main():
         return 0
     with open(DOC, encoding="utf-8") as fh:
         text = fh.read()
+    spliced = splice(text, body)
     with open(DOC, "w", encoding="utf-8") as fh:
-        fh.write(splice(text, body))
+        fh.write(spliced)
     print(f"rendered {len(rows)} prefixes into "
           f"{os.path.basename(os.path.normpath(DOC))}")
     return 0

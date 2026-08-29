@@ -20,6 +20,13 @@ produced it.
 > only artifact that exists today is
 > `artifacts/2026-08-29-job-census-summary.json`, the corpus evidence in §2.
 > Nothing in `.github/workflows/` runs a roadmap check yet.
+>
+> ⚠️ **SUPERSEDED 2026-08-29.** Both claims above are now false: the ledger,
+> renderer and Python guard described in §§3–7 exist. `spec-counts.yaml` runs
+> `check-roadmap-counts.py` on every push and pull request that touches
+> `dev/specs/**` or `inst/templates/**`. `tests/testthat/test-roadmap.R` also
+> exists; its own CI coverage is being decided separately. See the Status
+> line at the top of this document.
 
 ## 1. What this decides
 
@@ -291,7 +298,7 @@ same as complete, and there is currently no way to say so.
 { "prefix": "hs", "name": "Hazard setup", "folder": "analyses",
   "family": "hazard-chain", "kind": "job", "status": "queued",
   "ordinal": null, "batch": 1,
-  "sas_templates": 10, "r_templates": 0, "r_exemplars": 1,
+  "sas_breadth": 10, "r_jobs": 0, "r_exemplars": 1,
   "upstream": ["hm"], "downstream": ["hp"],
   "workflows": ["hazard-chain"],
   "blocked_on": null, "spec": null,
@@ -303,8 +310,8 @@ same as complete, and there is currently no way to say so.
 | `kind` | `job` for a template that scaffolds one job; `meta` for one that aggregates a set. `ar` is the only `meta` today |
 | `status` | `shipped` · `revisit` · `in-flight` · `queued` · `intake` · `out-of-scope` |
 | `batch` | integer; **provisional past batch 2** and stated as such |
-| `sas_templates` / `r_templates` | counts from §2, scope recorded in the file header |
-| `r_exemplars` | studies with an **R** job. **Measured for all 42 prefixes** (§2.3), seeded from `2026-08-29-job-census-summary.json`'s `r_studies`. A genuine `0` (nine prefixes have one) must be distinguishable from "not measured", so an unmeasured prefix serialises as `null`, never `0` |
+| `r_jobs` | count from §2, scope recorded in the file header |
+| `r_exemplars` | studies with an **R** job. **Measured for all 42 prefixes** (§2.3), seeded from `2026-08-29-job-census-summary.json`'s `r_studies_deflated` — never the raw `r_studies`; see the warning in §2 about stem replication inflating it. A genuine `0` (nine prefixes have one) must be distinguishable from "not measured", so an unmeasured prefix serialises as `null`, never `0` |
 | `sas_breadth` | `distinct_studies` from the same file — all extensions, SAS-dominated. Measures batch **value**, where `r_exemplars` measures extraction **risk**. Never conflate them |
 | `upstream` / `downstream` | from `2026-08-22-job-flow.json`'s 13 cross-job edges |
 | `blocked_on` | a named upstream, e.g. `hvtiRdatabuild` or `hvtiRutilities#taxonomy` |
@@ -323,12 +330,21 @@ Split by language, each guard placed where what it needs already exists.
 ⚠️ **Neither guard exists yet, and `spec-counts.yaml` does not call one.**
 Both are specified in the plan, Tasks 1–3.
 
+⚠️ **SUPERSEDED 2026-08-29.** Both guards exist. `check-roadmap-counts.py`
+is called by `spec-counts.yaml`; `tests/testthat/test-roadmap.R` exists,
+with its own CI coverage being decided separately.
+
 **Python — `check-roadmap-counts.py`, to be run by `spec-counts.yaml`.** Needs
 no R:
 
 1. `status == "shipped"` **iff** `inst/templates/<folder>/<ordinal>-<prefix>.qmd`
    exists. Both directions — a ledger claiming a template that is absent fails,
    and so does a template no ledger row claims.
+
+   ⚠️ **SUPERSEDED 2026-08-29.** The shipped implementation broadens this to
+   the status set `{shipped, revisit, in-flight}` (`check-roadmap-counts.py`'s
+   `ON_DISK`) — `revisit` and `in-flight` also assert a template exists on
+   disk, and a single `shipped` status could not carry that distinction.
 2. Every `ordinal` unique, zero-padded to `NN.MM`, with `NN` matching its
    folder's number.
 3. The roadmap document's generated tables byte-match a fresh render.

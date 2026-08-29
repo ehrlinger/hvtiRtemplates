@@ -18,6 +18,13 @@
 # the PR goes green with nothing having been verified. A red check is loud; a
 # check that silently stopped existing is not.
 #
+# `inst/templates/**` is in both filters for check-roadmap-counts.py's disk
+# check specifically -- it reads that tree to catch a template landing or
+# disappearing without a matching ledger row. Removing the filter does not fail
+# that check either; it just stops the job from starting on the one kind of PR
+# the check exists to cover, which is the same silent-drift failure mode as
+# above, aimed at this guard's main case.
+#
 # check-spec-counts.py finds its target through os.pardir, so artifacts/ has to
 # stay a direct child of the directory holding the design documents. Promoting
 # it to a sibling repoints it one level too high.
@@ -29,10 +36,12 @@ on:
     branches: [main]
     paths:
       - 'dev/specs/**'
+      - 'inst/templates/**'
       - '.github/workflows/spec-counts.yaml'
   pull_request:
     paths:
       - 'dev/specs/**'
+      - 'inst/templates/**'
       - '.github/workflows/spec-counts.yaml'
 
 permissions: read-all

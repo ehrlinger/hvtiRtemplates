@@ -89,20 +89,6 @@ def taxonomy():
     return {r["prefix"]: (r["name"], r["folder"]) for r in json.loads(out)}
 
 
-def sas_template_counts():
-    """prefix -> number of tp.<prefix>.*.sas files in the library."""
-    n = collections.Counter()
-    if not os.path.isdir(LIBRARY):
-        print(f"!! {LIBRARY} absent; sas_templates left at 0", file=sys.stderr)
-        return n
-    for root, _dirs, files in os.walk(LIBRARY):
-        for f in files:
-            m = re.match(r"^tp[.]([A-Za-z0-9]+)[.].*[.]sas$", f)
-            if m:
-                n[m.group(1)] += 1
-    return n
-
-
 def flow_edges():
     """prefix -> (upstream set, downstream set), from the cross-job handoffs."""
     with open(FLOW, encoding="utf-8") as fh:
@@ -134,7 +120,6 @@ def main():
     tax = taxonomy()
     with open(CENSUS, encoding="utf-8") as fh:
         census = {r["prefix"]: r for r in json.load(fh)["known"]}
-    sas = sas_template_counts()
     up, down = flow_edges()
 
     rows = []
