@@ -30,7 +30,7 @@
 
 > ⚠️ **Corrected 2026-08-29: the licence expires 2027-09-29, not 2026-09-29.**
 > The constraint above is left as written, and so are the two further statements of
-> the same date inside this plan's code blocks — the roxygen for `corpus_manifest()`
+> the same date inside this plan's code blocks: the roxygen for `corpus_manifest()`
 > and the body of `inst/corpus/README.md`. Those blocks record what the plan said to
 > write, and neither file survives: the corpus was removed and purged on 2026-08-14.
 > Full note in `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` §1.

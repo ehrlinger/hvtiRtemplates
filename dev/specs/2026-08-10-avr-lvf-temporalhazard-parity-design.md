@@ -47,7 +47,7 @@ out without SAS.
 > read what SAS produced. Parity work needs a live licence; reading a filed `.lst`
 > does not.
 >
-> The same wrong date was written into ten other places — the package `README.md`,
+> The same wrong date was written into ten other places: the package `README.md`,
 > the 1.0.0 `NEWS.md` provenance note, and eight statements across `dev/specs/`.
 > `README.md` is corrected outright, because it states a present fact to a reader.
 > Every historical record keeps the original sentence with a dated correction

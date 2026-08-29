@@ -7,8 +7,8 @@
   note below, and nine statements across the design and artifact records in
   `dev/specs/`. `README.md` is corrected outright, because it states a present fact
   to a reader. Everything else is a historical record, so the original sentence is
-  left standing with a dated correction beside it — the convention this repository
-  already uses for a superseded claim.
+  left standing with a dated correction beside it, following the convention this
+  repository already uses for a superseded claim.
 - Two of those statements used the date as a **deadline**, and both keep their
   argument: the "forcing function" in the AVR/LV-function parity design, and the
   window for re-running the corpus scan in the macro-allocation design. The
