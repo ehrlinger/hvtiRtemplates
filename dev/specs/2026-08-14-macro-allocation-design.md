@@ -353,7 +353,8 @@ destination names a package that exists locally only.
 > re-run is **loss of the sources**, not expiry of a licence: `~/Documents/template`
 > has never been under version control, and `~/Documents/macro.library` has git
 > history but no off-machine replica since this package purged its copy on
-> 2026-08-14. The mitigation is a private remote on `macro.library`, not a deadline.
+> 2026-08-14. The mitigation is a private remote on `macro.library`, not a deadline;
+> tracked as [#45](https://github.com/ehrlinger/hvtiRtemplates/issues/45).
 > Item 3's question stands; the bound it states does not.
 >
 > Full note on the date in
