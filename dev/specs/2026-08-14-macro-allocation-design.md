@@ -340,3 +340,22 @@ destination names a package that exists locally only.
    (2026-08-14), and its README says so. But the institutional SAS licence
    expires 2026-09-29, which bounds the window for re-running this scan against
    the originals.
+
+> ⚠️ **Corrected 2026-08-29. Two things above are wrong: the date, and the reason.**
+>
+> The date first. The licence runs into 2027, not out in 2026. `2027-09-29` is the
+> working date, carried until the real one is confirmed; what is settled is the
+> year, not the day.
+>
+> The reason matters more, and re-dating alone would have preserved the error. **The
+> licence does not bound this window at all.** The scan reads `.sas` files as text
+> and never invokes SAS, so it would run identically in 2030. What threatens the
+> re-run is **loss of the sources**, not expiry of a licence: `~/Documents/template`
+> has never been under version control, and `~/Documents/macro.library` has git
+> history but no off-machine replica since this package purged its copy on
+> 2026-08-14. The mitigation is a private remote on `macro.library`, not a deadline;
+> tracked as [#45](https://github.com/ehrlinger/hvtiRtemplates/issues/45).
+> Item 3's question stands; the bound it states does not.
+>
+> Full note on the date in
+> `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` §1.

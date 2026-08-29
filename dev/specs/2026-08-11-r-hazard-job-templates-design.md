@@ -27,6 +27,11 @@ Four such documents produced seven merged upstream PRs in two days.
 tolerance policy, no comparison. This is what runs when the SAS licence expires
 on 2026-09-29.
 
+> **Corrected 2026-08-29: the licence runs into 2027, not out in 2026** (working
+> date `2027-09-29`, not yet confirmed). The
+> text above is left as written, and the argument it supports is unaffected.
+> Full note in `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` §1.
+
 The distinction is **not lifespan**. Parity is not a phase that ends when the
 package is trusted:
 

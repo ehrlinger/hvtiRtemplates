@@ -28,6 +28,14 @@
 - **`inst/corpus/` and `inst/macros/` are reference specification, not runnable assets.** No task makes them executable, tested, or supported. The institutional SAS licence expires 2026-09-29.
 - **No PHI** in any file, commit message, or test fixture. The corpus is code and macros only; if any file is found to contain patient data, stop and report rather than committing it.
 
+> ⚠️ **Corrected 2026-08-29: the licence runs into 2027, not out in 2026**
+> (working date `2027-09-29`, not yet confirmed).
+> The constraint above is left as written, and so are the two further statements of
+> the same date inside this plan's code blocks: the roxygen for `corpus_manifest()`
+> and the body of `inst/corpus/README.md`. Those blocks record what the plan said to
+> write, and neither file survives: the corpus was removed and purged on 2026-08-14.
+> Full note in `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` §1.
+
 ## Source Inventory
 
 Measured 2026-08-13. Verification steps below depend on these numbers; if a count differs when the task runs, stop and report rather than adjusting the expectation.
