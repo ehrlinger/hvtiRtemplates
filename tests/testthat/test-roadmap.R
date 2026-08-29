@@ -11,8 +11,9 @@
 
 ledger_path <- function() {
   # testthat runs with the working directory at tests/testthat/, so the repo
-  # root is three levels up. `testthat::test_path()` is not used: it resolves
-  # inside tests/testthat/, and the ledger is deliberately outside the package.
+  # root is two levels up -- which is what the `".."`, `".."` below say.
+  # `testthat::test_path()` is not used: it resolves inside tests/testthat/,
+  # and the ledger is deliberately outside the package.
   file.path("..", "..", "dev", "specs", "artifacts",
             "2026-08-29-template-roadmap.json")
 }
