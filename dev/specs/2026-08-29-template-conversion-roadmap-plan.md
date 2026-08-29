@@ -841,7 +841,8 @@ sed -i '' '0,/| `ac` |/s/| `ac` | shipped |/| `ac` | queued |/' dev/specs/2026-0
 python3 dev/specs/artifacts/check-roadmap-counts.py; echo "exit=$?"
 ```
 
-⚠️ **CORRECTED 2026-08-29. Neither of the first two lines runs as written.**
+⚠️ **CORRECTED 2026-08-29. The `git checkout` and `sed` lines do not run as
+written.** (The `roadmap_render.py` line between them is fine.)
 
 1. `git checkout <file>` fails: at this point in the task the document was
    created in Step 2 and **not yet committed**, so git has no version to
@@ -853,9 +854,9 @@ python3 dev/specs/artifacts/check-roadmap-counts.py; echo "exit=$?"
    either platform. Since `` `ac` `` appears exactly once in the rendered
    document, a plain unanchored substitution is equivalent and portable:
 
-```bash
-sed -i '' 's/| `ac` | shipped |/| `ac` | queued |/' dev/specs/2026-08-29-template-conversion-roadmap.md
-```
+   ```bash
+   sed -i '' 's/| `ac` | shipped |/| `ac` | queued |/' dev/specs/2026-08-29-template-conversion-roadmap.md
+   ```
 
    (still BSD/macOS `-i ''`; on GNU use `sed -i` with no argument.)
 
@@ -903,8 +904,9 @@ Create `tests/testthat/test-roadmap.R`:
 
 ledger_path <- function() {
   # testthat runs with the working directory at tests/testthat/, so the repo
-  # root is three levels up. `testthat::test_path()` is not used: it resolves
-  # inside tests/testthat/, and the ledger is deliberately outside the package.
+  # root is two levels up -- which is what the `".."`, `".."` below say.
+  # `testthat::test_path()` is not used: it resolves inside tests/testthat/,
+  # and the ledger is deliberately outside the package.
   file.path("..", "..", "dev", "specs", "artifacts",
             "2026-08-29-template-roadmap.json")
 }
@@ -1235,6 +1237,13 @@ them:
 | 4 | `--force` reseed offered as the ledger's restore path | the seeder is not idempotent against a hand-maintained file |
 | 5 | predicted `PASS 3` / `PASS 93` | testthat counts expectations, not blocks; and a baseline was quoted without its branch |
 | 6 | two verification commands that run on neither macOS nor Linux | `git checkout` on an untracked file; GNU/BSD `sed` dialects mixed in one command |
+| 7 | the `ledger_path()` comment said the repo root is "three levels up" while the code beside it correctly used two (`../..`) | prose written from memory instead of read off the code it explains |
+
+Defect 7 was found by Copilot on [#47](https://github.com/ehrlinger/hvtiRtemplates/pull/47),
+after this correction pass had already shipped — the plan's code block above is
+fixed here too, since that block is where the wrong comment came from. A comment
+that contradicts working code is the worse direction of the two: the code keeps
+working, so nothing fails, and the next reader trusts the sentence.
 
 Defects 1 and 2 share a shape worth naming, because both produced a **guard that
 reports green while checking nothing** — the failure this plan's whole design is
