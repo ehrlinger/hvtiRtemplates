@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,18 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.10" id="hvtirtemplates-1010">hvtiRtemplates 1.0.10<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1010"></a></h2>
+<div class="section level3">
+<h3 id="documentation-1-0-10">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-0-10"></a></h3>
+<ul><li>
+<strong>The institutional SAS licence runs into 2027, not out in 2026.</strong> The wrong date <code>2026-09-29</code> was stated in eleven places: the package <code>README.md</code>, the 1.0.0 provenance note below, and nine statements across the design and artifact records in <code>dev/specs/</code>. <code>README.md</code> is corrected outright, because it states a present fact to a reader. Everything else is a historical record, so the original sentence is left standing with a dated correction beside it, following the convention this repository already uses for a superseded claim.</li>
+<li>
+<strong><code>2027-09-29</code> is a working date, not a confirmed one.</strong> Every note states it the same way and defers to one canonical note, so confirming the real date is a single edit rather than another eleven. What is settled is the year, not the day. Writing an unconfirmed date as flatly as the wrong one was written is the mistake this entry exists to correct.</li>
+<li>Two of those statements used the date as a <strong>deadline</strong>, and they came out differently. The “forcing function” in the AVR/LV-function parity design keeps its argument: fresh SAS execution genuinely needs a live licence, so the pressure is real and simply further out than stated. The macro-allocation design’s claim that the licence “bounds the window” for re-running the corpus scan is <strong>withdrawn, not re-dated.</strong> That scan reads <code>.sas</code> files as text and never invokes SAS. What threatens it is loss of the sources, which are unversioned or unreplicated, and the mitigation is a remote rather than a deadline.</li>
+<li>What the licence date does not bound, in either case, is reading: compiled SAS data stays readable well beyond expiry, so what ends is the ability to <em>run</em> SAS, not to read what it produced.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.9" id="hvtirtemplates-109">hvtiRtemplates 1.0.9<a class="anchor" aria-label="anchor" href="#hvtirtemplates-109"></a></h2>
 <div class="section level3">
@@ -206,6 +218,7 @@
 <h3 id="provenance-1-0-0">Provenance<a class="anchor" aria-label="anchor" href="#provenance-1-0-0"></a></h3>
 <p>During development this repository also carried the legacy SAS template corpus (240 files) and the SAS macro library (495 files, with history imported from 2014) as a reference specification. Both were removed before release, and every path was purged from every commit with <code>git filter-repo</code>. They are not recoverable from this repository’s history.</p>
 <p>Parity checks against the SAS originals therefore need a source outside this repository. The institutional SAS licence expires 2026-09-29.</p>
+<p><strong>Corrected 2026-08-29: the licence runs into 2027, not out in 2026</strong> (working date <code>2027-09-29</code>, not yet confirmed). The date above was wrong when 1.0.0 shipped. It is left as written and corrected here; see the 1.0.10 entry.</p>
 <p>A result filed before the migration still cannot say which macro version produced it. That was already true — <code>%inc</code> bound late to a mutable directory with no version — and removing the corpus neither creates nor worsens it.</p>
 </div>
 </div>
