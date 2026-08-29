@@ -71,6 +71,9 @@ def check_schema(rows):
         if r.get("kind") not in KINDS:
             bad.append(f"`{where}` has kind {r.get('kind')!r}, "
                        f"not one of {sorted(KINDS)}")
+        if r.get("family") not in roadmap_render.FAMILY_ORDER:
+            bad.append(f"`{where}` has family {r.get('family')!r}, "
+                       f"not one of {sorted(roadmap_render.FAMILY_ORDER)}")
         # A measured zero and an unmeasured field must stay distinguishable:
         # nine prefixes genuinely have no R job, and reading that as "not yet
         # counted" would send someone to re-run a census that already answered.

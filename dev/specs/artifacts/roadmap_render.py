@@ -66,7 +66,7 @@ def render(rows):
                 "|---|---|---|---|---|---|"]
         for r in sorted(fam_rows, key=lambda r: (r["batch"] is None,
                                                  r["batch"] or 0, r["prefix"])):
-            out.append(f"| `{r['prefix']}` | {STATUS_MARK[r['status']]} | "
+            out.append(f"| `{r['prefix']}` | {STATUS_MARK.get(r['status'], r['status'])} | "
                        f"{r['ordinal'] or '—'} | {_num(r['sas_breadth'])} | "
                        f"{_num(r['r_exemplars'])} | {r['blocked_on'] or '—'} |")
         out.append("")
