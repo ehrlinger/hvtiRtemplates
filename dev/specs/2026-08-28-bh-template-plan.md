@@ -96,25 +96,37 @@ Expected: `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 84 ]`
 - [ ] **Step 2: Create the template with front matter and markers**
 
 Create `inst/templates/analyses/04.06-bh.qmd`. Copy the `format:` block and the
-`render-stamp` chunk from the exemplar's lines 1–36 verbatim, then add the set
-markers. The four lines `new_job()` and `set_path()` depend on:
+`render-stamp` chunk from the exemplar's lines 1–36 verbatim, then port the
+**whole `set` chunk** from `inst/templates/analyses/04.01-hm.qmd:137`.
 
-```r
-# EDIT: new_job() rewrites these two lines. They name the (endpoint, analysis
-# type) set this job belongs to, and every artifact path below is derived from
-# them -- so a hand edit here silently redirects every read and write.
-ENDPOINT <- "ENDPOINT"
-TYPE     <- "TYPE"
+⚠️ **Port the `set` chunk entire — the guard is not optional.** It is three
+parts and only the first two are obvious:
 
-# Artifacts sit under <kind>/<endpoint>-<type>/; authored files sit flat.
-# Derived from the two lines above rather than declared, because a declaration
-# drifts from the filename and nothing catches it.
-set_path <- function(kind, file) {
-  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-```
+1. the `ENDPOINT` / `TYPE` declarations `new_job()` rewrites;
+2. `set_path()`, which resolves artifact paths from those declarations;
+3. **a guard checking the declarations against the rendered filename.**
+
+Part 3 is the one that is easy to drop and expensive to omit. `set_path()`
+resolves from the *declarations*, not the filename, so a hand-edited
+declaration that drifts from the name silently writes into **another set's**
+artifact directory — re-entering, through the body, exactly the collision the
+`(endpoint, type)` key exists to prevent. Every shipped template carries it.
+
+Two details in the ported guard that must survive the copy:
+
+- `knitr::current_input()` is `NULL` outside a render (a study author stepping
+  through chunks in RStudio), so the guard must no-op in that case rather than
+  raise a spurious error.
+- Quarto knits through an intermediate, so `knitr::current_input()` returns
+  `<endpoint>-<type>-<ordinal>-<prefix>.rmarkdown`, not the `.qmd`. Strip
+  whatever extension is actually present — `sub("[.][^.]+$", "", ...)` — rather
+  than hard-coding one, so this does not depend on a build-tool detail holding.
+
+Follow the shipped convention for the declarations themselves: a **concrete
+example value**, not a self-named placeholder. `04.01-hm.qmd` ships
+`ENDPOINT <- "dead_pa"` / `TYPE <- "hz"`; `new_job()` rewrites both. The
+constraint is one `^ENDPOINT\s+<- ` line and one `^TYPE\s+<- ` line, not any
+particular value.
 
 - [ ] **Step 3: Port the edit guard**
 
@@ -130,12 +142,18 @@ verbatim, changing only the file-specific danger sentence in its comment. For
 ```
 
 ⚠️ Keep `.tok <- paste0("ED", "IT", ":")` built rather than literal. Quarto
-knits through an intermediate and `current_input()` returns *that* file, so a
-literal token matches its own source line and the guard fires on every render.
+knits through an intermediate and `knitr::current_input()` returns *that* file,
+so a literal token matches its own source line and the guard fires on every
+render.
 
 - [ ] **Step 4: Add the `.lintr` file key**
 
-In `.lintr`, inside `exclusions: list(...)`, after the `04.01-hm.qmd` entry:
+In `.lintr`, inside `exclusions: list(...)`, after the `04.01-hm.qmd` entry.
+
+⚠️ **Add a comma to the end of the `04.01-hm.qmd` entry's closing `)` first.**
+It is currently the last element of the list and carries no trailing comma, so
+pasting the block below straight after it produces invalid R and `lintr` stops
+running entirely — a broken config does not fail one file, it fails the job.
 
 ```r
     "inst/templates/analyses/04.06-bh.qmd" = list(
@@ -435,12 +453,36 @@ git commit -m "feat(bh): report selection frequencies with Monte-Carlo error (#8
 
 **Files:**
 - Modify: `inst/templates/analyses/04.06-bh.qmd`
+- Modify: `tests/testthat/test-templates.R:155` (the `declared` vector)
+- Modify: `DESCRIPTION:27` (the `hvtiRutilities` floor), if this task calls a
+  helper newer than 1.1.4
 
 **Interfaces:**
 - Consumes: `bag`, `freq`.
 - Uses: `hvtiRutilities::concept_map()`, `concept_of()`, `selection_crowding()`,
   `pool_collinear_pairs()`, and the affix vocabulary `POOL_AFFIXES`,
   `POOL_MIN_STEM`, `POOL_PLAIN_SUFFIX`.
+
+⚠️ **This task will go red on a test that is not about concepts at all**, unless
+its Step 4 is done. `test-templates.R:144` — *"the hvtiRutilities helpers
+templates call are declared and exported"* — scans every shipped template's
+**code chunks** for calls into the `hvtiRutilities` namespace and fails any call
+absent from a hand-maintained `declared` vector. That vector currently lists
+`concept_map` but **not `concept_of`**, so the moment this task's code lands the
+suite fails with *"template calls an hvtiRutilities helper not in the declared
+list"*.
+
+That is the test working, not misfiring. It exists because adding a template
+that calls a newer helper otherwise leaves `DESCRIPTION`'s
+`hvtiRutilities (>= x.y.z)` behind — an install then satisfies `DESCRIPTION` and
+ships a template whose helper does not exist, failing at **render** time, in a
+study, far from the install. The test cannot check the bound itself (CI installs
+latest, not the declared minimum); what it does is make the trigger loud and put
+whoever added the call in the right place to ask the version question.
+
+Note the scanner reads **code chunks only**, and strips comments — so
+`POOL_AFFIXES` and friends never trip it (they are not calls), and a helper
+merely discussed in prose does not either.
 
 - [ ] **Step 1: Port `concept-map`, `concept-frequencies`, `concept-counts`**
 
@@ -480,16 +522,50 @@ concept <- concept_map(names(freq), affixes = POOL_AFFIXES,
                        plain_suffix = POOL_PLAIN_SUFFIX)
 ```
 
-- [ ] **Step 4: Run tests and lint**
+- [ ] **Step 4: Declare every new helper, and ask the version question**
+
+Run the suite first and let it fail, so the trigger is seen rather than
+pre-empted:
+
+```bash
+Rscript -e 'devtools::test(filter = "templates")'
+```
+
+Expected: FAIL — *"template calls an hvtiRutilities helper not in the declared
+list"*, naming `concept_of` and anything else this task introduced.
+
+Then add each named helper to the `declared` vector in
+`tests/testthat/test-templates.R:155`, keeping the version comments that group
+it:
+
+```r
+    "imputed_levels", "pool_collinear_pairs", "selection_crowding",  # >= 1.1.4
+    "concept_map", "concept_of"                                      # >= 1.1.5
+```
+
+Now answer the question the failure exists to force: **check which
+`hvtiRutilities` release first exported each helper you added.** If any is newer
+than `DESCRIPTION`'s current `hvtiRutilities (>= 1.1.4)`, raise that floor to
+match — the Global Constraints of this plan assume `>= 1.1.5`, but confirm it
+against the package rather than trusting this line:
+
+```bash
+Rscript -e 'packageVersion("hvtiRutilities")'
+Rscript -e 'cat(c("concept_of") %in% getNamespaceExports("hvtiRutilities"), "\n")'
+```
+
+- [ ] **Step 5: Run tests and lint**
 
 ```bash
 Rscript -e 'devtools::test()' && Rscript -e 'lintr::lint_package()'
 ```
 
-- [ ] **Step 5: Commit**
+Expected: PASS.
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add inst/templates/analyses/04.06-bh.qmd
+git add inst/templates/analyses/04.06-bh.qmd tests/testthat/test-templates.R DESCRIPTION
 git commit -m "feat(bh): group concepts at read time, never by pruning (#8)"
 ```
 
