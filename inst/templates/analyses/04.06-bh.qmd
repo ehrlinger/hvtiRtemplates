@@ -185,3 +185,79 @@ set_path <- function(kind, file) {
 # different set than the replicates it pooled. The write is in the `save` chunk
 # at the foot of this file.
 ```
+
+## The screen this reports on
+
+<!-- EDIT: nothing in this section, but read it before changing the two
+     expectations below.
+
+     This job does not RUN the screen. `hzr_bootstrap()` writes nothing until
+     its final replicate and a full screen is days of compute, so a run that
+     dies near the end leaves nothing at all. The run is therefore chunked from
+     a companion script, and this report reads what that script wrote. The file
+     boundary is a durability boundary, not tidiness. -->
+
+```{r}
+#| label: bootstrap
+# EDIT: the prefix your companion runner writes its output under.
+#
+# The runner is not templated -- it is a study's own script -- so its filenames
+# are its own choice, and this has to be told rather than guessed. One long run
+# writes <prefix>.rds; a chunked run writes <prefix>.chunk01.rds, chunk02 and so
+# on. Both are read the same way below.
+CHUNK_PREFIX <- "bagging"
+
+# EDIT: what this run was LAUNCHED as, not what happens to be on disk.
+#
+# Nothing in a chunk knows how many siblings it was launched alongside, so these
+# two numbers are the only thing that can tell a partial pool from a complete
+# one. Without them a render at hour eight of a twelve-hour run produces a
+# report that is wrong in no visible way: every health check passes, every
+# frequency is honestly computed, and only the denominator is not the one
+# anybody chose.
+#
+# For a single unchunked run, set EXPECT_CHUNKS to 1.
+EXPECT_CHUNKS <- 25L    # EDIT: how many chunks you launched
+EXPECT_BOOT   <- 500L   # EDIT: %hazboot(resampl=) -- total replicates wanted
+
+# Artifacts live under estimates/<endpoint>-<type>/, by set, so a screen can
+# never be read from or filed against a different set than the one this job
+# belongs to. set_path() creates the directory; dirname() is what
+# boot_chunk_files() wants.
+est_dir <- dirname(set_path("estimates", paste0(CHUNK_PREFIX, ".rds")))
+rds     <- file.path(est_dir, paste0(CHUNK_PREFIX, ".rds"))
+chunks  <- boot_chunk_files(est_dir, prefix = CHUNK_PREFIX)
+
+if (file.exists(rds)) {
+  bag <- readRDS(rds)
+} else if (length(chunks)) {
+  # boot_pool_chunks() REFUSES chunks that are not draws from one screen -- a
+  # shared seed, a dataset rewritten mid-run, different entry criteria. So a
+  # pooled frequency below is one that was checked rather than assumed, and a
+  # stop() here is the check working, not an inconvenience to route around.
+  bag <- boot_pool_chunks(lapply(chunks, readRDS))
+} else {
+  stop("No bootstrap output found in ", est_dir, ".\n",
+       "This screen is a long job -- days, not minutes -- and is run from a ",
+       "companion script rather than inside this render, because the run ",
+       "writes nothing until its final replicate.\n",
+       "Run your chunks first, then render this report.", call. = FALSE)
+}
+```
+
+```{r}
+#| label: completeness
+#| results: asis
+#| echo: false
+# Rendered as a CALLOUT rather than a table cell. Looking at a screen mid-run is
+# routine and worth keeping; what is not acceptable is a provisional report that
+# cannot say so -- including to someone who receives the .html later, without
+# the context of when it was made. A cell in a provenance table further down
+# does not survive that journey. A banner does.
+shortfall <- boot_shortfall(bag, EXPECT_CHUNKS, EXPECT_BOOT)
+if (!is.null(shortfall)) {
+  cat("::: {.callout-warning}\n",
+      "## Provisional -- this screen is not the complete run\n\n",
+      shortfall, "\n:::\n", sep = "")
+}
+```
