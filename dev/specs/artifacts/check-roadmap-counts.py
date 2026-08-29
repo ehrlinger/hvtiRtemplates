@@ -24,6 +24,11 @@ LEDGER = os.path.join(HERE, "2026-08-29-template-roadmap.json")
 REPO = os.path.join(HERE, os.pardir, os.pardir, os.pardir)
 TEMPLATES = os.path.join(REPO, "inst", "templates")
 
+sys.path.insert(0, HERE)
+import roadmap_render  # noqa: E402  (path set immediately above)
+
+DOC = os.path.join(HERE, os.pardir, "2026-08-29-template-conversion-roadmap.md")
+
 # The ordinal's major field is the taxonomy folder's position, and the two must
 # agree or a template sorts into the wrong run order. Taken from the order of
 # `hvti_taxonomy()`'s folder column, which is stable and is itself asserted in
@@ -126,6 +131,21 @@ def check_disk(rows):
     return bad
 
 
+def check_doc(rows):
+    """The document's tables must be exactly what the ledger renders."""
+    with open(DOC, encoding="utf-8") as fh:
+        text = fh.read()
+    want = roadmap_render.render(rows)
+    i, j = text.find(roadmap_render.BEGIN), text.find(roadmap_render.END)
+    if i < 0 or j < 0:
+        return ["the roadmap document has lost its BEGIN/END GENERATED markers"]
+    have = text[i:j + len(roadmap_render.END)]
+    if have != want:
+        return ["the roadmap document's tables are not what the ledger renders; "
+                "run `python3 dev/specs/artifacts/roadmap_render.py`"]
+    return []
+
+
 def main():
     # Encodings are pinned, as in the sibling checks: this runs on a CI runner
     # whose locale is not ours to choose, and the ledger carries em dashes an
@@ -134,7 +154,7 @@ def main():
         d = json.load(fh)
     rows = d["prefixes"]
 
-    bad = check_schema(rows) + check_ordinals(rows) + check_disk(rows)
+    bad = check_schema(rows) + check_ordinals(rows) + check_disk(rows) + check_doc(rows)
     if bad:
         print("Roadmap ledger disagrees with the templates on disk:\n", file=sys.stderr)
         for b in bad:
