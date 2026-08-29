@@ -95,9 +95,19 @@ Expected: `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 84 ]`
 
 - [ ] **Step 2: Create the template with front matter and markers**
 
-Create `inst/templates/analyses/04.06-bh.qmd`. Copy the `format:` block and the
-`render-stamp` chunk from the exemplar's lines 1–36 verbatim, then port the
+Create `inst/templates/analyses/04.06-bh.qmd`. Take the `format:` block from
+`inst/templates/analyses/04.01-hm.qmd`, not from the exemplar, then port the
 **whole `set` chunk** from `inst/templates/analyses/04.01-hm.qmd:137`.
+
+⚠️ **Correction to this step, found while executing it.** It previously said to
+copy the `format:` block *and the `render-stamp` chunk* from the exemplar's
+lines 1–36. Do not port `render-stamp`. It calls `session_stamp()` and
+`run_stamp()`, which are defined in the study's local
+`R/run-stamp.R` and exported by **no package** — so a template carrying that
+chunk stops on arrival anywhere else, which is precisely the failure the `hm`
+design guarded against for the candidate-pool helpers. No shipped template has
+a `render-stamp` chunk. The two `format:` blocks are equivalent anyway; taking
+the shipped one keeps the templates identical where they should be identical.
 
 ⚠️ **Port the `set` chunk entire — the guard is not optional.** It is three
 parts and only the first two are obvious:
