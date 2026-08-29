@@ -340,3 +340,9 @@ destination names a package that exists locally only.
    (2026-08-14), and its README says so. But the institutional SAS licence
    expires 2026-09-29, which bounds the window for re-running this scan against
    the originals.
+
+> ⚠️ **Corrected 2026-08-29. The licence expires 2027-09-29, not 2026-09-29.**
+> The window is still real and still worth acting inside — the scan reads live
+> paths outside version control, and that fragility is what item 3 is about — but
+> it closes in 2027, not within weeks of this document. Full note in
+> `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` §1.

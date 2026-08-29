@@ -241,6 +241,10 @@ assets.** They are what an R template is checked against. The package
 documentation must say so, so that nobody mistakes them for a supported SAS
 distribution. The institutional SAS licence expires 2026-09-29.
 
+> **Corrected 2026-08-29: the licence expires 2027-09-29, not 2026-09-29.** The
+> text above is left as written, and the argument it supports is unaffected.
+> Full note in `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` §1.
+
 ---
 
 ## 4. Components

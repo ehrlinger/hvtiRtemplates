@@ -28,7 +28,7 @@ recoverable from this repository's history by design.
 
 Two consequences worth stating plainly. Parity work against the SAS originals
 needs a source outside this repository; the institutional SAS licence expires
-2026-09-29, so plan accordingly. And a result filed before the migration still
+2027-09-29, so plan accordingly. And a result filed before the migration still
 cannot say what produced it — that was already true, because `%inc` bound late
 to a mutable directory with no version, and removing the corpus neither creates
 nor worsens that gap.

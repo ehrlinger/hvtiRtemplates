@@ -36,6 +36,23 @@ and the report render.
 first end-to-end demonstration that a Blackstone-lineage hazard analysis can be carried
 out without SAS.
 
+> ⚠️ **Corrected 2026-08-29. The licence expires 2027-09-29, not 2026-09-29.**
+> The forcing function stands and the paragraph above is left as written: this is
+> still the demonstration the migration needs, and it is still on a clock. The
+> clock simply runs a year longer than stated, which matters because a schedule
+> built on the 2026 date compresses a year of runway into a month.
+>
+> Note also what the deadline does **not** bound. Compiled SAS data stays readable
+> well beyond expiry, so what ends is the ability to *run* SAS, not the ability to
+> read what SAS produced. Parity work needs a live licence; reading a filed `.lst`
+> does not.
+>
+> The same wrong date was written into ten other places — the package `README.md`,
+> the 1.0.0 `NEWS.md` provenance note, and eight statements across `dev/specs/`.
+> `README.md` is corrected outright, because it states a present fact to a reader.
+> Every historical record keeps the original sentence with a dated correction
+> beside it, and points here.
+
 ---
 
 ## 2. Job flow
