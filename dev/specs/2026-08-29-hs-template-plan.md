@@ -61,7 +61,7 @@ What CI and this plan actually check:
 | `new_job()` can scaffold it and substitute both markers | `test-new-job.R` |
 | no study identifiers | `test-new-job.R` |
 | style | `lintr::lint_package()`, given the `.lintr` key |
-| the R is syntactically valid | Task 1 Step 5, by parsing the chunks |
+| the R is syntactically valid | Task 1 Step 6, by parsing the chunks |
 
 **A render against a real study is a manual acceptance step, named in Task 4
 Step 5 and not claimable by CI.** Say so in the PR rather than implying the
@@ -245,9 +245,16 @@ print(tl[tl$prefix == "hs", c("name", "prefix", "ordinal", "folder")])
 Expected: one row — `06.02-hs`, prefix `hs`, ordinal `06.02`, folder `graphs`.
 
 ```bash
-grep -c "^ENDPOINT <- " inst/templates/graphs/06.02-hs.qmd
-grep -c "^TYPE\s* <- " inst/templates/graphs/06.02-hs.qmd
+grep -cE "^ENDPOINT[[:space:]]+<- " inst/templates/graphs/06.02-hs.qmd
+grep -cE "^TYPE[[:space:]]+<- " inst/templates/graphs/06.02-hs.qmd
 ```
+
+POSIX classes rather than `\s`. Both GNU and BSD `grep` do accept `\s` as an
+extension — verified, it returns `1` on macOS against the `hm` template — but
+`[[:space:]]` is the form POSIX actually defines, and these two commands decide
+whether `new_job()` can scaffold the file at all. A check that silently returns
+`0` on some runner's `grep` reads as "the marker is missing" and sends the
+implementer to fix a template that was already correct.
 
 Expected: `1` and `1`. Any other number and `new_job()` cannot scaffold the file
 at all.
