@@ -1,7 +1,7 @@
 Package: hvtiRtemplates
 Type: Package
 Title: Analysis Job Templates for the HVTI CORR Group
-Version: 1.0.10
+Version: 1.0.11
 Date: 2026-08-29
 Authors@R: c(
     person(
@@ -29,6 +29,7 @@ Imports:
 Remotes:
     ehrlinger/hvtiRutilities
 Suggests:
+    jsonlite,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0
