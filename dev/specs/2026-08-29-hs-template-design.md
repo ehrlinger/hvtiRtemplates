@@ -178,18 +178,21 @@ loudly.
 ## 7. What this asks of `hvtiRlifetables`
 
 `hvtiRlifetables` is at 0.1.1 with three exports — `us_matched()`,
-`us_lifetable_model()`, `us_lifetable_vintages()` — and no open issues. **`hs`
-is its first real consumer, so this section is a demand signal, not a
-complaint.** Two gaps show up in writing the template, both recurring in the
-corpus:
+`us_lifetable_model()`, `us_lifetable_vintages()` — and, when this section was
+written, no open issues. **`hs` is its first real consumer, so this section is a
+demand signal, not a complaint.** Two gaps show up in writing the template, both
+recurring in the corpus, and **both are now filed on that repository**:
 
-1. **A cohort expected-survival curve.** `us_matched(individual = TRUE)`
+1. **A cohort expected-survival curve** —
+   [hvtiRlifetables#16](https://github.com/ehrlinger/hvtiRlifetables/issues/16). `us_matched(individual = TRUE)`
    returns per-patient expected survival. What gets overlaid on an actuarial
    curve is the **cohort average at each time**, which every study then derives
    for itself. `tp.hs.uslife_generates_matched_estimates.sas` is that
    derivation. Deriving it per study is how two studies end up averaging
    differently and neither knows.
-2. **Stratified expected survival.** `tp.hs.uslife_estimates_generate_stratify_.age.sas`
+2. **Stratified expected survival** —
+   [hvtiRlifetables#17](https://github.com/ehrlinger/hvtiRlifetables/issues/17).
+   `tp.hs.uslife_estimates_generate_stratify_.age.sas`
    stratifies the expected curve by an arbitrary grouping. `table =` chooses the
    life table's own strata, which is a different axis and does not serve this.
 
