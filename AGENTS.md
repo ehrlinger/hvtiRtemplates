@@ -179,13 +179,27 @@ scaffolded at all.
   The ruleset is named `protect main`, is identical across all twelve
   repositories in the HVTI R package family, and enforces four rules on
   the default branch: no deletion, no force-push, pull-request-only, and
-  an **automatic Copilot code review** on every PR. A direct push to
-  `main` is rejected by the server — that is the ruleset, not a local
-  hook, and the fix is to branch, never to force past it. ⚠️ It
-  currently requires **zero approvals**. `require_code_owner_review` is
-  set but inert because no repository in the family has a `CODEOWNERS`
-  file, so a PR can merge unreviewed. Adding `CODEOWNERS` makes that
-  flag live and changes who can merge what.
+  an **automatic Copilot code review**. A direct push to `main` is
+  rejected by the server — that is the ruleset, not a local hook, and
+  the fix is to branch, never to force past it. ⚠️ It currently requires
+  **zero approvals**. `require_code_owner_review` is set but inert
+  because no repository in the family has a `CODEOWNERS` file, so a PR
+  can merge unreviewed. Adding `CODEOWNERS` makes that flag live and
+  changes who can merge what. ⚠️ **A stacked PR gets no Copilot review,
+  and still reaches `main`.** The ruleset’s condition is
+  `ref_name: include: ["~DEFAULT_BRANCH"]`, so `copilot_code_review`
+  fires only for a PR opened *against* `main`. Open one against another
+  branch — stacking a plan on its design, say — and it never fires. When
+  the parent merges, GitHub retargets the base to `main`, but
+  **retargeting is not a PR-opened event and does not trigger it
+  either**. The PR then sits one click from `main` having been read by
+  nobody, which the zero-approvals rule above does nothing to catch.
+  Observed on
+  [\#42](https://github.com/ehrlinger/hvtiRtemplates/pull/42). The fix
+  is to open against `main`. If you have already stacked, request
+  Copilot by hand from the Reviewers menu — the REST
+  `requested_reviewers` endpoint returns 200 and silently does nothing
+  for the reviewer bot, so it cannot be scripted that way.
 - Versions are **straight three digits** (`1.0.2`). Never a `.9000`
   suffix or a fourth digit.
 - **Patch-digit bumps only**, as fixes land. Minor and major are the
