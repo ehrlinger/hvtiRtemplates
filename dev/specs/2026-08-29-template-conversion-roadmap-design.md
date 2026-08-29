@@ -111,6 +111,13 @@ as well:
 | `hm` | 1 | **2** |
 | `hs` | 1 | **7** |
 
+⚠️ **A stem replicated across studies inflates `r_studies`, and one prefix is
+badly hit.** `ar` reads 395 distinct R studies, but two stems account for 365
+of them; its real figure is **89**. Sweeping every prefix used for batch
+ordering, `ar` is the only severe case and `dp` the only other affected one
+(398 → 323). **Any prefix whose top stem spans more than ~100 studies must be
+deflated before its count is quoted.**
+
 ⚠️ **84% of R-side rows for taxonomy prefixes are templates, not jobs** —
 32,226 of 38,282. `job_census()` drops them on two flags (`is_template`, and
 `naming == "template"`); any recount that omits either filter inflates every
@@ -398,19 +405,41 @@ Two constraints on that order are firm rather than provisional:
 - **Datasets last.** `bd`, `vars` and `dt` scaffold jobs that call
   **`hvtiRdatabuild`**, which is under active development. Their templates
   cannot be designed against an unsettled API. `blocked_on: hvtiRdatabuild`.
-- **`ar` is terminal, and is `kind: meta`.** It is intended as a bookdown
-  assembly of every template a study used — an aggregator over a set, not a
-  job. It cannot be designed before the set it aggregates exists, and it must
-  not be scheduled as though it were one more job template.
+- **`ar` is a `kind: job` template and need not be last.** It was scheduled
+  terminal on the assumption that it assembled a whole study; the corpus says
+  otherwise (see below). The genuinely terminal unit is the study-level
+  assembly, which has no prefix yet.
 
-  ⚠️ **The evidence argues against scheduling it last, and the argument is
-  overruled on dependency rather than dismissed.** `ar` is the 5th most widely
-  used prefix (706 studies, 2,868 jobs) and has **395 R exemplar studies, second
-  only to `dp`'s 398** — more R precedent than every shipped template combined.
-  Nothing but the dependency justifies its position. If `ar` becomes urgent
-  before the roadmap reaches it, the move is a **minimal `ar`** that assembles
-  whatever templates exist and degrades cleanly on the rest, not a reordering of
-  the batches it depends on.
+  ⚠️ **CORRECTED 2026-08-29, and the earlier claim must not be reinstated.**
+  An earlier draft of this section read `ar` at "395 R exemplar studies, second
+  only to `dp`'s 398 — more R precedent than every shipped template combined",
+  and used that to argue its last-place slot was costly. **That number is
+  inflated roughly fourfold and the argument built on it was wrong.**
+
+  Two stems, `ar.a1c.hdeath` and `ar.a1c.los_icu`, each appear in **365
+  studies**, with 726 of their rows in `graphs/`. That is one analysis
+  replicated across the corpus, not 365 studies doing `ar` work. Excluding
+  those two stems, `ar` has **89** distinct R studies. A sweep for the same
+  signature across every prefix used to order batches found `ar` is the only
+  badly affected one — `dp` deflates 398 → 323, and `lp`, `rfsrc`, `dc`, `np`,
+  `rf`, `nb`, `ac`, `hp` and `bd` are unchanged — so §7's ordering stands.
+
+  ⚠️ **`ar` is also not what this roadmap first assumed it was.** Its stems are
+  `ar.rfsrc.survival`, `ar.rfs.death`, `ar.rfc.tbilirubin_renal`,
+  `ar.longitudinal.BoostMTree`, `ar.cluster.training` — named
+  `ar.<method>.<endpoint>`. Its library templates are
+  `tp.ar.analysis_report.doc`, `tp.ar.markdown_template.docx`,
+  `tp.ar.rfs.death.Rnw` and `tp.ar.quarto_template.qmd`. **`ar` is the write-up
+  of ONE analysis**, pairing with a single analysis prefix — overwhelmingly an
+  ML one, which is where the R-native work is. It is a `kind: job` template,
+  not a `kind: meta` one, and it has no dependency on the rest of the roadmap.
+
+  **The study-level assembly is therefore a different artifact that the
+  taxonomy does not yet name.** A bookdown report combining the templates a
+  study actually ran, for handoff to researchers, aggregates a set the way this
+  note originally mis-attributed to `ar`. It is a `new-prefix` intake item
+  (§6), it blocks on an `hvti_taxonomy()` PR, and **it is the only genuinely
+  terminal unit in the roadmap** — `ar` itself is not.
 
 Descriptive and models are cleared to move earlier if ledger evidence favours
 it. Nothing external forces the order: see §8.

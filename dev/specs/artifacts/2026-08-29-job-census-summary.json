@@ -32,7 +32,8 @@
         "ls",
         "pm",
         "rg"
-      ]
+      ],
+      "replication_hazard": "A single stem copied across studies inflates r_studies. r_studies_deflated drops any stem present in more than 100 studies. ar is the severe case (395 -> 89; ar.a1c.hdeath and ar.a1c.los_icu each span 365 studies with 726 rows in graphs/). dp is mild (398 -> 323). All other prefixes used for batch ordering are unchanged. Quote r_studies_deflated, not r_studies."
     }
   },
   "known": [
@@ -42,7 +43,9 @@
       "n_jobs": 8591,
       "n_files": 21463,
       "r_studies": 15,
-      "r_jobs": 18
+      "r_jobs": 18,
+      "r_studies_deflated": 15,
+      "replicated_stems": []
     },
     {
       "prefix": "dc",
@@ -50,7 +53,9 @@
       "n_jobs": 9603,
       "n_files": 24271,
       "r_studies": 69,
-      "r_jobs": 108
+      "r_jobs": 108,
+      "r_studies_deflated": 69,
+      "replicated_stems": []
     },
     {
       "prefix": "vars",
@@ -58,7 +63,9 @@
       "n_jobs": 1052,
       "n_files": 1365,
       "r_studies": 2,
-      "r_jobs": 2
+      "r_jobs": 2,
+      "r_studies_deflated": 2,
+      "replicated_stems": []
     },
     {
       "prefix": "ac",
@@ -66,7 +73,9 @@
       "n_jobs": 10693,
       "n_files": 22491,
       "r_studies": 16,
-      "r_jobs": 20
+      "r_jobs": 20,
+      "r_studies_deflated": 16,
+      "replicated_stems": []
     },
     {
       "prefix": "ar",
@@ -74,7 +83,12 @@
       "n_jobs": 2868,
       "n_files": 3894,
       "r_studies": 395,
-      "r_jobs": 1114
+      "r_jobs": 1114,
+      "r_studies_deflated": 89,
+      "replicated_stems": [
+        "ar.a1c.hdeath",
+        "ar.a1c.los_icu"
+      ]
     },
     {
       "prefix": "lp",
@@ -82,7 +96,9 @@
       "n_jobs": 8108,
       "n_files": 11777,
       "r_studies": 186,
-      "r_jobs": 606
+      "r_jobs": 606,
+      "r_studies_deflated": 186,
+      "replicated_stems": []
     },
     {
       "prefix": "dp",
@@ -90,7 +106,12 @@
       "n_jobs": 9180,
       "n_files": 13698,
       "r_studies": 398,
-      "r_jobs": 1780
+      "r_jobs": 1780,
+      "r_studies_deflated": 323,
+      "replicated_stems": [
+        "dp.EDA_barplots_scatterplots",
+        "dp.gfup"
+      ]
     },
     {
       "prefix": "lm",
@@ -98,7 +119,9 @@
       "n_jobs": 2596,
       "n_files": 6363,
       "r_studies": 10,
-      "r_jobs": 45
+      "r_jobs": 45,
+      "r_studies_deflated": 10,
+      "replicated_stems": []
     },
     {
       "prefix": "hz",
@@ -106,7 +129,9 @@
       "n_jobs": 4018,
       "n_files": 11444,
       "r_studies": 5,
-      "r_jobs": 8
+      "r_jobs": 8,
+      "r_studies_deflated": 5,
+      "replicated_stems": []
     },
     {
       "prefix": "hp",
@@ -114,7 +139,9 @@
       "n_jobs": 13687,
       "n_files": 30594,
       "r_studies": 16,
-      "r_jobs": 24
+      "r_jobs": 24,
+      "r_studies_deflated": 16,
+      "replicated_stems": []
     },
     {
       "prefix": "dt",
@@ -122,7 +149,9 @@
       "n_jobs": 813,
       "n_files": 1501,
       "r_studies": 0,
-      "r_jobs": 0
+      "r_jobs": 0,
+      "r_studies_deflated": 0,
+      "replicated_stems": []
     },
     {
       "prefix": "hm",
@@ -130,7 +159,9 @@
       "n_jobs": 2392,
       "n_files": 5954,
       "r_studies": 2,
-      "r_jobs": 9
+      "r_jobs": 9,
+      "r_studies_deflated": 2,
+      "replicated_stems": []
     },
     {
       "prefix": "lg",
@@ -138,7 +169,9 @@
       "n_jobs": 906,
       "n_files": 2330,
       "r_studies": 0,
-      "r_jobs": 0
+      "r_jobs": 0,
+      "r_studies_deflated": 0,
+      "replicated_stems": []
     },
     {
       "prefix": "bl",
@@ -146,7 +179,9 @@
       "n_jobs": 2492,
       "n_files": 7490,
       "r_studies": 1,
-      "r_jobs": 1
+      "r_jobs": 1,
+      "r_studies_deflated": 1,
+      "replicated_stems": []
     },
     {
       "prefix": "bh",
@@ -154,7 +189,9 @@
       "n_jobs": 3030,
       "n_files": 8245,
       "r_studies": 2,
-      "r_jobs": 5
+      "r_jobs": 5,
+      "r_studies_deflated": 2,
+      "replicated_stems": []
     },
     {
       "prefix": "np",
@@ -162,7 +199,9 @@
       "n_jobs": 8458,
       "n_files": 18699,
       "r_studies": 45,
-      "r_jobs": 201
+      "r_jobs": 201,
+      "r_studies_deflated": 45,
+      "replicated_stems": []
     },
     {
       "prefix": "nd",
@@ -170,7 +209,9 @@
       "n_jobs": 3082,
       "n_files": 9248,
       "r_studies": 3,
-      "r_jobs": 12
+      "r_jobs": 12,
+      "r_studies_deflated": 3,
+      "replicated_stems": []
     },
     {
       "prefix": "bn",
@@ -178,7 +219,9 @@
       "n_jobs": 1966,
       "n_files": 3521,
       "r_studies": 0,
-      "r_jobs": 0
+      "r_jobs": 0,
+      "r_studies_deflated": 0,
+      "replicated_stems": []
     },
     {
       "prefix": "cd",
@@ -186,7 +229,9 @@
       "n_jobs": 1168,
       "n_files": 2287,
       "r_studies": 6,
-      "r_jobs": 8
+      "r_jobs": 8,
+      "r_studies_deflated": 6,
+      "replicated_stems": []
     },
     {
       "prefix": "rm",
@@ -194,7 +239,9 @@
       "n_jobs": 785,
       "n_files": 1895,
       "r_studies": 8,
-      "r_jobs": 94
+      "r_jobs": 94,
+      "r_studies_deflated": 8,
+      "replicated_stems": []
     },
     {
       "prefix": "hs",
@@ -202,7 +249,9 @@
       "n_jobs": 998,
       "n_files": 2441,
       "r_studies": 7,
-      "r_jobs": 11
+      "r_jobs": 11,
+      "r_studies_deflated": 7,
+      "replicated_stems": []
     },
     {
       "prefix": "ce",
@@ -210,7 +259,9 @@
       "n_jobs": 1811,
       "n_files": 3558,
       "r_studies": 1,
-      "r_jobs": 1
+      "r_jobs": 1,
+      "r_studies_deflated": 1,
+      "replicated_stems": []
     },
     {
       "prefix": "rfsrc",
@@ -218,7 +269,9 @@
       "n_jobs": 2295,
       "n_files": 2486,
       "r_studies": 98,
-      "r_jobs": 631
+      "r_jobs": 631,
+      "r_studies_deflated": 98,
+      "replicated_stems": []
     },
     {
       "prefix": "nm",
@@ -226,7 +279,9 @@
       "n_jobs": 1012,
       "n_files": 2867,
       "r_studies": 1,
-      "r_jobs": 1
+      "r_jobs": 1,
+      "r_studies_deflated": 1,
+      "replicated_stems": []
     },
     {
       "prefix": "br",
@@ -234,7 +289,9 @@
       "n_jobs": 802,
       "n_files": 2483,
       "r_studies": 1,
-      "r_jobs": 1
+      "r_jobs": 1,
+      "r_studies_deflated": 1,
+      "replicated_stems": []
     },
     {
       "prefix": "mp",
@@ -242,7 +299,9 @@
       "n_jobs": 1278,
       "n_files": 1926,
       "r_studies": 4,
-      "r_jobs": 5
+      "r_jobs": 5,
+      "r_studies_deflated": 4,
+      "replicated_stems": []
     },
     {
       "prefix": "gm",
@@ -250,7 +309,9 @@
       "n_jobs": 357,
       "n_files": 845,
       "r_studies": 0,
-      "r_jobs": 0
+      "r_jobs": 0,
+      "r_studies_deflated": 0,
+      "replicated_stems": []
     },
     {
       "prefix": "rp",
@@ -258,7 +319,9 @@
       "n_jobs": 785,
       "n_files": 1685,
       "r_studies": 5,
-      "r_jobs": 8
+      "r_jobs": 8,
+      "r_studies_deflated": 5,
+      "replicated_stems": []
     },
     {
       "prefix": "mm",
@@ -266,7 +329,9 @@
       "n_jobs": 308,
       "n_files": 766,
       "r_studies": 1,
-      "r_jobs": 1
+      "r_jobs": 1,
+      "r_studies_deflated": 1,
+      "replicated_stems": []
     },
     {
       "prefix": "gp",
@@ -274,7 +339,9 @@
       "n_jobs": 608,
       "n_files": 1269,
       "r_studies": 2,
-      "r_jobs": 2
+      "r_jobs": 2,
+      "r_studies_deflated": 2,
+      "replicated_stems": []
     },
     {
       "prefix": "rf",
@@ -282,7 +349,9 @@
       "n_jobs": 397,
       "n_files": 493,
       "r_studies": 42,
-      "r_jobs": 312
+      "r_jobs": 312,
+      "r_studies_deflated": 42,
+      "replicated_stems": []
     },
     {
       "prefix": "rg",
@@ -290,7 +359,9 @@
       "n_jobs": 77,
       "n_files": 187,
       "r_studies": 0,
-      "r_jobs": 0
+      "r_jobs": 0,
+      "r_studies_deflated": 0,
+      "replicated_stems": []
     },
     {
       "prefix": "cm",
@@ -298,7 +369,9 @@
       "n_jobs": 130,
       "n_files": 338,
       "r_studies": 2,
-      "r_jobs": 2
+      "r_jobs": 2,
+      "r_studies_deflated": 2,
+      "replicated_stems": []
     },
     {
       "prefix": "ls",
@@ -306,7 +379,9 @@
       "n_jobs": 336,
       "n_files": 874,
       "r_studies": 0,
-      "r_jobs": 0
+      "r_jobs": 0,
+      "r_studies_deflated": 0,
+      "replicated_stems": []
     },
     {
       "prefix": "rfs",
@@ -314,7 +389,9 @@
       "n_jobs": 248,
       "n_files": 277,
       "r_studies": 10,
-      "r_jobs": 39
+      "r_jobs": 39,
+      "r_studies_deflated": 10,
+      "replicated_stems": []
     },
     {
       "prefix": "nb",
@@ -322,7 +399,9 @@
       "n_jobs": 137,
       "n_files": 155,
       "r_studies": 19,
-      "r_jobs": 63
+      "r_jobs": 63,
+      "r_studies_deflated": 19,
+      "replicated_stems": []
     },
     {
       "prefix": "fp",
@@ -330,7 +409,9 @@
       "n_jobs": 126,
       "n_files": 133,
       "r_studies": 11,
-      "r_jobs": 20
+      "r_jobs": 20,
+      "r_studies_deflated": 11,
+      "replicated_stems": []
     },
     {
       "prefix": "rfc",
@@ -338,7 +419,9 @@
       "n_jobs": 356,
       "n_files": 409,
       "r_studies": 12,
-      "r_jobs": 52
+      "r_jobs": 52,
+      "r_studies_deflated": 12,
+      "replicated_stems": []
     },
     {
       "prefix": "bc",
@@ -346,7 +429,9 @@
       "n_jobs": 129,
       "n_files": 348,
       "r_studies": 0,
-      "r_jobs": 0
+      "r_jobs": 0,
+      "r_studies_deflated": 0,
+      "replicated_stems": []
     },
     {
       "prefix": "cp",
@@ -354,7 +439,9 @@
       "n_jobs": 32,
       "n_files": 67,
       "r_studies": 1,
-      "r_jobs": 1
+      "r_jobs": 1,
+      "r_studies_deflated": 1,
+      "replicated_stems": []
     },
     {
       "prefix": "pm",
@@ -362,7 +449,9 @@
       "n_jobs": 9,
       "n_files": 26,
       "r_studies": 0,
-      "r_jobs": 0
+      "r_jobs": 0,
+      "r_studies_deflated": 0,
+      "replicated_stems": []
     },
     {
       "prefix": "bq",
@@ -370,7 +459,9 @@
       "n_jobs": 18,
       "n_files": 64,
       "r_studies": 0,
-      "r_jobs": 0
+      "r_jobs": 0,
+      "r_studies_deflated": 0,
+      "replicated_stems": []
     }
   ],
   "non_prefix": [
