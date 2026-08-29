@@ -11,6 +11,15 @@ produced it.
 
 ---
 
+> ⚠️ **This is a design document. §§3–7 describe machinery that does not exist
+> yet, and the present tense in them means *will*, not *does*.** The ledger
+> (`artifacts/2026-08-29-template-roadmap.json`), the renderer, both CI guards
+> and the roadmap document are **planned work**, specified task-by-task with
+> their full contents in `2026-08-29-template-conversion-roadmap-plan.md`. The
+> only artifact that exists today is
+> `artifacts/2026-08-29-job-census-summary.json`, the corpus evidence in §2.
+> Nothing in `.github/workflows/` runs a roadmap check yet.
+
 ## 1. What this decides
 
 How the remaining taxonomy prefixes become supported R templates: the unit of
@@ -127,10 +136,15 @@ future recount must reproduce `job-census.R`'s job definition, not invent one.**
 
 Two by-products of the census bear directly on this roadmap:
 
-- an **unknown-prefix bucket of 103,461 rows**, dominated by recurring non-job
+- an **unknown-prefix bucket of 103,454 rows**, dominated by recurring non-job
   names (`binder` 1,017 studies, `built` 975, `stat_refs` 957). That bucket is
   where a `sid`- or `vt`-class prefix surfaces, so §6's new-prefix discovery has
   a data source rather than only recollection.
+
+  ⚠️ **A note in the vault records this as 103,461, and that figure is wrong by
+  exactly 7.** `census-GATE.csv` classifies every row as `known` (42),
+  `non_prefix` (7) or `unknown` (103,454); the larger number counted the
+  non-prefixes as unknowns. **103,454 is the unknown bucket.**
 - a **misfiled false-positive class, shipped deliberately** — every R job under
   `analyses/R_hazard/` reports misfiled, because the taxonomy files `ac`/`hz`
   under `distributions/` while `hvtiRtemplates` places R jobs under `analyses/`.
@@ -305,7 +319,11 @@ A second top-level array holds intake records for off-catalogue R jobs (§6).
 
 Split by language, each guard placed where what it needs already exists.
 
-**Python — `check-roadmap-counts.py`, run by `spec-counts.yaml`.** Needs no R:
+⚠️ **Neither guard exists yet, and `spec-counts.yaml` does not call one.**
+Both are specified in the plan, Tasks 1–3.
+
+**Python — `check-roadmap-counts.py`, to be run by `spec-counts.yaml`.** Needs
+no R:
 
 1. `status == "shipped"` **iff** `inst/templates/<folder>/<ordinal>-<prefix>.qmd`
    exists. Both directions — a ledger claiming a template that is absent fails,

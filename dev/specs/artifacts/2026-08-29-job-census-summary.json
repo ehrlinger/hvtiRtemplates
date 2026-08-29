@@ -3,7 +3,7 @@
     "source": "hvtiRutilities::job_census() via job-census.R, run server-side 2026-08-27 06:42",
     "corpus": "/studies, all four top-level trees",
     "files_scanned": 2240570,
-    "raw_output": "/studies/vascular/thoracic-aorta/dissection/ascending/acute/preserve_root/analyses/R_hazard/R/census-20260827-064249/ (961 MB, share-resident)",
+    "raw_output": "census-20260827-064249/ beside job-census.R on the share (961 MB). The path is deliberately NOT recorded here -- this file claims to carry no study identifier and must not contradict itself. It is in the design spec section 2.3 and in ~/Documents/templates/census-20260827/README.md.",
     "raw_files": [
       "census-ALL.csv 479M",
       "census-cardiac.csv 305M",
@@ -13,7 +13,7 @@
       "census-GATE.csv 3.4M"
     ],
     "derived_from": "census-GATE.csv only",
-    "why_aggregate_only": "hvtiRtemplates is a PUBLIC repo and every row of the raw catalogue is a study path. This file carries counts only -- no path, study name or other identifier -- which is what the roadmap ledger needs. See tests/testthat/test-new-job.R for the rule this respects.",
+    "why_aggregate_only": "hvtiRtemplates is a PUBLIC repo and every row of the raw catalogue is a study path. This file carries counts only -- no path, study name or other identifier. See tests/testthat/test-new-job.R for the rule this respects.",
     "caveat": "distinct_studies/n_jobs/n_files come from census-GATE.csv and count EVERY extension, so they are SAS-dominated: they measure how widely a job type is used, not how much R precedent exists.",
     "unknown_bucket_truncated_to": 40,
     "r_counts": {
