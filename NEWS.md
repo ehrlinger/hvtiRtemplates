@@ -2,19 +2,29 @@
 
 ## Documentation
 
-- **The institutional SAS licence expires 2027-09-29, not 2026-09-29.** The wrong
-  date was stated in eleven places: the package `README.md`, the 1.0.0 provenance
-  note below, and nine statements across the design and artifact records in
-  `dev/specs/`. `README.md` is corrected outright, because it states a present fact
-  to a reader. Everything else is a historical record, so the original sentence is
-  left standing with a dated correction beside it, following the convention this
+- **The institutional SAS licence runs into 2027, not out in 2026.** The wrong date
+  `2026-09-29` was stated in eleven places: the package `README.md`, the 1.0.0
+  provenance note below, and nine statements across the design and artifact records
+  in `dev/specs/`. `README.md` is corrected outright, because it states a present
+  fact to a reader. Everything else is a historical record, so the original sentence
+  is left standing with a dated correction beside it, following the convention this
   repository already uses for a superseded claim.
-- Two of those statements used the date as a **deadline**, and both keep their
-  argument: the "forcing function" in the AVR/LV-function parity design, and the
-  window for re-running the corpus scan in the macro-allocation design. The
-  schedule pressure is real, a year further out than stated. What the date does not
-  bound is reading: compiled SAS data stays readable well beyond expiry, so what
-  ends is the ability to *run* SAS, not to read what it produced.
+- **`2027-09-29` is a working date, not a confirmed one.** Every note states it the
+  same way and defers to one canonical note, so confirming the real date is a single
+  edit rather than another eleven. What is settled is the year, not the day. Writing
+  an unconfirmed date as flatly as the wrong one was written is the mistake this
+  entry exists to correct.
+- Two of those statements used the date as a **deadline**, and they came out
+  differently. The "forcing function" in the AVR/LV-function parity design keeps its
+  argument: fresh SAS execution genuinely needs a live licence, so the pressure is
+  real and simply further out than stated. The macro-allocation design's claim that
+  the licence "bounds the window" for re-running the corpus scan is **withdrawn, not
+  re-dated.** That scan reads `.sas` files as text and never invokes SAS. What
+  threatens it is loss of the sources, which are unversioned or unreplicated, and
+  the mitigation is a remote rather than a deadline.
+- What the licence date does not bound, in either case, is reading: compiled SAS data
+  stays readable well beyond expiry, so what ends is the ability to *run* SAS, not to
+  read what it produced.
 
 # hvtiRtemplates 1.0.9
 
@@ -400,9 +410,9 @@ recoverable from this repository's history.
 Parity checks against the SAS originals therefore need a source outside this
 repository. The institutional SAS licence expires 2026-09-29.
 
-**Corrected 2026-08-29: the licence expires 2027-09-29, not 2026-09-29.** The
-date above was wrong when 1.0.0 shipped. It is left as written and corrected
-here; see the 1.0.10 entry.
+**Corrected 2026-08-29: the licence runs into 2027, not out in 2026** (working
+date `2027-09-29`, not yet confirmed). The date above was wrong when 1.0.0
+shipped. It is left as written and corrected here; see the 1.0.10 entry.
 
 A result filed before the migration still cannot say which macro version
 produced it. That was already true — `%inc` bound late to a mutable directory

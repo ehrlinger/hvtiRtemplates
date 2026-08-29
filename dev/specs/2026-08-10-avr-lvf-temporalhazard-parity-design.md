@@ -36,7 +36,11 @@ and the report render.
 first end-to-end demonstration that a Blackstone-lineage hazard analysis can be carried
 out without SAS.
 
-> ⚠️ **Corrected 2026-08-29. The licence expires 2027-09-29, not 2026-09-29.**
+> ⚠️ **Corrected 2026-08-29. The licence runs into 2027, not out in 2026.**
+> `2027-09-29` is the **working date**, carried until the real one is confirmed;
+> what is settled is the year, not the day. Every other note in this repository
+> states it the same way, so there is one place to change when it is confirmed.
+>
 > The forcing function stands and the paragraph above is left as written: this is
 > still the demonstration the migration needs, and it is still on a clock. The
 > clock simply runs a year longer than stated, which matters because a schedule
@@ -51,7 +55,10 @@ out without SAS.
 > the 1.0.0 `NEWS.md` provenance note, and eight statements across `dev/specs/`.
 > `README.md` is corrected outright, because it states a present fact to a reader.
 > Every historical record keeps the original sentence with a dated correction
-> beside it, and points here.
+> beside it, and points here. One of them needed more than a date:
+> `dev/specs/2026-08-14-macro-allocation-design.md` said the licence bounds the
+> window for re-running the macro scan, and it does not. That scan never invokes
+> SAS. Its note records the reversal.
 
 ---
 

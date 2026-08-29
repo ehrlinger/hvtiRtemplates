@@ -341,8 +341,20 @@ destination names a package that exists locally only.
    expires 2026-09-29, which bounds the window for re-running this scan against
    the originals.
 
-> ⚠️ **Corrected 2026-08-29. The licence expires 2027-09-29, not 2026-09-29.**
-> The window is still real and still worth acting inside; the scan reads live
-> paths outside version control, and that fragility is what item 3 is about. But
-> it closes in 2027, not within weeks of this document. Full note in
+> ⚠️ **Corrected 2026-08-29. Two things above are wrong: the date, and the reason.**
+>
+> The date first. The licence runs into 2027, not out in 2026. `2027-09-29` is the
+> working date, carried until the real one is confirmed; what is settled is the
+> year, not the day.
+>
+> The reason matters more, and re-dating alone would have preserved the error. **The
+> licence does not bound this window at all.** The scan reads `.sas` files as text
+> and never invokes SAS, so it would run identically in 2030. What threatens the
+> re-run is **loss of the sources**, not expiry of a licence: `~/Documents/template`
+> has never been under version control, and `~/Documents/macro.library` has git
+> history but no off-machine replica since this package purged its copy on
+> 2026-08-14. The mitigation is a private remote on `macro.library`, not a deadline.
+> Item 3's question stands; the bound it states does not.
+>
+> Full note on the date in
 > `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` §1.
