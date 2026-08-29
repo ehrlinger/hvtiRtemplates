@@ -24,7 +24,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "2026-08-29-template-roadmap.json")
 CENSUS = os.path.join(HERE, "2026-08-29-job-census-summary.json")
 FLOW = os.path.join(HERE, "2026-08-22-job-flow.json")
-LIBRARY = os.path.expanduser("~/Documents/template")
 
 # Family assignment is a DECISION from the design spec (section 3), not data.
 # It lives here rather than being inferred, because inferring it from the

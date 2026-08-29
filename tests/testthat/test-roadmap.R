@@ -17,8 +17,28 @@ ledger_path <- function() {
             "2026-08-29-template-roadmap.json")
 }
 
+require_ledger <- function() {
+  if (file.exists(ledger_path())) {
+    return(invisible(TRUE))
+  }
+  # `dev/` is .Rbuildignore'd, so the ledger is absent from a built package and
+  # these tests must skip there -- that is not a failure, it is the file being
+  # deliberately out of the tarball.
+  #
+  # But on the SOURCE tree in CI the ledger IS present, and a skip would mean
+  # the path resolution broke. A silently skipped guard is worse than no guard:
+  # it reports green while checking nothing, which is the exact failure this
+  # file exists to prevent. So CI sets HVTI_ROADMAP_STRICT and a skip becomes
+  # a hard stop there.
+  if (nzchar(Sys.getenv("HVTI_ROADMAP_STRICT"))) {
+    stop("roadmap ledger not found at ", ledger_path(),
+         ", but HVTI_ROADMAP_STRICT is set -- the source tree should have it")
+  }
+  testthat::skip("roadmap ledger not present")
+}
+
 test_that("every taxonomy prefix has a roadmap row", {
-  skip_if_not(file.exists(ledger_path()), "roadmap ledger not present")
+  require_ledger()
   skip_if_not_installed("jsonlite")
 
   ledger <- jsonlite::fromJSON(ledger_path(), simplifyDataFrame = FALSE)
@@ -34,7 +54,7 @@ test_that("every taxonomy prefix has a roadmap row", {
 })
 
 test_that("every roadmap row is a taxonomy prefix, unless it is intake", {
-  skip_if_not(file.exists(ledger_path()), "roadmap ledger not present")
+  require_ledger()
   skip_if_not_installed("jsonlite")
 
   ledger <- jsonlite::fromJSON(ledger_path(), simplifyDataFrame = FALSE)
@@ -53,7 +73,7 @@ test_that("every roadmap row is a taxonomy prefix, unless it is intake", {
 })
 
 test_that("an intake row names what it blocks on", {
-  skip_if_not(file.exists(ledger_path()), "roadmap ledger not present")
+  require_ledger()
   skip_if_not_installed("jsonlite")
 
   ledger <- jsonlite::fromJSON(ledger_path(), simplifyDataFrame = FALSE)
