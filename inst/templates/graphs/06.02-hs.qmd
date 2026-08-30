@@ -228,3 +228,86 @@ if (length(missing_cols)) {
        ". The cohort here is not the cohort hm was fitted on.", call. = FALSE)
 }
 ```
+
+## Predictions
+
+<!-- EDIT: the follow-up time column, and the horizons this job reports.
+
+     TIME must be the SAME column the hm job fitted on. It is re-declared here
+     rather than read from `hm.rds`, because that artifact does not carry it --
+     so the two CAN drift, and the guard below is what catches it. If you change
+     one, change both.
+
+     The horizons are in TIME's own units.
+
+     These are reporting choices, not statistical ones, and they must match the
+     job being replaced -- a nomogram at 5 years and a table at 10 answer
+     different questions. The corpus uses 30-day, 5-year and 10-year most
+     often. The units are whatever `hz` fitted in: if that job worked in years,
+     30 days is 30/365.25, not 30. Getting this wrong produces a plausible
+     number at the wrong time, which is the failure mode with no symptom. -->
+
+```{r}
+#| label: horizons
+TIME     <- "iu_dead"
+HORIZONS <- c(1, 5, 10)
+
+# A `hazard` object carries `call`, `call_env`, `spec`, `data`, `fit`,
+# `legacy_args` and `engine` -- there is NO `formula` slot, and `spec` holds
+# only dist/control/time_windows/phases. The formula is recoverable from
+# `fit$call` only when the model was built through the formula interface;
+# `hazard()` also accepts time=/status=, in which case it is not there at all.
+# So the time column is declared above rather than introspected.
+if (!TIME %in% names(fit$data)) {
+  stop("TIME is \"", TIME, "\", which is not a column of the data the model was ",
+       "fitted on. It must name the same follow-up column the hm job used.",
+       call. = FALSE)
+}
+
+# The model cannot extrapolate past the follow-up it was fitted on, and
+# `predict()` will not say so -- it returns a number for any time you give it.
+# Beyond the last observed time that number is the fitted parametric form
+# running on, not an estimate the data supports.
+.max_obs <- max(fit$data[[TIME]], na.rm = TRUE)
+if (any(HORIZONS > .max_obs)) {
+  stop("HORIZONS contains ", paste(HORIZONS[HORIZONS > .max_obs], collapse = ", "),
+       ", beyond the last observed time (", signif(.max_obs, 4),
+       "). Shorten the horizon or say in the text why extrapolation is defensible.",
+       call. = FALSE)
+}
+```
+
+`predict()` needs one row per (patient, horizon): the covariates identify the
+patient and a `time` column names the horizon.
+
+```{r}
+#| label: predict
+# One row per patient per horizon. Built explicitly rather than by looping
+# `predict()` per horizon, so every prediction comes from ONE call and cannot
+# drift between horizons.
+nd <- do.call(rbind, lapply(HORIZONS, function(h) {
+  x <- d[, COVARIATES, drop = FALSE]
+  x$time <- h
+  x$.id  <- seq_len(nrow(d))
+  x$.horizon <- h
+  x
+}))
+
+p <- predict(fit, newdata = nd[, c(COVARIATES, "time")], type = "survival",
+             se.fit = TRUE, level = 0.95)
+
+pred <- data.frame(id = nd$.id, horizon = nd$.horizon,
+                   fit = p$fit, se.fit = p$se.fit,
+                   lower = p$lower, upper = p$upper)
+
+# Survival is a probability. A value outside [0, 1] means the delta-method
+# interval was built on the wrong scale, not that a patient is 103% alive.
+stopifnot(all(pred$fit >= 0 & pred$fit <= 1, na.rm = TRUE))
+knitr::kable(
+  do.call(rbind, lapply(split(pred, pred$horizon), function(g)
+    data.frame(horizon = g$horizon[[1]], n = nrow(g),
+               median = stats::median(g$fit, na.rm = TRUE),
+               min = min(g$fit, na.rm = TRUE), max = max(g$fit, na.rm = TRUE)))),
+  row.names = FALSE, digits = 4,
+  caption = "Predicted survival by horizon, across the cohort")
+```
