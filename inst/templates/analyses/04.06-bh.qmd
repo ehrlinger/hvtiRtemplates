@@ -761,7 +761,7 @@ phase_matrix <- function(ph, members) {
 CLUSTERS <- list()
 
 if (!length(CLUSTERS)) {
-  knitr::kable(data.frame(result = "no clusters declared: see the EDIT: above"))
+  knitr::kable(data.frame(result = "no clusters declared: see the marker above"))
 } else {
   members <- unique(unlist(CLUSTERS, use.names = FALSE))
 

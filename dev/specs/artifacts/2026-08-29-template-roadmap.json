@@ -104,8 +104,8 @@
       "folder": "analyses",
       "family": "bootstrap",
       "kind": "job",
-      "status": "queued",
-      "ordinal": null,
+      "status": "shipped",
+      "ordinal": "04.06",
       "batch": 0,
       "sas_breadth": 322,
       "r_exemplars": 2,
@@ -114,7 +114,7 @@
       "downstream": [],
       "workflows": [],
       "blocked_on": null,
-      "spec": null,
+      "spec": "dev/specs/2026-08-28-bh-template-design.md",
       "note": null
     },
     {

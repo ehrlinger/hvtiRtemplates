@@ -1,3 +1,41 @@
+# hvtiRtemplates 1.0.13
+
+* Added `analyses/04.06-bh.qmd`, the bootstrap variable-selection screen,
+  replacing a SAS `%hazboot` / `%sumboot` / `%cluster` chain (#8). Scaffold it
+  with `new_job("bh", <endpoint>, <type>)`. Design:
+  `dev/specs/2026-08-28-bh-template-design.md`. Requires hvtiRbootstrap >= 0.1.1
+  and hvtiRutilities >= 1.1.6.
+
+  The template is the **report**, not the runner. A full screen is days of
+  compute and `hzr_bootstrap()` writes nothing until its final replicate, so the
+  run is chunked from a companion script and this file reports over what that
+  script wrote. `EXPECT_CHUNKS` and `EXPECT_BOOT` are what the run was launched
+  as, and a pool short of either raises a callout rather than a table cell: a
+  provisional report has to say so to a reader who receives the `.html` later,
+  without the context of when it was made.
+
+  Every frequency carries its Monte-Carlo standard error, and the near-threshold
+  flag counts variables on **both** sides of the retention line. A variable just
+  below it is exactly as decision-unstable as one just above, and counting only
+  the retained hides that.
+
+  Concepts are grouped when the result is READ, never by pruning the pool before
+  screening. The union across a concept's forms is computed from the replicate
+  table rather than from the summary, because a union cannot be recovered from
+  marginal percentages. Two clusterings sit beside it, and they answer different
+  questions: `boot_clusters()` over a declared list, which is clinical judgement,
+  and `pool_collinear_pairs()` over the built data, which is what the pool can
+  actually distinguish. The second is why this template reads the built dataset,
+  and it warns when that dataset has moved since the screen ran.
+
+  `bh` and `hm` are **parallel analyses, not a pipeline**, stated at the top of
+  the file. `%hazboot` and `%model` were parallel in SAS and these jobs reproduce
+  that, so this job's retained set is not what `hm` fits.
+
+* `dev/specs/2026-08-29-template-roadmap.json` marks `bh` shipped at ordinal
+  04.06. Every job named in #8 now has a template; what remains untemplated
+  there is the runner, which needs multi-file support in `new_job()`.
+
 # hvtiRtemplates 1.0.12
 
 * Added `graphs/06.02-hs.qmd`, the patient-level prediction template. It reads

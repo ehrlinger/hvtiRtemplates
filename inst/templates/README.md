@@ -14,6 +14,7 @@ refuses to overwrite an existing job.
 | `graphs/06.01-hp.qmd` | nomogram and hazard figures | `graphs/` |
 | `graphs/06.02-hs.qmd` | patient-level predictions and expected survival | `graphs/` |
 | `analyses/04.01-hm.qmd` | multivariable hazard model | `analyses/` |
+| `analyses/04.06-bh.qmd` | bootstrap variable-selection screen | `analyses/` |
 
 A template is named `<NN.MM>-<prefix>.qmd` and lives in the taxonomy folder it
 scaffolds into. The name is the authority: `template_list()` reads the ordinal
@@ -50,8 +51,16 @@ The full design, including what was rejected and why, is in
 
 ## What is not here yet, and why
 
-`bh` (bootstrap variable selection) is **not templated yet**. `hz` shipped in
-1.0.6, `hp` in 1.0.7 and `hm` in 1.0.8; see the design specs dated 2026-08-27.
+Every job in issue #8 is now templated. `hz` shipped in 1.0.6, `hp` in 1.0.7,
+`hm` in 1.0.8, `hs` in 1.0.12 and `bh` in 1.0.13; see the design specs dated
+2026-08-27 onward.
+
+What is **not** templated is `bh`'s companion **runner**. The screen is days of
+compute and `hzr_bootstrap()` writes nothing until its final replicate, so the
+run is chunked from a separate script and `04.06-bh.qmd` reports over whatever
+that script wrote. Templating the runner needs multi-file support in
+`new_job()`, which is a package change rather than another template. `hm` has
+the same gap.
 
 `hz` and `hp` were each extracted from three R exemplars — `preserve_root`,
 `maze/atricure/gender` and `lv_function/survival`. **`hm` had only one R
