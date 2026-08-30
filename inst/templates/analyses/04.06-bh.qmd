@@ -557,3 +557,46 @@ if (!nrow(crowding)) {
   crowding
 }
 ```
+
+## Correlation clusters
+
+Concept grouping above is by NAME. This section groups by DATA: variables that
+move together, whatever they are called. The SAS job this replaces ran
+`%cluster` once per named cluster per phase, and the two views answer different
+questions — a name tells you two variables are related, a correlation tells you
+they are redundant.
+
+```{r}
+#| label: cluster-matrix
+# boot_clusters() wants one ROW per replicate and one COLUMN per term, with an
+# unselected term left NA -- that is how it counts "at least one member". The
+# pooled replicates are long, so pivot rather than pass them straight in.
+#
+# Replicate ids are 1..n_boot across the whole pool: boot_pool_chunks() offsets
+# each chunk's ids before stacking, and refuses to pool at all if any chunk's
+# ids fall outside its own range. The direct indexing below relies on that.
+terms <- sort(unique(reps$parameter))
+coefs <- matrix(NA_real_, nrow = bag$n_boot, ncol = length(terms),
+                dimnames = list(NULL, terms))
+coefs[cbind(reps$replicate, match(reps$parameter, terms))] <- reps$estimate
+```
+
+```{r}
+#| label: clusters
+# EDIT: your clusters, one per concept you want reported, and the phase each
+# runs against. The SAS job named eight -- Age, Size, BMI, race, GFR, iv_opyrs,
+# Renal, blrbn_pr -- and ran each against both the early and constant phases.
+# There is no sensible default: which concepts are worth clustering is a
+# statement about your candidate pool.
+#
+# Members are PHASE-QUALIFIED, as `<phase>.<variable>`, because a variable
+# offered to two phases is two screening decisions. Naming a term that no
+# replicate carries is refused rather than reported as 0%: a typo that grouped
+# nothing would otherwise read as a concept nobody selected.
+CLUSTERS <- list(
+  early.Age  = c("early.age", "early.ln_age"),
+  const.Age  = c("const.age", "const.ln_age")
+)
+
+boot_clusters(coefs, CLUSTERS)
+```
