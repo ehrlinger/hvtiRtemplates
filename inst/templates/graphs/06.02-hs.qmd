@@ -219,7 +219,13 @@ fit    <- hm_art$reported
 # rather than re-declared here: a re-declared list drifts from the model the
 # moment the hm job's screen changes, and `predict()` would then either error
 # on a missing column or -- worse -- silently use a stale set.
-COVARIATES <- hm_art$covariates
+#
+# `hm` stores its screen as a LIST -- list(early = <chr>, late = <chr>) -- one
+# character vector per phase, and saves it in that shape. Flatten it the same
+# way hm itself does when it builds the model formula: `unique()` matters,
+# because a variable offered to BOTH phases appears twice, and a duplicated
+# column here makes a design matrix wider than the fitted coefficients.
+COVARIATES <- unique(unlist(hm_art$covariates, use.names = FALSE))
 stopifnot(is.character(COVARIATES), length(COVARIATES) > 0L)
 missing_cols <- setdiff(COVARIATES, names(d))
 if (length(missing_cols)) {
@@ -258,7 +264,12 @@ HORIZONS <- c(1, 5, 10)
 # `fit$call` only when the model was built through the formula interface;
 # `hazard()` also accepts time=/status=, in which case it is not there at all.
 # So the time column is declared above rather than introspected.
-if (!TIME %in% names(fit$data)) {
+# A `hazard` object's `data` slot is a CONTAINER -- time, time_lower,
+# time_upper, status, x, weights, frame -- not the model frame. The study's own
+# columns are one level down, in `fit$data$frame`. Reading `fit$data[[TIME]]`
+# returns NULL, which makes this guard unsatisfiable and turns the max() below
+# into -Inf. Measured, not assumed.
+if (!TIME %in% names(fit$data$frame)) {
   stop("TIME is \"", TIME, "\", which is not a column of the data the model was ",
        "fitted on. It must name the same follow-up column the hm job used.",
        call. = FALSE)
@@ -268,7 +279,7 @@ if (!TIME %in% names(fit$data)) {
 # `predict()` will not say so -- it returns a number for any time you give it.
 # Beyond the last observed time that number is the fitted parametric form
 # running on, not an estimate the data supports.
-.max_obs <- max(fit$data[[TIME]], na.rm = TRUE)
+.max_obs <- max(fit$data$frame[[TIME]], na.rm = TRUE)
 if (any(HORIZONS > .max_obs)) {
   stop("HORIZONS contains ", paste(HORIZONS[HORIZONS > .max_obs], collapse = ", "),
        ", beyond the last observed time (", signif(.max_obs, 4),
@@ -288,6 +299,14 @@ patient and a `time` column names the horizon.
 # `time`, `.id` and `.horizon` are constructed below. A covariate with one of
 # those names would be silently overwritten by the construction rather than
 # erroring, so the collision is checked rather than assumed away.
+# `hm` fitted on covariates_to_numeric(d, ...), not on the raw built data: that
+# conversion turns numeric-looking FACTORS into numerics, and a model fitted
+# after it has a different parameter count from one fitted before. hm.rds does
+# not carry the converted frame, so the conversion is redone here. Predicting
+# from the raw data instead would dummy-code a factor the model fitted
+# linearly -- a different design matrix, and nothing in the output would say so.
+dd <- covariates_to_numeric(d, COVARIATES)
+
 .clash <- intersect(COVARIATES, c("time", ".id", ".horizon"))
 if (length(.clash)) {
   stop("Covariate(s) ", paste(.clash, collapse = ", "), " collide with the ",
@@ -296,9 +315,9 @@ if (length(.clash)) {
        call. = FALSE)
 }
 nd <- do.call(rbind, lapply(HORIZONS, function(h) {
-  x <- d[, COVARIATES, drop = FALSE]
+  x <- dd[, COVARIATES, drop = FALSE]
   x$time <- h
-  x$.id  <- seq_len(nrow(d))
+  x$.id  <- seq_len(nrow(dd))
   x$.horizon <- h
   x
 }))
@@ -361,7 +380,17 @@ knitr::kable(summary_tbl, row.names = FALSE, digits = 4,
      Under `table2023`, stratum `"b"` is a risk-weighted average of Black,
      Asian, American Indian and Hispanic death rates, NOT Black, despite the
      code and despite the macro's own comment. Name strata by meaning in your
-     prose, never by the letter code. -->
+     prose, never by the letter code.
+
+     TABLE selects which strata the life table itself is built from. Use
+     "sexrace" when race is usable, "sex" when it is not, "overall" when
+     neither is. This is not the axis you group your REPORT by -- that is a
+     separate concern the template does not automate.
+
+     SCALE must match the units TIME and HORIZONS are in. It is NOT
+     independently checkable: pass "years" for a job fitted in months and you
+     get expected survival at 6, 12 and 24 YEARS against observed values at 6,
+     12 and 24 months, with a plausible-looking ratio and no error anywhere. -->
 
 ```{r}
 #| label: expected
@@ -369,6 +398,8 @@ AGE_COL   <- "age"
 MALE_COL  <- "male"
 OTHER_COL <- "other"
 VINTAGE   <- NULL
+TABLE     <- "sexrace"
+SCALE     <- "years"
 
 if (is.null(VINTAGE)) {
   # us_lifetable_vintages() returns a DATA FRAME -- vintage, n_strata,
@@ -380,6 +411,16 @@ if (is.null(VINTAGE)) {
        "comment on this chunk.", call. = FALSE)
 }
 
+# Named columns are checked before use, as the model chunk does for covariates.
+# Without this a typo surfaces as "`id` must be the same length as `age`; got
+# N and 0" from inside us_matched(), which never names the column at fault.
+.absent <- setdiff(c(AGE_COL, MALE_COL, OTHER_COL), names(d))
+if (length(.absent)) {
+  stop("Column(s) not in the cohort: ", paste(.absent, collapse = ", "),
+       ". Set AGE_COL, MALE_COL and OTHER_COL to this study's own column names.",
+       call. = FALSE)
+}
+
 # Read this before choosing, and print it in the report:
 knitr::kable(us_lifetable_vintages(), row.names = FALSE,
              caption = "Life table vintages, and what each one's non-white stratum means")
@@ -387,7 +428,7 @@ knitr::kable(us_lifetable_vintages(), row.names = FALSE,
 expected <- us_matched(
   age = d[[AGE_COL]], male = d[[MALE_COL]], other = d[[OTHER_COL]],
   times = HORIZONS, id = seq_len(nrow(d)),
-  vintage = VINTAGE, table = "sexrace", scale = "years", individual = TRUE
+  vintage = VINTAGE, table = TABLE, scale = SCALE, individual = TRUE
 )
 ```
 

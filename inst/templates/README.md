@@ -78,6 +78,7 @@ that one:
 | `hp` | 3 |
 | `bh` | 2 |
 | `hm` | **1** |
+| `hs` | 1 |
 
 That count is a lower bound — the census sees `.qmd` only, so a job written as
 `.R` or `.Rmd` is invisible to it, and the error direction is undercounting.
