@@ -494,3 +494,66 @@ freq[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
 retained <- freq[freq$pct >= RETAIN_PCT, , drop = FALSE]
 retained[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
 ```
+
+## Concepts
+
+⚠️ **Do not prune competing transformations from the pool before screening.**
+Screen every form; group only when reading, which is what this section does.
+
+Measured, on the study this template came from: of the 57 forms pruning removed,
+**16 correlated at |r| < 0.9** with the form kept and five below 0.5. `in_zexp`
+**is** `1/zexp` — r = 0.9997 against the reciprocal — yet correlates with
+`zexp` at only **-0.195**, because `zexp` spans 0.038 to 151.9. Over a 4000-fold
+range a value and its reciprocal are different information. That study's
+published model uses `zexp` and `in_zexp` in the same phase, **both
+significant**, a two-parameter flexible form pruning forbids.
+
+The naming convention tells you two variables are RELATED. Only the data tells
+you whether they are REDUNDANT.
+
+```{r}
+#| label: concept-map
+# EDIT: the affix vocabulary, if your study's variable names do not follow
+# vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing
+# 2, the order in which they strip, and the deliberate refusal to reduce agee
+# to age. Those are facts about this institution's names, not about statistics,
+# which is why they are data you can replace rather than logic you cannot.
+#
+# The pool grouped here is the set of forms that reached at least one replicate.
+# A candidate the screen never saw is in the unscreened table above, not here.
+concept <- concept_map(unique(freq$variable), affixes = POOL_AFFIXES,
+                       min_stem = POOL_MIN_STEM,
+                       plain_suffix = POOL_PLAIN_SUFFIX)
+concept
+```
+
+```{r}
+#| label: concept-frequencies
+# Grouped for READING. Every form keeps its own row and its own frequency --
+# nothing is collapsed, summed or dropped -- because the whole argument above is
+# that two forms of one concept may carry different information. The concept
+# column is a reading aid, not an aggregation.
+by_concept <- merge(freq, concept[, c("variable", "concept", "representative")],
+                    by = "variable", all.x = TRUE)
+by_concept <- by_concept[order(by_concept$phase, by_concept$concept,
+                               -by_concept$pct), , drop = FALSE]
+rownames(by_concept) <- NULL
+by_concept[, c("phase", "concept", "variable", "representative", "pct",
+               "mc_error")]
+```
+
+```{r}
+#| label: concept-counts
+# Crowding: a phase that spent several of its slots on forms of ONE concept is
+# budget-limited by redundancy, and that is invisible in a coefficient table.
+# Grouping is concept_map()'s, so this is a FLOOR -- a concept nobody's affix
+# vocabulary reaches is still counted as separate variables.
+crowding <- selection_crowding(retained$term, affixes = POOL_AFFIXES,
+                               min_stem = POOL_MIN_STEM,
+                               plain_suffix = POOL_PLAIN_SUFFIX)
+if (!nrow(crowding)) {
+  cat("No phase retained more than one form of any concept.\n")
+} else {
+  crowding
+}
+```
