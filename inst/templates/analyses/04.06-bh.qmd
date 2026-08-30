@@ -423,3 +423,74 @@ if (!is.na(bag$free_sd) && bag$free_sd == 0) {
        "below would all be 100% and mean nothing.", call. = FALSE)
 }
 ```
+
+## What a selection frequency is, and what it is not
+
+A selection frequency is an estimate, not a count of something fixed, and it
+carries Monte-Carlo error of roughly `sqrt(p(1-p)/n_boot)`. At `p = 0.5` over
+500 replicates that is about **2.2 percentage points**, so a variable sitting
+within a few points of the retention threshold can fall on either side of it on
+resampling noise alone.
+
+- **Agreement on the retention decision matters more than agreement on the
+  frequency.** Which side of the threshold a variable falls on is the decision
+  this job exists to support.
+- **A near-threshold variable is not a weak risk factor.** It is a variable
+  whose selection is unstable, which is a different claim.
+
+```{r}
+#| label: criteria
+# EDIT: from YOUR .sas %hazboot call. The two studies this template was
+# extracted from disagree -- 500/0.07/0.05 and 1000/0.12/0.1 -- so there is no
+# default here to fall back on. Read them off the call and paste it above.
+#
+# RETAIN_PCT is the reliability cutoff this report calls "retained". It is a
+# reporting decision, not something the run recorded: the entry and stay levels
+# above governed each replicate's stepwise fit, and neither of them says how
+# often a variable must survive to be worth carrying forward.
+RETAIN_PCT <- 50
+```
+
+```{r}
+#| label: frequencies
+# The name column differs by how the screen was produced, and reading the wrong
+# one yields NULL rather than an error. boot_pool_chunks() recomputes its
+# summary and names the column `parameter`; boot_summary() names it `variable`.
+# A single unchunked run carries whichever its runner wrote.
+summ <- bag$boot$summary
+name_col <- if ("parameter" %in% names(summ)) "parameter" else "variable"
+
+freq <- data.frame(term = summ[[name_col]], pct = summ$pct, n = summ$n,
+                   stringsAsFactors = FALSE)
+freq <- freq[!freq$term %in% bag$base_params, , drop = FALSE]
+
+# Terms are named `<phase>.<variable>`: one variable offered to two phases is
+# two independent screening decisions and must not be pooled into one row.
+freq$phase    <- sub("[.].*$", "", freq$term)
+freq$variable <- sub("^[^.]*[.]", "", freq$term)
+
+# Per-variable, not one figure for the table. Monte-Carlo error is largest at
+# p = 0.5 and shrinks towards either end, so a single quoted value overstates it
+# for the variables at the top and understates it for the ones in the middle --
+# and the middle is where the retention decision is actually being made.
+p <- freq$pct / 100
+freq$mc_error <- 100 * sqrt(p * (1 - p) / bag$n_boot)
+
+# Within two Monte-Carlo errors of the cutoff: the variables whose retention
+# would not survive a rerun with different seeds.
+freq$near_threshold <- abs(freq$pct - RETAIN_PCT) <= 2 * freq$mc_error
+
+freq <- freq[order(freq$phase, -freq$pct, freq$variable), , drop = FALSE]
+rownames(freq) <- NULL
+freq[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
+```
+
+```{r}
+#| label: retained
+# The retained set, by phase. Reported WITH the near-threshold flag rather than
+# as a bare list: a variable that cleared the cutoff by less than its own
+# Monte-Carlo error cleared it on noise, and a list that does not say so invites
+# the reader to treat the two kinds of retention as the same claim.
+retained <- freq[freq$pct >= RETAIN_PCT, , drop = FALSE]
+retained[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
+```
