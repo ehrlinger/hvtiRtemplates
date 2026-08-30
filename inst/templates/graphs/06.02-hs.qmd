@@ -279,6 +279,14 @@ if (!TIME %in% names(fit$data$frame)) {
 # `predict()` will not say so -- it returns a number for any time you give it.
 # Beyond the last observed time that number is the fitted parametric form
 # running on, not an estimate the data supports.
+# An all-missing time column makes max(na.rm = TRUE) return -Inf rather than
+# error, and the check below would then report "beyond the last observed time
+# (-Inf)", which explains nothing. Catch the empty case where it can still be
+# named.
+if (!any(is.finite(fit$data$frame[[TIME]]))) {
+  stop("Column \"", TIME, "\" in the fitted data has no finite values, so there ",
+       "is no observed follow-up to compare HORIZONS against.", call. = FALSE)
+}
 .max_obs <- max(fit$data$frame[[TIME]], na.rm = TRUE)
 if (any(HORIZONS > .max_obs)) {
   stop("HORIZONS contains ", paste(HORIZONS[HORIZONS > .max_obs], collapse = ", "),
@@ -322,8 +330,24 @@ nd <- do.call(rbind, lapply(HORIZONS, function(h) {
   x
 }))
 
+# CLEVEL and conf.type are SAS conventions recovered from the HAZPRED source
+# during parity work, not study choices -- and NEITHER errors when wrong.
+#
+# CLEVEL is 0.68268948, which is pnorm(1) - pnorm(-1): plus or minus one
+# standard error, about 68%, NOT 95%. The published papers state it. On the
+# same fit and grid a 95% band is 1.97x the width, so a reader who takes these
+# for 95% limits reads an interval roughly half as wide as they think.
+#
+# Survival limits are formed on the logit scale. predict.hazard() defaults to
+# "log-log", the survfit standard, so conf.type must be passed explicitly.
+#
+# `06.01-hp.qmd` uses both, and this job's estimates are read by plotting jobs
+# that do. Changing either here alone puts two coverages on one figure with
+# nothing saying so. Label the coverage wherever these numbers are published.
+CLEVEL <- 0.68268948   # SAS convention, not a study choice. +/-1 SD, NOT 95%.
+
 p <- predict(fit, newdata = nd[, c(COVARIATES, "time")], type = "survival",
-             se.fit = TRUE, level = 0.95)
+             se.fit = TRUE, level = CLEVEL, conf.type = "logit")
 
 pred <- data.frame(id = nd$.id, horizon = nd$.horizon,
                    fit = p$fit, se.fit = p$se.fit,
@@ -401,14 +425,24 @@ VINTAGE   <- NULL
 TABLE     <- "sexrace"
 SCALE     <- "years"
 
+# Two failure modes, both caught here rather than inside us_matched(): unset,
+# and set to something that is not a vintage. The second matters because the
+# valid values are not guessable -- "table2023" is not "2023" -- and an error
+# raised three calls down names neither the argument nor the alternatives.
+#
+# us_lifetable_vintages() returns a DATA FRAME -- vintage, n_strata,
+# nonwhite_code, nonwhite_meaning, added -- not a character vector. The
+# `$vintage` is deliberate; pasting the frame prints column-wise nonsense.
+valid_vintages <- us_lifetable_vintages()$vintage
 if (is.null(VINTAGE)) {
-  # us_lifetable_vintages() returns a DATA FRAME -- vintage, n_strata,
-  # nonwhite_code, nonwhite_meaning, added -- not a character vector. The
-  # `$vintage` is deliberate; pasting the frame prints column-wise nonsense.
-  valid_vintages <- us_lifetable_vintages()$vintage
   stop("VINTAGE is unset. Choose one of: ", paste(valid_vintages, collapse = ", "),
        " -- and record WHY in the text above. There is no safe default; see the ",
        "comment on this chunk.", call. = FALSE)
+}
+if (!VINTAGE %in% valid_vintages) {
+  stop("VINTAGE is \"", VINTAGE, "\", which is not a life table vintage. ",
+       "Valid values: ", paste(valid_vintages, collapse = ", "), ".",
+       call. = FALSE)
 }
 
 # Named columns are checked before use, as the model chunk does for covariates.
@@ -475,7 +509,12 @@ because the expected curve carries no sampling error of its own here.
 # rather than being recorded only in prose: an expected curve whose vintage has
 # to be recovered later is the defect this template's vintage marker exists to
 # prevent, and it would be reintroduced here by omitting it.
+#
+# `clevel` travels with the estimates for the same reason `vintage` does: a
+# confidence limit whose coverage has to be inferred later is a number waiting
+# to be misread, and 0.68268948 is not the coverage anyone assumes.
 saveRDS(list(pred = pred, expected = expected, obs_vs_exp = obs_vs_exp,
-             horizons = HORIZONS, covariates = COVARIATES, vintage = VINTAGE),
+             horizons = HORIZONS, covariates = COVARIATES, vintage = VINTAGE,
+             clevel = CLEVEL),
         set_path("estimates", "hs.rds"))
 ```
