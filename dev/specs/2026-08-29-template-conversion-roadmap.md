@@ -45,7 +45,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the ledger and re-render. CI checks the agreement.
 
-**43 prefixes in scope**, of which 4 have a template on disk. 2 demoted to umbrella rows.
+**43 prefixes in scope**, of which 5 have a template on disk. 2 demoted to umbrella rows.
 
 ## By family
 
@@ -53,7 +53,7 @@ row has no template on disk.
 
 | prefix | status | ordinal | breadth | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `hs` | queued | — | 144 | 7 | — |
+| `hs` | shipped | 06.02 | 144 | 7 | — |
 | `hm` | shipped | 04.01 | 383 | 2 | — |
 
 ### bootstrap (batches 0–2)
@@ -143,11 +143,11 @@ row has no template on disk.
 
 A workflow is complete when every prefix in it is on disk.
 
-### hazard-chain — 4/5
+### hazard-chain — 5/5
 
 Members: `ac`, `hm`, `hp`, `hs`, `hz`
 
-Outstanding: `hs`.
+**Complete.**
 
 ### propensity-matching — 1/10
 
