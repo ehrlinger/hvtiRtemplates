@@ -303,11 +303,17 @@ pred <- data.frame(id = nd$.id, horizon = nd$.horizon,
 # Survival is a probability. A value outside [0, 1] means the delta-method
 # interval was built on the wrong scale, not that a patient is 103% alive.
 stopifnot(all(pred$fit >= 0 & pred$fit <= 1, na.rm = TRUE))
-knitr::kable(
-  do.call(rbind, lapply(split(pred, pred$horizon), function(g)
-    data.frame(horizon = g$horizon[[1]], n = nrow(g),
-               median = stats::median(g$fit, na.rm = TRUE),
-               min = min(g$fit, na.rm = TRUE), max = max(g$fit, na.rm = TRUE)))),
-  row.names = FALSE, digits = 4,
-  caption = "Predicted survival by horizon, across the cohort")
+# Split out rather than nested inside kable(): a table built inside its own
+# printing call is hard to inspect when a number looks wrong, and the nesting
+# is what tripped the indentation and brace linters this repo keeps on for
+# templates on purpose.
+by_horizon <- split(pred, pred$horizon)
+summary_tbl <- do.call(rbind, lapply(by_horizon, function(g) {
+  data.frame(horizon = g$horizon[[1L]], n = nrow(g),
+             median = stats::median(g$fit, na.rm = TRUE),
+             min = min(g$fit, na.rm = TRUE),
+             max = max(g$fit, na.rm = TRUE))
+}))
+knitr::kable(summary_tbl, row.names = FALSE, digits = 4,
+             caption = "Predicted survival by horizon, across the cohort")
 ```
