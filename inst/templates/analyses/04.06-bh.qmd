@@ -707,3 +707,132 @@ knitr::kable(summ[summ$parameter %in% bag$base_params,
              row.names = FALSE, digits = 4,
              caption = "Base model parameters, present in every replicate by construction")
 ```
+
+## Clusters: the two views a name cannot give
+
+Concept grouping above is by NAME, and a naming convention only knows what its
+affix rules can reach. Two other groupings matter and neither is derivable from
+a variable's name. The SAS job this replaces ran `%cluster` for both, once per
+named cluster per phase.
+
+**Declared clusters** group by CLINICAL judgement: `Renal` is creatinine, GFR
+and dialysis, which share no stem and never will. **Collinear pairs** group by
+the DATA: variables that move together whatever they are called. A name tells
+you two variables are related, a declaration tells you a clinician thinks they
+are one thing, and a correlation tells you the pool cannot tell them apart.
+
+```{r}
+#| label: cluster-matrix
+# boot_clusters() wants a replicate x term matrix, and the pooled object does
+# not carry one -- boot_pool_chunks() returns replicates and summary only. It
+# is rebuilt here from the replicate table, whose replicate/parameter/estimate
+# columns that function validates before it will pool anything, so this is the
+# one shape guaranteed to be present on both the single-run and chunked paths.
+#
+# One matrix per phase, with bare variable names, because a cluster is a
+# statement about variables and the SAS job ran each against every phase.
+phase_matrix <- function(ph, members) {
+  r    <- rep_cov[rep_cov$phase == ph, , drop = FALSE]
+  vars <- sort(unique(c(r$variable, members)))
+  m    <- matrix(NA_real_, nrow = bag$n_boot, ncol = length(vars),
+                 dimnames = list(NULL, vars))
+  m[cbind(r$replicate, match(r$variable, vars))] <- r$estimate
+  m
+}
+```
+
+```{r}
+#| label: clusters
+# EDIT: your clusters, one per concept worth reporting as a unit. Which
+# concepts those are is a statement about YOUR candidate pool, so there is no
+# default and an empty list is a legitimate answer.
+#
+# The SAS job this template came from named eight -- Age, Size, BMI, race, GFR,
+# iv_opyrs, Renal, blrbn_pr -- and ran each against both the early and constant
+# phases. Names are the BARE variable names, without the phase prefix.
+CLUSTERS <- list()
+
+if (!length(CLUSTERS)) {
+  knitr::kable(data.frame(result = "no clusters declared: see the EDIT: above"))
+} else {
+  members <- unique(unlist(CLUSTERS, use.names = FALSE))
+
+  # Declared members that no replicate ever selected are carried into the
+  # matrix as all-NA columns rather than dropped. boot_clusters() refuses a
+  # cluster naming a term it cannot see, and dropping them silently would
+  # report the union over whichever members happened to be selected -- a
+  # smaller group than the one declared, under the declared group's name.
+  # Carried, they contribute zero and are named below, so a typo shows up as a
+  # member that was never selected instead of disappearing.
+  cl <- do.call(rbind, lapply(sort(unique(rep_cov$phase)), function(ph) {
+    m   <- phase_matrix(ph, members)
+    out <- boot_clusters(m, CLUSTERS)
+    out$phase <- ph
+    out[, c("phase", "cluster", "n_any", "pct_any", "members")]
+  }))
+  knitr::kable(cl, row.names = FALSE, digits = 1,
+               caption = paste0("Union selection over declared clusters. pct_any is the ",
+                                "percentage of replicates retaining ANY member, which is ",
+                                "the number a per-variable table cannot show."))
+
+  never <- setdiff(members, unique(rep_cov$variable))
+  if (length(never)) {
+    knitr::kable(data.frame(never_selected = never), row.names = FALSE,
+                 caption = paste0("Declared cluster members no replicate ever retained. ",
+                                  "Contributing zero above. Check these are spelled as ",
+                                  "the pool spells them."))
+  }
+}
+```
+
+```{r}
+#| label: collinear
+# EDIT: the correlation above which two candidates are reported as
+# indistinguishable to the screen. 0.99 finds near-duplicates -- a variable and
+# its rescaling, a dummy and its complement. Lower it to see the pool's
+# structure rather than only its accidents.
+COLLINEAR_R <- 0.99
+
+# Read to correlate the pool, NOT to re-run anything. The screen already
+# happened; this describes the data it ran against.
+d <- read_built()
+
+# A build that moved since the screen ran would have these correlations
+# describing one dataset and every frequency above describing another, with
+# nothing in the report to say so. n_rows is the cheapest check that catches
+# it, and it is a warning rather than a stop because the frequencies above
+# remain valid -- it is only this section that goes stale.
+if (!is.null(bag$n_rows) && !identical(as.integer(nrow(d)), as.integer(bag$n_rows))) {
+  warning("The built dataset now has ", nrow(d), " rows; this screen ran against ",
+          bag$n_rows, ". The correlations below describe TODAY'S data, not the ",
+          "data the frequencies above were computed on.", call. = FALSE)
+}
+
+pool  <- sort(unique(rep_cov$variable))
+pairs <- pool_collinear_pairs(d, pool = pool, threshold = COLLINEAR_R)
+
+if (!nrow(pairs)) {
+  knitr::kable(data.frame(result = paste0("no pair of screened candidates correlates at |r| >= ",
+                                          COLLINEAR_R)))
+} else {
+  knitr::kable(pairs, row.names = FALSE, digits = 4,
+               caption = paste0("Screened candidates correlating at |r| >= ", COLLINEAR_R,
+                                ". complement marks a pair summing to 1 -- a dummy and its ",
+                                "negation, which is a coding artefact rather than a finding."))
+}
+```
+
+::: {.callout-note}
+## What this section is not
+
+⚠️ **A collinear pair is not a licence to prune.** It says the two are
+indistinguishable *in this cohort at this threshold*, which is a statement about
+the pool, not about the concepts. The no-pruning argument above stands: the
+same measurement that found 57 prunable forms found 16 of them correlating
+below 0.9.
+
+`pool_collinear_pairs()` sees only NUMERIC, non-constant columns. Factor-coded
+binaries are invisible to it for the same reason they were invisible to the
+screen -- check the coercion table above before reading an empty result as an
+absence of collinearity.
+:::
