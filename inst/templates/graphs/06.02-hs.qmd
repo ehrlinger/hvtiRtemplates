@@ -285,6 +285,16 @@ patient and a `time` column names the horizon.
 # One row per patient per horizon. Built explicitly rather than by looping
 # `predict()` per horizon, so every prediction comes from ONE call and cannot
 # drift between horizons.
+# `time`, `.id` and `.horizon` are constructed below. A covariate with one of
+# those names would be silently overwritten by the construction rather than
+# erroring, so the collision is checked rather than assumed away.
+.clash <- intersect(COVARIATES, c("time", ".id", ".horizon"))
+if (length(.clash)) {
+  stop("Covariate(s) ", paste(.clash, collapse = ", "), " collide with the ",
+       "column names this chunk builds. Rename the column in the built ",
+       "dataset, or this job will predict from overwritten values.",
+       call. = FALSE)
+}
 nd <- do.call(rbind, lapply(HORIZONS, function(h) {
   x <- d[, COVARIATES, drop = FALSE]
   x$time <- h
@@ -300,9 +310,22 @@ pred <- data.frame(id = nd$.id, horizon = nd$.horizon,
                    fit = p$fit, se.fit = p$se.fit,
                    lower = p$lower, upper = p$upper)
 
+# Two checks, and the order matters. A prediction that came back NA is a
+# FAILED prediction, not an out-of-range one -- and `all(..., na.rm = TRUE)`
+# would strip them and then return TRUE for an empty vector, so a run where
+# EVERY prediction failed would pass a range check silently and render a table
+# of NA. Catch the missing case first, loudly, then range-check what remains
+# without na.rm so a partial failure cannot hide either.
+.bad <- !is.finite(pred$fit)
+if (any(.bad)) {
+  stop(sum(.bad), " of ", nrow(pred), " predictions are NA or non-finite. ",
+       "predict() returned no usable value for those rows -- check that the ",
+       "cohort's covariates match the ones the model was fitted on, and that ",
+       "TIME and HORIZONS are in the units the hz job used.", call. = FALSE)
+}
 # Survival is a probability. A value outside [0, 1] means the delta-method
 # interval was built on the wrong scale, not that a patient is 103% alive.
-stopifnot(all(pred$fit >= 0 & pred$fit <= 1, na.rm = TRUE))
+stopifnot(all(pred$fit >= 0 & pred$fit <= 1))
 # Split out rather than nested inside kable(): a table built inside its own
 # printing call is hard to inspect when a number looks wrong, and the nesting
 # is what tripped the indentation and brace linters this repo keeps on for
