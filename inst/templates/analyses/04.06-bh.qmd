@@ -459,3 +459,96 @@ never saw resampled data — and every frequency below would be an artefact.
 `replicates_selecting_none` is the companion check: replicates that ran but
 retained nothing. A few are ordinary. All of them means the screen is broken
 rather than strict, and the two failures look identical in a summary table.
+
+## What a selection frequency is, and what it is not
+
+A selection frequency is an estimate, not a count of something fixed, and it
+carries Monte-Carlo error of roughly `sqrt(p(1-p)/n_boot)`. At `p = 0.5` over
+500 replicates that is about **2.2 percentage points**, so a variable sitting
+within a few points of the retention threshold can fall on either side of it on
+resampling noise alone. The table below reports that error per variable rather
+than leaving it to be assumed away.
+
+Two consequences worth stating wherever these numbers are used:
+
+- **Agreement on the retention decision matters more than agreement on the
+  frequency.** Which side of the threshold a variable falls on is the decision
+  this job exists to support.
+- **A near-threshold variable is not a weak risk factor.** It is a variable
+  whose selection is unstable, which is a different claim.
+
+<!-- EDIT: if your study's entry/stay criteria disagree with anything it has
+     published, say so here rather than leaving it to be rediscovered. On the
+     study this template came from the `.sas` used sle = 0.07 while the paper
+     stated a retention criterion of .05, and the run follows the `.sas`
+     because that is the artefact that survives. A disagreement like that
+     belongs in the report, not in someone's memory. Delete this note if your
+     study has none. -->
+
+```{r}
+#| label: frequencies
+# EDIT: the retention threshold this study reports against, and the frequency
+# below which a variable is omitted from the concept table and the figure.
+#
+# Read RETAIN_PCT off your own `%hazboot` call and the reporting convention it
+# was run under. The two studies this template was extracted from disagree on
+# every knob of the screen -- 500 replicates at sle = 0.07 / sls = 0.05 against
+# 1000 at 0.12 / 0.1 -- so there is no default here to fall back on, and the
+# macro's own documented defaults are not what either production job ran.
+#
+# The criteria themselves are NOT set here. They are properties of the run that
+# already happened, read off `bag` into the provenance table above; declaring
+# them again in the report would let it assert a screen that was never run.
+RETAIN_PCT    <- 50
+DISPLAY_FLOOR <- 10
+
+summ <- bag$boot$summary
+sel  <- summ[!summ$parameter %in% bag$base_params, , drop = FALSE]
+
+# The base parameters are excluded above and reported separately below. They
+# appear at 100% by construction -- they are the model, not something the
+# screen chose -- and a table that mixes them in invites reading "100%" as
+# reliability.
+sel$phase    <- sub("[.].*$", "", sel$parameter)
+sel$variable <- sub("^[^.]*[.]", "", sel$parameter)
+
+# Monte-Carlo standard error of the frequency itself.
+p         <- sel$pct / 100
+sel$se_pp <- 100 * sqrt(p * (1 - p) / bag$n_boot)
+sel$retained <- sel$pct >= RETAIN_PCT
+
+# Within two standard errors of the threshold: the DECISION is unstable, not
+# the variable.
+sel$near_threshold <- abs(sel$pct - RETAIN_PCT) < 2 * sel$se_pp
+
+sel <- sel[order(sel$phase, -sel$pct), ]
+
+freq_cols <- c("phase", "variable", "n", "pct", "se_pp", "retained", "near_threshold")
+knitr::kable(sel[, freq_cols], row.names = FALSE, digits = 2,
+             caption = paste0("Selection frequency over ", bag$n_boot,
+                              " replicates. se_pp is the Monte-Carlo standard error in ",
+                              "percentage points; it degenerates to 0 at 0% and 100%, ",
+                              "where it understates the uncertainty rather than ",
+                              "reporting none."))
+```
+
+```{r}
+#| label: retained
+# Near-threshold is counted over ALL variables, not just the retained ones. A
+# variable sitting just BELOW the line is exactly as decision-unstable as one
+# just above it, and counting only the retained hides it: on the study this
+# template came from, two candidates at 48.8% and 46.4% were both within two
+# standard errors of 50 and appeared nowhere in this summary.
+by_phase <- lapply(split(sel, sel$phase), function(x) {
+  data.frame(phase      = x$phase[1],
+             n_retained = sum(x$retained),
+             near_above = sum(x$retained & x$near_threshold),
+             near_below = sum(!x$retained & x$near_threshold),
+             stringsAsFactors = FALSE)
+})
+knitr::kable(do.call(rbind, by_phase), row.names = FALSE,
+             caption = paste0("Variables retained at >= ", RETAIN_PCT,
+                              "%. near_above / near_below count variables within two ",
+                              "standard errors of the threshold on each side: their ",
+                              "retention decision is unstable, not their effect."))
+```
