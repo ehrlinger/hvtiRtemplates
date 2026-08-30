@@ -598,5 +598,44 @@ CLUSTERS <- list(
   const.Age  = c("const.age", "const.ln_age")
 )
 
-boot_clusters(coefs, CLUSTERS)
+clusters <- boot_clusters(coefs, CLUSTERS)
+clusters
+```
+
+## Figure
+
+```{r}
+#| label: fig-frequencies
+#| fig-height: 7
+#| fig-cap: "Selection frequency by phase, with Monte-Carlo error and the retention threshold."
+# The error bar is the point of the figure, not decoration. A bare dot plot
+# invites the reader to rank variables by a difference of two points, which is
+# inside the noise at every frequency near the middle of the range.
+ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
+  geom_hline(yintercept = RETAIN_PCT, linetype = "dashed") +
+  geom_errorbar(aes(ymin = pct - mc_error, ymax = pct + mc_error), width = 0) +
+  geom_point() +
+  coord_flip() +
+  facet_wrap(~phase, scales = "free_y") +
+  labs(x = NULL, y = "Replicates selecting the variable (%)") +
+  theme_minimal()
+```
+
+## Save
+
+```{r}
+#| label: save
+# Written through set_path(), so the screen is filed against the SET whose
+# candidates it screened rather than against the endpoint alone.
+#
+# There is deliberately NO handoff file here -- no selection_bh.csv, no retained
+# set written for `hm` to read. `bh` and `hm` are parallel analyses and the
+# study report that wrote such a file also claimed `hm` fits what `bh` retained.
+# Nothing read the file, and the claim was not true. A file whose existence
+# implies a dependency that does not exist is worse than no file.
+saveRDS(list(freq = freq, retained = retained, concept = concept,
+             crowding = crowding, clusters = clusters,
+             provenance = provenance, retain_pct = RETAIN_PCT,
+             expect_chunks = EXPECT_CHUNKS, expect_boot = EXPECT_BOOT),
+        set_path("estimates", "bh.rds"))
 ```
