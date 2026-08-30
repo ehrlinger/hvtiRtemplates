@@ -258,3 +258,118 @@ if (!is.null(.shortfall)) {
   cat(":::\n\n")
 }
 ```
+
+## Provenance
+
+```{r}
+#| label: contract
+# The runner is NOT templated -- it is a study file -- so the fields this report
+# reads are a contract between two files that no shared function enforces.
+# Stated here, and checked, because the alternative is a report that indexes a
+# field the runner stopped writing and renders `NULL` into a provenance table as
+# though it were an answer.
+#
+# A pooled run has already had most of these checked by boot_pool_chunks(),
+# which refuses chunks that disagree. A SINGLE unchunked run has not: nothing
+# ran between the runner and here. This is the only check that covers both.
+.required <- c("n_boot", "seed", "slentry", "slstay", "base_params", "usable",
+               "requested", "n_rows", "elapsed_mins", "manifest", "boot")
+.absent <- .required[!.required %in% names(bag)]
+if (length(.absent)) {
+  stop("The bootstrap output is missing ", length(.absent), " field(s) this ",
+       "report reads: ", paste(.absent, collapse = ", "), ".\nEither the runner ",
+       "that wrote it predates them, or it is not the runner this template ",
+       "expects. Reporting over it would print blanks where the screen's ",
+       "criteria belong.", call. = FALSE)
+}
+```
+
+```{r}
+#| label: provenance
+# CPU cost, NOT wall clock. boot_pool_chunks() SUMS elapsed across chunks, so on
+# a chunked run this is total compute; chunks run in parallel finish in a
+# fraction of it. Reported in hours because the minutes figure reads as a
+# wall-clock number and is off by the chunk count.
+cpu_hours <- bag$elapsed_mins / 60
+
+# The digest travels WITH its algorithm. An md5 and a sha256 of the same file
+# are different strings, and of different files may not be, so a bare digest
+# recorded without its algorithm is not evidence of anything.
+checksum <- NA_character_
+for (algo in c("sha256", "md5")) {
+  if (!is.null(bag$manifest[[algo]])) {
+    checksum <- paste0(algo, ":", bag$manifest[[algo]])
+    break
+  }
+}
+
+# A version string alone cannot say which codebase ran: one real package version
+# existed as two, one with a selection criterion and one without, and the
+# selection criterion is precisely what decides what a screen selects.
+engine <- if (!is.null(bag$th_sha)) {
+  paste0("sha:", bag$th_sha)
+} else if (!is.null(bag$th_version)) {
+  paste0("version:", bag$th_version)
+} else {
+  NA_character_
+}
+
+# Summarised, not listed: at 25 chunks the joined seed string is a single
+# 270-character cell that wrecks the table. Every seed is in the table below.
+n_chunks <- if (is.null(bag$n_chunks)) 1L else as.integer(bag$n_chunks)
+
+provenance <- data.frame(
+  item = c("Replicates pooled", "Chunks pooled", "Entry level (slentry)",
+           "Stay level (slstay)", "Candidates offered", "Candidates usable",
+           "Rows screened", "Replicates that fitted", "Replicates that failed",
+           "CPU hours (summed)", "Fitting engine", "Dataset checksum",
+           "Seeds"),
+  value = c(format(bag$n_boot), format(n_chunks), format(bag$slentry),
+            format(bag$slstay), format(bag$requested), format(bag$usable),
+            format(bag$n_rows), format(bag$boot$n_success),
+            format(bag$boot$n_failed), sprintf("%.1f", cpu_hours),
+            engine, checksum,
+            paste0(n_chunks, " distinct (listed below)")),
+  stringsAsFactors = FALSE
+)
+provenance
+```
+
+```{r}
+#| label: seeds
+# Every seed, so that a rerun is reproducible and a duplicate is visible. Two
+# chunks sharing a seed contain literally the SAME replicates: pooling them
+# counts each twice and reports a Monte-Carlo error smaller than the run
+# actually has. boot_pool_chunks() refuses that outright, so a pooled run cannot
+# reach here with a duplicate -- this table is what lets you check a single run,
+# and what lets a reader reproduce either.
+data.frame(chunk = seq_along(bag$seeds),
+           seed  = format(bag$seeds, scientific = FALSE),
+           stringsAsFactors = FALSE)
+```
+
+## Candidates that were never screened
+
+<!-- Counts first, detail second, and that ordering is not cosmetic. The detail
+     table runs to dozens of rows on a real pool, and a reader who has to scroll
+     it to discover that a whole CLASS of variable was never screened will not
+     discover it. -->
+
+```{r}
+#| label: dropped-summary
+# A candidate the screen never saw cannot appear at any frequency, so its
+# absence from the table below is indistinguishable from never having been
+# selected. That is the reason this section exists at all.
+if (is.null(bag$dropped) || !nrow(bag$dropped)) {
+  cat("Every candidate offered was screened.\n")
+} else {
+  as.data.frame(table(phase = bag$dropped$phase, reason = bag$dropped$reason))
+}
+```
+
+```{r}
+#| label: dropped-detail
+if (!is.null(bag$dropped) && nrow(bag$dropped)) {
+  bag$dropped[order(bag$dropped$phase, bag$dropped$reason), ]
+}
+```
