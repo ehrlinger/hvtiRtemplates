@@ -15,6 +15,18 @@ plotting jobs.
 **Tech Stack:** Quarto, R, `TemporalHazard`, `hvtiRutilities`,
 `hvtiRlifetables`, testthat edition 3.
 
+> ⚠️ **EXECUTED 2026-08-29. Defects in THIS PLAN are marked in place below, two
+> of them render-blockers.** The plan produced a working template
+> ([#51](https://github.com/ehrlinger/hvtiRtemplates/pull/51)), but its own code
+> blocks carried two wrong assumptions — about `hm.rds`'s shape and about the
+> fitted object's — and the template could not have run as written.
+>
+> **Every defect survived four per-task reviews and was caught only by running
+> the code**: the whole-branch review against real objects, and one Copilot
+> comment that led into a sibling template. That is the cost of the "nothing here
+> renders the template" gap this plan names in its own preamble — measured, not
+> predicted.
+
 **Design spec:** `dev/specs/2026-08-29-hs-template-design.md`. **Read it first.**
 This plan implements it and decides nothing it left open.
 
@@ -202,6 +214,7 @@ fit    <- hm_art$reported
 # on a missing column or -- worse -- silently use a stale set.
 COVARIATES <- hm_art$covariates
 stopifnot(is.character(COVARIATES), length(COVARIATES) > 0L)
+# ^ ⚠️ WRONG. See the correction below this code block.
 missing_cols <- setdiff(COVARIATES, names(d))
 if (length(missing_cols)) {
   stop("The model was fitted on covariate(s) absent from this cohort: ",
@@ -214,6 +227,33 @@ if (length(missing_cols)) {
 ⚠️ The fenced block above contains a nested ```` ```{r} ```` fence. When you
 write the file, the chunk fences are ordinary Quarto chunks — the outer fence in
 this plan is only for display.
+
+⚠️ **CORRECTED 2026-08-29 — RENDER-BLOCKER. `hm.rds$covariates` is a LIST.**
+`04.01-hm.qmd:287` writes `COVARIATES <- list(early = <chr>, late = <chr>)` — one
+character vector per phase — and saves it in that shape. `is.character(list(...))`
+is `FALSE`, so the `stopifnot` above killed **every** real `hs` job, with a
+message naming a type rather than a cause.
+
+`unlist()` alone is also wrong. `04.01-hm.qmd` uses `unique(unlist(COVARIATES))`
+(its lines 319, 330, 347, 416) because a variable offered to *both* phases appears
+twice, and a duplicated column produces a design matrix wider than the fitted
+coefficients. The shipped line is:
+
+```r
+COVARIATES <- unique(unlist(hm_art$covariates, use.names = FALSE))
+```
+
+The design spec's interface table named `covariates` as a field to read but never
+stated its **shape**, which is how this passed four reviews. **An interface block
+that names a field without its type is not an interface.**
+
+⚠️ **ALSO CORRECTED — the prediction frame is the wrong one.** `04.01-hm.qmd:330`
+fits on `dd <- covariates_to_numeric(d, unlist(COVARIATES))`, which converts
+numeric-looking *factors* to numeric; that file devotes a prose section to why it
+is load-bearing. This plan predicted from raw `d`, which dummy-codes a factor the
+model fitted linearly — a different design matrix, and nothing in the output would
+say so. `hm.rds` does not carry the converted frame, so `hs` must redo the
+conversion itself.
 
 - [ ] **Step 5: Add the `.lintr` key**
 
@@ -289,6 +329,19 @@ Expected: `FAIL 0 | WARN 0 | SKIP 0 | PASS 89`. The template tests are
 data-driven over `template_list()`, so the new file is picked up with no test
 changes. **A drop in the pass count means a test started skipping — investigate,
 do not accept it.**
+
+⚠️ **CORRECTED 2026-08-29: the figure is `PASS 95`, here and at every other
+`PASS 89` in this plan.** The sentence above explains its own error — the tests
+*are* data-driven over `template_list()`, so four pre-existing loops iterate once
+per row and **any** new template adds about six assertions. Baseline 89 confirmed
+by removing the file. `FAIL 0` and `SKIP 0` remain the substantive criteria.
+
+⚠️ **ALSO CORRECTED: `template_list()` reads the INSTALLED package**, through
+`system.file()` at `R/templates.R:17` — not the source tree. Step 6's command
+returns zero rows until `devtools::install(quiet = TRUE, upgrade = FALSE)` has
+run. (`upgrade = "never"` is not valid in this devtools; it wants
+`TRUE`/`FALSE`/`NA`.) Nothing in this plan said so, and every step that inspects
+`template_list()` needs it.
 
 ```bash
 Rscript -e 'lintr::lint_package()'
@@ -376,6 +429,28 @@ if (any(HORIZONS > .max_obs)) {
 ```
 ````
 
+⚠️ **CORRECTED 2026-08-29 — RENDER-BLOCKER. `fit$data` is a CONTAINER, not the
+model frame.** Measured on a real multiphase fit, `names(fit$data)` is
+`time, time_lower, time_upper, status, x, weights, frame`; the study's own columns
+live one level down, in **`fit$data$frame`**. So:
+
+- `TIME %in% names(fit$data)` was `FALSE` for **every** value of `TIME`, making
+  the guard unsatisfiable;
+- its message actively misled — telling an author their `TIME` disagreed with the
+  `hm` job when it was correct;
+- and behind it, `max(fit$data[[TIME]], na.rm = TRUE)` was `max(NULL)` → **`-Inf`**,
+  so deleting the guard would have made the extrapolation check fire on every
+  horizon with "beyond the last observed time (-Inf)".
+
+Both references are now `fit$data$frame`. Note the irony: this chunk's own comment
+correctly enumerated the object's top-level slots — it just read `data` as the
+model frame rather than the container holding it.
+
+⚠️ **ALSO CORRECTED: an all-`NA` time column reaches `-Inf` by a second route.**
+`max(x, na.rm = TRUE)` on an all-missing column returns `-Inf` rather than
+erroring. The shipped template checks `any(is.finite(...))` before the max, so the
+empty case is named where it can still be explained.
+
 - [ ] **Step 2: Add the prediction chunk**
 
 ```markdown
@@ -397,6 +472,7 @@ nd <- do.call(rbind, lapply(HORIZONS, function(h) {
 
 p <- predict(fit, newdata = nd[, c(COVARIATES, "time")], type = "survival",
              se.fit = TRUE, level = 0.95)
+# ^ ⚠️ WRONG on BOTH arguments. See the correction below this code block.
 
 pred <- data.frame(id = nd$.id, horizon = nd$.horizon,
                    fit = p$fit, se.fit = p$se.fit,
@@ -405,6 +481,7 @@ pred <- data.frame(id = nd$.id, horizon = nd$.horizon,
 # Survival is a probability. A value outside [0, 1] means the delta-method
 # interval was built on the wrong scale, not that a patient is 103% alive.
 stopifnot(all(pred$fit >= 0 & pred$fit <= 1, na.rm = TRUE))
+# ^ ⚠️ PASSES when every prediction is NA. See the correction below.
 knitr::kable(
   do.call(rbind, lapply(split(pred, pred$horizon), function(g)
     data.frame(horizon = g$horizon[[1]], n = nrow(g),
@@ -414,6 +491,39 @@ knitr::kable(
   caption = "Predicted survival by horizon, across the cohort")
 ```
 ````
+
+⚠️ **CORRECTED 2026-08-29 — the confidence convention was wrong in two ways.**
+`06.01-hp.qmd:278-308` documents both, recovered from the SAS `HAZPRED` source
+during parity work, and this plan violated both:
+
+- **`conf.type` must be `"logit"`.** `predict.hazard()` defaults to `"log-log"`,
+  the `survfit` standard. Quoting `hp`: *"Omitting it does not error; it silently
+  shifts every confidence limit."*
+- **The level is `0.68268948`, not `0.95`** — `pnorm(1) - pnorm(-1)`, ±1 standard
+  error. The published papers state it. `hp` measures the cost: a 95% band is
+  **1.97× the width** of the SAS-default band.
+
+This matters here specifically because `hs` writes `estimates/hs.rds` **for
+plotting jobs to read**. A figure drawing `hs` predictions beside `hp` bands would
+have mixed a 95% log-log interval with a 68% logit one, with nothing saying so.
+The shipped call uses `level = CLEVEL, conf.type = "logit"` with `hp`'s constant
+verbatim, and `clevel` travels in the saved artifact beside `vintage`.
+
+**Reading the sibling template would have caught this. Reading the diff did not.**
+
+⚠️ **CORRECTED — the range guard passed on total failure.**
+`all(x, na.rm = TRUE)` strips every element when `x` is all `NA`, and
+`all(logical(0))` is `TRUE`. So a run where **every** prediction failed passed the
+range check silently and rendered a table of `NA`. The guard inverted its own
+stated purpose. The shipped code checks `!is.finite()` first and loudly, then
+range-checks without `na.rm`.
+
+⚠️ **CORRECTED — this step's `kable()` call broke CI.** The verbatim code nested a
+multi-line `lapply()` inside `knitr::kable()`, tripping `indentation_linter` ×3 and
+`brace_linter` ×1. `lint.yaml` fails on any lint, so **the plan's own code broke
+the build**. The fix is to split out `by_horizon` / `summary_tbl` intermediates —
+**not** to add `.lintr` exclusions: `.lintr` keeps those linters on for templates
+deliberately, because a file people copy should be exemplary in its layout.
 
 - [ ] **Step 3: Verify it parses and the suite still passes**
 
@@ -500,9 +610,30 @@ expected <- us_matched(
   age = d[[AGE_COL]], male = d[[MALE_COL]], other = d[[OTHER_COL]],
   times = HORIZONS, id = seq_len(nrow(d)),
   vintage = VINTAGE, table = "sexrace", scale = "years", individual = TRUE
+  # ^ ⚠️ both hardcoded and unmarked. See the correction below.
 )
 ```
 ````
+
+⚠️ **CORRECTED 2026-08-29: `table` and `scale` were hardcoded with no marker.**
+
+- **`scale = "years"` silently contradicts this plan's own horizons marker**,
+  which tells the author horizons are in `TIME`'s units — "if that job worked in
+  years, 30 days is 30/365.25, not 30". A study fitted in months would have got
+  expected survival at 6/12/24 **years** against observed values at 6/12/24
+  months: a plausible ratio, and no error anywhere.
+- **`table` was required to carry a marker by the design spec** (§5.2 lists it
+  explicitly), and did not. A study without usable race data must pass `"sex"`,
+  and nothing said so — the unedited job renders green over `"sexrace"`, which is
+  the shape of issue #27.
+
+Both are now named constants (`TABLE`, `SCALE`) documented inside the existing
+expected-survival `EDIT:` block, so the marker count stays at four.
+
+⚠️ **ALSO CORRECTED: the `VINTAGE` guard only caught `NULL`.** An invalid string
+fell through to `us_matched()`, where the error names neither the argument nor the
+alternatives — and the valid values are not guessable (`table2023`, not `2023`).
+The shipped guard checks membership against `us_lifetable_vintages()$vintage` too.
 
 - [ ] **Step 2: Add the observed-versus-expected comparison**
 
@@ -582,10 +713,19 @@ Confirm the markers are present and countable:
 grep -c "EDIT:" inst/templates/graphs/06.02-hs.qmd
 ```
 
-Expected: `6` — the opening prose, cohort, horizons (which marks TIME and
-HORIZONS together), expected-survival, the save, and the one in the copied
-skeleton's set-declaration comment. If you get 5, the TIME marker is missing. **A count of 0 means the
-template ships as if it were finished, which is issue #27 all over again.**
+Expected: **`4`** — the opening prose (Task 1 Step 3), the cohort (Task 1
+Step 4), horizons and TIME (Task 2 Step 1), and the vintage (Task 3 Step 1).
+
+⚠️ **CORRECTED 2026-08-29, before execution.** An earlier draft of this step
+predicted `6` and attributed markers to "the save" and "the copied skeleton's
+set-declaration comment". Neither carries one. The skeleton's only `EDIT:` is
+in the opening prose block at `04.01-hm.qmd:22`, which Task 1 Step 2 **replaces
+wholesale**, so the copy contributes zero. Chasing the wrong number would send
+an implementer hunting markers that do not exist, or adding spurious ones to
+reach it.
+
+**A count of 0 means the template ships as if it were finished, which is
+issue #27 all over again.**
 
 - [ ] **Step 5: Commit**
 
@@ -721,6 +861,27 @@ opening the PR anyway.
 
 ---
 
+## Correction: the chunk-parse command does not run as written
+
+Every `Rscript -e '...'` chunk-parse block in this plan fails under **zsh** with
+`'\{' is an unrecognized escape`. Write the script to a temporary `.R` file and
+run `Rscript <file>` instead:
+
+```r
+src <- readLines("inst/templates/graphs/06.02-hs.qmd", warn = FALSE)
+starts <- grep("^```\\{r", src)
+ends <- grep("^```$", src)
+for (s in starts) {
+  e <- ends[ends > s][1]
+  code <- src[(s + 1):(e - 1)]
+  parse(text = paste(code[!grepl("^#\\|", code)], collapse = "\n"))
+}
+cat("parsed", length(starts), "chunks cleanly\n")
+```
+
+A verification command that cannot run is worse than none: it reports an error
+that looks like a defect in the thing being verified.
+
 ## Self-review notes
 
 **Spec coverage.** §3 placement → Task 1 Steps 1-2, Task 4 Step 2. §4 interface
@@ -738,3 +899,34 @@ chunk-parsing is the strongest available substitute and it is a syntax check,
 not a behaviour check — the `predict()` call, the `us_matched()` call and the
 `hm.rds` shape assumption are all unexercised until someone runs it against a
 real study. Task 4 Step 5 says so, and the PR must too.
+
+---
+
+## What execution found (2026-08-29)
+
+The plan produced a working template, and eight of its own statements were wrong.
+Grouped by what caused them:
+
+| # | defect | root cause |
+|---|---|---|
+| 1 | `hm.rds$covariates` read as a character vector; it is `list(early=, late=)` | an interface block that named a field without its **type** |
+| 2 | `fit$data[[TIME]]` read as the model frame; it is a container, columns are in `$frame` | assumed a slot's meaning from its name |
+| 3 | predicted from raw `d` where `hm` fitted on `covariates_to_numeric(d, ...)` | read what the sibling template *produced*, not what it *consumed* |
+| 4 | `level = 0.95` and default `conf.type`, where the house convention is `0.68268948` and `"logit"` | did not read the sibling template that documents both |
+| 5 | `all(..., na.rm = TRUE)` passing when every value is `NA` | a guard whose idiom defeats its own purpose |
+| 6 | `kable()` nesting a multi-line `lapply()` — tripped the layout linters and broke CI | wrote code without running the linter the repo enforces |
+| 7 | `table` / `scale` hardcoded and unmarked | the design spec required a marker; the plan dropped it |
+| 8 | `PASS 89`, and the unstated `template_list()` install requirement | quoted a number without re-measuring it |
+
+**Defects 1 through 4 are the same failure in four costumes: the plan asserted
+what another component's data looks like, without looking.** Each was invisible to
+`R CMD check`, to the test suite, to `lintr`, and to four per-task diff reviews.
+Two of them made the template unable to run at all.
+
+The one thing that worked as designed was this plan's own preamble, which said
+plainly that nothing here renders the template and that "the `predict()` call, the
+`us_matched()` call and the `hm.rds` shape assumption are all unexercised". All
+three were exactly where the defects were. **Naming a gap is not the same as
+closing it** — but it is what made the whole-branch review go and run the code.
+
+Implementation: [#51](https://github.com/ehrlinger/hvtiRtemplates/pull/51).

@@ -445,11 +445,11 @@
     {
       "prefix": "hs",
       "name": "Hazard setup",
-      "folder": "analyses",
+      "folder": "graphs",
       "family": "hazard-chain",
       "kind": "job",
-      "status": "queued",
-      "ordinal": null,
+      "status": "shipped",
+      "ordinal": "06.02",
       "batch": 1,
       "sas_breadth": 144,
       "r_exemplars": 7,
@@ -465,7 +465,7 @@
         "hazard-chain"
       ],
       "blocked_on": null,
-      "spec": null,
+      "spec": "dev/specs/2026-08-29-hs-template-design.md",
       "note": null
     },
     {

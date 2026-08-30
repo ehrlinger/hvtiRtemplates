@@ -1,3 +1,13 @@
+# hvtiRtemplates 1.0.12
+
+* Added `graphs/06.02-hs.qmd`, the patient-level prediction template. It reads
+  the model an `hm` job fitted, predicts survival per patient at the horizons a
+  study reports, and sets those against age/sex/race-matched population survival
+  from `hvtiRlifetables`. Its `vintage` marker has no default on purpose: the
+  SAS macro it replaces inherited a default that moved twice with no signal, and
+  a job that does not state its vintage cannot be reproduced. Design in
+  `dev/specs/2026-08-29-hs-template-design.md`.
+
 # hvtiRtemplates 1.0.11
 
 * Added the template conversion roadmap: a ledger of all 42 taxonomy prefixes

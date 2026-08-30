@@ -1,7 +1,8 @@
 # The `hs` template — patient-level predictions and expected survival
 
 **Date:** 2026-08-29
-**Status:** designed, not started
+**Status:** implemented 2026-08-29 — `inst/templates/graphs/06.02-hs.qmd`. Plan:
+`2026-08-29-hs-template-plan.md`.
 **Roadmap:** batch 1 of `2026-08-29-template-conversion-roadmap-design.md`.
 `hs` is one template, and it closes the authoring chain
 `ac → hz → hm → hs → hp`.
@@ -139,6 +140,14 @@ recurring variant.
 
 `EDIT:` markers: `ENDPOINT`, `TYPE`, `HORIZONS`, and the covariate profile(s)
 to predict at.
+
+⚠️ **CORRECTED 2026-08-29, during implementation.** The template uses
+`predict.hazard()`, not `hzr_phase_cumhaz()`. `hzr_phase_cumhaz()` takes
+scalar shape parameters — it evaluates one cumulative-hazard curve, not a
+per-patient design matrix — so it is not a patient-level predictor at all.
+`predict.hazard()` is the function that takes `newdata` and returns a
+survival estimate (with `se.fit`) per row, which is what "predictions for
+individual patients" requires.
 
 ### 5.2 Expected population survival
 
