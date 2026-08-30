@@ -1,0 +1,189 @@
+---
+title: "Bootstrap variable selection"
+# Carried in the file rather than inherited from _quarto.yml. A file meant to be
+# COPIED should not depend on settings from the directory it happens to sit in:
+# rendered as a standalone document the project's format block never applies,
+# which is how server-rendered reports end up with sibling _files/ trees instead
+# of being self-contained.
+#
+# NOTE: output-dir is a PROJECT setting and cannot be set here, so the .html
+# lands next to its source. With embed-resources that is a single standalone
+# file, which is the property that actually matters when a report is sent on.
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the SAS job this replaces, and paste its `%hazboot` call
+     verbatim. The call is the specification: it names the candidate pool, the
+     phases each candidate was offered to, the entry and stay levels, and the
+     replicate count. Prose describing it is a paraphrase that drifts; the call
+     does not. -->
+
+Replaces `analyses/<job>.sas`: paste its `%hazboot` call here — the candidate
+pool, which phases carried candidates, the entry and stay levels, and
+`resampl=`.
+
+This job **does not fit the final model**. It screens. The companion `hm` job
+fits the multivariable model.
+
+⚠️ `bh` and `hm` are **parallel analyses, not a pipeline.** `%hazboot` and
+`%model` were parallel in SAS and these jobs reproduce that. Do not describe
+this job's retained set as what `hm` fits, and do not write a handoff file for
+it — an earlier study report did both, and nothing read the file. A reader who
+believes the claim will assume the `hm` model was screened for reliability
+first. It was not.
+
+```{r}
+#| label: setup
+# This file runs either from the directory it was scaffolded into or from the
+# project root. Resolve which, so that no path in this document needs editing:
+# forgetting one of several ../ paths is the instantiation mistake that would
+# otherwise be easy to make and quiet when made.
+.root <- if (file.exists("_quarto.yml")) "." else ".."
+if (!file.exists(file.path(.root, "_quarto.yml"))) {
+  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
+       "resolved. Render this from the project root or from the job directory.",
+       call. = FALSE)
+}
+suppressPackageStartupMessages({
+  library(TemporalHazard)
+  library(hvtiRbootstrap)
+  library(hvtiRutilities)
+  library(ggplot2)
+})
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+# The markers in this file name work a study author still has to do, and
+# README.md says a job that still contains one has not been finished. This
+# chunk is what makes that TRUE rather than merely stated.
+#
+# Without it an unedited job renders green over a meaningless analysis. In THIS
+# file the danger is that EXPECT_CHUNKS and EXPECT_BOOT still hold the template's
+# numbers, so the completeness check compares the run against a denominator
+# nobody chose -- and passes, reporting frequencies over the wrong base.
+#
+# knitr::current_input() is NULL outside a render -- a study author stepping
+# through chunks in RStudio -- and there is no file to scan then, so this is a
+# no-op in that case. Same handling as the `set` guard below, for the same
+# reason.
+#
+# The token is BUILT, not written literally, and that is not stylistic. Quarto
+# knits through an intermediate and current_input() returns THAT file, so the
+# scan reads a copy of this chunk along with everything else: a literal
+# grep("<token>", .src) here matches its own source line, and the guard then
+# fires on every render, finished or not. Measured, not theorised -- a probe
+# found three markers in a file containing two. A guard that cries wolf on a
+# finished job is a guard that gets deleted, which returns us to issue #27.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    # Report the marker TEXT. Line numbers here are the intermediate's, not
+    # this .qmd's, so they need not match what the author sees in an editor.
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
+      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
+      "draft banner. Any other value, including 0, leaves this guard strict."
+    )
+    # Only the documented values enable draft mode. nzchar() alone would treat
+    # HVTI_TEMPLATE_DRAFT=0 as ON, silently downgrading this stop() to a
+    # warning for someone whose shell profile sets it to 0 meaning OFF -- a
+    # switch whose enablement does not mean what it says, which is the same
+    # defect this guard exists to catch. An unrecognised value falls through to
+    # strict on purpose: the author then sees the stop and re-reads the docs,
+    # which is the safe direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+      # The banner is not optional. A draft render that looks like a finished
+      # one is the same defect with an extra step: the warning scrolls past in
+      # a log, while the .html is the artifact that gets sent to someone.
+      warning(.msg, call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, call. = FALSE)
+    }
+  }
+}
+```
+
+<!-- The two values below are written by new_job() from the endpoint/type it
+     was called with, which are also the filename's first two fields. They
+     name the SET this job belongs to, and every artifact path in the
+     document is computed from them, so no output path below needs editing.
+
+     Do NOT hand-edit these declarations: the render-time guard below checks
+     them against this file's own name and stops if they disagree. To put
+     this job in a different set, call new_job() again with the new
+     endpoint/type rather than editing this copy in place.
+
+     A set is keyed on (endpoint, analysis type), not on the endpoint alone.
+     One endpoint is analysed by several methods -- parametric hazard, random
+     forest survival, competing risks -- and those chains share their upstream.
+     Two sets keyed on `dead_pa` alone would write their life tables to the
+     same file. -->
+
+```{r}
+#| label: set
+ENDPOINT <- "dead_pa"
+TYPE     <- "hz"
+
+# `new_job()` writes ENDPOINT/TYPE from the same values it put in this file's
+# name, but a hand-edited declaration can drift from it afterward. set_path()
+# below resolves from the declarations, not the filename, so a drifted
+# declaration would silently write into ANOTHER set's artifact directory --
+# exactly the collision the (endpoint, type) key exists to prevent, re-entered
+# through the body instead of the name.
+#
+# knitr::current_input() is NULL outside a render (a study author running
+# chunks interactively in RStudio), and there is no filename to check against
+# yet, so this is a no-op in that case rather than a spurious error.
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  # Quarto knits through an intermediate, so `knitr::current_input()` returns
+  # `<endpoint>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
+  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
+  # rather than hard-coding one, so this doesn't depend on a build-tool detail
+  # staying the same.
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (endpoint '", .name_endpoint, "', type '",
+         .name_type, "'), but declares ENDPOINT = \"", ENDPOINT, "\", TYPE = \"", TYPE,
+         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
+  }
+}
+
+# Resolve a path inside this set's artifact directory. `kind` is the artifact
+# folder -- "estimates" for serialized results, "graphs" for figures. The set
+# directory sits one layer under the kind and never two, which is the whole
+# layout rule.
+#
+# Created on first use rather than up front, so a job that writes nothing leaves
+# no empty directories behind.
+set_path <- function(kind, file) {
+  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+
+# The screen this job reports on was run by a companion script, which wrote its
+# chunks into this set's `estimates` directory. Reading them through set_path()
+# is what keeps a screen filed against the set whose candidates it screened.
+```
