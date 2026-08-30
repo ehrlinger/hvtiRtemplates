@@ -187,3 +187,74 @@ set_path <- function(kind, file) {
 # chunks into this set's `estimates` directory. Reading them through set_path()
 # is what keeps a screen filed against the set whose candidates it screened.
 ```
+
+## The screen
+
+```{r}
+#| label: expect
+# EDIT: what this run was LAUNCHED as, not what happens to be on disk.
+#
+# Nothing in a chunk knows how many siblings it was launched alongside, so these
+# two numbers are the only thing that can tell a partial pool from a complete
+# one. Without them a render at hour eight of a twelve-hour run produces a
+# report that is wrong in no visible way: every health check passes, every
+# frequency is honestly computed, and only the denominator is not the intended
+# one.
+#
+# For a single unchunked run, set EXPECT_CHUNKS to 1.
+EXPECT_CHUNKS <- 25L    # EDIT: how many chunks you launched
+EXPECT_BOOT   <- 500L   # EDIT: %hazboot(resampl=) -- total replicates wanted
+
+# EDIT: the file-name prefix your runner wrote its chunks under. It must match
+# the runner exactly: boot_chunk_files() quotes this literally and a prefix that
+# does not match finds nothing, while a prefix that matches TOO MUCH pools
+# chunks from another run -- and no downstream check can see that.
+BOOT_PREFIX <- "bh"
+```
+
+```{r}
+#| label: load
+# The screen is not run here. It is read.
+#
+# hzr_bootstrap() writes nothing until its final replicate and a full screen is
+# days of compute, so a run that dies near the end leaves nothing at all. The
+# companion runner exists to convert one all-or-nothing multi-day call into N
+# independently restartable ones. That file boundary is a DURABILITY boundary,
+# not tidiness, which is why this report reads chunks rather than producing
+# them.
+.boot_dir <- dirname(set_path("estimates", "."))
+.chunk_files <- boot_chunk_files(.boot_dir, prefix = BOOT_PREFIX)
+.single_file <- set_path("estimates", paste0(BOOT_PREFIX, ".rds"))
+
+if (length(.chunk_files)) {
+  # Pooling is checked, not assumed: boot_pool_chunks() refuses chunks that
+  # disagree on the dataset checksum, the entry/stay levels, the base
+  # parameters, the usable candidate counts, the engine version or the step
+  # cap, and refuses two chunks sharing a seed. Every one of those failures is
+  # silent on its own -- it shows up as a slightly different frequency, never
+  # as an error -- which is why the refusal belongs here rather than in a note.
+  bag <- boot_pool_chunks(lapply(.chunk_files, readRDS))
+} else if (file.exists(.single_file)) {
+  bag <- readRDS(.single_file)
+} else {
+  stop("No bootstrap output found. This screen is a long job -- days, not ",
+       "minutes -- and is run from a companion script rather than inside this ",
+       "render, because the run writes nothing until its final replicate.\n",
+       "Run your chunks first, then render this report.", call. = FALSE)
+}
+```
+
+```{r}
+#| label: completeness
+#| results: asis
+# A callout, not a table cell. A provisional report that cannot say so is the
+# failure being prevented, and it must survive someone receiving the .html
+# without knowing when it was made -- which a number buried in a provenance
+# table does not.
+.shortfall <- boot_shortfall(bag, EXPECT_CHUNKS, EXPECT_BOOT)
+if (!is.null(.shortfall)) {
+  cat("\n::: {.callout-warning title=\"Provisional -- this pool is incomplete\"}\n")
+  cat(.shortfall, "\n", sep = "")
+  cat(":::\n\n")
+}
+```
