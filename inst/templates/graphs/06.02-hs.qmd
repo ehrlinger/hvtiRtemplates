@@ -340,3 +340,101 @@ summary_tbl <- do.call(rbind, lapply(by_horizon, function(g) {
 knitr::kable(summary_tbl, row.names = FALSE, digits = 4,
              caption = "Predicted survival by horizon, across the cohort")
 ```
+
+## Expected population survival
+
+<!-- EDIT: the columns naming each patient's age, sex and race, and the life
+     table vintage.
+
+     `vintage` HAS NO DEFAULT HERE, ON PURPOSE. The SAS macro `%usmatchd` took
+     no vintage argument, so every `hs.uslife` job silently inherited the macro
+     default AS OF ITS RUN DATE -- and that default moved twice, table84 ->
+     table2008 -> table2023, with no signal at either move. The vintages are
+     structurally different fits, not perturbations, so a wrong one is wrong by
+     orders of magnitude. A parity check on one such job could not read the
+     vintage off it at all and had to RECOVER it, by fitting all three and
+     seeing which landed at machine precision. A job that does not state its
+     vintage cannot be reproduced.
+
+     `us_lifetable_vintages()` lists the valid values AND what each one's
+     non-white stratum actually means -- which is not what its code says.
+     Under `table2023`, stratum `"b"` is a risk-weighted average of Black,
+     Asian, American Indian and Hispanic death rates, NOT Black, despite the
+     code and despite the macro's own comment. Name strata by meaning in your
+     prose, never by the letter code. -->
+
+```{r}
+#| label: expected
+AGE_COL   <- "age"
+MALE_COL  <- "male"
+OTHER_COL <- "other"
+VINTAGE   <- NULL
+
+if (is.null(VINTAGE)) {
+  # us_lifetable_vintages() returns a DATA FRAME -- vintage, n_strata,
+  # nonwhite_code, nonwhite_meaning, added -- not a character vector. The
+  # `$vintage` is deliberate; pasting the frame prints column-wise nonsense.
+  valid_vintages <- us_lifetable_vintages()$vintage
+  stop("VINTAGE is unset. Choose one of: ", paste(valid_vintages, collapse = ", "),
+       " -- and record WHY in the text above. There is no safe default; see the ",
+       "comment on this chunk.", call. = FALSE)
+}
+
+# Read this before choosing, and print it in the report:
+knitr::kable(us_lifetable_vintages(), row.names = FALSE,
+             caption = "Life table vintages, and what each one's non-white stratum means")
+
+expected <- us_matched(
+  age = d[[AGE_COL]], male = d[[MALE_COL]], other = d[[OTHER_COL]],
+  times = HORIZONS, id = seq_len(nrow(d)),
+  vintage = VINTAGE, table = "sexrace", scale = "years", individual = TRUE
+)
+```
+
+```{r}
+#| label: obs-vs-exp
+# The cohort average at each horizon, which is what gets overlaid on an
+# actuarial curve. Derived here rather than called, because hvtiRlifetables
+# has no aggregate yet -- see hvtiRlifetables#16, which this derivation is the
+# specification for. When that lands, this chunk becomes one call and the
+# result must not change.
+#
+# The mean is taken over SURVIVAL, not over cumulative hazard. The two differ,
+# and mixing them across studies is exactly the drift that issue exists to
+# prevent -- so if you change it, say so in the text.
+# `smatched` is the matched SURVIVAL column. us_matched() returns
+# id / time / agesurv / smatched / hmatched -- there is no column called
+# `survival`, and `agesurv` is the age-matched baseline rather than the
+# sex/race-matched answer. Taking the wrong one is a plausible number for a
+# different question.
+exp_avg <- vapply(split(expected$smatched, expected$time), mean, numeric(1), na.rm = TRUE)
+obs_avg <- vapply(split(pred$fit, pred$horizon), mean, numeric(1), na.rm = TRUE)
+
+stopifnot(identical(names(exp_avg), names(obs_avg)))
+obs_vs_exp <- data.frame(
+  horizon  = as.numeric(names(obs_avg)),
+  observed = unname(obs_avg),
+  expected = unname(exp_avg)
+)
+obs_vs_exp$ratio <- obs_vs_exp$observed / obs_vs_exp$expected
+
+knitr::kable(obs_vs_exp, row.names = FALSE, digits = 4,
+             caption = "Model-predicted vs age/sex/race-matched population survival")
+```
+
+A ratio below 1 says the cohort does worse than the matched general population
+at that horizon. It is a comparison, not a test — no interval is attached,
+because the expected curve carries no sampling error of its own here.
+
+## Save
+
+```{r}
+#| label: save
+# Read by the plotting jobs in this set. `vintage` travels WITH the estimates
+# rather than being recorded only in prose: an expected curve whose vintage has
+# to be recovered later is the defect this template's vintage marker exists to
+# prevent, and it would be reintroduced here by omitting it.
+saveRDS(list(pred = pred, expected = expected, obs_vs_exp = obs_vs_exp,
+             horizons = HORIZONS, covariates = COVARIATES, vintage = VINTAGE),
+        set_path("estimates", "hs.rds"))
+```
