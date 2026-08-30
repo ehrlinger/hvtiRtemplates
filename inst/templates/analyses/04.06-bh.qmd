@@ -275,6 +275,17 @@ if (!is.null(.shortfall)) {
 .required <- c("n_boot", "seed", "slentry", "slstay", "base_params", "usable",
                "requested", "n_rows", "elapsed_mins", "manifest", "boot")
 .absent <- .required[!.required %in% names(bag)]
+
+# The nested fields are checked by name too. `boot` being present says nothing
+# about what is inside it, and every table below reaches into it -- a missing
+# `summary` surfaces thirty lines later as a NULL subscript, naming nothing.
+if (!length(.absent)) {
+  # Subset AFTER paste0, never inside it: paste0("boot$", character(0)) is
+  # "boot$", not character(0), so pasting the filtered vector reports a missing
+  # field named nothing on every healthy run.
+  .nested <- c("replicates", "summary", "n_success", "n_failed")
+  .absent <- paste0("boot$", .nested)[!.nested %in% names(bag$boot)]
+}
 if (length(.absent)) {
   stop("The bootstrap output is missing ", length(.absent), " field(s) this ",
        "report reads: ", paste(.absent, collapse = ", "), ".\nEither the runner ",
@@ -343,8 +354,14 @@ provenance
 # actually has. boot_pool_chunks() refuses that outright, so a pooled run cannot
 # reach here with a duplicate -- this table is what lets you check a single run,
 # and what lets a reader reproduce either.
-data.frame(chunk = seq_along(bag$seeds),
-           seed  = format(bag$seeds, scientific = FALSE),
+#
+# `seeds` is created by boot_pool_chunks(); a SINGLE unchunked run never went
+# through it and carries only the scalar `seed` its runner wrote. Falling back
+# is not defensive padding -- without it the one case this table exists to
+# serve is the one case it cannot render.
+seed_list <- if (!is.null(bag$seeds)) bag$seeds else bag$seed
+data.frame(chunk = seq_along(seed_list),
+           seed  = format(seed_list, scientific = FALSE),
            stringsAsFactors = FALSE)
 ```
 
@@ -393,12 +410,25 @@ then reads as a table of perfectly reliable variables.
 reps <- bag$boot$replicates
 candidates <- setdiff(unique(reps$parameter), bag$base_params)
 
+# boot_pool_chunks() computes free_sd, so a SINGLE unchunked run does not carry
+# it. Recomputed rather than skipped: this is the check that catches a bootstrap
+# which refit nothing, and an unchunked run is the shape most likely to have
+# been built that way. NA, never 0, when there is nothing to take an SD of --
+# zero is the CLAIM that the parameter did not vary, which one replicate cannot
+# support.
+free_sd <- if (!is.null(bag$free_sd)) {
+  bag$free_sd
+} else {
+  .est <- reps$estimate[reps$parameter == bag$base_params[[1L]]]
+  if (length(.est) > 1L) stats::sd(.est) else NA_real_
+}
+
 health <- data.frame(
   check = c("Replicates that fitted", "Replicates that failed",
             "Distinct candidates ever selected",
             "SD of the first free base parameter"),
   value = c(format(bag$boot$n_success), format(bag$boot$n_failed),
-            format(length(candidates)), format(bag$free_sd)),
+            format(length(candidates)), format(free_sd)),
   stringsAsFactors = FALSE
 )
 health
@@ -415,7 +445,7 @@ if (!length(candidates)) {
 # A free parameter must VARY across resamples. A bootstrap built on the vector
 # interface returns the original fit every replicate, with n_success = 500,
 # n_failed = 0, and no warning. sd() of a free base parameter is the tell.
-if (!is.na(bag$free_sd) && bag$free_sd == 0) {
+if (!is.na(free_sd) && free_sd == 0) {
   stop("The first free base parameter has SD exactly 0 across ", bag$n_boot,
        " replicates, so every replicate returned the SAME fit. A bootstrap ",
        "built on the vector interface does that: it refits nothing and reports ",
@@ -633,9 +663,28 @@ ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
 # study report that wrote such a file also claimed `hm` fits what `bh` retained.
 # Nothing read the file, and the claim was not true. A file whose existence
 # implies a dependency that does not exist is worse than no file.
+# NOT `<BOOT_PREFIX>.rds`. An unchunked run's INPUT is exactly that name, so
+# writing the report there overwrites the screen it just read -- and this is
+# the one job where that is unrecoverable: the input is days of compute that
+# `hzr_bootstrap()` produces only on its final replicate. The second render
+# then reports no bootstrap output found, having destroyed it on the first.
+#
+# The suffix alone is not the guard. BOOT_PREFIX is an edit point, so a study
+# can set it to anything, including this name. Checked rather than assumed,
+# because the failure destroys data instead of erroring.
+report_file <- set_path("estimates", "bh-report.rds")
+inputs <- normalizePath(c(.single_file, .chunk_files), mustWork = FALSE)
+if (normalizePath(report_file, mustWork = FALSE) %in% inputs) {
+  stop("This report would be written to ", basename(report_file), ", which is ",
+       "the bootstrap output it just read. That file is the screen -- days of ",
+       "compute, written only at the final replicate -- and overwriting it ",
+       "cannot be undone.\nChange BOOT_PREFIX so the runner's output and this ",
+       "report do not collide.", call. = FALSE)
+}
+
 saveRDS(list(freq = freq, retained = retained, concept = concept,
              crowding = crowding, clusters = clusters,
              provenance = provenance, retain_pct = RETAIN_PCT,
              expect_chunks = EXPECT_CHUNKS, expect_boot = EXPECT_BOOT),
-        set_path("estimates", "bh.rds"))
+        report_file)
 ```

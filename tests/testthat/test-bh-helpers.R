@@ -3,9 +3,12 @@
 # chunk whenever no bootstrap output exists, which is every CI run. So the two
 # helpers the template leans on are exercised here against synthetic input.
 #
-# hvtiRbootstrap is a STUDY dependency, not a DESCRIPTION one, so these skip
-# rather than fail where it is absent. That is the same reason the templates
-# themselves are excluded from object_usage_linter.
+# hvtiRbootstrap is declared in Suggests, not Imports -- these tests are the
+# only thing in the package that calls it, and the templates that use it are
+# shipped data rather than package source. Suggests means it may legitimately
+# be absent, so these skip rather than fail. That is also why the templates are
+# excluded from object_usage_linter: their OTHER study dependencies, such as
+# TemporalHazard, are in no DESCRIPTION field at all.
 
 test_that("boot_clusters() counts a replicate once when it selects two forms", {
   skip_if_not_installed("hvtiRbootstrap")
