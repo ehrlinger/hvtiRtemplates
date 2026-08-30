@@ -32,7 +32,15 @@ selection over the whole candidate pool. The **selection frequency** -- the
 percentage of replicates in which a variable was retained -- is the deliverable,
 and it is what a published *Reliability (%)* column reports.
 
-This job **does not fit the final model**. It screens.
+This job **does not fit the final model**. It screens. The companion `hm` job
+fits the multivariable model.
+
+⚠️ `bh` and `hm` are **parallel analyses, not a pipeline.** `%hazboot` and
+`%model` were parallel in SAS and these jobs reproduce that. Do not describe
+this job's retained set as what `hm` fits, and do not write a handoff file for
+it -- an earlier study report did both, and nothing read the file. A reader who
+believes the claim will assume the `hm` model was screened for reliability
+first. It was not.
 
 ```{r}
 #| label: setup
@@ -836,3 +844,72 @@ binaries are invisible to it for the same reason they were invisible to the
 screen -- check the coercion table above before reading an empty result as an
 absence of collinearity.
 :::
+
+## Figure
+
+```{r}
+#| label: fig-frequencies
+#| fig-width: 7
+#| fig-height: 9
+shown <- sel[sel$pct >= DISPLAY_FLOOR, , drop = FALSE]
+
+# A floor that excludes everything would leave nothing to draw and end the
+# render. On a study where nothing clears it, the floor is the wrong number and
+# the figure should still be drawn.
+if (nrow(shown) == 0L) {
+  shown <- sel
+}
+omitted <- nrow(sel) - nrow(shown)
+phases  <- sort(unique(shown$phase))
+
+sub_txt <- paste0("Dashed line: ", RETAIN_PCT, "% retention threshold. Open circles are ",
+                  "within two standard errors of it. ", omitted, " variable(s) below ",
+                  DISPLAY_FLOOR, "% omitted here and present in the table above.")
+
+op <- par(mfrow = c(length(phases), 1L), mar = c(4, 9, 2, 1), oma = c(0, 0, 5, 0))
+for (ph in phases) {
+  x <- shown[shown$phase == ph, , drop = FALSE]
+  x <- x[order(x$pct), , drop = FALSE]
+  y <- seq_len(nrow(x))
+  plot(x$pct, y, type = "n", xlim = c(0, 100), yaxt = "n",
+       xlab = "Selection frequency (%)", ylab = "", main = ph)
+  abline(v = RETAIN_PCT, lty = 2, col = "grey55")
+  segments(0, y, x$pct, y, col = "grey75")
+  # Open circles mark the near-threshold variables. The shape carries the
+  # instability of the DECISION, which is the thing a reader is about to act
+  # on; a frequency alone does not show it.
+  points(x$pct, y, pch = ifelse(x$near_threshold, 1L, 16L))
+  axis(2, at = y, labels = x$variable, las = 1, cex.axis = 0.7)
+}
+
+# EDIT: the title, if this job screens something other than the whole pool.
+mtext("Bootstrap selection frequency", side = 3, line = 2.6, outer = TRUE, font = 2)
+mtext(sub_txt, side = 3, line = 0.4, outer = TRUE, cex = 0.65)
+par(op)
+```
+
+The omitted count is printed rather than left implicit: a figure that silently
+truncates its own data reads as though it showed everything.
+
+## Save
+
+The retained set is written here so it can be read rather than retyped off a
+rendered page. It lands beside the replicates it was computed from, under this
+set's `estimates/` directory, so a screen and its summary can never be filed
+against different sets.
+
+**It is not an input to anything**, for the reason given at the top of this
+file: `bh` and `hm` are parallel analyses. This file is a deliverable, not a
+handoff.
+
+```{r}
+#| label: save
+# EDIT: your output name, if `selection.csv` collides with something this set
+# already writes.
+#
+# Through set_path() rather than a literal path, for the same reason the
+# `bootstrap` chunk reads through it: a screen filed against a different set
+# than the replicates it pooled is a defect nothing downstream would catch.
+write.csv(sel[, c("phase", "variable", "pct", "se_pp", "retained", "near_threshold")],
+          set_path("estimates", "selection.csv"), row.names = FALSE)
+```
