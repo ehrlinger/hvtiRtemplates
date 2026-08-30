@@ -552,3 +552,158 @@ knitr::kable(do.call(rbind, by_phase), row.names = FALSE,
                               "standard errors of the threshold on each side: their ",
                               "retention decision is unstable, not their effect."))
 ```
+
+## Concept-level frequencies
+
+A per-variable frequency answers "how often was *this form* selected". The
+question a paper asks is "how often was *this concept* selected", and the two
+differ whenever the pool offers several transformations of one variable. The gap
+runs both ways: competing forms can split replicates between them, so the
+concept reads weaker than it is, or two forms can both clear the threshold, so
+one finding is reported twice.
+
+⚠️ **Do not prune competing transformations from the pool before screening.**
+Screen every form; group only when reading, which is what this section does.
+
+Measured, on the study this template came from: of the 57 forms pruning removed,
+**16 correlated at |r| < 0.9** with the form kept and five below 0.5. `in_zexp`
+**is** `1/zexp` -- r = 0.9997 against the reciprocal -- yet correlates with
+`zexp` at only **-0.195**, because `zexp` spans 0.038 to 151.9. Over a 4000-fold
+range a value and its reciprocal are different information. That study's
+published model uses `zexp` and `in_zexp` in the same phase, **both
+significant**, a two-parameter flexible form pruning forbids.
+
+The naming convention tells you two variables are RELATED. Only the data tells
+you whether they are REDUNDANT.
+
+```{r}
+#| label: concept-map
+#| code-fold: true
+# The map the SCREEN used, if it used one at all. Distinct from the read-time
+# grouping below, and both are worth having: this says what the screen was
+# offered, that says how to read what it returned. Neither supersedes the other.
+if (is.null(bag$concept_map)) {
+  knitr::kable(data.frame(result = "pool not pruned: every form screened separately"))
+} else {
+  cm  <- bag$concept_map
+  cm  <- cm[cm$phase == cm$phase[1], , drop = FALSE]
+  grp <- cm[cm$concept %in% cm$concept[duplicated(cm$concept)], , drop = FALSE]
+  knitr::kable(grp[order(grp$concept, grp$variable), c("concept", "variable")],
+               row.names = FALSE,
+               caption = "Forms the screen itself collapsed. An empty table here is the good case.")
+}
+```
+
+```{r}
+#| label: concept-frequencies
+# EDIT: forms this study knows are one concept but no affix rule can reach.
+#
+# `vars.sas` truncates the stem when naming a derivative (`effic` -> `ln_effi`,
+# `area_int` -> `in_arin`), and some forms carry no affix at all (`agee`,
+# `sizee`). concept_of() handles truncation automatically where the stem
+# prefixes exactly one plain form; the rest are declared here, because whether
+# `agee` is a form of `age` is a CLINICAL judgement, not a naming rule.
+#
+# Leave it empty to group only what the affix and prefix rules can prove.
+CONCEPT_ALIASES <- character(0)
+
+# EDIT: the affix vocabulary, if your study's variable names do not follow
+# vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing
+# 2, the order in which they strip, and the deliberate refusal to reduce agee
+# to age. Those are facts about this institution's names, not about statistics,
+# which is why they are data you can replace rather than logic you cannot.
+concept_for <- function(v) {
+  # Aliases are filtered to the pool first. concept_map() refuses an alias
+  # pointing outside it, and a phase whose screen never saw `age` would
+  # otherwise error on an alias written for the phase that did.
+  al <- CONCEPT_ALIASES[unname(CONCEPT_ALIASES) %in% v]
+  concept_map(v, aliases = al, affixes = POOL_AFFIXES,
+              min_stem = POOL_MIN_STEM, plain_suffix = POOL_PLAIN_SUFFIX)
+}
+
+# Per-replicate, not per-summary. A UNION across a concept's forms cannot be
+# recovered from marginal percentages -- two forms at 30% each are anywhere
+# between 30% and 60% of replicates depending on how often they co-occur -- so
+# this reads the replicate table and counts distinct replicates.
+rep_cov <- reps[!reps$parameter %in% bag$base_params, , drop = FALSE]
+rep_cov$phase    <- sub("[.].*$", "", rep_cov$parameter)
+rep_cov$variable <- sub("^[^.]*[.]", "", rep_cov$parameter)
+
+cf <- do.call(rbind, lapply(split(sel, sel$phase), function(x) {
+  ph <- x$phase[1]
+  cm <- concept_for(x$variable)
+  x$concept <- cm$concept[match(x$variable, cm$variable)]
+  r <- rep_cov[rep_cov$phase == ph, , drop = FALSE]
+  r$concept <- x$concept[match(r$variable, x$variable)]
+  do.call(rbind, lapply(split(x, x$concept), function(g) {
+    hit <- unique(r$replicate[!is.na(r$concept) & r$concept == g$concept[1]])
+    data.frame(phase            = ph,
+               concept          = g$concept[1],
+               n_forms          = nrow(g),
+               union_pct        = 100 * length(hit) / bag$n_boot,
+               best_form_pct    = max(g$pct),
+               n_forms_retained = sum(g$retained),
+               forms            = paste(sort(g$variable), collapse = ", "),
+               stringsAsFactors = FALSE)
+  }))
+}))
+
+cf$spread   <- cf$union_pct - cf$best_form_pct
+cf$retained <- cf$union_pct >= RETAIN_PCT
+cf <- cf[order(cf$phase, -cf$union_pct), ]
+
+shown_cf <- cf[cf$union_pct >= DISPLAY_FLOOR, , drop = FALSE]
+cf_cols  <- c("phase", "concept", "n_forms", "union_pct", "best_form_pct",
+              "spread", "retained", "forms")
+knitr::kable(shown_cf[, cf_cols], row.names = FALSE, digits = 1,
+             caption = paste0("Selection frequency per CONCEPT. union_pct is the percentage of ",
+                              "replicates selecting the concept in any form; best_form_pct is its ",
+                              "strongest single form. spread is how much the per-variable table ",
+                              "understates the concept. Concepts below ", DISPLAY_FLOOR,
+                              "% are omitted here and present in the per-variable table above."))
+```
+
+```{r}
+#| label: concept-counts
+counts <- lapply(split(cf, cf$phase), function(x) {
+  data.frame(phase              = x$phase[1],
+             concepts_retained  = sum(x$retained),
+             variables_retained = sum(sel$retained[sel$phase == x$phase[1]]),
+             # Concepts the per-variable table reports more than once. Uses
+             # RETAINED forms, so this column actually accounts for the gap
+             # between the two counts to its left.
+             double_counted     = sum(x$n_forms_retained > 1),
+             stringsAsFactors   = FALSE)
+})
+knitr::kable(do.call(rbind, counts), row.names = FALSE,
+             caption = paste0("Retained at >= ", RETAIN_PCT,
+                              "%, counted both ways. Where these disagree, the ",
+                              "per-variable count is reporting one concept more ",
+                              "than once."))
+```
+
+::: {.callout-note}
+## Two things to check before quoting either number
+
+⚠️ **A selection frequency is conditional on the candidate pool**, and that is
+not a caveat this table can remove. On the study this template came from,
+re-running with 226 candidates instead of 189 moved one variable from 26.6% to
+95.2% and another from 93.8% to 20.2% -- same data, same seeds. Seven of nine
+retained concepts were common to both runs; two differed each way. Quote a
+reliability figure with the pool it came from, or it is not reproducible.
+
+**A concept whose `spread` is large was being understated by the per-variable
+table.** A concept whose `n_forms` exceeds one and which is `retained` was being
+reported more than once. Both are visible above; neither is visible in a
+per-variable frequency alone.
+:::
+
+```{r}
+#| label: base-params
+# Shown separately, and shown at all, because their absence would be the more
+# suspicious thing: these are the parameters every replicate carries.
+knitr::kable(summ[summ$parameter %in% bag$base_params,
+                  c("parameter", "n", "pct", "mean", "sd")],
+             row.names = FALSE, digits = 4,
+             caption = "Base model parameters, present in every replicate by construction")
+```
