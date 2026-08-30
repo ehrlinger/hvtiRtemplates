@@ -12,6 +12,7 @@ refuses to overwrite an existing job.
 | `distributions/03.01-ac.qmd` | actuarial life tables | `distributions/` |
 | `distributions/03.02-hz.qmd` | multiphase parametric hazard fit | `distributions/` |
 | `graphs/06.01-hp.qmd` | nomogram and hazard figures | `graphs/` |
+| `graphs/06.02-hs.qmd` | patient-level predictions and expected survival | `graphs/` |
 | `analyses/04.01-hm.qmd` | multivariable hazard model | `analyses/` |
 
 A template is named `<NN.MM>-<prefix>.qmd` and lives in the taxonomy folder it

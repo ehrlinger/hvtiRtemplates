@@ -41,17 +41,36 @@ jobs:
           use-public-rspm: true
           rtools-version: '44'
 
-      # This package has no Imports and no vignettes -- only base R plus
-      # testthat under Suggests. The sibling repos pull
-      # github::ehrlinger/hvtiRutilities here and set up Quarto; neither
-      # applies, so neither is present. Keep it that way unless a real
-      # dependency arrives.
+      # DESCRIPTION carries real dependencies -- hvtiRutilities via Remotes:
+      # plus stats under Imports -- and jsonlite and testthat under Suggests.
+      # There are no vignettes to build, so Quarto setup does not apply here.
+      # any::pkgload is for the roadmap-guard step below: test_local() loads
+      # the package from source through pkgload rather than through
+      # R CMD check, which is a separate code path with its own dependency.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: |
+            any::rcmdcheck
+            any::pkgload
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
           build_args: 'c("--no-manual")'
+
+      # The roadmap ledger (dev/specs/artifacts/2026-08-29-template-roadmap.json)
+      # lives under dev/, which is .Rbuildignore'd -- so it is absent from the
+      # tarball the check-r-package step above builds, and test-roadmap.R skips
+      # its three tests there on purpose. This step is the only place those
+      # tests actually run: it loads the package from the checked-out SOURCE
+      # tree, where dev/ is present. One matrix leg is enough -- this checks
+      # repository content, not platform behaviour. HVTI_ROADMAP_STRICT turns
+      # a skip into a hard failure, so a broken path resolution can't pass
+      # silently as "0 tests ran, all green".
+      - name: Run the roadmap vocabulary guard against the source tree
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
+        env:
+          HVTI_ROADMAP_STRICT: 1
+        run: testthat::test_local(".", filter = "roadmap", stop_on_failure = TRUE)
+        shell: Rscript {0}

@@ -37,6 +37,11 @@ before release (see "There is no SAS corpus here" in the top-level README), so
 there is no in-repo copy to scan. Those live paths are outside version control,
 and the institutional SAS licence expires 2026-09-29.
 
+> **Corrected 2026-08-29: the licence runs into 2027, not out in 2026** (working
+> date `2027-09-29`, not yet confirmed). The
+> text above is left as written, and the argument it supports is unaffected.
+> Full note in `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md` §1.
+
 **Why the scan is file-keyed and body-parsed.** Three corpus properties, each
 of which broke an earlier draft:
 

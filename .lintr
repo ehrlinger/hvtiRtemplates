@@ -58,6 +58,11 @@ exclusions: list(
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
+    "inst/templates/graphs/06.02-hs.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
     "inst/templates/analyses/04.01-hm.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,

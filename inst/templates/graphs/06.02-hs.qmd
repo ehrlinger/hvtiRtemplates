@@ -1,0 +1,520 @@
+---
+title: "Patient-level predictions and expected survival"
+# Carried in the file rather than inherited from _quarto.yml. A file meant to be
+# COPIED should not depend on settings from the directory it happens to sit in:
+# rendered as a standalone document the project's format block never applies,
+# which is how server-rendered reports end up with sibling _files/ trees instead
+# of being self-contained.
+#
+# NOTE: output-dir is a PROJECT setting and cannot be set here, so the .html
+# lands next to its source. With embed-resources that is a single standalone
+# file, which is the property that actually matters when a report is sent on.
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the SAS job this replaces, and say which horizons it reported
+     and against which expected-survival comparison. -->
+
+Replaces `graphs/<job>.sas`: describe its prediction step here — which horizons
+it reported, and what it compared them against.
+
+An `hs` job turns the risk-factor model an `hm` job fitted into **predictions
+for individual patients**, and sets those against the survival the general
+population would have had. The model is not refitted here; it is read.
+
+**This job is filed under `graphs/`, which reads oddly for something named
+"setup".** That placement follows the corpus rather than the name: all ten
+`tp.hs.*` templates in the SAS library, and ten of the eleven R `hs` jobs across
+the study tree, sit in `graphs/`. An `hs` job computes what the plotting jobs
+beside it consume — the `setup` / `uses_setup` pairing the corpus uses
+throughout. The reasoning is in
+`hvtiRtemplates:dev/specs/2026-08-29-hs-template-design.md`.
+
+Validation metrics — C-index, Brier score — are **not** here. The corpus files
+them under `hs`, but the only R implementation is a loose script on a shared
+drive with no package and no version, and no supported template depends on an
+unpackaged file. They arrive once it has a home.
+
+```{r}
+#| label: setup
+# This file runs either from the directory it was scaffolded into or from the
+# project root. Resolve which, so that no path in this document needs editing:
+# forgetting one of several ../ paths is the instantiation mistake that would
+# otherwise be easy to make and quiet when made.
+.root <- if (file.exists("_quarto.yml")) "." else ".."
+if (!file.exists(file.path(.root, "_quarto.yml"))) {
+  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
+       "resolved. Render this from the project root or from the job directory.",
+       call. = FALSE)
+}
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(TemporalHazard)
+  library(hvtiRutilities)
+  library(hvtiRlifetables)
+})
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+# The markers in this file name work a study author still has to do, and
+# README.md says a job that still contains one has not been finished. This
+# chunk is what makes that TRUE rather than merely stated.
+#
+# Without it an unedited job renders green over a meaningless analysis. In THIS
+# file the danger is sharper than a wrong number: the unedited entry and stay
+# levels are `hzr_stepwise()`'s defaults, which are LOOSER than the SAS job's,
+# so an unedited screen admits variables the job being reproduced rejected --
+# and reports them as risk factors, in a table that looks exactly like a
+# result.
+#
+# knitr::current_input() is NULL outside a render -- a study author stepping
+# through chunks in RStudio -- and there is no file to scan then, so this is a
+# no-op in that case. Same handling as the `set` guard below, for the same
+# reason.
+#
+# The token is BUILT, not written literally, and that is not stylistic. Quarto
+# knits through an intermediate and current_input() returns THAT file, so the
+# scan reads a copy of this chunk along with everything else: a literal
+# grep("<token>", .src) here matches its own source line, and the guard then
+# fires on every render, finished or not. Measured, not theorised -- a probe
+# found three markers in a file containing two. A guard that cries wolf on a
+# finished job is a guard that gets deleted, which returns us to issue #27.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    # Report the marker TEXT. Line numbers here are the intermediate's, not
+    # this .qmd's, so they need not match what the author sees in an editor.
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
+      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
+      "draft banner. Any other value, including 0, leaves this guard strict."
+    )
+    # Only the documented values enable draft mode. nzchar() alone would treat
+    # HVTI_TEMPLATE_DRAFT=0 as ON, silently downgrading this stop() to a
+    # warning for someone whose shell profile sets it to 0 meaning OFF -- a
+    # switch whose enablement does not mean what it says, which is the same
+    # defect this guard exists to catch. An unrecognised value falls through to
+    # strict on purpose: the author then sees the stop and re-reads the docs,
+    # which is the safe direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+      # The banner is not optional. A draft render that looks like a finished
+      # one is the same defect with an extra step: the warning scrolls past in
+      # a log, while the .html is the artifact that gets sent to someone.
+      warning(.msg, call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, call. = FALSE)
+    }
+  }
+}
+```
+
+<!-- The two values below are written by new_job() from the endpoint/type it
+     was called with, which are also the filename's first two fields. They
+     name the SET this job belongs to, and every artifact path in the
+     document is computed from them, so no output path below needs editing.
+
+     Do NOT hand-edit these declarations: the render-time guard below checks
+     them against this file's own name and stops if they disagree. To put
+     this job in a different set, call new_job() again with the new
+     endpoint/type rather than editing this copy in place.
+
+     A set is keyed on (endpoint, analysis type), not on the endpoint alone.
+     One endpoint is analysed by several methods -- parametric hazard, random
+     forest survival, competing risks -- and those chains share their upstream.
+     Two sets keyed on `dead_pa` alone would write their life tables to the
+     same file. -->
+
+```{r}
+#| label: set
+ENDPOINT <- "dead_pa"
+TYPE     <- "hz"
+
+# `new_job()` writes ENDPOINT/TYPE from the same values it put in this file's
+# name, but a hand-edited declaration can drift from it afterward. set_path()
+# below resolves from the declarations, not the filename, so a drifted
+# declaration would silently write into ANOTHER set's artifact directory --
+# exactly the collision the (endpoint, type) key exists to prevent, re-entered
+# through the body instead of the name.
+#
+# knitr::current_input() is NULL outside a render (a study author running
+# chunks interactively in RStudio), and there is no filename to check against
+# yet, so this is a no-op in that case rather than a spurious error.
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  # Quarto knits through an intermediate, so `knitr::current_input()` returns
+  # `<endpoint>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
+  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
+  # rather than hard-coding one, so this doesn't depend on a build-tool detail
+  # staying the same.
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (endpoint '", .name_endpoint, "', type '",
+         .name_type, "'), but declares ENDPOINT = \"", ENDPOINT, "\", TYPE = \"", TYPE,
+         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
+  }
+}
+
+# Resolve a path inside this set's artifact directory. `kind` is the artifact
+# folder -- "estimates" for serialized results, "graphs" for figures. The set
+# directory sits one layer under the kind and never two, which is the whole
+# layout rule.
+#
+# Created on first use rather than up front, so a job that writes nothing leaves
+# no empty directories behind.
+set_path <- function(kind, file) {
+  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+
+# `hm` reads the `hz` fit through this and writes its own model back, both by
+# set, so a model can never be filed against a different set than the shapes it
+# was built on. The write is in the `save` chunk at the foot of this file.
+```
+## Cohort and model
+
+<!-- EDIT: choose the cohort shape, exactly as the `hm` job did.
+
+     The rows this job predicts for MUST be the rows the model was fitted on,
+     or the predictions describe a cohort the model never saw. That failure is
+     silent: `predict()` returns a number for any row you hand it, whatever
+     cohort it came from. -->
+
+```{r}
+#| label: cohort
+d <- read_built()
+assert_cohort(d)
+```
+
+```{r}
+#| label: model
+# The model, not a refit. `hm.rds` is written by the hm job in this same set,
+# so a prediction can never be filed against a different set than the model it
+# came from.
+hm_art <- readRDS(set_path("estimates", "hm.rds"))
+fit    <- hm_art$reported
+
+# The covariates the model was actually fitted on. Taken from the artifact
+# rather than re-declared here: a re-declared list drifts from the model the
+# moment the hm job's screen changes, and `predict()` would then either error
+# on a missing column or -- worse -- silently use a stale set.
+#
+# `hm` stores its screen as a LIST -- list(early = <chr>, late = <chr>) -- one
+# character vector per phase, and saves it in that shape. Flatten it the same
+# way hm itself does when it builds the model formula: `unique()` matters,
+# because a variable offered to BOTH phases appears twice, and a duplicated
+# column here makes a design matrix wider than the fitted coefficients.
+COVARIATES <- unique(unlist(hm_art$covariates, use.names = FALSE))
+stopifnot(is.character(COVARIATES), length(COVARIATES) > 0L)
+missing_cols <- setdiff(COVARIATES, names(d))
+if (length(missing_cols)) {
+  stop("The model was fitted on covariate(s) absent from this cohort: ",
+       paste(missing_cols, collapse = ", "),
+       ". The cohort here is not the cohort hm was fitted on.", call. = FALSE)
+}
+```
+
+## Predictions
+
+<!-- EDIT: the follow-up time column, and the horizons this job reports.
+
+     TIME must be the SAME column the hm job fitted on. It is re-declared here
+     rather than read from `hm.rds`, because that artifact does not carry it --
+     so the two CAN drift, and the guard below is what catches it. If you change
+     one, change both.
+
+     The horizons are in TIME's own units.
+
+     These are reporting choices, not statistical ones, and they must match the
+     job being replaced -- a nomogram at 5 years and a table at 10 answer
+     different questions. The corpus uses 30-day, 5-year and 10-year most
+     often. The units are whatever `hz` fitted in: if that job worked in years,
+     30 days is 30/365.25, not 30. Getting this wrong produces a plausible
+     number at the wrong time, which is the failure mode with no symptom. -->
+
+```{r}
+#| label: horizons
+TIME     <- "iu_dead"
+HORIZONS <- c(1, 5, 10)
+
+# A `hazard` object carries `call`, `call_env`, `spec`, `data`, `fit`,
+# `legacy_args` and `engine` -- there is NO `formula` slot, and `spec` holds
+# only dist/control/time_windows/phases. The formula is recoverable from
+# `fit$call` only when the model was built through the formula interface;
+# `hazard()` also accepts time=/status=, in which case it is not there at all.
+# So the time column is declared above rather than introspected.
+# A `hazard` object's `data` slot is a CONTAINER -- time, time_lower,
+# time_upper, status, x, weights, frame -- not the model frame. The study's own
+# columns are one level down, in `fit$data$frame`. Reading `fit$data[[TIME]]`
+# returns NULL, which makes this guard unsatisfiable and turns the max() below
+# into -Inf. Measured, not assumed.
+if (!TIME %in% names(fit$data$frame)) {
+  stop("TIME is \"", TIME, "\", which is not a column of the data the model was ",
+       "fitted on. It must name the same follow-up column the hm job used.",
+       call. = FALSE)
+}
+
+# The model cannot extrapolate past the follow-up it was fitted on, and
+# `predict()` will not say so -- it returns a number for any time you give it.
+# Beyond the last observed time that number is the fitted parametric form
+# running on, not an estimate the data supports.
+# An all-missing time column makes max(na.rm = TRUE) return -Inf rather than
+# error, and the check below would then report "beyond the last observed time
+# (-Inf)", which explains nothing. Catch the empty case where it can still be
+# named.
+if (!any(is.finite(fit$data$frame[[TIME]]))) {
+  stop("Column \"", TIME, "\" in the fitted data has no finite values, so there ",
+       "is no observed follow-up to compare HORIZONS against.", call. = FALSE)
+}
+.max_obs <- max(fit$data$frame[[TIME]], na.rm = TRUE)
+if (any(HORIZONS > .max_obs)) {
+  stop("HORIZONS contains ", paste(HORIZONS[HORIZONS > .max_obs], collapse = ", "),
+       ", beyond the last observed time (", signif(.max_obs, 4),
+       "). Shorten the horizon or say in the text why extrapolation is defensible.",
+       call. = FALSE)
+}
+```
+
+`predict()` needs one row per (patient, horizon): the covariates identify the
+patient and a `time` column names the horizon.
+
+```{r}
+#| label: predict
+# One row per patient per horizon. Built explicitly rather than by looping
+# `predict()` per horizon, so every prediction comes from ONE call and cannot
+# drift between horizons.
+# `time`, `.id` and `.horizon` are constructed below. A covariate with one of
+# those names would be silently overwritten by the construction rather than
+# erroring, so the collision is checked rather than assumed away.
+# `hm` fitted on covariates_to_numeric(d, ...), not on the raw built data: that
+# conversion turns numeric-looking FACTORS into numerics, and a model fitted
+# after it has a different parameter count from one fitted before. hm.rds does
+# not carry the converted frame, so the conversion is redone here. Predicting
+# from the raw data instead would dummy-code a factor the model fitted
+# linearly -- a different design matrix, and nothing in the output would say so.
+dd <- covariates_to_numeric(d, COVARIATES)
+
+.clash <- intersect(COVARIATES, c("time", ".id", ".horizon"))
+if (length(.clash)) {
+  stop("Covariate(s) ", paste(.clash, collapse = ", "), " collide with the ",
+       "column names this chunk builds. Rename the column in the built ",
+       "dataset, or this job will predict from overwritten values.",
+       call. = FALSE)
+}
+nd <- do.call(rbind, lapply(HORIZONS, function(h) {
+  x <- dd[, COVARIATES, drop = FALSE]
+  x$time <- h
+  x$.id  <- seq_len(nrow(dd))
+  x$.horizon <- h
+  x
+}))
+
+# CLEVEL and conf.type are SAS conventions recovered from the HAZPRED source
+# during parity work, not study choices -- and NEITHER errors when wrong.
+#
+# CLEVEL is 0.68268948, which is pnorm(1) - pnorm(-1): plus or minus one
+# standard error, about 68%, NOT 95%. The published papers state it. On the
+# same fit and grid a 95% band is 1.97x the width, so a reader who takes these
+# for 95% limits reads an interval roughly half as wide as they think.
+#
+# Survival limits are formed on the logit scale. predict.hazard() defaults to
+# "log-log", the survfit standard, so conf.type must be passed explicitly.
+#
+# `06.01-hp.qmd` uses both, and this job's estimates are read by plotting jobs
+# that do. Changing either here alone puts two coverages on one figure with
+# nothing saying so. Label the coverage wherever these numbers are published.
+CLEVEL <- 0.68268948   # SAS convention, not a study choice. +/-1 SD, NOT 95%.
+
+p <- predict(fit, newdata = nd[, c(COVARIATES, "time")], type = "survival",
+             se.fit = TRUE, level = CLEVEL, conf.type = "logit")
+
+pred <- data.frame(id = nd$.id, horizon = nd$.horizon,
+                   fit = p$fit, se.fit = p$se.fit,
+                   lower = p$lower, upper = p$upper)
+
+# Two checks, and the order matters. A prediction that came back NA is a
+# FAILED prediction, not an out-of-range one -- and `all(..., na.rm = TRUE)`
+# would strip them and then return TRUE for an empty vector, so a run where
+# EVERY prediction failed would pass a range check silently and render a table
+# of NA. Catch the missing case first, loudly, then range-check what remains
+# without na.rm so a partial failure cannot hide either.
+.bad <- !is.finite(pred$fit)
+if (any(.bad)) {
+  stop(sum(.bad), " of ", nrow(pred), " predictions are NA or non-finite. ",
+       "predict() returned no usable value for those rows -- check that the ",
+       "cohort's covariates match the ones the model was fitted on, and that ",
+       "TIME and HORIZONS are in the units the hz job used.", call. = FALSE)
+}
+# Survival is a probability. A value outside [0, 1] means the delta-method
+# interval was built on the wrong scale, not that a patient is 103% alive.
+stopifnot(all(pred$fit >= 0 & pred$fit <= 1))
+# Split out rather than nested inside kable(): a table built inside its own
+# printing call is hard to inspect when a number looks wrong, and the nesting
+# is what tripped the indentation and brace linters this repo keeps on for
+# templates on purpose.
+by_horizon <- split(pred, pred$horizon)
+summary_tbl <- do.call(rbind, lapply(by_horizon, function(g) {
+  data.frame(horizon = g$horizon[[1L]], n = nrow(g),
+             median = stats::median(g$fit, na.rm = TRUE),
+             min = min(g$fit, na.rm = TRUE),
+             max = max(g$fit, na.rm = TRUE))
+}))
+knitr::kable(summary_tbl, row.names = FALSE, digits = 4,
+             caption = "Predicted survival by horizon, across the cohort")
+```
+
+## Expected population survival
+
+<!-- EDIT: the columns naming each patient's age, sex and race, and the life
+     table vintage.
+
+     `vintage` HAS NO DEFAULT HERE, ON PURPOSE. The SAS macro `%usmatchd` took
+     no vintage argument, so every `hs.uslife` job silently inherited the macro
+     default AS OF ITS RUN DATE -- and that default moved twice, table84 ->
+     table2008 -> table2023, with no signal at either move. The vintages are
+     structurally different fits, not perturbations, so a wrong one is wrong by
+     orders of magnitude. A parity check on one such job could not read the
+     vintage off it at all and had to RECOVER it, by fitting all three and
+     seeing which landed at machine precision. A job that does not state its
+     vintage cannot be reproduced.
+
+     `us_lifetable_vintages()` lists the valid values AND what each one's
+     non-white stratum actually means -- which is not what its code says.
+     Under `table2023`, stratum `"b"` is a risk-weighted average of Black,
+     Asian, American Indian and Hispanic death rates, NOT Black, despite the
+     code and despite the macro's own comment. Name strata by meaning in your
+     prose, never by the letter code.
+
+     TABLE selects which strata the life table itself is built from. Use
+     "sexrace" when race is usable, "sex" when it is not, "overall" when
+     neither is. This is not the axis you group your REPORT by -- that is a
+     separate concern the template does not automate.
+
+     SCALE must match the units TIME and HORIZONS are in. It is NOT
+     independently checkable: pass "years" for a job fitted in months and you
+     get expected survival at 6, 12 and 24 YEARS against observed values at 6,
+     12 and 24 months, with a plausible-looking ratio and no error anywhere. -->
+
+```{r}
+#| label: expected
+AGE_COL   <- "age"
+MALE_COL  <- "male"
+OTHER_COL <- "other"
+VINTAGE   <- NULL
+TABLE     <- "sexrace"
+SCALE     <- "years"
+
+# Two failure modes, both caught here rather than inside us_matched(): unset,
+# and set to something that is not a vintage. The second matters because the
+# valid values are not guessable -- "table2023" is not "2023" -- and an error
+# raised three calls down names neither the argument nor the alternatives.
+#
+# us_lifetable_vintages() returns a DATA FRAME -- vintage, n_strata,
+# nonwhite_code, nonwhite_meaning, added -- not a character vector. The
+# `$vintage` is deliberate; pasting the frame prints column-wise nonsense.
+valid_vintages <- us_lifetable_vintages()$vintage
+if (is.null(VINTAGE)) {
+  stop("VINTAGE is unset. Choose one of: ", paste(valid_vintages, collapse = ", "),
+       " -- and record WHY in the text above. There is no safe default; see the ",
+       "comment on this chunk.", call. = FALSE)
+}
+if (!VINTAGE %in% valid_vintages) {
+  stop("VINTAGE is \"", VINTAGE, "\", which is not a life table vintage. ",
+       "Valid values: ", paste(valid_vintages, collapse = ", "), ".",
+       call. = FALSE)
+}
+
+# Named columns are checked before use, as the model chunk does for covariates.
+# Without this a typo surfaces as "`id` must be the same length as `age`; got
+# N and 0" from inside us_matched(), which never names the column at fault.
+.absent <- setdiff(c(AGE_COL, MALE_COL, OTHER_COL), names(d))
+if (length(.absent)) {
+  stop("Column(s) not in the cohort: ", paste(.absent, collapse = ", "),
+       ". Set AGE_COL, MALE_COL and OTHER_COL to this study's own column names.",
+       call. = FALSE)
+}
+
+# Read this before choosing, and print it in the report:
+knitr::kable(us_lifetable_vintages(), row.names = FALSE,
+             caption = "Life table vintages, and what each one's non-white stratum means")
+
+expected <- us_matched(
+  age = d[[AGE_COL]], male = d[[MALE_COL]], other = d[[OTHER_COL]],
+  times = HORIZONS, id = seq_len(nrow(d)),
+  vintage = VINTAGE, table = TABLE, scale = SCALE, individual = TRUE
+)
+```
+
+```{r}
+#| label: obs-vs-exp
+# The cohort average at each horizon, which is what gets overlaid on an
+# actuarial curve. Derived here rather than called, because hvtiRlifetables
+# has no aggregate yet -- see hvtiRlifetables#16, which this derivation is the
+# specification for. When that lands, this chunk becomes one call and the
+# result must not change.
+#
+# The mean is taken over SURVIVAL, not over cumulative hazard. The two differ,
+# and mixing them across studies is exactly the drift that issue exists to
+# prevent -- so if you change it, say so in the text.
+# `smatched` is the matched SURVIVAL column. us_matched() returns
+# id / time / agesurv / smatched / hmatched -- there is no column called
+# `survival`, and `agesurv` is the age-matched baseline rather than the
+# sex/race-matched answer. Taking the wrong one is a plausible number for a
+# different question.
+exp_avg <- vapply(split(expected$smatched, expected$time), mean, numeric(1), na.rm = TRUE)
+obs_avg <- vapply(split(pred$fit, pred$horizon), mean, numeric(1), na.rm = TRUE)
+
+stopifnot(identical(names(exp_avg), names(obs_avg)))
+obs_vs_exp <- data.frame(
+  horizon  = as.numeric(names(obs_avg)),
+  observed = unname(obs_avg),
+  expected = unname(exp_avg)
+)
+obs_vs_exp$ratio <- obs_vs_exp$observed / obs_vs_exp$expected
+
+knitr::kable(obs_vs_exp, row.names = FALSE, digits = 4,
+             caption = "Model-predicted vs age/sex/race-matched population survival")
+```
+
+A ratio below 1 says the cohort does worse than the matched general population
+at that horizon. It is a comparison, not a test — no interval is attached,
+because the expected curve carries no sampling error of its own here.
+
+## Save
+
+```{r}
+#| label: save
+# Read by the plotting jobs in this set. `vintage` travels WITH the estimates
+# rather than being recorded only in prose: an expected curve whose vintage has
+# to be recovered later is the defect this template's vintage marker exists to
+# prevent, and it would be reintroduced here by omitting it.
+#
+# `clevel` travels with the estimates for the same reason `vintage` does: a
+# confidence limit whose coverage has to be inferred later is a number waiting
+# to be misread, and 0.68268948 is not the coverage anyone assumes.
+saveRDS(list(pred = pred, expected = expected, obs_vs_exp = obs_vs_exp,
+             horizons = HORIZONS, covariates = COVARIATES, vintage = VINTAGE,
+             clevel = CLEVEL),
+        set_path("estimates", "hs.rds"))
+```
