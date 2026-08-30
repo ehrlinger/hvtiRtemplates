@@ -1,5 +1,43 @@
 # Changelog
 
+## hvtiRtemplates 1.0.13
+
+- Added `analyses/04.06-bh.qmd`, the bootstrap variable-selection screen
+  that replaces a SAS `%hazboot` / `%sumboot` / `%cluster` chain
+  ([\#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)).
+  Scaffold it with `new_job("bh", <endpoint>, <type>)`. Requires
+  `hvtiRbootstrap` \>= 0.1.1 and `hvtiRutilities` \>= 1.1.6. Design in
+  `dev/specs/2026-08-28-bh-template-design.md`.
+
+  The template is the **report**, not the runner. `hzr_bootstrap()`
+  writes nothing until its final replicate and a full screen is days of
+  compute, so the run is chunked from a companion script and this file
+  pools what that script wrote. That file boundary is a durability
+  boundary, not tidiness, and the runner stays untemplated until
+  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+  grows multi-file templates.
+
+  It carries four traps that are silent rather than loud when they go
+  wrong: competing transformations must be screened and grouped only at
+  read time, never pruned beforehand; a screen that selected nothing is
+  a failed screen rather than a null result, and now stops the render;
+  `EXPECT_CHUNKS` and `EXPECT_BOOT` state what was *launched*, so a
+  partial pool is flagged as provisional instead of quietly reporting
+  over the wrong denominator; and the summed elapsed time is CPU cost,
+  not wall clock. `bh` and `hm` are parallel analyses, not a pipeline,
+  so the template deliberately writes no handoff file.
+
+- Added `tests/testthat/test-bh-helpers.R`, covering `boot_clusters()`
+  and `boot_shortfall()` against synthetic input. Both are first called
+  from this template, and a render cannot stand behind them: it stops
+  before reaching either whenever no bootstrap output exists, which is
+  every CI run.
+
+- Declared `hvtiRbootstrap` in `Suggests` and `Remotes`. The templates’
+  study dependencies stay out of `DESCRIPTION` deliberately, but the
+  test above calls the package directly, and `R CMD check` resolves what
+  tests reference — left undeclared it reports an unstated dependency.
+
 ## hvtiRtemplates 1.0.12
 
 - Added `graphs/06.02-hs.qmd`, the patient-level prediction template. It

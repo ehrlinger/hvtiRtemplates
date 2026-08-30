@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,16 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.13" id="hvtirtemplates-1013">hvtiRtemplates 1.0.13<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1013"></a></h2>
+<ul><li>
+<p>Added <code>analyses/04.06-bh.qmd</code>, the bootstrap variable-selection screen that replaces a SAS <code>%hazboot</code> / <code>%sumboot</code> / <code>%cluster</code> chain (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold it with <code>new_job("bh", &lt;endpoint&gt;, &lt;type&gt;)</code>. Requires <code>hvtiRbootstrap</code> &gt;= 0.1.1 and <code>hvtiRutilities</code> &gt;= 1.1.6. Design in <code>dev/specs/2026-08-28-bh-template-design.md</code>.</p>
+<p>The template is the <strong>report</strong>, not the runner. <code>hzr_bootstrap()</code> writes nothing until its final replicate and a full screen is days of compute, so the run is chunked from a companion script and this file pools what that script wrote. That file boundary is a durability boundary, not tidiness, and the runner stays untemplated until <code><a href="../reference/new_job.html">new_job()</a></code> grows multi-file templates.</p>
+<p>It carries four traps that are silent rather than loud when they go wrong: competing transformations must be screened and grouped only at read time, never pruned beforehand; a screen that selected nothing is a failed screen rather than a null result, and now stops the render; <code>EXPECT_CHUNKS</code> and <code>EXPECT_BOOT</code> state what was <em>launched</em>, so a partial pool is flagged as provisional instead of quietly reporting over the wrong denominator; and the summed elapsed time is CPU cost, not wall clock. <code>bh</code> and <code>hm</code> are parallel analyses, not a pipeline, so the template deliberately writes no handoff file.</p>
+</li>
+<li><p>Added <code>tests/testthat/test-bh-helpers.R</code>, covering <code>boot_clusters()</code> and <code>boot_shortfall()</code> against synthetic input. Both are first called from this template, and a render cannot stand behind them: it stops before reaching either whenever no bootstrap output exists, which is every CI run.</p></li>
+<li><p>Declared <code>hvtiRbootstrap</code> in <code>Suggests</code> and <code>Remotes</code>. The templates’ study dependencies stay out of <code>DESCRIPTION</code> deliberately, but the test above calls the package directly, and <code>R CMD check</code> resolves what tests reference — left undeclared it reports an unstated dependency.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.12" id="hvtirtemplates-1012">hvtiRtemplates 1.0.12<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1012"></a></h2>
 <ul><li>Added <code>graphs/06.02-hs.qmd</code>, the patient-level prediction template. It reads the model an <code>hm</code> job fitted, predicts survival per patient at the horizons a study reports, and sets those against age/sex/race-matched population survival from <code>hvtiRlifetables</code>. Its <code>vintage</code> marker has no default on purpose: the SAS macro it replaces inherited a default that moved twice with no signal, and a job that does not state its vintage cannot be reproduced. Design in <code>dev/specs/2026-08-29-hs-template-design.md</code>.</li>
