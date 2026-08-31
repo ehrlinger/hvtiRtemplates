@@ -59,54 +59,20 @@ test_that("a template sits in the folder its prefix is filed under", {
   expect_equal(tl$folder, tx$folder[match(tl$prefix, tx$prefix)])
 })
 
-test_that("within a folder, ordinal minors follow taxonomy row order", {
-  # Deliberately per-folder rather than global. Global row order does not work:
-  # `rfsrc`, `rfc`, `rfs` and `nb` are `analyses` rows that sit AFTER the
-  # `documents` row `ar`, so an `rfs` template (major 04) would compare as later
-  # than an `ar` template (major 07) on row order while being earlier on
-  # ordinal. The majors already carry the between-folder ordering; only the
-  # within-folder ordering is left for this check.
-  tl <- template_list()
-  skip_if(nrow(tl) == 0, "no templates installed")
-  tx <- hvti_taxonomy()
-  for (f in unique(tl$folder)) {
-    k <- tl$folder == f
-    expect_equal(order(tl$ordinal[k]),
-                 order(match(tl$prefix[k], tx$prefix)),
-                 info = paste("minors out of taxonomy order in", f))
-  }
-})
-
-test_that("the within-folder ordering rule itself can fail, on a synthetic pair", {
-  # The check above is structurally unable to fail while only one template is
-  # installed: order() on a length-1 vector always returns 1, so that assertion
-  # holds regardless of what ordinal or prefix contain. This block exercises the
-  # same rule -- ordinal order must track taxonomy row order -- against a small
-  # hand-built frame standing in for two templates in one folder, so a broken
-  # rule is caught now rather than only once a second `distributions` template
-  # actually lands.
-  tx <- hvti_taxonomy()
-  # `ac` and `hz` are both real `distributions` prefixes; `ac` sits earlier in
-  # hvti_taxonomy() row order, so the expected minor order below is derived from
-  # match(), not hard-coded, and stays correct if the taxonomy is reordered.
-  expected_order <- order(match(c("ac", "hz"), tx$prefix))
-
-  # Shaped like template_list()'s output: two rows standing in for two
-  # `distributions` templates.
-  ok <- data.frame(
-    name    = c("03.01-ac", "03.02-hz"),
-    prefix  = c("ac", "hz"),
-    ordinal = c("03.01", "03.02"),
-    folder  = c("distributions", "distributions"),
-    file    = c("ac.qmd", "hz.qmd"),
-    stringsAsFactors = FALSE
-  )
-  # Positive: minors agree with taxonomy row order.
-  expect_equal(order(ok$ordinal), expected_order)
-
-  # Negative: same two rows, minors swapped so ordinal order contradicts
-  # taxonomy row order -- the rule must detect this, not pass it silently.
-  bad <- ok
-  bad$ordinal <- rev(bad$ordinal)
-  expect_false(identical(order(bad$ordinal), expected_order))
-})
+# The two tests that stood here -- "within a folder, ordinal minors follow
+# taxonomy row order" and its synthetic-pair sibling -- were RETIRED 2026-08-31.
+#
+# They asserted the derivation that #56 removed. An ordinal is a KEY, assigned
+# once and recorded in the roadmap ledger, never recomputed from a row position:
+# `bh` shipped as 04.06 when it was 6th in `analyses`, hvtiRutilities aeb20f2
+# moved `hs` out to `graphs`, and the position changed while the shipped
+# filename could not. Keeping a test that enforced position would have pinned
+# the taxonomy's row order across a repository boundary, for a property the repo
+# no longer claims.
+#
+# What replaced them is NOT another position check. `check-roadmap-counts.py`
+# already owns the key side -- format, folder-major, uniqueness, retired
+# ordinals, and agreement with the files on disk. The one thing it could not
+# check is its own `FOLDER_ORDINAL` map, which is hardcoded; that check needs
+# `hvti_taxonomy()` and so lives in R, in `test-roadmap.R`. See
+# "the guard's folder map still matches the taxonomy" there.
