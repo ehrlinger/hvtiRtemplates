@@ -1,3 +1,33 @@
+# hvtiRtemplates 1.0.16
+
+* `graphs/06.02-hs.qmd` now calls `hvtiRlifetables::us_cohort_curve()` instead
+  of deriving the cohort expected-survival curve inline. The template shipped
+  that derivation deliberately, as the specification for
+  [hvtiRlifetables#16](https://github.com/ehrlinger/hvtiRlifetables/issues/16),
+  with a comment promising that when the function landed "this chunk becomes one
+  call and the result must not change". It landed in `hvtiRlifetables` 0.1.3;
+  the numbers were checked to 1e-12 against the derivation before the swap.
+
+  The function is not merely a convenience. Its averaging follows `%usmatchd`
+  (lines 338-350) — the unweighted cohort mean, over survival rather than
+  cumulative hazard, no patient weighted by follow-up — and it deliberately does
+  **not** drop `NA`, where the inline version used `na.rm = TRUE` and would have
+  hidden one. Every value `us_matched()` returns is finite by construction, so an
+  `NA` there is a defect, not a datum.
+
+* Added an `EDIT:` marker for `us_cohort_curve()`'s `by =`, which covers
+  reporting expected survival within groups
+  ([hvtiRlifetables#17](https://github.com/ehrlinger/hvtiRlifetables/issues/17)).
+  Grouping is not stratification: `table =` chooses which strata the life *table*
+  is built from, `by` chooses how the resulting curves are grouped for reporting.
+
+* `HORIZONS` must now be sorted and distinct, checked where it is declared.
+  `us_matched()` enforces sortedness too, but three chunks later and about its
+  own `times` argument rather than the value the author edited — and the
+  expected-survival join pairs `us_cohort_curve()`'s output, ordered by first
+  appearance, with `split()`'s, ordered numerically. They agree only while
+  `HORIZONS` is sorted.
+
 # hvtiRtemplates 1.0.15
 
 * **The bootstrap screen template is now `analyses/04.05-bh.qmd`**, renamed from
