@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.16</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.17</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,14 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.17" id="hvtirtemplates-1017">hvtiRtemplates 1.0.17<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1017"></a></h2>
+<ul><li>
+<p><strong><code>analyses/04.05-bh.qmd</code> could not render on any multiphase bag</strong> — which is every hazard bag, and <code>bh</code> is the bootstrap <em>hazard</em> screen. Its <code>provenance</code> chunk passed <code>bag$requested</code> and <code>bag$usable</code> to <code><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame()</a></code> as if they were scalars. They are per <strong>phase</strong>: a real bag carries <code>c(early = 230, late = 230)</code>, so a length-2 value met a length-13 item column and <code><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame()</a></code> errored. Now collapsed to one labelled string per row — <code>early 230, late 230</code> — with fallbacks for a single-phase run and for a runner that drops the names.</p>
+<p>Not summed: the pool is <em>offered</em> to each phase, so 230 and 230 is one pool seen twice, not 460 candidates.</p>
+<p>⚠️ <strong>Found by the first real render</strong>, against the very study the template was written from — <code>EXPECT_CHUNKS &lt;- 25L</code> and <code>EXPECT_BOOT &lt;- 500L</code> are that study’s own values. The template shipped in 1.0.13 and was renumbered in 1.0.15 without anyone rendering it. Nothing in <code>R CMD check</code>, the test suite, <code>lintr</code> or three code reviews could see it: the defect is an assumption about the shape of a field in an artifact produced by another package.</p>
+</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.16" id="hvtirtemplates-1016">hvtiRtemplates 1.0.16<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1016"></a></h2>
 <div class="section level3">

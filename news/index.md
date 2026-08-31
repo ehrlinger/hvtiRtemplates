@@ -1,5 +1,29 @@
 # Changelog
 
+## hvtiRtemplates 1.0.17
+
+- **`analyses/04.05-bh.qmd` could not render on any multiphase bag** —
+  which is every hazard bag, and `bh` is the bootstrap *hazard* screen.
+  Its `provenance` chunk passed `bag$requested` and `bag$usable` to
+  [`data.frame()`](https://rdrr.io/r/base/data.frame.html) as if they
+  were scalars. They are per **phase**: a real bag carries
+  `c(early = 230, late = 230)`, so a length-2 value met a length-13 item
+  column and [`data.frame()`](https://rdrr.io/r/base/data.frame.html)
+  errored. Now collapsed to one labelled string per row —
+  `early 230, late 230` — with fallbacks for a single-phase run and for
+  a runner that drops the names.
+
+  Not summed: the pool is *offered* to each phase, so 230 and 230 is one
+  pool seen twice, not 460 candidates.
+
+  ⚠️ **Found by the first real render**, against the very study the
+  template was written from — `EXPECT_CHUNKS <- 25L` and
+  `EXPECT_BOOT <- 500L` are that study’s own values. The template
+  shipped in 1.0.13 and was renumbered in 1.0.15 without anyone
+  rendering it. Nothing in `R CMD check`, the test suite, `lintr` or
+  three code reviews could see it: the defect is an assumption about the
+  shape of a field in an artifact produced by another package.
+
 ## hvtiRtemplates 1.0.16
 
 ### Guards
