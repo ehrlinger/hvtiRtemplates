@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.14</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,17 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.14" id="hvtirtemplates-1014">hvtiRtemplates 1.0.14<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1014"></a></h2>
+<ul><li>
+<p><strong><code>analyses/04.06-bh.qmd</code> gains the data-driven half of the SAS <code>%cluster</code> contribution.</strong> <code>boot_clusters()</code> counts replicates retaining any member of a list you declare and computes no correlation at all, so the section’s claim to group “by DATA” described the SAS macro rather than the R helper. A <code>pool_collinear_pairs()</code> chunk now makes it true. The two are kept apart deliberately: a declaration says a clinician treats several variables as one thing, a correlation says the pool cannot tell them apart, and only the second is a property of the data.</p>
+<p>This is why the template now reads the built dataset. The one failure that introduces is guarded: a build that moved since the screen ran would leave the correlations describing one dataset and every frequency above describing another. <code>n_rows</code> catches it, as a warning rather than a stop, because only this table goes stale.</p>
+</li>
+<li>
+<p><strong>Concept-level union frequencies.</strong> A per-form row cannot answer “how often was this <em>concept</em> selected”, which is the figure a paper quotes. Nothing is collapsed — every form keeps its own row — but each concept now also carries <code>union_pct</code>, <code>best_form_pct</code> and the <code>spread</code> between them, which is how much the per-form table understates it.</p>
+<p>Computed from the replicate table, never from the summary: a union across a concept’s forms cannot be recovered from marginal percentages. Two forms at 30% each are anywhere between 30% and 60% of replicates depending on how often the same replicate took both, and the summary does not record that.</p>
+</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.13" id="hvtirtemplates-1013">hvtiRtemplates 1.0.13<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1013"></a></h2>
 <ul><li>

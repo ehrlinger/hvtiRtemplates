@@ -1,5 +1,35 @@
 # Changelog
 
+## hvtiRtemplates 1.0.14
+
+- **`analyses/04.06-bh.qmd` gains the data-driven half of the SAS
+  `%cluster` contribution.** `boot_clusters()` counts replicates
+  retaining any member of a list you declare and computes no correlation
+  at all, so the section’s claim to group “by DATA” described the SAS
+  macro rather than the R helper. A `pool_collinear_pairs()` chunk now
+  makes it true. The two are kept apart deliberately: a declaration says
+  a clinician treats several variables as one thing, a correlation says
+  the pool cannot tell them apart, and only the second is a property of
+  the data.
+
+  This is why the template now reads the built dataset. The one failure
+  that introduces is guarded: a build that moved since the screen ran
+  would leave the correlations describing one dataset and every
+  frequency above describing another. `n_rows` catches it, as a warning
+  rather than a stop, because only this table goes stale.
+
+- **Concept-level union frequencies.** A per-form row cannot answer “how
+  often was this *concept* selected”, which is the figure a paper
+  quotes. Nothing is collapsed — every form keeps its own row — but each
+  concept now also carries `union_pct`, `best_form_pct` and the `spread`
+  between them, which is how much the per-form table understates it.
+
+  Computed from the replicate table, never from the summary: a union
+  across a concept’s forms cannot be recovered from marginal
+  percentages. Two forms at 30% each are anywhere between 30% and 60% of
+  replicates depending on how often the same replicate took both, and
+  the summary does not record that.
+
 ## hvtiRtemplates 1.0.13
 
 - Added `analyses/04.06-bh.qmd`, the bootstrap variable-selection screen
