@@ -1,4 +1,4 @@
-# The 04.06-bh template is this repo's first caller of boot_clusters() and
+# The 04.05-bh template is this repo's first caller of boot_clusters() and
 # boot_shortfall(), and a render is not a test: the render stops at the `load`
 # chunk whenever no bootstrap output exists, which is every CI run. So the two
 # helpers the template leans on are exercised here against synthetic input.

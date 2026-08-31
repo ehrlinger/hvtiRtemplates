@@ -60,7 +60,7 @@ row has no template on disk.
 
 | prefix | status | ordinal | breadth | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `bh` | shipped | 04.06 | 322 | 2 | — |
+| `bh` | shipped | 04.05 | 322 | 2 | — |
 | `bc` | queued | — | 16 | 0 | — |
 | `bl` | queued | — | 352 | 1 | — |
 | `bn` | queued | — | 214 | 0 | — |

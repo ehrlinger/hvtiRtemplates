@@ -52,6 +52,9 @@ FIELDS = ["prefix", "name", "folder", "family", "kind", "status", "ordinal",
 # incomplete, which is a different claim from absent.
 ON_DISK = {"shipped", "revisit", "in-flight"}
 
+# `retired_ordinals` is ledger data and gets the same treatment as a prefix row.
+RETIRED_FIELDS = ["ordinal", "prefix", "retired", "reason"]
+
 
 # A measured zero and an unmeasured field must stay distinguishable: nine
 # prefixes genuinely have no R job, and reading that as "not yet counted"
@@ -97,9 +100,26 @@ def check_schema(rows):
     return bad
 
 
-def check_ordinals(rows):
+def check_ordinals(rows, retired=()):
+    """An ordinal is a KEY, assigned once, not a position.
+
+    It is NOT derived from the prefix's row position in `hvti_taxonomy()`, and
+    must not be recomputed from it. That derivation is what put `bh` at 04.06:
+    it was 6th in `analyses` when the number was assigned, hvtiRutilities
+    aeb20f2 moved `hs` out to `graphs`, and every prefix below it shifted up
+    one while the shipped filename stayed put. Nothing caught it, because the
+    checks below verify format, folder-major and uniqueness -- never position.
+
+    Row order may drift. Ordinals may not. Same rule pub_kb reached for
+    document_key on 2026-08-06: identity is assigned once and only accumulates.
+    """
     bad = []
     seen = {}
+    # Only well-formed entries. A malformed one is REPORTED by check_retired()
+    # rather than raised here: this script exists to name a ledger's shape
+    # problems, and a KeyError names only its own traceback.
+    retired_by = {r["ordinal"]: r for r in retired
+                  if isinstance(r, dict) and isinstance(r.get("ordinal"), str)}
     for r in rows:
         ordinal, folder, prefix = r.get("ordinal"), r.get("folder"), r.get("prefix")
         if ordinal is None:
@@ -116,11 +136,53 @@ def check_ordinals(rows):
         elif major != want:
             bad.append(f"`{prefix}` is in {folder} (ordinal {want}) "
                        f"but its ordinal starts {major}")
+        if ordinal in retired_by:
+            was = retired_by[ordinal]
+            bad.append(f"`{prefix}` uses ordinal {ordinal}, retired "
+                       f"{was.get('retired', '?')} from `{was.get('prefix', '?')}`. "
+                       f"A retired ordinal "
+                       f"has already shipped in a scaffolded filename somewhere and "
+                       f"cannot be reissued; take the next free minor instead")
         if ordinal in seen:
             bad.append(f"ordinal {ordinal} is used by both "
                        f"`{seen[ordinal]}` and `{prefix}`")
         else:
             seen[ordinal] = prefix
+    return bad
+
+
+def check_retired(retired):
+    """Validate `retired_ordinals` itself, so a malformed entry reads as a
+    ledger defect rather than a traceback."""
+    if not isinstance(retired, list):
+        return [f"`retired_ordinals` must be a list, got "
+                f"{type(retired).__name__}"]
+    bad = []
+    seen = {}
+    for i, r in enumerate(retired):
+        where = f"retired_ordinals[{i}]"
+        if not isinstance(r, dict):
+            bad.append(f"{where} is a {type(r).__name__}, not an object")
+            continue
+        missing = [f for f in RETIRED_FIELDS if f not in r]
+        extra = [k for k in r if k not in RETIRED_FIELDS]
+        if missing:
+            bad.append(f"{where} is missing field(s): {', '.join(missing)}")
+        if extra:
+            bad.append(f"{where} has unknown field(s): {', '.join(extra)}")
+        # Absent is already reported above. PRESENT-but-null is not, and must
+        # not fall through: `"ordinal": null` is a different defect from a
+        # missing key, and skipping it let one through silently.
+        if "ordinal" not in r:
+            continue
+        ordinal = r["ordinal"]
+        if not isinstance(ordinal, str) or not re.fullmatch(r"\d{2}[.]\d{2}", ordinal):
+            bad.append(f"{where} has ordinal {ordinal!r}, not zero-padded NN.MM")
+        elif ordinal in seen:
+            bad.append(f"ordinal {ordinal} is retired twice, at "
+                       f"retired_ordinals[{seen[ordinal]}] and {where}")
+        else:
+            seen[ordinal] = i
     return bad
 
 
@@ -171,7 +233,10 @@ def main():
         d = json.load(fh)
     rows = d["prefixes"]
 
-    bad = check_schema(rows) + check_ordinals(rows) + check_disk(rows) + check_doc(rows)
+    retired = d.get("retired_ordinals", [])
+
+    bad = (check_schema(rows) + check_retired(retired)
+           + check_ordinals(rows, retired) + check_disk(rows) + check_doc(rows))
     if bad:
         print("Roadmap ledger disagrees with the templates on disk:\n", file=sys.stderr)
         for b in bad:
