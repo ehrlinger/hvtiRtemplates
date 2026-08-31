@@ -150,11 +150,11 @@
       "prefix": "bn",
       "name": "Bootstrap nonparametric",
       "folder": "analyses",
-      "family": "bootstrap",
+      "family": "bootstrap-ci",
       "kind": "job",
       "status": "queued",
       "ordinal": null,
-      "batch": 2,
+      "batch": null,
       "sas_breadth": 214,
       "r_exemplars": 0,
       "r_jobs": 0,
@@ -163,7 +163,7 @@
       "workflows": [],
       "blocked_on": null,
       "spec": null,
-      "note": null
+      "note": "different job from the bh family: %bnmnr / %bnprev / %decompos, no macro overlap beyond %vars. Bootstrap CIs for nonparametric estimates, not variable selection. Needs its own design spec."
     },
     {
       "prefix": "bq",
@@ -173,16 +173,16 @@
       "kind": "job",
       "status": "queued",
       "ordinal": null,
-      "batch": 2,
+      "batch": null,
       "sas_breadth": 2,
       "r_exemplars": 0,
       "r_jobs": 0,
       "upstream": [],
       "downstream": [],
       "workflows": [],
-      "blocked_on": null,
+      "blocked_on": "hvtiRbootstrap#16",
       "spec": null,
-      "note": null
+      "note": "no quantile fitter in hvtiRbootstrap, so the template cannot be written. Smallest prefix in the taxonomy (2 studies, 18 jobs)."
     },
     {
       "prefix": "br",

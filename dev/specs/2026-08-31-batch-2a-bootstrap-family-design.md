@@ -2,9 +2,17 @@
 
 **Date:** 2026-08-31
 **Status:** designed, not started
-**Roadmap:** batch 2 of `2026-08-29-template-conversion-roadmap-design.md`,
-**rescoped**. That note put `bl`, `bc`, `bn`, `bq` and `br` in one family riding
-on `bh`'s design. The corpus does not support that grouping; see §2.
+**Roadmap:** `2026-08-29-template-conversion-roadmap.md` is the live batch
+assignment, generated from the ledger; the reasoning behind family batching is
+in `2026-08-29-template-conversion-roadmap-design.md`. Both put `bl`, `bc`,
+`bn`, `bq` and `br` in one family riding on `bh`'s design. The corpus does not
+support that grouping; see §2.
+
+**This spec changed the ledger, not only the prose.** `bn` moves to a new
+`bootstrap-ci` family and `bq` to `blocked_on: hvtiRbootstrap#16`, both
+unscheduled, and the roadmap document is regenerated. Rescoping in prose alone
+would have left the generated roadmap still showing them in batch 2 —
+the drift the ledger exists to prevent.
 **Issue:** [#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)
 
 This note is self-contained. It assumes no memory of the session that produced
