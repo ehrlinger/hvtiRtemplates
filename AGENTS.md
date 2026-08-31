@@ -192,9 +192,18 @@ moved — a template that fails this check cannot be scaffolded at all.
     __typename ... on Bot{login}}}}}}}' -F pr=<PR_node_id> -F bot=<BOT_node_id>
   ```
 
-  Take the bot's node id from any existing review by it
-  (`gh api repos/<o>/<r>/pulls/<n>/reviews --jq '.[0].user.node_id'`); `union: true` adds
-  rather than replaces. The review lands roughly three minutes later. **Verify with
+  Take the bot's node id from an existing review **by that bot**, filtering explicitly
+  rather than taking the first review, which may be a human's and whose id `botIds` will
+  not accept:
+
+  ```sh
+  gh api repos/<o>/<r>/pulls/<n>/reviews \
+    --jq '[.[] | select(.user.login | startswith("copilot"))][0].user.node_id'
+  ```
+
+  This needs at least one prior review by the bot on some PR in the repo; any of them
+  will do, since the id is per installation rather than per PR. `union: true` adds rather
+  than replaces. The review lands roughly three minutes later. **Verify with
   `gh pr view <n> --json reviewRequests`, never the mutation's 200**, since trusting a 200
   is what made the REST endpoint look like it worked in the first place.
   ⚠️ **A re-review can re-raise a finding the reviewed commit already fixed**, because it
