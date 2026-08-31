@@ -28,7 +28,7 @@
 
 # hvtiRtemplates 1.0.14
 
-* **`analyses/04.05-bh.qmd` gains the data-driven half of the SAS `%cluster`
+* **`analyses/04.06-bh.qmd` gains the data-driven half of the SAS `%cluster`
   contribution.** `boot_clusters()` counts replicates retaining any member of a
   list you declare and computes no correlation at all, so the section's claim to
   group "by DATA" described the SAS macro rather than the R helper. A
@@ -56,7 +56,11 @@
 
 # hvtiRtemplates 1.0.13
 
-* Added `analyses/04.05-bh.qmd`, the bootstrap variable-selection screen that
+<sub>Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15
+onward. The sentences below are left as they shipped. A job scaffolded from this
+release keeps `04.06-bh` in its filename and needs no rename.</sub>
+
+* Added `analyses/04.06-bh.qmd`, the bootstrap variable-selection screen that
   replaces a SAS `%hazboot` / `%sumboot` / `%cluster` chain
   ([#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)). Scaffold it with
   `new_job("bh", <endpoint>, <type>)`. Requires `hvtiRbootstrap` >= 0.1.1 and
