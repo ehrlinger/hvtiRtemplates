@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.15</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.16</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,23 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.16" id="hvtirtemplates-1016">hvtiRtemplates 1.0.16<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1016"></a></h2>
+<div class="section level3">
+<h3 id="guards-1-0-16">Guards<a class="anchor" aria-label="anchor" href="#guards-1-0-16"></a></h3>
+<ul><li><p>Retired the two tests asserting that within-folder ordinal minors follow <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy()</a></code> row order. They enforced the derivation <a href="https://github.com/ehrlinger/hvtiRtemplates/issues/56" class="external-link">#56</a> removed: an ordinal is a key, assigned once and recorded in the ledger, never recomputed from a position. <a href="https://github.com/ehrlinger/hvtiRtemplates/issues/56" class="external-link">#56</a> established that rule in <code>AGENTS.md</code>, the ledger and <code>check-roadmap-counts.py</code>, but left the test suite asserting the opposite — two guards on one repository disagreeing, which is the drift the guards exist to prevent. Measured before removal: reordering two <strong>templated</strong> prefixes within a folder turned CI red, while inserting or reordering an untemplated one was always safe.</p></li>
+<li><p>Replaced them with a <strong>key</strong> check rather than another position check: <code>check-roadmap-counts.py</code> validates every ordinal’s major against a <strong>hardcoded</strong> <code>FOLDER_ORDINAL</code> map, whose authority is <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy()</a></code>’s folder order — a table that lives in <code>hvtiRutilities</code>, a different repository. <code>test-roadmap.R</code> now asserts the map still matches. That closes the same class of failure one level up from the one <a href="https://github.com/ehrlinger/hvtiRtemplates/issues/56" class="external-link">#56</a> fixed. The Python guard cannot check its own map: reading the taxonomy needs R, which is why the guards are split by language.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="graphs0602-hsqmd-1-0-16"><code>graphs/06.02-hs.qmd</code><a class="anchor" aria-label="anchor" href="#graphs0602-hsqmd-1-0-16"></a></h3>
+<ul><li>
+<p>Now calls <code>hvtiRlifetables::us_cohort_curve()</code> instead of deriving the cohort expected-survival curve inline. The template shipped that derivation deliberately, as the specification for <a href="https://github.com/ehrlinger/hvtiRlifetables/issues/16" class="external-link">hvtiRlifetables#16</a>, with a comment promising that when the function landed “this chunk becomes one call and the result must not change”. It landed in <code>hvtiRlifetables</code> 0.1.3; the numbers were checked to 1e-12 against the derivation before the swap.</p>
+<p>The function is not merely a convenience. Its averaging follows <code>%usmatchd</code> (lines 338-350) — the unweighted cohort mean, over survival rather than cumulative hazard, no patient weighted by follow-up — and it deliberately does <strong>not</strong> drop <code>NA</code>, where the inline version used <code>na.rm = TRUE</code> and would have hidden one.</p>
+</li>
+<li><p>Added an <code>EDIT:</code> marker for <code>us_cohort_curve()</code>’s <code>by =</code>, covering <a href="https://github.com/ehrlinger/hvtiRlifetables/issues/17" class="external-link">hvtiRlifetables#17</a>. Grouping is not stratification: <code>table =</code> chooses which strata the life <em>table</em> is built from, <code>by</code> chooses how the resulting curves are grouped for reporting.</p></li>
+<li><p><code>HORIZONS</code> must now be sorted and distinct, checked where it is declared. <code>us_matched()</code> enforces sortedness too, but three chunks later and about its own <code>times</code> argument rather than the value the author edited — and the expected-survival join pairs <code>us_cohort_curve()</code>’s output, ordered by first appearance, with <code><a href="https://rdrr.io/r/base/split.html" class="external-link">split()</a></code>’s, ordered numerically. They agree only while <code>HORIZONS</code> is sorted.</p></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.15" id="hvtirtemplates-1015">hvtiRtemplates 1.0.15<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1015"></a></h2>
 <ul><li>
