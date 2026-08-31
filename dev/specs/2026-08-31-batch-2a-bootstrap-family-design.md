@@ -71,7 +71,7 @@ counts alone.
 | prefix | disposition |
 |---|---|
 | `bl` `br` `bc` | **in this batch** — fitter exists, shape matches `bh` |
-| `bq` | **deferred, blocked**: no quantile fitter. A demand signal on `hvtiRbootstrap`, filed as an issue, not a template problem |
+| `bq` | **deferred, blocked**: no quantile fitter — [hvtiRbootstrap#16](https://github.com/ehrlinger/hvtiRbootstrap/issues/16). A demand signal on that package, not a template problem |
 | `bn` | **deferred, own design**: different job entirely (§2.2) |
 
 ---
@@ -212,8 +212,14 @@ taxonomy row position** (`04.06` is retired and cannot be reissued).
 
 ## 9. Out of scope
 
-- **`bq`** — no quantile fitter in `hvtiRbootstrap`. Filed there; not a template
-  problem and not fixable here.
+- **`bq`** — no quantile fitter in `hvtiRbootstrap`:
+  [#16](https://github.com/ehrlinger/hvtiRbootstrap/issues/16). Not a template
+  problem and not fixable here. The SAS side pairs `%bootreg` with `fit_linear`
+  and `%bootqr` with nothing; `%bootqr` is not in `~/Documents/macro.library`
+  either, so `tp.bq.quantile_regression_bagging.sas` is the specification that
+  exists. ⚠️ `bq` is the **smallest prefix in the taxonomy** — 2 studies, 18
+  jobs — so this may sit unbuilt for a while; it is filed so the blocker lives
+  where the fix would.
 - **`bn`** — a different job (§2.2). Needs its own design spec against its own
   macros and its 10 SAS templates.
 - **Running the screens.** These templates report over a bag; the bag is
