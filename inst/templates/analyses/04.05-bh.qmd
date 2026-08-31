@@ -341,7 +341,16 @@ n_chunks <- if (is.null(bag$n_chunks)) 1L else as.integer(bag$n_chunks)
 # candidates. Falls back to a bare value when a single-phase run makes it
 # length 1, and to unlabelled values if a future runner drops the names.
 .per_phase <- function(x) {
-  if (length(x) <= 1L) {
+  # A zero-length value must return exactly one string, or it vanishes from the
+  # `value` vector and data.frame() fails with the SAME "differing number of
+  # rows" error this helper was written to fix. `format(integer(0))` is
+  # character(0); `format(NULL)` is the string "NULL", so only the typed
+  # zero-length case actually drops. Guarded explicitly rather than relying on
+  # which of the two a future runner happens to write.
+  if (length(x) == 0L) {
+    return(NA_character_)
+  }
+  if (length(x) == 1L) {
     return(format(x))
   }
   if (is.null(names(x))) {
