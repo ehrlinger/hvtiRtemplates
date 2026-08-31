@@ -106,12 +106,28 @@ test_that("the guard's folder map still matches the taxonomy", {
 
   guard <- file.path("..", "..", "dev", "specs", "artifacts",
                      "check-roadmap-counts.py")
-  skip_if_not(file.exists(guard), "roadmap guard not present")
+  # Same rule as require_ledger() above, and for the same reason: outside the
+  # source tree the file is absent and skipping is correct, but under
+  # HVTI_ROADMAP_STRICT -- which CI sets -- a renamed or moved guard must FAIL.
+  # A skip there would report green while checking nothing, which is the exact
+  # defect this test exists to catch one level up.
+  if (!file.exists(guard)) {
+    if (nzchar(Sys.getenv("HVTI_ROADMAP_STRICT"))) {
+      stop("roadmap guard not found at ", guard,
+           ", but HVTI_ROADMAP_STRICT is set -- the source tree should have it")
+    }
+    testthat::skip("roadmap guard not present")
+  }
 
   src <- readLines(guard, warn = FALSE)
   open_at <- grep("^FOLDER_ORDINAL = \\{", src)
   expect_length(open_at, 1L)
-  close_at <- open_at + which(trimws(src[(open_at + 1L):length(src)]) == "}")[[1L]]
+  # An expectation, not `[[1L]]` on a possibly-empty vector: a missing closing
+  # brace should fail the test with a message, not raise a subscript error that
+  # says nothing about what is wrong.
+  closes <- which(trimws(src[(open_at + 1L):length(src)]) == "}")
+  expect_gt(length(closes), 0L)
+  close_at <- open_at + closes[[1L]]
 
   body <- src[(open_at + 1L):(close_at - 1L)]
   m <- regmatches(body, regexec('"([^"]+)":\\s*"([0-9]{2})"', body))
