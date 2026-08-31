@@ -14,7 +14,7 @@ refuses to overwrite an existing job.
 | `graphs/06.01-hp.qmd` | nomogram and hazard figures | `graphs/` |
 | `graphs/06.02-hs.qmd` | patient-level predictions and expected survival | `graphs/` |
 | `analyses/04.01-hm.qmd` | multivariable hazard model | `analyses/` |
-| `analyses/04.06-bh.qmd` | bootstrap variable selection | `analyses/` |
+| `analyses/04.05-bh.qmd` | bootstrap variable selection | `analyses/` |
 
 A template is named `<NN.MM>-<prefix>.qmd` and lives in the taxonomy folder it
 scaffolds into. The name is the authority: `template_list()` reads the ordinal

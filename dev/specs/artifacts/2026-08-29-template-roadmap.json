@@ -17,6 +17,14 @@
     "r_exemplars_note": "the DEFLATED count -- a stem replicated across studies inflates the raw figure, severely for ar (395 -> 89). Never quote the undeflated number.",
     "batch_note": "batches 0-2 are decided; 3 and later are PROVISIONAL and carry the family's provisional position."
   },
+  "retired_ordinals": [
+    {
+      "ordinal": "04.06",
+      "prefix": "bh",
+      "retired": "2026-08-31",
+      "reason": "Assigned when `hs` still sat in `analyses`, making `bh` 6th. hvtiRutilities aeb20f2 moved `hs` to `graphs`, shifting `bh` to 5th, and the ordinal was not moved with it. Reassigned to 04.05 while only hvtiRtemplates 1.0.13 and 1.0.14 had shipped it. Any job scaffolded from those two carries `04.06-bh` in its filename, so this ordinal must never be issued to another prefix."
+    }
+  ],
   "prefixes": [
     {
       "prefix": "ac",
@@ -105,7 +113,7 @@
       "family": "bootstrap",
       "kind": "job",
       "status": "shipped",
-      "ordinal": "04.06",
+      "ordinal": "04.05",
       "batch": 0,
       "sas_breadth": 322,
       "r_exemplars": 2,

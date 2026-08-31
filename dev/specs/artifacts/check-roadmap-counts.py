@@ -97,9 +97,22 @@ def check_schema(rows):
     return bad
 
 
-def check_ordinals(rows):
+def check_ordinals(rows, retired=()):
+    """An ordinal is a KEY, assigned once, not a position.
+
+    It is NOT derived from the prefix's row position in `hvti_taxonomy()`, and
+    must not be recomputed from it. That derivation is what put `bh` at 04.06:
+    it was 6th in `analyses` when the number was assigned, hvtiRutilities
+    aeb20f2 moved `hs` out to `graphs`, and every prefix below it shifted up
+    one while the shipped filename stayed put. Nothing caught it, because the
+    checks below verify format, folder-major and uniqueness -- never position.
+
+    Row order may drift. Ordinals may not. Same rule pub_kb reached for
+    document_key on 2026-08-06: identity is assigned once and only accumulates.
+    """
     bad = []
     seen = {}
+    retired_by = {r["ordinal"]: r for r in retired}
     for r in rows:
         ordinal, folder, prefix = r.get("ordinal"), r.get("folder"), r.get("prefix")
         if ordinal is None:
@@ -116,6 +129,12 @@ def check_ordinals(rows):
         elif major != want:
             bad.append(f"`{prefix}` is in {folder} (ordinal {want}) "
                        f"but its ordinal starts {major}")
+        if ordinal in retired_by:
+            was = retired_by[ordinal]
+            bad.append(f"`{prefix}` uses ordinal {ordinal}, retired "
+                       f"{was['retired']} from `{was['prefix']}`. A retired ordinal "
+                       f"has already shipped in a scaffolded filename somewhere and "
+                       f"cannot be reissued; take the next free minor instead")
         if ordinal in seen:
             bad.append(f"ordinal {ordinal} is used by both "
                        f"`{seen[ordinal]}` and `{prefix}`")
@@ -171,7 +190,10 @@ def main():
         d = json.load(fh)
     rows = d["prefixes"]
 
-    bad = check_schema(rows) + check_ordinals(rows) + check_disk(rows) + check_doc(rows)
+    retired = d.get("retired_ordinals", [])
+
+    bad = (check_schema(rows) + check_ordinals(rows, retired)
+           + check_disk(rows) + check_doc(rows))
     if bad:
         print("Roadmap ledger disagrees with the templates on disk:\n", file=sys.stderr)
         for b in bad:

@@ -1,6 +1,34 @@
+# hvtiRtemplates 1.0.15
+
+* **The bootstrap screen template is now `analyses/04.05-bh.qmd`**, renamed from
+  `04.06-bh.qmd`. The ordinal had been derived from the prefix's row position in
+  `hvti_taxonomy()`, and that derivation had already failed: `bh` was 6th in
+  `analyses` when the number was assigned, `hvtiRutilities` then moved `hs` out
+  to `graphs`, and every prefix below it shifted up one while the filename
+  stayed put. The identity was positional across a repository boundary, so a
+  correctness fix in the upstream vocabulary silently invalidated a downstream
+  filename, and nothing caught it: the ordinal checks verify format,
+  folder-major and uniqueness, never position.
+
+  ⚠️ **A job already scaffolded from 1.0.13 or 1.0.14 is unaffected.**
+  `new_job()` bakes the ordinal into the job filename at copy time, so existing
+  jobs keep theirs and do not need renaming. Only newly scaffolded `bh` jobs
+  take `04.05`.
+
+* **An ordinal is now a key, assigned once, and never recomputed from row
+  order.** `NN` is the taxonomy folder's position, which is stable; `MM` is
+  assigned from the next free minor in that folder and recorded in the roadmap
+  ledger. Row order may drift; ordinals may not. Stated in `AGENTS.md`, so the
+  next template is not numbered by counting rows.
+
+* **`04.06` is retired, not freed.** It shipped in two releases, so a study that
+  scaffolded `bh` from either carries it in a filename. It is recorded under
+  `retired_ordinals` in the ledger, and `check-roadmap-counts.py` now fails any
+  row that claims a retired ordinal, naming when and from what it was retired.
+
 # hvtiRtemplates 1.0.14
 
-* **`analyses/04.06-bh.qmd` gains the data-driven half of the SAS `%cluster`
+* **`analyses/04.05-bh.qmd` gains the data-driven half of the SAS `%cluster`
   contribution.** `boot_clusters()` counts replicates retaining any member of a
   list you declare and computes no correlation at all, so the section's claim to
   group "by DATA" described the SAS macro rather than the R helper. A
@@ -28,7 +56,7 @@
 
 # hvtiRtemplates 1.0.13
 
-* Added `analyses/04.06-bh.qmd`, the bootstrap variable-selection screen that
+* Added `analyses/04.05-bh.qmd`, the bootstrap variable-selection screen that
   replaces a SAS `%hazboot` / `%sumboot` / `%cluster` chain
   ([#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)). Scaffold it with
   `new_job("bh", <endpoint>, <type>)`. Requires `hvtiRbootstrap` >= 0.1.1 and
