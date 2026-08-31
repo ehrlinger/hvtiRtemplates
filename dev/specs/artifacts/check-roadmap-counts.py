@@ -119,7 +119,7 @@ def check_ordinals(rows, retired=()):
     # rather than raised here: this script exists to name a ledger's shape
     # problems, and a KeyError names only its own traceback.
     retired_by = {r["ordinal"]: r for r in retired
-                  if isinstance(r, dict) and "ordinal" in r}
+                  if isinstance(r, dict) and isinstance(r.get("ordinal"), str)}
     for r in rows:
         ordinal, folder, prefix = r.get("ordinal"), r.get("folder"), r.get("prefix")
         if ordinal is None:
@@ -170,9 +170,12 @@ def check_retired(retired):
             bad.append(f"{where} is missing field(s): {', '.join(missing)}")
         if extra:
             bad.append(f"{where} has unknown field(s): {', '.join(extra)}")
-        ordinal = r.get("ordinal")
-        if ordinal is None:
+        # Absent is already reported above. PRESENT-but-null is not, and must
+        # not fall through: `"ordinal": null` is a different defect from a
+        # missing key, and skipping it let one through silently.
+        if "ordinal" not in r:
             continue
+        ordinal = r["ordinal"]
         if not isinstance(ordinal, str) or not re.fullmatch(r"\d{2}[.]\d{2}", ordinal):
             bad.append(f"{where} has ordinal {ordinal!r}, not zero-padded NN.MM")
         elif ordinal in seen:
