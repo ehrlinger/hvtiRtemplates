@@ -329,6 +329,36 @@ engine <- if (!is.null(bag$th_sha)) {
 # 270-character cell that wrecks the table. Every seed is in the table below.
 n_chunks <- if (is.null(bag$n_chunks)) 1L else as.integer(bag$n_chunks)
 
+# `requested` and `usable` are per PHASE, not scalars: a multiphase screen
+# offers its candidate pool to each phase separately, and a real bag carries
+# c(early = 230, late = 230). data.frame() does not recycle a length-2 value
+# against a length-13 item column -- it errors -- so this table could not build
+# on ANY multiphase bag, which is every hazard bag. Found by the first real
+# render, against the study this template was written from.
+#
+# Collapsed to one labelled string per row rather than summed: the pool is
+# OFFERED to each phase, so 230 and 230 is one pool seen twice, not 460
+# candidates. Falls back to a bare value when a single-phase run makes it
+# length 1, and to unlabelled values if a future runner drops the names.
+.per_phase <- function(x) {
+  # A zero-length value must return exactly one string, or it vanishes from the
+  # `value` vector and data.frame() fails with the SAME "differing number of
+  # rows" error this helper was written to fix. `format(integer(0))` is
+  # character(0); `format(NULL)` is the string "NULL", so only the typed
+  # zero-length case actually drops. Guarded explicitly rather than relying on
+  # which of the two a future runner happens to write.
+  if (length(x) == 0L) {
+    return(NA_character_)
+  }
+  if (length(x) == 1L) {
+    return(format(x))
+  }
+  if (is.null(names(x))) {
+    return(paste(format(x), collapse = ", "))
+  }
+  paste0(names(x), " ", format(x), collapse = ", ")
+}
+
 provenance <- data.frame(
   item = c("Replicates pooled", "Chunks pooled", "Entry level (slentry)",
            "Stay level (slstay)", "Candidates offered", "Candidates usable",
@@ -336,7 +366,7 @@ provenance <- data.frame(
            "CPU hours (summed)", "Fitting engine", "Dataset checksum",
            "Seeds"),
   value = c(format(bag$n_boot), format(n_chunks), format(bag$slentry),
-            format(bag$slstay), format(bag$requested), format(bag$usable),
+            format(bag$slstay), .per_phase(bag$requested), .per_phase(bag$usable),
             format(bag$n_rows), format(bag$boot$n_success),
             format(bag$boot$n_failed), sprintf("%.1f", cpu_hours),
             engine, checksum,
