@@ -572,6 +572,60 @@ by_concept[, c("phase", "concept", "variable", "representative", "pct",
                "mc_error")]
 ```
 
+A per-form row answers "how often was *this form* selected". It cannot answer
+"how often was *this concept* selected", and that is the number a paper quotes.
+The gap runs both ways: competing forms split replicates between them, so the
+concept reads weaker than any single figure suggests, or two forms both clear
+the cutoff and one finding is reported twice.
+
+```{r}
+#| label: concept-union
+# Nothing above is collapsed -- every form keeps its row and its frequency.
+# This is an ADDITIONAL row per concept, not a replacement for them.
+#
+# Computed from the replicate table, never from the summary. A union across a
+# concept's forms cannot be recovered from marginal percentages: two forms at
+# 30% each are anywhere between 30% and 60% of replicates, depending entirely
+# on how often the same replicate took both, and the summary does not record
+# that.
+cov_reps <- reps[!reps$parameter %in% bag$base_params, , drop = FALSE]
+cov_reps$phase    <- sub("[.].*$", "", cov_reps$parameter)
+cov_reps$variable <- sub("^[^.]*[.]", "", cov_reps$parameter)
+cov_reps$concept  <- concept$concept[match(cov_reps$variable, concept$variable)]
+
+union_rows <- lapply(split(by_concept, list(by_concept$phase, by_concept$concept), drop = TRUE),
+                     function(g) {
+                       ph <- g$phase[1]
+                       ck <- g$concept[1]
+                       in_k <- cov_reps$phase == ph & !is.na(cov_reps$concept) &
+                         cov_reps$concept == ck
+                       data.frame(phase         = ph,
+                                  concept       = ck,
+                                  n_forms       = nrow(g),
+                                  union_pct     = 100 * length(unique(cov_reps$replicate[in_k])) /
+                                    bag$n_boot,
+                                  best_form_pct = max(g$pct),
+                                  stringsAsFactors = FALSE)
+                     })
+concept_union <- do.call(rbind, union_rows)
+
+# How much the per-form table understates the concept. A large spread is the
+# whole reason this table exists; a spread of zero means the concept has one
+# form and the two views agree.
+concept_union$spread   <- concept_union$union_pct - concept_union$best_form_pct
+concept_union$retained <- concept_union$union_pct >= RETAIN_PCT
+concept_union <- concept_union[order(concept_union$phase, -concept_union$union_pct), ,
+                               drop = FALSE]
+rownames(concept_union) <- NULL
+concept_union
+```
+
+⚠️ **A selection frequency is conditional on the candidate pool**, and no column
+here removes that. On the study this template came from, re-running with 226
+candidates instead of 189 moved one variable from 26.6% to 95.2% and another
+from 93.8% to 20.2% — same data, same seeds. Quote a reliability figure with
+the pool it came from.
+
 ```{r}
 #| label: concept-counts
 # Crowding: a phase that spent several of its slots on forms of ONE concept is
@@ -590,11 +644,16 @@ if (!nrow(crowding)) {
 
 ## Correlation clusters
 
-Concept grouping above is by NAME. This section groups by DATA: variables that
-move together, whatever they are called. The SAS job this replaces ran
-`%cluster` once per named cluster per phase, and the two views answer different
-questions — a name tells you two variables are related, a correlation tells you
-they are redundant.
+Concept grouping above is by NAME, and a naming convention only reaches what
+its affix rules can reach. Two further groupings matter, and neither is
+derivable from a variable's name: one by DECLARATION, which is clinical
+judgement, and one by the DATA. The SAS job this replaces ran `%cluster` once
+per named cluster per phase and covered both.
+
+The three views answer different questions. A name tells you two variables are
+related. A declaration tells you a clinician treats them as one thing —
+`Renal` is creatinine, GFR and dialysis, which share no stem and never will. A
+correlation tells you the pool cannot tell them apart.
 
 ```{r}
 #| label: cluster-matrix
@@ -631,6 +690,52 @@ CLUSTERS <- list(
 clusters <- boot_clusters(coefs, CLUSTERS)
 clusters
 ```
+
+The table above groups by DECLARATION, not by data: `boot_clusters()` counts
+replicates retaining any member of a list you wrote, and computes no
+correlation at all. The correlation is below, and the two are worth keeping
+apart. A declaration says a clinician thinks these are one thing; a correlation
+says the pool cannot tell them apart.
+
+```{r}
+#| label: collinear
+# EDIT: the correlation above which two candidates count as indistinguishable.
+# 0.99 finds near-duplicates -- a variable and its rescaling, a dummy and its
+# complement. Lower it to see the pool's structure rather than only its
+# accidents.
+COLLINEAR_R <- 0.99
+
+# Read to CORRELATE the pool, not to re-run anything. The screen already
+# happened; this describes the data it ran against.
+d <- read_built()
+
+# A build that moved since the screen ran would leave these correlations
+# describing one dataset and every frequency above describing another, with
+# nothing in the report to say so. A warning rather than a stop: the
+# frequencies above remain valid, and it is only this table that goes stale.
+if (!is.null(bag$n_rows) && !identical(as.integer(nrow(d)), as.integer(bag$n_rows))) {
+  warning("The built dataset now has ", nrow(d), " rows; this screen ran against ",
+          bag$n_rows, ". The correlations below describe TODAY'S data, not the data ",
+          "the frequencies above were computed on.", call. = FALSE)
+}
+
+collinear <- pool_collinear_pairs(d, pool = unique(freq$variable), threshold = COLLINEAR_R)
+if (!nrow(collinear)) {
+  cat("No pair of screened candidates correlates at |r| >= ", COLLINEAR_R, ".\n", sep = "")
+} else {
+  collinear
+}
+```
+
+⚠️ **A collinear pair is not a licence to prune.** It says two candidates are
+indistinguishable *in this cohort at this threshold* — a statement about the
+pool, not about the concepts. The no-pruning argument above stands: the same
+measurement that found 57 prunable forms found 16 of them correlating below 0.9.
+
+`pool_collinear_pairs()` sees only NUMERIC, non-constant columns, so
+factor-coded binaries are invisible to it for the same reason they were
+invisible to the screen. Check the coercion table above before reading an empty
+result as an absence of collinearity.
 
 ## Figure
 
