@@ -137,6 +137,33 @@ both a field separator inside the ordinal and the extension separator,
 so a split-based parser cannot tell the two apart. Prefixes come from
 [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html).
 
+**The ordinal is a KEY, assigned once. It is NOT the prefix’s row
+position.** `NN` is the taxonomy folder’s position, which is stable.
+`MM` is assigned from the next free minor in that folder when the
+template is created, recorded in
+`dev/specs/artifacts/2026-08-29-template-roadmap.json`, and never
+recomputed. Row order may drift; ordinals may not. This is the rule
+`pub_kb` reached for `document_key` on 2026-08-06: identity is assigned
+once and thereafter only accumulates.
+
+⚠️ **It was derived from row position until 2026-08-31, and that had
+already failed.** `bh` was 6th in `analyses` when its ordinal was
+assigned, so it shipped as `04.06`. Then `hvtiRutilities` `aeb20f2`
+moved `hs` out to `graphs`, correctly, and every analyses prefix below
+it shifted up one. `bh` became 5th while the filename stayed at `04.06`,
+and nothing caught it: `check_ordinals()` verifies format, folder-major
+and uniqueness, never position. The identity was positional **across a
+repository boundary**, so a correctness fix in the upstream vocabulary
+silently invalidated a downstream filename, with no coupling visible in
+either clone. `bh` was renumbered to `04.05` in 1.0.15 to resync, and
+then frozen.
+
+**A retired ordinal is never reissued.** `04.06` shipped in 1.0.13 and
+1.0.14, so a study that scaffolded `bh` from either carries it in a job
+filename. It is listed under `retired_ordinals` in the ledger and
+`check-roadmap-counts.py` fails any row that claims it. Retiring, rather
+than freeing, is what keeps the renumber from costing anything later.
+
 `new_job(prefix, endpoint, type, dir)` writes
 `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd` and **refuses to
 overwrite an existing job**, because a job file accumulates a study’s

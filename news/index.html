@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.15</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,15 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.15" id="hvtirtemplates-1015">hvtiRtemplates 1.0.15<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1015"></a></h2>
+<ul><li>
+<p><strong>The bootstrap screen template is now <code>analyses/04.05-bh.qmd</code></strong>, renamed from <code>04.06-bh.qmd</code>. The ordinal had been derived from the prefix’s row position in <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy()</a></code>, and that derivation had already failed: <code>bh</code> was 6th in <code>analyses</code> when the number was assigned, <code>hvtiRutilities</code> then moved <code>hs</code> out to <code>graphs</code>, and every prefix below it shifted up one while the filename stayed put. The identity was positional across a repository boundary, so a correctness fix in the upstream vocabulary silently invalidated a downstream filename, and nothing caught it: the ordinal checks verify format, folder-major and uniqueness, never position.</p>
+<p>⚠️ <strong>A job already scaffolded from 1.0.13 or 1.0.14 is unaffected.</strong> <code><a href="../reference/new_job.html">new_job()</a></code> bakes the ordinal into the job filename at copy time, so existing jobs keep theirs and do not need renaming. Only newly scaffolded <code>bh</code> jobs take <code>04.05</code>.</p>
+</li>
+<li><p><strong>An ordinal is now a key, assigned once, and never recomputed from row order.</strong> <code>NN</code> is the taxonomy folder’s position, which is stable; <code>MM</code> is assigned from the next free minor in that folder and recorded in the roadmap ledger. Row order may drift; ordinals may not. Stated in <code>AGENTS.md</code>, so the next template is not numbered by counting rows.</p></li>
+<li><p><strong><code>04.06</code> is retired, not freed.</strong> It shipped in two releases, so a study that scaffolded <code>bh</code> from either carries it in a filename. It is recorded under <code>retired_ordinals</code> in the ledger, and <code>check-roadmap-counts.py</code> now fails any row that claims a retired ordinal, naming when and from what it was retired.</p></li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.14" id="hvtirtemplates-1014">hvtiRtemplates 1.0.14<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1014"></a></h2>
 <ul><li>
 <p><strong><code>analyses/04.06-bh.qmd</code> gains the data-driven half of the SAS <code>%cluster</code> contribution.</strong> <code>boot_clusters()</code> counts replicates retaining any member of a list you declare and computes no correlation at all, so the section’s claim to group “by DATA” described the SAS macro rather than the R helper. A <code>pool_collinear_pairs()</code> chunk now makes it true. The two are kept apart deliberately: a declaration says a clinician treats several variables as one thing, a correlation says the pool cannot tell them apart, and only the second is a property of the data.</p>
@@ -51,6 +60,7 @@
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.13" id="hvtirtemplates-1013">hvtiRtemplates 1.0.13<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1013"></a></h2>
+<p><sub>Superseded 2026-08-31: this template is <code>analyses/04.05-bh.qmd</code> from 1.0.15 onward. The sentences below are left as they shipped. A job scaffolded from this release keeps <code>04.06-bh</code> in its filename and needs no rename.</sub></p>
 <ul><li>
 <p>Added <code>analyses/04.06-bh.qmd</code>, the bootstrap variable-selection screen that replaces a SAS <code>%hazboot</code> / <code>%sumboot</code> / <code>%cluster</code> chain (<a href="https://github.com/ehrlinger/hvtiRtemplates/issues/8" class="external-link">#8</a>). Scaffold it with <code>new_job("bh", &lt;endpoint&gt;, &lt;type&gt;)</code>. Requires <code>hvtiRbootstrap</code> &gt;= 0.1.1 and <code>hvtiRutilities</code> &gt;= 1.1.6. Design in <code>dev/specs/2026-08-28-bh-template-design.md</code>.</p>
 <p>The template is the <strong>report</strong>, not the runner. <code>hzr_bootstrap()</code> writes nothing until its final replicate and a full screen is days of compute, so the run is chunked from a companion script and this file pools what that script wrote. That file boundary is a durability boundary, not tidiness, and the runner stays untemplated until <code><a href="../reference/new_job.html">new_job()</a></code> grows multi-file templates.</p>

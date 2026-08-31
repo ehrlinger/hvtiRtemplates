@@ -29,14 +29,14 @@ it.
 template_list()
 #>       name prefix ordinal        folder
 #> 1 04.01-hm     hm   04.01      analyses
-#> 2 04.06-bh     bh   04.06      analyses
+#> 2 04.05-bh     bh   04.05      analyses
 #> 3 03.01-ac     ac   03.01 distributions
 #> 4 03.02-hz     hz   03.02 distributions
 #> 5 06.01-hp     hp   06.01        graphs
 #> 6 06.02-hs     hs   06.02        graphs
 #>                                                                                  file
 #> 1      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.01-hm.qmd
-#> 2      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.06-bh.qmd
+#> 2      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.05-bh.qmd
 #> 3 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.01-ac.qmd
 #> 4 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.02-hz.qmd
 #> 5        /home/runner/work/_temp/Library/hvtiRtemplates/templates/graphs/06.01-hp.qmd
