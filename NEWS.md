@@ -1,3 +1,24 @@
+# hvtiRtemplates 1.0.16
+
+* Retired the two tests asserting that within-folder ordinal minors follow
+  `hvti_taxonomy()` row order. They enforced the derivation #56 removed: an
+  ordinal is a key, assigned once and recorded in the ledger, never recomputed
+  from a position. #56 established that rule in `AGENTS.md`, the ledger and
+  `check-roadmap-counts.py`, but left the test suite asserting the opposite —
+  two guards on one repository disagreeing, which is the drift the guards exist
+  to prevent.
+
+* Replaced them with a **key** check rather than another position check:
+  `check-roadmap-counts.py` validates every ordinal's major against a
+  **hardcoded** `FOLDER_ORDINAL` map, whose authority is `hvti_taxonomy()`'s
+  folder order — a table that lives in `hvtiRutilities`, a different
+  repository. `test-roadmap.R` now asserts the map still matches. That closes
+  the same class of failure one level up from the one #56 fixed: an upstream
+  correctness change silently invalidating a downstream constant, with nothing
+  in either clone showing the two were connected. The Python guard cannot check
+  its own map — reading the taxonomy needs R, which is why the guards are split
+  by language.
+
 # hvtiRtemplates 1.0.15
 
 * **The bootstrap screen template is now `analyses/04.05-bh.qmd`**, renamed from

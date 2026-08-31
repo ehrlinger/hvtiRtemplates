@@ -87,3 +87,50 @@ test_that("an intake row names what it blocks on", {
                 label = paste("intake row", r$prefix, "has no blocked_on"))
   }
 })
+
+test_that("the guard's folder map still matches the taxonomy", {
+  # Replaces the two row-position tests retired from test-taxonomy.R on
+  # 2026-08-31. This one checks a KEY, not a position, so it is consistent with
+  # #56's rule that an ordinal is assigned once and never recomputed.
+  #
+  # `check-roadmap-counts.py` validates every ordinal's major against
+  # FOLDER_ORDINAL, which is a HARDCODED map. The authority it copies is
+  # `hvti_taxonomy()`'s folder order -- and that table lives in hvtiRutilities,
+  # a different repository. So the map can go stale the same way `bh`'s 04.06
+  # did: an upstream correctness fix silently invalidates a downstream constant,
+  # with nothing in either clone showing the two were connected.
+  #
+  # The Python guard cannot check this itself -- reading the taxonomy needs R,
+  # which is the whole reason the guards are split by language. So it lives here.
+  require_ledger()
+
+  guard <- file.path("..", "..", "dev", "specs", "artifacts",
+                     "check-roadmap-counts.py")
+  skip_if_not(file.exists(guard), "roadmap guard not present")
+
+  src <- readLines(guard, warn = FALSE)
+  open_at <- grep("^FOLDER_ORDINAL = \\{", src)
+  expect_length(open_at, 1L)
+  close_at <- open_at + which(trimws(src[(open_at + 1L):length(src)]) == "}")[[1L]]
+
+  body <- src[(open_at + 1L):(close_at - 1L)]
+  m <- regmatches(body, regexec('"([^"]+)":\\s*"([0-9]{2})"', body))
+  kept <- vapply(m, function(x) length(x) == 3L, logical(1))
+  mapped <- vapply(m[kept], function(x) x[[3L]], character(1))
+  names(mapped) <- vapply(m[kept], function(x) x[[2L]], character(1))
+
+  # The taxonomy's folder order IS the majors, in order of first appearance.
+  folders <- unique(hvti_taxonomy()$folder)
+  expected <- sprintf("%02d", seq_along(folders))
+  names(expected) <- folders
+
+  expect_identical(
+    mapped[order(names(mapped))], expected[order(names(expected))],
+    label = paste0(
+      "FOLDER_ORDINAL in check-roadmap-counts.py has drifted from ",
+      "hvti_taxonomy()'s folder order. Update the map, and check whether any ",
+      "shipped ordinal's major is now wrong -- a stale map validates against ",
+      "the wrong folder silently."
+    )
+  )
+})
