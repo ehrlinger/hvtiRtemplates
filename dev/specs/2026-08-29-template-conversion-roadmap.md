@@ -63,9 +63,14 @@ row has no template on disk.
 | `bh` | shipped | 04.05 | 322 | 2 | — |
 | `bc` | queued | — | 16 | 0 | — |
 | `bl` | queued | — | 352 | 1 | — |
-| `bn` | queued | — | 214 | 0 | — |
-| `bq` | queued | — | 2 | 0 | — |
 | `br` | queued | — | 103 | 1 | — |
+| `bq` | queued | — | 2 | 0 | hvtiRbootstrap#16 |
+
+### bootstrap-ci (unscheduled)
+
+| prefix | status | ordinal | breadth | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `bn` | queued | — | 214 | 0 | — |
 
 ### plots (batch 3)
 

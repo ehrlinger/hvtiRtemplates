@@ -27,7 +27,7 @@ DOC = os.path.join(HERE, os.pardir,
 BEGIN = "<!-- BEGIN GENERATED -->"
 END = "<!-- END GENERATED -->"
 
-FAMILY_ORDER = ["hazard-chain", "bootstrap", "plots", "descriptive",
+FAMILY_ORDER = ["hazard-chain", "bootstrap", "bootstrap-ci", "plots", "descriptive",
                 "machine-learning", "models", "distributions", "datasets",
                 "documents", "unassigned"]
 
