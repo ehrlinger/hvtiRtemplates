@@ -1,4 +1,4 @@
-# Batch 2a Phase 2 — rewrite `04.05-bh.qmd` onto the reporting layer
+# Batch 2a Phase 2: rewrite `04.05-bh.qmd` onto the reporting layer
 
 **Date:** 2026-09-01
 **Status:** planned, not started
@@ -6,7 +6,7 @@
 **Issue:** [#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)
 
 > **For agentic workers:** implement this task-by-task. Steps use checkbox
-> (`- [ ]`) syntax. Do not batch tasks — each ends at a render that must still
+> (`- [ ]`) syntax. Do not batch tasks; each ends at a render that must still
 > reproduce the baseline, and a batched failure cannot be attributed.
 
 This note is self-contained. It assumes no memory of the session that produced
@@ -50,13 +50,13 @@ function on the same input. Results:
 | `concept-union` | `boot_concepts()` | same 184 rows **in the same order**, max \|Δ\| = 0 on every shared column; **renames `union_pct` → `pct_any`**, adds `forms`, `n_any`, `n_retained` |
 
 ⚠️ **The frequencies result was not a foregone conclusion and is the reason to
-keep the gate.** The shipped chunk reads `bag$boot$summary` — whatever the
+keep the gate.** The shipped chunk reads `bag$boot$summary`, whatever the
 runner recorded. `boot_frequencies()` discards that and **recomputes** from
 `bag$boot$replicates`. They agree on this bag; they are not the same source of
 truth, and a runner that pooled its summary differently would move every
 percentage in the report with nothing to say so.
 
-The scripts that established this are not committed — they read a study bag.
+The scripts that established this are not committed; they read a study bag.
 Re-running them is Task 8.
 
 ---
@@ -71,10 +71,10 @@ Every task's requirements implicitly include this section.
   `new_job()` hard-stops otherwise and the template cannot be scaffolded at all.
 - **No study identifiers.** `test-new-job.R` asserts no template matches
   `/studies/`, a study name, or a built-dataset filename. Nothing measured
-  against the baseline bag — no variable name, no frequency, no count — is
+  against the baseline bag (no variable name, no frequency, no count) is
   written into this repository. Only pass/fail and row counts.
 - **Lines are 135 characters**, not 80. Every other default linter is on.
-- **Roxygen is Rd markup, not markdown** — irrelevant to a `.qmd` body, but it
+- **Roxygen is Rd markup, not markdown**, irrelevant to a `.qmd` body, but it
   applies to any `R/` or `man/` change a task makes.
 - **Chunk labels are unchanged.** They are how the baseline diff aligns.
 - Version is a **straight three digits**, patch digit only: `1.0.17` → `1.0.18`.
@@ -102,13 +102,13 @@ It lives outside git because the render carries a real study's variable names
 and selection frequencies, and this repository is public. It stays outside git.
 
 **The gate is: every number identical.** Three diffs are expected and are not
-regressions — each is listed in Task 8 with the reason:
+regressions; each is listed in Task 8 with the reason:
 
 1. the `collinear` chunk's error text, which cannot run outside a study tree
    either way;
 2. the `health` table gains `ok` and `note` columns;
 3. the concept-union table's `union_pct` column is renamed `pct_any` and gains
-   `forms`, `n_any` and `n_retained` — **unless Task 6 takes the narrowing
+   `forms`, `n_any` and `n_retained`, **unless Task 6 takes the narrowing
    option**, in which case there is no diff there at all.
 
 Any *other* diff fails the task.
@@ -119,28 +119,28 @@ Any *other* diff fails the task.
 
 | file | change |
 |---|---|
-| `inst/templates/analyses/04.05-bh.qmd` | modified — six chunk bodies replaced, one guard rewritten, setup gains a version floor |
-| `tests/testthat/test-templates.R` | modified — one new structural test (Task 7) |
-| `.lintr` | **unchanged** — `04.05-bh.qmd` already has its own file key at line 71 |
+| `inst/templates/analyses/04.05-bh.qmd` | modified: six chunk bodies replaced, one guard rewritten, setup gains a version floor |
+| `tests/testthat/test-templates.R` | modified: one new structural test (Task 7) |
+| `.lintr` | **unchanged**: `04.05-bh.qmd` already has its own file key at line 71 |
 | `DESCRIPTION` | `Version: 1.0.18`, `Date: 2026-09-01` |
 | `NEWS.md` | new `# hvtiRtemplates 1.0.18` entry |
-| `inst/templates/README.md` | **unchanged** — the row and ordinal are the same |
-| `dev/specs/artifacts/2026-08-29-template-roadmap.json` | **unchanged** — `bh` is already `shipped` at `04.05` |
+| `inst/templates/README.md` | **unchanged**: the row and ordinal are the same |
+| `dev/specs/artifacts/2026-08-29-template-roadmap.json` | **unchanged**: `bh` is already `shipped` at `04.05` |
 
 No new file is created. That is the point of a body-only refactor.
 
 ---
 
-## Chunk disposition — all 24, so nothing is decided by omission
+## Chunk disposition: all 24, so nothing is decided by omission
 
 | # | label | disposition |
 |---|---|---|
-| 1 | `setup` | **modify** — add version floor (Task 1) |
+| 1 | `setup` | **modify**: add version floor (Task 1) |
 | 2 | `edit-guard` | unchanged |
 | 3 | `set` | unchanged |
 | 4 | `expect` | unchanged (`EDIT:` markers) |
 | 5 | `load` | unchanged |
-| 6 | `completeness` | unchanged — already calls `boot_shortfall()` |
+| 6 | `completeness` | unchanged: already calls `boot_shortfall()` |
 | 7 | `contract` | **replace** → `boot_validate()` (Task 2) |
 | 8 | `provenance` | **replace** → `boot_provenance()` (Task 3) |
 | 9 | `seeds` | **replace** → `boot_seeds()` (Task 3) |
@@ -151,7 +151,7 @@ No new file is created. That is the point of a body-only refactor.
 | 14 | `frequencies` | **replace** → `boot_frequencies()` (Task 6) |
 | 15 | `retained` | **simplify** → filter on `freq$retained` (Task 6) |
 | 16 | `concept-map` | unchanged |
-| 17 | `concept-frequencies` | unchanged — a merge for reading, no package equivalent |
+| 17 | `concept-frequencies` | unchanged: a merge for reading, no package equivalent |
 | 18 | `concept-union` | **replace** → `boot_concepts()` (Task 6) |
 | 19 | `concept-counts` | unchanged |
 | 20 | `cluster-matrix` | unchanged |
@@ -174,7 +174,7 @@ three bindings are read by chunks that are **not** changing:
 ⚠️ **`reps` is the trap.** It is assigned in the `health` chunk and read 250
 lines later by `cluster-matrix`, which is not being touched. Replacing the
 health body with a bare `boot_health(bag)` deletes it, and the render fails at
-`cluster-matrix` with `object 'reps' not found` — far from the edit that caused
+`cluster-matrix` with `object 'reps' not found`, far from the edit that caused
 it. Task 5 re-binds it explicitly.
 
 ---
@@ -189,7 +189,7 @@ it. Task 5 re-binds it explicitly.
 
 **Why this is in scope for a body-only refactor.** Before this change the
 template used `boot_chunk_files()`, `boot_pool_chunks()`, `boot_shortfall()`
-and `boot_clusters()` — all present since 0.1.1. Afterwards it calls seven
+and `boot_clusters()`, all present since 0.1.1. Afterwards it calls seven
 functions that exist only from **0.1.2**. A study with 0.1.1 installed gets
 `could not find function "boot_provenance"` from the middle of a report, naming
 the symbol but not the cause. Four lines convert that into a sentence saying
@@ -218,7 +218,7 @@ if (utils::packageVersion("hvtiRbootstrap") < "0.1.2") {
 grep -c '^```{r}' inst/templates/analyses/04.05-bh.qmd
 ```
 
-Expected: `24` — unchanged, because this adds lines to an existing chunk rather
+Expected: `24`, unchanged, because this adds lines to an existing chunk rather
 than a new one.
 
 - [ ] **Step 3: lint**
@@ -248,13 +248,13 @@ git commit -m "refactor(bh): require hvtiRbootstrap 0.1.2 before the reporting l
 
 `boot_validate()` is strictly stronger than the chunk it replaces: the chunk
 checked that eleven fields were **present**, and passed the real bag happily
-while `requested` was a length-2 vector the report could not render — the
+while `requested` was a length-2 vector the report could not render: the
 defect fixed in 1.0.17. `boot_validate()` checks each field's **shape**.
 
 - [ ] **Step 1: replace the chunk body**
 
 Keep the chunk header, the label and every comment line. Replace the 17 lines
-of code — from `.required <- c(` through the closing `}` of the `stop()` — with:
+of code, from `.required <- c(` through the closing `}` of the `stop()`, with:
 
 ```r
 boot_validate(bag)
@@ -287,7 +287,7 @@ print(boot_validate(bag))'
 
 Expected: `[1] TRUE`. An error here means the baseline bag does not satisfy the
 stricter check, which is a finding about `boot_validate()`, not about this
-template — stop and report it rather than loosening anything.
+template. Stop and report it rather than loosening anything.
 
 - [ ] **Step 3: lint, then commit**
 
@@ -306,7 +306,7 @@ git commit -m "refactor(bh): contract chunk calls boot_validate()"
 
 **Interfaces:**
 - Consumes: `bag`.
-- Produces: `provenance` — a data frame with columns `item` and `value`, both
+- Produces: `provenance`, a data frame with columns `item` and `value`, both
   character, 13 rows. **The `save` chunk serialises this binding by name**, so
   it must be assigned, not merely printed.
 
@@ -317,7 +317,7 @@ identical, 13 rows, on the baseline bag.
 - [ ] **Step 1: replace the `provenance` body**
 
 Delete the code from `cpu_hours <- bag$elapsed_mins / 60` through the final
-`provenance` echo — including the local `.per_phase()` helper, which now lives
+`provenance` echo, including the local `.per_phase()` helper, which now lives
 in the package. Keep every comment. The body becomes:
 
 ```r
@@ -336,7 +336,7 @@ found`.
 boot_seeds(bag)
 ```
 
-This one binds nothing — the `save` chunk does not read it.
+This one binds nothing: the `save` chunk does not read it.
 
 - [ ] **Step 3: verify both against the baseline bag**
 
@@ -372,7 +372,7 @@ git commit -m "refactor(bh): provenance and seeds chunks call the reporting laye
 
 **Interfaces:**
 - Consumes: `bag`.
-- Produces: `dropped` — a data frame, zero rows when nothing was dropped.
+- Produces: `dropped`, a data frame with zero rows when nothing was dropped.
 
 `boot_dropped()` returns a zero-row data frame rather than `NULL` when
 `bag$dropped` is absent, so the two chunks test `nrow()` instead of
@@ -432,13 +432,13 @@ git commit -m "refactor(bh): dropped chunks call boot_dropped()"
 
 ---
 
-## Task 5: `health` — take the table, keep the refusal
+## Task 5: `health` takes the table, and keeps the refusal
 
 **Files:** Modify `inst/templates/analyses/04.05-bh.qmd`, the `health` chunk
 
 **Interfaces:**
 - Consumes: `bag`.
-- Produces: `reps` — `bag$boot$replicates`, **read by `cluster-matrix` at line
+- Produces: `reps`, which is `bag$boot$replicates`, **read by `cluster-matrix` at line
   697**; and `health`, a data frame with columns `check`, `value`, `ok`, `note`.
 
 ⚠️ **This is the task that can silently lose a guard, and it is the one to slow
@@ -446,10 +446,10 @@ down on.** `boot_health()` **never calls `stop()`.** It reports `ok = FALSE`
 with an explanatory `note` and returns. The shipped chunk's enforcement is two
 `stop()` calls of its own:
 
-1. the screen selected nothing — no parameter outside the base model appears in
+1. the screen selected nothing: no parameter outside the base model appears in
    any replicate, the signature of a formula that did not survive the
    per-replicate rewrite;
-2. the first free base parameter has SD exactly 0 — every replicate returned the
+2. the first free base parameter has SD exactly 0: every replicate returned the
    same fit, the signature of a bootstrap built on the vector interface.
 
 Both are failures that **do not error on their own** and whose reports read as
@@ -477,7 +477,7 @@ health
 - [ ] **Step 2: rewrite the two refusals against the `ok` column**
 
 Replace the two `stop()` blocks with the following. The messages are the
-shipped ones, unchanged — they say what the failure means and what to do, and
+shipped ones, unchanged: they say what the failure means and what to do, and
 `boot_health()`'s `note` is a shorter statement of the same thing for a reader
 of the table.
 
@@ -509,7 +509,7 @@ if ("SD of the first free base parameter" %in% .failed) {
 - [ ] **Step 3: prove both refusals still fire**
 
 This is the step that would have caught the guard going missing. Run it and
-read the output — a `stop()` that does not fire is the failure being tested
+read the output. A `stop()` that does not fire is the failure being tested
 for, and it does not announce itself.
 
 ```bash
@@ -540,7 +540,7 @@ flat screen flags: SD of the first free base parameter
 ```
 
 If either middle line is empty, the `%in% .failed` test cannot fire and the
-guard is gone. Fix that before continuing — do not proceed to Task 6.
+guard is gone. Fix that before continuing; do not proceed to Task 6.
 
 - [ ] **Step 4: lint, then commit**
 
@@ -561,16 +561,16 @@ git commit -m "refactor(bh): health table from boot_health(), refusals stay in t
 - Consumes: `bag`, `RETAIN_PCT` (from `criteria`), `concept` (from
   `concept-map`), `reps` (from `health`).
 - Produces:
-  - `freq` — columns `phase`, `variable`, `term`, `n`, `pct`, `mc_error`,
+  - `freq`: columns `phase`, `variable`, `term`, `n`, `pct`, `mc_error`,
     `near_threshold`, `retained`. Read by `concept-map`, `concept-frequencies`,
     `collinear`, `fig-frequencies` and `save`.
-  - `retained` — the same columns, filtered. Read by `concept-counts` (which
+  - `retained`: the same columns, filtered. Read by `concept-counts` (which
     uses `retained$term`) and `save`.
-  - `concept_union` — one row per phase per concept.
+  - `concept_union`: one row per phase per concept.
 
 `boot_frequencies()` was verified identical to the shipped chunk on the baseline
-bag: 266 rows, `max|Δpct| = 0`. It supplies two columns the chunk did not —
-`term` and `retained` — and `term` is what `concept-counts` already wanted.
+bag: 266 rows, `max|Δpct| = 0`. It supplies two columns the chunk did not,
+`term` and `retained`, and `term` is what `concept-counts` already wanted.
 
 - [ ] **Step 1: define the phase rule once, in `criteria`**
 
@@ -606,12 +606,12 @@ retained[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
 ```
 
 `freq$retained` is `pct >= RETAIN_PCT`, computed in the package from the same
-`threshold` — the comparison, including its `>=`, was verified to agree.
+`threshold`; the comparison, including its `>=`, was verified to agree.
 
 - [ ] **Step 4: replace the `concept-union` body**
 
-Keep every comment. The 28 lines — `cov_reps`, the `split()`/`lapply()`, the
-`do.call(rbind, ...)` — become:
+Keep every comment. The 28 lines (`cov_reps`, the `split()`/`lapply()`, the
+`do.call(rbind, ...)`) become:
 
 ```r
 concept_union <- boot_concepts(bag, concept_map = concept[, c("variable", "concept")],
@@ -622,8 +622,8 @@ concept_union[, c("phase", "concept", "n_forms", "pct_any", "best_form_pct",
 
 ⚠️ **This is the one table whose printed form changes**, and the change is a
 column *name*: the shipped chunk called the at-least-one figure `union_pct` and
-`boot_concepts()` calls it `pct_any`. Every value is identical — same 184 rows,
-same order, `max|Δ| = 0` on all four shared numeric columns — and the package's
+`boot_concepts()` calls it `pct_any`. Every value is identical: same 184 rows,
+same order, `max|Δ| = 0` on all four shared numeric columns, and the package's
 name is the better one, because `boot_clusters()` has called it `pct_any` since
 0.1.1 and two names for one quantity across two functions in one report is the
 drift this extraction exists to remove. The column selection above also drops
@@ -632,7 +632,7 @@ it was; they remain available in the object.
 
 **If a byte-identical diff is wanted instead**, add
 `names(concept_union)[names(concept_union) == "pct_any"] <- "union_pct"` before
-the echo. Decide once, here, and record which in Task 8's diff notes — do not
+the echo. Decide once, here, and record which in Task 8's diff notes; do not
 leave the render to reveal it.
 
 - [ ] **Step 5: verify the three tables against the shipped bodies**
@@ -673,7 +673,7 @@ git commit -m "refactor(bh): frequencies, retained and concepts call the reporti
 
 The render gate in Task 8 needs a study bag and cannot run in CI. What CI *can*
 assert is that the template calls the reporting layer rather than carrying its
-own copy again — which is exactly the regression this batch exists to prevent,
+own copy again, which is exactly the regression this batch exists to prevent,
 and the one a future hand-edit would reintroduce.
 
 - [ ] **Step 1: write the failing test**
@@ -716,8 +716,8 @@ calls. Expected: failure naming `boot_validate is not called by the bh template`
 Rscript -e 'devtools::test()'
 ```
 
-Expected: PASS, with **`SKIP 0`**. Read the `testthat` summary line itself —
-a green conclusion above a skipped test is the failure mode `hvtiRlifetables`
+Expected: PASS, with **`SKIP 0`**. Read the `testthat` summary line itself.
+A green conclusion above a skipped test is the failure mode `hvtiRlifetables`
 shipped through ten CI runs and two reviews.
 
 - [ ] **Step 4: commit**
@@ -751,9 +751,9 @@ cp -R ~/Documents/templates/bh-baseline-20260831 ~/Documents/templates/bh-phase2
 They are listed in the baseline's own `README.md` and the comparison is invalid
 without all three:
 
-1. `BOOT_PREFIX <- "bagging"` — the runner wrote `bagging.chunkNN.rds`.
+1. `BOOT_PREFIX <- "bagging"`, because the runner wrote `bagging.chunkNN.rds`.
 2. `CLUSTERS` set to `early.Ht = c("early.ht", "early.ln_ht")`.
-3. `#| error: true` on the `collinear` chunk — it calls `read_built()`, which
+3. `#| error: true` on the `collinear` chunk, which calls `read_built()` and
    needs a study tree, and without this the render aborts there and writes
    nothing at all.
 
@@ -772,7 +772,7 @@ Expected: completes, with the DRAFT banner. The banner reflects unresolved
 diff ~/Documents/templates/bh-baseline-20260831/project/analyses/dead-hz-04.05-bh.md ~/Documents/templates/bh-phase2-check/project/analyses/dead-hz-04.05-bh.md
 ```
 
-Expected: **only** the diffs listed below. Anything else fails the task — do not
+Expected: **only** the diffs listed below. Anything else fails the task; do not
 accept a numeric diff on the grounds that it looks small. The whole point of a
 baseline is that "small" is not a category it has.
 
@@ -784,7 +784,7 @@ baseline is that "small" is not a category it has.
 
 - [ ] **Step 5: record the result in this repo, without identifiers**
 
-Append to `NEWS.md` under the 1.0.18 entry — counts and outcome only:
+Append to `NEWS.md` under the 1.0.18 entry, counts and outcome only:
 
 ```
   Verified against the 25-chunk reference render captured at 1.0.17: the
@@ -829,8 +829,8 @@ Date: 2026-09-01
   This is what makes `bl`, `br` and `bc` thin templates in Batch 2a rather than
   four ~825-line reports to hand-sync on every fix.
 
-  `boot_health()` reports; it does not refuse. The two refusals — a screen that
-  selected nothing, and a bootstrap whose free base parameter has SD exactly 0 —
+  `boot_health()` reports; it does not refuse. The two refusals (a screen that
+  selected nothing, and a bootstrap whose free base parameter has SD exactly 0)
   stay in the template, because both are failures whose reports otherwise read
   as healthy.
 ```
@@ -848,7 +848,7 @@ warnings, 0 notes**.
 
 - [ ] **Step 4: build the PDF manual locally**
 
-`check-manual.yaml` has no `pull_request` trigger — it runs for the first time
+`check-manual.yaml` has no `pull_request` trigger, so it runs for the first time
 *after* merge, where there is no PR left to fix it in. This plan touches no Rd
 markup, so this should be uneventful; run it anyway, because "should be" is the
 assumption that gate exists to catch.
@@ -870,7 +870,7 @@ gh pr create --base main --title "refactor(bh): report through the hvtiRbootstra
 
 Open it **against `main`**. A PR opened against another branch never triggers
 Copilot's review, and GitHub retargeting the base when a parent merges does not
-trigger it either — the branch then sits one click from `main` having been read
+trigger it either, and the branch then sits one click from `main` having been read
 by nobody.
 
 ---
@@ -882,8 +882,8 @@ by nobody.
 renames the file), verified result-identical against the Phase 0 render
 (Task 8). Design §8's definition of done for this phase: `devtools::test()`
 passes and `check()` is 0/0/0 (Task 9 Step 3), `document()` run (Task 9 Step 3),
-patch bump with matching `NEWS.md` (Task 9 Steps 1–2). `.lintr` needs no new key
-— `04.05-bh.qmd` already has its own file key at line 71, and this refactor
+patch bump with matching `NEWS.md` (Task 9 Steps 1–2). `.lintr` needs no new key:
+`04.05-bh.qmd` already has its own file key at line 71, and this refactor
 adds no file.
 
 **Not covered, deliberately.** Phase 3 (`bl`, `br`, `bc`) is a separate plan;
@@ -894,6 +894,6 @@ and `bn` are out of scope per design §9.
 **Residual risk, stated rather than resolved.** The render gate exercises one
 bag from one study. `boot_dropped()`'s non-empty path, the single-unchunked-run
 fallbacks in `boot_seeds()` and `boot_health()`, and the `phase = NULL` path
-that Phase 3 depends on are **not** covered by it — the first is covered by
+that Phase 3 depends on are **not** covered by it. The first is covered by
 Task 4 Step 3 and Task 7, the last only by `hvtiRbootstrap`'s own tests. Phase 3
 is where `phase = NULL` first gets a real render.
