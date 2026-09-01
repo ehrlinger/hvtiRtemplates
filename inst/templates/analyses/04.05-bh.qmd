@@ -383,33 +383,22 @@ then reads as a table of perfectly reliable variables.
 # hzr_stepwise() rewrite the stored formula per replicate, and a symbol standing
 # where the formula should be does not survive that rewrite. See the health
 # check below for what the failure looks like -- it does not error.
+# Still bound here, and not only for this chunk: `cluster-matrix` below pivots
+# these same replicates into the wide matrix boot_clusters() wants. Dropping the
+# binding when this body moved into the package would fail 250 lines away,
+# naming `reps` and nothing about the cause.
 reps <- bag$boot$replicates
-candidates <- setdiff(unique(reps$parameter), bag$base_params)
 
-# boot_pool_chunks() computes free_sd, so a SINGLE unchunked run does not carry
-# it. Recomputed rather than skipped: this is the check that catches a bootstrap
-# which refit nothing, and an unchunked run is the shape most likely to have
-# been built that way. NA, never 0, when there is nothing to take an SD of --
-# zero is the CLAIM that the parameter did not vary, which one replicate cannot
-# support.
-free_sd <- if (!is.null(bag$free_sd)) {
-  bag$free_sd
-} else {
-  .est <- reps$estimate[reps$parameter == bag$base_params[[1L]]]
-  if (length(.est) > 1L) stats::sd(.est) else NA_real_
-}
-
-health <- data.frame(
-  check = c("Replicates that fitted", "Replicates that failed",
-            "Distinct candidates ever selected",
-            "SD of the first free base parameter"),
-  value = c(format(bag$boot$n_success), format(bag$boot$n_failed),
-            format(length(candidates)), format(free_sd)),
-  stringsAsFactors = FALSE
-)
+health <- boot_health(bag)
 health
 
-if (!length(candidates)) {
+# boot_health() REPORTS; it does not refuse. Both rows below are failures whose
+# reports read as healthy -- a screen that selected nothing has n_failed = 0,
+# and a bootstrap that refit nothing has n_success = 500 -- so a table cell is
+# not enough. The refusal stays in the template, where the render stops.
+.failed <- health$check[!is.na(health$ok) & !health$ok]
+
+if ("Distinct candidates ever selected" %in% .failed) {
   stop("The screen selected NOTHING: no parameter outside the base model ",
        "appears in any replicate. That is a failed screen, not a null result, ",
        "and it is what a formula held in a variable looks like from here -- ",
@@ -418,10 +407,7 @@ if (!length(candidates)) {
        "literally at the call site in your runner and rerun.", call. = FALSE)
 }
 
-# A free parameter must VARY across resamples. A bootstrap built on the vector
-# interface returns the original fit every replicate, with n_success = 500,
-# n_failed = 0, and no warning. sd() of a free base parameter is the tell.
-if (!is.na(free_sd) && free_sd == 0) {
+if ("SD of the first free base parameter" %in% .failed) {
   stop("The first free base parameter has SD exactly 0 across ", bag$n_boot,
        " replicates, so every replicate returned the SAME fit. A bootstrap ",
        "built on the vector interface does that: it refits nothing and reports ",
