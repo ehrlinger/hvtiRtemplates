@@ -206,3 +206,68 @@ test_that("the bh template reports through hvtiRbootstrap, not its own copy", {
   expect_true(any(grepl("The screen selected NOTHING", code, fixed = TRUE)))
   expect_true(any(grepl("returned the SAME fit", code, fixed = TRUE)))
 })
+
+test_that("the thin bootstrap templates report through hvtiRbootstrap", {
+  for (prefix in c("bl", "br", "bc")) {
+    src <- readLines(template_path(prefix), warn = FALSE)
+    # Comments stripped first. These templates NARRATE the reporting layer --
+    # the setup chunk's version-floor comment names boot_bag() -- so matching
+    # raw source would let a hand-edit delete a live call, leave the comment,
+    # and keep this green.
+    code <- sub("#.*$", "", src)
+
+    for (fn in c("boot_validate", "boot_provenance", "boot_seeds",
+                 "boot_dropped", "boot_health", "boot_frequencies",
+                 "boot_concepts")) {
+      expect_true(any(grepl(paste0(fn, "("), code, fixed = TRUE)),
+                  info = paste(fn, "is not called by the", prefix, "template"))
+    }
+
+    # The refusals boot_health() cannot make for itself. It reports and never
+    # stops, so a screen that selected nothing renders green without these.
+    expect_true(any(grepl("selected NOTHING", code, fixed = TRUE)),
+                info = paste(prefix, "lost the empty-screen refusal"))
+    expect_true(any(grepl("returned the SAME fit", code, fixed = TRUE)),
+                info = paste(prefix, "lost the flat-bootstrap refusal"))
+  }
+})
+
+test_that("the thin bootstrap templates carry no phase dimension", {
+  for (prefix in c("bl", "br", "bc")) {
+    src <- readLines(template_path(prefix), warn = FALSE)
+    fence <- grepl("^```", src)
+    in_chunk <- cumsum(fence) %% 2 == 1 & !fence
+    code <- sub("#.*$", "", src[in_chunk])
+
+    # PHASE_OF must be NULL and must stay NULL. A splitting rule that matches
+    # nothing still adds a phase column of empty strings, and every grouped
+    # table would then group by a column that says nothing -- silently, since
+    # no count changes and no error is raised.
+    ph <- grep("^\\s*PHASE_OF\\s*<-", code, value = TRUE)
+    expect_length(ph, 1L)
+    expect_match(ph, "NULL", info = paste(prefix, "supplies a phase rule"))
+
+    # No table may select or order by a phase column: with phase = NULL the
+    # reporting layer returns none, so a reference is an error at render time.
+    # `phase = PHASE_OF` is the argument, not a column, and is excluded.
+    cols <- sub("phase = PHASE_OF", "", code, fixed = TRUE)
+    expect_false(any(grepl("\\$phase|\"phase\"|~phase", cols)),
+                 info = paste(prefix, "references a phase column"))
+  }
+})
+
+test_that("the thin bootstrap templates read one screen, not pooled chunks", {
+  # bh pools chunks because a hazard screen is days of compute. These are not,
+  # and a chunked run is pooled in the RUNNER -- the only place that knows how
+  # many chunks it launched. A template that grew a pooling branch has taken on
+  # a decision it cannot make correctly.
+  for (prefix in c("bl", "br", "bc")) {
+    src <- readLines(template_path(prefix), warn = FALSE)
+    fence <- grepl("^```", src)
+    code <- sub("#.*$", "", src[cumsum(fence) %% 2 == 1 & !fence])
+    expect_false(any(grepl("boot_pool_chunks(", code, fixed = TRUE)),
+                 info = paste(prefix, "pools chunks in the template"))
+    expect_true(any(grepl("BOOT_FILE", code, fixed = TRUE)),
+                info = paste(prefix, "has no BOOT_FILE edit point"))
+  }
+})
