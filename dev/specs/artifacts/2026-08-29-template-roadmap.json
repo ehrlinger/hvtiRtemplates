@@ -72,8 +72,8 @@
       "folder": "analyses",
       "family": "bootstrap",
       "kind": "job",
-      "status": "queued",
-      "ordinal": null,
+      "status": "shipped",
+      "ordinal": "04.04",
       "batch": 2,
       "sas_breadth": 16,
       "r_exemplars": 0,
@@ -82,8 +82,8 @@
       "downstream": [],
       "workflows": [],
       "blocked_on": null,
-      "spec": null,
-      "note": null
+      "spec": "dev/specs/2026-08-31-batch-2a-bootstrap-family-design.md",
+      "note": "no exemplar study and no SAS template. Shipped on fit_cox() existing. Gated on a screen the render gate ran against a real built dataset, never on a screen a study ran."
     },
     {
       "prefix": "bd",
@@ -131,8 +131,8 @@
       "folder": "analyses",
       "family": "bootstrap",
       "kind": "job",
-      "status": "queued",
-      "ordinal": null,
+      "status": "shipped",
+      "ordinal": "04.02",
       "batch": 2,
       "sas_breadth": 352,
       "r_exemplars": 1,
@@ -143,7 +143,7 @@
         "propensity-matching"
       ],
       "blocked_on": null,
-      "spec": null,
+      "spec": "dev/specs/2026-08-31-batch-2a-bootstrap-family-design.md",
       "note": null
     },
     {
@@ -190,8 +190,8 @@
       "folder": "analyses",
       "family": "bootstrap",
       "kind": "job",
-      "status": "queued",
-      "ordinal": null,
+      "status": "shipped",
+      "ordinal": "04.03",
       "batch": 2,
       "sas_breadth": 103,
       "r_exemplars": 1,
@@ -200,7 +200,7 @@
       "downstream": [],
       "workflows": [],
       "blocked_on": null,
-      "spec": null,
+      "spec": "dev/specs/2026-08-31-batch-2a-bootstrap-family-design.md",
       "note": null
     },
     {
