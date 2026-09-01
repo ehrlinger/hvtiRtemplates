@@ -57,6 +57,26 @@ suppressPackageStartupMessages({
   library(hvtiRutilities)
   library(ggplot2)
 })
+
+# The reporting layer below -- boot_validate() and everything after it -- landed
+# in 0.1.2. Without this check a study on 0.1.1 gets "could not find function
+# boot_provenance" from the middle of a render: the symbol is named, the reason
+# is not, and the fix is not guessable from the message.
+
+# The floor is 0.9.0 rather than 0.1.2, and the extra distance is deliberate.
+# 0.1.2 splits a term into phase and variable by stripping the phase label
+# whether or not a separator follows it, so a term named `earlyage` reports its
+# variable as `age`: a real name, matching no concept, quietly absent from every
+# grouped table below. 0.9.0 leaves such a term whole. A frequency that is merely
+# WRONG is worse here than a function that is missing, because nothing downstream
+# can see it.
+if (utils::packageVersion("hvtiRbootstrap") < "0.9.0") {
+  stop("This report needs hvtiRbootstrap >= 0.9.0; ",
+       utils::packageVersion("hvtiRbootstrap"), " is installed. The reporting ",
+       "layer exists from 0.1.2, but 0.1.x mis-splits a term whose phase label ",
+       "is not followed by a separator, and reports the wrong variable name ",
+       "without erroring.\nUpdate it, then re-render.", call. = FALSE)
+}
 ```
 
 ```{r}
@@ -272,27 +292,13 @@ if (!is.null(.shortfall)) {
 # A pooled run has already had most of these checked by boot_pool_chunks(),
 # which refuses chunks that disagree. A SINGLE unchunked run has not: nothing
 # ran between the runner and here. This is the only check that covers both.
-.required <- c("n_boot", "seed", "slentry", "slstay", "base_params", "usable",
-               "requested", "n_rows", "elapsed_mins", "manifest", "boot")
-.absent <- .required[!.required %in% names(bag)]
 
-# The nested fields are checked by name too. `boot` being present says nothing
-# about what is inside it, and every table below reaches into it -- a missing
-# `summary` surfaces thirty lines later as a NULL subscript, naming nothing.
-if (!length(.absent)) {
-  # Subset AFTER paste0, never inside it: paste0("boot$", character(0)) is
-  # "boot$", not character(0), so pasting the filtered vector reports a missing
-  # field named nothing on every healthy run.
-  .nested <- c("replicates", "summary", "n_success", "n_failed")
-  .absent <- paste0("boot$", .nested)[!.nested %in% names(bag$boot)]
-}
-if (length(.absent)) {
-  stop("The bootstrap output is missing ", length(.absent), " field(s) this ",
-       "report reads: ", paste(.absent, collapse = ", "), ".\nEither the runner ",
-       "that wrote it predates them, or it is not the runner this template ",
-       "expects. Reporting over it would print blanks where the screen's ",
-       "criteria belong.", call. = FALSE)
-}
+# Shapes, not merely names. Checking presence is what let a length-2 `requested`
+# reach a table that cannot recycle it against a length-13 item column -- the
+# render-blocker that shipped in three releases and was fixed in 1.0.17. Every
+# failure is reported at once, because an author fixing a runner wants the whole
+# list rather than one field per re-render.
+boot_validate(bag)
 ```
 
 ```{r}
@@ -301,33 +307,17 @@ if (length(.absent)) {
 # a chunked run this is total compute; chunks run in parallel finish in a
 # fraction of it. Reported in hours because the minutes figure reads as a
 # wall-clock number and is off by the chunk count.
-cpu_hours <- bag$elapsed_mins / 60
 
 # The digest travels WITH its algorithm. An md5 and a sha256 of the same file
 # are different strings, and of different files may not be, so a bare digest
 # recorded without its algorithm is not evidence of anything.
-checksum <- NA_character_
-for (algo in c("sha256", "md5")) {
-  if (!is.null(bag$manifest[[algo]])) {
-    checksum <- paste0(algo, ":", bag$manifest[[algo]])
-    break
-  }
-}
 
 # A version string alone cannot say which codebase ran: one real package version
 # existed as two, one with a selection criterion and one without, and the
 # selection criterion is precisely what decides what a screen selects.
-engine <- if (!is.null(bag$th_sha)) {
-  paste0("sha:", bag$th_sha)
-} else if (!is.null(bag$th_version)) {
-  paste0("version:", bag$th_version)
-} else {
-  NA_character_
-}
 
 # Summarised, not listed: at 25 chunks the joined seed string is a single
 # 270-character cell that wrecks the table. Every seed is in the table below.
-n_chunks <- if (is.null(bag$n_chunks)) 1L else as.integer(bag$n_chunks)
 
 # `requested` and `usable` are per PHASE, not scalars: a multiphase screen
 # offers its candidate pool to each phase separately, and a real bag carries
@@ -340,39 +330,7 @@ n_chunks <- if (is.null(bag$n_chunks)) 1L else as.integer(bag$n_chunks)
 # OFFERED to each phase, so 230 and 230 is one pool seen twice, not 460
 # candidates. Falls back to a bare value when a single-phase run makes it
 # length 1, and to unlabelled values if a future runner drops the names.
-.per_phase <- function(x) {
-  # A zero-length value must return exactly one string, or it vanishes from the
-  # `value` vector and data.frame() fails with the SAME "differing number of
-  # rows" error this helper was written to fix. `format(integer(0))` is
-  # character(0); `format(NULL)` is the string "NULL", so only the typed
-  # zero-length case actually drops. Guarded explicitly rather than relying on
-  # which of the two a future runner happens to write.
-  if (length(x) == 0L) {
-    return(NA_character_)
-  }
-  if (length(x) == 1L) {
-    return(format(x))
-  }
-  if (is.null(names(x))) {
-    return(paste(format(x), collapse = ", "))
-  }
-  paste0(names(x), " ", format(x), collapse = ", ")
-}
-
-provenance <- data.frame(
-  item = c("Replicates pooled", "Chunks pooled", "Entry level (slentry)",
-           "Stay level (slstay)", "Candidates offered", "Candidates usable",
-           "Rows screened", "Replicates that fitted", "Replicates that failed",
-           "CPU hours (summed)", "Fitting engine", "Dataset checksum",
-           "Seeds"),
-  value = c(format(bag$n_boot), format(n_chunks), format(bag$slentry),
-            format(bag$slstay), .per_phase(bag$requested), .per_phase(bag$usable),
-            format(bag$n_rows), format(bag$boot$n_success),
-            format(bag$boot$n_failed), sprintf("%.1f", cpu_hours),
-            engine, checksum,
-            paste0(n_chunks, " distinct (listed below)")),
-  stringsAsFactors = FALSE
-)
+provenance <- boot_provenance(bag)
 provenance
 ```
 
@@ -389,10 +347,7 @@ provenance
 # through it and carries only the scalar `seed` its runner wrote. Falling back
 # is not defensive padding -- without it the one case this table exists to
 # serve is the one case it cannot render.
-seed_list <- if (!is.null(bag$seeds)) bag$seeds else bag$seed
-data.frame(chunk = seq_along(seed_list),
-           seed  = format(seed_list, scientific = FALSE),
-           stringsAsFactors = FALSE)
+boot_seeds(bag)
 ```
 
 ## Candidates that were never screened
@@ -407,17 +362,18 @@ data.frame(chunk = seq_along(seed_list),
 # A candidate the screen never saw cannot appear at any frequency, so its
 # absence from the table below is indistinguishable from never having been
 # selected. That is the reason this section exists at all.
-if (is.null(bag$dropped) || !nrow(bag$dropped)) {
+dropped <- boot_dropped(bag)
+if (!nrow(dropped)) {
   cat("Every candidate offered was screened.\n")
 } else {
-  as.data.frame(table(phase = bag$dropped$phase, reason = bag$dropped$reason))
+  as.data.frame(table(phase = dropped$phase, reason = dropped$reason))
 }
 ```
 
 ```{r}
 #| label: dropped-detail
-if (!is.null(bag$dropped) && nrow(bag$dropped)) {
-  bag$dropped[order(bag$dropped$phase, bag$dropped$reason), ]
+if (nrow(dropped)) {
+  dropped
 }
 ```
 
@@ -437,33 +393,34 @@ then reads as a table of perfectly reliable variables.
 # hzr_stepwise() rewrite the stored formula per replicate, and a symbol standing
 # where the formula should be does not survive that rewrite. See the health
 # check below for what the failure looks like -- it does not error.
+# Still bound here, and not only for this chunk: `cluster-matrix` below pivots
+# these same replicates into the wide matrix boot_clusters() wants. Dropping the
+# binding when this body moved into the package would fail 250 lines away,
+# naming `reps` and nothing about the cause.
 reps <- bag$boot$replicates
-candidates <- setdiff(unique(reps$parameter), bag$base_params)
 
-# boot_pool_chunks() computes free_sd, so a SINGLE unchunked run does not carry
-# it. Recomputed rather than skipped: this is the check that catches a bootstrap
-# which refit nothing, and an unchunked run is the shape most likely to have
-# been built that way. NA, never 0, when there is nothing to take an SD of --
-# zero is the CLAIM that the parameter did not vary, which one replicate cannot
-# support.
-free_sd <- if (!is.null(bag$free_sd)) {
-  bag$free_sd
-} else {
-  .est <- reps$estimate[reps$parameter == bag$base_params[[1L]]]
-  if (length(.est) > 1L) stats::sd(.est) else NA_real_
-}
-
-health <- data.frame(
-  check = c("Replicates that fitted", "Replicates that failed",
-            "Distinct candidates ever selected",
-            "SD of the first free base parameter"),
-  value = c(format(bag$boot$n_success), format(bag$boot$n_failed),
-            format(length(candidates)), format(free_sd)),
-  stringsAsFactors = FALSE
-)
+health <- boot_health(bag)
 health
 
-if (!length(candidates)) {
+# The refusals below select their check by NAME, so a rename upstream would
+# make both `%in%` tests FALSE and silently delete the guards rather than
+# break them. Checked here so that drift stops the render instead of quietly
+# passing a failed screen.
+.want <- c("Distinct candidates ever selected", "SD of the first free base parameter")
+if (!all(.want %in% health$check)) {
+  stop("boot_health() no longer reports the check(s): ",
+       paste(setdiff(.want, health$check), collapse = ", "),
+       ".\nThe refusals below match on that name, so they would silently stop ",
+       "firing. Update them to the new name in hvtiRbootstrap.", call. = FALSE)
+}
+
+# boot_health() REPORTS; it does not refuse. Both rows below are failures whose
+# reports read as healthy -- a screen that selected nothing has n_failed = 0,
+# and a bootstrap that refit nothing has n_success = 500 -- so a table cell is
+# not enough. The refusal stays in the template, where the render stops.
+.failed <- health$check[!is.na(health$ok) & !health$ok]
+
+if (.want[[1L]] %in% .failed) {
   stop("The screen selected NOTHING: no parameter outside the base model ",
        "appears in any replicate. That is a failed screen, not a null result, ",
        "and it is what a formula held in a variable looks like from here -- ",
@@ -472,10 +429,7 @@ if (!length(candidates)) {
        "literally at the call site in your runner and rerun.", call. = FALSE)
 }
 
-# A free parameter must VARY across resamples. A bootstrap built on the vector
-# interface returns the original fit every replicate, with n_success = 500,
-# n_failed = 0, and no warning. sd() of a free base parameter is the tell.
-if (!is.na(free_sd) && free_sd == 0) {
+if (.want[[2L]] %in% .failed) {
   stop("The first free base parameter has SD exactly 0 across ", bag$n_boot,
        " replicates, so every replicate returned the SAME fit. A bootstrap ",
        "built on the vector interface does that: it refits nothing and reports ",
@@ -509,39 +463,25 @@ resampling noise alone.
 # above governed each replicate's stepwise fit, and neither of them says how
 # often a variable must survive to be worth carrying forward.
 RETAIN_PCT <- 50
+
+# EDIT: how a term's name splits into phase and variable. Terms are named
+# `<phase>.<variable>`, so one variable offered to two phases is two independent
+# screening decisions and must not be pooled into one row.
+#
+# boot_frequencies() and boot_concepts() also accept PHASE_OF = NULL, for a
+# single-phase screen, and that is what lets one reporting code path serve the
+# forthcoming bl, br and bc templates. This template is not that case: it
+# reports a multiphase hazard screen, and every table and the figure below
+# assume a phase column throughout. PHASE_OF must name a real rule here.
+PHASE_OF <- function(term) sub("[.].*$", "", term)
 ```
 
 ```{r}
 #| label: frequencies
-# The name column differs by how the screen was produced, and reading the wrong
-# one yields NULL rather than an error. boot_pool_chunks() recomputes its
-# summary and names the column `parameter`; boot_summary() names it `variable`.
-# A single unchunked run carries whichever its runner wrote.
-summ <- bag$boot$summary
-name_col <- if ("parameter" %in% names(summ)) "parameter" else "variable"
-
-freq <- data.frame(term = summ[[name_col]], pct = summ$pct, n = summ$n,
-                   stringsAsFactors = FALSE)
-freq <- freq[!freq$term %in% bag$base_params, , drop = FALSE]
-
-# Terms are named `<phase>.<variable>`: one variable offered to two phases is
-# two independent screening decisions and must not be pooled into one row.
-freq$phase    <- sub("[.].*$", "", freq$term)
-freq$variable <- sub("^[^.]*[.]", "", freq$term)
-
-# Per-variable, not one figure for the table. Monte-Carlo error is largest at
-# p = 0.5 and shrinks towards either end, so a single quoted value overstates it
-# for the variables at the top and understates it for the ones in the middle --
-# and the middle is where the retention decision is actually being made.
-p <- freq$pct / 100
-freq$mc_error <- 100 * sqrt(p * (1 - p) / bag$n_boot)
-
-# Within two Monte-Carlo errors of the cutoff: the variables whose retention
+# mc_error is the per-variable Monte-Carlo error described above; near_threshold
+# flags a variable within two Monte-Carlo errors of RETAIN_PCT, whose retention
 # would not survive a rerun with different seeds.
-freq$near_threshold <- abs(freq$pct - RETAIN_PCT) <= 2 * freq$mc_error
-
-freq <- freq[order(freq$phase, -freq$pct, freq$variable), , drop = FALSE]
-rownames(freq) <- NULL
+freq <- boot_frequencies(bag, phase = PHASE_OF, threshold = RETAIN_PCT)
 freq[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
 ```
 
@@ -551,7 +491,7 @@ freq[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
 # as a bare list: a variable that cleared the cutoff by less than its own
 # Monte-Carlo error cleared it on noise, and a list that does not say so invites
 # the reader to treat the two kinds of retention as the same claim.
-retained <- freq[freq$pct >= RETAIN_PCT, , drop = FALSE]
+retained <- freq[freq$retained, , drop = FALSE]
 retained[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
 ```
 
@@ -618,36 +558,17 @@ the cutoff and one finding is reported twice.
 # 30% each are anywhere between 30% and 60% of replicates, depending entirely
 # on how often the same replicate took both, and the summary does not record
 # that.
-cov_reps <- reps[!reps$parameter %in% bag$base_params, , drop = FALSE]
-cov_reps$phase    <- sub("[.].*$", "", cov_reps$parameter)
-cov_reps$variable <- sub("^[^.]*[.]", "", cov_reps$parameter)
-cov_reps$concept  <- concept$concept[match(cov_reps$variable, concept$variable)]
-
-union_rows <- lapply(split(by_concept, list(by_concept$phase, by_concept$concept), drop = TRUE),
-                     function(g) {
-                       ph <- g$phase[1]
-                       ck <- g$concept[1]
-                       in_k <- cov_reps$phase == ph & !is.na(cov_reps$concept) &
-                         cov_reps$concept == ck
-                       data.frame(phase         = ph,
-                                  concept       = ck,
-                                  n_forms       = nrow(g),
-                                  union_pct     = 100 * length(unique(cov_reps$replicate[in_k])) /
-                                    bag$n_boot,
-                                  best_form_pct = max(g$pct),
-                                  stringsAsFactors = FALSE)
-                     })
-concept_union <- do.call(rbind, union_rows)
-
+#
 # How much the per-form table understates the concept. A large spread is the
 # whole reason this table exists; a spread of zero means the concept has one
 # form and the two views agree.
-concept_union$spread   <- concept_union$union_pct - concept_union$best_form_pct
-concept_union$retained <- concept_union$union_pct >= RETAIN_PCT
-concept_union <- concept_union[order(concept_union$phase, -concept_union$union_pct), ,
-                               drop = FALSE]
-rownames(concept_union) <- NULL
-concept_union
+#
+# This table's at-least-one figure is `pct_any`, not `union_pct`; every value
+# is unchanged.
+concept_union <- boot_concepts(bag, concept_map = concept[, c("variable", "concept")],
+                               phase = PHASE_OF, threshold = RETAIN_PCT)
+concept_union[, c("phase", "concept", "n_forms", "pct_any", "best_form_pct",
+                  "spread", "retained")]
 ```
 
 ⚠️ **A selection frequency is conditional on the candidate pool**, and no column
