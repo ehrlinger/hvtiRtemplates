@@ -14,6 +14,9 @@ refuses to overwrite an existing job.
 | `graphs/06.01-hp.qmd` | nomogram and hazard figures | `graphs/` |
 | `graphs/06.02-hs.qmd` | patient-level predictions and expected survival | `graphs/` |
 | `analyses/04.01-hm.qmd` | multivariable hazard model | `analyses/` |
+| `analyses/04.02-bl.qmd` | bootstrap variable selection, logistic | `analyses/` |
+| `analyses/04.03-br.qmd` | bootstrap variable selection, linear | `analyses/` |
+| `analyses/04.04-bc.qmd` | bootstrap variable selection, Cox | `analyses/` |
 | `analyses/04.05-bh.qmd` | bootstrap variable selection | `analyses/` |
 
 A template is named `<NN.MM>-<prefix>.qmd` and lives in the taxonomy folder it
@@ -54,8 +57,8 @@ The full design, including what was rejected and why, is in
 The five job types
 [#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8) offered as candidate
 content all ship now, `bh` last: `hz` in 1.0.6, `hp` in 1.0.7, `hm` in 1.0.8,
-`hs` in 1.0.12 and `bh` in 1.0.13. What is still untemplated is the rest of the
-taxonomy, and the roadmap ledger — not this file — is the authority on which
+`hs` in 1.0.12 and `bh` in 1.0.13. The bootstrap family joined it in 1.0.19:
+`bl`, `br` and `bc`. What is still untemplated is the rest of the taxonomy, and the roadmap ledger — not this file — is the authority on which
 prefix is scheduled when:
 [`dev/specs/2026-08-29-template-conversion-roadmap.md`](../../dev/specs/2026-08-29-template-conversion-roadmap.md).
 
@@ -64,6 +67,23 @@ prefix is scheduled when:
 chunked from a separate script and this template reports over what that script
 wrote. Templating the runner needs multi-file templates in `new_job()`, which
 is a package change. `hm` has the same gap.
+
+**Nor are `bl`, `br` and `bc`'s.** Their runner calls
+`hvtiRbootstrap::boot_select()` with the fitter for its model and converts the
+result with `boot_bag()`, which is one call and needs no template. What it must
+supply is the four facts the screen cannot know: which terms are the base
+model, how many candidates were offered before any were dropped, the dataset
+manifest, and what was dropped.
+
+⚠️ **None of the three has been rendered against a screen a study ran.** No R
+job in the corpus calls `boot_select()` yet, so all three were gated on a
+screen run against a real built dataset for the purpose. That covers real
+variable names and a real correlation structure; it does not cover the
+candidate pool and the dropped set a study author chooses, which is where
+`bh`'s one shipped defect lived. `bc` has the least behind it: it ships because
+`fit_cox()` exists, not because a study has run one, and of the 16 studies with
+a `bc` job none has an R exemplar. Read the first real output of any of the
+three against your own expectations, not as a checked path.
 
 `hz` and `hp` were each extracted from three R exemplars — `preserve_root`,
 `maze/atricure/gender` and `lv_function/survival`. **`hm` had only one R

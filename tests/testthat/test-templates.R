@@ -281,7 +281,12 @@ test_that("DESCRIPTION's hvtiRbootstrap bound matches what the templates enforce
   # A repomap would not have caught it either -- the generated maps list
   # Suggests with the version bounds stripped, and do not index
   # inst/templates/ at all, so neither side of this comparison appears in one.
-  desc <- read.dcf("../../DESCRIPTION", fields = "Suggests")[[1L]]
+  # packageDescription(), not read.dcf("../../DESCRIPTION"). The relative path
+  # resolves under devtools::test(), which runs from tests/testthat, and NOT
+  # under R CMD check, which tests an INSTALLED copy -- so the first version of
+  # this test passed locally and errored in check.
+  desc <- utils::packageDescription("hvtiRtemplates", fields = "Suggests")
+  skip_if(is.na(desc) || is.null(desc), "Suggests is not readable here")
   bound <- regmatches(desc,
                       regexpr("hvtiRbootstrap\\s*\\(>=\\s*[0-9.]+\\)", desc))
   skip_if(length(bound) == 0L, "hvtiRbootstrap is not a versioned Suggests")
