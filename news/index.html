@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.19</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.20</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,16 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.20" id="hvtirtemplates-1020">hvtiRtemplates 1.0.20<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1020"></a></h2>
+<ul><li><p><strong>Three bootstrap screen templates ship</strong>: <code>analyses/04.02-bl.qmd</code> (logistic), <code>analyses/04.03-br.qmd</code> (linear) and <code>analyses/04.04-bc.qmd</code> (Cox). All three report through <code>hvtiRbootstrap</code>’s reporting layer with <code>PHASE_OF &lt;- NULL</code>, which is the single-phase path the same functions serve for <code>bh</code> with a term-splitting rule. One code path, four templates.</p></li>
+<li><p><strong>They read one screen rather than pooling chunks.</strong> <code>bh</code> pools because a hazard screen is days of compute; these are not, and a chunked run is pooled in the runner, which is the only place that knows how many chunks it launched.</p></li>
+<li><p><strong>Two of <code>bh</code>’s warnings do not transfer, and were rewritten rather than copied.</strong> A formula held in a variable is fine here: <code>boot_select()</code>’s fitters evaluate through an environment that binds <code>formula</code> and <code>data</code> where <code><a href="https://rdrr.io/r/stats/step.html" class="external-link">step()</a></code> looks for them, and a variable-held formula gives byte-identical results. <code>bh</code> warns the opposite because <code>hzr_bootstrap()</code> rewrites the stored formula per replicate. The empty-screen and flat-bootstrap refusals stay, with diagnoses that fit a <code>boot_select()</code> screen.</p></li>
+<li><p><strong><code>bc</code> carries a warning the other two do not need.</strong> A Cox model has no intercept, so <code>base_params</code> cannot be the <code>"(Intercept)"</code> a logistic runner would pass. With nothing forced there is no free base parameter, the standard-deviation check reports <code>NA</code> rather than passing, and the guard that catches a bootstrap which refit nothing is silently inactive.</p></li>
+<li><p><strong>They require <code>hvtiRbootstrap (&gt;= 0.9.2)</code>, and <code>DESCRIPTION</code> now says so.</strong> 0.9.2 adds <code>boot_bag()</code>, without which a <code>boot_select()</code> screen cannot be read by the reporting layer at all: the screen returns a wide coefficients matrix and the layer reads a long-form bag, and nothing converted between them. The declared bound had also drifted – it read <code>&gt;= 0.1.1</code> from 1.0.13 while the <code>bh</code> template refused below 0.1.2 and later 0.9.0, for nine releases. A test now asserts the bound is at least the highest floor any template enforces.</p></li>
+<li><p><strong>All three were rendered against a screen run for the gate, not against a screen a study ran.</strong> No R job found on the share calls <code>boot_select()</code>, so no <code>bl</code>, <code>br</code> or <code>bc</code> bag existed to read. The gate screens a real built dataset instead, which exercises real variable names, a real correlation structure and <code>read_built()</code>; what it does not exercise is a candidate pool a study author chose. <code>bc</code> is the weakest of the three: of the 16 studies with a <code>bc</code> job, none has an R exemplar.</p></li>
+<li><p><strong>Ordinals 04.02, 04.03 and 04.04</strong> are free minors in <code>analyses</code>. <code>04.06</code> remains retired and unissuable.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.19" id="hvtirtemplates-1019">hvtiRtemplates 1.0.19<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1019"></a></h2>
 <ul><li>

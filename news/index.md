@@ -1,5 +1,57 @@
 # Changelog
 
+## hvtiRtemplates 1.0.20
+
+- **Three bootstrap screen templates ship**: `analyses/04.02-bl.qmd`
+  (logistic), `analyses/04.03-br.qmd` (linear) and
+  `analyses/04.04-bc.qmd` (Cox). All three report through
+  `hvtiRbootstrap`’s reporting layer with `PHASE_OF <- NULL`, which is
+  the single-phase path the same functions serve for `bh` with a
+  term-splitting rule. One code path, four templates.
+
+- **They read one screen rather than pooling chunks.** `bh` pools
+  because a hazard screen is days of compute; these are not, and a
+  chunked run is pooled in the runner, which is the only place that
+  knows how many chunks it launched.
+
+- **Two of `bh`’s warnings do not transfer, and were rewritten rather
+  than copied.** A formula held in a variable is fine here:
+  `boot_select()`’s fitters evaluate through an environment that binds
+  `formula` and `data` where
+  [`step()`](https://rdrr.io/r/stats/step.html) looks for them, and a
+  variable-held formula gives byte-identical results. `bh` warns the
+  opposite because `hzr_bootstrap()` rewrites the stored formula per
+  replicate. The empty-screen and flat-bootstrap refusals stay, with
+  diagnoses that fit a `boot_select()` screen.
+
+- **`bc` carries a warning the other two do not need.** A Cox model has
+  no intercept, so `base_params` cannot be the `"(Intercept)"` a
+  logistic runner would pass. With nothing forced there is no free base
+  parameter, the standard-deviation check reports `NA` rather than
+  passing, and the guard that catches a bootstrap which refit nothing is
+  silently inactive.
+
+- **They require `hvtiRbootstrap (>= 0.9.2)`, and `DESCRIPTION` now says
+  so.** 0.9.2 adds `boot_bag()`, without which a `boot_select()` screen
+  cannot be read by the reporting layer at all: the screen returns a
+  wide coefficients matrix and the layer reads a long-form bag, and
+  nothing converted between them. The declared bound had also drifted –
+  it read `>= 0.1.1` from 1.0.13 while the `bh` template refused below
+  0.1.2 and later 0.9.0, for nine releases. A test now asserts the bound
+  is at least the highest floor any template enforces.
+
+- **All three were rendered against a screen run for the gate, not
+  against a screen a study ran.** No R job found on the share calls
+  `boot_select()`, so no `bl`, `br` or `bc` bag existed to read. The
+  gate screens a real built dataset instead, which exercises real
+  variable names, a real correlation structure and `read_built()`; what
+  it does not exercise is a candidate pool a study author chose. `bc` is
+  the weakest of the three: of the 16 studies with a `bc` job, none has
+  an R exemplar.
+
+- **Ordinals 04.02, 04.03 and 04.04** are free minors in `analyses`.
+  `04.06` remains retired and unissuable.
+
 ## hvtiRtemplates 1.0.19
 
 - **`graphs/06.02-hs.qmd` states its confidence coverage in
