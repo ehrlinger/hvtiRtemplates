@@ -4,9 +4,10 @@ Steps use checkbox (`- [ ]`) syntax so a task can be picked up mid-way. Work
 task by task and run each task's verification before moving on.
 
 **Date:** 2026-09-01
-**Status:** Part A begun 2026-09-01. Task A1 is written and committed; see the
-execution note at the end of Part A for where it currently sits and why Part A
-is paused.
+**Status:** 2026-09-01. Part A paused after Task A1; see the execution note at
+the end of Part A. **Part B complete and pushed** on `feat/batch-2a-phase-3`,
+check 0/0/0, PR held until `hvtiRbootstrap` 0.9.2 ships; see the Part B
+execution note, which records six defects in this plan.
 **Design:** `2026-08-31-batch-2a-bootstrap-family-design.md` §4, §7 Phase 3, §8
 **Predecessor:** `2026-09-01-batch-2a-phase-2-plan.md`
 **Issue:** [#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)
@@ -767,8 +768,15 @@ either.
 
 - [ ] **Step 5: Wait for the merge before starting Part B**
 
-Part B's templates declare `hvtiRbootstrap (>= 0.9.2)` and cannot render
-against an unreleased adapter.
+Part B's templates declare `hvtiRbootstrap (>= 0.9.2)`, so the RELEASE waits on
+this one.
+
+⚠️ **The render gate does not.** The templates never call `boot_bag()`; only a
+runner does. A bag built by hand, or by the Part B harness with the pivot
+inlined, renders them completely. Tasks B1 through B7 can therefore all be done
+while Part A is blocked, and were. Only Task B8's PR waits, because CI resolves
+`Remotes: ehrlinger/hvtiRbootstrap` against that repository's `main` and cannot
+satisfy `>= 0.9.2` until it ships.
 
 ---
 
@@ -976,12 +984,17 @@ mkdir -p "$GATE/datasets" "$GATE/estimates" "$GATE/job"
 cp "$STUDY/_study.yml" "$GATE/_study.yml"
 cp "$STUDY/datasets/$(Rscript -e 'cat(yaml::read_yaml(Sys.getenv("CFG"))$built)' CFG="$STUDY/_study.yml")" "$GATE/datasets/"
 printf 'project:\n  type: default\n' > "$GATE/_quarto.yml"
-chmod -R a-w "$GATE/datasets"
 ```
 
-⚠️ **Every copy is one-way and the source is never opened for writing.**
-`chmod a-w` on the copy is belt and braces: a template bug that wrote to its
-input cannot then reach the staged data either.
+⚠️ **Every copy is one-way and the source is never opened for writing.** That
+is the property that matters: the share holds live research data.
+
+⚠️ **Do NOT `chmod a-w` the staged `datasets/`, which an earlier version of
+this step did.** `read_built()` writes a `built.schema.csv` beside the data on
+first read, so a read-only copy fails with a permission error from inside
+`read_built()` that names a temp file and not the cause. The staged copy is
+scratch; leave it writable. The study is protected by never writing to it, not
+by the mode bits on a copy of it.
 
 - [ ] **Step 2: Write the harness**
 
@@ -1305,6 +1318,49 @@ runner wrote. A single-phase runner writes no `phase` column, and
 is correct here; a runner that does write one still has it in the detail
 table below.
 
+- [ ] **Step 5b: Rewrite the health chunk. Two of `bh`'s warnings are FALSE
+      here.**
+
+⚠️ **This plan originally had no such step**, having assumed the health section
+transferred unchanged. It does not, and copying it tells a study author
+something untrue about the function they are calling.
+
+`bh`'s chunk instructs: *"EDIT: the candidate pool, written LITERALLY in your
+runner's formula. Not in a variable, not via as.formula() or reformulate()"*,
+because `hzr_bootstrap()` rewrites the stored formula per replicate and a
+symbol does not survive that rewrite. **`boot_select()` does not have that
+problem.** Its fitters evaluate through `.fit_in_env()`
+(`hvtiRbootstrap/R/fitters.R`), which builds a fresh environment and binds
+`formula` and `data` into it, which is exactly where `step()`'s `update()`
+looks. Verified against 0.9.1 rather than reasoned about:
+
+```r
+f <- y ~ x1 + x2 + noise
+a <- boot_select(d, f, fit_logistic, n_rep = 20, seed = 1)
+b <- boot_select(d, y ~ x1 + x2 + noise, fit_logistic, n_rep = 20, seed = 1)
+identical(a$coefficients, b$coefficients)   # TRUE
+```
+
+Replace the comment with one saying a variable-held formula is fine here, why,
+and that `bh` warns the opposite for a reason that does not apply.
+
+**Both refusals stay, and both diagnoses change.** `boot_health()` still cannot
+refuse for itself, so the template's two `stop()` calls remain. But `bh`'s
+messages diagnose hazard failures. Rewrite them for what actually produces
+these states under `boot_select()`:
+
+- *Selected nothing*: the runner passed `select = "none"` so nothing was ever a
+  candidate; `sle` is far too strict for the pool; or `base_params` in the
+  `boot_bag()` call names the whole model, subtracting every term from the
+  frequencies.
+- *SD exactly zero*: a bootstrap that resamples nothing. Check the runner was
+  given the cohort rather than a single row, and that `boot_bag()` was handed
+  the screen it thinks it was.
+
+⚠️ Keep the `.want` label-drift guard exactly as `bh` has it. The refusals match
+`boot_health()`'s checks by NAME, so a rename upstream makes both `%in%` tests
+`FALSE` and deletes the guards silently rather than breaking them.
+
 - [ ] **Step 6: Rewrite the clusters chunk's `EDIT:` block**
 
 `bh`'s members are phase-qualified. Replace with:
@@ -1468,8 +1524,15 @@ Step 9 pass.
 cd ~/Documents/GitHub/hvtiRtemplates && diff inst/templates/analyses/04.02-bl.qmd inst/templates/analyses/04.03-br.qmd
 ```
 
-Expected: four hunks, matching Step 1. A fifth hunk is an accidental edit;
-revert it.
+Expected: **ten** hunks, matching Step 1.
+
+⚠️ **This plan said four, and told you to revert a fifth as an accidental
+edit.** That instruction would have reverted correct changes. `bl` does not
+merely say "logistic" in its title: it names its companion model job (`lm`,
+which becomes `rm`), the fitter its runner calls (`fit_logistic`, which becomes
+`fit_linear`), and its own report file (`bl-report.rds`). Each of those is a
+real difference between the two templates. Count the hunks against Step 1's
+list rather than against a number.
 
 - [ ] **Step 5: Commit**
 
@@ -1690,10 +1753,14 @@ Edit the existing objects in place; do not append new ones. Every field in
 cd ~/Documents/GitHub/hvtiRtemplates && python3 dev/specs/artifacts/check-roadmap-counts.py
 ```
 
-Expected on first run: FAIL, naming the prose counts in
-`2026-08-29-template-conversion-roadmap.md` that no longer match the ledger.
-Update those numbers **from the checker's output**, not by hand-counting, and
-re-run until it exits 0.
+Expected on first run: FAIL, and **the failure names the fix**:
+`run python3 dev/specs/artifacts/roadmap_render.py`. Run that, then re-run the
+checker.
+
+⚠️ **Do not update the counts by hand, which is what this plan first said.**
+The roadmap document is generated from the ledger, and `roadmap_render.py` is
+the generator. Hand-editing it produces a document that agrees with the checker
+and disagrees with its source the next time anything regenerates.
 
 ⚠️ **Editing a count without regenerating fails the PR**, and hand-counting
 is how the macro-allocation tables drifted three times in one day.
@@ -2174,6 +2241,106 @@ cd ~/Documents/GitHub/hvtiRtemplates && python3 dev/specs/artifacts/check-spec-c
 ⚠️ **The README and design now carry anchored numbers.** If
 `check-spec-counts.py` covers the lines you edited, its map must be
 regenerated; editing a count without regenerating fails the PR.
+
+---
+
+## Part B execution note, 2026-09-01
+
+**Part B is done and pushed on `feat/batch-2a-phase-3`, nine commits.** Tasks
+B1 through B7 complete, B8 complete except the PR. Clean `git archive` export:
+`R CMD check` **0 errors, 0 warnings, 0 notes**. Source tree
+`testthat` **179 pass, 0 fail, 0 skip**; under check the tarball skips 4, all in
+`test-roadmap.R`, because `dev/specs/artifacts/*.json` is `.Rbuildignore`d.
+That is pre-existing and was verified for PR #62. `lintr` clean. PDF manual
+builds, 4 pages.
+
+**The PR is held, deliberately.** `DESCRIPTION` carries
+`Remotes: ehrlinger/hvtiRbootstrap` and `Suggests: hvtiRbootstrap (>= 0.9.2)`.
+CI resolves that remote against the other repository's `main`, which is 0.9.1,
+so `setup-r-dependencies` cannot satisfy the constraint and the run reddens for
+a reason only Part A can fix. Open the PR once 0.9.2 ships.
+
+**Version renumbered to 1.0.20.** 1.0.19 went to
+[#65](https://github.com/ehrlinger/hvtiRtemplates/pull/65), a prose fix that was
+ready while this branch was blocked. Renumbered rather than left to collide,
+which is how #44 and #46 both shipped under 1.0.10.
+
+**The render gate was stronger than planned.** Every template was rendered
+against a real built dataset from a study on the share, screened through
+`boot_select()`, rather than against the simulated columns the plan settled
+for: 12 candidates over 494 real rows. `read_built()` and
+`pool_collinear_pairs()` therefore ran for real, which closes the plan's
+residual risk 2. `new_job()` scaffolded each template, which exercises the
+single-`^ENDPOINT`/single-`^TYPE` contract, since it hard-stops otherwise.
+
+### What this plan got wrong
+
+Six defects, recorded because the next batch will be written from this one.
+Four are corrected inline above; two could not be.
+
+**D1. Task B4 said the `br` diff from `bl` is four hunks, and told the executor
+to revert a fifth as an accidental edit.** It is **ten**. `bl` names its
+companion model job, the fitter its runner calls and its own report file, and
+all three change for a linear screen. This is the worst defect in the plan:
+following it deletes correct work, and the instruction is phrased with enough
+confidence to be obeyed. Corrected at Task B4 Step 4.
+
+**D2. Task B2's staging step made the copied `datasets/` read-only.**
+`read_built()` writes a `built.schema.csv` beside the data on first read, so the
+gate died inside `read_built()` with a permission error naming a temp file.
+The instinct was right and the target was wrong: the study is protected by
+never writing to it, not by the mode bits on a scratch copy. Corrected at Task
+B2 Step 1.
+
+**D3. Task B7 told the executor to update the roadmap counts by hand from the
+checker's output.** There is a generator, `roadmap_render.py`, and the
+checker's own failure message names it. Hand-editing a generated document
+produces one that satisfies the checker and disagrees with its source at the
+next regeneration, which is the drift the ledger exists to prevent. Corrected
+at Task B7 Step 2.
+
+**D4. The plan believed Part B's render gate was blocked on `boot_bag()`.** It
+was not. The templates never call it; only a runner does. A hand-built bag
+renders them completely, and the pivot used to build it was the one this plan
+specifies for `boot_bag()`, so its round-trip invariant was verified **before**
+Part A writes it: `boot_frequencies()` on the assembled bag matched
+`boot_summary()` on the wide matrix to 1e-12. Had the plan been followed
+literally, all of Part B would have waited on a blocked Part A for no reason.
+Corrected at Task A4 Step 5.
+
+**D5. The plan assumed `bh`'s health chunk transferred unchanged, and gave it
+no step at all.** Two of its warnings are false under `boot_select()`. The
+"write the formula literally" instruction describes `hzr_bootstrap()`'s
+per-replicate rewrite; `boot_select()`'s fitters evaluate through
+`.fit_in_env()`, which binds `formula` and `data` where `step()` looks, and a
+variable-held formula gives byte-identical results. Copying the warning would
+have told study authors something untrue about the function they are calling,
+in three files. Added as Task B3 Step 5b.
+
+**D6. A test that passes under `devtools::test()` and errors under
+`R CMD check`.** Not a defect in the plan as written, but in work added beyond
+it: a new test asserting `DESCRIPTION`'s `hvtiRbootstrap` bound is at least the
+highest floor any template enforces read `../../DESCRIPTION`, which resolves
+from `tests/testthat` and not from an installed copy. It passed locally and
+errored in check. `utils::packageDescription()` is the portable form. This is
+the divergence `AGENTS.md` warns about, and only running the real check found
+it.
+
+### One thing the plan did not know to ask for
+
+The test in D6 exists because `DESCRIPTION` declared
+`hvtiRbootstrap (>= 0.1.1)` from 1.0.13 while `04.05-bh.qmd`'s own guard
+demanded 0.1.2 and later 0.9.0. **Nine releases with the two disagreeing**, and
+nothing read both: the bound is in `DESCRIPTION`, the floor is a string inside
+a `.qmd`. A study could satisfy the declared dependency and still be refused by
+the template it had just scaffolded, with the message arriving mid-render.
+
+⚠️ **A repomap would not have caught it**, and it is worth writing that down
+because it was proposed as the fix. The generated maps under
+`Claude/repomaps/` list `Suggests` with the version bounds **stripped**, and do
+not index `inst/templates/` at all, so neither side of the comparison appears
+in one. The check that catches this class has to compare the two artifacts
+directly.
 
 ---
 
