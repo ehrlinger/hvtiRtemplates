@@ -189,19 +189,20 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
 
 test_that("the bh template reports through hvtiRbootstrap, not its own copy", {
   src <- readLines(template_path("bh"), warn = FALSE)
+  code <- sub("#.*$", "", src)          # and not in a code comment either
 
   # The reporting layer is the point of Batch 2a: bl, br and bc are thin only
   # because these calls live in the package. A hand-edit that inlines one of
   # them back into this file makes four reports to hand-sync again.
   for (fn in c("boot_validate", "boot_provenance", "boot_seeds", "boot_dropped",
                "boot_health", "boot_frequencies", "boot_concepts")) {
-    expect_true(any(grepl(paste0(fn, "("), src, fixed = TRUE)),
+    expect_true(any(grepl(paste0(fn, "("), code, fixed = TRUE)),
                 info = paste(fn, "is not called by the bh template"))
   }
 
   # boot_health() reports and never stops, so the two refusals are the
   # template's own. A report that renders green over a screen which selected
   # nothing is the failure these prevent.
-  expect_true(any(grepl("The screen selected NOTHING", src, fixed = TRUE)))
-  expect_true(any(grepl("returned the SAME fit", src, fixed = TRUE)))
+  expect_true(any(grepl("The screen selected NOTHING", code, fixed = TRUE)))
+  expect_true(any(grepl("returned the SAME fit", code, fixed = TRUE)))
 })
