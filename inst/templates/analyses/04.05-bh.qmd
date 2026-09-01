@@ -282,27 +282,13 @@ if (!is.null(.shortfall)) {
 # A pooled run has already had most of these checked by boot_pool_chunks(),
 # which refuses chunks that disagree. A SINGLE unchunked run has not: nothing
 # ran between the runner and here. This is the only check that covers both.
-.required <- c("n_boot", "seed", "slentry", "slstay", "base_params", "usable",
-               "requested", "n_rows", "elapsed_mins", "manifest", "boot")
-.absent <- .required[!.required %in% names(bag)]
 
-# The nested fields are checked by name too. `boot` being present says nothing
-# about what is inside it, and every table below reaches into it -- a missing
-# `summary` surfaces thirty lines later as a NULL subscript, naming nothing.
-if (!length(.absent)) {
-  # Subset AFTER paste0, never inside it: paste0("boot$", character(0)) is
-  # "boot$", not character(0), so pasting the filtered vector reports a missing
-  # field named nothing on every healthy run.
-  .nested <- c("replicates", "summary", "n_success", "n_failed")
-  .absent <- paste0("boot$", .nested)[!.nested %in% names(bag$boot)]
-}
-if (length(.absent)) {
-  stop("The bootstrap output is missing ", length(.absent), " field(s) this ",
-       "report reads: ", paste(.absent, collapse = ", "), ".\nEither the runner ",
-       "that wrote it predates them, or it is not the runner this template ",
-       "expects. Reporting over it would print blanks where the screen's ",
-       "criteria belong.", call. = FALSE)
-}
+# Shapes, not merely names. Checking presence is what let a length-2 `requested`
+# reach a table that cannot recycle it against a length-13 item column -- the
+# render-blocker that shipped in three releases and was fixed in 1.0.17. Every
+# failure is reported at once, because an author fixing a runner wants the whole
+# list rather than one field per re-render.
+boot_validate(bag)
 ```
 
 ```{r}
