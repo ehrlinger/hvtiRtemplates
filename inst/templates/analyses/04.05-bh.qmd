@@ -352,17 +352,18 @@ boot_seeds(bag)
 # A candidate the screen never saw cannot appear at any frequency, so its
 # absence from the table below is indistinguishable from never having been
 # selected. That is the reason this section exists at all.
-if (is.null(bag$dropped) || !nrow(bag$dropped)) {
+dropped <- boot_dropped(bag)
+if (!nrow(dropped)) {
   cat("Every candidate offered was screened.\n")
 } else {
-  as.data.frame(table(phase = bag$dropped$phase, reason = bag$dropped$reason))
+  as.data.frame(table(phase = dropped$phase, reason = dropped$reason))
 }
 ```
 
 ```{r}
 #| label: dropped-detail
-if (!is.null(bag$dropped) && nrow(bag$dropped)) {
-  bag$dropped[order(bag$dropped$phase, bag$dropped$reason), ]
+if (nrow(dropped)) {
+  dropped
 }
 ```
 
