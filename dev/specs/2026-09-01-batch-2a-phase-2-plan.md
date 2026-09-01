@@ -1,7 +1,9 @@
 # Batch 2a Phase 2: rewrite `04.05-bh.qmd` onto the reporting layer
 
 **Date:** 2026-09-01
-**Status:** planned, not started
+**Status:** EXECUTED 2026-09-01 on `refactor/batch-2a-phase-2`. See section 11 for
+what the plan got wrong; the tasks below are left as written so the corrections
+have something to point at.
 **Design:** `2026-08-31-batch-2a-bootstrap-family-design.md` §7 Phase 2, §8
 **Issue:** [#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)
 
@@ -915,3 +917,76 @@ fallbacks in `boot_seeds()` and `boot_health()`, and the `phase = NULL` path
 that Phase 3 depends on are **not** covered by it. The first is covered by
 Task 4 Step 3 and Task 7, the last only by `hvtiRbootstrap`'s own tests. Phase 3
 is where `phase = NULL` first gets a real render.
+
+
+---
+
+## 11. Post-execution: what this plan got wrong
+
+Nine tasks, nine per-task reviews and one whole-branch review. The render gate
+passed: provenance, seeds, frequency and retained tables byte-identical against
+the reference, concept table zero value mismatches across 184 rows, figure PNG
+the same sha256. `devtools::check()` 0/0/0, `devtools::test()` `SKIP 0 | PASS 118`.
+
+Six defects in the plan itself, recorded because the next batch will be written
+from this one.
+
+**D1. The version floor was wrong, and this is the one that mattered.** The plan
+floored `hvtiRbootstrap` at 0.1.2, reasoning that 0.1.2 is where the reporting
+layer landed and is therefore the honest minimum. True, and still the wrong
+floor: 0.1.2 splits a term into phase and variable by stripping the phase label
+whether or not a separator follows it, so a term named `earlyage` reports its
+variable as `age`. A real name, matching no concept, quietly absent from every
+grouped table. Raised to 0.9.0 in the shipped template. **A frequency that is
+merely wrong is worse than a function that is missing**, because a missing
+function names itself in an error and a mis-split term produces a report that is
+complete, plausible and incorrect.
+
+**D2. Task 6's `PHASE_OF` comment documented a path the template cannot take.**
+It told the study author that "a single-phase screen passes `NULL` instead".
+The reporting layer does accept `NULL`; this template does not. With
+`PHASE_OF <- NULL` the render dies at `freq[, c("phase", ...)]`, again at
+`order(by_concept$phase, ...)`, and would die at `facet_wrap(~phase)`. Followed
+literally by the author it was written for, the instruction yields four
+unattributable errors. Found only by the whole-branch reviewer executing it.
+
+**D3. `template_path()` takes a bare prefix, not a path.** Task 7's interface
+block said `template_path("analyses/04.05-bh.qmd")`. `R/templates.R:46` shows
+`template_path(prefix)`; the folder-qualified form errors with "unknown
+template". Corrected to `template_path("bh")`.
+
+**D4. Task 8's render command named the wrong pandoc writer.** The plan said
+`--to gfm`; the reference was captured with `--to markdown`. `gfm` produces 38
+hunks and 804 lines of pure writer noise having nothing to do with the refactor.
+The baseline README recorded no writer at all, which is what let the plan guess;
+it now records `--to markdown`.
+
+**D5. Task 8's expected-diff list omitted the largest diff category.** The
+rendered `.md` echoes each chunk's R source, so rewriting six chunk bodies
+necessarily rewrites 208 lines of echoed source. The plan named three expected
+diffs when the honest number was five: echoed source, and the DRAFT banner's
+unresolved-marker count moving 10 to 11 as `PHASE_OF` is added. A gate that
+enumerates fewer diffs than it will see invites the operator to either fail a
+clean run or wave through a dirty one.
+
+**D6. Task 2 Step 1's first "replacement" comment paragraph was byte-identical
+to the text already in the file.** A no-op that reads as an edit.
+
+### One defect the plan did not have, and the reason it did not
+
+`boot_health()` reports and never refuses, so the template keeps its own two
+`stop()` calls. The plan said so and Task 5 implemented it. What neither caught
+is that matching a check by its LABEL STRING **fails open**: rename a check
+upstream and `%in%` is simply `FALSE`, both refusals silently vanish, and a
+screen that selected nothing renders green. The structural test greps the
+template's own source and never compares those strings to what `boot_health()`
+returns, so the coupling was untested in both repositories. The shipped template
+now asserts both labels are present before the guards run, so drift stops the
+render instead of deleting the guards. The label-matching design is unchanged;
+it is the maintainer's, and this makes it fail loud rather than replacing it.
+
+### For Phase 3
+
+`bl`, `br` and `bc` are the templates that actually take `phase = NULL`. D2 is
+their first real problem, not a footnote: whatever they share with this file has
+to work without a phase column, and this file has never been run that way.
