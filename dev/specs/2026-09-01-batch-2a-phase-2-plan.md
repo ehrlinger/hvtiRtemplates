@@ -682,22 +682,30 @@ and the one a future hand-edit would reintroduce.
 
 ```r
 test_that("the bh template reports through hvtiRbootstrap, not its own copy", {
-  src <- readLines(template_path("analyses/04.05-bh.qmd"), warn = FALSE)
+  src <- readLines(template_path("bh"), warn = FALSE)
+
+  # Comments stripped before matching, and not as tidiness. This template
+  # NARRATES the reporting layer: the setup chunk's version-floor comment names
+  # boot_validate() and the health chunk's comment names boot_health(). Matching
+  # raw source would let a hand-edit delete a live call, leave its explanatory
+  # comment behind, and keep this test green, which is precisely the drift the
+  # test exists to catch. Same guard as the template-token test above.
+  code <- sub("#.*$", "", src)
 
   # The reporting layer is the point of Batch 2a: bl, br and bc are thin only
   # because these calls live in the package. A hand-edit that inlines one of
   # them back into this file makes four reports to hand-sync again.
   for (fn in c("boot_validate", "boot_provenance", "boot_seeds", "boot_dropped",
                "boot_health", "boot_frequencies", "boot_concepts")) {
-    expect_true(any(grepl(paste0(fn, "("), src, fixed = TRUE)),
+    expect_true(any(grepl(paste0(fn, "("), code, fixed = TRUE)),
                 info = paste(fn, "is not called by the bh template"))
   }
 
   # boot_health() reports and never stops, so the two refusals are the
   # template's own. A report that renders green over a screen which selected
   # nothing is the failure these prevent.
-  expect_true(any(grepl("The screen selected NOTHING", src, fixed = TRUE)))
-  expect_true(any(grepl("returned the SAME fit", src, fixed = TRUE)))
+  expect_true(any(grepl("The screen selected NOTHING", code, fixed = TRUE)))
+  expect_true(any(grepl("returned the SAME fit", code, fixed = TRUE)))
 })
 ```
 
@@ -954,6 +962,16 @@ unattributable errors. Found only by the whole-branch reviewer executing it.
 block said `template_path("analyses/04.05-bh.qmd")`. `R/templates.R:46` shows
 `template_path(prefix)`; the folder-qualified form errors with "unknown
 template". Corrected to `template_path("bh")`.
+
+**D3b. The Task 7 test matched raw source, so a comment could satisfy it.** This
+template narrates the reporting layer: the setup chunk's version-floor comment
+names `boot_validate()` and the health chunk's names `boot_health()`. Matching
+uncommented source would let a hand-edit delete a live call, leave the comment,
+and keep the test green. Found independently by the task reviewer and by
+Copilot on the plan PR. Fixed by stripping comments first, following the guard
+an adjacent test in the same file already used; `knitr::purl()` would also work
+but would not match the file's existing pattern. Task 7's code block above is
+the shipped version.
 
 **D4. Task 8's render command named the wrong pandoc writer.** The plan said
 `--to gfm`; the reference was captured with `--to markdown`. `gfm` produces 38
