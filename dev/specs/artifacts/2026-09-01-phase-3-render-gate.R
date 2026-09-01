@@ -58,9 +58,14 @@ if (have_study) {
                   bmi = bmi, ln_bmi = log(bmi),
                   noise1 = stats::rnorm(n), noise2 = stats::rnorm(n))
   lp <- 0.05 * (d$age - 60) + 0.12 * (d$bmi - 27)
-  d$.y_bin <- stats::rbinom(n, 1, stats::plogis(lp))
-  d$.t     <- stats::rexp(n, rate = exp(lp) / 50)
-  d$.e     <- stats::rbinom(n, 1, 0.7)
+  # The event is drawn FROM lp, not independently of it. An earlier version
+  # built an unused `.y_bin` from lp and made `.e` a coin flip, so the
+  # simulated logistic screen had no signal: nothing would be selected above
+  # chance, and the template's own "screen selected NOTHING" refusal could
+  # fire -- which reads as a template defect rather than as a gate that was
+  # handed noise. Raised by Copilot.
+  d$.e <- stats::rbinom(n, 1, stats::plogis(lp))
+  d$.t <- stats::rexp(n, rate = exp(lp) / 50)
   cfg <- list(cohort = list(event = ".e", time = ".t"))
   cat("mode        : simulated, no study project at ", proj, "\n", sep = "")
 }

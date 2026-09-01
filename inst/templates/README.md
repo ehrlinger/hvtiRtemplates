@@ -57,7 +57,7 @@ The full design, including what was rejected and why, is in
 The five job types
 [#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8) offered as candidate
 content all ship now, `bh` last: `hz` in 1.0.6, `hp` in 1.0.7, `hm` in 1.0.8,
-`hs` in 1.0.12 and `bh` in 1.0.13. The bootstrap family joined it in 1.0.19:
+`hs` in 1.0.12 and `bh` in 1.0.13. The bootstrap family joined it in 1.0.20:
 `bl`, `br` and `bc`. What is still untemplated is the rest of the taxonomy, and the roadmap ledger — not this file — is the authority on which
 prefix is scheduled when:
 [`dev/specs/2026-08-29-template-conversion-roadmap.md`](../../dev/specs/2026-08-29-template-conversion-roadmap.md).

@@ -1,7 +1,10 @@
 # Batch 2a — the bootstrap screen family
 
 **Date:** 2026-08-31
-**Status:** Phases 0-2 shipped; Phase 3 in progress, see §4.2
+**Status:** Phases 0-3 shipped. Phase 3 opened upstream with `boot_bag()` in
+`hvtiRbootstrap` 0.9.2 (§4.2), then shipped `bl`, `br` and `bc` in 1.0.20.
+**Not done:** the SAS parity comparison for `bl` and `br` (§8), which lives in a
+study's own R project, and which `bc` cannot have.
 **Roadmap:** `2026-08-29-template-conversion-roadmap.md` is the live batch
 assignment, generated from the ledger; the reasoning behind family batching is
 in `2026-08-29-template-conversion-roadmap-design.md`. Both put `bl`, `bc`,
