@@ -265,8 +265,12 @@ moved — a template that fails this check cannot be scaffolded at all.
   "verified absent" into "not looked for".
 - Versions are **straight three digits** (`1.0.2`). Never a `.9000` suffix or a fourth digit.
 - **Patch-digit bumps only**, as fixes land. Minor and major are the maintainer's decision.
-- Bump `DESCRIPTION`, refresh its `Date`, and add the matching `NEWS.md` entry in the same
-  commit. `NEWS.md` uses plain `# hvtiRtemplates X.Y.Z` headings — **no `Version:` line**,
+- **Bump when you name a version, not when you merge.** A pull request lands
+  without touching `Version:`. Its entry goes under a standing
+  `# hvtiRtemplates (unreleased)` heading in `NEWS.md`, and a separate commit renames that
+  heading, moves `DESCRIPTION` to match and refreshes its `Date`, at most once a day.
+  `.claude/house-style.md` carries the rule and the reasoning.
+  `NEWS.md` uses plain `# hvtiRtemplates X.Y.Z` headings — **no `Version:` line**,
   unlike ggRandomForests, whose version-grep test requires a DCF-style header.
 
 ## Prose
