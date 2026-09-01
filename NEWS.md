@@ -2,8 +2,12 @@
 
 * **`analyses/04.05-bh.qmd` now reports through `hvtiRbootstrap`'s reporting
   layer** instead of building its own tables by hand. The template requires
-  `hvtiRbootstrap (>= 0.1.2)`, the version the reporting layer landed in, and
-  refuses to render below it. The `contract` chunk now calls
+  `hvtiRbootstrap (>= 0.9.0)` and refuses to render below it. The reporting
+  layer itself exists from 0.1.2; the floor sits higher because 0.1.x strips a
+  phase label whether or not a separator follows it, so a term named `earlyage`
+  reports its variable as `age`, matching no concept and quietly absent from
+  every grouped table. A wrong frequency is worse than a missing function,
+  because nothing downstream can see it. The `contract` chunk now calls
   `boot_validate()`, which checks field shapes, not only presence.
   `provenance` and `seeds` call `boot_provenance()` and `boot_seeds()`. Both
   `dropped-*` chunks collapse into one `boot_dropped()` call. The `health`

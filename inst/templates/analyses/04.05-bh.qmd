@@ -62,10 +62,20 @@ suppressPackageStartupMessages({
 # in 0.1.2. Without this check a study on 0.1.1 gets "could not find function
 # boot_provenance" from the middle of a render: the symbol is named, the reason
 # is not, and the fix is not guessable from the message.
-if (utils::packageVersion("hvtiRbootstrap") < "0.1.2") {
-  stop("This report needs hvtiRbootstrap >= 0.1.2 for its reporting layer; ",
-       utils::packageVersion("hvtiRbootstrap"), " is installed. Update it, ",
-       "then re-render.", call. = FALSE)
+
+# The floor is 0.9.0 rather than 0.1.2, and the extra distance is deliberate.
+# 0.1.2 splits a term into phase and variable by stripping the phase label
+# whether or not a separator follows it, so a term named `earlyage` reports its
+# variable as `age`: a real name, matching no concept, quietly absent from every
+# grouped table below. 0.9.0 leaves such a term whole. A frequency that is merely
+# WRONG is worse here than a function that is missing, because nothing downstream
+# can see it.
+if (utils::packageVersion("hvtiRbootstrap") < "0.9.0") {
+  stop("This report needs hvtiRbootstrap >= 0.9.0; ",
+       utils::packageVersion("hvtiRbootstrap"), " is installed. The reporting ",
+       "layer exists from 0.1.2, but 0.1.x mis-splits a term whose phase label ",
+       "is not followed by a separator, and reports the wrong variable name ",
+       "without erroring.\nUpdate it, then re-render.", call. = FALSE)
 }
 ```
 
