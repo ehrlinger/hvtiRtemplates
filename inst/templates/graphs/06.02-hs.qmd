@@ -309,6 +309,21 @@ if (any(HORIZONS > .max_obs)) {
 `predict()` needs one row per (patient, horizon): the covariates identify the
 patient and a `time` column names the horizon.
 
+⚠️ **The confidence limits this job computes are about 68%, not 95%.**
+`CLEVEL` is `0.68268948`, which is `pnorm(1) - pnorm(-1)`: plus or minus one
+standard error. That is the SAS `HAZPRED` convention, recovered from its source
+during parity work rather than chosen here, and the published papers state it,
+so the limits are correct. What can go wrong is the reading of them. On the
+same fit and the same grid a 95% band is **1.97 times the width**, so anyone
+who takes these for 95% limits is reading an interval roughly half as wide as
+they believe.
+
+It matters more here than in a job that only prints them, because this one
+does not draw them: `lower` and `upper` travel in the saved `pred` artifact and
+the plotting jobs read them from there. By the time the band reaches a figure,
+nothing beside it records which coverage it is. **State the coverage wherever
+these numbers appear**, in this report and in anything built from it.
+
 ```{r}
 #| label: predict
 # One row per patient per horizon. Built explicitly rather than by looping
