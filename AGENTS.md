@@ -237,9 +237,15 @@ moved — a template that fails this check cannot be scaffolded at all.
   poll until it rises:
 
   ```sh
-  gh api repos/<o>/<r>/pulls/<n>/reviews \
+  gh api --paginate repos/<o>/<r>/pulls/<n>/reviews \
     --jq '[.[] | select(.user.login | startswith("copilot"))] | length'
   ```
+
+  ⚠️ **`--paginate` is not optional.** That endpoint returns 30 per page, so a
+  long-running PR can carry the review you are waiting for on a later page and the
+  count comes back unchanged. A verification that silently undercounts is the same
+  defect as the one this paragraph replaced, one endpoint further along. Raised by
+  Copilot on the PR that wrote this.
 
   ⚠️ **Do not key on `commit_id` matching your head SHA.** It usually does, and on
   [#61](https://github.com/ehrlinger/hvtiRtemplates/pull/61) two reviews anchored to
