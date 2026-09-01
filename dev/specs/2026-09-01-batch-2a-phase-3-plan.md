@@ -1,10 +1,12 @@
 # Batch 2a Phase 3 — `bl`, `br`, `bc` implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
-> (recommended) or superpowers:executing-plans to implement this plan task-by-task.
-> Steps use checkbox (`- [ ]`) syntax for tracking.
+Steps use checkbox (`- [ ]`) syntax so a task can be picked up mid-way. Work
+task by task and run each task's verification before moving on.
 
 **Date:** 2026-09-01
+**Status:** Part A begun 2026-09-01. Task A1 is written and committed; see the
+execution note at the end of Part A for where it currently sits and why Part A
+is paused.
 **Design:** `2026-08-31-batch-2a-bootstrap-family-design.md` §4, §7 Phase 3, §8
 **Predecessor:** `2026-09-01-batch-2a-phase-2-plan.md`
 **Issue:** [#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8)
@@ -20,10 +22,10 @@ opens **upstream** — `boot_select()` records what it knows, and a new
 facts into a validated bag. Only then are `bl`, `br` and `bc` thin. This is
 the same order Phase 1 used, and for the same reason.
 
-**Tech Stack:** R (>= 4.1), `hvtiRbootstrap` 0.9.0 → 0.9.1, `hvtiRtemplates`
+**Tech Stack:** R (>= 4.1), `hvtiRbootstrap` 0.9.1 → 0.9.2, `hvtiRtemplates`
 1.0.18 → 1.0.19, `hvtiRutilities` (>= 1.1.4), Quarto, testthat edition 3.
 
-**Three parts, in order.** Part A is `hvtiRbootstrap` 0.9.1 and ships as its
+**Three parts, in order.** Part A is `hvtiRbootstrap` 0.9.2 and ships as its
 own release. Part B is the three templates and their render gate. Part C is
 the SAS parity check for `bl` and `br`, and it lives in the study's own R
 project, not here. Part C can begin once Part B's templates render; it does
@@ -72,10 +74,15 @@ re-entered one layer down.
 
 ### What Phase 3 does NOT fix
 
-- **[hvtiRbootstrap#22](https://github.com/ehrlinger/hvtiRbootstrap/issues/22)**
-  (`boot_health()` errors on a per-phase `free_sd`) is a **`bh`** shape. A
-  `boot_bag()` bag has one phase and a scalar `free_sd`, so Phase 3 cannot
-  reach it and does not carry the fix. Left open deliberately.
+- ⚠️ **[#21](https://github.com/ehrlinger/hvtiRbootstrap/issues/21) and
+  [#22](https://github.com/ehrlinger/hvtiRbootstrap/issues/22) were fixed
+  while this plan was being written**, by
+  [#23](https://github.com/ehrlinger/hvtiRbootstrap/pull/23) (commit
+  `4691713`, 2026-09-01), and more thoroughly than this plan scoped them: every
+  optional read is now exact -- `dropped`, `free_sd`, `n_chunks`, `seeds`,
+  `th_sha`, `th_version` -- and `boot_validate()` refuses a per-phase
+  `free_sd`. Task A3 is **withdrawn** in consequence, and Part A is based on
+  that PR rather than on 0.9.0.
 - **[#16](https://github.com/ehrlinger/hvtiRbootstrap/issues/16)** (`bq`,
   no quantile fitter) and `bn` stay out of scope per design §9.
 
@@ -85,10 +92,18 @@ re-entered one layer down.
 
 Every task's requirements implicitly include this section.
 
+- ⚠️ **Work in a git worktree, not in the shared clone.** On 2026-09-01 a
+  concurrent session switched `hvtiRbootstrap`'s working tree to another branch
+  between this plan's `git checkout -b` and its first commit, so Task A1's
+  commit landed on **that** session's branch and the working tree later
+  reverted under it. A branch cut is a point-in-time guess; only a worktree
+  isolates. `hvtiRtemplates` already keeps `.claude/worktrees/`.
 - **Never push to `main`.** Branch, open a PR **against `main`**, let the
   maintainer merge. A PR opened against another branch gets no Copilot review
   and still reaches `main` when the parent merges.
-- **Versions are straight three digits.** `hvtiRbootstrap` 0.9.0 → **0.9.1**,
+- **Versions are straight three digits.** `hvtiRbootstrap` → **0.9.2**
+  (0.9.1 is taken by
+  [#23](https://github.com/ehrlinger/hvtiRbootstrap/pull/23)),
   `hvtiRtemplates` 1.0.18 → **1.0.19**. Patch digit only; minor and major are
   the maintainer's decision. No `.9000`, no fourth digit.
 - **Bump `DESCRIPTION`, refresh its `Date`, and add the matching `NEWS.md`
@@ -106,9 +121,15 @@ Every task's requirements implicitly include this section.
   template matches `/studies/`, a study name, or a built-dataset filename.
 - **Every study-specific line is marked `EDIT:`**, and the comment says *why*
   the choice matters, not only what to type.
-- **Roxygen in both repos is Rd markup, not markdown.** Neither `DESCRIPTION`
-  sets `Roxygen: list(markdown = TRUE)`. Use `\code{}`, `\strong{}`,
-  `\emph{}`, `\itemize{}`, `\link{}`.
+- ⚠️ **The two repositories take OPPOSITE roxygen dialects, and this plan got
+  it wrong until 2026-09-01.** `hvtiRbootstrap` **does** set
+  `Roxygen: list(markdown = TRUE)` (`DESCRIPTION:24`), so Part A is written in
+  markdown: backticks, `[fn()]` links, `**bold**`. `hvtiRtemplates` sets no
+  such field, so Part B is Rd markup: `\code{}`, `\strong{}`, `\emph{}`,
+  `\itemize{}`, `\link{}`. `AGENTS.md`'s "Roxygen here is Rd markup" is a
+  statement about **this** repository only. Carrying it across is the same
+  mistake `AGENTS.md` warns about for `.lintr` widths and `_pkgdown.yml`
+  indexes, made in a plan that quotes those warnings.
 - **Every exported object needs `@return`.**
 - **No em-dashes in package documentation, template prose, commit messages or
   PR bodies.** Use `--` in code comments, "and" or a comma in prose.
@@ -143,7 +164,7 @@ Every task's requirements implicitly include this section.
 | `inst/templates/analyses/04.03-br.qmd` | **create** |
 | `inst/templates/analyses/04.04-bc.qmd` | **create** |
 | `.lintr` | modify: one file key per new template |
-| `DESCRIPTION` | modify: version, Date, `hvtiRbootstrap (>= 0.9.1)` |
+| `DESCRIPTION` | modify: version, Date, `hvtiRbootstrap (>= 0.9.2)` |
 | `NEWS.md` | modify: 1.0.19 entry |
 | `inst/templates/README.md` | modify: three table rows, the untemplated list |
 | `dev/specs/artifacts/2026-08-29-template-roadmap.json` | modify: three rows to `shipped` with ordinals |
@@ -162,13 +183,19 @@ Every task's requirements implicitly include this section.
 
 ---
 
-# Part A — `hvtiRbootstrap` 0.9.1
+# Part A — `hvtiRbootstrap` 0.9.2
 
-Work in `~/Documents/GitHub/hvtiRbootstrap` on a branch
-`feat/boot-bag-adapter`, cut from `origin/main`.
+⚠️ **Base this on [#23](https://github.com/ehrlinger/hvtiRbootstrap/pull/23),
+not on `origin/main`.** That PR fixes the optional-field reads `boot_bag()`'s
+output is read through, and it has already taken 0.9.1. Cutting from
+`origin/main` instead puts the adapter on a base whose `boot_dropped()` still
+partial-matches.
+
+⚠️ **Use a worktree.** The shared clone is not safe: see the Global
+Constraints.
 
 ```bash
-cd ~/Documents/GitHub/hvtiRbootstrap && git fetch origin && git checkout -b feat/boot-bag-adapter origin/main
+cd ~/Documents/GitHub/hvtiRbootstrap && git fetch origin && git worktree add ../hvtiRbootstrap-boot-bag -b feat/boot-bag-adapter origin/fix/optional-field-reads
 ```
 
 ---
@@ -262,7 +289,7 @@ new_boot_selection <- function(coefficients, n_rep, n_attempts, call,
 ```
 
 `control = NULL` rather than a required argument: the constructor is
-internal, but an object saved by 0.9.0 and reloaded under 0.9.1 has no
+internal, but an object saved before 0.9.2 and reloaded under it has no
 `control` either, and `boot_bag()` in Task A2 refuses that case by name
 rather than failing on an absent list element.
 
@@ -501,57 +528,57 @@ Create `R/boot-bag.R`:
 #' A screen the reporting layer can read
 #'
 #' @description
-#' Convert a \code{\link{boot_select}()} result into the bag that
-#' \code{\link{boot_validate}()} accepts and every reporting function reads.
+#' Convert a [boot_select()] result into the bag that
+#' [boot_validate()] accepts and every reporting function reads.
 #'
 #' @details
-#' \code{boot_select()} returns a WIDE object: one row per replicate, one
-#' column per term, \code{NA} where a term was not selected. The reporting
+#' `boot_select()` returns a WIDE object: one row per replicate, one
+#' column per term, `NA` where a term was not selected. The reporting
 #' layer reads a LONG one, because it was extracted from a hazard runner that
 #' writes long. Nothing converted between them, so the package's own screen
 #' function could not reach its own report. This is that conversion.
 #'
-#' \strong{The pivot drops \code{NA} rather than writing it.} That is not an
-#' optimisation: \code{boot_frequencies()} counts a term's rows against
-#' \code{n_boot}, so a row written for an unselected term would count as a
-#' selection. The replicate count travels in \code{n_boot}, never in the row
+#' **The pivot drops `NA` rather than writing it.** That is not an
+#' optimisation: `boot_frequencies()` counts a term's rows against
+#' `n_boot`, so a row written for an unselected term would count as a
+#' selection. The replicate count travels in `n_boot`, never in the row
 #' count.
 #'
-#' Everything the run knows about itself comes from \code{x$control} rather
+#' Everything the run knows about itself comes from `x$control` rather
 #' than from an argument, so a bag cannot claim an entry level the screen did
-#' not use. The four arguments here are the facts \code{boot_select()} cannot
+#' not use. The four arguments here are the facts `boot_select()` cannot
 #' know: which terms are the base model, how many candidates existed before
 #' the runner dropped any, what dataset was screened, and what was dropped.
 #'
-#' @param x A \code{boot_selection} from \code{\link{boot_select}()}, run
-#'   under 0.9.1 or later. An object from an earlier version carries no
-#'   \code{$control} and is refused by name.
+#' @param x A `boot_selection` from [boot_select()], run
+#'   under 0.9.2 or later. An object from an earlier version carries no
+#'   `$control` and is refused by name.
 #' @param base_params Character. The terms that are the base model rather than
 #'   candidates. They are excluded from every frequency, and the first of them
-#'   is the parameter \code{\link{boot_health}()} watches for a zero standard
+#'   is the parameter [boot_health()] watches for a zero standard
 #'   deviation. Must name terms the screen carries.
 #' @param requested Numeric. How many candidates the runner OFFERED, before it
 #'   dropped any. Not derivable here: a candidate dropped before screening
 #'   never became a column.
 #' @param manifest A named list describing the dataset screened, indexed by
-#'   name. \code{list(sha256 = ...)} at minimum.
+#'   name. `list(sha256 = ...)` at minimum.
 #' @param dropped Optional data frame of candidates dropped before screening,
-#'   as \code{\link{boot_dropped}()} reports it. Absent means nothing was
+#'   as [boot_dropped()] reports it. Absent means nothing was
 #'   dropped.
 #' @param usable Optional numeric, checked rather than used. Supply it to
 #'   assert the count the runner believed it screened; a disagreement with the
 #'   screen's own term count is refused.
 #'
-#' @return A list carrying the fields \code{\link{boot_validate}()} requires:
-#'   \code{n_boot}, \code{seed}, \code{slentry}, \code{slstay},
-#'   \code{base_params}, \code{requested}, \code{usable}, \code{n_rows},
-#'   \code{elapsed_mins}, \code{manifest}, \code{dropped} when supplied, and
-#'   \code{boot} holding \code{replicates}, \code{summary}, \code{n_success}
-#'   and \code{n_failed}. Validated before it is returned, so an invalid bag
+#' @return A list carrying the fields [boot_validate()] requires:
+#'   `n_boot`, `seed`, `slentry`, `slstay`,
+#'   `base_params`, `requested`, `usable`, `n_rows`,
+#'   `elapsed_mins`, `manifest`, `dropped` when supplied, and
+#'   `boot` holding `replicates`, `summary`, `n_success`
+#'   and `n_failed`. Validated before it is returned, so an invalid bag
 #'   is never emitted.
 #'
-#' @seealso \code{\link{boot_select}()} for the screen,
-#'   \code{\link{boot_provenance}()} and \code{\link{boot_frequencies}()} for
+#' @seealso [boot_select()] for the screen,
+#'   [boot_provenance()] and [boot_frequencies()] for
 #'   what reads the result.
 #'
 #' @examples
@@ -573,10 +600,10 @@ boot_bag <- function(x, base_params, requested, manifest, dropped = NULL,
   }
   ctl <- x$control
   if (!is.list(ctl)) {
-    stop("This boot_selection predates hvtiRbootstrap 0.9.1 and carries no ",
+    stop("This boot_selection predates hvtiRbootstrap 0.9.2 and carries no ",
          "`$control`, so the entry and stay levels, the seed and the row ",
          "count it ran under are not recoverable from it.\nRe-run the screen ",
-         "under 0.9.1 or later.", call. = FALSE)
+         "under 0.9.2 or later.", call. = FALSE)
   }
   if (is.na(ctl$seed)) {
     stop("This screen did not record a seed, so the report it feeds could ",
@@ -659,75 +686,25 @@ cd ~/Documents/GitHub/hvtiRbootstrap && git add R/boot-bag.R man NAMESPACE tests
 
 ---
 
-### Task A3: `boot_dropped()` stops partial-matching an absent field
+### Task A3: WITHDRAWN
 
-Closes [#21](https://github.com/ehrlinger/hvtiRbootstrap/issues/21). In scope
-here rather than deferred: `bl`, `br` and `bc` runners write
-`dropped_collinear` more readily than a hazard runner does, and all three
-templates call `boot_dropped()`.
+⚠️ **Do not implement this task.** It planned to change `bag$dropped` to
+`bag[["dropped"]]` in `boot_dropped()`, closing
+[#21](https://github.com/ehrlinger/hvtiRbootstrap/issues/21).
 
-**Files:**
-- Modify: `R/boot-frequencies.R` (inside `boot_dropped()`)
-- Test: `tests/testthat/test-boot-frequencies.R`
+[#23](https://github.com/ehrlinger/hvtiRbootstrap/pull/23) did that on
+2026-09-01, before this plan's execution began, and did more: **every** optional
+read is exact -- `dropped`, `free_sd`, `n_chunks`, `seeds`, `th_sha`,
+`th_version` -- and `boot_validate()` now refuses a per-phase `free_sd`, closing
+[#22](https://github.com/ehrlinger/hvtiRbootstrap/issues/22) as well. This plan
+had argued #22 was out of reach for Phase 3. It was not; it was one commit away.
 
-**Interfaces:**
-- Consumes: nothing. Independent of A1 and A2.
-- Produces: no signature change.
-
-- [ ] **Step 1: Write the failing test**
-
-Append to `tests/testthat/test-boot-frequencies.R`:
-
-```r
-test_that("boot_dropped() does not partial-match dropped_collinear", {
-  bag <- fx_bag()
-  bag$dropped <- NULL
-  bag$dropped_collinear <- c("x", "y")   # runner recorded collinear drops only
-
-  # `$` on a list falls back to partial matching, so bag$dropped resolves to
-  # the character vector above and the function refuses a field that is
-  # genuinely absent.
-  expect_true(is.null(bag[["dropped"]]))
-  expect_identical(nrow(boot_dropped(bag)), 0L)
-})
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-```bash
-cd ~/Documents/GitHub/hvtiRbootstrap && Rscript -e 'devtools::test(filter = "boot-frequencies")'
-```
-
-Expected: FAIL with "must be a data frame of dropped candidates, or absent."
-
-- [ ] **Step 3: Fix the indexing**
-
-In `boot_dropped()` in `R/boot-frequencies.R`, replace every `bag$dropped`
-with `bag[["dropped"]]`, and add above the first use:
-
-```r
-  # `[[` rather than `$`. Partial matching resolves an absent `dropped` onto a
-  # runner's `dropped_collinear`, and the refusal below then names a field
-  # that is genuinely not there.
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-```bash
-cd ~/Documents/GitHub/hvtiRbootstrap && Rscript -e 'devtools::test(filter = "boot-frequencies")'
-```
-
-Expected: PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-cd ~/Documents/GitHub/hvtiRbootstrap && git add R/boot-frequencies.R tests/testthat/test-boot-frequencies.R && git commit -m "fix(dropped): index dropped with [[ so an absent field is not partial-matched"
-```
+Part A is based on that PR (see the Part A header), so the fix arrives with the
+base rather than being re-applied here. Nothing to do.
 
 ---
 
-### Task A4: Release 0.9.1
+### Task A4: Release 0.9.2
 
 **Files:**
 - Modify: `DESCRIPTION` (Version, Date)
@@ -735,14 +712,15 @@ cd ~/Documents/GitHub/hvtiRbootstrap && git add R/boot-frequencies.R tests/testt
 
 - [ ] **Step 1: Bump `DESCRIPTION`**
 
-Set `Version: 0.9.1` and `Date: 2026-09-01`.
+Set `Version: 0.9.2` and `Date: 2026-09-01`. #23 already moved it to
+0.9.1; this is the next patch on top of that.
 
 - [ ] **Step 2: Add the `NEWS.md` entry**
 
-Insert above the `# hvtiRbootstrap 0.9.0` heading:
+Insert above the `# hvtiRbootstrap 0.9.1` heading that #23 added:
 
 ```markdown
-# hvtiRbootstrap 0.9.1
+# hvtiRbootstrap 0.9.2
 
 * **`boot_bag()` converts a `boot_select()` result into the bag the reporting
   layer reads.** The two ends of this package were built against different
@@ -762,10 +740,6 @@ Insert above the `# hvtiRbootstrap 0.9.0` heading:
   entry level the screen did not use. `$call` could not serve, because
   `match.call()` omits every argument left at its default.
 
-* **`boot_dropped()` indexes `dropped` with `[[` rather than `$`**
-  ([#21](https://github.com/ehrlinger/hvtiRbootstrap/issues/21)). Partial
-  matching resolved an absent `dropped` onto a runner's `dropped_collinear`,
-  and the function then refused a field that was genuinely not there.
 ```
 
 - [ ] **Step 3: Full check**
@@ -784,7 +758,7 @@ suite that skipped the tests you care about. The line to find is
 - [ ] **Step 4: Commit and open the PR**
 
 ```bash
-cd ~/Documents/GitHub/hvtiRbootstrap && git add DESCRIPTION NEWS.md man && git commit -m "release: 0.9.1, the boot_bag() adapter" && git push -u origin feat/boot-bag-adapter && gh pr create --base main --title "boot_bag(): give the reporting layer a producer it can read" --body "Closes #21. Phase 3 of hvtiRtemplates batch 2a opens here: bl, br and bc cannot be thin templates until boot_select() output can reach the reporting layer."
+cd ~/Documents/GitHub/hvtiRbootstrap && git add DESCRIPTION NEWS.md man && git commit -m "release: 0.9.2, the boot_bag() adapter" && git push -u origin feat/boot-bag-adapter && gh pr create --base main --title "boot_bag(): give the reporting layer a producer it can read" --body "Phase 3 of hvtiRtemplates batch 2a opens here: bl, br and bc cannot be thin templates until boot_select() output can reach the reporting layer. Builds on #23."
 ```
 
 ⚠️ **`--base main`, always.** A PR opened against another branch never gets
@@ -793,8 +767,43 @@ either.
 
 - [ ] **Step 5: Wait for the merge before starting Part B**
 
-Part B's templates declare `hvtiRbootstrap (>= 0.9.1)` and cannot render
+Part B's templates declare `hvtiRbootstrap (>= 0.9.2)` and cannot render
 against an unreleased adapter.
+
+---
+
+## Part A execution note, 2026-09-01
+
+**Task A1 is written and passing; it is in the wrong place.**
+
+The work itself is done and correct: `$control` recorded on the returned
+object, `new_boot_selection()` widened with `control = NULL`, `@return`
+documented, two tests. `devtools::test()` reported `FAIL 0 | WARN 0 | SKIP 0 |
+PASS 274`.
+
+⚠️ **That PASS count is not a clean measurement.** The working tree held
+another session's uncommitted tests at the time, so the run covered files that
+are not part of this task. Re-measure after the recovery below.
+
+⚠️ **The commit landed on another branch.** A concurrent session switched the
+shared working tree from `feat/boot-bag-adapter` to `fix/required-field-reads`
+between the branch cut and the commit, so `a0894e4` sits on top of that
+session's work and `feat/boot-bag-adapter` is still empty at `2cde608`. The
+tree then reverted `R/boot-select.R` and `R/boot-class.R` under the task.
+Nothing was lost; nothing of the other session's was touched.
+
+**Recovery, once that session is finished** and #23 has settled:
+
+1. Create the worktree named in the Part A header, based on #23.
+2. `git cherry-pick a0894e4` into it.
+3. The owner of `fix/required-field-reads` drops the stray commit.
+4. Re-run `devtools::test()` in the worktree and record the real counts.
+5. Resume at Task A2.
+
+**The general lesson is in the Global Constraints**: a branch cut is a
+point-in-time guess and only a worktree isolates. This plan warned about
+concurrent sessions for `hvtiRtemplates` and then shared a working tree in
+`hvtiRbootstrap`.
 
 ---
 
@@ -851,7 +860,7 @@ artifact is produced by the SAME package, at the other end of it.** The two
 ends were built against different studies and never met. No test in either
 repository composed them, because each end had its own fixtures.
 
-**Resolution:** `hvtiRbootstrap` 0.9.1 adds `boot_bag()`, and `boot_select()`
+**Resolution:** `hvtiRbootstrap` 0.9.2 adds `boot_bag()`, and `boot_select()`
 records a `$control` list so the bag's provenance comes from the run rather
 than from what a caller retypes. Phase 3 therefore opens upstream, as Phase 1
 did.
@@ -862,7 +871,7 @@ did.
 In §7, replace the Phase 3 paragraph with:
 
 ```markdown
-**Phase 3** -- `hvtiRbootstrap` gains `boot_bag()` and ships as 0.9.1 (§4.2),
+**Phase 3** -- `hvtiRbootstrap` gains `boot_bag()` and ships as 0.9.2 (§4.2),
 then `bl`, `br` and `bc` ship as thin templates. Ordinals are assigned from
 the ledger as free minors in `analyses`, **never recomputed from taxonomy row
 position** (`04.06` is retired and cannot be reissued): `bl` 04.02, `br`
@@ -1015,8 +1024,8 @@ suppressPackageStartupMessages({
   library(hvtiRbootstrap)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRbootstrap") < "0.9.1") {
-  stop("boot_bag() lands in 0.9.1; ", utils::packageVersion("hvtiRbootstrap"),
+if (utils::packageVersion("hvtiRbootstrap") < "0.9.2") {
+  stop("boot_bag() lands in 0.9.2; ", utils::packageVersion("hvtiRbootstrap"),
        " is installed.", call. = FALSE)
 }
 dir.create(file.path(proj, "estimates"), recursive = TRUE,
@@ -1190,15 +1199,15 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
-# boot_bag() lands in 0.9.1, and without it a boot_select() result cannot be
+# boot_bag() lands in 0.9.2, and without it a boot_select() result cannot be
 # read by anything below. A study on 0.9.0 otherwise gets "could not find
 # function boot_bag" from inside its runner, one file away from this one, and
 # the message names the symbol without naming the release that carries it.
-if (utils::packageVersion("hvtiRbootstrap") < "0.9.1") {
-  stop("This report needs hvtiRbootstrap >= 0.9.1; ",
+if (utils::packageVersion("hvtiRbootstrap") < "0.9.2") {
+  stop("This report needs hvtiRbootstrap >= 0.9.2; ",
        utils::packageVersion("hvtiRbootstrap"), " is installed. boot_bag() ",
        "converts a boot_select() screen into the bag this report reads, and ",
-       "0.9.0 has no such function.\nUpdate it, then re-render.",
+       "nothing below 0.9.2 has such a function.\nUpdate it, then re-render.",
        call. = FALSE)
 }
 ```
@@ -1751,11 +1760,11 @@ cd ~/Documents/GitHub/hvtiRtemplates && git add dev/specs/artifacts/2026-08-29-t
 - [ ] **Step 1: Bump `DESCRIPTION` and correct the dependency bound**
 
 Set `Version: 1.0.19` and `Date: 2026-09-01`. In `Suggests:`, raise
-`hvtiRbootstrap (>= 0.1.1)` to `hvtiRbootstrap (>= 0.9.1)`.
+`hvtiRbootstrap (>= 0.1.1)` to `hvtiRbootstrap (>= 0.9.2)`.
 
 ⚠️ **That bound is currently wrong and was already wrong before this plan.**
 1.0.18 shipped a `bh` template that refuses to render below 0.9.0 while
-`DESCRIPTION` still declared `>= 0.1.1`. Raising it to 0.9.1 fixes both.
+`DESCRIPTION` still declared `>= 0.1.1`. Raising it to 0.9.2 fixes both.
 
 - [ ] **Step 2: Add the `NEWS.md` entry**
 
@@ -1770,8 +1779,8 @@ Insert above the `# hvtiRtemplates 1.0.18` heading:
   `PHASE_OF <- NULL`, which is the single-phase path the same functions serve
   for `bh` with a term-splitting rule. One code path, four templates.
 
-* **They require `hvtiRbootstrap (>= 0.9.1)`, and `DESCRIPTION` now says so.**
-  0.9.1 adds `boot_bag()`, without which a `boot_select()` screen cannot be
+* **They require `hvtiRbootstrap (>= 0.9.2)`, and `DESCRIPTION` now says so.**
+  0.9.2 adds `boot_bag()`, without which a `boot_select()` screen cannot be
   read by the reporting layer at all: the screen returns a wide coefficients
   matrix and the layer reads a long-form bag written by a hazard runner, and
   nothing converted between them. The declared bound had also drifted -- it
@@ -1818,7 +1827,7 @@ command and the failure mode is a broken `main`.
 - [ ] **Step 5: Push and open the PR**
 
 ```bash
-cd ~/Documents/GitHub/hvtiRtemplates && git add DESCRIPTION NEWS.md man && git commit -m "release: 1.0.19, bl br and bc as thin bootstrap templates" && git push -u origin feat/batch-2a-phase-3 && gh pr create --base main --title "Batch 2a phase 3: bl, br and bc as thin templates" --body "Design 2026-08-31-batch-2a-bootstrap-family-design.md section 7 phase 3. Depends on hvtiRbootstrap 0.9.1, which adds boot_bag(). Section 4.2 of the design records the gap that release closes."
+cd ~/Documents/GitHub/hvtiRtemplates && git add DESCRIPTION NEWS.md man && git commit -m "release: 1.0.19, bl br and bc as thin bootstrap templates" && git push -u origin feat/batch-2a-phase-3 && gh pr create --base main --title "Batch 2a phase 3: bl, br and bc as thin templates" --body "Design 2026-08-31-batch-2a-bootstrap-family-design.md section 7 phase 3. Depends on hvtiRbootstrap 0.9.2, which adds boot_bag(). Section 4.2 of the design records the gap that release closes."
 ```
 
 - [ ] **Step 6: Verify all eight checks and the Copilot review**
