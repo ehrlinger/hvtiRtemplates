@@ -1,3 +1,33 @@
+# hvtiRtemplates 1.0.18
+
+* **`analyses/04.05-bh.qmd` now reports through `hvtiRbootstrap`'s reporting
+  layer** instead of building its own tables by hand. The template requires
+  `hvtiRbootstrap (>= 0.1.2)`, the version the reporting layer landed in, and
+  refuses to render below it. The `contract` chunk now calls
+  `boot_validate()`, which checks field shapes, not only presence.
+  `provenance` and `seeds` call `boot_provenance()` and `boot_seeds()`. Both
+  `dropped-*` chunks collapse into one `boot_dropped()` call. The `health`
+  table comes from `boot_health()`; the two `stop()` refusals stay in the
+  template, because `boot_health()` reports and never refuses on its own.
+  `frequencies` and `concept-union` call `boot_frequencies()` and
+  `boot_concepts()`, and `retained` now filters the package's own `retained`
+  column rather than recomputing the cutoff locally.
+
+* **The `health` table gained two columns.** It reports four now (`check`,
+  `value`, `ok`, `note`) where it reported two before; `boot_health()`
+  supplies `ok` and `note`, and the original two columns are unchanged.
+
+* **The template carries an eleventh `EDIT:` marker, `PHASE_OF`,** in the
+  `criteria` chunk. It names the rule that splits a term into its phase and
+  variable. A single-phase screen passes `NULL` instead, which is what lets
+  the same reporting functions serve the forthcoming `bl`, `br` and `bc`
+  templates.
+
+* Rendered against a real 25-chunk bag and diffed against a reference
+  captured from the pre-refactor template: the provenance, seeds, frequency
+  and retained tables are byte-identical, the concept table has zero value
+  mismatches across 184 rows, and the frequency figure has the same sha256.
+
 # hvtiRtemplates 1.0.17
 
 * **`analyses/04.05-bh.qmd` could not render on any multiphase bag** — which is
