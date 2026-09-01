@@ -1,4 +1,4 @@
-# hvtiRtemplates 1.0.19
+# hvtiRtemplates 1.0.20
 
 * **Three bootstrap screen templates ship**: `analyses/04.02-bl.qmd`
   (logistic), `analyses/04.03-br.qmd` (linear) and `analyses/04.04-bc.qmd`
