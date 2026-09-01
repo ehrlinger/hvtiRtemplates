@@ -441,39 +441,28 @@ resampling noise alone.
 # above governed each replicate's stepwise fit, and neither of them says how
 # often a variable must survive to be worth carrying forward.
 RETAIN_PCT <- 50
+
+# EDIT: how a term's name splits into phase and variable. Terms are named
+# `<phase>.<variable>`, so one variable offered to two phases is two independent
+# screening decisions and must not be pooled into one row. A single-phase screen
+# passes NULL instead, and the reporting layer then reports no phase dimension
+# at all -- which is how the same functions serve bl, br and bc.
+PHASE_OF <- function(term) sub("[.].*$", "", term)
 ```
 
 ```{r}
 #| label: frequencies
-# The name column differs by how the screen was produced, and reading the wrong
-# one yields NULL rather than an error. boot_pool_chunks() recomputes its
-# summary and names the column `parameter`; boot_summary() names it `variable`.
-# A single unchunked run carries whichever its runner wrote.
-summ <- bag$boot$summary
-name_col <- if ("parameter" %in% names(summ)) "parameter" else "variable"
-
-freq <- data.frame(term = summ[[name_col]], pct = summ$pct, n = summ$n,
-                   stringsAsFactors = FALSE)
-freq <- freq[!freq$term %in% bag$base_params, , drop = FALSE]
-
 # Terms are named `<phase>.<variable>`: one variable offered to two phases is
 # two independent screening decisions and must not be pooled into one row.
-freq$phase    <- sub("[.].*$", "", freq$term)
-freq$variable <- sub("^[^.]*[.]", "", freq$term)
 
 # Per-variable, not one figure for the table. Monte-Carlo error is largest at
 # p = 0.5 and shrinks towards either end, so a single quoted value overstates it
 # for the variables at the top and understates it for the ones in the middle --
 # and the middle is where the retention decision is actually being made.
-p <- freq$pct / 100
-freq$mc_error <- 100 * sqrt(p * (1 - p) / bag$n_boot)
 
 # Within two Monte-Carlo errors of the cutoff: the variables whose retention
 # would not survive a rerun with different seeds.
-freq$near_threshold <- abs(freq$pct - RETAIN_PCT) <= 2 * freq$mc_error
-
-freq <- freq[order(freq$phase, -freq$pct, freq$variable), , drop = FALSE]
-rownames(freq) <- NULL
+freq <- boot_frequencies(bag, phase = PHASE_OF, threshold = RETAIN_PCT)
 freq[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
 ```
 
@@ -483,7 +472,7 @@ freq[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
 # as a bare list: a variable that cleared the cutoff by less than its own
 # Monte-Carlo error cleared it on noise, and a list that does not say so invites
 # the reader to treat the two kinds of retention as the same claim.
-retained <- freq[freq$pct >= RETAIN_PCT, , drop = FALSE]
+retained <- freq[freq$retained, , drop = FALSE]
 retained[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
 ```
 
@@ -550,36 +539,20 @@ the cutoff and one finding is reported twice.
 # 30% each are anywhere between 30% and 60% of replicates, depending entirely
 # on how often the same replicate took both, and the summary does not record
 # that.
-cov_reps <- reps[!reps$parameter %in% bag$base_params, , drop = FALSE]
-cov_reps$phase    <- sub("[.].*$", "", cov_reps$parameter)
-cov_reps$variable <- sub("^[^.]*[.]", "", cov_reps$parameter)
-cov_reps$concept  <- concept$concept[match(cov_reps$variable, concept$variable)]
-
-union_rows <- lapply(split(by_concept, list(by_concept$phase, by_concept$concept), drop = TRUE),
-                     function(g) {
-                       ph <- g$phase[1]
-                       ck <- g$concept[1]
-                       in_k <- cov_reps$phase == ph & !is.na(cov_reps$concept) &
-                         cov_reps$concept == ck
-                       data.frame(phase         = ph,
-                                  concept       = ck,
-                                  n_forms       = nrow(g),
-                                  union_pct     = 100 * length(unique(cov_reps$replicate[in_k])) /
-                                    bag$n_boot,
-                                  best_form_pct = max(g$pct),
-                                  stringsAsFactors = FALSE)
-                     })
-concept_union <- do.call(rbind, union_rows)
-
+#
 # How much the per-form table understates the concept. A large spread is the
 # whole reason this table exists; a spread of zero means the concept has one
 # form and the two views agree.
-concept_union$spread   <- concept_union$union_pct - concept_union$best_form_pct
-concept_union$retained <- concept_union$union_pct >= RETAIN_PCT
-concept_union <- concept_union[order(concept_union$phase, -concept_union$union_pct), ,
-                               drop = FALSE]
-rownames(concept_union) <- NULL
-concept_union
+#
+# NOTE: this table's at-least-one figure is `pct_any`, not the `union_pct` name
+# the earlier version of this chunk used. Every value is unchanged; only the
+# name is, because `boot_clusters()` has called the same quantity `pct_any`
+# since 0.1.1 and two names for one number across two functions in one report
+# is exactly the drift this extraction removes.
+concept_union <- boot_concepts(bag, concept_map = concept[, c("variable", "concept")],
+                               phase = PHASE_OF, threshold = RETAIN_PCT)
+concept_union[, c("phase", "concept", "n_forms", "pct_any", "best_form_pct",
+                  "spread", "retained")]
 ```
 
 ⚠️ **A selection frequency is conditional on the candidate pool**, and no column
