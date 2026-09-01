@@ -392,13 +392,25 @@ reps <- bag$boot$replicates
 health <- boot_health(bag)
 health
 
+# The refusals below select their check by NAME, so a rename upstream would
+# make both `%in%` tests FALSE and silently delete the guards rather than
+# break them. Checked here so that drift stops the render instead of quietly
+# passing a failed screen.
+.want <- c("Distinct candidates ever selected", "SD of the first free base parameter")
+if (!all(.want %in% health$check)) {
+  stop("boot_health() no longer reports the check(s): ",
+       paste(setdiff(.want, health$check), collapse = ", "),
+       ".\nThe refusals below match on that name, so they would silently stop ",
+       "firing. Update them to the new name in hvtiRbootstrap.", call. = FALSE)
+}
+
 # boot_health() REPORTS; it does not refuse. Both rows below are failures whose
 # reports read as healthy -- a screen that selected nothing has n_failed = 0,
 # and a bootstrap that refit nothing has n_success = 500 -- so a table cell is
 # not enough. The refusal stays in the template, where the render stops.
 .failed <- health$check[!is.na(health$ok) & !health$ok]
 
-if ("Distinct candidates ever selected" %in% .failed) {
+if (.want[[1L]] %in% .failed) {
   stop("The screen selected NOTHING: no parameter outside the base model ",
        "appears in any replicate. That is a failed screen, not a null result, ",
        "and it is what a formula held in a variable looks like from here -- ",
@@ -407,7 +419,7 @@ if ("Distinct candidates ever selected" %in% .failed) {
        "literally at the call site in your runner and rerun.", call. = FALSE)
 }
 
-if ("SD of the first free base parameter" %in% .failed) {
+if (.want[[2L]] %in% .failed) {
   stop("The first free base parameter has SD exactly 0 across ", bag$n_boot,
        " replicates, so every replicate returned the SAME fit. A bootstrap ",
        "built on the vector interface does that: it refits nothing and reports ",
@@ -444,23 +456,20 @@ RETAIN_PCT <- 50
 
 # EDIT: how a term's name splits into phase and variable. Terms are named
 # `<phase>.<variable>`, so one variable offered to two phases is two independent
-# screening decisions and must not be pooled into one row. A single-phase screen
-# passes NULL instead, and the reporting layer then reports no phase dimension
-# at all -- which is how the same functions serve bl, br and bc.
+# screening decisions and must not be pooled into one row.
+#
+# boot_frequencies() and boot_concepts() also accept PHASE_OF = NULL, for a
+# single-phase screen, and that is what lets one reporting code path serve the
+# forthcoming bl, br and bc templates. This template is not that case: it
+# reports a multiphase hazard screen, and every table and the figure below
+# assume a phase column throughout. PHASE_OF must name a real rule here.
 PHASE_OF <- function(term) sub("[.].*$", "", term)
 ```
 
 ```{r}
 #| label: frequencies
-# Terms are named `<phase>.<variable>`: one variable offered to two phases is
-# two independent screening decisions and must not be pooled into one row.
-
-# Per-variable, not one figure for the table. Monte-Carlo error is largest at
-# p = 0.5 and shrinks towards either end, so a single quoted value overstates it
-# for the variables at the top and understates it for the ones in the middle --
-# and the middle is where the retention decision is actually being made.
-
-# Within two Monte-Carlo errors of the cutoff: the variables whose retention
+# mc_error is the per-variable Monte-Carlo error described above; near_threshold
+# flags a variable within two Monte-Carlo errors of RETAIN_PCT, whose retention
 # would not survive a rerun with different seeds.
 freq <- boot_frequencies(bag, phase = PHASE_OF, threshold = RETAIN_PCT)
 freq[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
@@ -544,11 +553,8 @@ the cutoff and one finding is reported twice.
 # whole reason this table exists; a spread of zero means the concept has one
 # form and the two views agree.
 #
-# NOTE: this table's at-least-one figure is `pct_any`, not the `union_pct` name
-# the earlier version of this chunk used. Every value is unchanged; only the
-# name is, because `boot_clusters()` has called the same quantity `pct_any`
-# since 0.1.1 and two names for one number across two functions in one report
-# is exactly the drift this extraction removes.
+# This table's at-least-one figure is `pct_any`, not `union_pct`; every value
+# is unchanged.
 concept_union <- boot_concepts(bag, concept_map = concept[, c("variable", "concept")],
                                phase = PHASE_OF, threshold = RETAIN_PCT)
 concept_union[, c("phase", "concept", "n_forms", "pct_any", "best_form_pct",

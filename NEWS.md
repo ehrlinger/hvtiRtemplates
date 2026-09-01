@@ -17,11 +17,19 @@
   `value`, `ok`, `note`) where it reported two before; `boot_health()`
   supplies `ok` and `note`, and the original two columns are unchanged.
 
+* **`freq`, as saved to `bh-report.rds`, now carries eight columns where it
+  carried seven, in a different order.** `boot_frequencies()` returns
+  `phase, variable, term, n, pct, mc_error, near_threshold, retained`; the
+  new column is `retained`. A study reading the saved object by name is
+  unaffected, but one reading it positionally is not.
+
 * **The template carries an eleventh `EDIT:` marker, `PHASE_OF`,** in the
   `criteria` chunk. It names the rule that splits a term into its phase and
-  variable. A single-phase screen passes `NULL` instead, which is what lets
-  the same reporting functions serve the forthcoming `bl`, `br` and `bc`
-  templates.
+  variable. `boot_frequencies()` and `boot_concepts()` also accept `PHASE_OF
+  = NULL`, for a single-phase screen, and that is what lets one reporting
+  code path serve the forthcoming `bl`, `br` and `bc` templates. This
+  template assumes a phase dimension throughout, so `PHASE_OF` must name a
+  real rule here.
 
 * Rendered against a real 25-chunk bag and diffed against a reference
   captured from the pre-refactor template: the provenance, seeds, frequency
