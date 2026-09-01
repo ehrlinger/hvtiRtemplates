@@ -701,14 +701,18 @@ test_that("the bh template reports through hvtiRbootstrap, not its own copy", {
 
 - [ ] **Step 2: run it against the *pre-refactor* file to see it fail**
 
-If Tasks 2–6 are already committed, check the shipped file out first:
+Tasks 2-6 are already committed by now, so the working tree passes. Extract the
+shipped file and assert against that copy instead. **Do not `git stash`**: it
+would take the whole working tree with it for a read that needs one file.
 
 ```bash
-git stash && git show 66a4038:inst/templates/analyses/04.05-bh.qmd > /tmp/bh-old.qmd
+git show 66a4038:inst/templates/analyses/04.05-bh.qmd > /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/c4a63f00-32ca-496c-b1c4-279ecadb293f/scratchpad/bh-old.qmd
+Rscript -e 'src <- readLines("/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/c4a63f00-32ca-496c-b1c4-279ecadb293f/scratchpad/bh-old.qmd", warn = FALSE)
+cat("calls boot_validate:", any(grepl("boot_validate(", src, fixed = TRUE)), "\n")'
 ```
 
-Otherwise just confirm the expectation would fail on a file with none of these
-calls. Expected: failure naming `boot_validate is not called by the bh template`.
+Expected: `calls boot_validate: FALSE`, which is the assertion failing on the
+pre-refactor file, and therefore the test having teeth.
 
 - [ ] **Step 3: run the suite**
 
@@ -782,15 +786,20 @@ baseline is that "small" is not a category it has.
 | `health` table gains `ok` and `note` columns | `boot_health()` returns them; `check` and `value` are identical |
 | `union_pct` → `pct_any` in the concept table | a rename, values identical; **absent if Task 6 Step 4 took the narrowing option** |
 
-- [ ] **Step 5: record the result in this repo, without identifiers**
+- [ ] **Step 5: record the result, without identifiers**
 
-Append to `NEWS.md` under the 1.0.18 entry, counts and outcome only:
+⚠️ **Do not write to `NEWS.md` here.** The 1.0.18 entry does not exist yet;
+Task 9 creates it, and this step ran before it. Put the outcome in this task's
+report file instead, counts and pass/fail only, and Task 9 carries the sentence
+into `NEWS.md`:
 
 ```
   Verified against the 25-chunk reference render captured at 1.0.17: the
   provenance, seeds, frequency, retained and concept tables reproduce
   row-for-row and value-for-value.
 ```
+
+No variable name, no frequency and no study name leaves the render directory.
 
 - [ ] **Step 6: clean up the scratch copy**
 
@@ -833,6 +842,10 @@ Date: 2026-09-01
   selected nothing, and a bootstrap whose free base parameter has SD exactly 0)
   stay in the template, because both are failures whose reports otherwise read
   as healthy.
+
+  Verified against the 25-chunk reference render captured at 1.0.17: the
+  provenance, seeds, frequency, retained and concept tables reproduce
+  row-for-row and value-for-value.
 ```
 
 - [ ] **Step 3: document, test, check**
@@ -854,7 +867,7 @@ markup, so this should be uneventful; run it anyway, because "should be" is the
 assumption that gate exists to catch.
 
 ```bash
-R CMD Rd2pdf . --output=/tmp/hvtiRtemplates.pdf --force --no-preview
+R CMD Rd2pdf . --output=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/c4a63f00-32ca-496c-b1c4-279ecadb293f/scratchpad/hvtiRtemplates.pdf --force --no-preview
 ```
 
 Expected: completes with no LaTeX error.
@@ -865,8 +878,13 @@ Expected: completes with no LaTeX error.
 git add DESCRIPTION NEWS.md
 git commit -m "release: 1.0.18"
 git push -u origin refactor/batch-2a-phase-2
-gh pr create --base main --title "refactor(bh): report through the hvtiRbootstrap reporting layer" --body-file /dev/stdin
+gh pr create --base main \
+  --title "refactor(bh): report through the hvtiRbootstrap reporting layer" \
+  --body-file /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/c4a63f00-32ca-496c-b1c4-279ecadb293f/scratchpad/pr-body.md
 ```
+
+Write the body to that file first. `--body-file /dev/stdin` with nothing piped
+to it waits on the terminal and never returns.
 
 Open it **against `main`**. A PR opened against another branch never triggers
 Copilot's review, and GitHub retargeting the base when a parent merges does not
