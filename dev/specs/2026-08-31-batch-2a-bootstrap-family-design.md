@@ -1,7 +1,7 @@
 # Batch 2a — the bootstrap screen family
 
 **Date:** 2026-08-31
-**Status:** designed, not started
+**Status:** Phases 0-2 shipped; Phase 3 in progress, see §4.2
 **Roadmap:** `2026-08-29-template-conversion-roadmap.md` is the live batch
 assignment, generated from the ledger; the reasoning behind family batching is
 in `2026-08-29-template-conversion-roadmap-design.md`. Both put `bl`, `bc`,
@@ -129,6 +129,43 @@ The alternative — the package serving `bl`/`br`/`bc` while `bh` keeps its own
 copy — reintroduces exactly the two-implementations problem the extraction
 exists to remove.
 
+### 4.2 The reporting layer had no producer, and this was found in Phase 3
+
+⚠️ **Added 2026-09-01, after Phases 1 and 2 shipped.** §4 above describes the
+reading side correctly and says nothing about the writing side, which is where
+the gap was.
+
+`boot_validate()` requires a **long-form** bag: `boot$replicates` carries one
+row per selected (replicate, term) pair, with an unselected term simply absent.
+That shape is written by TemporalHazard's hazard runner, which is why `bh`
+works.
+
+`boot_select()` — this package's own entry point, and the function a `bl`, `br`
+or `bc` runner calls — returns a **wide** `boot_selection`: a coefficients
+matrix, two integers and an unevaluated call. It takes `sle`, `sls` and `seed`
+as arguments and records none of them structurally. Nothing pivoted wide to
+long.
+
+So the layer Phase 1 extracted could not be reached from the screen function
+that feeds it. Written as designed, each study would hand-write the pivot plus
+nine provenance fields, and the three thin templates would ship three copies of
+an instruction to do so — the hand-sync problem the extraction exists to
+remove, re-entered one layer down.
+
+**This is §6's failure shape with one difference that makes it worse: the
+artifact is produced by the SAME package, at the other end of it.** The two
+ends were built against different studies and never met. No test in either
+repository composed them, because each end had its own fixtures.
+
+**Resolution.** Phase 3 opens upstream, as Phase 1 did. `hvtiRbootstrap` gains
+`boot_bag()`, which converts a `boot_selection` plus the four facts a screen
+cannot know — which terms are the base model, how many candidates were offered
+before any were dropped, the dataset manifest, and what was dropped — into a
+validated bag. `boot_select()` records a `$control` list so that the bag's
+entry level, stay level, seed and row count come from the run rather than from
+what a caller retypes; `$call` cannot serve, because `match.call()` omits every
+argument left at its default.
+
 ---
 
 ## 5. What Phase 0 established, and what it cost
@@ -197,9 +234,11 @@ filename do not change**; this is a body-only refactor, and it must be verified
 **result-identical** against the Phase 0 render, the same gate
 `us_cohort_curve()` passed at 1e-12.
 
-**Phase 3** — `bl`, `br`, `bc` ship as thin templates. Ordinals are assigned
-from the ledger as the next free minors in `analyses`, **never recomputed from
-taxonomy row position** (`04.06` is retired and cannot be reissued).
+**Phase 3** — `hvtiRbootstrap` gains `boot_bag()` and ships it (§4.2), then
+`bl`, `br` and `bc` ship as thin templates. Ordinals are assigned from the
+ledger as free minors in `analyses`, **never recomputed from taxonomy row
+position** (`04.06` is retired and cannot be reissued): `bl` 04.02, `br` 04.03,
+`bc` 04.04.
 
 ---
 
@@ -208,9 +247,23 @@ taxonomy row position** (`04.06` is retired and cannot be reissued).
 - `hvtiRbootstrap` released with the reporting layer and shape-checking
   `boot_validate()`.
 - `04.05-bh.qmd` rewritten, verified result-identical, ordinal unchanged.
-- `bl`, `br`, `bc` each: renders against a real bag; own `.lintr` **file** key;
-  `edit-guard` chunk; exactly one `^ENDPOINT` and one `^TYPE` line; no study
-  identifiers; README row; ledger row `shipped` with its assigned ordinal.
+- `bl`, `br`, `bc` each: renders against a bag built by `boot_bag()`; own
+  `.lintr` **file** key; `edit-guard` chunk; exactly one `^ENDPOINT` and one
+  `^TYPE` line; no study identifiers; README row; ledger row `shipped` with its
+  assigned ordinal.
+  ⚠️ **The render gate for this phase is a screen the gate runs, not a screen a
+  study ran, and that is weaker than what `bh` got.** `bh` rendered against a
+  real 25-chunk bag a study had produced (§5). Searched on 2026-09-01: no R job
+  found on the share calls `boot_select()`, so there is no `bl`, `br` or `bc`
+  bag to read. The gate therefore screens a study's real built dataset, which
+  exercises real variable names, a real correlation structure, a real row count
+  and `read_built()`. It does not exercise a candidate pool a study author
+  chose. For `bl` and `br` that last gap is closed separately, by comparing an
+  R screen against the SAS `%bootreg` job it replaces over the same pool and
+  criteria — **distributionally, not exactly**: two bootstrap runs draw
+  different resamples, so their frequencies differ by roughly two percentage
+  points per variable at 500 replicates and no 1e-12 comparison is available.
+  `bc` has no SAS counterpart anywhere in the corpus and gets no such check.
 - `devtools::test()` passes; `devtools::check()` 0/0/0; `document()` run.
 - Patch bumps with matching `NEWS.md` entries. **One tag per release**, not one
   per template: packages are moving under the `hvtiR` meta-package, where each
