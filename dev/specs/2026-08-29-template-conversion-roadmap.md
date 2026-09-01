@@ -45,7 +45,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the ledger and re-render. CI checks the agreement.
 
-**43 prefixes in scope**, of which 6 have a template on disk. 2 demoted to umbrella rows.
+**43 prefixes in scope**, of which 9 have a template on disk. 2 demoted to umbrella rows.
 
 ## By family
 
@@ -61,9 +61,9 @@ row has no template on disk.
 | prefix | status | ordinal | breadth | R exemplars | blocked on |
 |---|---|---|---|---|---|
 | `bh` | shipped | 04.05 | 322 | 2 | — |
-| `bc` | queued | — | 16 | 0 | — |
-| `bl` | queued | — | 352 | 1 | — |
-| `br` | queued | — | 103 | 1 | — |
+| `bc` | shipped | 04.04 | 16 | 0 | — |
+| `bl` | shipped | 04.02 | 352 | 1 | — |
+| `br` | shipped | 04.03 | 103 | 1 | — |
 | `bq` | queued | — | 2 | 0 | hvtiRbootstrap#16 |
 
 ### bootstrap-ci (unscheduled)
@@ -154,11 +154,11 @@ Members: `ac`, `hm`, `hp`, `hs`, `hz`
 
 **Complete.**
 
-### propensity-matching — 1/10
+### propensity-matching — 2/10
 
 Members: `bd`, `bl`, `cm`, `dc`, `hp`, `lm`, `lp`, `pm`, `rm`, `rp`
 
-Outstanding: `bd`, `bl`, `cm`, `dc`, `lm`, `lp`, `pm`, `rm`, `rp`.
+Outstanding: `bd`, `cm`, `dc`, `lm`, `lp`, `pm`, `rm`, `rp`.
 
 <!-- END GENERATED -->
 

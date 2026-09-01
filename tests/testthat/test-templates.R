@@ -206,3 +206,108 @@ test_that("the bh template reports through hvtiRbootstrap, not its own copy", {
   expect_true(any(grepl("The screen selected NOTHING", code, fixed = TRUE)))
   expect_true(any(grepl("returned the SAME fit", code, fixed = TRUE)))
 })
+
+test_that("the thin bootstrap templates report through hvtiRbootstrap", {
+  for (prefix in c("bl", "br", "bc")) {
+    src <- readLines(template_path(prefix), warn = FALSE)
+    # Comments stripped first. These templates NARRATE the reporting layer --
+    # the setup chunk's version-floor comment names boot_bag() -- so matching
+    # raw source would let a hand-edit delete a live call, leave the comment,
+    # and keep this green.
+    code <- sub("#.*$", "", src)
+
+    for (fn in c("boot_validate", "boot_provenance", "boot_seeds",
+                 "boot_dropped", "boot_health", "boot_frequencies",
+                 "boot_concepts")) {
+      expect_true(any(grepl(paste0(fn, "("), code, fixed = TRUE)),
+                  info = paste(fn, "is not called by the", prefix, "template"))
+    }
+
+    # The refusals boot_health() cannot make for itself. It reports and never
+    # stops, so a screen that selected nothing renders green without these.
+    expect_true(any(grepl("selected NOTHING", code, fixed = TRUE)),
+                info = paste(prefix, "lost the empty-screen refusal"))
+    expect_true(any(grepl("returned the SAME fit", code, fixed = TRUE)),
+                info = paste(prefix, "lost the flat-bootstrap refusal"))
+  }
+})
+
+test_that("the thin bootstrap templates carry no phase dimension", {
+  for (prefix in c("bl", "br", "bc")) {
+    src <- readLines(template_path(prefix), warn = FALSE)
+    fence <- grepl("^```", src)
+    in_chunk <- cumsum(fence) %% 2 == 1 & !fence
+    code <- sub("#.*$", "", src[in_chunk])
+
+    # PHASE_OF must be NULL and must stay NULL. A splitting rule that matches
+    # nothing still adds a phase column of empty strings, and every grouped
+    # table would then group by a column that says nothing -- silently, since
+    # no count changes and no error is raised.
+    ph <- grep("^\\s*PHASE_OF\\s*<-", code, value = TRUE)
+    expect_length(ph, 1L)
+    expect_match(ph, "NULL", info = paste(prefix, "supplies a phase rule"))
+
+    # No table may select or order by a phase column: with phase = NULL the
+    # reporting layer returns none, so a reference is an error at render time.
+    # `phase = PHASE_OF` is the argument, not a column, and is excluded.
+    cols <- sub("phase = PHASE_OF", "", code, fixed = TRUE)
+    expect_false(any(grepl("\\$phase|\"phase\"|~phase", cols)),
+                 info = paste(prefix, "references a phase column"))
+  }
+})
+
+test_that("the thin bootstrap templates read one screen, not pooled chunks", {
+  # bh pools chunks because a hazard screen is days of compute. These are not,
+  # and a chunked run is pooled in the RUNNER -- the only place that knows how
+  # many chunks it launched. A template that grew a pooling branch has taken on
+  # a decision it cannot make correctly.
+  for (prefix in c("bl", "br", "bc")) {
+    src <- readLines(template_path(prefix), warn = FALSE)
+    fence <- grepl("^```", src)
+    code <- sub("#.*$", "", src[cumsum(fence) %% 2 == 1 & !fence])
+    expect_false(any(grepl("boot_pool_chunks(", code, fixed = TRUE)),
+                 info = paste(prefix, "pools chunks in the template"))
+    expect_true(any(grepl("BOOT_FILE", code, fixed = TRUE)),
+                info = paste(prefix, "has no BOOT_FILE edit point"))
+  }
+})
+
+test_that("DESCRIPTION's hvtiRbootstrap bound matches what the templates enforce", {
+  # These two drifted apart for NINE releases. `hvtiRbootstrap (>= 0.1.1)`
+  # entered DESCRIPTION at 1.0.13 while 04.05-bh.qmd's own guard demanded
+  # 0.1.2, then 0.9.0 from 1.0.18. Nothing compared them: the bound is in
+  # DESCRIPTION, the floor is a string inside a .qmd, and no check read both.
+  #
+  # A repomap would not have caught it either -- the generated maps list
+  # Suggests with the version bounds stripped, and do not index
+  # inst/templates/ at all, so neither side of this comparison appears in one.
+  # packageDescription(), not read.dcf("../../DESCRIPTION"). The relative path
+  # resolves under devtools::test(), which runs from tests/testthat, and NOT
+  # under R CMD check, which tests an INSTALLED copy -- so the first version of
+  # this test passed locally and errored in check.
+  desc <- utils::packageDescription("hvtiRtemplates", fields = "Suggests")
+  skip_if(is.na(desc) || is.null(desc), "Suggests is not readable here")
+  bound <- regmatches(desc,
+                      regexpr("hvtiRbootstrap\\s*\\(>=\\s*[0-9.]+\\)", desc))
+  skip_if(length(bound) == 0L, "hvtiRbootstrap is not a versioned Suggests")
+  declared <- package_version(gsub("[^0-9.]", "", sub(".*>=", "", bound)))
+
+  floors <- package_version(character(0))
+  for (f in template_list()$file) {
+    code <- sub("#.*$", "", readLines(f, warn = FALSE))
+    pat <- 'packageVersion\\("hvtiRbootstrap"\\)\\s*<\\s*"[0-9.]+"'
+    hit <- unlist(regmatches(code, regexpr(pat, code)))
+    if (length(hit)) {
+      floors <- c(floors,
+                  package_version(gsub('.*<\\s*"([0-9.]+)".*', "\\1", hit)))
+    }
+  }
+  skip_if(length(floors) == 0L, "no template enforces a floor")
+
+  # The declared bound must be at least the highest floor any template
+  # enforces. Lower means a study can satisfy DESCRIPTION and still be refused
+  # by the template it just scaffolded, with the message arriving mid-render.
+  expect_gte(declared, max(floors),
+             label = paste0("DESCRIPTION declares hvtiRbootstrap >= ", declared,
+                            " but a template refuses below ", max(floors)))
+})

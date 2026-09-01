@@ -1,0 +1,752 @@
+---
+title: "Bootstrap variable selection: linear"
+# Carried in the file rather than inherited from _quarto.yml. A file meant to be
+# COPIED should not depend on settings from the directory it happens to sit in:
+# rendered as a standalone document the project's format block never applies,
+# which is how server-rendered reports end up with sibling _files/ trees instead
+# of being self-contained.
+#
+# NOTE: output-dir is a PROJECT setting and cannot be set here, so the .html
+# lands next to its source. With embed-resources that is a single standalone
+# file, which is the property that actually matters when a report is sent on.
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the SAS job this replaces, and paste its `%bootreg` call
+     verbatim. The call is the specification: it names the candidate pool, the
+     entry and stay levels, the replicate count and `proc=`. Prose describing
+     it is a paraphrase that drifts; the call does not. -->
+
+Replaces `analyses/<job>.sas`: paste its `%bootreg` call here — the candidate
+pool, `sle=`, `sls=`, `resampl=` and `proc=reg`.
+
+This job reports a bootstrap variable selection screen over a **linear**
+model: how often each candidate survived stepwise selection across resamples,
+how much of that figure is Monte-Carlo noise, and which candidates the screen
+never saw. **It does not run the screen and it does not fit the final model.**
+A companion runner screens; the companion `rm` job fits the multivariable
+model.
+
+⚠️ `br` and `rm` are **parallel analyses, not a pipeline.** `%bootreg` and the
+model job were parallel in SAS and these jobs reproduce that. Do not describe
+this job's retained set as what `rm` fits, and do not write a handoff file for
+it — an earlier study report did both for the hazard pair, and nothing read the
+file. A reader who believes the claim will assume the `lm` model was screened
+for reliability first. It was not.
+
+A selection frequency is an estimate, not a count of something fixed. Every
+table below is built to keep that visible, because the decision this job exists
+to support is which side of a retention threshold a variable falls on, and that
+is the part resampling noise moves.
+
+```{r}
+#| label: setup
+# This file runs either from the directory it was scaffolded into or from the
+# project root. Resolve which, so that no path in this document needs editing:
+# forgetting one of several ../ paths is the instantiation mistake that would
+# otherwise be easy to make and quiet when made.
+.root <- if (file.exists("_quarto.yml")) "." else ".."
+if (!file.exists(file.path(.root, "_quarto.yml"))) {
+  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
+       "resolved. Render this from the project root or from the job directory.",
+       call. = FALSE)
+}
+# TemporalHazard is deliberately absent: a linear screen never touches it.
+# The runner calls hvtiRbootstrap::boot_select() with fit_linear() and
+# converts the result with boot_bag().
+suppressPackageStartupMessages({
+  library(hvtiRbootstrap)
+  library(hvtiRutilities)
+  library(ggplot2)
+})
+
+# boot_bag() lands in 0.9.2, and without it a boot_select() screen cannot be
+# read by anything below. A study on 0.9.1 otherwise gets "could not find
+# function boot_bag" from inside its runner, one file away from this one, and
+# the message names the symbol without naming the release that carries it.
+#
+# The check lives HERE rather than only in the runner because this report is
+# what a reader opens. A bag written by an older runner would reach these
+# chunks missing the provenance fields, and the tables would print blanks where
+# the screen's criteria belong.
+if (utils::packageVersion("hvtiRbootstrap") < "0.9.2") {
+  stop("This report needs hvtiRbootstrap >= 0.9.2; ",
+       utils::packageVersion("hvtiRbootstrap"), " is installed. boot_bag() ",
+       "converts a boot_select() screen into the bag this report reads, and ",
+       "nothing below 0.9.2 has such a function.\nUpdate it, then re-render.",
+       call. = FALSE)
+}
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+# The markers in this file name work a study author still has to do, and
+# README.md says a job that still contains one has not been finished. This
+# chunk is what makes that TRUE rather than merely stated.
+#
+# Without it an unedited job renders green over a meaningless analysis. In THIS
+# file the danger is that EXPECT_BOOT still holds the template's number, so the
+# completeness check compares the run against a denominator nobody chose -- and
+# passes, reporting frequencies over the wrong base.
+#
+# knitr::current_input() is NULL outside a render -- a study author stepping
+# through chunks in RStudio -- and there is no file to scan then, so this is a
+# no-op in that case. Same handling as the `set` guard below, for the same
+# reason.
+#
+# The token is BUILT, not written literally, and that is not stylistic. Quarto
+# knits through an intermediate and current_input() returns THAT file, so the
+# scan reads a copy of this chunk along with everything else: a literal
+# grep("<token>", .src) here matches its own source line, and the guard then
+# fires on every render, finished or not. Measured, not theorised -- a probe
+# found three markers in a file containing two. A guard that cries wolf on a
+# finished job is a guard that gets deleted, which returns us to issue #27.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    # Report the marker TEXT. Line numbers here are the intermediate's, not
+    # this .qmd's, so they need not match what the author sees in an editor.
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
+      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
+      "draft banner. Any other value, including 0, leaves this guard strict."
+    )
+    # Only the documented values enable draft mode. nzchar() alone would treat
+    # HVTI_TEMPLATE_DRAFT=0 as ON, silently downgrading this stop() to a
+    # warning for someone whose shell profile sets it to 0 meaning OFF -- a
+    # switch whose enablement does not mean what it says, which is the same
+    # defect this guard exists to catch. An unrecognised value falls through to
+    # strict on purpose: the author then sees the stop and re-reads the docs,
+    # which is the safe direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+      # The banner is not optional. A draft render that looks like a finished
+      # one is the same defect with an extra step: the warning scrolls past in
+      # a log, while the .html is the artifact that gets sent to someone.
+      warning(.msg, call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, call. = FALSE)
+    }
+  }
+}
+```
+
+<!-- The two values below are written by new_job() from the endpoint/type it
+     was called with, which are also the filename's first two fields. They
+     name the SET this job belongs to, and every artifact path in the
+     document is computed from them, so no output path below needs editing.
+
+     Do NOT hand-edit these declarations: the render-time guard below checks
+     them against this file's own name and stops if they disagree. To put
+     this job in a different set, call new_job() again with the new
+     endpoint/type rather than editing this copy in place.
+
+     A set is keyed on (endpoint, analysis type), not on the endpoint alone.
+     One endpoint is analysed by several methods -- parametric hazard, random
+     forest survival, competing risks -- and those chains share their upstream.
+     Two sets keyed on `dead_pa` alone would write their life tables to the
+     same file. -->
+
+```{r}
+#| label: set
+ENDPOINT <- "dead_pa"
+TYPE     <- "hz"
+
+# `new_job()` writes ENDPOINT/TYPE from the same values it put in this file's
+# name, but a hand-edited declaration can drift from it afterward. set_path()
+# below resolves from the declarations, not the filename, so a drifted
+# declaration would silently write into ANOTHER set's artifact directory --
+# exactly the collision the (endpoint, type) key exists to prevent, re-entered
+# through the body instead of the name.
+#
+# knitr::current_input() is NULL outside a render (a study author running
+# chunks interactively in RStudio), and there is no filename to check against
+# yet, so this is a no-op in that case rather than a spurious error.
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  # Quarto knits through an intermediate, so `knitr::current_input()` returns
+  # `<endpoint>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
+  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
+  # rather than hard-coding one, so this doesn't depend on a build-tool detail
+  # staying the same.
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (endpoint '", .name_endpoint, "', type '",
+         .name_type, "'), but declares ENDPOINT = \"", ENDPOINT, "\", TYPE = \"", TYPE,
+         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
+  }
+}
+
+# Resolve a path inside this set's artifact directory. `kind` is the artifact
+# folder -- "estimates" for serialized results, "graphs" for figures. The set
+# directory sits one layer under the kind and never two, which is the whole
+# layout rule.
+#
+# Created on first use rather than up front, so a job that writes nothing leaves
+# no empty directories behind.
+set_path <- function(kind, file) {
+  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+
+# The screen this job reports on was run by a companion script, which wrote its
+# chunks into this set's `estimates` directory. Reading them through set_path()
+# is what keeps a screen filed against the set whose candidates it screened.
+```
+
+## The screen
+
+```{r}
+#| label: expect
+# EDIT: what this run was LAUNCHED as, not what happens to be on disk.
+#
+# Nothing in this file knows how many replicates the runner was asked for, so
+# this number is the only thing that can tell a partial screen from a complete
+# one. Without it a render against a run that stopped early produces a report
+# that is wrong in no visible way: every health check passes, every frequency
+# is honestly computed, and only the denominator is not the intended one.
+EXPECT_BOOT <- 1000L   # EDIT: %bootreg(resampl=) -- valid models wanted
+
+# EDIT: the file your runner wrote its screen to, under this set's estimates
+# directory. It must match the runner exactly.
+BOOT_FILE <- "bagging.rds"
+```
+
+```{r}
+#| label: load
+# The screen is not run here. It is read.
+#
+# boot_select() writes nothing until it returns, so a run that dies partway
+# leaves nothing at all. Keeping the run in a companion file means a failed
+# render costs a re-render rather than a re-run, and it is what lets this
+# report be re-read months later against the screen it actually described.
+.single_file <- set_path("estimates", BOOT_FILE)
+if (!file.exists(.single_file)) {
+  stop("No screen found at ", .single_file, ". This report reads a bag your ",
+       "runner wrote with boot_bag(); it does not run the screen.\nRun the ",
+       "companion runner first, or correct BOOT_FILE.", call. = FALSE)
+}
+bag <- readRDS(.single_file)
+
+# Bound empty so the `save` chunk's overwrite guard has both names to compare
+# against. A logistic screen is not chunked by default; a chunked one is pooled
+# in the RUNNER, not here.
+.chunk_files <- character(0)
+
+# A run split across chunks is still supported, and belongs upstream: pool with
+# hvtiRbootstrap::boot_pool_chunks() in your runner and write the pooled bag to
+# BOOT_FILE. Only the runner knows how many chunks it launched, and
+# boot_pool_chunks() refuses chunks that disagree on the dataset checksum, the
+# entry and stay levels, the base parameters or the engine version -- every one
+# of which is silent on its own, showing up as a slightly different frequency
+# rather than as an error.
+```
+
+```{r}
+#| label: completeness
+#| results: asis
+# A callout, not a table cell. A provisional report that cannot say so is the
+# failure being prevented, and it must survive someone receiving the .html
+# without knowing when it was made -- which a number buried in a provenance
+# table does not.
+.shortfall <- boot_shortfall(bag, expect_chunks = 1L,
+                             expect_boot = EXPECT_BOOT)
+if (!is.null(.shortfall)) {
+  cat("\n::: {.callout-warning title=\"Provisional -- this pool is incomplete\"}\n")
+  cat(.shortfall, "\n", sep = "")
+  cat(":::\n\n")
+}
+```
+
+## Provenance
+
+```{r}
+#| label: contract
+# The runner is NOT templated -- it is a study file -- so the fields this report
+# reads are a contract between two files that no shared function enforces.
+# Stated here, and checked, because the alternative is a report that indexes a
+# field the runner stopped writing and renders `NULL` into a provenance table as
+# though it were an answer.
+#
+# A pooled run has already had most of these checked by boot_pool_chunks(),
+# which refuses chunks that disagree. A SINGLE unchunked run has not: nothing
+# ran between the runner and here. This is the only check that covers both.
+
+# Shapes, not merely names. Checking presence is what let a length-2 `requested`
+# reach a table that cannot recycle it against a length-13 item column -- the
+# render-blocker that shipped in three releases and was fixed in 1.0.17. Every
+# failure is reported at once, because an author fixing a runner wants the whole
+# list rather than one field per re-render.
+boot_validate(bag)
+```
+
+```{r}
+#| label: provenance
+# CPU cost, NOT wall clock. boot_pool_chunks() SUMS elapsed across chunks, so on
+# a chunked run this is total compute; chunks run in parallel finish in a
+# fraction of it. Reported in hours because the minutes figure reads as a
+# wall-clock number and is off by the chunk count.
+
+# The digest travels WITH its algorithm. An md5 and a sha256 of the same file
+# are different strings, and of different files may not be, so a bare digest
+# recorded without its algorithm is not evidence of anything.
+
+# A version string alone cannot say which codebase ran: one real package version
+# existed as two, one with a selection criterion and one without, and the
+# selection criterion is precisely what decides what a screen selects.
+
+# `requested` and `usable` are scalars on a single-phase screen: the pool is
+# offered once. boot_provenance() also accepts the per-phase vectors a
+# multiphase hazard bag carries, and collapses them to one labelled string per
+# row rather than summing -- a pool offered to two phases is one pool seen
+# twice, not twice as many candidates. Nothing here needs that, and nothing
+# here breaks if a future runner supplies it.
+provenance <- boot_provenance(bag)
+provenance
+```
+
+```{r}
+#| label: seeds
+# Every seed, so that a rerun is reproducible and a duplicate is visible. Two
+# chunks sharing a seed contain literally the SAME replicates: pooling them
+# counts each twice and reports a Monte-Carlo error smaller than the run
+# actually has. boot_pool_chunks() refuses that outright, so a pooled run cannot
+# reach here with a duplicate -- this table is what lets you check a single run,
+# and what lets a reader reproduce either.
+#
+# `seeds` is created by boot_pool_chunks(); a SINGLE unchunked run never went
+# through it and carries only the scalar `seed` its runner wrote. Falling back
+# is not defensive padding -- without it the one case this table exists to
+# serve is the one case it cannot render.
+boot_seeds(bag)
+```
+
+## Candidates that were never screened
+
+<!-- Counts first, detail second, and that ordering is not cosmetic. The detail
+     table runs to dozens of rows on a real pool, and a reader who has to scroll
+     it to discover that a whole CLASS of variable was never screened will not
+     discover it. -->
+
+```{r}
+#| label: dropped-summary
+# A candidate the screen never saw cannot appear at any frequency, so its
+# absence from the table below is indistinguishable from never having been
+# selected. That is the reason this section exists at all.
+dropped <- boot_dropped(bag)
+if (!nrow(dropped)) {
+  cat("Every candidate offered was screened.\n")
+} else {
+  # No phase column: boot_dropped() returns whatever the runner wrote, and a
+  # single-phase runner writes none. Tabulating an absent column errors.
+  as.data.frame(table(reason = dropped$reason))
+}
+```
+
+```{r}
+#| label: dropped-detail
+if (nrow(dropped)) {
+  dropped
+}
+```
+
+## Did the screen actually run?
+
+⚠️ **A screen that selected nothing is a failure, not a finding.** Nothing
+about it looks like an error: `boot_select()` keeps drawing until it has the
+replicates it was asked for, so `n_success` is the full count and `n_failed` is
+whatever the fitter genuinely refused. The frequency table is then empty, or
+holds only the base model, and reads as a screen that found no risk factors
+rather than as a screen that never selected.
+
+```{r}
+#| label: health
+# A formula held in a variable is FINE here, unlike in the hazard sibling.
+# boot_select()'s fitters evaluate through .fit_in_env(), which binds `formula`
+# and `data` into the environment step() updates in, so `f <- y ~ a + b` then
+# boot_select(d, f, ...) gives byte-identical results to writing the formula at
+# the call site. Verified against 0.9.1 rather than assumed; bh warns the
+# opposite because hzr_bootstrap() rewrites the stored formula per replicate
+# and a symbol does not survive that. Do not carry bh's warning across.
+#
+# `reps` is bound here, and not only for this chunk: `cluster-matrix` below pivots
+# these same replicates into the wide matrix boot_clusters() wants. Dropping the
+# binding when this body moved into the package would fail 250 lines away,
+# naming `reps` and nothing about the cause.
+reps <- bag$boot$replicates
+
+health <- boot_health(bag)
+health
+
+# The refusals below select their check by NAME, so a rename upstream would
+# make both `%in%` tests FALSE and silently delete the guards rather than
+# break them. Checked here so that drift stops the render instead of quietly
+# passing a failed screen.
+.want <- c("Distinct candidates ever selected", "SD of the first free base parameter")
+if (!all(.want %in% health$check)) {
+  stop("boot_health() no longer reports the check(s): ",
+       paste(setdiff(.want, health$check), collapse = ", "),
+       ".\nThe refusals below match on that name, so they would silently stop ",
+       "firing. Update them to the new name in hvtiRbootstrap.", call. = FALSE)
+}
+
+# boot_health() REPORTS; it does not refuse. Both rows below are failures whose
+# reports read as healthy -- a screen that selected nothing has n_failed = 0,
+# and a bootstrap that refit nothing has n_success = 500 -- so a table cell is
+# not enough. The refusal stays in the template, where the render stops.
+.failed <- health$check[!is.na(health$ok) & !health$ok]
+
+if (.want[[1L]] %in% .failed) {
+  stop("The screen selected NOTHING: no parameter outside the base model ",
+       "appears in any replicate. That is a failed screen, not a null result. ",
+       "n_failed is ", bag$boot$n_failed, ", so the fits themselves ran.\n",
+       "The usual causes, in the order worth checking: the runner passed ",
+       "select = \"none\" and every term was forced rather than screened, so ",
+       "no term was ever a candidate; sle is far too strict for the pool; or ",
+       "base_params in the boot_bag() call names the whole model, which ",
+       "subtracts every term from the frequencies.", call. = FALSE)
+}
+
+if (.want[[2L]] %in% .failed) {
+  stop("The first free base parameter has SD exactly 0 across ", bag$n_boot,
+       " replicates, so every replicate returned the SAME fit. A bootstrap ",
+       "that resamples nothing does that, and it reports n_success = ",
+       bag$boot$n_success, " with no warning.\nCheck that the runner passed ",
+       "the cohort rather than a single row, and that boot_bag() was given the ",
+       "screen it thinks it was.\nThe frequencies below would all be 100% and ",
+       "mean nothing.", call. = FALSE)
+}
+```
+
+## What a selection frequency is, and what it is not
+
+A selection frequency is an estimate, not a count of something fixed, and it
+carries Monte-Carlo error of roughly `sqrt(p(1-p)/n_boot)`. At `p = 0.5` over
+500 replicates that is about **2.2 percentage points**, so a variable sitting
+within a few points of the retention threshold can fall on either side of it on
+resampling noise alone.
+
+- **Agreement on the retention decision matters more than agreement on the
+  frequency.** Which side of the threshold a variable falls on is the decision
+  this job exists to support.
+- **A near-threshold variable is not a weak risk factor.** It is a variable
+  whose selection is unstable, which is a different claim.
+
+⚠️ **A linear screen's frequencies move with the outcome's scale.** Stepwise
+entry and stay are p-value thresholds, and a p-value on a continuous outcome
+responds to residual variance in a way a binary outcome's does not. Two runs of
+the same pool against the same cohort, one on a raw outcome and one on a
+transformed one, are not comparable screens and their retained sets should not
+be read against each other.
+
+```{r}
+#| label: criteria
+# EDIT: from YOUR .sas %bootreg call. Its documented defaults are
+# resampl=1000, sle=0.10, sls=0.05, but real jobs override them -- and the
+# entry and stay levels decide what each replicate selected, so a report
+# quoting the defaults when the run used something else is describing a
+# different screen. Read them off the call and paste it above.
+#
+# RETAIN_PCT is the reliability cutoff this report calls "retained". It is a
+# reporting decision, not something the run recorded: the entry and stay levels
+# above governed each replicate's stepwise fit, and neither of them says how
+# often a variable must survive to be worth carrying forward.
+RETAIN_PCT <- 50
+
+# A linear screen has no phases: a candidate is offered once, so one term is
+# one screening decision and there is nothing to split a term name on.
+#
+# boot_frequencies() and boot_concepts() take phase = NULL for exactly this
+# case, and it is the same code path bh drives with a term-splitting rule. One
+# implementation serves both, which is the whole reason this file is thin.
+#
+# Do NOT supply a rule here to "be safe". A rule that matches nothing still
+# adds a phase column of empty strings, and every grouped table below would
+# then group by a column that says nothing -- silently, since no count changes
+# and no error is raised.
+PHASE_OF <- NULL
+```
+
+```{r}
+#| label: frequencies
+# mc_error is the per-variable Monte-Carlo error described above; near_threshold
+# flags a variable within two Monte-Carlo errors of RETAIN_PCT, whose retention
+# would not survive a rerun with different seeds.
+freq <- boot_frequencies(bag, phase = PHASE_OF, threshold = RETAIN_PCT)
+freq[, c("variable", "n", "pct", "mc_error", "near_threshold")]
+```
+
+```{r}
+#| label: retained
+# The retained set. Reported WITH the near-threshold flag rather than
+# as a bare list: a variable that cleared the cutoff by less than its own
+# Monte-Carlo error cleared it on noise, and a list that does not say so invites
+# the reader to treat the two kinds of retention as the same claim.
+retained <- freq[freq$retained, , drop = FALSE]
+retained[, c("variable", "n", "pct", "mc_error", "near_threshold")]
+```
+
+## Concepts
+
+⚠️ **Do not prune competing transformations from the pool before screening.**
+Screen every form; group only when reading, which is what this section does.
+
+Measured, on the study this template came from: of the 57 forms pruning removed,
+**16 correlated at |r| < 0.9** with the form kept and five below 0.5. `in_zexp`
+**is** `1/zexp` — r = 0.9997 against the reciprocal — yet correlates with
+`zexp` at only **-0.195**, because `zexp` spans 0.038 to 151.9. Over a 4000-fold
+range a value and its reciprocal are different information. That study's
+published model uses `zexp` and `in_zexp` **together and both significant**, a
+two-parameter flexible form pruning forbids. The measurement is from a hazard
+study, and it is quoted here because the argument is about variable NAMES and
+correlation, which a logistic screen shares.
+
+The naming convention tells you two variables are RELATED. Only the data tells
+you whether they are REDUNDANT.
+
+```{r}
+#| label: concept-map
+# EDIT: the affix vocabulary, if your study's variable names do not follow
+# vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing
+# 2, the order in which they strip, and the deliberate refusal to reduce agee
+# to age. Those are facts about this institution's names, not about statistics,
+# which is why they are data you can replace rather than logic you cannot.
+#
+# The pool grouped here is the set of forms that reached at least one replicate.
+# A candidate the screen never saw is in the unscreened table above, not here.
+concept <- concept_map(unique(freq$variable), affixes = POOL_AFFIXES,
+                       min_stem = POOL_MIN_STEM,
+                       plain_suffix = POOL_PLAIN_SUFFIX)
+concept
+```
+
+```{r}
+#| label: concept-frequencies
+# Grouped for READING. Every form keeps its own row and its own frequency --
+# nothing is collapsed, summed or dropped -- because the whole argument above is
+# that two forms of one concept may carry different information. The concept
+# column is a reading aid, not an aggregation.
+by_concept <- merge(freq, concept[, c("variable", "concept", "representative")],
+                    by = "variable", all.x = TRUE)
+by_concept <- by_concept[order(by_concept$concept, -by_concept$pct), ,
+                         drop = FALSE]
+rownames(by_concept) <- NULL
+by_concept[, c("concept", "variable", "representative", "pct", "mc_error")]
+```
+
+A per-form row answers "how often was *this form* selected". It cannot answer
+"how often was *this concept* selected", and that is the number a paper quotes.
+The gap runs both ways: competing forms split replicates between them, so the
+concept reads weaker than any single figure suggests, or two forms both clear
+the cutoff and one finding is reported twice.
+
+```{r}
+#| label: concept-union
+# Nothing above is collapsed -- every form keeps its row and its frequency.
+# This is an ADDITIONAL row per concept, not a replacement for them.
+#
+# Computed from the replicate table, never from the summary. A union across a
+# concept's forms cannot be recovered from marginal percentages: two forms at
+# 30% each are anywhere between 30% and 60% of replicates, depending entirely
+# on how often the same replicate took both, and the summary does not record
+# that.
+#
+# How much the per-form table understates the concept. A large spread is the
+# whole reason this table exists; a spread of zero means the concept has one
+# form and the two views agree.
+#
+# This table's at-least-one figure is `pct_any`, not `union_pct`; every value
+# is unchanged.
+concept_union <- boot_concepts(bag, concept_map = concept[, c("variable", "concept")],
+                               phase = PHASE_OF, threshold = RETAIN_PCT)
+concept_union[, c("concept", "n_forms", "pct_any", "best_form_pct",
+                  "spread", "retained")]
+```
+
+⚠️ **A selection frequency is conditional on the candidate pool**, and no column
+here removes that. On the study this template came from, re-running with 226
+candidates instead of 189 moved one variable from 26.6% to 95.2% and another
+from 93.8% to 20.2% — same data, same seeds. Quote a reliability figure with
+the pool it came from.
+
+```{r}
+#| label: concept-counts
+# Crowding: a model that spent several of its slots on forms of ONE concept is
+# budget-limited by redundancy, and that is invisible in a coefficient table.
+# Grouping is concept_map()'s, so this is a FLOOR -- a concept nobody's affix
+# vocabulary reaches is still counted as separate variables.
+crowding <- selection_crowding(retained$term, affixes = POOL_AFFIXES,
+                               min_stem = POOL_MIN_STEM,
+                               plain_suffix = POOL_PLAIN_SUFFIX)
+if (!nrow(crowding)) {
+  cat("No concept had more than one form retained.\n")
+} else {
+  crowding
+}
+```
+
+## Correlation clusters
+
+Concept grouping above is by NAME, and a naming convention only reaches what
+its affix rules can reach. Two further groupings matter, and neither is
+derivable from a variable's name: one by DECLARATION, which is clinical
+judgement, and one by the DATA. The SAS job this replaces ran `%cluster` once
+per named cluster and covered both.
+
+The three views answer different questions. A name tells you two variables are
+related. A declaration tells you a clinician treats them as one thing —
+`Renal` is creatinine, GFR and dialysis, which share no stem and never will. A
+correlation tells you the pool cannot tell them apart.
+
+```{r}
+#| label: cluster-matrix
+# boot_clusters() wants one ROW per replicate and one COLUMN per term, with an
+# unselected term left NA -- that is how it counts "at least one member". The
+# pooled replicates are long, so pivot rather than pass them straight in.
+#
+# Replicate ids are 1..n_boot across the whole pool: boot_pool_chunks() offsets
+# each chunk's ids before stacking, and refuses to pool at all if any chunk's
+# ids fall outside its own range. The direct indexing below relies on that.
+terms <- sort(unique(reps$parameter))
+coefs <- matrix(NA_real_, nrow = bag$n_boot, ncol = length(terms),
+                dimnames = list(NULL, terms))
+coefs[cbind(reps$replicate, match(reps$parameter, terms))] <- reps$estimate
+```
+
+```{r}
+#| label: clusters
+# EDIT: your clusters, one per concept you want reported. The SAS jobs this
+# replaces named around eight -- Age, Size, BMI, race, GFR, Renal and the like.
+# There is no sensible default: which concepts are worth clustering is a
+# statement about your candidate pool, not about linear regression.
+#
+# Members are BARE variable names, not phase-qualified: this screen offers each
+# candidate once, so a term is one screening decision. Naming a term that no
+# replicate carries is refused rather than reported as 0%: a typo that grouped
+# nothing would otherwise read as a concept nobody selected.
+CLUSTERS <- list(
+  Age = c("age", "ln_age")
+)
+
+clusters <- boot_clusters(coefs, CLUSTERS)
+clusters
+```
+
+The table above groups by DECLARATION, not by data: `boot_clusters()` counts
+replicates retaining any member of a list you wrote, and computes no
+correlation at all. The correlation is below, and the two are worth keeping
+apart. A declaration says a clinician thinks these are one thing; a correlation
+says the pool cannot tell them apart.
+
+```{r}
+#| label: collinear
+# EDIT: the correlation above which two candidates count as indistinguishable.
+# 0.99 finds near-duplicates -- a variable and its rescaling, a dummy and its
+# complement. Lower it to see the pool's structure rather than only its
+# accidents.
+COLLINEAR_R <- 0.99
+
+# Read to CORRELATE the pool, not to re-run anything. The screen already
+# happened; this describes the data it ran against.
+d <- read_built()
+
+# A build that moved since the screen ran would leave these correlations
+# describing one dataset and every frequency above describing another, with
+# nothing in the report to say so. A warning rather than a stop: the
+# frequencies above remain valid, and it is only this table that goes stale.
+if (!is.null(bag$n_rows) && !identical(as.integer(nrow(d)), as.integer(bag$n_rows))) {
+  warning("The built dataset now has ", nrow(d), " rows; this screen ran against ",
+          bag$n_rows, ". The correlations below describe TODAY'S data, not the data ",
+          "the frequencies above were computed on.", call. = FALSE)
+}
+
+collinear <- pool_collinear_pairs(d, pool = unique(freq$variable), threshold = COLLINEAR_R)
+if (!nrow(collinear)) {
+  cat("No pair of screened candidates correlates at |r| >= ", COLLINEAR_R, ".\n", sep = "")
+} else {
+  collinear
+}
+```
+
+⚠️ **A collinear pair is not a licence to prune.** It says two candidates are
+indistinguishable *in this cohort at this threshold* — a statement about the
+pool, not about the concepts. The no-pruning argument above stands: the same
+measurement that found 57 prunable forms found 16 of them correlating below 0.9.
+
+`pool_collinear_pairs()` sees only NUMERIC, non-constant columns, so
+factor-coded binaries are invisible to it for the same reason they were
+invisible to the screen. Check the coercion table above before reading an empty
+result as an absence of collinearity.
+
+## Figure
+
+```{r}
+#| label: fig-frequencies
+#| fig-height: 7
+#| fig-cap: "Selection frequency, with Monte-Carlo error and the retention threshold."
+# The error bar is the point of the figure, not decoration. A bare dot plot
+# invites the reader to rank variables by a difference of two points, which is
+# inside the noise at every frequency near the middle of the range.
+ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
+  geom_hline(yintercept = RETAIN_PCT, linetype = "dashed") +
+  geom_errorbar(aes(ymin = pct - mc_error, ymax = pct + mc_error), width = 0) +
+  geom_point() +
+  coord_flip() +
+  labs(x = NULL, y = "Replicates selecting the variable (%)") +
+  theme_minimal()
+```
+
+## Save
+
+```{r}
+#| label: save
+# Written through set_path(), so the screen is filed against the SET whose
+# candidates it screened rather than against the endpoint alone.
+#
+# There is deliberately NO handoff file here -- no selection_bl.csv, no
+# retained set written for `rm` to read. `br` and `rm` are parallel analyses,
+# and the study report that wrote such a file for the hazard pair also claimed
+# the model fits what the screen retained. Nothing read the file, and the claim
+# was not true. A file whose existence implies a dependency that does not exist
+# is worse than no file.
+
+# NOT BOOT_FILE. The run's INPUT is that name, so writing the report there
+# overwrites the screen it just read. BOOT_FILE is an edit point, so a study
+# can set it to anything, including this name -- checked rather than assumed,
+# because the failure destroys the run instead of erroring, and a screen is
+# hours of compute that boot_select() produces only on return.
+report_file <- set_path("estimates", "br-report.rds")
+inputs <- normalizePath(c(.single_file, .chunk_files), mustWork = FALSE)
+if (normalizePath(report_file, mustWork = FALSE) %in% inputs) {
+  stop("This report would be written to ", basename(report_file), ", which is ",
+       "the bootstrap output it just read. That file is the screen itself, and ",
+       "overwriting it cannot be undone.\nChange BOOT_FILE so the runner's ",
+       "output and this report do not collide.", call. = FALSE)
+}
+
+saveRDS(list(freq = freq, retained = retained, concept = concept,
+             crowding = crowding, clusters = clusters,
+             provenance = provenance, retain_pct = RETAIN_PCT,
+             expect_boot = EXPECT_BOOT),
+        report_file)
+```
