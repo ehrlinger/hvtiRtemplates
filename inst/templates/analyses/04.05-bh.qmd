@@ -297,33 +297,17 @@ boot_validate(bag)
 # a chunked run this is total compute; chunks run in parallel finish in a
 # fraction of it. Reported in hours because the minutes figure reads as a
 # wall-clock number and is off by the chunk count.
-cpu_hours <- bag$elapsed_mins / 60
 
 # The digest travels WITH its algorithm. An md5 and a sha256 of the same file
 # are different strings, and of different files may not be, so a bare digest
 # recorded without its algorithm is not evidence of anything.
-checksum <- NA_character_
-for (algo in c("sha256", "md5")) {
-  if (!is.null(bag$manifest[[algo]])) {
-    checksum <- paste0(algo, ":", bag$manifest[[algo]])
-    break
-  }
-}
 
 # A version string alone cannot say which codebase ran: one real package version
 # existed as two, one with a selection criterion and one without, and the
 # selection criterion is precisely what decides what a screen selects.
-engine <- if (!is.null(bag$th_sha)) {
-  paste0("sha:", bag$th_sha)
-} else if (!is.null(bag$th_version)) {
-  paste0("version:", bag$th_version)
-} else {
-  NA_character_
-}
 
 # Summarised, not listed: at 25 chunks the joined seed string is a single
 # 270-character cell that wrecks the table. Every seed is in the table below.
-n_chunks <- if (is.null(bag$n_chunks)) 1L else as.integer(bag$n_chunks)
 
 # `requested` and `usable` are per PHASE, not scalars: a multiphase screen
 # offers its candidate pool to each phase separately, and a real bag carries
@@ -336,39 +320,7 @@ n_chunks <- if (is.null(bag$n_chunks)) 1L else as.integer(bag$n_chunks)
 # OFFERED to each phase, so 230 and 230 is one pool seen twice, not 460
 # candidates. Falls back to a bare value when a single-phase run makes it
 # length 1, and to unlabelled values if a future runner drops the names.
-.per_phase <- function(x) {
-  # A zero-length value must return exactly one string, or it vanishes from the
-  # `value` vector and data.frame() fails with the SAME "differing number of
-  # rows" error this helper was written to fix. `format(integer(0))` is
-  # character(0); `format(NULL)` is the string "NULL", so only the typed
-  # zero-length case actually drops. Guarded explicitly rather than relying on
-  # which of the two a future runner happens to write.
-  if (length(x) == 0L) {
-    return(NA_character_)
-  }
-  if (length(x) == 1L) {
-    return(format(x))
-  }
-  if (is.null(names(x))) {
-    return(paste(format(x), collapse = ", "))
-  }
-  paste0(names(x), " ", format(x), collapse = ", ")
-}
-
-provenance <- data.frame(
-  item = c("Replicates pooled", "Chunks pooled", "Entry level (slentry)",
-           "Stay level (slstay)", "Candidates offered", "Candidates usable",
-           "Rows screened", "Replicates that fitted", "Replicates that failed",
-           "CPU hours (summed)", "Fitting engine", "Dataset checksum",
-           "Seeds"),
-  value = c(format(bag$n_boot), format(n_chunks), format(bag$slentry),
-            format(bag$slstay), .per_phase(bag$requested), .per_phase(bag$usable),
-            format(bag$n_rows), format(bag$boot$n_success),
-            format(bag$boot$n_failed), sprintf("%.1f", cpu_hours),
-            engine, checksum,
-            paste0(n_chunks, " distinct (listed below)")),
-  stringsAsFactors = FALSE
-)
+provenance <- boot_provenance(bag)
 provenance
 ```
 
@@ -385,10 +337,7 @@ provenance
 # through it and carries only the scalar `seed` its runner wrote. Falling back
 # is not defensive padding -- without it the one case this table exists to
 # serve is the one case it cannot render.
-seed_list <- if (!is.null(bag$seeds)) bag$seeds else bag$seed
-data.frame(chunk = seq_along(seed_list),
-           seed  = format(seed_list, scientific = FALSE),
-           stringsAsFactors = FALSE)
+boot_seeds(bag)
 ```
 
 ## Candidates that were never screened
