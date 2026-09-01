@@ -46,6 +46,19 @@
 * **Ordinals 04.02, 04.03 and 04.04** are free minors in `analyses`. `04.06`
   remains retired and unissuable.
 
+# hvtiRtemplates 1.0.19
+
+* **`graphs/06.02-hs.qmd` states its confidence coverage in reader-visible
+  prose**, not only in a code comment. `CLEVEL` is `0.68268948`, plus or minus
+  one standard error and about 68% rather than 95%. That is the SAS `HAZPRED`
+  convention and the published papers state it, so the limits are correct and
+  only the reading of them can be wrong. The templates ship `code-fold: true`,
+  so the comment that said this was invisible to anyone reading the rendered
+  report. `03.01-ac.qmd` and `06.01-hp.qmd` already said it in prose; this was
+  the one job that did not, and it is the job whose `lower` and `upper` travel
+  into the saved artifact for the plotting jobs to draw, arriving at a figure
+  with nothing beside them recording the coverage.
+
 # hvtiRtemplates 1.0.18
 
 * **`analyses/04.05-bh.qmd` now reports through `hvtiRbootstrap`'s reporting

@@ -295,10 +295,8 @@ test_that("DESCRIPTION's hvtiRbootstrap bound matches what the templates enforce
   floors <- package_version(character(0))
   for (f in template_list()$file) {
     code <- sub("#.*$", "", readLines(f, warn = FALSE))
-    hit <- regmatches(
-      code,
-      regexpr('packageVersion\\("hvtiRbootstrap"\\)\\s*<\\s*"[0-9.]+"', code))
-    hit <- unlist(hit)
+    pat <- 'packageVersion\\("hvtiRbootstrap"\\)\\s*<\\s*"[0-9.]+"'
+    hit <- unlist(regmatches(code, regexpr(pat, code)))
     if (length(hit)) {
       floors <- c(floors,
                   package_version(gsub('.*<\\s*"([0-9.]+)".*', "\\1", hit)))
