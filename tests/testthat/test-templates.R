@@ -271,3 +271,40 @@ test_that("the thin bootstrap templates read one screen, not pooled chunks", {
                 info = paste(prefix, "has no BOOT_FILE edit point"))
   }
 })
+
+test_that("DESCRIPTION's hvtiRbootstrap bound matches what the templates enforce", {
+  # These two drifted apart for NINE releases. `hvtiRbootstrap (>= 0.1.1)`
+  # entered DESCRIPTION at 1.0.13 while 04.05-bh.qmd's own guard demanded
+  # 0.1.2, then 0.9.0 from 1.0.18. Nothing compared them: the bound is in
+  # DESCRIPTION, the floor is a string inside a .qmd, and no check read both.
+  #
+  # A repomap would not have caught it either -- the generated maps list
+  # Suggests with the version bounds stripped, and do not index
+  # inst/templates/ at all, so neither side of this comparison appears in one.
+  desc <- read.dcf("../../DESCRIPTION", fields = "Suggests")[[1L]]
+  bound <- regmatches(desc,
+                      regexpr("hvtiRbootstrap\\s*\\(>=\\s*[0-9.]+\\)", desc))
+  skip_if(length(bound) == 0L, "hvtiRbootstrap is not a versioned Suggests")
+  declared <- package_version(gsub("[^0-9.]", "", sub(".*>=", "", bound)))
+
+  floors <- package_version(character(0))
+  for (f in template_list()$file) {
+    code <- sub("#.*$", "", readLines(f, warn = FALSE))
+    hit <- regmatches(
+      code,
+      regexpr('packageVersion\\("hvtiRbootstrap"\\)\\s*<\\s*"[0-9.]+"', code))
+    hit <- unlist(hit)
+    if (length(hit)) {
+      floors <- c(floors,
+                  package_version(gsub('.*<\\s*"([0-9.]+)".*', "\\1", hit)))
+    }
+  }
+  skip_if(length(floors) == 0L, "no template enforces a floor")
+
+  # The declared bound must be at least the highest floor any template
+  # enforces. Lower means a study can satisfy DESCRIPTION and still be refused
+  # by the template it just scaffolded, with the message arriving mid-render.
+  expect_gte(declared, max(floors),
+             label = paste0("DESCRIPTION declares hvtiRbootstrap >= ", declared,
+                            " but a template refuses below ", max(floors)))
+})
