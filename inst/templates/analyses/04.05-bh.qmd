@@ -57,6 +57,16 @@ suppressPackageStartupMessages({
   library(hvtiRutilities)
   library(ggplot2)
 })
+
+# The reporting layer below -- boot_validate() and everything after it -- landed
+# in 0.1.2. Without this check a study on 0.1.1 gets "could not find function
+# boot_provenance" from the middle of a render: the symbol is named, the reason
+# is not, and the fix is not guessable from the message.
+if (utils::packageVersion("hvtiRbootstrap") < "0.1.2") {
+  stop("This report needs hvtiRbootstrap >= 0.1.2 for its reporting layer; ",
+       utils::packageVersion("hvtiRbootstrap"), " is installed. Update it, ",
+       "then re-render.", call. = FALSE)
+}
 ```
 
 ```{r}
