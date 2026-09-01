@@ -224,9 +224,40 @@ moved — a template that fails this check cannot be scaffolded at all.
 
   This needs at least one prior review by the bot on some PR in the repo; any of them
   will do, since the id is per installation rather than per PR. `union: true` adds rather
-  than replaces. The review lands roughly three minutes later. **Verify with
-  `gh pr view <n> --json reviewRequests`, never the mutation's 200**, since trusting a 200
-  is what made the REST endpoint look like it worked in the first place.
+  than replaces.
+  ⚠️ **Do not verify with `gh pr view <n> --json reviewRequests`, which this file
+  said until 2026-09-01.** That reads `[]` immediately after a re-request that
+  WORKED, so it cannot tell success from failure and its emptiness means nothing.
+  Measured twice on [#64](https://github.com/ehrlinger/hvtiRtemplates/pull/64):
+  both mutations returned 200, both left `reviewRequests` empty, and both produced
+  a review, at 4 minutes and at 14 seconds. The advice was right that a 200 proves
+  nothing and wrong about what to check instead.
+
+  **Verify against the reviews list, by counting.** Record the count before, then
+  poll until it rises:
+
+  ```sh
+  gh api --paginate repos/<o>/<r>/pulls/<n>/reviews \
+    --jq '[.[] | select(.user.login | startswith("copilot"))] | length'
+  ```
+
+  ⚠️ **`--paginate` is not optional.** That endpoint returns 30 per page, so a
+  long-running PR can carry the review you are waiting for on a later page and the
+  count comes back unchanged. A verification that silently undercounts is the same
+  defect as the one this paragraph replaced, one endpoint further along. Raised by
+  Copilot on the PR that wrote this.
+
+  ⚠️ **Do not key on `commit_id` matching your head SHA.** It usually does, and on
+  [#61](https://github.com/ehrlinger/hvtiRtemplates/pull/61) two reviews anchored to
+  a commit that was not head, so that test gives false negatives. The same PR
+  produced two reviews **two seconds apart on the same commit**, so a count can also
+  rise by more than one. Timing ranged from 14 seconds to about 6 minutes across
+  five PRs; do not treat "roughly three minutes" as a deadline.
+
+  The underlying claim above still holds: **Copilot does not review every push.**
+  [#62](https://github.com/ehrlinger/hvtiRtemplates/pull/62) carried 11 commits and
+  drew exactly one review, anchored to its last commit. That is the control which
+  makes the re-request, not the push, the thing producing the extra reviews on #64.
   ⚠️ **A re-review can re-raise a finding the reviewed commit already fixed**, because it
   anchors against the cumulative `base..head` diff rather than the head alone. Check the
   file before acting on one, with a pattern that survives the file's own markup: a grep for
