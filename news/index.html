@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.17</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.18</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,14 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.18" id="hvtirtemplates-1018">hvtiRtemplates 1.0.18<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1018"></a></h2>
+<ul><li><p><strong><code>analyses/04.05-bh.qmd</code> now reports through <code>hvtiRbootstrap</code>’s reporting layer</strong> instead of building its own tables by hand. The template requires <code>hvtiRbootstrap (&gt;= 0.9.0)</code> and refuses to render below it. The reporting layer itself exists from 0.1.2; the floor sits higher because 0.1.x strips a phase label whether or not a separator follows it, so a term named <code>earlyage</code> reports its variable as <code>age</code>, matching no concept and quietly absent from every grouped table. A wrong frequency is worse than a missing function, because nothing downstream can see it. The <code>contract</code> chunk now calls <code>boot_validate()</code>, which checks field shapes, not only presence. <code>provenance</code> and <code>seeds</code> call <code>boot_provenance()</code> and <code>boot_seeds()</code>. Both <code>dropped-*</code> chunks collapse into one <code>boot_dropped()</code> call. The <code>health</code> table comes from <code>boot_health()</code>; the two <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code> refusals stay in the template, because <code>boot_health()</code> reports and never refuses on its own. <code>frequencies</code> and <code>concept-union</code> call <code>boot_frequencies()</code> and <code>boot_concepts()</code>, and <code>retained</code> now filters the package’s own <code>retained</code> column rather than recomputing the cutoff locally.</p></li>
+<li><p><strong>The <code>health</code> table gained two columns.</strong> It reports four now (<code>check</code>, <code>value</code>, <code>ok</code>, <code>note</code>) where it reported two before; <code>boot_health()</code> supplies <code>ok</code> and <code>note</code>, and the original two columns are unchanged.</p></li>
+<li><p><strong><code>freq</code>, as saved to <code>bh-report.rds</code>, now carries eight columns where it carried seven, in a different order.</strong> <code>boot_frequencies()</code> returns <code>phase, variable, term, n, pct, mc_error, near_threshold, retained</code>; the new column is <code>retained</code>. A study reading the saved object by name is unaffected, but one reading it positionally is not.</p></li>
+<li><p><strong>The template carries an eleventh <code>EDIT:</code> marker, <code>PHASE_OF</code>,</strong> in the <code>criteria</code> chunk. It names the rule that splits a term into its phase and variable. <code>boot_frequencies()</code> and <code>boot_concepts()</code> also accept <code>PHASE_OF = NULL</code>, for a single-phase screen, and that is what lets one reporting code path serve the forthcoming <code>bl</code>, <code>br</code> and <code>bc</code> templates. This template assumes a phase dimension throughout, so <code>PHASE_OF</code> must name a real rule here.</p></li>
+<li><p>Rendered against a real 25-chunk bag and diffed against a reference captured from the pre-refactor template: the provenance, seeds, frequency and retained tables are byte-identical, the concept table has zero value mismatches across 184 rows, and the frequency figure has the same sha256.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.17" id="hvtirtemplates-1017">hvtiRtemplates 1.0.17<a class="anchor" aria-label="anchor" href="#hvtirtemplates-1017"></a></h2>
 <ul><li>

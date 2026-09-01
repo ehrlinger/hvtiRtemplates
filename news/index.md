@@ -1,5 +1,51 @@
 # Changelog
 
+## hvtiRtemplates 1.0.18
+
+- **`analyses/04.05-bh.qmd` now reports through `hvtiRbootstrap`’s
+  reporting layer** instead of building its own tables by hand. The
+  template requires `hvtiRbootstrap (>= 0.9.0)` and refuses to render
+  below it. The reporting layer itself exists from 0.1.2; the floor sits
+  higher because 0.1.x strips a phase label whether or not a separator
+  follows it, so a term named `earlyage` reports its variable as `age`,
+  matching no concept and quietly absent from every grouped table. A
+  wrong frequency is worse than a missing function, because nothing
+  downstream can see it. The `contract` chunk now calls
+  `boot_validate()`, which checks field shapes, not only presence.
+  `provenance` and `seeds` call `boot_provenance()` and `boot_seeds()`.
+  Both `dropped-*` chunks collapse into one `boot_dropped()` call. The
+  `health` table comes from `boot_health()`; the two
+  [`stop()`](https://rdrr.io/r/base/stop.html) refusals stay in the
+  template, because `boot_health()` reports and never refuses on its
+  own. `frequencies` and `concept-union` call `boot_frequencies()` and
+  `boot_concepts()`, and `retained` now filters the package’s own
+  `retained` column rather than recomputing the cutoff locally.
+
+- **The `health` table gained two columns.** It reports four now
+  (`check`, `value`, `ok`, `note`) where it reported two before;
+  `boot_health()` supplies `ok` and `note`, and the original two columns
+  are unchanged.
+
+- **`freq`, as saved to `bh-report.rds`, now carries eight columns where
+  it carried seven, in a different order.** `boot_frequencies()` returns
+  `phase, variable, term, n, pct, mc_error, near_threshold, retained`;
+  the new column is `retained`. A study reading the saved object by name
+  is unaffected, but one reading it positionally is not.
+
+- **The template carries an eleventh `EDIT:` marker, `PHASE_OF`,** in
+  the `criteria` chunk. It names the rule that splits a term into its
+  phase and variable. `boot_frequencies()` and `boot_concepts()` also
+  accept `PHASE_OF = NULL`, for a single-phase screen, and that is what
+  lets one reporting code path serve the forthcoming `bl`, `br` and `bc`
+  templates. This template assumes a phase dimension throughout, so
+  `PHASE_OF` must name a real rule here.
+
+- Rendered against a real 25-chunk bag and diffed against a reference
+  captured from the pre-refactor template: the provenance, seeds,
+  frequency and retained tables are byte-identical, the concept table
+  has zero value mismatches across 184 rows, and the frequency figure
+  has the same sha256.
+
 ## hvtiRtemplates 1.0.17
 
 - **`analyses/04.05-bh.qmd` could not render on any multiphase bag** —
