@@ -72,11 +72,25 @@ outcomes <- unlist(cfg$cohort[c("event", "time")], use.names = FALSE)
 num <- vapply(d, is.numeric, logical(1))
 ok  <- vapply(d, function(x) length(unique(x[!is.na(x)])) > 2L, logical(1))
 cand <- setdiff(names(d)[num & ok], outcomes)
+
+# Drop the mostly-missing columns, then restrict to complete cases.
+#
+# NOT optional, and not tidiness. A real built dataset carries columns that are
+# 60% NA, and glm() drops those rows per replicate: with twelve such candidates
+# almost every resample loses its fit, boot_select() exhausts max_attempts and
+# stops with "gave up after 600 attempts with 2 valid models of 60". Measured
+# on a real study, which is how this line came to exist -- the first version of
+# this script had no filtering and could not complete a single gate run.
+cand <- cand[vapply(d[cand], function(x) mean(is.na(x)) < 0.05, logical(1))]
 cand <- cand[seq_len(min(12L, length(cand)))]   # 12 keeps the gate to minutes
 if (length(cand) < 3L) {
   stop("Only ", length(cand), " usable candidate columns; the concept and ",
        "cluster tables need more than that to show anything.", call. = FALSE)
 }
+keep <- stats::complete.cases(d[, c(cand, outcomes), drop = FALSE])
+d <- d[keep, , drop = FALSE]
+cat("pool        : ", length(cand), " candidates, ", nrow(d), " rows\n",
+    sep = "")
 
 # The outcome each fitter needs, taken from the manifest rather than guessed.
 #
