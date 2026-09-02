@@ -62,9 +62,16 @@ OUTPUT_FOLDERS = {"estimates"}
 # `tp.br.linear_regression_summary` states the analysis and omits the
 # endpoint, where the analyses grammar is <prefix>.<outcome>[.<qualifier>].
 # Flagged, counted and reported -- never quietly bucketed.
+#
+# Every entry here FIRES on the corpus: linear_regression_summary and
+# linear_regression_bagging at 2 studies each, bagging at 1. A bare `summary`
+# was listed until Copilot pointed out that it contradicts the design note,
+# which corrects the handoff's claim that `tp.br.summary` is the malformed
+# case. It is not; it does not occur. A filter for a form the corpus does not
+# contain, sitting next to prose saying it does not contain it, is the same
+# kind of unchecked assumption as the bug being fixed.
 MALFORMED_ANALYSES_Q1 = {
-    "linear_regression_bagging", "linear_regression_summary",
-    "summary", "bagging",
+    "linear_regression_bagging", "linear_regression_summary", "bagging",
 }
 
 
@@ -202,8 +209,13 @@ def main():
     } for p in prefixes]
 
     families = []
+    # Ordered by DISTINCT studies in the folder, not by the sum over
+    # qualifiers. Summing double-counts a study that runs both dp.trends and
+    # dp.gfup, which is the exact arithmetic this file's own provenance warns
+    # against, and it ranked families by how many job types they spread over
+    # rather than by how widely they are used. Raised by Copilot on #72.
     for (folder, p), d in sorted(fq.items(), key=lambda kv: (
-            -sum(len(v) for v in kv[1].values()), kv[0])):
+            -len(fam_studies[kv[0]]), kv[0])):
         top = sorted(d.items(), key=lambda kv: (-len(kv[1]), kv[0]))
         families.append({
             "folder": folder,

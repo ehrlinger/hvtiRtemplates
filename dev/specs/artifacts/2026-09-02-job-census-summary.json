@@ -284,6 +284,140 @@
  ],
  "families": [
   {
+   "folder": "datasets",
+   "prefix": "bd",
+   "distinct_qualifier1": 2575,
+   "job_studies_in_folder": 1093,
+   "job_studies_all_folders": 1094,
+   "qualifier1_top": [
+    {
+     "qualifier1": "data",
+     "studies": 985,
+     "rows": 2206
+    },
+    {
+     "qualifier1": "SAStoR",
+     "studies": 389,
+     "rows": 643
+    },
+    {
+     "qualifier1": "mult",
+     "studies": 256,
+     "rows": 503
+    },
+    {
+     "qualifier1": "propen",
+     "studies": 97,
+     "rows": 173
+    },
+    {
+     "qualifier1": "gmatch",
+     "studies": 71,
+     "rows": 105
+    },
+    {
+     "qualifier1": "fup",
+     "studies": 48,
+     "rows": 48
+    },
+    {
+     "qualifier1": "ssdi",
+     "studies": 44,
+     "rows": 48
+    },
+    {
+     "qualifier1": "redcap",
+     "studies": 35,
+     "rows": 36
+    },
+    {
+     "qualifier1": "data_old",
+     "studies": 33,
+     "rows": 33
+    },
+    {
+     "qualifier1": "events",
+     "studies": 21,
+     "rows": 21
+    },
+    {
+     "qualifier1": "matched_pairs",
+     "studies": 20,
+     "rows": 23
+    },
+    {
+     "qualifier1": "data_dw",
+     "studies": 18,
+     "rows": 18
+    },
+    {
+     "qualifier1": "echo",
+     "studies": 18,
+     "rows": 20
+    },
+    {
+     "qualifier1": "lab",
+     "studies": 18,
+     "rows": 19
+    },
+    {
+     "qualifier1": "medhx",
+     "studies": 16,
+     "rows": 16
+    },
+    {
+     "qualifier1": "prob",
+     "studies": 15,
+     "rows": 29
+    },
+    {
+     "qualifier1": "cohort",
+     "studies": 14,
+     "rows": 15
+    },
+    {
+     "qualifier1": "SAStoR_echo",
+     "studies": 11,
+     "rows": 11
+    },
+    {
+     "qualifier1": "data_all",
+     "studies": 11,
+     "rows": 11
+    },
+    {
+     "qualifier1": "data2",
+     "studies": 10,
+     "rows": 11
+    },
+    {
+     "qualifier1": "labs",
+     "studies": 10,
+     "rows": 11
+    },
+    {
+     "qualifier1": "mult_imput",
+     "studies": 10,
+     "rows": 10
+    },
+    {
+     "qualifier1": "studypop",
+     "studies": 10,
+     "rows": 12
+    },
+    {
+     "qualifier1": "textdata",
+     "studies": 10,
+     "rows": 10
+    },
+    {
+     "qualifier1": "cardsurg",
+     "studies": 9,
+     "rows": 9
+    }
+   ]
+  },
+  {
    "folder": "descriptive",
    "prefix": "dc",
    "distinct_qualifier1": 2330,
@@ -419,135 +553,135 @@
   },
   {
    "folder": "datasets",
-   "prefix": "bd",
-   "distinct_qualifier1": 2575,
-   "job_studies_in_folder": 1093,
-   "job_studies_all_folders": 1094,
+   "prefix": "vars",
+   "distinct_qualifier1": 27,
+   "job_studies_in_folder": 912,
+   "job_studies_all_folders": 912,
    "qualifier1_top": [
     {
-     "qualifier1": "data",
-     "studies": 985,
-     "rows": 2206
+     "qualifier1": "old",
+     "studies": 8,
+     "rows": 8
     },
     {
-     "qualifier1": "SAStoR",
-     "studies": 389,
-     "rows": 643
+     "qualifier1": "base",
+     "studies": 2,
+     "rows": 3
     },
     {
-     "qualifier1": "mult",
-     "studies": 256,
-     "rows": 503
+     "qualifier1": "ehb",
+     "studies": 2,
+     "rows": 2
     },
     {
-     "qualifier1": "propen",
-     "studies": 97,
-     "rows": 173
+     "qualifier1": "sas",
+     "studies": 2,
+     "rows": 2
     },
     {
-     "qualifier1": "gmatch",
-     "studies": 71,
-     "rows": 105
+     "qualifier1": "01112022",
+     "studies": 1,
+     "rows": 1
     },
     {
-     "qualifier1": "fup",
-     "studies": 48,
-     "rows": 48
+     "qualifier1": "05112023",
+     "studies": 1,
+     "rows": 1
     },
     {
-     "qualifier1": "ssdi",
-     "studies": 44,
-     "rows": 48
+     "qualifier1": "11151015",
+     "studies": 1,
+     "rows": 1
     },
     {
-     "qualifier1": "redcap",
-     "studies": 35,
-     "rows": 36
+     "qualifier1": "2024",
+     "studies": 1,
+     "rows": 1
     },
     {
-     "qualifier1": "data_old",
-     "studies": 33,
-     "rows": 33
+     "qualifier1": "CMD",
+     "studies": 1,
+     "rows": 1
     },
     {
-     "qualifier1": "events",
-     "studies": 21,
-     "rows": 21
-    },
-    {
-     "qualifier1": "matched_pairs",
-     "studies": 20,
-     "rows": 23
-    },
-    {
-     "qualifier1": "data_dw",
-     "studies": 18,
-     "rows": 18
-    },
-    {
-     "qualifier1": "echo",
-     "studies": 18,
-     "rows": 20
-    },
-    {
-     "qualifier1": "lab",
-     "studies": 18,
-     "rows": 19
-    },
-    {
-     "qualifier1": "medhx",
-     "studies": 16,
-     "rows": 16
-    },
-    {
-     "qualifier1": "prob",
-     "studies": 15,
-     "rows": 29
-    },
-    {
-     "qualifier1": "cohort",
-     "studies": 14,
-     "rows": 15
-    },
-    {
-     "qualifier1": "SAStoR_echo",
-     "studies": 11,
-     "rows": 11
-    },
-    {
-     "qualifier1": "data_all",
-     "studies": 11,
-     "rows": 11
-    },
-    {
-     "qualifier1": "data2",
-     "studies": 10,
-     "rows": 11
-    },
-    {
-     "qualifier1": "labs",
-     "studies": 10,
-     "rows": 11
-    },
-    {
-     "qualifier1": "mult_imput",
-     "studies": 10,
-     "rows": 10
-    },
-    {
-     "qualifier1": "studypop",
-     "studies": 10,
-     "rows": 12
-    },
-    {
-     "qualifier1": "textdata",
-     "studies": 10,
-     "rows": 10
+     "qualifier1": "OLD",
+     "studies": 1,
+     "rows": 1
     },
     {
      "qualifier1": "cardsurg",
-     "studies": 9,
-     "rows": 9
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "cardsurg)old",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "copy",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "donor",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "feas2023may",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "jf",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "js",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "jw",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "kevinsun",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "o",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "oldest",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "qa",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "rajes",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "recip",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "savr",
+     "studies": 1,
+     "rows": 1
     }
    ]
   },
@@ -954,404 +1088,136 @@
    ]
   },
   {
-   "folder": "graphs",
-   "prefix": "np",
-   "distinct_qualifier1": 1131,
-   "job_studies_in_folder": 241,
-   "job_studies_all_folders": 241,
+   "folder": "datasets",
+   "prefix": "dt",
+   "distinct_qualifier1": 84,
+   "job_studies_in_folder": 500,
+   "job_studies_all_folders": 503,
    "qualifier1_top": [
     {
-     "qualifier1": "avmngrad",
-     "studies": 31,
-     "rows": 47
+     "qualifier1": "check",
+     "studies": 482,
+     "rows": 579
     },
     {
-     "qualifier1": "ar",
-     "studies": 24,
-     "rows": 54
-    },
-    {
-     "qualifier1": "lvmassi",
-     "studies": 23,
-     "rows": 46
-    },
-    {
-     "qualifier1": "afib",
-     "studies": 18,
-     "rows": 66
-    },
-    {
-     "qualifier1": "lvef",
-     "studies": 18,
-     "rows": 44
-    },
-    {
-     "qualifier1": "avregurg",
-     "studies": 17,
-     "rows": 27
-    },
-    {
-     "qualifier1": "avpkgrad",
-     "studies": 13,
-     "rows": 21
-    },
-    {
-     "qualifier1": "mr",
-     "studies": 13,
-     "rows": 34
-    },
-    {
-     "qualifier1": "fev1po",
+     "qualifier1": "check_lmd",
      "studies": 10,
-     "rows": 110
-    },
-    {
-     "qualifier1": "tr",
-     "studies": 9,
-     "rows": 55
-    },
-    {
-     "qualifier1": "biopsy",
-     "studies": 8,
-     "rows": 41
-    },
-    {
-     "qualifier1": "fev1_po",
-     "studies": 8,
-     "rows": 56
-    },
-    {
-     "qualifier1": "lvedvi",
-     "studies": 8,
-     "rows": 9
-    },
-    {
-     "qualifier1": "pain_score",
-     "studies": 7,
-     "rows": 31
-    },
-    {
-     "qualifier1": "pgd",
-     "studies": 7,
-     "rows": 37
-    },
-    {
-     "qualifier1": "amngrd",
-     "studies": 6,
-     "rows": 51
-    },
-    {
-     "qualifier1": "avarea",
-     "studies": 6,
-     "rows": 38
-    },
-    {
-     "qualifier1": "bar_w_5m_empty",
-     "studies": 6,
-     "rows": 39
-    },
-    {
-     "qualifier1": "eck_ord",
-     "studies": 6,
-     "rows": 34
-    },
-    {
-     "qualifier1": "fev",
-     "studies": 6,
-     "rows": 33
-    },
-    {
-     "qualifier1": "fev1",
-     "studies": 6,
-     "rows": 59
-    },
-    {
-     "qualifier1": "mv_regn",
-     "studies": 6,
-     "rows": 38
-    },
-    {
-     "qualifier1": "nyha",
-     "studies": 6,
-     "rows": 40
-    },
-    {
-     "qualifier1": "lavoli",
-     "studies": 5,
-     "rows": 8
-    },
-    {
-     "qualifier1": "sten100",
-     "studies": 5,
-     "rows": 30
-    }
-   ]
-  },
-  {
-   "folder": "distributions",
-   "prefix": "nd",
-   "distinct_qualifier1": 1093,
-   "job_studies_in_folder": 244,
-   "job_studies_all_folders": 244,
-   "qualifier1_top": [
-    {
-     "qualifier1": "avmngrad",
-     "studies": 37,
-     "rows": 57
-    },
-    {
-     "qualifier1": "lvmassi",
-     "studies": 29,
-     "rows": 58
-    },
-    {
-     "qualifier1": "ar",
-     "studies": 20,
-     "rows": 43
-    },
-    {
-     "qualifier1": "lvef",
-     "studies": 19,
-     "rows": 44
-    },
-    {
-     "qualifier1": "afib",
-     "studies": 18,
-     "rows": 56
-    },
-    {
-     "qualifier1": "avregurg",
-     "studies": 18,
-     "rows": 18
-    },
-    {
-     "qualifier1": "avpkgrad",
-     "studies": 13,
-     "rows": 22
-    },
-    {
-     "qualifier1": "mr",
-     "studies": 12,
-     "rows": 32
-    },
-    {
-     "qualifier1": "fev1_po",
-     "studies": 10,
-     "rows": 79
-    },
-    {
-     "qualifier1": "fev1po",
-     "studies": 10,
-     "rows": 160
-    },
-    {
-     "qualifier1": "tr",
-     "studies": 9,
-     "rows": 44
-    },
-    {
-     "qualifier1": "biopsy",
-     "studies": 8,
-     "rows": 69
-    },
-    {
-     "qualifier1": "lvedvi",
-     "studies": 8,
      "rows": 10
     },
     {
-     "qualifier1": "pain_score",
-     "studies": 8,
-     "rows": 26
-    },
-    {
-     "qualifier1": "pgd",
-     "studies": 7,
-     "rows": 34
-    },
-    {
-     "qualifier1": "fev",
-     "studies": 6,
-     "rows": 24
-    },
-    {
-     "qualifier1": "mv_regn",
-     "studies": 6,
-     "rows": 44
-    },
-    {
-     "qualifier1": "nyha",
-     "studies": 6,
-     "rows": 37
-    },
-    {
-     "qualifier1": "avarea",
-     "studies": 5,
-     "rows": 36
-    },
-    {
-     "qualifier1": "dead",
-     "studies": 5,
-     "rows": 17
-    },
-    {
-     "qualifier1": "lavoli",
+     "qualifier1": "check_fup",
      "studies": 5,
      "rows": 8
     },
     {
-     "qualifier1": "rvsp",
-     "studies": 5,
-     "rows": 16
-    },
-    {
-     "qualifier1": "bar_width_empty_5m_ind",
-     "studies": 4,
-     "rows": 8
-    },
-    {
-     "qualifier1": "bar_width_empty_5m_u",
-     "studies": 4,
-     "rows": 11
-    },
-    {
-     "qualifier1": "ef_echo",
-     "studies": 4,
-     "rows": 7
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "bl",
-   "distinct_qualifier1": 1194,
-   "job_studies_in_folder": 352,
-   "job_studies_all_folders": 352,
-   "qualifier1_top": [
-    {
-     "qualifier1": "hdeath",
-     "studies": 39,
-     "rows": 79
-    },
-    {
-     "qualifier1": "hdeath_summary",
-     "studies": 7,
-     "rows": 7
-    },
-    {
-     "qualifier1": "cva",
-     "studies": 6,
-     "rows": 22
-    },
-    {
-     "qualifier1": "mvrpl",
-     "studies": 6,
-     "rows": 8
-    },
-    {
-     "qualifier1": "ratio_boot_ci",
-     "studies": 5,
-     "rows": 13
-    },
-    {
-     "qualifier1": "afib",
-     "studies": 4,
-     "rows": 8
-    },
-    {
-     "qualifier1": "dead30",
-     "studies": 4,
-     "rows": 6
-    },
-    {
-     "qualifier1": "mb_cva",
-     "studies": 4,
-     "rows": 8
-    },
-    {
-     "qualifier1": "mvrpl_summary",
+     "qualifier1": "check_MS",
      "studies": 4,
      "rows": 4
     },
     {
-     "qualifier1": "stroke",
-     "studies": 4,
-     "rows": 8
-    },
-    {
-     "qualifier1": "wean",
-     "studies": 4,
-     "rows": 18
-    },
-    {
-     "qualifier1": "av_mec",
-     "studies": 3,
-     "rows": 9
-    },
-    {
-     "qualifier1": "av_mec1",
+     "qualifier1": "check2",
      "studies": 3,
      "rows": 3
     },
     {
-     "qualifier1": "bagsum",
+     "qualifier1": "check_iso",
      "studies": 3,
-     "rows": 15
+     "rows": 3
     },
     {
-     "qualifier1": "biopsy",
+     "qualifier1": "check_ld",
      "studies": 3,
-     "rows": 7
+     "rows": 3
     },
     {
-     "qualifier1": "bridge",
+     "qualifier1": "fup",
      "studies": 3,
-     "rows": 8
+     "rows": 3
     },
     {
-     "qualifier1": "cnstrokp",
-     "studies": 3,
-     "rows": 5
+     "qualifier1": "check1",
+     "studies": 2,
+     "rows": 2
     },
     {
-     "qualifier1": "dialysis",
-     "studies": 3,
-     "rows": 5
+     "qualifier1": "check_MA",
+     "studies": 2,
+     "rows": 2
     },
     {
-     "qualifier1": "ecmo",
-     "studies": 3,
-     "rows": 5
+     "qualifier1": "check_old",
+     "studies": 2,
+     "rows": 2
     },
     {
-     "qualifier1": "iabp",
-     "studies": 3,
-     "rows": 6
+     "qualifier1": "data_cleanup",
+     "studies": 2,
+     "rows": 2
     },
     {
-     "qualifier1": "mb_bld",
-     "studies": 3,
-     "rows": 6
+     "qualifier1": "avout",
+     "studies": 1,
+     "rows": 1
     },
     {
-     "qualifier1": "mb_rnl",
-     "studies": 3,
-     "rows": 8
+     "qualifier1": "bug",
+     "studies": 1,
+     "rows": 1
     },
     {
-     "qualifier1": "mb_rsp",
-     "studies": 3,
-     "rows": 8
+     "qualifier1": "cath",
+     "studies": 1,
+     "rows": 1
     },
     {
-     "qualifier1": "median",
-     "studies": 3,
-     "rows": 51
+     "qualifier1": "check051609",
+     "studies": 1,
+     "rows": 1
     },
     {
-     "qualifier1": "mip",
-     "studies": 3,
-     "rows": 6
+     "qualifier1": "check102013",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "check20070719",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "check20080225",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "check2008data",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "check3115",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "check_0109",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "check_022107",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "check_031104",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "check_04032020",
+     "studies": 1,
+     "rows": 1
     }
    ]
   },
@@ -1491,140 +1357,6 @@
   },
   {
    "folder": "analyses",
-   "prefix": "bh",
-   "distinct_qualifier1": 641,
-   "job_studies_in_folder": 319,
-   "job_studies_all_folders": 320,
-   "qualifier1_top": [
-    {
-     "qualifier1": "dead",
-     "studies": 219,
-     "rows": 808
-    },
-    {
-     "qualifier1": "dead_summary",
-     "studies": 46,
-     "rows": 55
-    },
-    {
-     "qualifier1": "st_dead",
-     "studies": 30,
-     "rows": 180
-    },
-    {
-     "qualifier1": "reop",
-     "studies": 14,
-     "rows": 26
-    },
-    {
-     "qualifier1": "repeated",
-     "studies": 12,
-     "rows": 143
-    },
-    {
-     "qualifier1": "reop_summary",
-     "studies": 10,
-     "rows": 10
-    },
-    {
-     "qualifier1": "dead1",
-     "studies": 9,
-     "rows": 12
-    },
-    {
-     "qualifier1": "thrombosis",
-     "studies": 9,
-     "rows": 52
-    },
-    {
-     "qualifier1": "st_txpl",
-     "studies": 8,
-     "rows": 18
-    },
-    {
-     "qualifier1": "af_fail",
-     "studies": 5,
-     "rows": 10
-    },
-    {
-     "qualifier1": "dead2",
-     "studies": 5,
-     "rows": 7
-    },
-    {
-     "qualifier1": "recur",
-     "studies": 5,
-     "rows": 50
-    },
-    {
-     "qualifier1": "dead200",
-     "studies": 4,
-     "rows": 4
-    },
-    {
-     "qualifier1": "dead3",
-     "studies": 4,
-     "rows": 7
-    },
-    {
-     "qualifier1": "modulated",
-     "studies": 4,
-     "rows": 36
-    },
-    {
-     "qualifier1": "mvreop",
-     "studies": 4,
-     "rows": 5
-    },
-    {
-     "qualifier1": "afib",
-     "studies": 3,
-     "rows": 5
-    },
-    {
-     "qualifier1": "bos",
-     "studies": 3,
-     "rows": 11
-    },
-    {
-     "qualifier1": "comp2",
-     "studies": 3,
-     "rows": 6
-    },
-    {
-     "qualifier1": "cva",
-     "studies": 3,
-     "rows": 9
-    },
-    {
-     "qualifier1": "dead300",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "dead_all",
-     "studies": 3,
-     "rows": 5
-    },
-    {
-     "qualifier1": "dead_match",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "dead_test",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "dialysis",
-     "studies": 3,
-     "rows": 8
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
    "prefix": "hm",
    "distinct_qualifier1": 587,
    "job_studies_in_folder": 372,
@@ -1754,6 +1486,298 @@
      "qualifier1": "st2vr",
      "studies": 3,
      "rows": 4
+    }
+   ]
+  },
+  {
+   "folder": "graphs",
+   "prefix": "ar",
+   "distinct_qualifier1": 3,
+   "job_studies_in_folder": 364,
+   "job_studies_all_folders": 394,
+   "qualifier1_top": [
+    {
+     "qualifier1": "a1c",
+     "studies": 363,
+     "rows": 1451
+    },
+    {
+     "qualifier1": "sas2r_powerpoint_stratified",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sas2r_powerpoint_stratified_toth",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "lg",
+   "distinct_qualifier1": 411,
+   "job_studies_in_folder": 359,
+   "job_studies_all_folders": 362,
+   "qualifier1_top": [
+    {
+     "qualifier1": "dead",
+     "studies": 143,
+     "rows": 201
+    },
+    {
+     "qualifier1": "st_dead",
+     "studies": 19,
+     "rows": 19
+    },
+    {
+     "qualifier1": "hdeath",
+     "studies": 16,
+     "rows": 17
+    },
+    {
+     "qualifier1": "hdead",
+     "studies": 13,
+     "rows": 14
+    },
+    {
+     "qualifier1": "trends",
+     "studies": 11,
+     "rows": 11
+    },
+    {
+     "qualifier1": "reop",
+     "studies": 9,
+     "rows": 10
+    },
+    {
+     "qualifier1": "cva",
+     "studies": 7,
+     "rows": 10
+    },
+    {
+     "qualifier1": "af_fail",
+     "studies": 6,
+     "rows": 6
+    },
+    {
+     "qualifier1": "afib",
+     "studies": 5,
+     "rows": 5
+    },
+    {
+     "qualifier1": "death",
+     "studies": 5,
+     "rows": 10
+    },
+    {
+     "qualifier1": "thrombosis",
+     "studies": 5,
+     "rows": 5
+    },
+    {
+     "qualifier1": "comp",
+     "studies": 4,
+     "rows": 4
+    },
+    {
+     "qualifier1": "dialysis",
+     "studies": 4,
+     "rows": 4
+    },
+    {
+     "qualifier1": "svd",
+     "studies": 4,
+     "rows": 4
+    },
+    {
+     "qualifier1": "av_mec",
+     "studies": 3,
+     "rows": 6
+    },
+    {
+     "qualifier1": "double",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "mb_bld",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "mip",
+     "studies": 3,
+     "rows": 4
+    },
+    {
+     "qualifier1": "mv_proc",
+     "studies": 3,
+     "rows": 5
+    },
+    {
+     "qualifier1": "readmit",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "recur",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "reint",
+     "studies": 3,
+     "rows": 5
+    },
+    {
+     "qualifier1": "remove",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "repair",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "st_txpl",
+     "studies": 3,
+     "rows": 3
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "bl",
+   "distinct_qualifier1": 1194,
+   "job_studies_in_folder": 352,
+   "job_studies_all_folders": 352,
+   "qualifier1_top": [
+    {
+     "qualifier1": "hdeath",
+     "studies": 39,
+     "rows": 79
+    },
+    {
+     "qualifier1": "hdeath_summary",
+     "studies": 7,
+     "rows": 7
+    },
+    {
+     "qualifier1": "cva",
+     "studies": 6,
+     "rows": 22
+    },
+    {
+     "qualifier1": "mvrpl",
+     "studies": 6,
+     "rows": 8
+    },
+    {
+     "qualifier1": "ratio_boot_ci",
+     "studies": 5,
+     "rows": 13
+    },
+    {
+     "qualifier1": "afib",
+     "studies": 4,
+     "rows": 8
+    },
+    {
+     "qualifier1": "dead30",
+     "studies": 4,
+     "rows": 6
+    },
+    {
+     "qualifier1": "mb_cva",
+     "studies": 4,
+     "rows": 8
+    },
+    {
+     "qualifier1": "mvrpl_summary",
+     "studies": 4,
+     "rows": 4
+    },
+    {
+     "qualifier1": "stroke",
+     "studies": 4,
+     "rows": 8
+    },
+    {
+     "qualifier1": "wean",
+     "studies": 4,
+     "rows": 18
+    },
+    {
+     "qualifier1": "av_mec",
+     "studies": 3,
+     "rows": 9
+    },
+    {
+     "qualifier1": "av_mec1",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "bagsum",
+     "studies": 3,
+     "rows": 15
+    },
+    {
+     "qualifier1": "biopsy",
+     "studies": 3,
+     "rows": 7
+    },
+    {
+     "qualifier1": "bridge",
+     "studies": 3,
+     "rows": 8
+    },
+    {
+     "qualifier1": "cnstrokp",
+     "studies": 3,
+     "rows": 5
+    },
+    {
+     "qualifier1": "dialysis",
+     "studies": 3,
+     "rows": 5
+    },
+    {
+     "qualifier1": "ecmo",
+     "studies": 3,
+     "rows": 5
+    },
+    {
+     "qualifier1": "iabp",
+     "studies": 3,
+     "rows": 6
+    },
+    {
+     "qualifier1": "mb_bld",
+     "studies": 3,
+     "rows": 6
+    },
+    {
+     "qualifier1": "mb_rnl",
+     "studies": 3,
+     "rows": 8
+    },
+    {
+     "qualifier1": "mb_rsp",
+     "studies": 3,
+     "rows": 8
+    },
+    {
+     "qualifier1": "median",
+     "studies": 3,
+     "rows": 51
+    },
+    {
+     "qualifier1": "mip",
+     "studies": 3,
+     "rows": 6
     }
    ]
   },
@@ -1892,136 +1916,136 @@
    ]
   },
   {
-   "folder": "distributions",
-   "prefix": "dp",
-   "distinct_qualifier1": 620,
-   "job_studies_in_folder": 237,
-   "job_studies_all_folders": 515,
+   "folder": "analyses",
+   "prefix": "bh",
+   "distinct_qualifier1": 641,
+   "job_studies_in_folder": 319,
+   "job_studies_all_folders": 320,
    "qualifier1_top": [
     {
-     "qualifier1": "echo",
-     "studies": 52,
-     "rows": 61
+     "qualifier1": "dead",
+     "studies": 219,
+     "rows": 808
     },
     {
-     "qualifier1": "afib",
-     "studies": 18,
-     "rows": 18
+     "qualifier1": "dead_summary",
+     "studies": 46,
+     "rows": 55
     },
     {
-     "qualifier1": "lvmassi",
+     "qualifier1": "st_dead",
+     "studies": 30,
+     "rows": 180
+    },
+    {
+     "qualifier1": "reop",
      "studies": 14,
-     "rows": 20
+     "rows": 26
     },
     {
-     "qualifier1": "avmngrad",
-     "studies": 11,
-     "rows": 13
+     "qualifier1": "repeated",
+     "studies": 12,
+     "rows": 143
     },
     {
-     "qualifier1": "mv_regn",
+     "qualifier1": "reop_summary",
+     "studies": 10,
+     "rows": 10
+    },
+    {
+     "qualifier1": "dead1",
      "studies": 9,
-     "rows": 20
-    },
-    {
-     "qualifier1": "pain_score",
-     "studies": 9,
-     "rows": 18
-    },
-    {
-     "qualifier1": "avpkgrad",
-     "studies": 8,
-     "rows": 8
-    },
-    {
-     "qualifier1": "biopsy",
-     "studies": 8,
      "rows": 12
     },
     {
-     "qualifier1": "fev1_po",
+     "qualifier1": "thrombosis",
+     "studies": 9,
+     "rows": 52
+    },
+    {
+     "qualifier1": "st_txpl",
      "studies": 8,
-     "rows": 33
+     "rows": 18
     },
     {
-     "qualifier1": "fev1po",
-     "studies": 8,
-     "rows": 43
+     "qualifier1": "af_fail",
+     "studies": 5,
+     "rows": 10
     },
     {
-     "qualifier1": "avarea",
-     "studies": 6,
-     "rows": 20
+     "qualifier1": "dead2",
+     "studies": 5,
+     "rows": 7
     },
     {
-     "qualifier1": "avregurg",
-     "studies": 6,
-     "rows": 6
+     "qualifier1": "recur",
+     "studies": 5,
+     "rows": 50
     },
     {
-     "qualifier1": "pgd",
-     "studies": 6,
+     "qualifier1": "dead200",
+     "studies": 4,
+     "rows": 4
+    },
+    {
+     "qualifier1": "dead3",
+     "studies": 4,
+     "rows": 7
+    },
+    {
+     "qualifier1": "modulated",
+     "studies": 4,
+     "rows": 36
+    },
+    {
+     "qualifier1": "mvreop",
+     "studies": 4,
+     "rows": 5
+    },
+    {
+     "qualifier1": "afib",
+     "studies": 3,
+     "rows": 5
+    },
+    {
+     "qualifier1": "bos",
+     "studies": 3,
      "rows": 11
     },
     {
-     "qualifier1": "tv_regn",
-     "studies": 6,
-     "rows": 38
-    },
-    {
-     "qualifier1": "ar",
-     "studies": 5,
-     "rows": 7
-    },
-    {
-     "qualifier1": "fev1",
-     "studies": 5,
-     "rows": 17
-    },
-    {
-     "qualifier1": "lvef",
-     "studies": 5,
-     "rows": 13
-    },
-    {
-     "qualifier1": "lvmass",
-     "studies": 5,
+     "qualifier1": "comp2",
+     "studies": 3,
      "rows": 6
     },
     {
-     "qualifier1": "mr",
-     "studies": 5,
+     "qualifier1": "cva",
+     "studies": 3,
+     "rows": 9
+    },
+    {
+     "qualifier1": "dead300",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "dead_all",
+     "studies": 3,
+     "rows": 5
+    },
+    {
+     "qualifier1": "dead_match",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "dead_test",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "dialysis",
+     "studies": 3,
      "rows": 8
-    },
-    {
-     "qualifier1": "rvsp",
-     "studies": 5,
-     "rows": 7
-    },
-    {
-     "qualifier1": "ef_echo",
-     "studies": 4,
-     "rows": 4
-    },
-    {
-     "qualifier1": "ladiam",
-     "studies": 4,
-     "rows": 5
-    },
-    {
-     "qualifier1": "mvmngrad",
-     "studies": 4,
-     "rows": 4
-    },
-    {
-     "qualifier1": "pvr",
-     "studies": 4,
-     "rows": 4
-    },
-    {
-     "qualifier1": "tapse",
-     "studies": 4,
-     "rows": 5
     }
    ]
   },
@@ -2294,458 +2318,369 @@
    ]
   },
   {
-   "folder": "descriptive",
-   "prefix": "lg",
-   "distinct_qualifier1": 411,
-   "job_studies_in_folder": 359,
-   "job_studies_all_folders": 362,
+   "folder": "distributions",
+   "prefix": "nd",
+   "distinct_qualifier1": 1093,
+   "job_studies_in_folder": 244,
+   "job_studies_all_folders": 244,
    "qualifier1_top": [
-    {
-     "qualifier1": "dead",
-     "studies": 143,
-     "rows": 201
-    },
-    {
-     "qualifier1": "st_dead",
-     "studies": 19,
-     "rows": 19
-    },
-    {
-     "qualifier1": "hdeath",
-     "studies": 16,
-     "rows": 17
-    },
-    {
-     "qualifier1": "hdead",
-     "studies": 13,
-     "rows": 14
-    },
-    {
-     "qualifier1": "trends",
-     "studies": 11,
-     "rows": 11
-    },
-    {
-     "qualifier1": "reop",
-     "studies": 9,
-     "rows": 10
-    },
-    {
-     "qualifier1": "cva",
-     "studies": 7,
-     "rows": 10
-    },
-    {
-     "qualifier1": "af_fail",
-     "studies": 6,
-     "rows": 6
-    },
-    {
-     "qualifier1": "afib",
-     "studies": 5,
-     "rows": 5
-    },
-    {
-     "qualifier1": "death",
-     "studies": 5,
-     "rows": 10
-    },
-    {
-     "qualifier1": "thrombosis",
-     "studies": 5,
-     "rows": 5
-    },
-    {
-     "qualifier1": "comp",
-     "studies": 4,
-     "rows": 4
-    },
-    {
-     "qualifier1": "dialysis",
-     "studies": 4,
-     "rows": 4
-    },
-    {
-     "qualifier1": "svd",
-     "studies": 4,
-     "rows": 4
-    },
-    {
-     "qualifier1": "av_mec",
-     "studies": 3,
-     "rows": 6
-    },
-    {
-     "qualifier1": "double",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "mb_bld",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "mip",
-     "studies": 3,
-     "rows": 4
-    },
-    {
-     "qualifier1": "mv_proc",
-     "studies": 3,
-     "rows": 5
-    },
-    {
-     "qualifier1": "readmit",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "recur",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "reint",
-     "studies": 3,
-     "rows": 5
-    },
-    {
-     "qualifier1": "remove",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "repair",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "st_txpl",
-     "studies": 3,
-     "rows": 3
-    }
-   ]
-  },
-  {
-   "folder": "datasets",
-   "prefix": "dt",
-   "distinct_qualifier1": 84,
-   "job_studies_in_folder": 500,
-   "job_studies_all_folders": 503,
-   "qualifier1_top": [
-    {
-     "qualifier1": "check",
-     "studies": 482,
-     "rows": 579
-    },
-    {
-     "qualifier1": "check_lmd",
-     "studies": 10,
-     "rows": 10
-    },
-    {
-     "qualifier1": "check_fup",
-     "studies": 5,
-     "rows": 8
-    },
-    {
-     "qualifier1": "check_MS",
-     "studies": 4,
-     "rows": 4
-    },
-    {
-     "qualifier1": "check2",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "check_iso",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "check_ld",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "fup",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "check1",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "check_MA",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "check_old",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "data_cleanup",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "avout",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "bug",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "cath",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check051609",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check102013",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check20070719",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check20080225",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check2008data",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check3115",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check_0109",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check_022107",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check_031104",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check_04032020",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "br",
-   "distinct_qualifier1": 439,
-   "job_studies_in_folder": 103,
-   "job_studies_all_folders": 103,
-   "qualifier1_top": [
-    {
-     "qualifier1": "los_op",
-     "studies": 8,
-     "rows": 21
-    },
-    {
-     "qualifier1": "los_icu",
-     "studies": 6,
-     "rows": 8
-    },
-    {
-     "qualifier1": "age",
-     "studies": 4,
-     "rows": 7
-    },
-    {
-     "qualifier1": "fev1_po",
-     "studies": 4,
-     "rows": 23
-    },
-    {
-     "qualifier1": "los_icu_summary",
-     "studies": 4,
-     "rows": 4
-    },
-    {
-     "qualifier1": "los_op_summary",
-     "studies": 4,
-     "rows": 4
-    },
-    {
-     "qualifier1": "dead",
-     "studies": 3,
-     "rows": 8
-    },
-    {
-     "qualifier1": "icustay",
-     "studies": 3,
-     "rows": 8
-    },
-    {
-     "qualifier1": "los",
-     "studies": 3,
-     "rows": 18
-    },
-    {
-     "qualifier1": "lospo",
-     "studies": 3,
-     "rows": 9
-    },
-    {
-     "qualifier1": "plvmassi",
-     "studies": 3,
-     "rows": 4
-    },
-    {
-     "qualifier1": "z_value",
-     "studies": 3,
-     "rows": 4
-    },
-    {
-     "qualifier1": "O2sat",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "av_area",
-     "studies": 2,
-     "rows": 3
-    },
     {
      "qualifier1": "avmngrad",
-     "studies": 2,
-     "rows": 4
+     "studies": 37,
+     "rows": 57
     },
     {
-     "qualifier1": "ef",
-     "studies": 2,
-     "rows": 3
-    },
-    {
-     "qualifier1": "f3gfr_min",
-     "studies": 2,
-     "rows": 3
-    },
-    {
-     "qualifier1": "f3gfr_min_summary",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "iga_pr",
-     "studies": 2,
-     "rows": 4
-    },
-    {
-     "qualifier1": "igg_pr",
-     "studies": 2,
-     "rows": 4
-    },
-    {
-     "qualifier1": "linear_regression_bagging",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "linear_regression_summary",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "los_hos",
-     "studies": 2,
-     "rows": 3
-    },
-    {
-     "qualifier1": "mpi",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "mpi_s1",
-     "studies": 2,
-     "rows": 2
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "nm",
-   "distinct_qualifier1": 399,
-   "job_studies_in_folder": 121,
-   "job_studies_all_folders": 121,
-   "qualifier1_top": [
-    {
-     "qualifier1": "afib",
-     "studies": 12,
-     "rows": 33
-    },
-    {
-     "qualifier1": "fev1po",
-     "studies": 7,
-     "rows": 40
+     "qualifier1": "lvmassi",
+     "studies": 29,
+     "rows": 58
     },
     {
      "qualifier1": "ar",
-     "studies": 6,
-     "rows": 8
+     "studies": 20,
+     "rows": 43
+    },
+    {
+     "qualifier1": "lvef",
+     "studies": 19,
+     "rows": 44
+    },
+    {
+     "qualifier1": "afib",
+     "studies": 18,
+     "rows": 56
+    },
+    {
+     "qualifier1": "avregurg",
+     "studies": 18,
+     "rows": 18
+    },
+    {
+     "qualifier1": "avpkgrad",
+     "studies": 13,
+     "rows": 22
+    },
+    {
+     "qualifier1": "mr",
+     "studies": 12,
+     "rows": 32
+    },
+    {
+     "qualifier1": "fev1_po",
+     "studies": 10,
+     "rows": 79
+    },
+    {
+     "qualifier1": "fev1po",
+     "studies": 10,
+     "rows": 160
+    },
+    {
+     "qualifier1": "tr",
+     "studies": 9,
+     "rows": 44
     },
     {
      "qualifier1": "biopsy",
-     "studies": 6,
-     "rows": 23
+     "studies": 8,
+     "rows": 69
+    },
+    {
+     "qualifier1": "lvedvi",
+     "studies": 8,
+     "rows": 10
+    },
+    {
+     "qualifier1": "pain_score",
+     "studies": 8,
+     "rows": 26
+    },
+    {
+     "qualifier1": "pgd",
+     "studies": 7,
+     "rows": 34
     },
     {
      "qualifier1": "fev",
      "studies": 6,
+     "rows": 24
+    },
+    {
+     "qualifier1": "mv_regn",
+     "studies": 6,
+     "rows": 44
+    },
+    {
+     "qualifier1": "nyha",
+     "studies": 6,
      "rows": 37
     },
     {
+     "qualifier1": "avarea",
+     "studies": 5,
+     "rows": 36
+    },
+    {
+     "qualifier1": "dead",
+     "studies": 5,
+     "rows": 17
+    },
+    {
+     "qualifier1": "lavoli",
+     "studies": 5,
+     "rows": 8
+    },
+    {
+     "qualifier1": "rvsp",
+     "studies": 5,
+     "rows": 16
+    },
+    {
+     "qualifier1": "bar_width_empty_5m_ind",
+     "studies": 4,
+     "rows": 8
+    },
+    {
+     "qualifier1": "bar_width_empty_5m_u",
+     "studies": 4,
+     "rows": 11
+    },
+    {
+     "qualifier1": "ef_echo",
+     "studies": 4,
+     "rows": 7
+    }
+   ]
+  },
+  {
+   "folder": "graphs",
+   "prefix": "np",
+   "distinct_qualifier1": 1131,
+   "job_studies_in_folder": 241,
+   "job_studies_all_folders": 241,
+   "qualifier1_top": [
+    {
+     "qualifier1": "avmngrad",
+     "studies": 31,
+     "rows": 47
+    },
+    {
+     "qualifier1": "ar",
+     "studies": 24,
+     "rows": 54
+    },
+    {
+     "qualifier1": "lvmassi",
+     "studies": 23,
+     "rows": 46
+    },
+    {
+     "qualifier1": "afib",
+     "studies": 18,
+     "rows": 66
+    },
+    {
+     "qualifier1": "lvef",
+     "studies": 18,
+     "rows": 44
+    },
+    {
+     "qualifier1": "avregurg",
+     "studies": 17,
+     "rows": 27
+    },
+    {
+     "qualifier1": "avpkgrad",
+     "studies": 13,
+     "rows": 21
+    },
+    {
+     "qualifier1": "mr",
+     "studies": 13,
+     "rows": 34
+    },
+    {
+     "qualifier1": "fev1po",
+     "studies": 10,
+     "rows": 110
+    },
+    {
+     "qualifier1": "tr",
+     "studies": 9,
+     "rows": 55
+    },
+    {
+     "qualifier1": "biopsy",
+     "studies": 8,
+     "rows": 41
+    },
+    {
      "qualifier1": "fev1_po",
-     "studies": 6,
-     "rows": 15
+     "studies": 8,
+     "rows": 56
+    },
+    {
+     "qualifier1": "lvedvi",
+     "studies": 8,
+     "rows": 9
     },
     {
      "qualifier1": "pain_score",
+     "studies": 7,
+     "rows": 31
+    },
+    {
+     "qualifier1": "pgd",
+     "studies": 7,
+     "rows": 37
+    },
+    {
+     "qualifier1": "amngrd",
      "studies": 6,
+     "rows": 51
+    },
+    {
+     "qualifier1": "avarea",
+     "studies": 6,
+     "rows": 38
+    },
+    {
+     "qualifier1": "bar_w_5m_empty",
+     "studies": 6,
+     "rows": 39
+    },
+    {
+     "qualifier1": "eck_ord",
+     "studies": 6,
+     "rows": 34
+    },
+    {
+     "qualifier1": "fev",
+     "studies": 6,
+     "rows": 33
+    },
+    {
+     "qualifier1": "fev1",
+     "studies": 6,
+     "rows": 59
+    },
+    {
+     "qualifier1": "mv_regn",
+     "studies": 6,
+     "rows": 38
+    },
+    {
+     "qualifier1": "nyha",
+     "studies": 6,
+     "rows": 40
+    },
+    {
+     "qualifier1": "lavoli",
+     "studies": 5,
+     "rows": 8
+    },
+    {
+     "qualifier1": "sten100",
+     "studies": 5,
+     "rows": 30
+    }
+   ]
+  },
+  {
+   "folder": "distributions",
+   "prefix": "dp",
+   "distinct_qualifier1": 620,
+   "job_studies_in_folder": 237,
+   "job_studies_all_folders": 515,
+   "qualifier1_top": [
+    {
+     "qualifier1": "echo",
+     "studies": 52,
+     "rows": 61
+    },
+    {
+     "qualifier1": "afib",
+     "studies": 18,
+     "rows": 18
+    },
+    {
+     "qualifier1": "lvmassi",
+     "studies": 14,
+     "rows": 20
+    },
+    {
+     "qualifier1": "avmngrad",
+     "studies": 11,
+     "rows": 13
+    },
+    {
+     "qualifier1": "mv_regn",
+     "studies": 9,
+     "rows": 20
+    },
+    {
+     "qualifier1": "pain_score",
+     "studies": 9,
+     "rows": 18
+    },
+    {
+     "qualifier1": "avpkgrad",
+     "studies": 8,
+     "rows": 8
+    },
+    {
+     "qualifier1": "biopsy",
+     "studies": 8,
      "rows": 12
+    },
+    {
+     "qualifier1": "fev1_po",
+     "studies": 8,
+     "rows": 33
+    },
+    {
+     "qualifier1": "fev1po",
+     "studies": 8,
+     "rows": 43
+    },
+    {
+     "qualifier1": "avarea",
+     "studies": 6,
+     "rows": 20
+    },
+    {
+     "qualifier1": "avregurg",
+     "studies": 6,
+     "rows": 6
     },
     {
      "qualifier1": "pgd",
      "studies": 6,
-     "rows": 14
+     "rows": 11
+    },
+    {
+     "qualifier1": "tv_regn",
+     "studies": 6,
+     "rows": 38
+    },
+    {
+     "qualifier1": "ar",
+     "studies": 5,
+     "rows": 7
     },
     {
      "qualifier1": "fev1",
      "studies": 5,
-     "rows": 19
+     "rows": 17
+    },
+    {
+     "qualifier1": "lvef",
+     "studies": 5,
+     "rows": 13
+    },
+    {
+     "qualifier1": "lvmass",
+     "studies": 5,
+     "rows": 6
     },
     {
      "qualifier1": "mr",
@@ -2753,79 +2688,168 @@
      "rows": 8
     },
     {
-     "qualifier1": "avmngrad",
-     "studies": 4,
-     "rows": 6
+     "qualifier1": "rvsp",
+     "studies": 5,
+     "rows": 7
     },
     {
-     "qualifier1": "steng100",
+     "qualifier1": "ef_echo",
      "studies": 4,
-     "rows": 29
+     "rows": 4
     },
     {
-     "qualifier1": "tr",
+     "qualifier1": "ladiam",
      "studies": 4,
-     "rows": 14
-    },
-    {
-     "qualifier1": "lvef",
-     "studies": 3,
      "rows": 5
+    },
+    {
+     "qualifier1": "mvmngrad",
+     "studies": 4,
+     "rows": 4
     },
     {
      "qualifier1": "pvr",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "reject",
-     "studies": 3,
-     "rows": 48
-    },
-    {
-     "qualifier1": "afib_energy",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "avpkgrad",
-     "studies": 2,
-     "rows": 3
-    },
-    {
-     "qualifier1": "bar_empty",
-     "studies": 2,
-     "rows": 13
-    },
-    {
-     "qualifier1": "bxgra",
-     "studies": 2,
+     "studies": 4,
      "rows": 4
     },
     {
-     "qualifier1": "fevpo",
-     "studies": 2,
-     "rows": 4
+     "qualifier1": "tapse",
+     "studies": 4,
+     "rows": 5
+    }
+   ]
+  },
+  {
+   "folder": "distributions",
+   "prefix": "cd",
+   "distinct_qualifier1": 124,
+   "job_studies_in_folder": 183,
+   "job_studies_all_folders": 190,
+   "qualifier1_top": [
+    {
+     "qualifier1": "vars",
+     "studies": 84,
+     "rows": 97
     },
     {
-     "qualifier1": "fvc",
-     "studies": 2,
+     "qualifier1": "followup",
+     "studies": 22,
+     "rows": 22
+    },
+    {
+     "qualifier1": "general",
+     "studies": 6,
+     "rows": 7
+    },
+    {
+     "qualifier1": "age",
+     "studies": 5,
      "rows": 5
     },
     {
-     "qualifier1": "ladim",
+     "qualifier1": "general1",
+     "studies": 3,
+     "rows": 4
+    },
+    {
+     "qualifier1": "gfup",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "size",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "specific",
+     "studies": 3,
+     "rows": 4
+    },
+    {
+     "qualifier1": "aosin",
      "studies": 2,
      "rows": 2
     },
     {
-     "qualifier1": "lvmassi",
+     "qualifier1": "blood",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "dead",
      "studies": 2,
      "rows": 4
     },
     {
-     "qualifier1": "match",
+     "qualifier1": "interval",
      "studies": 2,
-     "rows": 4
+     "rows": 2
+    },
+    {
+     "qualifier1": "intervals",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "los",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "pre_po",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "preds",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "tethering_mpi_tapse",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "HLAtypes",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "Ig_Dx",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "LOS",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "MESF",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "PRA",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "STROK_preds_avprc_AHA",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "aodim",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "area_bsa",
+     "studies": 1,
+     "rows": 1
     }
    ]
   },
@@ -2964,6 +2988,408 @@
    ]
   },
   {
+   "folder": "graphs",
+   "prefix": "hs",
+   "distinct_qualifier1": 147,
+   "job_studies_in_folder": 140,
+   "job_studies_all_folders": 140,
+   "qualifier1_top": [
+    {
+     "qualifier1": "dead",
+     "studies": 58,
+     "rows": 229
+    },
+    {
+     "qualifier1": "uslife",
+     "studies": 22,
+     "rows": 27
+    },
+    {
+     "qualifier1": "uslife_estimates",
+     "studies": 12,
+     "rows": 33
+    },
+    {
+     "qualifier1": "death",
+     "studies": 11,
+     "rows": 38
+    },
+    {
+     "qualifier1": "st_dead",
+     "studies": 8,
+     "rows": 34
+    },
+    {
+     "qualifier1": "uslife_est",
+     "studies": 7,
+     "rows": 8
+    },
+    {
+     "qualifier1": "uslife_generates_matched_estimates",
+     "studies": 6,
+     "rows": 6
+    },
+    {
+     "qualifier1": "st_death",
+     "studies": 4,
+     "rows": 5
+    },
+    {
+     "qualifier1": "comp",
+     "studies": 3,
+     "rows": 12
+    },
+    {
+     "qualifier1": "brier",
+     "studies": 2,
+     "rows": 3
+    },
+    {
+     "qualifier1": "presrg_dead",
+     "studies": 2,
+     "rows": 5
+    },
+    {
+     "qualifier1": "readmit",
+     "studies": 2,
+     "rows": 8
+    },
+    {
+     "qualifier1": "redo1",
+     "studies": 2,
+     "rows": 12
+    },
+    {
+     "qualifier1": "s2die",
+     "studies": 2,
+     "rows": 4
+    },
+    {
+     "qualifier1": "stage2",
+     "studies": 2,
+     "rows": 4
+    },
+    {
+     "qualifier1": "svd",
+     "studies": 2,
+     "rows": 7
+    },
+    {
+     "qualifier1": "uslife_AIAS",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "uslife_est_84",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "uslife_match_strat1",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "uslife_matched",
+     "studies": 2,
+     "rows": 6
+    },
+    {
+     "qualifier1": "ITT",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "af_fail",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "all",
+     "studies": 1,
+     "rows": 5
+    },
+    {
+     "qualifier1": "all1",
+     "studies": 1,
+     "rows": 5
+    },
+    {
+     "qualifier1": "cabg",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "nm",
+   "distinct_qualifier1": 399,
+   "job_studies_in_folder": 121,
+   "job_studies_all_folders": 121,
+   "qualifier1_top": [
+    {
+     "qualifier1": "afib",
+     "studies": 12,
+     "rows": 33
+    },
+    {
+     "qualifier1": "fev1po",
+     "studies": 7,
+     "rows": 40
+    },
+    {
+     "qualifier1": "ar",
+     "studies": 6,
+     "rows": 8
+    },
+    {
+     "qualifier1": "biopsy",
+     "studies": 6,
+     "rows": 23
+    },
+    {
+     "qualifier1": "fev",
+     "studies": 6,
+     "rows": 37
+    },
+    {
+     "qualifier1": "fev1_po",
+     "studies": 6,
+     "rows": 15
+    },
+    {
+     "qualifier1": "pain_score",
+     "studies": 6,
+     "rows": 12
+    },
+    {
+     "qualifier1": "pgd",
+     "studies": 6,
+     "rows": 14
+    },
+    {
+     "qualifier1": "fev1",
+     "studies": 5,
+     "rows": 19
+    },
+    {
+     "qualifier1": "mr",
+     "studies": 5,
+     "rows": 8
+    },
+    {
+     "qualifier1": "avmngrad",
+     "studies": 4,
+     "rows": 6
+    },
+    {
+     "qualifier1": "steng100",
+     "studies": 4,
+     "rows": 29
+    },
+    {
+     "qualifier1": "tr",
+     "studies": 4,
+     "rows": 14
+    },
+    {
+     "qualifier1": "lvef",
+     "studies": 3,
+     "rows": 5
+    },
+    {
+     "qualifier1": "pvr",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "reject",
+     "studies": 3,
+     "rows": 48
+    },
+    {
+     "qualifier1": "afib_energy",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "avpkgrad",
+     "studies": 2,
+     "rows": 3
+    },
+    {
+     "qualifier1": "bar_empty",
+     "studies": 2,
+     "rows": 13
+    },
+    {
+     "qualifier1": "bxgra",
+     "studies": 2,
+     "rows": 4
+    },
+    {
+     "qualifier1": "fevpo",
+     "studies": 2,
+     "rows": 4
+    },
+    {
+     "qualifier1": "fvc",
+     "studies": 2,
+     "rows": 5
+    },
+    {
+     "qualifier1": "ladim",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "lvmassi",
+     "studies": 2,
+     "rows": 4
+    },
+    {
+     "qualifier1": "match",
+     "studies": 2,
+     "rows": 4
+    }
+   ]
+  },
+  {
+   "folder": "graphs",
+   "prefix": "ce",
+   "distinct_qualifier1": 189,
+   "job_studies_in_folder": 121,
+   "job_studies_all_folders": 128,
+   "qualifier1_top": [
+    {
+     "qualifier1": "states",
+     "studies": 75,
+     "rows": 214
+    },
+    {
+     "qualifier1": "states_CIF_CP",
+     "studies": 10,
+     "rows": 13
+    },
+    {
+     "qualifier1": "age",
+     "studies": 6,
+     "rows": 15
+    },
+    {
+     "qualifier1": "15578912",
+     "studies": 3,
+     "rows": 6
+    },
+    {
+     "qualifier1": "age35",
+     "studies": 3,
+     "rows": 6
+    },
+    {
+     "qualifier1": "age75",
+     "studies": 3,
+     "rows": 6
+    },
+    {
+     "qualifier1": "badrisk",
+     "studies": 3,
+     "rows": 6
+    },
+    {
+     "qualifier1": "death_complete_fup_av_mec",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "fup_tst_iso_av_mec",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "reop_death_iso",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "reop_death_iso_av_mec",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "states_CIF_CP_av_mec_fup",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "states_CIF_CP_av_mec_fup_match",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "3rd_states",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "dead",
+     "studies": 2,
+     "rows": 4
+    },
+    {
+     "qualifier1": "dead_tx",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "endstates",
+     "studies": 2,
+     "rows": 7
+    },
+    {
+     "qualifier1": "recur",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "states1",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "states_3estimates",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "1st_states",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "2nd_states",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "2nd_surgery",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "3rd_surgery",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "4states",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
    "folder": "analyses",
    "prefix": "bn",
    "distinct_qualifier1": 347,
@@ -3092,6 +3518,140 @@
     },
     {
      "qualifier1": "fev_dou",
+     "studies": 2,
+     "rows": 2
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "br",
+   "distinct_qualifier1": 439,
+   "job_studies_in_folder": 103,
+   "job_studies_all_folders": 103,
+   "qualifier1_top": [
+    {
+     "qualifier1": "los_op",
+     "studies": 8,
+     "rows": 21
+    },
+    {
+     "qualifier1": "los_icu",
+     "studies": 6,
+     "rows": 8
+    },
+    {
+     "qualifier1": "age",
+     "studies": 4,
+     "rows": 7
+    },
+    {
+     "qualifier1": "fev1_po",
+     "studies": 4,
+     "rows": 23
+    },
+    {
+     "qualifier1": "los_icu_summary",
+     "studies": 4,
+     "rows": 4
+    },
+    {
+     "qualifier1": "los_op_summary",
+     "studies": 4,
+     "rows": 4
+    },
+    {
+     "qualifier1": "dead",
+     "studies": 3,
+     "rows": 8
+    },
+    {
+     "qualifier1": "icustay",
+     "studies": 3,
+     "rows": 8
+    },
+    {
+     "qualifier1": "los",
+     "studies": 3,
+     "rows": 18
+    },
+    {
+     "qualifier1": "lospo",
+     "studies": 3,
+     "rows": 9
+    },
+    {
+     "qualifier1": "plvmassi",
+     "studies": 3,
+     "rows": 4
+    },
+    {
+     "qualifier1": "z_value",
+     "studies": 3,
+     "rows": 4
+    },
+    {
+     "qualifier1": "O2sat",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "av_area",
+     "studies": 2,
+     "rows": 3
+    },
+    {
+     "qualifier1": "avmngrad",
+     "studies": 2,
+     "rows": 4
+    },
+    {
+     "qualifier1": "ef",
+     "studies": 2,
+     "rows": 3
+    },
+    {
+     "qualifier1": "f3gfr_min",
+     "studies": 2,
+     "rows": 3
+    },
+    {
+     "qualifier1": "f3gfr_min_summary",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "iga_pr",
+     "studies": 2,
+     "rows": 4
+    },
+    {
+     "qualifier1": "igg_pr",
+     "studies": 2,
+     "rows": 4
+    },
+    {
+     "qualifier1": "linear_regression_bagging",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "linear_regression_summary",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "los_hos",
+     "studies": 2,
+     "rows": 3
+    },
+    {
+     "qualifier1": "mpi",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "mpi_s1",
      "studies": 2,
      "rows": 2
     }
@@ -3232,426 +3792,402 @@
    ]
   },
   {
-   "folder": "graphs",
-   "prefix": "ar",
-   "distinct_qualifier1": 3,
-   "job_studies_in_folder": 364,
-   "job_studies_all_folders": 394,
+   "folder": "analyses",
+   "prefix": "gm",
+   "distinct_qualifier1": 97,
+   "job_studies_in_folder": 73,
+   "job_studies_all_folders": 73,
    "qualifier1_top": [
     {
-     "qualifier1": "a1c",
-     "studies": 363,
-     "rows": 1451
+     "qualifier1": "mr",
+     "studies": 20,
+     "rows": 79
     },
     {
-     "qualifier1": "sas2r_powerpoint_stratified",
-     "studies": 1,
-     "rows": 1
+     "qualifier1": "coumadin",
+     "studies": 8,
+     "rows": 8
     },
     {
-     "qualifier1": "sas2r_powerpoint_stratified_toth",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "graphs",
-   "prefix": "ce",
-   "distinct_qualifier1": 189,
-   "job_studies_in_folder": 121,
-   "job_studies_all_folders": 128,
-   "qualifier1_top": [
-    {
-     "qualifier1": "states",
-     "studies": 75,
-     "rows": 214
-    },
-    {
-     "qualifier1": "states_CIF_CP",
-     "studies": 10,
-     "rows": 13
-    },
-    {
-     "qualifier1": "age",
-     "studies": 6,
-     "rows": 15
-    },
-    {
-     "qualifier1": "15578912",
-     "studies": 3,
-     "rows": 6
-    },
-    {
-     "qualifier1": "age35",
-     "studies": 3,
-     "rows": 6
-    },
-    {
-     "qualifier1": "age75",
-     "studies": 3,
-     "rows": 6
-    },
-    {
-     "qualifier1": "badrisk",
-     "studies": 3,
-     "rows": 6
-    },
-    {
-     "qualifier1": "death_complete_fup_av_mec",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "fup_tst_iso_av_mec",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "reop_death_iso",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "reop_death_iso_av_mec",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "states_CIF_CP_av_mec_fup",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "states_CIF_CP_av_mec_fup_match",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "3rd_states",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "dead",
-     "studies": 2,
-     "rows": 4
-    },
-    {
-     "qualifier1": "dead_tx",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "endstates",
-     "studies": 2,
+     "qualifier1": "arrhythmics",
+     "studies": 7,
      "rows": 7
     },
     {
-     "qualifier1": "recur",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "states1",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "states_3estimates",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "1st_states",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "2nd_states",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "2nd_surgery",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "3rd_surgery",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "4states",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "graphs",
-   "prefix": "hs",
-   "distinct_qualifier1": 147,
-   "job_studies_in_folder": 140,
-   "job_studies_all_folders": 140,
-   "qualifier1_top": [
-    {
-     "qualifier1": "dead",
-     "studies": 58,
-     "rows": 229
-    },
-    {
-     "qualifier1": "uslife",
-     "studies": 22,
-     "rows": 27
-    },
-    {
-     "qualifier1": "uslife_estimates",
-     "studies": 12,
-     "rows": 33
-    },
-    {
-     "qualifier1": "death",
-     "studies": 11,
-     "rows": 38
-    },
-    {
-     "qualifier1": "st_dead",
-     "studies": 8,
-     "rows": 34
-    },
-    {
-     "qualifier1": "uslife_est",
+     "qualifier1": "nyha",
      "studies": 7,
      "rows": 8
     },
     {
-     "qualifier1": "uslife_generates_matched_estimates",
-     "studies": 6,
+     "qualifier1": "ar",
+     "studies": 5,
+     "rows": 7
+    },
+    {
+     "qualifier1": "pain",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "poisson",
+     "studies": 3,
+     "rows": 7
+    },
+    {
+     "qualifier1": "tr",
+     "studies": 3,
+     "rows": 20
+    },
+    {
+     "qualifier1": "afib",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "chronic_mr",
+     "studies": 2,
      "rows": 6
     },
     {
-     "qualifier1": "st_death",
-     "studies": 4,
-     "rows": 5
+     "qualifier1": "effusion",
+     "studies": 2,
+     "rows": 2
     },
     {
-     "qualifier1": "comp",
-     "studies": 3,
-     "rows": 12
+     "qualifier1": "match",
+     "studies": 2,
+     "rows": 4
     },
     {
-     "qualifier1": "brier",
+     "qualifier1": "mr0",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "mvrg",
+     "studies": 2,
+     "rows": 14
+    },
+    {
+     "qualifier1": "patency",
+     "studies": 2,
+     "rows": 11
+    },
+    {
+     "qualifier1": "repeated",
      "studies": 2,
      "rows": 3
     },
     {
-     "qualifier1": "presrg_dead",
-     "studies": 2,
-     "rows": 5
-    },
-    {
-     "qualifier1": "readmit",
-     "studies": 2,
-     "rows": 8
-    },
-    {
-     "qualifier1": "redo1",
-     "studies": 2,
-     "rows": 12
-    },
-    {
-     "qualifier1": "s2die",
-     "studies": 2,
-     "rows": 4
-    },
-    {
-     "qualifier1": "stage2",
-     "studies": 2,
-     "rows": 4
-    },
-    {
-     "qualifier1": "svd",
-     "studies": 2,
-     "rows": 7
-    },
-    {
-     "qualifier1": "uslife_AIAS",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "uslife_est_84",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "uslife_match_strat1",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "uslife_matched",
-     "studies": 2,
-     "rows": 6
-    },
-    {
-     "qualifier1": "ITT",
+     "qualifier1": "aicd",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "af_fail",
+     "qualifier1": "amicar",
      "studies": 1,
      "rows": 2
     },
     {
-     "qualifier1": "all",
+     "qualifier1": "argrg",
      "studies": 1,
-     "rows": 5
+     "rows": 1
     },
     {
-     "qualifier1": "all1",
+     "qualifier1": "argrg1",
      "studies": 1,
-     "rows": 5
+     "rows": 1
     },
     {
-     "qualifier1": "cabg",
+     "qualifier1": "arrythmic",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "avreg",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "baht",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "bais",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "bawd",
      "studies": 1,
      "rows": 1
     }
    ]
   },
   {
-   "folder": "distributions",
-   "prefix": "cd",
-   "distinct_qualifier1": 124,
-   "job_studies_in_folder": 183,
-   "job_studies_all_folders": 190,
+   "folder": "graphs",
+   "prefix": "rp",
+   "distinct_qualifier1": 64,
+   "job_studies_in_folder": 68,
+   "job_studies_all_folders": 68,
    "qualifier1_top": [
     {
-     "qualifier1": "vars",
-     "studies": 84,
-     "rows": 97
+     "qualifier1": "trends",
+     "studies": 38,
+     "rows": 72
     },
     {
-     "qualifier1": "followup",
-     "studies": 22,
-     "rows": 22
-    },
-    {
-     "qualifier1": "general",
-     "studies": 6,
+     "qualifier1": "los",
+     "studies": 4,
      "rows": 7
     },
     {
-     "qualifier1": "age",
+     "qualifier1": "lr",
+     "studies": 4,
+     "rows": 14
+    },
+    {
+     "qualifier1": "blnc_scr",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "cost",
+     "studies": 2,
+     "rows": 8
+    },
+    {
+     "qualifier1": "los_icu",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "los_op",
+     "studies": 2,
+     "rows": 5
+    },
+    {
+     "qualifier1": "stroke",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "AOCCtime",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "CPBtime",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "GFR_72",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "GFR_72_ctsHCT",
+     "studies": 1,
+     "rows": 4
+    },
+    {
+     "qualifier1": "ORtime",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "RBCHCT_gfr72_3D",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "aortic",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "av_area",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "avpkgra",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "bilirubin",
+     "studies": 1,
+     "rows": 10
+    },
+    {
+     "qualifier1": "chapter6",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "clev",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dob",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "gfr_bs",
+     "studies": 1,
+     "rows": 3
+    },
+    {
+     "qualifier1": "hbga1cpr",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "iv_aocc",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "documents",
+   "prefix": "ar",
+   "distinct_qualifier1": 35,
+   "job_studies_in_folder": 61,
+   "job_studies_all_folders": 394,
+   "qualifier1_top": [
+    {
+     "qualifier1": "analysis_report_test",
+     "studies": 37,
+     "rows": 37
+    },
+    {
+     "qualifier1": "rfs",
+     "studies": 9,
+     "rows": 11
+    },
+    {
+     "qualifier1": "rfc",
+     "studies": 7,
+     "rows": 21
+    },
+    {
+     "qualifier1": "part1",
      "studies": 5,
      "rows": 5
     },
     {
-     "qualifier1": "general1",
-     "studies": 3,
-     "rows": 4
-    },
-    {
-     "qualifier1": "gfup",
+     "qualifier1": "part2",
      "studies": 3,
      "rows": 3
     },
     {
-     "qualifier1": "size",
-     "studies": 3,
+     "qualifier1": "TA-TF",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "age",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "part3",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "part4",
+     "studies": 2,
      "rows": 3
     },
     {
-     "qualifier1": "specific",
-     "studies": 3,
+     "qualifier1": "DataVisualization2",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "RandomForests",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "TA_Intensity",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "a1c",
+     "studies": 1,
+     "rows": 27
+    },
+    {
+     "qualifier1": "aaoca_iFR",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "aaoca_morphc_iFR",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "aaoca_morphc_noretro_iFR",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "aaoca_noretro_iFR",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "cmri_amy",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "intermacs",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "lg",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "log-longitudinal",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "longitudinal",
+     "studies": 1,
      "rows": 4
     },
     {
-     "qualifier1": "aosin",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "blood",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "dead",
-     "studies": 2,
-     "rows": 4
-    },
-    {
-     "qualifier1": "interval",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "intervals",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "los",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "pre_po",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "preds",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "tethering_mpi_tapse",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "HLAtypes",
+     "qualifier1": "part0",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "Ig_Dx",
+     "qualifier1": "part4a",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "LOS",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "MESF",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "PRA",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "STROK_preds_avprc_AHA",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "aodim",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "area_bsa",
+     "qualifier1": "part4b",
      "studies": 1,
      "rows": 1
     }
@@ -3792,16 +4328,21 @@
    ]
   },
   {
-   "folder": "analyses",
-   "prefix": "gm",
-   "distinct_qualifier1": 97,
-   "job_studies_in_folder": 73,
-   "job_studies_all_folders": 73,
+   "folder": "graphs",
+   "prefix": "gp",
+   "distinct_qualifier1": 49,
+   "job_studies_in_folder": 50,
+   "job_studies_all_folders": 50,
    "qualifier1_top": [
     {
      "qualifier1": "mr",
-     "studies": 20,
-     "rows": 79
+     "studies": 14,
+     "rows": 50
+    },
+    {
+     "qualifier1": "arrhythmic",
+     "studies": 8,
+     "rows": 8
     },
     {
      "qualifier1": "coumadin",
@@ -3809,47 +4350,22 @@
      "rows": 8
     },
     {
-     "qualifier1": "arrhythmics",
-     "studies": 7,
-     "rows": 7
-    },
-    {
      "qualifier1": "nyha",
-     "studies": 7,
-     "rows": 8
-    },
-    {
-     "qualifier1": "ar",
      "studies": 5,
-     "rows": 7
-    },
-    {
-     "qualifier1": "pain",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "poisson",
-     "studies": 3,
      "rows": 7
     },
     {
      "qualifier1": "tr",
      "studies": 3,
-     "rows": 20
-    },
-    {
-     "qualifier1": "afib",
-     "studies": 2,
-     "rows": 2
+     "rows": 13
     },
     {
      "qualifier1": "chronic_mr",
      "studies": 2,
-     "rows": 6
+     "rows": 2
     },
     {
-     "qualifier1": "effusion",
+     "qualifier1": "forestplot",
      "studies": 2,
      "rows": 2
     },
@@ -3859,24 +4375,14 @@
      "rows": 4
     },
     {
-     "qualifier1": "mr0",
-     "studies": 2,
-     "rows": 2
-    },
-    {
      "qualifier1": "mvrg",
-     "studies": 2,
-     "rows": 14
-    },
-    {
-     "qualifier1": "patency",
      "studies": 2,
      "rows": 11
     },
     {
-     "qualifier1": "repeated",
-     "studies": 2,
-     "rows": 3
+     "qualifier1": "afib",
+     "studies": 1,
+     "rows": 1
     },
     {
      "qualifier1": "aicd",
@@ -3884,9 +4390,9 @@
      "rows": 1
     },
     {
-     "qualifier1": "amicar",
+     "qualifier1": "ar",
      "studies": 1,
-     "rows": 2
+     "rows": 6
     },
     {
      "qualifier1": "argrg",
@@ -3894,32 +4400,171 @@
      "rows": 1
     },
     {
-     "qualifier1": "argrg1",
+     "qualifier1": "av",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "arrythmic",
+     "qualifier1": "biatr",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "avreg",
+     "qualifier1": "bicav",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "baht",
+     "qualifier1": "chronic_mr>1",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "bais",
+     "qualifier1": "con_type_g4",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "bawd",
+     "qualifier1": "echo_SAM",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "lvef_ev",
+     "studies": 1,
+     "rows": 3
+    },
+    {
+     "qualifier1": "lvesv",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "lvesvi",
+     "studies": 1,
+     "rows": 3
+    },
+    {
+     "qualifier1": "mitral_valve_mip_painscr",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mitral_valve_mip_painscr_jr",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mitral_valve_mip_painscr_rev",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "rg",
+   "distinct_qualifier1": 20,
+   "job_studies_in_folder": 41,
+   "job_studies_all_folders": 45,
+   "qualifier1_top": [
+    {
+     "qualifier1": "trends",
+     "studies": 32,
+     "rows": 43
+    },
+    {
+     "qualifier1": "redo",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "timetrends",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "afib_po",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "albumin",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "blrbn",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "bun",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "ct_vol",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "gluco",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "hct",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "los",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "los_proc_tf",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mcrspl_vevco2",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "qol",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "repair",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sarah",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sgn",
+     "studies": 1,
+     "rows": 7
+    },
+    {
+     "qualifier1": "trends05",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "trends_TA",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "trends_TF",
      "studies": 1,
      "rows": 1
     }
@@ -4195,401 +4840,133 @@
   },
   {
    "folder": "graphs",
-   "prefix": "rp",
-   "distinct_qualifier1": 64,
-   "job_studies_in_folder": 68,
-   "job_studies_all_folders": 68,
+   "prefix": "dc",
+   "distinct_qualifier1": 58,
+   "job_studies_in_folder": 35,
+   "job_studies_all_folders": 1009,
    "qualifier1_top": [
     {
-     "qualifier1": "trends",
-     "studies": 38,
-     "rows": 72
+     "qualifier1": "boxplot",
+     "studies": 11,
+     "rows": 36
     },
     {
-     "qualifier1": "los",
-     "studies": 4,
+     "qualifier1": "boxplots",
+     "studies": 6,
      "rows": 7
     },
     {
-     "qualifier1": "lr",
+     "qualifier1": "boxp",
      "studies": 4,
-     "rows": 14
+     "rows": 9
     },
     {
-     "qualifier1": "blnc_scr",
+     "qualifier1": "bsa_zvalue",
      "studies": 2,
      "rows": 2
     },
     {
-     "qualifier1": "cost",
-     "studies": 2,
-     "rows": 8
-    },
-    {
-     "qualifier1": "los_icu",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "los_op",
-     "studies": 2,
-     "rows": 5
-    },
-    {
-     "qualifier1": "stroke",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "AOCCtime",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "CPBtime",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "GFR_72",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "GFR_72_ctsHCT",
-     "studies": 1,
-     "rows": 4
-    },
-    {
-     "qualifier1": "ORtime",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "RBCHCT_gfr72_3D",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "aortic",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "av_area",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "avpkgra",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "bilirubin",
-     "studies": 1,
-     "rows": 10
-    },
-    {
-     "qualifier1": "chapter6",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "clev",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dob",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "gfr_bs",
-     "studies": 1,
-     "rows": 3
-    },
-    {
-     "qualifier1": "hbga1cpr",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "iv_aocc",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "bc",
-   "distinct_qualifier1": 96,
-   "job_studies_in_folder": 16,
-   "job_studies_all_folders": 16,
-   "qualifier1_top": [
-    {
-     "qualifier1": "dead",
-     "studies": 8,
-     "rows": 13
-    },
-    {
-     "qualifier1": "dead_summary",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "all_evt",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "cdiff",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "comp",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "dead1",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead2",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead2_summary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_ex_int",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_ex_int_summary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_ex_summary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_ex",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_ex_summary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_s1",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_s1_summary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_s2",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_s2_summary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_s3",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_s3_summary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_s4",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_s4_summary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_s5",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_s5_summary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_fit_summary",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "documents",
-   "prefix": "ar",
-   "distinct_qualifier1": 35,
-   "job_studies_in_folder": 61,
-   "job_studies_all_folders": 394,
-   "qualifier1_top": [
-    {
-     "qualifier1": "analysis_report_test",
-     "studies": 37,
-     "rows": 37
-    },
-    {
-     "qualifier1": "rfs",
-     "studies": 9,
-     "rows": 11
-    },
-    {
-     "qualifier1": "rfc",
-     "studies": 7,
-     "rows": 21
-    },
-    {
-     "qualifier1": "part1",
-     "studies": 5,
-     "rows": 5
-    },
-    {
-     "qualifier1": "part2",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "TA-TF",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "age",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "part3",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "part4",
+     "qualifier1": "bubbleplot",
      "studies": 2,
      "rows": 3
     },
     {
-     "qualifier1": "DataVisualization2",
+     "qualifier1": "mpi_raas",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "mpi_rvsp",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "mpi_tvel",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "pre_po",
+     "studies": 2,
+     "rows": 12
+    },
+    {
+     "qualifier1": "tapse_raas",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "tapse_rvsp",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "tapse_tvel",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "BUN_relation",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "RandomForests",
+     "qualifier1": "GFR_relation",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "TA_Intensity",
+     "qualifier1": "MELD_relation",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "a1c",
-     "studies": 1,
-     "rows": 27
-    },
-    {
-     "qualifier1": "aaoca_iFR",
+     "qualifier1": "ae_histogram",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "aaoca_morphc_iFR",
+     "qualifier1": "avmngrad_5-10-yr-estimates",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "aaoca_morphc_noretro_iFR",
+     "qualifier1": "avmngrad_randomEffects",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "avmngrad_randomEffects-test",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "aaoca_noretro_iFR",
+     "qualifier1": "avmngrad_randomEffects_test",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "cmri_amy",
+     "qualifier1": "avmngrad_svd_nosvd",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "intermacs",
+     "qualifier1": "bendl",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "lg",
+     "qualifier1": "boxplot_imp",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "log-longitudinal",
+     "qualifier1": "boxplot_ppt",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "longitudinal",
-     "studies": 1,
-     "rows": 4
-    },
-    {
-     "qualifier1": "part0",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "part4a",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "part4b",
+     "qualifier1": "boxplots_jf",
      "studies": 1,
      "rows": 1
     }
@@ -4730,274 +5107,6 @@
    ]
   },
   {
-   "folder": "graphs",
-   "prefix": "gp",
-   "distinct_qualifier1": 49,
-   "job_studies_in_folder": 50,
-   "job_studies_all_folders": 50,
-   "qualifier1_top": [
-    {
-     "qualifier1": "mr",
-     "studies": 14,
-     "rows": 50
-    },
-    {
-     "qualifier1": "arrhythmic",
-     "studies": 8,
-     "rows": 8
-    },
-    {
-     "qualifier1": "coumadin",
-     "studies": 8,
-     "rows": 8
-    },
-    {
-     "qualifier1": "nyha",
-     "studies": 5,
-     "rows": 7
-    },
-    {
-     "qualifier1": "tr",
-     "studies": 3,
-     "rows": 13
-    },
-    {
-     "qualifier1": "chronic_mr",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "forestplot",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "match",
-     "studies": 2,
-     "rows": 4
-    },
-    {
-     "qualifier1": "mvrg",
-     "studies": 2,
-     "rows": 11
-    },
-    {
-     "qualifier1": "afib",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "aicd",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ar",
-     "studies": 1,
-     "rows": 6
-    },
-    {
-     "qualifier1": "argrg",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "av",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "biatr",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "bicav",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "chronic_mr>1",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "con_type_g4",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "echo_SAM",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "lvef_ev",
-     "studies": 1,
-     "rows": 3
-    },
-    {
-     "qualifier1": "lvesv",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "lvesvi",
-     "studies": 1,
-     "rows": 3
-    },
-    {
-     "qualifier1": "mitral_valve_mip_painscr",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mitral_valve_mip_painscr_jr",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mitral_valve_mip_painscr_rev",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "graphs",
-   "prefix": "dc",
-   "distinct_qualifier1": 58,
-   "job_studies_in_folder": 35,
-   "job_studies_all_folders": 1009,
-   "qualifier1_top": [
-    {
-     "qualifier1": "boxplot",
-     "studies": 11,
-     "rows": 36
-    },
-    {
-     "qualifier1": "boxplots",
-     "studies": 6,
-     "rows": 7
-    },
-    {
-     "qualifier1": "boxp",
-     "studies": 4,
-     "rows": 9
-    },
-    {
-     "qualifier1": "bsa_zvalue",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "bubbleplot",
-     "studies": 2,
-     "rows": 3
-    },
-    {
-     "qualifier1": "mpi_raas",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "mpi_rvsp",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "mpi_tvel",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "pre_po",
-     "studies": 2,
-     "rows": 12
-    },
-    {
-     "qualifier1": "tapse_raas",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "tapse_rvsp",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "tapse_tvel",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "BUN_relation",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "GFR_relation",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "MELD_relation",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ae_histogram",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "avmngrad_5-10-yr-estimates",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "avmngrad_randomEffects",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "avmngrad_randomEffects-test",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "avmngrad_randomEffects_test",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "avmngrad_svd_nosvd",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "bendl",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "boxplot_imp",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "boxplot_ppt",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "boxplots_jf",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
    "folder": "analyses",
    "prefix": "ar",
    "distinct_qualifier1": 41,
@@ -5126,244 +5235,6 @@
     },
     {
      "qualifier1": "lucy",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "rg",
-   "distinct_qualifier1": 20,
-   "job_studies_in_folder": 41,
-   "job_studies_all_folders": 45,
-   "qualifier1_top": [
-    {
-     "qualifier1": "trends",
-     "studies": 32,
-     "rows": 43
-    },
-    {
-     "qualifier1": "redo",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "timetrends",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "afib_po",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "albumin",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "blrbn",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "bun",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ct_vol",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "gluco",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "hct",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "los",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "los_proc_tf",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mcrspl_vevco2",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "qol",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "repair",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sarah",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sgn",
-     "studies": 1,
-     "rows": 7
-    },
-    {
-     "qualifier1": "trends05",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "trends_TA",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "trends_TF",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "ls",
-   "distinct_qualifier1": 24,
-   "job_studies_in_folder": 20,
-   "job_studies_all_folders": 32,
-   "qualifier1_top": [
-    {
-     "qualifier1": "sts_pred",
-     "studies": 10,
-     "rows": 13
-    },
-    {
-     "qualifier1": "sts_observed_predicted",
-     "studies": 4,
-     "rows": 9
-    },
-    {
-     "qualifier1": "sts_analyses",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "sts_obs_pred",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "STStable",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "STStable_test",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "STStable_test2",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "sts_ObsdPredTable",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_ObsdPredTable_full_ster",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_ObsdPredTable_less_invasive",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_isomv",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_nonisomv",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_04192018",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_112222",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_12042017",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_jr",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_redone",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_redone_cabg",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_redone_iso",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_redone_other",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_testdata",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_testdata_chris",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_traindata",
      "studies": 1,
      "rows": 1
     }
@@ -5499,134 +5370,455 @@
    ]
   },
   {
-   "folder": "datasets",
-   "prefix": "vars",
-   "distinct_qualifier1": 27,
-   "job_studies_in_folder": 912,
-   "job_studies_all_folders": 912,
+   "folder": "graphs",
+   "prefix": "ac",
+   "distinct_qualifier1": 8,
+   "job_studies_in_folder": 22,
+   "job_studies_all_folders": 745,
    "qualifier1_top": [
     {
-     "qualifier1": "old",
-     "studies": 8,
-     "rows": 8
+     "qualifier1": "dead",
+     "studies": 13,
+     "rows": 18
     },
     {
-     "qualifier1": "base",
-     "studies": 2,
+     "qualifier1": "manuscript_plots",
+     "studies": 3,
      "rows": 3
     },
     {
-     "qualifier1": "ehb",
+     "qualifier1": "reop",
      "studies": 2,
      "rows": 2
     },
     {
-     "qualifier1": "sas",
+     "qualifier1": "dead_arf",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_woman and procedure",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "redo1",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "rein1",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "svds",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "ls",
+   "distinct_qualifier1": 24,
+   "job_studies_in_folder": 20,
+   "job_studies_all_folders": 32,
+   "qualifier1_top": [
+    {
+     "qualifier1": "sts_pred",
+     "studies": 10,
+     "rows": 13
+    },
+    {
+     "qualifier1": "sts_observed_predicted",
+     "studies": 4,
+     "rows": 9
+    },
+    {
+     "qualifier1": "sts_analyses",
+     "studies": 3,
+     "rows": 3
+    },
+    {
+     "qualifier1": "sts_obs_pred",
      "studies": 2,
      "rows": 2
     },
     {
-     "qualifier1": "01112022",
+     "qualifier1": "STStable",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "05112023",
+     "qualifier1": "STStable_test",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "11151015",
+     "qualifier1": "STStable_test2",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "2024",
+     "qualifier1": "sts",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "sts_ObsdPredTable",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "CMD",
+     "qualifier1": "sts_ObsdPredTable_full_ster",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "OLD",
+     "qualifier1": "sts_ObsdPredTable_less_invasive",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "cardsurg",
+     "qualifier1": "sts_isomv",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "cardsurg)old",
+     "qualifier1": "sts_nonisomv",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "copy",
+     "qualifier1": "sts_pred_04192018",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "donor",
+     "qualifier1": "sts_pred_112222",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "feas2023may",
+     "qualifier1": "sts_pred_12042017",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "jf",
+     "qualifier1": "sts_pred_jr",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "js",
+     "qualifier1": "sts_pred_redone",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "jw",
+     "qualifier1": "sts_pred_redone_cabg",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "kevinsun",
+     "qualifier1": "sts_pred_redone_iso",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "o",
+     "qualifier1": "sts_pred_redone_other",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "oldest",
+     "qualifier1": "sts_pred_testdata",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "qa",
+     "qualifier1": "sts_pred_testdata_chris",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "rajes",
+     "qualifier1": "sts_pred_traindata",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "distributions",
+   "prefix": "ce",
+   "distinct_qualifier1": 11,
+   "job_studies_in_folder": 19,
+   "job_studies_all_folders": 128,
+   "qualifier1_top": [
+    {
+     "qualifier1": "states",
+     "studies": 13,
+     "rows": 21
+    },
+    {
+     "qualifier1": "CP_reopSVD_oz_ccf_age_mtch",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "recip",
+     "qualifier1": "CP_reopSVD_oz_dial_mtch",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "savr",
+     "qualifier1": "check",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "expltsvd",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "reop_dead",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "states1",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "states2",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "states4",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "states_death",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "states_modulated",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "nb",
+   "distinct_qualifier1": 14,
+   "job_studies_in_folder": 18,
+   "job_studies_all_folders": 18,
+   "qualifier1_top": [
+    {
+     "qualifier1": "Boostmtree",
+     "studies": 12,
+     "rows": 49
+    },
+    {
+     "qualifier1": "Boostmtree_avpkg",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "Boostmtree_polvmassi_AI",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "Boostmtree_polvmassi_ALL3",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "Boostmtree_rvedai",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "Boostmtree_rvedai_ap",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "Boostmtreelvmassi_AI",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "Boostmtreelvmassi_AIAS",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "Boostmtreelvmassi_AS",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "boostmtree",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "boostmtree_bun",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "boostmtree_eck",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "boostmtree_tbe",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "test",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "bc",
+   "distinct_qualifier1": 96,
+   "job_studies_in_folder": 16,
+   "job_studies_all_folders": 16,
+   "qualifier1_top": [
+    {
+     "qualifier1": "dead",
+     "studies": 8,
+     "rows": 13
+    },
+    {
+     "qualifier1": "dead_summary",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "all_evt",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "cdiff",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "comp",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "dead1",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead2",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead2_summary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_ex_int",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_ex_int_summary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_ex_summary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_ex",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_ex_summary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_s1",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_s1_summary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_s2",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_s2_summary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_s3",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_s3_summary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_s4",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_s4_summary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_s5",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_s5_summary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_fit_summary",
      "studies": 1,
      "rows": 1
     }
@@ -5748,302 +5940,6 @@
      "qualifier1": "prob",
      "studies": 1,
      "rows": 2
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "nb",
-   "distinct_qualifier1": 14,
-   "job_studies_in_folder": 18,
-   "job_studies_all_folders": 18,
-   "qualifier1_top": [
-    {
-     "qualifier1": "Boostmtree",
-     "studies": 12,
-     "rows": 49
-    },
-    {
-     "qualifier1": "Boostmtree_avpkg",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "Boostmtree_polvmassi_AI",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "Boostmtree_polvmassi_ALL3",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "Boostmtree_rvedai",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "Boostmtree_rvedai_ap",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "Boostmtreelvmassi_AI",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "Boostmtreelvmassi_AIAS",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "Boostmtreelvmassi_AS",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "boostmtree",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "boostmtree_bun",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "boostmtree_eck",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "boostmtree_tbe",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "test",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "distributions",
-   "prefix": "ce",
-   "distinct_qualifier1": 11,
-   "job_studies_in_folder": 19,
-   "job_studies_all_folders": 128,
-   "qualifier1_top": [
-    {
-     "qualifier1": "states",
-     "studies": 13,
-     "rows": 21
-    },
-    {
-     "qualifier1": "CP_reopSVD_oz_ccf_age_mtch",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "CP_reopSVD_oz_dial_mtch",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "check",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "expltsvd",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "reop_dead",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "states1",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "states2",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "states4",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "states_death",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "states_modulated",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "graphs",
-   "prefix": "ac",
-   "distinct_qualifier1": 8,
-   "job_studies_in_folder": 22,
-   "job_studies_all_folders": 745,
-   "qualifier1_top": [
-    {
-     "qualifier1": "dead",
-     "studies": 13,
-     "rows": 18
-    },
-    {
-     "qualifier1": "manuscript_plots",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "reop",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "dead_arf",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_woman and procedure",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "redo1",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "rein1",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "svds",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "rfs",
-   "distinct_qualifier1": 19,
-   "job_studies_in_folder": 4,
-   "job_studies_all_folders": 9,
-   "qualifier1_top": [
-    {
-     "qualifier1": "survival",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "amy_al",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_all",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_clinical",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune_all",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune_clinical",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune_clinical_lv_lge",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune_clinical_lv_lge_nobnptrop",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune_clinical_lv_lge_rv",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune_clinical_nobnptrop",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune_mri",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune_stage-lv-lge",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune_staging",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_notune_staging-lvef-lvedvi",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mayo_tune",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "nuc_sss",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "temp",
-     "studies": 1,
-     "rows": 1
     }
    ]
   },
@@ -6221,6 +6117,172 @@
    ]
   },
   {
+   "folder": "distributions",
+   "prefix": "dc",
+   "distinct_qualifier1": 7,
+   "job_studies_in_folder": 8,
+   "job_studies_all_folders": 1009,
+   "qualifier1_top": [
+    {
+     "qualifier1": "po_pft",
+     "studies": 2,
+     "rows": 8
+    },
+    {
+     "qualifier1": "HbA1c_ProportionMeasured",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "asc_sinus",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "echo",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "gfup",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "loess",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "medianfu",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "dc",
+   "distinct_qualifier1": 7,
+   "job_studies_in_folder": 7,
+   "job_studies_all_folders": 1009,
+   "qualifier1_top": [
+    {
+     "qualifier1": "cindex_cox",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "general",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "quintiles",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "std_diff",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "stsrisk",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "tables",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "volumes",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "graphs",
+   "prefix": "cd",
+   "distinct_qualifier1": 7,
+   "job_studies_in_folder": 7,
+   "job_studies_all_folders": 190,
+   "qualifier1_top": [
+    {
+     "qualifier1": "bootstrap",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "cdf",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "ct_vol",
+     "studies": 1,
+     "rows": 3
+    },
+    {
+     "qualifier1": "intervals",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "iv_incan_pdf",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "iv_psx",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "stat_cad",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "dt",
+   "distinct_qualifier1": 5,
+   "job_studies_in_folder": 6,
+   "job_studies_all_folders": 503,
+   "qualifier1_top": [
+    {
+     "qualifier1": "data_check",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "data",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "moses",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mvcabg",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "parm",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
    "folder": "documents",
    "prefix": "rfs",
    "distinct_qualifier1": 17,
@@ -6315,6 +6377,55 @@
    ]
   },
   {
+   "folder": "graphs",
+   "prefix": "rm",
+   "distinct_qualifier1": 8,
+   "job_studies_in_folder": 5,
+   "job_studies_all_folders": 170,
+   "qualifier1_top": [
+    {
+     "qualifier1": "ivcpb_ivaocc_learning_curve",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "lvgrr",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "avpkgrad_learning_curve_alone",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "avregurg_learning_curve_alone",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "ivaocc_learning_curve",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "ivaocc_learning_curve_alone",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "ivcpb_learning_curve",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "ivcpb_learning_curve_alone",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
    "folder": "analyses",
    "prefix": "bd",
    "distinct_qualifier1": 14,
@@ -6394,79 +6505,588 @@
    ]
   },
   {
-   "folder": "datasets",
-   "prefix": "ac",
-   "distinct_qualifier1": 14,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 745,
+   "folder": "analyses",
+   "prefix": "hp",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 4,
+   "job_studies_all_folders": 541,
    "qualifier1_top": [
     {
-     "qualifier1": "paivs",
-     "studies": 1,
-     "rows": 12
+     "qualifier1": "dead",
+     "studies": 3,
+     "rows": 3
     },
     {
-     "qualifier1": "paivs_15v_sept082011",
+     "qualifier1": "example",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "nd",
+   "distinct_qualifier1": 9,
+   "job_studies_in_folder": 4,
+   "job_studies_all_folders": 244,
+   "qualifier1_top": [
+    {
+     "qualifier1": "5m_tbe_virtual_twin",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_15vr",
+     "qualifier1": "avmngrad_i_toth",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_2vr",
+     "qualifier1": "eck_dys_virtual_twin",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_alldeath_sept082011",
+     "qualifier1": "eck_virtual_twin",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_bvr_sept072011",
+     "qualifier1": "eck_virtual_twin_raw",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_bvr_sept082011",
+     "qualifier1": "mae30d_TA",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_dea1_sept082011",
+     "qualifier1": "mae30d_TF",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_fontan",
+     "qualifier1": "mr",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_htx",
+     "qualifier1": "tbe_virtual_twin",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "pm",
+   "distinct_qualifier1": 4,
+   "job_studies_in_folder": 4,
+   "job_studies_all_folders": 4,
+   "qualifier1_top": [
+    {
+     "qualifier1": "amicar",
+     "studies": 1,
+     "rows": 4
+    },
+    {
+     "qualifier1": "count",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "dead",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_htx_sept082011",
+     "qualifier1": "rbctot",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "rfs",
+   "distinct_qualifier1": 19,
+   "job_studies_in_folder": 4,
+   "job_studies_all_folders": 9,
+   "qualifier1_top": [
+    {
+     "qualifier1": "survival",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "amy_al",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_nit_sept082011",
+     "qualifier1": "dead",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_pal_sept082011",
+     "qualifier1": "mayo_all",
      "studies": 1,
      "rows": 1
     },
     {
-     "qualifier1": "paivs_svr_sept082011",
+     "qualifier1": "mayo_clinical",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune_all",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune_clinical",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune_clinical_lv_lge",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune_clinical_lv_lge_nobnptrop",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune_clinical_lv_lge_rv",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune_clinical_nobnptrop",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune_mri",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune_stage-lv-lge",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune_staging",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_notune_staging-lvef-lvedvi",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mayo_tune",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "nuc_sss",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "temp",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "rg",
+   "distinct_qualifier1": 5,
+   "job_studies_in_folder": 4,
+   "job_studies_all_folders": 45,
+   "qualifier1_top": [
+    {
+     "qualifier1": "adx_dila",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "rdw",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "structures",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "timetrends",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "tv_lev_uk",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "cd",
+   "distinct_qualifier1": 4,
+   "job_studies_in_folder": 4,
+   "job_studies_all_folders": 190,
+   "qualifier1_top": [
+    {
+     "qualifier1": "cering",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "followup",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "learning",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "tables",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "documents",
+   "prefix": "rfc",
+   "distinct_qualifier1": 7,
+   "job_studies_in_folder": 4,
+   "job_studies_all_folders": 11,
+   "qualifier1_top": [
+    {
+     "qualifier1": "hdead",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "ppm",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "ppm_bav",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "ppm_old",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "ppm_tav",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "respef",
+     "studies": 1,
+     "rows": 17
+    },
+    {
+     "qualifier1": "statins",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "graphs",
+   "prefix": "cp",
+   "distinct_qualifier1": 9,
+   "job_studies_in_folder": 4,
+   "job_studies_all_folders": 4,
+   "qualifier1_top": [
+    {
+     "qualifier1": "ce_death_htx_lvad_bystage",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead5",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_imp",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_imp_Table3d",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_imp_Table3d_old",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_imp_Table3e_old",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "dead_imp_abn1_uni",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "timevary_cov",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "hz",
+   "distinct_qualifier1": 4,
+   "job_studies_in_folder": 3,
+   "job_studies_all_folders": 574,
+   "qualifier1_top": [
+    {
+     "qualifier1": "CR",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "dead",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "repeated_events",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "example",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "lg",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 3,
+   "job_studies_all_folders": 362,
+   "qualifier1_top": [
+    {
+     "qualifier1": "hdead",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "trends",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "datasets",
+   "prefix": "ls",
+   "distinct_qualifier1": 4,
+   "job_studies_in_folder": 3,
+   "job_studies_all_folders": 32,
+   "qualifier1_top": [
+    {
+     "qualifier1": "sts_pred",
+     "studies": 2,
+     "rows": 2
+    },
+    {
+     "qualifier1": "sts_pred120117",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sts_pred_jr",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sts_pred_lmd",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "distributions",
+   "prefix": "bd",
+   "distinct_qualifier1": 3,
+   "job_studies_in_folder": 3,
+   "job_studies_all_folders": 1094,
+   "qualifier1_top": [
+    {
+     "qualifier1": "avmngrad_JTCVS-comm",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "data_old",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "tvc_km",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "distributions",
+   "prefix": "hp",
+   "distinct_qualifier1": 3,
+   "job_studies_in_folder": 3,
+   "job_studies_all_folders": 541,
+   "qualifier1_top": [
+    {
+     "qualifier1": "dead",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "device",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "fontan",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "documents",
+   "prefix": "dc",
+   "distinct_qualifier1": 3,
+   "job_studies_in_folder": 3,
+   "job_studies_all_folders": 1009,
+   "qualifier1_top": [
+    {
+     "qualifier1": "flowsheets",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "longitudinal",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "stddiff_5yr_10yr",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "graphs",
+   "prefix": "rf",
+   "distinct_qualifier1": 3,
+   "job_studies_in_folder": 3,
+   "job_studies_all_folders": 41,
+   "qualifier1_top": [
+    {
+     "qualifier1": "partialplot-acute_b",
+     "studies": 1,
+     "rows": 3
+    },
+    {
+     "qualifier1": "partialplot-diabetes",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "pp",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "bq",
+   "distinct_qualifier1": 4,
+   "job_studies_in_folder": 2,
+   "job_studies_all_folders": 2,
+   "qualifier1_top": [
+    {
+     "qualifier1": "bootstrap_quantile_90_summary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "quantile_regression_bagging",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "quantile_regression_bagging_test",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "trop_po",
+     "studies": 1,
+     "rows": 14
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "dp",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 2,
+   "job_studies_all_folders": 515,
+   "qualifier1_top": [
+    {
+     "qualifier1": "spaghetti",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "trends",
      "studies": 1,
      "rows": 1
     }
@@ -6621,6 +7241,213 @@
    ]
   },
   {
+   "folder": "descriptive",
+   "prefix": "ac",
+   "distinct_qualifier1": 3,
+   "job_studies_in_folder": 2,
+   "job_studies_all_folders": 745,
+   "qualifier1_top": [
+    {
+     "qualifier1": "death",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mvreop",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "reint",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "ar",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 2,
+   "job_studies_all_folders": 394,
+   "qualifier1_top": [
+    {
+     "qualifier1": "eda",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "part1",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "ls",
+   "distinct_qualifier1": 7,
+   "job_studies_in_folder": 2,
+   "job_studies_all_folders": 32,
+   "qualifier1_top": [
+    {
+     "qualifier1": "STStable",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sts_ObsdPredTable_avr_overall",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sts_ObsdPredTable_avr_primary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sts_ObsdPredTable_avr_reop",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sts_ObsdPredTable_cabg_overall",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sts_ObsdPredTable_cabg_primary",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "sts_ObsdPredTable_cabg_reop",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "distributions",
+   "prefix": "nm",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 2,
+   "job_studies_all_folders": 121,
+   "qualifier1_top": [
+    {
+     "qualifier1": "eckardt_score",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "tbe_5m_vt",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "distributions",
+   "prefix": "np",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 2,
+   "job_studies_all_folders": 241,
+   "qualifier1_top": [
+    {
+     "qualifier1": "SIM_phases",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "fvc",
+     "studies": 1,
+     "rows": 2
+    }
+   ]
+  },
+  {
+   "folder": "documents",
+   "prefix": "ac",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 2,
+   "job_studies_all_folders": 745,
+   "qualifier1_top": [
+    {
+     "qualifier1": "dead",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "repeated",
+     "studies": 1,
+     "rows": 2
+    }
+   ]
+  },
+  {
+   "folder": "documents",
+   "prefix": "bd",
+   "distinct_qualifier1": 5,
+   "job_studies_in_folder": 2,
+   "job_studies_all_folders": 1094,
+   "qualifier1_top": [
+    {
+     "qualifier1": "SAStoR_echo",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "data",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "gmatch_5yr_10yr",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mult",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "propen",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "documents",
+   "prefix": "lm",
+   "distinct_qualifier1": 4,
+   "job_studies_in_folder": 2,
+   "job_studies_all_folders": 469,
+   "qualifier1_top": [
+    {
+     "qualifier1": "5yr_10yr_propen",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "fp",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "mi",
+     "studies": 1,
+     "rows": 3
+    },
+    {
+     "qualifier1": "predprob",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
    "folder": "graphs",
    "prefix": "lm",
    "distinct_qualifier1": 13,
@@ -6691,6 +7518,488 @@
      "qualifier1": "predprob",
      "studies": 1,
      "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "ac",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 745,
+   "qualifier1_top": [
+    {
+     "qualifier1": "example",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "cd",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 190,
+   "qualifier1_top": [
+    {
+     "qualifier1": "carrest",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "gp",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 50,
+   "qualifier1_top": [
+    {
+     "qualifier1": "mv",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "hs",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 140,
+   "qualifier1_top": [
+    {
+     "qualifier1": "deadp_demoimg",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "analyses",
+   "prefix": "lp",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 310,
+   "qualifier1_top": [
+    {
+     "qualifier1": "mae30d",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "datasets",
+   "prefix": "ac",
+   "distinct_qualifier1": 14,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 745,
+   "qualifier1_top": [
+    {
+     "qualifier1": "paivs",
+     "studies": 1,
+     "rows": 12
+    },
+    {
+     "qualifier1": "paivs_15v_sept082011",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_15vr",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_2vr",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_alldeath_sept082011",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_bvr_sept072011",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_bvr_sept082011",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_dea1_sept082011",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_fontan",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_htx",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_htx_sept082011",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_nit_sept082011",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_pal_sept082011",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "paivs_svr_sept082011",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "datasets",
+   "prefix": "bh",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 320,
+   "qualifier1_top": [
+    {
+     "qualifier1": "st1VR_pathway_surv",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "st2VR_pathway_surv",
+     "studies": 1,
+     "rows": 2
+    }
+   ]
+  },
+  {
+   "folder": "datasets",
+   "prefix": "dp",
+   "distinct_qualifier1": 3,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 515,
+   "qualifier1_top": [
+    {
+     "qualifier1": "EDA_barplots_scatterplots",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "descriptive",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "gfup",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "datasets",
+   "prefix": "hm",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 373,
+   "qualifier1_top": [
+    {
+     "qualifier1": "st1VR_pathway_surv",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "st2VR_pathway_surv_patient",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "datasets",
+   "prefix": "lg",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 362,
+   "qualifier1_top": [
+    {
+     "qualifier1": "st1VR_pathway",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "st2VR_pathway",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "datasets",
+   "prefix": "lm",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 469,
+   "qualifier1_top": [
+    {
+     "qualifier1": "logistic_mult_imp_calcium",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "logistic_mult_imp_death",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "datasets",
+   "prefix": "lp",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 310,
+   "qualifier1_top": [
+    {
+     "qualifier1": "propen",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "bd",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 1094,
+   "qualifier1_top": [
+    {
+     "qualifier1": "forest_QOL_toth",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "hz",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 574,
+   "qualifier1_top": [
+    {
+     "qualifier1": "allograft",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "explant",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "lm",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 469,
+   "qualifier1_top": [
+    {
+     "qualifier1": "trends",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "lp",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 310,
+   "qualifier1_top": [
+    {
+     "qualifier1": "dead",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "nd",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 244,
+   "qualifier1_top": [
+    {
+     "qualifier1": "MM",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "descriptive",
+   "prefix": "np",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 241,
+   "qualifier1_top": [
+    {
+     "qualifier1": "points_lt8",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "distributions",
+   "prefix": "bn",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 108,
+   "qualifier1_top": [
+    {
+     "qualifier1": "avmngrd",
+     "studies": 1,
+     "rows": 2
+    }
+   ]
+  },
+  {
+   "folder": "documents",
+   "prefix": "bn",
+   "distinct_qualifier1": 10,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 108,
+   "qualifier1_top": [
+    {
+     "qualifier1": "ecaeoa_10yr",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "ecaeoa_5yr",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "ecaeoa_mtch_10yr",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "ecaeoa_mtch_5yr",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "ecaeoa_mtch_5yr10yr_ALL",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "ecmsga_10yr",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "ecmsga_5yr",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "ecmsga_mtch_10yr",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "ecmsga_mtch_5yr",
+     "studies": 1,
+     "rows": 2
+    },
+    {
+     "qualifier1": "ecmsga_mtch_5yr10yr_ALL",
+     "studies": 1,
+     "rows": 2
+    }
+   ]
+  },
+  {
+   "folder": "documents",
+   "prefix": "dp",
+   "distinct_qualifier1": 3,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 515,
+   "qualifier1_top": [
+    {
+     "qualifier1": "avarea_spaghetti",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "avmngrad_spaghetti",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "echo_5yr_10yr",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "documents",
+   "prefix": "hm",
+   "distinct_qualifier1": 1,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 373,
+   "qualifier1_top": [
+    {
+     "qualifier1": "repeated",
+     "studies": 1,
+     "rows": 1
+    }
+   ]
+  },
+  {
+   "folder": "documents",
+   "prefix": "hz",
+   "distinct_qualifier1": 2,
+   "job_studies_in_folder": 1,
+   "job_studies_all_folders": 574,
+   "qualifier1_top": [
+    {
+     "qualifier1": "modulate",
+     "studies": 1,
+     "rows": 1
+    },
+    {
+     "qualifier1": "repeat",
+     "studies": 1,
+     "rows": 2
     }
    ]
   },
@@ -6834,737 +8143,6 @@
   },
   {
    "folder": "documents",
-   "prefix": "bn",
-   "distinct_qualifier1": 10,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 108,
-   "qualifier1_top": [
-    {
-     "qualifier1": "ecaeoa_10yr",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "ecaeoa_5yr",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "ecaeoa_mtch_10yr",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "ecaeoa_mtch_5yr",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "ecaeoa_mtch_5yr10yr_ALL",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "ecmsga_10yr",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "ecmsga_5yr",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "ecmsga_mtch_10yr",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "ecmsga_mtch_5yr",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "ecmsga_mtch_5yr10yr_ALL",
-     "studies": 1,
-     "rows": 2
-    }
-   ]
-  },
-  {
-   "folder": "graphs",
-   "prefix": "rm",
-   "distinct_qualifier1": 8,
-   "job_studies_in_folder": 5,
-   "job_studies_all_folders": 170,
-   "qualifier1_top": [
-    {
-     "qualifier1": "ivcpb_ivaocc_learning_curve",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "lvgrr",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "avpkgrad_learning_curve_alone",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "avregurg_learning_curve_alone",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ivaocc_learning_curve",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ivaocc_learning_curve_alone",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ivcpb_learning_curve",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ivcpb_learning_curve_alone",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "nd",
-   "distinct_qualifier1": 9,
-   "job_studies_in_folder": 4,
-   "job_studies_all_folders": 244,
-   "qualifier1_top": [
-    {
-     "qualifier1": "5m_tbe_virtual_twin",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "avmngrad_i_toth",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "eck_dys_virtual_twin",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "eck_virtual_twin",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "eck_virtual_twin_raw",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mae30d_TA",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mae30d_TF",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mr",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "tbe_virtual_twin",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "graphs",
-   "prefix": "cp",
-   "distinct_qualifier1": 9,
-   "job_studies_in_folder": 4,
-   "job_studies_all_folders": 4,
-   "qualifier1_top": [
-    {
-     "qualifier1": "ce_death_htx_lvad_bystage",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead5",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_imp",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_imp_Table3d",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_imp_Table3d_old",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_imp_Table3e_old",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "dead_imp_abn1_uni",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "timevary_cov",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "distributions",
-   "prefix": "dc",
-   "distinct_qualifier1": 7,
-   "job_studies_in_folder": 8,
-   "job_studies_all_folders": 1009,
-   "qualifier1_top": [
-    {
-     "qualifier1": "po_pft",
-     "studies": 2,
-     "rows": 8
-    },
-    {
-     "qualifier1": "HbA1c_ProportionMeasured",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "asc_sinus",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "echo",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "gfup",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "loess",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "medianfu",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "dc",
-   "distinct_qualifier1": 7,
-   "job_studies_in_folder": 7,
-   "job_studies_all_folders": 1009,
-   "qualifier1_top": [
-    {
-     "qualifier1": "cindex_cox",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "general",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "quintiles",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "std_diff",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "stsrisk",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "tables",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "volumes",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "hz",
-   "distinct_qualifier1": 4,
-   "job_studies_in_folder": 3,
-   "job_studies_all_folders": 574,
-   "qualifier1_top": [
-    {
-     "qualifier1": "CR",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "dead",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "repeated_events",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "example",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "ls",
-   "distinct_qualifier1": 7,
-   "job_studies_in_folder": 2,
-   "job_studies_all_folders": 32,
-   "qualifier1_top": [
-    {
-     "qualifier1": "STStable",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_ObsdPredTable_avr_overall",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_ObsdPredTable_avr_primary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_ObsdPredTable_avr_reop",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_ObsdPredTable_cabg_overall",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_ObsdPredTable_cabg_primary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_ObsdPredTable_cabg_reop",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "documents",
-   "prefix": "rfc",
-   "distinct_qualifier1": 7,
-   "job_studies_in_folder": 4,
-   "job_studies_all_folders": 11,
-   "qualifier1_top": [
-    {
-     "qualifier1": "hdead",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ppm",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ppm_bav",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ppm_old",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ppm_tav",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "respef",
-     "studies": 1,
-     "rows": 17
-    },
-    {
-     "qualifier1": "statins",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "graphs",
-   "prefix": "cd",
-   "distinct_qualifier1": 7,
-   "job_studies_in_folder": 7,
-   "job_studies_all_folders": 190,
-   "qualifier1_top": [
-    {
-     "qualifier1": "bootstrap",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "cdf",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "ct_vol",
-     "studies": 1,
-     "rows": 3
-    },
-    {
-     "qualifier1": "intervals",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "iv_incan_pdf",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "iv_psx",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "stat_cad",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "dt",
-   "distinct_qualifier1": 5,
-   "job_studies_in_folder": 6,
-   "job_studies_all_folders": 503,
-   "qualifier1_top": [
-    {
-     "qualifier1": "data_check",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "data",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "moses",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mvcabg",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "parm",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "rg",
-   "distinct_qualifier1": 5,
-   "job_studies_in_folder": 4,
-   "job_studies_all_folders": 45,
-   "qualifier1_top": [
-    {
-     "qualifier1": "adx_dila",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "rdw",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "structures",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "timetrends",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "tv_lev_uk",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "datasets",
-   "prefix": "ls",
-   "distinct_qualifier1": 4,
-   "job_studies_in_folder": 3,
-   "job_studies_all_folders": 32,
-   "qualifier1_top": [
-    {
-     "qualifier1": "sts_pred",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "sts_pred120117",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_jr",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "sts_pred_lmd",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "documents",
-   "prefix": "bd",
-   "distinct_qualifier1": 5,
-   "job_studies_in_folder": 2,
-   "job_studies_all_folders": 1094,
-   "qualifier1_top": [
-    {
-     "qualifier1": "SAStoR_echo",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "data",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "gmatch_5yr_10yr",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mult",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "propen",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "bq",
-   "distinct_qualifier1": 4,
-   "job_studies_in_folder": 2,
-   "job_studies_all_folders": 2,
-   "qualifier1_top": [
-    {
-     "qualifier1": "bootstrap_quantile_90_summary",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "quantile_regression_bagging",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "quantile_regression_bagging_test",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "trop_po",
-     "studies": 1,
-     "rows": 14
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "hp",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 4,
-   "job_studies_all_folders": 541,
-   "qualifier1_top": [
-    {
-     "qualifier1": "dead",
-     "studies": 3,
-     "rows": 3
-    },
-    {
-     "qualifier1": "example",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "pm",
-   "distinct_qualifier1": 4,
-   "job_studies_in_folder": 4,
-   "job_studies_all_folders": 4,
-   "qualifier1_top": [
-    {
-     "qualifier1": "amicar",
-     "studies": 1,
-     "rows": 4
-    },
-    {
-     "qualifier1": "count",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "dead",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "rbctot",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "cd",
-   "distinct_qualifier1": 4,
-   "job_studies_in_folder": 4,
-   "job_studies_all_folders": 190,
-   "qualifier1_top": [
-    {
-     "qualifier1": "cering",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "followup",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "learning",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "tables",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "documents",
-   "prefix": "lm",
-   "distinct_qualifier1": 4,
-   "job_studies_in_folder": 2,
-   "job_studies_all_folders": 469,
-   "qualifier1_top": [
-    {
-     "qualifier1": "5yr_10yr_propen",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "fp",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mi",
-     "studies": 1,
-     "rows": 3
-    },
-    {
-     "qualifier1": "predprob",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "documents",
    "prefix": "rf",
    "distinct_qualifier1": 4,
    "job_studies_in_folder": 1,
@@ -7587,584 +8165,6 @@
     },
     {
      "qualifier1": "unsupervised-exp",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "lg",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 3,
-   "job_studies_all_folders": 362,
-   "qualifier1_top": [
-    {
-     "qualifier1": "hdead",
-     "studies": 2,
-     "rows": 2
-    },
-    {
-     "qualifier1": "trends",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "datasets",
-   "prefix": "dp",
-   "distinct_qualifier1": 3,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 515,
-   "qualifier1_top": [
-    {
-     "qualifier1": "EDA_barplots_scatterplots",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "descriptive",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "gfup",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "ac",
-   "distinct_qualifier1": 3,
-   "job_studies_in_folder": 2,
-   "job_studies_all_folders": 745,
-   "qualifier1_top": [
-    {
-     "qualifier1": "death",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "mvreop",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "reint",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "distributions",
-   "prefix": "bd",
-   "distinct_qualifier1": 3,
-   "job_studies_in_folder": 3,
-   "job_studies_all_folders": 1094,
-   "qualifier1_top": [
-    {
-     "qualifier1": "avmngrad_JTCVS-comm",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "data_old",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "tvc_km",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "distributions",
-   "prefix": "hp",
-   "distinct_qualifier1": 3,
-   "job_studies_in_folder": 3,
-   "job_studies_all_folders": 541,
-   "qualifier1_top": [
-    {
-     "qualifier1": "dead",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "device",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "fontan",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "documents",
-   "prefix": "dc",
-   "distinct_qualifier1": 3,
-   "job_studies_in_folder": 3,
-   "job_studies_all_folders": 1009,
-   "qualifier1_top": [
-    {
-     "qualifier1": "flowsheets",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "longitudinal",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "stddiff_5yr_10yr",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "documents",
-   "prefix": "dp",
-   "distinct_qualifier1": 3,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 515,
-   "qualifier1_top": [
-    {
-     "qualifier1": "avarea_spaghetti",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "avmngrad_spaghetti",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "echo_5yr_10yr",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "graphs",
-   "prefix": "rf",
-   "distinct_qualifier1": 3,
-   "job_studies_in_folder": 3,
-   "job_studies_all_folders": 41,
-   "qualifier1_top": [
-    {
-     "qualifier1": "partialplot-acute_b",
-     "studies": 1,
-     "rows": 3
-    },
-    {
-     "qualifier1": "partialplot-diabetes",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "pp",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "dp",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 2,
-   "job_studies_all_folders": 515,
-   "qualifier1_top": [
-    {
-     "qualifier1": "spaghetti",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "trends",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "datasets",
-   "prefix": "bh",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 320,
-   "qualifier1_top": [
-    {
-     "qualifier1": "st1VR_pathway_surv",
-     "studies": 1,
-     "rows": 2
-    },
-    {
-     "qualifier1": "st2VR_pathway_surv",
-     "studies": 1,
-     "rows": 2
-    }
-   ]
-  },
-  {
-   "folder": "datasets",
-   "prefix": "hm",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 373,
-   "qualifier1_top": [
-    {
-     "qualifier1": "st1VR_pathway_surv",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "st2VR_pathway_surv_patient",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "datasets",
-   "prefix": "lg",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 362,
-   "qualifier1_top": [
-    {
-     "qualifier1": "st1VR_pathway",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "st2VR_pathway",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "datasets",
-   "prefix": "lm",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 469,
-   "qualifier1_top": [
-    {
-     "qualifier1": "logistic_mult_imp_calcium",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "logistic_mult_imp_death",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "ar",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 2,
-   "job_studies_all_folders": 394,
-   "qualifier1_top": [
-    {
-     "qualifier1": "eda",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "part1",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "hz",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 574,
-   "qualifier1_top": [
-    {
-     "qualifier1": "allograft",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "explant",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "distributions",
-   "prefix": "nm",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 2,
-   "job_studies_all_folders": 121,
-   "qualifier1_top": [
-    {
-     "qualifier1": "eckardt_score",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "tbe_5m_vt",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "distributions",
-   "prefix": "np",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 2,
-   "job_studies_all_folders": 241,
-   "qualifier1_top": [
-    {
-     "qualifier1": "SIM_phases",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "fvc",
-     "studies": 1,
-     "rows": 2
-    }
-   ]
-  },
-  {
-   "folder": "documents",
-   "prefix": "ac",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 2,
-   "job_studies_all_folders": 745,
-   "qualifier1_top": [
-    {
-     "qualifier1": "dead",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "repeated",
-     "studies": 1,
-     "rows": 2
-    }
-   ]
-  },
-  {
-   "folder": "documents",
-   "prefix": "hz",
-   "distinct_qualifier1": 2,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 574,
-   "qualifier1_top": [
-    {
-     "qualifier1": "modulate",
-     "studies": 1,
-     "rows": 1
-    },
-    {
-     "qualifier1": "repeat",
-     "studies": 1,
-     "rows": 2
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "ac",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 745,
-   "qualifier1_top": [
-    {
-     "qualifier1": "example",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "cd",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 190,
-   "qualifier1_top": [
-    {
-     "qualifier1": "carrest",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "gp",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 50,
-   "qualifier1_top": [
-    {
-     "qualifier1": "mv",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "hs",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 140,
-   "qualifier1_top": [
-    {
-     "qualifier1": "deadp_demoimg",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "analyses",
-   "prefix": "lp",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 310,
-   "qualifier1_top": [
-    {
-     "qualifier1": "mae30d",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "datasets",
-   "prefix": "lp",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 310,
-   "qualifier1_top": [
-    {
-     "qualifier1": "propen",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "bd",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 1094,
-   "qualifier1_top": [
-    {
-     "qualifier1": "forest_QOL_toth",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "lm",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 469,
-   "qualifier1_top": [
-    {
-     "qualifier1": "trends",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "lp",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 310,
-   "qualifier1_top": [
-    {
-     "qualifier1": "dead",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "nd",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 244,
-   "qualifier1_top": [
-    {
-     "qualifier1": "MM",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "descriptive",
-   "prefix": "np",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 241,
-   "qualifier1_top": [
-    {
-     "qualifier1": "points_lt8",
-     "studies": 1,
-     "rows": 1
-    }
-   ]
-  },
-  {
-   "folder": "distributions",
-   "prefix": "bn",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 108,
-   "qualifier1_top": [
-    {
-     "qualifier1": "avmngrd",
-     "studies": 1,
-     "rows": 2
-    }
-   ]
-  },
-  {
-   "folder": "documents",
-   "prefix": "hm",
-   "distinct_qualifier1": 1,
-   "job_studies_in_folder": 1,
-   "job_studies_all_folders": 373,
-   "qualifier1_top": [
-    {
-     "qualifier1": "repeated",
      "studies": 1,
      "rows": 1
     }
