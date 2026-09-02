@@ -231,30 +231,68 @@ scaffolded at all.
 
 - **`main` is protected by a GitHub ruleset, and nothing in this repo
   records that.** A clone shows no trace of it, so it is stated here.
-  The ruleset is named `protect main`, is identical across all twelve
-  repositories in the HVTI R package family, and enforces four rules on
-  the default branch: no deletion, no force-push, pull-request-only, and
-  an **automatic Copilot code review**. A direct push to `main` is
-  rejected by the server — that is the ruleset, not a local hook, and
-  the fix is to branch, never to force past it. ⚠️ It currently requires
-  **zero approvals**. `require_code_owner_review` is set but inert
-  because no repository in the family has a `CODEOWNERS` file, so a PR
-  can merge unreviewed. Adding `CODEOWNERS` makes that flag live and
-  changes who can merge what. ⚠️ **A stacked PR gets no Copilot review,
-  and still reaches `main`.** The ruleset’s condition is
+  The ruleset is named `protect main`, is active on twelve repositories
+  in the HVTI R package family, and enforces four rules on the default
+  branch: no deletion, no force-push, pull-request-only, and an
+  **automatic Copilot code review**. A direct push to `main` is rejected
+  by the server, which is the ruleset and not a local hook, and the fix
+  is to branch, never to force past it. ⚠️ **A PR needs one approving
+  review, and you cannot give it to your own PR.**
+  `required_approving_review_count` is **1** in eleven of the twelve,
+  and GitHub refuses a self-approval, so a solo-authored PR cannot merge
+  on its own. Copilot reviews are `COMMENTED`, never `APPROVED`, and do
+  not satisfy it. In practice that leaves an admin merge
+  (`gh pr merge --admin`, which BYPASSES the rule rather than satisfying
+  it, and is the maintainer’s call, never an agent’s) or a second
+  reviewer. `require_code_owner_review` is **false**, and no repository
+  in the family has a `CODEOWNERS` file, so that flag is not what is
+  stopping the merge. ⚠️ **The ruleset is NOT identical across the
+  family**, though this paragraph said it was from `f0043c0` on
+  2026-08-20 until 2026-09-02. Measured over all fourteen
+  `hvti*`/`TemporalHazard` repositories on 2026-09-02:
+
+  | repository | approvals | `require_code_owner_review` | rules |
+  |----|----|----|----|
+  | ten, this one included | 1 | false | 4 |
+  | `TemporalHazard` | 1 | false | 5, adding `required_status_checks` |
+  | `hvtiGraphics` | **0** | **true** | 4 |
+  | `hvtiEDAreports` | n/a | n/a | **none. `main` is unprotected** |
+  | `temporalHazards` | unknown | unknown | unreadable: private, default branch `master` |
+
+  The old text describes `hvtiGraphics` and no other repository: zero
+  approvals, code-owner review set but inert. Whether it was written
+  from that one repo and stated for twelve, or was true everywhere in
+  August and since changed on eleven, is not recoverable from here,
+  because a ruleset leaves no history in the clone. Either way the
+  lesson is the same one the template gate above teaches: **read the
+  ruleset for the repo you are in** rather than trusting any family-wide
+  claim, including the one in this paragraph.
+
+  ``` sh
+  gh api repos/ehrlinger/<repo>/rules/branches/main \
+    --jq '.[] | select(.type=="pull_request") | .parameters'
+  ```
+
+  ⚠️ `require_extra_approval_for_unattributed_changes` is **true** in
+  all twelve, and was never recorded here. It bears directly on
+  agent-authored commits. ⚠️ **A stacked PR gets no Copilot review, and
+  still reaches `main`.** The ruleset’s condition is
   `ref_name: include: ["~DEFAULT_BRANCH"]`, so `copilot_code_review`
   fires only for a PR opened *against* `main`. Open one against another
   branch — stacking a plan on its design, say — and it never fires. When
   the parent merges, GitHub retargets the base to `main`, but
   **retargeting is not a PR-opened event and does not trigger it
   either**. The PR then sits one click from `main` having been read by
-  nobody, which the zero-approvals rule above does nothing to catch.
-  Observed on
+  nobody, and the approval rule above does not catch that: an approval
+  says a human clicked, not that anyone read the diff, and an `--admin`
+  merge skips even the click. Observed on
   [\#42](https://github.com/ehrlinger/hvtiRtemplates/pull/42). The fix
   is to open against `main`. ⚠️ **Copilot reviews a PR as opened, and
   never re-reviews a later push.** Commits added after it runs reach
-  `main` unread, which the zero-approvals rule does nothing to catch.
-  Observed on
+  `main` unread, and the approval rule does not catch that either:
+  `dismiss_stale_reviews_on_push` and `require_last_push_approval` are
+  both **false** in all twelve, so an approval given to commit 1 still
+  stands over commit 12. Observed on
   [hvtiRlifetables#21](https://github.com/ehrlinger/hvtiRlifetables/pull/21),
   where an approval stood while the branch replaced its entire mechanism
   underneath it. ⚠️ **Re-requesting one CAN be scripted, contrary to
