@@ -13,8 +13,12 @@ The fix landed upstream (hvtiRutilities, `qualifier1` / `qualifiers` /
 `n_qualifiers`). This script applies the SAME rule to the existing raw
 catalogue rather than re-walking 2.24M files over a share, which is sound
 because the parse is a pure function of the `stem` and `folder` columns the
-catalogue already carries. Re-running `job_census()` against the fixed
-package must reproduce these numbers; `--selftest` pins the parse itself.
+catalogue already carries.
+
+The evidence that this Python parse agrees with the R one is that it
+reproduces the 2026-08-29 all-extension count EXACTLY for all 42 prefixes,
+and that file was written by the R parser. `--selftest` runs fixed cases in
+this file and checks nothing about R.
 
 WHAT IT DELIBERATELY DOES NOT DO
 --------------------------------
@@ -69,8 +73,15 @@ def qualifiers(stem):
 
     `stem` from the catalogue already has the extension stripped, so unlike
     the R function this drops only the FIRST field. The R function is handed
-    a full basename and must drop the last field too; `--selftest` asserts
-    the two agree on names where both apply.
+    a full basename and must drop the last field too.
+
+    `--selftest` does NOT check that against R. It runs fixed cases in this
+    file and nothing else, so it catches a typo here and would not notice
+    the two implementations diverging. The real cross-check is that this
+    script reproduces the 2026-08-29 all-extension count EXACTLY for all 42
+    prefixes, and that file was produced by the R parser: agreement on
+    every prefix over 2.24M rows is a stronger statement than any fixture,
+    and it is checked by comparing the two JSON files rather than here.
     """
     s = stem[3:] if stem.startswith("tp.") else stem
     parts = s.split(".")
@@ -86,6 +97,8 @@ def selftest():
         ("tp.br.linear_regression_summary", "br",
          ["linear_regression_summary"]),
     ]
+    # Fixed cases only. This asserts nothing about the R implementation; see
+    # the note in qualifiers() for what actually cross-checks the two.
     bad = [(s, qualifiers(s), (p, q)) for s, p, q in cases
            if qualifiers(s) != (p, q)]
     for s, got, want in bad:
