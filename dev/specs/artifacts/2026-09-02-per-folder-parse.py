@@ -218,9 +218,13 @@ def main():
                        ".lst, a .log, a .pdf and a .sas7bdat each counted as "
                        "evidence that a study runs a job of that type",
             },
-            "no_identifiers": "counts only. No path, study name or filename "
-                              "stem leaves this script; qualifier1 values are "
-                              "job-type words, not study identifiers.",
+            "identifiers": "counts only. No path, study name, filename stem "
+                           "or patient identifier leaves this script. "
+                           "qualifier1 values DO include generic clinical "
+                           "variable names (echo, afib, lvmassi) under "
+                           "distributions, because that is the finding: the "
+                           "qualifier is a variable there. They are shared "
+                           "clinical vocabulary, not study-specific.",
             "qualifier1_is_positional": "it is an outcome in analyses, a "
                                         "table type in descriptive, a "
                                         "clinical variable in distributions "

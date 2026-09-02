@@ -8,8 +8,18 @@ about `dp` and `dc`, which section 5 sets out but does not take.
 have for templates is not valid". Handoff at
 `2026-09-02-per-folder-naming-parse-handoff.md`.
 
-⚠️ No study, variable or patient identifier appears in this note or in any
-artifact it produces. The re-parse reads study paths and emits counts.
+⚠️ **No path, study name or patient identifier** appears in this note or in
+any artifact it produces. The re-parse reads study paths and emits counts.
+
+⚠️ **Clinical variable names DO appear**, and the handoff's banner saying
+otherwise is not reproduced here. `echo`, `afib`, `lvmassi` and `avmngrad`
+are in section 2, in section 5 and in the `distributions` rows of the
+census summary. They have to be: "the qualifier is a clinical variable in
+`distributions`" is the central finding, and it cannot be stated without
+showing the values. They are generic clinical measurement terms drawn from a
+shared vocabulary, not study-specific and not linked to any patient. A note
+that claims to carry no identifier while carrying one is worse than either,
+which is the standard `2026-08-29-job-census-summary.json` set for itself.
 
 ## 1. The defect
 
