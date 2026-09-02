@@ -222,14 +222,17 @@ moved — a template that fails this check cannot be scaffolded at all.
   for a PR opened *against* `main`. Open one against another branch — stacking a plan on its
   design, say — and it never fires. When the parent merges, GitHub retargets the base to
   `main`, but **retargeting is not a PR-opened event and does not trigger it either**. The PR
-  then sits one click from `main` having been read by nobody, which the zero-approvals rule
-  above does nothing to catch. Observed on
+  then sits one click from `main` having been read by nobody, and the approval rule above
+  does not catch that: an approval says a human clicked, not that anyone read the diff, and
+  an `--admin` merge skips even the click. Observed on
   [#42](https://github.com/ehrlinger/hvtiRtemplates/pull/42).
   The fix is to open against `main`.
   ⚠️ **Copilot reviews a PR as opened, and never re-reviews a later push.** Commits added
-  after it runs reach `main` unread, which the zero-approvals rule does nothing to catch.
-  Observed on [hvtiRlifetables#21](https://github.com/ehrlinger/hvtiRlifetables/pull/21),
-  where an approval stood while the branch replaced its entire mechanism underneath it.
+  after it runs reach `main` unread, and the approval rule does not catch that either:
+  `dismiss_stale_reviews_on_push` and `require_last_push_approval` are both **false** in all
+  twelve, so an approval given to commit 1 still stands over commit 12. Observed on
+  [hvtiRlifetables#21](https://github.com/ehrlinger/hvtiRlifetables/pull/21), where an
+  approval stood while the branch replaced its entire mechanism underneath it.
   ⚠️ **Re-requesting one CAN be scripted, contrary to what this file said until 2026-08-31.**
   The REST `requested_reviewers` endpoint does return 200 and silently do nothing; it
   answers `requested_reviewers: []` under either `Copilot` or
