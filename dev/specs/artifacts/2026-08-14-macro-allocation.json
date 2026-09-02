@@ -1,14 +1,29 @@
 {
   "counts": {
-    "macro_files": 180,
+    "macro_files": 176,
     "macro_names": 272,
-    "templates": 229,
-    "allocated": 93,
+    "templates": 244,
+    "allocated": 94,
     "blocked": 4,
     "travels_with_dependent": 5,
-    "corpus_only": 78
+    "corpus_only": 73
   },
   "by_destination": {
+    "TemporalHazard": [
+      "CR_CIF_CP_variance.sas",
+      "bootstrap-test.models_wts.sas",
+      "bootstrap.models_wts.sas",
+      "cindex_hazard.sas",
+      "cindex_hazard_tvc.sas",
+      "haz_to_mi.sas",
+      "hazplot.sas",
+      "hazplot02252013.sas",
+      "hazplot10242003.sas",
+      "hazplot_cltest.sas",
+      "markov.sas",
+      "mi_to_haz.sas",
+      "nelsont.sas"
+    ],
     "_blocked": [
       "ExpdObsdPlot.sas",
       "STStable.sas",
@@ -21,9 +36,6 @@
       "CR_compare_CP.sas",
       "CR_compare_CP_old.sas",
       "CR_compare_CP_test_AT.sas",
-      "Copy of dist_complete.sas",
-      "Copy of dist_incomplete.sas",
-      "Copy of dydx.sas",
       "CorrTable.sas",
       "ROCplot.sas",
       "areakey.sas",
@@ -89,8 +101,6 @@
       "std_coef2.sas",
       "std_dif_4groups.sas",
       "univariate.quartile3.sas",
-      "xls2sas.sas",
-      "xls2sas_MA.sas",
       "xmacro.sas",
       "zscore_uk.example.sas",
       "zscore_uk.sas"
@@ -143,15 +153,15 @@
       "tp.bh.hazard_CP_2evnt_mixed.sas",
       "tp.bootstrap.hazard_CP_2evnt.sas"
     ],
-    "hvtiRdatasets": [
-      "Copy of dist.sas",
+    "hvtiRdatabuild": [
       "dist.sas",
       "gmatch.sas",
       "lgtphcurv9.sas",
       "phcurv9.sas",
       "repeated_txt.sas",
-      "stddiff.sas",
-      "trends.test.sas"
+      "trends.test.sas",
+      "xls2sas.sas",
+      "xls2sas_MA.sas"
     ],
     "hvtiRlifetables": [
       "uslife.sas",
@@ -192,22 +202,8 @@
       "plotjoan.sas",
       "repeat.sas",
       "repeat.testmacro.sas",
-      "repeated.sas"
-    ],
-    "temporal_hazard": [
-      "CR_CIF_CP_variance.sas",
-      "bootstrap-test.models_wts.sas",
-      "bootstrap.models_wts.sas",
-      "cindex_hazard.sas",
-      "cindex_hazard_tvc.sas",
-      "haz_to_mi.sas",
-      "hazplot.sas",
-      "hazplot02252013.sas",
-      "hazplot10242003.sas",
-      "hazplot_cltest.sas",
-      "markov.sas",
-      "mi_to_haz.sas",
-      "nelsont.sas"
+      "repeated.sas",
+      "stddiff.sas"
     ]
   },
   "blocked_by_prefix": {
@@ -249,7 +245,7 @@
       "needed_by": []
     },
     "CR_CIF_CP_variance.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "ce"
@@ -302,52 +298,6 @@
       "unowned_prefixes": [],
       "macros": [
         "compcp"
-      ],
-      "seeded": false,
-      "needed_by": []
-    },
-    "Copy of dist.sas": {
-      "destination": "hvtiRdatasets",
-      "tier": "single-owner",
-      "prefixes": [
-        "bd"
-      ],
-      "unowned_prefixes": [],
-      "macros": [
-        "dist"
-      ],
-      "seeded": true,
-      "needed_by": []
-    },
-    "Copy of dist_complete.sas": {
-      "destination": null,
-      "tier": "corpus-only",
-      "prefixes": [],
-      "unowned_prefixes": [],
-      "macros": [
-        "distcomp"
-      ],
-      "seeded": false,
-      "needed_by": []
-    },
-    "Copy of dist_incomplete.sas": {
-      "destination": null,
-      "tier": "corpus-only",
-      "prefixes": [],
-      "unowned_prefixes": [],
-      "macros": [
-        "distincp"
-      ],
-      "seeded": false,
-      "needed_by": []
-    },
-    "Copy of dydx.sas": {
-      "destination": null,
-      "tier": "corpus-only",
-      "prefixes": [],
-      "unowned_prefixes": [],
-      "macros": [
-        "dydx"
       ],
       "seeded": false,
       "needed_by": []
@@ -656,7 +606,7 @@
       "needed_by": []
     },
     "bootstrap-test.models_wts.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "ac"
@@ -904,7 +854,7 @@
       "needed_by": []
     },
     "bootstrap.models_wts.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "ac"
@@ -990,7 +940,7 @@
       "needed_by": []
     },
     "cindex_hazard.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "hs"
@@ -1003,7 +953,7 @@
       "needed_by": []
     },
     "cindex_hazard_tvc.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "hs"
@@ -1271,7 +1221,7 @@
       ]
     },
     "dist.sas": {
-      "destination": "hvtiRdatasets",
+      "destination": "hvtiRdatabuild",
       "tier": "single-owner",
       "prefixes": [
         "bd"
@@ -1372,7 +1322,7 @@
       "needed_by": []
     },
     "gmatch.sas": {
-      "destination": "hvtiRdatasets",
+      "destination": "hvtiRdatabuild",
       "tier": "single-owner",
       "prefixes": [
         "bd"
@@ -1387,7 +1337,7 @@
       "needed_by": []
     },
     "haz_to_mi.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "hm"
@@ -1400,7 +1350,7 @@
       "needed_by": []
     },
     "hazplot.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "hz"
@@ -1413,7 +1363,7 @@
       "needed_by": []
     },
     "hazplot02252013.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "hz"
@@ -1426,7 +1376,7 @@
       "needed_by": []
     },
     "hazplot10242003.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "hz"
@@ -1439,7 +1389,7 @@
       "needed_by": []
     },
     "hazplot_cltest.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "hz"
@@ -1563,7 +1513,7 @@
       "needed_by": []
     },
     "lgtphcurv9.sas": {
-      "destination": "hvtiRdatasets",
+      "destination": "hvtiRdatabuild",
       "tier": "single-owner",
       "prefixes": [
         "bd"
@@ -1808,7 +1758,7 @@
       "needed_by": []
     },
     "markov.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "ce"
@@ -1888,7 +1838,7 @@
       "needed_by": []
     },
     "mi_to_haz.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "hm"
@@ -1994,7 +1944,7 @@
       ]
     },
     "nelsont.sas": {
-      "destination": "temporal_hazard",
+      "destination": "TemporalHazard",
       "tier": "single-owner",
       "prefixes": [
         "ac"
@@ -2063,7 +2013,7 @@
       "needed_by": []
     },
     "phcurv9.sas": {
-      "destination": "hvtiRdatasets",
+      "destination": "hvtiRdatabuild",
       "tier": "single-owner",
       "prefixes": [
         "bd"
@@ -2453,7 +2403,7 @@
       "needed_by": []
     },
     "repeated_txt.sas": {
-      "destination": "hvtiRdatasets",
+      "destination": "hvtiRdatabuild",
       "tier": "single-owner",
       "prefixes": [
         "bd"
@@ -2649,9 +2599,10 @@
       "needed_by": []
     },
     "stddiff.sas": {
-      "destination": "hvtiRdatasets",
-      "tier": "single-owner",
+      "destination": "hvtiRutilities",
+      "tier": "shared",
       "prefixes": [
+        "dc",
         "vars",
         "vars_base_only"
       ],
@@ -2772,7 +2723,7 @@
       ]
     },
     "trends.test.sas": {
-      "destination": "hvtiRdatasets",
+      "destination": "hvtiRdatabuild",
       "tier": "single-owner",
       "prefixes": [
         "bd",
@@ -2801,7 +2752,7 @@
     "uslife.sas": {
       "destination": "hvtiRlifetables",
       "tier": "override",
-      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to temporal_hazard because hs templates name it, but the port has a different destination.",
+      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to TemporalHazard because hs templates name it, but the port has a different destination.",
       "prefixes": [],
       "unowned_prefixes": [],
       "macros": [
@@ -2813,8 +2764,9 @@
     "usmatchd.sas": {
       "destination": "hvtiRlifetables",
       "tier": "override",
-      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to temporal_hazard because hs templates name it, but the port has a different destination.",
+      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to TemporalHazard because hs templates name it, but the port has a different destination.",
       "prefixes": [
+        "ac",
         "hs"
       ],
       "unowned_prefixes": [],
@@ -2828,8 +2780,9 @@
     "usmatchd10172003.sas": {
       "destination": "hvtiRlifetables",
       "tier": "override",
-      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to temporal_hazard because hs templates name it, but the port has a different destination.",
+      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to TemporalHazard because hs templates name it, but the port has a different destination.",
       "prefixes": [
+        "ac",
         "hs"
       ],
       "unowned_prefixes": [],
@@ -2843,8 +2796,9 @@
     "usmatchd84.sas": {
       "destination": "hvtiRlifetables",
       "tier": "override",
-      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to temporal_hazard because hs templates name it, but the port has a different destination.",
+      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to TemporalHazard because hs templates name it, but the port has a different destination.",
       "prefixes": [
+        "ac",
         "hs"
       ],
       "unowned_prefixes": [],
@@ -2858,7 +2812,7 @@
     "usmtch08.sas": {
       "destination": "hvtiRlifetables",
       "tier": "override",
-      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to temporal_hazard because hs templates name it, but the port has a different destination.",
+      "override_reason": "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to reimplement %usmatchd in R and vendors this file in data-raw/sas. Prefix ownership sends it to TemporalHazard because hs templates name it, but the port has a different destination.",
       "prefixes": [],
       "unowned_prefixes": [],
       "macros": [
@@ -2880,7 +2834,6 @@
       ],
       "seeded": false,
       "needed_by": [
-        "Copy of dist.sas",
         "dist.sas"
       ]
     },
@@ -2900,25 +2853,29 @@
       ]
     },
     "xls2sas.sas": {
-      "destination": null,
-      "tier": "corpus-only",
-      "prefixes": [],
+      "destination": "hvtiRdatabuild",
+      "tier": "single-owner",
+      "prefixes": [
+        "bd"
+      ],
       "unowned_prefixes": [],
       "macros": [
         "xls2sas"
       ],
-      "seeded": false,
+      "seeded": true,
       "needed_by": []
     },
     "xls2sas_MA.sas": {
-      "destination": null,
-      "tier": "corpus-only",
-      "prefixes": [],
+      "destination": "hvtiRdatabuild",
+      "tier": "single-owner",
+      "prefixes": [
+        "bd"
+      ],
       "unowned_prefixes": [],
       "macros": [
         "xls2sas"
       ],
-      "seeded": false,
+      "seeded": true,
       "needed_by": []
     },
     "xmacro.sas": {

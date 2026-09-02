@@ -44,7 +44,8 @@ FOLDER_ORDINAL = {
 STATUSES = {"shipped", "revisit", "in-flight", "queued", "intake", "out-of-scope"}
 KINDS = {"job", "meta"}
 FIELDS = ["prefix", "name", "folder", "family", "kind", "status", "ordinal",
-          "batch", "sas_breadth", "r_exemplars", "r_jobs", "upstream",
+          "batch", "sas_breadth", "sas_breadth_jobs", "r_exemplars",
+          "r_jobs", "upstream",
           "downstream", "workflows", "blocked_on", "spec", "note"]
 
 # A row in one of these states asserts a template exists on disk. Every other
@@ -62,7 +63,8 @@ RETIRED_FIELDS = ["ordinal", "prefix", "retired", "reason"]
 # field carries the same risk -- a string here renders into the table
 # verbatim (sas_breadth) or breaks the renderer's sort key (batch) -- so all
 # of them get the same integer-or-null check.
-INT_OR_NULL_FIELDS = ["batch", "sas_breadth", "r_exemplars", "r_jobs"]
+INT_OR_NULL_FIELDS = ["batch", "sas_breadth", "sas_breadth_jobs",
+                      "r_exemplars", "r_jobs"]
 
 
 def check_schema(rows):
