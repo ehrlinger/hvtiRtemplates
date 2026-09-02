@@ -126,7 +126,10 @@ def main():
 
     csv.field_size_limit(10 ** 7)
 
-    # (folder, prefix) -> studies, and (folder, prefix, q1) -> studies.
+    # breadth and breadth_all are keyed by PREFIX alone; fam_studies by
+    # (folder, prefix); fq by (folder, prefix) then qualifier1. The scopes
+    # differ on purpose and the output names them, because a count read at
+    # the wrong scope is how analyses/lp came out at 310.
     # Sets of study ids, because "how many studies use this" is the question
     # the batch order is built on, and a study with 40 copies of one job is
     # still one study. The study ids never leave this process.
