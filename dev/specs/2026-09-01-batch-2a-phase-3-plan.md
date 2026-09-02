@@ -1937,10 +1937,21 @@ that risk for two of the three prefixes.
 `hz` reproduced at 1e-12 because a nomogram is deterministic: the C code
 transcribes to R exactly. **A bootstrap screen is stochastic.** `%bootreg` and
 `boot_select()` draw different resamples from different generators, so their
-selection frequencies agree only within Monte-Carlo error — about 2.2
+selection frequencies agree only within Monte-Carlo error — about **3.2**
 percentage points per variable at `p = 0.5` over 500 replicates. Over a table
 of 150 candidates, **several rows will differ by more than two standard errors
 by chance alone**.
+
+⚠️ **3.2, not the 2.2 this plan said until 2026-09-01.** 2.2 is
+`100 * sqrt(p * (1 - p) / n)`, the error of ONE run. The comparison is between
+two independent runs, whose difference carries
+`100 * sqrt(2 * p * (1 - p) / n)`, larger by a factor of `sqrt(2)`. Written with
+explicit multiplication because these are expressions to be applied, not
+notation to be read: `2p(1-p)` pasted into R is a call to a function `p`. `compare_bootreg()` below had the right formula throughout;
+only the prose was wrong. Following the prose instead of the code sets the band
+at 2 x 2.2 rather than 2 x 3.2, which turns a nominal 95% band into roughly
+84% and flags about 24 spurious disagreements on a 150-row table -- read, of
+course, as the port having failed.
 
 A parity test written as equality therefore has two failure modes and both are
 bad: it fails spuriously, or it gets tuned until it passes and then certifies
@@ -2220,7 +2231,7 @@ summary output: rank correlation [x] and [x], with [n]% and [n]% of
 candidates within two Monte-Carlo standard errors and retention decisions
 agreeing on [n]% and [n]%. Exact agreement is not available and not expected
 -- two bootstrap runs draw different resamples, so their frequencies differ
-by about two percentage points per variable at 500 replicates.
+by about three percentage points per variable at 500 replicates.
 
 ⚠️ **`bc` has no such check**, because no `bc` SAS job exists anywhere in the
 corpus. It ships on a render against a real dataset and on `fit_cox()`
