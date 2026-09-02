@@ -174,7 +174,13 @@ def main():
                 malformed[(p, q1)].add(study)
 
     # ---- emit, counts only ----------------------------------------------
-    prefixes = sorted(breadth_all, key=lambda p: -len(breadth_all[p]))
+    # Every sort below carries a secondary key on the NAME. Python's sort is
+    # stable, so ties would otherwise fall back to dict insertion order, which
+    # is the order rows happened to appear in the catalogue. Two runs over
+    # equivalent sweeps would then produce byte-different JSON carrying
+    # identical data, and a regenerated artifact whose diff is noise is one
+    # nobody reads. Raised by Copilot on #72.
+    prefixes = sorted(breadth_all, key=lambda p: (-len(breadth_all[p]), p))
     known = [{
         "prefix": p,
         "sas_breadth_all_ext": len(breadth_all[p]),
@@ -183,9 +189,9 @@ def main():
     } for p in prefixes]
 
     families = []
-    for (folder, p), d in sorted(fq.items(), key=lambda kv: -sum(
-            len(v) for v in kv[1].values())):
-        top = sorted(d.items(), key=lambda kv: -len(kv[1]))
+    for (folder, p), d in sorted(fq.items(), key=lambda kv: (
+            -sum(len(v) for v in kv[1].values()), kv[0])):
+        top = sorted(d.items(), key=lambda kv: (-len(kv[1]), kv[0]))
         families.append({
             "folder": folder,
             "prefix": p,
@@ -236,11 +242,11 @@ def main():
         "malformed_analyses": sorted(
             ({"prefix": p, "qualifier1": q, "studies": len(s)}
              for (p, q), s in malformed.items()),
-            key=lambda d: -d["studies"]),
+            key=lambda d: (-d["studies"], d["prefix"], d["qualifier1"])),
         "output_folder_unknowns": sorted(
             ({"stem_head": p, "studies": len(s)}
              for p, s in unknown_est.items() if len(s) >= 20),
-            key=lambda d: -d["studies"]),
+            key=lambda d: (-d["studies"], d["stem_head"])),
         "qualifier_depth_by_folder": {
             f: dict(sorted(c.items())) for f, c in sorted(depth_hist.items())
         },

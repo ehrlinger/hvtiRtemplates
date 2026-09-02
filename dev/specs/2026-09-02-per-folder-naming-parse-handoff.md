@@ -1,3 +1,12 @@
+> **Status, added 2026-09-02 when this landed:** DONE. The body below is the
+> handoff exactly as received, including the "not started" line and its
+> `descriptives` spelling, which the corpus spells `descriptive`. It is kept
+> unedited because
+> [`2026-09-02-per-folder-naming-parse-design.md`](2026-09-02-per-folder-naming-parse-design.md)
+> section 3 corrects four of its claims against measurement, and correcting
+> them here instead would delete the evidence for those corrections. Read the
+> design record for what is true; read this for what was asked.
+
 # Handoff — re-parse the corpus with per-folder naming rules
 
 **Date:** 2026-09-02
