@@ -267,7 +267,7 @@ position** (`04.06` is retired and cannot be reissued): `bl` 04.02, `br` 04.03,
   different resamples, so their frequencies differ by roughly **three**
   percentage points per variable at 500 replicates and no 1e-12 comparison is
   available. Three, not two: 2.2 points is the error of ONE run, and the
-  difference of two independent runs is larger by a factor of root 2.
+  difference of two independent runs is larger by a factor of `sqrt(2)`.
   `bc` has no SAS counterpart anywhere in the corpus and gets no such check.
 - `devtools::test()` passes; `devtools::check()` 0/0/0; `document()` run.
 - Patch bumps with matching `NEWS.md` entries. **One tag per release**, not one

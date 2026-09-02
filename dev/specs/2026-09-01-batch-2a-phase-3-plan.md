@@ -1943,9 +1943,11 @@ of 150 candidates, **several rows will differ by more than two standard errors
 by chance alone**.
 
 ⚠️ **3.2, not the 2.2 this plan said until 2026-09-01.** 2.2 is
-`100 * sqrt(p(1-p)/n)`, the error of ONE run. The comparison is between two
-independent runs, whose difference carries `100 * sqrt(2p(1-p)/n)`, larger by a
-factor of root 2. `compare_bootreg()` below had the right formula throughout;
+`100 * sqrt(p * (1 - p) / n)`, the error of ONE run. The comparison is between
+two independent runs, whose difference carries
+`100 * sqrt(2 * p * (1 - p) / n)`, larger by a factor of `sqrt(2)`. Written with
+explicit multiplication because these are expressions to be applied, not
+notation to be read: `2p(1-p)` pasted into R is a call to a function `p`. `compare_bootreg()` below had the right formula throughout;
 only the prose was wrong. Following the prose instead of the code sets the band
 at 2 x 2.2 rather than 2 x 3.2, which turns a nominal 95% band into roughly
 84% and flags about 24 spurious disagreements on a 150-row table -- read, of
