@@ -209,7 +209,8 @@
   "cross_package_dependencies": {
     "n_dependencies": 43,
     "n_package_pairs": 5,
-    "acyclic": true,
+    "acyclic_packages": true,
+    "acyclic_files": true,
     "edges": [
       {
         "dependent": "hvtiRbootstrap",

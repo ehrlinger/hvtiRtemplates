@@ -118,24 +118,38 @@ def main():
                            f"map = {xd['n_package_pairs']}")
 
         # The edge list is a copy of the map and drifts the same way the
-        # per-package lists do, so it gets the same row-by-row treatment.
-        for e in xd["edges"]:
-            pat = (rf"{re.escape(e['dependent'])}\s*->\s*"
-                   rf"{re.escape(e['dependency'])}\s*\((\d+)\)")
-            m2 = re.search(pat, spec)
-            if not m2:
-                bad.append(f"dependency block omits `{e['dependent']} -> "
-                           f"{e['dependency']}` ({e['n']}), which the map has")
-            elif int(m2.group(1)) != e["n"]:
-                bad.append(f"dependency block `{e['dependent']} -> "
-                           f"{e['dependency']}` = {m2.group(1)}, map = {e['n']}")
+        # per-package lists do, so it gets the same row-by-row treatment --
+        # and in BOTH directions. Checking only that every map edge appears
+        # in the spec lets a hand-added edge sit in the block forever, which
+        # is the failure `check-roadmap-counts.py` already guards against for
+        # ledger rows. Raised by Copilot on #73.
+        block = re.search(r"package pairs.*?```\n(.*?)```", spec, re.S)
+        block = block.group(1) if block else ""
+        listed = {(a2, b2): int(n) for a2, b2, n in
+                  re.findall(r"(\S+)\s*->\s*(\S+)\s*\((\d+)\)", block)}
+        mapped = {(e["dependent"], e["dependency"]): e["n"] for e in xd["edges"]}
+        for k, n in sorted(mapped.items()):
+            if k not in listed:
+                bad.append(f"dependency block omits `{k[0]} -> {k[1]}` ({n}), "
+                           f"which the map has")
+            elif listed[k] != n:
+                bad.append(f"dependency block `{k[0]} -> {k[1]}` = "
+                           f"{listed[k]}, map = {n}")
+        for k, n in sorted(listed.items()):
+            if k not in mapped:
+                bad.append(f"dependency block lists `{k[0]} -> {k[1]}` ({n}), "
+                           f"which the map does not have")
 
-        # "acyclic" is a claim, not a count. The scan verifies it; the spec
-        # must not assert it when the scan says otherwise.
+        # "acyclic" is a claim, not a count. The scan verifies it on the
+        # package graph AND the file graph, because the cycle this document
+        # reports having survived, phcurv9 <-> usmatchd, was between files.
         claims_acyclic = re.search(r"graph is \*\*acyclic\*\*", spec) is not None
-        if claims_acyclic and not xd["acyclic"]:
-            bad.append("spec calls the dependency graph acyclic; the map does not")
-        if xd["acyclic"] and not claims_acyclic:
+        really_acyclic = xd["acyclic_packages"] and xd["acyclic_files"]
+        if claims_acyclic and not really_acyclic:
+            where = ("packages" if not xd["acyclic_packages"] else "files")
+            bad.append(f"spec calls the dependency graph acyclic; the map "
+                       f"reports a cycle at the {where} level")
+        if really_acyclic and not claims_acyclic:
             bad.append("map reports an acyclic graph; the spec no longer says so")
 
     if bad:
@@ -154,7 +168,7 @@ def main():
     print(f"Spec agrees with the map: {len(by_dest)} sections, {n} files, "
           f"{counts['macro_files']} total, {xd['n_dependencies']} cross-package "
           f"dependencies over {xd['n_package_pairs']} pairs"
-          f"{', acyclic' if xd['acyclic'] else ', CYCLIC'}.")
+          f"{', acyclic' if xd['acyclic_packages'] and xd['acyclic_files'] else ', CYCLIC'}.")
     return 0
 
 
