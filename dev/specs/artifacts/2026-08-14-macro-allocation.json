@@ -206,6 +206,38 @@
       "stddiff.sas"
     ]
   },
+  "cross_package_dependencies": {
+    "n_dependencies": 43,
+    "n_package_pairs": 5,
+    "acyclic": true,
+    "edges": [
+      {
+        "dependent": "hvtiRbootstrap",
+        "dependency": "hvtiRutilities",
+        "n": 14
+      },
+      {
+        "dependent": "TemporalHazard",
+        "dependency": "hvtiRutilities",
+        "n": 12
+      },
+      {
+        "dependent": "hvtiRbootstrap",
+        "dependency": "hvtiPlotR",
+        "n": 10
+      },
+      {
+        "dependent": "hvtiRdatabuild",
+        "dependency": "hvtiRutilities",
+        "n": 4
+      },
+      {
+        "dependent": "hvtiRtables",
+        "dependency": "hvtiRutilities",
+        "n": 3
+      }
+    ]
+  },
   "blocked_by_prefix": {
     "ls": 2,
     "rp": 2

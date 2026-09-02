@@ -193,14 +193,34 @@ A name-level rule gets `plot.sas`'s helpers wrong; resolving ownership through
 ## Cross-package dependencies
 
 The map records `needed_by` for every file, so a port can see what it will pull
-from another package. 19 file-level dependencies span 3 package pairs, and the
-graph is **acyclic**:
+from another package. **43** file-level dependencies span **5** package pairs,
+and the graph is **acyclic**:
 
 ```
-hvtiRtables     -> hvtiRutilities    (summarytable.sas needs stddiff.sas)
-hvtiRdatabuild   -> hvtiRutilities
-TemporalHazard -> hvtiRutilities
+hvtiRbootstrap  -> hvtiRutilities    (14)
+TemporalHazard  -> hvtiRutilities    (12)
+hvtiRbootstrap  -> hvtiPlotR         (10)
+hvtiRdatabuild  -> hvtiRutilities     (4)
+hvtiRtables     -> hvtiRutilities     (3)  summarytable.sas needs stddiff.sas
 ```
+
+An edge is one `(dependent file, dependency file)` pair whose two files are
+allocated to different packages. A file in `_blocked`, `_corpus-only` or
+`_travels-with-dependent` has no package and so raises no edge.
+
+⚠️ **This read 19 across 3 pairs from 2026-08-14 until 2026-09-02, and the
+figure was correct when written.** It went stale the same day, at `77734a9`,
+which created `hvtiRbootstrap` and moved 24 dependencies into two new pairs
+without touching this sentence; `4f14368` then re-synced the per-package lists
+and still left it. Nothing caught it for nineteen days because every other
+number in this document is anchored to the map and this one was prose. The
+count now comes from `cross_package_dependencies` in the map and
+`check-spec-counts.py` fails the PR when the two disagree.
+
+The **acyclic** half was true throughout, and that is the part worth noting:
+a stale number sitting beside a correct claim is harder to see than a wrong
+one on its own. It is now verified rather than asserted, by a depth-first
+colouring in the scan, at package level and at file level.
 
 **Name resolution prefers a definition in the same file.** 117 of 272 macro
 names are defined in more than one file, so a file calling a helper it defines

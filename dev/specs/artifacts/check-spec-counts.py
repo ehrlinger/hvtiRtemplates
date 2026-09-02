@@ -89,6 +89,55 @@ def main():
             for miss in sorted(set(files) - listed):
                 bad.append(f"section `{head}` omits `{miss}`, which the map assigns there")
 
+    # 4. the cross-package dependency graph.
+    #
+    # This is here because it is the one number in the document that was NOT
+    # anchored, and it drifted for nineteen days: the prose said 19 across 3
+    # pairs, correct on 2026-08-14 and stale from `77734a9` the same day, when
+    # hvtiRbootstrap added 24 dependencies across 2 more pairs. Every count
+    # guarded below was re-synced repeatedly over that period. The unguarded
+    # one was not, which is the argument for guarding it.
+    xd = d.get("cross_package_dependencies")
+    if xd is None:
+        bad.append("map has no `cross_package_dependencies`; re-run the scan")
+    else:
+        m = re.search(r"\*\*(\d+)\*\* file-level dependencies span "
+                      r"\*\*(\d+)\*\* package pairs", spec)
+        if not m:
+            bad.append(
+                f"no anchored dependency sentence found (map: "
+                f"{xd['n_dependencies']} across {xd['n_package_pairs']} pairs). "
+                f"Expected `**N** file-level dependencies span **M** package "
+                f"pairs`")
+        else:
+            if int(m.group(1)) != xd["n_dependencies"]:
+                bad.append(f"prose says {m.group(1)} dependencies, "
+                           f"map = {xd['n_dependencies']}")
+            if int(m.group(2)) != xd["n_package_pairs"]:
+                bad.append(f"prose says {m.group(2)} package pairs, "
+                           f"map = {xd['n_package_pairs']}")
+
+        # The edge list is a copy of the map and drifts the same way the
+        # per-package lists do, so it gets the same row-by-row treatment.
+        for e in xd["edges"]:
+            pat = (rf"{re.escape(e['dependent'])}\s*->\s*"
+                   rf"{re.escape(e['dependency'])}\s*\((\d+)\)")
+            m2 = re.search(pat, spec)
+            if not m2:
+                bad.append(f"dependency block omits `{e['dependent']} -> "
+                           f"{e['dependency']}` ({e['n']}), which the map has")
+            elif int(m2.group(1)) != e["n"]:
+                bad.append(f"dependency block `{e['dependent']} -> "
+                           f"{e['dependency']}` = {m2.group(1)}, map = {e['n']}")
+
+        # "acyclic" is a claim, not a count. The scan verifies it; the spec
+        # must not assert it when the scan says otherwise.
+        claims_acyclic = re.search(r"graph is \*\*acyclic\*\*", spec) is not None
+        if claims_acyclic and not xd["acyclic"]:
+            bad.append("spec calls the dependency graph acyclic; the map does not")
+        if xd["acyclic"] and not claims_acyclic:
+            bad.append("map reports an acyclic graph; the spec no longer says so")
+
     if bad:
         print("Spec prose disagrees with the generated map:\n", file=sys.stderr)
         for b in bad:
@@ -101,8 +150,11 @@ def main():
         return 1
 
     n = sum(len(v) for v in by_dest.values())
+    xd = d["cross_package_dependencies"]
     print(f"Spec agrees with the map: {len(by_dest)} sections, {n} files, "
-          f"{counts['macro_files']} total.")
+          f"{counts['macro_files']} total, {xd['n_dependencies']} cross-package "
+          f"dependencies over {xd['n_package_pairs']} pairs"
+          f"{', acyclic' if xd['acyclic'] else ', CYCLIC'}.")
     return 0
 
 
