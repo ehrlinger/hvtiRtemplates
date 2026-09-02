@@ -1,5 +1,22 @@
 # hvtiRtemplates (unreleased)
 
+* **The allocation note's cross-package dependency count was wrong for
+  nineteen days, and is now anchored.** It read "19 file-level dependencies
+  span 3 package pairs". That was correct when written on 2026-08-14 and went
+  stale the same day, at `77734a9`, which created `hvtiRbootstrap` and moved
+  24 dependencies into two new package pairs without touching the sentence.
+  The real figures are 43 across 5 pairs.
+
+  The scan now emits `cross_package_dependencies` into the map, and
+  `check-spec-counts.py` fails the PR when the prose, the edge list or the
+  acyclic claim disagrees with it. Every other count in that document was
+  already anchored and had been re-synced repeatedly over the same period;
+  this one was prose, and prose is what drifted.
+
+  The **acyclic** half of the claim was true throughout, and is now verified
+  by a depth-first colouring rather than asserted. A stale number sitting
+  beside a correct claim is harder to see than a wrong one on its own.
+
 * **The corpus was re-parsed, and the batch order moved.** The census that
   ordered the conversion work was produced by a parser that captured a legacy
   job name's first dot-field and discarded the rest, so `dp.trends`,

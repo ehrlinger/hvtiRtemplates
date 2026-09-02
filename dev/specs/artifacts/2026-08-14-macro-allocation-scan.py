@@ -149,6 +149,52 @@ for b in sorted(fdefs):
                  "prefixes": sorted(pres), "unowned_prefixes": unk,
                  "macros": sorted(fdefs[b]), "seeded": b in seed,
                  "needed_by": sorted(deps.get(b, ()))}
+# ---- cross-package dependency graph, EMITTED rather than left to a reader
+# to count. The design note carried "19 file-level dependencies span 3 package
+# pairs" from 2026-08-14 until 2026-09-02. It was right when written and went
+# stale the same day, at 77734a9, which introduced hvtiRbootstrap and added 24
+# edges across 2 more pairs without touching the sentence. Nothing caught it
+# for nineteen days, because every other number in that document is anchored
+# to this map and this one was prose. So the map now states it.
+#
+# An edge is one (dependent file, dependency file) pair whose two files are
+# allocated to DIFFERENT packages. Files in _blocked, _corpus-only and
+# _travels-with-dependent have no package, so they raise no edge.
+xdep = collections.Counter()
+for _b, _rec in detail.items():
+    _src = _rec["destination"]
+    for _dep in _rec["needed_by"]:
+        _dst = detail.get(_dep, {}).get("destination")
+        if _src and _dst and _src != _dst:
+            xdep[(_dst, _src)] += 1          # dependent package -> dependency
+
+# Acyclic is a claim the note makes, so it is checked rather than asserted.
+# A spurious phcurv9 <-> usmatchd cycle was reported once already, at 8ad414c,
+# and that one was between two FILES. So both graphs are checked: a package
+# graph can be acyclic while the file graph under it is not, and reporting a
+# single flag from the package graph alone would let exactly the historical
+# failure pass. Raised by Copilot on #73.
+def _acyclic(g):
+    colour = {}
+    def walk(u):
+        colour[u] = 1
+        for v in g.get(u, ()):
+            if colour.get(v) == 1: return False
+            if colour.get(v) is None and not walk(v): return False
+        colour[u] = 2
+        return True
+    return all(walk(u) for u in list(g) if colour.get(u) is None)
+
+_pkg_adj = collections.defaultdict(set)
+for (_a, _b2) in xdep: _pkg_adj[_a].add(_b2)
+
+# Every file-to-file edge, not only the cross-package ones: a cycle inside one
+# package is still a cycle, and is what a porter would hit first.
+_file_adj = collections.defaultdict(set)
+for _b, _rec in detail.items():
+    for _dep in _rec["needed_by"]:
+        _file_adj[_dep].add(_b)
+
 res = {"counts": {"macro_files": len(files), "macro_names": len(name2file),
                   "templates": tpl_n,
                   "allocated": sum(len(v) for k, v in alloc.items() if not k.startswith("_")),
@@ -156,6 +202,15 @@ res = {"counts": {"macro_files": len(files), "macro_names": len(name2file),
                   "travels_with_dependent": len(alloc["_travels-with-dependent"]),
                   "corpus_only": len(alloc["_corpus-only"])},
        "by_destination": {k: sorted(v) for k, v in sorted(alloc.items())},
+       "cross_package_dependencies": {
+           "n_dependencies": sum(xdep.values()),
+           "n_package_pairs": len(xdep),
+           "acyclic_packages": _acyclic(_pkg_adj),
+           "acyclic_files": _acyclic(_file_adj),
+           "edges": [{"dependent": a, "dependency": b2, "n": n}
+                     for (a, b2), n in sorted(xdep.items(),
+                                              key=lambda kv: (-kv[1], kv[0]))],
+       },
        "blocked_by_prefix": dict(blocked.most_common()),
        "unknown_prefixes": dict(unknown.most_common()),
        "files": detail}
