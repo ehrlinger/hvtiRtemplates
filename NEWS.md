@@ -1,3 +1,37 @@
+# hvtiRtemplates (unreleased)
+
+* **The corpus was re-parsed, and the batch order moved.** The census that
+  ordered the conversion work was produced by a parser that captured a legacy
+  job name's first dot-field and discarded the rest, so `dp.trends`,
+  `dp.gfup` and `dp.spaghetti.echo` all counted as one bucket called `dp`.
+  A bucket cannot be templated, which is why Batch 3 was stuck. The parser
+  fix is upstream in `hvtiRutilities`; here, the roadmap ledger gains
+  `sas_breadth_jobs` beside the existing `sas_breadth`, and
+  `dev/specs/2026-09-02-per-folder-naming-parse-design.md` records what
+  changed.
+
+  The two counts differ because the old one counted every extension, so a
+  `.lst`, a `.log`, a `.pdf` and a `.sas7bdat` each counted as evidence that
+  a study runs a job of that type. Ten prefixes move three ranks or more.
+  `lp` drops nine, from 636 studies to 310, because more than half its
+  breadth was output rather than programs. The top four are unmoved.
+
+* **The `hz +396` / `hm +172` hand corrections are withdrawn.** `hzdead` and
+  `hmdead` are result datasets in `estimates`, `.sas7bdat` and `.ssd01`, not
+  hazard jobs. Adding them added model output to a count of programs. The
+  measured job breadth is `hz` 574 and `hm` 373.
+
+* **`deade` and `deadl` are identified.** Hazard-phase estimate datasets,
+  early and late, with `deadc` beside them at 60 studies. They sit in
+  `estimates` and were never jobs.
+
+* **The macro-allocation scan globbed one level deep** and missed 13 of the
+  244 template `.sas` files. Three files change destination as a result, and
+  `stddiff.sas` is the one that matters: it was allocated to a single package
+  only because the glob hid the two `dc` templates that make it shared. Three
+  retired destination slugs are also corrected, to `hvtiRdatabuild`,
+  `TemporalHazard` and `hvtiRpropensity`.
+
 # hvtiRtemplates 1.0.20
 
 * **Three bootstrap screen templates ship**: `analyses/04.02-bl.qmd`

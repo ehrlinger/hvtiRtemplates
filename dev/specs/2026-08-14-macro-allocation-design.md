@@ -75,8 +75,8 @@ Other unmapped prefixes are deliberately left unowned - see Deferred.
 new package. This unblocks 32 of the 36 files that were blocked.
 
 **Why one owner rather than a split by model type.** The natural per-prefix homes
-look obvious - `bh` to `temporal_hazard` (which already owns `hz`/`hs`, and `bh`
-builds on the HZ fit), `bl` to `hvtiPropensityScores` (which already owns `lm`,
+look obvious - `bh` to `TemporalHazard` (which already owns `hz`/`hs`, and `bh`
+builds on the HZ fit), `bl` to `hvtiRpropensity` (which already owns `lm`,
 logistic and propensity). But the prefixes are entangled: `bootstrap.clusters.sas`
 is reached from `bh`, `bl` and `br`, and `bootstrap.summary.sas` from four model
 prefixes. Splitting would push that shared machinery into `hvtiRutilities` as
@@ -87,7 +87,7 @@ files; owning any other single prefix unblocks one or zero.
 
 **One file did not follow, and the rule was right.** `bootstrap.summary.sas`
 still lands in `hvtiRutilities`, because its prefixes are
-`ac, bh, bl, bq, br` - `ac` is actuarial, owned by `temporal_hazard`. It is
+`ac, bh, bl, bq, br` - `ac` is actuarial, owned by `TemporalHazard`. It is
 shared *beyond* the bootstrap family, so tier 2 applies correctly. The
 shared-engine argument held for `bootstrap.clusters.sas`, whose prefixes are all
 bootstrap, and was wrong in detail for `bootstrap.summary.sas`. Recorded rather
@@ -130,16 +130,16 @@ stale. Re-run the scan and re-sync rather than editing a count by hand.
 |---|---|
 | `hvtiRtables` | 17 |
 | `hvtiRbootstrap` | 31 |
-| `temporal_hazard` | 13 |
-| `hvtiRutilities` (shared) | 13 |
-| `hvtiRdatasets` | 8 |
+| `TemporalHazard` | 13 |
+| `hvtiRutilities` (shared) | 14 |
+| `hvtiRdatabuild` | 8 |
 | `hvtiPlotR` | 6 |
 | `hvtiRlifetables` (override) | 5 |
-| **Allocated** | **93** |
+| **Allocated** | **94** |
 | Travels with a dependent | 5 |
 | Blocked on an unowned prefix | 4 |
-| Corpus-only | 78 |
-| **Total** | **180** |
+| Corpus-only | 73 |
+| **Total** | **176** |
 
 ### `hvtiRtables` (17)
 
@@ -149,17 +149,17 @@ stale. Re-run the scan and re-sync rather than editing a count by hand.
 
 `bl_ord.ci.sas`, `bl_ord.delta_ci.sas`, `bl_ord.norm.ci.sas`, `bl_ord.perc.ci.sas`, `bn.binary.prev.ci.unique.sas`, `bn.mixed.ci.binary.sas`, `bn.mixed.ci.binary_gr.sas`, `bn.mixed.ci.continuous.sas`, `bn.mixed.ci.continuous_gr.sas`, `bn.mixed.ci.ordinal.gr.sas`, `bn.mixed.ci.ordinal.sas`, `bootstrap.clusters.sas`, `bootstrap.hazard.grid.sas`, `bootstrap.hazard.sas`, `bootstrap.hazard101703.sas`, `bootstrap.hazard_CP_2evnt.sas`, `bootstrap.hazard_CP_2evnt_jr.sas`, `bootstrap.hazard_CP_3evnt_ph.sas`, `bootstrap.hazard_jr.sas`, `bootstrap.hazard_jr1.sas`, `bootstrap.hazard_p.sas`, `bootstrap.hazard_tvc.sas`, `bootstrap.logistic.prediction.sas`, `bootstrap.models.asa.sas`, `bootstrap.models.quant.sas`, `bootstrap.models.sas`, `bootstrap.models.test.sas`, `bootstrap_models_asahp.sas`, `logitlasso.sas`, `tp.bh.hazard_CP_2evnt_mixed.sas`, `tp.bootstrap.hazard_CP_2evnt.sas`
 
-### `temporal_hazard` (13)
+### `TemporalHazard` (13)
 
 `CR_CIF_CP_variance.sas`, `bootstrap-test.models_wts.sas`, `bootstrap.models_wts.sas`, `cindex_hazard.sas`, `cindex_hazard_tvc.sas`, `haz_to_mi.sas`, `hazplot.sas`, `hazplot02252013.sas`, `hazplot10242003.sas`, `hazplot_cltest.sas`, `markov.sas`, `mi_to_haz.sas`, `nelsont.sas`
 
-### `hvtiRutilities` - shared (13)
+### `hvtiRutilities` - shared (14)
 
-`bootstrap.summary.sas`, `decomposition.sas`, `decomposition_JR.sas`, `kaplan.int.sas`, `kaplan_jr.sas`, `nelsonl.sas`, `plot.sas`, `plot_8.sas`, `plot_emf.sas`, `plotjoan.sas`, `repeat.sas`, `repeat.testmacro.sas`, `repeated.sas`
+`bootstrap.summary.sas`, `decomposition.sas`, `decomposition_JR.sas`, `kaplan.int.sas`, `kaplan_jr.sas`, `nelsonl.sas`, `plot.sas`, `plot_8.sas`, `plot_emf.sas`, `plotjoan.sas`, `repeat.sas`, `repeat.testmacro.sas`, `repeated.sas`, `stddiff.sas`
 
-### `hvtiRdatasets` (8)
+### `hvtiRdatabuild` (8)
 
-`Copy of dist.sas`, `dist.sas`, `gmatch.sas`, `lgtphcurv9.sas`, `phcurv9.sas`, `repeated_txt.sas`, `stddiff.sas`, `trends.test.sas`
+`dist.sas`, `gmatch.sas`, `lgtphcurv9.sas`, `phcurv9.sas`, `repeated_txt.sas`, `trends.test.sas`, `xls2sas.sas`, `xls2sas_MA.sas`
 
 ### `hvtiPlotR` (6)
 
@@ -183,7 +183,7 @@ rule from the variants rejected above:
 | File | Rule says | Known truth |
 |---|---|---|
 | `summarytable.sas` | `hvtiRtables` | the macro `hvtiRtables` ported on 2026-08-14 |
-| `usmatchd.sas` | `temporal_hazard` | matches the `hvtiRlifetables` handoff |
+| `usmatchd.sas` | `TemporalHazard` | matches the `hvtiRlifetables` handoff |
 | `plot.sas` | `hvtiRutilities` | genuinely shared across many prefixes |
 
 A name-level rule gets `plot.sas`'s helpers wrong; resolving ownership through
@@ -197,9 +197,9 @@ from another package. 19 file-level dependencies span 3 package pairs, and the
 graph is **acyclic**:
 
 ```
-hvtiRtables     -> hvtiRdatasets     (summarytable.sas needs stddiff.sas)
-hvtiRdatasets   -> hvtiRutilities
-temporal_hazard -> hvtiRutilities
+hvtiRtables     -> hvtiRutilities    (summarytable.sas needs stddiff.sas)
+hvtiRdatabuild   -> hvtiRutilities
+TemporalHazard -> hvtiRutilities
 ```
 
 **Name resolution prefers a definition in the same file.** 117 of 272 macro
@@ -222,7 +222,7 @@ call rather than a family decision:
 `mm`, `gm` and `nm` remain owner-undetermined in the canonicalization spec. They
 block nothing today, so no decision is forced.
 
-## Corpus-only files (78)
+## Corpus-only files (73)
 
 They stay in `hvtiRtemplates` as reference and are allocated nowhere.
 
@@ -296,7 +296,7 @@ decision already taken elsewhere - that a macro is being **replaced** rather tha
 ported, and that the replacement lives in a specific package.
 
 `%usmatchd` is that case. The rule sent `usmatchd.sas`, `usmatchd84.sas` and
-`usmatchd10172003.sas` to `temporal_hazard` (named by `hs` templates) and left
+`usmatchd10172003.sas` to `TemporalHazard` (named by `hs` templates) and left
 `usmtch08.sas` corpus-only. But `hvtiRlifetables` was scaffolded on 2026-08-13
 specifically to reimplement `%usmatchd` in R, and vendors all four variants in
 its `data-raw/sas/`.

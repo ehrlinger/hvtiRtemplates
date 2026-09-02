@@ -9,22 +9,22 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                    "2026-08-14-macro-allocation.json")
 
 OWNER = {}
-for p in "bd vars dt".split():           OWNER[p] = "hvtiRdatasets"
+for p in "bd vars dt".split():           OWNER[p] = "hvtiRdatabuild"
 for p in "hp np lp dp fp cp gp".split(): OWNER[p] = "hvtiPlotR"
-for p in "lm cm pm rm".split():          OWNER[p] = "hvtiPropensityScores"
-for p in "ac hz hs nd ce".split():       OWNER[p] = "temporal_hazard"
+for p in "lm cm pm rm".split():          OWNER[p] = "hvtiRpropensity"
+for p in "ac hz hs nd ce".split():       OWNER[p] = "TemporalHazard"
 OWNER["dc"] = "hvtiRtables"
 # Tier A - prefixes the map omitted from families it already assigns.
 # hm: the template README defines it as the hazard model built on the HZ fit,
-#     and hz/hs already go to temporal_hazard.
+#     and hz/hs already go to TemporalHazard.
 # mp: mixed-model plot; every other *p plot prefix is already hvtiPlotR.
-# vars_base_only: a variant of vars, already mapped to hvtiRdatasets.
-OWNER["hm"] = "temporal_hazard"
+# vars_base_only: a variant of vars, already mapped to hvtiRdatabuild.
+OWNER["hm"] = "TemporalHazard"
 OWNER["mp"] = "hvtiPlotR"
-OWNER["vars_base_only"] = "hvtiRdatasets"
+OWNER["vars_base_only"] = "hvtiRdatabuild"
 
 # The bootstrap model-building family. One owner rather than a split by model
-# type (bh -> temporal_hazard, bl -> hvtiPropensityScores), because the prefixes
+# type (bh -> TemporalHazard, bl -> hvtiRpropensity), because the prefixes
 # are entangled: bootstrap.clusters.sas is reached from bh, bl and br, so a
 # split would push it into hvtiRutilities as tier-2 "shared" -- a resampling
 # engine separated from every model it serves. Splitting also buys little: bh
@@ -32,7 +32,7 @@ OWNER["vars_base_only"] = "hvtiRdatasets"
 #
 # NOTE bootstrap.summary.sas lands in hvtiRutilities REGARDLESS of this
 # decision, and correctly: its prefixes are ac, bh, bl, bq, br, and ac is
-# actuarial (temporal_hazard). It is shared beyond the bootstrap family, so
+# actuarial (TemporalHazard). It is shared beyond the bootstrap family, so
 # tier 2 applies on its own merits. Do not read its placement as evidence
 # against one-owner -- bootstrap.clusters.sas is the file this decision saved.
 # bc is included though no template currently reaches it.
@@ -50,7 +50,7 @@ FILE_OVERRIDE = {
     b: ("hvtiRlifetables",
         "replaced, not ported: hvtiRlifetables was scaffolded 2026-08-13 to "
         "reimplement %usmatchd in R and vendors this file in data-raw/sas. "
-        "Prefix ownership sends it to temporal_hazard because hs templates "
+        "Prefix ownership sends it to TemporalHazard because hs templates "
         "name it, but the port has a different destination.")
     for b in ("usmatchd.sas", "usmatchd84.sas", "usmatchd10172003.sas",
               "usmtch08.sas", "uslife.sas")
@@ -97,7 +97,11 @@ for b, ns in fdefs.items():
 
 # ---- seeds: a template NAMING a macro states intent about that macro's file
 seed = collections.defaultdict(set); tpl_n = 0; unknown = collections.Counter()
-for f in sorted(glob.glob(f"{TPL_ROOT}/*/templates/*.sas")):
+# recursive=True with **. The one-level glob missed 13 of the 244 template
+# .sas files: ten under datasets/templates/transplant_mcs/ and three under an
+# archive/ subdirectory. A scan that silently sees 95% of its input reports a
+# confident allocation over an incomplete call graph.
+for f in sorted(glob.glob(f"{TPL_ROOT}/*/templates/**/*.sas", recursive=True)):
     tpl_n += 1
     key  = os.path.relpath(f, TPL_ROOT)                       # FIX 2: full path
     pre  = os.path.basename(f).split(".")[1].lower() if os.path.basename(f).count(".") > 1 else "?"
@@ -108,7 +112,7 @@ for f in sorted(glob.glob(f"{TPL_ROOT}/*/templates/*.sas")):
 # ---- dependencies: NOT independently allocated; they travel with a dependent.
 # Ownership deliberately does not propagate - inheriting owners from several
 # dependents makes every shared dependency look like a utility, which is how an
-# earlier draft mis-assigned usmatchd.sas away from temporal_hazard.
+# earlier draft mis-assigned usmatchd.sas away from TemporalHazard.
 owners = {b: set(v) for b, v in seed.items()}
 deps = collections.defaultdict(set)          # file -> seeded files that need it
 for b in list(owners):

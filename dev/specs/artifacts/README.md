@@ -225,3 +225,27 @@ stays visible rather than being assumed.
 **The `dead_pa-rfs` chain is proposed, not observed.** Its ordinals
 (`04.19-rfs`, `06.14-np`) are the design's. The random-forest templates exist in
 `analyses/templates/`, but that chain has never been run as a numbered set.
+
+
+## 2026-09-02  -  per-folder naming parse
+
+The 2026-08-27 census was parsed by a rule that captured a legacy job name's
+first dot-field and discarded the rest, so `dp.trends`, `dp.gfup` and
+`dp.spaghetti.echo` all reduced to one bucket called `dp`. The parser fix is
+upstream in `hvtiRutilities`; these artifacts are the re-parse and what it
+measured.
+
+| File | What it is |
+|---|---|
+| `2026-09-02-per-folder-parse.py` | the re-parse, so the numbers regenerate rather than being trusted. The catalogue path is an ARGUMENT, never a literal, because every row of it is a study path. `--selftest` pins the parse with no corpus present |
+| `2026-09-02-job-census-summary.json` | counts only. Supersedes `2026-08-29-job-census-summary.json`, which is kept because the new file reproduces it exactly and that reproduction is the evidence the re-parse is faithful |
+
+**The qualifier is named by position, not by meaning.** It is an outcome in
+`analyses`, a table type in `descriptive`, a clinical variable in
+`distributions` and a mix in `graphs`. Anything that assigns it a single name
+is asserting something the corpus does not support; see
+`dev/specs/2026-09-02-per-folder-naming-parse-design.md` section 2.
+
+**Do not sum the family rows.** Every count is a distinct-study count within
+its own scope, so a study running both `dp.trends` and `dp.gfup` is one study
+in `dp` and appears in two family rows.
