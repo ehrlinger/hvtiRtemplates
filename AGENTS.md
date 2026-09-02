@@ -209,7 +209,7 @@ moved — a template that fails this check cannot be scaffolded at all.
   was true everywhere in August and since changed on eleven, is not recoverable from here,
   because a ruleset leaves no history in the clone. Either way the lesson is the same one the
   template gate above teaches: **read the ruleset for the repo you are in** rather than
-  trusting a family-wide claim, this paragraph's included.
+  trusting any family-wide claim, including the one in this paragraph.
 
   ```sh
   gh api repos/ehrlinger/<repo>/rules/branches/main \
