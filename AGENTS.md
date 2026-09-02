@@ -336,10 +336,16 @@ scaffolded at all.
 - **Patch-digit bumps only**, as fixes land. Minor and major are the
   maintainer’s decision.
 
-- Bump `DESCRIPTION`, refresh its `Date`, and add the matching `NEWS.md`
-  entry in the same commit. `NEWS.md` uses plain
-  `# hvtiRtemplates X.Y.Z` headings — **no `Version:` line**, unlike
-  ggRandomForests, whose version-grep test requires a DCF-style header.
+- **Bump when you name a version, not when you merge.** A pull request
+  lands without touching `Version:`. Its entry goes under a
+  `# hvtiRtemplates (unreleased)` heading in `NEWS.md`, which you add
+  when it is not already there. A separate commit then renames that
+  heading to the new version and updates `DESCRIPTION` and its `Date`,
+  at most once a day. The heading is gone again after a bump, so the
+  next change re-adds it. `.claude/house-style.md` carries the rule and
+  the reasoning. `NEWS.md` uses plain `# hvtiRtemplates X.Y.Z` headings
+  — **no `Version:` line**, unlike ggRandomForests, whose version-grep
+  test requires a DCF-style header.
 
 ## Prose
 

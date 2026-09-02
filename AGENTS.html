@@ -149,7 +149,7 @@
 </li>
 <li><p>Versions are <strong>straight three digits</strong> (<code>1.0.2</code>). Never a <code>.9000</code> suffix or a fourth digit.</p></li>
 <li><p><strong>Patch-digit bumps only</strong>, as fixes land. Minor and major are the maintainer’s decision.</p></li>
-<li><p>Bump <code>DESCRIPTION</code>, refresh its <code>Date</code>, and add the matching <code>NEWS.md</code> entry in the same commit. <code>NEWS.md</code> uses plain <code># hvtiRtemplates X.Y.Z</code> headings — <strong>no <code>Version:</code> line</strong>, unlike ggRandomForests, whose version-grep test requires a DCF-style header.</p></li>
+<li><p><strong>Bump when you name a version, not when you merge.</strong> A pull request lands without touching <code>Version:</code>. Its entry goes under a <code># hvtiRtemplates (unreleased)</code> heading in <code>NEWS.md</code>, which you add when it is not already there. A separate commit then renames that heading to the new version and updates <code>DESCRIPTION</code> and its <code>Date</code>, at most once a day. The heading is gone again after a bump, so the next change re-adds it. <code>.claude/house-style.md</code> carries the rule and the reasoning. <code>NEWS.md</code> uses plain <code># hvtiRtemplates X.Y.Z</code> headings — <strong>no <code>Version:</code> line</strong>, unlike ggRandomForests, whose version-grep test requires a DCF-style header.</p></li>
 </ul></div>
 <div class="section level2">
 <h2 id="prose">Prose<a class="anchor" aria-label="anchor" href="#prose"></a></h2>
