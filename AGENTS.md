@@ -201,8 +201,8 @@ moved — a template that fails this check cannot be scaffolded at all.
   | ten, this one included | 1 | false | 4 |
   | `TemporalHazard` | 1 | false | 5, adding `required_status_checks` |
   | `hvtiGraphics` | **0** | **true** | 4 |
-  | `hvtiEDAreports` | no ruleset at all, `main` is **unprotected** | | |
-  | `temporalHazards` | private, default branch `master`, ruleset not readable on this plan | | |
+  | `hvtiEDAreports` | n/a | n/a | **none. `main` is unprotected** |
+  | `temporalHazards` | unknown | unknown | unreadable: private, default branch `master` |
 
   The old text describes `hvtiGraphics` and no other repository: zero approvals, code-owner
   review set but inert. Whether it was written from that one repo and stated for twelve, or
