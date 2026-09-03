@@ -148,13 +148,25 @@ note did not reach:
 | folder | shape | example |
 |---|---|---|
 | `graphs` | `dp.<plot type>.<variable>` | `tp.dp.spaghetti.echo.R` |
-| `distributions` | `dp.<variable>.<measurement scale>` | `tp.dp.pain_score.ordinal.sas` |
+| `distributions` | `dp.<variable>[.<qualifier>]`, the qualifier optional and usually **not** a scale | `tp.dp.echo.sas`, `tp.dp.pain_score.ordinal.sas` |
 | `descriptive` | `dc.<what>.<output format>` | `tp.dc.tables.html_and_rtf.sas` |
 
-So `distributions/dp` is **not** one template parameterised by variable, as
-first suggested. The scale is what changes the code; the variable is an `EDIT:`
-field. That points at one template per scale, binary / ordinal / continuous,
-which is two or three rather than one.
+The `distributions` row was read as `dp.<variable>.<measurement scale>` from
+the two local templates that carry a scale, which first suggested one template
+per scale rather than one parameterised by variable.
+
+⚠️ **Measured 2026-09-03, and that is wrong.** Over 1,271 `distributions/dp`
+job rows: 666 of them, 52%, carry only the variable and no second field at
+all, and a scale word appears in 110 stems, 8.7%. As a second qualifier
+`binary` (8 studies) and `ordinal` (10) rank fifth and sixth, behind `trend`
+(21), `tavr`, `gastroparesis` and `matched`. **`distributions/dp` is ONE job
+parameterised by variable**, which is what section 5 said before this
+paragraph talked itself out of it.
+
+The scale reading came from two template filenames. Recommending three
+templates from a sample of two, inside the note that exists because a
+convention was inferred from a small sample and applied to a corpus, is the
+same error one more time. It reached the ledger for a day.
 
 ## 8. The decision: what is a template's identity?
 
@@ -180,9 +192,10 @@ packages, so a single template that switches between them would depend on both.
 |---|---|---|---|
 | `descriptive` | `dc` | `general`, `tables`, `gfup`, `dead` | plus `stddiff` if section 5 is resolved in favour of the 2019 macro |
 | `graphs` | `dp` | `trends`, `gfup`, `spaghetti`, `procs` | see section 6: `tp_ggplot/` is 2017 work on dead dependencies, and carries neither `trends` nor `spaghetti` anyway |
-| `distributions` | `dp` | one per measurement scale | binary / ordinal / continuous, variable as `EDIT:` |
+| `distributions` | `dp` | **one**, `variable` | measured 2026-09-03; the scale reading in section 7 is withdrawn |
 
-Roughly ten to eleven templates where the ledger currently carries two rows.
+Ten templates where the ledger carried two rows: five `dc`, four `graphs/dp`,
+one `distributions/dp`. Enacted 2026-09-03.
 
 ## 10. What this does not settle
 
