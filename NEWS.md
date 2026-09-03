@@ -1,3 +1,27 @@
+# hvtiRtemplates (unreleased)
+
+* **⚠️ `distributions/dp` is ONE ledger row, not the three that shipped in
+  1.0.21.** Those three were keyed on measurement scale, recommended from a
+  sample of two template filenames and released before anyone measured them.
+
+  Measured over all 1,271 `distributions/dp` job rows: **666 of them, 52%,
+  carry only the variable and no second field at all**, and a scale word
+  appears in 110 stems, 8.7% (`binary` 51, `ordinal` 49, `continuous` 6). As
+  a second qualifier `binary` (8 studies) and `ordinal` (10) rank fifth and
+  sixth, behind `trend` (21), `tavr`, `gastroparesis` and `matched`.
+
+  So it is one job parameterised by variable, which is what the design record
+  said before it talked itself out of it. The row is `dp` / `variable`, 237
+  job studies. `qualifier` is `variable` rather than null because a prefix
+  must be wholly qualified or wholly unqualified and `graphs/dp` is
+  decomposed.
+
+  Recommending three templates from a sample of two, inside the work that
+  exists because a convention was inferred from a small sample and applied to
+  a whole corpus, is that error committed once more. It reached `main` and
+  shipped. `trend` (100 rows, 21 studies) is the one second qualifier that
+  might still earn a template, and is noted rather than acted on.
+
 # hvtiRtemplates 1.0.21
 
 * **`dp` and `dc` are decomposed in the roadmap ledger: two rows become

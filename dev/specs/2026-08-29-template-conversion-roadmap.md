@@ -45,7 +45,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the ledger and re-render. CI checks the agreement.
 
-**53 templates in scope**, of which 9 exist on disk. 2 demoted to umbrella rows.
+**51 templates in scope**, of which 9 exist on disk. 2 demoted to umbrella rows.
 
 ## By family
 
@@ -78,13 +78,11 @@ row has no template on disk.
 |---|---|---|---|---|---|---|
 | `ce` | queued | — | 131 | 128 | 1 | — |
 | `cp` | queued | — | 5 | 4 | 1 | — |
-| `dp-binary` | queued | — | — | — | — | — |
-| `dp-continuous` | queued | — | — | — | — | — |
 | `dp-gfup` | queued | — | — | 48 | — | — |
-| `dp-ordinal` | queued | — | — | — | — | — |
 | `dp-procs` | queued | — | — | 35 | — | — |
 | `dp-spaghetti` | queued | — | — | 40 | — | — |
 | `dp-trends` | queued | — | — | 80 | — | — |
+| `dp-variable` | queued | — | — | 237 | — | — |
 | `fp` | queued | — | 19 | 11 | 11 | — |
 | `gp` | queued | — | 50 | 50 | 2 | — |
 | `hp` | **revisit** | 06.01 | 557 | 541 | 16 | — |

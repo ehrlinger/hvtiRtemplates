@@ -35,7 +35,8 @@
      "r_jobs": 1780
     }
    },
-   "note": "Prefix-level totals are kept here because the split rows cannot carry them: a study running both dp.trends and dp.gfup is one study in dp and appears in two rows, so the rows must not be summed."
+   "note": "Prefix-level totals are kept here because the split rows cannot carry them: a study running both dp.trends and dp.gfup is one study in dp and appears in two rows, so the rows must not be summed.",
+   "distributions_dp_unconfirmed": "Section 9 recommended three distributions/dp templates keyed on measurement scale, from a sample of TWO template filenames. Measured against census-ALL.csv on 2026-09-03 the same day: scale words appear in 8.7% of 1,271 job stems and rank fifth and sixth as a second qualifier, and 52% of stems carry no second field at all. The three rows were replaced by ONE, dp/variable. The recommendation was the same assumption-at-scale error the parse work exists to undo, made while undoing it."
   }
  },
  "retired_ordinals": [
@@ -1192,8 +1193,8 @@
   },
   {
    "prefix": "dp",
-   "qualifier": "binary",
-   "name": "Distribution: binary variable",
+   "qualifier": "variable",
+   "name": "Distribution of a variable",
    "folder": "distributions",
    "family": "plots",
    "kind": "job",
@@ -1201,7 +1202,7 @@
    "ordinal": null,
    "batch": 3,
    "sas_breadth": null,
-   "sas_breadth_jobs": null,
+   "sas_breadth_jobs": 237,
    "r_exemplars": null,
    "r_jobs": null,
    "upstream": [],
@@ -1209,49 +1210,7 @@
    "workflows": [],
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
-   "note": "Keyed on MEASUREMENT SCALE, not variable: distributions/dp is dp.<variable>.<scale>, 620 distinct variables over 237 studies, and the scale is what changes the code. NOT measured: the census extracts qualifier1 only, which here is the variable. Evidence is two of three local templates plus the same binary/ordinal/continuous vocabulary recurring in graphs. Confirm against qualifier2 before writing."
-  },
-  {
-   "prefix": "dp",
-   "qualifier": "ordinal",
-   "name": "Distribution: ordinal variable",
-   "folder": "distributions",
-   "family": "plots",
-   "kind": "job",
-   "status": "queued",
-   "ordinal": null,
-   "batch": 3,
-   "sas_breadth": null,
-   "sas_breadth_jobs": null,
-   "r_exemplars": null,
-   "r_jobs": null,
-   "upstream": [],
-   "downstream": [],
-   "workflows": [],
-   "blocked_on": null,
-   "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
-   "note": "See the `binary` row. Same caveat: unmeasured, inferred from template names."
-  },
-  {
-   "prefix": "dp",
-   "qualifier": "continuous",
-   "name": "Distribution: continuous variable",
-   "folder": "distributions",
-   "family": "plots",
-   "kind": "job",
-   "status": "queued",
-   "ordinal": null,
-   "batch": 3,
-   "sas_breadth": null,
-   "sas_breadth_jobs": null,
-   "r_exemplars": null,
-   "r_jobs": null,
-   "upstream": [],
-   "downstream": [],
-   "workflows": [],
-   "blocked_on": null,
-   "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
-   "note": "See the `binary` row. Same caveat, and weaker: no distributions template carries a `continuous` suffix today; it is the third member of a vocabulary observed in graphs."
+   "note": "ONE template, the variable as an EDIT: field. Measured 2026-09-03 over 1,271 distributions/dp job rows: 666 (52%) carry only the variable and no second field at all, and a measurement-scale word appears in 110 stems (8.7%) -- binary 51, ordinal 49, continuous 6. As a second qualifier, `binary` (8 studies) and `ordinal` (10) rank fifth and sixth behind `trend` (21), `tavr`, `gastroparesis` and `matched`. `qualifier` is `variable` rather than null because a prefix must be wholly qualified or wholly unqualified and graphs/dp is decomposed; it names what the job is parameterised by. Watch `trend` (100 rows, 21 studies), the one qualifier2 that could earn a template of its own."
   }
  ],
  "intake": []
