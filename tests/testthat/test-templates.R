@@ -1,7 +1,7 @@
 test_that("template_list() has the expected shape", {
   tl <- template_list()
   expect_s3_class(tl, "data.frame")
-  expect_named(tl, c("name", "prefix", "ordinal", "folder", "file"))
+  expect_named(tl, c("name", "prefix", "qualifier", "ordinal", "folder", "file"))
 })
 
 test_that("template_list() finds templates in taxonomy subfolders", {
@@ -310,4 +310,78 @@ test_that("DESCRIPTION's hvtiRbootstrap bound matches what the templates enforce
   expect_gte(declared, max(floors),
              label = paste0("DESCRIPTION declares hvtiRbootstrap >= ", declared,
                             " but a template refuses below ", max(floors)))
+})
+
+# ---- qualifier ------------------------------------------------------------
+# `graphs/dp` is trends, spaghetti, procs and more under one prefix, so a
+# template name has to be able to say which. See
+# dev/specs/2026-09-02-dp-dc-decomposition-design.md, which decided this.
+
+test_that("a qualified template name parses into three fields", {
+  f <- hvtiRtemplates:::.template_fields("06.03-dp-trends.qmd")
+  expect_equal(f$ordinal, "06.03")
+  expect_equal(f$prefix, "dp")
+  expect_equal(f$qualifier, "trends")
+})
+
+test_that("an unqualified name still parses, with qualifier NA", {
+  # Every template shipped today is unqualified. NA and "" must stay
+  # distinguishable: regexec returns "" for a group that did not participate,
+  # which would read as a template qualified with the empty string.
+  f <- hvtiRtemplates:::.template_fields("03.01-ac.qmd")
+  expect_equal(f$prefix, "ac")
+  expect_true(is.na(f$qualifier))
+})
+
+test_that("the prefix capture does not swallow the qualifier", {
+  # It was `.+`, which is greedy, so "06.03-dp-trends.qmd" parsed as the single
+  # prefix "dp-trends". That validates and is wrong.
+  f <- hvtiRtemplates:::.template_fields("06.03-dp-trends.qmd")
+  expect_false(identical(f$prefix, "dp-trends"))
+})
+
+test_that("a trailing separator with no qualifier is rejected", {
+  f <- hvtiRtemplates:::.template_fields("06.03-dp-.qmd")
+  expect_true(is.na(f$prefix))
+})
+
+test_that("template_list() reports a qualifier column", {
+  expect_true("qualifier" %in% names(template_list()))
+})
+
+test_that(".select_template() refuses to guess when a prefix is ambiguous", {
+  # The whole point. Taking the first row is how one `dp` bucket hid four job
+  # types; an unanswered question must not get a confident answer.
+  tl <- data.frame(
+    prefix = c("dp", "dp", "ac"),
+    qualifier = c("trends", "spaghetti", NA_character_),
+    ordinal = c("06.03", "06.04", "03.01"),
+    folder = c("graphs", "graphs", "distributions"),
+    file = c("a.qmd", "b.qmd", "c.qmd"),
+    stringsAsFactors = FALSE
+  )
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp"),
+               "carries 2 templates")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp"), "trends")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp"), "spaghetti")
+})
+
+test_that(".select_template() resolves a named qualifier, and rejects a wrong one", {
+  tl <- data.frame(
+    prefix = c("dp", "dp"), qualifier = c("trends", "spaghetti"),
+    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
+  )
+  expect_equal(hvtiRtemplates:::.select_template(tl, "dp", "trends")$file, "a.qmd")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp", "nope"),
+               "no template qualified")
+})
+
+test_that("a single unqualified template still resolves without a qualifier", {
+  # Backwards compatibility for all nine shipped templates.
+  tl <- data.frame(
+    prefix = "ac", qualifier = NA_character_, ordinal = "03.01",
+    folder = "distributions", file = "c.qmd", stringsAsFactors = FALSE
+  )
+  expect_equal(hvtiRtemplates:::.select_template(tl, "ac")$file, "c.qmd")
 })

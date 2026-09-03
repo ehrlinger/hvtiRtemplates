@@ -2,7 +2,7 @@
 #'
 #' @description
 #' Copies a supported job template into the taxonomy folder it belongs to,
-#' named \code{<endpoint>-<type>-<NN.MM>-<prefix>.qmd}. Refuses to overwrite an
+#' named \code{<endpoint>-<type>-<NN.MM>-<prefix>[-<qualifier>].qmd}. Refuses to overwrite an
 #' existing job: a job file accumulates a study's edits, and silently replacing
 #' one would discard them.
 #'
@@ -15,6 +15,11 @@
 #' random-forest-survival set both begin from the same life table, so keyed on
 #' the endpoint alone both would be written to one filename.
 #'
+#' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
+#'   \code{dp}. Required only where a prefix carries more than one template;
+#'   omitting it there is an error naming the choices, never a silent pick.
+#'   Restricted to \code{[A-Za-z0-9_]+}, because \code{-} separates the
+#'   filename's fields.
 #' @param prefix Job type: one of the prefixes reported by
 #'   \code{\link{template_list}}.
 #' @param endpoint The endpoint this job analyses, e.g. \code{"dead_pa"}. Must
@@ -38,28 +43,30 @@
 #' new_job("ac", "dead_pa", "hz", dir = d)
 #' list.files(d, recursive = TRUE)
 #' unlink(d, recursive = TRUE)
-new_job <- function(prefix, endpoint, type, dir = ".") {
+new_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
   .check_field("endpoint", endpoint)
   .check_field("type", type)
+  if (!is.null(qualifier)) .check_field("qualifier", qualifier)
 
-  tl <- template_list()
-  valid <- sort(unique(stats::na.omit(tl$prefix)))
-  if (!prefix %in% valid) {
-    stop("new_job(): unknown prefix '", prefix, "'. Valid prefixes: ",
-         paste(valid, collapse = ", "), call. = FALSE)
-  }
-  i <- match(prefix, tl$prefix)
+  # One row or an error. Selecting with match() took the FIRST row for a
+  # prefix and said nothing about the others, which is safe only while every
+  # prefix has one template.
+  row <- .select_template(template_list(), prefix, qualifier)
 
-  out_dir <- file.path(dir, tl$folder[[i]])
+  out_dir <- file.path(dir, row$folder[[1L]])
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
-  out <- file.path(out_dir, paste0(endpoint, "-", type, "-",
-                                   tl$ordinal[[i]], "-", prefix, ".qmd"))
+  # The job carries the template's qualifier. A job scaffolded from
+  # 06.03-dp-trends.qmd is a trends job, and a filename that drops that says
+  # only "some dp job", which is the thing the template split exists to fix.
+  stem <- paste0(endpoint, "-", type, "-", row$ordinal[[1L]], "-", prefix,
+                 if (!is.na(row$qualifier[[1L]])) paste0("-", row$qualifier[[1L]]) else "")
+  out <- file.path(out_dir, paste0(stem, ".qmd"))
 
   if (file.exists(out)) {
     stop("new_job(): '", out, "' already exists; refusing to overwrite.",
          call. = FALSE)
   }
-  if (!file.copy(tl$file[[i]], out, overwrite = FALSE)) {
+  if (!file.copy(row$file[[1L]], out, overwrite = FALSE)) {
     stop("new_job(): failed to write '", out, "'.", call. = FALSE)
   }
   # A job file named for one set but declaring another is exactly the defect

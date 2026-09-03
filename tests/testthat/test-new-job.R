@@ -54,9 +54,13 @@ test_that("new_job errors when the template lacks the ENDPOINT/TYPE marker lines
   writeLines(c("---", "title: fake", "---", "no markers here"), fake_template)
   on.exit(unlink(fake_template), add = TRUE)
 
+  # Mirrors template_list()'s real columns, `qualifier` included. A mock that
+  # is narrower than the function it stands in for passes while the real code
+  # path breaks.
   fake_tl <- data.frame(
-    name = "01.01-zz", prefix = "zz", ordinal = "01.01",
-    folder = "distributions", file = fake_template, stringsAsFactors = FALSE
+    name = "01.01-zz", prefix = "zz", qualifier = NA_character_,
+    ordinal = "01.01", folder = "distributions", file = fake_template,
+    stringsAsFactors = FALSE
   )
   testthat::local_mocked_bindings(template_list = function() fake_tl, .package = "hvtiRtemplates")
 

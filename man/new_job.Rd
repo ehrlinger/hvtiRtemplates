@@ -4,7 +4,7 @@
 \alias{new_job}
 \title{Scaffold a new analysis job from a template}
 \usage{
-new_job(prefix, endpoint, type, dir = ".")
+new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
@@ -19,6 +19,12 @@ Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{endpoint}.}
 
 \item{dir}{The study root to write into. The taxonomy folder beneath it is
 created if it does not exist.}
+
+\item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
+\code{dp}. Required only where a prefix carries more than one template;
+omitting it there is an error naming the choices, never a silent pick.
+Restricted to \code{[A-Za-z0-9_]+}, because \code{-} separates the
+filename's fields.}
 }
 \value{
 The path written, invisibly. On any failure -- including one after
@@ -27,7 +33,7 @@ The path written, invisibly. On any failure -- including one after
 }
 \description{
 Copies a supported job template into the taxonomy folder it belongs to,
-named \code{<endpoint>-<type>-<NN.MM>-<prefix>.qmd}. Refuses to overwrite an
+named \code{<endpoint>-<type>-<NN.MM>-<prefix>[-<qualifier>].qmd}. Refuses to overwrite an
 existing job: a job file accumulates a study's edits, and silently replacing
 one would discard them.
 }

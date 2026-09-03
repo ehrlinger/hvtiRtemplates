@@ -36,6 +36,16 @@ STATUS_MARK = {"shipped": "shipped", "revisit": "**revisit**",
                "intake": "*intake*", "out-of-scope": "~~umbrella~~"}
 
 
+def _label(r):
+    """`dp-trends` where a prefix carries several job types, else `dp`.
+
+    Two rows for one prefix render identically without this, which defeats the
+    reason for splitting them. See
+    dev/specs/2026-09-02-dp-dc-decomposition-design.md.
+    """
+    return r["prefix"] + (f"-{r['qualifier']}" if r.get("qualifier") else "")
+
+
 def _num(v):
     """A measured zero and an unmeasured field must not render the same."""
     return "—" if v is None else str(v)
@@ -65,8 +75,8 @@ def render(rows):
                 "| prefix | status | ordinal | breadth | R exemplars | blocked on |",
                 "|---|---|---|---|---|---|"]
         for r in sorted(fam_rows, key=lambda r: (r["batch"] is None,
-                                                 r["batch"] or 0, r["prefix"])):
-            out.append(f"| `{r['prefix']}` | {STATUS_MARK.get(r['status'], r['status'])} | "
+                                                 r["batch"] or 0, _label(r))):
+            out.append(f"| `{_label(r)}` | {STATUS_MARK.get(r['status'], r['status'])} | "
                        f"{r['ordinal'] or '—'} | {_num(r['sas_breadth'])} | "
                        f"{_num(r['r_exemplars'])} | {r['blocked_on'] or '—'} |")
         out.append("")
@@ -78,12 +88,12 @@ def render(rows):
         for w in r["workflows"]:
             wf.setdefault(w, []).append(r)
     for name in sorted(wf):
-        members = sorted(wf[name], key=lambda r: r["prefix"])
+        members = sorted(wf[name], key=_label)
         done = [r for r in members
                 if r["status"] in ("shipped", "revisit", "in-flight")]
-        short = [r["prefix"] for r in members if r not in done]
+        short = [_label(r) for r in members if r not in done]
         out += [f"### {name} — {len(done)}/{len(members)}", "",
-                "Members: " + ", ".join(f"`{r['prefix']}`" for r in members),
+                "Members: " + ", ".join(f"`{_label(r)}`" for r in members),
                 "",
                 ("**Complete.**" if not short else
                  "Outstanding: " + ", ".join(f"`{p}`" for p in short) + "."),

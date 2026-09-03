@@ -43,7 +43,8 @@ FOLDER_ORDINAL = {
 
 STATUSES = {"shipped", "revisit", "in-flight", "queued", "intake", "out-of-scope"}
 KINDS = {"job", "meta"}
-FIELDS = ["prefix", "name", "folder", "family", "kind", "status", "ordinal",
+FIELDS = ["prefix", "qualifier", "name", "folder", "family", "kind", "status",
+          "ordinal",
           "batch", "sas_breadth", "sas_breadth_jobs", "r_exemplars",
           "r_jobs", "upstream",
           "downstream", "workflows", "blocked_on", "spec", "note"]
@@ -92,13 +93,21 @@ def check_schema(rows):
             if v is not None and not isinstance(v, int):
                 bad.append(f"`{where}` has non-integer {field} {v!r}; "
                            f"use null for unmeasured")
+        # Keyed on (prefix, qualifier), not prefix alone. `graphs/dp` is
+        # several job types under one prefix, so one row per prefix cannot
+        # express the estate; two rows for the SAME pair still cannot both be
+        # right. A null qualifier is part of the key, so a prefix may hold one
+        # unqualified row and any number of qualified ones, but not two
+        # unqualified. See dev/specs/2026-09-02-dp-dc-decomposition-design.md.
         prefix = r.get("prefix")
         if prefix is not None:
-            if prefix in seen_prefixes:
-                bad.append(f"prefix `{prefix}` appears more than once, "
-                           f"at row {seen_prefixes[prefix]} and row {i}")
+            key = (prefix, r.get("qualifier"))
+            if key in seen_prefixes:
+                shown = prefix if key[1] is None else f"{prefix}-{key[1]}"
+                bad.append(f"`{shown}` appears more than once, "
+                           f"at row {seen_prefixes[key]} and row {i}")
             else:
-                seen_prefixes[prefix] = i
+                seen_prefixes[key] = i
     return bad
 
 
@@ -194,8 +203,9 @@ def check_disk(rows):
     for r in rows:
         if r.get("status") not in ON_DISK or not r.get("ordinal"):
             continue
-        rel = os.path.join(r["folder"], f"{r['ordinal']}-{r['prefix']}.qmd")
-        claimed[rel] = r["prefix"]
+        stem = r["prefix"] + (f"-{r['qualifier']}" if r.get("qualifier") else "")
+        rel = os.path.join(r["folder"], f"{r['ordinal']}-{stem}.qmd")
+        claimed[rel] = stem
         if not os.path.isfile(os.path.join(TEMPLATES, rel)):
             bad.append(f"`{r['prefix']}` is {r['status']} but "
                        f"inst/templates/{rel} does not exist")

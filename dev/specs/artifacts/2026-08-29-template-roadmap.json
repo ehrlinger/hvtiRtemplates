@@ -16,7 +16,8 @@
   ],
   "r_exemplars_note": "the DEFLATED count -- a stem replicated across studies inflates the raw figure, severely for ar (395 -> 89). Never quote the undeflated number.",
   "batch_note": "batches 0-2 are decided; 3 and later are PROVISIONAL and carry the family's provisional position.",
-  "sas_breadth_jobs": "2026-09-02-job-census-summary.json. Distinct studies with a PROGRAM file of this prefix: program extension, folder other than estimates, not a template, and placed. sas_breadth is retained unchanged and still counts every extension, so the two are comparable rather than one replacing the other. See dev/specs/2026-09-02-per-folder-naming-parse-design.md. Both are DISTINCT-STUDY counts and must not be summed across rows."
+  "sas_breadth_jobs": "2026-09-02-job-census-summary.json. Distinct studies with a PROGRAM file of this prefix: program extension, folder other than estimates, not a template, and placed. sas_breadth is retained unchanged and still counts every extension, so the two are comparable rather than one replacing the other. See dev/specs/2026-09-02-per-folder-naming-parse-design.md. Both are DISTINCT-STUDY counts and must not be summed across rows.",
+  "qualifier": "Job type within the prefix, matching the template filename's optional third field. null means the prefix carries a single unqualified template, which is every row today. A prefix may now hold SEVERAL rows, one per qualifier, because graphs/dp is trends, spaghetti, procs and more under one prefix. See dev/specs/2026-09-02-dp-dc-decomposition-design.md."
  },
  "retired_ordinals": [
   {
@@ -29,6 +30,7 @@
  "prefixes": [
   {
    "prefix": "ac",
+   "qualifier": null,
    "name": "Actuarial",
    "folder": "distributions",
    "family": "distributions",
@@ -51,6 +53,7 @@
   },
   {
    "prefix": "ar",
+   "qualifier": null,
    "name": "Analysis report",
    "folder": "documents",
    "family": "documents",
@@ -71,6 +74,7 @@
   },
   {
    "prefix": "bc",
+   "qualifier": null,
    "name": "Bootstrap Cox",
    "folder": "analyses",
    "family": "bootstrap",
@@ -91,6 +95,7 @@
   },
   {
    "prefix": "bd",
+   "qualifier": null,
    "name": "Build",
    "folder": "datasets",
    "family": "datasets",
@@ -113,6 +118,7 @@
   },
   {
    "prefix": "bh",
+   "qualifier": null,
    "name": "Bootstrap hazard",
    "folder": "analyses",
    "family": "bootstrap",
@@ -133,6 +139,7 @@
   },
   {
    "prefix": "bl",
+   "qualifier": null,
    "name": "Bootstrap logistic",
    "folder": "analyses",
    "family": "bootstrap",
@@ -155,6 +162,7 @@
   },
   {
    "prefix": "bn",
+   "qualifier": null,
    "name": "Bootstrap nonparametric",
    "folder": "analyses",
    "family": "bootstrap-ci",
@@ -175,6 +183,7 @@
   },
   {
    "prefix": "bq",
+   "qualifier": null,
    "name": "Bootstrap quantile",
    "folder": "analyses",
    "family": "bootstrap",
@@ -195,6 +204,7 @@
   },
   {
    "prefix": "br",
+   "qualifier": null,
    "name": "Bootstrap regression",
    "folder": "analyses",
    "family": "bootstrap",
@@ -215,6 +225,7 @@
   },
   {
    "prefix": "cd",
+   "qualifier": null,
    "name": "Cumulative distribution",
    "folder": "distributions",
    "family": "distributions",
@@ -235,6 +246,7 @@
   },
   {
    "prefix": "ce",
+   "qualifier": null,
    "name": "Competing events",
    "folder": "graphs",
    "family": "plots",
@@ -258,6 +270,7 @@
   },
   {
    "prefix": "cm",
+   "qualifier": null,
    "name": "Cox matching",
    "folder": "analyses",
    "family": "models",
@@ -280,6 +293,7 @@
   },
   {
    "prefix": "cp",
+   "qualifier": null,
    "name": "Cumulative probability plot",
    "folder": "graphs",
    "family": "plots",
@@ -300,6 +314,7 @@
   },
   {
    "prefix": "dc",
+   "qualifier": null,
    "name": "Descriptive",
    "folder": "descriptive",
    "family": "descriptive",
@@ -322,6 +337,7 @@
   },
   {
    "prefix": "dp",
+   "qualifier": null,
    "name": "Descriptive plot",
    "folder": "graphs",
    "family": "plots",
@@ -342,6 +358,7 @@
   },
   {
    "prefix": "dt",
+   "qualifier": null,
    "name": "Data check",
    "folder": "datasets",
    "family": "datasets",
@@ -362,6 +379,7 @@
   },
   {
    "prefix": "fp",
+   "qualifier": null,
    "name": "Forest plot",
    "folder": "graphs",
    "family": "plots",
@@ -382,6 +400,7 @@
   },
   {
    "prefix": "gm",
+   "qualifier": null,
    "name": "Generalized model",
    "folder": "analyses",
    "family": "models",
@@ -402,6 +421,7 @@
   },
   {
    "prefix": "gp",
+   "qualifier": null,
    "name": "Generalized model plot",
    "folder": "graphs",
    "family": "plots",
@@ -422,6 +442,7 @@
   },
   {
    "prefix": "hm",
+   "qualifier": null,
    "name": "Hazard model",
    "folder": "analyses",
    "family": "hazard-chain",
@@ -447,6 +468,7 @@
   },
   {
    "prefix": "hp",
+   "qualifier": null,
    "name": "Hazard plot",
    "folder": "graphs",
    "family": "plots",
@@ -474,6 +496,7 @@
   },
   {
    "prefix": "hs",
+   "qualifier": null,
    "name": "Hazard setup",
    "folder": "graphs",
    "family": "hazard-chain",
@@ -501,6 +524,7 @@
   },
   {
    "prefix": "hz",
+   "qualifier": null,
    "name": "Hazard fit",
    "folder": "distributions",
    "family": "distributions",
@@ -526,6 +550,7 @@
   },
   {
    "prefix": "lg",
+   "qualifier": null,
    "name": "Logit trends",
    "folder": "descriptive",
    "family": "descriptive",
@@ -546,6 +571,7 @@
   },
   {
    "prefix": "lm",
+   "qualifier": null,
    "name": "Logistic model",
    "folder": "analyses",
    "family": "models",
@@ -568,6 +594,7 @@
   },
   {
    "prefix": "lp",
+   "qualifier": null,
    "name": "Logistic plot",
    "folder": "graphs",
    "family": "plots",
@@ -590,6 +617,7 @@
   },
   {
    "prefix": "ls",
+   "qualifier": null,
    "name": "Life table / STS",
    "folder": "analyses",
    "family": "models",
@@ -610,6 +638,7 @@
   },
   {
    "prefix": "mm",
+   "qualifier": null,
    "name": "Mixed model",
    "folder": "analyses",
    "family": "models",
@@ -630,6 +659,7 @@
   },
   {
    "prefix": "mp",
+   "qualifier": null,
    "name": "Mixed model plot",
    "folder": "graphs",
    "family": "plots",
@@ -650,6 +680,7 @@
   },
   {
    "prefix": "nb",
+   "qualifier": null,
    "name": "Notebook",
    "folder": "analyses",
    "family": "machine-learning",
@@ -670,6 +701,7 @@
   },
   {
    "prefix": "nd",
+   "qualifier": null,
    "name": "Nonparametric distributions",
    "folder": "distributions",
    "family": "distributions",
@@ -690,6 +722,7 @@
   },
   {
    "prefix": "nm",
+   "qualifier": null,
    "name": "Nonparametric model",
    "folder": "analyses",
    "family": "models",
@@ -712,6 +745,7 @@
   },
   {
    "prefix": "np",
+   "qualifier": null,
    "name": "Nonparametric plot",
    "folder": "graphs",
    "family": "plots",
@@ -734,6 +768,7 @@
   },
   {
    "prefix": "pm",
+   "qualifier": null,
    "name": "Propensity model",
    "folder": "analyses",
    "family": "models",
@@ -756,6 +791,7 @@
   },
   {
    "prefix": "rf",
+   "qualifier": null,
    "name": "Random forest",
    "folder": "analyses",
    "family": "machine-learning",
@@ -776,6 +812,7 @@
   },
   {
    "prefix": "rfc",
+   "qualifier": null,
    "name": "Random forest classifier",
    "folder": "analyses",
    "family": "machine-learning",
@@ -796,6 +833,7 @@
   },
   {
    "prefix": "rfs",
+   "qualifier": null,
    "name": "Random forest survival",
    "folder": "analyses",
    "family": "machine-learning",
@@ -816,6 +854,7 @@
   },
   {
    "prefix": "rfsrc",
+   "qualifier": null,
    "name": "Random forest (SRC)",
    "folder": "analyses",
    "family": "machine-learning",
@@ -836,6 +875,7 @@
   },
   {
    "prefix": "rg",
+   "qualifier": null,
    "name": "Regression trends",
    "folder": "descriptive",
    "family": "descriptive",
@@ -856,6 +896,7 @@
   },
   {
    "prefix": "rm",
+   "qualifier": null,
    "name": "Regression model",
    "folder": "analyses",
    "family": "models",
@@ -878,6 +919,7 @@
   },
   {
    "prefix": "rp",
+   "qualifier": null,
    "name": "Regression plot",
    "folder": "graphs",
    "family": "plots",
@@ -900,6 +942,7 @@
   },
   {
    "prefix": "vars",
+   "qualifier": null,
    "name": "Variables",
    "folder": "datasets",
    "family": "datasets",
@@ -920,6 +963,7 @@
   },
   {
    "prefix": "rfr",
+   "qualifier": null,
    "name": "Random forest regression",
    "folder": "analyses",
    "family": "machine-learning",
@@ -940,6 +984,7 @@
   },
   {
    "prefix": "sid",
+   "qualifier": null,
    "name": "Random forest clustering (sidClustering)",
    "folder": "analyses",
    "family": "machine-learning",
@@ -960,6 +1005,7 @@
   },
   {
    "prefix": "vt",
+   "qualifier": null,
    "name": "Virtual twins",
    "folder": "analyses",
    "family": "machine-learning",
