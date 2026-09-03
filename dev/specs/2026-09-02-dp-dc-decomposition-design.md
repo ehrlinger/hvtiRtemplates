@@ -9,10 +9,15 @@ identity scheme are the maintainer's call.
 `dp` and `dc` are not single job types. This note asks what they actually
 decompose into, and hits a constraint the ledger has never had to face.
 
-⚠️ **No path, study name or patient identifier** appears here. **Clinical
-variable names DO appear** (`afib`, `echo`, `rv_index`, `tvrg`, `POAF`), because
-template filenames carry them and the filenames are the evidence. They are
-shared clinical vocabulary, not study-specific.
+⚠️ **No STUDY path, study name or patient identifier** appears here. The one
+path named is `~/Documents/template`, the template corpus on the maintainer's
+machine, which holds no study data. The distinction is the point: a catalogue
+row is a study path and must not land in a public repository, while a template
+directory may.
+
+⚠️ **Clinical variable names DO appear** (`afib`, `echo`, `rv_index`, `tvrg`,
+`POAF`), because template filenames carry them and the filenames are the
+evidence here. They are shared clinical vocabulary, not study-specific.
 
 ## 1. Two facts that make this cheap to decide now
 
