@@ -95,10 +95,20 @@ template_path <- function(prefix, qualifier = NULL) {
   # for it: naming a qualifier filters to qualified rows, and naming none is
   # the ambiguity. Rather than invent an NA sentinel to select a row that
   # should not exist, say so. Raised by Copilot on #76.
-  if (nrow(hit) > 1L && any(is.na(hit$qualifier))) {
+  # `any(is.na())` alone called two UNQUALIFIED rows "mixed", which they are
+  # not: that is a duplicate pair, a different fault with a different fix.
+  # Mixed means BOTH kinds present. Raised by Copilot on #76.
+  n_unqualified <- sum(is.na(hit$qualifier))
+  if (n_unqualified > 0L && n_unqualified < nrow(hit)) {
     stop("prefix '", prefix, "' mixes qualified and unqualified templates: ",
          paste(basename(hit$file), collapse = ", "),
          ". Decomposing a prefix means naming every job under it.",
+         call. = FALSE)
+  }
+  if (n_unqualified > 1L) {
+    stop("prefix '", prefix, "' has ", n_unqualified,
+         " unqualified templates; the (prefix, qualifier) pair must be ",
+         "unique. Found: ", paste(basename(hit$file), collapse = ", "),
          call. = FALSE)
   }
   if (!is.null(qualifier)) {

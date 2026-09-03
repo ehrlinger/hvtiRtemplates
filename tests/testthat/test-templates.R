@@ -440,3 +440,25 @@ test_that("a malformed prefix is rejected before it is compared", {
     expect_error(template_path(bad), "single non-empty, non-NA")
   }
 })
+
+test_that("two unqualified templates are a duplicate pair, not a mixed prefix", {
+  # `any(is.na())` alone reported these as mixed, which they are not: mixed
+  # means both kinds present. Two faults, two fixes, so two messages.
+  tl <- data.frame(
+    prefix = c("dp", "dp"), qualifier = c(NA_character_, NA_character_),
+    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
+  )
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp"),
+               "unqualified templates")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp"), "must be")
+})
+
+test_that("a genuinely mixed prefix still reports as mixed", {
+  tl <- data.frame(
+    prefix = c("dp", "dp"), qualifier = c(NA_character_, "trends"),
+    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
+  )
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp", "trends"), "mixes")
+})
