@@ -88,6 +88,13 @@ def check_schema(rows):
         if r.get("family") not in roadmap_render.FAMILY_ORDER:
             bad.append(f"`{where}` has family {r.get('family')!r}, "
                        f"not one of {sorted(roadmap_render.FAMILY_ORDER)}")
+        # Shape-check the qualifier rather than only handling "" at each use
+        # site. Two sites collapsed empty into absent and a third would have
+        # done it again; rejecting the value is what stops that recurring.
+        q = r.get("qualifier")
+        if q is not None and not re.fullmatch(r"[A-Za-z0-9_]+", str(q)):
+            bad.append(f"`{where}` has qualifier {q!r}; use null for an "
+                       f"unqualified template, else [A-Za-z0-9_]+")
         for field in INT_OR_NULL_FIELDS:
             v = r.get(field)
             if v is not None and not isinstance(v, int):
@@ -203,7 +210,12 @@ def check_disk(rows):
     for r in rows:
         if r.get("status") not in ON_DISK or not r.get("ordinal"):
             continue
-        stem = r["prefix"] + (f"-{r['qualifier']}" if r.get("qualifier") else "")
+        # `is not None`, not truthiness. An empty-string qualifier is falsy,
+        # so `if r.get("qualifier")` would look for the UNQUALIFIED filename
+        # and quietly pass. Absent and empty are different states, which is
+        # the same distinction .template_fields() draws between NA and "".
+        q = r.get("qualifier")
+        stem = r["prefix"] + (f"-{q}" if q is not None else "")
         rel = os.path.join(r["folder"], f"{r['ordinal']}-{stem}.qmd")
         claimed[rel] = stem
         if not os.path.isfile(os.path.join(TEMPLATES, rel)):

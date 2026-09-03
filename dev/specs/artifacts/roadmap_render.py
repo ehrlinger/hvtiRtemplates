@@ -43,7 +43,10 @@ def _label(r):
     reason for splitting them. See
     dev/specs/2026-09-02-dp-dc-decomposition-design.md.
     """
-    return r["prefix"] + (f"-{r['qualifier']}" if r.get("qualifier") else "")
+    # `is not None`, not truthiness: an empty-string qualifier would render as
+    # a plain `dp` and hide an invalid row rather than surfacing it.
+    q = r.get("qualifier")
+    return r["prefix"] + (f"-{q}" if q is not None else "")
 
 
 def _num(v):

@@ -84,6 +84,15 @@ template_path <- function(prefix, qualifier = NULL) {
       stop("prefix '", prefix, "' has no template qualified '", qualifier,
            "'. Available for this prefix: ", .qualifier_menu(hit), call. = FALSE)
     }
+    # A named pair matching more than once is a broken estate, not a choice.
+    # Returning the first row here would be the same silent pick this function
+    # exists to refuse, one level further in: the caller takes [[1L]] and never
+    # learns there was a second. Raised by Copilot on #76.
+    if (nrow(q) > 1L) {
+      stop("prefix '", prefix, "' has ", nrow(q), " templates qualified '",
+           qualifier, "'; the pair must be unique. Found: ",
+           paste(basename(q$file), collapse = ", "), call. = FALSE)
+    }
     return(q)
   }
   if (nrow(hit) > 1L) {

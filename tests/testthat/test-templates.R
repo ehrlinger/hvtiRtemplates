@@ -385,3 +385,16 @@ test_that("a single unqualified template still resolves without a qualifier", {
   )
   expect_equal(hvtiRtemplates:::.select_template(tl, "ac")$file, "c.qmd")
 })
+
+test_that(".select_template() refuses a (prefix, qualifier) pair that matches twice", {
+  # Returning the first row here would be the same silent pick the function
+  # exists to refuse, one level further in: the caller takes [[1L]] and never
+  # learns there was a second.
+  tl <- data.frame(
+    prefix = c("dp", "dp"), qualifier = c("trends", "trends"),
+    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
+  )
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp", "trends"),
+               "must be unique")
+})
