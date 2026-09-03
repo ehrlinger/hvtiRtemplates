@@ -5,7 +5,7 @@ Path to a supported template
 ## Usage
 
 ``` r
-template_path(prefix)
+template_path(prefix, qualifier = NULL)
 ```
 
 ## Arguments
@@ -14,6 +14,12 @@ template_path(prefix)
 
   Analysis prefix, e.g. `"ac"`. See
   [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md).
+
+- qualifier:
+
+  Job type within the prefix, e.g. `"trends"` for `dp`. Required only
+  where a prefix carries more than one template; omitting it there is an
+  error naming the choices, never a silent pick.
 
 ## Value
 

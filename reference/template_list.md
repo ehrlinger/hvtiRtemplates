@@ -11,14 +11,16 @@ template_list()
 
 ## Value
 
-A data frame with columns `name`, `prefix`, `ordinal`, `folder` and
-`file`.
+A data frame with columns `name`, `prefix`, `qualifier`, `ordinal`,
+`folder` and `file`. `qualifier` is `NA` for a prefix carrying a single
+template, which is every template shipped today.
 
 ## Details
 
-A template is named `<NN.MM>-<prefix>.qmd` and lives in the taxonomy
-folder it scaffolds into, so `folder` and `ordinal` are read from the
-tree rather than looked up.
+A template is named `<NN.MM>-<prefix>.qmd`, or
+`<NN.MM>-<prefix>-<qualifier>.qmd` where one prefix carries several job
+types, and lives in the taxonomy folder it scaffolds into, so `folder`
+and `ordinal` are read from the tree rather than looked up.
 [`hvti_taxonomy`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
 is a cross-check on that, enforced by the test suite, not a source for
 it.
@@ -27,16 +29,16 @@ it.
 
 ``` r
 template_list()
-#>       name prefix ordinal        folder
-#> 1 04.01-hm     hm   04.01      analyses
-#> 2 04.02-bl     bl   04.02      analyses
-#> 3 04.03-br     br   04.03      analyses
-#> 4 04.04-bc     bc   04.04      analyses
-#> 5 04.05-bh     bh   04.05      analyses
-#> 6 03.01-ac     ac   03.01 distributions
-#> 7 03.02-hz     hz   03.02 distributions
-#> 8 06.01-hp     hp   06.01        graphs
-#> 9 06.02-hs     hs   06.02        graphs
+#>       name prefix qualifier ordinal        folder
+#> 1 04.01-hm     hm      <NA>   04.01      analyses
+#> 2 04.02-bl     bl      <NA>   04.02      analyses
+#> 3 04.03-br     br      <NA>   04.03      analyses
+#> 4 04.04-bc     bc      <NA>   04.04      analyses
+#> 5 04.05-bh     bh      <NA>   04.05      analyses
+#> 6 03.01-ac     ac      <NA>   03.01 distributions
+#> 7 03.02-hz     hz      <NA>   03.02 distributions
+#> 8 06.01-hp     hp      <NA>   06.01        graphs
+#> 9 06.02-hs     hs      <NA>   06.02        graphs
 #>                                                                                  file
 #> 1      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.01-hm.qmd
 #> 2      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.02-bl.qmd

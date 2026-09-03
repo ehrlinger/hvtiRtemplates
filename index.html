@@ -120,10 +120,10 @@
 </tr>
 <tr>
 <td><code><a href="reference/template_list.html">template_list()</a></code></td>
-<td>supported templates: name, prefix, ordinal, folder, file</td>
+<td>supported templates: name, prefix, qualifier, ordinal, folder, file</td>
 </tr>
 <tr>
-<td><code>template_path(prefix)</code></td>
+<td><code>template_path(prefix, qualifier = NULL)</code></td>
 <td>path to one supported template</td>
 </tr>
 <tr>
@@ -131,11 +131,12 @@
 <td>leading name fields that are utilities, not analysis prefixes</td>
 </tr>
 <tr>
-<td><code>new_job(prefix, endpoint, type, dir = ".")</code></td>
+<td><code>new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)</code></td>
 <td>the scaffolded job’s path, invisibly</td>
 </tr>
 </tbody>
 </table>
+<p><code>qualifier</code> names a job type within a prefix, for the prefixes that carry several: <code>graphs/dp</code> is <code>trends</code>, <code>spaghetti</code> and <code>procs</code>, not one job. It is <code>NULL</code> and the column is <code>NA</code> for a prefix with a single template, which is every template shipped today. Naming no qualifier where a prefix carries several is an error listing the choices, never a silent pick of the first.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

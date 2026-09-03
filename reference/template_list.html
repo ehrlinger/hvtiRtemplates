@@ -53,12 +53,16 @@ the intended starting point for a new analysis job.</p>
 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with columns <code>name</code>, <code>prefix</code>, <code>ordinal</code>,
-  <code>folder</code> and <code>file</code>.</p>
+    <p>A data frame with columns <code>name</code>, <code>prefix</code>,
+  <code>qualifier</code>, <code>ordinal</code>, <code>folder</code> and <code>file</code>.
+  <code>qualifier</code> is <code>NA</code> for a prefix carrying a single template,
+  which is every template shipped today.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A template is named <code>&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code> and lives in the taxonomy
+    <p>A template is named <code>&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code>, or
+<code>&lt;NN.MM&gt;-&lt;prefix&gt;-&lt;qualifier&gt;.qmd</code> where one prefix carries several job
+types, and lives in the taxonomy
 folder it scaffolds into, so <code>folder</code> and <code>ordinal</code> are read from
 the tree rather than looked up. <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy</a></code> is a cross-check
 on that, enforced by the test suite, not a source for it.</p>
@@ -67,16 +71,16 @@ on that, enforced by the test suite, not a source for it.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">template_list</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       name prefix ordinal        folder</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 04.01-hm     hm   04.01      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 04.02-bl     bl   04.02      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 04.03-br     br   04.03      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 04.04-bc     bc   04.04      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 04.05-bh     bh   04.05      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 03.01-ac     ac   03.01 distributions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7 03.02-hz     hz   03.02 distributions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8 06.01-hp     hp   06.01        graphs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9 06.02-hs     hs   06.02        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       name prefix qualifier ordinal        folder</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 04.01-hm     hm      &lt;NA&gt;   04.01      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 04.02-bl     bl      &lt;NA&gt;   04.02      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 04.03-br     br      &lt;NA&gt;   04.03      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 04.04-bc     bc      &lt;NA&gt;   04.04      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 04.05-bh     bh      &lt;NA&gt;   04.05      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 03.01-ac     ac      &lt;NA&gt;   03.01 distributions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7 03.02-hz     hz      &lt;NA&gt;   03.02 distributions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8 06.01-hp     hp      &lt;NA&gt;   06.01        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9 06.02-hs     hs      &lt;NA&gt;   06.02        graphs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                  file</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.01-hm.qmd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.02-bl.qmd</span>
