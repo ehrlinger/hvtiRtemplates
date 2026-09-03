@@ -7,24 +7,34 @@ refuses to overwrite an existing job.
 
 ## What is here
 
-| template | job type | scaffolds into |
+| template | job type | a job scaffolds into |
 |---|---|---|
-| `distributions/03.01-ac.qmd` | actuarial life tables | `distributions/` |
-| `distributions/03.02-hz.qmd` | multiphase parametric hazard fit | `distributions/` |
-| `graphs/06.01-hp.qmd` | nomogram and hazard figures | `graphs/` |
-| `graphs/06.02-hs.qmd` | patient-level predictions and expected survival | `graphs/` |
-| `analyses/04.01-hm.qmd` | multivariable hazard model | `analyses/` |
-| `analyses/04.02-bl.qmd` | bootstrap variable selection, logistic | `analyses/` |
-| `analyses/04.03-br.qmd` | bootstrap variable selection, linear | `analyses/` |
-| `analyses/04.04-bc.qmd` | bootstrap variable selection, Cox | `analyses/` |
-| `analyses/04.05-bh.qmd` | bootstrap variable selection | `analyses/` |
+| `20_distributions/ac.qmd` | actuarial life tables | `distributions/` |
+| `20_distributions/hz.qmd` | multiphase parametric hazard fit | `distributions/` |
+| `40_graphs/hp.qmd` | nomogram and hazard figures | `graphs/` |
+| `40_graphs/hs.qmd` | patient-level predictions and expected survival | `graphs/` |
+| `30_analyses/hm.qmd` | multivariable hazard model | `analyses/` |
+| `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `analyses/` |
+| `30_analyses/br.qmd` | bootstrap variable selection, linear | `analyses/` |
+| `30_analyses/bc.qmd` | bootstrap variable selection, Cox | `analyses/` |
+| `30_analyses/bh.qmd` | bootstrap variable selection | `analyses/` |
 
-A template is named `<NN.MM>-<prefix>.qmd`, or
-`<NN.MM>-<prefix>-<qualifier>.qmd` where one prefix carries several job types,
-and lives in the taxonomy folder it scaffolds into. The name is the authority:
-`template_list()` reads the ordinal, prefix and qualifier from it and the
-folder from the directory, and the test suite checks them against
-`hvti_taxonomy()`.
+A template is named `<prefix>.qmd`, or `<prefix>-<qualifier>.qmd` where one
+prefix carries several job types, and lives in a numbered directory named for
+the taxonomy folder it scaffolds into:
+
+```
+00_datasets   10_descriptive   20_distributions   30_analyses
+40_graphs     50_documents                        90_estimates
+```
+
+The name is the authority: `template_list()` reads the prefix and qualifier
+from it and the folder from the directory, stripping the ordering digits, and
+the test suite checks them against `hvti_taxonomy()`.
+
+⚠️ **The digits are ASSIGNED, not derived.** `estimates` is 90 though it is
+fifth in the taxonomy, because it holds saved output rather than jobs. The
+decade gaps are room to insert without renumbering.
 
 The qualifier exists because `graphs/dp` is `trends`, `spaghetti` and `procs`
 rather than one job. Every template here is unqualified today. A prefix is
@@ -33,13 +43,23 @@ wholly qualified or wholly unqualified, never half-decomposed.
 ## Where a scaffolded job lands
 
 `new_job("ac", "dead_pa", "hz")` writes
-`distributions/dead_pa-hz-03.01-ac.qmd`. Four fields, `-` separated, with `.`
-reserved for inside the ordinal: **endpoint, type, ordinal, prefix**.
+`distributions/dead_pa-hz-ac.qmd`. Three fields, `-` separated:
+**endpoint, type, prefix**.
 
-A job scaffolded from a qualified template carries the qualifier as a fifth
+⚠️ **The job lands in the BARE folder, `distributions/`, not the numbered
+directory the template sits in.** That is what a study's own folders are
+called, and writing into `20_distributions/` would split the estate across two
+spellings of one folder.
+
+A job scaffolded from a qualified template carries the qualifier as a fourth
 field, so `new_job("dp", "dead_pa", "hz", qualifier = "trends")` would write
-`graphs/dead_pa-hz-06.03-dp-trends.qmd`. A filename that drops it says only
-"some `dp` job", which is what splitting the templates exists to fix.
+`graphs/dead_pa-hz-dp-trends.qmd`. A filename that drops it says only "some
+`dp` job", which is what splitting the templates exists to fix.
+
+⭐ **The ordinal was dropped in 1.1.0.** A job named
+`dead_pa-hz-03.01-ac.qmd` is from before that change; `03.01` was the taxonomy
+folder's position and a per-folder key, and both are gone. See
+`dev/specs/2026-09-03-template-identity-design.md`.
 
 The layout rule is one sentence, and it holds in every folder:
 
@@ -47,16 +67,16 @@ The layout rule is one sentence, and it holds in every folder:
 
 ```
 <study_root>/
-├── distributions/  dead_pa-hz-03.01-ac.qmd   dead_pa-rfs-03.01-ac.qmd
+├── distributions/  dead_pa-hz-ac.qmd        dead_pa-rfs-ac.qmd
 ├── estimates/                                dead_pa-hz/ac.rds
-└── graphs/         dead_pa-hz-06.01-hp.qmd   dead_pa-hz/hp-fig1.png
+└── graphs/         dead_pa-hz-hp.qmd         dead_pa-hz/hp-fig1.png
 ```
 
 **A set is keyed on `(endpoint, analysis type)`, not on the endpoint alone.**
 One endpoint is analysed by several methods, and those chains share their
 upstream — a death-hazard set and a death random-forest-survival set both begin
 from the same life table. Keyed on the endpoint alone, both would be written to
-`dead_pa-03.01-ac.qmd`. The cost of carrying the type on every job is that the
+`dead_pa-ac.qmd`. The cost of carrying the type on every job is that the
 shared upstream runs once per set rather than once per endpoint; the benefit is
 that a set is self-contained and uniformly named.
 
@@ -168,7 +188,7 @@ loudly.
 **That property is enforced, not merely stated.** Each template carries an
 `edit-guard` chunk that scans the rendering file and stops if any marker
 remains, listing the ones it found. Until 1.0.5 it was a convention only, and
-an unedited `03.01-ac` rendered green over a meaningless stratification: the
+an unedited `ac` template rendered green over a meaningless stratification: the
 `derive` chunk indexed a placeholder column, and when a column is absent
 `!is.na(d$<col>)` is `logical(0)`, which makes the assignment a **silent no-op**
 rather than an error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/27)).
@@ -176,7 +196,7 @@ rather than an error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/2
 To render a partly-worked job while drafting, set `HVTI_TEMPLATE_DRAFT=1`:
 
 ```sh
-HVTI_TEMPLATE_DRAFT=1 quarto render <endpoint>-<type>-03.01-ac.qmd
+HVTI_TEMPLATE_DRAFT=1 quarto render <endpoint>-<type>-ac.qmd
 ```
 
 `1`, `true` and `yes` enable it, case-insensitively. **Any other value leaves

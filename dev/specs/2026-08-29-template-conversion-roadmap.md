@@ -51,106 +51,106 @@ row has no template on disk.
 
 ### hazard-chain (batch 1)
 
-| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|---|
-| `hs` | shipped | 06.02 | 144 | 140 | 7 | — |
-| `hm` | shipped | 04.01 | 383 | 373 | 2 | — |
+| template | status | breadth | jobs | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `hs` | shipped | 144 | 140 | 7 | — |
+| `hm` | shipped | 383 | 373 | 2 | — |
 
 ### bootstrap (batches 0–2)
 
-| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|---|
-| `bh` | shipped | 04.05 | 322 | 320 | 2 | — |
-| `bc` | shipped | 04.04 | 16 | 16 | 0 | — |
-| `bl` | shipped | 04.02 | 352 | 352 | 1 | — |
-| `br` | shipped | 04.03 | 103 | 103 | 1 | — |
-| `bq` | queued | — | 2 | 2 | 0 | hvtiRbootstrap#16 |
+| template | status | breadth | jobs | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `bh` | shipped | 322 | 320 | 2 | — |
+| `bc` | shipped | 16 | 16 | 0 | — |
+| `bl` | shipped | 352 | 352 | 1 | — |
+| `br` | shipped | 103 | 103 | 1 | — |
+| `bq` | queued | 2 | 2 | 0 | hvtiRbootstrap#16 |
 
 ### bootstrap-ci (unscheduled)
 
-| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|---|
-| `bn` | queued | — | 214 | 108 | 0 | — |
+| template | status | breadth | jobs | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `bn` | queued | 214 | 108 | 0 | — |
 
 ### plots (batch 3)
 
-| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|---|
-| `ce` | queued | — | 131 | 128 | 1 | — |
-| `cp` | queued | — | 5 | 4 | 1 | — |
-| `dp-gfup` | queued | — | — | 48 | — | — |
-| `dp-procs` | queued | — | — | 35 | — | — |
-| `dp-spaghetti` | queued | — | — | 40 | — | — |
-| `dp-trends` | queued | — | — | 80 | — | — |
-| `dp-variable` | queued | — | — | 237 | — | — |
-| `fp` | queued | — | 19 | 11 | 11 | — |
-| `gp` | queued | — | 50 | 50 | 2 | — |
-| `hp` | **revisit** | 06.01 | 557 | 541 | 16 | — |
-| `lp` | queued | — | 636 | 310 | 186 | — |
-| `mp` | queued | — | 82 | 41 | 4 | — |
-| `np` | queued | — | 248 | 241 | 45 | — |
-| `rp` | queued | — | 76 | 68 | 5 | — |
+| template | status | breadth | jobs | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `ce` | queued | 131 | 128 | 1 | — |
+| `cp` | queued | 5 | 4 | 1 | — |
+| `dp-gfup` | queued | — | 48 | — | — |
+| `dp-procs` | queued | — | 35 | — | — |
+| `dp-spaghetti` | queued | — | 40 | — | — |
+| `dp-trends` | queued | — | 80 | — | — |
+| `dp-variable` | queued | — | 237 | — | — |
+| `fp` | queued | 19 | 11 | 11 | — |
+| `gp` | queued | 50 | 50 | 2 | — |
+| `hp` | **revisit** | 557 | 541 | 16 | — |
+| `lp` | queued | 636 | 310 | 186 | — |
+| `mp` | queued | 82 | 41 | 4 | — |
+| `np` | queued | 248 | 241 | 45 | — |
+| `rp` | queued | 76 | 68 | 5 | — |
 
 ### descriptive (batch 4)
 
-| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|---|
-| `dc-dead` | queued | — | — | 171 | — | — |
-| `dc-general` | queued | — | — | 759 | — | — |
-| `dc-gfup` | queued | — | — | 389 | — | — |
-| `dc-stddiff` | queued | — | — | 59 | — | — |
-| `dc-tables` | queued | — | — | 551 | — | — |
-| `lg` | queued | — | 367 | 362 | 0 | — |
-| `rg` | queued | — | 45 | 45 | 0 | — |
+| template | status | breadth | jobs | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `dc-dead` | queued | — | 171 | — | — |
+| `dc-general` | queued | — | 759 | — | — |
+| `dc-gfup` | queued | — | 389 | — | — |
+| `dc-stddiff` | queued | — | 59 | — | — |
+| `dc-tables` | queued | — | 551 | — | — |
+| `lg` | queued | 367 | 362 | 0 | — |
+| `rg` | queued | 45 | 45 | 0 | — |
 
 ### machine-learning (batch 5)
 
-| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|---|
-| `nb` | queued | — | 21 | 18 | 19 | — |
-| `rf` | ~~umbrella~~ | — | 47 | 41 | 42 | — |
-| `rfc` | queued | — | 19 | 11 | 12 | — |
-| `rfr` | *intake* | — | — | — | — | hvtiRutilities#taxonomy |
-| `rfs` | queued | — | 25 | 9 | 10 | — |
-| `rfsrc` | ~~umbrella~~ | — | 131 | 97 | 98 | — |
-| `sid` | *intake* | — | — | — | — | hvtiRutilities#taxonomy |
-| `vt` | *intake* | — | — | — | — | hvtiRutilities#taxonomy |
+| template | status | breadth | jobs | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `nb` | queued | 21 | 18 | 19 | — |
+| `rf` | ~~umbrella~~ | 47 | 41 | 42 | — |
+| `rfc` | queued | 19 | 11 | 12 | — |
+| `rfr` | *intake* | — | — | — | hvtiRutilities#taxonomy |
+| `rfs` | queued | 25 | 9 | 10 | — |
+| `rfsrc` | ~~umbrella~~ | 131 | 97 | 98 | — |
+| `sid` | *intake* | — | — | — | hvtiRutilities#taxonomy |
+| `vt` | *intake* | — | — | — | hvtiRutilities#taxonomy |
 
 ### models (batch 6)
 
-| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|---|
-| `cm` | queued | — | 35 | 35 | 2 | — |
-| `gm` | queued | — | 77 | 73 | 0 | — |
-| `lm` | queued | — | 621 | 469 | 10 | — |
-| `ls` | queued | — | 34 | 32 | 0 | — |
-| `mm` | queued | — | 59 | 56 | 1 | — |
-| `nm` | queued | — | 122 | 121 | 1 | — |
-| `pm` | queued | — | 5 | 4 | 0 | — |
-| `rm` | queued | — | 174 | 170 | 8 | — |
+| template | status | breadth | jobs | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `cm` | queued | 35 | 35 | 2 | — |
+| `gm` | queued | 77 | 73 | 0 | — |
+| `lm` | queued | 621 | 469 | 10 | — |
+| `ls` | queued | 34 | 32 | 0 | — |
+| `mm` | queued | 59 | 56 | 1 | — |
+| `nm` | queued | 122 | 121 | 1 | — |
+| `pm` | queued | 5 | 4 | 0 | — |
+| `rm` | queued | 174 | 170 | 8 | — |
 
 ### distributions (batch 7)
 
-| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|---|
-| `ac` | shipped | 03.01 | 756 | 745 | 16 | — |
-| `cd` | queued | — | 202 | 190 | 6 | — |
-| `hz` | shipped | 03.02 | 581 | 574 | 5 | — |
-| `nd` | queued | — | 244 | 244 | 3 | — |
+| template | status | breadth | jobs | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `ac` | shipped | 756 | 745 | 16 | — |
+| `cd` | queued | 202 | 190 | 6 | — |
+| `hz` | shipped | 581 | 574 | 5 | — |
+| `nd` | queued | 244 | 244 | 3 | — |
 
 ### datasets (batch 8)
 
-| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|---|
-| `bd` | queued | — | 1134 | 1094 | 15 | hvtiRdatabuild |
-| `dt` | queued | — | 512 | 503 | 0 | hvtiRdatabuild |
-| `vars` | queued | — | 959 | 912 | 2 | hvtiRdatabuild |
+| template | status | breadth | jobs | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `bd` | queued | 1134 | 1094 | 15 | hvtiRdatabuild |
+| `dt` | queued | 512 | 503 | 0 | hvtiRdatabuild |
+| `vars` | queued | 959 | 912 | 2 | hvtiRdatabuild |
 
 ### documents (batch 9)
 
-| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|---|
-| `ar` | queued | — | 706 | 394 | 89 | — |
+| template | status | breadth | jobs | R exemplars | blocked on |
+|---|---|---|---|---|---|
+| `ar` | queued | 706 | 394 | 89 | — |
 
 ## By workflow
 

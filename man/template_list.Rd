@@ -8,7 +8,9 @@ template_list()
 }
 \value{
 A data frame with columns \code{name}, \code{prefix},
-  \code{qualifier}, \code{ordinal}, \code{folder} and \code{file}.
+  \code{qualifier}, \code{folder} and \code{file}. \code{folder} is the
+  taxonomy name with the directory's ordering digits stripped, so
+  \code{20_distributions} reports as \code{distributions}.
   \code{qualifier} is \code{NA} for a prefix carrying a single template,
   which is every template shipped today.
 }
@@ -17,11 +19,12 @@ These templates are supported: they render, they are tested, and they are
 the intended starting point for a new analysis job.
 }
 \details{
-A template is named \code{<NN.MM>-<prefix>.qmd}, or
-\code{<NN.MM>-<prefix>-<qualifier>.qmd} where one prefix carries several job
-types, and lives in the taxonomy
-folder it scaffolds into, so \code{folder} and \code{ordinal} are read from
-the tree rather than looked up. \code{\link{hvti_taxonomy}} is a cross-check
+A template is named \code{<prefix>.qmd}, or
+\code{<prefix>-<qualifier>.qmd} where one prefix carries several job
+types, and lives in a numbered directory named for the taxonomy folder it
+scaffolds into, so \code{folder} is read from the tree rather than looked
+up. The directory's leading digits order the folders and are stripped from
+\code{folder}. \code{\link{hvti_taxonomy}} is a cross-check
 on that, enforced by the test suite, not a source for it.
 }
 \examples{

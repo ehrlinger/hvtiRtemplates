@@ -1,7 +1,7 @@
 test_that("template_list() has the expected shape", {
   tl <- template_list()
   expect_s3_class(tl, "data.frame")
-  expect_named(tl, c("name", "prefix", "qualifier", "ordinal", "folder", "file"))
+  expect_named(tl, c("name", "prefix", "qualifier", "folder", "file"))
 })
 
 test_that("template_list() finds templates in taxonomy subfolders", {
@@ -11,9 +11,10 @@ test_that("template_list() finds templates in taxonomy subfolders", {
   tl <- template_list()
   expect_true("ac" %in% tl$prefix)
   i <- match("ac", tl$prefix)
+  # `folder` is the taxonomy name, with the directory's ordering digits
+  # stripped: the template sits in `20_distributions/`.
   expect_equal(tl$folder[[i]], "distributions")
-  expect_equal(tl$ordinal[[i]], "03.01")
-  expect_equal(tl$name[[i]], "03.01-ac")
+  expect_equal(tl$name[[i]], "ac")
 })
 
 test_that("template_list() reads folder from the directory, not the taxonomy", {
@@ -21,8 +22,11 @@ test_that("template_list() reads folder from the directory, not the taxonomy", {
   # hvti_taxonomy() instead would report the folder the prefix is *filed* under
   # even when the file sits somewhere else -- hiding exactly the mistake the
   # cross-check in test-taxonomy.R exists to catch.
+  # `folder` is the directory with its ordering digits stripped, so this
+  # compares against the stripped name rather than the raw one.
   tl <- template_list()
-  expect_equal(tl$folder, basename(dirname(tl$file)))
+  expect_equal(tl$folder,
+               hvtiRtemplates:::.folder_name(basename(dirname(tl$file))))
 })
 
 test_that("every listed template exists and every template file is listed", {
@@ -45,21 +49,37 @@ test_that("every template prefix is in the taxonomy", {
 })
 
 test_that(".template_fields() parses a structured template name", {
-  # A template is named "<NN>.<MM>-<prefix>.qmd". The name is parsed by pattern
-  # rather than by splitting on separators, because `.` is both a field
-  # separator inside the ordinal and the extension separator -- a split cannot
-  # tell the two apart.
-  expect_equal(hvtiRtemplates:::.template_fields("03.01-ac.qmd")$ordinal, "03.01")
-  expect_equal(hvtiRtemplates:::.template_fields("03.01-ac.qmd")$prefix, "ac")
-  expect_equal(hvtiRtemplates:::.template_fields("04.19-rfs.qmd")$prefix, "rfs")
+  # A template is named "<prefix>[-<qualifier>].qmd". The ordinal was dropped
+  # on 2026-09-03: `NN` duplicated the directory and `MM` asserted an order
+  # among a folder's templates that does not exist. The digits now live on the
+  # directory.
+  expect_equal(hvtiRtemplates:::.template_fields("ac.qmd")$prefix, "ac")
+  expect_true(is.na(hvtiRtemplates:::.template_fields("ac.qmd")$qualifier))
+  expect_equal(hvtiRtemplates:::.template_fields("rfs.qmd")$prefix, "rfs")
+})
+
+test_that(".template_fields() no longer accepts an ordinal", {
+  # The old shape must not keep parsing, or a file left over from before the
+  # 2026-09-03 change would be read as a template whose prefix is "03".
+  expect_true(is.na(hvtiRtemplates:::.template_fields("03.01-ac.qmd")$prefix))
+})
+
+test_that(".folder_name() strips the directory's ordering digits", {
+  expect_equal(hvtiRtemplates:::.folder_name("20_distributions"), "distributions")
+  expect_equal(hvtiRtemplates:::.folder_name("90_estimates"), "estimates")
+  # A directory with no numeric prefix is returned unchanged, so the function
+  # is safe on a hand-made path.
+  expect_equal(hvtiRtemplates:::.folder_name("distributions"), "distributions")
 })
 
 test_that(".template_fields() returns NA for a name it cannot parse", {
   # NA rather than an error: template_list() reports what is on disk, and a
   # stray file should not stop it. The unclassified-prefix test in
   # test-taxonomy.R is what turns an unparsed name into a build failure.
-  expect_true(is.na(hvtiRtemplates:::.template_fields("ac.qmd")$prefix))
+  # `ac.qmd` now PARSES, so it cannot stand for an unparseable name any more.
   expect_true(is.na(hvtiRtemplates:::.template_fields("README.md")$prefix))
+  expect_true(is.na(hvtiRtemplates:::.template_fields("ac.Rmd")$prefix))
+  expect_true(is.na(hvtiRtemplates:::.template_fields("a c.qmd")$prefix))
 })
 
 test_that("no two templates share a (prefix, qualifier) pair", {
@@ -98,23 +118,24 @@ test_that("every installed template's name parses", {
   # .template_fields() returns NA rather than erroring on a name it cannot
   # parse, so a stray file does not stop template_list(). But nothing on disk
   # should actually BE that stray file: an unparseable template name is a real
-  # defect, and letting it through as an NA prefix/ordinal produces three
-  # confusing downstream failures (the taxonomy folder check, the taxonomy
-  # cross-check, and the "every template exists" check) instead of one test
-  # that names the actual problem. This is that one test.
+  # defect, and letting it through as an NA prefix produces three confusing
+  # downstream failures (the taxonomy folder check, the taxonomy cross-check,
+  # and the "every template exists" check) instead of one test that names the
+  # actual problem. This is that one test.
   tl <- template_list()
-  expect_false(any(is.na(tl$ordinal)),
-               info = "a template file name did not match <NN.MM>-<prefix>.qmd")
   expect_false(any(is.na(tl$prefix)),
-               info = "a template file name did not match <NN.MM>-<prefix>.qmd")
+               info = "a template file name did not match <prefix>[-<qualifier>].qmd")
 })
 
-test_that(".template_fields() rejects an unpadded ordinal", {
-  # The zero-padding is what makes `ls` sort a set in run order past nine
-  # entries. Accepting "3.1" here would let an unsortable name into the tree
-  # silently, so the parser is where the padding rule is enforced.
-  expect_true(is.na(hvtiRtemplates:::.template_fields("3.1-ac.qmd")$ordinal))
-  expect_true(is.na(hvtiRtemplates:::.template_fields("03.1-ac.qmd")$ordinal))
+test_that("every template directory carries ordering digits", {
+  # The digits are what order the folders now that no filename carries them.
+  # A directory without them sorts arbitrarily among the rest.
+  dirs <- list.dirs(system.file("templates", package = "hvtiRtemplates"),
+                    full.names = FALSE, recursive = FALSE)
+  skip_if(length(dirs) == 0, "templates are not installed")
+  expect_true(all(grepl("^[0-9]{2}_", dirs)),
+              info = paste("undigited:", paste(dirs[!grepl("^[0-9]{2}_", dirs)],
+                                               collapse = ", ")))
 })
 
 test_that("every template carries an edit-guard chunk", {
@@ -341,8 +362,7 @@ test_that("DESCRIPTION's hvtiRbootstrap bound matches what the templates enforce
 # dev/specs/2026-09-02-dp-dc-decomposition-design.md, which decided this.
 
 test_that("a qualified template name parses into three fields", {
-  f <- hvtiRtemplates:::.template_fields("06.03-dp-trends.qmd")
-  expect_equal(f$ordinal, "06.03")
+  f <- hvtiRtemplates:::.template_fields("dp-trends.qmd")
   expect_equal(f$prefix, "dp")
   expect_equal(f$qualifier, "trends")
 })
@@ -351,20 +371,20 @@ test_that("an unqualified name still parses, with qualifier NA", {
   # Every template shipped today is unqualified. NA and "" must stay
   # distinguishable: regexec returns "" for a group that did not participate,
   # which would read as a template qualified with the empty string.
-  f <- hvtiRtemplates:::.template_fields("03.01-ac.qmd")
+  f <- hvtiRtemplates:::.template_fields("ac.qmd")
   expect_equal(f$prefix, "ac")
   expect_true(is.na(f$qualifier))
 })
 
 test_that("the prefix capture does not swallow the qualifier", {
-  # It was `.+`, which is greedy, so "06.03-dp-trends.qmd" parsed as the single
+  # It was `.+`, which is greedy, so "dp-trends.qmd" parsed as the single
   # prefix "dp-trends". That validates and is wrong.
-  f <- hvtiRtemplates:::.template_fields("06.03-dp-trends.qmd")
+  f <- hvtiRtemplates:::.template_fields("dp-trends.qmd")
   expect_false(identical(f$prefix, "dp-trends"))
 })
 
 test_that("a trailing separator with no qualifier is rejected", {
-  f <- hvtiRtemplates:::.template_fields("06.03-dp-.qmd")
+  f <- hvtiRtemplates:::.template_fields("dp-.qmd")
   expect_true(is.na(f$prefix))
 })
 
@@ -378,7 +398,6 @@ test_that(".select_template() refuses to guess when a prefix is ambiguous", {
   tl <- data.frame(
     prefix = c("dp", "dp", "ac"),
     qualifier = c("trends", "spaghetti", NA_character_),
-    ordinal = c("06.03", "06.04", "03.01"),
     folder = c("graphs", "graphs", "distributions"),
     file = c("a.qmd", "b.qmd", "c.qmd"),
     stringsAsFactors = FALSE
@@ -391,8 +410,7 @@ test_that(".select_template() refuses to guess when a prefix is ambiguous", {
 
 test_that(".select_template() resolves a named qualifier, and rejects a wrong one", {
   tl <- data.frame(
-    prefix = c("dp", "dp"), qualifier = c("trends", "spaghetti"),
-    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    prefix = c("dp", "dp"), qualifier = c("trends", "spaghetti"), folder = c("graphs", "graphs"),
     file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
   )
   expect_equal(hvtiRtemplates:::.select_template(tl, "dp", "trends")$file, "a.qmd")
@@ -403,7 +421,7 @@ test_that(".select_template() resolves a named qualifier, and rejects a wrong on
 test_that("a single unqualified template still resolves without a qualifier", {
   # Backwards compatibility for all nine shipped templates.
   tl <- data.frame(
-    prefix = "ac", qualifier = NA_character_, ordinal = "03.01",
+    prefix = "ac", qualifier = NA_character_,
     folder = "distributions", file = "c.qmd", stringsAsFactors = FALSE
   )
   expect_equal(hvtiRtemplates:::.select_template(tl, "ac")$file, "c.qmd")
@@ -414,8 +432,7 @@ test_that(".select_template() refuses a (prefix, qualifier) pair that matches tw
   # exists to refuse, one level further in: the caller takes [[1L]] and never
   # learns there was a second.
   tl <- data.frame(
-    prefix = c("dp", "dp"), qualifier = c("trends", "trends"),
-    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    prefix = c("dp", "dp"), qualifier = c("trends", "trends"), folder = c("graphs", "graphs"),
     file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
   )
   expect_error(hvtiRtemplates:::.select_template(tl, "dp", "trends"),
@@ -445,8 +462,7 @@ test_that("two unqualified templates are a duplicate pair, not a mixed prefix", 
   # `any(is.na())` alone reported these as mixed, which they are not: mixed
   # means both kinds present. Two faults, two fixes, so two messages.
   tl <- data.frame(
-    prefix = c("dp", "dp"), qualifier = c(NA_character_, NA_character_),
-    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    prefix = c("dp", "dp"), qualifier = c(NA_character_, NA_character_), folder = c("graphs", "graphs"),
     file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
   )
   expect_error(hvtiRtemplates:::.select_template(tl, "dp"),
@@ -456,8 +472,7 @@ test_that("two unqualified templates are a duplicate pair, not a mixed prefix", 
 
 test_that("a genuinely mixed prefix still reports as mixed", {
   tl <- data.frame(
-    prefix = c("dp", "dp"), qualifier = c(NA_character_, "trends"),
-    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    prefix = c("dp", "dp"), qualifier = c(NA_character_, "trends"), folder = c("graphs", "graphs"),
     file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
   )
   expect_error(hvtiRtemplates:::.select_template(tl, "dp", "trends"), "mixes")

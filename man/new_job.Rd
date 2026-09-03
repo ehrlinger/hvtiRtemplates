@@ -12,7 +12,7 @@ new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)
 
 \item{endpoint}{The endpoint this job analyses, e.g. \code{"dead_pa"}. Must
 match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
-\code{.} is reserved to the ordinal, so neither may appear here.}
+\code{.} separates the extension, so neither may appear here.}
 
 \item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.
 Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{endpoint}.}
@@ -33,13 +33,14 @@ The path written, invisibly. On any failure -- including one after
 }
 \description{
 Copies a supported job template into the taxonomy folder it belongs to,
-named \code{<endpoint>-<type>-<NN.MM>-<prefix>[-<qualifier>].qmd}. Refuses to overwrite an
+named \code{<endpoint>-<type>-<prefix>[-<qualifier>].qmd}. Refuses to overwrite an
 existing job: a job file accumulates a study's edits, and silently replacing
 one would discard them.
 }
 \details{
-A job is identified by four fields. Two come from the template — its
-\code{ordinal} and \code{prefix} — and two from the caller. The pair
+A job is identified by three or four fields. One or two come from the
+template, its \code{prefix} and, where the prefix carries several job types,
+its \code{qualifier}; two come from the caller. The pair
 \code{(endpoint, type)} names the \strong{set} the job belongs to, and both
 are required: one endpoint is analysed by several methods, and the jobs those
 chains share would otherwise collide. A death-hazard set and a death

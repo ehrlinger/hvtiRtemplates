@@ -36,6 +36,11 @@ linters: linters_with_defaults(
 # Indentation and braces stay ON here deliberately: a file people copy should
 # be exemplary in its layout.
 #
+# ⚠️ These keys are PATHS, so renaming a template or its directory silently
+# orphans its entry and the excluded linters come back. Renaming the nine
+# templates and their directories on 2026-09-03 took the count from 0 to 86
+# lints in one step. If a rename ever shows a lint spike, look here first.
+#
 # The key is the FILE, not the directory `inst/templates`. A directory key
 # excludes every linter on that path wholesale and silently -- with it, the six
 # real indentation/brace lints in ac.qmd disappeared from a clean run. Only a
@@ -43,47 +48,47 @@ linters: linters_with_defaults(
 # entry here, which is the right amount of friction: it forces a decision per
 # template rather than blanket-exempting the directory.
 exclusions: list(
-    "inst/templates/distributions/03.01-ac.qmd" = list(
+    "inst/templates/20_distributions/ac.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
-    "inst/templates/distributions/03.02-hz.qmd" = list(
+    "inst/templates/20_distributions/hz.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
-    "inst/templates/graphs/06.01-hp.qmd" = list(
+    "inst/templates/40_graphs/hp.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
-    "inst/templates/graphs/06.02-hs.qmd" = list(
+    "inst/templates/40_graphs/hs.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
-    "inst/templates/analyses/04.01-hm.qmd" = list(
+    "inst/templates/30_analyses/hm.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
-    "inst/templates/analyses/04.02-bl.qmd" = list(
+    "inst/templates/30_analyses/bl.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
-    "inst/templates/analyses/04.03-br.qmd" = list(
+    "inst/templates/30_analyses/br.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
-    "inst/templates/analyses/04.04-bc.qmd" = list(
+    "inst/templates/30_analyses/bc.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
-    "inst/templates/analyses/04.05-bh.qmd" = list(
+    "inst/templates/30_analyses/bh.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf

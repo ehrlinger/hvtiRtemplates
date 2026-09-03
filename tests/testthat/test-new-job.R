@@ -19,13 +19,13 @@ test_that("new_job writes into the taxonomy folder with all four fields", {
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   out <- new_job("ac", "dead_pa", "hz", dir = dir)
   expect_true(file.exists(out))
-  expect_equal(out, file.path(dir, "distributions", "dead_pa-hz-03.01-ac.qmd"))
+  expect_equal(out, file.path(dir, "distributions", "dead_pa-hz-ac.qmd"))
 })
 
 test_that("new_job distinguishes two analysis types over one endpoint", {
   # This is the collision the type field exists to prevent. A death-hazard set
   # and a death-RFS set share the same Kaplan-Meier upstream, so keyed on
-  # endpoint alone both would be `dead_pa-03.01-ac.qmd` -- two sets, one file.
+  # endpoint alone both would be `dead_pa-ac.qmd` -- two sets, one file.
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   a <- new_job("ac", "dead_pa", "hz", dir = dir)
@@ -58,8 +58,8 @@ test_that("new_job errors when the template lacks the ENDPOINT/TYPE marker lines
   # is narrower than the function it stands in for passes while the real code
   # path breaks.
   fake_tl <- data.frame(
-    name = "01.01-zz", prefix = "zz", qualifier = NA_character_,
-    ordinal = "01.01", folder = "distributions", file = fake_template,
+    name = "zz", prefix = "zz", qualifier = NA_character_,
+    folder = "distributions", file = fake_template,
     stringsAsFactors = FALSE
   )
   testthat::local_mocked_bindings(template_list = function() fake_tl, .package = "hvtiRtemplates")
@@ -72,12 +72,12 @@ test_that("new_job errors when the template lacks the ENDPOINT/TYPE marker lines
   # -- a job named for one set but declaring the template's placeholder set
   # -- must not survive: the partially-written file must be gone, not just
   # the error raised.
-  out <- file.path(dir, "distributions", "dead_pa-hz-01.01-zz.qmd")
+  out <- file.path(dir, "distributions", "dead_pa-hz-zz.qmd")
   expect_false(file.exists(out))
 })
 
 test_that("new_job rejects endpoint/type shapes that would break the filename", {
-  # `-` is the field separator and `.` is reserved to the ordinal, so neither
+  # `-` is the field separator and `.` separates the extension, so neither
   # may appear in `endpoint` or `type`; both must also be a single non-NA
   # string. Verified misbehaviour this guards against: "" collapses a field,
   # NA writes the string "NA" into the path, character(0) recycles silently,
