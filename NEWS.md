@@ -7,8 +7,8 @@
   cannot search. Decided 2026-09-02; see
   `dev/specs/2026-09-02-dp-dc-decomposition-design.md`.
 
-  `template_list()` gains a `qualifier` column, `NA` where a prefix carries a
-  single template, which is every template shipped today. `template_path()`
+  `template_list()` gains a `qualifier` column. `NA` marks an unqualified
+  template row, which is every template shipped today. `template_path()`
   and `new_job()` gain a `qualifier` argument. Nothing existing changes: all
   nine shipped templates are unqualified and every existing call still
   resolves.

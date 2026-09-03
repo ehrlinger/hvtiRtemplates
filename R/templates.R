@@ -67,6 +67,18 @@ template_path <- function(prefix, qualifier = NULL) {
 # `qualifier = NULL` is still accepted where the prefix has exactly one
 # template, which is every template shipped today, so no existing call changes.
 .select_template <- function(tl, prefix, qualifier = NULL) {
+  # Validate before comparing. `hit$qualifier == NA_character_` is NA, not
+  # FALSE, so an NA qualifier produces NA-indexed rows and an error that names
+  # nothing useful; a length-2 qualifier recycles silently. `new_job()` screens
+  # its argument, `template_path()` did not, and this is the shared path.
+  # Raised by Copilot on #76.
+  if (!is.null(qualifier) &&
+        (length(qualifier) != 1L || is.na(qualifier) ||
+           !is.character(qualifier) || !nzchar(qualifier))) {
+    stop("template selection: `qualifier` must be a single non-empty, non-NA ",
+         "string, or NULL. Got ", class(qualifier)[[1L]], " of length ",
+         length(qualifier), ".", call. = FALSE)
+  }
   hit <- tl[!is.na(tl$prefix) & tl$prefix == prefix, , drop = FALSE]
   if (!nrow(hit)) {
     stop("unknown template: ", prefix,

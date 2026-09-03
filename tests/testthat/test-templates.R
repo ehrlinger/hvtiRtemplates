@@ -70,9 +70,14 @@ test_that("no two templates share a (prefix, qualifier) pair", {
   # the old form would have blocked the first one from landing. What must
   # still hold is that the PAIR is unique, since that is what identifies a
   # template. Raised by Copilot on #76.
+  # Duplicated() on the two COLUMNS, not on a pasted key. paste() coerces
+  # NA_character_ to the literal "NA", so an unqualified template would
+  # collide with one qualified `NA`, which `[A-Za-z0-9_]+` permits. That is
+  # the same NA-versus-string collapse this branch has already fixed twice,
+  # and baking a sentinel into the test would hide it a third time.
   tl <- template_list()
-  key <- paste(tl$prefix, tl$qualifier, sep = "\r")
-  expect_false(any(duplicated(key[!is.na(tl$prefix)])))
+  named <- tl[!is.na(tl$prefix), c("prefix", "qualifier"), drop = FALSE]
+  expect_false(any(duplicated(named)))
 })
 
 test_that("a prefix is either wholly qualified or wholly unqualified", {
@@ -415,4 +420,14 @@ test_that(".select_template() refuses a (prefix, qualifier) pair that matches tw
   )
   expect_error(hvtiRtemplates:::.select_template(tl, "dp", "trends"),
                "must be unique")
+})
+
+test_that("a malformed qualifier is rejected before it is compared", {
+  # `hit$qualifier == NA_character_` is NA, not FALSE, so an NA qualifier
+  # produces NA-indexed rows and an error naming nothing useful; a length-2
+  # qualifier recycles silently. new_job() screened its argument and
+  # template_path() did not, so the guard belongs on the shared path.
+  for (bad in list(NA_character_, c("a", "b"), "", 42, character(0))) {
+    expect_error(template_path("ac", bad), "single non-empty, non-NA")
+  }
 })

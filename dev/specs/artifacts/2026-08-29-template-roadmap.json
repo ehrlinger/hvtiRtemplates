@@ -17,7 +17,7 @@
   "r_exemplars_note": "the DEFLATED count -- a stem replicated across studies inflates the raw figure, severely for ar (395 -> 89). Never quote the undeflated number.",
   "batch_note": "batches 0-2 are decided; 3 and later are PROVISIONAL and carry the family's provisional position.",
   "sas_breadth_jobs": "2026-09-02-job-census-summary.json. Distinct studies with a PROGRAM file of this prefix: program extension, folder other than estimates, not a template, and placed. sas_breadth is retained unchanged and still counts every extension, so the two are comparable rather than one replacing the other. See dev/specs/2026-09-02-per-folder-naming-parse-design.md. Both are DISTINCT-STUDY counts and must not be summed across rows.",
-  "qualifier": "Job type within the prefix, matching the template filename's optional third field. null means the prefix carries a single unqualified template, which is every row today. A prefix may now hold SEVERAL rows, one per qualifier, because graphs/dp is trends, spaghetti, procs and more under one prefix. See dev/specs/2026-09-02-dp-dc-decomposition-design.md."
+  "qualifier": "Job type within the prefix, matching the template filename's optional third field. null marks an UNQUALIFIED row, which is every row today. A prefix may hold several rows, one per qualifier, because graphs/dp is trends, spaghetti, procs and more under one prefix; it must be wholly qualified or wholly unqualified, so a null row is the only row for its prefix. Rows are keyed on (prefix, qualifier). See dev/specs/2026-09-02-dp-dc-decomposition-design.md, section 8."
  },
  "retired_ordinals": [
   {
