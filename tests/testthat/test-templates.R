@@ -1,7 +1,7 @@
 test_that("template_list() has the expected shape", {
   tl <- template_list()
   expect_s3_class(tl, "data.frame")
-  expect_named(tl, c("name", "prefix", "ordinal", "folder", "file"))
+  expect_named(tl, c("name", "prefix", "qualifier", "ordinal", "folder", "file"))
 })
 
 test_that("template_list() finds templates in taxonomy subfolders", {
@@ -62,13 +62,36 @@ test_that(".template_fields() returns NA for a name it cannot parse", {
   expect_true(is.na(hvtiRtemplates:::.template_fields("README.md")$prefix))
 })
 
-test_that("no two templates share a prefix", {
-  # `template_path()` and `new_job()` both resolve with `match()`, which takes
-  # the first hit silently. Under the old flat layout one directory guaranteed
-  # one file per prefix; a recursive glob does not, so the invariant has to be
-  # asserted rather than assumed.
+test_that("no two templates share a (prefix, qualifier) pair", {
+  # This asserted "no two templates share a prefix" until 2026-09-02, because
+  # `template_path()` and `new_job()` resolved with `match()`, which takes the
+  # first hit silently. Both now resolve on the pair and error rather than
+  # guess, so a prefix carrying several job types is the intended state and
+  # the old form would have blocked the first one from landing. What must
+  # still hold is that the PAIR is unique, since that is what identifies a
+  # template. Raised by Copilot on #76.
+  # Duplicated() on the two COLUMNS, not on a pasted key. paste() coerces
+  # NA_character_ to the literal "NA", so an unqualified template would
+  # collide with one qualified `NA`, which `[A-Za-z0-9_]+` permits. That is
+  # the same NA-versus-string collapse this branch has already fixed twice,
+  # and baking a sentinel into the test would hide it a third time.
   tl <- template_list()
-  expect_false(any(duplicated(stats::na.omit(tl$prefix))))
+  named <- tl[!is.na(tl$prefix), c("prefix", "qualifier"), drop = FALSE]
+  expect_false(any(duplicated(named)))
+})
+
+test_that("a prefix is either wholly qualified or wholly unqualified", {
+  # A mixed prefix would offer `<none>` in the ambiguity menu while
+  # `.select_template()` has no way to ask for it, so the error would name a
+  # choice the API cannot honour. Decomposing a prefix means naming every job
+  # under it, not just the new ones.
+  tl <- template_list()
+  mixed <- vapply(
+    split(tl$qualifier, tl$prefix),
+    function(q) any(is.na(q)) && any(!is.na(q)),
+    logical(1)
+  )
+  expect_false(any(mixed))
 })
 
 test_that("every installed template's name parses", {
@@ -310,4 +333,132 @@ test_that("DESCRIPTION's hvtiRbootstrap bound matches what the templates enforce
   expect_gte(declared, max(floors),
              label = paste0("DESCRIPTION declares hvtiRbootstrap >= ", declared,
                             " but a template refuses below ", max(floors)))
+})
+
+# ---- qualifier ------------------------------------------------------------
+# `graphs/dp` is trends, spaghetti, procs and more under one prefix, so a
+# template name has to be able to say which. See
+# dev/specs/2026-09-02-dp-dc-decomposition-design.md, which decided this.
+
+test_that("a qualified template name parses into three fields", {
+  f <- hvtiRtemplates:::.template_fields("06.03-dp-trends.qmd")
+  expect_equal(f$ordinal, "06.03")
+  expect_equal(f$prefix, "dp")
+  expect_equal(f$qualifier, "trends")
+})
+
+test_that("an unqualified name still parses, with qualifier NA", {
+  # Every template shipped today is unqualified. NA and "" must stay
+  # distinguishable: regexec returns "" for a group that did not participate,
+  # which would read as a template qualified with the empty string.
+  f <- hvtiRtemplates:::.template_fields("03.01-ac.qmd")
+  expect_equal(f$prefix, "ac")
+  expect_true(is.na(f$qualifier))
+})
+
+test_that("the prefix capture does not swallow the qualifier", {
+  # It was `.+`, which is greedy, so "06.03-dp-trends.qmd" parsed as the single
+  # prefix "dp-trends". That validates and is wrong.
+  f <- hvtiRtemplates:::.template_fields("06.03-dp-trends.qmd")
+  expect_false(identical(f$prefix, "dp-trends"))
+})
+
+test_that("a trailing separator with no qualifier is rejected", {
+  f <- hvtiRtemplates:::.template_fields("06.03-dp-.qmd")
+  expect_true(is.na(f$prefix))
+})
+
+test_that("template_list() reports a qualifier column", {
+  expect_true("qualifier" %in% names(template_list()))
+})
+
+test_that(".select_template() refuses to guess when a prefix is ambiguous", {
+  # The whole point. Taking the first row is how one `dp` bucket hid four job
+  # types; an unanswered question must not get a confident answer.
+  tl <- data.frame(
+    prefix = c("dp", "dp", "ac"),
+    qualifier = c("trends", "spaghetti", NA_character_),
+    ordinal = c("06.03", "06.04", "03.01"),
+    folder = c("graphs", "graphs", "distributions"),
+    file = c("a.qmd", "b.qmd", "c.qmd"),
+    stringsAsFactors = FALSE
+  )
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp"),
+               "carries 2 templates")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp"), "trends")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp"), "spaghetti")
+})
+
+test_that(".select_template() resolves a named qualifier, and rejects a wrong one", {
+  tl <- data.frame(
+    prefix = c("dp", "dp"), qualifier = c("trends", "spaghetti"),
+    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
+  )
+  expect_equal(hvtiRtemplates:::.select_template(tl, "dp", "trends")$file, "a.qmd")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp", "nope"),
+               "no template qualified")
+})
+
+test_that("a single unqualified template still resolves without a qualifier", {
+  # Backwards compatibility for all nine shipped templates.
+  tl <- data.frame(
+    prefix = "ac", qualifier = NA_character_, ordinal = "03.01",
+    folder = "distributions", file = "c.qmd", stringsAsFactors = FALSE
+  )
+  expect_equal(hvtiRtemplates:::.select_template(tl, "ac")$file, "c.qmd")
+})
+
+test_that(".select_template() refuses a (prefix, qualifier) pair that matches twice", {
+  # Returning the first row here would be the same silent pick the function
+  # exists to refuse, one level further in: the caller takes [[1L]] and never
+  # learns there was a second.
+  tl <- data.frame(
+    prefix = c("dp", "dp"), qualifier = c("trends", "trends"),
+    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
+  )
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp", "trends"),
+               "must be unique")
+})
+
+test_that("a malformed qualifier is rejected before it is compared", {
+  # `hit$qualifier == NA_character_` is NA, not FALSE, so an NA qualifier
+  # produces NA-indexed rows and an error naming nothing useful; a length-2
+  # qualifier recycles silently. new_job() screened its argument and
+  # template_path() did not, so the guard belongs on the shared path.
+  for (bad in list(NA_character_, c("a", "b"), "", 42, character(0))) {
+    expect_error(template_path("ac", bad), "single non-empty, non-NA")
+  }
+})
+
+test_that("a malformed prefix is rejected before it is compared", {
+  # Validating `qualifier` and not its sibling is how a length-2 prefix
+  # reaches `tl$prefix == prefix`, recycles, and selects rows nobody asked
+  # for. The old match() path errored cleanly there.
+  for (bad in list(NA_character_, c("ac", "hz"), "", 42, character(0))) {
+    expect_error(template_path(bad), "single non-empty, non-NA")
+  }
+})
+
+test_that("two unqualified templates are a duplicate pair, not a mixed prefix", {
+  # `any(is.na())` alone reported these as mixed, which they are not: mixed
+  # means both kinds present. Two faults, two fixes, so two messages.
+  tl <- data.frame(
+    prefix = c("dp", "dp"), qualifier = c(NA_character_, NA_character_),
+    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
+  )
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp"),
+               "unqualified templates")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp"), "must be")
+})
+
+test_that("a genuinely mixed prefix still reports as mixed", {
+  tl <- data.frame(
+    prefix = c("dp", "dp"), qualifier = c(NA_character_, "trends"),
+    ordinal = c("06.03", "06.04"), folder = c("graphs", "graphs"),
+    file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
+  )
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp", "trends"), "mixes")
 })

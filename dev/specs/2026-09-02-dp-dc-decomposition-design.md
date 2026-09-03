@@ -1,9 +1,13 @@
 # Decomposing `dp` and `dc`
 
-**Status.** Evidence complete, **decision open**. Nothing in the ledger has been
-changed. Sections 2 to 7 are measurement; section 8 states the choice that has
-to be made and section 9 recommends, but the count of templates and the
-identity scheme are the maintainer's call.
+**Status.** Evidence complete. **Section 8 was decided on 2026-09-02: option A,
+carry the qualifier in the filename.** Implemented the same day; see the
+`(unreleased)` entry in `NEWS.md` and the Template naming section of
+`AGENTS.md`. Sections 2 to 7 are measurement and stand as written.
+
+**Still the maintainer's call:** which qualifiers actually earn a template
+(section 9 recommends, and nothing has been added to `inst/templates/`), the
+`std_dif` / `stddiff` question in section 5, and the four items in section 10.
 
 **Why now.** `2026-09-02-per-folder-naming-parse-design.md` established that
 `dp` and `dc` are not single job types. This note asks what they actually
@@ -145,8 +149,9 @@ Four `graphs/dp` templates cannot all be keyed `dp`.
 | **B. Several ordinals, one prefix**, `06.03-dp.qmd` and `06.04-dp.qmd` | ledger uniqueness check must go; no code change to the parser | filenames already permit it, but they are opaque: nothing distinguishes the two but an ordinal |
 | **C. Do not split.** One `dp` template branching on an `EDIT:` field | nothing | re-buries the distinction this whole exercise surfaced, and cannot express that `general` and `tables` have different package dependencies |
 
-**Recommendation: A.** It is the only option under which the filename states the
-job type, and the job type is what a study author is looking for. It is also the
+**Recommendation: A**, and **A was taken on 2026-09-02.** It is the only option
+under which the filename states the job type, and the job type is what a study
+author is looking for. It is also the
 only one that survives section 4: `general` and `tables` resolve to different
 packages, so a single template that switches between them would depend on both.
 

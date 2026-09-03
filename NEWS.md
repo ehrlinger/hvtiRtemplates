@@ -1,5 +1,37 @@
 # hvtiRtemplates (unreleased)
 
+* **A template name can now say which job it is: `<NN.MM>-<prefix>-<qualifier>.qmd`.**
+  `graphs/dp` is `trends`, `spaghetti`, `procs` and more under one prefix, and
+  the split is already present in the template estate rather than being
+  proposed. A name that cannot say which job it is, is one a study author
+  cannot search. Decided 2026-09-02; see
+  `dev/specs/2026-09-02-dp-dc-decomposition-design.md`.
+
+  `template_list()` gains a `qualifier` column. `NA` marks an unqualified
+  template row, which is every template shipped today. `template_path()`
+  and `new_job()` gain a `qualifier` argument. Nothing existing changes: all
+  nine shipped templates are unqualified and every existing call still
+  resolves.
+
+  **Both refuse to guess.** Naming no qualifier where a prefix carries several
+  is an error listing the choices. Selection was `match()`, which returns the
+  first row and says nothing about the rest; that is safe only while every
+  prefix has one template, and is the same shape as the bug that made `dp`
+  look like one job type.
+
+  The parser's prefix capture was `.+`, which is greedy and read
+  `06.03-dp-trends.qmd` as the single prefix `dp-trends`. It parsed, it
+  validated, and it was wrong. The prefix is now `[A-Za-z0-9]+`, so a prefix
+  may never contain `-`.
+
+* **The roadmap ledger is keyed on `(prefix, qualifier)`, not prefix alone.**
+  A prefix may hold several rows, one per job type, and must be wholly
+  qualified or wholly unqualified: a half-decomposed prefix would offer an
+  unqualified row in the ambiguity error that no caller can ask for. The
+  renderer labels a qualified row `dp-trends` so two rows for one prefix do
+  not render identically. An empty-string qualifier is rejected outright,
+  rather than being collapsed into an absent one by a truthiness test.
+
 * **The allocation note's cross-package dependency count was wrong for
   nineteen days, and is now anchored.** It read "19 file-level dependencies
   span 3 package pairs". That was correct when written on 2026-08-14 and went

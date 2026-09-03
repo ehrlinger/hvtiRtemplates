@@ -58,7 +58,13 @@ answer, because `%inc` had nothing to pin.
 | Function | Returns |
 |---|---|
 | `hvti_taxonomy()` | the analysis prefix table: prefix, name, folder, description |
-| `template_list()` | supported templates: name, prefix, ordinal, folder, file |
-| `template_path(prefix)` | path to one supported template |
+| `template_list()` | supported templates: name, prefix, qualifier, ordinal, folder, file |
+| `template_path(prefix, qualifier = NULL)` | path to one supported template |
 | `hvti_non_prefixes()` | leading name fields that are utilities, not analysis prefixes |
-| `new_job(prefix, endpoint, type, dir = ".")` | the scaffolded job's path, invisibly |
+| `new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` | the scaffolded job's path, invisibly |
+
+`qualifier` names a job type within a prefix, for the prefixes that carry
+several: `graphs/dp` is `trends`, `spaghetti` and `procs`, not one job. It is
+`NULL` and the column is `NA` for a prefix with a single template, which is
+every template shipped today. Naming no qualifier where a prefix carries
+several is an error listing the choices, never a silent pick of the first.

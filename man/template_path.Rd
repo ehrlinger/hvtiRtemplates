@@ -4,10 +4,14 @@
 \alias{template_path}
 \title{Path to a supported template}
 \usage{
-template_path(prefix)
+template_path(prefix, qualifier = NULL)
 }
 \arguments{
 \item{prefix}{Analysis prefix, e.g. \code{"ac"}. See \code{\link{template_list}}.}
+
+\item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
+\code{dp}. Required only where a prefix carries more than one template;
+omitting it there is an error naming the choices, never a silent pick.}
 }
 \value{
 The full path, as \code{character(1)}.

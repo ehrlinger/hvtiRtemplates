@@ -104,8 +104,33 @@ per-platform summary lines did.
 
 ## Template naming
 
-A template file is `<NN.MM>-<prefix>.qmd` and lives in the taxonomy folder it scaffolds into
-— e.g. `inst/templates/distributions/03.01-ac.qmd`. `.template_fields()` parses the name by
+A template file is `<NN.MM>-<prefix>[-<qualifier>].qmd` and lives in the taxonomy folder it
+scaffolds into, e.g. `inst/templates/distributions/03.01-ac.qmd` or
+`inst/templates/graphs/06.03-dp-trends.qmd`.
+
+**The qualifier names a job type within a prefix, and is optional.** Every template shipped
+today omits it. It exists because `graphs/dp` is `trends`, `spaghetti`, `procs` and more under
+one prefix: a corpus census on 2026-09-02 found the split already present in the template
+estate, and a filename that cannot say which job it is, is one a study author cannot search.
+Decided 2026-09-02, see `dev/specs/2026-09-02-dp-dc-decomposition-design.md`.
+
+⚠️ **A prefix may therefore hold SEVERAL ledger rows, keyed on `(prefix, qualifier)`.**
+`check-roadmap-counts.py` enforces the pair, and also enforces that a prefix is **wholly
+qualified or wholly unqualified**. A half-decomposed prefix is a state the ledger could
+describe and the package would refuse to use, because the ambiguity error would offer an
+unqualified row that no caller can ask for. Decomposing a prefix means naming every job
+under it.
+
+⚠️ **`qualifier` is `[A-Za-z0-9_]+`, and a prefix may never contain `-`.** `-` is the
+filename's field separator, so a prefix carrying one would make the name ambiguous. The
+parser's prefix capture was `.+` until 2026-09-02, which is greedy and read
+`06.03-dp-trends.qmd` as the single prefix `dp-trends`: it parsed, it validated, and it was
+wrong.
+
+⚠️ **`template_path()` and `new_job()` REFUSE to guess when a prefix is ambiguous.** Naming no
+qualifier where a prefix carries several is an error listing the choices, never a silent pick
+of the first. Selecting with `match()` returned the first row and said nothing about the rest,
+which is the same shape as the bug that made `dp` look like one job type. `.template_fields()` parses the name by
 pattern, not by splitting on `.`: that character is both a field separator inside the ordinal
 and the extension separator, so a split-based parser cannot tell the two apart. Prefixes come
 from `hvti_taxonomy()`.
@@ -131,7 +156,8 @@ that scaffolded `bh` from either carries it in a job filename. It is listed unde
 `retired_ordinals` in the ledger and `check-roadmap-counts.py` fails any row that claims it.
 Retiring, rather than freeing, is what keeps the renumber from costing anything later.
 
-`new_job(prefix, endpoint, type, dir)` writes `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd`
+`new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` writes
+`<folder>/<endpoint>-<type>-<NN.MM>-<prefix>[-<qualifier>].qmd`
 and **refuses to overwrite an existing job**, because a job file accumulates a study's edits.
 `endpoint` and `type` name the `(endpoint, analysis type)` set the job belongs to; both are
 required and both are restricted to `[A-Za-z0-9_]+`, because `-` is the filename's field
