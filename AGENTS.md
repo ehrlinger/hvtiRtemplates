@@ -156,7 +156,7 @@ that scaffolded `bh` from either carries it in a job filename. It is listed unde
 `retired_ordinals` in the ledger and `check-roadmap-counts.py` fails any row that claims it.
 Retiring, rather than freeing, is what keeps the renumber from costing anything later.
 
-`new_job(prefix, endpoint, type, dir, qualifier)` writes
+`new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` writes
 `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>[-<qualifier>].qmd`
 and **refuses to overwrite an existing job**, because a job file accumulates a study's edits.
 `endpoint` and `type` name the `(endpoint, analysis type)` set the job belongs to; both are
