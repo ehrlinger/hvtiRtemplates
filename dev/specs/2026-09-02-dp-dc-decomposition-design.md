@@ -148,11 +148,12 @@ note did not reach:
 | folder | shape | example |
 |---|---|---|
 | `graphs` | `dp.<plot type>.<variable>` | `tp.dp.spaghetti.echo.R` |
-| `distributions` | `dp.<variable>.<measurement scale>` | `tp.dp.pain_score.ordinal.sas` |
+| `distributions` | `dp.<variable>[.<qualifier>]`, the qualifier optional and usually **not** a scale | `tp.dp.echo.sas`, `tp.dp.pain_score.ordinal.sas` |
 | `descriptive` | `dc.<what>.<output format>` | `tp.dc.tables.html_and_rtf.sas` |
 
-That first suggested that `distributions/dp` is one template per measurement
-scale rather than one parameterised by variable.
+The `distributions` row was read as `dp.<variable>.<measurement scale>` from
+the two local templates that carry a scale, which first suggested one template
+per scale rather than one parameterised by variable.
 
 ⚠️ **Measured 2026-09-03, and that is wrong.** Over 1,271 `distributions/dp`
 job rows: 666 of them, 52%, carry only the variable and no second field at
