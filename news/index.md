@@ -1,5 +1,99 @@
 # Changelog
 
+## hvtiRtemplates 1.1.0
+
+### Breaking
+
+- **The ordinal is gone from every template and job filename.** A
+  template is now `<prefix>[-<qualifier>].qmd` and a job is
+  `<endpoint>-<type>-<prefix>[-<qualifier>].qmd`. `03.01-ac.qmd` becomes
+  `ac.qmd`; `dead_pa-hz-03.01-ac.qmd` becomes `dead_pa-hz-ac.qmd`.
+
+  `NN` was the taxonomy folder’s position and duplicated the directory
+  the file already sat in. `MM` was a per-folder key asserting an order
+  among a folder’s templates that does not exist. Both are removed. See
+  `dev/specs/2026-09-03-template-identity-design.md`.
+
+- **`inst/templates/` directories carry the ordering digits:**
+  `00_datasets`, `10_descriptive`, `20_distributions`, `30_analyses`,
+  `40_graphs`, `50_documents`, `90_estimates`. `NN` moved here, where it
+  is the thing rather than a copy of the directory beside it, and the
+  decade gaps are room to insert a folder without renumbering, which is
+  what the `bh` rename cost last time.
+
+  ⚠️ **The digits are ASSIGNED, not derived.** `estimates` is 90 though
+  it is fifth in the taxonomy, because it holds saved output rather than
+  jobs.
+
+  ⚠️ **A STUDY does not use the numbered names.**
+  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+  writes into the bare taxonomy folder, `distributions/` and
+  `analyses/`, because that is what studies already have (63,278 and
+  119,582 corpus files). Writing into `20_distributions/` would split a
+  study’s estate across two spellings.
+  [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+  reports `folder` with the digits stripped, for the same reason.
+
+- **[`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+  drops its `ordinal` column**, and the roadmap ledger drops both
+  `ordinal` and the `retired_ordinals` register.
+
+### Removed machinery
+
+- `check_ordinals()`, `check_retired()`, `FOLDER_ORDINAL` and
+  `RETIRED_FIELDS` are gone from `check-roadmap-counts.py`, and the
+  roadmap table drops its `ordinal` column. `check_disk()` now derives
+  the folder-to-directory map by **reading `inst/templates/`**, so there
+  is no hardcoded copy of the numbering to drift.
+
+- The R test that parsed `FOLDER_ORDINAL` out of the guard and compared
+  it to
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
+  is retired with its reasoning: the right answer to “this constant can
+  go stale” turned out to be deleting the constant.
+
+### Note for old filenames
+
+⚠️ **`04.06` will never be explained by anything else.** The retirement
+register recorded that `04.06-bh` shipped in 1.0.13 and 1.0.14 before
+`bh` was renumbered to `04.05`; it went with the ordinal. So: an `NN.MM`
+in a filename is a pre-1.1.0 job, `04.06-bh` and `04.05-bh` are the same
+template, and no ordinal will ever be issued again.
+
+- **Copilot review credits are reported exhausted until October 2026,
+  and that is recorded in `AGENTS.md` together with the evidence against
+  it.** Reviews were still arriving the afternoon it was reported,
+  including one on the PR recording it. The note says what the
+  consequence would be if the cutoff lands (the rule does not block a
+  merge, so a PR would go green and get no review, and with the approval
+  rule nobody can satisfy on their own PR it would reach `main` unread)
+  without asserting a state the evidence contradicts.
+
+- **⚠️ `distributions/dp` is ONE ledger row, not the three that shipped
+  in 1.0.21.** Those three were keyed on measurement scale, recommended
+  from a sample of two template filenames and released before anyone
+  measured them.
+
+  Measured over all 1,271 `distributions/dp` job rows: **666 of them,
+  52%, carry only the variable and no second field at all**, and a scale
+  word appears in 110 stems, 8.7% (`binary` 51, `ordinal` 49,
+  `continuous` 6). As a second qualifier `binary` (8 studies) and
+  `ordinal` (10) rank fifth and sixth, behind `trend` (21), `tavr`,
+  `gastroparesis` and `matched`.
+
+  So it is one job parameterised by variable, which is what the design
+  record said before it talked itself out of it. The row is `dp` /
+  `variable`, 237 job studies. `qualifier` is `variable` rather than
+  null because a prefix must be wholly qualified or wholly unqualified
+  and `graphs/dp` is decomposed.
+
+  Recommending three templates from a sample of two, inside the work
+  that exists because a convention was inferred from a small sample and
+  applied to a whole corpus, is that error committed once more. It
+  reached `main` and shipped. `trend` (100 rows, 21 studies) is the one
+  second qualifier that might still earn a template, and is noted rather
+  than acted on.
+
 ## hvtiRtemplates 1.0.21
 
 - **`dp` and `dc` are decomposed in the roadmap ledger: two rows become

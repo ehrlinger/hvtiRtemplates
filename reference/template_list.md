@@ -11,16 +11,19 @@ template_list()
 
 ## Value
 
-A data frame with columns `name`, `prefix`, `qualifier`, `ordinal`,
-`folder` and `file`. `qualifier` is `NA` for a prefix carrying a single
-template, which is every template shipped today.
+A data frame with columns `name`, `prefix`, `qualifier`, `folder` and
+`file`. `folder` is the taxonomy name with the directory's ordering
+digits stripped, so `20_distributions` reports as `distributions`.
+`qualifier` is `NA` for a prefix carrying a single template, which is
+every template shipped today.
 
 ## Details
 
-A template is named `<NN.MM>-<prefix>.qmd`, or
-`<NN.MM>-<prefix>-<qualifier>.qmd` where one prefix carries several job
-types, and lives in the taxonomy folder it scaffolds into, so `folder`
-and `ordinal` are read from the tree rather than looked up.
+A template is named `<prefix>.qmd`, or `<prefix>-<qualifier>.qmd` where
+one prefix carries several job types, and lives in a numbered directory
+named for the taxonomy folder it scaffolds into, so `folder` is read
+from the tree rather than looked up. The directory's leading digits
+order the folders and are stripped from `folder`.
 [`hvti_taxonomy`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
 is a cross-check on that, enforced by the test suite, not a source for
 it.
@@ -29,24 +32,24 @@ it.
 
 ``` r
 template_list()
-#>       name prefix qualifier ordinal        folder
-#> 1 04.01-hm     hm      <NA>   04.01      analyses
-#> 2 04.02-bl     bl      <NA>   04.02      analyses
-#> 3 04.03-br     br      <NA>   04.03      analyses
-#> 4 04.04-bc     bc      <NA>   04.04      analyses
-#> 5 04.05-bh     bh      <NA>   04.05      analyses
-#> 6 03.01-ac     ac      <NA>   03.01 distributions
-#> 7 03.02-hz     hz      <NA>   03.02 distributions
-#> 8 06.01-hp     hp      <NA>   06.01        graphs
-#> 9 06.02-hs     hs      <NA>   06.02        graphs
-#>                                                                                  file
-#> 1      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.01-hm.qmd
-#> 2      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.02-bl.qmd
-#> 3      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.03-br.qmd
-#> 4      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.04-bc.qmd
-#> 5      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.05-bh.qmd
-#> 6 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.01-ac.qmd
-#> 7 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.02-hz.qmd
-#> 8        /home/runner/work/_temp/Library/hvtiRtemplates/templates/graphs/06.01-hp.qmd
-#> 9        /home/runner/work/_temp/Library/hvtiRtemplates/templates/graphs/06.02-hs.qmd
+#>   name prefix qualifier        folder
+#> 1   ac     ac      <NA> distributions
+#> 2   hz     hz      <NA> distributions
+#> 3   bc     bc      <NA>      analyses
+#> 4   bh     bh      <NA>      analyses
+#> 5   bl     bl      <NA>      analyses
+#> 6   br     br      <NA>      analyses
+#> 7   hm     hm      <NA>      analyses
+#> 8   hp     hp      <NA>        graphs
+#> 9   hs     hs      <NA>        graphs
+#>                                                                               file
+#> 1 /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd
+#> 2 /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/hz.qmd
+#> 3      /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bc.qmd
+#> 4      /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bh.qmd
+#> 5      /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bl.qmd
+#> 6      /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/br.qmd
+#> 7      /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/hm.qmd
+#> 8        /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
+#> 9        /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd
 ```

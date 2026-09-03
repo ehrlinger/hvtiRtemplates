@@ -29,5 +29,5 @@ The full path, as `character(1)`.
 
 ``` r
 try(template_path("ac"))
-#> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.01-ac.qmd"
+#> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd"
 ```

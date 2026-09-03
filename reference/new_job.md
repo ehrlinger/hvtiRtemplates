@@ -1,7 +1,7 @@
 # Scaffold a new analysis job from a template
 
 Copies a supported job template into the taxonomy folder it belongs to,
-named `<endpoint>-<type>-<NN.MM>-<prefix>[-<qualifier>].qmd`. Refuses to
+named `<endpoint>-<type>-<prefix>[-<qualifier>].qmd`. Refuses to
 overwrite an existing job: a job file accumulates a study's edits, and
 silently replacing one would discard them.
 
@@ -21,8 +21,8 @@ new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)
 - endpoint:
 
   The endpoint this job analyses, e.g. `"dead_pa"`. Must match
-  `^[A-Za-z0-9_]+$`: `-` separates the filename's fields and `.` is
-  reserved to the ordinal, so neither may appear here.
+  `^[A-Za-z0-9_]+$`: `-` separates the filename's fields and `.`
+  separates the extension, so neither may appear here.
 
 - type:
 
@@ -49,13 +49,14 @@ returned path always names a complete, correctly-declared job.
 
 ## Details
 
-A job is identified by four fields. Two come from the template — its
-`ordinal` and `prefix` — and two from the caller. The pair
-`(endpoint, type)` names the **set** the job belongs to, and both are
-required: one endpoint is analysed by several methods, and the jobs
-those chains share would otherwise collide. A death-hazard set and a
-death random-forest-survival set both begin from the same life table, so
-keyed on the endpoint alone both would be written to one filename.
+A job is identified by three or four fields. One or two come from the
+template, its `prefix` and, where the prefix carries several job types,
+its `qualifier`; two come from the caller. The pair `(endpoint, type)`
+names the **set** the job belongs to, and both are required: one
+endpoint is analysed by several methods, and the jobs those chains share
+would otherwise collide. A death-hazard set and a death
+random-forest-survival set both begin from the same life table, so keyed
+on the endpoint alone both would be written to one filename.
 
 ## See also
 
@@ -68,6 +69,6 @@ keyed on the endpoint alone both would be written to one filename.
 d <- file.path(tempdir(), "new-job-example")
 new_job("ac", "dead_pa", "hz", dir = d)
 list.files(d, recursive = TRUE)
-#> [1] "distributions/dead_pa-hz-03.01-ac.qmd"
+#> [1] "distributions/dead_pa-hz-ac.qmd"
 unlink(d, recursive = TRUE)
 ```

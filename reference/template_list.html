@@ -9,7 +9,7 @@ the intended starting point for a new analysis job."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.21</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,43 +54,46 @@ the intended starting point for a new analysis job.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with columns <code>name</code>, <code>prefix</code>,
-  <code>qualifier</code>, <code>ordinal</code>, <code>folder</code> and <code>file</code>.
+  <code>qualifier</code>, <code>folder</code> and <code>file</code>. <code>folder</code> is the
+  taxonomy name with the directory's ordering digits stripped, so
+  <code>20_distributions</code> reports as <code>distributions</code>.
   <code>qualifier</code> is <code>NA</code> for a prefix carrying a single template,
   which is every template shipped today.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A template is named <code>&lt;NN.MM&gt;-&lt;prefix&gt;.qmd</code>, or
-<code>&lt;NN.MM&gt;-&lt;prefix&gt;-&lt;qualifier&gt;.qmd</code> where one prefix carries several job
-types, and lives in the taxonomy
-folder it scaffolds into, so <code>folder</code> and <code>ordinal</code> are read from
-the tree rather than looked up. <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy</a></code> is a cross-check
+    <p>A template is named <code>&lt;prefix&gt;.qmd</code>, or
+<code>&lt;prefix&gt;-&lt;qualifier&gt;.qmd</code> where one prefix carries several job
+types, and lives in a numbered directory named for the taxonomy folder it
+scaffolds into, so <code>folder</code> is read from the tree rather than looked
+up. The directory's leading digits order the folders and are stripped from
+<code>folder</code>. <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy</a></code> is a cross-check
 on that, enforced by the test suite, not a source for it.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">template_list</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       name prefix qualifier ordinal        folder</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 04.01-hm     hm      &lt;NA&gt;   04.01      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 04.02-bl     bl      &lt;NA&gt;   04.02      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 04.03-br     br      &lt;NA&gt;   04.03      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 04.04-bc     bc      &lt;NA&gt;   04.04      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 04.05-bh     bh      &lt;NA&gt;   04.05      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 03.01-ac     ac      &lt;NA&gt;   03.01 distributions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7 03.02-hz     hz      &lt;NA&gt;   03.02 distributions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8 06.01-hp     hp      &lt;NA&gt;   06.01        graphs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9 06.02-hs     hs      &lt;NA&gt;   06.02        graphs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                  file</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.01-hm.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.02-bl.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.03-br.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.04-bc.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5      /home/runner/work/_temp/Library/hvtiRtemplates/templates/analyses/04.05-bh.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.01-ac.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7 /home/runner/work/_temp/Library/hvtiRtemplates/templates/distributions/03.02-hz.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8        /home/runner/work/_temp/Library/hvtiRtemplates/templates/graphs/06.01-hp.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9        /home/runner/work/_temp/Library/hvtiRtemplates/templates/graphs/06.02-hs.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   name prefix qualifier        folder</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   ac     ac      &lt;NA&gt; distributions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   hz     hz      &lt;NA&gt; distributions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   bc     bc      &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   bh     bh      &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   bl     bl      &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   br     br      &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7   hm     hm      &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8   hp     hp      &lt;NA&gt;        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9   hs     hs      &lt;NA&gt;        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                               file</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/hz.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3      /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bc.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4      /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bh.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5      /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bl.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6      /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/br.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7      /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/hm.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8        /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9        /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

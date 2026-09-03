@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.21</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,7 +120,7 @@
 </tr>
 <tr>
 <td><code><a href="reference/template_list.html">template_list()</a></code></td>
-<td>supported templates: name, prefix, qualifier, ordinal, folder, file</td>
+<td>supported templates: name, prefix, qualifier, folder, file</td>
 </tr>
 <tr>
 <td><code>template_path(prefix, qualifier = NULL)</code></td>
@@ -136,6 +136,7 @@
 </tr>
 </tbody>
 </table>
+<p>Templates are <code>&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in a numbered directory (<code>20_distributions/ac.qmd</code>); a job is <code>&lt;endpoint&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in the bare taxonomy folder. The ordinal that once prefixed both was dropped in 1.1.0.</p>
 <p><code>qualifier</code> names a job type within a prefix, for the prefixes that carry several: <code>graphs/dp</code> is <code>trends</code>, <code>spaghetti</code> and <code>procs</code>, not one job. It is <code>NULL</code> and the column is <code>NA</code> for a prefix with a single template, which is every template shipped today. Naming no qualifier where a prefix carries several is an error listing the choices, never a silent pick of the first.</p>
 </div>
 </div>

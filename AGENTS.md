@@ -129,32 +129,47 @@ only the per-platform summary lines did.
 
 ## Template naming
 
-A template file is `<NN.MM>-<prefix>[-<qualifier>].qmd` and lives in the
-taxonomy folder it scaffolds into,
-e.g. `inst/templates/distributions/03.01-ac.qmd` or
-`inst/templates/graphs/06.03-dp-trends.qmd`.
+A template file is `<prefix>[-<qualifier>].qmd` and lives in a numbered
+directory named for the taxonomy folder it scaffolds into,
+e.g. `inst/templates/20_distributions/ac.qmd` or
+`inst/templates/40_graphs/dp-trends.qmd`.
+
+    00_datasets   10_descriptive   20_distributions   30_analyses
+    40_graphs     50_documents                        90_estimates
+
+**The digits order the directories and are ASSIGNED, not derived.**
+`estimates` is 90 though it is fifth in the taxonomy, because it holds
+saved output rather than jobs. Deriving a number from a row position is
+the defect this scheme removed, so do not “fix” 90 to 50. The decade
+gaps are deliberate room: a new folder goes in at 25 and shifts nothing.
+
+⚠️ **`inst/templates/` uses the numbered directories. A STUDY does
+not.**
+[`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+writes into the bare taxonomy name, `distributions/` and `analyses/`,
+because that is what studies already have: 63,278 and 119,582 corpus
+files respectively. Writing a job into `20_distributions/` would split a
+study’s estate across two spellings of one folder.
+[`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+reports `folder` with the digits stripped for the same reason.
 
 **The qualifier names a job type within a prefix, and is optional.**
 Every template shipped today omits it. It exists because `graphs/dp` is
-`trends`, `spaghetti`, `procs` and more under one prefix: a corpus
-census on 2026-09-02 found the split already present in the template
-estate, and a filename that cannot say which job it is, is one a study
-author cannot search. Decided 2026-09-02, see
+`trends`, `spaghetti`, `procs` and more under one prefix, and a filename
+that cannot say which job it is, is one a study author cannot search.
+Decided 2026-09-02, see
 `dev/specs/2026-09-02-dp-dc-decomposition-design.md`.
 
-⚠️ **A prefix may therefore hold SEVERAL ledger rows, keyed on
+⚠️ **A prefix may hold SEVERAL ledger rows, keyed on
 `(prefix, qualifier)`.** `check-roadmap-counts.py` enforces the pair,
 and also enforces that a prefix is **wholly qualified or wholly
 unqualified**. A half-decomposed prefix is a state the ledger could
 describe and the package would refuse to use, because the ambiguity
 error would offer an unqualified row that no caller can ask for.
-Decomposing a prefix means naming every job under it.
 
 ⚠️ **`qualifier` is `[A-Za-z0-9_]+`, and a prefix may never contain
 `-`.** `-` is the filename’s field separator, so a prefix carrying one
-would make the name ambiguous. The parser’s prefix capture was `.+`
-until 2026-09-02, which is greedy and read `06.03-dp-trends.qmd` as the
-single prefix `dp-trends`: it parsed, it validated, and it was wrong.
+would make the name ambiguous.
 
 ⚠️
 **[`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
@@ -165,46 +180,33 @@ a prefix carries several is an error listing the choices, never a silent
 pick of the first. Selecting with
 [`match()`](https://rdrr.io/r/base/match.html) returned the first row
 and said nothing about the rest, which is the same shape as the bug that
-made `dp` look like one job type. `.template_fields()` parses the name
-by pattern, not by splitting on `.`: that character is both a field
-separator inside the ordinal and the extension separator, so a
-split-based parser cannot tell the two apart. Prefixes come from
-[`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html).
+made `dp` look like one job type.
 
-**The ordinal is a KEY, assigned once. It is NOT the prefix’s row
-position.** `NN` is the taxonomy folder’s position, which is stable.
-`MM` is assigned from the next free minor in that folder when the
-template is created, recorded in
-`dev/specs/artifacts/2026-08-29-template-roadmap.json`, and never
-recomputed. Row order may drift; ordinals may not. This is the rule
-`pub_kb` reached for `document_key` on 2026-08-06: identity is assigned
-once and thereafter only accumulates.
+⭐ **THE ORDINAL IS GONE, dropped 2026-09-03.** Templates were once
+`<NN>.<MM>-<prefix>.qmd`, so `03.01-ac.qmd` and `04.05-bh.qmd`. `NN` was
+the taxonomy folder’s position and duplicated the directory the file
+already sat in; `MM` was a key assigned once per folder, asserting an
+order among a folder’s templates that does not exist. Both are removed:
+`NN` moved onto the directory where it is the thing rather than a copy,
+and `MM` went because nothing needed it. See
+`dev/specs/2026-09-03-template-identity-design.md`.
 
-⚠️ **It was derived from row position until 2026-08-31, and that had
-already failed.** `bh` was 6th in `analyses` when its ordinal was
-assigned, so it shipped as `04.06`. Then `hvtiRutilities` `aeb20f2`
-moved `hs` out to `graphs`, correctly, and every analyses prefix below
-it shifted up one. `bh` became 5th while the filename stayed at `04.06`,
-and nothing caught it: `check_ordinals()` verifies format, folder-major
-and uniqueness, never position. The identity was positional **across a
-repository boundary**, so a correctness fix in the upstream vocabulary
-silently invalidated a downstream filename, with no coupling visible in
-either clone. `bh` was renumbered to `04.05` in 1.0.15 to resync, and
-then frozen.
-
-**A retired ordinal is never reissued.** `04.06` shipped in 1.0.13 and
-1.0.14, so a study that scaffolded `bh` from either carries it in a job
-filename. It is listed under `retired_ordinals` in the ledger and
-`check-roadmap-counts.py` fails any row that claims it. Retiring, rather
-than freeing, is what keeps the renumber from costing anything later.
+⚠️ **Old filenames are still in the wild, and `04.06` will never be
+explained by anything else.** A retirement register used to record that
+`04.06-bh` shipped in 1.0.13 and 1.0.14 before `bh` was renumbered to
+`04.05`; that register went with the ordinal. So: an `NN.MM` in a
+filename is a pre-1.1.0 job, `04.06-bh` and `04.05-bh` are the same
+template, and no ordinal will ever be issued again. Do not reintroduce
+the field to explain one.
 
 `new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` writes
-`<folder>/<endpoint>-<type>-<NN.MM>-<prefix>[-<qualifier>].qmd` and
-**refuses to overwrite an existing job**, because a job file accumulates
-a study’s edits. `endpoint` and `type` name the
+`<folder>/<endpoint>-<type>-<prefix>[-<qualifier>].qmd`, where
+`<folder>` is the BARE taxonomy name and not the numbered directory the
+template sits in, and **refuses to overwrite an existing job**, because
+a job file accumulates a study’s edits. `endpoint` and `type` name the
 `(endpoint, analysis type)` set the job belongs to; both are required
 and both are restricted to `[A-Za-z0-9_]+`, because `-` is the
-filename’s field separator and `.` is reserved to the ordinal.
+filename’s field separator and `.` separates the extension.
 
 **A template must have exactly one `^ENDPOINT\s+<-` line and one
 `^TYPE\s+<-` line.**
