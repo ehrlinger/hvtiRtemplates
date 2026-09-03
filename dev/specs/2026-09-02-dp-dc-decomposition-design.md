@@ -137,7 +137,7 @@ which is two or three rather than one.
 
 Decomposition forces this, and it is the only genuinely open question.
 A template file is `<NN.MM>-<prefix>.qmd` and a ledger row is keyed by prefix.
-Four `graphs/dp` templates cannot both be `dp`.
+Four `graphs/dp` templates cannot all be keyed `dp`.
 
 | option | what it costs | what it buys |
 |---|---|---|
@@ -165,12 +165,13 @@ Roughly ten to eleven templates where the ledger currently carries two rows.
 - **Whether `dc.general` deserves a template at all.** It is 759 studies and
   base procs only, so it is either the most valuable template here or too
   trivial to be worth one. The counts cannot say; reading two study exemplars
-  can, and the share was unmounted when this was written.
+  can, and the share was not mounted when this was written.
 - **Which generation each `graphs/dp` template extracts from.** Section 6 says
   choose deliberately, not which to choose.
 - **The `tp_ggplot/` set has no `trends` or `spaghetti`.** The two largest
   `graphs/dp` job types have no ggplot version, so recommending "from
   `tp_ggplot/` where it exists" leaves the two biggest cases unanswered.
 - **Cumulative row coverage**, which would say how much of each folder the
-  recommended set actually covers. It needs the raw catalogue and the share was
-  unmounted. The study percentages in section 2 are exact but do not sum.
+  recommended set actually covers. It needs the raw catalogue, which lives on
+  the studies share, and that share was not mounted when this was written. The
+  study percentages in section 2 are exact but do not sum.
