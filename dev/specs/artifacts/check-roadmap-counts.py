@@ -103,9 +103,9 @@ def check_schema(rows):
         # Keyed on (prefix, qualifier), not prefix alone. `graphs/dp` is
         # several job types under one prefix, so one row per prefix cannot
         # express the estate; two rows for the SAME pair still cannot both be
-        # right. A null qualifier is part of the key, so a prefix may hold one
-        # unqualified row and any number of qualified ones, but not two
-        # unqualified. See dev/specs/2026-09-02-dp-dc-decomposition-design.md.
+        # right. A prefix must be wholly qualified or wholly unqualified,
+        # checked below. See
+        # dev/specs/2026-09-02-dp-dc-decomposition-design.md, section 8.
         prefix = r.get("prefix")
         if prefix is not None:
             key = (prefix, r.get("qualifier"))
@@ -115,6 +115,19 @@ def check_schema(rows):
                            f"at row {seen_prefixes[key]} and row {i}")
             else:
                 seen_prefixes[key] = i
+    # A prefix half-decomposed is a state the ledger could describe and the
+    # package would then refuse to use: .select_template() errors on a mixed
+    # prefix, because its ambiguity message would offer an unqualified row
+    # that no caller can ask for. Catch it here, where it is cheaper.
+    by_prefix = {}
+    for r in rows:
+        if r.get("prefix") is not None:
+            by_prefix.setdefault(r["prefix"], []).append(r.get("qualifier"))
+    for prefix, quals in sorted(by_prefix.items()):
+        if any(q is None for q in quals) and any(q is not None for q in quals):
+            bad.append(f"`{prefix}` mixes qualified and unqualified rows "
+                       f"({', '.join(str(q) for q in quals)}); decomposing a "
+                       f"prefix means naming every job under it")
     return bad
 
 

@@ -25,10 +25,12 @@
   may never contain `-`.
 
 * **The roadmap ledger is keyed on `(prefix, qualifier)`, not prefix alone.**
-  A prefix may hold several rows, one per job type. A null qualifier is part
-  of the key, so one unqualified row and any number of qualified ones can
-  coexist but not two unqualified. The renderer labels a qualified row
-  `dp-trends` so two rows for one prefix do not render identically.
+  A prefix may hold several rows, one per job type, and must be wholly
+  qualified or wholly unqualified: a half-decomposed prefix would offer an
+  unqualified row in the ambiguity error that no caller can ask for. The
+  renderer labels a qualified row `dp-trends` so two rows for one prefix do
+  not render identically. An empty-string qualifier is rejected outright,
+  rather than being collapsed into an absent one by a truthiness test.
 
 * **The allocation note's cross-package dependency count was wrong for
   nineteen days, and is now anchored.** It read "19 file-level dependencies

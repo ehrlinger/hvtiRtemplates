@@ -114,9 +114,12 @@ one prefix: a corpus census on 2026-09-02 found the split already present in the
 estate, and a filename that cannot say which job it is, is one a study author cannot search.
 Decided 2026-09-02, see `dev/specs/2026-09-02-dp-dc-decomposition-design.md`.
 
-⚠️ **A prefix may therefore hold SEVERAL ledger rows, keyed on `(prefix, qualifier)`.** A null
-qualifier is part of that key, so one unqualified row and any number of qualified ones can
-coexist, but not two unqualified. `check-roadmap-counts.py` enforces the pair.
+⚠️ **A prefix may therefore hold SEVERAL ledger rows, keyed on `(prefix, qualifier)`.**
+`check-roadmap-counts.py` enforces the pair, and also enforces that a prefix is **wholly
+qualified or wholly unqualified**. A half-decomposed prefix is a state the ledger could
+describe and the package would refuse to use, because the ambiguity error would offer an
+unqualified row that no caller can ask for. Decomposing a prefix means naming every job
+under it.
 
 ⚠️ **`qualifier` is `[A-Za-z0-9_]+`, and a prefix may never contain `-`.** `-` is the
 filename's field separator, so a prefix carrying one would make the name ambiguous. The

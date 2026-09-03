@@ -62,13 +62,31 @@ test_that(".template_fields() returns NA for a name it cannot parse", {
   expect_true(is.na(hvtiRtemplates:::.template_fields("README.md")$prefix))
 })
 
-test_that("no two templates share a prefix", {
-  # `template_path()` and `new_job()` both resolve with `match()`, which takes
-  # the first hit silently. Under the old flat layout one directory guaranteed
-  # one file per prefix; a recursive glob does not, so the invariant has to be
-  # asserted rather than assumed.
+test_that("no two templates share a (prefix, qualifier) pair", {
+  # This asserted "no two templates share a prefix" until 2026-09-02, because
+  # `template_path()` and `new_job()` resolved with `match()`, which takes the
+  # first hit silently. Both now resolve on the pair and error rather than
+  # guess, so a prefix carrying several job types is the intended state and
+  # the old form would have blocked the first one from landing. What must
+  # still hold is that the PAIR is unique, since that is what identifies a
+  # template. Raised by Copilot on #76.
   tl <- template_list()
-  expect_false(any(duplicated(stats::na.omit(tl$prefix))))
+  key <- paste(tl$prefix, tl$qualifier, sep = "\r")
+  expect_false(any(duplicated(key[!is.na(tl$prefix)])))
+})
+
+test_that("a prefix is either wholly qualified or wholly unqualified", {
+  # A mixed prefix would offer `<none>` in the ambiguity menu while
+  # `.select_template()` has no way to ask for it, so the error would name a
+  # choice the API cannot honour. Decomposing a prefix means naming every job
+  # under it, not just the new ones.
+  tl <- template_list()
+  mixed <- vapply(
+    split(tl$qualifier, tl$prefix),
+    function(q) any(is.na(q)) && any(!is.na(q)),
+    logical(1)
+  )
+  expect_false(any(mixed))
 })
 
 test_that("every installed template's name parses", {

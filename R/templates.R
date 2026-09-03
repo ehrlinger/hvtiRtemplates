@@ -78,6 +78,17 @@ template_path <- function(prefix, qualifier = NULL) {
          },
          call. = FALSE)
   }
+  # A prefix half-decomposed is a broken estate, not a choice. The ambiguity
+  # error below lists `<none>` for an unqualified row, and a caller cannot ask
+  # for it: naming a qualifier filters to qualified rows, and naming none is
+  # the ambiguity. Rather than invent an NA sentinel to select a row that
+  # should not exist, say so. Raised by Copilot on #76.
+  if (nrow(hit) > 1L && any(is.na(hit$qualifier))) {
+    stop("prefix '", prefix, "' mixes qualified and unqualified templates: ",
+         paste(basename(hit$file), collapse = ", "),
+         ". Decomposing a prefix means naming every job under it.",
+         call. = FALSE)
+  }
   if (!is.null(qualifier)) {
     q <- hit[!is.na(hit$qualifier) & hit$qualifier == qualifier, , drop = FALSE]
     if (!nrow(q)) {
