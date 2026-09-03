@@ -82,10 +82,13 @@ def render(rows):
                 # columns rather than one with a fallback. BOTH are counts of
                 # distinct STUDIES, not of files: breadth counts studies having
                 # a file of any extension, jobs counts studies having one with
-                # a program extension. A decomposed row has jobs and no
-                # breadth, because the census emits the all-extension figure
-                # per prefix and not per qualifier. Neither column may be
-                # summed down: one study appears in every row it uses.
+                # a program extension. A decomposed row shows no breadth,
+                # because the census emits the all-extension figure per prefix
+                # and not per qualifier, and it shows jobs only where the
+                # qualifier was measured: the three distributions/dp rows are
+                # keyed on measurement scale, which the census does not
+                # extract, so they show neither. Neither column may be summed
+                # down: one study appears in every row it uses.
                 "| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |",
                 "|---|---|---|---|---|---|---|"]
         for r in sorted(fam_rows, key=lambda r: (r["batch"] is None,
