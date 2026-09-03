@@ -290,7 +290,7 @@ scaffolded at all.
   | ten, this one included | 1 | false | 4 |
   | `TemporalHazard` | 1 | false | 5, adding `required_status_checks` |
   | `hvtiGraphics` | **0** | **true** | 4 |
-  | `hvtiEDAreports` | n/a | n/a | **none. `main` is unprotected** |
+  | `hvtiEDAreports` | n/a | n/a | none, because the repository is **archived** and therefore read-only |
   | `temporalHazards` | unknown | unknown | unreadable: private, default branch `master` |
 
   The old text describes `hvtiGraphics` and no other repository: zero
