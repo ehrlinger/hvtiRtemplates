@@ -2,7 +2,7 @@
 
 **Status.** ⭐ **DECIDED 2026-09-03. The ordinal goes away entirely.**
 
-- **Folders carry the digits**, in taxonomy order with taxonomy spellings:
+- **Folders carry the digits**, in the taxonomy's order and using its spellings:
   `00_datasets`, `10_descriptive`, `20_distributions`, `30_analyses`,
   `40_graphs`, `50_documents`, `90_estimates`.
 - **`NN` moves into the folder name**, where it is the thing rather than a
@@ -181,8 +181,9 @@ scheme is insertable, which positional numbering never was.
 
 ### Resolved 2026-09-03: taxonomy names, taxonomy order, estimates at 90
 
-The maintainer settled both discrepancies: **use the taxonomy names**, keep the
-current order, and **push `estimates` to 90** because it is a different beast.
+The maintainer settled both discrepancies: **use the taxonomy's names**, keep
+its current order, and **push `estimates` to 90** because it is a different
+beast.
 
 ```
 00_datasets   10_descriptive   20_distributions   30_analyses
@@ -216,7 +217,7 @@ a **corpus-wide vocabulary change**, not a package-local one, and it needs the
 same legacy alias treatment section 5 describes for prefixes: 54,510 and
 119,582 existing files sit under the current spellings.
 
-Both are superseded by the resolution above: the taxonomy spellings stand, so
+Both are superseded by the resolution above: the taxonomy's spellings stand, so
 neither rename happens and neither alias is needed.
 
 ### What it left, and how that closed
@@ -231,7 +232,7 @@ retirement register, 40 mentions in the checker, and a rename.
 
 **Take the folder digits, then the ordinal, then the prefix, in that order.**
 The folder digits are the cleanest of the three: they solve `NN` and the
-insertion problem together, they keep the taxonomy spellings so no alias is
+insertion problem together, they keep the taxonomy's spellings so no alias is
 needed, and section 8's naming question is now settled.
 
 ⭐ **And do it while nobody is using the templates.** Section 5 measures 27
