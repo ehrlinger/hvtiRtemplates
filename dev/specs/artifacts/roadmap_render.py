@@ -62,8 +62,11 @@ def render(rows):
 
     live = [r for r in rows if r["status"] != "out-of-scope"]
     on_disk = [r for r in live if r["status"] in ("shipped", "revisit", "in-flight")]
-    out += [f"**{len(live)} prefixes in scope**, of which {len(on_disk)} have a "
-            f"template on disk. {len(rows) - len(live)} demoted to umbrella rows.",
+    # "templates in scope", not "prefixes": a decomposed prefix contributes one
+    # row per job type, so `dp` alone is seven of these. Counting rows and
+    # calling them prefixes would overstate the vocabulary.
+    out += [f"**{len(live)} templates in scope**, of which {len(on_disk)} exist "
+            f"on disk. {len(rows) - len(live)} demoted to umbrella rows.",
             ""]
 
     out += ["## By family", ""]
@@ -76,10 +79,13 @@ def render(rows):
                 f"batches {batches[0]}–{batches[-1]}" if batches else "unscheduled"
         out += [f"### {fam} ({label})", "",
                 # `breadth` and `jobs` are two different measures and get two
-                # columns rather than one with a fallback. breadth counts every
-                # extension, jobs counts program files only; a decomposed row
-                # has jobs and no breadth, because the census emits the
-                # all-extension figure per prefix and not per qualifier.
+                # columns rather than one with a fallback. BOTH are counts of
+                # distinct STUDIES, not of files: breadth counts studies having
+                # a file of any extension, jobs counts studies having one with
+                # a program extension. A decomposed row has jobs and no
+                # breadth, because the census emits the all-extension figure
+                # per prefix and not per qualifier. Neither column may be
+                # summed down: one study appears in every row it uses.
                 "| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |",
                 "|---|---|---|---|---|---|---|"]
         for r in sorted(fam_rows, key=lambda r: (r["batch"] is None,
@@ -137,7 +143,7 @@ def main():
     spliced = splice(text, body)
     with open(DOC, "w", encoding="utf-8") as fh:
         fh.write(spliced)
-    print(f"rendered {len(rows)} prefixes into "
+    print(f"rendered {len(rows)} template rows into "
           f"{os.path.basename(os.path.normpath(DOC))}")
     return 0
 

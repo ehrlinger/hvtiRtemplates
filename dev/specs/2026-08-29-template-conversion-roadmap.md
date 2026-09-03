@@ -45,7 +45,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the ledger and re-render. CI checks the agreement.
 
-**53 prefixes in scope**, of which 9 have a template on disk. 2 demoted to umbrella rows.
+**53 templates in scope**, of which 9 exist on disk. 2 demoted to umbrella rows.
 
 ## By family
 
