@@ -51,14 +51,14 @@ row has no template on disk.
 
 ### hazard-chain (batch 1)
 
-| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |
+| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|---|
 | `hs` | shipped | 06.02 | 144 | 140 | 7 | — |
 | `hm` | shipped | 04.01 | 383 | 373 | 2 | — |
 
 ### bootstrap (batches 0–2)
 
-| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |
+| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|---|
 | `bh` | shipped | 04.05 | 322 | 320 | 2 | — |
 | `bc` | shipped | 04.04 | 16 | 16 | 0 | — |
@@ -68,13 +68,13 @@ row has no template on disk.
 
 ### bootstrap-ci (unscheduled)
 
-| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |
+| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|---|
 | `bn` | queued | — | 214 | 108 | 0 | — |
 
 ### plots (batch 3)
 
-| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |
+| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|---|
 | `ce` | queued | — | 131 | 128 | 1 | — |
 | `cp` | queued | — | 5 | 4 | 1 | — |
@@ -95,7 +95,7 @@ row has no template on disk.
 
 ### descriptive (batch 4)
 
-| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |
+| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|---|
 | `dc-dead` | queued | — | — | 171 | — | — |
 | `dc-general` | queued | — | — | 759 | — | — |
@@ -107,7 +107,7 @@ row has no template on disk.
 
 ### machine-learning (batch 5)
 
-| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |
+| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|---|
 | `nb` | queued | — | 21 | 18 | 19 | — |
 | `rf` | ~~umbrella~~ | — | 47 | 41 | 42 | — |
@@ -120,7 +120,7 @@ row has no template on disk.
 
 ### models (batch 6)
 
-| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |
+| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|---|
 | `cm` | queued | — | 35 | 35 | 2 | — |
 | `gm` | queued | — | 77 | 73 | 0 | — |
@@ -133,7 +133,7 @@ row has no template on disk.
 
 ### distributions (batch 7)
 
-| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |
+| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|---|
 | `ac` | shipped | 03.01 | 756 | 745 | 16 | — |
 | `cd` | queued | — | 202 | 190 | 6 | — |
@@ -142,7 +142,7 @@ row has no template on disk.
 
 ### datasets (batch 8)
 
-| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |
+| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|---|
 | `bd` | queued | — | 1134 | 1094 | 15 | hvtiRdatabuild |
 | `dt` | queued | — | 512 | 503 | 0 | hvtiRdatabuild |
@@ -150,7 +150,7 @@ row has no template on disk.
 
 ### documents (batch 9)
 
-| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |
+| template | status | ordinal | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|---|
 | `ar` | queued | — | 706 | 394 | 89 | — |
 

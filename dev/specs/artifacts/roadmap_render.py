@@ -89,7 +89,9 @@ def render(rows):
                 # keyed on measurement scale, which the census does not
                 # extract, so they show neither. Neither column may be summed
                 # down: one study appears in every row it uses.
-                "| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |",
+                # `template`, not `prefix`: a cell may read `dp-trends`, and
+                # a header calling that a prefix contradicts the count above it.
+                "| template | status | ordinal | breadth | jobs | R exemplars | blocked on |",
                 "|---|---|---|---|---|---|---|"]
         for r in sorted(fam_rows, key=lambda r: (r["batch"] is None,
                                                  r["batch"] or 0, _label(r))):
