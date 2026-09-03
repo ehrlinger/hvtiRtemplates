@@ -27,24 +27,10 @@ TEMPLATES = os.path.join(REPO, "inst", "templates")
 sys.path.insert(0, HERE)
 import roadmap_render  # noqa: E402  (path set immediately above)
 
-# The ordinal's major field is the taxonomy folder's position, and the two must
-# agree or a template sorts into the wrong run order. Taken from the order of
-# `hvti_taxonomy()`'s folder column, which is stable and is itself asserted in
-# tests/testthat/test-taxonomy.R.
-FOLDER_ORDINAL = {
-    "datasets": "01",
-    "descriptive": "02",
-    "distributions": "03",
-    "analyses": "04",
-    "estimates": "05",
-    "graphs": "06",
-    "documents": "07",
-}
 
 STATUSES = {"shipped", "revisit", "in-flight", "queued", "intake", "out-of-scope"}
 KINDS = {"job", "meta"}
 FIELDS = ["prefix", "qualifier", "name", "folder", "family", "kind", "status",
-          "ordinal",
           "batch", "sas_breadth", "sas_breadth_jobs", "r_exemplars",
           "r_jobs", "upstream",
           "downstream", "workflows", "blocked_on", "spec", "note"]
@@ -54,8 +40,6 @@ FIELDS = ["prefix", "qualifier", "name", "folder", "family", "kind", "status",
 # incomplete, which is a different claim from absent.
 ON_DISK = {"shipped", "revisit", "in-flight"}
 
-# `retired_ordinals` is ledger data and gets the same treatment as a prefix row.
-RETIRED_FIELDS = ["ordinal", "prefix", "retired", "reason"]
 
 
 # A measured zero and an unmeasured field must stay distinguishable: nine
@@ -135,97 +119,32 @@ def check_schema(rows):
     return bad
 
 
-def check_ordinals(rows, retired=()):
-    """An ordinal is a KEY, assigned once, not a position.
 
-    It is NOT derived from the prefix's row position in `hvti_taxonomy()`, and
-    must not be recomputed from it. That derivation is what put `bh` at 04.06:
-    it was 6th in `analyses` when the number was assigned, hvtiRutilities
-    aeb20f2 moved `hs` out to `graphs`, and every prefix below it shifted up
-    one while the shipped filename stayed put. Nothing caught it, because the
-    checks below verify format, folder-major and uniqueness -- never position.
 
-    Row order may drift. Ordinals may not. Same rule pub_kb reached for
-    document_key on 2026-08-06: identity is assigned once and only accumulates.
+def _folder_dirs():
+    """Taxonomy folder name -> the numbered directory holding it, from DISK.
+
+    `20_distributions` -> {"distributions": "20_distributions"}. Read rather
+    than hardcoded: a second copy of the numbering is a second thing to keep in
+    step, and that is exactly what the retired `FOLDER_ORDINAL` map was. A
+    directory without the digits maps to itself, so the check still works on a
+    tree mid-migration.
     """
-    bad = []
-    seen = {}
-    # Only well-formed entries. A malformed one is REPORTED by check_retired()
-    # rather than raised here: this script exists to name a ledger's shape
-    # problems, and a KeyError names only its own traceback.
-    retired_by = {r["ordinal"]: r for r in retired
-                  if isinstance(r, dict) and isinstance(r.get("ordinal"), str)}
-    for r in rows:
-        ordinal, folder, prefix = r.get("ordinal"), r.get("folder"), r.get("prefix")
-        if ordinal is None:
-            if r.get("status") in ON_DISK:
-                bad.append(f"`{prefix}` is {r['status']} but has no ordinal")
-            continue
-        if not re.fullmatch(r"\d{2}[.]\d{2}", ordinal):
-            bad.append(f"`{prefix}` has ordinal {ordinal!r}, not zero-padded NN.MM")
-            continue
-        major = ordinal.split(".")[0]
-        want = FOLDER_ORDINAL.get(folder)
-        if want is None:
-            bad.append(f"`{prefix}` has unknown folder {folder!r}")
-        elif major != want:
-            bad.append(f"`{prefix}` is in {folder} (ordinal {want}) "
-                       f"but its ordinal starts {major}")
-        if ordinal in retired_by:
-            was = retired_by[ordinal]
-            bad.append(f"`{prefix}` uses ordinal {ordinal}, retired "
-                       f"{was.get('retired', '?')} from `{was.get('prefix', '?')}`. "
-                       f"A retired ordinal "
-                       f"has already shipped in a scaffolded filename somewhere and "
-                       f"cannot be reissued; take the next free minor instead")
-        if ordinal in seen:
-            bad.append(f"ordinal {ordinal} is used by both "
-                       f"`{seen[ordinal]}` and `{prefix}`")
-        else:
-            seen[ordinal] = prefix
-    return bad
-
-
-def check_retired(retired):
-    """Validate `retired_ordinals` itself, so a malformed entry reads as a
-    ledger defect rather than a traceback."""
-    if not isinstance(retired, list):
-        return [f"`retired_ordinals` must be a list, got "
-                f"{type(retired).__name__}"]
-    bad = []
-    seen = {}
-    for i, r in enumerate(retired):
-        where = f"retired_ordinals[{i}]"
-        if not isinstance(r, dict):
-            bad.append(f"{where} is a {type(r).__name__}, not an object")
-            continue
-        missing = [f for f in RETIRED_FIELDS if f not in r]
-        extra = [k for k in r if k not in RETIRED_FIELDS]
-        if missing:
-            bad.append(f"{where} is missing field(s): {', '.join(missing)}")
-        if extra:
-            bad.append(f"{where} has unknown field(s): {', '.join(extra)}")
-        # Absent is already reported above. PRESENT-but-null is not, and must
-        # not fall through: `"ordinal": null` is a different defect from a
-        # missing key, and skipping it let one through silently.
-        if "ordinal" not in r:
-            continue
-        ordinal = r["ordinal"]
-        if not isinstance(ordinal, str) or not re.fullmatch(r"\d{2}[.]\d{2}", ordinal):
-            bad.append(f"{where} has ordinal {ordinal!r}, not zero-padded NN.MM")
-        elif ordinal in seen:
-            bad.append(f"ordinal {ordinal} is retired twice, at "
-                       f"retired_ordinals[{seen[ordinal]}] and {where}")
-        else:
-            seen[ordinal] = i
-    return bad
+    out = {}
+    if not os.path.isdir(TEMPLATES):
+        return out
+    for d in sorted(os.listdir(TEMPLATES)):
+        if os.path.isdir(os.path.join(TEMPLATES, d)):
+            out[re.sub(r"^[0-9]+_", "", d)] = d
+    return out
 
 
 def check_disk(rows):
     bad = []
     claimed = {}
+    folder_dir = _folder_dirs()
     for r in rows:
-        if r.get("status") not in ON_DISK or not r.get("ordinal"):
+        if r.get("status") not in ON_DISK:
             continue
         # `is not None`, not truthiness. An empty-string qualifier is falsy,
         # so `if r.get("qualifier")` would look for the UNQUALIFIED filename
@@ -233,7 +152,11 @@ def check_disk(rows):
         # the same distinction .template_fields() draws between NA and "".
         q = r.get("qualifier")
         stem = r["prefix"] + (f"-{q}" if q is not None else "")
-        rel = os.path.join(r["folder"], f"{r['ordinal']}-{stem}.qmd")
+        # The directory carries the ordering digits and the ledger row carries
+        # the bare taxonomy name, so the path is resolved from what is on disk
+        # rather than reconstructed from a second copy of the numbering.
+        rel = os.path.join(folder_dir.get(r["folder"], r["folder"]),
+                           f"{stem}.qmd")
         claimed[rel] = stem
         if not os.path.isfile(os.path.join(TEMPLATES, rel)):
             # `stem`, not `prefix`: once a prefix carries several qualifiers,
@@ -276,10 +199,7 @@ def main():
         d = json.load(fh)
     rows = d["prefixes"]
 
-    retired = d.get("retired_ordinals", [])
-
-    bad = (check_schema(rows) + check_retired(retired)
-           + check_ordinals(rows, retired) + check_disk(rows) + check_doc(rows))
+    bad = check_schema(rows) + check_disk(rows) + check_doc(rows)
     if bad:
         print("Roadmap ledger disagrees with the templates on disk:\n", file=sys.stderr)
         for b in bad:

@@ -91,12 +91,12 @@ def render(rows):
                 # down: one study appears in every row it uses.
                 # `template`, not `prefix`: a cell may read `dp-trends`, and
                 # a header calling that a prefix contradicts the count above it.
-                "| template | status | ordinal | breadth | jobs | R exemplars | blocked on |",
-                "|---|---|---|---|---|---|---|"]
+                "| template | status | breadth | jobs | R exemplars | blocked on |",
+                "|---|---|---|---|---|---|"]
         for r in sorted(fam_rows, key=lambda r: (r["batch"] is None,
                                                  r["batch"] or 0, _label(r))):
             out.append(f"| `{_label(r)}` | {STATUS_MARK.get(r['status'], r['status'])} | "
-                       f"{r['ordinal'] or '—'} | {_num(r['sas_breadth'])} | "
+                       f"{_num(r['sas_breadth'])} | "
                        f"{_num(r.get('sas_breadth_jobs'))} | "
                        f"{_num(r['r_exemplars'])} | {r['blocked_on'] or '—'} |")
         out.append("")

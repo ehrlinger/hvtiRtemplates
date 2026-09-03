@@ -38,15 +38,22 @@ test_that("every prefix-shaped template name is classified", {
                             "or to hvti_non_prefixes() if not"))
 })
 
-test_that("a template's ordinal major identifies the folder it sits in", {
-  # The major is derived from the taxonomy's own folder order rather than from a
-  # table written out here. A second copy of that mapping would be a second
-  # thing to keep in step, which is the drift hvti_taxonomy() exists to prevent.
-  tl <- template_list()
-  skip_if(nrow(tl) == 0, "no templates installed")
-  order_of <- unique(hvti_taxonomy()$folder)
-  expect_equal(substr(tl$ordinal, 1L, 2L),
-               sprintf("%02d", match(tl$folder, order_of)))
+test_that("every template directory is <NN>_<taxonomy folder>", {
+  # The digits order the directories; the name after them must be a folder the
+  # taxonomy actually has, or a template scaffolds into a folder no study uses.
+  #
+  # ⚠️ The digits are NOT checked against the taxonomy's row position, and
+  # deliberately so. They are ASSIGNED: `estimates` is numbered 90 because it
+  # holds saved output rather than jobs, though it is fifth in the table. That
+  # is the same lesson the ordinal taught -- deriving identity from position is
+  # what made `bh` need renumbering when an upstream row moved.
+  dir <- system.file("templates", package = "hvtiRtemplates")
+  skip_if(!nzchar(dir), "templates are not installed")
+  dirs <- list.dirs(dir, full.names = FALSE, recursive = FALSE)
+  skip_if(length(dirs) == 0, "no template directories")
+  expect_true(all(grepl("^[0-9]{2}_", dirs)))
+  expect_true(all(sub("^[0-9]+_", "", dirs) %in% hvti_taxonomy()$folder))
+  expect_false(any(duplicated(substr(dirs, 1L, 2L))))
 })
 
 test_that("a template sits in the folder its prefix is filed under", {
@@ -59,6 +66,12 @@ test_that("a template sits in the folder its prefix is filed under", {
   expect_equal(tl$folder, tx$folder[match(tl$prefix, tx$prefix)])
 })
 
+# ⭐ The ordinal was DROPPED ENTIRELY on 2026-09-03, so the history below is
+# now the record of a field that no longer exists. `NN` moved onto the
+# directory, where it is the thing rather than a copy of it, and `MM` went
+# because templates within a folder are not ordered. See
+# dev/specs/2026-09-03-template-identity-design.md, which decided it.
+#
 # The two tests that stood here -- "within a folder, ordinal minors follow
 # taxonomy row order" and its synthetic-pair sibling -- were RETIRED 2026-08-31.
 #

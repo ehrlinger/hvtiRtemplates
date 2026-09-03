@@ -2,13 +2,14 @@
 #'
 #' @description
 #' Copies a supported job template into the taxonomy folder it belongs to,
-#' named \code{<endpoint>-<type>-<NN.MM>-<prefix>[-<qualifier>].qmd}. Refuses to overwrite an
+#' named \code{<endpoint>-<type>-<prefix>[-<qualifier>].qmd}. Refuses to overwrite an
 #' existing job: a job file accumulates a study's edits, and silently replacing
 #' one would discard them.
 #'
 #' @details
-#' A job is identified by four fields. Two come from the template — its
-#' \code{ordinal} and \code{prefix} — and two from the caller. The pair
+#' A job is identified by three or four fields. One or two come from the
+#' template, its \code{prefix} and, where the prefix carries several job types,
+#' its \code{qualifier}; two come from the caller. The pair
 #' \code{(endpoint, type)} names the \strong{set} the job belongs to, and both
 #' are required: one endpoint is analysed by several methods, and the jobs those
 #' chains share would otherwise collide. A death-hazard set and a death
@@ -24,7 +25,7 @@
 #'   \code{\link{template_list}}.
 #' @param endpoint The endpoint this job analyses, e.g. \code{"dead_pa"}. Must
 #'   match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
-#'   \code{.} is reserved to the ordinal, so neither may appear here.
+#'   \code{.} separates the extension, so neither may appear here.
 #' @param type The analysis type the job's set belongs to, e.g. \code{"hz"}.
 #'   Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{endpoint}.
 #' @param dir The study root to write into. The taxonomy folder beneath it is
@@ -64,9 +65,15 @@ new_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
   out_dir <- file.path(dir, row$folder[[1L]])
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
   # The job carries the template's qualifier. A job scaffolded from
-  # 06.03-dp-trends.qmd is a trends job, and a filename that drops that says
-  # only "some dp job", which is the thing the template split exists to fix.
-  stem <- paste0(endpoint, "-", type, "-", row$ordinal[[1L]], "-", prefix,
+  # dp-trends.qmd is a trends job, and a filename that drops that says only
+  # "some dp job", which is the thing the template split exists to fix.
+  #
+  # No ordinal: it was dropped on 2026-09-03, and the taxonomy folder the job
+  # lands in is what the old `NN` duplicated. `row$folder` is the BARE name,
+  # not the numbered directory the template sits in, because a study's own
+  # folders are `distributions/` and `analyses/`; writing to a numbered one
+  # would split the study's estate across two spellings.
+  stem <- paste0(endpoint, "-", type, "-", prefix,
                  if (!is.na(row$qualifier[[1L]])) paste0("-", row$qualifier[[1L]]) else "")
   out <- file.path(out_dir, paste0(stem, ".qmd"))
 
@@ -91,8 +98,8 @@ new_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
 }
 
 # `endpoint` and `type` are written straight into the filename, which is
-# `-`-separated with the ordinal's `.` reserved to itself, so neither
-# character may appear in either field. Reject anything else that would
+# `-`-separated and ends in a `.`-separated extension, so neither character
+# may appear in either field. Reject anything else that would
 # produce a filename the naming scheme cannot parse back: not length-1,
 # `NA`, or outside `[A-Za-z0-9_]+` -- which also excludes a leading `../`
 # that would otherwise write outside the taxonomy folder.
@@ -102,7 +109,7 @@ new_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
   if (!ok) {
     stop("new_job(): `", arg, "` must be a single non-NA string matching ",
          "'^[A-Za-z0-9_]+$' (it becomes a '-'-separated filename field, so '-' ",
-         "is reserved as the separator and '.' to the ordinal); got ",
+         "is reserved as the separator and '.' to the extension); got ",
          paste(deparse(value), collapse = ", "), ".", call. = FALSE)
   }
 }

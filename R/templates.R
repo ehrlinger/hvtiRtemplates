@@ -3,15 +3,18 @@
 #' These templates are supported: they render, they are tested, and they are
 #' the intended starting point for a new analysis job.
 #'
-#' A template is named \code{<NN.MM>-<prefix>.qmd}, or
-#' \code{<NN.MM>-<prefix>-<qualifier>.qmd} where one prefix carries several job
-#' types, and lives in the taxonomy
-#' folder it scaffolds into, so \code{folder} and \code{ordinal} are read from
-#' the tree rather than looked up. \code{\link{hvti_taxonomy}} is a cross-check
+#' A template is named \code{<prefix>.qmd}, or
+#' \code{<prefix>-<qualifier>.qmd} where one prefix carries several job
+#' types, and lives in a numbered directory named for the taxonomy folder it
+#' scaffolds into, so \code{folder} is read from the tree rather than looked
+#' up. The directory's leading digits order the folders and are stripped from
+#' \code{folder}. \code{\link{hvti_taxonomy}} is a cross-check
 #' on that, enforced by the test suite, not a source for it.
 #'
 #' @return A data frame with columns \code{name}, \code{prefix},
-#'   \code{qualifier}, \code{ordinal}, \code{folder} and \code{file}.
+#'   \code{qualifier}, \code{folder} and \code{file}. \code{folder} is the
+#'   taxonomy name with the directory's ordering digits stripped, so
+#'   \code{20_distributions} reports as \code{distributions}.
 #'   \code{qualifier} is \code{NA} for a prefix carrying a single template,
 #'   which is every template shipped today.
 #' @export
@@ -26,16 +29,15 @@ template_list <- function() {
   }
   fields <- do.call(rbind, lapply(basename(files), .template_fields))
   if (is.null(fields)) {
-    fields <- data.frame(ordinal = character(0), prefix = character(0),
-                         qualifier = character(0), stringsAsFactors = FALSE)
+    fields <- data.frame(prefix = character(0), qualifier = character(0),
+                         stringsAsFactors = FALSE)
   }
 
   data.frame(
     name      = sub("[.]qmd$", "", basename(files)),
     prefix    = fields$prefix,
     qualifier = fields$qualifier,
-    ordinal   = fields$ordinal,
-    folder    = basename(dirname(files)),
+    folder    = .folder_name(basename(dirname(files))),
     file      = files,
     stringsAsFactors = FALSE
   )
@@ -157,51 +159,44 @@ template_path <- function(prefix, qualifier = NULL) {
 
 # Parse a template file name into its fields.
 #
-# A template is named `<NN>.<MM>-<prefix>[-<qualifier>].qmd` -- "03.01-ac.qmd",
-# or "06.03-dp-trends.qmd" where one prefix carries several job types. The
-# qualifier is what `graphs/dp` needed: `trends`, `spaghetti` and `procs` are
-# distinct jobs sharing a prefix, and a name that cannot say which is a name a
-# study author cannot search. See
-# dev/specs/2026-09-02-dp-dc-decomposition-design.md, which decided this.
+# A template is named `<prefix>[-<qualifier>].qmd` and lives in a numbered
+# taxonomy directory, `20_distributions/ac.qmd`. The name carries no ordinal.
 #
-# The prefix capture is `[A-Za-z0-9]+`, NOT `.+` as it was until 2026-09-02.
-# `.+` is greedy and would read "06.03-dp-trends.qmd" as the single prefix
-# "dp-trends", which parses, validates and is wrong. Restricting the prefix and
-# making `-` the field separator is what keeps the two fields apart. It also
-# means a prefix may never contain `-`, which matches `hvti_taxonomy()`.
+# ⭐ The ordinal was dropped on 2026-09-03, see
+# dev/specs/2026-09-03-template-identity-design.md. It was `<NN>.<MM>-`, where
+# `NN` was the taxonomy folder's position and `MM` a key assigned once per
+# folder. `NN` duplicated the directory the file already sits in, and `MM`
+# asserted an order among templates in a folder that does not exist. The
+# digits now live on the DIRECTORY, where they order the folders and are the
+# thing rather than a copy of it.
 #
-# The name is
-# fully structured, so it is matched by pattern rather than split on separators:
-# `.` is a field separator inside the ordinal AND the extension separator, and a
-# split-based parser cannot tell the two apart. This replaces `.prefix_of()`,
-# whose heuristics (drop a leading "tp.", reject a first field over five
-# characters) existed only because legacy names were unstructured.
-#
-# The two digits either side of the dot are required. The zero-padding is what
-# makes a flat folder sort into run order past nine entries, so an unpadded name
-# is rejected here rather than allowed to sort wrongly later.
-#
-# Returns `ordinal`, `prefix` and `qualifier` as NA for a name that does not match, rather
-# than erroring: `template_list()` reports what is on disk, and a stray file
-# should not stop it. The "every template name parses" test in
-# test-templates.R is what turns an unparsed name into a build failure.
+# A name that does not match returns NA rather than erroring: `template_list()`
+# reports what is on disk, and a stray file should not stop it. The "every
+# template name parses" test in test-templates.R turns an unparsed name into a
+# build failure.
 .template_fields <- function(name) {
   m <- regmatches(
     name,
-    regexec("^(\\d{2}[.]\\d{2})-([A-Za-z0-9]+)(?:-([A-Za-z0-9_]+))?[.]qmd$", name)
+    regexec("^([A-Za-z0-9]+)(?:-([A-Za-z0-9_]+))?[.]qmd$", name)
   )[[1L]]
-  if (length(m) != 4L) {
-    return(data.frame(ordinal = NA_character_, prefix = NA_character_,
-                      qualifier = NA_character_, stringsAsFactors = FALSE))
+  if (length(m) != 3L) {
+    return(data.frame(prefix = NA_character_, qualifier = NA_character_,
+                      stringsAsFactors = FALSE))
   }
   data.frame(
-    ordinal = m[[2L]],
-    prefix  = m[[3L]],
+    prefix = m[[2L]],
     # regexec returns "" for an optional group that did not participate. That
     # is a MATCH of an empty qualifier, not an absent one, and the two must
-    # stay distinguishable: `03.01-ac.qmd` has no qualifier and must not read
-    # as one that is blank.
-    qualifier = if (nzchar(m[[4L]])) m[[4L]] else NA_character_,
+    # stay distinguishable.
+    qualifier = if (nzchar(m[[3L]])) m[[3L]] else NA_character_,
     stringsAsFactors = FALSE
   )
 }
+
+# The taxonomy folder name for a numbered template directory.
+#
+# `20_distributions` -> `distributions`. The digits order the directories for
+# anyone reading `inst/templates/`; the name after them is the taxonomy's, and
+# it is what a study's own folders are called. A directory without the numeric
+# prefix is returned unchanged, so the function is safe on a hand-made path.
+.folder_name <- function(dir) sub("^[0-9]+_", "", dir)

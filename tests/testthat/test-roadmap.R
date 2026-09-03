@@ -88,65 +88,20 @@ test_that("an intake row names what it blocks on", {
   }
 })
 
-test_that("the guard's folder map still matches the taxonomy", {
-  # Replaces the two row-position tests retired from test-taxonomy.R on
-  # 2026-08-31. This one checks a KEY, not a position, so it is consistent with
-  # #56's rule that an ordinal is assigned once and never recomputed.
-  #
-  # `check-roadmap-counts.py` validates every ordinal's major against
-  # FOLDER_ORDINAL, which is a HARDCODED map. The authority it copies is
-  # `hvti_taxonomy()`'s folder order -- and that table lives in hvtiRutilities,
-  # a different repository. So the map can go stale the same way `bh`'s 04.06
-  # did: an upstream correctness fix silently invalidates a downstream constant,
-  # with nothing in either clone showing the two were connected.
-  #
-  # The Python guard cannot check this itself -- reading the taxonomy needs R,
-  # which is the whole reason the guards are split by language. So it lives here.
-  require_ledger()
-
-  guard <- file.path("..", "..", "dev", "specs", "artifacts",
-                     "check-roadmap-counts.py")
-  # Same rule as require_ledger() above, and for the same reason: outside the
-  # source tree the file is absent and skipping is correct, but under
-  # HVTI_ROADMAP_STRICT -- which CI sets -- a renamed or moved guard must FAIL.
-  # A skip there would report green while checking nothing, which is the exact
-  # defect this test exists to catch one level up.
-  if (!file.exists(guard)) {
-    if (nzchar(Sys.getenv("HVTI_ROADMAP_STRICT"))) {
-      stop("roadmap guard not found at ", guard,
-           ", but HVTI_ROADMAP_STRICT is set -- the source tree should have it")
-    }
-    testthat::skip("roadmap guard not present")
-  }
-
-  src <- readLines(guard, warn = FALSE)
-  open_at <- grep("^FOLDER_ORDINAL = \\{", src)
-  expect_length(open_at, 1L)
-  # An expectation, not `[[1L]]` on a possibly-empty vector: a missing closing
-  # brace should fail the test with a message, not raise a subscript error that
-  # says nothing about what is wrong.
-  closes <- which(trimws(src[(open_at + 1L):length(src)]) == "}")
-  expect_gt(length(closes), 0L)
-  close_at <- open_at + closes[[1L]]
-
-  body <- src[(open_at + 1L):(close_at - 1L)]
-  m <- regmatches(body, regexec('"([^"]+)":\\s*"([0-9]{2})"', body))
-  kept <- vapply(m, function(x) length(x) == 3L, logical(1))
-  mapped <- vapply(m[kept], function(x) x[[3L]], character(1))
-  names(mapped) <- vapply(m[kept], function(x) x[[2L]], character(1))
-
-  # The taxonomy's folder order IS the majors, in order of first appearance.
-  folders <- unique(hvti_taxonomy()$folder)
-  expected <- sprintf("%02d", seq_along(folders))
-  names(expected) <- folders
-
-  expect_identical(
-    mapped[order(names(mapped))], expected[order(names(expected))],
-    label = paste0(
-      "FOLDER_ORDINAL in check-roadmap-counts.py has drifted from ",
-      "hvti_taxonomy()'s folder order. Update the map, and check whether any ",
-      "shipped ordinal's major is now wrong -- a stale map validates against ",
-      "the wrong folder silently."
-    )
-  )
-})
+# ⭐ RETIRED 2026-09-03: "the guard's folder map still matches the taxonomy".
+#
+# It parsed `FOLDER_ORDINAL` out of `check-roadmap-counts.py` and compared it
+# against `hvti_taxonomy()`'s folder order, because that map was HARDCODED and
+# copied an authority living in another repository. It could go stale the same
+# way `bh`'s 04.06 did.
+#
+# The map is gone. `check_disk()` now derives the folder-to-directory mapping
+# by reading `inst/templates/` itself, so there is no second copy to drift.
+# The right response to "this constant can go stale" turned out to be deleting
+# the constant, not testing it harder.
+#
+# What still holds is checked in test-taxonomy.R, "every template directory is
+# <NN>_<taxonomy folder>": the directories must name folders the taxonomy has.
+# Their DIGITS are deliberately unchecked against row position -- `estimates`
+# is 90 though it is fifth -- because assigning identity from position is the
+# defect this whole change removes.
