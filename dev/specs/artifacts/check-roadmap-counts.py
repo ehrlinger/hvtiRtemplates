@@ -289,7 +289,7 @@ def main():
         return 1
 
     shipped = sum(1 for r in rows if r["status"] in ON_DISK)
-    print(f"Ledger agrees with disk: {len(rows)} prefixes, {shipped} on disk.")
+    print(f"Ledger agrees with disk: {len(rows)} template rows, {shipped} on disk.")
     return 0
 
 

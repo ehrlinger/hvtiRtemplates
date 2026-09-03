@@ -5,9 +5,10 @@ carry the qualifier in the filename.** Implemented the same day; see the
 `(unreleased)` entry in `NEWS.md` and the Template naming section of
 `AGENTS.md`. Sections 2 to 7 are measurement and stand as written.
 
-**Still the maintainer's call:** which qualifiers actually earn a template
-(section 9 recommends, and nothing has been added to `inst/templates/`), the
-`std_dif` / `stddiff` question in section 5, and the four items in section 10.
+**Decided 2026-09-03:** the section 9 shape is enacted in the ledger as twelve
+queued rows, and section 5 resolves in favour of the 2019 successor. No
+template has been written; each is its own design and PR, as `hs` and `bh`
+were. The section 6 guidance is **withdrawn**, see below.
 
 **Why now.** `2026-09-02-per-folder-naming-parse-design.md` established that
 `dp` and `dc` are not single job types. This note asks what they actually
@@ -100,8 +101,12 @@ different macros with different capability and different owners:
 The corpus split, `std_dif` 72 studies against `stddiff` 59, is what a 2009
 macro versus its 2019 successor should look like. A template states what a NEW
 study should do, so this is not a spelling choice: it is whether to ship the
-successor. Shipping `stddiff` also moves the template's dependency from
-`hvtiRtables` to `hvtiRutilities`, which the port has to know.
+successor.
+
+**Decided 2026-09-03: ship the 2019 successor.** The wider corpus use of
+`std_dif` is a macro outliving its replacement, not a preference. The template
+therefore depends on `hvtiRutilities`, not `hvtiRtables`, which the port has
+to know.
 
 ## 6. `graphs/dp` carries three generations
 
@@ -115,6 +120,20 @@ successor. Shipping `stddiff` also moves the template's dependency from
 `afib_long_profile_binary.R`, differing only in case. **A template extracted
 without choosing a generation will encode whichever copy was opened first.**
 That is the same failure as section 5, one directory up.
+
+⚠️ **`tp_ggplot/` is NOT the modern generation, and section 9 said to prefer
+it. That guidance is withdrawn.** Read on 2026-09-03: five of its seven files
+depend on `hviPlotR` (note the spelling, `hvi`, the predecessor of today's
+`hvtiPlotR`) installed from GitHub, and four load `ReporteRs`. Neither is on
+CRAN and neither is installed here; `ReporteRs` was superseded by `officer`
+and `flextable`. One file has not been touched since 2017-01-27 and the
+example PDFs beside them are from 2017, so the 2026 timestamps on the rest are
+a bulk copy rather than maintenance.
+
+So the three generations are a 2017 ggplot attempt on two dead dependencies,
+an older S-Plus and R set in `archive/`, and the live mixed estate. **None is
+a modern R generation.** `tp_ggplot/` is worth reading for the plot grammar it
+works out, and is not worth extracting from unmodified.
 
 ## 7. Two things the ledger currently mis-states
 
@@ -160,7 +179,7 @@ packages, so a single template that switches between them would depend on both.
 | folder | prefix | templates | note |
 |---|---|---|---|
 | `descriptive` | `dc` | `general`, `tables`, `gfup`, `dead` | plus `stddiff` if section 5 is resolved in favour of the 2019 macro |
-| `graphs` | `dp` | `trends`, `gfup`, `spaghetti`, `procs` | from `tp_ggplot/` where a ggplot version exists |
+| `graphs` | `dp` | `trends`, `gfup`, `spaghetti`, `procs` | see section 6: `tp_ggplot/` is 2017 work on dead dependencies, and carries neither `trends` nor `spaghetti` anyway |
 | `distributions` | `dp` | one per measurement scale | binary / ordinal / continuous, variable as `EDIT:` |
 
 Roughly ten to eleven templates where the ledger currently carries two rows.
@@ -173,9 +192,11 @@ Roughly ten to eleven templates where the ledger currently carries two rows.
   can, and the share was not mounted when this was written.
 - **Which generation each `graphs/dp` template extracts from.** Section 6 says
   choose deliberately, not which to choose.
-- **The `tp_ggplot/` set has no `trends` or `spaghetti`.** The two largest
-  `graphs/dp` job types have no ggplot version, so recommending "from
-  `tp_ggplot/` where it exists" leaves the two biggest cases unanswered.
+- **There is no modern R generation to extract from.** `tp_ggplot/` is 2017
+  work on `hviPlotR` and `ReporteRs`, neither available, and carries neither
+  `trends` nor `spaghetti`, the two largest `graphs/dp` job types. Whether
+  those are ported from the live `.R`/`.sas` estate or written fresh against
+  `hvtiPlotR` is open, and is the substantive question for Batch 3.
 - **Cumulative row coverage**, which would say how much of each folder the
   recommended set actually covers. It needs the raw catalogue, which lives on
   the studies share, and that share was not mounted when this was written. The

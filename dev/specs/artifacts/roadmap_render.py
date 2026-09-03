@@ -62,8 +62,11 @@ def render(rows):
 
     live = [r for r in rows if r["status"] != "out-of-scope"]
     on_disk = [r for r in live if r["status"] in ("shipped", "revisit", "in-flight")]
-    out += [f"**{len(live)} prefixes in scope**, of which {len(on_disk)} have a "
-            f"template on disk. {len(rows) - len(live)} demoted to umbrella rows.",
+    # "templates in scope", not "prefixes": a decomposed prefix contributes one
+    # row per job type, so `dp` alone is seven of these. Counting rows and
+    # calling them prefixes would overstate the vocabulary.
+    out += [f"**{len(live)} templates in scope**, of which {len(on_disk)} exist "
+            f"on disk. {len(rows) - len(live)} demoted to umbrella rows.",
             ""]
 
     out += ["## By family", ""]
@@ -75,12 +78,26 @@ def render(rows):
         label = f"batch {batches[0]}" if len(batches) == 1 else \
                 f"batches {batches[0]}–{batches[-1]}" if batches else "unscheduled"
         out += [f"### {fam} ({label})", "",
-                "| prefix | status | ordinal | breadth | R exemplars | blocked on |",
-                "|---|---|---|---|---|---|"]
+                # `breadth` and `jobs` are two different measures and get two
+                # columns rather than one with a fallback. BOTH are counts of
+                # distinct STUDIES, not of files: breadth counts studies having
+                # a file of any extension, jobs counts studies having one with
+                # a program extension. A decomposed row shows no breadth,
+                # because the census emits the all-extension figure per prefix
+                # and not per qualifier, and it shows jobs only where the
+                # qualifier was measured: the three distributions/dp rows are
+                # keyed on measurement scale, which the census does not
+                # extract, so they show neither. Neither column may be summed
+                # down: one study appears in every row it uses.
+                # `template`, not `prefix`: a cell may read `dp-trends`, and
+                # a header calling that a prefix contradicts the count above it.
+                "| template | status | ordinal | breadth | jobs | R exemplars | blocked on |",
+                "|---|---|---|---|---|---|---|"]
         for r in sorted(fam_rows, key=lambda r: (r["batch"] is None,
                                                  r["batch"] or 0, _label(r))):
             out.append(f"| `{_label(r)}` | {STATUS_MARK.get(r['status'], r['status'])} | "
                        f"{r['ordinal'] or '—'} | {_num(r['sas_breadth'])} | "
+                       f"{_num(r.get('sas_breadth_jobs'))} | "
                        f"{_num(r['r_exemplars'])} | {r['blocked_on'] or '—'} |")
         out.append("")
 
@@ -131,7 +148,7 @@ def main():
     spliced = splice(text, body)
     with open(DOC, "w", encoding="utf-8") as fh:
         fh.write(spliced)
-    print(f"rendered {len(rows)} prefixes into "
+    print(f"rendered {len(rows)} template rows into "
           f"{os.path.basename(os.path.normpath(DOC))}")
     return 0
 
