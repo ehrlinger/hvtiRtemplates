@@ -1,10 +1,31 @@
 # Template identity: the ordinal, and the width of a prefix
 
-**Status.** Evidence complete, **both decisions open**. Nothing is renamed and
-no code is changed. Raised by the maintainer on 2026-09-03: "ordinals are
-still TBD and might not actually be necessary", and "we might want to increase
-the template identifier lengths to 4 characters, especially for the new
-formatting".
+**Status.** ⭐ **DECIDED 2026-09-03. The ordinal goes away entirely.**
+
+- **Folders carry the digits**, in taxonomy order with taxonomy spellings:
+  `00_datasets`, `10_descriptive`, `20_distributions`, `30_analyses`,
+  `40_graphs`, `50_documents`, `90_estimates`.
+- **`NN` moves into the folder name**, where it is the thing rather than a
+  duplicate of it.
+- **`MM` is dropped. Templates within a folder are NOT ordered** (maintainer,
+  2026-09-03), so nothing replaces it, because nothing needed it. Section 7
+  question 1 is answered: `MM` was asserting an order that does not exist.
+- **Prefix width is deferred**, not rejected. It is upstream, permanent, and
+  needs the legacy alias map of section 5; it should not ride along.
+
+A template becomes `<folder>/<prefix>[-<qualifier>].qmd` and a job becomes
+`<endpoint>-<type>-<prefix>[-<qualifier>].qmd`. `retired_ordinals` and the
+never-reissue rule go with the ordinal, and `04.06` becomes a historical note
+rather than a live constraint.
+
+Implementation is a separate change; this note is the reasoning. Evidence
+sections below stand as written.
+
+**Provenance.** Raised by the maintainer on 2026-09-03: "ordinals are still TBD
+and might not actually be necessary", and "we might want to increase the
+template identifier lengths to 4 characters, especially for the new
+formatting"; then "I'm actually leaning toward folders by digits", and "no
+ordering within folders, drop MM".
 
 ⚠️ **No STUDY path, study name or patient identifier** appears here. Counts
 only, from the 2026-08-27 catalogue.
@@ -122,19 +143,21 @@ though they are one subject.**
 
 ## 7. What has to be settled
 
-1. **Are templates within a folder ordered?** If not, `MM` has no job and `NN`
-   is redundant with the directory, so the ordinal can go entirely.
-2. **If they are ordered, what orders them?** `MM`, or an explicit `order:`
-   field in the ledger, which would be recomputable rather than permanent.
+1. ✅ **Are templates within a folder ordered?** **No** (maintainer,
+   2026-09-03). `MM` has no job, `NN` is redundant with the directory, and the
+   ordinal goes entirely.
+2. ✅ **If they are ordered, what orders them?** Moot, per 1.
 3. **Does the prefix rename carry a legacy alias map**, or does the census
    accept that renamed prefixes fall into the unknown bucket? The second is not
    viable: `dp` alone is 32,462 files.
-4. **What happens to the nine shipped templates and the sixteen scaffolded
-   jobs?** Sixteen is small enough to migrate by hand, and it is the smallest
-   this number will ever be.
-5. **`04.06` is retired and in the wild.** If ordinals go, the retirement
-   register goes with them, and any study still holding `04.06-bh` holds a name
-   nothing explains. That needs a sentence somewhere permanent.
+4. **What happens to the nine shipped templates?** They are renamed, and the
+   three template folders become numbered. Section 5 measures the job side at
+   27 files that nobody is using, so there is nothing else to migrate.
+5. ⚠️ **`04.06` is retired and in the wild, and this is the one loose end.**
+   The retirement register goes with the ordinal, so a study still holding
+   `04.06-bh` would hold a name nothing explains. It needs a permanent
+   sentence in `AGENTS.md` recording that ordinals existed, what they looked
+   like, and when they were dropped, so an old filename stays readable.
 
 ## 8. The folder-digit proposal, and it is the better answer
 
@@ -196,11 +219,13 @@ same legacy alias treatment section 5 describes for prefixes: 54,510 and
 Both are superseded by the resolution above: the taxonomy spellings stand, so
 neither rename happens and neither alias is needed.
 
-### What it does not settle
+### What it left, and how that closed
 
-The folder digits replace `NN`. **`MM` is still unanswered**, and so is
-section 7 question 1: if templates within a folder are not ordered, nothing
-replaces `MM` because nothing needed it.
+The folder digits replace `NN`, which left `MM` and section 7 question 1.
+**Answered the same day: templates within a folder are not ordered.** So `MM`
+is dropped outright rather than replaced. It had been asserting a sequence
+nobody had claimed existed, and the cost of that assertion was a permanent
+retirement register, 40 mentions in the checker, and a rename.
 
 ## 9. Recommendation
 
