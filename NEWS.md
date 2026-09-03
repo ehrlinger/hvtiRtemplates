@@ -1,10 +1,13 @@
 # hvtiRtemplates (unreleased)
 
-* **Copilot review credits are exhausted until October 2026**, recorded in
-  `AGENTS.md`. The ruleset rule stays and does not block a merge, so PRs go
-  green and get no review; with the approval rule nobody can satisfy on their
-  own PR, every merge until October reaches `main` unread by anyone. Run
-  `/code-review` locally before opening a PR and say so in the body.
+* **Copilot review credits are reported exhausted until October 2026, and
+  that is recorded in `AGENTS.md` together with the evidence against it.**
+  Reviews were still arriving the afternoon it was reported, including one on
+  the PR recording it. The note says what the consequence would be if the
+  cutoff lands (the rule does not block a merge, so a PR would go green and
+  get no review, and with the approval rule nobody can satisfy on their own PR
+  it would reach `main` unread) without asserting a state the evidence
+  contradicts.
 
 * **⚠️ `distributions/dp` is ONE ledger row, not the three that shipped in
   1.0.21.** Those three were keyed on measurement scale, recommended from a

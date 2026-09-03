@@ -209,20 +209,27 @@ moved — a template that fails this check cannot be scaffolded at all.
   on twelve repositories in the HVTI R package family, and enforces four rules on the default
   branch: no deletion, no force-push, pull-request-only, and an **automatic Copilot code
   review**.
-  🔴 **Copilot review credits are EXHAUSTED until October 2026** (John, 2026-09-03).
-  The `copilot_code_review` rule stays in the ruleset and does not block a merge, so PRs open
-  and go green as usual, they simply get **no review**. Combined with the approval rule below,
-  which nobody can satisfy on their own PR, that means **every merge until October reaches
-  `main` having been read by no one and nothing.** CI checks compilation, tests, lint and the
-  count guards; none of them reads for correctness.
-  ⚠️ **Do not wait for a review that is not coming**, and do not re-request one: the
+  ⚠️ **Copilot review credits are reported EXHAUSTED until October 2026** (John, 2026-09-03),
+  **but reviews were still arriving when that was recorded.** [#79](https://github.com/ehrlinger/hvtiRtemplates/pull/79)
+  and [#80](https://github.com/ehrlinger/hvtiRtemplates/pull/80) each drew a substantive
+  review that afternoon, #80's at 18:50 UTC on the very PR recording the exhaustion. So the
+  cutoff was not in effect on 2026-09-03; whether it lands later in the month, or applies to a
+  quota other than this one, is **unconfirmed**. Do not treat either state as settled without
+  checking.
+  The consequence if and when it does land: the `copilot_code_review` rule stays in the
+  ruleset and does not block a merge, so PRs open and go green as usual and simply get **no
+  review**. Combined with the approval rule below, which nobody can satisfy on their own PR,
+  **a merge then reaches `main` having been read by no one and nothing.** CI checks
+  compilation, tests, lint and the count guards; none of them reads for correctness.
+  ⚠️ **Do not block on a review, and do not read an empty re-request as the bot being
+  slow**: the
   `requestReviews` mutation below will still return 200 and produce nothing, which is
   indistinguishable from the bot being slow. **Run `/code-review` locally before opening a PR
   instead**, and say in the PR body that it stood in for the bot.
-  For scale: over 2026-09-02/03 the Copilot reviewer found roughly twenty real defects across
-  eight PRs, including a logic error that misreported two unqualified templates as a mixed
-  prefix, an `NA`-versus-`"NA"` collapse in a uniqueness key, and a released recommendation
-  built on a sample of two. That is what is unavailable until October. A direct push to `main` is rejected by the server, which is the ruleset and not a
+  For scale, so the cost is legible if it does land: over 2026-09-02/03 the Copilot reviewer
+  found roughly twenty real defects across eight PRs, including a logic error that misreported
+  two unqualified templates as a mixed prefix, an `NA`-versus-`"NA"` collapse in a uniqueness
+  key, and a released recommendation built on a sample of two. A direct push to `main` is rejected by the server, which is the ruleset and not a
   local hook, and the fix is to branch, never to force past it.
   ⚠️ **A PR needs one approving review, and you cannot give it to your own PR.**
   `required_approving_review_count` is **1** in eleven of the twelve, and GitHub refuses a
