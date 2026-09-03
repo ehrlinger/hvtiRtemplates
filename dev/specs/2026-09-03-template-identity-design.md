@@ -83,13 +83,25 @@ This is the number that decides when, if not whether.
 
 | what | count |
 |---|---|
-| files scaffolded from **our** templates, whole corpus | **16** (5 `set`, 11 `r_transitional`) |
+| files in a template-era naming convention, whole corpus | **27** `.qmd` across **6 studies** |
+| of those, the `r_transitional` shape that predates `new_job()` | **22** |
+| of those, the current `set` shape | **5** |
 | legacy SAS files carrying a known prefix | **423,269** |
 
-**Only sixteen files anywhere would be orphaned by a prefix rename**, and every
-job scaffolded from here on adds to that. The cost of this change only rises.
+⚠️ **Corrected 2026-09-03.** An earlier draft said sixteen, counting only rows
+whose prefix is in the taxonomy; the honest figure is 27. It also called them
+"scaffolded from our templates", which 22 of them were not: `r_transitional` is
+the hand-written convention that predates `new_job()`.
 
-⚠️ **But the 423,269 are the real cost, in a different way.** They are not
+⭐ **And the maintainer's account is that nobody has used the templates yet, the
+work is still being specced.** So the template-side migration cost of renaming
+a folder, a prefix or the ordinal is **effectively nil right now**, and every
+number in this table is the largest it will be before real use begins. That
+argues for deciding sooner rather than later, and it is the opposite of the
+caution the earlier draft implied.
+
+⚠️ **The 423,269 are a SEPARATE cost, and template usage has no bearing on
+it.** They are not
 renamed and do not need to be: they are pre-existing SAS jobs that keep their
 own names. They are, however, **classified by this vocabulary**. Rename `dp` to
 `dplt` and 32,462 `dp` files stop matching a known prefix unless
@@ -144,7 +156,27 @@ renumbered because inserting `hs` shifted every folder position below it.
 Under `00 / 10 / 20`, a new folder goes in at `25` and shifts nothing. The
 scheme is insertable, which positional numbering never was.
 
-### Two details in the proposal differ from the live vocabulary
+### Resolved 2026-09-03: taxonomy names, taxonomy order, estimates at 90
+
+The maintainer settled both discrepancies: **use the taxonomy names**, keep the
+current order, and **push `estimates` to 90** because it is a different beast.
+
+```
+00_datasets   10_descriptive   20_distributions   30_analyses
+40_graphs     50_documents                        90_estimates
+```
+
+⭐ **`estimates` at 90 is well founded by this session's own measurement.** It
+is the one folder that holds no jobs: its contents are `.sas7bdat`, `.rda`,
+`.RData` and `.ssd01`, model output rather than programs. Reading it as a job
+folder is exactly what made `hzdead` (395 studies) and `deade`/`deadl` look
+like analyses when they are saved estimates. Numbering it apart from the job
+folders states that in the layout instead of leaving it to be rediscovered.
+
+The gap from 50 to 90 is deliberate room, on the same principle as the
+decades.
+
+### What the original list would have changed, kept for the record
 
 | proposed | taxonomy and corpus | corpus files |
 |---|---|---|
@@ -161,7 +193,8 @@ a **corpus-wide vocabulary change**, not a package-local one, and it needs the
 same legacy alias treatment section 5 describes for prefixes: 54,510 and
 119,582 existing files sit under the current spellings.
 
-Whether the reordering is deliberate is worth confirming rather than assuming.
+Both are superseded by the resolution above: the taxonomy spellings stand, so
+neither rename happens and neither alias is needed.
 
 ### What it does not settle
 
@@ -173,8 +206,13 @@ replaces `MM` because nothing needed it.
 
 **Take the folder digits, then the ordinal, then the prefix, in that order.**
 The folder digits are the cleanest of the three: they solve `NN` and the
-insertion problem together, and section 8's naming discrepancies are the only
-thing to settle first.
+insertion problem together, they keep the taxonomy spellings so no alias is
+needed, and section 8's naming question is now settled.
+
+⭐ **And do it while nobody is using the templates.** Section 5 measures 27
+files in a template-era convention, 22 of them predating `new_job()`, against
+a maintainer's account that the templates have not been used at all. Every one
+of the three changes is cheapest today and never gets cheaper.
 
 The ordinal is cheap to remove, local to this package, and already
 under-used at 9 of 53. The prefix rename is upstream, permanent, and needs a
