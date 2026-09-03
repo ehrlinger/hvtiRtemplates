@@ -19,16 +19,27 @@ refuses to overwrite an existing job.
 | `analyses/04.04-bc.qmd` | bootstrap variable selection, Cox | `analyses/` |
 | `analyses/04.05-bh.qmd` | bootstrap variable selection | `analyses/` |
 
-A template is named `<NN.MM>-<prefix>.qmd` and lives in the taxonomy folder it
-scaffolds into. The name is the authority: `template_list()` reads the ordinal
-and prefix from it and the folder from the directory, and the test suite checks
-both against `hvti_taxonomy()`.
+A template is named `<NN.MM>-<prefix>.qmd`, or
+`<NN.MM>-<prefix>-<qualifier>.qmd` where one prefix carries several job types,
+and lives in the taxonomy folder it scaffolds into. The name is the authority:
+`template_list()` reads the ordinal, prefix and qualifier from it and the
+folder from the directory, and the test suite checks them against
+`hvti_taxonomy()`.
+
+The qualifier exists because `graphs/dp` is `trends`, `spaghetti` and `procs`
+rather than one job. Every template here is unqualified today. A prefix is
+wholly qualified or wholly unqualified, never half-decomposed.
 
 ## Where a scaffolded job lands
 
 `new_job("ac", "dead_pa", "hz")` writes
 `distributions/dead_pa-hz-03.01-ac.qmd`. Four fields, `-` separated, with `.`
 reserved for inside the ordinal: **endpoint, type, ordinal, prefix**.
+
+A job scaffolded from a qualified template carries the qualifier as a fifth
+field, so `new_job("dp", "dead_pa", "hz", qualifier = "trends")` would write
+`graphs/dead_pa-hz-06.03-dp-trends.qmd`. A filename that drops it says only
+"some `dp` job", which is what splitting the templates exists to fix.
 
 The layout rule is one sentence, and it holds in every folder:
 
