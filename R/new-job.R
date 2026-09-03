@@ -51,7 +51,15 @@ new_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
   # One row or an error. Selecting with match() took the FIRST row for a
   # prefix and said nothing about the others, which is safe only while every
   # prefix has one template.
-  row <- .select_template(template_list(), prefix, qualifier)
+  # Re-raised with this function's own prefix. .select_template() is shared
+  # with template_path(), so its messages say "template selection:" and
+  # "unknown template:", where every other error this function raises says
+  # "new_job():". A user-facing API should be greppable by one name.
+  # Raised by Copilot on #76.
+  row <- tryCatch(
+    .select_template(template_list(), prefix, qualifier),
+    error = function(e) stop("new_job(): ", conditionMessage(e), call. = FALSE)
+  )
 
   out_dir <- file.path(dir, row$folder[[1L]])
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
