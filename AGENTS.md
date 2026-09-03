@@ -208,7 +208,21 @@ moved — a template that fails this check cannot be scaffolded at all.
   shows no trace of it, so it is stated here. The ruleset is named `protect main`, is active
   on twelve repositories in the HVTI R package family, and enforces four rules on the default
   branch: no deletion, no force-push, pull-request-only, and an **automatic Copilot code
-  review**. A direct push to `main` is rejected by the server, which is the ruleset and not a
+  review**.
+  🔴 **Copilot review credits are EXHAUSTED until October 2026** (John, 2026-09-03).
+  The `copilot_code_review` rule stays in the ruleset and does not block a merge, so PRs open
+  and go green as usual, they simply get **no review**. Combined with the approval rule below,
+  which nobody can satisfy on their own PR, that means **every merge until October reaches
+  `main` having been read by no one and nothing.** CI checks compilation, tests, lint and the
+  count guards; none of them reads for correctness.
+  ⚠️ **Do not wait for a review that is not coming**, and do not re-request one: the
+  `requestReviews` mutation below will still return 200 and produce nothing, which is
+  indistinguishable from the bot being slow. **Run `/code-review` locally before opening a PR
+  instead**, and say in the PR body that it stood in for the bot.
+  For scale: over 2026-09-02/03 the Copilot reviewer found roughly twenty real defects across
+  eight PRs, including a logic error that misreported two unqualified templates as a mixed
+  prefix, an `NA`-versus-`"NA"` collapse in a uniqueness key, and a released recommendation
+  built on a sample of two. That is what is unavailable until October. A direct push to `main` is rejected by the server, which is the ruleset and not a
   local hook, and the fix is to branch, never to force past it.
   ⚠️ **A PR needs one approving review, and you cannot give it to your own PR.**
   `required_approving_review_count` is **1** in eleven of the twelve, and GitHub refuses a

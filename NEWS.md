@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* **Copilot review credits are exhausted until October 2026**, recorded in
+  `AGENTS.md`. The ruleset rule stays and does not block a merge, so PRs go
+  green and get no review; with the approval rule nobody can satisfy on their
+  own PR, every merge until October reaches `main` unread by anyone. Run
+  `/code-review` locally before opening a PR and say so in the body.
+
 * **⚠️ `distributions/dp` is ONE ledger row, not the three that shipped in
   1.0.21.** Those three were keyed on measurement scale, recommended from a
   sample of two template filenames and released before anyone measured them.
