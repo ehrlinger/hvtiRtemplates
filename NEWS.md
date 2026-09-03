@@ -1,4 +1,4 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.0.21
 
 * **`dp` and `dc` are decomposed in the roadmap ledger: two rows become
   twelve.** Enacts section 9 of

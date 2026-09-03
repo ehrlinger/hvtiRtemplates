@@ -1,8 +1,8 @@
 Package: hvtiRtemplates
 Type: Package
 Title: Analysis Job Templates for the HVTI CORR Group
-Version: 1.0.20
-Date: 2026-09-01
+Version: 1.0.21
+Date: 2026-09-03
 Authors@R: c(
     person(
       "John", "Ehrlinger",
