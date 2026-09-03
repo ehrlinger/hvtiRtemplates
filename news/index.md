@@ -1,5 +1,131 @@
 # Changelog
 
+## hvtiRtemplates 1.0.21
+
+- **`dp` and `dc` are decomposed in the roadmap ledger: two rows become
+  twelve.** Enacts section 9 of
+  `dev/specs/2026-09-02-dp-dc-decomposition-design.md`. `dc` becomes
+  `general` (759 studies), `tables` (551), `gfup` (389), `dead` (171)
+  and `stddiff` (59); `graphs/dp` becomes `trends` (80), `gfup` (48),
+  `spaghetti` (40) and `procs` (35); `distributions/dp` becomes
+  `binary`, `ordinal` and `continuous`.
+
+  **No ordinals are assigned.** An ordinal is issued when a template is
+  created and a retired one is never reissued, so assigning twelve now
+  to templates that may never be written would burn them. Every row is
+  `queued` with `ordinal: null`, as `dp` and `dc` were. No template has
+  been written.
+
+  The `distributions/dp` three are keyed on **measurement scale**, not
+  variable, and are marked unmeasured: the census extracts the first
+  qualifier, which there is the variable. The evidence is two of three
+  local templates plus the same vocabulary recurring in `graphs`, and
+  the rows say so.
+
+- **`std_dif` versus `stddiff` is resolved: ship the 2019 successor.**
+  `stddiff.sas` is 649 lines handling continuous, ordinal and
+  categorical; `std_dif.sas` is 108 lines from 2009. Its wider corpus
+  use, 72 studies against 59, is a macro outliving its replacement
+  rather than a preference. The template therefore depends on
+  `hvtiRutilities`, not `hvtiRtables`.
+
+- **The roadmap table gains a `jobs` column.** `sas_breadth_jobs` has
+  been in the ledger since the re-parse and rendered nowhere, so a
+  decomposed row showed a dash for every count it actually has. Two
+  measures, two columns, rather than one column falling back to the
+  other.
+
+- **A template name can now say which job it is:
+  `<NN.MM>-<prefix>-<qualifier>.qmd`.** `graphs/dp` is `trends`,
+  `spaghetti`, `procs` and more under one prefix, and the split is
+  already present in the template estate rather than being proposed. A
+  name that cannot say which job it is, is one a study author cannot
+  search. Decided 2026-09-02; see
+  `dev/specs/2026-09-02-dp-dc-decomposition-design.md`.
+
+  [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+  gains a `qualifier` column. `NA` marks an unqualified template row,
+  which is every template shipped today.
+  [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
+  and
+  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+  gain a `qualifier` argument. Nothing existing changes: all nine
+  shipped templates are unqualified and every existing call still
+  resolves.
+
+  **Both refuse to guess.** Naming no qualifier where a prefix carries
+  several is an error listing the choices. Selection was
+  [`match()`](https://rdrr.io/r/base/match.html), which returns the
+  first row and says nothing about the rest; that is safe only while
+  every prefix has one template, and is the same shape as the bug that
+  made `dp` look like one job type.
+
+  The parser’s prefix capture was `.+`, which is greedy and read
+  `06.03-dp-trends.qmd` as the single prefix `dp-trends`. It parsed, it
+  validated, and it was wrong. The prefix is now `[A-Za-z0-9]+`, so a
+  prefix may never contain `-`.
+
+- **The roadmap ledger is keyed on `(prefix, qualifier)`, not prefix
+  alone.** A prefix may hold several rows, one per job type, and must be
+  wholly qualified or wholly unqualified: a half-decomposed prefix would
+  offer an unqualified row in the ambiguity error that no caller can ask
+  for. The renderer labels a qualified row `dp-trends` so two rows for
+  one prefix do not render identically. An empty-string qualifier is
+  rejected outright, rather than being collapsed into an absent one by a
+  truthiness test.
+
+- **The allocation note’s cross-package dependency count was wrong for
+  nineteen days, and is now anchored.** It read “19 file-level
+  dependencies span 3 package pairs”. That was correct when written on
+  2026-08-14 and went stale the same day, at `77734a9`, which created
+  `hvtiRbootstrap` and moved 24 dependencies into two new package pairs
+  without touching the sentence. The real figures are 43 across 5 pairs.
+
+  The scan now emits `cross_package_dependencies` into the map, and
+  `check-spec-counts.py` fails the PR when the prose, the edge list or
+  the acyclic claim disagrees with it. Every other count in that
+  document was already anchored and had been re-synced repeatedly over
+  the same period; this one was prose, and prose is what drifted.
+
+  The **acyclic** half of the claim was true throughout, and is now
+  verified by a depth-first colouring rather than asserted. A stale
+  number sitting beside a correct claim is harder to see than a wrong
+  one on its own.
+
+- **The corpus was re-parsed, and the batch order moved.** The census
+  that ordered the conversion work was produced by a parser that
+  captured a legacy job name’s first dot-field and discarded the rest,
+  so `dp.trends`, `dp.gfup` and `dp.spaghetti.echo` all counted as one
+  bucket called `dp`. A bucket cannot be templated, which is why Batch 3
+  was stuck. The parser fix is upstream in `hvtiRutilities`; here, the
+  roadmap ledger gains `sas_breadth_jobs` beside the existing
+  `sas_breadth`, and
+  `dev/specs/2026-09-02-per-folder-naming-parse-design.md` records what
+  changed.
+
+  The two counts differ because the old one counted every extension, so
+  a `.lst`, a `.log`, a `.pdf` and a `.sas7bdat` each counted as
+  evidence that a study runs a job of that type. Ten prefixes move three
+  ranks or more. `lp` drops nine, from 636 studies to 310, because more
+  than half its breadth was output rather than programs. The top four
+  are unmoved.
+
+- **The `hz +396` / `hm +172` hand corrections are withdrawn.** `hzdead`
+  and `hmdead` are result datasets in `estimates`, `.sas7bdat` and
+  `.ssd01`, not hazard jobs. Adding them added model output to a count
+  of programs. The measured job breadth is `hz` 574 and `hm` 373.
+
+- **`deade` and `deadl` are identified.** Hazard-phase estimate
+  datasets, early and late, with `deadc` beside them at 60 studies. They
+  sit in `estimates` and were never jobs.
+
+- **The macro-allocation scan globbed one level deep** and missed 13 of
+  the 244 template `.sas` files. Three files change destination as a
+  result, and `stddiff.sas` is the one that matters: it was allocated to
+  a single package only because the glob hid the two `dc` templates that
+  make it shared. Three retired destination slugs are also corrected, to
+  `hvtiRdatabuild`, `TemporalHazard` and `hvtiRpropensity`.
+
 ## hvtiRtemplates 1.0.20
 
 - **Three bootstrap screen templates ship**: `analyses/04.02-bl.qmd`
