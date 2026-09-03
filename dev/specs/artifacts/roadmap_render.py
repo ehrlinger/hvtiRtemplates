@@ -75,12 +75,18 @@ def render(rows):
         label = f"batch {batches[0]}" if len(batches) == 1 else \
                 f"batches {batches[0]}–{batches[-1]}" if batches else "unscheduled"
         out += [f"### {fam} ({label})", "",
-                "| prefix | status | ordinal | breadth | R exemplars | blocked on |",
-                "|---|---|---|---|---|---|"]
+                # `breadth` and `jobs` are two different measures and get two
+                # columns rather than one with a fallback. breadth counts every
+                # extension, jobs counts program files only; a decomposed row
+                # has jobs and no breadth, because the census emits the
+                # all-extension figure per prefix and not per qualifier.
+                "| prefix | status | ordinal | breadth | jobs | R exemplars | blocked on |",
+                "|---|---|---|---|---|---|---|"]
         for r in sorted(fam_rows, key=lambda r: (r["batch"] is None,
                                                  r["batch"] or 0, _label(r))):
             out.append(f"| `{_label(r)}` | {STATUS_MARK.get(r['status'], r['status'])} | "
                        f"{r['ordinal'] or '—'} | {_num(r['sas_breadth'])} | "
+                       f"{_num(r.get('sas_breadth_jobs'))} | "
                        f"{_num(r['r_exemplars'])} | {r['blocked_on'] or '—'} |")
         out.append("")
 

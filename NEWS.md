@@ -1,5 +1,35 @@
 # hvtiRtemplates (unreleased)
 
+* **`dp` and `dc` are decomposed in the roadmap ledger: two rows become
+  twelve.** Enacts section 9 of
+  `dev/specs/2026-09-02-dp-dc-decomposition-design.md`. `dc` becomes
+  `general` (759 studies), `tables` (551), `gfup` (389), `dead` (171) and
+  `stddiff` (59); `graphs/dp` becomes `trends` (80), `gfup` (48),
+  `spaghetti` (40) and `procs` (35); `distributions/dp` becomes `binary`,
+  `ordinal` and `continuous`.
+
+  **No ordinals are assigned.** An ordinal is issued when a template is
+  created and a retired one is never reissued, so assigning twelve now to
+  templates that may never be written would burn them. Every row is `queued`
+  with `ordinal: null`, as `dp` and `dc` were. No template has been written.
+
+  The `distributions/dp` three are keyed on **measurement scale**, not
+  variable, and are marked unmeasured: the census extracts the first
+  qualifier, which there is the variable. The evidence is two of three local
+  templates plus the same vocabulary recurring in `graphs`, and the rows say
+  so.
+
+* **`std_dif` versus `stddiff` is resolved: ship the 2019 successor.**
+  `stddiff.sas` is 649 lines handling continuous, ordinal and categorical;
+  `std_dif.sas` is 108 lines from 2009. Its wider corpus use, 72 studies
+  against 59, is a macro outliving its replacement rather than a preference.
+  The template therefore depends on `hvtiRutilities`, not `hvtiRtables`.
+
+* **The roadmap table gains a `jobs` column.** `sas_breadth_jobs` has been
+  in the ledger since the re-parse and rendered nowhere, so a decomposed row
+  showed a dash for every count it actually has. Two measures, two columns,
+  rather than one column falling back to the other.
+
 * **A template name can now say which job it is: `<NN.MM>-<prefix>-<qualifier>.qmd`.**
   `graphs/dp` is `trends`, `spaghetti`, `procs` and more under one prefix, and
   the split is already present in the template estate rather than being
