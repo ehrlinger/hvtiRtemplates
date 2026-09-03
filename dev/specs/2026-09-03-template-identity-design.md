@@ -124,9 +124,57 @@ though they are one subject.**
    register goes with them, and any study still holding `04.06-bh` holds a name
    nothing explains. That needs a sentence somewhere permanent.
 
-## 8. Recommendation
+## 8. The folder-digit proposal, and it is the better answer
 
-**Take them in two steps, ordinal first, and only after question 1 is answered.**
+Raised by the maintainer later the same day: put the digits on the **folder**.
+
+```
+00_datasets  10_descriptives  20_distributions  30_analysis
+40_documents 50_graphs        60_estimates
+```
+
+**This is the right shape, and for a reason section 2 already established.**
+`NN` is redundant in a filename because the directory already says it. Move it
+to the directory and it stops being a duplicate and becomes the thing itself.
+The filename then needs no ordinal at all, and `<prefix>-<qualifier>.qmd` is
+the whole identity.
+
+⭐ **The decade gaps fix the defect that caused the `bh` renumber.** `bh` was
+renumbered because inserting `hs` shifted every folder position below it.
+Under `00 / 10 / 20`, a new folder goes in at `25` and shifts nothing. The
+scheme is insertable, which positional numbering never was.
+
+### Two details in the proposal differ from the live vocabulary
+
+| proposed | taxonomy and corpus | corpus files |
+|---|---|---|
+| `10_descriptives` | **`descriptive`**, singular | 54,510 |
+| `30_analysis` | **`analyses`**, plural | 119,582 |
+
+And the tail is reordered. The taxonomy is `estimates` 05, `graphs` 06,
+`documents` 07; the proposal is `documents` 40, `graphs` 50, `estimates` 60.
+
+⚠️ **These are not cosmetic.** `new_job()` writes into the folder name inside
+a real study, so a job landing in `descriptives/` while that study's other
+jobs sit in `descriptive/` splits the estate. Renaming is possible, but it is
+a **corpus-wide vocabulary change**, not a package-local one, and it needs the
+same legacy alias treatment section 5 describes for prefixes: 54,510 and
+119,582 existing files sit under the current spellings.
+
+Whether the reordering is deliberate is worth confirming rather than assuming.
+
+### What it does not settle
+
+The folder digits replace `NN`. **`MM` is still unanswered**, and so is
+section 7 question 1: if templates within a folder are not ordered, nothing
+replaces `MM` because nothing needed it.
+
+## 9. Recommendation
+
+**Take the folder digits, then the ordinal, then the prefix, in that order.**
+The folder digits are the cleanest of the three: they solve `NN` and the
+insertion problem together, and section 8's naming discrepancies are the only
+thing to settle first.
 
 The ordinal is cheap to remove, local to this package, and already
 under-used at 9 of 53. The prefix rename is upstream, permanent, and needs a
