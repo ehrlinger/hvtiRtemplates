@@ -91,10 +91,14 @@ def check_schema(rows):
         # Shape-check the qualifier rather than only handling "" at each use
         # site. Two sites collapsed empty into absent and a third would have
         # done it again; rejecting the value is what stops that recurring.
+        # `str(q)` first would accept 42 as "42", which then renders and
+        # resolves as `dp-42`. The contract is string-or-null, so a non-string
+        # is rejected as one rather than coerced into a passing one.
         q = r.get("qualifier")
-        if q is not None and not re.fullmatch(r"[A-Za-z0-9_]+", str(q)):
+        if q is not None and (not isinstance(q, str)
+                              or not re.fullmatch(r"[A-Za-z0-9_]+", q)):
             bad.append(f"`{where}` has qualifier {q!r}; use null for an "
-                       f"unqualified template, else [A-Za-z0-9_]+")
+                       f"unqualified template, else a string [A-Za-z0-9_]+")
         for field in INT_OR_NULL_FIELDS:
             v = r.get(field)
             if v is not None and not isinstance(v, int):
@@ -232,7 +236,9 @@ def check_disk(rows):
         rel = os.path.join(r["folder"], f"{r['ordinal']}-{stem}.qmd")
         claimed[rel] = stem
         if not os.path.isfile(os.path.join(TEMPLATES, rel)):
-            bad.append(f"`{r['prefix']}` is {r['status']} but "
+            # `stem`, not `prefix`: once a prefix carries several qualifiers,
+            # naming the bare prefix does not say which row is unsatisfied.
+            bad.append(f"`{stem}` is {r['status']} but "
                        f"inst/templates/{rel} does not exist")
 
     on_disk = []

@@ -72,13 +72,13 @@ template_path <- function(prefix, qualifier = NULL) {
   # nothing useful; a length-2 qualifier recycles silently. `new_job()` screens
   # its argument, `template_path()` did not, and this is the shared path.
   # Raised by Copilot on #76.
-  if (!is.null(qualifier) &&
-        (length(qualifier) != 1L || is.na(qualifier) ||
-           !is.character(qualifier) || !nzchar(qualifier))) {
-    stop("template selection: `qualifier` must be a single non-empty, non-NA ",
-         "string, or NULL. Got ", class(qualifier)[[1L]], " of length ",
-         length(qualifier), ".", call. = FALSE)
-  }
+  # `prefix` gets the same treatment as `qualifier`. Validating one argument
+  # and not its sibling is how a length-2 prefix reaches `tl$prefix == prefix`,
+  # recycles, and selects rows nobody asked for. The old `match()` path errored
+  # cleanly there, so leaving it unchecked would be a regression as well as a
+  # gap. Raised by Copilot on #76.
+  .check_scalar_string("prefix", prefix)
+  if (!is.null(qualifier)) .check_scalar_string("qualifier", qualifier)
   hit <- tl[!is.na(tl$prefix) & tl$prefix == prefix, , drop = FALSE]
   if (!nrow(hit)) {
     stop("unknown template: ", prefix,
@@ -124,6 +124,18 @@ template_path <- function(prefix, qualifier = NULL) {
          .qualifier_menu(hit), call. = FALSE)
   }
   hit
+}
+
+# One non-empty, non-NA string, or stop. `hit$qualifier == NA_character_` is
+# NA rather than FALSE, so an NA argument produces NA-indexed rows and an error
+# naming nothing useful, and a length-2 argument recycles silently.
+.check_scalar_string <- function(what, x) {
+  if (length(x) != 1L || !is.character(x) || is.na(x) || !nzchar(x)) {
+    stop("template selection: `", what, "` must be a single non-empty, ",
+         "non-NA string. Got ", class(x)[[1L]], " of length ", length(x), ".",
+         call. = FALSE)
+  }
+  invisible(x)
 }
 
 # The qualifiers on offer for a prefix, for an error message. An unqualified

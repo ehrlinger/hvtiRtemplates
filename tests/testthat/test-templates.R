@@ -431,3 +431,12 @@ test_that("a malformed qualifier is rejected before it is compared", {
     expect_error(template_path("ac", bad), "single non-empty, non-NA")
   }
 })
+
+test_that("a malformed prefix is rejected before it is compared", {
+  # Validating `qualifier` and not its sibling is how a length-2 prefix
+  # reaches `tl$prefix == prefix`, recycles, and selects rows nobody asked
+  # for. The old match() path errored cleanly there.
+  for (bad in list(NA_character_, c("ac", "hz"), "", 42, character(0))) {
+    expect_error(template_path(bad), "single non-empty, non-NA")
+  }
+})
