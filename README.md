@@ -1,5 +1,16 @@
 # hvtiRtemplates
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/ehrlinger/hvtiRtemplates/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ehrlinger/hvtiRtemplates/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/ehrlinger/hvtiRtemplates/graph/badge.svg)](https://app.codecov.io/gh/ehrlinger/hvtiRtemplates)
+[![active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/badges/latest/active.svg)
+[![pkgdown](https://github.com/ehrlinger/hvtiRtemplates/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/ehrlinger/hvtiRtemplates/actions/workflows/pkgdown.yaml)
+
+[![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiRtemplates)](https://github.com/ehrlinger/hvtiRtemplates)
+
+[![lint](https://github.com/ehrlinger/hvtiRtemplates/actions/workflows/lint.yaml/badge.svg)](https://github.com/ehrlinger/hvtiRtemplates/actions/workflows/lint.yaml)
+<!-- badges: end -->
+
 Versioned analysis job templates for the HVTI CORR group at the Cleveland
 Clinic.
 
