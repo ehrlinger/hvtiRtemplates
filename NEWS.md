@@ -1,5 +1,22 @@
 # hvtiRtemplates (unreleased)
 
+* **`bl`, `br` and `bc` now require `hvtiRbootstrap >= 0.9.3`**, and the
+  reason is not a missing function. Below 0.9.3, `boot_select()` recorded
+  `sle` and `sls` on the screen and then selected on AIC regardless, so the
+  `boot_provenance()` table these reports print named an entry and a stay
+  criterion the screen had never applied -- directly above the frequencies a
+  reader attributes to them. A blank would have been obvious; a plausible
+  number that describes nothing is not. 0.9.3's renamed bag columns do *not*
+  affect these templates, which read `$boot$replicates` and rebuild the matrix
+  themselves rather than reading `$boot$summary`.
+* **`bh` deliberately stays at `>= 0.9.0`.** Its screen comes from
+  `TemporalHazard`, whose own stepwise has always honoured `slentry` and
+  `slstay`; `hvtiRbootstrap` is only the reporting layer there. Raising it
+  would assert a dependency the template does not have.
+* The Phase 3 render gate moves to 0.9.3 as well, because it *runs* a screen:
+  below that, the bags it produces are not the bags these templates now
+  declare they need.
+
 * **Copilot review credits are confirmed exhausted**, and `AGENTS.md` now says
   so as fact rather than as a report. A re-request on
   [#83](https://github.com/ehrlinger/hvtiRtemplates/pull/83) came back as a
