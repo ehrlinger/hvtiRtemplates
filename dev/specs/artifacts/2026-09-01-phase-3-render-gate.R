@@ -34,9 +34,13 @@ suppressPackageStartupMessages({
   library(hvtiRbootstrap)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRbootstrap") < "0.9.2") {
-  stop("boot_bag() lands in 0.9.2; ", utils::packageVersion("hvtiRbootstrap"),
-       " is installed.", call. = FALSE)
+# 0.9.3, not 0.9.2: this gate RUNS a screen, and below 0.9.3 boot_select()
+# recorded `sle`/`sls` and selected on AIC anyway, so the bags it produced
+# would not be the bags the templates now declare they need.
+if (utils::packageVersion("hvtiRbootstrap") < "0.9.3") {
+  stop("boot_bag() lands in 0.9.2 and sle/sls only select from 0.9.3; ",
+       utils::packageVersion("hvtiRbootstrap"), " is installed.",
+       call. = FALSE)
 }
 dir.create(file.path(proj, "estimates"), recursive = TRUE,
            showWarnings = FALSE)

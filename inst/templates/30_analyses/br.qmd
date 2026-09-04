@@ -76,12 +76,23 @@ suppressPackageStartupMessages({
 # what a reader opens. A bag written by an older runner would reach these
 # chunks missing the provenance fields, and the tables would print blanks where
 # the screen's criteria belong.
-if (utils::packageVersion("hvtiRbootstrap") < "0.9.2") {
-  stop("This report needs hvtiRbootstrap >= 0.9.2; ",
+#
+# THE FLOOR IS 0.9.3, NOT 0.9.2, AND THE EXTRA DISTANCE IS THE POINT. Below
+# 0.9.3 boot_select() recorded `sle` and `sls` on the screen and then selected
+# on AIC regardless, so the provenance table this report prints names an entry
+# and a stay criterion the screen never applied. A reader takes those two rows
+# as the rule that produced the frequencies beneath them. A blank would be
+# obvious; a plausible number that describes nothing is not. bh.qmd stays at
+# 0.9.0 on purpose -- its screen comes from TemporalHazard, whose own stepwise
+# always honoured them.
+if (utils::packageVersion("hvtiRbootstrap") < "0.9.3") {
+  stop("This report needs hvtiRbootstrap >= 0.9.3; ",
        utils::packageVersion("hvtiRbootstrap"), " is installed. boot_bag() ",
        "converts a boot_select() screen into the bag this report reads, and ",
-       "nothing below 0.9.2 has such a function.\nUpdate it, then re-render.",
-       call. = FALSE)
+       "nothing below 0.9.2 has such a function; below 0.9.3 the screen ",
+       "recorded `sle` and `sls` but selected on AIC, so the provenance ",
+       "table below would name criteria it never used.\nUpdate it, then ",
+       "re-render.", call. = FALSE)
 }
 ```
 
