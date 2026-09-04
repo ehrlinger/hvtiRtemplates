@@ -54,6 +54,19 @@ jobs:
         with:
           persist-credentials: false
 
+      # The job catalog check-roadmap-counts.py reads no longer lives in this
+      # repo -- it moved to the sibling package hvtiR, at
+      # inst/extdata/jobs.json. This checkout puts a copy where HVTI_JOBS can
+      # point at it, pinned to a tag rather than hvtiR's main so that editing
+      # the catalog in that repo cannot fail every pull request here.
+      - uses: actions/checkout@v4
+        with:
+          repository: ehrlinger/hvtiR
+          ref: v1.1.3
+          path: .hvtiR
+
+      - run: echo "HVTI_JOBS=$GITHUB_WORKSPACE/.hvtiR/inst/extdata/jobs.json" >> "$GITHUB_ENV"
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'

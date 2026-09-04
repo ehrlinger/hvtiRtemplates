@@ -59,15 +59,36 @@ jobs:
           upload-snapshots: true
           build_args: 'c("--no-manual")'
 
-      # The roadmap ledger (dev/specs/artifacts/2026-08-29-template-roadmap.json)
-      # lives under dev/, which is .Rbuildignore'd -- so it is absent from the
-      # tarball the check-r-package step above builds, and test-roadmap.R skips
-      # its three tests there on purpose. This step is the only place those
-      # tests actually run: it loads the package from the checked-out SOURCE
-      # tree, where dev/ is present. One matrix leg is enough -- this checks
-      # repository content, not platform behaviour. HVTI_ROADMAP_STRICT turns
-      # a skip into a hard failure, so a broken path resolution can't pass
-      # silently as "0 tests ran, all green".
+      # The job catalog test-roadmap.R reads no longer lives in this repo -- it
+      # moved to the sibling package hvtiR, at inst/extdata/jobs.json. This
+      # checkout puts a copy where HVTI_JOBS can point at it, pinned to a tag
+      # rather than hvtiR's main so that editing the catalog in that repo
+      # cannot fail every pull request here. Only the one matrix leg that runs
+      # the strict guard below needs it, so it is scoped to the same
+      # condition; that also keeps the added checkout off the Windows and
+      # macOS legs, where the `run:` step's bash syntax would need `shell:
+      # bash` to work at all.
+      - uses: actions/checkout@v4
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
+        with:
+          repository: ehrlinger/hvtiR
+          ref: v1.1.3
+          path: .hvtiR
+
+      - name: Point HVTI_JOBS at the checked-out catalog
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
+        run: echo "HVTI_JOBS=$GITHUB_WORKSPACE/.hvtiR/inst/extdata/jobs.json" >> "$GITHUB_ENV"
+        shell: bash
+
+      # The job catalog lives under dev/-adjacent tooling only via HVTI_JOBS or
+      # a sibling checkout, neither of which the tarball the check-r-package
+      # step above builds has -- so test-roadmap.R skips its three tests there
+      # on purpose. This step is the only place those tests actually run: it
+      # loads the package from the checked-out SOURCE tree, where HVTI_JOBS
+      # now points at the sibling catalog above. One matrix leg is enough --
+      # this checks repository content, not platform behaviour.
+      # HVTI_ROADMAP_STRICT turns a skip into a hard failure, so a broken path
+      # resolution can't pass silently as "0 tests ran, all green".
       - name: Run the roadmap vocabulary guard against the source tree
         if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
         env:

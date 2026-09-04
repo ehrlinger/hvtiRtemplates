@@ -5,45 +5,78 @@
 # Python guard checks everything the filesystem can answer on its own; this
 # checks the one thing it cannot.
 #
-# `dev/` is .Rbuildignore'd, so the ledger is ABSENT from a built package and
-# from `R CMD check` on the tarball. Without the skip below, every check of a
-# built package would fail on a missing file that is deliberately missing.
+# The catalog itself no longer lives in this repo. It moved to the sibling
+# package `hvtiR`, at `inst/extdata/jobs.json`. `ledger_path()` resolves it the
+# same way `dev/specs/artifacts/roadmap_render.py`'s `catalog_path()` does:
+# the `HVTI_JOBS` environment variable first, then a sibling `hvtiR` checkout
+# next to this repo, so a developer or CI runner only has one convention to
+# learn across both languages.
+#
+# This test deliberately covers ALL 53 rows, not only the ones destined for
+# hvtiRtemplates. The Python disk/doc checks filter to this repo's rows
+# because they ask "does a template exist for this". This file asks a
+# different question: does the catalog's vocabulary match `hvti_taxonomy()`.
+# A row routed to another package (hvtiPlotR, say) still has to name a real
+# taxonomy prefix, so no destination filter belongs here.
+#
+# On a built tarball the sibling checkout is absent and `HVTI_JOBS` is unset,
+# so the catalog cannot be found. Without the skip below, every check of a
+# built package would fail on a file that is deliberately not part of it.
 
 ledger_path <- function() {
+  env <- Sys.getenv("HVTI_JOBS")
+  if (nzchar(env)) {
+    return(env)
+  }
   # testthat runs with the working directory at tests/testthat/, so the repo
-  # root is two levels up -- which is what the `".."`, `".."` below say.
-  # `testthat::test_path()` is not used: it resolves inside tests/testthat/,
-  # and the ledger is deliberately outside the package.
-  file.path("..", "..", "dev", "specs", "artifacts",
-            "2026-08-29-template-roadmap.json")
+  # root is two levels up. The sibling `hvtiR` checkout sits next to the repo
+  # root, one level further up again -- matching
+  # `roadmap_render.py`'s `../hvtiR/inst/extdata/jobs.json` relative to the
+  # repo root. `testthat::test_path()` is not used: it resolves inside
+  # tests/testthat/, and the catalog is deliberately outside the package.
+  file.path("..", "..", "..", "hvtiR", "inst", "extdata", "jobs.json")
 }
 
 require_ledger <- function() {
   if (file.exists(ledger_path())) {
     return(invisible(TRUE))
   }
-  # `dev/` is .Rbuildignore'd, so the ledger is absent from a built package and
-  # these tests must skip there -- that is not a failure, it is the file being
-  # deliberately out of the tarball.
+  # The catalog is absent from a built package and from a checkout with no
+  # sibling `hvtiR` -- that is not a failure, it is the file being
+  # deliberately outside this repo.
   #
-  # But on the SOURCE tree in CI the ledger IS present, and a skip would mean
-  # the path resolution broke. A silently skipped guard is worse than no guard:
-  # it reports green while checking nothing, which is the exact failure this
-  # file exists to prevent. So CI sets HVTI_ROADMAP_STRICT and a skip becomes
-  # a hard stop there.
+  # But on the SOURCE tree in CI the catalog IS available (via HVTI_JOBS or a
+  # checked-out sibling), and a skip would mean the path resolution broke. A
+  # silently skipped guard is worse than no guard: it reports green while
+  # checking nothing, which is the exact failure this file exists to prevent.
+  # So CI sets HVTI_ROADMAP_STRICT and a skip becomes a hard stop there.
   if (nzchar(Sys.getenv("HVTI_ROADMAP_STRICT"))) {
-    stop("roadmap ledger not found at ", ledger_path(),
+    stop("job catalog not found at ", ledger_path(),
          ", but HVTI_ROADMAP_STRICT is set -- the source tree should have it")
   }
-  testthat::skip("roadmap ledger not present")
+  testthat::skip("job catalog not present")
+}
+
+# The catalog is written by `hvtiR` as `{"jobs": [...]}`; an older local
+# ledger used `{"prefixes": [...]}`. Both are accepted here for the same
+# reason `roadmap_render.load_catalog()` accepts both: a stray old-shaped file
+# still reads, rather than failing on a key name that used to be right.
+ledger_rows <- function() {
+  ledger <- jsonlite::fromJSON(ledger_path(), simplifyDataFrame = FALSE)
+  if (!is.null(ledger$jobs)) {
+    return(ledger$jobs)
+  }
+  if (!is.null(ledger$prefixes)) {
+    return(ledger$prefixes)
+  }
+  stop(ledger_path(), " has neither a top-level 'jobs' nor 'prefixes' key")
 }
 
 test_that("every taxonomy prefix has a roadmap row", {
   require_ledger()
   skip_if_not_installed("jsonlite")
 
-  ledger <- jsonlite::fromJSON(ledger_path(), simplifyDataFrame = FALSE)
-  rows <- ledger$prefixes
+  rows <- ledger_rows()
   in_ledger <- vapply(rows, function(r) r$prefix, character(1))
   tx <- stats::na.omit(hvti_taxonomy()$prefix)
 
@@ -58,8 +91,7 @@ test_that("every roadmap row is a taxonomy prefix, unless it is intake", {
   require_ledger()
   skip_if_not_installed("jsonlite")
 
-  ledger <- jsonlite::fromJSON(ledger_path(), simplifyDataFrame = FALSE)
-  rows <- ledger$prefixes
+  rows <- ledger_rows()
   tx <- as.character(stats::na.omit(hvti_taxonomy()$prefix))
 
   # Direction two, with one exemption. `rfr`, `sid` and `vt` are PROPOSED and
@@ -77,8 +109,7 @@ test_that("an intake row names what it blocks on", {
   require_ledger()
   skip_if_not_installed("jsonlite")
 
-  ledger <- jsonlite::fromJSON(ledger_path(), simplifyDataFrame = FALSE)
-  intake <- Filter(function(r) identical(r$status, "intake"), ledger$prefixes)
+  intake <- Filter(function(r) identical(r$status, "intake"), ledger_rows())
 
   # An intake row without a blocker is indistinguishable from a forgotten one.
   # The blocker is what tells a reader why it is not scheduled.
