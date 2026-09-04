@@ -5,9 +5,9 @@
 **Design:** `2026-08-29-template-conversion-roadmap-design.md`, which argues
 every decision recorded here. Read it before changing anything.
 
-The taxonomy names 42 analysis prefixes and three more are proposed. Four
+The taxonomy names 42 analysis prefixes and three more are proposed. Nine
 templates ship. This is the queue for the rest, and the ledger behind it is
-`artifacts/2026-08-29-template-roadmap.json`.
+`inst/extdata/jobs.json` in `ehrlinger/hvtiR`, not anything in this repo.
 
 ## How to read this
 
@@ -29,8 +29,10 @@ exemplars, which is a finding, not a gap.
 
 ## Changing this document
 
-Do not hand-edit the generated tables. Edit
-`artifacts/2026-08-29-template-roadmap.json`, then:
+Do not hand-edit the generated tables. The catalog moved out of this repo: it now lives at
+`inst/extdata/jobs.json` in `ehrlinger/hvtiR`. Editing the copy that used to live here does
+nothing, because the renderer no longer reads it. Edit the catalog in `hvtiR`, resolved either
+through the `HVTI_JOBS` environment variable or a sibling checkout (`../hvtiR`), then run:
 
 ```sh
 python3 dev/specs/artifacts/roadmap_render.py

@@ -41,6 +41,17 @@ require_ledger <- function() {
   if (file.exists(ledger_path())) {
     return(invisible(TRUE))
   }
+
+  # HVTI_JOBS being set is an explicit claim about where the catalog lives.
+  # A wrong claim is a developer's typo or a broken CI variable, not a normal
+  # "no sibling checkout" state, so it errors regardless of strict mode --
+  # unlike the sibling-checkout fallback below, this has no legitimate absent
+  # case to fall through to.
+  env <- Sys.getenv("HVTI_JOBS")
+  if (nzchar(env)) {
+    stop("HVTI_JOBS is set to ", env, ", but no file exists there")
+  }
+
   # The catalog is absent from a built package and from a checkout with no
   # sibling `hvtiR` -- that is not a failure, it is the file being
   # deliberately outside this repo.
@@ -55,6 +66,20 @@ require_ledger <- function() {
          ", but HVTI_ROADMAP_STRICT is set -- the source tree should have it")
   }
   testthat::skip("job catalog not present")
+}
+
+require_jsonlite <- function() {
+  if (requireNamespace("jsonlite", quietly = TRUE)) {
+    return(invisible(TRUE))
+  }
+  # Same discipline as require_ledger(): under HVTI_ROADMAP_STRICT a skip is a
+  # failure, so a missing Suggests dependency must be as loud as a missing
+  # catalog, not the one remaining silent skip path in this file.
+  if (nzchar(Sys.getenv("HVTI_ROADMAP_STRICT"))) {
+    stop("jsonlite is not installed, but HVTI_ROADMAP_STRICT is set -- ",
+         "the source tree's test environment should have it")
+  }
+  testthat::skip("jsonlite not installed")
 }
 
 # The catalog is written by `hvtiR` as `{"jobs": [...]}`; an older local
@@ -74,7 +99,7 @@ ledger_rows <- function() {
 
 test_that("every taxonomy prefix has a roadmap row", {
   require_ledger()
-  skip_if_not_installed("jsonlite")
+  require_jsonlite()
 
   rows <- ledger_rows()
   in_ledger <- vapply(rows, function(r) r$prefix, character(1))
@@ -89,7 +114,7 @@ test_that("every taxonomy prefix has a roadmap row", {
 
 test_that("every roadmap row is a taxonomy prefix, unless it is intake", {
   require_ledger()
-  skip_if_not_installed("jsonlite")
+  require_jsonlite()
 
   rows <- ledger_rows()
   tx <- as.character(stats::na.omit(hvti_taxonomy()$prefix))
@@ -107,7 +132,7 @@ test_that("every roadmap row is a taxonomy prefix, unless it is intake", {
 
 test_that("an intake row names what it blocks on", {
   require_ledger()
-  skip_if_not_installed("jsonlite")
+  require_jsonlite()
 
   intake <- Filter(function(r) identical(r$status, "intake"), ledger_rows())
 

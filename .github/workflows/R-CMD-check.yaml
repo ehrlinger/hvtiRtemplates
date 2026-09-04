@@ -66,8 +66,7 @@ jobs:
       # cannot fail every pull request here. Only the one matrix leg that runs
       # the strict guard below needs it, so it is scoped to the same
       # condition; that also keeps the added checkout off the Windows and
-      # macOS legs, where the `run:` step's bash syntax would need `shell:
-      # bash` to work at all.
+      # macOS legs, which would fetch a catalog those legs never read.
       - uses: actions/checkout@v4
         if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
         with:

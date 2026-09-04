@@ -97,7 +97,11 @@ def check_schema(rows):
         # several job types under one prefix, so one row per prefix cannot
         # express the estate; two rows for the SAME pair still cannot both be
         # right. A prefix must be wholly qualified or wholly unqualified,
-        # checked below. See
+        # checked below. `rows` here is already filtered to this repo's
+        # destination (see the module docstring), so this only catches a
+        # mismatch among rows routed to hvtiRtemplates -- a prefix mixed
+        # across destinations would not be caught here. That is acceptable
+        # because this package only ever scaffolds its own templates. See
         # dev/specs/2026-09-02-dp-dc-decomposition-design.md, section 8.
         prefix = r.get("prefix")
         if prefix is not None:
@@ -111,7 +115,10 @@ def check_schema(rows):
     # A prefix half-decomposed is a state the ledger could describe and the
     # package would then refuse to use: .select_template() errors on a mixed
     # prefix, because its ambiguity message would offer an unqualified row
-    # that no caller can ask for. Catch it here, where it is cheaper.
+    # that no caller can ask for. Catch it here, where it is cheaper. Same
+    # scoping note as above: this only sees rows destined for this repo, so
+    # the guarantee is "wholly qualified or unqualified among hvtiRtemplates
+    # rows", not across the whole catalog.
     by_prefix = {}
     for r in rows:
         if r.get("prefix") is not None:
