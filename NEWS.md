@@ -1,3 +1,21 @@
+# hvtiRtemplates (unreleased)
+
+* **Copilot review credits are confirmed exhausted**, and `AGENTS.md` now says
+  so as fact rather than as a report. A re-request on
+  [#83](https://github.com/ehrlinger/hvtiRtemplates/pull/83) came back as a
+  review reading *"Copilot was unable to review this pull request because the
+  user who requested the review has reached their quota limit."*
+
+  The earlier note said an unanswered re-request is indistinguishable from a
+  slow bot. **That was wrong once the quota is hit**: Copilot posts a review
+  saying so, and the note now carries the one-line query that reads it. An
+  empty result still means slow or not-requested; a body containing "quota
+  limit" means the credits are gone.
+
+  Until October, a PR gets no automated reading at all, and with the approval
+  rule nobody can satisfy on their own PR, every merge reaches `main` unread.
+  Run `/code-review` locally before opening one and say so in the body.
+
 # hvtiRtemplates 1.1.0
 
 ## Breaking
