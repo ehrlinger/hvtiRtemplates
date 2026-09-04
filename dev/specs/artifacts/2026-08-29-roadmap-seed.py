@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """Seed the roadmap ledger from the taxonomy, the census and the job flow.
 
+The ledger this script seeded has since moved out of this repo, to the
+sibling package `ehrlinger/hvtiR`, at `inst/extdata/jobs.json`. This script
+still points at the old local path below and is NOT runnable as written; it
+is kept only as a historical record of how the ledger was first assembled.
+
+Original docstring follows.
+
 Kept rather than run-and-discarded, for the reason the macro-allocation scan is
 kept: a 42-row table assembled by hand from three sources is wrong in ways
 nobody can see, and a regenerable map can be checked against its sources.

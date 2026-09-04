@@ -5,9 +5,9 @@
 **Design:** `2026-08-29-template-conversion-roadmap-design.md`, which argues
 every decision recorded here. Read it before changing anything.
 
-The taxonomy names 42 analysis prefixes and three more are proposed. Four
+The taxonomy names 42 analysis prefixes and three more are proposed. Nine
 templates ship. This is the queue for the rest, and the ledger behind it is
-`artifacts/2026-08-29-template-roadmap.json`.
+`inst/extdata/jobs.json` in `ehrlinger/hvtiR`, not anything in this repo.
 
 ## How to read this
 
@@ -29,8 +29,10 @@ exemplars, which is a finding, not a gap.
 
 ## Changing this document
 
-Do not hand-edit the generated tables. Edit
-`artifacts/2026-08-29-template-roadmap.json`, then:
+Do not hand-edit the generated tables. The catalog moved out of this repo: it now lives at
+`inst/extdata/jobs.json` in `ehrlinger/hvtiR`. Editing the copy that used to live here does
+nothing, because the renderer no longer reads it. Edit the catalog in `hvtiR`, resolved either
+through the `HVTI_JOBS` environment variable or a sibling checkout (`../hvtiR`), then run:
 
 ```sh
 python3 dev/specs/artifacts/roadmap_render.py
@@ -41,11 +43,11 @@ row has no template on disk.
 
 <!-- BEGIN GENERATED -->
 
-> Generated from `artifacts/2026-08-29-template-roadmap.json` by
+> Generated from the job catalog in `hvtiR` (`inst/extdata/jobs.json`) by
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
-> edit the ledger and re-render. CI checks the agreement.
+> edit the catalog and re-render. CI checks the agreement.
 
-**51 templates in scope**, of which 9 exist on disk. 2 demoted to umbrella rows.
+**41 templates in scope**, of which 9 exist on disk. 0 demoted to umbrella rows.
 
 ## By family
 
@@ -76,15 +78,11 @@ row has no template on disk.
 
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `ce` | queued | 131 | 128 | 1 | — |
-| `cp` | queued | 5 | 4 | 1 | — |
 | `dp-gfup` | queued | — | 48 | — | — |
 | `dp-procs` | queued | — | 35 | — | — |
 | `dp-spaghetti` | queued | — | 40 | — | — |
 | `dp-trends` | queued | — | 80 | — | — |
 | `dp-variable` | queued | — | 237 | — | — |
-| `fp` | queued | 19 | 11 | 11 | — |
-| `gp` | queued | 50 | 50 | 2 | — |
 | `hp` | **revisit** | 557 | 541 | 16 | — |
 | `lp` | queued | 636 | 310 | 186 | — |
 | `mp` | queued | 82 | 41 | 4 | — |
@@ -102,19 +100,6 @@ row has no template on disk.
 | `dc-tables` | queued | — | 551 | — | — |
 | `lg` | queued | 367 | 362 | 0 | — |
 | `rg` | queued | 45 | 45 | 0 | — |
-
-### machine-learning (batch 5)
-
-| template | status | breadth | jobs | R exemplars | blocked on |
-|---|---|---|---|---|---|
-| `nb` | queued | 21 | 18 | 19 | — |
-| `rf` | ~~umbrella~~ | 47 | 41 | 42 | — |
-| `rfc` | queued | 19 | 11 | 12 | — |
-| `rfr` | *intake* | — | — | — | hvtiRutilities#taxonomy |
-| `rfs` | queued | 25 | 9 | 10 | — |
-| `rfsrc` | ~~umbrella~~ | 131 | 97 | 98 | — |
-| `sid` | *intake* | — | — | — | hvtiRutilities#taxonomy |
-| `vt` | *intake* | — | — | — | hvtiRutilities#taxonomy |
 
 ### models (batch 6)
 

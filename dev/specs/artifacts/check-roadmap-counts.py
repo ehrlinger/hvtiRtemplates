@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
-"""Fail if the roadmap ledger disagrees with the templates on disk.
+"""Fail if the job catalog disagrees with the templates on disk.
 
-The ledger (`2026-08-29-template-roadmap.json`) is authoritative for status,
-family and batch; `inst/templates/` is authoritative for what actually ships.
-This checks they agree, in both directions -- a ledger row claiming a template
-that is absent is a lie, and a template no row claims is a template nobody
-scheduled.
+The catalog is authoritative for status, family and batch; `inst/templates/`
+is authoritative for what actually ships. This checks they agree, in both
+directions -- a row claiming a template that is absent is a lie, and a
+template no row claims is a template nobody scheduled.
+
+The catalog itself no longer lives in this repo. It moved to the sibling
+package `hvtiR` (`inst/extdata/jobs.json`), which now owns every job type
+across the family and routes each one to the package that owes it. This
+script only cares about the rows routed here; `roadmap_render.load_catalog()`
+does both the path resolution and the routing filter, so both scripts share
+one copy of that logic instead of two that can drift.
 
 Deliberately does NOT read `hvti_taxonomy()`. That needs R, and this runs in a
 Python step. The vocabulary check lives in `tests/testthat/test-roadmap.R`,
@@ -14,13 +20,11 @@ that already has what it needs.
 
 Exit 0 = agree. Exit 1 = drift, with every mismatch listed.
 """
-import json
 import os
 import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LEDGER = os.path.join(HERE, "2026-08-29-template-roadmap.json")
 REPO = os.path.join(HERE, os.pardir, os.pardir, os.pardir)
 TEMPLATES = os.path.join(REPO, "inst", "templates")
 
@@ -33,7 +37,8 @@ KINDS = {"job", "meta"}
 FIELDS = ["prefix", "qualifier", "name", "folder", "family", "kind", "status",
           "batch", "sas_breadth", "sas_breadth_jobs", "r_exemplars",
           "r_jobs", "upstream",
-          "downstream", "workflows", "blocked_on", "spec", "note"]
+          "downstream", "workflows", "blocked_on", "spec", "note",
+          "disposition", "destination", "replaced_by"]
 
 # A row in one of these states asserts a template exists on disk. Every other
 # state asserts it does not. `revisit` counts as shipped: the file is there and
@@ -92,7 +97,11 @@ def check_schema(rows):
         # several job types under one prefix, so one row per prefix cannot
         # express the estate; two rows for the SAME pair still cannot both be
         # right. A prefix must be wholly qualified or wholly unqualified,
-        # checked below. See
+        # checked below. `rows` here is already filtered to this repo's
+        # destination (see the module docstring), so this only catches a
+        # mismatch among rows routed to hvtiRtemplates -- a prefix mixed
+        # across destinations would not be caught here. That is acceptable
+        # because this package only ever scaffolds its own templates. See
         # dev/specs/2026-09-02-dp-dc-decomposition-design.md, section 8.
         prefix = r.get("prefix")
         if prefix is not None:
@@ -106,7 +115,10 @@ def check_schema(rows):
     # A prefix half-decomposed is a state the ledger could describe and the
     # package would then refuse to use: .select_template() errors on a mixed
     # prefix, because its ambiguity message would offer an unqualified row
-    # that no caller can ask for. Catch it here, where it is cheaper.
+    # that no caller can ask for. Catch it here, where it is cheaper. Same
+    # scoping note as above: this only sees rows destined for this repo, so
+    # the guarantee is "wholly qualified or unqualified among hvtiRtemplates
+    # rows", not across the whole catalog.
     by_prefix = {}
     for r in rows:
         if r.get("prefix") is not None:
@@ -192,24 +204,23 @@ def check_doc(rows):
 
 
 def main():
-    # Encodings are pinned, as in the sibling checks: this runs on a CI runner
-    # whose locale is not ours to choose, and the ledger carries em dashes an
-    # ascii default would refuse outright.
-    with open(LEDGER, encoding="utf-8") as fh:
-        d = json.load(fh)
-    rows = d["prefixes"]
+    # Path resolution, key-name handling and the destination filter all live
+    # in roadmap_render.load_catalog(), so this script and the renderer read
+    # exactly the same rows in exactly the same way.
+    rows = roadmap_render.load_catalog()
 
     bad = check_schema(rows) + check_disk(rows) + check_doc(rows)
     if bad:
-        print("Roadmap ledger disagrees with the templates on disk:\n", file=sys.stderr)
+        print("Job catalog disagrees with the templates on disk:\n", file=sys.stderr)
         for b in bad:
             print(f"  - {b}", file=sys.stderr)
-        print("\nThe ledger is the map. Fix the ledger, or ship the template it\n"
+        print("\nThe catalog is the map. Fix the catalog, or ship the template it\n"
               "claims; do not delete the row to make the check pass.", file=sys.stderr)
         return 1
 
     shipped = sum(1 for r in rows if r["status"] in ON_DISK)
-    print(f"Ledger agrees with disk: {len(rows)} template rows, {shipped} on disk.")
+    print(f"Catalog agrees with disk: {len(rows)} template rows routed to "
+          f"hvtiRtemplates, {shipped} on disk.")
     return 0
 
 
