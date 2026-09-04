@@ -9,6 +9,13 @@
   number that describes nothing is not. 0.9.3's renamed bag columns do *not*
   affect these templates, which read `$boot$replicates` and rebuild the matrix
   themselves rather than reading `$boot$summary`.
+* **The reports also refuse a bag *produced* below 0.9.3.** The version guard
+  at the top of each one checks the `hvtiRbootstrap` installed where the report
+  renders, which is not the version that matters: the report reads a bag some
+  runner wrote earlier. A 0.9.2 bag survives 0.9.3's own documented migration,
+  passes `boot_validate()`, and would render an AIC-selected screen beneath the
+  entry and stay criteria it never used. `bag$engine` is now checked as well,
+  and an absent, `NA` or unparseable one is refused rather than crashed on.
 * **`bh` deliberately stays at `>= 0.9.0`.** Its screen comes from
   `TemporalHazard`, whose own stepwise has always honoured `slentry` and
   `slstay`; `hvtiRbootstrap` is only the reporting layer there. Raising it

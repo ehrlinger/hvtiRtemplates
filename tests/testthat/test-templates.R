@@ -316,6 +316,78 @@ test_that("the thin bootstrap templates read one screen, not pooled chunks", {
   }
 })
 
+# Pull the producer guard out of a template so it can be RUN, not just read.
+# Every other template test here is static source analysis, and a static test
+# could only assert that the words are present -- which would pass against a
+# guard with its comparison inverted. This one is worth executing.
+.producer_guard <- function(prefix) {
+  src <- readLines(template_path(prefix), warn = FALSE)
+  from <- grep('^\\.engine <- bag\\[\\["engine"\\]\\]', src)
+  if (!length(from)) return(NULL)
+  # Grow the block until it parses, rather than guessing where it ends. The
+  # guard contains an inner `} else {` at column zero, so "the first line
+  # starting with }" stops halfway through and yields a syntax error that
+  # looks like a broken test rather than a truncated extraction.
+  for (to in seq(from[[1L]], min(from[[1L]] + 40L, length(src)))) {
+    got <- tryCatch(parse(text = src[from[[1L]]:to]), error = function(e) NULL)
+    # Stop only once the block ENDS on the `if` that refuses the bag. Parsing
+    # is not enough on its own: the two assignments above it parse cleanly by
+    # themselves, and a block cut there evaluates without ever refusing
+    # anything, so every expect_error below would fail for the wrong reason.
+    if (!is.null(got) && length(got) >= 2L) {
+      last <- got[[length(got)]]
+      if (is.call(last) && identical(as.character(last[[1L]]), "if")) {
+        return(got)
+      }
+    }
+  }
+  NULL
+}
+
+test_that("bl, br and bc refuse a bag PRODUCED below 0.9.3", {
+  # The version guard at the top of each report checks the hvtiRbootstrap
+  # installed HERE. That is not the one that matters: the report reads a bag
+  # some runner wrote earlier, possibly under 0.9.2, where boot_select()
+  # recorded `sle` and `sls` and then selected on AIC regardless.
+  #
+  # Such a bag survives 0.9.3's own documented migration -- renaming
+  # boot$summary's `variable` to `parameter` -- and passes boot_validate(). It
+  # would then render an AIC-selected screen underneath the entry and stay
+  # criteria it never used, which is the single failure raising the floor was
+  # meant to prevent. Found in review of #85, after the floor raise alone had
+  # been called complete.
+  for (prefix in c("bl", "br", "bc")) {
+    guard <- .producer_guard(prefix)
+    expect_false(is.null(guard), info = paste(prefix, "has no producer guard"))
+
+    # NA and "" are in here because package_version(NA) does NOT error -- it
+    # returns a length-1 NA, and comparing that gives NA, which makes the
+    # guard's `if` crash rather than refuse. An unreadable engine field is the
+    # case to refuse, not the case to fall over on.
+    for (bad in list("0.9.2", "0.1.1", NULL, NA_character_, "", "garbage")) {
+      env <- new.env(parent = baseenv())
+      env$bag <- list(engine = bad)
+      expect_error(eval(guard, env), "0\\.9\\.3",
+                   info = paste(prefix, "accepted engine",
+                                if (is.null(bad)) "NULL" else bad))
+    }
+
+    env <- new.env(parent = baseenv())
+    env$bag <- list(engine = "0.9.3")
+    expect_silent(eval(guard, env))
+    env$bag <- list(engine = "0.10.0")
+    expect_silent(eval(guard, env))
+  }
+})
+
+test_that("bh has no producer guard, because its producer is TemporalHazard", {
+  # bh's screen comes from hzr_bootstrap(), whose own stepwise has always
+  # honoured slentry and slstay. bag$engine there is not an hvtiRbootstrap
+  # version at all, so a guard demanding >= 0.9.3 of it would refuse every
+  # valid hazard bag.
+  expect_null(.producer_guard("bh"))
+})
+
 test_that("DESCRIPTION's hvtiRbootstrap bound matches what the templates enforce", {
   # These two drifted apart for NINE releases. `hvtiRbootstrap (>= 0.1.1)`
   # entered DESCRIPTION at 1.0.13 while 04.05-bh.qmd's own guard demanded

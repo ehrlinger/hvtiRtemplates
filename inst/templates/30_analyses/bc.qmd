@@ -260,6 +260,40 @@ if (!file.exists(.single_file)) {
 }
 bag <- readRDS(.single_file)
 
+# THE GUARD ABOVE CHECKS THE RENDERER; THIS CHECKS THE PRODUCER, AND ONLY THIS
+# ONE MATTERS FOR THE PROVENANCE TABLE. `packageVersion()` says which
+# hvtiRbootstrap is installed HERE, but this report reads a bag some runner
+# wrote earlier -- possibly under 0.9.2, where boot_select() recorded `sle` and
+# `sls` and then selected on AIC anyway. Such a bag survives 0.9.3's own
+# documented migration (rename boot$summary's `variable` to `parameter`),
+# passes boot_validate(), and renders an AIC-selected screen underneath the
+# entry and stay criteria it never used -- which is the single failure this
+# floor was raised to prevent.
+#
+# bag$engine is the hvtiRbootstrap version that PRODUCED the bag. Absent is
+# refused too: a bag old enough not to record its engine is older still.
+# Present, single, non-NA and parseable, checked in that order. A bare
+# tryCatch(package_version()) is not enough: package_version(NA) yields a
+# length-1 NA rather than erroring, and `NA < "0.9.3"` is NA, so the `if`
+# would fail with "missing value where TRUE/FALSE needed" instead of
+# refusing the bag. An engine field that cannot be read is exactly the case
+# to refuse, so it must not be the case that crashes.
+.engine <- bag[["engine"]]
+.engine_v <- if (length(.engine) == 1L && !is.na(.engine)) {
+  tryCatch(package_version(.engine), error = function(e) NULL)
+} else {
+  NULL
+}
+if (is.null(.engine_v) || .engine_v < "0.9.3") {
+  stop("This bag was written by hvtiRbootstrap ",
+       if (is.null(.engine_v)) "(unrecorded)" else format(.engine_v),
+       ", and this report needs a screen produced by 0.9.3 or later. Below ",
+       "0.9.3 `sle` and `sls` were recorded and then ignored -- the screen ",
+       "selected on AIC -- so the provenance table below would name criteria ",
+       "it never used.\nRe-run the companion runner under 0.9.3 or later.",
+       call. = FALSE)
+}
+
 # Bound empty so the `save` chunk's overwrite guard has both names to compare
 # against. A logistic screen is not chunked by default; a chunked one is pooled
 # in the RUNNER, not here.
