@@ -47,7 +47,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**41 templates in scope**, of which 9 exist on disk.
+**40 templates in scope**, of which 9 exist on disk.
 
 ## By family
 
@@ -96,7 +96,6 @@ row has no template on disk.
 | `dc-dead` | queued | — | 171 | — | — |
 | `dc-general` | queued | — | 759 | — | — |
 | `dc-gfup` | queued | — | 389 | — | — |
-| `dc-stddiff` | queued | — | 59 | — | — |
 | `dc-tables` | queued | — | 551 | — | — |
 | `lg` | queued | 367 | 362 | 0 | — |
 | `rg` | queued | 45 | 45 | 0 | — |
@@ -147,11 +146,11 @@ Members: `ac`, `hm`, `hp`, `hs`, `hz`
 
 **Complete.**
 
-### propensity-matching — 2/10
+### propensity-matching — 2/9
 
-Members: `bd`, `bl`, `cm`, `dc-stddiff`, `hp`, `lm`, `lp`, `pm`, `rm`, `rp`
+Members: `bd`, `bl`, `cm`, `hp`, `lm`, `lp`, `pm`, `rm`, `rp`
 
-Outstanding: `bd`, `cm`, `dc-stddiff`, `lm`, `lp`, `pm`, `rm`, `rp`.
+Outstanding: `bd`, `cm`, `lm`, `lp`, `pm`, `rm`, `rp`.
 
 <!-- END GENERATED -->
 
