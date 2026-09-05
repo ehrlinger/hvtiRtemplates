@@ -188,11 +188,19 @@ def check_disk(rows):
     return bad
 
 
-def check_doc(rows):
-    """The document's tables must be exactly what the ledger renders."""
+def check_doc(rows, all_rows):
+    """The document's tables must be exactly what the ledger renders.
+
+    The workflow section now spans the whole catalog, not just the rows
+    routed here (see roadmap_render's module docstring), so `render()` needs
+    both lists: `rows` for the family view's scope line and tables, `all_rows`
+    for the workflow section. Passing only `rows` would compare the document
+    against a workflow section scoped to this repo, which is not what
+    `roadmap_render.py` actually writes.
+    """
     with open(roadmap_render.DOC, encoding="utf-8") as fh:
         text = fh.read()
-    want = roadmap_render.render(rows)
+    want = roadmap_render.render(rows, all_rows)
     i, j = text.find(roadmap_render.BEGIN), text.find(roadmap_render.END)
     if i < 0 or j < 0:
         return ["the roadmap document has lost its BEGIN/END GENERATED markers"]
@@ -206,10 +214,16 @@ def check_doc(rows):
 def main():
     # Path resolution, key-name handling and the destination filter all live
     # in roadmap_render.load_catalog(), so this script and the renderer read
-    # exactly the same rows in exactly the same way.
+    # exactly the same rows in exactly the same way. The schema and disk
+    # checks below stay scoped to this repo's rows -- a row owed elsewhere
+    # carries `status: null` and would fail the schema check outright, and
+    # this repo cannot be blamed for a template it was never asked to ship.
+    # `all_rows` exists only to reproduce the workflow section's wider view
+    # in check_doc().
     rows = roadmap_render.load_catalog()
+    all_rows = roadmap_render.load_catalog(all_rows=True)
 
-    bad = check_schema(rows) + check_disk(rows) + check_doc(rows)
+    bad = check_schema(rows) + check_disk(rows) + check_doc(rows, all_rows)
     if bad:
         print("Job catalog disagrees with the templates on disk:\n", file=sys.stderr)
         for b in bad:

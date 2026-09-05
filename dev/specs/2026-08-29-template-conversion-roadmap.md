@@ -138,7 +138,7 @@ row has no template on disk.
 
 ## By workflow
 
-A workflow is complete when every prefix in it is on disk.
+A workflow spans the whole family, not just this repo's rows: a member owed by another package still counts toward the denominator below, and is marked with the package that owes it. That member is complete when that package ships the function, which this repo cannot see, so its `disposition` stands in -- `retire` means the function already exists in the owning package, `build` means it does not yet.
 
 ### hazard-chain — 5/5
 
@@ -146,11 +146,11 @@ Members: `ac`, `hm`, `hp`, `hs`, `hz`
 
 **Complete.**
 
-### propensity-matching — 2/9
+### propensity-matching — 2/10
 
-Members: `bd`, `bl`, `cm`, `hp`, `lm`, `lp`, `pm`, `rm`, `rp`
+Members: `bd`, `bl`, `cm`, `dc-stddiff` (hvtiRutilities), `hp`, `lm`, `lp`, `pm`, `rm`, `rp`
 
-Outstanding: `bd`, `cm`, `lm`, `lp`, `pm`, `rm`, `rp`.
+Outstanding here: `bd`, `cm`, `lm`, `lp`, `pm`, `rm`, `rp`; owed by another package: `dc-stddiff` (hvtiRutilities).
 
 <!-- END GENERATED -->
 
