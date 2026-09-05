@@ -32,7 +32,7 @@ sys.path.insert(0, HERE)
 import roadmap_render  # noqa: E402  (path set immediately above)
 
 
-STATUSES = {"shipped", "revisit", "in-flight", "queued", "intake", "out-of-scope"}
+STATUSES = {"shipped", "revisit", "in-flight", "queued", "intake"}
 KINDS = {"job", "meta"}
 FIELDS = ["prefix", "qualifier", "name", "folder", "family", "kind", "status",
           "batch", "sas_breadth", "sas_breadth_jobs", "r_exemplars",

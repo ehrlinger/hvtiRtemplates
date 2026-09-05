@@ -106,7 +106,7 @@ FAMILY_ORDER = ["hazard-chain", "bootstrap", "bootstrap-ci", "plots", "descripti
 
 STATUS_MARK = {"shipped": "shipped", "revisit": "**revisit**",
                "in-flight": "*in flight*", "queued": "queued",
-               "intake": "*intake*", "out-of-scope": "~~umbrella~~"}
+               "intake": "*intake*"}
 
 
 def _label(r):
@@ -134,13 +134,12 @@ def render(rows):
            "> `artifacts/roadmap_render.py`. Do not hand-edit these tables —",
            "> edit the catalog and re-render. CI checks the agreement.", ""]
 
-    live = [r for r in rows if r["status"] != "out-of-scope"]
-    on_disk = [r for r in live if r["status"] in ("shipped", "revisit", "in-flight")]
+    on_disk = [r for r in rows if r["status"] in ("shipped", "revisit", "in-flight")]
     # "templates in scope", not "prefixes": a decomposed prefix contributes one
     # row per job type, so `dp` alone is seven of these. Counting rows and
     # calling them prefixes would overstate the vocabulary.
-    out += [f"**{len(live)} templates in scope**, of which {len(on_disk)} exist "
-            f"on disk. {len(rows) - len(live)} demoted to umbrella rows.",
+    out += [f"**{len(rows)} templates in scope**, of which {len(on_disk)} exist "
+            f"on disk.",
             ""]
 
     out += ["## By family", ""]
