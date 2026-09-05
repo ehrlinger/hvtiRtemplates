@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """Generate the roadmap document's tables from the job catalog.
 
-Two views of the same rows. The family view is how the work is BATCHED; the
-workflow view is what a study can actually RUN end to end. Family batching
-amortises the design spec across a family, but it delivers a cross-cutting
-workflow piecemeal -- propensity matching spans ten prefixes across five
-batches -- so the second view exists to make that visible early rather than at
-batch eight.
+Two views of the catalog, and they no longer share one row list. The family
+view is how the work is BATCHED, and stays filtered to the rows this repo
+owes -- that is the work a batch actually schedules. The workflow view is
+what a study can actually RUN end to end, and a workflow does not stop at
+this repo's border: propensity matching spans ten prefixes across five
+batches, and one of those ten is owed by hvtiRutilities, not here. Filtering
+the workflow view to this repo's rows would hide that member entirely rather
+than showing it as outstanding, which defeats the reason the view exists --
+to make a cross-cutting workflow's full shape visible early, not just the
+slice this repo ships. So the workflow view renders over every row in the
+catalog, and marks each row owed elsewhere with the package that owes it.
 
 Writes between `<!-- BEGIN GENERATED -->` and `<!-- END GENERATED -->` in
 `2026-08-29-template-conversion-roadmap.md`. Everything outside those markers is
@@ -72,8 +77,8 @@ def catalog_path():
     )
 
 
-def load_catalog():
-    """Load the catalog and return only the rows this repo is responsible for.
+def load_catalog(all_rows=False):
+    """Load the catalog and return the rows this repo is responsible for.
 
     `hvtiR` writes the catalog as `{"jobs": [...]}`; the old local ledger used
     `{"prefixes": [...]}`. Both are accepted so a stray old-shaped file still
@@ -82,9 +87,16 @@ def load_catalog():
     The catalog now covers every job type in the family, with a `destination`
     field saying which package owes it. A row destined for another package
     (`hvtiPlotR`, `ggRandomForests`, ...) is not this repo's business, and
-    counting it here would read as a template this repo failed to ship. Only
-    rows destined for `hvtiRtemplates`, or not yet routed (`destination`
-    absent or null), are kept.
+    counting it here would read as a template this repo failed to ship. By
+    default, only rows destined for `hvtiRtemplates`, or not yet routed
+    (`destination` absent or null), are kept -- this is what the family view
+    and `check-roadmap-counts.py`'s schema check both need, since a row owed
+    elsewhere carries `status: null`, which fails that schema check outright.
+
+    Pass `all_rows=True` to get every row regardless of destination. The
+    workflow view needs this: a cross-cutting workflow can include prefixes
+    owed by other packages, and hiding them understates what the workflow
+    actually needs before a study can run it end to end.
     """
     path = catalog_path()
     with open(path, encoding="utf-8") as fh:
@@ -98,6 +110,8 @@ def load_catalog():
             f"{path} has neither a top-level 'jobs' nor 'prefixes' key; "
             f"cannot tell what the row list is called."
         )
+    if all_rows:
+        return rows
     return [r for r in rows if r.get("destination") in (None, "hvtiRtemplates")]
 
 FAMILY_ORDER = ["hazard-chain", "bootstrap", "bootstrap-ci", "plots", "descriptive",
@@ -127,7 +141,20 @@ def _num(v):
     return "—" if v is None else str(v)
 
 
-def render(rows):
+def render(rows, workflow_rows=None):
+    """`rows` builds the scope line and the family view; `workflow_rows` builds
+    the workflow section.
+
+    Defaulting `workflow_rows` to `rows` keeps an existing single-argument
+    caller working unchanged -- `check-roadmap-counts.py`'s schema and disk
+    checks only ever see the filtered list, and passing just `rows` there
+    renders a workflow section scoped to this repo, matching the pre-fix
+    behaviour. The document itself is produced by `main()` below, which
+    passes the full catalog as `workflow_rows` so the workflow section can
+    see across the whole family.
+    """
+    if workflow_rows is None:
+        workflow_rows = rows
     out = [BEGIN, "",
            "> Generated from the job catalog in `hvtiR` "
            "(`inst/extdata/jobs.json`) by",
@@ -175,21 +202,55 @@ def render(rows):
         out.append("")
 
     out += ["## By workflow", "",
-            "A workflow is complete when every prefix in it is on disk.", ""]
+            "A workflow spans the whole family, not just this repo's rows: a member "
+            "owed by another package still counts toward the denominator below, and "
+            "is marked with the package that owes it. That member is complete when "
+            "that package ships the function, which this repo cannot see, so its "
+            "`disposition` stands in -- `retire` means the function already exists "
+            "in the owning package, `build` means it does not yet.", ""]
     wf = {}
-    for r in rows:
+    for r in workflow_rows:
         for w in r["workflows"]:
             wf.setdefault(w, []).append(r)
+
+    def elsewhere(r):
+        """A row this repo does not own: any destination other than ours or unrouted."""
+        return r.get("destination") not in (None, "hvtiRtemplates")
+
+    def is_done(r):
+        # A row owed elsewhere carries `status: null` -- reading it here would be
+        # reading a field this repo has no way to keep current. `disposition` is
+        # the field that answers "does the function exist", so elsewhere rows are
+        # judged on that instead, and `status` is never touched for them.
+        if elsewhere(r):
+            return r.get("disposition") == "retire"
+        return r["status"] in ("shipped", "revisit", "in-flight")
+
     for name in sorted(wf):
         members = sorted(wf[name], key=_label)
-        done = [r for r in members
-                if r["status"] in ("shipped", "revisit", "in-flight")]
-        short = [_label(r) for r in members if r not in done]
+        done = [r for r in members if is_done(r)]
+        outstanding = [r for r in members if r not in done]
+        here_short = [f"`{_label(r)}`" for r in outstanding if not elsewhere(r)]
+        elsewhere_short = [f"`{_label(r)}` ({r.get('destination')})"
+                           for r in outstanding if elsewhere(r)]
+        member_labels = [f"`{_label(r)}` ({r.get('destination')})" if elsewhere(r)
+                         else f"`{_label(r)}`" for r in members]
+        if not outstanding:
+            status_line = "**Complete.**"
+        else:
+            clauses = []
+            if here_short:
+                clauses.append("outstanding here: " + ", ".join(here_short))
+            if elsewhere_short:
+                clauses.append("owed by another package: " + ", ".join(elsewhere_short))
+            # Not `.capitalize()`: it lowercases the rest of the string, and a
+            # destination like `hvtiRutilities` would come out `hvtirutilities`.
+            joined = "; ".join(clauses)
+            status_line = joined[0].upper() + joined[1:] + "."
         out += [f"### {name} — {len(done)}/{len(members)}", "",
-                "Members: " + ", ".join(f"`{_label(r)}`" for r in members),
+                "Members: " + ", ".join(member_labels),
                 "",
-                ("**Complete.**" if not short else
-                 "Outstanding: " + ", ".join(f"`{p}`" for p in short) + "."),
+                status_line,
                 ""]
 
     out.append(END)
@@ -211,7 +272,11 @@ def splice(text, body):
 
 def main():
     rows = load_catalog()
-    body = render(rows)
+    # The workflow section needs every row in the catalog, not just this
+    # repo's, so a cross-cutting workflow's members owed elsewhere still show
+    # up instead of vanishing from the roster. See the module docstring.
+    all_rows = load_catalog(all_rows=True)
+    body = render(rows, all_rows)
     if "--check" in sys.argv:
         print(body)
         return 0
