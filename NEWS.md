@@ -11,6 +11,15 @@
   started no job at all and went green unverified -- the exact silent-drift
   failure this workflow's own header warns about, aimed at the guard being
   added.
+* 🔴 **It also rejects refs that are not immutable tag pins**, added after
+  review found the first version passed states it forbids: `ref: main` in both
+  workflows agrees with itself, and so does an empty `ref:`, and both resolve
+  to mutable default-branch behaviour. **Equality is not pinning.** An empty
+  `ref:` was the sharp edge — a missing `ref:` line yields `None` and was
+  always rejected, but `ref:` with nothing after it yields `""`, which is not
+  `None` and slipped through while the docstring claimed otherwise. A commit
+  SHA is immutable and still rejected: hvtiR's `jobs-pin-drift` compares these
+  against its newest *tag name*, so a SHA reads as permanently stale.
 * **Lagging hvtiR's newest tag is deliberately NOT a failure here.** That alarm
   belongs to hvtiR's `jobs-pin-drift`, on a schedule with a grace period;
   failing every pull request the moment hvtiR cuts a tag would redden reviews
