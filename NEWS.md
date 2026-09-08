@@ -1,5 +1,27 @@
 # hvtiRtemplates (unreleased)
 
+* **The job-catalog pin advances to `hvtiR` `v1.1.6`**, in both
+  `R-CMD-check.yaml` and `spec-counts.yaml`. They are pinned independently and
+  both must move; advancing one leaves the other validating against the old
+  catalog with its guards still green. `v1.1.5` predates the `si` and `mi`
+  imputation rows ([hvtiR#54](https://github.com/ehrlinger/hvtiR/pull/54)), so
+  until now `test-roadmap.R` was checked against a 53-row catalog while `hvtiR`
+  shipped 55.
+* **The roadmap document is regenerated against the new catalog**, which is
+  the half of a pin bump that is easy to miss. `dev/specs/2026-08-29-template-conversion-roadmap.md`
+  is rendered from the catalog, so advancing the pin without re-rendering
+  leaves a checked-in document contradicting the very catalog it was just
+  pointed at. 40 templates in scope becomes 42, with queued rows for `mi` and
+  `si`. ⚠️ Their "blocked on" cells differ and both are correct: `mi` is
+  blocked on `hvtiRimputation` because `impute_multiple()` is unbuilt, while
+  `si` is blocked on nothing because `impute_mean()` has shipped.
+* Reading the catalog by tag is still the right call -- a dependency would
+  invert the family, since `hvtiR` installs it, and tracking `main` would let
+  an edit there fail every pull request here. What was missing is that nothing
+  reported when the pin aged. `hvtiR` 1.1.6 adds that detector, and it now
+  reads these two files directly: it will not consider the family current
+  until both refs name its newest tag.
+
 * **`bl`, `br` and `bc` now require `hvtiRbootstrap >= 0.9.3`**, and the
   reason is not a missing function. Below 0.9.3, `boot_select()` recorded
   `sle` and `sls` on the screen and then selected on AIC regardless, so the
