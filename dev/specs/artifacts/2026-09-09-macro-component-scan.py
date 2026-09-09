@@ -33,7 +33,11 @@ unmounted. The output records which corpus it read.
 import argparse, collections, glob, json, os, re, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-MACRO_DIR = os.path.expanduser("~/Documents/macro.library")
+sys.path.insert(0, HERE)
+import macro_library_files
+# $MACROS first -- the same fileref SAS and the corpus use -- then the
+# workstation default. See macro_library_files.macro_dir().
+MACRO_DIR = macro_library_files.macro_dir()
 
 # ---------------------------------------------------------------- prefix owners
 #
@@ -109,9 +113,15 @@ def bodies(txt):
 
 
 def read_library():
-    files = sorted(glob.glob(f"{MACRO_DIR}/*.sas"))
+    # Denylist, NOT `*.sas`. This line read glob(f"{MACRO_DIR}/*.sas")
+    # on the emitter's first run (2026-09-09) and inherited the
+    # 2026-08-14 defect verbatim along with the reader: 176 files of
+    # 310. `kaplan` -- the shared house survival primitive -- has no
+    # `.sas` twin and was invisible to both. See
+    # ../2026-09-09-macro-library-coverage-erratum.md.
+    files = macro_library_files.source_files(MACRO_DIR)
     if not files:
-        sys.exit(f"FATAL: no .sas files under {MACRO_DIR}")
+        sys.exit(f"FATAL: no SAS source under {MACRO_DIR}")
     canon = {os.path.basename(f).lower(): os.path.basename(f) for f in files}
     fdefs, fcalls, fincs = {}, {}, {}
     for f in files:
@@ -145,9 +155,18 @@ def resolve_corpus(explicit):
         m = re.search(r'\son (/Volumes/[^ ]*qhs[^ ]*) ', line, re.I)
         if m:
             return m.group(1)
-    sys.exit("FATAL: qhsstudies share is not mounted and no --corpus given.\n"
-             "       Check `mount | grep -i qhs`. Pass --corpus ~/Documents/template\n"
-             "       for a dry run against the legacy template folder.")
+    # On the server the corpus is not a mount at all -- it is the local
+    # tree the workstation sees THROUGH that mount. Checking it after the
+    # mount scan keeps the workstation behaviour unchanged while letting the
+    # staged copy run with no arguments, which is how the other scans on
+    # /studies/general are run.
+    if os.path.isdir("/studies"):
+        return "/studies"
+    sys.exit("FATAL: no corpus found and no --corpus given.\n"
+             "       On a workstation: check `mount | grep -i qhs`.\n"
+             "       On the server: /studies does not exist.\n"
+             "       Pass --corpus ~/Documents/template for a dry run against\n"
+             "       the legacy template folder.")
 
 
 def job_prefix(basename):
