@@ -1,47 +1,65 @@
 # EDA templates: descriptive checking, data-checking graphics, goodness of follow-up
 
 **Date:** 2026-09-09
-**Status:** design, approved in session; implementation not started
-**Supersedes nothing.** Schedules six rows that
+**Status:** design. Two questions are open and named in section 8; the batch
+should not be scheduled in the catalog until they are answered.
+**Supersedes nothing.** Schedules rows that
 `2026-08-29-template-conversion-roadmap.md` placed in batches 3 and 4, both of
-which that document marks provisional and expects to be reordered as evidence
-arrives. Three of the six move batch; the other three are already where they
-need to be.
+which that document marks provisional. Answers the first open question in
+`2026-09-02-dp-dc-decomposition-design.md` section 10 only partially, and
+inherits the rest.
 
-## Why now
+## 1. Why now
 
-The biostats team's fellows training session (Teams, 2026-09-09) named the
+The biostats fellows training session (Teams, 2026-09-09) named the
 exploratory-data-analysis jobs as the material fellows should be taught first,
 before actuarial or hazard work. Ashley Lowry, at 54:12: "cover the templates
 that we have for these types of jobs, all the EDA stuff, that's relative
 specifically to R. So the postage stamps, some correlation plots, trend..."
 
-None of those templates exists. The engines behind most of them do.
+None of those templates exists in this package. Most of the engines do, but not
+the ones the first draft of this document claimed.
 
-## What was asked for, and what it maps to
+## 2. Read `replaced_by` before reading any package
 
-Six items were named. They map onto six rows that are **already in the job
-catalog**, so this batch needs no new prefix and no `hvti_taxonomy()` intake in
-`hvtiRutilities`.
+Every `dc` and `dp` row in the catalog carries `disposition: "thin"` and a
+populated `replaced_by` list naming the functions its template would be thin
+over. That is a machine-readable answer to "what is the engine for this row",
+and it is authoritative in a way that reading sibling `NAMESPACE` files is not.
+
+The first draft of this document was written from package exports and got two
+of six rows wrong. The list below is copied from the catalog.
+
+| row | folder | `replaced_by` |
+|---|---|---|
+| `dc-general` | descriptive | `hvtiRutilities::proc_contents`, `proc_means` |
+| `dc-tables` | descriptive | `hvtiRtables::hv_tbl_summary`, `hv_man_table`, `hv_man_table_save` |
+| `dc-gfup` | descriptive | `hvtiRutilities::proc_means` |
+| `dp-trends` | graphs | `hvtiPlotR::hv_trends` |
+| `dp-gfup` | graphs | `hvtiPlotR::hv_followup` |
+| `dp-variable` | distributions | `hvtiPlotR::hv_trends`, `hv_ordinal` |
+
+## 3. What was asked for, and what it maps to
+
+Six items were named. Five map onto existing catalog rows. **One does not**,
+which is the finding that changed this design.
 
 | asked for | row | jobs | engine | missing |
 |---|---|---|---|---|
-| Postage stamps | `dp-variable` | 237 | `hvtiPlotR::hv_eda()` | template |
+| `dc.general` | `dc-general` | 759 | `hvtiRutilities::proc_contents()`, `proc_means()` | template, if one is warranted at all (section 8) |
+| Tables, and correlation plots | `dc-tables` | 551 | `hvtiRtables::hv_tbl_summary()` | template, plus two functions |
+| Goodness of follow-up, summary | `dc-gfup` | 389 | `hvtiRutilities::proc_means()` | template |
 | Trend plots | `dp-trends` | 80 | `hvtiPlotR::hv_trends()` | template |
 | Goodness of follow-up, graph | `dp-gfup` | 48 | `hvtiPlotR::hv_followup()` | template |
-| Dc.General | `dc-general` | 759 | `hvtiRtables::hv_tbl_summary()` | template |
-| Tables, and correlation plots | `dc-tables` | 551 | `hv_tbl_summary()` | template, plus two functions |
-| Goodness of follow-up, summary | `dc-gfup` | 389 | `hv_followup()` covers the graph only | template, plus one function |
+| Postage stamps | **no row** | unmeasured | none | a row, a decision, and a template |
 
-2,064 jobs of corpus coverage behind six templates and three functions.
+`dc.general` is spelled as the fellows' list spells it. The row key is
+`dc-general` and the SAS job is `dc.general.*`; all three name one thing.
 
-### Correlation plots are a `dc-tables` job, not a `dp` graph job
-
-This is the finding that kept the batch inside the existing ledger.
+### 3.1 Correlation plots are a `dc-tables` job
 
 "Correlation plots" has no roadmap row, no taxonomy prefix, and no chapter in
-`hvtiGraphics`. The temptation is to read that as a gap and open a `new-prefix`
-intake. The corpus says otherwise. The exemplar is
+`hvtiGraphics`. The corpus places them. The exemplar is
 `/descriptive/dc.tables.ods_preoplabs_a1c.sas`, preserved in
 `~/Documents/macro.library/CorrTable.sas`, whose header reads "to obtain
 pairwise correlations between preop lab values and A1c within A1c groups". Its
@@ -53,130 +71,166 @@ proc corr data=built nosimple spearman pearson fisher(biasadj=no alpha=.32) plot
              PearsonCorr=corrp  FisherPearsonCorr=corrcip;
 ```
 
-Two artifacts come out of it: a **scatter-plot matrix** (`plots=matrix`) and a
-**table of pairwise coefficients with Fisher confidence intervals**. The job is
-filed under `/descriptive/` and named `dc.tables.*`. So correlation work is a
-variant inside `dc-tables`, recorded there as an `EDIT:` path, and not a
-seventh row.
+Two artifacts: a **scatter-plot matrix** (`plots=matrix`) and a **table of
+pairwise coefficients with Fisher confidence intervals**. The job is filed
+under `/descriptive/` and named `dc.tables.*`, so correlation work is a variant
+inside `dc-tables`, recorded there as an `EDIT:` path rather than a seventh row.
 
 ⚠️ `~/Documents/macro.library/CorrTable.sas` is two unrelated programs
-concatenated in one file. The first is `%STStable`, an STS observed-versus-
-expected table; the correlation program is the second, below it. The filename
-describes neither well. Read past the first header before concluding what that
-file is.
+concatenated. The first is `%STStable`, an STS observed-versus-expected table;
+the correlation program is the second, below it. The filename describes neither.
+Read past the first header before concluding what that file is.
 
 ⚠️ **`pool_collinear_pairs()` in `hvtiRutilities` is not this function.** It
 prunes bootstrap selection pools at a 0.99 threshold. It answers "which pair is
 so collinear that one must go", not "what is the correlation structure here",
-and reusing it for the EDA screen would silently discard everything below the
-threshold, which is the part an author is looking at.
+and reusing it would silently discard everything below the threshold, which is
+the part an author is looking at.
 
-### The table engine already exists
+### 3.2 `dc-tables`, not `dc-general`, is the `hv_tbl_summary()` row
 
-`hvtiRtables` 1.0.0 ships `hv_tbl_summary()`, and it is not a generic wrapper:
-it is written to the `%summarytable` SAS macro interface the biostats team
-already knows. `groups` is the macro's `LIST=`, doing double duty as display
-order and section headers; `continuous`, `binary` and `categorical` are `CON1=`,
-`CAT1=` and `CAT2=`; `compare` adds the trailing comparison column as
-`"pvalue"`, `"smd"`, `"both"`. `R/hv-sas-glossary.R` encodes the compute, shape
-and save stages of that lineage explicitly.
+`hvtiRtables` 1.0.0 ships `hv_tbl_summary()`, written to the `%summarytable`
+SAS macro interface the biostats team already knows: `groups` is the macro's
+`LIST=`, doing double duty as display order and section headers; `continuous`,
+`binary` and `categorical` are `CON1=`, `CAT1=` and `CAT2=`; `compare` adds the
+trailing comparison column as `"pvalue"`, `"smd"` or `"both"`.
+`R/hv-sas-glossary.R` encodes the compute, shape and save stages explicitly.
+`%summarytable` descends from Amanda Artis (2020), modifying Rocio Lopez's
+`%summtable` (2013), modifying Ryan Lennon's `%summary` (Mayo, 2009).
 
-`%summarytable` itself descends from Amanda Artis (2020), modifying Rocio
-Lopez's `%summtable` (2013), modifying Ryan Lennon's `%summary` (Mayo, 2009).
-`dc-general` is therefore a wiring job against a deliberate port, not a new
-build.
+⚠️ **That engine backs `dc-tables`, and the first draft of this document
+attached it to `dc-general`.** The catalog note on `dc-general` is explicit
+about the difference: "Base procs only (contents/means/freq), **no package
+dependency, which is what separates it from `tables`**." `dc-general` is a
+base-R QC job. Any design that gives it a `gtsummary` dependency has collapsed
+the one distinction the two rows exist to draw.
 
 ⚠️ **`corr` in `hvtiRtables` means CORR the group**, Cardiovascular Outcomes,
 Registries and Research, and never correlation. `hv-sas-glossary.R` keys every
 stage on `corr` versus `jtcvs` as the two manuscript destinations. A grep for
-correlation machinery in that package returns nothing but false positives. This
-is also why the new functions below are named `hv_correlation_*` in full.
+correlation machinery there returns nothing but false positives. This is why
+the new functions in section 6 are named `hv_correlation_*` in full.
 
-## Ledger changes
+### 3.3 Postage stamps have no row, and `dp` spans three folders
 
-The catalog is `inst/extdata/jobs.json` in `ehrlinger/hvtiR`, resolved through
-`HVTI_JOBS` or a sibling checkout. Nothing in this repo is the authority, and
-editing the copy that used to live here does nothing.
+This is the finding that stops the batch being scheduled today.
 
-1. `dc-general`, `dc-tables`, `dc-gfup`: `batch` 4 becomes **3**.
-2. `dp-variable`, `dp-trends`, `dp-gfup`: unchanged, already `batch` 3.
-3. `dc-tables` gains a `note` recording that pairwise correlation is in scope,
-   naming the exemplar above.
-4. Each row flips `status` to `shipped` as its template lands, not before.
+`2026-09-02-dp-dc-decomposition-design.md` section 7 records that **`dp` spans
+three folders while the ledger records `folder: graphs`**: `distributions/dp`
+is the 237-study per-variable job, `graphs/dp` is trends, spaghetti, procs and
+gfup, and `descriptive/` carries six live `dp` templates, named there as
+`DescriptiveSummary`, `EDA_barplots_scatterplots`, `descriptive.figures`,
+`gfup` and two variants. That design's section 9 enacted rows for `graphs/dp`
+and `distributions/dp`. **It enacted none for `descriptive/dp`**, and the six
+templates in that folder are therefore unrepresented in the catalog.
 
-⚠️ **`batch` is an integer, and must stay one.** The obvious spelling of this
-change is a new batch `"3a"`, isolating the six rows. It crashes the renderer.
-`roadmap_render.py` derives each family's label by sorting the set of batch
-values it contains (line 177) and sorts rows on `r["batch"] or 0` (line 196),
-so a `plots` family holding both `3` and `"3a"`, which is exactly what moving
-three of five `dp` rows produces, raises `TypeError: '<' not supported between
-instances of 'str' and 'int'`. Every value in the catalog today is an integer
-or `null`, so no string batch has ever been exercised. Batch 5 is a free
-integer slot, but it sorts after 4 and would say this work happens later, which
-is the opposite of the intent.
+The postage stamp is one of those six. The exemplar is
+`~/Documents/template/descriptive/templates/tp.dp.DescriptiveSummary.qmd`,
+which is already a Quarto file with a `format:` block, an
+`## ===== EDIT HERE BEFORE RUNNING =====` block that is the direct ancestor of
+`EDIT:` markers, a matching `## ---- DO NOT EDIT THIS SECTION ----`, and at
+line 195:
 
-Batch 3 therefore carries thirteen rows rather than isolating these six. That
-is a real loss of legibility, accepted because a batch is a family-scheduling
-unit and the wave table below is what actually orders the work. Three rows
-change, and nothing else moves.
+```r
+# postage stamp plot grid size
+ncol=4
+nrow=4
+```
 
-Then re-render, from this repo:
+It is parameterised by dataset, not by variable: `dta_filename`,
+`pref_time_var`, `pref_color_var`, `stratify_by`, `examine_cont_feature`, and
+the grid dimensions. One small panel per **variable**, across the whole
+dataset.
+
+⚠️ **It is not `dp-variable`.** That row is `distributions/dp`, is
+parameterised by variable rather than by dataset, and its `replaced_by` is
+`hv_trends` and `hv_ordinal`. Its own note records the measurement: 666 of
+1,271 job rows (52%) carry only the variable and no second field. A whole-
+dataset EDA grid is a different job, and filing it there would repeat the
+`dp`-is-one-thing error that the decomposition design exists to correct.
+
+⚠️ **No faceting constructor exists.** `hvtiGraphics` `postagestamp.qmd:27`
+says "hvtiPlotR 2.7.10 has no postage-stamp or faceting constructor, so we
+build this" from `ggplot2::facet_wrap()` and `theme_hv_manuscript()`. Confirmed
+still true at hvtiPlotR 2.7.13. `hv_eda()` classifies one variable's
+measurement scale and plots one panel; it does not arrange a grid.
+
+⚠️ **Two different pictures are called a postage stamp.** `postagestamp.qmd`
+facets one plot **by subgroup or era**. `tp.dp.DescriptiveSummary.qmd` tiles
+one panel **per variable**. The fellows' list means the second: it sits beside
+correlation and trend plots as a data-checking sweep over a new build. A design
+that ports the first has built the wrong thing.
+
+## 4. Ledger changes
+
+⚠️ **None yet.** The first draft of this document prescribed moving three `dc`
+rows to batch 3 and adding a note to `dc-tables`. That is held until section 8
+is answered, because the justification for the move was "four of six are wiring
+jobs" and that count did not survive section 2.
+
+When the move is made, the catalog is `inst/extdata/jobs.json` in
+`ehrlinger/hvtiR`, resolved through `HVTI_JOBS` or a sibling checkout. Nothing
+in this repo is the authority, and editing the copy that used to live here does
+nothing. Re-render from this repo afterwards:
 
 ```sh
 python3 dev/specs/artifacts/roadmap_render.py
 ```
 
-`check-roadmap-counts.py` enforces agreement in both directions, so a template
-on disk with no `shipped` row fails the PR exactly as a `shipped` row with no
-template does. Steps 1 to 3 land in one catalog PR before any template work;
-step 4 rides with each template's own PR.
+⚠️ **`batch` is an integer, and must stay one.** The obvious spelling of a
+pulled-forward batch is `"3a"`. It crashes the renderer. `roadmap_render.py`
+derives each family's label by sorting the set of batch values it contains
+(line 177) and sorts rows on `r["batch"] or 0` (line 196), so a `plots` family
+holding both `3` and `"3a"`, which is what moving three of five `dp` rows
+produces, raises `TypeError: '<' not supported between instances of 'str' and
+'int'`. Every value in the catalog today is an integer or `null`, so no string
+batch has ever been exercised. Batch 5 is a free integer slot but sorts after
+4, saying this work happens later, which is the opposite of the intent.
 
-Not moved: `dp-procs` and `dp-spaghetti` stay in batch 3 beside their moved
-siblings, and `dc-dead`, `lg` and `rg` stay in batch 4. They were not asked
-for.
+## 5. Sequencing
 
-## Sequencing
-
-Three waves. Waves 1 and 2 are template-only work in this repo and depend on
-nothing outside it. Wave 3 runs in **parallel** with them rather than after
-them, because its blocking work lives in other repositories and its templates
-are otherwise identical in shape to wave 2's.
+Provisional, and contingent on section 8.
 
 | wave | templates | blocked on |
 |---|---|---|
-| 1 | `dp-variable`, `dp-trends`, `dp-gfup` | nothing |
-| 2 | `dc-general` | nothing |
-| 3 | `dc-tables`, `dc-gfup` | the three functions below |
+| 1 | `dp-trends`, `dp-gfup` | nothing |
+| 2 | `dc-gfup`, and `dc-general` if warranted | nothing |
+| 3 | `dc-tables` | the two correlation functions |
+| 4 | postage stamps | a row, then a decision on the grid helper |
 
-Wave 1 first because it is unblocked and because a facet graph is the thing a
-fellow can read on a slide. Wave 2 next because `dc-general` at 759 jobs is the
-widest single row in the batch and exercises `hv_tbl_summary()` against a real
-template for the first time, which is where interface problems will surface if
-there are any.
+Wave 1 first because both rows are genuinely thin over shipped `hvtiPlotR`
+functions, and because a trend plot is the thing a fellow can read on a slide.
+Postage stamps move to the back despite being named first, which is the cost of
+their having no row.
 
-## The three new functions
+## 6. New functions
 
 Split by artifact type: a plot goes to the plotting package, a table to the
 tables package. The correlation job produces one of each, so it costs a
-cross-package pair. That is accepted, because the alternative puts a
-manuscript-output package in the business of drawing EDA scatter matrices, or
-puts confidence-interval statistics in a plotting package.
+cross-package pair. Accepted, because the alternative puts a manuscript-output
+package in the business of drawing EDA scatter matrices, or puts
+confidence-interval statistics in a plotting package.
 
 **These are specced by their owning repositories, not here.** This document
-records only the dependency and the shape the templates need.
+records the dependency and the shape the templates need.
 
 | function | package | shape |
 |---|---|---|
-| `hv_correlation_matrix()` | `hvtiPlotR` | scatter-plot matrix, mirroring `plots=matrix`. Returns an `hv_data`-classed object with a `sample_*_data()` companion, per that package's convention and beside `hv_eda()`. |
-| `hv_correlation_table()` | `hvtiRtables` | Spearman and Pearson coefficients with Fisher confidence intervals, mirroring `ods output SpearmanCorr` / `FisherSpearmanCorr` / `PearsonCorr` / `FisherPearsonCorr`. Must support stratification: the exemplar computes both overall and within `a1c_grp`. |
-| `hv_followup_table()` | `hvtiRtables` | the `dc-gfup` summary companion to `hv_followup()`'s graph. |
+| `hvtiPlotR::hv_correlation_matrix()` | hvtiPlotR | scatter-plot matrix, mirroring `plots=matrix`. Returns an `hv_data`-classed object with a `sample_*_data()` companion, per that package's convention. |
+| `hvtiRtables::hv_correlation_table()` | hvtiRtables | Spearman and Pearson coefficients with Fisher confidence intervals, mirroring `ods output SpearmanCorr` / `FisherSpearmanCorr` / `PearsonCorr` / `FisherPearsonCorr`. Must support stratification: the exemplar computes overall and within `a1c_grp`. |
 
 Names are spelled out rather than abbreviated to `hv_corr_*` because of the
-CORR collision noted above.
+CORR collision in section 3.2.
 
-## Per-template obligations in this repo
+⚠️ **`hv_followup_table()` was proposed in the first draft and is withdrawn.**
+`dc-gfup`'s `replaced_by` is `hvtiRutilities::proc_means`, so the summary it
+needs may already exist. Read that function against
+`~/Documents/template/descriptive/templates/tp.dc.gfup.sas` before proposing a
+new one.
 
-Each of the six templates carries, without exception:
+## 7. Per-template obligations in this repo
+
+Each template carries, without exception:
 
 - Its own **file key** in `.lintr`, never a directory key. A directory key
   excludes every linter on that path wholesale and silently.
@@ -195,7 +249,6 @@ Each of the six templates carries, without exception:
 Filenames, all qualified, because `dp` and `dc` are wholly-qualified prefixes:
 
 ```
-inst/templates/40_graphs/dp-variable.qmd
 inst/templates/40_graphs/dp-trends.qmd
 inst/templates/40_graphs/dp-gfup.qmd
 inst/templates/10_descriptive/dc-general.qmd
@@ -210,14 +263,40 @@ Jobs scaffold into the **bare** taxonomy folder, `graphs/` and `descriptive/`,
 carrying the qualifier as a fourth field: `new_job("dp", "dead_pa", "hz",
 qualifier = "trends")` writes `graphs/dead_pa-hz-dp-trends.qmd`.
 
-## The second-exemplar gate
+## 8. Open questions, blocking the ledger change
+
+**8.1 Does `dc-general` deserve a template at all?**
+`2026-09-02-dp-dc-decomposition-design.md` section 10 raised this and could not
+answer it: "759 studies and base procs only, so it is either the most valuable
+template here or too trivial to be worth one. The counts cannot say; reading
+two study exemplars can, **and the share was not mounted when this was
+written**." The share is mounted now, at `/Volumes/qhsstudies`. This is
+answerable today and should be answered before `dc-general` is scheduled.
+
+**8.2 Where do postage stamps go?**
+`descriptive/dp` has six live legacy templates and no catalog row. Three
+readings, none of them free:
+
+1. A new `dp` qualifier for the descriptive folder. Truest to the corpus, but
+   the row's `folder` field cannot express a prefix that spans three folders,
+   which is the ledger defect section 3.3 quotes rather than solves.
+2. A `dc` qualifier, on the grounds that the job is a descriptive sweep and
+   `dc` is the descriptive prefix. Cheapest, and mis-files a `dp`-named job.
+3. Out of scope for this batch, pending a decision on the three-folder `dp`
+   problem generally.
+
+The decision is the maintainer's. It is the reason postage stamps sit in wave 4
+of a batch that named them first.
+
+## 9. The second-exemplar gate
 
 `AGENTS.md` requires two studies to have exercised a shape before a template is
-added. Every row here clears it by a wide margin, the smallest being `dp-gfup`
-at 48 jobs. Nothing in this batch is gated, and no per-study count needs to be
-quoted to establish that.
+added. Every row with a measured count clears it by a wide margin, the smallest
+being `dp-gfup` at 48 jobs. Postage stamps are unmeasured, because the job type
+has no row to count; the six legacy templates in `descriptive/` are evidence of
+use but are not a study count.
 
-## Definition of done
+## 10. Definition of done
 
 Per template, and per `AGENTS.md`:
 
@@ -232,22 +311,33 @@ Per template, and per `AGENTS.md`:
   flow diagrams against the taxonomy. Neither is affected by this batch, so a
   failure in either is not a symptom of a missing catalog flip.
 
-⚠️ `/code-review` is run locally before each PR opens, and the PR body says so.
-Copilot's review quota is exhausted until October, confirmed 2026-09-03, so
-nothing else reads the diff: the ruleset's `copilot_code_review` rule does not
-block a merge, and the approval rule cannot be satisfied by its own author.
-
 ⚠️ `check-manual.yaml` does not run on `pull_request`. It is push-to-`main`,
 release and dispatch only. No template here is expected to touch Rd markup, but
-if one does, build the PDF manual locally before merging rather than trusting a
-green PR.
+if one does, build the PDF manual locally before merging.
 
-## Out of scope
+⚠️ **Copilot review credits are available again, measured 2026-09-09.**
+`AGENTS.md` records them as exhausted until October, confirmed 2026-09-03. PR
+#95 drew a substantive review the same day this was written. Treat the
+`AGENTS.md` paragraph as stale and re-measure rather than assuming either way:
 
-- `dp-procs`, `dp-spaghetti`, `dc-dead`, `lg`, `rg`. Not asked for; batches
-  unchanged.
-- The `dc-stddiff` standardized-difference member, which the roadmap already
-  assigns to `hvtiRutilities`, not here.
-- Multi-file templates. `dc-general` and `dc-tables` are single-file jobs, so
-  the runner-template gap that blocks `bh` and `hm` does not apply.
-- Any `hvti_taxonomy()` change. This batch deliberately needs none.
+```sh
+gh api --paginate repos/ehrlinger/hvtiRtemplates/pulls/<n>/reviews \
+  --jq '[.[] | select(.user.login | startswith("copilot"))] | last | .body'
+```
+
+A body containing "quota limit" means the credits are gone. Running
+`/code-review` locally before opening a PR remains the rule regardless, since
+Copilot reads only the diff: on PR #95 it returned two presentation nits and
+caught none of the three engine-mapping defects corrected in this revision,
+because those live in a catalog it never opened.
+
+## 11. Out of scope
+
+- `dp-procs`, `dp-spaghetti`, `dp-variable`, `dc-dead`, `lg`, `rg`. Not asked
+  for.
+- The `dc-stddiff` member, which the catalog assigns to `hvtiRutilities` with
+  `disposition: build`, not here.
+- The three-folder `dp` ledger defect in general. This document records it
+  where it blocks a decision and does not attempt to fix it.
+- Multi-file templates. Every row here is a single-file job, so the runner
+  gap that blocks `bh` and `hm` does not apply.
