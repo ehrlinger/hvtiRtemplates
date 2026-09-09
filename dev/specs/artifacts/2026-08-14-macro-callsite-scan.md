@@ -4,6 +4,14 @@ Generated 2026-08-14T16:39Z. Sources: `~/Documents/macro.library`
 (180 files) and `~/Documents/template/*/templates` (229 `tp.*.sas`,
 archives excluded). This is **evidence only** - no allocation is decided here.
 
+🔴 **ERRATUM 2026-09-09 — every count below is over 176 of the library's 281
+files.** The scan globs `macro.library/*.sas` and never opened the 105
+extensionless files, 58 of which define macros and 38 of which are call sites.
+`unreachable = 133` is inflated by unseen callers; the definition counts are
+short by unseen definitions. The "180 files" above is also unreconciled with the
+176 in `../2026-08-14-macro-allocation-design.md`. Held, not corrected — see
+[`../2026-09-09-macro-library-coverage-erratum.md`](../2026-09-09-macro-library-coverage-erratum.md).
+
 ## Method
 
 Three edge types, all followed transitively:
