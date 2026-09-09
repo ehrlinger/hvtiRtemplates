@@ -1,5 +1,27 @@
 # hvtiRtemplates (unreleased)
 
+* **A template's expected folder now comes from the job catalog, not from
+  `hvti_taxonomy()` alone.** The taxonomy maps a prefix to ONE folder, but a
+  prefix may span several: `dp` is `graphs` for `trends`, `gfup`, `spaghetti`
+  and `procs`, and `distributions` for `variable`. The old check asserted
+  `tl$folder == tx$folder[match(tl$prefix, tx$prefix)]`, so it would have
+  rejected `dp-variable` the moment anyone wrote it, and `dp-variable` is
+  already scheduled in batch 3. The catalog records `folder` per row, keyed on
+  `(prefix, qualifier)`, and is consulted first; the taxonomy answers for rows
+  the catalog does not have and whenever the catalog is absent. See
+  [#97](https://github.com/ehrlinger/hvtiRtemplates/issues/97).
+
+  ⚠️ **The fallback does not skip.** A missing catalog leaves the taxonomy
+  answering for every template rather than the check quietly passing, because
+  the taxonomy still catches a template filed under a folder no study uses,
+  which is most of this guard's value. A silently skipped guard is worse than
+  no guard.
+
+  The ledger helpers moved from `test-roadmap.R` to a new `helper-ledger.R`,
+  because testthat gives each test file its own environment and `test-taxonomy.R`
+  needs them too. A second copy of the path resolution was the alternative, and
+  a copied authority free to drift is what retired the `FOLDER_ORDINAL` guard.
+
 * **`spec-counts` now fails when the two hvtiR pins disagree with each other**
   (`tools/check_pin_currency.py`). `R-CMD-check.yaml` and `spec-counts.yaml`
   check the job catalog out independently, and advancing one while forgetting

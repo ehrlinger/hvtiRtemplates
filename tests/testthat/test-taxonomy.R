@@ -56,14 +56,27 @@ test_that("every template directory is <NN>_<taxonomy folder>", {
   expect_false(any(duplicated(substr(dirs, 1L, 2L))))
 })
 
-test_that("a template sits in the folder its prefix is filed under", {
+test_that("a template sits in the folder its row files it under", {
   # template_list() reads `folder` from the directory, so this is a real check
-  # and not a tautology: it catches a template filed somewhere the taxonomy does
-  # not put its prefix.
+  # and not a tautology: it catches a template filed somewhere neither the
+  # catalog nor the taxonomy puts it.
+  #
+  # ⭐ The expected folder came from `hvti_taxonomy()` alone until 2026-09-09.
+  # That map has ONE row per prefix, and a prefix may span folders: `dp` is
+  # `graphs` for trends/gfup/spaghetti/procs, `distributions` for `variable`,
+  # and a `descriptive` row is planned for the postage-stamp sweep. So the old
+  # form would have failed `dp-variable`, which is ALREADY scheduled in batch
+  # 3, the moment anyone wrote it. The job catalog carries `folder` per row,
+  # keyed on (prefix, qualifier), and is consulted first; the taxonomy answers
+  # for rows the catalog does not have and whenever the catalog is absent.
+  # See issue #97 and `dev/specs/2026-09-09-eda-templates-design.md` §8.3.
+  #
+  # The taxonomy is NOT the loser here: "every template directory is
+  # <NN>_<taxonomy folder>" above still forces every directory to name a
+  # folder the taxonomy has, so the catalog cannot invent one.
   tl <- template_list()
   skip_if(nrow(tl) == 0, "no templates installed")
-  tx <- hvti_taxonomy()
-  expect_equal(tl$folder, tx$folder[match(tl$prefix, tx$prefix)])
+  expect_equal(tl$folder, expected_template_folders(tl))
 })
 
 # ⭐ The ordinal was DROPPED ENTIRELY on 2026-09-03, so the history below is
