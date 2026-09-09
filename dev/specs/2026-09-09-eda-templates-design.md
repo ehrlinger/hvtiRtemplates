@@ -1,8 +1,8 @@
 # EDA templates: descriptive checking, data-checking graphics, goodness of follow-up
 
 **Date:** 2026-09-09
-**Status:** design. Two questions are open and named in section 8; the batch
-should not be scheduled in the catalog until they are answered.
+**Status:** design. Section 8.1 is ANSWERED, 2026-09-09, from two study
+exemplars. Section 8.2 remains open and blocks the catalog change.
 **Supersedes nothing.** Schedules rows that
 `2026-08-29-template-conversion-roadmap.md` placed in batches 3 and 4, both of
 which that document marks provisional. Answers the first open question in
@@ -46,7 +46,7 @@ which is the finding that changed this design.
 
 | asked for | row | jobs | engine | missing |
 |---|---|---|---|---|
-| `dc.general` | `dc-general` | 759 | `hvtiRutilities::proc_contents()`, `proc_means()` | template, if one is warranted at all (section 8) |
+| `dc.general` | `dc-general` | 759 | `hvtiRutilities::proc_contents()`, `proc_means()` | template; warranted, see section 8.1 |
 | Tables, and correlation plots | `dc-tables` | 551 | `hvtiRtables::hv_tbl_summary()` | template, plus two functions |
 | Goodness of follow-up, summary | `dc-gfup` | 389 | `hvtiRutilities::proc_means()` | template |
 | Trend plots | `dp-trends` | 80 | `hvtiPlotR::hv_trends()` | template |
@@ -194,7 +194,7 @@ Provisional, and contingent on section 8.
 | wave | templates | blocked on |
 |---|---|---|
 | 1 | `dp-trends`, `dp-gfup` | nothing |
-| 2 | `dc-gfup`, and `dc-general` if warranted | nothing |
+| 2 | `dc-general`, `dc-gfup` | nothing |
 | 3 | `dc-tables` | the two correlation functions |
 | 4 | postage stamps | a row, then a decision on the grid helper |
 
@@ -265,13 +265,79 @@ qualifier = "trends")` writes `graphs/dead_pa-hz-dp-trends.qmd`.
 
 ## 8. Open questions, blocking the ledger change
 
-**8.1 Does `dc-general` deserve a template at all?**
+**8.1 Does `dc-general` deserve a template at all? ANSWERED: yes.**
+
 `2026-09-02-dp-dc-decomposition-design.md` section 10 raised this and could not
 answer it: "759 studies and base procs only, so it is either the most valuable
 template here or too trivial to be worth one. The counts cannot say; reading
 two study exemplars can, **and the share was not mounted when this was
-written**." The share is mounted now, at `/Volumes/qhsstudies`. This is
-answerable today and should be answered before `dc-general` is scheduled.
+written**." The share is mounted now. Two exemplars were read on 2026-09-09,
+chosen to be as unlike each other as the corpus allows:
+
+| | exemplar A | exemplar B |
+|---|---|---|
+| study | `cardiac/general/dm_a1c` | `thoracic/lung/complications/po_afib` |
+| cohort | CCF 1999 to 2010, n=10,999 | CCF Jan 1998 to Aug 2002, n=99 |
+| lines | 360 | 177 |
+
+Different specialty, different decade, different author, two orders of
+magnitude apart in cohort size. **Both carry the same four-section skeleton,
+down to the spaced-capital banner comments**, which is not a shape two authors
+arrive at independently:
+
+```
+*                    O V E R A L L   S T A T I S T I C S                       ;
+  proc contents data=built;
+  proc means data=built n nmiss mean std min max sum;
+
+*                    C O N T I N G E N C Y   T A B L E S                       ;
+*             F O R   C A T E G O R I C A L  V A R I A B L E S                 ;
+  proc freq data=built; tables <grouped list> ; run;
+
+*                C U M U L A T I V E   D I S T R I B U T I O N S               ;
+*                 F O R   C O N T I N U O U S  V A R I A B L E S               ;
+  proc univariate data=built; id ccfid; var <grouped list> ; run;
+
+*              P A I R - W I S E   C O R R E L A T I O N S                     ;
+  proc corr nosimple rank data=built; var ; run;
+```
+
+Four further findings, each of which shapes the template:
+
+1. **The variable lists are grouped by a stable comment taxonomy**, and it is
+   the same taxonomy in both: `/* Demography */`, `/* Cardiac Comorbidity */`,
+   `/* Non-cardiac Comorbidity */`, `/* Procedure */`, `/* Time-related
+   Outcomes */`. That is the shape of `hv_tbl_summary()`'s `groups` argument.
+   `dc-general`'s **engine** is base procs, but its **variable-grouping
+   structure** is the same one `dc-tables` uses, which is what makes the pair
+   coherent rather than redundant.
+2. **Sections are wrapped in `%macro name; ... %mend;` and called at the
+   bottom** (`%freq; %cdfs;`), the SAS idiom for toggling a section on and off.
+   That is the direct ancestor of `EDIT:` markers and of the commented
+   scaffolding `commented_code_linter` is excluded for.
+3. **Exemplar B's `%macro corr` has an empty `var` list.** A section was copied
+   in and never filled. A skeleton that arrives unfilled is copied, not
+   written, which is the strongest available evidence that a template already
+   exists in practice and is simply not in this package.
+4. **Roughly two thirds of exemplar A is study-specific ad-hoc work sitting
+   above the skeleton**, and none of it generalises. The template should
+   scaffold the four sections and leave a marked, empty region for that work
+   rather than attempt to anticipate it.
+
+⚠️ **`id ccfid` is a patient identifier and must not be a default.** Both
+exemplars label extreme observations with `ccfid` so an author can look a case
+up, which is a real need. Exemplar A goes further: it prints `ccfid` for
+outlier ranges and exports two identified `.xlsx` files to the study root. The
+template carries this as an `EDIT:` with the reason stated, never switched on,
+and ships no export step at all.
+
+⚠️ **This also revises section 3.1.** Pairwise correlation is a section of the
+`dc.general` skeleton, `proc corr nosimple rank`, as well as a `dc.tables` job.
+The two are different: `dc-general`'s is a bare coefficient sweep, while the
+`dc-tables` exemplar adds `spearman pearson fisher(biasadj=no) plots=matrix`
+with ODS output. The fellows asked for correlation **plots**, so the
+`dc-tables` assignment stands, and `dc-general`'s template needs the plain
+section as a fourth banner.
 
 **8.2 Where do postage stamps go?**
 `descriptive/dp` has six live legacy templates and no catalog row. Three
