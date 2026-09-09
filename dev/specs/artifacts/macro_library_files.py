@@ -92,6 +92,28 @@ NON_SOURCE_RE = re.compile(
 )
 
 
+def describe_dir(path):
+    """A form of `path` safe to write into a tracked artifact.
+
+    This repository is PUBLIC and `tools/check-no-site-identifiers.sh` fails
+    the build on a committed developer home path. Reporting the scoping
+    basis beside a count is right, but the resolved path is the one part of
+    that basis nobody outside needs and CI will not accept: on a
+    workstation it is literally `/Users/<name>/...`.
+
+    So $HOME contracts to `~`, and anything still matching the guard's
+    class pattern degrades to its basename. What survives is what the
+    reader actually needs -- which library, reached how -- without the
+    account name.
+    """
+    home = os.path.expanduser("~")
+    if path == home or path.startswith(home + os.sep):
+        return "~" + path[len(home):]
+    if re.search(r"(/home/|/Users/|\\Users\\)[^/\\]+[/\\]", path):
+        return os.path.basename(path.rstrip("/\\"))
+    return path
+
+
 def source_files(macro_dir):
     """Top-level SAS source files in `macro_dir`, sorted, full paths.
 

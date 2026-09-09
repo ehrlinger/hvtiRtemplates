@@ -1,6 +1,7 @@
 {
   "corpus": {
-    "macro_dir": "/Users/ehrlinj/Documents/macro.library",
+    "macro_dir": "~/Documents/macro.library",
+    "macro_dir_from": "default",
     "picker": "denylist (macro_library_files.py), top level only",
     "macro_files_read": 310,
     "macro_files_sas_ext": 176,

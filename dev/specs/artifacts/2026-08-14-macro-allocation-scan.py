@@ -209,7 +209,9 @@ for _b, _rec in detail.items():
 
 # Scoping basis, reported beside the numbers rather than left implicit --
 # a count is only meaningful against its reference set.
-res = {"corpus": {"macro_dir": MACRO_DIR,
+res = {"corpus": {"macro_dir": macro_library_files.describe_dir(MACRO_DIR),
+                  "macro_dir_from": ("$MACROS" if os.environ.get("MACROS")
+                                     else "default"),
                   "picker": "denylist (macro_library_files.py), top level only",
                   "macro_files_read": len(files),
                   "macro_files_sas_ext": sum(1 for f in files
