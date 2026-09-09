@@ -6,7 +6,9 @@ import re, os, sys, glob, json, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import macro_library_files
 
-MACRO_DIR = os.path.expanduser("~/Documents/macro.library")
+# $MACROS first -- the same fileref SAS and the corpus use -- then the
+# workstation default. See macro_library_files.macro_dir().
+MACRO_DIR = macro_library_files.macro_dir()
 TPL_ROOT  = os.path.expanduser("~/Documents/template")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                    "2026-08-14-macro-allocation.json")

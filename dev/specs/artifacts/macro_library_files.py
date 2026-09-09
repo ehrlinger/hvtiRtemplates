@@ -1,4 +1,4 @@
-"""Which files in ~/Documents/macro.library are SAS source.
+"""Which files in the macro library are SAS source, and where the library is.
 
 Shared by 2026-08-14-macro-allocation-scan.py and
 2026-09-09-macro-component-scan.py so the two cannot drift apart on the
@@ -32,6 +32,41 @@ in the artifacts rather than silently absent.
 """
 import os
 import re
+import sys
+
+# Default for a workstation checkout. The server sets $MACROS.
+DEFAULT_MACRO_DIR = "~/Documents/macro.library"
+
+
+def macro_dir():
+    """Where the macro library is, `$MACROS` first.
+
+    `MACROS` is not an invented name: it is the SAS fileref the corpus
+    itself uses, and the one this scan's own `%inc` reader parses out of
+    `filename ref "!MACROS/<file>.sas"`. So a job, a SAS session and this
+    scan all resolve the library through the same variable, and a server
+    that has already set it for SAS needs no second setting for us.
+
+    Falls back to the workstation path so a local run still works with
+    nothing exported. A `$MACROS` that is set but does not exist is a hard
+    error rather than a fallback: silently reading a different library than
+    the operator asked for is the failure this whole module exists to stop.
+    """
+    env = os.environ.get("MACROS")
+    if env:
+        path = os.path.expanduser(os.path.expandvars(env))
+        # SAS filerefs are sometimes written with a trailing separator or as
+        # a concatenation ("(a b)"); neither is a directory this can read.
+        if not os.path.isdir(path):
+            sys.exit(
+                f"FATAL: $MACROS is set to {env!r}, which is not a readable "
+                f"directory.\n"
+                f"       Resolved to: {path}\n"
+                f"       Unset it to fall back to {DEFAULT_MACRO_DIR}, or "
+                f"point it at the library root."
+            )
+        return path
+    return os.path.expanduser(DEFAULT_MACRO_DIR)
 
 # Suffixes that never hold SAS source: logs, listings, documents, binary data
 # sets, and numbered RCS backups (`kaplan.~1.1.1.1.~`). A trailing `~` is
@@ -89,7 +124,8 @@ def excluded_dirs(macro_dir):
 
 
 if __name__ == "__main__":
-    d = os.path.expanduser("~/Documents/macro.library")
+    d = macro_dir()
+    print("library:", d)
     fs = source_files(d)
     ext = sum(1 for f in fs if f.lower().endswith(".sas"))
     print(f"{len(fs)} source files ({ext} .sas, {len(fs) - ext} other)")
