@@ -17,6 +17,16 @@
   which is most of this guard's value. A silently skipped guard is worse than
   no guard.
 
+  ⚠️ **The change had no CI coverage when it was first pushed, and ten green
+  checks said otherwise.** `R-CMD-check.yaml`'s strict step ran
+  `filter = "roadmap"`, so `test-taxonomy.R` executed only inside `R CMD
+  check`, where the catalog is always absent and the new lookup always took
+  the taxonomy fallback. The filter is now `roadmap|taxonomy`, and five tests
+  drive the lookup against a temporary catalog so the catalog-first branch is
+  asserted rather than merely executed. A test filter naming one file silently
+  decides which code paths CI exercises; widen it whenever a test starts
+  reading the catalog.
+
   The ledger helpers moved from `test-roadmap.R` to a new `helper-ledger.R`,
   because testthat gives each test file its own environment and `test-taxonomy.R`
   needs them too. A second copy of the path resolution was the alternative, and

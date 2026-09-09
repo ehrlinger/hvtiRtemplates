@@ -102,3 +102,104 @@ test_that("a template sits in the folder its row files it under", {
 # check is its own `FOLDER_ORDINAL` map, which is hardcoded; that check needs
 # `hvti_taxonomy()` and so lives in R, in `test-roadmap.R`. See
 # "the guard's folder map still matches the taxonomy" there.
+
+# ⭐ Coverage for the catalog-first folder lookup itself, added 2026-09-09.
+#
+# The check above runs the lookup, but every template shipped today is in the
+# folder `hvti_taxonomy()` names, so catalog and taxonomy agree and the two
+# branches are indistinguishable from its result. A regression to taxonomy-only
+# would keep it green. These tests are the ones that would go red, and they
+# drive the lookup with a temporary catalog rather than the real one so they do
+# not go stale when the real catalog is edited.
+
+# Write `rows` as a catalog to a temp file and point HVTI_JOBS at it for the
+# duration of `code`. Base R rather than withr: this package does not Suggest
+# it, and adding a dependency to reach one helper is a poor trade.
+with_temp_catalog <- function(rows, code) {
+  # Qualified, as `testthat::skip()` is in helper-ledger.R: lintr's
+  # object_usage_linter does not resolve bare testthat verbs here.
+  testthat::skip_if_not_installed("jsonlite")
+  path <- tempfile(fileext = ".json")
+  writeLines(jsonlite::toJSON(list(jobs = rows), auto_unbox = TRUE), path)
+  old <- Sys.getenv("HVTI_JOBS", unset = NA)
+  Sys.setenv(HVTI_JOBS = path)
+  on.exit({
+    if (is.na(old)) Sys.unsetenv("HVTI_JOBS") else Sys.setenv(HVTI_JOBS = old)
+    unlink(path)
+  }, add = TRUE)
+  force(code)
+}
+
+# One template row as template_list() would report it.
+.tl <- function(prefix, qualifier, folder) {
+  data.frame(prefix = prefix, qualifier = qualifier, folder = folder,
+             stringsAsFactors = FALSE)
+}
+
+test_that("the catalog's folder wins over the taxonomy's", {
+  # `dp` is `graphs` in the taxonomy. A row filing it under `descriptive` must
+  # be believed, or a descriptive/dp template can never ship.
+  rows <- list(list(prefix = "dp", qualifier = "postage",
+                    folder = "descriptive", destination = "hvtiRtemplates"))
+  with_temp_catalog(rows, {
+    got <- expected_template_folders(.tl("dp", "postage", "descriptive"))
+    expect_identical(got, "descriptive")
+    expect_false(identical(got, "graphs"))
+  })
+})
+
+test_that("a template with no catalog row falls back to the taxonomy", {
+  rows <- list(list(prefix = "dp", qualifier = "postage",
+                    folder = "descriptive", destination = "hvtiRtemplates"))
+  with_temp_catalog(rows, {
+    # `ac` is absent from this catalog, so the taxonomy answers: distributions.
+    expect_identical(expected_template_folders(.tl("ac", NA_character_, "x")),
+                     "distributions")
+  })
+})
+
+test_that("a row for another package cannot shadow ours", {
+  # Same pair, two destinations, different folders. Filtering to this repo is
+  # what makes the answer deterministic; without it `match()` would return
+  # whichever row came first and report nothing.
+  rows <- list(
+    list(prefix = "dp", qualifier = "postage", folder = "graphs",
+         destination = "hvtiPlotR"),
+    list(prefix = "dp", qualifier = "postage", folder = "descriptive",
+         destination = "hvtiRtemplates")
+  )
+  with_temp_catalog(rows, {
+    expect_identical(expected_template_folders(.tl("dp", "postage", "descriptive")),
+                     "descriptive")
+  })
+})
+
+test_that("a duplicated pair stops rather than picking the first row", {
+  rows <- list(
+    list(prefix = "dp", qualifier = "postage", folder = "descriptive",
+         destination = "hvtiRtemplates"),
+    list(prefix = "dp", qualifier = "postage", folder = "graphs",
+         destination = "hvtiRtemplates")
+  )
+  with_temp_catalog(rows, {
+    expect_error(expected_template_folders(.tl("dp", "postage", "descriptive")),
+                 "more than one row.*dp-postage")
+  })
+})
+
+test_that("an absent qualifier does not collide with one spelled 'NA'", {
+  # paste() renders NA as the three characters "NA", so a naive key would give
+  # these two rows the same identity and one would silently shadow the other.
+  rows <- list(
+    list(prefix = "dp", qualifier = NULL, folder = "graphs",
+         destination = "hvtiRtemplates"),
+    list(prefix = "dp", qualifier = "NA", folder = "descriptive",
+         destination = "hvtiRtemplates")
+  )
+  with_temp_catalog(rows, {
+    expect_identical(expected_template_folders(.tl("dp", NA_character_, "graphs")),
+                     "graphs")
+    expect_identical(expected_template_folders(.tl("dp", "NA", "descriptive")),
+                     "descriptive")
+  })
+})
