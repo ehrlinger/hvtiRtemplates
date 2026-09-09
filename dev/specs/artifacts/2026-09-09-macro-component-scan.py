@@ -39,6 +39,12 @@ import macro_library_files
 # workstation default. See macro_library_files.macro_dir().
 MACRO_DIR = macro_library_files.macro_dir()
 
+# Distinct studies below which a corpus is a sample, not the population.
+# The template dry run yields a handful; the studies corpus yields thousands.
+# Set well below the real figure so a partial mount is still caught, and well
+# above anything the template folder can produce.
+MIN_POPULATION_STUDIES = 50
+
 # ---------------------------------------------------------------- prefix owners
 #
 # NOT hvtiR's jobs.json. That catalog's `destination` is who owes the TEMPLATE
@@ -530,16 +536,37 @@ def main():
     denom = sorted(r["n_studies"] for r in detail.values()
                    if r["destination"] and r["is_component_root"])
     med = denom[len(denom) // 2] if denom else 0
-    provisional = (med < 3) or ("qhs" not in root_dir.lower())
+
+    # "Is this the population?" is a question about what was READ, not about
+    # what the path is called.
+    #
+    # This tested `"qhs" not in root_dir.lower()` until 2026-09-09 -- the
+    # WORKSTATION mount name. On the server the same corpus is /studies, so
+    # the first real run stamped itself "OTHER -- dry run, not the
+    # population" after walking 215,708 job files across 1,000+ studies. The
+    # heuristic failed at the one place the real run happens, which is the
+    # only place it mattered.
+    #
+    # The structural difference is the study count. The template dry run is
+    # one flat folder of 244 files and yields a handful of studies; the
+    # population yields thousands. That is also the quantity the vote
+    # actually rests on, so it is the honest thing to gate on.
+    n_studies = len({sid for sids in pre_studies.values() for sid in sids})
+    thin_corpus = n_studies < MIN_POPULATION_STUDIES
+    provisional = (med < 3) or thin_corpus
     trust = {
         "allocation_provisional": provisional,
         "median_studies_per_allocated_component": med,
         "max_studies_per_allocated_component": denom[-1] if denom else 0,
         "n_components_voted_by_one_study": sum(1 for d in denom if d <= 1),
+        "distinct_studies": n_studies,
+        "population_threshold": MIN_POPULATION_STUDIES,
         "reason": ("read the machinery, not the allocation: "
                    + ("; ".join(filter(None, [
                        "median vote denominator < 3 studies" if med < 3 else "",
-                       "corpus is not the studies share" if "qhs" not in root_dir.lower() else "",
+                       f"only {n_studies} distinct studies, below the "
+                       f"{MIN_POPULATION_STUDIES} that separates the "
+                       f"population from a dry run" if thin_corpus else "",
                    ]))) if provisional else "vote denominator is adequate"),
     }
 
@@ -565,8 +592,8 @@ def main():
     res = {
         "_provenance": {
             "generated_by": os.path.basename(__file__),
-            "corpus_root_kind": ("studies" if "qhs" in root_dir.lower()
-                                 else "OTHER -- dry run, not the population"),
+            "corpus_root_kind": ("population" if not thin_corpus
+                                 else "THIN -- dry run, not the population"),
             "rule": "dominator components; direct-edge majority on distinct studies",
             "seed_edges": a.seed,
             "identifiers": "counts only. No path, study name, filename stem or "
