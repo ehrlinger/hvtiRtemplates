@@ -4,12 +4,25 @@ Generated 2026-08-14T16:39Z. Sources: `~/Documents/macro.library`
 (180 files) and `~/Documents/template/*/templates` (229 `tp.*.sas`,
 archives excluded). This is **evidence only** - no allocation is decided here.
 
-🔴 **ERRATUM 2026-09-09 — every count below is over 176 of the library's 281
-files.** The scan globs `macro.library/*.sas` and never opened the 105
-extensionless files, 58 of which define macros and 38 of which are call sites.
-`unreachable = 133` is inflated by unseen callers; the definition counts are
-short by unseen definitions. The "180 files" above is also unreconciled with the
-176 in `../2026-08-14-macro-allocation-design.md`. Held, not corrected — see
+🔴 **ERRATUM 2026-09-09 — every count below is over 176 of the library's 310
+top-level source files, and these numbers are STILL UNCORRECTED.** The scan read
+`macro.library/*.sas`, never opening 105 extensionless files (58 defining
+macros) or 29 dot-named ones. Both other scans were fixed and re-run on
+2026-09-09; **this artifact was not, because no script for it survives** — it is
+dated evidence with no regenerating source, so its `reachable = 137` /
+`unreachable = 133` / `270 names` cannot be re-derived, only replaced.
+
+Two specifics, since the figures are still in circulation:
+
+- `kaplan` appears in the validation table below as "4 packages, shared". That
+  conclusion was right, and the fixed scan now allocates it to
+  `hvtiRutilities` — but it was reached about a file this scan could not open.
+- The **"180 files"** above is unreconciled with the 176 that
+  `../2026-08-14-macro-allocation-design.md` reported for the same directory on
+  the same day. Neither figure is the library, which holds 310.
+
+Treat this document as a record of the 2026-08-14 method, not as a source of
+counts. See
 [`../2026-09-09-macro-library-coverage-erratum.md`](../2026-09-09-macro-library-coverage-erratum.md).
 
 ## Method
