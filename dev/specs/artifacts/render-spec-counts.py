@@ -109,15 +109,24 @@ def main():
                       f"span **{xd['n_package_pairs']}** package pairs", spec)
     edits += n
 
-    w = max(len(e["dependent"]) for e in xd["edges"])
-    w2 = max(len(e["dependency"]) for e in xd["edges"])
-    # The count is NOT padded inside the parens. check-spec-counts.py reads
-    # these edges back with `\((\d+)\)`, which does not match `( 8)`, so a
-    # right-aligned number makes the block parse as three edges instead of six
-    # -- a renderer that silently defeats its own checker.
-    block = "\n".join(
-        f"{e['dependent']:<{w}}  -> {e['dependency']:<{w2}}  ({e['n']})"
-        for e in sorted(xd["edges"], key=lambda e: -e["n"]))
+    # An empty edge list is a legitimate map -- an allocation where nothing
+    # crosses a package boundary -- and max() raises ValueError on it, which
+    # would crash the renderer BEFORE it writes, leaving the spec unsynced
+    # behind a traceback. check-spec-counts.py handles the empty case, so
+    # this must too.
+    if xd["edges"]:
+        w = max(len(e["dependent"]) for e in xd["edges"])
+        w2 = max(len(e["dependency"]) for e in xd["edges"])
+        # The count is NOT padded inside the parens. check-spec-counts.py
+        # reads these edges back with `\((\d+)\)`, which does not match
+        # `( 8)`, so a right-aligned number makes the block parse as three
+        # edges instead of six -- a renderer that silently defeats its own
+        # checker.
+        block = "\n".join(
+            f"{e['dependent']:<{w}}  -> {e['dependency']:<{w2}}  ({e['n']})"
+            for e in sorted(xd["edges"], key=lambda e: -e["n"]))
+    else:
+        block = "(none -- no dependency crosses a package boundary)"
     spec, n = re.subn(r"(package pairs.*?```\n).*?(```)", 
                       lambda m: m.group(1) + block + "\n" + m.group(2),
                       spec, flags=re.S)

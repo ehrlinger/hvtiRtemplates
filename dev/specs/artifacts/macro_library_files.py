@@ -3,7 +3,7 @@
 Shared by 2026-08-14-macro-allocation-scan.py and
 2026-09-09-macro-component-scan.py so the two cannot drift apart on the
 question of what the library IS. Both previously globbed `*.sas` and read
-176 of the top level's 281 files; see
+176 of the top level's 310 source files; see
 ../2026-09-09-macro-library-coverage-erratum.md.
 
 Discovery is a DENYLIST, not a `*.sas` allowlist, for two reasons measured
@@ -25,7 +25,9 @@ two in step: if one changes, change both, or the R and Python answers to
 
 Scope is the TOP LEVEL ONLY. The nine subdirectories -- `archive/`,
 `tests/`, `macros_to_test/`, `repeat_test/` and the rest -- hold a further
-79 `.sas` files and are deliberately out of scope. They are not the library
+163 source files under this same rule, and are deliberately out of scope.
+(79 of those end in `.sas`; quoting that figure was the extension
+assumption again, one directory down.) They are not the library
 corpus, and including them would change what "library-only" MEANS rather
 than correct it. `excluded_dirs()` reports them so the exclusion is visible
 in the artifacts rather than silently absent.
@@ -57,11 +59,21 @@ def macro_dir():
         path = os.path.expanduser(os.path.expandvars(env))
         # SAS filerefs are sometimes written with a trailing separator or as
         # a concatenation ("(a b)"); neither is a directory this can read.
-        if not os.path.isdir(path):
+        #
+        # The check LISTS the directory rather than asking os.path.isdir(),
+        # which answers a different question: isdir() is true of a directory
+        # this process cannot open, and the failure then surfaces from the
+        # first source_files() call as a bare PermissionError traceback
+        # instead of the message below. On a share with its own auth that is
+        # the likely failure, not a typo in the path.
+        try:
+            os.listdir(path)
+        except OSError as exc:
             sys.exit(
                 f"FATAL: $MACROS is set to {env!r}, which is not a readable "
                 f"directory.\n"
                 f"       Resolved to: {path}\n"
+                f"       {type(exc).__name__}: {exc.strerror or exc}\n"
                 f"       Unset it to fall back to {DEFAULT_MACRO_DIR}, or "
                 f"point it at the library root."
             )

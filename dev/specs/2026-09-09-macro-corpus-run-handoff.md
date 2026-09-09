@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-09
 **Repo:** hvtiRtemplates
-**Status:** emitter written and merged-pending on [#93](https://github.com/ehrlinger/hvtiRtemplates/pull/93). **No allocation has been produced.** The only run so far is a dry run against `~/Documents/template`, and it labels itself `PROVISIONAL`.
+**Status:** emitter merged on [#93](https://github.com/ehrlinger/hvtiRtemplates/pull/93); the library picker it reads through is fixed on [#94](https://github.com/ehrlinger/hvtiRtemplates/pull/94). **No allocation has been produced.** The only run so far is a dry run against `~/Documents/template`, and it labels itself `PROVISIONAL`.
 **Origin:** John, 2026-09-09: *"Do I need a similar studies crawl to determine what macros belong in each of the hvtiR packages?"* then *"direct-edge majority, component moves as a unit"*, *"dominator-based"*, and *"I want to know where macros and templates will land … the final catalog is something we're tracking as backlog work as well."*
 **Priority:** item 1 below comes **before** the corpus run. It invalidates the input the run reads.
 
@@ -10,12 +10,18 @@
 
 ---
 
-## 1. 🔴 Do this first: the library glob reads 176 of 281 files
+## 1. ✅ Done first: the library glob read 176 of 310 files
+
+**Fixed 2026-09-09 on [#94](https://github.com/ehrlinger/hvtiRtemplates/pull/94);
+kept here as the finding that led the run.** Both scans now use a shared
+denylist picker and read all 310.
 
 `2026-09-09-macro-component-scan.py` and `2026-08-14-macro-allocation-scan.py`
-both read `~/Documents/macro.library/*.sas`. That is **176 files**. The
-directory also holds **105 extensionless files**, which neither scan has ever
-opened. Measured 2026-09-09:
+both read `~/Documents/macro.library/*.sas`. That is **176 files** of the top
+level's **310 SAS source files** (346 files in all). The directory also holds
+**105 extensionless files** and **29 dot-named ones** — `kaplan.int`,
+`lm.cprobs`, `plot.compile` — which neither scan had ever opened. Measured
+2026-09-09:
 
 | File | Finding |
 |---|---|
@@ -29,7 +35,7 @@ least one macro exists **only** in that form. Every "unreachable" and
 library, and nothing in either output says so.
 
 This is the shape of defect this family keeps shipping: a full, plausible
-allocation table over an input that was silently 63% of itself.
+allocation table over an input that was silently 57% of itself.
 
 **What to do:** decide what the extensionless files are — SAS autocall members,
 editor leftovers, or a second generation — then either widen the glob or record

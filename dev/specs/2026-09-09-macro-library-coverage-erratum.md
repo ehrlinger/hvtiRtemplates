@@ -2,12 +2,15 @@
 
 **Date:** 2026-09-09
 **Repo:** hvtiRtemplates (the scans), affecting notes in hvtiRutilities too
-**Status:** 🔴 **counts held, not corrected.** The correct numbers do not exist
-yet — they need the picker fixed and both scans re-run. This note records what
-is wrong, how wrong, and which notes inherit it.
+**Status:** ✅ **picker fixed and the allocation re-run, same day.** Written
+while the counts were still held; kept as the record of the defect, with the
+measured result folded in below rather than replacing it. Two things remain
+open: the call-site artifact cannot be re-run (no script survives), and the
+studies-corpus run has not happened.
 **Origin:** John, 2026-09-09: *"One directory listing settles what those files
 are; until then the corpus run should not start."*
-**Blocks:** the corpus run in `2026-09-09-macro-corpus-run-handoff.md` §1.
+**Blocked:** the corpus run in `2026-09-09-macro-corpus-run-handoff.md` §1 —
+now unblocked, and staged to `/studies/general/hvtiRtemplates-scan/`.
 
 ⚠️ No study, variable or patient identifier appears here.
 
@@ -213,19 +216,29 @@ count drift.
 
 ## What closes this
 
-1. Replace the `*.sas` glob in both scans with a **denylist** picker — the rule
-   `hvtiRutilities::sas_triage()` already ships, added 2026-08-14 for this exact
-   failure. Keep the `%macro` reader verbatim; only the picker changes.
-2. Re-run both scans over 281 files. Diff against the 176-file output and paste
-   the difference rather than summarising it.
-3. Resolve the 180-vs-176 discrepancy above.
-4. Re-run the `%inc` seeding measurement, which is uninterpretable on the
-   partial corpus — an `%inc` naming an extensionless file cannot resolve under
-   a `*.sas` picker, so it registers as nothing rather than as unresolved.
-5. Update the three notes above from the new artifacts. Do not hand-edit a
-   count; re-sync from the JSON, per the rule already in
-   `2026-08-14-macro-allocation-design.md`.
-6. Only then start the corpus run.
+1. ✅ **Replace the `*.sas` glob in both scans with a denylist picker.** Done —
+   `artifacts/macro_library_files.py`, ported from the shipped
+   `hvtiRutilities:::.sas_source_files()`. Both implementations return 310 on
+   this directory, which is how the port was checked. The `%macro` reader is
+   verbatim; only the picker changed.
+2. ✅ **Re-run the allocation scan over 310 files.** Done; the deltas are in
+   *Measured* above, per file rather than summarised.
+3. 🔴 **Resolve the 180-vs-176 discrepancy.** Not done. The call-site artifact
+   that reports 180 has no surviving script, so its figures can only be
+   replaced, not re-derived. Its banner now says so.
+4. 🔴 **Re-run the `%inc` seeding measurement.** Not done — an `%inc` naming an
+   extensionless file could not resolve under a `*.sas` picker, so it
+   registered as nothing rather than as unresolved. The picker is fixed, so
+   the measurement is now possible; it has not been taken.
+5. ✅ **Update the three notes from the new artifacts.** Done, and mechanically:
+   `artifacts/render-spec-counts.py` re-renders the design note's tables and
+   lists from the JSON, so no count was hand-edited. It deliberately refuses to
+   rewrite a *claim* — which is how the acyclicity paragraph came to be
+   rewritten by hand instead of silently patched.
+6. 🔴 **Then start the corpus run.** Not done, and no longer blocked. Staged to
+   `/studies/general/hvtiRtemplates-scan/`: the workstation run was killed at
+   24 minutes and 18,000 job files having used 9.9 seconds of CPU, so it is a
+   server job.
 
 ## The general rule this is the second instance of
 
