@@ -1,4 +1,4 @@
-# Erratum — every published macro-library count is over 63% of the library
+# Erratum — every published macro-library count is over 57% of the library
 
 **Date:** 2026-09-09
 **Repo:** hvtiRtemplates (the scans), affecting notes in hvtiRutilities too
@@ -17,19 +17,34 @@ are; until then the corpus run should not start."*
 
 `2026-08-14-macro-allocation-scan.py` and `2026-09-09-macro-component-scan.py`
 both select their input with `~/Documents/macro.library/*.sas`. The library's
-top level holds 281 files, of which 176 carry that extension.
+top level holds 346 files, of which 310 are SAS source and 176 carry that
+extension.
 
 | | files | share |
 |---|---:|---:|
-| `*.sas` — what both scans read | 176 | **62.6%** |
-| extensionless — never opened | 105 | 37.4% |
-| **top level, total** | **281** | |
+| `*.sas` — what both scans read | 176 | **56.8%** |
+| extensionless — never opened | 105 | 33.9% |
+| dot-named, no `.sas` — never opened | 29 | 9.4% |
+| **top-level SAS source, total** | **310** | |
+| non-source (logs, listings, `.doc`, data sets) | 36 | — |
+
+🔴 **The first version of this note said 281 and 63%, and was wrong the same
+way the scans are.** It reached that denominator as "`.sas` plus extensionless",
+which still assumes the trailing token after a dot is an extension. It is not:
+this library uses dots as word separators, so `kaplan.int` (206 lines),
+`lm.cprobs` (218), `plot.compile` (1291), `hazplot.production` (316) and
+`gee.uab` (519) are macro source with names, not stems. 18 of those 29 define
+macros outright. Correcting an extension assumption while still holding one is
+the failure mode this note exists to describe, and it survived one round of it.
 
 **Scope of this erratum: the top level only.** The library also has nine
-subdirectories holding a further 79 `.sas` files. Those are **deliberately out
-of scope** — `archive/`, `tests/`, `macros_to_test/` and `repeat_test/` are not
-the library corpus, and pulling them in would change what "library-only" means
-rather than correct it. The denominator is 281, not 360.
+subdirectories, holding a further 163 source files under the same denylist
+rule. Those are **deliberately out of scope** — `archive/`, `tests/`,
+`macros_to_test/` and `repeat_test/` are not the library corpus, and pulling
+them in would change what "library-only" means rather than correct it. The
+denominator is 310, not 473. Both scans now emit the per-directory counts
+alongside their totals, so the exclusion is visible in the artifact rather than
+implied by its absence.
 
 ## What the 105 files are
 
@@ -46,6 +61,13 @@ them.
 | `PROC MATRIX` programs | 8 | `sasproc`, `mlephase`, `mlephas1`, `mle86apr`, `mleqtest`, `mletoler`, `nlphases`, `goodfit2` |
 | job decks and driver examples | 38 | CMS `SUBMIT * HAZARDEX * *` headers; MVS `//CONSERVE JOB (CVSR,...)` cards |
 | empty | 1 | `Ne00` |
+
+The 29 dot-named files are a different population and mostly not card images —
+they are variant and platform copies (`gee.uab`, `gee.pc.version`,
+`hazplot.pc` vs `hazplot.production`, `rem.original` vs `rem.uab`,
+`deciles.new` vs `deciles.joan`). 18 define macros. These are exactly the
+divergent-copy pattern the union rule addresses; they are not duplicates to
+pick a winner from.
 
 ⚠️ **The 8 `PROC MATRIX` files read as binary to `file(1)`** — they are plain
 text with no trailing newline, which `file` reports as `RAGE Package Format`. A
@@ -85,6 +107,16 @@ adjusted.
 So `unreachable = 133` is inflated by an unknown amount, and `corpus-only = 73`
 is wrong in both directions at once. Neither can be repaired by arithmetic.
 
+🔴 **Measured 2026-09-09, after the fix: only ONE of those two directions was
+real, and the prediction above is wrong about the other.** The caller-direction
+error does not reach the allocation scan, because that scan seeds ownership from
+`~/Documents/template` templates only. The 38 missed call sites are *inside* the
+library, and an unseeded library file confers no ownership on what it calls. So
+no previously-unreachable file became reachable — `corpus-only` grew rather than
+shrank. The caller-direction concern still stands for any scan that seeds from
+the library itself; it did not apply here, and this note asserted it without
+checking.
+
 ⚠️ **A second, older discrepancy surfaces alongside this.**
 `artifacts/2026-08-14-macro-callsite-scan.md` states its source as
 `~/Documents/macro.library` **(180 files)**, while
@@ -106,6 +138,78 @@ Three, all of which publish counts derived from the 176:
 Downstream of those, `[[Projects/SAS Macro Port Status]]` in the vault carries
 the same 176 denominator, and the biostats deck reports it externally. Neither
 is a design note; both need the corrected figures when they exist.
+
+## Measured — the allocation scan re-run, 2026-09-09
+
+Picker replaced with `artifacts/macro_library_files.py` (a port of the shipped
+`hvtiRutilities:::.sas_source_files()`; both return 310 on this directory, which
+is how the port was checked). `2026-08-14-macro-allocation.json` regenerated.
+
+| | before | after | |
+|---|---:|---:|---|
+| macro files read | 176 | **310** | +134 |
+| macro names defined | 272 | **317** | +45 |
+| allocated | 94 | **119** | +25 |
+| corpus-only | 73 | **178** | +105 |
+| blocked on an unowned prefix | 4 | **8** | +4 |
+| travels with a dependent | 5 | 5 | — |
+
+⭐ **Zero pre-existing files changed tier or destination.** All 176 keep the
+allocation they had; the 134 new files account for the entire delta
+(105 + 25 + 4 = 134). The three ground truths still hold — `summarytable.sas` →
+`hvtiRtables`, `usmatchd.sas` → `hvtiRlifetables` by override, `plot.sas`
+shared. **The old allocation was not wrong, it was short.** That is the best
+available evidence that the `%macro` reader was never the problem and only the
+picker was, which is what keeping the reader verbatim was for.
+
+⚠️ **But the headline moves the wrong way, and it should be stated that way to
+anyone reading the old figure.** Corpus-only more than doubles: 178 of 310
+library files are named by no template, against 73 of 176. As a share that is
+57% against 41%. The extensionless generation is almost entirely unreferenced by
+the template corpus — which is consistent with it being the older generation,
+and is a finding about the templates as much as about the macros. It is **not**
+a licence to retire those files: the template corpus is a curated sample, and
+the studies corpus is the population. That is what the component emitter reads.
+
+### 🔴 The fix surfaces a package-level dependency cycle
+
+`check-spec-counts.py` fails on the new map, as designed — the design note's
+tables are hand-synced copies and are now stale. Most of what it reports is
+count drift to be re-synced. **One item is not.**
+
+```
+spec calls the dependency graph acyclic; the map reports a cycle at the packages level
+```
+
+The file graph stays acyclic. The package graph does not, and the edge that
+closes it is new:
+
+| dependent | dependency | edges | |
+|---|---|---:|---|
+| `TemporalHazard` | `hvtiRutilities` | 44 | was 12 |
+| **`hvtiRutilities`** | **`TemporalHazard`** | **8** | **new** |
+
+All eight are the same two calls from four files:
+
+```
+deciles.hazard, deciles.hazard.test, deciles.joan, deciles.new   (hvtiRutilities)
+        -> chisqgf, chisqgf.exact                                (TemporalHazard)
+```
+
+Every one of the six files is in the newly-admitted set, which is why this could
+not appear before. The calibration family (`deciles.*`) votes to
+`hvtiRutilities` and the goodness-of-fit macros (`chisqgf*`) vote to
+`TemporalHazard` on the `hz`/`hs` prefixes, and calibration calls
+goodness-of-fit.
+
+⚠️ **`hvtiRutilities` is the package the family depends on; it cannot depend on
+`TemporalHazard`.** So one of the two votes has to lose, and which one is a
+design decision, not a scan output — either `chisqgf*` is a shared primitive
+that belongs in `hvtiRutilities`, or the `deciles.*` calibration family belongs
+in `TemporalHazard` beside the fit it calibrates. **Not decided here.** It is
+raised because the acyclicity check exists precisely to catch this, it fired,
+and a re-sync of the spec's tables would otherwise bury it among sixty lines of
+count drift.
 
 ## What closes this
 

@@ -33,6 +33,8 @@ unmounted. The output records which corpus it read.
 import argparse, collections, glob, json, os, re, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import macro_library_files
 MACRO_DIR = os.path.expanduser("~/Documents/macro.library")
 
 # ---------------------------------------------------------------- prefix owners
@@ -109,9 +111,15 @@ def bodies(txt):
 
 
 def read_library():
-    files = sorted(glob.glob(f"{MACRO_DIR}/*.sas"))
+    # Denylist, NOT `*.sas`. This line read glob(f"{MACRO_DIR}/*.sas")
+    # on the emitter's first run (2026-09-09) and inherited the
+    # 2026-08-14 defect verbatim along with the reader: 176 files of
+    # 310. `kaplan` -- the shared house survival primitive -- has no
+    # `.sas` twin and was invisible to both. See
+    # ../2026-09-09-macro-library-coverage-erratum.md.
+    files = macro_library_files.source_files(MACRO_DIR)
     if not files:
-        sys.exit(f"FATAL: no .sas files under {MACRO_DIR}")
+        sys.exit(f"FATAL: no SAS source under {MACRO_DIR}")
     canon = {os.path.basename(f).lower(): os.path.basename(f) for f in files}
     fdefs, fcalls, fincs = {}, {}, {}
     for f in files:

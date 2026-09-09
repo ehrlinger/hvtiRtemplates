@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Macro allocation scan. Ownership from named calls; %inc for reachability;
 the FILE is the unit of allocation. See dev/specs/2026-08-14-macro-allocation-design.md."""
-import re, os, glob, json, collections
+import re, os, sys, glob, json, collections
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import macro_library_files
 
 MACRO_DIR = os.path.expanduser("~/Documents/macro.library")
 TPL_ROOT  = os.path.expanduser("~/Documents/template")
@@ -80,7 +83,14 @@ def bodies(txt):                      # FIX 3: per-%macro body, not per-file
             n, s = stack.pop(); out.append((n, txt[s:m.start()]))
     return out + [(n, txt[s:]) for n, s in stack]
 
-files = sorted(glob.glob(f"{MACRO_DIR}/*.sas"))
+# The picker is a denylist, NOT `*.sas`. Until 2026-09-09 this line read
+# glob(f"{MACRO_DIR}/*.sas") and saw 176 of the library's 310 top-level
+# source files -- missing 105 extensionless files (58 of them macro
+# definitions, 38 of them call sites) and 29 dot-named ones such as
+# `kaplan.int` and `lm.cprobs`. Every count this scan published before
+# that date is over 57% of the library. See
+# ../2026-09-09-macro-library-coverage-erratum.md.
+files = macro_library_files.source_files(MACRO_DIR)
 canon = {os.path.basename(f).lower(): os.path.basename(f) for f in files}
 fdefs, fcalls, fincs, bodycalls = {}, {}, {}, collections.defaultdict(set)
 for f in files:
@@ -195,7 +205,15 @@ for _b, _rec in detail.items():
     for _dep in _rec["needed_by"]:
         _file_adj[_dep].add(_b)
 
-res = {"counts": {"macro_files": len(files), "macro_names": len(name2file),
+# Scoping basis, reported beside the numbers rather than left implicit --
+# a count is only meaningful against its reference set.
+res = {"corpus": {"macro_dir": MACRO_DIR,
+                  "picker": "denylist (macro_library_files.py), top level only",
+                  "macro_files_read": len(files),
+                  "macro_files_sas_ext": sum(1 for f in files
+                                             if f.lower().endswith(".sas")),
+                  "excluded_subdirs": macro_library_files.excluded_dirs(MACRO_DIR)},
+       "counts": {"macro_files": len(files), "macro_names": len(name2file),
                   "templates": tpl_n,
                   "allocated": sum(len(v) for k, v in alloc.items() if not k.startswith("_")),
                   "blocked": len(alloc["_blocked"]),

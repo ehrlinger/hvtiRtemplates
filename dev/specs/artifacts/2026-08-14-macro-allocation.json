@@ -1,34 +1,60 @@
 {
+  "corpus": {
+    "macro_dir": "/Users/ehrlinj/Documents/macro.library",
+    "picker": "denylist (macro_library_files.py), top level only",
+    "macro_files_read": 310,
+    "macro_files_sas_ext": 176,
+    "excluded_subdirs": {
+      "archive": 51,
+      "jobs": 31,
+      "logis_reclassi": 4,
+      "macros_to_test": 2,
+      "plot_": 5,
+      "readin_samples": 18,
+      "repeat_test": 2,
+      "table_mac": 19,
+      "tests": 31
+    }
+  },
   "counts": {
-    "macro_files": 176,
-    "macro_names": 272,
+    "macro_files": 310,
+    "macro_names": 317,
     "templates": 244,
-    "allocated": 94,
-    "blocked": 4,
+    "allocated": 119,
+    "blocked": 8,
     "travels_with_dependent": 5,
-    "corpus_only": 73
+    "corpus_only": 178
   },
   "by_destination": {
     "TemporalHazard": [
       "CR_CIF_CP_variance.sas",
       "bootstrap-test.models_wts.sas",
       "bootstrap.models_wts.sas",
+      "chisqgf",
+      "chisqgf.exact",
       "cindex_hazard.sas",
       "cindex_hazard_tvc.sas",
       "haz_to_mi.sas",
+      "hazplot.pc",
+      "hazplot.production",
       "hazplot.sas",
       "hazplot02252013.sas",
       "hazplot10242003.sas",
       "hazplot_cltest.sas",
       "markov.sas",
       "mi_to_haz.sas",
+      "nelsont",
       "nelsont.sas"
     ],
     "_blocked": [
       "ExpdObsdPlot.sas",
       "STStable.sas",
+      "linregm",
       "linregm.sas",
-      "linregm_jr.sas"
+      "linregm_jr.sas",
+      "logit",
+      "logit.cases",
+      "logitgr"
     ],
     "_corpus-only": [
       "ADJSURV.sas",
@@ -37,6 +63,7 @@
       "CR_compare_CP_old.sas",
       "CR_compare_CP_test_AT.sas",
       "CorrTable.sas",
+      "Ne00\ued3a",
       "ROCplot.sas",
       "areakey.sas",
       "areakey_b.sas",
@@ -45,31 +72,99 @@
       "baseoutnoformat.2000.sas",
       "bl.fixed.sample2.sas",
       "bl_genmod.sas",
+      "bootchi",
+      "bootchx",
+      "bootgf",
       "bootstrap.clusters.example.sas",
       "bootstrap.summary.example.sas",
       "boxplots.sas",
       "brier.sas",
       "bs_sens_spec_cl.sas",
+      "calibration",
+      "chisqgfx",
+      "climits",
+      "clpara1",
+      "clprint",
+      "clprop",
+      "clpropct",
+      "clpropex",
+      "cltest",
+      "clwork",
+      "cnphases",
+      "cntest",
+      "condcls",
+      "condtga",
+      "condtga2",
+      "condtga3",
+      "conserv1",
+      "conserve",
+      "cumdistx",
+      "cumhaz",
+      "cumhaz2",
+      "cumhazl",
+      "cusums",
       "cvirfmts.sas",
+      "decilesx",
       "density_ci.simulation.sas",
       "dist_complete.sas",
       "dist_incomplete.sas",
       "duke.cad.index.sas",
+      "duncanex",
       "dydx.sas",
       "dydx.test.sas",
+      "early",
       "echo.readin.sas",
       "format_01.sas",
       "format_TF.sas",
+      "gee",
+      "gee.documentation",
+      "gee.example.data",
+      "gee.note",
+      "gee.pc.uab",
+      "gee.pc.version",
+      "gee.uab",
+      "goodfit",
+      "goodfit2",
+      "hazard",
+      "hazard.ICcompaction.example",
+      "hazard.hs.setup",
+      "hazard.hs.setup.example",
+      "hazardex",
+      "hazgplot",
+      "hazll",
+      "hazpltex",
       "hlmrsq.sas",
       "hp.test.612.sas",
+      "hs#death",
+      "hz#death",
       "ice.sas",
       "japanmatchd2015.sas",
+      "jcl.symbols",
+      "jcl.tables.pagebreak",
       "kaplan_tvc.sas",
       "kaplan_tvc_woci.sas",
+      "kaplane1",
+      "last.fu.epid",
+      "latefit",
+      "leastsq",
+      "linear",
+      "linnoi",
+      "linnoic",
+      "linreg",
+      "linregc",
+      "linregex",
+      "linregp",
+      "linregxx",
+      "lm.cprobs",
       "lm.cprobs.example.sas",
       "loadredcapdata.sas",
+      "logistex",
+      "logistm",
+      "logistp",
       "logit_ord.no_trans.sas",
       "logit_ord.tr_log.sas",
+      "logitgrx",
+      "luft",
       "lvfunction.sas",
       "markov.test.sas",
       "match.sas",
@@ -77,30 +172,66 @@
       "matchgr.sas",
       "matchgrd.original.sas",
       "mixcorr_normal.sas",
+      "mle86apr",
+      "mlephas1",
+      "mlephase",
+      "mleqtest",
+      "mletoler",
+      "multiple.decrement.ex",
+      "nelson2",
       "nelson2.sas",
+      "nelsonb",
       "nelsonb.sas",
+      "nelsong",
       "nelsong.sas",
+      "nlinroot",
       "nlmm800.sas",
       "nlmm800e.sas",
+      "nlphases",
       "np_ice.sas",
       "np_ice2.sas",
+      "obsexp",
+      "parmplot",
+      "parmplt2",
+      "plot.README",
       "plot.example.sas",
+      "plot.samplelines.ex",
       "plot.samplelines.sas",
       "pred_sts_models.sas",
       "pred_sts_models_12042017.sas",
       "pred_sts_models_v2017.sas",
       "pred_sts_models_v2017_112322.sas",
+      "randex",
       "readin.sas",
       "readin_101903.sas",
+      "rem.original",
+      "rem.uab",
       "repeat.test.sas",
       "repeat.text.sas",
+      "sampsize",
+      "sasproc",
+      "sastest",
       "sens_spec.sas",
       "sens_spec.test.sas",
       "sens_spec.testbegg.sas",
+      "setattr",
       "sgpie.sas",
       "std_coef2.sas",
       "std_dif_4groups.sas",
+      "surv3",
+      "surv4",
+      "testear1",
+      "testerly",
+      "tetnath",
+      "transprt",
+      "transprtex",
+      "unistats",
       "univariate.quartile3.sas",
+      "vartest5",
+      "vartest6",
+      "vartest7",
+      "vartest8",
+      "vartestb",
       "xmacro.sas",
       "zscore_uk.example.sas",
       "zscore_uk.sas"
@@ -113,6 +244,7 @@
       "wt_mtch_boot_sd.sas"
     ],
     "hvtiPlotR": [
+      "logistc",
       "logistc.sas",
       "logistc_p.sas",
       "logistc_sts.sas",
@@ -191,11 +323,25 @@
     ],
     "hvtiRutilities": [
       "bootstrap.summary.sas",
+      "cumdist",
+      "cumdist.test",
+      "deciles",
+      "deciles.hazard",
+      "deciles.hazard.test",
+      "deciles.joan",
+      "deciles.new",
       "decomposition.sas",
       "decomposition_JR.sas",
+      "kaplan",
+      "kaplan.int",
       "kaplan.int.sas",
       "kaplan_jr.sas",
+      "kaplanol",
+      "kaptest",
+      "nelsonl",
       "nelsonl.sas",
+      "plot",
+      "plot.compile",
       "plot.sas",
       "plot_8.sas",
       "plot_emf.sas",
@@ -203,34 +349,44 @@
       "repeat.sas",
       "repeat.testmacro.sas",
       "repeated.sas",
-      "stddiff.sas"
+      "stddiff.sas",
+      "sumtest",
+      "vartest",
+      "vartest2",
+      "vartest3",
+      "vartest4"
     ]
   },
   "cross_package_dependencies": {
-    "n_dependencies": 43,
-    "n_package_pairs": 5,
-    "acyclic_packages": true,
+    "n_dependencies": 88,
+    "n_package_pairs": 6,
+    "acyclic_packages": false,
     "acyclic_files": true,
     "edges": [
+      {
+        "dependent": "TemporalHazard",
+        "dependency": "hvtiRutilities",
+        "n": 44
+      },
       {
         "dependent": "hvtiRbootstrap",
         "dependency": "hvtiRutilities",
         "n": 14
       },
       {
-        "dependent": "TemporalHazard",
-        "dependency": "hvtiRutilities",
-        "n": 12
-      },
-      {
         "dependent": "hvtiRbootstrap",
         "dependency": "hvtiPlotR",
-        "n": 10
+        "n": 13
+      },
+      {
+        "dependent": "hvtiRutilities",
+        "dependency": "TemporalHazard",
+        "n": 8
       },
       {
         "dependent": "hvtiRdatabuild",
         "dependency": "hvtiRutilities",
-        "n": 4
+        "n": 6
       },
       {
         "dependent": "hvtiRtables",
@@ -240,8 +396,9 @@
     ]
   },
   "blocked_by_prefix": {
-    "ls": 2,
-    "rp": 2
+    "rp": 3,
+    "lg": 3,
+    "ls": 2
   },
   "unknown_prefixes": {
     "nm": 6,
@@ -357,6 +514,15 @@
         "expdobsdplot"
       ],
       "seeded": true,
+      "needed_by": []
+    },
+    "Ne00\ued3a": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
       "needed_by": []
     },
     "ROCplot.sas": {
@@ -636,6 +802,37 @@
         "mrg2"
       ],
       "seeded": true,
+      "needed_by": []
+    },
+    "bootchi": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "bootchi"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "bootchx": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "bootgf": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "bootgf"
+      ],
+      "seeded": false,
       "needed_by": []
     },
     "bootstrap-test.models_wts.sas": {
@@ -972,6 +1169,62 @@
       "seeded": false,
       "needed_by": []
     },
+    "calibration": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "chisqgf": {
+      "destination": "TemporalHazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "chisqgf"
+      ],
+      "seeded": true,
+      "needed_by": [
+        "STStable.sas",
+        "deciles.hazard",
+        "deciles.hazard.test",
+        "deciles.joan",
+        "deciles.new"
+      ]
+    },
+    "chisqgf.exact": {
+      "destination": "TemporalHazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "chisqgf"
+      ],
+      "seeded": true,
+      "needed_by": [
+        "STStable.sas",
+        "deciles.hazard",
+        "deciles.hazard.test",
+        "deciles.joan",
+        "deciles.new"
+      ]
+    },
+    "chisqgfx": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
     "cindex_hazard.sas": {
       "destination": "TemporalHazard",
       "tier": "single-owner",
@@ -998,7 +1251,337 @@
       "seeded": true,
       "needed_by": []
     },
+    "climits": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "climits"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "clpara1": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "climits"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "clprint": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "climits"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "clprop": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "clprop"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "clpropct": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "clpropct"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "clpropex": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "cltest": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "climits"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "clwork": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "clwork"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "cnphases": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "cntest": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "condcls": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "condcls"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "condtga": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "condtga"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "condtga2": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "condtga2"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "condtga3": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "condtga3"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "conserv1": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "conserve": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "cumdist": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "cd",
+        "hs",
+        "rm"
+      ],
+      "unowned_prefixes": [
+        "cd"
+      ],
+      "macros": [
+        "cumdist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "cumdist.test": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "cd",
+        "hs",
+        "rm"
+      ],
+      "unowned_prefixes": [
+        "cd"
+      ],
+      "macros": [
+        "cumdist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "cumdistx": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "cumhaz": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "cumhaz2": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "cumhaz2"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "cumhazl": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "cumhazl"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "cusums": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "cusums"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
     "cvirfmts.sas": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "deciles": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "hm",
+        "lm"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "deciles"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "deciles.hazard": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "hm",
+        "lm"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "deciles"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "deciles.hazard.test": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "hm",
+        "lm"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "deciles"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "deciles.joan": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "hm",
+        "lm"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "deciles"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "deciles.new": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "hm",
+        "lm"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "deciles"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "decilesx": {
       "destination": null,
       "tier": "corpus-only",
       "prefixes": [],
@@ -1299,6 +1882,15 @@
       "seeded": false,
       "needed_by": []
     },
+    "duncanex": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
     "dydx.sas": {
       "destination": null,
       "tier": "corpus-only",
@@ -1316,6 +1908,17 @@
       "prefixes": [],
       "unowned_prefixes": [],
       "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "early": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "early"
+      ],
       "seeded": false,
       "needed_by": []
     },
@@ -1354,6 +1957,77 @@
       "seeded": false,
       "needed_by": []
     },
+    "gee": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "gee"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "gee.documentation": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "gee.example.data": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "gee.note": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "gee.pc.uab": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "gee"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "gee.pc.version": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "gee"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "gee.uab": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "gee"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
     "gmatch.sas": {
       "destination": "hvtiRdatabuild",
       "tier": "single-owner",
@@ -1369,6 +2043,24 @@
       "seeded": true,
       "needed_by": []
     },
+    "goodfit": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "goodfit2": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
     "haz_to_mi.sas": {
       "destination": "TemporalHazard",
       "tier": "single-owner",
@@ -1378,6 +2070,107 @@
       "unowned_prefixes": [],
       "macros": [
         "haz_to_mi"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "hazard": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "early"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "hazard.ICcompaction.example": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "hazard.hs.setup": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "numobs",
+        "predict",
+        "setuphaz"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "hazard.hs.setup.example": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "predict"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "hazardex": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "hazgplot": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "hazgplot"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "hazll": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "hazll"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "hazplot.pc": {
+      "destination": "TemporalHazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "hazplot"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "hazplot.production": {
+      "destination": "TemporalHazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "hazplot"
       ],
       "seeded": true,
       "needed_by": []
@@ -1434,6 +2227,15 @@
       "seeded": true,
       "needed_by": []
     },
+    "hazpltex": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
     "hlmrsq.sas": {
       "destination": null,
       "tier": "corpus-only",
@@ -1453,6 +2255,24 @@
       "macros": [
         "plots"
       ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "hs#death": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "hz#death": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
       "seeded": false,
       "needed_by": []
     },
@@ -1481,6 +2301,71 @@
       "seeded": false,
       "needed_by": []
     },
+    "jcl.symbols": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "jcl.tables.pagebreak": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "kaplan": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "ce",
+        "hp",
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "kaplan"
+      ],
+      "seeded": true,
+      "needed_by": [
+        "hazplot.pc",
+        "hazplot.production",
+        "hazplot.sas",
+        "hazplot02252013.sas",
+        "hazplot10242003.sas",
+        "hazplot_cltest.sas",
+        "repeated.sas"
+      ]
+    },
+    "kaplan.int": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "ce",
+        "hp",
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "kaplan"
+      ],
+      "seeded": true,
+      "needed_by": [
+        "hazplot.pc",
+        "hazplot.production",
+        "hazplot.sas",
+        "hazplot02252013.sas",
+        "hazplot10242003.sas",
+        "hazplot_cltest.sas"
+      ]
+    },
     "kaplan.int.sas": {
       "destination": "hvtiRutilities",
       "tier": "shared",
@@ -1496,6 +2381,8 @@
       ],
       "seeded": true,
       "needed_by": [
+        "hazplot.pc",
+        "hazplot.production",
         "hazplot.sas",
         "hazplot02252013.sas",
         "hazplot10242003.sas",
@@ -1517,6 +2404,8 @@
       ],
       "seeded": true,
       "needed_by": [
+        "hazplot.pc",
+        "hazplot.production",
         "hazplot.sas",
         "hazplot02252013.sas",
         "hazplot10242003.sas",
@@ -1542,6 +2431,88 @@
       "macros": [
         "kap_tvc"
       ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "kaplane1": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "kaplanol": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "ce",
+        "hp",
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "kaplan"
+      ],
+      "seeded": true,
+      "needed_by": [
+        "hazplot.pc",
+        "hazplot.production",
+        "hazplot.sas",
+        "hazplot02252013.sas",
+        "hazplot10242003.sas",
+        "hazplot_cltest.sas"
+      ]
+    },
+    "kaptest": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "ce",
+        "hp",
+        "hs"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "kaplan"
+      ],
+      "seeded": true,
+      "needed_by": [
+        "hazplot.pc",
+        "hazplot.production",
+        "hazplot.sas",
+        "hazplot02252013.sas",
+        "hazplot10242003.sas",
+        "hazplot_cltest.sas"
+      ]
+    },
+    "last.fu.epid": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "latefit": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "leastsq": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
       "seeded": false,
       "needed_by": []
     },
@@ -1576,6 +2547,83 @@
       "seeded": true,
       "needed_by": []
     },
+    "linear": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "linnoi": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "linnoi"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "linnoic": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "linnoic"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "linreg": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "linreg"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "linregc": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "linregc"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "linregex": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "linregm": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "rp"
+      ],
+      "unowned_prefixes": [
+        "rp"
+      ],
+      "macros": [
+        "linregm"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
     "linregm.sas": {
       "destination": null,
       "tier": "blocked",
@@ -1606,6 +2654,37 @@
       "seeded": true,
       "needed_by": []
     },
+    "linregp": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "linregp"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "linregxx": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "lm.cprobs": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "cprobs"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
     "lm.cprobs.example.sas": {
       "destination": null,
       "tier": "corpus-only",
@@ -1630,6 +2709,24 @@
       ],
       "seeded": false,
       "needed_by": []
+    },
+    "logistc": {
+      "destination": "hvtiPlotR",
+      "tier": "single-owner",
+      "prefixes": [
+        "gp",
+        "lp"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "logistc"
+      ],
+      "seeded": true,
+      "needed_by": [
+        "bl_ord.ci.sas",
+        "bl_ord.norm.ci.sas",
+        "bl_ord.perc.ci.sas"
+      ]
     },
     "logistc.sas": {
       "destination": "hvtiPlotR",
@@ -1684,6 +2781,67 @@
         "bl_ord.norm.ci.sas",
         "bl_ord.perc.ci.sas"
       ]
+    },
+    "logistex": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "logistm": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "logistm"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "logistp": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "logistp"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "logit": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "lg"
+      ],
+      "unowned_prefixes": [
+        "lg"
+      ],
+      "macros": [
+        "logit"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "logit.cases": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "lg"
+      ],
+      "unowned_prefixes": [
+        "lg"
+      ],
+      "macros": [
+        "logit"
+      ],
+      "seeded": true,
+      "needed_by": []
     },
     "logit_nominal.sas": {
       "destination": "hvtiPlotR",
@@ -1754,6 +2912,30 @@
       "seeded": false,
       "needed_by": []
     },
+    "logitgr": {
+      "destination": null,
+      "tier": "blocked",
+      "prefixes": [
+        "lg"
+      ],
+      "unowned_prefixes": [
+        "lg"
+      ],
+      "macros": [
+        "logitgr"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "logitgrx": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
     "logitlasso.sas": {
       "destination": "hvtiRbootstrap",
       "tier": "single-owner",
@@ -1779,6 +2961,17 @@
         "lrtrend"
       ],
       "seeded": true,
+      "needed_by": []
+    },
+    "luft": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "luft"
+      ],
+      "seeded": false,
       "needed_by": []
     },
     "lvfunction.sas": {
@@ -1894,6 +3087,60 @@
       "seeded": false,
       "needed_by": []
     },
+    "mle86apr": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "mlephas1": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "mlephase": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "mleqtest": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "mletoler": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "multiple.decrement.ex": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
     "mw_var.sas": {
       "destination": null,
       "tier": "travels-with-dependent",
@@ -1922,6 +3169,17 @@
       "seeded": true,
       "needed_by": []
     },
+    "nelson2": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelson2"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
     "nelson2.sas": {
       "destination": null,
       "tier": "corpus-only",
@@ -1929,6 +3187,17 @@
       "unowned_prefixes": [],
       "macros": [
         "nelson2"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "nelsonb": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelsonb"
       ],
       "seeded": false,
       "needed_by": []
@@ -1944,6 +3213,17 @@
       "seeded": false,
       "needed_by": []
     },
+    "nelsong": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelsong"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
     "nelsong.sas": {
       "destination": null,
       "tier": "corpus-only",
@@ -1954,6 +3234,27 @@
       ],
       "seeded": false,
       "needed_by": []
+    },
+    "nelsonl": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "hp",
+        "hz"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelsonl"
+      ],
+      "seeded": true,
+      "needed_by": [
+        "hazplot.sas",
+        "hazplot02252013.sas",
+        "hazplot10242003.sas",
+        "hazplot_cltest.sas",
+        "repeated.sas"
+      ]
     },
     "nelsonl.sas": {
       "destination": "hvtiRutilities",
@@ -1976,6 +3277,19 @@
         "repeated.sas"
       ]
     },
+    "nelsont": {
+      "destination": "TemporalHazard",
+      "tier": "single-owner",
+      "prefixes": [
+        "ac"
+      ],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelsont"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
     "nelsont.sas": {
       "destination": "TemporalHazard",
       "tier": "single-owner",
@@ -1987,6 +3301,22 @@
         "nelsont"
       ],
       "seeded": true,
+      "needed_by": []
+    },
+    "nlinroot": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "bisect",
+        "falsi",
+        "newtraph",
+        "quasimul",
+        "secant",
+        "steffacc"
+      ],
+      "seeded": false,
       "needed_by": []
     },
     "nlmm800.sas": {
@@ -2023,6 +3353,15 @@
       "seeded": false,
       "needed_by": []
     },
+    "nlphases": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
     "np_ice.sas": {
       "destination": null,
       "tier": "corpus-only",
@@ -2042,6 +3381,35 @@
       "macros": [
         "np_ice"
       ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "obsexp": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "obsexp"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "parmplot": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "parmplt2": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
       "seeded": false,
       "needed_by": []
     },
@@ -2076,6 +3444,114 @@
       "seeded": true,
       "needed_by": []
     },
+    "plot": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "cd",
+        "ce",
+        "cp",
+        "dc",
+        "dp",
+        "gp",
+        "hp",
+        "hs",
+        "lp",
+        "ls",
+        "mp",
+        "np",
+        "rp"
+      ],
+      "unowned_prefixes": [
+        "cd",
+        "ls",
+        "rp"
+      ],
+      "macros": [
+        "_by",
+        "_id",
+        "_label",
+        "_plot",
+        "_scan_",
+        "_uscan_",
+        "adj_symb",
+        "axis",
+        "bld_anno",
+        "bldano_c",
+        "bounds",
+        "bounds1",
+        "connect",
+        "dummy",
+        "goption",
+        "labl_pos",
+        "plot",
+        "set_size",
+        "token"
+      ],
+      "seeded": true,
+      "needed_by": [
+        "trends.test.sas"
+      ]
+    },
+    "plot.README": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "plot.compile": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "ac",
+        "cd",
+        "ce",
+        "cp",
+        "dc",
+        "dp",
+        "gp",
+        "hp",
+        "hs",
+        "lp",
+        "ls",
+        "mp",
+        "np",
+        "rp"
+      ],
+      "unowned_prefixes": [
+        "cd",
+        "ls",
+        "rp"
+      ],
+      "macros": [
+        "_by",
+        "_id",
+        "_label",
+        "_plot",
+        "_scan_",
+        "_uscan_",
+        "adj_symb",
+        "axis",
+        "bld_anno",
+        "bldano_c",
+        "bounds",
+        "connect",
+        "dummy",
+        "goption",
+        "labl_pos",
+        "plot",
+        "set_size",
+        "token"
+      ],
+      "seeded": true,
+      "needed_by": [
+        "trends.test.sas"
+      ]
+    },
     "plot.example.sas": {
       "destination": null,
       "tier": "corpus-only",
@@ -2084,6 +3560,15 @@
       "macros": [
         "plots"
       ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "plot.samplelines.ex": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
       "seeded": false,
       "needed_by": []
     },
@@ -2340,6 +3825,15 @@
       "seeded": false,
       "needed_by": []
     },
+    "randex": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
     "readin.sas": {
       "destination": null,
       "tier": "corpus-only",
@@ -2358,6 +3852,28 @@
       "unowned_prefixes": [],
       "macros": [
         "skip"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "rem.original": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "rem"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "rem.uab": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "rem"
       ],
       "seeded": false,
       "needed_by": []
@@ -2448,6 +3964,33 @@
       "seeded": true,
       "needed_by": []
     },
+    "sampsize": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "sasproc": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "sastest": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
     "sens_spec.sas": {
       "destination": null,
       "tier": "corpus-only",
@@ -2477,6 +4020,17 @@
       "unowned_prefixes": [],
       "macros": [
         "skip"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "setattr": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "setattr"
       ],
       "seeded": false,
       "needed_by": []
@@ -2712,6 +4266,72 @@
       "seeded": true,
       "needed_by": []
     },
+    "sumtest": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "cd",
+        "hs",
+        "rm"
+      ],
+      "unowned_prefixes": [
+        "cd"
+      ],
+      "macros": [
+        "cumdist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "surv3": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "surv4": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "testear1": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "early"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "testerly": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "tetnath": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "tetnath"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
     "tp.bh.hazard_CP_2evnt_mixed.sas": {
       "destination": "hvtiRbootstrap",
       "tier": "single-owner",
@@ -2742,6 +4362,26 @@
       "seeded": true,
       "needed_by": []
     },
+    "transprt": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "transprt"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "transprtex": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
     "trends.sas": {
       "destination": null,
       "tier": "travels-with-dependent",
@@ -2769,6 +4409,17 @@
         "skip"
       ],
       "seeded": true,
+      "needed_by": []
+    },
+    "unistats": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "unistats"
+      ],
+      "seeded": false,
       "needed_by": []
     },
     "univariate.quartile3.sas": {
@@ -2851,6 +4502,125 @@
       "macros": [
         "numobs",
         "usmtch08"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "vartest": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "cd",
+        "hs",
+        "rm"
+      ],
+      "unowned_prefixes": [
+        "cd"
+      ],
+      "macros": [
+        "cumdist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "vartest2": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "cd",
+        "hs",
+        "rm"
+      ],
+      "unowned_prefixes": [
+        "cd"
+      ],
+      "macros": [
+        "cumdist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "vartest3": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "cd",
+        "hs",
+        "rm"
+      ],
+      "unowned_prefixes": [
+        "cd"
+      ],
+      "macros": [
+        "cumdist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "vartest4": {
+      "destination": "hvtiRutilities",
+      "tier": "shared",
+      "prefixes": [
+        "cd",
+        "hs",
+        "rm"
+      ],
+      "unowned_prefixes": [
+        "cd"
+      ],
+      "macros": [
+        "cumdist"
+      ],
+      "seeded": true,
+      "needed_by": []
+    },
+    "vartest5": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelson2"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "vartest6": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelson2"
+      ],
+      "seeded": false,
+      "needed_by": []
+    },
+    "vartest7": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "vartest8": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [],
+      "seeded": false,
+      "needed_by": []
+    },
+    "vartestb": {
+      "destination": null,
+      "tier": "corpus-only",
+      "prefixes": [],
+      "unowned_prefixes": [],
+      "macros": [
+        "nelsonb"
       ],
       "seeded": false,
       "needed_by": []
