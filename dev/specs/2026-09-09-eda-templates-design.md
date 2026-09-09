@@ -1,8 +1,9 @@
 # EDA templates: descriptive checking, data-checking graphics, goodness of follow-up
 
 **Date:** 2026-09-09
-**Status:** design. Section 8.1 is ANSWERED, 2026-09-09, from two study
-exemplars. Section 8.2 remains open and blocks the catalog change.
+**Status:** design. Sections 8.1 and 8.2 are both ANSWERED, 2026-09-09. A new
+prerequisite fell out of 8.2 and is section 8.3, which blocks the catalog
+change and also blocks `dp-variable` in batch 3.
 **Supersedes nothing.** Schedules rows that
 `2026-08-29-template-conversion-roadmap.md` placed in batches 3 and 4, both of
 which that document marks provisional. Answers the first open question in
@@ -196,7 +197,7 @@ Provisional, and contingent on section 8.
 | 1 | `dp-trends`, `dp-gfup` | nothing |
 | 2 | `dc-general`, `dc-gfup` | nothing |
 | 3 | `dc-tables` | the two correlation functions |
-| 4 | postage stamps | a row, then a decision on the grid helper |
+| 4 | `dp-postage` | section 8.3, then a decision on the grid helper |
 
 Wave 1 first because both rows are genuinely thin over shipped `hvtiPlotR`
 functions, and because a trend plot is the thing a fellow can read on a slide.
@@ -339,20 +340,68 @@ with ODS output. The fellows asked for correlation **plots**, so the
 `dc-tables` assignment stands, and `dc-general`'s template needs the plain
 section as a fourth banner.
 
-**8.2 Where do postage stamps go?**
-`descriptive/dp` has six live legacy templates and no catalog row. Three
-readings, none of them free:
+**8.2 Where do postage stamps go? ANSWERED: a new `descriptive/dp` qualifier.**
 
-1. A new `dp` qualifier for the descriptive folder. Truest to the corpus, but
-   the row's `folder` field cannot express a prefix that spans three folders,
-   which is the ledger defect section 3.3 quotes rather than solves.
-2. A `dc` qualifier, on the grounds that the job is a descriptive sweep and
-   `dc` is the descriptive prefix. Cheapest, and mis-files a `dp`-named job.
-3. Out of scope for this batch, pending a decision on the three-folder `dp`
-   problem generally.
+Decided by the maintainer, 2026-09-09. The job is `dp`-named in the corpus and
+sits in `descriptive/`, so it is filed as what it is rather than folded into
+`dc`.
 
-The decision is the maintainer's. It is the reason postage stamps sit in wave 4
-of a batch that named them first.
+⚠️ **The cost stated in the first draft of this section was wrong, and the real
+one is worse.** That draft said "the row's `folder` field cannot express a
+prefix that spans three folders". It can: `folder` is a per-row field, and
+`dp-variable` already carries `folder: distributions` while its four siblings
+carry `graphs`. The catalog needs nothing new. The constraint is one layer up,
+and it is section 8.3.
+
+**8.3 `hvti_taxonomy()` cannot express a prefix that spans folders, and a test
+enforces that. NEW, blocking.**
+
+`hvti_taxonomy()` is a prefix-to-folder map with exactly one row per prefix:
+`dp` maps to `graphs`, full stop. `test-taxonomy.R:59` checks every template on
+disk against it:
+
+```r
+test_that("a template sits in the folder its prefix is filed under", {
+  tl <- template_list()
+  tx <- hvti_taxonomy()
+  expect_equal(tl$folder, tx$folder[match(tl$prefix, tx$prefix)])
+})
+```
+
+`template_list()` derives `folder` from the directory, so a
+`10_descriptive/dp-variable.qmd` yields `descriptive` against the taxonomy's
+`graphs` and the suite fails. A `descriptive/dp` template cannot ship until
+this is resolved.
+
+⚠️ **`dp-variable` hits this first, and it is already scheduled.** It is a
+batch 3 row carrying `folder: distributions`, so shipping it into
+`20_distributions/dp-variable.qmd` fails the same assertion. The catalog is
+scheduling a row the test suite will reject, and nothing surfaces that until
+someone writes the template. This is not a cost of the present batch; the
+present batch is what found it.
+
+`new_job()` is unaffected: `out_dir <- file.path(dir, row$folder[[1L]])` takes
+`folder` from `template_list()`, which is directory-derived, so scaffolding
+routes a `descriptive/dp` job into `descriptive/` correctly today.
+
+Two ways to resolve it:
+
+1. **Make the test consult the catalog row's folder**, falling back to the
+   taxonomy when a template has no row. The catalog is already the finer
+   authority and already carries the per-row answer; the taxonomy stays the
+   coarse cross-check for undecomposed prefixes. No `hvtiRutilities` change, no
+   schema change, one test rewritten. **Recommended.**
+2. **Give `hvti_taxonomy()` several rows per prefix.** Truer to the corpus and
+   far riskier: every consumer that does `match(prefix, tx$prefix)` silently
+   takes the first row, which is precisely the failure class `AGENTS.md`
+   records for `template_path()`'s ambiguity, where selecting with `match()`
+   returned the first row and said nothing about the rest. Changing a shared
+   map so that a one-to-one lookup quietly becomes one-to-many, in a package
+   eleven repositories import, would seed that bug everywhere at once.
+
+Option 1 is a change in this repository; option 2 is a cross-repo PR against
+`hvtiRutilities` plus an audit of every `hvti_taxonomy()` caller. The
+recommendation is 1, and the decision has not been taken.
 
 ## 9. The second-exemplar gate
 
