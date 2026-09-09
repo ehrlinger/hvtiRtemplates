@@ -87,6 +87,20 @@ def macro_dir():
 # sets, and numbered RCS backups (`kaplan.~1.1.1.1.~`). A trailing `~` is
 # allowed on each so `run.log~` is recorded as non-source rather than as an
 # editor backup, which would be true but misleading evidence.
+# A filename ending in `~` is an editor backup, whatever precedes it. This
+# clause is separate from the suffix list on purpose: that list allows a
+# trailing `~` on the suffixes it NAMES (`run.log~`), which is a different
+# rule and does not catch `plot.sas~`.
+#
+# Found 2026-09-09 by the first server run. The workstation copy of the
+# library carries no backups, so the gap was invisible locally and appeared
+# only against the real library -- 25 of them, counted as source. The shipped
+# R rule shares this gap and does not suffer from it, because sas_triage()
+# runs a rule ladder AFTER discovery that drops editor backups with recorded
+# evidence. This port kept the denylist and dropped the ladder, so nothing
+# else was going to catch them.
+EDITOR_BACKUP_RE = re.compile(r"~$")
+
 NON_SOURCE_RE = re.compile(
     r"\.(log|lst|txt|doc|docx|pdf|ps|cgm|emf|wmf|png|jpg|gif|"
     r"sas7bdat|sas7bcat|bak|save|asv|xls|xlsx|csv|rtf|zip)~?$"
@@ -124,6 +138,13 @@ def source_files(macro_dir):
     A file that turns out not to be SAS contributes no definitions and no
     calls, which is the same outcome as skipping it -- but it is skipped
     with its name in the artifact rather than in silence.
+
+    A DUPLICATE is deliberately not dropped. `Copy of dist.sas` is real
+    macro source that happens to be a second copy, and this corpus is full
+    of per-study and per-year variants; taking their union and exposing the
+    differences as arguments is the house rule. Filtering one out here would
+    settle that question in the wrong place. It is a variant to reconcile,
+    not noise to remove.
     """
     out = []
     for name in os.listdir(macro_dir):
@@ -132,7 +153,7 @@ def source_files(macro_dir):
             continue
         if name.startswith("."):
             continue
-        if NON_SOURCE_RE.search(name):
+        if NON_SOURCE_RE.search(name) or EDITOR_BACKUP_RE.search(name):
             continue
         out.append(path)
     return sorted(out)
@@ -155,7 +176,9 @@ def excluded_dirs(macro_dir):
         for root, dirs, files in os.walk(path):
             dirs[:] = [d for d in dirs if not d.startswith(".")]
             n += sum(1 for f in files
-                     if not f.startswith(".") and not NON_SOURCE_RE.search(f))
+                     if not f.startswith(".")
+                     and not NON_SOURCE_RE.search(f)
+                     and not EDITOR_BACKUP_RE.search(f))
         out[name] = n
     return out
 
