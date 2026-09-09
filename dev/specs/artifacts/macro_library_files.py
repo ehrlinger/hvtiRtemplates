@@ -57,8 +57,11 @@ def macro_dir():
     env = os.environ.get("MACROS")
     if env:
         path = os.path.expanduser(os.path.expandvars(env))
-        # SAS filerefs are sometimes written with a trailing separator or as
-        # a concatenation ("(a b)"); neither is a directory this can read.
+        # A trailing separator is the normal shape of this value in the wild
+        # -- the server exports it that way -- and it reads fine: listdir()
+        # accepts it and os.path.join() tolerates the doubled separator. The
+        # case that does NOT read is a SAS fileref CONCATENATION, "(a b)",
+        # which names several directories at once and is not a path at all.
         #
         # The check LISTS the directory rather than asking os.path.isdir(),
         # which answers a different question: isdir() is true of a directory
