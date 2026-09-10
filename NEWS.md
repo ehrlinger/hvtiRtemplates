@@ -14,9 +14,10 @@
 
   It stops, rather than drawing, on an operation year outside 1900 to next
   year (the wrong-origin mistake), on a fractional year (which would draw one
-  "annual" point per patient), on a percent column holding anything but 0/1,
-  and on a subgroup that selects nobody, and it prints each figure's dropped
-  rows. Axis limits zoom through `coord_cartesian()` rather than dropping
+  "annual" point per patient), on a year missing for every patient, on a
+  percent column holding anything but 0/1, on a subgroup filter that is not one
+  TRUE/FALSE per patient, and on a subgroup that selects nobody, and it prints
+  each figure's dropped rows. Axis limits zoom through `coord_cartesian()` rather than dropping
   patients before the smooth is fitted. `hvtiPlotR (>= 2.7.7)` joins `Suggests` and `Remotes`; 2.7.7
   rather than 2.7.6 because the dropped-row count arrived part-way through 2.7.6
   without a version bump. The Suggests-bound test now covers hvtiPlotR.

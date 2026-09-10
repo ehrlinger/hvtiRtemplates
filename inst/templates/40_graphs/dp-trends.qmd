@@ -201,6 +201,10 @@ if (!is.numeric(d$year)) {
        "numeric column, such as years since an origin plus that origin.",
        call. = FALSE)
 }
+if (all(is.na(d$year))) {
+  stop("`year` is missing for every patient, so there is nothing to plot. ",
+       "Check the column it is built from.", call. = FALSE)
+}
 if (any(d$year != round(d$year), na.rm = TRUE)) {
   stop("`year` must be a whole calendar year. hv_trends() draws one summary ",
        "point per distinct value, so a fractional year draws one point per ",
@@ -309,6 +313,14 @@ trend_long <- function(d, spec) {
 # itself is written through set_path(), which resolves from the project root.
 for (sg in names(SUBGROUPS)) {
   keep <- SUBGROUPS[[sg]](d)
+  # One logical per patient, or the filter is wrong. R would silently recycle
+  # a length-1 or short vector through d[keep, ] and select the wrong patients,
+  # and a filter on a missing column returns logical(0).
+  if (!is.logical(keep) || length(keep) != nrow(d)) {
+    stop("SUBGROUPS entry `", sg, "` must return one TRUE/FALSE per patient (",
+         nrow(d), "); it returned ", length(keep), " value(s) of type ",
+         typeof(keep), ".", call. = FALSE)
+  }
   keep[is.na(keep)] <- FALSE
   dd <- d[keep, , drop = FALSE]
   if (nrow(dd) == 0L) {

@@ -64,6 +64,11 @@ Each fails loudly where the exemplars failed quietly:
   origin;
 - a `percent` column holding anything but 0/1 or logical stops, because a 1/2
   code times 100 draws a plausible wrong figure;
+- a year missing for every patient stops, where `min()`/`max()` would have
+  printed `Inf` bounds over empty figures;
+- a subgroup filter that is not one TRUE/FALSE per patient stops, because R
+  would silently recycle a length-1 or short vector through `d[keep, ]` and
+  select the wrong patients;
 - a subgroup that selects nobody stops;
 - rows missing the year or the value are counted and printed with every figure,
   where the exemplars dropped them with `na.omit()` and said nothing.
@@ -85,6 +90,8 @@ No study data, path or identifier is involved.
 | a `percent` column coded 1/2 | stops: "is kind "percent" but holds 2" |
 | **fractional** years (600 patients, 594 distinct interval values), default `floor()` | renders 6 figures; 31 yearly points per trend, where raw fractional x would have drawn 594 |
 | the same data with `year <- iv_opyrs + origin` | stops: "`year` must be a whole calendar year" |
+| a `SUBGROUPS` filter returning a single `TRUE` | stops: "must return one TRUE/FALSE per patient" |
+| `year` missing for every patient | stops: "`year` is missing for every patient" |
 
 The first gate used whole-number years only, and so could not see the
 fractional-year defect; a local review of the diff found it, and these two rows
