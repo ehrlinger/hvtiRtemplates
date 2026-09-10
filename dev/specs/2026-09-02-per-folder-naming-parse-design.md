@@ -195,6 +195,29 @@ written as a set.
 They were never jobs, and the reason they looked unidentifiable is that a
 `.sas7bdat` in `estimates` was being counted as evidence of an analysis.
 
+**Checked again on 2026-09-10, against the reading "dead early, dead late,
+landmark jobs".** The names are right and the landmark reading is not. The
+program that writes them is `tp.bh.hazard_bootstrap_bagging.sas`, which saves
+`est.deade`, `est.deadc` and `est.deadl` from its per-phase bagging output, and
+`tp.bh.bootstrap_bagging_clustering_summary.sas` reads them back under the
+titles "Early Hazard Phase" and "Late Hazard Phase". The phases decompose the
+hazard: they overlap in time and sum to it, and neither conditions on survival
+to a fixed point.
+
+A glob of the share to depth 6 found 1,203 `dead[elc]*` files and every one is
+a dataset: 850 in `estimates` (821 `.sas7bdat`, 29 `.ssd01`), 350 in
+`bstrap_ests`, 3 in `documents`. A second glob, for `*dead[el]*.sas` to depth
+8, found no program named `deade` or `deadl`, and nine programs carrying the
+string inside a longer name. Eight are `deadexpl`, death before explant, the
+competing event for explant, under `hz`, `hm`, `ac` and `bh`.
+
+The ninth is the only landmark-shaped job the search found:
+`descriptive/dc.deadlate.sas`, in one study. It deletes
+`iv_dead le 30/365.2425 or hdeath` before describing the deaths that remain,
+so it conditions on surviving 30 days and the hospital stay. A landmark
+construct therefore exists in the corpus, as a `dc` job at one study, and it is
+not what `deadl` names. One study does not open the two-studies gate.
+
 ## 9. The pattern worth naming
 
 This is the third assumption-at-scale failure in a fortnight, after the
