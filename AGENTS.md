@@ -55,6 +55,32 @@ through ten CI runs and two code reviews. Three independent causes, each hidden 
 last. Nothing in a conclusion, a check mark, or a review surfaced it; only the
 per-platform summary lines did.
 
+⚠️ **And a test FILTER silently decides which code paths CI exercises at all.**
+`R-CMD-check.yaml` runs one extra step, scoped to a single matrix leg, that loads the
+package from the source tree with `HVTI_JOBS` pointed at a checked-out catalog. It is the
+only place the catalog-reading tests actually run, because the tarball `R CMD check` builds
+has no catalog. That step takes a `filter=`, and the filter is a list of file-name patterns:
+
+```sh
+gh run view <run-id> --log | grep -E "SKIP [0-9]+ \| PASS"   # read EVERY step, not just the check legs
+```
+
+On 2026-09-09 the filter was `"roadmap"` while the change under review was in
+`test-taxonomy.R`. That file therefore ran only inside `R CMD check`, where the catalog is
+always absent, so its new catalog-first lookup took the taxonomy fallback on every platform
+and the branch the pull request existed to add had **no coverage at all**. Ten green checks
+and an approving Copilot review said otherwise. The tell was in the summaries: `SKIP 3 |
+PASS 231` on the check legs beside `SKIP 0 | PASS 5` on the strict step, five being the
+roadmap file alone. Widened to `"roadmap|taxonomy"` in
+[#98](https://github.com/ehrlinger/hvtiRtemplates/pull/98).
+
+**Widen the filter whenever a test starts reading the catalog**, and when a change adds a
+branch that only runs with the catalog present, assert it: every template shipped today
+sits in the folder `hvti_taxonomy()` names, so catalog and taxonomy agree and a regression
+to taxonomy-only stays green. Drive such a test from a TEMPORARY catalog, so it covers the
+divergent case and does not go stale when the real one is edited. Prove it by mutation, not
+by counting assertions: revert the code and confirm the new tests go red.
+
 ## Rules for this repo
 
 - **`_pkgdown.yml` deliberately has NO `reference:` section**, so pkgdown indexes every
@@ -213,14 +239,35 @@ moved — a template that fails this check cannot be scaffolded at all.
   branch: no deletion, no force-push, pull-request-only, and an **automatic Copilot code
   review**. A direct push to `main` is rejected by the server, which is the ruleset and not a
   local hook, and the fix is to branch, never to force past it.
-  ⚠️ **Copilot review credits ARE exhausted, confirmed 2026-09-03 around 20:00 UTC.**
-  A re-request on [#83](https://github.com/ehrlinger/hvtiRtemplates/pull/83) came back as a
-  review whose entire body is *"Copilot was unable to review this pull request because the
-  user who requested the review has reached their quota limit."* Reported by the maintainer
-  earlier that day as lasting until October.
-  ⚠️ **The quota announces itself, so do not guess.** This is the one thing the earlier draft
-  of this paragraph got wrong: it said an unanswered re-request is indistinguishable from a
-  slow bot. It is not, once the quota is hit. Copilot posts a review saying so, and it is
+  ⚠️ **Copilot review credits are AVAILABLE again, measured 2026-09-09.** Three pull
+  requests drew reviews that day:
+  [#95](https://github.com/ehrlinger/hvtiRtemplates/pull/95) and
+  [#98](https://github.com/ehrlinger/hvtiRtemplates/pull/98) here, and
+  [hvtiR#57](https://github.com/ehrlinger/hvtiR/pull/57). None returned a quota body. The
+  maintainer's report on 2026-09-03 was that the exhaustion would last until October; it did
+  not, and no explanation for the early return is available from here. **Measure, do not
+  reason from either date.**
+  ⚠️ **Latency is wider than the range recorded below, and a slow bot invites a false
+  conclusion.** Measured 2026-09-09: hvtiR#57 was reviewed 2m48s after opening, and #98
+  12m46s, against the 14-seconds-to-6-minutes range below. #98 looked unrequested at the
+  two-minute mark, was re-requested by script, and produced a review at 12m46s. **Do not read
+  that as the re-request working.** The timeline shows the ruleset's own
+  `review_requested -> Copilot` at 20:45:13Z, two seconds after the PR opened, so an
+  automatic request was already outstanding the whole time and the scripted one is not
+  distinguishable from waiting. Widen the expectation to at least 15 minutes before
+  concluding anything.
+  ⚠️ **The timeline resolves "not requested" from "slow", which the reviews list cannot.**
+  This is the better check, and it was not here before 2026-09-09:
+
+  ```sh
+  gh api repos/<o>/<r>/issues/<n>/timeline \
+    --jq '.[] | select(.event=="review_requested") | "\(.created_at) \(.requested_reviewer.login // "bot")"'
+  ```
+
+  A `review_requested` naming Copilot means one is outstanding and the answer is to wait. No
+  such event means it never fired, and only then is a re-request the right move.
+  ⚠️ **The quota announces itself, so do not guess.** Once the quota IS hit, an unanswered
+  re-request is distinguishable from a slow bot: Copilot posts a review saying so, and it is
   visible in the reviews list:
 
   ```sh
@@ -228,21 +275,37 @@ moved — a template that fails this check cannot be scaffolded at all.
     --jq '[.[] | select(.user.login | startswith("copilot"))] | last | .body'
   ```
 
-  A body containing "quota limit" means the credits are gone; an empty result still means
-  slow or not-requested. Check before concluding either.
-  ⚠️ **Every merge now reaches `main` unread.** The `copilot_code_review` rule stays in the
-  ruleset and does not block a merge, so PRs open and go green as usual and simply get no
-  review. Combined with the approval rule below, which nobody can satisfy on their own PR,
-  nothing and nobody reads the diff. CI checks compilation, tests, lint and the count guards;
-  none of them reads for correctness.
+  A body containing "quota limit" means the credits are gone. An empty result on its own is
+  ambiguous; the timeline check above is what separates slow from not-requested, so use both
+  rather than concluding from this one.
+  ⚠️ **A merge can still reach `main` unread, for reasons that outlive the quota.** The
+  `copilot_code_review` rule stays in the ruleset and does not block a merge, so a PR that
+  draws no review opens and goes green exactly like one that did. Three ways that happens
+  even with credits: the review does not fire automatically (see #98 above), the PR was
+  opened against a branch other than `main` so the rule never applied, and, most often, the
+  review covers only the commit the PR was opened with. Combined with the approval rule
+  below, which nobody can satisfy on their own PR, the diff can go unread by anything that
+  reads for correctness; CI checks compilation, tests, lint and the count guards, and none of
+  those do.
   ⚠️ **Run `/code-review` locally before opening a PR**, and say in the PR body that it stood
-  in for the bot, so a reader can tell a reviewed change from an unreviewed one.
+  in for the bot, so a reader can tell a reviewed change from an unreviewed one. Do it for
+  every substantive push, not only the first, because the bot will not. Measured on
+  [#98](https://github.com/ehrlinger/hvtiRtemplates/pull/98): the review landed at 20:57:59Z
+  and the commit that carried the whole point of the change was pushed at 21:01:52Z, so the
+  standing approval was given four minutes before the code it appears to approve existed.
   For scale, so the cost is legible: over 2026-09-02/03 the Copilot reviewer found roughly
   twenty real defects across eight PRs, including a logic error that misreported two
   unqualified templates as a mixed prefix, an `NA`-versus-`"NA"` collapse in a uniqueness key
   written in the branch that fixed the same collapse elsewhere, a released recommendation
   built on a sample of two, and nine broken paths in a user-facing table in the last PR
-  before the quota bit.
+  before the quota bit. Against that, on 2026-09-09 it returned two presentation nits on #95
+  and nothing on #98 or hvtiR#57, while the three genuine defects those branches carried were
+  found by the local review instead. **A bot approval is evidence the diff was read, not
+  evidence it was read well.**
+  <sub>History (superseded 2026-09-09): this paragraph read "Every merge NOW reaches `main`
+  unread", as a consequence of the exhausted quota above. The quota returned; the paragraph
+  is rewritten around the three causes that do not depend on it, all of which were true
+  while the quota was the visible one.</sub>
   <sub>History (superseded 2026-09-03 20:00): this paragraph read that credits were
   "reported EXHAUSTED ... but reviews were still arriving", citing #79 and #80 drawing
   substantive reviews that afternoon, #80's at 18:50 UTC. That was accurate when written and
