@@ -88,9 +88,19 @@ jobs:
       # this checks repository content, not platform behaviour.
       # HVTI_ROADMAP_STRICT turns a skip into a hard failure, so a broken path
       # resolution can't pass silently as "0 tests ran, all green".
-      - name: Run the roadmap vocabulary guard against the source tree
+      #
+      # ⚠️ `taxonomy` joined the filter on 2026-09-09, and the reason is the
+      # exact failure the paragraph above guards against, one file over.
+      # `test-taxonomy.R`'s folder check now reads the catalog first and falls
+      # back to `hvti_taxonomy()` when it is absent. Inside `R CMD check` the
+      # catalog is ALWAYS absent, so that check took the fallback branch on
+      # every platform and the catalog-first path -- the entire point of the
+      # change -- had no coverage at all while ten green checks said otherwise.
+      # A filter that names one file silently decides which code paths CI
+      # exercises. Widen it whenever a test starts reading the catalog.
+      - name: Run the catalog-reading guards against the source tree
         if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
         env:
           HVTI_ROADMAP_STRICT: 1
-        run: testthat::test_local(".", filter = "roadmap", stop_on_failure = TRUE)
+        run: testthat::test_local(".", filter = "roadmap|taxonomy", stop_on_failure = TRUE)
         shell: Rscript {0}
