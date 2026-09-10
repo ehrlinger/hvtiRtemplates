@@ -520,7 +520,10 @@ def main():
         # which on a workstation is /Users/<name>/... -- the site identifier
         # tools/check-no-site-identifiers.sh already caught once in the
         # allocation JSON. `catalog_path` below carries the redacted path.
-        cat_error = f"{type(exc).__name__}: {getattr(exc, 'strerror', None) or 'unreadable'}"
+        _errno = getattr(exc, "errno", None)
+        cat_error = (f"{type(exc).__name__}: "
+                     + (f"[errno {_errno}] " if _errno is not None else "")
+                     + (getattr(exc, "strerror", None) or "unreadable"))
         cat_by_prefix = {}
         if os.environ.get("HVTI_JOBS"):
             sys.exit(
@@ -664,6 +667,13 @@ def main():
             "edges": edges,
         },
         "allocation_trust": trust,
+        # NOT catalog rows. One row per prefix in `set(pre_jobs) | set(OWNER)`,
+        # built from what THIS scan measured -- n_jobs, n_studies and the macro
+        # components each prefix reaches. Only `job_destination`,
+        # `job_disposition`, `job_status` and `folder` come from jobs.json, and
+        # those are null when it was not read. Emitting the whole list as null
+        # in that case would discard the scan's own measurements along with the
+        # catalog's, which is a worse artifact, not a safer one.
         "catalog": catalog_rows,
         # `catalog_read` first, and every count null when it is false. A zero
         # here is indistinguishable from "nothing was ready" unless the reader
@@ -674,7 +684,10 @@ def main():
             "catalog_path": macro_library_files.describe_dir(
                 os.path.dirname(cat_path)) + "/" + os.path.basename(cat_path),
             "catalog_error": cat_error,
-            "rows": len(catalog_rows),
+            # `prefix_rows`, not `rows`: the count is of prefixes this scan
+            # saw, and reading it as "29 catalog rows were loaded" beside
+            # `catalog_read: false` is exactly the confusion to avoid.
+            "prefix_rows": len(catalog_rows),
             "backlog_ready": (None if cat_error else
                               sum(1 for r in catalog_rows if r["backlog_ready"])),
             "no_domain_owner": (None if cat_error else
@@ -710,7 +723,7 @@ def main():
         print(f"\ncatalog: NOT READ -- {cc['catalog_error']}. "
               f"Counts are null, not zero. Set $HVTI_JOBS.")
     else:
-        print(f"\ncatalog: {cc['rows']} prefixes, {cc['backlog_ready']} backlog-ready, "
+        print(f"\ncatalog: {cc['prefix_rows']} prefixes, {cc['backlog_ready']} backlog-ready, "
               f"{cc['no_domain_owner']} without a domain owner, "
               f"{cc['no_job_destination']} without a job destination, "
               f"{cc['cran_boundary_blocked']} CRAN-boundary blocked")
