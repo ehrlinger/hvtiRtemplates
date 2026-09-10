@@ -403,7 +403,16 @@ def main():
     detail, alloc = {}, collections.defaultdict(list)
     for c, mem in members.items():
         votes = {p: len(s) for (b, p), s in studies.items() if b == c}
+        # `total` sums per-package study counts, so a study that calls this
+        # component under two owned prefixes is counted once PER PACKAGE. It
+        # is a VOTE TOTAL, not a study count, and the majority rule below
+        # divides by it -- correctly, since each vote is one (study, package)
+        # pair. It was called `n_studies` until 2026-09-09, which reported a
+        # per-component maximum of 3947 beside a corpus of 2945 distinct
+        # studies: a component voted by more studies than exist.
         total = sum(votes.values())
+        distinct = len(set().union(*(s for (b, p), s in studies.items()
+                                     if b == c)) if votes else set())
         top, top_n = (max(votes.items(), key=lambda kv: (kv[1], kv[0]))
                       if votes else (None, 0))
         if not votes:
@@ -420,7 +429,8 @@ def main():
                 "component": c, "is_component_root": b == c,
                 "destination": dest, "tier": tier,
                 "votes_studies": dict(sorted(votes.items(), key=lambda kv: -kv[1])),
-                "n_studies": total,
+                "n_votes": total,
+                "n_distinct_studies": distinct,
                 "majority_share": round(top_n / total, 3) if total else None,
                 "direct_call_sites": {p: n for (x, p), n in call_sites.items() if x == c},
                 "direct_inc_sites": {p: n for (x, p), n in inc_sites.items() if x == c},
@@ -431,7 +441,8 @@ def main():
         if b not in detail:
             detail[b] = {"component": None, "is_component_root": False,
                          "destination": None, "tier": "library-only",
-                         "votes_studies": {}, "n_studies": 0,
+                         "votes_studies": {}, "n_votes": 0,
+                         "n_distinct_studies": 0,
                          "macros": sorted(fdefs[b])}
             alloc["_library-only"].append(b)
 
@@ -485,12 +496,45 @@ def main():
     # component it reaches has a destination.
     cat_path = os.environ.get("HVTI_JOBS") or os.path.expanduser(
         "~/Documents/GitHub/hvtiR/inst/extdata/jobs.json")
+    #
+    # The read FAILS LOUD. It used to swallow OSError into an empty dict, and
+    # on the first server run that turned "the catalog is not on this machine"
+    # into "29 prefixes, 0 backlog-ready, 29 without a job destination" -- a
+    # complete, plausible table over a file that was never opened. That is the
+    # defect this emitter exists to refuse, sitting inside the emitter.
+    #
+    # $HVTI_JOBS set but unreadable is fatal, on the same rule as $MACROS: an
+    # operator who named a path meant that path. The DEFAULT path missing is
+    # not fatal -- the catalog is one section and the allocation is the
+    # product -- but it is recorded in the artifact and shouted on stderr, and
+    # the counts read null rather than zero so nothing downstream can mistake
+    # "not read" for "read, and empty".
     catalog_rows, cat_by_prefix = [], {}
+    cat_error = None
     try:
-        for r in json.load(open(cat_path))["jobs"]:
-            cat_by_prefix.setdefault(r["prefix"], r)
-    except (OSError, KeyError, ValueError):
+        with open(cat_path) as fh:
+            for r in json.load(fh)["jobs"]:
+                cat_by_prefix.setdefault(r["prefix"], r)
+    except (OSError, KeyError, ValueError) as exc:
+        # Type and errno only. str(exc) on an OSError embeds the full path,
+        # which on a workstation is /Users/<name>/... -- the site identifier
+        # tools/check-no-site-identifiers.sh already caught once in the
+        # allocation JSON. `catalog_path` below carries the redacted path.
+        _errno = getattr(exc, "errno", None)
+        cat_error = (f"{type(exc).__name__}: "
+                     + (f"[errno {_errno}] " if _errno is not None else "")
+                     + (getattr(exc, "strerror", None) or "unreadable"))
         cat_by_prefix = {}
+        if os.environ.get("HVTI_JOBS"):
+            sys.exit(
+                f"FATAL: $HVTI_JOBS is set to {os.environ['HVTI_JOBS']!r} and "
+                f"could not be read.\n       {cat_error}\n"
+                f"       Unset it to fall back to the default path, or point "
+                f"it at the jobs.json catalog.")
+        print(f"WARNING: job catalog not read ({cat_error}).\n"
+              f"         Looked at: {cat_path}\n"
+              f"         The catalog section of the output is NULL, not empty."
+              f" Set $HVTI_JOBS to read it.", file=sys.stderr)
     for pre in sorted(set(pre_jobs) | set(OWNER)):
         cat = cat_by_prefix.get(pre, {})
         comps, blocked_on, needs = {}, [], set()
@@ -533,7 +577,7 @@ def main():
     # shape of defect this package exists to refuse. So the denominator is
     # reported, and a thin one marks the allocation provisional in the file
     # itself rather than in a reader's memory of how it was run.
-    denom = sorted(r["n_studies"] for r in detail.values()
+    denom = sorted(r["n_votes"] for r in detail.values()
                    if r["destination"] and r["is_component_root"])
     med = denom[len(denom) // 2] if denom else 0
 
@@ -556,9 +600,11 @@ def main():
     provisional = (med < 3) or thin_corpus
     trust = {
         "allocation_provisional": provisional,
-        "median_studies_per_allocated_component": med,
-        "max_studies_per_allocated_component": denom[-1] if denom else 0,
-        "n_components_voted_by_one_study": sum(1 for d in denom if d <= 1),
+        # Named for what they are. The console line already said "median vote
+        # denominator" while the JSON said "studies"; the console was right.
+        "median_vote_denominator": med,
+        "max_vote_denominator": denom[-1] if denom else 0,
+        "n_components_voted_once": sum(1 for d in denom if d <= 1),
         "distinct_studies": n_studies,
         "population_threshold": MIN_POPULATION_STUDIES,
         "reason": ("read the machinery, not the allocation: "
@@ -621,16 +667,40 @@ def main():
             "edges": edges,
         },
         "allocation_trust": trust,
+        # NOT catalog rows. One row per prefix in `set(pre_jobs) | set(OWNER)`,
+        # built from what THIS scan measured -- n_jobs, n_studies and the macro
+        # components each prefix reaches. Only `job_destination`,
+        # `job_disposition`, `job_status` and `folder` come from jobs.json, and
+        # those are null when it was not read. Emitting the whole list as null
+        # in that case would discard the scan's own measurements along with the
+        # catalog's, which is a worse artifact, not a safer one.
         "catalog": catalog_rows,
+        # `catalog_read` first, and every count null when it is false. A zero
+        # here is indistinguishable from "nothing was ready" unless the reader
+        # already knows the file was missing, which is exactly the confusion
+        # the first server run produced.
         "catalog_counts": {
-            "rows": len(catalog_rows),
-            "backlog_ready": sum(1 for r in catalog_rows if r["backlog_ready"]),
-            "no_domain_owner": sum(1 for r in catalog_rows if not r["domain_owner"]),
-            "no_job_destination": sum(1 for r in catalog_rows if not r["job_destination"]),
-            "blocked_on_unallocated": sum(1 for r in catalog_rows
-                                          if r["blocked_on_unallocated"]),
-            "cran_boundary_blocked": sum(1 for r in catalog_rows
-                                         if r["cran_boundary_blocked_on"]),
+            "catalog_read": cat_error is None,
+            "catalog_path": macro_library_files.describe_dir(
+                os.path.dirname(cat_path)) + "/" + os.path.basename(cat_path),
+            "catalog_error": cat_error,
+            # `prefix_rows`, not `rows`: the count is of prefixes this scan
+            # saw, and reading it as "29 catalog rows were loaded" beside
+            # `catalog_read: false` is exactly the confusion to avoid.
+            "prefix_rows": len(catalog_rows),
+            "backlog_ready": (None if cat_error else
+                              sum(1 for r in catalog_rows if r["backlog_ready"])),
+            "no_domain_owner": (None if cat_error else
+                                sum(1 for r in catalog_rows if not r["domain_owner"])),
+            "no_job_destination": (None if cat_error else
+                                   sum(1 for r in catalog_rows
+                                       if not r["job_destination"])),
+            "blocked_on_unallocated": (None if cat_error else
+                                       sum(1 for r in catalog_rows
+                                           if r["blocked_on_unallocated"])),
+            "cran_boundary_blocked": (None if cat_error else
+                                      sum(1 for r in catalog_rows
+                                          if r["cran_boundary_blocked_on"])),
         },
         "owner_map_vs_catalog": disagree,
         "unknown_prefixes": dict(unknown_prefix.most_common(30)),
@@ -646,13 +716,17 @@ def main():
           f"  cran violations: {res['package_dependencies']['n_cran_boundary_violations']}")
     if trust["allocation_provisional"]:
         print(f"\n*** PROVISIONAL: {trust['reason']}. "
-              f"median vote denominator = {trust['median_studies_per_allocated_component']} "
+              f"median vote denominator = {trust['median_vote_denominator']} "
               f"study/studies. Do not quote by_destination as an allocation. ***")
     cc = res["catalog_counts"]
-    print(f"\ncatalog: {cc['rows']} prefixes, {cc['backlog_ready']} backlog-ready, "
-          f"{cc['no_domain_owner']} without a domain owner, "
-          f"{cc['no_job_destination']} without a job destination, "
-          f"{cc['cran_boundary_blocked']} CRAN-boundary blocked")
+    if not cc["catalog_read"]:
+        print(f"\ncatalog: NOT READ -- {cc['catalog_error']}. "
+              f"Counts are null, not zero. Set $HVTI_JOBS.")
+    else:
+        print(f"\ncatalog: {cc['prefix_rows']} prefixes, {cc['backlog_ready']} backlog-ready, "
+              f"{cc['no_domain_owner']} without a domain owner, "
+              f"{cc['no_job_destination']} without a job destination, "
+              f"{cc['cran_boundary_blocked']} CRAN-boundary blocked")
     print(f"\nwrote {a.out}")
 
 
