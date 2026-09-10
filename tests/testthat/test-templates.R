@@ -388,7 +388,7 @@ test_that("bh has no producer guard, because its producer is TemporalHazard", {
   expect_null(.producer_guard("bh"))
 })
 
-test_that("DESCRIPTION's hvtiRbootstrap bound matches what the templates enforce", {
+test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
   # These two drifted apart for NINE releases. `hvtiRbootstrap (>= 0.1.1)`
   # entered DESCRIPTION at 1.0.13 while 04.05-bh.qmd's own guard demanded
   # 0.1.2, then 0.9.0 from 1.0.18. Nothing compared them: the bound is in
@@ -401,31 +401,41 @@ test_that("DESCRIPTION's hvtiRbootstrap bound matches what the templates enforce
   # resolves under devtools::test(), which runs from tests/testthat, and NOT
   # under R CMD check, which tests an INSTALLED copy -- so the first version of
   # this test passed locally and errored in check.
+  #
+  # hvtiRlifetables repeated the first half of that: hs.qmd called
+  # us_cohort_curve(), new in 0.1.2, while DESCRIPTION did not name the package
+  # at all. This test then skipped a missing bound, so it could not have said
+  # so. A package listed here must now have both a template floor and a bound,
+  # and either one missing FAILS.
   desc <- utils::packageDescription("hvtiRtemplates", fields = "Suggests")
   skip_if(is.na(desc) || is.null(desc), "Suggests is not readable here")
-  bound <- regmatches(desc,
-                      regexpr("hvtiRbootstrap\\s*\\(>=\\s*[0-9.]+\\)", desc))
-  skip_if(length(bound) == 0L, "hvtiRbootstrap is not a versioned Suggests")
-  declared <- package_version(gsub("[^0-9.]", "", sub(".*>=", "", bound)))
 
-  floors <- package_version(character(0))
-  for (f in template_list()$file) {
-    code <- sub("#.*$", "", readLines(f, warn = FALSE))
-    pat <- 'packageVersion\\("hvtiRbootstrap"\\)\\s*<\\s*"[0-9.]+"'
-    hit <- unlist(regmatches(code, regexpr(pat, code)))
-    if (length(hit)) {
-      floors <- c(floors,
-                  package_version(gsub('.*<\\s*"([0-9.]+)".*', "\\1", hit)))
+  for (pkg in c("hvtiRbootstrap", "hvtiRlifetables")) {
+    floors <- package_version(character(0))
+    pat <- paste0('packageVersion\\("', pkg, '"\\)\\s*<\\s*"[0-9.]+"')
+    for (f in template_list()$file) {
+      code <- sub("#.*$", "", readLines(f, warn = FALSE))
+      hit <- unlist(regmatches(code, regexpr(pat, code)))
+      if (length(hit)) {
+        floors <- c(floors,
+                    package_version(gsub('.*<\\s*"([0-9.]+)".*', "\\1", hit)))
+      }
     }
-  }
-  skip_if(length(floors) == 0L, "no template enforces a floor")
+    # No floor means a template's guard was dropped, or this list is stale.
+    expect_gt(length(floors), 0L, label = paste("templates enforcing a", pkg, "floor"))
 
-  # The declared bound must be at least the highest floor any template
-  # enforces. Lower means a study can satisfy DESCRIPTION and still be refused
-  # by the template it just scaffolded, with the message arriving mid-render.
-  expect_gte(declared, max(floors),
-             label = paste0("DESCRIPTION declares hvtiRbootstrap >= ", declared,
-                            " but a template refuses below ", max(floors)))
+    bound <- regmatches(desc, regexpr(paste0(pkg, "\\s*\\(>=\\s*[0-9.]+\\)"), desc))
+    expect_length(bound, 1L)
+    if (length(floors) == 0L || length(bound) == 0L) next
+    declared <- package_version(gsub("[^0-9.]", "", sub(".*>=", "", bound)))
+
+    # The declared bound must be at least the highest floor any template
+    # enforces. Lower means a study can satisfy DESCRIPTION and still be refused
+    # by the template it just scaffolded, with the message arriving mid-render.
+    expect_gte(declared, max(floors),
+               label = paste0("DESCRIPTION declares ", pkg, " >= ", declared,
+                              " but a template refuses below ", max(floors)))
+  }
 })
 
 # ---- qualifier ------------------------------------------------------------

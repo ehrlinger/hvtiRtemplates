@@ -60,6 +60,17 @@ suppressPackageStartupMessages({
   library(hvtiRutilities)
   library(hvtiRlifetables)
 })
+
+# The obs-vs-exp chunk calls us_cohort_curve(), which arrived in
+# hvtiRlifetables 0.1.2. Without this check a study on 0.1.1 gets "could not
+# find function" from the middle of a render, after the model has been read
+# and every prediction made: the symbol is named, the fix is not.
+if (utils::packageVersion("hvtiRlifetables") < "0.1.2") {
+  stop("This job needs hvtiRlifetables >= 0.1.2; ",
+       utils::packageVersion("hvtiRlifetables"), " is installed. ",
+       "us_cohort_curve(), which the obs-vs-exp chunk calls, arrived in ",
+       "0.1.2.\nUpdate it, then re-render.", call. = FALSE)
+}
 ```
 
 ```{r}
