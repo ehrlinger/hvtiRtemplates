@@ -184,17 +184,28 @@ set_path <- function(kind, file) {
 #| label: data
 d <- read_built()
 
-# EDIT: the calendar year of operation. Older jobs store years since an origin
-# and add the origin back, and the origin differs between studies: 1985 in one,
-# 2000 in another. A wrong origin moves every figure along the x-axis with
-# nothing to say so, which is why the range is checked and printed below. If
-# the dataset carries the calendar year directly, use that column instead.
-d$year <- d$iv_opyrs + 1985
+# EDIT: the calendar year of operation, as a WHOLE year. hv_trends() puts one
+# summary point at every distinct value of x, so x must be the year itself.
+# Years since an origin are an interval, fractional like every iv_ column, and
+# origin plus a fractional interval would give one "annual" point per patient.
+# Older jobs kept the two apart for this reason: they smoothed on the interval
+# and averaged on an integer year column. If the dataset carries the calendar
+# year, use that column; otherwise take the whole years of the interval and add
+# the origin. The origin differs between studies, 1985 in one and 2000 in
+# another, and a wrong one moves every figure along the x-axis, which is why
+# the range is checked and printed below.
+d$year <- floor(d$iv_opyrs) + 1985
 
 if (!is.numeric(d$year)) {
   stop("`year` is not numeric (", class(d$year)[1L], "). Build it from a ",
        "numeric column, such as years since an origin plus that origin.",
        call. = FALSE)
+}
+if (any(d$year != round(d$year), na.rm = TRUE)) {
+  stop("`year` must be a whole calendar year. hv_trends() draws one summary ",
+       "point per distinct value, so a fractional year draws one point per ",
+       "patient. Use floor() on a years-since-origin interval, or a ",
+       "calendar-year column.", call. = FALSE)
 }
 # A plausible window, not a precise one. Its job is to catch the wrong-origin
 # mistake, which lands decades or centuries out, not to police real data.
@@ -223,7 +234,8 @@ knitr::kable(data.frame(
 #   "percent"     0/1 or logical, drawn as the percent of patients with it
 #   "continuous"  a measurement, drawn on its own scale
 # `labels` names the series in the legend (default: the column names). Fixing
-# `ylim` and `ybreaks` keeps figures for different subgroups comparable.
+# `ylim` and `ybreaks` keeps figures for different subgroups comparable; either
+# may be set alone, and `ylim` zooms without dropping any patient.
 # `summary` is "mean" (the default) or "median", the per-year point drawn under
 # the smooth.
 TRENDS <- list(
@@ -316,12 +328,13 @@ for (sg in names(SUBGROUPS)) {
     p <- plot(tr) +
       labs(x = "Year of operation", y = spec$ylab, colour = NULL, shape = NULL) +
       theme_hv_manuscript()
-    if (!is.null(spec$ylim)) {
-      p <- p + scale_y_continuous(
-        limits = spec$ylim,
-        breaks = if (is.null(spec$ybreaks)) waiver() else spec$ybreaks
-      )
-    }
+    # Limits through coord_cartesian(), not scale limits. A scale limit DROPS
+    # the patients outside it before the smooth is fitted, so the curve would
+    # stop passing through the yearly points hv_trends() computed from all of
+    # them, and any stretch of the fitted line past the limit would vanish.
+    # Breaks and limits are applied independently: either may be set alone.
+    if (!is.null(spec$ybreaks)) p <- p + scale_y_continuous(breaks = spec$ybreaks)
+    if (!is.null(spec$ylim)) p <- p + coord_cartesian(ylim = spec$ylim)
     if (!is.null(XBREAKS)) p <- p + scale_x_continuous(breaks = XBREAKS)
     fname <- paste0("dp-trends-", nm, "-", sg, ".png")
     png(set_path("graphs", fname), width = 8, height = 6, units = "in", res = 150)
