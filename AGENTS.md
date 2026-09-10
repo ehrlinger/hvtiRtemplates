@@ -266,6 +266,15 @@ moved — a template that fails this check cannot be scaffolded at all.
 
   A `review_requested` naming Copilot means one is outstanding and the answer is to wait. No
   such event means it never fired, and only then is a re-request the right move.
+  ⚠️ **The event count is also how to verify a re-request, and it beats polling the reviews
+  list.** Observed on #98: a scripted re-request sent while the automatic request was still
+  outstanding added NO event, and the same mutation sent after that review had landed added
+  one, taking the count from 1 to 2. The mutation returns 200 either way. The consistent
+  reading is that `union: true` is a no-op against an outstanding request and only registers
+  once the previous one has been fulfilled, which is inference from two observations rather
+  than documented behaviour, so check the count rather than trusting either the 200 or this
+  sentence. It is a cheaper signal than the review-count polling below, because it moves
+  immediately instead of after the bot finishes.
   ⚠️ **The quota announces itself, so do not guess.** Once the quota IS hit, an unanswered
   re-request is distinguishable from a slow bot: Copilot posts a review saying so, and it is
   visible in the reviews list:
