@@ -1,12 +1,14 @@
 # hvtiRtemplates (unreleased)
 
-* **`deade` and `deadl` are not landmark jobs, and one landmark job was found
-  elsewhere.** The per-folder parse design (section 8) now records the check.
-  Both names are hazard-phase bagging output from the `bh` template: every
-  `dead[elc]*` file on the share is a dataset, and no program carries either
-  name. The one landmark-shaped job is a `dc` descriptive job at a single
-  study, which conditions on surviving 30 days and the hospital stay before
-  describing late deaths. That is below the two-studies gate.
+* **`deade` and `deadl` are not landmark jobs, but the early/late landmark
+  split is a real construct that nothing names.** The per-folder parse design
+  (section 8) now records the check. Both names are hazard-phase bagging
+  output from the `bh` template: every `dead[elc]*` file on the share is a
+  dataset, and no program carries either name. Separately, job pairs such as
+  `lg.dead.early` and `lg.dead.late` (10 and 8 studies) or `dc.dead.early` and
+  `dc.dead.late` (4 and 5) split follow-up at a cutoff: the early job censors
+  at it, and the late job keeps only those who reach it. No taxonomy row or
+  job catalog entry names the construct.
 
 * **The job-catalog pin advances to `hvtiR` `v1.1.7`**, in both
   `R-CMD-check.yaml` and `spec-counts.yaml`, which `tools/check_pin_currency.py`
