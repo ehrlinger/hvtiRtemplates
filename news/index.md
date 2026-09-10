@@ -388,9 +388,11 @@ template, and no ordinal will ever be issued again.
 
 ### `graphs/06.02-hs.qmd`
 
-- Now calls `hvtiRlifetables::us_cohort_curve()` instead of deriving the
-  cohort expected-survival curve inline. The template shipped that
-  derivation deliberately, as the specification for
+- Now calls
+  [`hvtiRlifetables::us_cohort_curve()`](https://ehrlinger.github.io/hvtiRlifetables/reference/us_cohort_curve.html)
+  instead of deriving the cohort expected-survival curve inline. The
+  template shipped that derivation deliberately, as the specification
+  for
   [hvtiRlifetables#16](https://github.com/ehrlinger/hvtiRlifetables/issues/16),
   with a comment promising that when the function landed “this chunk
   becomes one call and the result must not change”. It landed in
