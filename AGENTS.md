@@ -59,7 +59,8 @@ per-platform summary lines did.
 `R-CMD-check.yaml` runs one extra step, scoped to a single matrix leg, that loads the
 package from the source tree with `HVTI_JOBS` pointed at a checked-out catalog. It is the
 only place the catalog-reading tests actually run, because the tarball `R CMD check` builds
-has no catalog. That step takes a `filter=`, and the filter is a list of file-name patterns:
+has no catalog. That step takes a `filter=`, which is ONE regular expression matched against
+test-file names, so it is widened by alternation (`roadmap|taxonomy`), not by adding to a list:
 
 ```sh
 gh run view <run-id> --log | grep -E "SKIP [0-9]+ \| PASS"   # read EVERY step, not just the check legs
@@ -260,7 +261,7 @@ moved — a template that fails this check cannot be scaffolded at all.
   This is the better check, and it was not here before 2026-09-09:
 
   ```sh
-  gh api repos/<o>/<r>/issues/<n>/timeline \
+  gh api --paginate repos/<o>/<r>/issues/<n>/timeline \
     --jq '.[] | select(.event=="review_requested") | "\(.created_at) \(.requested_reviewer.login // "bot")"'
   ```
 
@@ -274,17 +275,24 @@ moved — a template that fails this check cannot be scaffolded at all.
   once the previous one has been fulfilled, which is inference from two observations rather
   than documented behaviour, so check the count rather than trusting either the 200 or this
   sentence. It is a cheaper signal than the review-count polling below, because it moves
-  immediately instead of after the bot finishes.
+  immediately instead of after the bot finishes. Count it across pages with `wc -l`:
+
+  ```sh
+  gh api --paginate repos/<o>/<r>/issues/<n>/timeline \
+    --jq '.[] | select(.event=="review_requested") | .created_at' | wc -l
+  ```
   ⚠️ **The quota announces itself, so do not guess.** Once the quota IS hit, an unanswered
   re-request is distinguishable from a slow bot: Copilot posts a review saying so, and it is
   visible in the reviews list:
 
   ```sh
   gh api --paginate repos/<o>/<r>/pulls/<n>/reviews \
-    --jq '[.[] | select(.user.login | startswith("copilot"))] | last | .body'
+    --jq '.[] | select(.user.login | startswith("copilot")) | "\(.submitted_at) quota=\(.body | test("quota limit"))"' \
+    | tail -1
   ```
 
-  A body containing "quota limit" means the credits are gone. An empty result on its own is
+  `quota=true` on the latest line means the credits are gone. Reviews come back oldest
+  first, so the last line printed across all pages is the newest review. An empty result on its own is
   ambiguous; the timeline check above is what separates slow from not-requested, so use both
   rather than concluding from this one.
   ⚠️ **A merge can still reach `main` unread, for reasons that outlive the quota.** The
@@ -406,7 +414,7 @@ moved — a template that fails this check cannot be scaffolded at all.
 
   ```sh
   gh api --paginate repos/<o>/<r>/pulls/<n>/reviews \
-    --jq '[.[] | select(.user.login | startswith("copilot"))] | length'
+    --jq '.[] | select(.user.login | startswith("copilot")) | .id' | wc -l
   ```
 
   ⚠️ **`--paginate` is not optional.** That endpoint returns 30 per page, so a
@@ -414,6 +422,16 @@ moved — a template that fails this check cannot be scaffolded at all.
   count comes back unchanged. A verification that silently undercounts is the same
   defect as the one this paragraph replaced, one endpoint further along. Raised by
   Copilot on the PR that wrote this.
+  ⚠️ **But `--paginate` alone does not make an aggregate correct: `--jq` runs once PER
+  PAGE.** An expression that collects into an array, `[.[] | ...] | length` or `| last`,
+  therefore prints one answer per page rather than one answer. Measured 2026-09-10 with the
+  page size forced to 1: the count form printed `1 1 0 1` instead of `3`, and the `last |
+  .body` form ended on whichever page came last, not on the newest review. The commands in
+  this file emit one line per item and let `wc -l` or `tail -1` do the aggregating after
+  the pages are joined. `--slurp` would join them first, but gh refuses it alongside
+  `--jq`. Raised by Copilot on
+  [#100](https://github.com/ehrlinger/hvtiRtemplates/pull/100), for the timeline command;
+  the two reviews commands above had the same defect and had carried it since 2026-08-31.
 
   ⚠️ **Do not key on `commit_id` matching your head SHA.** It usually does, and on
   [#61](https://github.com/ehrlinger/hvtiRtemplates/pull/61) two reviews anchored to
