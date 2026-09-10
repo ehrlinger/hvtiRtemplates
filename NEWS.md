@@ -1,5 +1,26 @@
 # hvtiRtemplates (unreleased)
 
+* **`40_graphs/dp-trends.qmd` ships**, the first of the EDA templates and the
+  first QUALIFIED template: a job is scaffolded with
+  `new_job("dp", "cohort", "eda", qualifier = "trends")` and lands at
+  `graphs/cohort-eda-dp-trends.qmd`. It is thin over `hvtiPlotR::hv_trends()`,
+  which takes one row per patient and computes the per-year points itself, so
+  the job never aggregates by hand. Of 50 trends job files across 24 studies,
+  none used it. One job draws a list of figures, optionally once per subgroup
+  on shared axes.
+
+  The set key for an EDA job is `(subject, eda)`: `ENDPOINT` names what is
+  described, `cohort` by default, and `TYPE` is always `eda`.
+
+  It stops, rather than drawing, on an operation year outside 1900 to next
+  year (the wrong-origin mistake), on a percent column holding anything but
+  0/1, and on a subgroup that selects nobody, and it prints each figure's
+  dropped rows. `hvtiPlotR (>= 2.7.7)` joins `Suggests` and `Remotes`; 2.7.7
+  rather than 2.7.6 because the dropped-row count arrived part-way through 2.7.6
+  without a version bump. The Suggests-bound test now covers hvtiPlotR.
+
+  Design: `dev/specs/2026-09-10-dp-trends-template-design.md`.
+
 * **The job-catalog pin advances to `hvtiR` `v1.1.7`**, in both
   `R-CMD-check.yaml` and `spec-counts.yaml`, which `tools/check_pin_currency.py`
   requires to agree. 1.1.7 carries the EDA batch's catalog changes

@@ -13,6 +13,7 @@ refuses to overwrite an existing job.
 | `20_distributions/hz.qmd` | multiphase parametric hazard fit | `distributions/` |
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `graphs/` |
 | `40_graphs/hs.qmd` | patient-level predictions and expected survival | `graphs/` |
+| `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `graphs/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `analyses/` |
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `analyses/` |
@@ -37,8 +38,9 @@ fifth in the taxonomy, because it holds saved output rather than jobs. The
 decade gaps are room to insert without renumbering.
 
 The qualifier exists because `graphs/dp` is `trends`, `spaghetti` and `procs`
-rather than one job. Every template here is unqualified today. A prefix is
-wholly qualified or wholly unqualified, never half-decomposed.
+rather than one job. `dp-trends` is the first qualified template; every other
+template here is unqualified. A prefix is wholly qualified or wholly
+unqualified, never half-decomposed.
 
 ## Where a scaffolded job lands
 
@@ -52,9 +54,11 @@ called, and writing into `20_distributions/` would split the estate across two
 spellings of one folder.
 
 A job scaffolded from a qualified template carries the qualifier as a fourth
-field, so `new_job("dp", "dead_pa", "hz", qualifier = "trends")` would write
-`graphs/dead_pa-hz-dp-trends.qmd`. A filename that drops it says only "some
-`dp` job", which is what splitting the templates exists to fix.
+field, so `new_job("dp", "cohort", "eda", qualifier = "trends")` writes
+`graphs/cohort-eda-dp-trends.qmd`. A filename that drops the qualifier says
+only "some `dp` job", which is what splitting the templates exists to fix.
+An EDA job's set key is `(subject, eda)`: the endpoint field names what is
+described, and the type is always `eda`.
 
 ⭐ **The ordinal was dropped in 1.1.0.** A job named
 `dead_pa-hz-03.01-ac.qmd` is from before that change; `03.01` was the taxonomy

@@ -29,8 +29,10 @@ Imports:
 Remotes:
     ehrlinger/hvtiRutilities,
     ehrlinger/hvtiRbootstrap,
-    ehrlinger/hvtiRlifetables
+    ehrlinger/hvtiRlifetables,
+    ehrlinger/hvtiPlotR
 Suggests:
+    hvtiPlotR (>= 2.7.7),
     hvtiRbootstrap (>= 0.9.3),
     hvtiRlifetables (>= 0.1.2),
     jsonlite,
