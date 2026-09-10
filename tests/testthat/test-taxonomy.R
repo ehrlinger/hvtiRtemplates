@@ -116,9 +116,14 @@ test_that("a template sits in the folder its row files it under", {
 # duration of `code`. Base R rather than withr: this package does not Suggest
 # it, and adding a dependency to reach one helper is a poor trade.
 with_temp_catalog <- function(rows, code) {
-  # Qualified, as `testthat::skip()` is in helper-ledger.R: lintr's
-  # object_usage_linter does not resolve bare testthat verbs here.
-  testthat::skip_if_not_installed("jsonlite")
+  # require_jsonlite(), not testthat::skip_if_not_installed(). The latter skips
+  # silently even under HVTI_ROADMAP_STRICT, so these five tests could drop out
+  # of the strict step with it still reporting green, which is the defect this
+  # block exists to prevent. require_jsonlite() is a hard stop there and a skip
+  # everywhere else. Raised by Copilot on #98. The nolint is because
+  # object_usage_linter checks function bodies and cannot see a helper
+  # defined in helper-ledger.R; testthat loads that file before this one.
+  require_jsonlite() # nolint: object_usage_linter.
   path <- tempfile(fileext = ".json")
   writeLines(jsonlite::toJSON(list(jobs = rows), auto_unbox = TRUE), path)
   old <- Sys.getenv("HVTI_JOBS", unset = NA)
