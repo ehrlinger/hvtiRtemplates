@@ -9,6 +9,24 @@
   roadmap is re-rendered to match: 43 templates in scope, a `dp-postage` row with
   no blocker, and `descriptive` spanning batches 3 to 4.
 
+* **`hvtiRlifetables (>= 0.1.2)` is now declared, in `DESCRIPTION` and in
+  `40_graphs/hs.qmd`.** The template has called `us_cohort_curve()` since
+  1.0.16, but nothing recorded which version provides it. `DESCRIPTION` did
+  not name the package, and the template had no floor check, so a study on
+  0.1.1 failed with "could not find function" part-way through a render,
+  after the model had been read and every prediction made. It is now a
+  versioned `Suggests` with a `Remotes` entry, as `hvtiRbootstrap` is, and
+  the setup chunk refuses below 0.1.2 before anything is read.
+
+  The floor is 0.1.2 because that is where the function was introduced. The
+  1.0.16 entry below says it "landed in 0.1.3", which is wrong: 0.1.3 changed
+  only the package's own tests.
+
+  The test comparing `DESCRIPTION`'s bounds with the templates' floors now
+  covers both packages, and FAILS rather than skips when a template enforces
+  a floor `DESCRIPTION` does not declare. That is the case it could not see
+  before, and the one this entry fixes.
+
 * **A template's expected folder now comes from the job catalog, not from
   `hvti_taxonomy()` alone.** The taxonomy maps a prefix to ONE folder, but a
   prefix may span several: `dp` is `graphs` for `trends`, `gfup`, `spaghetti`

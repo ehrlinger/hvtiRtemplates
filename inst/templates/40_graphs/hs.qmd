@@ -60,6 +60,17 @@ suppressPackageStartupMessages({
   library(hvtiRutilities)
   library(hvtiRlifetables)
 })
+
+# The obs-vs-exp chunk calls us_cohort_curve(), which arrived in
+# hvtiRlifetables 0.1.2. Without this check a study on 0.1.1 gets "could not
+# find function" from the middle of a render, after the model has been read
+# and every prediction made: the symbol is named, the fix is not.
+if (utils::packageVersion("hvtiRlifetables") < "0.1.2") {
+  stop("This job needs hvtiRlifetables >= 0.1.2; ",
+       utils::packageVersion("hvtiRlifetables"), " is installed. ",
+       "us_cohort_curve(), which the obs-vs-exp chunk calls, arrived in ",
+       "0.1.2.\nUpdate it, then re-render.", call. = FALSE)
+}
 ```
 
 ```{r}
@@ -494,7 +505,7 @@ expected <- us_matched(
 ```{r}
 #| label: obs-vs-exp
 # The cohort average at each horizon, which is what gets overlaid on an
-# actuarial curve. This was derived inline until hvtiRlifetables 0.1.3 shipped
+# actuarial curve. This was derived inline until hvtiRlifetables 0.1.2 shipped
 # `us_cohort_curve()` (hvtiRlifetables#16); it is now one call, and the numbers
 # are unchanged -- checked to 1e-12 against the derivation it replaces before
 # the swap, because the comment that stood here promised exactly that.
