@@ -1,5 +1,14 @@
 # hvtiRtemplates (unreleased)
 
+* **The job-catalog pin advances to `hvtiR` `v1.1.7`**, in both
+  `R-CMD-check.yaml` and `spec-counts.yaml`, which `tools/check_pin_currency.py`
+  requires to agree. 1.1.7 carries the EDA batch's catalog changes
+  ([hvtiR#57](https://github.com/ehrlinger/hvtiR/pull/57),
+  [hvtiR#58](https://github.com/ehrlinger/hvtiR/pull/58)): `dp-postage` joins the
+  catalog, and `dc-general`, `dc-tables` and `dc-gfup` move into batch 3. The
+  roadmap is re-rendered to match: 43 templates in scope, a `dp-postage` row with
+  no blocker, and `descriptive` spanning batches 3 to 4.
+
 * **`hvtiRlifetables (>= 0.1.2)` is now declared, in `DESCRIPTION` and in
   `40_graphs/hs.qmd`.** The template has called `us_cohort_curve()` since
   1.0.16, but nothing recorded which version provides it. `DESCRIPTION` did
