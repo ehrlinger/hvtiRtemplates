@@ -83,7 +83,7 @@ No study data, path or identifier is involved.
 | `HVTI_TEMPLATE_DRAFT=1` | renders; 2 PNGs written and embedded |
 | edited: four-series NYHA percent trend, median points, a `complex` subgroup | renders 6 figures; subgroup headings `all (n = 600)`, `complex (n = 244)`; dropped-row counts match the 40 injected missing values |
 | a `percent` column coded 1/2 | stops: "is kind "percent" but holds 2" |
-| **fractional** years (600 patients, 600 distinct interval values), default `floor()` | renders 6 figures; 31 yearly points per trend, where raw fractional x would have drawn 600 |
+| **fractional** years (600 patients, 594 distinct interval values), default `floor()` | renders 6 figures; 31 yearly points per trend, where raw fractional x would have drawn 594 |
 | the same data with `year <- iv_opyrs + origin` | stops: "`year` must be a whole calendar year" |
 
 The first gate used whole-number years only, and so could not see the
