@@ -28,9 +28,11 @@ Imports:
     stats
 Remotes:
     ehrlinger/hvtiRutilities,
-    ehrlinger/hvtiRbootstrap
+    ehrlinger/hvtiRbootstrap,
+    ehrlinger/hvtiRlifetables
 Suggests:
     hvtiRbootstrap (>= 0.9.3),
+    hvtiRlifetables (>= 0.1.2),
     jsonlite,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
