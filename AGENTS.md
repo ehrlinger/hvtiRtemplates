@@ -300,10 +300,10 @@ moved — a template that fails this check cannot be scaffolded at all.
   draws no review opens and goes green exactly like one that did. Three ways that happens
   even with credits: the review does not fire automatically (see #98 above), the PR was
   opened against a branch other than `main` so the rule never applied, and, most often, the
-  review covers only the commit the PR was opened with. Combined with the approval rule
-  below, which nobody can satisfy on their own PR, the diff can go unread by anything that
-  reads for correctness; CI checks compilation, tests, lint and the count guards, and none of
-  those do.
+  review covers only the commit the PR was opened with, because the ruleset's
+  `review_on_push` is off (see below). Nothing else in the ruleset reads the diff: it requires
+  no approving review, and CI checks compilation, tests, lint and the count guards, none of
+  which reads for correctness.
   ⚠️ **Run `/code-review` locally before opening a PR**, and say in the PR body that it stood
   in for the bot, so a reader can tell a reviewed change from an unreviewed one. Do it for
   every substantive push, not only the first, because the bot will not. Measured on
@@ -327,55 +327,79 @@ moved — a template that fails this check cannot be scaffolded at all.
   "reported EXHAUSTED ... but reviews were still arriving", citing #79 and #80 drawing
   substantive reviews that afternoon, #80's at 18:50 UTC. That was accurate when written and
   the cutoff landed roughly an hour later.</sub>
-  ⚠️ **A PR needs one approving review, and you cannot give it to your own PR.**
-  `required_approving_review_count` is **1** in eleven of the twelve, and GitHub refuses a
-  self-approval, so a solo-authored PR cannot merge on its own. Copilot reviews are
-  `COMMENTED`, never `APPROVED`, and do not satisfy it. In practice that leaves an admin
-  merge (`gh pr merge --admin`, which BYPASSES the rule rather than satisfying it, and is the
-  maintainer's call, never an agent's) or a second reviewer. `require_code_owner_review` is
-  **false**, and no repository in the family has a `CODEOWNERS` file, so that flag is not
-  what is stopping the merge.
-  ⚠️ **The ruleset is NOT identical across the family**, though this paragraph said it was
-  from `f0043c0` on 2026-08-20 until 2026-09-02. Measured over all fourteen
-  `hvti*`/`TemporalHazard` repositories on 2026-09-02:
+  ⚠️ **No approving review is required.** `required_approving_review_count` is **0** here,
+  measured 2026-09-10, so a solo-authored PR merges on its required status checks alone and
+  needs neither a second reviewer nor an `--admin` bypass. The gate that does exist is
+  `required_status_checks`: ten contexts, all of which must report `SUCCESS`, which is why a
+  PR briefly shows `BLOCKED` while its checks are still running. Copilot reviews are
+  `COMMENTED`, never `APPROVED`, and would not have satisfied an approval rule anyway.
+  `require_code_owner_review` is **false**, and no repository in the family has a
+  `CODEOWNERS` file.
+  <sub>History (superseded 2026-09-10): this paragraph read "A PR needs one approving review,
+  and you cannot give it to your own PR ... `required_approving_review_count` is **1** in
+  eleven of the twelve", and recommended an admin merge or a second reviewer. That matched
+  the 2026-09-02 measurement below and had stopped being true by 2026-09-10, when
+  [#101](https://github.com/ehrlinger/hvtiRtemplates/pull/101) showed `CLEAN` with no review
+  decision at all.</sub>
+  ⚠️ **The ruleset is near-uniform across the family, with one outlier.** Measured over all
+  fifteen `hvti*`/`TemporalHazard` repositories on 2026-09-10:
 
-  | repository | approvals | `require_code_owner_review` | rules |
-  |---|---|---|---|
-  | ten, this one included | 1 | false | 4 |
-  | `TemporalHazard` | 1 | false | 5, adding `required_status_checks` |
-  | `hvtiGraphics` | **0** | **true** | 4 |
-  | `hvtiEDAreports` | n/a | n/a | none, because the repository is **archived** and therefore read-only |
-  | `temporalHazards` | unknown | unknown | unreadable: private, default branch `master` |
+  | repository | approvals | `require_code_owner_review` | `review_on_push` | rules |
+  |---|---|---|---|---|
+  | twelve, this one included | 0 | false | false | 5, including `required_status_checks` |
+  | `hvtiBoostmtree` | **1** | false | false | 4, no `required_status_checks`; also reviews draft PRs |
+  | `hvtiEDAreports` | n/a | n/a | n/a | none, because the repository is **archived** and therefore read-only |
+  | `temporalHazards` | unknown | unknown | unknown | unreadable: private, and GitHub serves a private repository's rulesets only on a paid plan |
 
-  The old text describes `hvtiGraphics` and no other repository: zero approvals, code-owner
-  review set but inert. Whether it was written from that one repo and stated for twelve, or
-  was true everywhere in August and since changed on eleven, is not recoverable from here,
-  because a ruleset leaves no history in the clone. Either way the lesson is the same one the
-  template gate above teaches: **read the ruleset for the repo you are in** rather than
-  trusting any family-wide claim, including the one in this paragraph.
+  The twelve are `hvtiGraphics`, `hvtiPlotR`, `hvtiR`, `hvtiRbootstrap`, `hvtiRdatabuild`,
+  `hvtiRimputation`, `hvtiRlifetables`, `hvtiRpropensity`, `hvtiRtables`, `hvtiRtemplates`,
+  `hvtiRutilities` and `TemporalHazard`. `hvtiBoostmtree` left the `hvtiR` registry at 1.1.2,
+  replaced by `ggBoostedTrees`, which is the likeliest reason its ruleset was not brought
+  along; it is recorded here, not changed. This paragraph has now been wrong about the family
+  twice, in opposite directions, so the lesson stands: **read the ruleset for the repo you
+  are in** rather than trusting any family-wide claim, including this one.
+  <sub>History (superseded 2026-09-10): measured over fourteen repositories on 2026-09-02,
+  the table read ten, this one included, at 1 approval, code-owner review false and 4 rules;
+  `TemporalHazard` at 1, false, and 5 with `required_status_checks`; `hvtiGraphics` at **0**,
+  **true** and 4; `hvtiEDAreports` archived; `temporalHazards` unreadable. Before that, from
+  `f0043c0` on 2026-08-20 until 2026-09-02, this paragraph claimed the ruleset was identical
+  across the family, which described `hvtiGraphics` alone.</sub>
 
   ```sh
   gh api repos/ehrlinger/<repo>/rules/branches/main \
     --jq '.[] | select(.type=="pull_request") | .parameters'
   ```
-  ⚠️ `require_extra_approval_for_unattributed_changes` is **true** in all twelve, and was
-  never recorded here. It bears directly on agent-authored commits.
+  ⚠️ `require_extra_approval_for_unattributed_changes` is **true** in all thirteen
+  repositories with a ruleset (measured 2026-09-10). GitHub documents it as requiring one
+  additional approval when the Copilot coding agent opens a pull request that is not
+  attributed to a person. With approvals otherwise at 0, it is the only way this ruleset can
+  demand an approval at all, and it does not touch a PR opened from a person's account,
+  whoever wrote the commits.
   ⚠️ **A stacked PR gets no Copilot review, and still reaches `main`.** The ruleset's
   condition is `ref_name: include: ["~DEFAULT_BRANCH"]`, so `copilot_code_review` fires only
   for a PR opened *against* `main`. Open one against another branch — stacking a plan on its
   design, say — and it never fires. When the parent merges, GitHub retargets the base to
   `main`, but **retargeting is not a PR-opened event and does not trigger it either**. The PR
-  then sits one click from `main` having been read by nobody, and the approval rule above
-  does not catch that: an approval says a human clicked, not that anyone read the diff, and
-  an `--admin` merge skips even the click. Observed on
+  then sits one click from `main` having been read by nobody, and with no approving review
+  required, nothing stands between it and a merge but green checks. Observed on
   [#42](https://github.com/ehrlinger/hvtiRtemplates/pull/42).
   The fix is to open against `main`.
-  ⚠️ **Copilot reviews a PR as opened, and never re-reviews a later push.** Commits added
-  after it runs reach `main` unread, and the approval rule does not catch that either:
-  `dismiss_stale_reviews_on_push` and `require_last_push_approval` are both **false** in all
-  twelve, so an approval given to commit 1 still stands over commit 12. Observed on
+  ⚠️ **Copilot reviews a PR once, as opened, because the ruleset tells it to.** This is a
+  setting, not a limit of the bot: `copilot_code_review.review_on_push` is **false** in all
+  thirteen repositories with a ruleset (measured 2026-09-10), and GitHub's documentation for
+  that option reads "If this option is not selected, Copilot will only review the pull
+  request once." Turning it on would review every push, and would spend Copilot credits on
+  every push, the budget that ran out on 2026-09-03; that trade-off is the maintainer's
+  call. While it is off, commits added after the review reach `main` read by nothing but CI,
+  and no other setting catches that: `dismiss_stale_reviews_on_push` and
+  `require_last_push_approval` are both **false** in all thirteen, and with no approval
+  required they would gate nothing anyway. Observed on
   [hvtiRlifetables#21](https://github.com/ehrlinger/hvtiRlifetables/pull/21), where an
-  approval stood while the branch replaced its entire mechanism underneath it.
+  approval stood while the branch replaced its entire mechanism underneath it, and on
+  [#98](https://github.com/ehrlinger/hvtiRtemplates/pull/98) above.
+  <sub>History (superseded 2026-09-10): this paragraph read "Copilot reviews a PR as opened,
+  and never re-reviews a later push", as though the bot could not. It can; the ruleset has
+  it switched off.</sub>
   ⚠️ **Re-requesting one CAN be scripted, contrary to what this file said until 2026-08-31.**
   The REST `requested_reviewers` endpoint does return 200 and silently do nothing; it
   answers `requested_reviewers: []` under either `Copilot` or
