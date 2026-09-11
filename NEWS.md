@@ -25,6 +25,13 @@
 
   Design: `dev/specs/2026-09-10-dp-trends-template-design.md`.
 
+* **The job-catalog pin advances to `hvtiR` `v1.1.8`**, in both
+  `R-CMD-check.yaml` and `spec-counts.yaml`. 1.1.8 carries one catalog change,
+  [hvtiR#60](https://github.com/ehrlinger/hvtiR/pull/60): `dp-trends` is
+  `shipped`. The pin moves in the pull request that adds the file, as the
+  design's section 5 requires, because at `v1.1.7` the row was still `queued`
+  and `spec-counts` failed on a template no ledger row claimed.
+
 * **The job-catalog pin advances to `hvtiR` `v1.1.7`**, in both
   `R-CMD-check.yaml` and `spec-counts.yaml`, which `tools/check_pin_currency.py`
   requires to agree. 1.1.7 carries the EDA batch's catalog changes
