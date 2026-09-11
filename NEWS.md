@@ -1,5 +1,18 @@
 # hvtiRtemplates (unreleased)
 
+* **`deade` and `deadl` are not landmark jobs, but the early/late landmark
+  split is a real construct.** The per-folder parse design (section 8) now
+  records the check. Both names are hazard-phase bagging output from the `bh`
+  template: every `dead[elc]*` file on the share is a dataset, and no program
+  is named `deade` or `deadl`. Nine programs carry the string inside a longer
+  name, eight `deadexpl` jobs (death before explant) and `dc.deadlate`.
+  Separately, job pairs such as `lg.dead.early` and `lg.dead.late` (10 and 8
+  studies) or `dc.dead.early` and `dc.dead.late` (4 and 5) split follow-up at a
+  cutoff: the early job censors at it, and the late job keeps only those who
+  reach it. No taxonomy row names the construct; the job catalog records it as
+  a shared `landmark` option from
+  [hvtiR#61](https://github.com/ehrlinger/hvtiR/pull/61), not yet in a tag.
+
 * **`40_graphs/dp-trends.qmd` ships**, the first of the EDA templates and the
   first QUALIFIED template: a job is scaffolded with
   `new_job("dp", "cohort", "eda", qualifier = "trends")` and lands at

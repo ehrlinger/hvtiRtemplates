@@ -195,6 +195,65 @@ written as a set.
 They were never jobs, and the reason they looked unidentifiable is that a
 `.sas7bdat` in `estimates` was being counted as evidence of an analysis.
 
+**Checked again on 2026-09-10, against the reading "dead early, dead late,
+landmark jobs".** The names are right and the landmark reading is not. The
+program that writes them is `tp.bh.hazard_bootstrap_bagging.sas`, which saves
+`est.deade`, `est.deadc` and `est.deadl` from its per-phase bagging output, and
+`tp.bh.bootstrap_bagging_clustering_summary.sas` reads them back under the
+titles "Early Hazard Phase" and "Late Hazard Phase". The phases decompose the
+hazard: they overlap in time and sum to it, and neither conditions on survival
+to a fixed point.
+
+A glob of the share to depth 6 found 1,203 `dead[elc]*` files and every one is
+a dataset: 850 in `estimates` (821 `.sas7bdat`, 29 `.ssd01`), 350 in
+`bstrap_ests`, 3 in `documents`. A second glob, for `*dead[el]*.sas` to depth
+8, found no program named `deade` or `deadl`, and nine programs carrying the
+string inside a longer name. Eight are `deadexpl`, death before explant, the
+competing event for explant, under `hz`, `hm`, `ac` and `bh`.
+
+The ninth is `descriptive/dc.deadlate.sas`, which deletes
+`iv_dead le 30/365.2425 or hdeath` before describing the deaths that remain,
+so it conditions on surviving 30 days and the hospital stay. That is a landmark
+job. The file itself is a one-off, but the construct behind it is not rare, and
+the glob could not show that: its pattern needs `dead` and `l` adjacent, so it
+cannot match `dc.dead.late`. The census can. Job stems
+carrying `early` or `late` as a field, in distinct studies:
+
+| stems | studies, early / late |
+|---|---|
+| `lg.dead.early`, `lg.dead.late` | 10 / 8 |
+| `gm.mr.early`, `gm.mr.late` | 6 / 6 |
+| `lm.af_po.early`, `lm.af_po.late` | 6 / 4 |
+| `dc.dead.early`, `dc.dead.late` | 4 / 5 |
+| `lm.mr.early`, `lm.mr.late` | 4 / 4 |
+| `dc.af_po.early`, `dc.af_po.late` | 4 / 2 |
+| `dc.mr.early`, `dc.mr.late` | 3 / 3 |
+| `dc.deadlate` | 1 |
+
+Early and late come in pairs, and the pair is one construct: split follow-up at
+a cutoff and treat the event before it and the event after it separately. The
+early job censors at the cutoff (`if iv_dead > 30/365.2425 then dead30d = 0`);
+the late job deletes everyone who did not reach it
+(`if iv_dead le 30/365.2425 then delete`). Read by hand, every late job sampled
+(nine) subsets past a cutoff and no early job does. An automatic pattern
+flagged 20 of 33 late files and 0 of 30 early ones, and its misses were forms
+it did not anticipate, `if iv_dead<(6/12) then delete` and a subsetting
+`if iv_dead>2;`, not jobs that fail to condition.
+
+Two readings of "late" share the shape. For death (`dc`, `lg`) the cutoff is on
+survival, anywhere from 30 days to several years, and the `lg` titles call the
+halves the "Early Hazard Phase" and the "Late Hazard Phase": the landmark split
+is the non-parametric stand-in for the phase decomposition that `deade` and
+`deadl` store. For repeated measures (`mr` from echo in `lm` and `gm`, `af_po`
+from ECG in `lm`) the cutoff is on measurement time, two weeks or a month, and
+it drops early readings rather than early deaths.
+
+So the reading that prompted the check was half right. `deade` and `deadl` are
+not landmark jobs, but the early/late landmark split is a real construct, it is
+well past the two-studies gate, and no taxonomy row names it. The job catalog
+records it as a shared `landmark` option from hvtiR#61 (merged 2026-09-11, not
+yet in a tag), not as a qualifier on any one prefix.
+
 ## 9. The pattern worth naming
 
 This is the third assumption-at-scale failure in a fortnight, after the
