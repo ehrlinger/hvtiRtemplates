@@ -188,10 +188,10 @@ study’s estate across two spellings of one folder.
 reports `folder` with the digits stripped for the same reason.
 
 **The qualifier names a job type within a prefix, and is optional.**
-Every template shipped today omits it. It exists because `graphs/dp` is
-`trends`, `spaghetti`, `procs` and more under one prefix, and a filename
-that cannot say which job it is, is one a study author cannot search.
-Decided 2026-09-02, see
+`dp-trends` is the first template to carry one. The qualifier exists
+because `graphs/dp` is `trends`, `spaghetti`, `procs` and more under one
+prefix, and a filename that cannot say which job it is, is one a study
+author cannot search. Decided 2026-09-02, see
 `dev/specs/2026-09-02-dp-dc-decomposition-design.md`.
 
 ⚠️ **A prefix may hold SEVERAL ledger rows, keyed on
