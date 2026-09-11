@@ -250,8 +250,9 @@ it drops early readings rather than early deaths.
 
 So the reading that prompted the check was half right. `deade` and `deadl` are
 not landmark jobs, but the early/late landmark split is a real construct, it is
-well past the two-studies gate, and no taxonomy row or job catalog entry names
-it.
+well past the two-studies gate, and no taxonomy row names it. The job catalog
+records it as a shared `landmark` option from hvtiR#61 (merged 2026-09-11, not
+yet in a tag), not as a qualifier on any one prefix.
 
 ## 9. The pattern worth naming
 

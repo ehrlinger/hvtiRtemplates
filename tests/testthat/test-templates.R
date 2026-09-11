@@ -410,7 +410,7 @@ test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
   desc <- utils::packageDescription("hvtiRtemplates", fields = "Suggests")
   skip_if(is.na(desc) || is.null(desc), "Suggests is not readable here")
 
-  for (pkg in c("hvtiRbootstrap", "hvtiRlifetables")) {
+  for (pkg in c("hvtiRbootstrap", "hvtiRlifetables", "hvtiPlotR")) {
     floors <- package_version(character(0))
     pat <- paste0('packageVersion\\("', pkg, '"\\)\\s*<\\s*"[0-9.]+"')
     for (f in template_list()$file) {
