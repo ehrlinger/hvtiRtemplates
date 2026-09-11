@@ -71,7 +71,7 @@ jobs:
         if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
         with:
           repository: ehrlinger/hvtiR
-          ref: v1.1.7
+          ref: v1.1.8
           path: .hvtiR
 
       - name: Point HVTI_JOBS at the checked-out catalog
