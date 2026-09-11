@@ -31,7 +31,7 @@ imports this file.
 | `spec-counts.yaml` | three checks. `check-spec-counts.py`, the prose in `dev/specs/` must agree with the generated map. `check-flow-counts.py`, every `data-check` anchored number in the job flow diagrams must agree with the maps they copy from. `check-roadmap-counts.py`, the roadmap ledger and `inst/templates/` must agree **in both directions**, so a template no ledger row claims fails the PR just as a row claiming an absent template does. Editing a count without regenerating fails the PR |
 | `test-coverage.yaml` | coverage upload |
 
-⚠️ **`check-manual.yaml` is not a PR gate.** Its triggers are `push` to `main`, `release`
+⚠️ **`check-manual.yaml` is not a PR gate.** Its triggers are `push` to `main`
 and `workflow_dispatch`; there is no `pull_request` among them, so the PDF manual build
 runs for the first time *after* a change has already merged. A change that breaks the
 manual therefore passes every check on its PR and fails on `main`, where there is no PR
