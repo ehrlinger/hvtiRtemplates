@@ -214,8 +214,9 @@ competing event for explant, under `hz`, `hm`, `ac` and `bh`.
 The ninth is `descriptive/dc.deadlate.sas`, which deletes
 `iv_dead le 30/365.2425 or hdeath` before describing the deaths that remain,
 so it conditions on surviving 30 days and the hospital stay. That is a landmark
-job, and it is not rare. The glob could not show that: its pattern needs `dead`
-and `l` adjacent, so it cannot match `dc.dead.late`. The census can. Job stems
+job. The file itself is a one-off, but the construct behind it is not rare, and
+the glob could not show that: its pattern needs `dead` and `l` adjacent, so it
+cannot match `dc.dead.late`. The census can. Job stems
 carrying `early` or `late` as a field, in distinct studies:
 
 | stems | studies, early / late |
