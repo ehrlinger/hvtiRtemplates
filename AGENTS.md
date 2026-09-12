@@ -39,14 +39,14 @@ affordances live in `CLAUDE.md`, which imports this file.
 | `test-coverage.yaml` | coverage upload |
 
 ⚠️ **`check-manual.yaml` is not a PR gate.** Its triggers are `push` to
-`main`, `release` and `workflow_dispatch`; there is no `pull_request`
-among them, so the PDF manual build runs for the first time *after* a
-change has already merged. A change that breaks the manual therefore
-passes every check on its PR and fails on `main`, where there is no PR
-left to fix it in. Every other workflow in this table does run on
-`pull_request`. If a change touches Rd markup (Greek, `\eqn{}` content,
-combining marks, anything the PDF pipeline renders), build the manual
-locally before merging rather than trusting a green PR.
+`main` and `workflow_dispatch`; there is no `pull_request` among them,
+so the PDF manual build runs for the first time *after* a change has
+already merged. A change that breaks the manual therefore passes every
+check on its PR and fails on `main`, where there is no PR left to fix it
+in. Every other workflow in this table does run on `pull_request`. If a
+change touches Rd markup (Greek, `\eqn{}` content, combining marks,
+anything the PDF pipeline renders), build the manual locally before
+merging rather than trusting a green PR.
 
 ⚠️ **A green `R-CMD-check` job can hide a suite that skipped the tests
 you care about.** The job’s conclusion reports whether `R CMD check`
