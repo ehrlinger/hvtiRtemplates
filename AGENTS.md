@@ -484,6 +484,12 @@ moved — a template that fails this check cannot be scaffolded at all.
   rule and the reasoning.
   `NEWS.md` uses plain `# hvtiRtemplates X.Y.Z` headings — **no `Version:` line**,
   unlike ggRandomForests, whose version-grep test requires a DCF-style header.
+- **A change that ships nothing gets no `NEWS.md` entry and no bump.** That is a pull request
+  whose every changed file is left out of the tarball `R CMD build` produces, meaning the base
+  branch's `.Rbuildignore` excludes it: here `.github/`, `AGENTS.md` and `CLAUDE.md` among
+  others. One shipped file means the change ships, and the usual rules apply. No user can
+  observe a change that ships nothing, so the pull request and its commit message are the
+  record. Read `.Rbuildignore` rather than judging by feel.
 
 ## Prose
 
