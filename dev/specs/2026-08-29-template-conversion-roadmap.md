@@ -47,7 +47,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**43 templates in scope**, of which 10 exist on disk.
+**44 templates in scope**, of which 10 exist on disk.
 
 ## By family
 
@@ -78,28 +78,30 @@ row has no template on disk.
 
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `dp-gfup` | queued | — | 48 | — | — |
+| `dp-gfup` | queued | — | 48 | 4 | — |
 | `dp-postage` | queued | — | — | — | — |
-| `dp-procs` | queued | — | 35 | — | — |
-| `dp-spaghetti` | queued | — | 40 | — | — |
-| `dp-trends` | shipped | — | 80 | — | — |
-| `dp-variable` | queued | — | 237 | — | — |
+| `dp-procs` | queued | — | 35 | 0 | — |
+| `dp-spaghetti` | queued | — | 40 | 40 | — |
+| `dp-trends` | shipped | — | 80 | 75 | — |
+| `dp-variable` | queued | — | 237 | 2 | — |
 | `hp` | **revisit** | 557 | 541 | 16 | — |
 | `lp` | queued | 636 | 310 | 186 | — |
 | `mp` | queued | 82 | 41 | 4 | — |
 | `np` | queued | 248 | 241 | 45 | — |
 | `rp` | queued | 76 | 68 | 5 | — |
+| `dp-boxplot` | queued | — | 9 | 2 | — |
 
 ### descriptive (batches 3–4)
 
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `dc-general` | queued | — | 759 | — | — |
-| `dc-gfup` | queued | — | 389 | — | — |
-| `dc-tables` | queued | — | 551 | — | — |
-| `dc-dead` | queued | — | 171 | — | — |
+| `dc-general` | queued | — | 759 | 1 | — |
+| `dc-gfup` | queued | — | 389 | 0 | — |
+| `dc-tables` | queued | — | 551 | 1 | — |
+| `dc-dead` | queued | — | 171 | 0 | — |
 | `lg` | queued | 367 | 362 | 0 | — |
 | `rg` | queued | 45 | 45 | 0 | — |
+| `dc-trends` | queued | — | 43 | 0 | — |
 
 ### models (batch 6)
 
@@ -107,11 +109,10 @@ row has no template on disk.
 |---|---|---|---|---|---|
 | `cm` | queued | 35 | 35 | 2 | — |
 | `gm` | queued | 77 | 73 | 0 | — |
-| `lm` | queued | 621 | 469 | 10 | — |
+| `lm` | queued | 621 | 470 | 10 | — |
 | `ls` | queued | 34 | 32 | 0 | — |
 | `mm` | queued | 59 | 56 | 1 | — |
 | `nm` | queued | 122 | 121 | 1 | — |
-| `pm` | queued | 5 | 4 | 0 | — |
 | `rm` | queued | 174 | 170 | 8 | — |
 
 ### distributions (batch 7)
@@ -129,8 +130,8 @@ row has no template on disk.
 |---|---|---|---|---|---|
 | `bd` | queued | 1134 | 1094 | 15 | hvtiRdatabuild |
 | `dt` | queued | 512 | 503 | 0 | hvtiRdatabuild |
-| `mi` | queued | — | — | — | hvtiRimputation |
-| `si` | queued | — | — | — | — |
+| `mi` | queued | — | 18 | — | hvtiRimputation |
+| `si` | queued | — | 1 | — | — |
 | `vars` | queued | 959 | 912 | 2 | hvtiRdatabuild |
 
 ### documents (batch 9)
@@ -149,11 +150,11 @@ Members: `ac`, `hm`, `hp`, `hs`, `hz`
 
 **Complete.**
 
-### propensity-matching — 2/10
+### propensity-matching — 3/10
 
-Members: `bd`, `bl`, `cm`, `dc-stddiff` (hvtiRutilities), `hp`, `lm`, `lp`, `pm`, `rm`, `rp`
+Members: `bd`, `bl`, `cm`, `dc-stddiff` (hvtiRutilities), `hp`, `lm`, `lp`, `pm` (hvtiRpropensity), `rm`, `rp`
 
-Outstanding here: `bd`, `cm`, `lm`, `lp`, `pm`, `rm`, `rp`; owed by another package: `dc-stddiff` (hvtiRutilities).
+Outstanding here: `bd`, `cm`, `lm`, `lp`, `rm`, `rp`; owed by another package: `dc-stddiff` (hvtiRutilities).
 
 <!-- END GENERATED -->
 
