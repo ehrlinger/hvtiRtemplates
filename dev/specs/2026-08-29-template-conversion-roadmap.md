@@ -150,9 +150,9 @@ Members: `ac`, `hm`, `hp`, `hs`, `hz`
 
 **Complete.**
 
-### propensity-matching — 3/10
+### propensity-matching — 2/9
 
-Members: `bd`, `bl`, `cm`, `dc-stddiff` (hvtiRutilities), `hp`, `lm`, `lp`, `pm` (hvtiRpropensity), `rm`, `rp`
+Members: `bd`, `bl`, `cm`, `dc-stddiff` (hvtiRutilities), `hp`, `lm`, `lp`, `rm`, `rp`
 
 Outstanding here: `bd`, `cm`, `lm`, `lp`, `rm`, `rp`; owed by another package: `dc-stddiff` (hvtiRutilities).
 

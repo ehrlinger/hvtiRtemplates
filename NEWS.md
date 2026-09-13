@@ -1,5 +1,17 @@
 # hvtiRtemplates (unreleased)
 
+* **The job-catalog pin advances to `hvtiR` `v1.1.10`**, in both
+  `R-CMD-check.yaml` and `spec-counts.yaml`, and the roadmap is re-rendered
+  from it. 1.1.10 carries [hvtiR#73](https://github.com/ehrlinger/hvtiR/pull/73)
+  and [hvtiR#74](https://github.com/ehrlinger/hvtiR/pull/74): TemporalHazard
+  functions named on the hazard rows, the relabelled names, and `pm`'s row
+  dropped now that it folds into `lm`. It moves together with
+  [hvtiRutilities#113](https://github.com/ehrlinger/hvtiRutilities/pull/113),
+  which drops `pm` from `hvti_taxonomy()`, because `test-roadmap.R` checks
+  catalog and taxonomy against each other both ways. The propensity-matching
+  workflow reads 2 of 9, with `pm` no longer a member. 44 templates in scope,
+  10 on disk, unchanged.
+
 * **The job-catalog pin advances to `hvtiR` `v1.1.9`**, in both
   `R-CMD-check.yaml` and `spec-counts.yaml`, and the roadmap is re-rendered
   from it. 1.1.9 carries [hvtiR#61](https://github.com/ehrlinger/hvtiR/pull/61),
