@@ -9,6 +9,10 @@
   `hvtiPlotR::hv_eda()`. The job-catalog pin advances to `hvtiR` `v1.1.11`
   in both workflows, and the roadmap is re-rendered: 44 templates are in scope
   and 13 are on disk.
+* **`add_job()` replaces `new_job()` and follows the study's directory layout.**
+  New studies receive jobs in numbered folders such as `20_distributions/`;
+  adopted legacy studies retain bare folders such as `distributions/`. Mixed
+  layouts are rejected. This requires `hvtiRutilities` 1.1.12.
 
 * **The job-catalog pin advances to `hvtiR` `v1.1.10`**, in both
   `R-CMD-check.yaml` and `spec-counts.yaml`, and the roadmap is re-rendered
@@ -50,8 +54,9 @@
 
 * **`40_graphs/dp-trends.qmd` ships**, the first of the EDA templates and the
   first QUALIFIED template: a job is scaffolded with
-  `new_job("dp", "cohort", "eda", qualifier = "trends")` and lands at
-  `graphs/cohort-eda-dp-trends.qmd`. It is thin over `hvtiPlotR::hv_trends()`,
+  `add_job("dp", "cohort", "eda", qualifier = "trends")` and lands at
+  `40_graphs/cohort-eda-dp-trends.qmd` in a new study. It is thin over
+  `hvtiPlotR::hv_trends()`,
   which takes one row per patient and computes the per-year points itself, so
   the job never aggregates by hand. Of 50 trends job files across 24 studies,
   none used it. One job draws a list of figures, optionally once per subgroup
