@@ -11,13 +11,30 @@
   masked <- as.character(lines)
   in_block <- FALSE
   in_statement <- FALSE
+  in_comment <- FALSE
+  quote <- ""
 
   for (i in seq_along(masked)) {
     chars <- strsplit(masked[[i]], "", fixed = TRUE)[[1L]]
     j <- 1L
 
     while (j <= length(chars)) {
-      if (in_block) {
+      char <- chars[[j]]
+      next_char <- if (j < length(chars)) chars[[j + 1L]] else ""
+      if (in_comment) {
+        chars[[j]] <- " "
+        if (char == ";") in_comment <- FALSE
+        j <- j + 1L
+      } else if (nzchar(quote)) {
+        if (char == quote) {
+          if (next_char == quote) {
+            j <- j + 1L
+          } else {
+            quote <- ""
+          }
+        }
+        j <- j + 1L
+      } else if (in_block) {
         closes_block <- chars[[j]] == "*" && j < length(chars) && chars[[j + 1L]] == "/"
         chars[[j]] <- " "
         if (closes_block) {
@@ -27,29 +44,28 @@
         } else {
           j <- j + 1L
         }
-      } else if (j < length(chars) && chars[[j]] == "/" &&
-                   chars[[j + 1L]] == "*") {
+      } else if (char == "/" && next_char == "*") {
         chars[[j]] <- " "
         chars[[j + 1L]] <- " "
         in_block <- TRUE
         j <- j + 2L
+      } else if ((char == "%" && next_char == "*") ||
+                   (char == "*" && !in_statement)) {
+        in_comment <- TRUE
+        chars[[j]] <- " "
+        j <- j + 1L
       } else {
+        if (char %in% c("'", '"')) quote <- char
+        if (char == ";") {
+          in_statement <- FALSE
+        } else if (nzchar(trimws(char))) {
+          in_statement <- TRUE
+        }
         j <- j + 1L
       }
     }
 
-    text <- paste(chars, collapse = "")
-    is_star_comment <- !in_statement && grepl("^[[:space:]]*\\*", text)
-
-    if (is_star_comment) {
-      masked[[i]] <- paste(rep(" ", length(chars)), collapse = "")
-    } else {
-      masked[[i]] <- text
-      code <- trimws(text)
-      if (nzchar(code)) {
-        in_statement <- !grepl(";[[:space:]]*$", code)
-      }
-    }
+    masked[[i]] <- paste(chars, collapse = "")
   }
 
   masked
@@ -62,7 +78,7 @@
   pattern <- paste0("(?i)%", name, "[[:space:]]*\\(")
   starts <- gregexpr(pattern, scan_text, perl = TRUE)[[1L]]
 
-  if (identical(starts, -1L)) {
+  if (starts[[1L]] == -1L) {
     return(list())
   }
 

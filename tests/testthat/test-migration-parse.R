@@ -123,3 +123,23 @@ test_that("comment masking keeps multiplication on a continuation line", {
   masked <- hvtiRtemplates:::.sas_mask_comments(c("score = top", "  * bottom;"))
   expect_identical(masked, c("score = top", "  * bottom;"))
 })
+
+test_that("macro and multiline statement comments never become calls", {
+  source <- c(
+    "%* %desc_tab(vartype=bad);",
+    "* a multiline comment",
+    "  %desc_tab(vartype=bad);",
+    "x=2 * 3; * %desc_tab(vartype=bad); %desc_tab(vartype=continuous);",
+    "x=top",
+    " * bottom; %* trailing comment",
+    "%desc_tab(vartype=bad);",
+    "%desc_tab(vartype=category);"
+  )
+  calls <- hvtiRtemplates:::.sas_calls(source, "desc_tab")
+  expect_identical(vapply(calls, `[[`, integer(1), "start"), c(4L, 8L))
+  masked <- hvtiRtemplates:::.sas_mask_comments(source)
+  expect_identical(nchar(masked), nchar(source))
+  expect_match(masked[[4L]], "x=2 * 3;", fixed = TRUE)
+  expect_match(masked[[6L]], " * bottom;", fixed = TRUE)
+  expect_length(hvtiRtemplates:::.sas_calls(source[1:3], "desc_tab"), 0L)
+})

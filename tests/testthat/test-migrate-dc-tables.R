@@ -19,6 +19,21 @@ tables_source <- function(root, lines) {
   writeLines(lines, file.path(root, "descriptive", "dc.tables.sas"))
 }
 
+test_that("dc-tables ignores commented calls beside an active call", {
+  for (comment in c("%*", "* multiline\n")) {
+    root <- migration_study_fixture("dc-tables")
+    tables_source(root, c(
+      paste0(comment, " %desc_tab(vartype=bad,input=wrong,varlist=/* Bad */ wrong);"),
+      "%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);"
+    ))
+    out <- tables_migrate(root, evidence = FALSE)
+    env <- new.env()
+    eval(parse(text = tables_region(out, "dc-tables-config")), env)
+    expect_identical(env$CONTINUOUS, "age")
+    expect_identical(env$GROUPS, list(Demography = "age"))
+  }
+})
+
 test_that("dc-tables blocks local DATA-step filters and transformed measurements", {
   root <- migration_study_fixture("dc-tables")
   tables_source(root, c(
