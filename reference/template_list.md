@@ -14,8 +14,7 @@ template_list()
 A data frame with columns `name`, `prefix`, `qualifier`, `folder` and
 `file`. `folder` is the taxonomy name with the directory's ordering
 digits stripped, so `20_distributions` reports as `distributions`.
-`qualifier` is `NA` for a prefix carrying a single template, which is
-every template shipped today.
+`qualifier` is `NA` for a prefix carrying a single template.
 
 ## Details
 
@@ -32,26 +31,32 @@ it.
 
 ``` r
 template_list()
-#>         name prefix qualifier        folder
-#> 1         ac     ac      <NA> distributions
-#> 2         hz     hz      <NA> distributions
-#> 3         bc     bc      <NA>      analyses
-#> 4         bh     bh      <NA>      analyses
-#> 5         bl     bl      <NA>      analyses
-#> 6         br     br      <NA>      analyses
-#> 7         hm     hm      <NA>      analyses
-#> 8  dp-trends     dp    trends        graphs
-#> 9         hp     hp      <NA>        graphs
-#> 10        hs     hs      <NA>        graphs
-#>                                                                                file
-#> 1  /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd
-#> 2  /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/hz.qmd
-#> 3       /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bc.qmd
-#> 4       /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bh.qmd
-#> 5       /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bl.qmd
-#> 6       /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/br.qmd
-#> 7       /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/hm.qmd
-#> 8  /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
-#> 9         /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
-#> 10        /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd
+#>          name prefix qualifier        folder
+#> 1     dc-gfup     dc      gfup   descriptive
+#> 2   dc-tables     dc    tables   descriptive
+#> 3  dp-postage     dp   postage   descriptive
+#> 4          ac     ac      <NA> distributions
+#> 5          hz     hz      <NA> distributions
+#> 6          bc     bc      <NA>      analyses
+#> 7          bh     bh      <NA>      analyses
+#> 8          bl     bl      <NA>      analyses
+#> 9          br     br      <NA>      analyses
+#> 10         hm     hm      <NA>      analyses
+#> 11  dp-trends     dp    trends        graphs
+#> 12         hp     hp      <NA>        graphs
+#> 13         hs     hs      <NA>        graphs
+#>                                                                                      file
+#> 1     /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd
+#> 2   /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-tables.qmd
+#> 3  /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dp-postage.qmd
+#> 4        /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd
+#> 5        /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/hz.qmd
+#> 6             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bc.qmd
+#> 7             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bh.qmd
+#> 8             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bl.qmd
+#> 9             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/br.qmd
+#> 10            /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/hm.qmd
+#> 11       /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
+#> 12              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
+#> 13              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd
 ```

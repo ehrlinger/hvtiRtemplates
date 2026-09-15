@@ -34,6 +34,7 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -141,7 +142,7 @@
 </tbody>
 </table>
 <p>Templates are <code>&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in a numbered directory (<code>20_distributions/ac.qmd</code>); a job is <code>&lt;endpoint&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in the bare taxonomy folder. The ordinal that once prefixed both was dropped in 1.1.0.</p>
-<p><code>qualifier</code> names a job type within a prefix, for the prefixes that carry several: <code>graphs/dp</code> is <code>trends</code>, <code>spaghetti</code> and <code>procs</code>, not one job. It is <code>NULL</code> and the column is <code>NA</code> for a prefix with a single template, which is every template shipped today. Naming no qualifier where a prefix carries several is an error listing the choices, never a silent pick of the first.</p>
+<p><code>qualifier</code> names a job type within a prefix. The current qualified templates are <code>dc-tables</code>, <code>dc-gfup</code>, <code>dp-trends</code>, and <code>dp-postage</code>; other prefixes remain unqualified. It is <code>NULL</code> and the column is <code>NA</code> for a prefix with a single template. Naming no qualifier where a prefix carries several is an error listing the choices, never a silent pick of the first.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
