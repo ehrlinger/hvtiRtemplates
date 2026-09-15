@@ -1,6 +1,12 @@
-template <- testthat::test_path(
-  "..", "..", "inst", "templates", "10_descriptive", "dc-tables.qmd"
+template <- system.file(
+  "templates", "10_descriptive", "dc-tables.qmd",
+  package = "hvtiRtemplates"
 )
+if (!nzchar(template)) {
+  template <- testthat::test_path(
+    "..", "..", "inst", "templates", "10_descriptive", "dc-tables.qmd"
+  )
+}
 template_lines <- readLines(template, warn = FALSE)
 helper_label <- grep("^#\\| label: helpers$", template_lines)
 helper_end <- helper_label + which(template_lines[-seq_len(helper_label)] == "```")[[1L]]

@@ -1,5 +1,13 @@
 # hvtiRtemplates (unreleased)
 
+* **Three descriptive job templates ship: `dc-tables`, `dc-gfup` and
+  `dp-postage`**, with `vignette("sas-to-r-descriptive")` walking a SAS user
+  from `descriptive/dc.tables*`, `dc.gfup`, `dp.trends` and the EDA postage
+  stamps to the R job that replaces each. `dc-tables` carries the correlation
+  variant on `hvtiRtables::hv_correlation_table()` and
+  `hvtiPlotR::hv_correlation_matrix()`; `dp-postage` is thin over
+  `hvtiPlotR::hv_eda()`.
+
 * **The job-catalog pin advances to `hvtiR` `v1.1.10`**, in both
   `R-CMD-check.yaml` and `spec-counts.yaml`, and the roadmap is re-rendered
   from it. 1.1.10 carries [hvtiR#73](https://github.com/ehrlinger/hvtiR/pull/73)
