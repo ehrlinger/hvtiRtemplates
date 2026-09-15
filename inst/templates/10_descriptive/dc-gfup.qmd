@@ -1,0 +1,176 @@
+---
+title: "Goodness of follow-up"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the job this replaces (descriptive/dc.gfup). -->
+
+Replaces `descriptive/dc.gfup`.
+
+A `dc-gfup` job asks whether follow-up is complete enough to trust the
+time-related analyses: how long patients were followed for death and for
+non-fatal events, against how long they could have been followed by the close
+date. The figure is `dp-gfup` (`hv_followup()`); this job is the tables.
+
+```{r}
+#| label: setup
+.root <- if (file.exists("_quarto.yml")) "." else ".."
+if (!file.exists(file.path(.root, "_quarto.yml"))) {
+  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
+       "resolved. Render this from the project root or from the job directory.",
+       call. = FALSE)
+}
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages(library(hvtiRutilities))
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
+      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
+      "draft banner. Any other value, including 0, leaves this guard strict."
+    )
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+      warning(.msg, call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: set
+ENDPOINT <- "cohort"
+TYPE     <- "eda"
+
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (endpoint '", .name_endpoint,
+         "', type '", .name_type, "'), but declares ENDPOINT = \"", ENDPOINT,
+         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.",
+         call. = FALSE)
+  }
+}
+
+set_path <- function(kind, file) {
+  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+```
+
+## Data
+
+```{r}
+#| label: data
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+# EDIT: the analysis set this job reads: declare its columns and excluded rows
+# under analysis_sets: in _study.yml, then write it with
+# hvtiRdatabuild::write_analysis_set(). Replace both lines with d <- read_built()
+# only when the whole built cohort is the intended population.
+ANALYSIS_SET <- "eda"
+d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
+knitr::kable(attr(d, "attrition"), caption = paste0(
+  "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
+))
+```
+
+```{r}
+#| label: spec
+# EDIT: the close date of follow-up (SAS: current=mdy(mm,dd,yyyy)). Potential
+# follow-up is measured to this date, so a wrong date makes follow-up look
+# better or worse than it is.
+CLOSE_DATE <- as.Date("2026-01-01")
+# EDIT: column names in the built data. The SAS template used dt_surg, iv_dead,
+# dead and iv_fup; change any that differ.
+COLS <- c(dt_surg = "dt_surg", iv_dead = "iv_dead", dead = "dead", iv_fup = "iv_fup")
+# EDIT: event-coding consistency checks, each a set of columns cross-tabulated
+# with missing values shown (SAS: proc freq; table a*b*c / list missprint).
+# list() for none.
+CHECKS <- list(c("dead", "hdeath"))
+```
+
+```{r}
+#| label: derive
+needed <- unique(c(unname(COLS), unlist(CHECKS, use.names = FALSE)))
+unknown <- setdiff(needed, names(d))
+if (length(unknown)) {
+  stop("Unknown follow-up column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
+}
+g <- data.frame(
+  dt_surg = as.Date(d[[COLS[["dt_surg"]]]]),
+  iv_dead = d[[COLS[["iv_dead"]]]],
+  dead = d[[COLS[["dead"]]]],
+  iv_fup = d[[COLS[["iv_fup"]]]]
+)
+yrs <- function(days) as.numeric(days) / 365.2425
+g$maxfup <- ifelse(g$dead == 1, g$iv_dead, yrs(CLOSE_DATE - g$dt_surg))
+g$potfup <- ifelse(
+  g$dead == 1,
+  NA_real_,
+  yrs(CLOSE_DATE - (g$dt_surg + g$iv_fup * 365.2425))
+)
+g$pctfup <- g$iv_fup / g$maxfup
+g$pctvit <- g$iv_fup / g$iv_dead
+```
+
+## Data checks
+
+```{r}
+#| label: checks
+for (cc in CHECKS) print(as.data.frame(table(d[cc], useNA = "ifany")))
+```
+
+## Follow-up for survival
+
+```{r}
+#| label: survival
+st <- c("n", "nmiss", "mean", "std", "min", "p15", "median", "p85", "max")
+proc_means(g, vars = "iv_dead", class = "dead", stats = st)
+proc_means(g[g$dead == 0, ], vars = c("iv_dead", "maxfup", "pctfup"), stats = st)
+```
+
+## Follow-up for non-fatal events
+
+```{r}
+#| label: events
+proc_means(g, vars = "iv_fup", class = "dead", stats = st)
+proc_means(
+  g[g$dead == 0, ],
+  vars = c("iv_fup", "potfup", "pctfup", "pctvit"),
+  stats = st
+)
+```
+
+The SAS job printed every patient, sorted by `dead` and operation date, so an
+author could find the incompletely followed ones by `ccfid`. This job prints
+none: the percentiles of `pctfup` among survivors answer the same question
+without an identifier. Quantiles here are SAS `QNTLDEF=5`; the SAS template's
+`proc univariate def=4` gives slightly different tail percentiles.

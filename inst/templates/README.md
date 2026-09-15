@@ -15,6 +15,7 @@ refuses to overwrite an existing job.
 | `40_graphs/hs.qmd` | patient-level predictions and expected survival | `graphs/` |
 | `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `graphs/` |
 | `10_descriptive/dc-tables.qmd` | descriptive tables and correlations | `descriptive/` |
+| `10_descriptive/dc-gfup.qmd` | goodness-of-follow-up tables | `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `analyses/` |
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `analyses/` |
