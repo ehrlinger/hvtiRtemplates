@@ -33,12 +33,23 @@ test_that("descriptive templates can read the whole cohort", {
   dir.create(file.path(root, "datasets"), recursive = TRUE)
   built <- data.frame(id = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4))
   utils::write.csv(built, file.path(root, "datasets", "built.csv"), row.names = FALSE)
-  suppressWarnings(
-    suppressMessages(hvtiRutilities::study_init(
-      root, study = "Template route test", built = "built.csv",
-      event = "dead", time = "iv_dead"
-    ))
-  )
+  suppressWarnings(suppressMessages(hvtiRutilities::study_setup(
+    root,
+    study = "Template route test",
+    study_tracker_id = 999999L,
+    umbrella = "Synthetic template fixture",
+    owner = "hvtiRtemplates tests",
+    irb_number = "SYNTHETIC",
+    cvir_no = "SYNTHETIC",
+    adopt = TRUE
+  )))
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(
+    root,
+    built = "built.csv",
+    event = "dead",
+    time = "iv_dead",
+    role = "study"
+  )))
 
   old_wd <- setwd(root)
   on.exit(setwd(old_wd), add = TRUE)
