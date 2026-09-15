@@ -1,5 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.git$
 ^\.github$
 ^README\.Rmd$
 ^LICENSE\.md$
@@ -13,3 +14,5 @@
 ^\.hvtiR$
 ^AGENTS\.md$
 ^CLAUDE\.md$
+^doc$
+^Meta$

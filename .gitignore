@@ -9,3 +9,5 @@ inst/doc
 .superpowers/
 __pycache__/
 .hvtiR/
+/doc/
+/Meta/

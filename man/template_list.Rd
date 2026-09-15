@@ -11,8 +11,7 @@ A data frame with columns \code{name}, \code{prefix},
   \code{qualifier}, \code{folder} and \code{file}. \code{folder} is the
   taxonomy name with the directory's ordering digits stripped, so
   \code{20_distributions} reports as \code{distributions}.
-  \code{qualifier} is \code{NA} for a prefix carrying a single template,
-  which is every template shipped today.
+  \code{qualifier} is \code{NA} for a prefix carrying a single template.
 }
 \description{
 These templates are supported: they render, they are tested, and they are

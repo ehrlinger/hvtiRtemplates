@@ -200,7 +200,7 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "hvti_taxonomy", "sas_path",
     "sas_variable_block", "covariate_audit", "covariates_to_numeric",
     "imputed_levels", "pool_collinear_pairs", "selection_crowding",  # >= 1.1.4
-    "concept_map"
+    "concept_map", "verify_manifest", "proc_means"
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")
@@ -410,7 +410,10 @@ test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
   desc <- utils::packageDescription("hvtiRtemplates", fields = "Suggests")
   skip_if(is.na(desc) || is.null(desc), "Suggests is not readable here")
 
-  for (pkg in c("hvtiRbootstrap", "hvtiRlifetables", "hvtiPlotR")) {
+  for (pkg in c(
+    "hvtiRbootstrap", "hvtiRdatabuild", "hvtiRlifetables", "hvtiPlotR",
+    "hvtiRtables"
+  )) {
     floors <- package_version(character(0))
     pat <- paste0('packageVersion\\("', pkg, '"\\)\\s*<\\s*"[0-9.]+"')
     for (f in template_list()$file) {

@@ -14,6 +14,9 @@ refuses to overwrite an existing job.
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `graphs/` |
 | `40_graphs/hs.qmd` | patient-level predictions and expected survival | `graphs/` |
 | `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `graphs/` |
+| `10_descriptive/dc-tables.qmd` | descriptive tables and correlations | `descriptive/` |
+| `10_descriptive/dc-gfup.qmd` | goodness-of-follow-up tables | `descriptive/` |
+| `10_descriptive/dp-postage.qmd` | EDA postage-stamp sweep | `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `analyses/` |
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `analyses/` |
@@ -37,10 +40,10 @@ the test suite checks them against `hvti_taxonomy()`.
 fifth in the taxonomy, because it holds saved output rather than jobs. The
 decade gaps are room to insert without renumbering.
 
-The qualifier exists because `graphs/dp` is `trends`, `spaghetti` and `procs`
-rather than one job. `dp-trends` is the first qualified template; every other
-template here is unqualified. A prefix is wholly qualified or wholly
-unqualified, never half-decomposed.
+The qualifier exists because one prefix can name several jobs. The current
+qualified templates are `dc-tables`, `dc-gfup`, `dp-trends` and `dp-postage`;
+the other prefixes here remain unqualified. A prefix is wholly qualified or
+wholly unqualified, never half-decomposed.
 
 ## Where a scaffolded job lands
 

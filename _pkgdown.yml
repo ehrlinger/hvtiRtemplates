@@ -17,6 +17,11 @@ template:
 # without a matching entry, which is a failure mode this package does not
 # need for four functions.
 
+articles:
+  - title: Tutorials
+    contents:
+      - sas-to-r-descriptive
+
 footer:
   structure:
     left: developed_by

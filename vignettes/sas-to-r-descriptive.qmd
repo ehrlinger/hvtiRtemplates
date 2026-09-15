@@ -1,0 +1,184 @@
+---
+title: "From SAS descriptive jobs to R"
+author: "John Ehrlinger"
+date: today
+vignette: >
+  %\VignetteIndexEntry{From SAS descriptive jobs to R}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+format:
+  html:
+    toc: true
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## Who this is for
+
+This guide is for a SAS biostatistician who knows the `tp.dc.*` templates and
+wants to run the same descriptive work in an hvtiR study. "R equivalent" means
+the same numbers when the method is the same, and an explicit difference when
+the R job makes a different choice. It does not mean translating every SAS
+statement line by line.
+
+## Install once
+
+Install the hvtiR package set, then check it before starting a study job:
+
+```r
+hvtiR::install()
+hvtiR::status()
+```
+
+## The map
+
+| SAS job | R job | template | engine |
+|:--|:--|:--|:--|
+| `descriptive/dc.tables.ods.sas` (`%desc_tab`) | `dc-tables` | `10_descriptive/dc-tables.qmd` | `hv_tbl_summary()`; `hv_correlation_table()` and `hv_correlation_matrix()` |
+| `descriptive/dc.gfup.sas` | `dc-gfup` | `10_descriptive/dc-gfup.qmd` | `proc_means()` |
+| `graphs/dp.trends.R` | `dp-trends` | `40_graphs/dp-trends.qmd` | `hv_trends()` |
+| `tp.dp.EDA_barplots_scatterplots*.R` | `dp-postage` | `10_descriptive/dp-postage.qmd` | `hv_eda()` |
+
+## Five steps for every job
+
+1. Scaffold the job. For example,
+   `new_job("dc", "cohort", "eda", qualifier = "tables")` writes
+   `descriptive/cohort-eda-dc-tables.qmd`.
+2. Work every `EDIT:` marker. The edit guard stops a render while any remain.
+3. Render from the study root with
+   `quarto render descriptive/cohort-eda-dc-tables.qmd`.
+4. Compare the result with the SAS `.lst`, section by section.
+5. Keep the authored job flat in `descriptive/`; its generated artifacts are
+   filed beneath `descriptive/cohort-eda/`.
+
+## Descriptive tables and correlations: `dc-tables`
+
+The SAS job commonly calls `%desc_tab` once for categorical variables and once
+for continuous variables. The R job supplies both sets to one table. SAS
+comment banners become the names in `GROUPS`; `by=` and `byvalue=` become `BY`;
+and `perctile=15 50 85` becomes `continuous_stat = "both"` with percentiles 15
+and 85. The `dc.tables.ods_<topic>.sas` correlation variant becomes `CORR` in
+the same job.
+
+```sas
+%desc_tab(vartype=category,   varlist=female diabetes nyha_pr);
+%desc_tab(vartype=continuous, varlist=age bmi, perctile=15 50 85);
+```
+
+```{r dc-tables}
+if (requireNamespace("hvtiRtables", quietly = TRUE) &&
+      requireNamespace("hvtiPlotR", quietly = TRUE)) {
+  d <- hvtiPlotR::sample_correlation_data(n = 80)
+  d$female <- rep(0:1, length.out = nrow(d))
+  groups <- list(
+    Demography = c("female"),
+    Measurements = c("a1c", "glucose", "creatinine")
+  )
+  hvtiRtables::hv_tbl_summary(
+    d,
+    groups = groups,
+    binary = "female",
+    continuous = c("a1c", "glucose", "creatinine"),
+    continuous_stat = "both",
+    percentiles = c(15, 85),
+    compare = "none"
+  )
+  hvtiRtables::hv_correlation_table(
+    d,
+    vars = c("glucose", "creatinine"),
+    with = "a1c"
+  )
+}
+```
+
+## Goodness of follow-up: `dc-gfup`
+
+The SAS `proc means` and `proc univariate` calls become `proc_means()`. The R
+job reports follow-up distributions overall, by vital status, and among
+survivors. It deliberately omits the patient-level listing: a rendered report
+should answer the completeness question without exposing an identifier.
+
+```sas
+proc means data=built n mean std min max;
+  class dead;
+  var iv_dead iv_fup;
+run;
+```
+
+```{r dc-gfup}
+if (requireNamespace("hvtiRutilities", quietly = TRUE)) {
+  d <- hvtiRutilities::generate_survival_data(n = 80)
+  d$iv_fup <- pmin(d$iv_dead, 0.85 * d$iv_dead)
+  hvtiRutilities::proc_means(
+    d,
+    vars = c("iv_dead", "iv_fup"),
+    class = "dead",
+    stats = c("n", "nmiss", "mean", "std", "min", "p15", "median", "p85", "max")
+  )
+}
+```
+
+## Trends over operation year: `dp-trends`
+
+The shipped `dp-trends` template replaces hand-built annual summaries and
+per-series `smooth.spline(df = 6)` calls with `hv_trends()`. Its smoother is
+LOESS, not the SAS-era smoothing spline, so compare the old and new figures by
+shape rather than pointwise equality.
+
+```r
+fit <- smooth.spline(year, annual_mean, df = 6)
+```
+
+```{r dp-trends}
+if (requireNamespace("hvtiPlotR", quietly = TRUE)) {
+  d <- hvtiPlotR::sample_eda_data(n = 120)
+  trend_data <- data.frame(year = d$year, value = d$ef, group = "EF")
+  plot(hvtiPlotR::hv_trends(trend_data))
+}
+```
+
+## EDA postage stamps: `dp-postage`
+
+The older `Function_DataPlotting()` loops become one `hv_eda()` call per entry
+in `VARS`. Character and factor columns produce bars. A numeric column produces
+bars only when it has at most six distinct non-missing values and every value
+is a non-negative whole number no greater than six; otherwise it produces a
+scatter panel. The template lays those panels out in printable pages.
+
+```r
+for (v in variables) Function_DataPlotting(data, v, "year")
+```
+
+```{r dp-postage}
+if (requireNamespace("hvtiPlotR", quietly = TRUE)) {
+  d <- hvtiPlotR::sample_eda_data(n = 120)
+  variables <- c(male = "Male", ef = "Ejection fraction")
+  panels <- lapply(names(variables), function(v) {
+    plot(hvtiPlotR::hv_eda(d, x_col = "year", y_col = v, y_label = variables[[v]]))
+  })
+  panels[[1]]
+  panels[[2]]
+}
+```
+
+## Where the numbers differ
+
+Percentiles use SAS `QNTLDEF=5`, equivalent to R's `type = 2`;
+`proc_means()` and the table engine already make that choice. Pin `type = 2`
+in any hand-written `quantile()` call. `N` is the non-missing count, not always
+the number of rows. Continuous-variable p-values are non-parametric.
+Correlation intervals are 68% Fisher intervals by default. Finally,
+`%desc_tab` wrote separate categorical and continuous RTF files; the R job
+writes one DOCX table.
+
+## What is not ported
+
+The templates do not reproduce RTF output; they produce DOCX and self-contained
+HTML instead. They also do not reproduce identified patient listings. Use the
+distribution summaries to assess completeness, then investigate any necessary
+patient-level records inside the governed study environment rather than in a
+portable report.

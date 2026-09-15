@@ -42,8 +42,9 @@ jobs:
           rtools-version: '44'
 
       # DESCRIPTION carries real dependencies -- hvtiRutilities via Remotes:
-      # plus stats under Imports -- and jsonlite and testthat under Suggests.
-      # There are no vignettes to build, so Quarto setup does not apply here.
+      # plus stats under Imports -- and jsonlite, quarto, and testthat under
+      # Suggests. setup-r-dependencies detects the .qmd files and installs the
+      # Quarto CLI automatically (install-quarto: auto).
       # any::pkgload is for the roadmap-guard step below: test_local() loads
       # the package from source through pkgload rather than through
       # R CMD check, which is a separate code path with its own dependency.
@@ -71,7 +72,7 @@ jobs:
         if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
         with:
           repository: ehrlinger/hvtiR
-          ref: v1.1.10
+          ref: v1.1.11
           path: .hvtiR
 
       - name: Point HVTI_JOBS at the checked-out catalog

@@ -74,6 +74,12 @@ test_that("a template sits in the folder its row files it under", {
   # The taxonomy is NOT the loser here: "every template directory is
   # <NN>_<taxonomy folder>" above still forces every directory to name a
   # folder the taxonomy has, so the catalog cannot invent one.
+  # Once a prefix spans folders, its prefix-wide taxonomy folder is not a
+  # valid fallback for this assertion. Installed-package checks deliberately
+  # carry no sibling catalog; the source-tree CI guard below supplies the
+  # pinned catalog and runs this test in strict mode. The preceding test still
+  # verifies every template directory is a real taxonomy folder everywhere.
+  skip_if(is.null(ledger_rows_or_null()), "job catalog not present")
   tl <- template_list()
   skip_if(nrow(tl) == 0, "no templates installed")
   expect_equal(tl$folder, expected_template_folders(tl))
