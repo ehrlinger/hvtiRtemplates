@@ -1,0 +1,240 @@
+---
+title: "Descriptive tables"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the job this replaces (descriptive/dc.tables.*) and say whether it
+     was the overall tables, the by-group tables, or the correlation variant. -->
+
+Replaces `descriptive/dc.tables`: say which variant.
+
+A `dc-tables` job is the formatted descriptive table: every variable the study
+reports, grouped under the section headings the SAS `%desc_tab` lists carried as
+comments, categorical as `n (%)` and continuous as mean±SD and median (15th,
+85th percentile). `%desc_tab` wrote the categorical and continuous tables as two
+RTF files; `hv_tbl_summary()` writes one table with both. It describes; with
+`BY` set it also tests, and a p-value here is a prompt for an analysis, not a
+result.
+
+```{r}
+#| label: setup
+# This file runs either from the directory it was scaffolded into or from the
+# project root. Resolve which, so that no path in this document needs editing.
+.root <- if (file.exists("_quarto.yml")) "." else ".."
+if (!file.exists(file.path(.root, "_quarto.yml"))) {
+  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
+       "resolved. Render this from the project root or from the job directory.",
+       call. = FALSE)
+}
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(hvtiRutilities)
+  library(hvtiRtables)
+  library(hvtiPlotR)
+  library(ggplot2)
+})
+if (utils::packageVersion("hvtiRtables") < "1.0.1") {
+  stop("This job needs hvtiRtables >= 1.0.1 for hv_correlation_table(); ",
+       utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
+}
+if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
+  stop("This job needs hvtiPlotR >= 2.7.14 for hv_correlation_matrix(); ",
+       utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
+}
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+# The markers in this file name work a study author still has to do, and a job
+# that still contains one has not been finished. This chunk is what makes that
+# TRUE rather than merely stated: an unedited job would otherwise render green
+# over placeholder columns.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
+      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
+      "draft banner. Any other value, including 0, leaves this guard strict."
+    )
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+      warning(.msg, call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, call. = FALSE)
+    }
+  }
+}
+```
+
+<!-- The two values below are written by new_job() from the endpoint/type it
+     was called with, which are also the filename's first two fields. Every
+     artifact path in this document is computed from them. -->
+
+```{r}
+#| label: set
+ENDPOINT <- "cohort"
+TYPE     <- "eda"
+
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (endpoint '", .name_endpoint, "', type '",
+         .name_type, "'), but declares ENDPOINT = \"", ENDPOINT, "\", TYPE = \"", TYPE,
+         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
+  }
+}
+
+set_path <- function(kind, file) {
+  dir <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
+  file.path(dir, file)
+}
+```
+
+## Data
+
+```{r}
+#| label: data
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+# EDIT: the analysis set this job reads: the columns and the excluded rows,
+# declared under analysis_sets: in _study.yml and written once with
+# hvtiRdatabuild::write_analysis_set(). A stale set (the built dataset or the
+# declaration changed) stops here and names the call that refreshes it. To
+# describe the whole study cohort instead, replace both lines with
+# d <- read_built().
+ANALYSIS_SET <- "eda"
+d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
+knitr::kable(attr(d, "attrition"), caption = paste0("Analysis set `", ANALYSIS_SET,
+                                                    "`: exclusions, in order"))
+```
+
+```{r}
+#| label: spec
+# EDIT: the variables to report, grouped. Each name is a section heading and
+# becomes a row group in the table, in this order. These are the /* Demography */
+# style banners from the SAS varlist; carry them across unchanged so the R table
+# reads like the SAS one. Commented-out SAS blocks stay out.
+GROUPS <- list(
+  Demography = c("age", "female"),
+  Symptoms   = c("nyha_pr")
+)
+# EDIT: NULL for the overall table. A column name reproduces the `%macro skip`
+# by-group sections (by=, byvalue=): one column per level and a p-value column.
+BY <- NULL
+# EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you
+# want summarised as continuous: list(continuous = c("nyha_pr")). list() for none.
+OVERRIDES <- list()
+# EDIT: NULL skips the correlation variant (dc.tables.ods_<topic>.sas). To run
+# it, name the numeric columns, the anchor to correlate them against (NULL for
+# every pair), and an optional stratum:
+#   list(vars = c("glu_pr", "creat_pr"), with = "a1c_pr", by = "a1c_grp")
+CORR <- NULL
+```
+
+```{r}
+#| label: helpers
+classify_buckets <- function(d, vars, overrides = list()) {
+  vars <- unique(as.character(vars))
+  unknown <- setdiff(vars, names(d))
+  if (length(unknown)) stop("Unknown table variable(s): ", paste(unknown, collapse = ", "), call. = FALSE)
+  allowed <- c("continuous", "binary", "categorical")
+  if (!is.list(overrides) || length(setdiff(names(overrides), allowed))) {
+    stop("overrides must be a list named continuous, binary, or categorical.", call. = FALSE)
+  }
+  forced <- unlist(overrides, use.names = FALSE)
+  if (anyDuplicated(forced)) stop("A variable may appear in only one override bucket.", call. = FALSE)
+  if (length(setdiff(forced, vars))) {
+    stop("Override variable(s) are not in vars: ", paste(setdiff(forced, vars), collapse = ", "), call. = FALSE)
+  }
+
+  is_binary <- vapply(d[vars], function(x) {
+    if (is.logical(x)) return(TRUE)
+    if (!is.numeric(x)) return(FALSE)
+    values <- unique(x[!is.na(x)])
+    length(values) > 0L && all(values %in% c(0, 1))
+  }, logical(1))
+  is_continuous <- vapply(d[vars], function(x) {
+    is.numeric(x) && length(unique(x[!is.na(x)])) > 6L
+  }, logical(1))
+  buckets <- list(
+    continuous = vars[!is_binary & is_continuous],
+    binary = vars[is_binary],
+    categorical = vars[!is_binary & !is_continuous]
+  )
+  for (bucket in intersect(allowed, names(overrides))) {
+    move <- as.character(overrides[[bucket]])
+    buckets <- lapply(buckets, setdiff, y = move)
+    buckets[[bucket]] <- unique(c(buckets[[bucket]], move))
+  }
+  buckets
+}
+```
+
+## Table
+
+```{r}
+#| label: table
+b <- classify_buckets(d, unlist(GROUPS, use.names = FALSE), OVERRIDES)
+tbl <- hv_tbl_summary(
+  d, by = BY, groups = GROUPS,
+  continuous = b$continuous, binary = b$binary, categorical = b$categorical,
+  continuous_stat = "both", percentiles = c(15, 85),
+  compare = if (is.null(BY)) "none" else "pvalue"
+)
+tbl
+hv_man_table_save(
+  hv_man_table(tbl),
+  file = set_path("descriptive", paste0(ENDPOINT, "-", TYPE, "-dc-tables.docx"))
+)
+```
+
+## Correlations
+
+```{r}
+#| label: correlation
+#| results: asis
+if (is.null(CORR)) {
+  cat("Correlation variant not requested (`CORR <- NULL`).\n")
+} else {
+  ct <- hv_correlation_table(d, vars = CORR$vars, with = CORR$with)
+  conf_level <- attr(ct, "conf_level")
+  if (!is.null(CORR$by)) {
+    st <- hv_correlation_table(d, vars = CORR$vars, with = CORR$with, by = CORR$by)
+    ct[[CORR$by]] <- "Overall"
+    ct <- rbind(ct[names(st)], st)
+    attr(ct, "conf_level") <- conf_level
+  }
+  print(knitr::kable(ct, caption = sprintf(
+    "Spearman and Pearson, %d%% Fisher interval", round(100 * attr(ct, "conf_level"))
+  )))
+  cm <- hv_correlation_matrix(d, vars = unique(c(CORR$with, CORR$vars)))
+  fname <- "dc-tables-correlation-matrix.png"
+  png(set_path("descriptive", fname), width = 10, height = 10, units = "in", res = 150)
+  print(plot(cm) + theme_hv_manuscript())
+  invisible(dev.off())
+  cat("\n![Scatter-plot matrix](", file.path(paste0(ENDPOINT, "-", TYPE), fname), ")\n", sep = "")
+}
+```
