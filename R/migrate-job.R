@@ -204,23 +204,39 @@ migrate_job <- function(source, endpoint, type, prefix, qualifier = NULL,
   invisible(result)
 }
 
+.migration_redact_text <- function(text) {
+  absolute <- "(?:[A-Za-z]:[/\\\\]|\\\\\\\\|/)"
+  quoted <- paste0("(?s)([\"'])", absolute, ".*?\\1")
+  text <- gsub(quoted, "\\1[absolute path]\\1", text, perl = TRUE)
+  # Unquoted paths have no reliable whitespace delimiter. Redact through
+  # their field's next statement delimiter, including any path components
+  # containing spaces. This runs before fields are joined into report rows.
+  unquoted <- paste0(
+    "(^|[[:space:]=(:,])", absolute,
+    "[^[:space:]\"'<>;|)][^\\r\\n\"'<>;|)]*"
+  )
+  gsub(unquoted, "\\1[absolute path]", text, perl = TRUE)
+}
+
 .migration_report <- function(evidence, result, template,
                               version = as.character(utils::packageVersion("hvtiRtemplates"))) {
   .check_migration_result(result)
-  section <- function(title, rows) {
+  section <- function(title, rows, redact = TRUE) {
     body <- if (!nrow(rows)) {
       "None recorded."
     } else {
       vapply(seq_len(nrow(rows)), function(i) {
-        paste0("- ", paste(paste0(names(rows), "=", as.character(rows[i, ])), collapse = "; "))
+        values <- as.character(rows[i, ])
+        if (redact) values <- .migration_redact_text(values)
+        paste0("- ", paste(paste0(names(rows), "=", values), collapse = "; "))
       }, character(1L))
     }
     c(paste0("## ", title), "", body, "")
   }
-  report <- c(
+  c(
     "# Migration report", "",
     paste0("Template: hvtiRtemplates ", version, " / ", template), "",
-    section("Evidence (SHA-256)", evidence$files),
+    section("Evidence (SHA-256)", evidence$files, redact = FALSE),
     section("Translated", result$translated),
     section("Unresolved", result$unresolved),
     section("Ignored", result$ignored),
@@ -232,12 +248,6 @@ migrate_job <- function(source, endpoint, type, prefix, qualifier = NULL,
     "- [ ] Confirm the registered dataset and the job's analysis cohort.",
     "- [ ] Render the job and compare its outputs with the supplied references."
   )
-  # Source statements can themselves contain absolute share paths. Preserve
-  # study-relative references and redact other absolute paths in quoted text.
-  report <- gsub(paste0(evidence$root, "/"), "", report, fixed = TRUE)
-  report <- gsub(evidence$root, "[study root]", report, fixed = TRUE)
-  absolute <- "(?<![[:alnum:]_.])(?:[A-Za-z]:[/\\\\]|\\\\\\\\|/)[^[:space:]\"'<>;,|)]+"
-  gsub(absolute, "[absolute path]", report, perl = TRUE)
 }
 
 .write_migration_pair <- function(job, report, out, report_path) {

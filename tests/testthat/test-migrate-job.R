@@ -156,6 +156,57 @@ test_that("migration reports include decisions, provenance and checklist without
   expect_match(report, "[absolute path]", fixed = TRUE)
 })
 
+test_that("report redaction removes complete quoted paths across operating systems", {
+  root <- withr::local_tempdir()
+  source <- file.path(root, "job.sas")
+  writeLines("proc means; run;", source)
+  evidence <- .migration_evidence(c(source = source), normalizePath(root, winslash = "/"))
+  paths <- c(
+    "/legacy/Study Alpha/private/vars.sas",
+    "C:\\Legacy Studies\\Synthetic\\datasets",
+    "\\\\server\\Legacy Studies\\Synthetic\\datasets"
+  )
+  result <- list(
+    regions = character(), translated = data.frame(), ignored = data.frame(),
+    unresolved = data.frame(
+      line = 1:3,
+      text = paste0("%include '", paths, "';"),
+      marker = "EDIT: review include"
+    )
+  )
+  evidence$log <- data.frame(line = 1:3, severity = "warning", text = paste0('WARNING: "', paths, '"'))
+  evidence$lst <- data.frame(line = 1:3, text = paste0('Output: "', paths, '"'))
+  report <- .migration_report(evidence, result, "dc-tables")
+  for (i in seq_along(paths)) {
+    expect_true(paste0("- line=", i, "; text=%include '[absolute path]';; marker=EDIT: review include") %in% report)
+    expect_true(paste0("- line=", i, '; severity=warning; text=WARNING: "[absolute path]"') %in% report)
+    expect_true(paste0("- line=", i, '; text=Output: "[absolute path]"') %in% report)
+  }
+  expect_false(any(grepl("Alpha|Synthetic|vars[.]sas|datasets", report)))
+})
+
+test_that("report provenance preserves punctuation and spaces in validated relative paths", {
+  root <- withr::local_tempdir()
+  relative <- c("descriptive/Source (legacy)/job.sas", "documents/Report (final)/table.rtf",
+                "documents/Report, copy; [review]/table.docx")
+  paths <- file.path(root, relative)
+  for (path in paths) {
+    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    writeBin(charToRaw("abc"), path)
+  }
+  evidence <- .migration_evidence(
+    c(source = paths[[1L]], reference = paths[2:3]), normalizePath(root, winslash = "/")
+  )
+  result <- list(regions = character(), translated = data.frame(), unresolved = data.frame(), ignored = data.frame())
+  report <- .migration_report(evidence, result, "dc-tables")
+  expected <- paste0(
+    "- role=", c("source", "reference1", "reference2"), "; path=", relative,
+    "; sha256=ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+  )
+  expect_true(all(expected %in% report))
+  expect_false(any(grepl("[absolute path]", report, fixed = TRUE)))
+})
+
 test_that("malformed adapter results cannot generate an incomplete report", {
   expect_error(.migration_report(list(), list(regions = "bad"), "dc-tables"), "adapter result")
 })
