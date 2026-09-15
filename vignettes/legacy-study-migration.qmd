@@ -52,10 +52,10 @@ utils::write.csv(built, file.path(root, "datasets", "built.csv"), row.names = FA
 utils::write.csv(built[1:24, ], file.path(root, "datasets", "complete_cases.csv"), row.names = FALSE)
 writeLines(c(
   'title "Synthetic descriptive tables";',
-  '%desc_tab(vartype=category, input=built, by=,',
-  '  varlist=/* Demography */ female race_grp /* Procedure */ repair);',
-  '%desc_tab(vartype=continuous, input=built, by=,',
-  '  varlist=/* Demography */ age bmi /* Follow-up */ iv_dead);'
+  "%desc_tab(vartype=category, input=built, by=,",
+  "  varlist=/* Demography */ female race_grp /* Procedure */ repair);",
+  "%desc_tab(vartype=continuous, input=built, by=,",
+  "  varlist=/* Demography */ age bmi /* Follow-up */ iv_dead);"
 ), file.path(root, "descriptive", "dc.tables.sas"))
 writeLines(c("Synthetic descriptive tables", "Demography", "Procedure", "Follow-up"),
            file.path(root, "descriptive", "dc.tables.lst"))

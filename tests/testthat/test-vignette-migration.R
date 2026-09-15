@@ -1,5 +1,5 @@
 legacy_vignette_path <- function() {
-  source <- test_path("..", "..", "vignettes", "legacy-study-migration.qmd")
+  source <- testthat::test_path("..", "..", "vignettes", "legacy-study-migration.qmd")
   if (file.exists(source)) return(source)
   system.file("doc", "legacy-study-migration.qmd", package = "hvtiRtemplates")
 }
