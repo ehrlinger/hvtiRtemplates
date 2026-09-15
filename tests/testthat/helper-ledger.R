@@ -103,19 +103,6 @@ ledger_rows_or_null <- function() {
   tryCatch(ledger_rows(), error = function(e) NULL)
 }
 
-# A lookup key for a (prefix, qualifier) pair.
-#
-# ⚠️ An absent qualifier must not collapse into a present one spelled the same.
-# `paste()` renders NA as the three characters "NA", so a hypothetical row
-# qualified "NA" and an unqualified row would share a key and one would
-# silently shadow the other. A qualifier matches `[A-Za-z0-9_]+`, so it can
-# never be empty and never contain a control character: "" marks absent and
-# "\r" separates, and neither can occur inside a real qualifier.
-.pair_key <- function(prefix, qualifier) {
-  qualifier <- ifelse(is.na(qualifier), "", as.character(qualifier))
-  paste(as.character(prefix), qualifier, sep = "\r")
-}
-
 # The folder each template in `tl` is expected to sit in.
 #
 # `hvti_taxonomy()` maps a prefix to ONE folder, but a prefix may span several.
@@ -134,59 +121,17 @@ ledger_rows_or_null <- function() {
 # guard, which is the discipline require_ledger() states and this must not
 # quietly opt out of.
 expected_template_folders <- function(tl) {
-  tx <- hvti_taxonomy()
-  folder <- tx$folder[match(tl$prefix, tx$prefix)]
-
   rows <- ledger_rows_or_null()
-  if (is.null(rows) || length(rows) == 0L) {
-    return(folder)
+  catalog <- if (!length(rows)) {
+    NULL
+  } else {
+    fields <- lapply(c("prefix", "qualifier", "folder", "destination"), function(field) {
+      vapply(rows, function(row) if (!length(row[[field]])) NA_character_ else as.character(row[[field]]), character(1L))
+    })
+    names(fields) <- c("prefix", "qualifier", "folder", "destination")
+    as.data.frame(fields, stringsAsFactors = FALSE)
   }
-
-  # ⚠️ Filter to the rows this repo owns BEFORE matching. The catalog covers
-  # every destination, and `check-roadmap-counts.py` only guarantees
-  # (prefix, qualifier) uniqueness AFTER the same filter -- its own comment
-  # says "a prefix mixed across destinations would not be caught here". Match
-  # unfiltered and another package's row can shadow ours. The predicate is
-  # copied from `roadmap_render.py`'s `load_catalog()`: destination absent or
-  # null means unrouted and is kept.
-  rows <- Filter(function(r) {
-    is.null(r$destination) || identical(as.character(r$destination),
-                                        "hvtiRtemplates")
-  }, rows)
-  if (length(rows) == 0L) {
-    return(folder)
-  }
-
-  row_folder <- vapply(rows, function(r) {
-    if (is.null(r$folder)) NA_character_ else as.character(r$folder)
-  }, character(1))
-  row_key <- vapply(rows, function(r) {
-    .pair_key(r$prefix, if (is.null(r$qualifier)) NA_character_ else r$qualifier)
-  }, character(1))
-
-  # ⚠️ And stop rather than pick, if the pair is not unique even after
-  # filtering. `match()` returns the first hit and says nothing about the
-  # rest, which is the shape of the bug that made `dp` look like one job type
-  # and that `template_path()` refuses to repeat. The Python guard enforces
-  # this uniqueness, but it is a different language in a different workflow,
-  # so relying on it silently would put this file one CI regression away from
-  # picking a row at random.
-  if (anyDuplicated(row_key)) {
-    dup <- unique(row_key[duplicated(row_key)])
-    # Render the key back as a reader would write it: `dp-variable` when
-    # qualified, bare `ac` when not. A naive separator swap gives "ac-", which
-    # reads as a qualifier that is empty rather than absent, and this message
-    # is the entire value of stopping here.
-    stop("job catalog has more than one row routed to hvtiRtemplates for ",
-         "the same (prefix, qualifier): ",
-         paste(sub("\r", "-", sub("\r$", "", dup)), collapse = ", "))
-  }
-
-  hit <- match(.pair_key(tl$prefix, tl$qualifier), row_key)
-  from_catalog <- row_folder[hit]
-
-  # A template with no catalog row, or a row carrying no folder, keeps the
-  # taxonomy's answer rather than becoming NA and failing on a comparison that
-  # was never about it.
-  ifelse(is.na(from_catalog), folder, from_catalog)
+  vapply(seq_len(nrow(tl)), function(i) {
+    hvtiRtemplates:::.template_folder_authority(tl$prefix[i], tl$qualifier[i], catalog)
+  }, character(1L))
 }

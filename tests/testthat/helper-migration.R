@@ -12,6 +12,9 @@ migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame()) 
     hx_chf = as.integer(i %% 4L == 0L), lvmassi = 80 + i,
     iv_opyrs = i + 0.25
   )
+  if (identical(kind, "dp-postage")) {
+    for (j in seq_len(5L)) built[[paste0("panel", j)]] <- i + j / 10
+  }
   utils::write.csv(built, file.path(root, "datasets", "built.csv"), row.names = FALSE)
   utils::write.csv(built[1:24, ], file.path(root, "datasets", "complete_cases.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::study_setup(

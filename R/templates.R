@@ -199,3 +199,30 @@ template_path <- function(prefix, qualifier = NULL) {
 # it is what a study's own folders are called. A directory without the numeric
 # prefix is returned unchanged, so the function is safe on a hand-made path.
 .folder_name <- function(dir) sub("^[0-9]+_", "", dir)
+
+# Qualified catalog rows take precedence over the prefix-wide taxonomy.
+.template_folder_authority <- function(prefix, qualifier, catalog = NULL) {
+  fallback <- hvti_taxonomy()$folder[match(prefix, hvti_taxonomy()$prefix)]
+  if (is.null(catalog) || !nrow(catalog)) return(fallback)
+  if ("destination" %in% names(catalog)) {
+    catalog <- catalog[is.na(catalog$destination) | catalog$destination == "hvtiRtemplates", , drop = FALSE]
+  }
+  if (anyDuplicated(catalog[c("prefix", "qualifier")])) {
+    dup <- catalog[duplicated(catalog[c("prefix", "qualifier")]), , drop = FALSE]
+    names <- ifelse(is.na(dup$qualifier), dup$prefix, paste(dup$prefix, dup$qualifier, sep = "-"))
+    stop("job catalog has more than one row routed to hvtiRtemplates for the same (prefix, qualifier): ",
+         paste(names, collapse = ", "), call. = FALSE)
+  }
+  same_qualifier <- if (is.null(qualifier) || is.na(qualifier)) {
+    is.na(catalog$qualifier)
+  } else {
+    !is.na(catalog$qualifier) & catalog$qualifier == qualifier
+  }
+  hit <- which(!is.na(catalog$prefix) & catalog$prefix == prefix & same_qualifier)
+  if (!length(hit)) return(fallback)
+  folder <- catalog$folder[hit]
+  if (length(folder) != 1L || is.na(folder) || !nzchar(folder)) {
+    stop("Matching job catalog row has no folder.", call. = FALSE)
+  }
+  folder
+}

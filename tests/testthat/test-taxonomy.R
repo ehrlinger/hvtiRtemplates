@@ -159,6 +159,15 @@ test_that("the catalog's folder wins over the taxonomy's", {
   })
 })
 
+test_that("package folder authority matches the qualified catalog row or falls back", {
+  catalog <- data.frame(prefix = c("dp", "dp"), qualifier = c("postage", "trends"),
+                        folder = c("descriptive", "graphs"))
+  expect_identical(hvtiRtemplates:::.template_folder_authority("dp", "postage", catalog), "descriptive")
+  expect_identical(hvtiRtemplates:::.template_folder_authority("ac", NA_character_, catalog), "distributions")
+  expect_identical(hvtiRtemplates:::.template_folder_authority("dp", "postage", NULL), "graphs")
+  expect_error(hvtiRtemplates:::.template_folder_authority("dp", "postage", rbind(catalog, catalog)), "more than one row")
+})
+
 test_that("a template with no catalog row falls back to the taxonomy", {
   rows <- list(list(prefix = "dp", qualifier = "postage",
                     folder = "descriptive", destination = "hvtiRtemplates"))
