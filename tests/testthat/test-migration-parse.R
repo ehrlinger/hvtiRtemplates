@@ -54,6 +54,19 @@ test_that("group headings cannot be empty or repeated", {
   )
 })
 
+test_that("absent SAS groups return an empty named list without attached packages", {
+  grouped <- hvtiRtemplates:::.sas_grouped_vars
+  environment(grouped) <- baseenv()
+  expect_identical(grouped(character()), structure(list(), names = character()))
+  expect_identical(grouped("age bmi"), structure(list(), names = character()))
+})
+
+test_that("SAS group names are assigned without attached packages", {
+  grouped <- hvtiRtemplates:::.sas_grouped_vars
+  environment(grouped) <- baseenv()
+  expect_identical(grouped("/* Demography */ age bmi"), list(Demography = c("age", "bmi")))
+})
+
 test_that("log and listing facts keep evidence line numbers", {
   log <- c("NOTE: There were 40 observations read", "WARNING: Missing values")
   lst <- c("Goodness of Follow-up", "N  Mean  Std Dev", "40  3.2  1.1")

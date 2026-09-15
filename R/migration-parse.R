@@ -161,8 +161,8 @@
   source <- paste(text, collapse = "\n")
   starts <- gregexpr("(?s)/\\*.*?\\*/", source, perl = TRUE)[[1L]]
 
-  if (identical(starts, -1L)) {
-    return(setNames(list(), character()))
+  if (starts[[1L]] == -1L) {
+    return(stats::setNames(list(), character()))
   }
 
   lengths <- attr(starts, "match.length")
@@ -196,7 +196,7 @@
     strsplit(segment, "[[:space:]]+", perl = TRUE)[[1L]]
   })
 
-  setNames(variables, headings)
+  stats::setNames(variables, headings)
 }
 
 .sas_log_findings <- function(lines) {
