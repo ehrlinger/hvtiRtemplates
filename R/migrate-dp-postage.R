@@ -87,6 +87,25 @@
 
 .postage_r_controls <- function(lines, aliases) {
   # Only R fences contribute executable declarations; prose cannot select data.
+  literal_eval <- function(option) {
+    if (grepl("^\\s*#\\|", option)) {
+      value <- sub("^\\s*#\\|\\s*eval\\s*:\\s*", "", option)
+      value <- tolower(trimws(sub("\\s+#.*$", "", value)))
+      if (value %in% c("true", "false")) return(value == "true")
+      return(NA)
+    }
+    # Parse the complete inline argument without evaluating source expressions.
+    header <- sub("^```\\{r\\s*,?\\s*", "", option)
+    header <- sub("\\}\\s*$", "", header)
+    parsed <- tryCatch(parse(text = paste0("alist(", header, ")"))[[1L]], error = function(e) NULL)
+    args <- as.list(parsed)[-1L]
+    values <- args[names(args) == "eval"]
+    if (length(values) == 1L) {
+      if (identical(values[[1L]], TRUE)) return(TRUE)
+      if (identical(values[[1L]], FALSE)) return(FALSE)
+    }
+    NA
+  }
   inside <- FALSE
   start <- 0L
   code <- rep("", length(lines))
@@ -98,10 +117,11 @@
     } else if (grepl("^```\\s*$", lines[i])) {
       if (inside) {
         block <- seq.int(start, i)
-        options <- lines[block][grepl("#\\|\\s*eval\\s*:|^```\\{r.*\\beval\\s*=", lines[block], perl = TRUE)]
-        if (length(options) && !all(grepl("(?i)eval\\s*[:=]\\s*true\\b", options, perl = TRUE))) {
+        options <- lines[block][grepl("^\\s*#\\|\\s*eval\\s*:|^```\\{r.*\\beval\\s*=", lines[block], perl = TRUE)]
+        values <- vapply(options, literal_eval, logical(1L))
+        if (length(values) && (anyNA(values) || !all(values))) {
           code[block] <- ""
-          conditional[block] <- !any(grepl("(?i)eval\\s*[:=]\\s*false\\b", options, perl = TRUE))
+          conditional[block] <- anyNA(values)
         }
       }
       inside <- FALSE

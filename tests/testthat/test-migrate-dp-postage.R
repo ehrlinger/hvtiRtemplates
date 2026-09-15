@@ -229,3 +229,40 @@ test_that("postage retains cleaning with omitted subscript arguments as unresolv
   expect_true(5L %in% result$unresolved$line)
   expect_false(any(grepl("d[", result$regions, fixed = TRUE)))
 })
+
+test_that("postage preserves boolean-prefixed eval expressions as unresolved", {
+  root <- migration_study_fixture()
+  for (value in c("FALSE || run_eda", "TRUE && run_eda")) {
+    for (header in list(c(paste0("```{r setup, eval=", value, ", echo=FALSE}")),
+                        c("```{r}", paste0("#| eval: ", value)))) {
+      lines <- c(header, 'dta_filename <- "built.csv"', 'pref_time_var <- "iv_dead"',
+                 'variables <- "age"', "d$age <- d$age + 1", "```")
+      result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+      env <- postage_config(result)
+      expect_identical(env$DATASET, NA_character_, info = paste(header, collapse = " "))
+      expect_identical(env$X_VAR, NA_character_)
+      expect_identical(env$VARIABLES, character())
+      source_rows <- length(header) + 1:4
+      expect_true(all(source_rows %in% result$unresolved$line))
+      expect_false(any(source_rows %in% result$ignored$line))
+      expect_false(any(source_rows %in% result$translated$line))
+      expect_match(result$regions[[1L]], "EDIT:", fixed = TRUE)
+    }
+  }
+})
+
+test_that("postage recognizes complete inline boolean eval options", {
+  root <- migration_study_fixture()
+  for (value in c("TRUE", "FALSE")) {
+    lines <- c(paste0("```{r setup, eval=", value, ", echo=FALSE}"),
+               'dta_filename <- "built.csv"', 'pref_time_var <- "iv_dead"', 'variables <- "age"', "```")
+    result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+    if (value == "TRUE") {
+      expect_identical(postage_config(result)$VARIABLES, "age")
+      expect_true(all(2:4 %in% result$translated$line))
+    } else {
+      expect_identical(postage_config(result)$VARIABLES, character())
+      expect_true(all(2:4 %in% result$ignored$line))
+    }
+  }
+})
