@@ -40,6 +40,10 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
+if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
+  stop("This job needs hvtiRdatabuild >= 0.2.1 for read_analysis_set(); ",
+       utils::packageVersion("hvtiRdatabuild"), " is installed.", call. = FALSE)
+}
 if (utils::packageVersion("hvtiRtables") < "1.0.1") {
   stop("This job needs hvtiRtables >= 1.0.1 for hv_correlation_table(); ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
