@@ -10,6 +10,7 @@
 .sas_mask_comments <- function(lines) {
   masked <- as.character(lines)
   in_block <- FALSE
+  in_statement <- FALSE
 
   for (i in seq_along(masked)) {
     chars <- strsplit(masked[[i]], "", fixed = TRUE)[[1L]]
@@ -36,10 +37,17 @@
       }
     }
 
-    if (!in_block && grepl("^[[:space:]]*\\*", masked[[i]])) {
+    text <- paste(chars, collapse = "")
+    is_star_comment <- !in_statement && grepl("^[[:space:]]*\\*", text)
+
+    if (is_star_comment) {
       masked[[i]] <- paste(rep(" ", length(chars)), collapse = "")
     } else {
-      masked[[i]] <- paste(chars, collapse = "")
+      masked[[i]] <- text
+      code <- trimws(text)
+      if (nzchar(code)) {
+        in_statement <- !grepl(";[[:space:]]*$", code)
+      }
     }
   }
 

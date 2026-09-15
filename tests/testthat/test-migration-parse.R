@@ -87,3 +87,8 @@ test_that("comment masking leaves arithmetic visible", {
   masked <- hvtiRtemplates:::.sas_mask_comments(c("* hidden;", "answer = top * bottom;"))
   expect_identical(masked, c("         ", "answer = top * bottom;"))
 })
+
+test_that("comment masking keeps multiplication on a continuation line", {
+  masked <- hvtiRtemplates:::.sas_mask_comments(c("score = top", "  * bottom;"))
+  expect_identical(masked, c("score = top", "  * bottom;"))
+})
