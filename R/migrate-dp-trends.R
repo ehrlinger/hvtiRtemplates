@@ -13,9 +13,17 @@
   match_code <- function(pattern) which(!rows$comment & grepl(pattern, code, perl = TRUE))
   capture <- function(pattern, text) regmatches(text, regexec(pattern, text, perl = TRUE))[[1L]][-1L]
   quote_r <- function(x) encodeString(x, quote = '"')
+  quote_name <- function(x) if (identical(make.names(x), x)) x else paste0("`", x, "`")
   plain <- "[a-z_][a-z0-9_]*"
   number <- "-?[0-9]+(?:[.][0-9]+)?"
   unquoted <- gsub("'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"", " ", code, perl = TRUE)
+  active <- unquoted[!rows$comment]
+  # Count declarations independently of the grammar that can translate them.
+  # Otherwise an unsupported later definition leaves a stale supported value.
+  names_in <- function(text, pattern) {
+    matches <- regmatches(text, gregexpr(pattern, text, perl = TRUE))
+    unlist(lapply(matches, function(x) sub(pattern, "\\1", x, perl = TRUE)), use.names = FALSE)
+  }
   inputs <- which(!rows$comment & grepl("(^|\\bthen\\s+|^else\\s+)set(?:\\s|$)", unquoted, perl = TRUE))
   selection <- list(dataset = NA_character_, reason = "Exactly one plain SET statement is required to select registered data.")
   if (length(inputs) == 1L && grepl(paste0("^set\\s+", plain, "$"), code[inputs], perl = TRUE)) {
@@ -34,7 +42,7 @@
     i <- years[[1L]]
     parts <- capture(year_pattern, code[i])
     if (length(parts) && !parts[1L] %in% assigned) {
-      year <- paste0("d$year <- floor(d$", parts[1L], ") + ", parts[2L])
+      year <- paste0("d$year <- floor(d$", quote_name(parts[1L]), ") + ", parts[2L])
       record(i, "translated", "Explicit whole-year assignment and origin.")
     } else {
       interval <- capture(interval_pattern, code[i])
@@ -42,7 +50,7 @@
       if (length(interval) && !interval %in% assigned && length(candidates) == 1L) {
         origin <- sub(".*year origin: *([0-9]{4}).*", "\\1", tolower(rows$text[candidates]))
         year <- c(paste0("# EDIT: confirm inferred origin from source line ", rows$line[candidates], "."),
-                  paste0("d$year <- floor(d$", interval, ") + ", origin))
+                  paste0("d$year <- floor(d$", quote_name(interval), ") + ", origin))
         record(c(i, candidates), "unresolved", "Candidate origin occurs only in prose; original year review marker must remain.")
       }
     }
@@ -52,9 +60,7 @@
   declarations <- match_code(paste0("^%let\\s+(percent|continuous)\\s*=\\s*", plain, "(?:\\s+", plain, ")*$"))
   fields <- kinds <- character()
   declaration_rows <- integer()
-  declaration_kinds <- vapply(declarations, function(i) {
-    capture("^%let\\s+(percent|continuous)\\s*=\\s*(.*)$", code[i])[1L]
-  }, character(1L))
+  declaration_kinds <- names_in(active, "%let\\s+(percent|continuous)\\b")
   for (i in declarations) {
     parts <- capture("^%let\\s+(percent|continuous)\\s*=\\s*(.*)$", code[i])
     vars <- strsplit(parts[2L], "\\s+", perl = TRUE)[[1L]]
@@ -73,8 +79,8 @@
   labels <- list()
   label_pattern <- paste0("(?i)^label\\s+(", plain, ")\\s*=\\s*('(?:[^']|'')*'|\"(?:[^\"]|\"\")*\")$")
   label_rows <- match_code(label_pattern)
-  label_fields <- vapply(label_rows, function(i) capture(label_pattern, rows$code[i])[1L], character(1L))
-  label_fields <- tolower(label_fields)
+  label_definitions <- active[grepl("(?:^|%then\\s+)label\\s", active, perl = TRUE)]
+  label_fields <- names_in(label_definitions, paste0("\\b(", plain, ")\\s*="))
   for (i in label_rows) {
     parts <- capture(label_pattern, rows$code[i])
     field <- tolower(parts[1L])
@@ -89,7 +95,7 @@
   axis_pattern <- paste0("^axis([0-9]+)\\s+order\\s*=\\s*\\(\\s*(", number, ")\\s+to\\s+(", number,
                          ")\\s+by\\s+(", number, ")\\s*\\)$")
   axis_rows <- match_code(axis_pattern)
-  axis_ids <- vapply(axis_rows, function(i) capture(axis_pattern, code[i])[1L], character(1L))
+  axis_ids <- names_in(active, "(?:^|%then\\s+)axis([0-9]+)\\b")
   for (i in axis_rows) {
     parts <- capture(axis_pattern, code[i])
     values <- as.numeric(parts[-1L])
@@ -102,7 +108,9 @@
   plots <- list()
   plot_pattern <- paste0("^plot\\s+(", plain, ")\\s*\\*\\s*year\\s*/\\s*haxis=axis([0-9]+)\\s+vaxis=axis([0-9]+)$")
   plot_rows <- match_code(plot_pattern)
-  plot_fields <- vapply(plot_rows, function(i) capture(plot_pattern, code[i])[1L], character(1L))
+  plot_definitions <- active[grepl("(?:^|%then\\s+)plot\\s", active, perl = TRUE)]
+  plot_definitions <- sub("/.*$", "", plot_definitions)
+  plot_fields <- names_in(plot_definitions, paste0("\\b(", plain, ")\\b"))
   xaxes <- character()
   for (i in plot_rows) {
     parts <- capture(plot_pattern, code[i])
@@ -120,7 +128,7 @@
     axis <- plots[[field]]
     ylim <- if (is.null(axis)) "NULL" else paste0("c(", paste(axis[1:2], collapse = ", "), ")")
     ybreaks <- if (is.null(axis)) "NULL" else seq_r(axis)
-    paste0("  ", field, " = list(cols = ", quote_r(field), ", kind = ", quote_r(kinds[i]), ",\n",
+    paste0("  ", quote_name(field), " = list(cols = ", quote_r(field), ", kind = ", quote_r(kinds[i]), ",\n",
            "    labels = ", quote_r(label), ", ylab = ", quote_r(if (kinds[i] == "percent") "Patients (%)" else label), ",\n",
            "    ylim = ", ylim, ", ybreaks = ", ybreaks, ")")
   }, character(1L))
@@ -136,8 +144,17 @@
   } else {
     c("# EDIT: resolve a shared horizontal axis from the source plots.", "XBREAKS <- NULL")
   }
-  wrappers <- match_code(paste0("^(run|quit)$|^data\\s|^proc (means|gplot)\\b|^class\\s|^var\\s|",
-                                "^output\\s|^title[0-9]*\\s|^filename\\s|^smooth[.]spline\\("))
+  quoted <- "('(?:[^']|'')*'|\"(?:[^\"]|\"\")*\")"
+  wrapper_patterns <- c(
+    "^(run|quit)$", paste0("^data\\s+", plain, "$"),
+    paste0("^proc\\s+means\\s+data\\s*=\\s*", plain, "\\s+noprint$"),
+    paste0("^proc\\s+gplot\\s+data\\s*=\\s*", plain, "$"), "^class\\s+year$",
+    paste0("^var\\s+", plain, "(?:\\s+", plain, ")*$"),
+    paste0("^output\\s+out\\s*=\\s*", plain, "\\s+mean\\s*=$"),
+    paste0("^title[0-9]*\\s+", quoted, "$"), paste0("^filename\\s+", plain, "\\s+", quoted, "$"),
+    paste0("^smooth[.]spline\\(\\s*", plain, "\\s*,\\s*", plain, "\\s*\\)$")
+  )
+  wrappers <- match_code(paste(wrapper_patterns, collapse = "|"))
   record(wrappers, "ignored", "Legacy aggregation, plotting, title or destination replaced by the template's hv_trends() output.")
   subgroups <- c("# EDIT: review source filters and subgroup intent before accepting the whole cohort.",
                  "SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)))")
@@ -147,6 +164,12 @@
   }
   regions <- list("dp-trends-data" = data, "dp-trends-year" = year, "dp-trends-trends" = trends,
                   "dp-trends-xbreaks" = xbreaks, "dp-trends-subgroups" = subgroups)
-  list(regions = vapply(regions, paste, character(1L), collapse = "\n"), translated = decisions("translated"),
+  regions <- vapply(regions, paste, character(1L), collapse = "\n")
+  for (name in names(regions)) {
+    tryCatch(parse(text = regions[[name]]), error = function(e) {
+      stop("Generated dp-trends region '", name, "' is not valid R: ", conditionMessage(e), call. = FALSE)
+    })
+  }
+  list(regions = regions, translated = decisions("translated"),
        unresolved = decisions("unresolved"), ignored = decisions("ignored"))
 }

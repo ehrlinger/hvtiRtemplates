@@ -161,3 +161,86 @@ test_that("dp-trends leaves inferred origins and ambiguous or absent definitions
   expect_identical(trends_config(result)$XBREAKS, NULL)
   expect_match(result$regions[["dp-trends-year"]], "NA_real_", fixed = TRUE)
 })
+
+test_that("dp-trends keeps procedure filters and additional class grouping unresolved", {
+  root <- migration_study_fixture("dp-trends")
+  original <- trends_evidence(root)$source$text
+  unsupported <- c(
+    "proc means data=trends(where=(female=1)) noprint;",
+    "proc gplot data=annual(where=(female=1));",
+    "class year female;"
+  )
+  for (statement in unsupported) {
+    result <- hvtiRtemplates:::.migrate_dp_trends(trends_evidence(root, c(original, statement)), character())
+    expect_true(statement %in% result$unresolved$text, info = statement)
+    expect_false(statement %in% result$ignored$text, info = statement)
+    expect_false(any(grepl("female", result$regions, fixed = TRUE)))
+  }
+})
+
+test_that("dp-trends invalidates intent when any competing definition is unsupported", {
+  root <- migration_study_fixture("dp-trends")
+  original <- trends_evidence(root)$source$text
+  for (statement in c("%let percent=;", "%let percent=%scan(hx_chf,1);", "%let percent=hx_chf--female;",
+                      "%if flag %then %let percent=;")) {
+    result <- hvtiRtemplates:::.migrate_dp_trends(trends_evidence(root, c(original, statement)), character())
+    expect_identical(names(trends_config(result)$TRENDS), "lvmassi", info = statement)
+    expect_true(all(c(5L, 25L) %in% result$unresolved$line), info = statement)
+    expect_false(5L %in% result$translated$line, info = statement)
+  }
+  result <- hvtiRtemplates:::.migrate_dp_trends(trends_evidence(root, c(original, "%let continuous=;")), character())
+  expect_identical(names(trends_config(result)$TRENDS), "hx_chf")
+})
+
+test_that("dp-trends inventories competing axis label and plot declarations before accepting values", {
+  root <- migration_study_fixture("dp-trends")
+  original <- trends_evidence(root)$source$text
+  extra <- "axis1 order=(2000 to 2025 by 5) label=('Year');"
+  result <- hvtiRtemplates:::.migrate_dp_trends(trends_evidence(root, c(original, extra)), character())
+  expect_identical(trends_config(result)$XBREAKS, NULL)
+  expect_true(all(c(9L, 21L, 22L, 25L) %in% result$unresolved$line))
+  expect_false(any(c(9L, 21L, 22L) %in% result$translated$line))
+  extra <- "axis2 label=('Patients');"
+  result <- hvtiRtemplates:::.migrate_dp_trends(trends_evidence(root, c(original, extra)), character())
+  expect_identical(trends_config(result)$TRENDS$hx_chf$ylim, NULL)
+  expect_true(all(c(10L, 21L, 25L) %in% result$unresolved$line))
+  extra <- "label lvmassi='LV mass' hx_chf='CHF';"
+  result <- hvtiRtemplates:::.migrate_dp_trends(trends_evidence(root, c(original, extra)), character())
+  expect_identical(trends_config(result)$TRENDS$hx_chf$labels, "hx_chf")
+  expect_identical(trends_config(result)$TRENDS$lvmassi$labels, "lvmassi")
+  expect_true(all(c(7L, 8L, 25L) %in% result$unresolved$line))
+  extra <- "plot hx_chf*year / haxis=axis1 vaxis=axis2 overlay;"
+  result <- hvtiRtemplates:::.migrate_dp_trends(trends_evidence(root, c(original, extra)), character())
+  expect_identical(trends_config(result)$TRENDS$hx_chf$ybreaks, NULL)
+  expect_true(all(c(21L, 25L) %in% result$unresolved$line))
+})
+
+test_that("dp-trends generates executable R for SAS names reserved or nonsyntactic in R", {
+  root <- migration_study_fixture("dp-trends")
+  original <- trends_evidence(root)$source$text
+  for (field in c("repeat", "if", "next", "function", "_interval")) {
+    lines <- gsub("iv_opyrs", field, original, fixed = TRUE)
+    lines <- gsub("hx_chf", field, lines, fixed = TRUE)
+    result <- hvtiRtemplates:::.migrate_dp_trends(trends_evidence(root, lines), character())
+    expect_no_error(lapply(result$regions, function(x) parse(text = x)))
+    env <- trends_config(result)
+    env$d <- setNames(data.frame(c(1.25, 2.75)), field)
+    eval(parse(text = result$regions[["dp-trends-year"]]), env)
+    expect_equal(env$d$year, c(1986, 1987))
+    expect_identical(names(env$TRENDS), c(field, "lvmassi"))
+    expect_identical(env$TRENDS[[field]]$cols, field)
+  }
+})
+
+test_that("dp-trends returns parseable candidate origins from multiline prose", {
+  root <- migration_study_fixture("dp-trends")
+  original <- trends_evidence(root)$source$text
+  original[4L] <- "year=floor(iv_opyrs); /* Candidate only:\nyear origin: 1985\nconfirm before use. */"
+  result <- hvtiRtemplates:::.migrate_dp_trends(trends_evidence(root, original), character())
+  expect_no_error(lapply(result$regions, function(x) parse(text = x)))
+  expect_match(result$regions[["dp-trends-year"]], "EDIT:", fixed = TRUE)
+  env <- new.env()
+  env$d <- data.frame(iv_opyrs = c(1.25, 2.75))
+  eval(parse(text = result$regions[["dp-trends-year"]]), env)
+  expect_equal(env$d$year, c(1986, 1987))
+})
