@@ -6,7 +6,9 @@
   stamps to the R job that replaces each. `dc-tables` carries the correlation
   variant on `hvtiRtables::hv_correlation_table()` and
   `hvtiPlotR::hv_correlation_matrix()`; `dp-postage` is thin over
-  `hvtiPlotR::hv_eda()`.
+  `hvtiPlotR::hv_eda()`. The job-catalog pin advances to `hvtiR` `v1.1.11`
+  in both workflows, and the roadmap is re-rendered: 44 templates are in scope
+  and 13 are on disk.
 
 * **The job-catalog pin advances to `hvtiR` `v1.1.10`**, in both
   `R-CMD-check.yaml` and `spec-counts.yaml`, and the roadmap is re-rendered
@@ -44,7 +46,7 @@
   cutoff: the early job censors at it, and the late job keeps only those who
   reach it. No taxonomy row names the construct; the job catalog records it as
   a shared `landmark` option from
-  [hvtiR#61](https://github.com/ehrlinger/hvtiR/pull/61), not yet in a tag.
+  [hvtiR#61](https://github.com/ehrlinger/hvtiR/pull/61), shipped in `v1.1.9`.
 
 * **`40_graphs/dp-trends.qmd` ships**, the first of the EDA templates and the
   first QUALIFIED template: a job is scaffolded with
@@ -209,22 +211,6 @@
 * The Phase 3 render gate moves to 0.9.3 as well, because it *runs* a screen:
   below that, the bags it produces are not the bags these templates now
   declare they need.
-
-* **Copilot review credits are confirmed exhausted**, and `AGENTS.md` now says
-  so as fact rather than as a report. A re-request on
-  [#83](https://github.com/ehrlinger/hvtiRtemplates/pull/83) came back as a
-  review reading *"Copilot was unable to review this pull request because the
-  user who requested the review has reached their quota limit."*
-
-  The earlier note said an unanswered re-request is indistinguishable from a
-  slow bot. **That was wrong once the quota is hit**: Copilot posts a review
-  saying so, and the note now carries the one-line query that reads it. An
-  empty result still means slow or not-requested; a body containing "quota
-  limit" means the credits are gone.
-
-  Until October, a PR gets no automated reading at all, and with the approval
-  rule nobody can satisfy on their own PR, every merge reaches `main` unread.
-  Run `/code-review` locally before opening one and say so in the body.
 
 # hvtiRtemplates 1.1.0
 

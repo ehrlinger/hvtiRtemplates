@@ -98,13 +98,17 @@ set_path <- function(kind, file) {
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 # EDIT: the analysis set this job reads: declare its columns and excluded rows
 # under analysis_sets: in _study.yml, then write it with
-# hvtiRdatabuild::write_analysis_set(). Replace both lines with d <- read_built()
-# only when the whole built cohort is the intended population.
+# hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
+# cohort is the intended population.
 ANALYSIS_SET <- "eda"
-d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
-knitr::kable(attr(d, "attrition"), caption = paste0(
-  "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
-))
+if (is.null(ANALYSIS_SET)) {
+  d <- read_built()
+} else {
+  d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
+  knitr::kable(attr(d, "attrition"), caption = paste0(
+    "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
+  ))
+}
 ```
 
 ```{r}
