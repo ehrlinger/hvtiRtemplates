@@ -49,6 +49,9 @@ the endpoint alone both would be written to one filename.
 }
 \examples{
 d <- file.path(tempdir(), "add-job-example")
+invisible(hvtiRutilities::study_setup(
+  d, study = "Example", study_tracker_id = 1L
+))
 add_job("ac", "dead_pa", "hz", dir = d)
 list.files(d, recursive = TRUE)
 unlink(d, recursive = TRUE)

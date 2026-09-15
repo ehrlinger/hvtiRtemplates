@@ -170,7 +170,8 @@ if (!is.null(.current)) {
 # Created on first use rather than up front, so a job that writes nothing leaves
 # no empty directories behind.
 set_path <- function(kind, file) {
-  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(ENDPOINT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }

@@ -9,19 +9,19 @@ refuses to overwrite an existing job.
 
 | template | job type | a job scaffolds into |
 |---|---|---|
-| `20_distributions/ac.qmd` | actuarial life tables | `distributions/` |
-| `20_distributions/hz.qmd` | multiphase parametric hazard fit | `distributions/` |
-| `40_graphs/hp.qmd` | nomogram and hazard figures | `graphs/` |
-| `40_graphs/hs.qmd` | patient-level predictions and expected survival | `graphs/` |
-| `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `graphs/` |
-| `10_descriptive/dc-tables.qmd` | descriptive tables and correlations | `descriptive/` |
-| `10_descriptive/dc-gfup.qmd` | goodness-of-follow-up tables | `descriptive/` |
-| `10_descriptive/dp-postage.qmd` | EDA postage-stamp sweep | `descriptive/` |
-| `30_analyses/hm.qmd` | multivariable hazard model | `analyses/` |
-| `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `analyses/` |
-| `30_analyses/br.qmd` | bootstrap variable selection, linear | `analyses/` |
-| `30_analyses/bc.qmd` | bootstrap variable selection, Cox | `analyses/` |
-| `30_analyses/bh.qmd` | bootstrap variable selection | `analyses/` |
+| `20_distributions/ac.qmd` | actuarial life tables | `20_distributions/` or `distributions/` |
+| `20_distributions/hz.qmd` | multiphase parametric hazard fit | `20_distributions/` or `distributions/` |
+| `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
+| `40_graphs/hs.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
+| `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `40_graphs/` or `graphs/` |
+| `10_descriptive/dc-tables.qmd` | descriptive tables and correlations | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-gfup.qmd` | goodness-of-follow-up tables | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dp-postage.qmd` | EDA postage-stamp sweep | `10_descriptive/` or `descriptive/` |
+| `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
+| `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `30_analyses/` or `analyses/` |
+| `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
+| `30_analyses/bc.qmd` | bootstrap variable selection, Cox | `30_analyses/` or `analyses/` |
+| `30_analyses/bh.qmd` | bootstrap variable selection | `30_analyses/` or `analyses/` |
 
 A template is named `<prefix>.qmd`, or `<prefix>-<qualifier>.qmd` where one
 prefix carries several job types, and lives in a numbered directory named for
