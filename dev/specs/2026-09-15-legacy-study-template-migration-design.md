@@ -1,8 +1,7 @@
 # Legacy study adoption and template-specific SAS migration
 
 **Date:** 2026-09-15
-**Status:** Design approved in conversation; written specification awaiting
-review
+**Status:** Design approved; implementation plan written 2026-09-15
 **Primary repository:** `hvtiRtemplates`
 **Upstream dependencies:** the two-stage study API in `hvtiRutilities` and the
 `add_job()` numbered-layout change in `hvtiRtemplates`
@@ -243,26 +242,27 @@ The editable block declares:
 
 - `DATASET`;
 - the x or preferred-time variable;
-- an optional color variable;
 - variables to include or exclude;
 - grid rows and columns; and
 - common point and axis settings.
 
 The template removes no columns by name unless the author confirms the
-selection. It warns when likely identifiers or date fields are included. It
-splits a long variable list into numbered pages, writes page-level PNG files
-under the study's logical `graphs/` directory, and embeds them in the rendered
-job. Ordinary `ggplot2` faceting is sufficient; this change adds no plotting
+selection. It warns when likely identifiers or date fields are included. For
+each selected variable it calls `hvtiPlotR::hv_eda()` and plots the returned
+object. `patchwork::wrap_plots()` arranges those plots into numbered pages. The
+template writes page-level PNG files under the study's logical `graphs/`
+directory and embeds them in the rendered job. This change adds no plotting
 package function.
 
 ### Adapter contract
 
 The adapter reads the preferred time, color, stratification, inclusion and
 exclusion choices, grid dimensions, alpha, and simple scale settings from the
-legacy R or SAS source. Study-specific cleaning remains an unresolved block,
-quoted in the migration report. Supporting both `.qmd` and `.sas` source here
-does not create a generic R-to-R converter; it is the adapter for this one
-legacy template shape.
+legacy R or SAS source. `hv_eda()` has no color-variable argument, so a legacy
+color choice is recorded as unresolved rather than translated. Study-specific
+cleaning remains an unresolved block, quoted in the migration report.
+Supporting both `.qmd` and `.sas` source here does not create a generic R-to-R
+converter; it is the adapter for this one legacy template shape.
 
 ## 10. Template identity and placement
 
@@ -375,16 +375,17 @@ study directory is shared state.
 
 ## 14. Repository and release scope
 
-Implementation belongs in `hvtiRtemplates`. The job catalog that records
-template disposition belongs in `hvtiR`; its four rows must be updated there
-and the roadmap artifacts re-rendered before the templates can ship.
-`hvtiRutilities`, `hvtiRtables`, and `hvtiPlotR` are dependencies, not edit
-targets for this design.
+Implementation belongs in `hvtiRtemplates`. The current `hvtiR` catalog already
+marks `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-postage` as shipped. The
+catalog is a verification input for this change, not an edit target. Strict
+catalog-backed tests must confirm that every installed template still agrees
+with those rows. `hvtiRutilities`, `hvtiRtables`, and `hvtiPlotR` are
+dependencies, not edit targets for this design.
 
 The active `add_job()` branch lands first. This branch then rebases onto it and
 uses that public name throughout. The implementation adds `hvtiRtables`,
-`ggplot2`, and the packages required to render the vignette to `Suggests` with
-the minimum versions that provide the called interfaces.
+`hvtiPlotR`, `patchwork`, and the packages required to render the vignette to
+`Suggests` with the minimum versions that provide the called interfaces.
 
 The package change is done when:
 
