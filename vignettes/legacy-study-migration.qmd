@@ -18,8 +18,9 @@ evidence remain in place.
 
 This example creates its own disposable study with 40 synthetic observations
 and a named 24-row subset. Every study file and job output stays inside that
-temporary directory, which is removed when the R session ends. Run the chunks
-in order in one session to inspect the files yourself. For the statistical
+temporary directory. During rendering, it is removed after the R chunks run;
+the displayed figure is embedded before cleanup. Run the chunks in order in
+one interactive session to inspect the files yourself. For the statistical
 mapping behind these jobs, see [From SAS descriptive jobs to
 R](sas-to-r-descriptive.html).
 
@@ -317,7 +318,11 @@ word <- file.path(root, "documents", "cohort-eda", "dc-tables.docx")
 png <- file.path(root, "graphs", "cohort-eda", "dp-postage-page-01.png")
 stopifnot(file.exists(word), file.exists(png))
 hvtiRtables::hv_check_docx(word)
-knitr::include_graphics(png)
+# Embed while the PNG exists; study cleanup runs before HTML conversion.
+knitr::asis_output(paste0(
+  '<img src="', knitr::image_uri(png),
+  '" alt="Postage stamp plots for the named subset">'
+))
 stopifnot(identical(unname(tools::md5sum(legacy_files)),
                     unname(legacy_checksums)))
 ```

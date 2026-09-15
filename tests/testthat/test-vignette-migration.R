@@ -83,3 +83,36 @@ test_that("the final migration verifier returns four lasting rendered fixtures",
   expect_true(any(grepl("[.]docx$", results[["dc-tables"]]$outputs)))
   expect_equal(sum(grepl("dp-postage-page-[0-9]+[.]png$", results[["dp-postage"]]$outputs)), 2L)
 })
+
+test_that("the tutorial embeds its PNG before temporary study cleanup", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  lines <- readLines(legacy_vignette_path(), warn = FALSE)
+  setup <- lines[grepl("^root <-", lines)]
+  start <- match("#| label: inspect-outputs", lines)
+  end <- start + match("```", lines[-seq_len(start)])
+  expressions <- parse(text = lines[seq.int(start + 1L, end - 1L)])
+  image <- expressions[vapply(expressions, function(x) {
+    any(grepl("knitr::", deparse(x), fixed = TRUE))
+  }, logical(1L))]
+  fixture <- withr::local_tempdir()
+  path <- file.path(fixture, "image-lifetime.qmd")
+  # Use the article's actual lifetime and image-output expressions, isolating
+  # Pandoc conversion from unrelated template dependency requirements.
+  writeLines(c(
+    "---", 'title: "Temporary study image"', "format:", "  html:",
+    "    embed-resources: true", "---", "```{r}", "#| echo: false",
+    setup, 'writeLines(root, "study-root.txt")',
+    'png <- file.path(root, "postage.png")',
+    "grDevices::png(png, width = 480, height = 320)",
+    "graphics::plot(1:3, c(2, 1, 3))", "invisible(grDevices::dev.off())",
+    'writeLines(knitr::image_uri(png), "expected-image.txt")',
+    unlist(lapply(image, deparse)), "```"
+  ), path)
+  quarto::quarto_render(path, execute_dir = fixture, quiet = TRUE)
+  html <- paste(readLines(file.path(fixture, "image-lifetime.html"), warn = FALSE), collapse = "\n")
+  uri <- readLines(file.path(fixture, "expected-image.txt"))
+  expect_false(dir.exists(readLines(file.path(fixture, "study-root.txt"))))
+  expect_true(grepl(paste0('src="', uri, '"'), html, fixed = TRUE))
+  expect_false(grepl('src="[^"]*postage[.]png', html))
+})
