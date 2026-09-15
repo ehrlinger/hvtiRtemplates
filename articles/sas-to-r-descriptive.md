@@ -58,29 +58,32 @@ same job.
 
 ``` r
 
-if (requireNamespace("hvtiRtables", quietly = TRUE) &&
-      requireNamespace("hvtiPlotR", quietly = TRUE)) {
-  d <- hvtiPlotR::sample_correlation_data(n = 80)
-  d$female <- rep(0:1, length.out = nrow(d))
-  groups <- list(
-    Demography = c("female"),
-    Measurements = c("a1c", "glucose", "creatinine")
-  )
-  hvtiRtables::hv_tbl_summary(
-    d,
-    groups = groups,
-    binary = "female",
-    continuous = c("a1c", "glucose", "creatinine"),
-    continuous_stat = "both",
-    percentiles = c(15, 85),
-    compare = "none"
-  )
-  hvtiRtables::hv_correlation_table(
-    d,
-    vars = c("glucose", "creatinine"),
-    with = "a1c"
-  )
-}
+d <- hvtiPlotR::sample_correlation_data(n = 80)
+d$female <- rep(0:1, length.out = nrow(d))
+groups <- list(
+  Demography = c("female"),
+  Measurements = c("a1c", "glucose", "creatinine")
+)
+hvtiRtables::hv_tbl_summary(
+  d,
+  groups = groups,
+  binary = "female",
+  continuous = c("a1c", "glucose", "creatinine"),
+  continuous_stat = "both",
+  percentiles = c(15, 85),
+  compare = "none"
+)
+```
+
+[TABLE]
+
+``` r
+
+hvtiRtables::hv_correlation_table(
+  d,
+  vars = c("glucose", "creatinine"),
+  with = "a1c"
+)
 #>     variable      label with   method  n    estimate   conf.low   conf.high
 #> 1    glucose    glucose  a1c spearman 80  0.73097166  0.6736969  0.77951755
 #> 2    glucose    glucose  a1c  pearson 80  0.77903753  0.7304020  0.81981285
@@ -175,18 +178,22 @@ for (v in variables) Function_DataPlotting(data, v, "year")
 
 ``` r
 
-if (requireNamespace("hvtiPlotR", quietly = TRUE)) {
-  d <- hvtiPlotR::sample_eda_data(n = 120)
-  variables <- c(male = "Male", ef = "Ejection fraction")
-  panels <- lapply(names(variables), function(v) {
-    plot(hvtiPlotR::hv_eda(d, x_col = "year", y_col = v, y_label = variables[[v]]))
-  })
-  panels[[1]]
-  panels[[2]]
-}
+d <- hvtiPlotR::sample_eda_data(n = 120)
+variables <- c(male = "Male", ef = "Ejection fraction")
+panels <- lapply(names(variables), function(v) {
+  plot(hvtiPlotR::hv_eda(d, x_col = "year", y_col = v, y_label = variables[[v]]))
+})
+panels[[1]]
 ```
 
 ![](sas-to-r-descriptive_files/figure-html/dp-postage-1.png)
+
+``` r
+
+panels[[2]]
+```
+
+![](sas-to-r-descriptive_files/figure-html/dp-postage-2.png)
 
 ## Where the numbers differ
 

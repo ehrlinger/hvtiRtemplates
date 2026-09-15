@@ -142,29 +142,545 @@
 %desc_tab(vartype=continuous, varlist=age bmi, perctile=15 50 85);</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"hvtiRtables"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span>
-<span>      <span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"hvtiPlotR"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_correlation_data.html" class="external-link">sample_correlation_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
-<span>  <span class="va">d</span><span class="op">$</span><span class="va">female</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, length.out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>    Demography <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"female"</span><span class="op">)</span>,</span>
-<span>    Measurements <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a1c"</span>, <span class="st">"glucose"</span>, <span class="st">"creatinine"</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
-<span>  <span class="fu">hvtiRtables</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRtables/reference/hv_tbl_summary.html" class="external-link">hv_tbl_summary</a></span><span class="op">(</span></span>
-<span>    <span class="va">d</span>,</span>
-<span>    groups <span class="op">=</span> <span class="va">groups</span>,</span>
-<span>    binary <span class="op">=</span> <span class="st">"female"</span>,</span>
-<span>    continuous <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a1c"</span>, <span class="st">"glucose"</span>, <span class="st">"creatinine"</span><span class="op">)</span>,</span>
-<span>    continuous_stat <span class="op">=</span> <span class="st">"both"</span>,</span>
-<span>    percentiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">85</span><span class="op">)</span>,</span>
-<span>    compare <span class="op">=</span> <span class="st">"none"</span></span>
-<span>  <span class="op">)</span></span>
-<span>  <span class="fu">hvtiRtables</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRtables/reference/hv_correlation_table.html" class="external-link">hv_correlation_table</a></span><span class="op">(</span></span>
-<span>    <span class="va">d</span>,</span>
-<span>    vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"glucose"</span>, <span class="st">"creatinine"</span><span class="op">)</span>,</span>
-<span>    with <span class="op">=</span> <span class="st">"a1c"</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="op">}</span></span>
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_correlation_data.html" class="external-link">sample_correlation_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
+<span><span class="va">d</span><span class="op">$</span><span class="va">female</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, length.out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  Demography <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"female"</span><span class="op">)</span>,</span>
+<span>  Measurements <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a1c"</span>, <span class="st">"glucose"</span>, <span class="st">"creatinine"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu">hvtiRtables</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRtables/reference/hv_tbl_summary.html" class="external-link">hv_tbl_summary</a></span><span class="op">(</span></span>
+<span>  <span class="va">d</span>,</span>
+<span>  groups <span class="op">=</span> <span class="va">groups</span>,</span>
+<span>  binary <span class="op">=</span> <span class="st">"female"</span>,</span>
+<span>  continuous <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a1c"</span>, <span class="st">"glucose"</span>, <span class="st">"creatinine"</span><span class="op">)</span>,</span>
+<span>  continuous_stat <span class="op">=</span> <span class="st">"both"</span>,</span>
+<span>  percentiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">85</span><span class="op">)</span>,</span>
+<span>  compare <span class="op">=</span> <span class="st">"none"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div id="bgtuukzkza" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#bgtuukzkza table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#bgtuukzkza thead, #bgtuukzkza tbody, #bgtuukzkza tfoot, #bgtuukzkza tr, #bgtuukzkza td, #bgtuukzkza th {
+  border-style: none;
+}
+
+#bgtuukzkza p {
+  margin: 0;
+  padding: 0;
+}
+
+#bgtuukzkza .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#bgtuukzkza .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#bgtuukzkza .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#bgtuukzkza .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#bgtuukzkza .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#bgtuukzkza .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#bgtuukzkza .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#bgtuukzkza .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#bgtuukzkza .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#bgtuukzkza .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#bgtuukzkza .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#bgtuukzkza .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#bgtuukzkza .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#bgtuukzkza .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#bgtuukzkza .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bgtuukzkza .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#bgtuukzkza .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#bgtuukzkza .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#bgtuukzkza .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bgtuukzkza .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#bgtuukzkza .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bgtuukzkza .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#bgtuukzkza .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bgtuukzkza .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#bgtuukzkza .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bgtuukzkza .gt_left {
+  text-align: left;
+}
+
+#bgtuukzkza .gt_center {
+  text-align: center;
+}
+
+#bgtuukzkza .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#bgtuukzkza .gt_font_normal {
+  font-weight: normal;
+}
+
+#bgtuukzkza .gt_font_bold {
+  font-weight: bold;
+}
+
+#bgtuukzkza .gt_font_italic {
+  font-style: italic;
+}
+
+#bgtuukzkza .gt_super {
+  font-size: 65%;
+}
+
+#bgtuukzkza .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#bgtuukzkza .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#bgtuukzkza .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#bgtuukzkza .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#bgtuukzkza .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#bgtuukzkza .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#bgtuukzkza .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#bgtuukzkza .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#bgtuukzkza div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+<table class="table gt_table caption-top" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead><tr class="gt_col_headings header">
+<th id="label" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Characteristic</strong></th>
+<th id="stat_0" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col">
+<strong>N = 80</strong><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span>
+</th>
+</tr></thead>
+<tbody class="gt_table_body">
+<tr class="gt_group_heading_row odd">
+<th colspan="2" id="Demography" class="gt_group_heading" data-quarto-table-cell-role="th" scope="colgroup">Demography</th>
+</tr>
+<tr class="gt_row_group_first even">
+<td class="gt_row gt_left" headers="Demography  label">female</td>
+<td class="gt_row gt_center" headers="Demography  stat_0">80 ||| 40 (50%)</td>
+</tr>
+<tr class="gt_group_heading_row odd">
+<th colspan="2" id="Measurements" class="gt_group_heading" data-quarto-table-cell-role="th" scope="colgroup">Measurements</th>
+</tr>
+<tr class="gt_row_group_first even">
+<td class="gt_row gt_left" headers="Measurements  label">a1c</td>
+<td class="gt_row gt_center" headers="Measurements  stat_0"><br></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Measurements  label">    Mean±SD</td>
+<td class="gt_row gt_center" headers="Measurements  stat_0">80 ||| 6.5±1.29</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Measurements  label">    Median (15th, 85th percentile)</td>
+<td class="gt_row gt_center" headers="Measurements  stat_0">||| 6.65 (5.40, 7.85)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Measurements  label">glucose</td>
+<td class="gt_row gt_center" headers="Measurements  stat_0"><br></td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Measurements  label">    Mean±SD</td>
+<td class="gt_row gt_center" headers="Measurements  stat_0">80 ||| 130±36</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Measurements  label">    Median (15th, 85th percentile)</td>
+<td class="gt_row gt_center" headers="Measurements  stat_0">||| 124 (96, 168)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Measurements  label">creatinine</td>
+<td class="gt_row gt_center" headers="Measurements  stat_0"><br></td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="Measurements  label">    Mean±SD</td>
+<td class="gt_row gt_center" headers="Measurements  stat_0">80 ||| 1.0±0.29</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Measurements  label">    Median (15th, 85th percentile)</td>
+<td class="gt_row gt_center" headers="Measurements  stat_0">||| 0.99 (0.73, 1.31)</td>
+</tr>
+</tbody>
+<tfoot><tr class="gt_footnotes odd">
+<td colspan="2" class="gt_footnote">
+<span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span> N Non-missing ||| n (%)</td>
+</tr></tfoot>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">hvtiRtables</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRtables/reference/hv_correlation_table.html" class="external-link">hv_correlation_table</a></span><span class="op">(</span></span>
+<span>  <span class="va">d</span>,</span>
+<span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"glucose"</span>, <span class="st">"creatinine"</span><span class="op">)</span>,</span>
+<span>  with <span class="op">=</span> <span class="st">"a1c"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt;     variable      label with   method  n    estimate   conf.low   conf.high</span></span>
 <span><span class="co">#&gt; 1    glucose    glucose  a1c spearman 80  0.73097166  0.6736969  0.77951755</span></span>
 <span><span class="co">#&gt; 2    glucose    glucose  a1c  pearson 80  0.77903753  0.7304020  0.81981285</span></span>
@@ -185,7 +701,7 @@
   var iv_dead iv_fup;
 run;</code></pre>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"hvtiRutilities"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/generate_survival_data.html" class="external-link">generate_survival_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
 <span>  <span class="va">d</span><span class="op">$</span><span class="va">iv_fup</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">iv_dead</span>, <span class="fl">0.85</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">iv_dead</span><span class="op">)</span></span>
@@ -211,10 +727,10 @@ run;</code></pre>
 <a class="anchor" aria-label="anchor" href="#trends-over-operation-year-dp-trends"></a>
 </h2>
 <p>The shipped <code>dp-trends</code> template replaces hand-built annual summaries and per-series <code>smooth.spline(df = 6)</code> calls with <code>hv_trends()</code>. Its smoother is LOESS, not the SAS-era smoothing spline, so compare the old and new figures by shape rather than pointwise equality.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/smooth.spline.html" class="external-link">smooth.spline</a></span><span class="op">(</span><span class="va">year</span>, <span class="va">annual_mean</span>, df <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"hvtiPlotR"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_eda_data.html" class="external-link">sample_eda_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">120</span><span class="op">)</span></span>
 <span>  <span class="va">trend_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">year</span>, value <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">ef</span>, group <span class="op">=</span> <span class="st">"EF"</span><span class="op">)</span></span>
@@ -235,22 +751,27 @@ run;</code></pre>
 <a class="anchor" aria-label="anchor" href="#eda-postage-stamps-dp-postage"></a>
 </h2>
 <p>The older <code>Function_DataPlotting()</code> loops become one <code>hv_eda()</code> call per entry in <code>VARS</code>. Character and factor columns produce bars. A numeric column produces bars only when it has at most six distinct non-missing values and every value is a non-negative whole number no greater than six; otherwise it produces a scatter panel. The template lays those panels out in printable pages.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">v</span> <span class="kw">in</span> <span class="va">variables</span><span class="op">)</span> <span class="fu">Function_DataPlotting</span><span class="op">(</span><span class="va">data</span>, <span class="va">v</span>, <span class="st">"year"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"hvtiPlotR"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_eda_data.html" class="external-link">sample_eda_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">120</span><span class="op">)</span></span>
-<span>  <span class="va">variables</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>male <span class="op">=</span> <span class="st">"Male"</span>, ef <span class="op">=</span> <span class="st">"Ejection fraction"</span><span class="op">)</span></span>
-<span>  <span class="va">panels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">variables</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/hv_eda.html" class="external-link">hv_eda</a></span><span class="op">(</span><span class="va">d</span>, x_col <span class="op">=</span> <span class="st">"year"</span>, y_col <span class="op">=</span> <span class="va">v</span>, y_label <span class="op">=</span> <span class="va">variables</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="op">}</span><span class="op">)</span></span>
-<span>  <span class="va">panels</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
-<span>  <span class="va">panels</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span>
-<span><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_eda_data.html" class="external-link">sample_eda_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">120</span><span class="op">)</span></span>
+<span><span class="va">variables</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>male <span class="op">=</span> <span class="st">"Male"</span>, ef <span class="op">=</span> <span class="st">"Ejection fraction"</span><span class="op">)</span></span>
+<span><span class="va">panels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">variables</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/hv_eda.html" class="external-link">hv_eda</a></span><span class="op">(</span><span class="va">d</span>, x_col <span class="op">=</span> <span class="st">"year"</span>, y_col <span class="op">=</span> <span class="va">v</span>, y_label <span class="op">=</span> <span class="va">variables</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="va">panels</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="sas-to-r-descriptive_files/figure-html/dp-postage-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">panels</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="sas-to-r-descriptive_files/figure-html/dp-postage-2.png" width="672"></p>
 </figure>
 </div>
 </div>
