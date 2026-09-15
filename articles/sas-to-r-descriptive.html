@@ -129,11 +129,11 @@
 </table></section><section class="level2"><h2 id="five-steps-for-every-job">Five steps for every job<a class="anchor" aria-label="anchor" href="#five-steps-for-every-job"></a>
 </h2>
 <ol type="1">
-<li>Scaffold the job. For example, <code>new_job("dc", "cohort", "eda", qualifier = "tables")</code> writes <code>descriptive/cohort-eda-dc-tables.qmd</code>.</li>
+<li>Scaffold the job. For example, <code>add_job("dc", "cohort", "eda", qualifier = "tables")</code> writes <code>10_descriptive/cohort-eda-dc-tables.qmd</code> in a new study.</li>
 <li>Work every <code>EDIT:</code> marker. The edit guard stops a render while any remain.</li>
-<li>Render from the study root with <code>quarto render descriptive/cohort-eda-dc-tables.qmd</code>.</li>
+<li>Render from the study root with <code>quarto render 10_descriptive/cohort-eda-dc-tables.qmd</code>.</li>
 <li>Compare the result with the SAS <code>.lst</code>, section by section.</li>
-<li>Keep the authored job flat in <code>descriptive/</code>; its generated artifacts are filed beneath <code>descriptive/cohort-eda/</code>.</li>
+<li>Keep the authored job flat in <code>10_descriptive/</code>; its generated artifacts are filed beneath <code>10_descriptive/cohort-eda/</code>.</li>
 </ol></section><section class="level2"><h2 id="descriptive-tables-and-correlations-dc-tables">Descriptive tables and correlations: <code>dc-tables</code>
 <a class="anchor" aria-label="anchor" href="#descriptive-tables-and-correlations-dc-tables"></a>
 </h2>

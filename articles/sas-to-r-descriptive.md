@@ -31,15 +31,15 @@ hvtiR::status()
 ## Five steps for every job
 
 1.  Scaffold the job. For example,
-    `new_job("dc", "cohort", "eda", qualifier = "tables")` writes
-    `descriptive/cohort-eda-dc-tables.qmd`.
+    `add_job("dc", "cohort", "eda", qualifier = "tables")` writes
+    `10_descriptive/cohort-eda-dc-tables.qmd` in a new study.
 2.  Work every `EDIT:` marker. The edit guard stops a render while any
     remain.
 3.  Render from the study root with
-    `quarto render descriptive/cohort-eda-dc-tables.qmd`.
+    `quarto render 10_descriptive/cohort-eda-dc-tables.qmd`.
 4.  Compare the result with the SAS `.lst`, section by section.
-5.  Keep the authored job flat in `descriptive/`; its generated
-    artifacts are filed beneath `descriptive/cohort-eda/`.
+5.  Keep the authored job flat in `10_descriptive/`; its generated
+    artifacts are filed beneath `10_descriptive/cohort-eda/`.
 
 ## Descriptive tables and correlations: `dc-tables`
 

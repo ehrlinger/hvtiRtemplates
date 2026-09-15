@@ -25,12 +25,11 @@
   it is fifth in the taxonomy, because it holds saved output rather than
   jobs.
 
-  ⚠️ **A STUDY does not use the numbered names.**
-  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-  writes into the bare taxonomy folder, `distributions/` and
-  `analyses/`, because that is what studies already have (63,278 and
-  119,582 corpus files). Writing into `20_distributions/` would split a
-  study’s estate across two spellings.
+  ⚠️ **A STUDY does not use the numbered names.** `new_job()` writes
+  into the bare taxonomy folder, `distributions/` and `analyses/`,
+  because that is what studies already have (63,278 and 119,582 corpus
+  files). Writing into `20_distributions/` would split a study’s estate
+  across two spellings.
   [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
   reports `folder` with the digits stripped, for the same reason.
 
@@ -141,11 +140,9 @@ template, and no ordinal will ever be issued again.
   gains a `qualifier` column. `NA` marks an unqualified template row,
   which is every template shipped today.
   [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
-  and
-  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-  gain a `qualifier` argument. Nothing existing changes: all nine
-  shipped templates are unqualified and every existing call still
-  resolves.
+  and `new_job()` gain a `qualifier` argument. Nothing existing changes:
+  all nine shipped templates are unqualified and every existing call
+  still resolves.
 
   **Both refuse to guess.** Naming no qualifier where a prefix carries
   several is an error listing the choices. Selection was
@@ -434,10 +431,9 @@ template, and no ordinal will ever be issued again.
   format, folder-major and uniqueness, never position.
 
   ⚠️ **A job already scaffolded from 1.0.13 or 1.0.14 is unaffected.**
-  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-  bakes the ordinal into the job filename at copy time, so existing jobs
-  keep theirs and do not need renaming. Only newly scaffolded `bh` jobs
-  take `04.05`.
+  `new_job()` bakes the ordinal into the job filename at copy time, so
+  existing jobs keep theirs and do not need renaming. Only newly
+  scaffolded `bh` jobs take `04.05`.
 
 - **An ordinal is now a key, assigned once, and never recomputed from
   row order.** `NN` is the taxonomy folder’s position, which is stable;
@@ -497,8 +493,7 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
   compute, so the run is chunked from a companion script and this file
   pools what that script wrote. That file boundary is a durability
   boundary, not tidiness, and the runner stays untemplated until
-  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-  grows multi-file templates.
+  `new_job()` grows multi-file templates.
 
   It carries four traps that are silent rather than loud when they go
   wrong: competing transformations must be screened and grouped only at
@@ -866,9 +861,8 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
 
 ### Breaking changes
 
-- [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-  now takes `endpoint` and `type` in place of `basename`, and `dir`
-  defaults to the study root rather than `"qmd"`. It writes
+- `new_job()` now takes `endpoint` and `type` in place of `basename`,
+  and `dir` defaults to the study root rather than `"qmd"`. It writes
   `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd` — into the taxonomy
   folder the template belongs to, not a flat `qmd/`. The `type` is
   required because a set is keyed on `(endpoint, analysis type)`: one
@@ -891,33 +885,31 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
   do once the ordinal contained one.
 - The `ac` template declares its set with `ENDPOINT` and `TYPE` markers
   and resolves artifact paths from them, so a scaffolded job needs no
-  output path edited by hand.
-  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-  now substitutes the caller’s `endpoint`/`type` into those declarations
-  after copying the template, so a scaffolded job’s body agrees with its
-  own filename instead of still naming the template’s placeholder set.
-  The template itself checks this at render time — comparing its
-  `ENDPOINT`/`TYPE` declarations against
+  output path edited by hand. `new_job()` now substitutes the caller’s
+  `endpoint`/`type` into those declarations after copying the template,
+  so a scaffolded job’s body agrees with its own filename instead of
+  still naming the template’s placeholder set. The template itself
+  checks this at render time — comparing its `ENDPOINT`/`TYPE`
+  declarations against
   [`knitr::current_input()`](https://rdrr.io/pkg/knitr/man/current_input.html)
   — and errors if they disagree, because a mismatch resolves
   `set_path()` into another set’s artifact directory silently. The check
   is a no-op outside a knitr render, so editing the file interactively
   in RStudio is unaffected.
-- [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-  validates `endpoint` and `type`: each must be a single non-`NA` string
-  matching `^[A-Za-z0-9_]+$`, since `-` is the filename’s field
-  separator and `.` is reserved to the ordinal. This also rejects a
-  leading `../` that would otherwise escape the taxonomy folder.
+- `new_job()` validates `endpoint` and `type`: each must be a single
+  non-`NA` string matching `^[A-Za-z0-9_]+$`, since `-` is the
+  filename’s field separator and `.` is reserved to the ordinal. This
+  also rejects a leading `../` that would otherwise escape the taxonomy
+  folder.
 - New tests cross-check every template’s ordinal against
   [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   — the major against the folder it sits in, and the minors against row
   order within that folder — and assert that no two templates share a
   prefix, since
   [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
-  and
-  [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-  both resolve with [`match()`](https://rdrr.io/r/base/match.html),
-  which takes the first hit silently.
+  and `new_job()` both resolve with
+  [`match()`](https://rdrr.io/r/base/match.html), which takes the first
+  hit silently.
 - `hs` is refiled from `distributions` to `analyses`, immediately after
   `hm`, the job it actually consumes.
   [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
@@ -930,13 +922,13 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
 
 ### Bug fixes
 
-- [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-  no longer leaves a copied-but-unsubstituted job file behind when
-  writing the `ENDPOINT`/`TYPE` markers fails. Previously a template
-  whose markers had moved or been removed still left its copy on disk
-  after erroring — a job named for one set but declaring the template’s
-  placeholder set, and a retry then hit the refuse-to-overwrite guard
-  and reported “already exists” instead of the actual template problem.
+- `new_job()` no longer leaves a copied-but-unsubstituted job file
+  behind when writing the `ENDPOINT`/`TYPE` markers fails. Previously a
+  template whose markers had moved or been removed still left its copy
+  on disk after erroring — a job named for one set but declaring the
+  template’s placeholder set, and a retry then hit the
+  refuse-to-overwrite guard and reported “already exists” instead of the
+  actual template problem.
 - The `ac` template’s render-time filename guard strips whatever
   extension
   [`knitr::current_input()`](https://rdrr.io/pkg/knitr/man/current_input.html)
@@ -961,9 +953,9 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
 
 ### New features
 
-- [`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-  scaffolds an analysis job from a supported template, naming the file
-  `<prefix>.<basename>.qmd` and refusing to overwrite an existing job.
+- `new_job()` scaffolds an analysis job from a supported template,
+  naming the file `<prefix>.<basename>.qmd` and refusing to overwrite an
+  existing job.
 
 - `inst/templates/ac.qmd` — the first supported job template, for
   actuarial life tables. It carries its own `format:` block so that a

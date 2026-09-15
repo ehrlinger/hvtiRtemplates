@@ -7,7 +7,7 @@ that names them. Five exports across three source files:
 [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
 [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
 and
-[`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md).
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md).
 
 The package is small; the **templates are the product**.
 `inst/templates/README.md` promises that files there are supported and
@@ -122,7 +122,7 @@ confirm the new tests go red.
   file key honours a per-linter list. The friction is deliberate: it
   forces a decision per template instead of blanket-exempting the
   directory.
-- **Templates carry no study identifiers.** `test-new-job.R` asserts
+- **Templates carry no study identifiers.** `test-add-job.R` asserts
   that no template matches `/studies/`, a study name, or a built-dataset
   filename. A template that names a study is not a template.
 - **Every study-specific line in a template is marked `EDIT:`.** The
@@ -177,15 +177,15 @@ saved output rather than jobs. Deriving a number from a row position is
 the defect this scheme removed, so do not “fix” 90 to 50. The decade
 gaps are deliberate room: a new folder goes in at 25 and shifts nothing.
 
-⚠️ **`inst/templates/` uses the numbered directories. A STUDY does
-not.**
-[`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
-writes into the bare taxonomy name, `distributions/` and `analyses/`,
-because that is what studies already have: 63,278 and 119,582 corpus
-files respectively. Writing a job into `20_distributions/` would split a
-study’s estate across two spellings of one folder.
+⚠️ **`inst/templates/` and new studies use numbered directories.**
+Legacy studies keep their bare taxonomy names.
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+delegates placement to
+[`hvtiRutilities::study_dir()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html),
+which preserves either consistent scheme and rejects a mixed study
+rather than splitting its estate across two spellings of one folder.
 [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
-reports `folder` with the digits stripped for the same reason.
+reports the taxonomy name without digits.
 
 **The qualifier names a job type within a prefix, and is optional.**
 `dp-trends` is the first template to carry one. The qualifier exists
@@ -208,7 +208,7 @@ would make the name ambiguous.
 ⚠️
 **[`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
 and
-[`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 REFUSE to guess when a prefix is ambiguous.** Naming no qualifier where
 a prefix carries several is an error listing the choices, never a silent
 pick of the first. Selecting with
@@ -233,18 +233,18 @@ filename is a pre-1.1.0 job, `04.06-bh` and `04.05-bh` are the same
 template, and no ordinal will ever be issued again. Do not reintroduce
 the field to explain one.
 
-`new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` writes
+`add_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` writes
 `<folder>/<endpoint>-<type>-<prefix>[-<qualifier>].qmd`, where
-`<folder>` is the BARE taxonomy name and not the numbered directory the
-template sits in, and **refuses to overwrite an existing job**, because
-a job file accumulates a study’s edits. `endpoint` and `type` name the
+`<folder>` follows the study’s numbered or legacy bare layout, and
+**refuses to overwrite an existing job**, because a job file accumulates
+a study’s edits. `endpoint` and `type` name the
 `(endpoint, analysis type)` set the job belongs to; both are required
 and both are restricted to `[A-Za-z0-9_]+`, because `-` is the
 filename’s field separator and `.` separates the extension.
 
 **A template must have exactly one `^ENDPOINT\s+<-` line and one
 `^TYPE\s+<-` line.**
-[`new_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/new_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 substitutes both after copying, and hard-stops if either is missing,
 duplicated, or moved — a template that fails this check cannot be
 scaffolded at all.
