@@ -69,30 +69,30 @@ the same job.
 %desc_tab(vartype=continuous, varlist=age bmi, perctile=15 50 85);
 ```
 
-```{r dc-tables}
-if (requireNamespace("hvtiRtables", quietly = TRUE) &&
-      requireNamespace("hvtiPlotR", quietly = TRUE)) {
-  d <- hvtiPlotR::sample_correlation_data(n = 80)
-  d$female <- rep(0:1, length.out = nrow(d))
-  groups <- list(
-    Demography = c("female"),
-    Measurements = c("a1c", "glucose", "creatinine")
-  )
-  hvtiRtables::hv_tbl_summary(
-    d,
-    groups = groups,
-    binary = "female",
-    continuous = c("a1c", "glucose", "creatinine"),
-    continuous_stat = "both",
-    percentiles = c(15, 85),
-    compare = "none"
-  )
-  hvtiRtables::hv_correlation_table(
-    d,
-    vars = c("glucose", "creatinine"),
-    with = "a1c"
-  )
-}
+```{r dc-tables, eval=requireNamespace("hvtiRtables", quietly = TRUE) && requireNamespace("hvtiPlotR", quietly = TRUE)}
+d <- hvtiPlotR::sample_correlation_data(n = 80)
+d$female <- rep(0:1, length.out = nrow(d))
+groups <- list(
+  Demography = c("female"),
+  Measurements = c("a1c", "glucose", "creatinine")
+)
+hvtiRtables::hv_tbl_summary(
+  d,
+  groups = groups,
+  binary = "female",
+  continuous = c("a1c", "glucose", "creatinine"),
+  continuous_stat = "both",
+  percentiles = c(15, 85),
+  compare = "none"
+)
+```
+
+```{r dc-correlations, eval=requireNamespace("hvtiRtables", quietly = TRUE) && requireNamespace("hvtiPlotR", quietly = TRUE)}
+hvtiRtables::hv_correlation_table(
+  d,
+  vars = c("glucose", "creatinine"),
+  with = "a1c"
+)
 ```
 
 ## Goodness of follow-up: `dc-gfup`
@@ -153,16 +153,14 @@ scatter panel. The template lays those panels out in printable pages.
 for (v in variables) Function_DataPlotting(data, v, "year")
 ```
 
-```{r dp-postage}
-if (requireNamespace("hvtiPlotR", quietly = TRUE)) {
-  d <- hvtiPlotR::sample_eda_data(n = 120)
-  variables <- c(male = "Male", ef = "Ejection fraction")
-  panels <- lapply(names(variables), function(v) {
-    plot(hvtiPlotR::hv_eda(d, x_col = "year", y_col = v, y_label = variables[[v]]))
-  })
-  panels[[1]]
-  panels[[2]]
-}
+```{r dp-postage, eval=requireNamespace("hvtiPlotR", quietly = TRUE)}
+d <- hvtiPlotR::sample_eda_data(n = 120)
+variables <- c(male = "Male", ef = "Ejection fraction")
+panels <- lapply(names(variables), function(v) {
+  plot(hvtiPlotR::hv_eda(d, x_col = "year", y_col = v, y_label = variables[[v]]))
+})
+panels[[1]]
+panels[[2]]
 ```
 
 ## Where the numbers differ
