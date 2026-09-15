@@ -24,6 +24,7 @@ Description: Versioned analysis job templates for the clinical investigations
 Depends:
     R (>= 4.1.0)
 Imports:
+    digest,
     hvtiRutilities (>= 1.1.12),
     stats
 Remotes:
@@ -43,7 +44,8 @@ Suggests:
     jsonlite,
     knitr,
     quarto,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    withr
 VignetteBuilder: quarto
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0
