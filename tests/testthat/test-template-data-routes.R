@@ -59,7 +59,7 @@ test_that("descriptive templates can read the whole cohort", {
     env$read_built <- hvtiRutilities::read_built
 
     code <- use_whole_cohort(extract_chunk(template, "data"))
-    if (basename(template) == "dc-tables.qmd") {
+    if (basename(template) %in% c("dc-tables.qmd", "dc-gfup.qmd")) {
       env$study_config <- hvtiRutilities::study_config
       assignment <- vapply(code, function(expr) {
         is.call(expr) && identical(expr[[1L]], quote(`<-`)) && identical(expr[[2L]], quote(DATASET))
