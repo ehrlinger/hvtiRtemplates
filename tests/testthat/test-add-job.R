@@ -20,6 +20,17 @@ test_that("every template is free of study identifiers", {
   }
 })
 
+test_that("every template names the current job scaffolder", {
+  tl <- template_list()
+  for (i in seq_len(nrow(tl))) {
+    txt <- readLines(tl$file[[i]], warn = FALSE)
+    expect_false(
+      any(grepl("new_job", txt, fixed = TRUE)),
+      label = paste("template", tl$name[[i]], "mentions removed new_job()")
+    )
+  }
+})
+
 test_that("add_job writes into the taxonomy folder with all four fields", {
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
