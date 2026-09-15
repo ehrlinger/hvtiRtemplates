@@ -8,8 +8,9 @@
 #' types, and lives in a numbered directory named for the taxonomy folder it
 #' scaffolds into, so \code{folder} is read from the tree rather than looked
 #' up. The directory's leading digits order the folders and are stripped from
-#' \code{folder}. \code{\link{hvti_taxonomy}} is a cross-check
-#' on that, enforced by the test suite, not a source for it.
+#' \code{folder}. The test suite checks placement against the job catalog's
+#' \code{(prefix, qualifier)} row, falling back to
+#' \code{\link{hvti_taxonomy}} when the catalog or matching row is absent.
 #'
 #' @return A data frame with columns \code{name}, \code{prefix},
 #'   \code{qualifier}, \code{folder} and \code{file}. \code{folder} is the

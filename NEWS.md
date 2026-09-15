@@ -1,5 +1,20 @@
 # hvtiRtemplates (unreleased)
 
+* `migrate_job()` fills the four EDA templates (`dc-tables`, `dc-gfup`,
+  `dp-trends`, and `dp-postage`) from their supported legacy source shapes.
+  It writes a QMD and an evidence report, preserves source files, and refuses
+  overwrite. Only deterministic extraction can remove an `EDIT:` marker;
+  uncertain choices remain for review. The three descriptive templates listed
+  below and the existing trends template now have migration adapters.
+* `dc-tables` writes editable CORR DOCX output in place of the SAS RTF through
+  `hv_tbl_summary()`, `hv_man_table()`, `hv_man_table_save()`, and
+  `hv_check_docx()`. Structural findings stop the job. `dc-gfup` checks
+  registered follow-up intervals with identifiers disabled; `dp-postage`
+  writes numbered PNG pages through `hv_eda()` and `patchwork`.
+* `vignette("legacy-study-migration")` teaches adoption of an existing study,
+  separate registration of study and named-subset data, all four migrations,
+  marker review, and output checks with synthetic data.
+
 * **Three descriptive job templates ship: `dc-tables`, `dc-gfup` and
   `dp-postage`**, with `vignette("sas-to-r-descriptive")` walking a SAS user
   from `descriptive/dc.tables*`, `dc.gfup`, `dp.trends` and the EDA postage
