@@ -207,6 +207,40 @@ test_that("report provenance preserves punctuation and spaces in validated relat
   expect_false(any(grepl("[absolute path]", report, fixed = TRUE)))
 })
 
+test_that("unstructured report paths redact safely at punctuation boundaries", {
+  root <- withr::local_tempdir()
+  source <- file.path(root, "job.sas")
+  writeLines("proc means; run;", source)
+  evidence <- .migration_evidence(c(source = source), normalizePath(root, winslash = "/"))
+  text <- c(
+    "value=[/secure/Patient Name/report.sas]",
+    "url|/secure/Patient Name/report.sas|tail",
+    "value={/secure/Patient Name/report.sas}",
+    "value=</secure/Patient Name/report.sas>",
+    "value=[C:\\Private Studies\\Patient Name\\report.sas]",
+    "url|\\\\server\\Private Studies\\Patient Name\\report.sas|tail",
+    "age / 10", "mean=42; label=Age (years)", "ratio=3/4"
+  )
+  expected <- c(
+    "value=[[absolute path]]",
+    "url|[absolute path]|tail",
+    "value={[absolute path]}",
+    "value=<[absolute path]>",
+    "value=[[absolute path]]",
+    "url|[absolute path]|tail",
+    "age / 10", "mean=42; label=Age (years)", "ratio=3/4"
+  )
+  result <- list(
+    regions = character(), translated = data.frame(), ignored = data.frame(),
+    unresolved = data.frame(line = seq_along(text), text = text, marker = "EDIT: review")
+  )
+  report <- .migration_report(evidence, result, "dc-tables")
+  for (i in seq_along(expected)) {
+    expect_true(paste0("- line=", i, "; text=", expected[[i]], "; marker=EDIT: review") %in% report)
+  }
+  expect_false(any(grepl("Patient Name|Private Studies|report[.]sas", report)))
+})
+
 test_that("malformed adapter results cannot generate an incomplete report", {
   expect_error(.migration_report(list(), list(regions = "bad"), "dc-tables"), "adapter result")
 })

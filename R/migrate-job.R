@@ -212,10 +212,10 @@ migrate_job <- function(source, endpoint, type, prefix, qualifier = NULL,
   # their field's next statement delimiter, including any path components
   # containing spaces. This runs before fields are joined into report rows.
   unquoted <- paste0(
-    "(^|[[:space:]=(:,])", absolute,
-    "[^[:space:]\"'<>;|)][^\\r\\n\"'<>;|)]*"
+    "(?<![[:alnum:]_./\\\\])", absolute,
+    "[^[:space:]\"'<>;|)\\]}][^\\r\\n\"'<>;|)\\]}]*"
   )
-  gsub(unquoted, "\\1[absolute path]", text, perl = TRUE)
+  gsub(unquoted, "[absolute path]", text, perl = TRUE)
 }
 
 .migration_report <- function(evidence, result, template,
