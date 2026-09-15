@@ -34,10 +34,12 @@ the taxonomy folder it scaffolds into:
 
 The name is the authority: `template_list()` reads the prefix and qualifier
 from it and the folder from the directory, stripping the ordering digits.
-The test suite checks placement against the job catalog's `(prefix, qualifier)`
-row, falling back to `hvti_taxonomy()` when the catalog or matching row is
-absent. That qualified row places `dp-postage` in `descriptive/`, while
-`dp-trends` belongs in `graphs/`.
+The placement test requires the job catalog and skips when it is absent.
+Its internal lookup helper uses the catalog's `(prefix, qualifier)` row and
+falls back to `hvti_taxonomy()` when the catalog or matching row is absent.
+The catalog places `dp-postage` in `descriptive/` and `dp-trends` in `graphs/`;
+the prefix-wide taxonomy cannot distinguish those jobs. A separate test checks
+that every template directory names a taxonomy folder even without the catalog.
 
 ⚠️ **The digits are ASSIGNED, not derived.** `estimates` is 90 though it is
 fifth in the taxonomy, because it holds saved output rather than jobs. The

@@ -92,7 +92,7 @@ listing the choices, never a silent pick of the first.
 For a study with SAS programs already in `descriptive/` and `graphs/`, first
 adopt its directory with `hvtiRutilities::study_setup(..., adopt = TRUE)` and
 register its built datasets with `register_data()`. The tutorial
-[Migrate a legacy study to R jobs](vignettes/legacy-study-migration.qmd)
+[Migrate a legacy study to R jobs](articles/legacy-study-migration.html)
 walks through adoption, study and named-subset registration, migration, and
 output review using synthetic data.
 
