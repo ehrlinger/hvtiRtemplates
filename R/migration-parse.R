@@ -222,7 +222,7 @@
     "observations?[[:space:]]+(read|created|written|deleted|added))"
   )
   severity <- ifelse(
-    grepl("^[[:space:]]*ERROR:", lines, ignore.case = TRUE),
+    grepl("^[[:space:]]*ERROR(?:[[:space:]]+[0-9]+-[0-9]+)?:", lines, ignore.case = TRUE, perl = TRUE),
     "error",
     ifelse(
       grepl("^[[:space:]]*WARNING:", lines, ignore.case = TRUE),

@@ -77,6 +77,14 @@ test_that("log and listing facts keep evidence line numbers", {
   expect_equal(hvtiRtemplates:::.listing_facts(lst)$line, 1:3)
 })
 
+test_that("coded SAS errors retain severity and source location", {
+  lines <- c("routine", "ERROR 180-322: Statement is not valid.", "  error 22-322: Syntax error.", "ERROR: Failed.")
+  findings <- hvtiRtemplates:::.sas_log_findings(lines)
+  expect_identical(findings$line, 2:4)
+  expect_identical(findings$severity, rep("error", 3L))
+  expect_identical(findings$text, lines[2:4])
+})
+
 test_that("fixture evidence retains source text and original line positions", {
   fixture <- testthat::test_path("fixtures-migration", "common")
   sas <- hvtiRtemplates:::.source_lines(file.path(fixture, "example.sas"))
