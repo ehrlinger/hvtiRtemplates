@@ -1,4 +1,6 @@
 .migrate_dc_gfup <- function(evidence, template) {
+  inline <- .sas_inline_data(evidence$source)
+  evidence$source <- inline$source
   statements <- .gfup_statements(evidence$source)
   translated <- unresolved <- ignored <- data.frame(line = integer(), text = character(), reason = character())
   record <- function(row, reason) data.frame(line = row$line, text = row$text, reason = reason)
@@ -93,8 +95,10 @@
     unresolved <- rbind(unresolved, data.frame(line = NA_integer_, text = "EVENT/FOLLOWUP",
                                                reason = "Source evidence is incomplete; no default field was inferred."))
   }
-  list(regions = c("dc-gfup-data" = paste(data, collapse = "\n"), "dc-gfup-config" = paste(config, collapse = "\n")),
-       translated = translated, unresolved = unresolved, ignored = ignored)
+  .sas_inline_result(list(
+    regions = c("dc-gfup-data" = paste(data, collapse = "\n"), "dc-gfup-config" = paste(config, collapse = "\n")),
+    translated = translated, unresolved = unresolved, ignored = ignored
+  ), inline)
 }
 
 .gfup_assigned <- function(code) {

@@ -4,9 +4,11 @@
                ncol = "GRID_NCOL", grid_ncol = "GRID_NCOL", nrow = "GRID_NROW", grid_nrow = "GRID_NROW",
                unique_limit = "UNIQUE_LIMIT", show_percent = "SHOW_PERCENT",
                pref_color_var = "COLOR", stratify_by = "STRATA", alpha = "ALPHA")
-  lines <- evidence$source$text
   source <- evidence$paths[["source"]]
   sas <- !is.null(source) && grepl("[.]sas$", source, ignore.case = TRUE)
+  inline <- if (sas) .sas_inline_data(evidence$source) else NULL
+  if (sas) evidence$source <- inline$source
+  lines <- evidence$source$text
   statements <- if (sas) .postage_sas_controls(evidence$source, aliases) else .postage_r_controls(lines, aliases)
   declarations <- unlist(lapply(statements, `[[`, "declared"), use.names = FALSE)
   repeated <- unique(declarations[duplicated(declarations)])
@@ -66,8 +68,8 @@
   if (nrow(decisions$unresolved) || incomplete) {
     region <- c(region, "# EDIT: review unresolved postage source choices in the migration report.")
   }
-  list(regions = c("dp-postage-config" = paste(region, collapse = "\n")),
-       translated = decisions$translated, unresolved = decisions$unresolved, ignored = decisions$ignored)
+  .sas_inline_result(list(regions = c("dp-postage-config" = paste(region, collapse = "\n")),
+                          translated = decisions$translated, unresolved = decisions$unresolved, ignored = decisions$ignored), inline)
 }
 
 # Literal extraction never evaluates legacy code, including calls inside c().

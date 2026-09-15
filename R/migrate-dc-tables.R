@@ -1,5 +1,5 @@
 .migrate_dc_tables <- function(evidence, template) {
-  inline <- .dc_tables_inline_data(evidence$source)
+  inline <- .sas_inline_data(evidence$source)
   evidence$source <- inline$source
   calls <- .sas_calls(evidence$source$text, "desc_tab")
   if (!length(calls)) stop("dc-tables migration requires a %desc_tab call.", call. = FALSE)
@@ -24,7 +24,7 @@
   groups <- list()
   buckets <- list(continuous = character(), category = character())
   translated <- data.frame(line = integer(), text = character(), reason = character())
-  unresolved <- inline$withheld
+  unresolved <- translated
   record <- function(line, text, reason) data.frame(line = line, text = text, reason = reason)
   for (i in seq_along(calls)) {
     parsed <- .dc_tables_groups(args[[i]]$varlist)
@@ -165,61 +165,11 @@
     config <- c(config, "# EDIT: resolve registered-data column checks and binary/categorical classification.")
   }
   if (nrow(exterior)) config <- c(config, "# EDIT: resolve source cohort and measurement logic before enabling mappings.")
-  list(
+  .sas_inline_result(list(
     regions = c("dc-tables-data" = paste(data_lines, collapse = "\n"),
                 "dc-tables-config" = paste(config, collapse = "\n")),
     translated = translated, unresolved = unresolved, ignored = data.frame()
-  )
-}
-
-.dc_tables_inline_data <- function(source) {
-  text <- paste(source$text, collapse = "\n")
-  starts <- cumsum(c(1L, nchar(source$text) + 1L))
-  withheld <- data.frame(line = integer(), text = character(), reason = character())
-  pattern <- "(?s)^(?:/\\*.*?(?:\\*/|$)|'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|;|[^;'\"/]+|/)"
-  pos <- 1L
-  statement <- ""
-  while (pos <= nchar(text)) {
-    token <- regmatches(substr(text, pos, nchar(text)), regexpr(pattern, substr(text, pos, nchar(text)), perl = TRUE))
-    if (!length(token) || !nzchar(token)) break
-    pos <- pos + nchar(token)
-    if (startsWith(token, "/*")) {
-      statement <- paste0(statement, " ")
-    } else if (token != ";") {
-      statement <- paste0(statement, token)
-    } else {
-      alias <- tolower(trimws(statement))
-      statement <- ""
-      if (!grepl("^(datalines|cards|lines)4?$", alias)) next
-      # Inline records are data, not SAS syntax: quotes, comments, macro calls
-      # and semicolons in a four-semicolon block must never be interpreted.
-      remaining <- substr(text, pos, nchar(text))
-      terminator <- if (endsWith(alias, "4")) ";;;;" else ";"
-      first_line <- strsplit(paste0(remaining, "\n"), "\n", fixed = TRUE)[[1L]][[1L]]
-      same_line <- nzchar(trimws(first_line)) && grepl(paste0(terminator, "[[:blank:]]*$"), first_line)
-      ending <- regexpr(paste0("(?m)^[[:blank:]]*", terminator, "[[:blank:]]*$"), remaining, perl = TRUE)
-      size <- if (same_line) {
-        nchar(first_line)
-      } else if (ending[[1L]] > 0L) {
-        ending[[1L]] + attr(ending, "match.length") - 1L
-      } else {
-        nchar(remaining)
-      }
-      payload <- substr(remaining, 1L, size)
-      lines <- strsplit(payload, "\n", fixed = TRUE)[[1L]]
-      locations <- findInterval(pos, starts) - 1L + which(nzchar(trimws(lines)))
-      if (length(locations)) {
-        withheld <- rbind(withheld, data.frame(
-          line = source$line[locations], text = "Inline SAS data content withheld; review the source locally.",
-          reason = "Inline records require review in the registered data build; no patient values copied."
-        ))
-      }
-      if (size > 0L) substr(text, pos, pos + size - 1L) <- gsub("[^\n]", " ", payload)
-      pos <- pos + size
-    }
-  }
-  source$text <- strsplit(paste0(text, "\n"), "\n", fixed = TRUE)[[1L]]
-  list(source = source, withheld = withheld)
+  ), inline)
 }
 
 .dc_tables_titles <- function(source) {

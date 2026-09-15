@@ -7,6 +7,87 @@
   )
 }
 
+.sas_inline_data <- function(source) {
+  text <- paste(source$text, collapse = "\n")
+  starts <- cumsum(c(1L, nchar(source$text) + 1L))
+  withheld <- data.frame(line = integer(), text = character(), reason = character())
+  hide <- function(text, first, last, label) {
+    rows <- withheld[FALSE, ]
+    if (last < first) return(list(text = text, rows = rows))
+    payload <- substr(text, first, last)
+    lines <- strsplit(payload, "\n", fixed = TRUE)[[1L]]
+    offsets <- cumsum(c(0L, nchar(lines) + 1L))[seq_along(lines)]
+    locations <- findInterval(first + offsets[nzchar(trimws(lines))], starts)
+    if (length(locations)) {
+      rows <- data.frame(
+        line = source$line[locations], text = label,
+        reason = "Review withheld source locally; no patient values copied or source choices inferred."
+      )
+    }
+    substr(text, first, last) <- gsub("[^\n]", " ", payload)
+    list(text = text, rows = rows)
+  }
+  pattern <- "(?s)^(?:/\\*.*?(?:\\*/|$)|'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|;|[^;'\"/%]+|[/%%])"
+  pos <- statement_start <- 1L
+  statement <- ""
+  while (pos <= nchar(text)) {
+    remaining <- substr(text, pos, nchar(text))
+    # Statement comments end at a semicolon even with unmatched apostrophes.
+    # Mask them before the downstream statement readers inspect quotes.
+    comment_pattern <- if (nzchar(trimws(statement))) "^[[:space:]]*%\\*[^;]*(?:;|$)" else "^[[:space:]]*%?\\*[^;]*(?:;|$)"
+    comment <- regmatches(remaining, regexpr(comment_pattern, remaining, perl = TRUE))
+    if (length(comment) && nzchar(comment)) {
+      substr(text, pos, pos + nchar(comment) - 1L) <- gsub("[^\n]", " ", comment)
+      pos <- pos + nchar(comment)
+      if (!nzchar(trimws(statement))) statement_start <- pos
+      next
+    }
+    token <- regmatches(remaining, regexpr(pattern, remaining, perl = TRUE))
+    if (!length(token) || !nzchar(token) || (startsWith(token, "/*") && !endsWith(token, "*/"))) {
+      hidden <- hide(text, statement_start, nchar(text), "SAS source content withheld after uncertain tokenization; review locally.")
+      text <- hidden$text
+      withheld <- rbind(withheld, hidden$rows)
+      break
+    }
+    pos <- pos + nchar(token)
+    if (startsWith(token, "/*")) {
+      statement <- paste0(statement, " ")
+    } else if (token != ";") {
+      statement <- paste0(statement, token)
+    } else {
+      alias <- tolower(trimws(statement))
+      statement <- ""
+      statement_start <- pos
+      if (!grepl("^(datalines|cards|lines)4?$", alias)) next
+      remaining <- substr(text, pos, nchar(text))
+      terminator <- if (endsWith(alias, "4")) ";;;;" else ";"
+      # Only a standalone terminator on a subsequent line is unambiguous.
+      # Same-line payload and apparent terminators stay data, through EOF if
+      # necessary. Record quotes and semicolons never enter the SAS tokenizer.
+      ending <- regexpr(paste0("(?m)(?<=\n)[[:blank:]]*", terminator, "[[:blank:]]*$"), remaining, perl = TRUE)
+      size <- if (ending[[1L]] > 0L) ending[[1L]] + attr(ending, "match.length") - 1L else nchar(remaining)
+      hidden <- hide(text, pos, pos + size - 1L, "Inline SAS data content withheld; review the source locally.")
+      text <- hidden$text
+      withheld <- rbind(withheld, hidden$rows)
+      pos <- pos + size
+      statement_start <- pos
+    }
+  }
+  source$text <- vapply(seq_len(nrow(source)), function(i) {
+    substr(text, starts[[i]], starts[[i]] + nchar(source$text[[i]]) - 1L)
+  }, character(1L))
+  list(source = source, withheld = withheld)
+}
+
+.sas_inline_result <- function(result, inline) {
+  if (!is.null(inline) && nrow(inline$withheld)) {
+    result$unresolved <- rbind(result$unresolved, inline$withheld)
+    result$regions[[1L]] <- paste(result$regions[[1L]],
+                                  "# EDIT: review withheld SAS source locally before interpreting this job.", sep = "\n")
+  }
+  result
+}
+
 .sas_mask_comments <- function(lines) {
   masked <- as.character(lines)
   in_block <- FALSE

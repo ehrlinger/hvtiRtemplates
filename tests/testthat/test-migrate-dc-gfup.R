@@ -142,7 +142,8 @@ test_that("dc-gfup keeps an unterminated block comment inactive through end of s
   eval(parse(text = result$regions[["dc-gfup-config"]]), env)
   expect_identical(env$EVENT, "dead")
   expect_identical(env$FOLLOWUP, c("iv_dead", "iv_fup"))
-  expect_true(any(grepl("by stroke; var wrong;", result$unresolved$text, fixed = TRUE)))
+  expect_true(any(grepl("content withheld", result$unresolved$text, fixed = TRUE)))
+  expect_false(any(grepl("by stroke; var wrong;", result$unresolved$text, fixed = TRUE)))
 })
 
 test_that("dc-gfup marks incomplete evidence without choosing defaults", {

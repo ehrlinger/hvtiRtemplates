@@ -1,4 +1,6 @@
 .migrate_dp_trends <- function(evidence, template) {
+  inline <- .sas_inline_data(evidence$source)
+  evidence$source <- inline$source
   # This is the fixture's declaration grammar, not a SAS execution engine.
   rows <- .gfup_statements(evidence$source)
   rows <- rows[order(rows$line, seq_len(nrow(rows))), ]
@@ -170,6 +172,6 @@
       stop("Generated dp-trends region '", name, "' is not valid R: ", conditionMessage(e), call. = FALSE)
     })
   }
-  list(regions = regions, translated = decisions("translated"),
-       unresolved = decisions("unresolved"), ignored = decisions("ignored"))
+  .sas_inline_result(list(regions = regions, translated = decisions("translated"),
+                          unresolved = decisions("unresolved"), ignored = decisions("ignored")), inline)
 }
