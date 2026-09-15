@@ -17,7 +17,8 @@ Replaces `descriptive/dc.gfup`.
 A `dc-gfup` job asks whether follow-up is complete enough to trust the
 time-related analyses: how long patients were followed for death and for
 non-fatal events, against how long they could have been followed by the close
-date. The figure is `dp-gfup` (`hv_followup()`); this job is the tables.
+date. `hvtiPlotR::hv_followup()` supplies the companion figure; this job is the
+tables. A scaffolded `dp-gfup` job is not part of this template wave.
 
 ```{r}
 #| label: setup
@@ -139,6 +140,7 @@ g$potfup <- ifelse(
 )
 g$pctfup <- g$iv_fup / g$maxfup
 g$pctvit <- g$iv_fup / g$iv_dead
+survivors <- g[!is.na(g$dead) & g$dead == 0, , drop = FALSE]
 ```
 
 ## Data checks
@@ -154,7 +156,7 @@ for (cc in CHECKS) print(as.data.frame(table(d[cc], useNA = "ifany")))
 #| label: survival
 st <- c("n", "nmiss", "mean", "std", "min", "p15", "median", "p85", "max")
 proc_means(g, vars = "iv_dead", class = "dead", stats = st)
-proc_means(g[g$dead == 0, ], vars = c("iv_dead", "maxfup", "pctfup"), stats = st)
+proc_means(survivors, vars = c("iv_dead", "maxfup", "pctfup"), stats = st)
 ```
 
 ## Follow-up for non-fatal events
@@ -163,7 +165,7 @@ proc_means(g[g$dead == 0, ], vars = c("iv_dead", "maxfup", "pctfup"), stats = st
 #| label: events
 proc_means(g, vars = "iv_fup", class = "dead", stats = st)
 proc_means(
-  g[g$dead == 0, ],
+  survivors,
   vars = c("iv_fup", "potfup", "pctfup", "pctvit"),
   stats = st
 )

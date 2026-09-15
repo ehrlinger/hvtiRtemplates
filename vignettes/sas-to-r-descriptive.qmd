@@ -1,13 +1,19 @@
 ---
 title: "From SAS descriptive jobs to R"
-output: rmarkdown::html_vignette
+author: "John Ehrlinger"
+date: today
 vignette: >
   %\VignetteIndexEntry{From SAS descriptive jobs to R}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
+format:
+  html:
+    toc: true
 ---
 
-```{r setup, include=FALSE}
+```{r}
+#| label: setup
+#| include: false
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
@@ -138,7 +144,9 @@ if (requireNamespace("hvtiPlotR", quietly = TRUE)) {
 ## EDA postage stamps: `dp-postage`
 
 The older `Function_DataPlotting()` loops become one `hv_eda()` call per entry
-in `VARS`. Six or fewer distinct values produces a bar panel; more produces a
+in `VARS`. Character and factor columns produce bars. A numeric column produces
+bars only when it has at most six distinct non-missing values and every value
+is a non-negative whole number no greater than six; otherwise it produces a
 scatter panel. The template lays those panels out in printable pages.
 
 ```r

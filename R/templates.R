@@ -15,8 +15,7 @@
 #'   \code{qualifier}, \code{folder} and \code{file}. \code{folder} is the
 #'   taxonomy name with the directory's ordering digits stripped, so
 #'   \code{20_distributions} reports as \code{distributions}.
-#'   \code{qualifier} is \code{NA} for a prefix carrying a single template,
-#'   which is every template shipped today.
+#'   \code{qualifier} is \code{NA} for a prefix carrying a single template.
 #' @export
 #' @examples
 #' template_list()
@@ -67,7 +66,7 @@ template_path <- function(prefix, qualifier = NULL) {
 # dev/specs/2026-09-02-dp-dc-decomposition-design.md section 8.
 #
 # `qualifier = NULL` is still accepted where the prefix has exactly one
-# template, which is every template shipped today, so no existing call changes.
+# template, so existing unqualified calls keep their meaning.
 .select_template <- function(tl, prefix, qualifier = NULL) {
   # Validate before comparing. `hit$qualifier == NA_character_` is NA, not
   # FALSE, so an NA qualifier produces NA-indexed rows and an error that names

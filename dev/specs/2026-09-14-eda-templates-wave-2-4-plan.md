@@ -48,7 +48,7 @@ shipped (hvtiRtemplates#104) and is only documented here.
 
 - [ ] `cd ~/Documents/GitHub/hvtiRtemplates && git fetch origin && git switch -c feat/eda-templates-dc-tables-gfup-postage origin/main`
 - [ ] Copy this plan to `dev/specs/2026-09-14-eda-templates-wave-2-4-plan.md`.
-- [ ] `DESCRIPTION`: in `Suggests` set `hvtiPlotR (>= 2.7.14)`, add `hvtiRtables (>= 1.0.1)`, `hvtiRdatabuild (>= 0.2.1)`, `arrow`, `knitr`, `rmarkdown`; add `ehrlinger/hvtiRtables` and `ehrlinger/hvtiRdatabuild` to `Remotes`; add `VignetteBuilder: knitr`.
+- [ ] `DESCRIPTION`: in `Suggests` set `hvtiPlotR (>= 2.7.14)`, add `hvtiRtables (>= 1.0.1)`, `hvtiRdatabuild (>= 0.2.1)`, `arrow`, `knitr`, `quarto`; add `ehrlinger/hvtiRtables` and `ehrlinger/hvtiRdatabuild` to `Remotes`; add `VignetteBuilder: quarto`.
 - [ ] Commit `chore: plan and suggest the EDA engines`.
 
 ### Task 1: dc-tables template
@@ -406,7 +406,7 @@ for (i in seq_along(pages)) {
 
 ### Task 4: The tutorial vignette
 
-**Files:** Create `vignettes/sas-to-r-descriptive.Rmd`; modify `_pkgdown.yml` (articles), `.Rbuildignore` if needed.
+**Files:** Create `vignettes/sas-to-r-descriptive.qmd`; modify `_pkgdown.yml` (articles), `.Rbuildignore` if needed.
 
 - [ ] **Step 1: Write the vignette** with this outline (house voice per the `ehrlinger-writing` skill; reader is a SAS biostatistician who knows the `tp.dc.*` templates):
   1. *Who this is for*, and what "R equivalent" means here: same numbers where the method is the same, a stated difference where it is not.

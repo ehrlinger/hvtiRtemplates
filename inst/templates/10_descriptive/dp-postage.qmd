@@ -118,8 +118,10 @@ knitr::kable(attr(d, "attrition"), caption = paste0(
 # EDIT: the x-axis for every panel, usually operation year.
 X_COL <- "year"
 # EDIT: the variables to sweep, named by column with a display label. Order is
-# page order. hv_eda() decides bar or scatter per variable (6 distinct values or
-# fewer is categorical), so a column does not need a type here.
+# page order. Character and factor columns become bars. Numeric columns become
+# bars only when they have at most 6 distinct non-missing values and every value
+# is a non-negative whole number no greater than 6; all other numeric columns
+# become scatter panels. A column therefore does not need a type here.
 VARS <- c(age = "Age (years)", female = "Female")
 # Panels per page. 3 x 3 keeps a label readable on a printed page.
 NCOL <- 3L

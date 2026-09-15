@@ -40,10 +40,10 @@ the test suite checks them against `hvti_taxonomy()`.
 fifth in the taxonomy, because it holds saved output rather than jobs. The
 decade gaps are room to insert without renumbering.
 
-The qualifier exists because `graphs/dp` is `trends`, `spaghetti` and `procs`
-rather than one job. `dp-trends` is the first qualified template; every other
-template here is unqualified. A prefix is wholly qualified or wholly
-unqualified, never half-decomposed.
+The qualifier exists because one prefix can name several jobs. The current
+qualified templates are `dc-tables`, `dc-gfup`, `dp-trends` and `dp-postage`;
+the other prefixes here remain unqualified. A prefix is wholly qualified or
+wholly unqualified, never half-decomposed.
 
 ## Where a scaffolded job lands
 

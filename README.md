@@ -76,8 +76,8 @@ answer, because `%inc` had nothing to pin.
 
 Templates are `<prefix>[-<qualifier>].qmd` in a numbered directory (`20_distributions/ac.qmd`); a job is `<endpoint>-<type>-<prefix>[-<qualifier>].qmd` in the bare taxonomy folder. The ordinal that once prefixed both was dropped in 1.1.0.
 
-`qualifier` names a job type within a prefix, for the prefixes that carry
-several: `graphs/dp` is `trends`, `spaghetti` and `procs`, not one job. It is
-`NULL` and the column is `NA` for a prefix with a single template, which is
-every template shipped today. Naming no qualifier where a prefix carries
-several is an error listing the choices, never a silent pick of the first.
+`qualifier` names a job type within a prefix. The current qualified templates
+are `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-postage`; other prefixes remain
+unqualified. It is `NULL` and the column is `NA` for a prefix with a single
+template. Naming no qualifier where a prefix carries several is an error
+listing the choices, never a silent pick of the first.

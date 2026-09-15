@@ -161,7 +161,18 @@ classify_buckets <- function(d, vars, overrides = list()) {
   unknown <- setdiff(vars, names(d))
   if (length(unknown)) stop("Unknown table variable(s): ", paste(unknown, collapse = ", "), call. = FALSE)
   allowed <- c("continuous", "binary", "categorical")
-  if (!is.list(overrides) || length(setdiff(names(overrides), allowed))) {
+  if (!is.list(overrides)) {
+    stop("overrides must be a list named continuous, binary, or categorical.", call. = FALSE)
+  }
+  override_names <- names(overrides)
+  if (length(overrides) &&
+        (is.null(override_names) || anyNA(override_names) || any(!nzchar(override_names)))) {
+    stop("Every override bucket must be named continuous, binary, or categorical.", call. = FALSE)
+  }
+  if (anyDuplicated(override_names)) {
+    stop("Override bucket names must be unique.", call. = FALSE)
+  }
+  if (length(setdiff(override_names, allowed))) {
     stop("overrides must be a list named continuous, binary, or categorical.", call. = FALSE)
   }
   forced <- unlist(overrides, use.names = FALSE)
@@ -172,9 +183,15 @@ classify_buckets <- function(d, vars, overrides = list()) {
 
   is_binary <- vapply(d[vars], function(x) {
     if (is.logical(x)) return(TRUE)
-    if (!is.numeric(x)) return(FALSE)
-    values <- unique(x[!is.na(x)])
-    length(values) > 0L && all(values %in% c(0, 1))
+    values <- unique(stats::na.omit(x))
+    if (is.numeric(x)) return(setequal(values, c(0, 1)))
+    if (is.factor(x)) {
+      return(nlevels(x) == 2L && setequal(toupper(levels(x)), c("NO", "YES")))
+    }
+    if (is.character(x)) {
+      return(length(values) == 2L && setequal(toupper(values), c("NO", "YES")))
+    }
+    FALSE
   }, logical(1))
   is_continuous <- vapply(d[vars], function(x) {
     is.numeric(x) && length(unique(x[!is.na(x)])) > 6L
