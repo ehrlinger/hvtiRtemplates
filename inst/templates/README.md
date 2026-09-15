@@ -2,7 +2,7 @@
 
 Files in this directory are **supported and runnable**: they render, they are
 tested, and they are the intended starting point for a new analysis job. Copy
-one with `new_job()` rather than by hand, which names the file consistently and
+one with `add_job()` rather than by hand, which names the file consistently and
 refuses to overwrite an existing job.
 
 ## What is here
@@ -47,18 +47,19 @@ wholly unqualified, never half-decomposed.
 
 ## Where a scaffolded job lands
 
-`new_job("ac", "dead_pa", "hz")` writes
-`distributions/dead_pa-hz-ac.qmd`. Three fields, `-` separated:
+`add_job("ac", "dead_pa", "hz")` writes
+`20_distributions/dead_pa-hz-ac.qmd` in a new study. Three fields, `-`
+separated:
 **endpoint, type, prefix**.
 
-⚠️ **The job lands in the BARE folder, `distributions/`, not the numbered
-directory the template sits in.** That is what a study's own folders are
-called, and writing into `20_distributions/` would split the estate across two
-spellings of one folder.
+The study layout decides the folder. New studies use the numbered taxonomy;
+an adopted legacy study with bare folders keeps `distributions/`. A study that
+contains both schemes is ambiguous, so job creation stops instead of splitting
+the estate across two spellings of one folder.
 
 A job scaffolded from a qualified template carries the qualifier as a fourth
-field, so `new_job("dp", "cohort", "eda", qualifier = "trends")` writes
-`graphs/cohort-eda-dp-trends.qmd`. A filename that drops the qualifier says
+field, so `add_job("dp", "cohort", "eda", qualifier = "trends")` writes
+`40_graphs/cohort-eda-dp-trends.qmd` in a new study. A filename that drops the qualifier says
 only "some `dp` job", which is what splitting the templates exists to fix.
 An EDA job's set key is `(subject, eda)`: the endpoint field names what is
 described, and the type is always `eda`.
@@ -103,7 +104,7 @@ prefix is scheduled when:
 **`bh`'s companion runner is not templated.** The screen is days of compute and
 `hzr_bootstrap()` writes nothing until its final replicate, so the run is
 chunked from a separate script and this template reports over what that script
-wrote. Templating the runner needs multi-file templates in `new_job()`, which
+wrote. Templating the runner needs multi-file templates in `add_job()`, which
 is a package change. `hm` has the same gap.
 
 **Nor are `bl`, `br` and `bc`'s.** Their runner calls

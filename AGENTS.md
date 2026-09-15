@@ -2,7 +2,7 @@
 
 Analysis job templates for the HVTI CORR group, plus the prefix taxonomy that names them.
 Five exports across three source files: `hvti_taxonomy()`, `hvti_non_prefixes()`,
-`template_list()`, `template_path()` and `new_job()`.
+`template_list()`, `template_path()` and `add_job()`.
 
 The package is small; the **templates are the product**. `inst/templates/README.md` promises
 that files there are supported and runnable, and that promise is the reason most of the rules
@@ -99,7 +99,7 @@ by counting assertions: revert the code and confirm the new tests go red.
   six real indentation and brace lints in `ac.qmd` vanished from a clean run that way. Only a
   file key honours a per-linter list. The friction is deliberate: it forces a decision per
   template instead of blanket-exempting the directory.
-- **Templates carry no study identifiers.** `test-new-job.R` asserts that no template matches
+- **Templates carry no study identifiers.** `test-add-job.R` asserts that no template matches
   `/studies/`, a study name, or a built-dataset filename. A template that names a study is not
   a template.
 - **Every study-specific line in a template is marked `EDIT:`.** The markers are the interface;
@@ -145,11 +145,10 @@ it is fifth in the taxonomy, because it holds saved output rather than jobs. Der
 number from a row position is the defect this scheme removed, so do not "fix" 90 to 50.
 The decade gaps are deliberate room: a new folder goes in at 25 and shifts nothing.
 
-⚠️ **`inst/templates/` uses the numbered directories. A STUDY does not.** `new_job()` writes
-into the bare taxonomy name, `distributions/` and `analyses/`, because that is what studies
-already have: 63,278 and 119,582 corpus files respectively. Writing a job into
-`20_distributions/` would split a study's estate across two spellings of one folder.
-`template_list()` reports `folder` with the digits stripped for the same reason.
+⚠️ **`inst/templates/` and new studies use numbered directories.** Legacy studies keep their
+bare taxonomy names. `add_job()` delegates placement to `hvtiRutilities::study_dir()`, which
+preserves either consistent scheme and rejects a mixed study rather than splitting its estate
+across two spellings of one folder. `template_list()` reports the taxonomy name without digits.
 
 **The qualifier names a job type within a prefix, and is optional.** `dp-trends` is the
 first template to carry one. The qualifier exists because `graphs/dp` is `trends`,
@@ -167,7 +166,7 @@ unqualified row that no caller can ask for.
 ⚠️ **`qualifier` is `[A-Za-z0-9_]+`, and a prefix may never contain `-`.** `-` is the
 filename's field separator, so a prefix carrying one would make the name ambiguous.
 
-⚠️ **`template_path()` and `new_job()` REFUSE to guess when a prefix is ambiguous.** Naming
+⚠️ **`template_path()` and `add_job()` REFUSE to guess when a prefix is ambiguous.** Naming
 no qualifier where a prefix carries several is an error listing the choices, never a silent
 pick of the first. Selecting with `match()` returned the first row and said nothing about
 the rest, which is the same shape as the bug that made `dp` look like one job type.
@@ -186,16 +185,16 @@ before `bh` was renumbered to `04.05`; that register went with the ordinal. So: 
 `NN.MM` in a filename is a pre-1.1.0 job, `04.06-bh` and `04.05-bh` are the same template,
 and no ordinal will ever be issued again. Do not reintroduce the field to explain one.
 
-`new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` writes
-`<folder>/<endpoint>-<type>-<prefix>[-<qualifier>].qmd`, where `<folder>` is the BARE
-taxonomy name and not the numbered directory the template sits in,
+`add_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` writes
+`<folder>/<endpoint>-<type>-<prefix>[-<qualifier>].qmd`, where `<folder>` follows the study's
+numbered or legacy bare layout,
 and **refuses to overwrite an existing job**, because a job file accumulates a study's edits.
 `endpoint` and `type` name the `(endpoint, analysis type)` set the job belongs to; both are
 required and both are restricted to `[A-Za-z0-9_]+`, because `-` is the filename's field
 separator and `.` separates the extension.
 
 **A template must have exactly one `^ENDPOINT\s+<- ` line and one `^TYPE\s+<- ` line.**
-`new_job()` substitutes both after copying, and hard-stops if either is missing, duplicated, or
+`add_job()` substitutes both after copying, and hard-stops if either is missing, duplicated, or
 moved — a template that fails this check cannot be scaffolded at all.
 
 ## Gotchas

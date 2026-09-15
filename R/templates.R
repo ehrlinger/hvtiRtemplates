@@ -70,7 +70,7 @@ template_path <- function(prefix, qualifier = NULL) {
 .select_template <- function(tl, prefix, qualifier = NULL) {
   # Validate before comparing. `hit$qualifier == NA_character_` is NA, not
   # FALSE, so an NA qualifier produces NA-indexed rows and an error that names
-  # nothing useful; a length-2 qualifier recycles silently. `new_job()` screens
+  # nothing useful; a length-2 qualifier recycles silently. `add_job()` screens
   # its argument, `template_path()` did not, and this is the shared path.
   # Raised by Copilot on #76.
   # `prefix` gets the same treatment as `qualifier`. Validating one argument
