@@ -232,9 +232,11 @@
   lines <- as.character(lines)
   keep <- nzchar(trimws(lines))
 
+  # Listings can interleave aggregate tables and patient observations. Without
+  # a verified table schema, retain locations only, never arbitrary cell text.
   data.frame(
     line = which(keep),
-    text = lines[keep],
+    text = rep("Nonblank listing line; content withheld. Review the source locally.", sum(keep)),
     stringsAsFactors = FALSE
   )
 }

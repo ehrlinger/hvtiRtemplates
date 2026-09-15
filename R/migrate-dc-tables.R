@@ -103,7 +103,10 @@
     if (grepl("[.]rtf$", path, ignore.case = TRUE)) {
       text <- readLines(file.path(evidence$root, path), warn = FALSE)
       if (length(text)) {
-        unresolved <- rbind(unresolved, record(seq_along(text), text, paste("RTF reference", path, "requires output review.")))
+        unresolved <- rbind(unresolved, record(
+          seq_along(text), rep(path, length(text)),
+          "RTF content withheld; review the referenced source line locally."
+        ))
       } else {
         unresolved <- rbind(unresolved, record(NA_integer_, path, "Empty RTF reference: supply readable output for comparison."))
       }

@@ -20,6 +20,8 @@
 #' version, translated choices, unresolved choices, and ignored material.
 #' Absolute paths within quoted source text are redacted. SAS log errors
 #' leave a blocking \code{EDIT:} marker in the generated job.
+#' Listing and RTF contents may contain patient observations, so the report
+#' records their locations for local review without copying their text.
 #'
 #' Both outputs are prepared before placement. Migration refuses to overwrite
 #' either existing target. If placement fails, newly placed outputs are
