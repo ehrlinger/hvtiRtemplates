@@ -208,3 +208,44 @@ test_that("dc-tables reports an empty RTF reference without failing migration", 
   report <- paste(readLines(sub("[.]qmd$", "-migration.md", out)), collapse = "\n")
   expect_match(report, "Empty RTF reference", fixed = TRUE)
 })
+
+test_that("slashes in group headings do not become table variables", {
+  root <- migration_study_fixture("dc-tables")
+  tables_source(root, "%desc_tab(vartype=continuous,input=built,varlist=/* Height/Weight */ age);")
+  out <- tables_migrate(root, evidence = FALSE)
+  env <- new.env()
+  eval(parse(text = tables_region(out, "dc-tables-config")), env)
+  expect_identical(env$GROUPS, list(`Height/Weight` = "age"))
+  expect_identical(env$CONTINUOUS, "age")
+})
+
+test_that("dc-tables retains complete title statements and their starting lines", {
+  root <- migration_study_fixture("dc-tables")
+  source <- c(
+    "options nodate; title3",
+    '  "General; Descriptive Analyses"',
+    '  "continued title text";',
+    'footnote "Evidence only"; TiTlE4 "Same-line title";',
+    'title5 "A ""quoted; phrase"" remains intact"; title6 "Second title";',
+    '* title7 "Not active";',
+    '/* title8 "Not active either"; */',
+    "%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);"
+  )
+  tables_source(root, source)
+  evidence <- hvtiRtemplates:::.migration_evidence(
+    c(source = file.path(root, "descriptive", "dc.tables.sas")), normalizePath(root)
+  )
+  result <- hvtiRtemplates:::.migrate_dc_tables(evidence, readLines(template_path("dc", "tables")))
+  titles <- result$unresolved[result$unresolved$reason == "Review title against the combined Word table.", ]
+  expect_identical(titles$line, c(1L, 4L, 5L, 5L))
+  expect_identical(titles$text, c(
+    'title3\n  "General; Descriptive Analyses"\n  "continued title text";',
+    'TiTlE4 "Same-line title";',
+    'title5 "A ""quoted; phrase"" remains intact";',
+    'title6 "Second title";'
+  ))
+  out <- tables_migrate(root, evidence = FALSE)
+  report <- paste(readLines(sub("[.]qmd$", "-migration.md", out)), collapse = "\n")
+  expect_match(report, 'line=1; text=title3\n  "General; Descriptive Analyses"\n  "continued title text";', fixed = TRUE)
+  expect_match(report, 'line=4; text=TiTlE4 "Same-line title";', fixed = TRUE)
+})

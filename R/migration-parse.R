@@ -18,8 +18,9 @@
 
     while (j <= length(chars)) {
       if (in_block) {
+        closes_block <- chars[[j]] == "*" && j < length(chars) && chars[[j + 1L]] == "/"
         chars[[j]] <- " "
-        if (j < length(chars) && chars[[j + 1L]] == "/") {
+        if (closes_block) {
           chars[[j + 1L]] <- " "
           in_block <- FALSE
           j <- j + 2L
@@ -27,7 +28,7 @@
           j <- j + 1L
         }
       } else if (j < length(chars) && chars[[j]] == "/" &&
-                 chars[[j + 1L]] == "*") {
+                   chars[[j + 1L]] == "*") {
         chars[[j]] <- " "
         chars[[j + 1L]] <- " "
         in_block <- TRUE

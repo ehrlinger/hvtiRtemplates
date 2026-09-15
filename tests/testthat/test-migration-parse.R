@@ -88,6 +88,24 @@ test_that("comment masking leaves arithmetic visible", {
   expect_identical(masked, c("         ", "answer = top * bottom;"))
 })
 
+test_that("only an exact closing delimiter ends a SAS block comment", {
+  source <- c(
+    "/* Height/Weight / another slash",
+    "still hidden * then / and **/ age;",
+    "score = top",
+    "  * bottom;"
+  )
+  masked <- hvtiRtemplates:::.sas_mask_comments(source)
+  expect_identical(trimws(masked), c("", "age;", "score = top", "* bottom;"))
+  expect_identical(nchar(masked), nchar(source))
+  calls <- hvtiRtemplates:::.sas_calls(c(
+    "/* Height/Weight %desc_tab(vartype=bad); */",
+    "%desc_tab(vartype=continuous,varlist=/* Height/Weight */ age);"
+  ), "desc_tab")
+  expect_length(calls, 1L)
+  expect_identical(calls[[1L]]$start, 2L)
+})
+
 test_that("comment masking keeps multiplication on a continuation line", {
   masked <- hvtiRtemplates:::.sas_mask_comments(c("score = top", "  * bottom;"))
   expect_identical(masked, c("score = top", "  * bottom;"))

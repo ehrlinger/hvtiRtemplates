@@ -94,9 +94,9 @@
     unresolved <- rbind(unresolved, record(calls[[1L]]$start, paste(missing, collapse = ", "),
                                            "Column presence cannot be verified in the selected registered data."))
   }
-  title <- grepl("^[[:space:]]*title[0-9]*[[:space:]]", .sas_mask_comments(evidence$source$text), ignore.case = TRUE)
-  for (i in which(title)) {
-    unresolved <- rbind(unresolved, record(evidence$source$line[[i]], evidence$source$text[[i]],
+  titles <- .dc_tables_titles(evidence$source)
+  for (i in seq_len(nrow(titles))) {
+    unresolved <- rbind(unresolved, record(titles$line[[i]], titles$text[[i]],
                                            "Review title against the combined Word table."))
   }
   for (path in evidence$reference) {
@@ -143,6 +143,40 @@
                 "dc-tables-config" = paste(config, collapse = "\n")),
     translated = translated, unresolved = unresolved, ignored = data.frame()
   )
+}
+
+.dc_tables_titles <- function(source) {
+  text <- paste(source$text, collapse = "\n")
+  # Keep quoted strings (including doubled quotes) and block comments whole,
+  # so only a semicolon outside them ends a title statement.
+  pattern <- paste0(
+    "(?s)/\\*.*?\\*/|'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|;|",
+    "[^[:space:];'\"/]+|/"
+  )
+  positions <- gregexpr(pattern, text, perl = TRUE)[[1L]]
+  tokens <- regmatches(text, list(positions))[[1L]]
+  line_starts <- cumsum(c(1L, nchar(source$text) + 1L))
+  out <- data.frame(line = integer(), text = character())
+  start <- NA_integer_
+  is_title <- FALSE
+  for (i in seq_along(tokens)) {
+    token <- tokens[[i]]
+    if (startsWith(token, "/*")) next
+    if (token == ";") {
+      if (is_title) {
+        out <- rbind(out, data.frame(
+          line = source$line[[findInterval(start, line_starts)]],
+          text = substr(text, start, positions[[i]])
+        ))
+      }
+      start <- NA_integer_
+      is_title <- FALSE
+    } else if (is.na(start)) {
+      start <- positions[[i]]
+      is_title <- grepl("^title[0-9]*$", token, ignore.case = TRUE)
+    }
+  }
+  out
 }
 
 .dc_tables_groups <- function(varlist) {
