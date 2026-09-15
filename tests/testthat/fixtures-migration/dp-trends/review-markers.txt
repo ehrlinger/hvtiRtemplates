@@ -1,0 +1,6 @@
+<!-- EDIT: name the job this replaces (an older graphs/dp.trends job) and list
+# EDIT: the calendar year of operation, as a WHOLE year. hv_trends() puts one
+# EDIT: one entry per figure. `cols` are the columns drawn together: several
+# EDIT: optional. x-axis breaks shared by every figure, e.g. seq(1985, 2025, 5).
+# EDIT: optional. Each entry is a filter, given as a function of the data that
+# EDIT: review source filters and subgroup intent before accepting the whole cohort.

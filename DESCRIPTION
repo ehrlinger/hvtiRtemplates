@@ -36,6 +36,7 @@ Remotes:
     ehrlinger/hvtiPlotR
 Suggests:
     arrow,
+    ggplot2,
     hvtiPlotR (>= 2.7.14),
     hvtiRtables (>= 1.0.1),
     hvtiRdatabuild (>= 0.2.1),

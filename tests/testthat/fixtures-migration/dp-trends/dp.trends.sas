@@ -1,0 +1,24 @@
+/* Synthetic source: no patient records or live study paths. */
+data trends;
+set built;
+year=floor(iv_opyrs)+1985;
+%let percent = hx_chf;
+%let continuous = lvmassi;
+label hx_chf = 'Heart failure';
+label lvmassi = 'LV mass index';
+axis1 order=(1985 to 2025 by 5);
+axis2 order=(0 to 100 by 20);
+axis3 order=(80 to 140 by 10);
+run;
+proc means data=trends noprint;
+class year;
+var hx_chf lvmassi;
+output out=annual mean=;
+run;
+title 'Synthetic trends; set wrong;';
+filename graph 'legacy-trends.png';
+proc gplot data=annual;
+plot hx_chf*year / haxis=axis1 vaxis=axis2;
+plot lvmassi*year / haxis=axis1 vaxis=axis3;
+run;
+quit;

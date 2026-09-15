@@ -9,7 +9,8 @@ migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame()) 
     year = 2000L + i %% 10L, female = i %% 2L, race_grp = 1L + i %% 3L,
     repair = as.integer(i %% 3L == 0L), age = 40 + i, bmi = 20 + i / 10,
     treatment = i %% 2L,
-    hx_chf = as.integer(i %% 4L == 0L), lvmassi = 80 + i
+    hx_chf = as.integer(i %% 4L == 0L), lvmassi = 80 + i,
+    iv_opyrs = i + 0.25
   )
   utils::write.csv(built, file.path(root, "datasets", "built.csv"), row.names = FALSE)
   utils::write.csv(built[1:24, ], file.path(root, "datasets", "complete_cases.csv"), row.names = FALSE)
@@ -82,7 +83,7 @@ render_migrated_fixture <- function(kind, root = NULL) {
   )
   declarations <- testthat::test_path("fixtures-migration", kind, "review-markers.txt")
   if (file.exists(declarations)) .resolve_fixture_markers(job, readLines(declarations, warn = FALSE))
-  quarto::quarto_render(job, execute_dir = root, quiet = TRUE)
+  quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
   list(
     root = root, job = job, report = sub("[.]qmd$", "-migration.md", job),
     outputs = list.files(root, pattern = "[.](html|docx|png)$", recursive = TRUE, full.names = TRUE)
