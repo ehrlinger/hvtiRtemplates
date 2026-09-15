@@ -92,3 +92,11 @@ render_migrated_fixture <- function(kind, root = NULL) {
     outputs = list.files(root, pattern = "[.](html|docx|png)$", recursive = TRUE, full.names = TRUE)
   )
 }
+
+render_all_migration_fixtures <- function() {
+  kinds <- c("dc-tables", "dc-gfup", "dp-trends", "dp-postage")
+  # Keep all four roots alive in the caller's scope for artifact inspection.
+  caller <- parent.frame()
+  roots <- lapply(kinds, migration_study_fixture, .local_envir = caller)
+  stats::setNames(Map(render_migrated_fixture, kinds, roots), kinds)
+}
