@@ -119,7 +119,7 @@ if (!is.null(.cur)) {
 }
 ```
 
-<!-- The two values below are written by new_job() from the endpoint/type it
+<!-- The two values below are written by add_job() from the endpoint/type it
      was called with, which are also the filename's first two fields. Every
      artifact path in this document is computed from them.
 
@@ -138,7 +138,7 @@ if (!is.null(.cur)) {
 ENDPOINT <- "cohort"
 TYPE     <- "eda"
 
-# `new_job()` writes ENDPOINT/TYPE from the same values it put in this file's
+# `add_job()` writes ENDPOINT/TYPE from the same values it put in this file's
 # name, but a hand-edited declaration can drift from it afterward. set_path()
 # below resolves from the declarations, not the filename, so a drifted
 # declaration would silently write into ANOTHER set's artifact directory --
@@ -172,7 +172,8 @@ if (!is.null(.current)) {
 # Created on first use rather than up front, so a job that writes nothing leaves
 # no empty directories behind.
 set_path <- function(kind, file) {
-  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(ENDPOINT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }

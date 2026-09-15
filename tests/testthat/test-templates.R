@@ -84,7 +84,7 @@ test_that(".template_fields() returns NA for a name it cannot parse", {
 
 test_that("no two templates share a (prefix, qualifier) pair", {
   # This asserted "no two templates share a prefix" until 2026-09-02, because
-  # `template_path()` and `new_job()` resolved with `match()`, which takes the
+  # `template_path()` and `add_job()` resolved with `match()`, which takes the
   # first hit silently. Both now resolve on the pair and error rather than
   # guess, so a prefix carrying several job types is the intended state and
   # the old form would have blocked the first one from landing. What must
@@ -200,7 +200,8 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "hvti_taxonomy", "sas_path",
     "sas_variable_block", "covariate_audit", "covariates_to_numeric",
     "imputed_levels", "pool_collinear_pairs", "selection_crowding",  # >= 1.1.4
-    "concept_map", "verify_manifest", "proc_means"
+    "concept_map", "verify_manifest", "proc_means",
+    "study_dir"  # >= 1.1.12
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")
@@ -527,7 +528,7 @@ test_that(".select_template() refuses a (prefix, qualifier) pair that matches tw
 test_that("a malformed qualifier is rejected before it is compared", {
   # `hit$qualifier == NA_character_` is NA, not FALSE, so an NA qualifier
   # produces NA-indexed rows and an error naming nothing useful; a length-2
-  # qualifier recycles silently. new_job() screened its argument and
+  # qualifier recycles silently. add_job() screened its argument and
   # template_path() did not, so the guard belongs on the shared path.
   for (bad in list(NA_character_, c("a", "b"), "", 42, character(0))) {
     expect_error(template_path("ac", bad), "single non-empty, non-NA")

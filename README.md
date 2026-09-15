@@ -72,9 +72,13 @@ answer, because `%inc` had nothing to pin.
 | `template_list()` | supported templates: name, prefix, qualifier, folder, file |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
 | `hvti_non_prefixes()` | leading name fields that are utilities, not analysis prefixes |
-| `new_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` | the scaffolded job's path, invisibly |
+| `add_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` | the scaffolded job's path, invisibly |
 
-Templates are `<prefix>[-<qualifier>].qmd` in a numbered directory (`20_distributions/ac.qmd`); a job is `<endpoint>-<type>-<prefix>[-<qualifier>].qmd` in the bare taxonomy folder. The ordinal that once prefixed both was dropped in 1.1.0.
+Templates are `<prefix>[-<qualifier>].qmd` in a numbered directory
+(`20_distributions/ac.qmd`); a job is
+`<endpoint>-<type>-<prefix>[-<qualifier>].qmd` in the study's matching taxonomy
+folder. New studies use numbered folders and existing bare-folder studies keep
+their layout. The ordinal that once prefixed filenames was dropped in 1.1.0.
 
 `qualifier` names a job type within a prefix. The current qualified templates
 are `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-postage`; other prefixes remain

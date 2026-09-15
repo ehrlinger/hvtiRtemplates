@@ -30,13 +30,15 @@ test_that("descriptive templates can read the whole cohort", {
   ))
   root <- file.path(tempdir(), "whole-cohort-study")
   unlink(root, recursive = TRUE)
-  dir.create(file.path(root, "datasets"), recursive = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(
+    root, study = "Template route test", study_tracker_id = 1L
+  ))
   built <- data.frame(id = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4))
-  utils::write.csv(built, file.path(root, "datasets", "built.csv"), row.names = FALSE)
+  data_dir <- hvtiRutilities::study_dir("datasets", root)
+  utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
   suppressWarnings(
-    suppressMessages(hvtiRutilities::study_init(
-      root, study = "Template route test", built = "built.csv",
-      event = "dead", time = "iv_dead"
+    suppressMessages(hvtiRutilities::register_data(
+      root, built = "built.csv", event = "dead", time = "iv_dead"
     ))
   )
 

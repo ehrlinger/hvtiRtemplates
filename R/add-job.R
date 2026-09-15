@@ -40,11 +40,14 @@
 #' @export
 #'
 #' @examples
-#' d <- file.path(tempdir(), "new-job-example")
-#' new_job("ac", "dead_pa", "hz", dir = d)
+#' d <- file.path(tempdir(), "add-job-example")
+#' invisible(hvtiRutilities::study_setup(
+#'   d, study = "Example", study_tracker_id = 1L
+#' ))
+#' add_job("ac", "dead_pa", "hz", dir = d)
 #' list.files(d, recursive = TRUE)
 #' unlink(d, recursive = TRUE)
-new_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
+add_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
   .check_field("endpoint", endpoint)
   .check_field("type", type)
   if (!is.null(qualifier)) .check_field("qualifier", qualifier)
@@ -55,34 +58,32 @@ new_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
   # Re-raised with this function's own prefix. .select_template() is shared
   # with template_path(), so its messages say "template selection:" and
   # "unknown template:", where every other error this function raises says
-  # "new_job():". A user-facing API should be greppable by one name.
+  # "add_job():". A user-facing API should be greppable by one name.
   # Raised by Copilot on #76.
   row <- tryCatch(
     .select_template(template_list(), prefix, qualifier),
-    error = function(e) stop("new_job(): ", conditionMessage(e), call. = FALSE)
+    error = function(e) stop("add_job(): ", conditionMessage(e), call. = FALSE)
   )
 
-  out_dir <- file.path(dir, row$folder[[1L]])
+  out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = dir)
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
   # The job carries the template's qualifier. A job scaffolded from
   # dp-trends.qmd is a trends job, and a filename that drops that says only
   # "some dp job", which is the thing the template split exists to fix.
   #
-  # No ordinal: it was dropped on 2026-09-03, and the taxonomy folder the job
-  # lands in is what the old `NN` duplicated. `row$folder` is the BARE name,
-  # not the numbered directory the template sits in, because a study's own
-  # folders are `distributions/` and `analyses/`; writing to a numbered one
-  # would split the study's estate across two spellings.
+  # No ordinal in the filename: the taxonomy folder records placement. The
+  # shared resolver keeps a numbered new study and a bare legacy study in its
+  # own directory scheme.
   stem <- paste0(endpoint, "-", type, "-", prefix,
                  if (!is.na(row$qualifier[[1L]])) paste0("-", row$qualifier[[1L]]) else "")
   out <- file.path(out_dir, paste0(stem, ".qmd"))
 
   if (file.exists(out)) {
-    stop("new_job(): '", out, "' already exists; refusing to overwrite.",
+    stop("add_job(): '", out, "' already exists; refusing to overwrite.",
          call. = FALSE)
   }
   if (!file.copy(row$file[[1L]], out, overwrite = FALSE)) {
-    stop("new_job(): failed to write '", out, "'.", call. = FALSE)
+    stop("add_job(): failed to write '", out, "'.", call. = FALSE)
   }
   # A job file named for one set but declaring another is exactly the defect
   # the marker substitution below exists to prevent, so it must not survive
@@ -107,14 +108,14 @@ new_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
   ok <- is.character(value) && length(value) == 1L && !is.na(value) &&
     grepl("^[A-Za-z0-9_]+$", value)
   if (!ok) {
-    stop("new_job(): `", arg, "` must be a single non-NA string matching ",
+    stop("add_job(): `", arg, "` must be a single non-NA string matching ",
          "'^[A-Za-z0-9_]+$' (it becomes a '-'-separated filename field, so '-' ",
          "is reserved as the separator and '.' to the extension); got ",
          paste(deparse(value), collapse = ", "), ".", call. = FALSE)
   }
 }
 
-# Rewrite the template's ENDPOINT/TYPE declarations to the values `new_job()`
+# Rewrite the template's ENDPOINT/TYPE declarations to the values `add_job()`
 # already put in the filename, so a scaffolded job arrives self-consistent
 # rather than naming one set and declaring another. `set_path()` in the job
 # body resolves from the declarations, not the filename, so a mismatch would
@@ -128,19 +129,19 @@ new_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
 # Requires `endpoint` and `type` to already be validated by .check_field():
 # they are interpolated straight into an R string literal with no escaping,
 # so an unvalidated `"` or `\` would emit a syntactically broken job. A future
-# caller (a planned `new_job_set()`) must run .check_field() first too.
+# caller (a planned `add_job_set()`) must run .check_field() first too.
 .set_markers <- function(path, endpoint, type) {
   txt <- readLines(path, warn = FALSE)
 
   i_endpoint <- grep("^ENDPOINT\\s+<- ", txt)
   if (length(i_endpoint) != 1L) {
-    stop("new_job(): '", path, "' has ", length(i_endpoint), " lines matching ",
+    stop("add_job(): '", path, "' has ", length(i_endpoint), " lines matching ",
          "'^ENDPOINT\\\\s+<- ', expected exactly 1; cannot substitute the set markers.",
          call. = FALSE)
   }
   i_type <- grep("^TYPE\\s+<- ", txt)
   if (length(i_type) != 1L) {
-    stop("new_job(): '", path, "' has ", length(i_type), " lines matching ",
+    stop("add_job(): '", path, "' has ", length(i_type), " lines matching ",
          "'^TYPE\\\\s+<- ', expected exactly 1; cannot substitute the set markers.",
          call. = FALSE)
   }
