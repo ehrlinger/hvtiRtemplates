@@ -47,7 +47,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**44 templates in scope**, of which 10 exist on disk.
+**44 templates in scope**, of which 13 exist on disk.
 
 ## By family
 
@@ -79,7 +79,7 @@ row has no template on disk.
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
 | `dp-gfup` | queued | — | 48 | 4 | — |
-| `dp-postage` | queued | — | — | — | — |
+| `dp-postage` | shipped | — | — | — | — |
 | `dp-procs` | queued | — | 35 | 0 | — |
 | `dp-spaghetti` | queued | — | 40 | 40 | — |
 | `dp-trends` | shipped | — | 80 | 75 | — |
@@ -96,8 +96,8 @@ row has no template on disk.
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
 | `dc-general` | queued | — | 759 | 1 | — |
-| `dc-gfup` | queued | — | 389 | 0 | — |
-| `dc-tables` | queued | — | 551 | 1 | — |
+| `dc-gfup` | shipped | — | 389 | 0 | — |
+| `dc-tables` | shipped | — | 551 | 1 | — |
 | `dc-dead` | queued | — | 171 | 0 | — |
 | `lg` | queued | 367 | 362 | 0 | — |
 | `rg` | queued | 45 | 45 | 0 | — |
