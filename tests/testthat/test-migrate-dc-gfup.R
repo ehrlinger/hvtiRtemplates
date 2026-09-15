@@ -160,6 +160,53 @@ test_that("dc-gfup marks incomplete evidence without choosing defaults", {
   expect_true(any(grepl("set absent", result$unresolved$text, fixed = TRUE)))
 })
 
+test_that("dc-gfup requires complete SET evidence before selecting registered data", {
+  root <- migration_study_fixture("dc-gfup")
+  for (extra in c("set other(obs=10);", "set complete_cases;", "set built(obs=10);", "set built;",
+                  "if flag then set other;", "else set other;")) {
+    result <- hvtiRtemplates:::.migrate_dc_gfup(gfup_evidence(root, extra), character())
+    env <- new.env()
+    eval(parse(text = result$regions[["dc-gfup-data"]]), env)
+    expect_identical(env$DATASET, NA_character_, info = extra)
+    expect_false(any(grepl("^set ", result$translated$text, ignore.case = TRUE)), info = extra)
+    expect_true(extra %in% result$unresolved$text, info = extra)
+  }
+})
+
+test_that("dc-gfup does not promote locally assigned event or interval fields", {
+  root <- migration_study_fixture("dc-gfup")
+  cases <- list(
+    list(code = "if dead=0 then iv_dead=(close_date-dt_surg)/365.25;", event = "dead", followup = "iv_fup"),
+    list(code = "dead=1-olddead;", event = NA_character_, followup = c("iv_dead", "iv_fup")),
+    list(code = "if olddead=0 then dead=1; else dead=0;", event = NA_character_, followup = c("iv_dead", "iv_fup")),
+    list(code = "if dead=1 then iv_fup=iv_dead; else iv_dead=0;", event = "dead", followup = character())
+  )
+  for (case in cases) {
+    result <- hvtiRtemplates:::.migrate_dc_gfup(gfup_evidence(root, case$code), character())
+    env <- new.env()
+    eval(parse(text = result$regions[["dc-gfup-config"]]), env)
+    expect_identical(env$EVENT, case$event, info = case$code)
+    expect_identical(env$FOLLOWUP, case$followup, info = case$code)
+    expect_true(any(grepl("not executed", result$unresolved$reason, fixed = TRUE)))
+    affected <- if (is.na(case$event)) "event" else "interval"
+    expect_true(any(grepl(paste0("assigned ", affected), result$unresolved$reason, fixed = TRUE)), info = case$code)
+    expect_false(any(grepl("^if .* then|^else |^dead=", result$translated$text)), info = case$code)
+  }
+})
+
+test_that("dc-gfup ignores assignment-like strings and comments", {
+  root <- migration_study_fixture("dc-gfup")
+  result <- hvtiRtemplates:::.migrate_dc_gfup(gfup_evidence(root, c(
+    "title 'if dead=0 then iv_dead=0; if flag then set other;';", "/* if dead=0 then iv_fup=0; */", "* dead=0;"
+  )), character())
+  env <- new.env()
+  eval(parse(text = result$regions[["dc-gfup-data"]]), env)
+  eval(parse(text = result$regions[["dc-gfup-config"]]), env)
+  expect_identical(env$DATASET, "study")
+  expect_identical(env$EVENT, "dead")
+  expect_identical(env$FOLLOWUP, c("iv_dead", "iv_fup"))
+})
+
 test_that("dc-gfup dataset selection rejects both or neither and reads named data", {
   root <- migration_study_fixture("dc-gfup")
   code <- gfup_chunk(template_path("dc", "gfup"), "data")

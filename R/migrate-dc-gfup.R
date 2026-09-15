@@ -6,9 +6,12 @@
   ids <- active[grepl("^id[[:space:]]", active)]
   ids <- unique(unlist(strsplit(sub("^id[[:space:]]+", "", ids), "[[:space:]]+"), use.names = FALSE))
   ids <- ids[grepl("^[a-z_][a-z0-9_]*$", ids)]
-  assigned <- active[grepl("^[a-z_][a-z0-9_]*[[:space:]]*=", active)]
-  derived <- sub("^([a-z_][a-z0-9_]*)[[:space:]]*=.*$", "\\1", assigned)
-  intervals <- events <- inputs <- character()
+  derived <- unique(unlist(lapply(active, .gfup_assigned), use.names = FALSE))
+  input_code <- gsub("'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"", " ", statements$code, perl = TRUE)
+  input_statement <- !statements$comment & grepl(
+    "(^|\\bthen[[:space:]]+|^else[[:space:]]+)set([[:space:]]|$)", input_code, ignore.case = TRUE, perl = TRUE
+  )
+  intervals <- events <- character()
   for (i in seq_len(nrow(statements))) {
     row <- statements[i, ]
     code <- tolower(trimws(row$code))
@@ -17,20 +20,32 @@
     } else if (grepl("^var[[:space:]]+[a-z_][a-z0-9_[:space:]]*$", code)) {
       fields <- strsplit(sub("^var[[:space:]]+", "", code), "[[:space:]]+")[[1L]]
       intervals <- unique(c(intervals, setdiff(fields, c(ids, derived))))
-      if (length(intersect(fields, c(ids, derived)))) {
-        unresolved <- rbind(unresolved, record(row, "VAR includes identifier or locally derived fields, which remain disabled."))
+      if (length(intersect(fields, derived))) {
+        unresolved <- rbind(unresolved, record(row, "VAR includes a locally assigned interval; affected fields remain disabled."))
+      } else if (length(intersect(fields, ids))) {
+        unresolved <- rbind(unresolved, record(row, "VAR includes identifier fields, which remain disabled."))
       } else {
         translated <- rbind(translated, record(row, "Declared follow-up fields; no interval derivation reproduced."))
       }
     } else if (grepl("^by[[:space:]]+[a-z_][a-z0-9_[:space:]]*$", code)) {
       fields <- strsplit(sub("^by[[:space:]]+", "", code), "[[:space:]]+")[[1L]]
       events <- unique(c(events, fields[[1L]]))
-      translated <- rbind(translated, record(row, "Leading BY field supplies event evidence; other sort fields do not filter data."))
+      if (fields[[1L]] %in% derived) {
+        unresolved <- rbind(unresolved, record(row, "BY names a locally assigned event; the field remains disabled."))
+      } else {
+        translated <- rbind(translated, record(row, "Leading BY field supplies event evidence; other sort fields do not filter data."))
+      }
     } else if (grepl("^if[[:space:]]+[a-z_][a-z0-9_]*[[:space:]]*=[[:space:]]*0$", code)) {
-      events <- unique(c(events, sub("^if[[:space:]]+([a-z_][a-z0-9_]*)[[:space:]]*=.*$", "\\1", code)))
-      translated <- rbind(translated, record(row, "Censored subset evidence; the full registered cohort remains in the report."))
-    } else if (grepl("^set[[:space:]]+[a-z_][a-z0-9_]*$", code)) {
-      inputs <- unique(c(inputs, sub("^set[[:space:]]+", "", code)))
+      field <- sub("^if[[:space:]]+([a-z_][a-z0-9_]*)[[:space:]]*=.*$", "\\1", code)
+      events <- unique(c(events, field))
+      if (field %in% derived) {
+        unresolved <- rbind(unresolved, record(row, "Filter names a locally assigned event; the field remains disabled."))
+      } else {
+        translated <- rbind(translated, record(row, "Censored subset evidence; the full registered cohort remains in the report."))
+      }
+    } else if (input_statement[[i]]) {
+      # Resolve the complete SET evidence together after reading all statements.
+      next
     } else if (grepl("^(run|quit)$|^data[[:space:]]|^proc[[:space:]]", code)) {
       ignored <- rbind(ignored, record(row, "SAS execution or procedure wrapper; review options against the new QC output."))
     } else {
@@ -38,13 +53,14 @@
     }
   }
   if (length(events) > 1L) stop("dc-gfup has contradictory event fields in BY/filter evidence.", call. = FALSE)
-  events <- setdiff(events, ids)
-  if (length(inputs) == 1L) {
-    selection <- .dc_tables_dataset(evidence$root, inputs)
+  events <- setdiff(events, c(ids, derived))
+  input_rows <- statements[input_statement, ]
+  if (nrow(input_rows) == 1L && grepl("^set[[:space:]]+[a-z_][a-z0-9_]*$", input_rows$code, ignore.case = TRUE)) {
+    input <- tolower(sub("^set[[:space:]]+", "", input_rows$code, ignore.case = TRUE))
+    selection <- .dc_tables_dataset(evidence$root, input)
   } else {
-    selection <- list(dataset = NA_character_, reason = "A unique plain SET input is required to select registered data.")
+    selection <- list(dataset = NA_character_, reason = "Exactly one plain SET statement is required to select registered data.")
   }
-  input_rows <- statements[grepl("^set[[:space:]]", statements$code, ignore.case = TRUE) & !statements$comment, ]
   if (!nrow(input_rows)) input_rows <- data.frame(line = NA_integer_, text = "No plain SET input")
   if (is.na(selection$dataset)) {
     unresolved <- rbind(unresolved, record(input_rows, selection$reason))
@@ -79,6 +95,15 @@
   }
   list(regions = c("dc-gfup-data" = paste(data, collapse = "\n"), "dc-gfup-config" = paste(config, collapse = "\n")),
        translated = translated, unresolved = unresolved, ignored = ignored)
+}
+
+.gfup_assigned <- function(code) {
+  # Recognize direct assignments and simple THEN/ELSE targets. Quoted text
+  # supplies no assignment evidence; other SAS transformations stay unresolved.
+  code <- gsub("'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"", " ", code, perl = TRUE)
+  pattern <- "(?:^|\\b(?:then|else)[[:space:]]+)([a-z_][a-z0-9_]*)[[:space:]]*=(?!=)"
+  matches <- regmatches(code, gregexpr(pattern, code, perl = TRUE))[[1L]]
+  sub("^(?:(?:then|else)[[:space:]]+)?([a-z_][a-z0-9_]*)[[:space:]]*=$", "\\1", matches, perl = TRUE)
 }
 
 .gfup_statements <- function(source) {
