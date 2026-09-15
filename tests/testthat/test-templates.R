@@ -200,7 +200,7 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "hvti_taxonomy", "sas_path",
     "sas_variable_block", "covariate_audit", "covariates_to_numeric",
     "imputed_levels", "pool_collinear_pairs", "selection_crowding",  # >= 1.1.4
-    "concept_map"
+    "concept_map", "verify_manifest", "proc_means"
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")
