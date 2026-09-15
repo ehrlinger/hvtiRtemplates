@@ -1,0 +1,151 @@
+---
+title: "EDA postage stamps"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the job this replaces (tp.dp.EDA_barplots_scatterplots*.R). -->
+
+Replaces an older EDA bar-plot and scatter-plot sweep.
+
+A `dp-postage` job is the data-checking sweep over a new build: one small panel
+per variable against operation year, bars for categorical variables and points
+for continuous ones, pages of them. It is for finding coding errors, drift and
+missingness before any analysis. It is not a figure for a manuscript.
+
+```{r}
+#| label: setup
+.root <- if (file.exists("_quarto.yml")) "." else ".."
+if (!file.exists(file.path(.root, "_quarto.yml"))) {
+  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
+       "resolved. Render this from the project root or from the job directory.",
+       call. = FALSE)
+}
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(hvtiRutilities)
+  library(hvtiPlotR)
+  library(ggplot2)
+})
+if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
+  stop("This job needs hvtiPlotR >= 2.7.14 for hv_eda(); ",
+       utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
+}
+if (!requireNamespace("patchwork", quietly = TRUE)) {
+  stop("This job needs the patchwork package. Install it, then re-render.", call. = FALSE)
+}
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
+      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
+      "draft banner. Any other value, including 0, leaves this guard strict."
+    )
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+      warning(.msg, call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: set
+ENDPOINT <- "cohort"
+TYPE     <- "eda"
+
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (endpoint '", .name_endpoint,
+         "', type '", .name_type, "'), but declares ENDPOINT = \"", ENDPOINT,
+         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.",
+         call. = FALSE)
+  }
+}
+
+set_path <- function(kind, file) {
+  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+```
+
+## Data
+
+```{r}
+#| label: data
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+# EDIT: the analysis set this job reads: declare its columns and excluded rows
+# under analysis_sets: in _study.yml, then write it with
+# hvtiRdatabuild::write_analysis_set(). Replace both lines with d <- read_built()
+# only when the whole built cohort is the intended population.
+ANALYSIS_SET <- "eda"
+d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
+knitr::kable(attr(d, "attrition"), caption = paste0(
+  "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
+))
+```
+
+```{r}
+#| label: spec
+# EDIT: the x-axis for every panel, usually operation year.
+X_COL <- "year"
+# EDIT: the variables to sweep, named by column with a display label. Order is
+# page order. hv_eda() decides bar or scatter per variable (6 distinct values or
+# fewer is categorical), so a column does not need a type here.
+VARS <- c(age = "Age (years)", female = "Female")
+# Panels per page. 3 x 3 keeps a label readable on a printed page.
+NCOL <- 3L
+NROW <- 3L
+```
+
+## Pages
+
+```{r}
+#| label: pages
+#| results: asis
+unknown <- setdiff(c(X_COL, names(VARS)), names(d))
+if (length(unknown)) {
+  stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
+}
+plots <- lapply(names(VARS), function(v) {
+  plot(hv_eda(d, x_col = X_COL, y_col = v, y_label = VARS[[v]])) +
+    theme_hv_manuscript(base_size = 8)
+})
+per_page <- NCOL * NROW
+pages <- split(plots, ceiling(seq_along(plots) / per_page))
+for (i in seq_along(pages)) {
+  fname <- sprintf("dp-postage-%02d.png", i)
+  png(set_path("descriptive", fname), width = 11, height = 8.5, units = "in", res = 150)
+  print(patchwork::wrap_plots(pages[[i]], ncol = NCOL, nrow = NROW))
+  invisible(dev.off())
+  cat("\n![Page ", i, "](", file.path(paste0(ENDPOINT, "-", TYPE), fname), ")\n", sep = "")
+}
+```
