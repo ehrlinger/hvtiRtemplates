@@ -19,6 +19,26 @@ tables_source <- function(root, lines) {
   writeLines(lines, file.path(root, "descriptive", "dc.tables.sas"))
 }
 
+test_that("dc-tables blocks local DATA-step filters and transformed measurements", {
+  root <- migration_study_fixture("dc-tables")
+  tables_source(root, c(
+    "data built; set built; if female=1; age=age+10; run;",
+    "%desc_tab(vartype=continuous,input=built,by=,",
+    "          varlist=/* Demography */ age);"
+  ))
+  out <- tables_migrate(root, evidence = FALSE)
+  env <- new.env()
+  eval(parse(text = c(tables_region(out, "dc-tables-data"), tables_region(out, "dc-tables-config"))), env)
+  expect_true(is.na(env$DATASET))
+  expect_identical(env$CONTINUOUS, character())
+  expect_true(any(grepl("EDIT:.*source.*logic", readLines(out))))
+  report <- readLines(sub("[.]qmd$", "-migration.md", out))
+  translated <- report[seq.int(match("## Translated", report), match("## Unresolved", report) - 1L)]
+  expect_false(any(grepl("input=built|continuous: age", translated)))
+  expect_true(any(grepl("line=1; text=if female=1;", report, fixed = TRUE)))
+  expect_true(any(grepl("line=1; text=age=age+10;", report, fixed = TRUE)))
+})
+
 test_that("dc-tables migrates desc_tab groups and types", {
   root <- migration_study_fixture("dc-tables")
   expect_true(file.exists(file.path(root, "_quarto.yml")))

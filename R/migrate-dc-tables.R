@@ -116,6 +116,26 @@
   }
   unresolved <- rbind(unresolved, record(NA_integer_, "compare, continuous_stat, percentiles, abbreviations, Word filename",
                                          "Template defaults require review; SAS options do not prove these choices."))
+  statements <- .gfup_statements(evidence$source)
+  # Only presentation statements and complete calls are accounted for above.
+  # Without DATA-step lineage, even a matching input name cannot prove that
+  # the registered rows and measurements are the ones supplied to the macro.
+  exterior <- statements[!statements$comment & !grepl(
+    "^(%desc_tab[[:space:]]*\\(|title[0-9]*\\b|footnote[0-9]*\\b|options\\b|ods\\b|run$|quit$)",
+    statements$code, ignore.case = TRUE, perl = TRUE
+  ), ]
+  if (nrow(exterior)) {
+    unresolved <- rbind(unresolved, record(
+      exterior$line, exterior$text,
+      "Unsupported source logic; verify cohort and measurements in the registered data build."
+    ))
+    translated$reason <- paste("Candidate only; source logic prevents deterministic mapping.", translated$reason)
+    unresolved <- rbind(unresolved, translated)
+    translated <- translated[FALSE, ]
+    selection$dataset <- NA_character_
+    buckets$continuous <- binary <- categorical <- character()
+    by <- ""
+  }
   quote_r <- function(x) encodeString(x, quote = '"')
   vector_r <- function(x) if (length(x)) paste0("c(", paste(quote_r(x), collapse = ", "), ")") else "character(0)"
   group_lines <- vapply(names(groups), function(name) {
@@ -141,6 +161,7 @@
   if (length(unknown) || is.null(d) || length(missing)) {
     config <- c(config, "# EDIT: resolve registered-data column checks and binary/categorical classification.")
   }
+  if (nrow(exterior)) config <- c(config, "# EDIT: resolve source cohort and measurement logic before enabling mappings.")
   list(
     regions = c("dc-tables-data" = paste(data_lines, collapse = "\n"),
                 "dc-tables-config" = paste(config, collapse = "\n")),
