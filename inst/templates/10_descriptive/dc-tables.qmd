@@ -88,7 +88,7 @@ if (!is.null(.cur)) {
 }
 ```
 
-<!-- The two values below are written by new_job() from the endpoint/type it
+<!-- The two values below are written by add_job() from the endpoint/type it
      was called with, which are also the filename's first two fields. Every
      artifact path in this document is computed from them. -->
 
