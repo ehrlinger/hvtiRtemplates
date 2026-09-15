@@ -79,7 +79,7 @@
   labels <- list()
   label_pattern <- paste0("(?i)^label\\s+(", plain, ")\\s*=\\s*('(?:[^']|'')*'|\"(?:[^\"]|\"\")*\")$")
   label_rows <- match_code(label_pattern)
-  label_definitions <- active[grepl("(?:^|%then\\s+)label\\s", active, perl = TRUE)]
+  label_definitions <- active[grepl("(?:^|%(?:then|else)\\s+)label\\s", active, perl = TRUE)]
   label_fields <- names_in(label_definitions, paste0("\\b(", plain, ")\\s*="))
   for (i in label_rows) {
     parts <- capture(label_pattern, rows$code[i])
@@ -95,7 +95,7 @@
   axis_pattern <- paste0("^axis([0-9]+)\\s+order\\s*=\\s*\\(\\s*(", number, ")\\s+to\\s+(", number,
                          ")\\s+by\\s+(", number, ")\\s*\\)$")
   axis_rows <- match_code(axis_pattern)
-  axis_ids <- names_in(active, "(?:^|%then\\s+)axis([0-9]+)\\b")
+  axis_ids <- names_in(active, "(?:^|%(?:then|else)\\s+)axis([0-9]+)\\b")
   for (i in axis_rows) {
     parts <- capture(axis_pattern, code[i])
     values <- as.numeric(parts[-1L])
@@ -108,7 +108,7 @@
   plots <- list()
   plot_pattern <- paste0("^plot\\s+(", plain, ")\\s*\\*\\s*year\\s*/\\s*haxis=axis([0-9]+)\\s+vaxis=axis([0-9]+)$")
   plot_rows <- match_code(plot_pattern)
-  plot_definitions <- active[grepl("(?:^|%then\\s+)plot\\s", active, perl = TRUE)]
+  plot_definitions <- active[grepl("(?:^|%(?:then|else)\\s+)plot\\s", active, perl = TRUE)]
   plot_definitions <- sub("/.*$", "", plot_definitions)
   plot_fields <- names_in(plot_definitions, paste0("\\b(", plain, ")\\b"))
   xaxes <- character()

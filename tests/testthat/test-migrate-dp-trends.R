@@ -244,3 +244,25 @@ test_that("dp-trends returns parseable candidate origins from multiline prose", 
   eval(parse(text = result$regions[["dp-trends-year"]]), env)
   expect_equal(env$d$year, c(1986, 1987))
 })
+
+test_that("dp-trends inventories else branches for axis label and plot definitions", {
+  root <- migration_study_fixture("dp-trends")
+  original <- trends_evidence(root)$source$text
+  branch <- "%if &flag %then %put unchanged;"
+  cases <- list(
+    list(statement = "%else axis1 order=(2000 to 2020 by 10);", lines = c(9L, 21L, 22L, 26L), choice = "axis"),
+    list(statement = "%else label hx_chf='Conditional heart failure';", lines = c(7L, 26L), choice = "label"),
+    list(statement = "%else plot hx_chf*year / haxis=axis1 vaxis=axis3;", lines = c(21L, 26L), choice = "plot")
+  )
+  for (case in cases) {
+    evidence <- trends_evidence(root, c(original, branch, case$statement))
+    result <- hvtiRtemplates:::.migrate_dp_trends(evidence, character())
+    env <- trends_config(result)
+    expect_true(all(case$lines %in% result$unresolved$line), info = case$statement)
+    expect_false(any(case$lines %in% result$translated$line), info = case$statement)
+    expect_false(case$statement %in% result$ignored$text)
+    if (case$choice == "axis") expect_identical(env$XBREAKS, NULL)
+    if (case$choice == "label") expect_identical(env$TRENDS$hx_chf$labels, "hx_chf")
+    if (case$choice == "plot") expect_identical(env$TRENDS$hx_chf$ylim, NULL)
+  }
+})
