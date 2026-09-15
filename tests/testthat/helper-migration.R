@@ -2,11 +2,13 @@ migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame()) 
   root <- withr::local_tempdir(.local_envir = .local_envir)
   folders <- c("datasets", "descriptive", "distributions", "analyses", "graphs", "documents", "estimates")
   for (folder in folders) dir.create(file.path(root, folder))
+  writeLines(c("project:", "  type: default"), file.path(root, "_quarto.yml"))
   i <- seq_len(40L)
   built <- data.frame(
     dead = i %% 2L, iv_dead = i / 10, iv_fup = i / 10 + 1,
     year = 2000L + i %% 10L, female = i %% 2L, race_grp = 1L + i %% 3L,
     repair = as.integer(i %% 3L == 0L), age = 40 + i, bmi = 20 + i / 10,
+    treatment = i %% 2L,
     hx_chf = as.integer(i %% 4L == 0L), lvmassi = 80 + i
   )
   utils::write.csv(built, file.path(root, "datasets", "built.csv"), row.names = FALSE)

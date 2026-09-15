@@ -43,6 +43,7 @@ Suggests:
     hvtiRlifetables (>= 0.1.2),
     jsonlite,
     knitr,
+    officer,
     quarto,
     testthat (>= 3.0.0),
     withr

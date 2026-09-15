@@ -17,11 +17,12 @@ Replaces `descriptive/dc.tables`: say which variant.
 
 A `dc-tables` job is the formatted descriptive table: every variable the study
 reports, grouped under the section headings the SAS `%desc_tab` lists carried as
-comments, categorical as `n (%)` and continuous as mean±SD and median (15th,
-85th percentile). `%desc_tab` wrote the categorical and continuous tables as two
+comments, categorical as `n (%)` and continuous in the summary form you select.
+The default is median (15th, 85th percentile).
+`%desc_tab` wrote the categorical and continuous tables as two
 RTF files; `hv_tbl_summary()` writes one table with both. It describes; with
-`BY` set it also tests, and a p-value here is a prompt for an analysis, not a
-result.
+`BY` set it separates the groups into columns. `COMPARE` chooses whether to
+test them; a p-value here is a prompt for an analysis, not a result.
 
 ```{r}
 #| label: setup
@@ -126,10 +127,18 @@ hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 # EDIT: the analysis set this job reads: the columns and excluded rows declared
 # under analysis_sets: in _study.yml and written once with
 # hvtiRdatabuild::write_analysis_set(). A stale set stops and names the call
-# that refreshes it. Use NULL to describe the whole built cohort instead.
+# that refreshes it. Alternatively, set ANALYSIS_SET to NULL and select a
+# registered DATASET ("study" for the whole built cohort).
+# MIGRATE-BEGIN: dc-tables-data
+DATASET <- NULL
 ANALYSIS_SET <- "eda"
-if (is.null(ANALYSIS_SET)) {
-  d <- read_built()
+# MIGRATE-END: dc-tables-data
+if (is.null(DATASET) == is.null(ANALYSIS_SET)) {
+  stop("Select exactly one of DATASET and ANALYSIS_SET.", call. = FALSE)
+}
+if (!is.null(DATASET)) {
+  cfg <- study_config(.root)
+  d <- read_built(cfg, dataset = DATASET)
 } else {
   d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
   knitr::kable(attr(d, "attrition"), caption = paste0(
@@ -144,13 +153,26 @@ if (is.null(ANALYSIS_SET)) {
 # becomes a row group in the table, in this order. These are the /* Demography */
 # style banners from the SAS varlist; carry them across unchanged so the R table
 # reads like the SAS one. Commented-out SAS blocks stay out.
+# MIGRATE-BEGIN: dc-tables-config
 GROUPS <- list(
   Demography = c("age", "female"),
   Symptoms   = c("nyha_pr")
 )
 # EDIT: NULL for the overall table. A column name reproduces the `%macro skip`
-# by-group sections (by=, byvalue=): one column per level and a p-value column.
+# by-group sections (by=): one column per observed level. Review byvalue=
+# against the data before accepting the columns; COMPARE controls testing.
 BY <- NULL
+# All three NULL values use automatic classification for a new, unmigrated job.
+# Migrated jobs declare every row explicitly; character(0) is an empty bucket.
+CONTINUOUS <- NULL
+BINARY <- NULL
+CATEGORICAL <- NULL
+COMPARE <- "none"             # EDIT: choose whether to compare groups
+CONTINUOUS_STAT <- "median"   # EDIT: choose the continuous summary
+PERCENTILES <- c(15, 85)       # EDIT: choose the reported percentiles
+ABBREVIATIONS <- character(0) # EDIT: define abbreviations used in the table
+WORD_FILE <- "dc-tables.docx"  # EDIT: choose the Word filename within this set
+# MIGRATE-END: dc-tables-config
 # EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you
 # want summarised as continuous: list(continuous = c("nyha_pr")). list() for none.
 OVERRIDES <- list()
@@ -221,18 +243,39 @@ classify_buckets <- function(d, vars, overrides = list()) {
 
 ```{r}
 #| label: table
-b <- classify_buckets(d, unlist(GROUPS, use.names = FALSE), OVERRIDES)
-tbl <- hv_tbl_summary(
-  d, by = BY, groups = GROUPS,
-  continuous = b$continuous, binary = b$binary, categorical = b$categorical,
-  continuous_stat = "both", percentiles = c(15, 85),
-  compare = if (is.null(BY)) "none" else "pvalue"
+explicit <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
+if (all(vapply(explicit, is.null, logical(1)))) {
+  b <- classify_buckets(d, unlist(GROUPS, use.names = FALSE), OVERRIDES)
+  CONTINUOUS <- b$continuous
+  BINARY <- b$binary
+  CATEGORICAL <- b$categorical
+} else {
+  if (any(vapply(explicit, is.null, logical(1))) || length(OVERRIDES)) {
+    stop("Declare all three buckets and leave OVERRIDES empty for explicit classification.", call. = FALSE)
+  }
+  rows <- unlist(GROUPS, use.names = FALSE)
+  classified <- unlist(explicit, use.names = FALSE)
+  if (anyDuplicated(rows) || anyDuplicated(classified) || !setequal(rows, classified)) {
+    stop("Every grouped row must appear in exactly one explicit bucket.", call. = FALSE)
+  }
+  invisible(classify_buckets(d, rows, explicit))
+}
+tbl <- hvtiRtables::hv_tbl_summary(
+  d, by = BY, groups = GROUPS, continuous = CONTINUOUS,
+  binary = BINARY, categorical = CATEGORICAL, compare = COMPARE,
+  percentiles = PERCENTILES, continuous_stat = CONTINUOUS_STAT
 )
 tbl
-hv_man_table_save(
-  hv_man_table(tbl),
-  file = set_path("descriptive", paste0(ENDPOINT, "-", TYPE, "-dc-tables.docx"))
-)
+ft <- hvtiRtables::hv_man_table(tbl)
+if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
+      !grepl("^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$", WORD_FILE)) {
+  stop("WORD_FILE must be a plain .docx filename within this set.", call. = FALSE)
+}
+word_path <- file.path(study_dir("documents", .root), paste0(ENDPOINT, "-", TYPE), WORD_FILE)
+dir.create(dirname(word_path), recursive = TRUE, showWarnings = FALSE)
+hvtiRtables::hv_man_table_save(ft, word_path, abbreviations = ABBREVIATIONS)
+check <- hvtiRtables::hv_check_docx(word_path)
+if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)
 ```
 
 ## Correlations

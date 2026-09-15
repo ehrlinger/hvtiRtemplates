@@ -1,0 +1,7 @@
+<!-- EDIT: name the job this replaces (descriptive/dc.tables.*) and say whether it
+# EDIT: the analysis set this job reads: the columns and excluded rows declared
+# EDIT: the variables to report, grouped. Each name is a section heading and
+# EDIT: review SAS presentation choices in the migration report.
+# EDIT: confirm comparison, summaries, percentiles, abbreviations and Word filename.
+# EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you
+# EDIT: NULL skips the correlation variant (dc.tables.ods_<topic>.sas). To run

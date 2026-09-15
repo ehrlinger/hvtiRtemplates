@@ -58,9 +58,15 @@ test_that("descriptive templates can read the whole cohort", {
     env$.root <- "."
     env$read_built <- hvtiRutilities::read_built
 
-    result <- withVisible(eval(
-      use_whole_cohort(extract_chunk(template, "data")), envir = env
-    ))
+    code <- use_whole_cohort(extract_chunk(template, "data"))
+    if (basename(template) == "dc-tables.qmd") {
+      env$study_config <- hvtiRutilities::study_config
+      assignment <- vapply(code, function(expr) {
+        is.call(expr) && identical(expr[[1L]], quote(`<-`)) && identical(expr[[2L]], quote(DATASET))
+      }, logical(1))
+      code[[which(assignment)]] <- call("<-", as.name("DATASET"), "study")
+    }
+    result <- withVisible(eval(code, envir = env))
 
     expect_equal(env$d, built, info = basename(template))
     expect_false(result$visible, info = basename(template))
