@@ -1,5 +1,12 @@
 # hvtiRtemplates (unreleased)
 
+* **The `dc-general` job template ships**, replacing `descriptive/dc.general`:
+  overall statistics through `hvtiRutilities::proc_contents()` and
+  `proc_means()`, then base-R contingency tables, cumulative distributions
+  (SAS `QNTLDEF=5` quantiles and the five lowest and highest values) and a
+  Pearson pairwise-correlation sweep. `ID_COL` is off by default, so no
+  patient identifier reaches the report unless a study author sets it.
+
 * **Three descriptive job templates ship: `dc-tables`, `dc-gfup` and
   `dp-postage`**, with `vignette("sas-to-r-descriptive")` walking a SAS user
   from `descriptive/dc.tables*`, `dc.gfup`, `dp.trends` and the EDA postage

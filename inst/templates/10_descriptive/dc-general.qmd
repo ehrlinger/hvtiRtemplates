@@ -199,3 +199,69 @@ if (length(corr_vars) >= 2L) {
   rownames(corrs) <- NULL
 }
 ```
+
+## Other investigations
+
+<!-- EDIT: study-specific checks go here, above the standard sections (the SAS
+job's O T H E R   I N V E S T I G A T I O N S banner). Delete this marker when
+there are none. -->
+
+## Overall statistics
+
+```{r}
+#| label: overall
+proc_contents(d)
+proc_means(d, stats = c("n", "nmiss", "mean", "std", "min", "max", "sum"))
+```
+
+## Contingency tables for categorical variables
+
+```{r}
+#| label: freqs
+#| results: asis
+for (group in names(freqs)) {
+  cat("\n### ", group, "\n\n", sep = "")
+  for (v in names(freqs[[group]])) {
+    cat(knitr::kable(freqs[[group]][[v]], caption = v), sep = "\n")
+    cat("\n")
+  }
+}
+```
+
+## Cumulative distributions for continuous variables
+
+```{r}
+#| label: cdfs
+#| results: asis
+for (group in names(cdfs)) {
+  cat("\n### ", group, "\n\n", sep = "")
+  for (v in names(cdfs[[group]])) {
+    cdf <- cdfs[[group]][[v]]
+    cat("\n#### ", v, "\n\n", sep = "")
+    cat(knitr::kable(cdf$summary), sep = "\n")
+    cat("\n")
+    cat(knitr::kable(cdf$quantiles, caption = "Quantiles (SAS QNTLDEF=5)"), sep = "\n")
+    cat("\n")
+    cat(knitr::kable(cdf$extremes, caption = "Five lowest and five highest values"), sep = "\n")
+    cat("\n")
+  }
+}
+```
+
+## Pair-wise correlations
+
+```{r}
+#| label: corrs
+#| results: asis
+if (nrow(corrs)) {
+  cat(knitr::kable(corrs, digits = 3, row.names = FALSE,
+                   caption = "Pearson, pairwise complete, strongest first"), sep = "\n")
+} else {
+  cat("No correlation sweep: `CORR_VARS` names fewer than two variables.\n")
+}
+```
+
+`proc_means()` skips non-numeric columns. Quantiles are SAS `QNTLDEF=5`, the
+`proc univariate` default. The SAS job printed `ccfid` beside every extreme
+value so an author could look the patient up; this job prints the values alone
+unless `ID_COL` is set in the spec chunk.
