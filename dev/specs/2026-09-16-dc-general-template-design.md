@@ -62,7 +62,7 @@ README row. The full list:
 ## 4. Boilerplate
 
 Copied verbatim from `inst/templates/10_descriptive/dc-gfup.qmd` as of
-`d79bf45`, so the siblings share one setup contract:
+`9ec46fc` (after #117), so the siblings share one setup contract:
 
 - the YAML header (HTML, table of contents, folded code, embedded resources);
 - `setup`: project-root resolution, sourcing `R/`, the hvtiRdatabuild >= 0.2.1
@@ -71,7 +71,9 @@ Copied verbatim from `inst/templates/10_descriptive/dc-gfup.qmd` as of
   `HVTI_TEMPLATE_DRAFT` is set;
 - `set`: `ENDPOINT <- "cohort"`, `TYPE <- "eda"`, the filename check, and
   `set_path()` through `hvtiRutilities::study_dir()`;
-- `data`: `verify_manifest()`, `ANALYSIS_SET <- "eda"`, the attrition table.
+- `data`: `verify_manifest()`, `DATASET <- "study"`, `ANALYSIS_SET <- "eda"`,
+  the analysis-set/dataset guard, the attrition table, and the "Data read:"
+  line.
 
 ## 5. The `spec` chunk
 
