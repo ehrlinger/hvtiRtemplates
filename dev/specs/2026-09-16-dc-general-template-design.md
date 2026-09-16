@@ -39,8 +39,23 @@ need). Revisit the first if a second job needs the same procedures.
 
 ## 3. File
 
-`inst/templates/10_descriptive/dc-general.qmd`, and a row in
-`inst/templates/README.md`. No code registry lists templates.
+`inst/templates/10_descriptive/dc-general.qmd`. No code registry lists
+templates: `template_list()` scans `inst/templates/` for `<prefix>-<qualifier>.qmd`.
+
+The per-template obligations of `2026-09-09-eda-templates-design.md` section 7
+apply. Corrected 2026-09-16: the first draft of this section named only the
+README row. The full list:
+
+- a row in `inst/templates/README.md`, and `dc-general` added to that file's
+  list of qualified templates;
+- its own **file key** in `.lintr` (never a directory key) excluding
+  `object_name_linter`, `commented_code_linter` and `object_usage_linter`, as
+  every sibling has;
+- a `NEWS.md` entry under `# hvtiRtemplates (unreleased)`, with no `Version:`
+  bump, because `inst/` ships;
+- no study identifiers: `test-add-job.R` scans every template for
+  `/studies/`, `preserve_root`, `lv_function` and `built.sas7bdat`, and
+  `tools/check-no-site-identifiers.sh` scans the repository.
 
 ## 4. Boilerplate
 
