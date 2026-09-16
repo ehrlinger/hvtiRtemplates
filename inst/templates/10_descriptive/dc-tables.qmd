@@ -124,13 +124,21 @@ set_path <- function(kind, file) {
 # The checksum of every dataset in manifest.yaml is checked before anything is
 # read, so a result can name the data that produced it. It stops on a mismatch.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+# EDIT: the built dataset this job reads. "study" is the file named by built:
+# in _study.yml; any other name must be declared under additional_datasets:,
+# such as a column subset written for R. Analysis sets are derived from
+# "study" only, so another dataset needs ANALYSIS_SET <- NULL.
+DATASET <- "study"
 # EDIT: the analysis set this job reads: the columns and excluded rows declared
 # under analysis_sets: in _study.yml and written once with
 # hvtiRdatabuild::write_analysis_set(). A stale set stops and names the call
 # that refreshes it. Use NULL to describe the whole built cohort instead.
 ANALYSIS_SET <- "eda"
 if (is.null(ANALYSIS_SET)) {
-  d <- read_built()
+  d <- read_built(dataset = DATASET)
+} else if (!identical(DATASET, "study")) {
+  stop("An analysis set is written from the study dataset, not `", DATASET,
+       "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
 } else {
   d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
   knitr::kable(attr(d, "attrition"), caption = paste0(
