@@ -7,11 +7,10 @@
   must have been adopted with `hvtiRutilities::study_setup()`.
 
 * **`open_job()` finds the study root and opens or creates a job.** Called
-  from anywhere inside a study, it resolves the root via the nearest
+  from anywhere inside a study, it resolves the root through the nearest
   `_study.yml` at or above `dir`, creates the job with `add_job()` when it
   does not exist, and opens an existing job as it stands, never overwriting
-  it. The internal `.open_in_editor()` helper it introduces is reused by a
-  later render-job workflow.
+  it.
 
 * `render_job()` renders a job from its own directory: a draft by default,
   and with `final = TRUE` a render that stops on an unfinished job.
