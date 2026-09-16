@@ -41,6 +41,52 @@ hvtiR::status()
 5.  Keep the authored job flat in `10_descriptive/`; its generated
     artifacts are filed beneath `10_descriptive/cohort-eda/`.
 
+## Which data a job reads
+
+A SAS job names its dataset in a `set` statement, so the answer is in
+the code. An R job takes it from `_study.yml`, which can offer the same
+study more than one way. The descriptive jobs choose with two settings
+at the top of their `data` chunk, and every rendered report prints what
+they chose:
+
+    Data read: dataset `builtr` (builtr.sas7bdat), 2514 rows, 135 columns.
+
+`_study.yml` can declare three kinds of data:
+
+``` yaml
+built: built.sas7bdat            # the study dataset
+additional_datasets:
+  builtr:                        # another file, read as it stands
+    built: builtr.sas7bdat
+analysis_sets:
+  eda:                           # columns kept and rows excluded, written by R
+    ...
+```
+
+| to read | `DATASET` | `ANALYSIS_SET` | exclusions shown |
+|:---|:---|:---|:---|
+| the study dataset | `"study"` | `NULL` | none applied |
+| an additional dataset, such as a column subset written for R | its name, `"builtr"` | `NULL` | none applied |
+| an analysis set | `"study"` | its name, `"eda"` | yes, in order |
+
+Three things catch people:
+
+- **An additional dataset is not an analysis set.** Putting `"builtr"`
+  in `ANALYSIS_SET` stops with “No analysis set `builtr`”. The two are
+  separate lists in `_study.yml`.
+- **An analysis set must be written before a job can read it.** Run
+  `hvtiRdatabuild::write_analysis_set("eda")` once from the study root.
+  If the study dataset or the set’s declaration changes afterwards, the
+  job stops and names that same call, so it never describes a cohort
+  that has since moved.
+- **An analysis set is always cut from the study dataset.** Pairing one
+  with a `DATASET` other than `"study"` stops rather than quietly using
+  the study dataset instead.
+
+Before any of this, `verify_manifest()` checks every file’s checksum
+against `manifest.yaml`. A stop on that first line means the data
+changed, not that a setting is wrong.
+
 ## Descriptive tables and correlations: `dc-tables`
 
 The SAS job commonly calls `%desc_tab` once for categorical variables

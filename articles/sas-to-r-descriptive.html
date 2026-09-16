@@ -62,7 +62,7 @@
       <h1>From SAS descriptive jobs to R</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-09-15</p>
+      <p class="date">2026-09-16</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/vignettes/sas-to-r-descriptive.qmd" class="external-link"><code>vignettes/sas-to-r-descriptive.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -134,14 +134,72 @@
 <li>Render from the study root with <code>quarto render 10_descriptive/cohort-eda-dc-tables.qmd</code>.</li>
 <li>Compare the result with the SAS <code>.lst</code>, section by section.</li>
 <li>Keep the authored job flat in <code>10_descriptive/</code>; its generated artifacts are filed beneath <code>10_descriptive/cohort-eda/</code>.</li>
-</ol></section><section class="level2"><h2 id="descriptive-tables-and-correlations-dc-tables">Descriptive tables and correlations: <code>dc-tables</code>
+</ol></section><section class="level2"><h2 id="which-data-a-job-reads">Which data a job reads<a class="anchor" aria-label="anchor" href="#which-data-a-job-reads"></a>
+</h2>
+<p>A SAS job names its dataset in a <code>set</code> statement, so the answer is in the code. An R job takes it from <code>_study.yml</code>, which can offer the same study more than one way. The descriptive jobs choose with two settings at the top of their <code>data</code> chunk, and every rendered report prints what they chose:</p>
+<pre><code>Data read: dataset `builtr` (builtr.sas7bdat), 2514 rows, 135 columns.</code></pre>
+<p><code>_study.yml</code> can declare three kinds of data:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">built</span><span class="kw">:</span><span class="at"> built.sas7bdat</span><span class="co">            # the study dataset</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">additional_datasets</span><span class="kw">:</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">builtr</span><span class="kw">:</span><span class="co">                        # another file, read as it stands</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">built</span><span class="kw">:</span><span class="at"> builtr.sas7bdat</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">analysis_sets</span><span class="kw">:</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">eda</span><span class="kw">:</span><span class="co">                           # columns kept and rows excluded, written by R</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="at">    ...</span></span></code></pre></div>
+<table class="table caption-top">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead><tr class="header">
+<th style="text-align: left;">to read</th>
+<th style="text-align: left;"><code>DATASET</code></th>
+<th style="text-align: left;"><code>ANALYSIS_SET</code></th>
+<th style="text-align: left;">exclusions shown</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">the study dataset</td>
+<td style="text-align: left;"><code>"study"</code></td>
+<td style="text-align: left;"><code>NULL</code></td>
+<td style="text-align: left;">none applied</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">an additional dataset, such as a column subset written for R</td>
+<td style="text-align: left;">its name, <code>"builtr"</code>
+</td>
+<td style="text-align: left;"><code>NULL</code></td>
+<td style="text-align: left;">none applied</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">an analysis set</td>
+<td style="text-align: left;"><code>"study"</code></td>
+<td style="text-align: left;">its name, <code>"eda"</code>
+</td>
+<td style="text-align: left;">yes, in order</td>
+</tr>
+</tbody>
+</table>
+<p>Three things catch people:</p>
+<ul>
+<li>
+<strong>An additional dataset is not an analysis set.</strong> Putting <code>"builtr"</code> in <code>ANALYSIS_SET</code> stops with “No analysis set <code>builtr</code>”. The two are separate lists in <code>_study.yml</code>.</li>
+<li>
+<strong>An analysis set must be written before a job can read it.</strong> Run <code>hvtiRdatabuild::write_analysis_set("eda")</code> once from the study root. If the study dataset or the set’s declaration changes afterwards, the job stops and names that same call, so it never describes a cohort that has since moved.</li>
+<li>
+<strong>An analysis set is always cut from the study dataset.</strong> Pairing one with a <code>DATASET</code> other than <code>"study"</code> stops rather than quietly using the study dataset instead.</li>
+</ul>
+<p>Before any of this, <code>verify_manifest()</code> checks every file’s checksum against <code>manifest.yaml</code>. A stop on that first line means the data changed, not that a setting is wrong.</p>
+</section><section class="level2"><h2 id="descriptive-tables-and-correlations-dc-tables">Descriptive tables and correlations: <code>dc-tables</code>
 <a class="anchor" aria-label="anchor" href="#descriptive-tables-and-correlations-dc-tables"></a>
 </h2>
 <p>The SAS job commonly calls <code>%desc_tab</code> once for categorical variables and once for continuous variables. The R job supplies both sets to one table. SAS comment banners become the names in <code>GROUPS</code>; <code>by=</code> and <code>byvalue=</code> become <code>BY</code>; and <code>perctile=15 50 85</code> becomes <code>continuous_stat = "both"</code> with percentiles 15 and 85. The <code>dc.tables.ods_&lt;topic&gt;.sas</code> correlation variant becomes <code>CORR</code> in the same job.</p>
 <pre class="sas"><code>%desc_tab(vartype=category,   varlist=female diabetes nyha_pr);
 %desc_tab(vartype=continuous, varlist=age bmi, perctile=15 50 85);</code></pre>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_correlation_data.html" class="external-link">sample_correlation_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
 <span><span class="va">d</span><span class="op">$</span><span class="va">female</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, length.out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -675,7 +733,7 @@
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiRtables</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRtables/reference/hv_correlation_table.html" class="external-link">hv_correlation_table</a></span><span class="op">(</span></span>
 <span>  <span class="va">d</span>,</span>
 <span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"glucose"</span>, <span class="st">"creatinine"</span><span class="op">)</span>,</span>
@@ -701,7 +759,7 @@
   var iv_dead iv_fup;
 run;</code></pre>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"hvtiRutilities"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/generate_survival_data.html" class="external-link">generate_survival_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
 <span>  <span class="va">d</span><span class="op">$</span><span class="va">iv_fup</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">iv_dead</span>, <span class="fl">0.85</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">iv_dead</span><span class="op">)</span></span>
@@ -727,10 +785,10 @@ run;</code></pre>
 <a class="anchor" aria-label="anchor" href="#trends-over-operation-year-dp-trends"></a>
 </h2>
 <p>The shipped <code>dp-trends</code> template replaces hand-built annual summaries and per-series <code>smooth.spline(df = 6)</code> calls with <code>hv_trends()</code>. Its smoother is LOESS, not the SAS-era smoothing spline, so compare the old and new figures by shape rather than pointwise equality.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/smooth.spline.html" class="external-link">smooth.spline</a></span><span class="op">(</span><span class="va">year</span>, <span class="va">annual_mean</span>, df <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"hvtiPlotR"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_eda_data.html" class="external-link">sample_eda_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">120</span><span class="op">)</span></span>
 <span>  <span class="va">trend_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">year</span>, value <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">ef</span>, group <span class="op">=</span> <span class="st">"EF"</span><span class="op">)</span></span>
@@ -751,10 +809,10 @@ run;</code></pre>
 <a class="anchor" aria-label="anchor" href="#eda-postage-stamps-dp-postage"></a>
 </h2>
 <p>The older <code>Function_DataPlotting()</code> loops become one <code>hv_eda()</code> call per entry in <code>VARS</code>. Character and factor columns produce bars. A numeric column produces bars only when it has at most six distinct non-missing values and every value is a non-negative whole number no greater than six; otherwise it produces a scatter panel. The template lays those panels out in printable pages.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">v</span> <span class="kw">in</span> <span class="va">variables</span><span class="op">)</span> <span class="fu">Function_DataPlotting</span><span class="op">(</span><span class="va">data</span>, <span class="va">v</span>, <span class="st">"year"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_eda_data.html" class="external-link">sample_eda_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">120</span><span class="op">)</span></span>
 <span><span class="va">variables</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>male <span class="op">=</span> <span class="st">"Male"</span>, ef <span class="op">=</span> <span class="st">"Ejection fraction"</span><span class="op">)</span></span>
 <span><span class="va">panels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">variables</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">{</span></span>
@@ -767,7 +825,7 @@ run;</code></pre>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">panels</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
