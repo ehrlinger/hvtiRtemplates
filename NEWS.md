@@ -8,6 +8,9 @@
   with "No analysis set", because analysis sets and additional datasets are
   separate registries. Pairing an analysis set with a dataset other than
   `"study"` now stops, since a set is always derived from the study dataset.
+  Each job now explains the three data routes above its `data` chunk and
+  prints the dataset, file and dimensions it read, so a report says which
+  data it describes.
 
 * **Three descriptive job templates ship: `dc-tables`, `dc-gfup` and
   `dp-postage`**, with `vignette("sas-to-r-descriptive")` walking a SAS user
