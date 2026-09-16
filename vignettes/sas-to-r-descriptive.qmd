@@ -48,19 +48,19 @@ hvtiR::status()
 1. Scaffold the job. For example,
    `add_job("dc", "cohort", "eda", qualifier = "tables")` writes
    `10_descriptive/cohort-eda-dc-tables.qmd` in a new study.
-2. Render it from the study root with
-   `quarto render 10_descriptive/cohort-eda-dc-tables.qmd`. It renders at once,
-   as a draft.
-3. Work the `EDIT:` markers, re-rendering as you go, until the draft banner goes.
+2. Work the `EDIT:` markers, rendering from the study root with
+   `quarto render 10_descriptive/cohort-eda-dc-tables.qmd` as you go.
+   Unfinished work renders as a draft, as far as the markers you have worked.
+3. Stop when every marker is gone and the draft banner with it.
 4. Compare the result with the SAS `.lst`, section by section.
 5. Keep the authored job flat in `10_descriptive/`; its generated artifacts
    are filed beneath `10_descriptive/cohort-eda/`.
 
 ## The draft banner and `EDIT:` markers
 
-Every line a study author has to change carries an `EDIT:` marker. A freshly
-scaffolded job still renders, so there is a working report to iterate on from
-the start, but while any marker remains the report opens with a banner:
+Every line a study author has to change carries an `EDIT:` marker. Markers
+left in a job do not stop its render; while any remain, the report opens with a
+banner:
 
 ```
 DRAFT -- this job is unfinished
@@ -73,9 +73,16 @@ Unresolved markers remain. The numbers below are not a result.
   ...
 ```
 
-The render log carries the same list as a warning. Until the markers are
-worked, the tables describe the template's placeholder choices rather than your
-study, which is why the banner says the numbers are not a result.
+The render log carries the same list as a warning. The banner says the
+numbers are not a result because some of them may still come from the
+template's placeholder choices rather than your study.
+
+The banner does not mean every section will run. A section whose marker is not
+yet worked still reads the template's placeholders, and most of those stop with
+their own error rather than draw a table from nothing. A new `dc-tables` job,
+for instance, stops with "Unknown table variable(s)" until `GROUPS` names your
+columns, and before that if the `eda` analysis set has not been written. Work
+the markers from the top of the file down, and each render gets further.
 
 Each listed line is the start of a marker. Read the comment around it, make the
 change it asks for, delete the marker line, and render again. To see what is

@@ -202,9 +202,11 @@ placeholder column, and when a column is absent `!is.na(d$<col>)` is
 error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/27)).
 
 **A job with markers left renders as a draft.** The guard warns, and the
-report opens with a DRAFT banner naming the unresolved markers, so a freshly
-scaffolded job works at once and the author removes markers as they go. The
-banner goes when the last marker does. It is deliberate: a draft render that
+report opens with a DRAFT banner naming the unresolved markers, so the author
+renders as they work and the banner goes when the last marker does. The guard
+only stops blocking: a section still holding a template placeholder, such as a
+column the study does not have, stops with its own error, so a fresh job
+renders as far as the markers already worked. It is deliberate: a draft render that
 looks like a finished one is the same defect with an extra step, and the
 `.html` is what gets sent to someone.
 
