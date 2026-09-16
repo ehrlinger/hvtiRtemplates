@@ -99,6 +99,15 @@ editor. The text is unambiguous; the number is a hint.
 
 ## 2. The drafting escape
 
+> **Superseded 2026-09-16: draft is now the default.** The maintainer chose to
+> let a scaffolded job render straight away, so an author iterates on a working
+> report and removes markers as they go. `HVTI_TEMPLATE_DRAFT` is gone.
+> `HVTI_TEMPLATE_STRICT` restores the stop for a final render: unset, `0`,
+> `false` and `no` draft, and any other value stops, so a mistyped switch still
+> fails toward the stop. The banner stays mandatory, and is now the thing that
+> keeps #27 closed on a default render. The text below records the original
+> opt-in design.
+
 `HVTI_TEMPLATE_DRAFT=1` downgrades the stop to a warning **and emits a visible
 banner into the rendered document**.
 

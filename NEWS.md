@@ -13,6 +13,16 @@
   data it describes. `vignette("sas-to-r-descriptive")` gains a "Which data a job
   reads" section covering the same ground for the biostatistics team.
 
+* **A scaffolded job now renders straight away, as a draft.** Every template's
+  edit guard used to stop a render while any `EDIT:` marker remained, unless
+  `HVTI_TEMPLATE_DRAFT` was set. The default is now the draft: the render warns
+  and the report opens with a DRAFT banner listing the open markers, so an
+  author iterates on a working report and the banner goes when the last marker
+  does. `HVTI_TEMPLATE_DRAFT` is gone. Set `HVTI_TEMPLATE_STRICT=1` to make an
+  unfinished job stop, as a final render should; unset, `0`, `false` and `no`
+  draft, and any other value stops. `vignette("sas-to-r-descriptive")` gains a
+  section on the draft banner and the markers.
+
 * **Three descriptive job templates ship: `dc-tables`, `dc-gfup` and
   `dp-postage`**, with `vignette("sas-to-r-descriptive")` walking a SAS user
   from `descriptive/dc.tables*`, `dc.gfup`, `dp.trends` and the EDA postage

@@ -48,12 +48,57 @@ hvtiR::status()
 1. Scaffold the job. For example,
    `add_job("dc", "cohort", "eda", qualifier = "tables")` writes
    `10_descriptive/cohort-eda-dc-tables.qmd` in a new study.
-2. Work every `EDIT:` marker. The edit guard stops a render while any remain.
-3. Render from the study root with
-   `quarto render 10_descriptive/cohort-eda-dc-tables.qmd`.
+2. Render it from the study root with
+   `quarto render 10_descriptive/cohort-eda-dc-tables.qmd`. It renders at once,
+   as a draft.
+3. Work the `EDIT:` markers, re-rendering as you go, until the draft banner goes.
 4. Compare the result with the SAS `.lst`, section by section.
 5. Keep the authored job flat in `10_descriptive/`; its generated artifacts
    are filed beneath `10_descriptive/cohort-eda/`.
+
+## The draft banner and `EDIT:` markers
+
+Every line a study author has to change carries an `EDIT:` marker. A freshly
+scaffolded job still renders, so there is a working report to iterate on from
+the start, but while any marker remains the report opens with a banner:
+
+```
+DRAFT -- this job is unfinished
+
+Unresolved markers remain. The numbers below are not a result.
+
+5 unresolved EDIT: marker(s) remain in this job:
+  - <!-- EDIT: name the job this replaces (descriptive/dc.tables.*) and say whether it
+  - # EDIT: the variables to report, grouped. Each name is a section heading and
+  ...
+```
+
+The render log carries the same list as a warning. Until the markers are
+worked, the tables describe the template's placeholder choices rather than your
+study, which is why the banner says the numbers are not a result.
+
+Each listed line is the start of a marker. Read the comment around it, make the
+change it asks for, delete the marker line, and render again. To see what is
+left:
+
+```sh
+grep -n "EDIT:" 10_descriptive/cohort-eda-dc-tables.qmd
+```
+
+The guard scans the whole file, so a marker in the prose, inside an HTML
+comment, counts as much as one in a code chunk. When the last marker goes, so
+does the banner.
+
+For a final render, such as the one that goes to an investigator, make an
+unfinished job stop rather than render as a draft:
+
+```sh
+HVTI_TEMPLATE_STRICT=1 quarto render 10_descriptive/cohort-eda-dc-tables.qmd
+```
+
+The render then fails at the `edit-guard` chunk with the same list. Unset, `0`,
+`false` and `no` leave draft rendering on; any other value stops, so a mistyped
+setting errs toward the stop.
 
 ## Which data a job reads
 

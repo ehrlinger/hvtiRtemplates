@@ -153,8 +153,8 @@ test_that("every template carries an edit-guard chunk", {
     src <- readLines(f, warn = FALSE)
     expect_true(any(grepl("label: edit-guard", src, fixed = TRUE)),
                 info = paste("no edit-guard chunk in", basename(f)))
-    expect_true(any(grepl("HVTI_TEMPLATE_DRAFT", src, fixed = TRUE)),
-                info = paste("edit-guard has no draft escape in", basename(f)))
+    expect_true(any(grepl("HVTI_TEMPLATE_STRICT", src, fixed = TRUE)),
+                info = paste("edit-guard has no strict switch in", basename(f)))
   }
 })
 

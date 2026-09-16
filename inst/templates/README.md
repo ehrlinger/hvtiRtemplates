@@ -194,28 +194,29 @@ to type — several exist because the alternative fails quietly rather than
 loudly.
 
 **That property is enforced, not merely stated.** Each template carries an
-`edit-guard` chunk that scans the rendering file and stops if any marker
-remains, listing the ones it found. Until 1.0.5 it was a convention only, and
-an unedited `ac` template rendered green over a meaningless stratification: the
-`derive` chunk indexed a placeholder column, and when a column is absent
-`!is.na(d$<col>)` is `logical(0)`, which makes the assignment a **silent no-op**
-rather than an error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/27)).
+`edit-guard` chunk that scans the rendering file for markers and lists the ones
+it found. Until 1.0.5 it was a convention only, and an unedited `ac` template
+rendered green over a meaningless stratification: the `derive` chunk indexed a
+placeholder column, and when a column is absent `!is.na(d$<col>)` is
+`logical(0)`, which makes the assignment a **silent no-op** rather than an
+error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/27)).
 
-To render a partly-worked job while drafting, set `HVTI_TEMPLATE_DRAFT=1`:
+**A job with markers left renders as a draft.** The guard warns, and the
+report opens with a DRAFT banner naming the unresolved markers, so a freshly
+scaffolded job works at once and the author removes markers as they go. The
+banner goes when the last marker does. It is deliberate: a draft render that
+looks like a finished one is the same defect with an extra step, and the
+`.html` is what gets sent to someone.
+
+For a final render, make an unfinished job stop instead:
 
 ```sh
-HVTI_TEMPLATE_DRAFT=1 quarto render <endpoint>-<type>-ac.qmd
+HVTI_TEMPLATE_STRICT=1 quarto render <endpoint>-<type>-ac.qmd
 ```
 
-`1`, `true` and `yes` enable it, case-insensitively. **Any other value leaves
-the guard strict**, `0` included — a variable set to `0` meaning "off" must not
-switch the guard off by being non-empty, and an unrecognised value fails toward
-the stop so the author sees it rather than getting a quiet draft.
-
-The guard then warns instead of stopping, **and the report carries a DRAFT
-banner naming the unresolved markers**. The banner is deliberate: a draft render
-that looks like a finished one is the same defect with an extra step, and the
-`.html` is what gets sent to someone.
+Unset, `0`, `false` and `no` leave the job rendering as a draft, case-insensitively.
+**Any other value stops**, `1`, `true` and `yes` included, so a mistyped value
+fails toward the stop and the author sees it rather than getting a quiet draft.
 
 The guard does not catch a marker that was worked *wrongly* — a placeholder
 replaced with a mistyped column name leaves nothing to scan for. That case is
