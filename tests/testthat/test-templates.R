@@ -158,6 +158,58 @@ test_that("every template carries an edit-guard chunk", {
   }
 })
 
+test_that("every edit-guard drafts by default and stops when strict", {
+  # The test above only proves the switch is NAMED. This one runs each
+  # template's own guard chunk, so an inverted branch, a dropped banner, or an
+  # unrecognised value that drafts instead of stopping fails here. The chunk
+  # is run outside Quarto with knitr::current_input() pointed at a job file,
+  # which is the one thing a render supplies to it.
+  skip_if_not_installed("knitr")
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+
+  guard_code <- function(f) {
+    src <- readLines(f, warn = FALSE)
+    at <- grep("#| label: edit-guard", src, fixed = TRUE)
+    end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
+    src[(at + 1L):(end - 1L)]
+  }
+  job <- tempfile(fileext = ".qmd")
+  local_mocked_bindings(current_input = function(...) job, .package = "knitr")
+  old <- Sys.getenv("HVTI_TEMPLATE_STRICT", unset = NA)
+  # eval() runs this package's own shipped template chunk, the code under test.
+  run <- function(code, strict) {
+    if (is.na(strict)) Sys.unsetenv("HVTI_TEMPLATE_STRICT") else Sys.setenv(HVTI_TEMPLATE_STRICT = strict)
+    capture.output(eval(parse(text = code), envir = new.env()))
+  }
+  marker <- paste0("# ", paste0("ED", "IT", ":"), " choose the endpoint")
+
+  # tryCatch(finally =) rather than withr, which this package does not suggest.
+  tryCatch(for (f in tl$file) {
+    code <- guard_code(f)
+    info <- basename(f)
+
+    writeLines("finished job", job)
+    expect_silent(out <- run(code, NA))
+    expect_length(out, 0L)
+
+    writeLines(c("some prose", marker), job)
+    for (v in list(NA, "0", "false", "no", "FALSE")) {
+      expect_warning(out <- run(code, v), "Rendering as a draft", info = info)
+      expect_true(any(grepl("DRAFT", out, fixed = TRUE)), info = paste(info, v))
+      expect_true(any(grepl("choose the endpoint", out, fixed = TRUE)),
+                  info = paste(info, v))
+    }
+    for (v in c("1", "true", "yes")) {
+      expect_error(run(code, v), "unresolved", info = paste(info, v))
+    }
+    expect_error(run(code, "ture"), "HVTI_TEMPLATE_STRICT is 'ture'", info = info)
+  }, finally = {
+    unlink(job)
+    if (is.na(old)) Sys.unsetenv("HVTI_TEMPLATE_STRICT") else Sys.setenv(HVTI_TEMPLATE_STRICT = old)
+  })
+})
+
 test_that("no template writes the edit marker token literally", {
   # A regression test for a trap that is invisible on inspection. Quarto knits
   # through an intermediate and knitr::current_input() returns THAT file, so a

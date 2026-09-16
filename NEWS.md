@@ -20,10 +20,16 @@
   markers, so an author iterates towards a finished report and the banner goes
   when the last marker does. The guard only stops blocking: a section still
   holding a template placeholder stops with its own error, so a fresh job
-  renders as far as the markers already worked. `HVTI_TEMPLATE_DRAFT` is gone. Set `HVTI_TEMPLATE_STRICT=1` to make an
-  unfinished job stop, as a final render should; unset, `0`, `false` and `no`
-  draft, and any other value stops. `vignette("sas-to-r-descriptive")` gains a
-  section on the draft banner and the markers.
+  renders as far as the markers already worked. `HVTI_TEMPLATE_DRAFT` is gone
+  from the templates. Set `HVTI_TEMPLATE_STRICT=1` to make an unfinished job
+  stop, as a final render should; unset, `0`, `false` and `no` draft, and any
+  other value stops. **This applies to jobs scaffolded from now on.** A job
+  file is a copy of its template, so a job created before this release keeps
+  the old guard: it still stops by default, still needs
+  `HVTI_TEMPLATE_DRAFT=1` to draft, and ignores `HVTI_TEMPLATE_STRICT`. To
+  move one over, replace its `edit-guard` chunk with the current template's.
+  `vignette("sas-to-r-descriptive")` gains a section on the draft banner and
+  the markers.
 
 * **Three descriptive job templates ship: `dc-tables`, `dc-gfup` and
   `dp-postage`**, with `vignette("sas-to-r-descriptive")` walking a SAS user
