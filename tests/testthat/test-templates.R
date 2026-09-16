@@ -253,7 +253,7 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "sas_variable_block", "covariate_audit", "covariates_to_numeric",
     "imputed_levels", "pool_collinear_pairs", "selection_crowding",  # >= 1.1.4
     "concept_map", "verify_manifest", "proc_means",
-    "study_dir", "built_path"  # >= 1.1.12
+    "study_dir", "built_path", "study_root"  # >= 1.1.12
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")
@@ -614,4 +614,52 @@ test_that("a genuinely mixed prefix still reports as mixed", {
     file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
   )
   expect_error(hvtiRtemplates:::.select_template(tl, "dp", "trends"), "mixes")
+})
+
+test_that("no template resolves its root from _quarto.yml", {
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+  for (f in tl$file) {
+    src <- readLines(f, warn = FALSE)
+    expect_false(any(grepl("file.exists(\"_quarto.yml\")", src, fixed = TRUE)), info = basename(f))
+    expect_true(any(grepl("hvtiRutilities::study_root(", src, fixed = TRUE)), info = basename(f))
+  }
+})
+
+test_that("every template's root resolves to the study from any depth", {
+  # Runs each template's own root lines with knitr::current_input() mocked to
+  # a job file two levels below the study, then with it NULL (interactive
+  # chunk execution) from a working directory inside the study.
+  skip_if_not_installed("knitr")
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+
+  root <- tempfile("root-lookup-")
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Root lookup", study_tracker_id = 1L))
+  root <- normalizePath(root)
+  deep <- file.path(root, "30_analyses", "sub")
+  dir.create(deep, recursive = TRUE)
+  job <- file.path(deep, "job.qmd")
+
+  root_code <- function(f) {
+    src <- readLines(f, warn = FALSE)
+    i <- grep("^\\.in <- knitr::current_input", src)
+    src[c(i, i + 1L)]
+  }
+  input <- job
+  local_mocked_bindings(current_input = function(...) input, .package = "knitr")
+  for (f in tl$file) {
+    code <- root_code(f)
+    expect_length(code, 2L)
+    env <- new.env()
+    input <- job
+    eval(parse(text = code), envir = env)
+    expect_identical(normalizePath(env$.root), root, info = basename(f))
+
+    input <- NULL
+    old <- setwd(deep)
+    tryCatch(eval(parse(text = code), envir = env), finally = setwd(old))
+    expect_identical(normalizePath(env$.root), root, info = paste(basename(f), "interactive"))
+  }
 })
