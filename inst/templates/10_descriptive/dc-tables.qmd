@@ -71,18 +71,19 @@ if (!is.null(.cur)) {
       length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
       paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
       "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
-      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
-      "draft banner. Any other value, including 0, leaves this guard strict."
+      "marker and delete it."
     )
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
-      warning(.msg, call. = FALSE)
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
       cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+      cat("Unresolved markers remain. **The numbers below are not",
           "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
       cat(":::\n\n")
     } else {
-      stop(.msg, call. = FALSE)
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
     }
   }
 }

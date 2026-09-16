@@ -93,6 +93,15 @@ No study data, path or identifier is involved.
 | a `SUBGROUPS` filter returning a single `TRUE` | stops: "must return one TRUE/FALSE per patient" |
 | `year` missing for every patient | stops: "`year` is missing for every patient" |
 
+⚠️ **The first two rows describe the edit guard as it was on 2026-09-10, and
+it has since been inverted.** Since `feat/draft-by-default` (#119) an unedited
+job renders as a draft with a banner by default, `HVTI_TEMPLATE_DRAFT` no
+longer exists, and `HVTI_TEMPLATE_STRICT=1` is what makes it stop. Read those
+rows as the record of that day's gate, not as the current acceptance criteria;
+the current behaviour is pinned for every template by `test-templates.R`
+("every edit-guard drafts by default and stops when strict") and described in
+`2026-08-27-edit-guard-design.md`.
+
 The first gate used whole-number years only, and so could not see the
 fractional-year defect; a local review of the diff found it, and these two rows
 were added with the fix.
