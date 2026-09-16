@@ -17,7 +17,7 @@
 #'
 #' @return The path to the job file, invisibly.
 #'
-#' @seealso \code{\link{add_job}}, \code{render_job()}
+#' @seealso \code{\link{add_job}}, \code{\link{render_job}}
 #' @examples
 #' root <- file.path(tempdir(), "open-job-example")
 #' suppressMessages(hvtiRutilities::study_setup(

@@ -49,5 +49,5 @@ open_job("ac", "dead", "eda", dir = root)
 unlink(root, recursive = TRUE)
 }
 \seealso{
-\code{\link{add_job}}, \code{render_job()}
+\code{\link{add_job}}, \code{\link{render_job}}
 }
