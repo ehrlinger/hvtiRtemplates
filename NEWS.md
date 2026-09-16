@@ -6,6 +6,8 @@
   overwrite. Only deterministic extraction can remove an `EDIT:` marker;
   uncertain choices remain for review. The three descriptive templates listed
   below and the existing trends template now have migration adapters.
+  Log messages are withheld; reports keep their locations, severity, SAS error
+  codes and recognized aggregate counts for review.
 * `dc-tables` writes editable CORR DOCX output in place of the SAS RTF through
   `hv_tbl_summary()`, `hv_man_table()`, `hv_man_table_save()`, and
   `hv_check_docx()`. Structural findings stop the job. `dc-gfup` checks

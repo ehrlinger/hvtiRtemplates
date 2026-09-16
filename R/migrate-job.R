@@ -20,8 +20,9 @@
 #' version, translated choices, unresolved choices, and ignored material.
 #' Absolute paths within quoted source text are redacted. SAS log errors
 #' leave a blocking \code{EDIT:} marker in the generated job.
-#' Listing and RTF contents may contain patient observations, so the report
-#' records their locations for local review without copying their text.
+#' Listings, RTF files and log messages may contain patient observations.
+#' Their text is withheld; locations remain available for local review.
+#' Logs retain severity, error codes and recognized aggregate counts only.
 #'
 #' Both outputs are prepared before placement. Migration refuses to overwrite
 #' either existing target. If placement fails, newly placed outputs are
@@ -189,7 +190,8 @@ migrate_job <- function(source, endpoint, type, prefix, qualifier = NULL,
     ),
     source = .source_lines(paths[["source"]]),
     lst = .listing_facts(optional_text("lst")),
-    log = .sas_log_findings(optional_text("log")),
+    log = .sas_log_findings(optional_text("log"),
+                            if ("log" %in% names(paths)) relative[match("log", names(paths))] else NA_character_),
     reference = unname(relative[grepl("^reference", names(paths))])
   )
 }
@@ -223,6 +225,9 @@ migrate_job <- function(source, endpoint, type, prefix, qualifier = NULL,
 .migration_report <- function(evidence, result, template,
                               version = as.character(utils::packageVersion("hvtiRtemplates"))) {
   .check_migration_result(result)
+  log <- evidence$log[intersect(c("line", "severity", "category", "error_code", "observations", "variables", "path"),
+                                names(evidence$log))]
+  log$text <- rep("SAS log message content withheld; review the source locally.", nrow(evidence$log))
   section <- function(title, rows, redact = TRUE) {
     body <- if (!nrow(rows)) {
       "None recorded."
@@ -242,7 +247,7 @@ migrate_job <- function(source, endpoint, type, prefix, qualifier = NULL,
     section("Translated", result$translated),
     section("Unresolved", result$unresolved),
     section("Ignored", result$ignored),
-    section("Log findings", evidence$log),
+    section("Log findings", log),
     section("Listing facts", evidence$lst),
     "## Completion checklist", "",
     "- [ ] Resolve every EDIT: marker using the source evidence.",

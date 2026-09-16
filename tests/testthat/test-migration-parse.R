@@ -82,7 +82,8 @@ test_that("coded SAS errors retain severity and source location", {
   findings <- hvtiRtemplates:::.sas_log_findings(lines)
   expect_identical(findings$line, 2:4)
   expect_identical(findings$severity, rep("error", 3L))
-  expect_identical(findings$text, lines[2:4])
+  expect_identical(findings$error_code, c("180-322", "22-322", NA_character_))
+  expect_true(all(grepl("content withheld", findings$text, fixed = TRUE)))
 })
 
 test_that("fixture evidence retains source text and original line positions", {

@@ -60,8 +60,9 @@ records study-relative evidence paths, SHA-256 checksums, the package
 version, translated choices, unresolved choices, and ignored material.
 Absolute paths within quoted source text are redacted. SAS log errors
 leave a blocking \code{EDIT:} marker in the generated job.
-Listing and RTF contents may contain patient observations, so the report
-records their locations for local review without copying their text.
+Listings, RTF files and log messages may contain patient observations.
+Their text is withheld; locations remain available for local review.
+Logs retain severity, error codes and recognized aggregate counts only.
 
 Both outputs are prepared before placement. Migration refuses to overwrite
 either existing target. If placement fails, newly placed outputs are

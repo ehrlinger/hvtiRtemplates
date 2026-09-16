@@ -179,7 +179,8 @@ test_that("report redaction removes complete quoted paths across operating syste
   report <- .migration_report(evidence, result, "dc-tables")
   for (i in seq_along(paths)) {
     expect_true(paste0("- line=", i, "; text=%include '[absolute path]';; marker=EDIT: review include") %in% report)
-    expect_true(paste0("- line=", i, '; severity=warning; text=WARNING: "[absolute path]"') %in% report)
+    expected <- paste0("- line=", i, "; severity=warning; text=SAS log message content withheld; review the source locally.")
+    expect_true(expected %in% report)
     expect_true(paste0("- line=", i, '; text=Output: "[absolute path]"') %in% report)
   }
   expect_false(any(grepl("Alpha|Synthetic|vars[.]sas|datasets", report)))
@@ -299,7 +300,9 @@ test_that("log errors add a blocking review marker to the generated job", {
   result <- list(regions = character(), translated = data.frame(), unresolved = data.frame(), ignored = data.frame())
   out <- .migration_finish(prepared, evidence, result)
   expect_true(any(grepl("EDIT: resolve SAS log errors", readLines(out), fixed = TRUE)))
-  expect_match(paste(readLines(sub("[.]qmd$", "-migration.md", out)), collapse = "\n"), "ERROR: failed run", fixed = TRUE)
+  report <- paste(readLines(sub("[.]qmd$", "-migration.md", out)), collapse = "\n")
+  expect_match(report, "severity=error", fixed = TRUE)
+  expect_false(grepl("ERROR: failed run", report, fixed = TRUE))
 })
 
 test_that("output folder links cannot redirect migration outside the study", {

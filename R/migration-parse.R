@@ -296,7 +296,7 @@
   stats::setNames(variables, headings)
 }
 
-.sas_log_findings <- function(lines) {
+.sas_log_findings <- function(lines, path = NA_character_) {
   lines <- as.character(lines)
   note_pattern <- paste0(
     "^[[:space:]]*NOTE:.*([0-9][0-9,]*[[:space:]]+observations?|",
@@ -316,11 +316,31 @@
     )
   )
   keep <- !is.na(severity)
+  messages <- lines[keep]
+  capture <- function(pattern, group) {
+    matches <- regmatches(messages, regexec(pattern, messages, ignore.case = TRUE, perl = TRUE))
+    vapply(matches, function(x) if (length(x) > group) x[[group + 1L]] else NA_character_, character(1L))
+  }
+  count <- "([0-9]+(?:,[0-9]{3})*)"
+  read_pattern <- paste0("^[[:space:]]*NOTE:[[:space:]]+There (?:were|was) ", count,
+                         " observations? (?:read|created|written|deleted|added)\\b")
+  dataset_pattern <- paste0("^[[:space:]]*NOTE:[[:space:]]+The data set [^[:space:]]+ has ", count,
+                            " observations? and ", count, " variables?\\b")
+  # Only complete recognized count prefixes supply numeric facts. Numbers
+  # elsewhere in a diagnostic may be observation values or identifiers.
+  observations <- as.numeric(gsub(",", "", capture(read_pattern, 1L), fixed = TRUE))
+  dataset_counts <- as.numeric(gsub(",", "", capture(dataset_pattern, 1L), fixed = TRUE))
+  observations[is.na(observations)] <- dataset_counts[is.na(observations)]
 
   data.frame(
     line = which(keep),
     severity = unname(severity[keep]),
-    text = lines[keep],
+    category = ifelse(severity[keep] == "note", "observation_note", paste0("sas_", severity[keep])),
+    error_code = capture("^[[:space:]]*ERROR[[:space:]]+([0-9]+-[0-9]+):", 1L),
+    observations = observations,
+    variables = as.numeric(gsub(",", "", capture(dataset_pattern, 2L), fixed = TRUE)),
+    path = rep(unname(path), sum(keep)),
+    text = rep("SAS log message content withheld; review the source locally.", sum(keep)),
     stringsAsFactors = FALSE
   )
 }

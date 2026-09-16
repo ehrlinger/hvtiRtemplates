@@ -31,7 +31,7 @@ test_that("public migration blocks jobs whose SAS log has coded errors", {
   )
   expect_true(any(grepl("EDIT:.*SAS.*error", readLines(job))))
   report <- paste(readLines(sub("[.]qmd$", "-migration.md", job)), collapse = "\n")
-  expect_match(report, "line=1; severity=error; text=ERROR 180-322:", fixed = TRUE)
+  expect_match(report, "line=1; severity=error; category=sas_error; error_code=180-322", fixed = TRUE)
 })
 
 test_that("table migration withholds inline data for every supported SAS alias", {
