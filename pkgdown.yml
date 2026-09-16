@@ -3,7 +3,7 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   sas-to-r-descriptive: sas-to-r-descriptive.html
-last_built: 2026-09-16T18:07Z
+last_built: 2026-09-16T18:30Z
 urls:
   reference: https://ehrlinger.github.io/hvtiRtemplates/reference
   article: https://ehrlinger.github.io/hvtiRtemplates/articles
