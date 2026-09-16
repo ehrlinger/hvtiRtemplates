@@ -94,22 +94,57 @@ set_path <- function(kind, file) {
 
 ## Data
 
+<!-- How this job finds its data. Read this before touching the chunk below.
+
+     A study can offer a job data three ways, and `_study.yml` says which exist:
+
+     1. The study dataset: the file named by `built:`. `DATASET <- "study"`
+        with `ANALYSIS_SET <- NULL`.
+     2. An additional dataset: any file declared under `additional_datasets:`,
+        for example a column subset written for R. Set `DATASET` to its
+        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: no
+        rows are excluded.
+     3. An analysis set: declared under `analysis_sets:` with the columns kept
+        and the rows excluded, then written once with
+        `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
+        and leave `DATASET` as "study", because a set is always cut from the
+        study dataset. The report shows its exclusions in order.
+
+     A name under `additional_datasets:` is not an analysis set, so putting it
+     in `ANALYSIS_SET` stops with "No analysis set". Whichever route is taken,
+     the report prints the dataset, file and dimensions it read, so a reader
+     never has to ask which data a table describes. -->
+
 ```{r}
 #| label: data
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+# EDIT: the built dataset this job reads. "study" is the file named by built:
+# in _study.yml; any other name must be declared under additional_datasets:,
+# such as a column subset written for R. Analysis sets are derived from
+# "study" only, so another dataset needs ANALYSIS_SET <- NULL.
+DATASET <- "study"
 # EDIT: the analysis set this job reads: declare its columns and excluded rows
 # under analysis_sets: in _study.yml, then write it with
 # hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
 # cohort is the intended population.
 ANALYSIS_SET <- "eda"
 if (is.null(ANALYSIS_SET)) {
-  d <- read_built()
+  d <- read_built(dataset = DATASET)
+} else if (!identical(DATASET, "study")) {
+  stop("An analysis set is written from the study dataset, not `", DATASET,
+       "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
 } else {
   d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
   knitr::kable(attr(d, "attrition"), caption = paste0(
     "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
   ))
 }
+cat("Data read: ", if (is.null(ANALYSIS_SET)) {
+  paste0("dataset `", DATASET, "` (",
+         basename(hvtiRutilities::built_path(dataset = DATASET)), ")")
+} else {
+  paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
+}, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
 ```
 
 ```{r}
