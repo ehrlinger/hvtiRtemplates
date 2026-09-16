@@ -32,11 +32,9 @@ open_job <- function(prefix, endpoint, type, qualifier = NULL, dir = ".") {
     .select_template(template_list(), prefix, qualifier),
     error = function(e) stop("open_job(): ", conditionMessage(e), call. = FALSE)
   )
-  .check_field("endpoint", endpoint)
-  .check_field("type", type)
-  stem <- paste0(endpoint, "-", type, "-", prefix,
-                 if (!is.na(row$qualifier[[1L]])) paste0("-", row$qualifier[[1L]]) else "")
-  out <- file.path(hvtiRutilities::study_dir(row$folder[[1L]], root = root), paste0(stem, ".qmd"))
+  .check_field("endpoint", endpoint, fn = "open_job")
+  .check_field("type", type, fn = "open_job")
+  out <- .job_path(row, endpoint, type, root)
   if (file.exists(out)) {
     message("open_job(): '", out, "' already exists; opening it unchanged.")
   } else {
