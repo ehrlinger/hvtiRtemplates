@@ -170,9 +170,15 @@ ps_stddiff_perm(data, group, ..., weight = NULL, reweight = NULL,
 ```
 
 - Permutes `group`, calls `ps_stddiff()`, and returns the observed value
-  beside the 2.5, 16, 50, 84 and 97.5 percentiles, computed with `type = 4`
-  to match `PCTLDEF=1`. The 2021 correction (16/84, not 14/86) is the point of
+  beside the 2.5, 16, 50, 84 and 97.5 percentiles, computed with `type = 2`
+  to match `PCTLDEF=5`. The 2021 correction (16/84, not 14/86) is the point of
   listing the percentiles explicitly.
+  ⚠️ **Corrected 2026-09-16: this said `type = 4` / `PCTLDEF=1`.** That is
+  `%mw_var`'s definition (`PROC STDIZE PCTLDEF=1`, §6). `stddiffci.sas` takes
+  its percentiles with `PROC UNIVARIATE` and sets no `PCTLDEF`, so it gets the
+  procedure default, 5, which is R's `type = 2`. The two macros differ, and
+  the two ports must too. Implemented as specified here in
+  hvtiRpropensity#37.
 - **`reweight`** is a function of the permuted data returning a weight vector.
   It replaces the precomputed `<weight>_<i>` columns. With a weight and no
   `reweight`, the function errors: holding weights fixed under a permutation
