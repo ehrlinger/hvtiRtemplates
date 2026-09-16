@@ -66,10 +66,13 @@ the file being rendered, not the working directory, so the RStudio Render
 button, `quarto render` and `render_job()` resolve the same root:
 
 ```r
-.root <- hvtiRutilities::study_root(dirname(knitr::current_input(dir = TRUE)))
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
 ```
 
-The line above is unverified under a server-side `quarto render`; the first
+`knitr::current_input()` is `NULL` when a chunk is run interactively, where
+RStudio's working directory is the document's, hence the `getwd()` fallback.
+The lookup is unverified under a server-side `quarto render`; the first
 implementation task tests it and replaces it if it fails. Sourcing `R/*.R`
 stays as it is, now under `.root`.
 
@@ -151,7 +154,8 @@ All in temporary studies, never `/studies`.
 
 - Root: a template renders to the same root from outside the study, from the job
   directory, and from a deeper directory. First task; it decides §4.1's line.
-- No template contains `_quarto.yml`.
+- No template resolves its root from `_quarto.yml` (the `format:` comments that
+  mention the file are unrelated and stay), and every template calls `study_root()`.
 - `open_job()`: creates when absent; opens an existing job and leaves its bytes
   unchanged; stops on an ambiguous prefix.
 - `render_job()`: marked job drafts by default, stops under `final = TRUE`, and
