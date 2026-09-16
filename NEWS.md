@@ -1,5 +1,12 @@
 # hvtiRtemplates (unreleased)
 
+* **`open_job()` finds the study root and opens or creates a job.** Called
+  from anywhere inside a study, it resolves the root via the nearest
+  `_study.yml` at or above `dir`, creates the job with `add_job()` when it
+  does not exist, and opens an existing job as it stands, never overwriting
+  it. The internal `.open_in_editor()` helper it introduces is reused by a
+  later render-job workflow.
+
 * **The descriptive templates can read a named dataset.** `dc-tables`,
   `dc-gfup` and `dp-postage` gain `DATASET`, passed to
   `read_built(dataset = )` when `ANALYSIS_SET` is `NULL`, so a job can read an
