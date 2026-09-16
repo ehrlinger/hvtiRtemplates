@@ -1,0 +1,201 @@
+---
+title: "General descriptive checks"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the job this replaces (descriptive/dc.general). -->
+
+Replaces `descriptive/dc.general`.
+
+A `dc-general` job is the first look at a built cohort, before any table or
+model: what the data contain, how each categorical variable breaks down, how
+each continuous variable is distributed, and which variables move together. It
+uses base procedures only. The formatted manuscript table is a `dc-tables` job.
+
+```{r}
+#| label: setup
+.root <- if (file.exists("_quarto.yml")) "." else ".."
+if (!file.exists(file.path(.root, "_quarto.yml"))) {
+  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
+       "resolved. Render this from the project root or from the job directory.",
+       call. = FALSE)
+}
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages(library(hvtiRutilities))
+if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
+  stop("This job needs hvtiRdatabuild >= 0.2.1 for read_analysis_set(); ",
+       utils::packageVersion("hvtiRdatabuild"), " is installed.", call. = FALSE)
+}
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
+      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
+      "draft banner. Any other value, including 0, leaves this guard strict."
+    )
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+      warning(.msg, call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: set
+ENDPOINT <- "cohort"
+TYPE     <- "eda"
+
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (endpoint '", .name_endpoint,
+         "', type '", .name_type, "'), but declares ENDPOINT = \"", ENDPOINT,
+         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.",
+         call. = FALSE)
+  }
+}
+
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(ENDPOINT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+```
+
+## Data
+
+```{r}
+#| label: data
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+# EDIT: the analysis set this job reads: declare its columns and excluded rows
+# under analysis_sets: in _study.yml, then write it with
+# hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
+# cohort is the intended population.
+ANALYSIS_SET <- "eda"
+if (is.null(ANALYSIS_SET)) {
+  d <- read_built()
+} else {
+  d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
+  knitr::kable(attr(d, "attrition"), caption = paste0(
+    "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
+  ))
+}
+```
+
+```{r}
+#| label: spec
+# EDIT: categorical variables, grouped. Each name is a section heading, in this
+# order. Carry the /* Demography */ banners across from the SAS %macro freq
+# tables list. Missing values are tabulated as their own level (missprint).
+CATEGORICAL <- list(
+  Demography = c("female")
+)
+# EDIT: continuous variables, grouped the same way (the SAS %macro cdfs var
+# list).
+CONTINUOUS <- list(
+  Demography = c("age")
+)
+# EDIT: variables for the pairwise correlation sweep (SAS proc corr nosimple
+# rank). Defaults to every continuous variable; character() skips the section.
+CORR_VARS <- unlist(CONTINUOUS, use.names = FALSE)
+# EDIT: leave NULL. A column name (the SAS job used id ccfid) labels the extreme
+# values with it, which puts patient identifiers in the report: a report
+# rendered that way must not be circulated.
+ID_COL <- NULL
+```
+
+```{r}
+#| label: derive
+PROBS <- c(0, 0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99, 1)
+cat_vars <- unlist(CATEGORICAL, use.names = FALSE)
+con_vars <- unlist(CONTINUOUS, use.names = FALSE)
+unknown <- setdiff(unique(c(cat_vars, con_vars, CORR_VARS, ID_COL)), names(d))
+if (length(unknown)) {
+  stop("Unknown column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
+}
+numeric_vars <- unique(c(con_vars, CORR_VARS))
+not_numeric <- numeric_vars[!vapply(numeric_vars, function(v) is.numeric(d[[v]]), logical(1))]
+if (length(not_numeric)) {
+  stop("Not numeric, so not summarised as continuous or correlated: ",
+       paste(not_numeric, collapse = ", "), call. = FALSE)
+}
+
+freqs <- lapply(CATEGORICAL, function(vars) {
+  stats::setNames(lapply(vars, function(v) {
+    tab <- table(d[[v]], useNA = "ifany")
+    data.frame(
+      level = ifelse(is.na(names(tab)), "(missing)", names(tab)),
+      n = as.integer(tab),
+      percent = round(100 * as.integer(tab) / sum(tab), 1)
+    )
+  }), vars)
+})
+
+cdfs <- lapply(CONTINUOUS, function(vars) {
+  stats::setNames(lapply(vars, function(v) {
+    x <- d[[v]]
+    seen <- which(!is.na(x))
+    lowest <- seen[order(x[seen])][seq_len(min(5L, length(seen)))]
+    highest <- seen[order(-x[seen])][seq_len(min(5L, length(seen)))]
+    extremes <- data.frame(
+      end = rep(c("lowest", "highest"), c(length(lowest), length(highest))),
+      value = x[c(lowest, highest)]
+    )
+    if (!is.null(ID_COL)) extremes[[ID_COL]] <- d[[ID_COL]][c(lowest, highest)]
+    list(
+      summary = data.frame(n = length(seen), nmiss = sum(is.na(x))),
+      quantiles = data.frame(
+        percent = 100 * PROBS,
+        value = if (length(seen)) stats::quantile(x[seen], PROBS, type = 2, names = FALSE) else NA_real_
+      ),
+      extremes = extremes
+    )
+  }), vars)
+})
+
+corr_vars <- unique(CORR_VARS)
+corrs <- data.frame(var1 = character(), var2 = character(), r = numeric(), n = integer())
+if (length(corr_vars) >= 2L) {
+  pairs <- utils::combn(corr_vars, 2L)
+  pair_stats <- apply(pairs, 2L, function(p) {
+    ok <- stats::complete.cases(d[[p[[1L]]]], d[[p[[2L]]]])
+    r <- if (sum(ok) >= 2L) stats::cor(d[[p[[1L]]]][ok], d[[p[[2L]]]][ok]) else NA_real_
+    c(r = r, n = sum(ok))
+  })
+  corrs <- data.frame(
+    var1 = pairs[1L, ], var2 = pairs[2L, ],
+    r = pair_stats["r", ], n = as.integer(pair_stats["n", ])
+  )
+  corrs <- corrs[order(-abs(corrs$r)), , drop = FALSE]
+  rownames(corrs) <- NULL
+}
+```
