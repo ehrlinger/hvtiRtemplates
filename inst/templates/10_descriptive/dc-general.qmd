@@ -127,6 +127,11 @@ CONTINUOUS <- list(
 # EDIT: variables for the pairwise correlation sweep (SAS proc corr nosimple
 # rank). Defaults to every continuous variable; character() skips the section.
 CORR_VARS <- unlist(CONTINUOUS, use.names = FALSE)
+# EDIT: identifier columns, kept out of every summary. The overall statistics
+# would otherwise print their minimum and maximum, and each of those is one
+# patient's identifier. Name every key column the data carry; character()
+# only if there are none.
+KEY_COLS <- "ccfid"
 # EDIT: leave NULL. A column name (the SAS job used id ccfid) labels the extreme
 # values with it, which puts patient identifiers in the report: a report
 # rendered that way must not be circulated.
@@ -136,9 +141,21 @@ ID_COL <- NULL
 ```{r}
 #| label: derive
 PROBS <- c(0, 0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99, 1)
+check_group_names <- function(x, setting) {
+  if (!length(x)) return(invisible())
+  nm <- names(x)
+  if (is.null(nm) || any(nm == "") || anyDuplicated(nm)) {
+    stop(setting, " must be a list with a unique, non-empty name for every group.", call. = FALSE)
+  }
+}
+check_group_names(CATEGORICAL, "CATEGORICAL")
+check_group_names(CONTINUOUS, "CONTINUOUS")
+if (!is.null(ID_COL) && !(is.character(ID_COL) && length(ID_COL) == 1L)) {
+  stop("ID_COL must be NULL or a single column name.", call. = FALSE)
+}
 cat_vars <- unlist(CATEGORICAL, use.names = FALSE)
 con_vars <- unlist(CONTINUOUS, use.names = FALSE)
-unknown <- setdiff(unique(c(cat_vars, con_vars, CORR_VARS, ID_COL)), names(d))
+unknown <- setdiff(unique(c(cat_vars, con_vars, CORR_VARS, ID_COL, KEY_COLS)), names(d))
 if (length(unknown)) {
   stop("Unknown column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
 }
@@ -148,14 +165,26 @@ if (length(not_numeric)) {
   stop("Not numeric, so not summarised as continuous or correlated: ",
        paste(not_numeric, collapse = ", "), call. = FALSE)
 }
+key_overlap <- intersect(unique(c(cat_vars, con_vars, CORR_VARS)), KEY_COLS)
+if (length(key_overlap)) {
+  stop("Key column(s) cannot be summarised: ", paste(key_overlap, collapse = ", "), call. = FALSE)
+}
+overall_vars <- setdiff(names(d)[vapply(d, is.numeric, logical(1))], c(KEY_COLS, ID_COL))
 
 freqs <- lapply(CATEGORICAL, function(vars) {
   stats::setNames(lapply(vars, function(v) {
     tab <- table(d[[v]], useNA = "ifany")
+    is_na_level <- is.na(names(tab))
+    n_int <- as.integer(tab)
+    total_nonmissing <- sum(n_int[!is_na_level])
+    percent <- rep(NA_real_, length(tab))
+    if (total_nonmissing > 0L) {
+      percent[!is_na_level] <- round(100 * n_int[!is_na_level] / total_nonmissing, 1)
+    }
     data.frame(
-      level = ifelse(is.na(names(tab)), "(missing)", names(tab)),
-      n = as.integer(tab),
-      percent = round(100 * as.integer(tab) / sum(tab), 1)
+      level = ifelse(is_na_level, "(missing)", names(tab)),
+      n = n_int,
+      percent = percent
     )
   }), vars)
 })
@@ -211,7 +240,9 @@ there are none. -->
 ```{r}
 #| label: overall
 proc_contents(d)
-proc_means(d, stats = c("n", "nmiss", "mean", "std", "min", "max", "sum"))
+if (length(overall_vars)) {
+  proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min", "max", "sum"))
+}
 ```
 
 ## Contingency tables for categorical variables
@@ -219,6 +250,7 @@ proc_means(d, stats = c("n", "nmiss", "mean", "std", "min", "max", "sum"))
 ```{r}
 #| label: freqs
 #| results: asis
+.kable_na <- options(knitr.kable.NA = "")
 for (group in names(freqs)) {
   cat("\n### ", group, "\n\n", sep = "")
   for (v in names(freqs[[group]])) {
@@ -226,6 +258,7 @@ for (group in names(freqs)) {
     cat("\n")
   }
 }
+options(.kable_na)
 ```
 
 ## Cumulative distributions for continuous variables
@@ -261,7 +294,11 @@ if (nrow(corrs)) {
 }
 ```
 
-`proc_means()` skips non-numeric columns. Quantiles are SAS `QNTLDEF=5`, the
-`proc univariate` default. The SAS job printed `ccfid` beside every extreme
-value so an author could look the patient up; this job prints the values alone
-unless `ID_COL` is set in the spec chunk.
+`proc_means()` covers every numeric column other than `KEY_COLS` and `ID_COL`.
+Percentages in the contingency tables are over non-missing rows, as SAS
+`MISSPRINT` computes them; the `(missing)` row shows its count with a blank
+percent. Quantiles are SAS `QNTLDEF=5`, the `proc univariate` default. The
+highest extremes are listed largest first (SAS lists them ascending). The SAS
+job printed `ccfid` beside every extreme value so an author could look the
+patient up; this job prints the values alone unless `ID_COL` is set in the
+spec chunk.

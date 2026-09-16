@@ -26,11 +26,12 @@ run_derive <- function(d = synthetic(),
                        categorical = list(Demography = c("female", "nyha")),
                        continuous = list(Demography = "age", Labs = "creat"),
                        corr_vars = c("age", "creat"),
-                       id_col = NULL) {
+                       id_col = NULL,
+                       key_cols = "ccfid") {
   env <- list2env(
     list(
       d = d, CATEGORICAL = categorical, CONTINUOUS = continuous,
-      CORR_VARS = corr_vars, ID_COL = id_col
+      CORR_VARS = corr_vars, ID_COL = id_col, KEY_COLS = key_cols
     ),
     parent = baseenv()
   )
@@ -75,6 +76,45 @@ test_that("contingency tables show missing values as their own level", {
   expect_identical(female$n, c(5L, 6L, 1L))
 })
 
+test_that("percentages are over non-missing rows, as SAS MISSPRINT computes them", {
+  female <- run_derive()$freqs$Demography$female
+  expect_identical(
+    female$percent,
+    c(round(100 * 5 / 11, 1), round(100 * 6 / 11, 1), NA_real_)
+  )
+})
+
+test_that("KEY_COLS keeps identifier columns out of the overall statistics", {
+  overall_vars <- run_derive()$overall_vars
+  expect_false("ccfid" %in% overall_vars)
+  expect_true("age" %in% overall_vars)
+})
+
+test_that("a KEY_COLS name in CATEGORICAL, CONTINUOUS or CORR_VARS stops", {
+  expect_error(
+    run_derive(continuous = list(Demography = c("age", "ccfid"))),
+    "Key column\\(s\\) cannot be summarised: ccfid"
+  )
+})
+
+test_that("CATEGORICAL and CONTINUOUS must be lists with unique, non-empty names", {
+  expect_error(
+    run_derive(categorical = list(c("female", "nyha"))),
+    "CATEGORICAL must be a list with a unique, non-empty name for every group\\."
+  )
+  expect_error(
+    run_derive(continuous = stats::setNames(list("age", "creat"), c("Demography", "Demography"))),
+    "CONTINUOUS must be a list with a unique, non-empty name for every group\\."
+  )
+})
+
+test_that("ID_COL must be NULL or a single column name", {
+  expect_error(
+    run_derive(id_col = c("ccfid", "age")),
+    "ID_COL must be NULL or a single column name\\."
+  )
+})
+
 test_that("correlations list each distinct pair once, strongest first", {
   d <- synthetic()
   d$noise <- c(5, 1, 4, 2, 3, 6, 2, 5, 1, 4, 3, 6)
@@ -101,6 +141,13 @@ test_that("quantiles follow SAS QNTLDEF=5", {
   )
   expect_identical(creat$summary$n, 11L)
   expect_identical(creat$summary$nmiss, 1L)
+
+  # Hand-computed under SAS QNTLDEF=5, sorted non-missing values:
+  # 0.8, 0.9, 0.95, 1.0, 1.0, 1.1, 1.2, 1.4, 1.7, 2.2, 3.1
+  median <- creat$quantiles$value[creat$quantiles$percent == 50]
+  p25 <- creat$quantiles$value[creat$quantiles$percent == 25]
+  expect_equal(median, 1.1)
+  expect_equal(p25, 0.95)
 })
 
 test_that("an empty CORR_VARS skips the sweep without error", {

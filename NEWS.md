@@ -6,6 +6,8 @@
   (SAS `QNTLDEF=5` quantiles and the five lowest and highest values) and a
   Pearson pairwise-correlation sweep. `ID_COL` is off by default, so no
   patient identifier reaches the report unless a study author sets it.
+  `KEY_COLS` keeps identifier columns, `ccfid` by default, out of the overall
+  statistics too.
 
 * **Three descriptive job templates ship: `dc-tables`, `dc-gfup` and
   `dp-postage`**, with `vignette("sas-to-r-descriptive")` walking a SAS user

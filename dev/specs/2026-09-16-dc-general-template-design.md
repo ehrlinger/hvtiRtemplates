@@ -1,6 +1,8 @@
 # `dc-general` template: base-procedure descriptive checking
 
 **Date:** 2026-09-16
+Revised 2026-09-16 after the final review: KEY_COLS, the MISSPRINT
+denominator, group-name and ID_COL validation.
 **Status:** design, approved 2026-09-16.
 **Supersedes nothing.** Implements the `dc-general` row that
 `2026-09-09-eda-templates-design.md` placed in wave 2 and answered in its
@@ -80,6 +82,7 @@ Every setting carries an `EDIT:` marker.
 | `CATEGORICAL` | `list(Demography = c("female"))` | the `%macro freq` `tables` list, grouped by `/* Demography */`-style banners |
 | `CONTINUOUS` | `list(Demography = c("age"))` | the `%macro cdfs` `var` list, same banners |
 | `CORR_VARS` | `unlist(CONTINUOUS, use.names = FALSE)`; `character()` skips the section | the `proc corr` `var` list |
+| `KEY_COLS` | `"ccfid"` | identifier columns, kept out of every summary |
 | `ID_COL` | `NULL` | `id ccfid` |
 
 The grouped lists take the `list(heading = vars)` shape of `dc-tables`'
@@ -113,10 +116,12 @@ anticipating the content.
 
 ```r
 proc_contents(d)
-proc_means(d, stats = c("n", "nmiss", "mean", "std", "min", "max", "sum"))
+proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min", "max", "sum"))
 ```
 
-The SAS statistics list is `n nmiss mean std min max sum`. `proc_means()` in
+`overall_vars` is every numeric column of `d` other than `KEY_COLS` and
+`ID_COL`, so an identifier column's minimum and maximum never print. The SAS
+statistics list is `n nmiss mean std min max sum`. `proc_means()` in
 hvtiRutilities 1.1.12 accepts every one of them, `"sum"` included (verified
 2026-09-16).
 
@@ -124,7 +129,9 @@ hvtiRutilities 1.1.12 accepts every one of them, `"sum"` included (verified
 
 One sub-heading per `CATEGORICAL` group, in list order. For each variable,
 `table(x, useNA = "ifany")` with counts and percentages, missing values shown as
-their own level (SAS `missprint`).
+their own level (SAS `missprint`). The percentage denominator is non-missing
+rows only, as SAS `MISSPRINT` computes it; the `(missing)` row's percent is
+blank.
 
 ### 6.3 Cumulative distributions
 
@@ -151,10 +158,17 @@ and the scatter-plot matrix belong to `dc-tables`' correlation variant.
 
 `derive` validates before computing anything:
 
-- every name in `CATEGORICAL`, `CONTINUOUS`, `CORR_VARS` and `ID_COL` must be a
-  column of `d`; otherwise stop, naming **every** unknown column in one message;
+- `CATEGORICAL` and `CONTINUOUS` must each be a list with a unique, non-empty
+  name for every group (an empty `list()` is allowed); otherwise stop, naming
+  the setting;
+- `ID_COL` must be `NULL` or a single column name; otherwise stop;
+- every name in `CATEGORICAL`, `CONTINUOUS`, `CORR_VARS`, `ID_COL` and
+  `KEY_COLS` must be a column of `d`; otherwise stop, naming **every** unknown
+  column in one message;
 - every `CONTINUOUS` and `CORR_VARS` column must be numeric; otherwise stop,
-  naming the offending columns.
+  naming the offending columns;
+- no `CATEGORICAL`, `CONTINUOUS` or `CORR_VARS` name may also be in
+  `KEY_COLS`; otherwise stop, naming the offending columns.
 
 No silent coercion and no dropped variables.
 
@@ -172,6 +186,13 @@ source) `.qmd`, `parse()` it, and evaluate it in an environment built on
    descending `abs(r)`.
 5. A reported quantile equals `quantile(x, p, type = 2)`.
 6. `CORR_VARS = character()` yields an empty `corrs` without error.
+7. `overall_vars` excludes `KEY_COLS` and `ID_COL` and includes other numeric
+   columns.
+8. Percentages are over non-missing rows, with a blank `(missing)` percent.
+9. An unnamed or duplicate-named `CATEGORICAL` or `CONTINUOUS` group stops.
+10. An `ID_COL` with more than one name stops.
+11. A `KEY_COLS` name reused in `CATEGORICAL`, `CONTINUOUS` or `CORR_VARS`
+    stops.
 
 `test-template-data-routes.R` names its templates explicitly (line 29:
 `"dc-tables.qmd", "dc-gfup.qmd", "dp-postage.qmd"`), so add `"dc-general.qmd"`

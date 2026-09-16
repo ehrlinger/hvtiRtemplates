@@ -81,7 +81,7 @@ folder. New studies use numbered folders and existing bare-folder studies keep
 their layout. The ordinal that once prefixed filenames was dropped in 1.1.0.
 
 `qualifier` names a job type within a prefix. The current qualified templates
-are `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-postage`; other prefixes remain
-unqualified. It is `NULL` and the column is `NA` for a prefix with a single
-template. Naming no qualifier where a prefix carries several is an error
-listing the choices, never a silent pick of the first.
+are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-postage`; other
+prefixes remain unqualified. It is `NULL` and the column is `NA` for a prefix
+with a single template. Naming no qualifier where a prefix carries several is
+an error listing the choices, never a silent pick of the first.

@@ -578,7 +578,8 @@ for (h in c("Overall statistics", "Contingency tables", "Cumulative distribution
             "Pair-wise correlations", "(missing)", "Five lowest and five highest")) {
   stopifnot(grepl(h, txt, fixed = TRUE))
 }
-stopifnot(!grepl("DRAFT", txt, fixed = TRUE))
+# Not grepl("DRAFT"): code-fold embeds the edit-guard source, which contains that word.
+stopifnot(!grepl('class="callout[^"]*callout-important', txt))
 cat("render gate: PASS\n", job, "\n")
 unlink(root, recursive = TRUE)
 EOF
