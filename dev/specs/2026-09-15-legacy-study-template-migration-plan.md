@@ -72,8 +72,8 @@ hvtiRtables, hvtiPlotR, ggplot2, patchwork, digest, yaml, officer, flextable.
 Run:
 
 ```bash
-git -C /Users/ehrlinj/Documents/GitHub/hvtiRtemplates status --short --branch
-git -C /Users/ehrlinj/Documents/GitHub/hvtiRutilities status --short --branch
+git -C <local-checkout>/hvtiRtemplates status --short --branch
+git -C <local-checkout>/hvtiRutilities status --short --branch
 ```
 
 Expected: the `add_job()` work and study API work are committed. If either
@@ -1132,7 +1132,7 @@ Expected: generated files match roxygen and no whitespace errors appear.
 Run:
 
 ```bash
-HVTI_JOBS=/Users/ehrlinj/Documents/GitHub/hvtiR/inst/extdata/jobs.json \
+HVTI_JOBS=<local-checkout>/hvtiR/inst/extdata/jobs.json \
   Rscript -e 'devtools::test(filter = "roadmap|taxonomy|templates")'
 python3 dev/specs/artifacts/check-roadmap-counts.py
 python3 dev/specs/artifacts/check-spec-counts.py
@@ -1190,7 +1190,7 @@ Expected: no new lints and no generated-file drift.
 - [ ] **Step 3: Run the complete test suite with the catalog present**
 
 ```bash
-HVTI_JOBS=/Users/ehrlinj/Documents/GitHub/hvtiR/inst/extdata/jobs.json Rscript -e 'devtools::test()'
+HVTI_JOBS=<local-checkout>/hvtiR/inst/extdata/jobs.json Rscript -e 'devtools::test()'
 ```
 
 Expected: 0 failures, 0 warnings, and no catalog skips.
