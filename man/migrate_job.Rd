@@ -87,8 +87,9 @@ Logs retain severity, error codes and recognized aggregate counts only.
 
 Both outputs are prepared before placement. Migration refuses to overwrite
 either existing target. If placement fails, newly placed outputs are
-removed. The destination filesystem must support hard links within each
-output directory, which provide atomic creation without overwriting.
+removed. Outputs are placed by hard link, which creates them atomically
+without overwriting; where the filesystem refuses hard links, a copy that
+may not overwrite is used instead.
 }
 \seealso{
 \code{\link{add_job}}, \code{\link{template_list}}

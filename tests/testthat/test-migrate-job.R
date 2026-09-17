@@ -467,3 +467,27 @@ test_that("the overwrite refusal names the existing path", {
   expect_error(.write_migration_pair("job", "report", out, file.path(root, "job-migration.md")),
                paste0("refusing to overwrite.*", out), fixed = FALSE)
 })
+
+test_that("pair placement falls back to a non-overwriting copy when hard links fail", {
+  local_mocked_bindings(.migration_link = function(from, to) FALSE)
+  root <- withr::local_tempdir()
+  out <- file.path(root, "job.qmd")
+  report <- file.path(root, "job-migration.md")
+  .write_migration_pair(c("job", "complete"), "report", out, report)
+  expect_identical(readLines(out), c("job", "complete"))
+  expect_identical(readLines(report), "report")
+  expect_setequal(list.files(root, all.files = TRUE, no.. = TRUE), c("job.qmd", "job-migration.md"))
+})
+
+test_that("the copy fallback still refuses a target that appears after the existence check", {
+  local_mocked_bindings(.migration_link = function(from, to) {
+    writeLines("another writer", to)
+    FALSE
+  })
+  root <- withr::local_tempdir()
+  out <- file.path(root, "job.qmd")
+  report <- file.path(root, "job-migration.md")
+  expect_error(.write_migration_pair("job", "report", out, report), "refusing to overwrite an existing target")
+  expect_identical(readLines(out), "another writer")
+  expect_false(file.exists(report))
+})

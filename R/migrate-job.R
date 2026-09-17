@@ -37,8 +37,9 @@
 #'
 #' Both outputs are prepared before placement. Migration refuses to overwrite
 #' either existing target. If placement fails, newly placed outputs are
-#' removed. The destination filesystem must support hard links within each
-#' output directory, which provide atomic creation without overwriting.
+#' removed. Outputs are placed by hard link, which creates them atomically
+#' without overwriting; where the filesystem refuses hard links, a copy that
+#' may not overwrite is used instead.
 #'
 #' @param source Path to one legacy source job, relative to the working
 #'   directory or absolute.
@@ -479,11 +480,24 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   for (i in seq_along(targets)) {
     # Both files are complete before publication. A hard link creates a new
     # directory entry atomically and cannot replace another writer's file.
-    if (!suppressWarnings(file.link(staged[[i]], targets[[i]]))) {
-      stop("Could not place ", labels[[i]], "; refusing to overwrite an existing target.", call. = FALSE)
+    if (!.migration_link(staged[[i]], targets[[i]])) {
+      # Some filesystems, SMB shares among them, refuse hard links. A copy
+      # that may not overwrite is the fallback; an existing target still stops.
+      if (.migration_target_exists(targets[[i]])) {
+        stop("Could not place ", labels[[i]], "; refusing to overwrite an existing target: ", targets[[i]], call. = FALSE)
+      }
+      if (!suppressWarnings(file.copy(staged[[i]], targets[[i]], overwrite = FALSE))) {
+        stop("Could not place ", labels[[i]], ": hard links are unsupported and the copy failed: ", targets[[i]],
+             call. = FALSE)
+      }
     }
     placed <- c(placed, targets[[i]])
   }
   complete <- TRUE
   invisible(targets)
+}
+
+# A seam for tests: base::file.link() cannot be mocked in place.
+.migration_link <- function(from, to) {
+  isTRUE(suppressWarnings(file.link(from, to)))
 }
