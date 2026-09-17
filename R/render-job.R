@@ -22,7 +22,7 @@
 #' @seealso \code{\link{open_job}}
 #' @export
 render_job <- function(path, final = FALSE, quiet = FALSE) {
-  if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path)) {
+  if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
     stop("render_job(): `path` must be an existing job file.", call. = FALSE)
   }
   if (!is.logical(final) || length(final) != 1L || is.na(final)) {

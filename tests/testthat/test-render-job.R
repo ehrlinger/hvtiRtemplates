@@ -44,3 +44,12 @@ test_that("render_job rejects a missing file and a non-logical final", {
   on.exit(unlink(job), add = TRUE)
   expect_error(render_job(job, final = "yes"), "render_job\\(\\):")
 })
+
+test_that("render_job rejects a directory path", {
+  skip_if_not_installed("quarto")
+  called <- FALSE
+  local_mocked_bindings(quarto_render = function(...) called <<- TRUE, .package = "quarto")
+
+  expect_error(render_job(tempdir()), "render_job\\(\\):")
+  expect_false(called)
+})
