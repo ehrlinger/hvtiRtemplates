@@ -88,11 +88,14 @@ Listings, RTF files and log messages may contain patient observations.
 Their text is withheld; locations remain available for local review.
 Logs retain severity, error codes and recognized aggregate counts only.
 
-Both outputs are prepared before placement. Migration refuses to overwrite
-either existing target. If placement fails, newly placed outputs are
-removed. Outputs are placed by hard link, which creates them atomically
-without overwriting; where the filesystem refuses hard links, a copy that
-may not overwrite is used instead.
+Both outputs are prepared as temporary files beside their targets before
+placement. Migration refuses to overwrite an existing target, checked for
+each output immediately before it is placed. Outputs are placed by hard
+link, which cannot replace an existing file; where the filesystem refuses
+hard links, the prepared file is renamed into place after a fresh check, so
+a concurrent writer landing between that check and the rename can still be
+replaced. If placement fails, only the outputs this call placed are removed,
+along with its temporary files.
 }
 \seealso{
 \code{\link{add_job}}, \code{\link{template_list}}

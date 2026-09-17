@@ -72,8 +72,10 @@
   placeholders such as `"[string]"` or `title2 [text];`, and Quarto prose and
   YAML are withheld. `dc-tables`
   group headings, which come from SAS comments, appear in the report as
-  `[heading]` and in the job as `GROUPS` keys. The job itself is not masked. Outputs are placed by hard link, with a copy that
-  never overwrites where the filesystem refuses links. When `DATASET` is
+  `[heading]` and in the job as `GROUPS` keys. The job itself is not masked. Outputs are placed by hard link. Where the
+  filesystem refuses links, the prepared file is renamed into place after a
+  check that the target is still absent, so a concurrent writer can race that
+  check. A failed placement removes only the outputs that call placed. When `DATASET` is
   unresolved, the `dc-tables`, `dc-gfup`, `dp-postage` and `dp-trends` jobs
   stop before reading data and point to the migration report.
 * `dc-tables` writes editable CORR DOCX output in place of the SAS RTF through

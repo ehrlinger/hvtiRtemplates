@@ -468,7 +468,7 @@ test_that("the overwrite refusal names the existing path", {
                paste0("refusing to overwrite.*", out), fixed = FALSE)
 })
 
-test_that("pair placement falls back to a non-overwriting copy when hard links fail", {
+test_that("pair placement falls back to renaming the prepared file when hard links fail", {
   local_mocked_bindings(.migration_link = function(from, to) FALSE)
   root <- withr::local_tempdir()
   out <- file.path(root, "job.qmd")
@@ -479,7 +479,7 @@ test_that("pair placement falls back to a non-overwriting copy when hard links f
   expect_setequal(list.files(root, all.files = TRUE, no.. = TRUE), c("job.qmd", "job-migration.md"))
 })
 
-test_that("the copy fallback still refuses a target that appears after the existence check", {
+test_that("the rename fallback still refuses a target that appears after the existence check", {
   local_mocked_bindings(.migration_link = function(from, to) {
     writeLines("another writer", to)
     FALSE
@@ -490,4 +490,32 @@ test_that("the copy fallback still refuses a target that appears after the exist
   expect_error(.write_migration_pair("job", "report", out, report), "refusing to overwrite an existing target")
   expect_identical(readLines(out), "another writer")
   expect_false(file.exists(report))
+})
+
+test_that("the rename fallback refuses an existing target by path and leaves it unchanged", {
+  local_mocked_bindings(.migration_link = function(from, to) FALSE)
+  root <- withr::local_tempdir()
+  out <- file.path(root, "job.qmd")
+  report <- file.path(root, "job-migration.md")
+  writeLines("keep", report)
+  expect_error(.write_migration_pair("job", "report", out, report), paste0("refusing to overwrite.*", report))
+  expect_identical(readLines(report), "keep")
+  expect_identical(list.files(root, all.files = TRUE, no.. = TRUE), "job-migration.md")
+})
+
+test_that("a rename fallback failure removes only the output this call placed", {
+  local_mocked_bindings(.migration_link = function(from, to) {
+    # Another writer claims the report after the job has been placed.
+    if (basename(to) == "job-migration.md") writeLines("another writer", to)
+    FALSE
+  })
+  root <- withr::local_tempdir()
+  writeLines("unrelated", file.path(root, "notes.txt"))
+  out <- file.path(root, "job.qmd")
+  report <- file.path(root, "job-migration.md")
+  expect_error(.write_migration_pair("job", "report", out, report), paste0("refusing to overwrite.*", report))
+  expect_false(file.exists(out))
+  expect_identical(readLines(report), "another writer")
+  expect_identical(readLines(file.path(root, "notes.txt")), "unrelated")
+  expect_setequal(list.files(root, all.files = TRUE, no.. = TRUE), c("job-migration.md", "notes.txt"))
 })

@@ -38,11 +38,14 @@
 #' Their text is withheld; locations remain available for local review.
 #' Logs retain severity, error codes and recognized aggregate counts only.
 #'
-#' Both outputs are prepared before placement. Migration refuses to overwrite
-#' either existing target. If placement fails, newly placed outputs are
-#' removed. Outputs are placed by hard link, which creates them atomically
-#' without overwriting; where the filesystem refuses hard links, a copy that
-#' may not overwrite is used instead.
+#' Both outputs are prepared as temporary files beside their targets before
+#' placement. Migration refuses to overwrite an existing target, checked for
+#' each output immediately before it is placed. Outputs are placed by hard
+#' link, which cannot replace an existing file; where the filesystem refuses
+#' hard links, the prepared file is renamed into place after a fresh check, so
+#' a concurrent writer landing between that check and the rename can still be
+#' replaced. If placement fails, only the outputs this call placed are removed,
+#' along with its temporary files.
 #'
 #' @param source Path to one legacy source job, relative to the working
 #'   directory or absolute.
@@ -506,20 +509,26 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
       error = function(e) stop("Could not prepare ", labels[[i]], ": ", conditionMessage(e), call. = FALSE)
     )
   }
+  refuse <- function(i) {
+    stop("Could not place ", labels[[i]], "; refusing to overwrite an existing target: ", targets[[i]], call. = FALSE)
+  }
   for (i in seq_along(targets)) {
-    # Both files are complete before publication. A hard link creates a new
+    # Both files are complete before publication, and the refusal is checked
+    # again immediately before each placement. A hard link creates a new
     # directory entry atomically and cannot replace another writer's file.
+    if (.migration_target_exists(targets[[i]])) refuse(i)
     if (!.migration_link(staged[[i]], targets[[i]])) {
-      # Some filesystems, SMB shares among them, refuse hard links. A copy
-      # that may not overwrite is the fallback; an existing target still stops.
-      if (.migration_target_exists(targets[[i]])) {
-        stop("Could not place ", labels[[i]], "; refusing to overwrite an existing target: ", targets[[i]], call. = FALSE)
-      }
-      if (!suppressWarnings(file.copy(staged[[i]], targets[[i]], overwrite = FALSE))) {
-        stop("Could not place ", labels[[i]], ": hard links are unsupported and the copy failed: ", targets[[i]],
+      # Some filesystems, SMB shares among them, refuse hard links. The
+      # prepared file is then renamed into place after a fresh absence check.
+      # Base R has no exclusive create, so a writer landing between that check
+      # and the rename can still be replaced: a residual race, accepted.
+      if (.migration_target_exists(targets[[i]])) refuse(i)
+      if (!suppressWarnings(file.rename(staged[[i]], targets[[i]]))) {
+        stop("Could not place ", labels[[i]], ": hard links are unsupported and the rename failed: ", targets[[i]],
              call. = FALSE)
       }
     }
+    # Only a file this call placed is ever removed on a later failure.
     placed <- c(placed, targets[[i]])
   }
   complete <- TRUE
