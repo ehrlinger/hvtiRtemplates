@@ -1,4 +1,4 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.2.0
 
 * **The `hz` template renders again.** Its `phases` chunk read the order of
   `theta` through TemporalHazard's internal `.hzr_phase_theta_names()`, which
