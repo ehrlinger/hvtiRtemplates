@@ -255,11 +255,13 @@ scaffolded at all.
 ## Gotchas
 
 - **`object_usage_linter` can never pass inside `inst/templates/`.** The
-  templates call `TemporalHazard` and `hvtiRutilities`, which are the
-  *study’s* dependencies and deliberately absent from `DESCRIPTION`, so
-  CI has no copy and every call reports “no visible global function”.
-  That is why the exclusion exists; it is not licence to disable it in
-  `R/`.
+  templates call study-side packages attached with
+  [`library()`](https://rdrr.io/r/base/library.html) inside chunks,
+  which lintr does not see, so every call reports “no visible global
+  function”. That is why the exclusion exists; it is not licence to
+  disable it in `R/`. `TemporalHazard (>= 1.2.8)` has been in `Suggests`
+  since 2026-09-17 only so tests can run template chunks against it
+  (#125); it remains the study’s dependency, not this package’s.
 - **`object_name_linter` is excluded for templates on purpose.**
   `CLEVEL`, `TIME`, `STATUS`, `DERIVED` and friends are SCREAMING_CASE
   so a study author sees at a glance what to change, and `CLEVEL`

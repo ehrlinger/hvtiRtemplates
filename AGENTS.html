@@ -122,7 +122,7 @@
 <div class="section level2">
 <h2 id="gotchas">Gotchas<a class="anchor" aria-label="anchor" href="#gotchas"></a></h2>
 <ul><li>
-<strong><code>object_usage_linter</code> can never pass inside <code>inst/templates/</code>.</strong> The templates call <code>TemporalHazard</code> and <code>hvtiRutilities</code>, which are the <em>study’s</em> dependencies and deliberately absent from <code>DESCRIPTION</code>, so CI has no copy and every call reports “no visible global function”. That is why the exclusion exists; it is not licence to disable it in <code>R/</code>.</li>
+<strong><code>object_usage_linter</code> can never pass inside <code>inst/templates/</code>.</strong> The templates call study-side packages attached with <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code> inside chunks, which lintr does not see, so every call reports “no visible global function”. That is why the exclusion exists; it is not licence to disable it in <code>R/</code>. <code>TemporalHazard (&gt;= 1.2.8)</code> has been in <code>Suggests</code> since 2026-09-17 only so tests can run template chunks against it (#125); it remains the study’s dependency, not this package’s.</li>
 <li>
 <strong><code>object_name_linter</code> is excluded for templates on purpose.</strong> <code>CLEVEL</code>, <code>TIME</code>, <code>STATUS</code>, <code>DERIVED</code> and friends are SCREAMING_CASE so a study author sees at a glance what to change, and <code>CLEVEL</code> carries the name of the SAS macro parameter it replaces. Do not snake_case them.</li>
 <li>
