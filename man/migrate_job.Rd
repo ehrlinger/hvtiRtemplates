@@ -75,9 +75,12 @@ Its report replaces the \code{.qmd} extension with \code{-migration.md} and
 records study-relative evidence paths, SHA-256 checksums, the package
 version, translated choices, unresolved choices, and ignored material.
 Source text quoted in the report is masked, whichever converter ran:
-string literal contents, SAS and R comment bodies, \code{\%let} values and
-digit runs of five or more are replaced by placeholders such as
-\code{"[string]"}, and Quarto or R Markdown prose and YAML are withheld.
+string literal contents (R raw strings included), SAS and R comment bodies,
+\code{\%let} values (whole, even when a macro-quoting function such as
+\code{\%str()} holds a semicolon), \code{\%put} text, unquoted
+\code{title} and \code{footnote} text, and digit runs of five or more are
+replaced by placeholders such as \code{"[string]"} or \code{[text]}, and
+Quarto or R Markdown prose and YAML are withheld.
 Statement keywords, variable names and operators remain. Absolute paths in
 any remaining text are redacted. The job is not masked. SAS log errors
 leave a blocking \code{EDIT:} marker in the generated job.

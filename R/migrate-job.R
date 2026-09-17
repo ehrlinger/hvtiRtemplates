@@ -25,9 +25,12 @@
 #' records study-relative evidence paths, SHA-256 checksums, the package
 #' version, translated choices, unresolved choices, and ignored material.
 #' Source text quoted in the report is masked, whichever converter ran:
-#' string literal contents, SAS and R comment bodies, \code{\%let} values and
-#' digit runs of five or more are replaced by placeholders such as
-#' \code{"[string]"}, and Quarto or R Markdown prose and YAML are withheld.
+#' string literal contents (R raw strings included), SAS and R comment bodies,
+#' \code{\%let} values (whole, even when a macro-quoting function such as
+#' \code{\%str()} holds a semicolon), \code{\%put} text, unquoted
+#' \code{title} and \code{footnote} text, and digit runs of five or more are
+#' replaced by placeholders such as \code{"[string]"} or \code{[text]}, and
+#' Quarto or R Markdown prose and YAML are withheld.
 #' Statement keywords, variable names and operators remain. Absolute paths in
 #' any remaining text are redacted. The job is not masked. SAS log errors
 #' leave a blocking \code{EDIT:} marker in the generated job.
@@ -310,7 +313,23 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   while (i <= n) {
     ch <- chars[[i]]
     nx <- if (i < n) chars[[i + 1L]] else ""
-    if (ch %in% c("'", "\"")) {
+    raw <- if (language == "r" && ch %in% c("r", "R") && nx %in% c("'", "\"") &&
+                 (i == 1L || !grepl("[[:alnum:]._]", chars[[i - 1L]]))) {
+      k <- i + 2L
+      while (k <= n && chars[[k]] == "-") k <- k + 1L
+      if (k <= n && chars[[k]] %in% c("(", "[", "{")) k
+    }
+    if (!is.null(raw)) {
+      # An R raw string, r"(...)" or r"-[...]-", may hold either quote; it
+      # ends only at its own closing bracket, dashes and quote.
+      dashes <- strrep("-", raw - i - 2L)
+      ending <- paste0(c("(" = ")", "[" = "]", "{" = "}")[[chars[[raw]]]], dashes, nx)
+      rest <- if (raw < n) paste(chars[seq.int(raw + 1L, n)], collapse = "") else ""
+      hit <- regexpr(ending, rest, fixed = TRUE)[[1L]]
+      out <- c(out, ch, nx, dashes, chars[[raw]], "[string]", if (hit > 0L) ending)
+      i <- if (hit > 0L) raw + hit + nchar(ending) else n + 1L
+      statement_start <- FALSE
+    } else if (ch %in% c("'", "\"")) {
       j <- i + 1L
       while (j <= n) {
         if (language == "r" && chars[[j]] == "\\") {
@@ -353,7 +372,17 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
     }
   }
   masked <- paste(out, collapse = "")
-  if (language == "sas") masked <- gsub("(?i)(%let\\s+[^=;]*=)[^;]*", "\\1 [value]", masked, perl = TRUE)
+  if (language == "sas") {
+    # A macro-quoted argument such as %str(a;b) holds semicolons that do not
+    # end the statement, so it is consumed whole. %put text and unquoted
+    # title or footnote text are free text; quoted titles are literals above.
+    value <- paste0("(?:", .sas_macro_quote, "|[^;])*")
+    masked <- gsub(paste0("(?i)(%let\\s+[^=;]*=)", value), "\\1 [value]", masked, perl = TRUE)
+    masked <- gsub(paste0("(?i)(%put)(?![a-z0-9_])", value), "\\1 [text]", masked, perl = TRUE)
+    literals_only <- "(?!(?:\\s*(?:\"\\[string\\]\"|'\\[string\\]'))*\\s*(?:;|$))"
+    masked <- gsub(paste0("(?i)(^|;|\\*/)(\\s*)(title|footnote)([0-9]*)(?![a-z0-9_])", literals_only, value),
+                   "\\1\\2\\3\\4 [text]", masked, perl = TRUE)
+  }
   gsub("[0-9]{5,}", "[number]", masked)
 }
 

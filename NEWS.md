@@ -65,9 +65,12 @@
   and the existing trends template have migration adapters.
   Log messages are withheld; reports keep their locations, severity, SAS error
   codes and recognized aggregate counts for review. Source text the report
-  quotes is masked for every template: string literal contents, comment
-  bodies, `%let` values and digit runs of five or more become placeholders
-  such as `"[string]"`, and Quarto prose and YAML are withheld. `dc-tables`
+  quotes is masked for every template: string literal contents, R raw
+  strings included, comment bodies, `%let` values, whole even when a
+  macro-quoted value such as `%str(a;b)` holds a semicolon, `%put` text,
+  unquoted `title` and `footnote` text, and digit runs of five or more become
+  placeholders such as `"[string]"` or `title2 [text];`, and Quarto prose and
+  YAML are withheld. `dc-tables`
   group headings, which come from SAS comments, appear in the report as
   `[heading]` and in the job as `GROUPS` keys. The job itself is not masked. Outputs are placed by hard link, with a copy that
   never overwrites where the filesystem refuses links. When `DATASET` is

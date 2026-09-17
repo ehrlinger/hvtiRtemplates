@@ -179,8 +179,8 @@
   # Keep quoted strings (including doubled quotes) and block comments whole,
   # so only a semicolon outside them ends a title statement.
   pattern <- paste0(
-    "(?s)/\\*.*?\\*/|'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|;|",
-    "[^[:space:];'\"/]+|/"
+    "(?s)/\\*.*?\\*/|", .sas_macro_quote, "|'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|;|",
+    "[^[:space:];'\"/%]+|[/%]"
   )
   positions <- gregexpr(pattern, text, perl = TRUE)[[1L]]
   tokens <- regmatches(text, list(positions))[[1L]]

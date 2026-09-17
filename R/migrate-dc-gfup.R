@@ -112,7 +112,7 @@
 
 .gfup_statements <- function(source) {
   text <- paste(source$text, collapse = "\n")
-  pattern <- "(?s)/\\*.*?(?:\\*/|$)|'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|;|[^;'\"/]+|/"
+  pattern <- paste0("(?s)/\\*.*?(?:\\*/|$)|", .sas_macro_quote, "|'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|;|[^;'\"/%]+|[/%]")
   positions <- gregexpr(pattern, text, perl = TRUE)[[1L]]
   tokens <- regmatches(text, list(positions))[[1L]]
   starts <- cumsum(c(1L, nchar(source$text) + 1L))

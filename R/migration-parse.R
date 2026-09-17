@@ -7,6 +7,16 @@
   )
 }
 
+# A SAS macro quoting call and its balanced argument, as one token. Inside
+# it a semicolon does not end the statement, so splitting there would leave
+# the rest of a %let value outside the %let. %( %) %' and %" are escapes.
+# The body is possessive, so an unbalanced call fails fast and is left to the
+# caller's ordinary tokens.
+.sas_macro_quote <- paste0(
+  "(?i:%(?:nr)?(?:str|quote|bquote)|%superq)\\s*",
+  "(\\((?>(?:%.|'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|[^()%'\"]+|['\"%]|(?-1))*)\\))"
+)
+
 .sas_inline_data <- function(source) {
   text <- paste(source$text, collapse = "\n")
   starts <- cumsum(c(1L, nchar(source$text) + 1L))
