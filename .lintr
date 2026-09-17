@@ -83,6 +83,11 @@ exclusions: list(
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
+    "inst/templates/10_descriptive/dc-general.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
     "inst/templates/10_descriptive/dp-postage.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,

@@ -47,7 +47,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**44 templates in scope**, of which 13 exist on disk.
+**44 templates in scope**, of which 14 exist on disk.
 
 ## By family
 
@@ -95,7 +95,7 @@ row has no template on disk.
 
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `dc-general` | queued | — | 759 | 1 | — |
+| `dc-general` | shipped | — | 759 | 1 | — |
 | `dc-gfup` | shipped | — | 389 | 0 | — |
 | `dc-tables` | shipped | — | 551 | 1 | — |
 | `dc-dead` | queued | — | 171 | 0 | — |
@@ -152,9 +152,9 @@ Members: `ac`, `hm`, `hp`, `hs`, `hz`
 
 ### propensity-matching — 2/9
 
-Members: `bd`, `bl`, `cm`, `dc-stddiff` (hvtiRutilities), `hp`, `lm`, `lp`, `rm`, `rp`
+Members: `bd`, `bl`, `cm`, `dc-stddiff` (hvtiRpropensity), `hp`, `lm`, `lp`, `rm`, `rp`
 
-Outstanding here: `bd`, `cm`, `lm`, `lp`, `rm`, `rp`; owed by another package: `dc-stddiff` (hvtiRutilities).
+Outstanding here: `bd`, `cm`, `lm`, `lp`, `rm`, `rp`; owed by another package: `dc-stddiff` (hvtiRpropensity).
 
 <!-- END GENERATED -->
 

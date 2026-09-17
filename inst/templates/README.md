@@ -16,6 +16,7 @@ refuses to overwrite an existing job.
 | `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `40_graphs/` or `graphs/` |
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-gfup.qmd` | recorded follow-up interval checks | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dp-postage.qmd` | EDA panels on numbered PNG pages | `10_descriptive/` or `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `30_analyses/` or `analyses/` |
@@ -46,7 +47,7 @@ fifth in the taxonomy, because it holds saved output rather than jobs. The
 decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
-qualified templates are `dc-tables`, `dc-gfup`, `dp-trends` and `dp-postage`;
+qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends` and `dp-postage`;
 the other prefixes here remain unqualified. A prefix is wholly qualified or
 wholly unqualified, never half-decomposed.
 

@@ -383,10 +383,15 @@ test_that("output folder links cannot redirect migration outside the study", {
   # runs deferred expressions LIFO, so registering this defer after `root`'s
   # and `outside`'s local_tempdir() cleanups guarantees it runs before either
   # of them, and in particular before withr's recursive unlink() of `root`.
+  # The path is built from `link` itself, never normalizePath(), which follows
+  # an existing link to its target and would have rmdir remove `outside`
+  # instead (#124). A non-zero status is reported rather than discarded.
   if (.Platform$OS.type == "windows") {
-    windows_link <- normalizePath(link, winslash = "\\", mustWork = FALSE)
-    windows_link <- chartr("/", "\\", windows_link)
-    withr::defer(system2("cmd", c("/c", "rmdir", shQuote(windows_link)), stdout = FALSE, stderr = FALSE))
+    windows_link <- chartr("/", "\\", link)
+    withr::defer({
+      status <- system2("cmd", c("/c", "rmdir", shQuote(windows_link)))
+      if (!identical(as.integer(status), 0L)) warning("rmdir on the test link returned ", status, call. = FALSE)
+    })
   }
   row <- .select_template(template_list(), "dc", "tables")
   expect_error(.migration_template(row, "cohort", "eda", root), "beneath the study root")
