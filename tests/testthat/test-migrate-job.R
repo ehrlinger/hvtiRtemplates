@@ -379,9 +379,13 @@ test_that("output folder links cannot redirect migration outside the study", {
   skip_if_not(linked, "This platform does not permit creating symbolic links.")
   # R's recursive unlink() on Windows deletes a directory reparse point as a
   # junction and warns on a true symbolic link, so remove the link itself
-  # first; rmdir removes a directory link without touching its target.
+  # first; rmdir removes a directory link without touching its target. withr
+  # runs deferred expressions LIFO, so registering this defer after `root`'s
+  # and `outside`'s local_tempdir() cleanups guarantees it runs before either
+  # of them, and in particular before withr's recursive unlink() of `root`.
   if (.Platform$OS.type == "windows") {
-    windows_link <- normalizePath(link, winslash = "\\\\", mustWork = FALSE)
+    windows_link <- normalizePath(link, winslash = "\\", mustWork = FALSE)
+    windows_link <- chartr("/", "\\", windows_link)
     withr::defer(system2("cmd", c("/c", "rmdir", shQuote(windows_link)), stdout = FALSE, stderr = FALSE))
   }
   row <- .select_template(template_list(), "dc", "tables")
