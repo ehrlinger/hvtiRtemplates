@@ -52,7 +52,9 @@
 #' @param endpoint Endpoint field for the new job's filename.
 #' @param type Analysis-type field for the new job's filename.
 #' @param prefix Template prefix, such as \code{"dc"}. Read from the SAS
-#'   filename when \code{NULL}.
+#'   filename when \code{NULL}. When given without \code{qualifier}, the
+#'   qualifier is still read from the filename's second field if that field
+#'   names one of this prefix's templates.
 #' @param qualifier Template qualifier, such as \code{"tables"}. Read from the
 #'   SAS filename when \code{NULL}. When given without \code{prefix}, the
 #'   prefix is read from the filename and this qualifier is used. Filename
@@ -135,9 +137,18 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
 # qualified templates the second field must name one of them; otherwise the
 # choice is the author's, and guessing is the defect add_job() refuses.
 .infer_template <- function(source, prefix, qualifier) {
-  if (!is.null(prefix)) return(list(prefix = prefix, qualifier = qualifier))
   fields <- strsplit(basename(source), ".", fixed = TRUE)[[1L]]
   tl <- template_list()
+  if (!is.null(prefix)) {
+    # The caller's prefix wins, but a qualified prefix still takes its
+    # qualifier from the second field when that field names one. Anything
+    # else is left for .select_template() to refuse as ambiguous.
+    if (is.null(qualifier) && length(fields) >= 3L &&
+          fields[[2L]] %in% stats::na.omit(tl$qualifier[tl$prefix == prefix])) {
+      qualifier <- fields[[2L]]
+    }
+    return(list(prefix = prefix, qualifier = qualifier))
+  }
   needed <- if (is.null(qualifier)) 3L else 2L
   if (length(fields) < needed || !fields[[1L]] %in% tl$prefix) {
     stop("migrate_job(): cannot read a template prefix from '", basename(source),
@@ -155,6 +166,10 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
 }
 
 .default_evidence <- function(source, suffix) {
+  # Without an extension in the file name, sub() either matches nothing and
+  # returns the source as its own listing or log, or matches a dot in a
+  # directory name and returns an unrelated path.
+  if (!grepl("[.][^.]+$", basename(source))) return(NULL)
   path <- sub("[.][^.]+$", paste0(".", suffix), source)
   if (file.exists(path)) path else NULL
 }

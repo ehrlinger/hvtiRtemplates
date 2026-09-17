@@ -25,7 +25,9 @@ directory or absolute.}
 \item{type}{Analysis-type field for the new job's filename.}
 
 \item{prefix}{Template prefix, such as \code{"dc"}. Read from the SAS
-filename when \code{NULL}.}
+filename when \code{NULL}. When given without \code{qualifier}, the
+qualifier is still read from the filename's second field if that field
+names one of this prefix's templates.}
 
 \item{qualifier}{Template qualifier, such as \code{"tables"}. Read from the
 SAS filename when \code{NULL}. When given without \code{prefix}, the

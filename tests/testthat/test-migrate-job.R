@@ -9,6 +9,35 @@ test_that(".infer_template refuses a qualified prefix it cannot resolve", {
   expect_error(.infer_template("x/oddname.sas", NULL, NULL), "prefix")
 })
 
+test_that("a prefix given without a qualifier still reads the qualifier from the filename", {
+  expect_identical(.infer_template("x/dc.tables.ods.sas", "dc", NULL), list(prefix = "dc", qualifier = "tables"))
+  # The caller's prefix wins over the filename's first field, and the second
+  # field is read against that prefix's qualifiers.
+  expect_identical(.infer_template("x/old.tables.sas", "dc", NULL), list(prefix = "dc", qualifier = "tables"))
+  expect_identical(.infer_template("x/dc.custom.sas", "dc", NULL), list(prefix = "dc", qualifier = NULL))
+  expect_error(.select_template(template_list(), "dc", NULL), "name one with `qualifier`")
+  expect_identical(.infer_template("x/ac.tables.sas", "ac", NULL), list(prefix = "ac", qualifier = NULL))
+  expect_identical(.infer_template("x/dc.sas", "dc", NULL), list(prefix = "dc", qualifier = NULL))
+  root <- migration_study_fixture()
+  source <- file.path(root, "descriptive", "dc.tables.ods.sas")
+  writeLines("%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);", source)
+  expect_identical(basename(migrate_job(source, "cohort", "eda", prefix = "dc", dir = root)), "cohort-eda-dc-tables.qmd")
+  custom <- file.path(root, "descriptive", "dc.custom.sas")
+  writeLines("proc means; run;", custom)
+  expect_error(migrate_job(custom, "cohort", "eda", prefix = "dc", dir = root), "migrate_job\\(\\).*name one with `qualifier`")
+})
+
+test_that(".default_evidence has no default for a source without an extension", {
+  d <- withr::local_tempdir()
+  # The directory's dot must not count as the source's extension.
+  d <- file.path(d, "study.v2")
+  dir.create(d)
+  src <- file.path(d, "dctables")
+  file.create(src)
+  expect_null(.default_evidence(src, "lst"))
+  expect_null(.default_evidence(src, "log"))
+})
+
 test_that(".default_evidence finds a same-stem listing and log", {
   d <- tempfile("evidence-")
   dir.create(d)
