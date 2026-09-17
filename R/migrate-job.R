@@ -6,9 +6,12 @@
 #' it. Review the remaining \code{EDIT:} markers before rendering the job.
 #'
 #' @details
-#' Migration is available for \code{dc-tables}, \code{dc-gfup},
-#' \code{dp-trends}, and \code{dp-postage}. Each template has its own
-#' interpreter; unsupported source choices remain for review.
+#' A converter is available for \code{dc-tables}, \code{dc-gfup},
+#' \code{dp-trends}, and \code{dp-postage}, each interpreting its own source
+#' choices; choices the interpreter does not recognize remain for review. A
+#' template with no converter yet still migrates: it is scaffolded with every
+#' \code{EDIT:} marker kept, the evidence travels with it, and the report
+#' says the migration adapter is not yet available.
 #'
 #' Source and evidence files must be readable files beneath \code{dir}.
 #' Relative paths are resolved from that study root, and symbolic links are
@@ -140,10 +143,10 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   if (any(evidence$log$severity == "error")) {
     lines <- c(lines, "", "<!-- EDIT: resolve SAS log errors before interpreting this job. -->")
   }
-  report <- .migration_report(evidence, result, template$name)
+  report <- .migration_report(evidence, result, template$name, converter = !isFALSE(result$converter))
   report_path <- sub("[.]qmd$", "-migration.md", template$out)
   .write_migration_pair(lines, report, template$out, report_path)
-  invisible(template$out)
+  .open_in_editor(template$out)
 }
 
 .migration_path <- function(path, root) {
@@ -174,11 +177,15 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
 .migration_adapter <- function(prefix, qualifier = NULL) {
   key <- .migration_key(prefix, qualifier)
   registry <- .migration_adapters()
-  if (!key %in% names(registry)) {
-    stop("migrate_job(): migration is not supported for ", prefix,
-         if (!is.null(qualifier)) paste0("-", qualifier), ".", call. = FALSE)
-  }
+  if (!key %in% names(registry)) return(.migrate_no_converter)
   get(registry[[key]], envir = asNamespace("hvtiRtemplates"), mode = "function", inherits = FALSE)
+}
+
+# A template without a converter still migrates: the scaffold keeps every
+# EDIT: marker, and the evidence travels with the job for the manual port.
+.migrate_no_converter <- function(evidence, lines) {
+  none <- data.frame(line = integer(), text = character(), reason = character())
+  list(regions = character(), translated = none, unresolved = none, ignored = none, converter = FALSE)
 }
 
 .replace_regions <- function(lines, regions) {
@@ -266,7 +273,8 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
 }
 
 .migration_report <- function(evidence, result, template,
-                              version = as.character(utils::packageVersion("hvtiRtemplates"))) {
+                              version = as.character(utils::packageVersion("hvtiRtemplates")),
+                              converter = TRUE) {
   .check_migration_result(result)
   log <- evidence$log[intersect(c("line", "severity", "category", "error_code", "observations", "variables", "path"),
                                 names(evidence$log))]
@@ -286,6 +294,8 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   c(
     "# Migration report", "",
     paste0("Template: hvtiRtemplates ", version, " / ", template), "",
+    if (!converter) c("**No converter: every choice is manual.** This template has no migration adapter yet; ",
+                      "the job is the plain scaffold and the evidence below is for porting by hand.", "") else character(),
     section("Evidence (SHA-256)", evidence$files, redact = FALSE),
     section("Translated", result$translated),
     section("Unresolved", result$unresolved),

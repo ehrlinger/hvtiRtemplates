@@ -19,14 +19,29 @@ test_that(".default_evidence finds a same-stem listing and log", {
   expect_null(.default_evidence(src, "log"))
 })
 
-test_that("migrate_job refuses unsupported and out-of-root sources", {
+test_that("migrate_job refuses out-of-root sources", {
   root <- migration_study_fixture()
   src <- withr::local_tempfile(fileext = ".sas")
   writeLines("proc means; run;", src)
   expect_error(migrate_job(src, "cohort", "eda", "ac", dir = root), "beneath the study root")
-  inside <- file.path(root, "descriptive", "job.sas")
-  writeLines("proc means; run;", inside)
-  expect_error(migrate_job(inside, "cohort", "eda", "ac", dir = root), "migration is not supported")
+})
+
+test_that("migrate_job scaffolds a template with no converter and says so", {
+  root <- tempfile("migrate-noconv-")
+  suppressMessages(hvtiRutilities::study_setup(root, study = "No converter", study_tracker_id = 1L))
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  src <- file.path(root, "20_distributions", "ac.dead.sas")
+  writeLines(c("proc lifetest data=built;", "run;"), src)
+
+  out <- migrate_job(src, "dead", "eda")
+
+  expect_identical(basename(out), "dead-eda-ac.qmd")
+  tpl <- readLines(template_path("ac"), warn = FALSE)
+  tok <- paste0("ED", "IT", ":")
+  expect_identical(sum(grepl(tok, readLines(out), fixed = TRUE)), sum(grepl(tok, tpl, fixed = TRUE)))
+  report <- readLines(sub("[.]qmd$", "-migration.md", out))
+  expect_true(any(grepl("No converter: every choice is manual", report, fixed = TRUE)))
+  expect_identical(readLines(src), c("proc lifetest data=built;", "run;"))
 })
 
 test_that("optional evidence must exist when supplied", {

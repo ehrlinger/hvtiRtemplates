@@ -51,9 +51,12 @@ supported template. Writes the migrated job and an evidence report beside
 it. Review the remaining \code{EDIT:} markers before rendering the job.
 }
 \details{
-Migration is available for \code{dc-tables}, \code{dc-gfup},
-\code{dp-trends}, and \code{dp-postage}. Each template has its own
-interpreter; unsupported source choices remain for review.
+A converter is available for \code{dc-tables}, \code{dc-gfup},
+\code{dp-trends}, and \code{dp-postage}, each interpreting its own source
+choices; choices the interpreter does not recognize remain for review. A
+template with no converter yet still migrates: it is scaffolded with every
+\code{EDIT:} marker kept, the evidence travels with it, and the report
+says the migration adapter is not yet available.
 
 Source and evidence files must be readable files beneath \code{dir}.
 Relative paths are resolved from that study root, and symbolic links are
