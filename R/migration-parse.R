@@ -190,10 +190,29 @@
   paste(chars, collapse = "")
 }
 
+# Blank a %str()/%nrstr()/%quote()/%nrquote()/%bquote()/%nrbquote()/%superq()
+# macro-quoted span with same-length filler, keeping newlines so offsets and
+# line numbers are unaffected. A macro name inside SAS macro quoting is text,
+# not a call (the same reasoning `.sas_mask_strings` applies to quoted
+# strings), so it must not be found by the call search below.
+.sas_mask_macro_quote <- function(text) {
+  matches <- gregexpr(.sas_macro_quote, text, perl = TRUE)[[1L]]
+  if (matches[[1L]] == -1L) return(text)
+  lengths <- attr(matches, "match.length")
+  for (i in seq_along(matches)) {
+    start <- matches[[i]]
+    end <- start + lengths[[i]] - 1L
+    span <- substr(text, start, end)
+    substr(text, start, end) <- gsub("[^\n]", " ", span)
+  }
+  text
+}
+
 .sas_calls <- function(lines, name) {
   masked <- .sas_mask_comments(lines)
   source <- paste(lines, collapse = "\n")
   scan_text <- .sas_mask_strings(paste(masked, collapse = "\n"))
+  scan_text <- .sas_mask_macro_quote(scan_text)
   pattern <- paste0("(?i)%", name, "[[:space:]]*\\(")
   starts <- gregexpr(pattern, scan_text, perl = TRUE)[[1L]]
 

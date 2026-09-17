@@ -165,3 +165,15 @@ test_that("a macro call quoted inside a string is not a call", {
   expect_identical(calls[[1L]]$text, "%desc_tab(vartype=continuous, varlist=age)")
   expect_identical(calls[[2L]]$text, "%desc_tab(vartype=category, varlist=sex)")
 })
+
+test_that("a macro call inside SAS macro quoting is not a call", {
+  source <- c(
+    "%let x = %str(%desc_tab(vartype=bad, varlist=wrong));",
+    "%let y = %nrstr(%desc_tab(vartype=bad2, varlist=wrong2));",
+    "%desc_tab(vartype=category, varlist=sex);"
+  )
+  calls <- hvtiRtemplates:::.sas_calls(source, "desc_tab")
+  expect_length(calls, 1L)
+  expect_identical(calls[[1L]]$start, 3L)
+  expect_identical(calls[[1L]]$text, "%desc_tab(vartype=category, varlist=sex)")
+})
