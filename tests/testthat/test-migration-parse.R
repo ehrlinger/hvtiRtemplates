@@ -152,3 +152,16 @@ test_that("macro and multiline statement comments never become calls", {
   expect_match(masked[[6L]], " * bottom;", fixed = TRUE)
   expect_length(hvtiRtemplates:::.sas_calls(source[1:3], "desc_tab"), 0L)
 })
+
+test_that("a macro call quoted inside a string is not a call", {
+  source <- c(
+    'title "see %desc_tab( and (";',
+    "%desc_tab(vartype=continuous, varlist=age);",
+    "footnote 'it''s %desc_tab(bad)';",
+    "%desc_tab(vartype=category, varlist=sex);"
+  )
+  calls <- hvtiRtemplates:::.sas_calls(source, "desc_tab")
+  expect_identical(vapply(calls, `[[`, integer(1), "start"), c(2L, 4L))
+  expect_identical(calls[[1L]]$text, "%desc_tab(vartype=continuous, varlist=age)")
+  expect_identical(calls[[2L]]$text, "%desc_tab(vartype=category, varlist=sex)")
+})

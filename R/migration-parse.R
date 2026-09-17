@@ -162,10 +162,38 @@
   masked
 }
 
+# Blank the contents of quoted strings, keeping the quotes, newlines and every
+# offset, so a macro name or parenthesis inside a title is neither found as a
+# call nor counted while matching a real call's parentheses. A doubled quote
+# inside a string is an escaped quote, as in SAS.
+.sas_mask_strings <- function(text) {
+  chars <- strsplit(text, "", fixed = TRUE)[[1L]]
+  quote <- ""
+  j <- 1L
+  while (j <= length(chars)) {
+    char <- chars[[j]]
+    if (!nzchar(quote)) {
+      if (char %in% c("'", '"')) quote <- char
+    } else if (char == quote) {
+      if (j < length(chars) && chars[[j + 1L]] == quote) {
+        chars[[j]] <- " "
+        chars[[j + 1L]] <- " "
+        j <- j + 1L
+      } else {
+        quote <- ""
+      }
+    } else if (char != "\n") {
+      chars[[j]] <- " "
+    }
+    j <- j + 1L
+  }
+  paste(chars, collapse = "")
+}
+
 .sas_calls <- function(lines, name) {
   masked <- .sas_mask_comments(lines)
   source <- paste(lines, collapse = "\n")
-  scan_text <- paste(masked, collapse = "\n")
+  scan_text <- .sas_mask_strings(paste(masked, collapse = "\n"))
   pattern <- paste0("(?i)%", name, "[[:space:]]*\\(")
   starts <- gregexpr(pattern, scan_text, perl = TRUE)[[1L]]
 
