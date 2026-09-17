@@ -1,5 +1,14 @@
 # hvtiRtemplates (unreleased)
 
+* **The intake-row guard no longer goes quiet when intake is empty.** It
+  asserted inside a `for` over the intake rows, so with none left it made no
+  expectation at all; testthat reports that as an empty test, which reports as
+  a SKIP. The strict CI step expects `SKIP 0`, but `HVTI_ROADMAP_STRICT` only
+  promotes the helper-driven skips to hard stops and `stop_on_failure` does
+  not fire on a skip, so the gate would have gone quiet under a green check.
+  It now asserts over the whole set, which is still an assertion when the set
+  is empty. Found when `rfr`, `sid` and `vt` left intake.
+
 * Requires `hvtiRutilities` 1.2.0 or newer, up from 1.1.12. That release ports
   SAS `PROC FREQ` and `PROC UNIVARIATE` as `proc_freq()` and `proc_univariate()`,
   and corrects `proc_means()` weighted `nobs`, weighted `stderr` and the mode of a

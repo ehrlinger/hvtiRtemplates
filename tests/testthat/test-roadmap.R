@@ -45,10 +45,17 @@ test_that("every roadmap row is a taxonomy prefix, unless it is intake", {
   rows <- ledger_rows()
   tx <- as.character(stats::na.omit(hvti_taxonomy()$prefix))
 
-  # Direction two, with one exemption. `rfr`, `sid` and `vt` are PROPOSED and
-  # deliberately not in the taxonomy yet -- they block on a PR to
-  # hvtiRutilities. They carry status "intake" to say so. Any other row naming
-  # a prefix the taxonomy does not have is a typo or a stale row, and fails.
+  # Direction two, with one exemption: a row at status "intake" names a prefix
+  # that is PROPOSED and not in the taxonomy yet, and says so. Any other row
+  # naming a prefix the taxonomy does not have is a typo or a stale row, and
+  # fails.
+  #
+  # ⭐ The three rows this exemption was written for -- `rfr`, `sid` and `vt`
+  # -- landed in `hvti_taxonomy()` via hvtiRutilities PR #127 (on its `main`,
+  # in no release yet, so NOT in 1.2.0) and left intake on 2026-09-17, so the
+  # exemption currently covers nothing. It stays because it is the MECHANISM,
+  # not a special case for those three, and the next proposed prefix needs
+  # it. Do not remove it on the grounds that intake is empty today.
   live <- Filter(function(r) !identical(r$status, "intake"), rows)
   live_prefixes <- vapply(live, function(r) r$prefix, character(1))
   expect_true(all(live_prefixes %in% tx),
@@ -64,10 +71,23 @@ test_that("an intake row names what it blocks on", {
 
   # An intake row without a blocker is indistinguishable from a forgotten one.
   # The blocker is what tells a reader why it is not scheduled.
-  for (r in intake) {
-    expect_true(!is.null(r$blocked_on) && nzchar(r$blocked_on),
-                label = paste("intake row", r$prefix, "has no blocked_on"))
-  }
+  #
+  # ⚠️ Asserted over the whole set rather than inside a `for`, because the set
+  # is legitimately EMPTY whenever every proposed prefix has landed -- as it
+  # was on 2026-09-17, when `rfr`, `sid` and `vt` left intake. A `for`
+  # over zero rows makes no expectation at all, testthat reports that as an
+  # "empty test", and an empty test reports as a SKIP. The strict CI step
+  # expects SKIP 0, but HVTI_ROADMAP_STRICT only promotes the helper-driven
+  # skips to hard stops and `stop_on_failure` does not fire on a skip, so this
+  # gate would have gone quiet underneath a green check. `all()` of an empty
+  # logical is TRUE, which is the right answer AND is still an assertion.
+  named <- vapply(intake,
+                  function(r) !is.null(r$blocked_on) && nzchar(r$blocked_on),
+                  logical(1))
+  expect_true(all(named),
+              label = paste("intake rows with no blocked_on:",
+                            paste(vapply(intake[!named], function(r) r$prefix,
+                                         character(1)), collapse = ", ")))
 })
 
 # ⭐ RETIRED 2026-09-03: "the guard's folder map still matches the taxonomy".
