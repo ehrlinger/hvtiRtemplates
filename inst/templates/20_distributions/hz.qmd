@@ -273,21 +273,15 @@ phases <- list(
 # phase specification above, and a hand-written vector silently mis-assigns
 # every value if the specification changes.
 #
-# ⚠️ .hzr_phase_theta_names() is INTERNAL to TemporalHazard (temporal_hazard#186
-# asks for it to be exported). Reached through getFromNamespace() rather than
-# `:::` so that if it is ever renamed this job stops with a sentence a study
-# author can act on, instead of an object-not-found from a namespace they have
-# no reason to know about.
-theta_names <- try(
-  getFromNamespace(".hzr_phase_theta_names", "TemporalHazard")(phases),
-  silent = TRUE
-)
-if (inherits(theta_names, "try-error")) {
-  stop("TemporalHazard no longer provides .hzr_phase_theta_names(). The order ",
-       "and count of `theta` below cannot be checked automatically. See ",
-       "temporal_hazard#186 and pin the parameter order by hand before ",
-       "trusting any estimate in this file.", call. = FALSE)
+# hzr_theta_names() is exported from TemporalHazard 1.2.8 on. This job once
+# reached the internal it replaced, which later changed shape and stopped every
+# render here, so the floor is checked with a sentence a study author can act on.
+if (utils::packageVersion("TemporalHazard") < "1.2.8") {
+  stop("This job needs TemporalHazard 1.2.8 or later for hzr_theta_names(), ",
+       "which states the order and count of `theta` below. Installed: ",
+       utils::packageVersion("TemporalHazard"), ".", call. = FALSE)
 }
+theta_names <- hzr_theta_names(phases)
 theta_table <- data.frame(
   position  = seq_along(theta_names),
   parameter = theta_names

@@ -1,5 +1,12 @@
 # hvtiRtemplates (unreleased)
 
+* **The `hz` template renders again.** Its `phases` chunk read the order of
+  `theta` through TemporalHazard's internal `.hzr_phase_theta_names()`, which
+  changed shape once `hzr_theta_names()` was exported, so every `hz` job
+  stopped there. It now calls `hzr_theta_names(phases)` and stops with a clear
+  message on TemporalHazard older than 1.2.8. A job already scaffolded from the
+  old template needs the same edit to its `phases` chunk.
+
 * **Templates find the study root through `_study.yml`.** Each template calls
   `hvtiRutilities::study_root()` in place of looking for `_quarto.yml` in `.`
   or `..`, so a study needs no `_quarto.yml`, and a job renders the same from
