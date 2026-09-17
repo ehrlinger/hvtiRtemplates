@@ -50,17 +50,28 @@
   plus an evidence report, preserving the source and refusing to overwrite
   either output. The template and its qualifier are read from the SAS
   filename (`<prefix>.<qualifier>.sas`), and `prefix`/`qualifier` override
-  that reading when a source does not follow it. The study root is found
+  that reading when a source does not follow it; a `qualifier` given alone
+  is used with the prefix from the filename. The study root is found
   from `_study.yml` above the source, and `dir` overrides that when the
-  source sits outside the study. The listing and log default to the
-  same-named files beside the source, and `lst`/`log` override them. A
+  source sits outside the study. Relative `source`, `lst`, `log` and
+  `reference` paths resolve against the working directory, and `dir` only
+  locates the root. The listing and log default to the same-named files
+  beside the source, `lst`/`log` override them, and the report says whether
+  each was supplied, found or not found. A
   template with no migration adapter yet is still scaffolded, every `EDIT:`
   marker kept, with a report that says plainly that the migration is manual.
   Only deterministic extraction can remove an `EDIT:` marker; uncertain
   choices remain for review. The three descriptive templates listed below
   and the existing trends template have migration adapters.
   Log messages are withheld; reports keep their locations, severity, SAS error
-  codes and recognized aggregate counts for review.
+  codes and recognized aggregate counts for review. Source text the report
+  quotes is masked for every template: string literal contents, comment
+  bodies, `%let` values and digit runs of five or more become placeholders
+  such as `"[string]"`, and Quarto prose and YAML are withheld. The job
+  itself is not masked. Outputs are placed by hard link, with a copy that
+  never overwrites where the filesystem refuses links. When `DATASET` is
+  unresolved, the `dc-tables`, `dc-gfup`, `dp-postage` and `dp-trends` jobs
+  stop before reading data and point to the migration report.
 * `dc-tables` writes editable CORR DOCX output in place of the SAS RTF through
   `hv_tbl_summary()`, `hv_man_table()`, `hv_man_table_save()`, and
   `hv_check_docx()`. Structural findings stop the job. `dc-gfup` checks
