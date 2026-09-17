@@ -36,14 +36,11 @@ the distribution of a single variable is `dp-variable`.
 
 ```{r}
 #| label: setup
-# This file runs either from the directory it was scaffolded into or from the
-# project root. Resolve which, so that no path in this document needs editing.
-.root <- if (file.exists("_quarto.yml")) "." else ".."
-if (!file.exists(file.path(.root, "_quarto.yml"))) {
-  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
-       "resolved. Render this from the project root or from the job directory.",
-       call. = FALSE)
-}
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(hvtiRutilities)
@@ -92,28 +89,28 @@ if (!is.null(.cur)) {
       length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
       paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
       "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
-      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
-      "draft banner. Any other value, including 0, leaves this guard strict."
+      "marker and delete it."
     )
-    # Only the documented values enable draft mode. nzchar() alone would treat
-    # HVTI_TEMPLATE_DRAFT=0 as ON, silently downgrading this stop() to a
-    # warning for someone whose shell profile sets it to 0 meaning OFF -- a
-    # switch whose enablement does not mean what it says, which is the same
-    # defect this guard exists to catch. An unrecognised value falls through to
-    # strict on purpose: the author then sees the stop and re-reads the docs,
-    # which is the safe direction to be wrong in.
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+    # A job renders as a draft by default, so an author can iterate on a
+    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
+    # turns the draft into a stop for a final render. Only unset, 0, false
+    # and no mean "not strict": an unrecognised value stops on purpose, so a
+    # mistyped switch is seen rather than quietly ignored, which is the safe
+    # direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
       # The banner is not optional. A draft render that looks like a finished
       # one is the same defect with an extra step: the warning scrolls past in
       # a log, while the .html is the artifact that gets sent to someone.
-      warning(.msg, call. = FALSE)
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
       cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+      cat("Unresolved markers remain. **The numbers below are not",
           "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
       cat(":::\n\n")
     } else {
-      stop(.msg, call. = FALSE)
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
     }
   }
 }
@@ -183,7 +180,14 @@ set_path <- function(kind, file) {
 
 ```{r}
 #| label: data
-d <- read_built()
+# MIGRATE-BEGIN: dp-trends-data
+DATASET <- "study"
+# MIGRATE-END: dp-trends-data
+if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
+  stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
+       "In a migrated job, see the migration report beside this job.", call. = FALSE)
+}
+d <- read_built(study_config(.root), dataset = DATASET)
 
 # EDIT: the calendar year of operation, as a WHOLE year. hv_trends() puts one
 # summary point at every distinct value of x, so x must be the year itself.
@@ -195,7 +199,9 @@ d <- read_built()
 # the origin. The origin differs between studies, 1985 in one and 2000 in
 # another, and a wrong one moves every figure along the x-axis, which is why
 # the range is checked and printed below.
+# MIGRATE-BEGIN: dp-trends-year
 d$year <- floor(d$iv_opyrs) + 1985
+# MIGRATE-END: dp-trends-year
 
 if (!is.numeric(d$year)) {
   stop("`year` is not numeric (", class(d$year)[1L], "). Build it from a ",
@@ -243,23 +249,29 @@ knitr::kable(data.frame(
 # may be set alone, and `ylim` zooms without dropping any patient.
 # `summary` is the per-year point drawn under the smooth. Percent trends must
 # use "mean" (the default); continuous trends may use "mean" or "median".
+# MIGRATE-BEGIN: dp-trends-trends
 TRENDS <- list(
   chf = list(cols = "hx_chf", kind = "percent", labels = "Heart failure",
              ylab = "Patients (%)", ylim = c(0, 100), ybreaks = seq(0, 100, 20)),
   lvmass = list(cols = "plvmassi", kind = "continuous", labels = "LV mass index",
                 ylab = "LV mass index", ylim = NULL, ybreaks = NULL)
 )
+# MIGRATE-END: dp-trends-trends
 
 # EDIT: optional. x-axis breaks shared by every figure, e.g. seq(1985, 2025, 5).
 # NULL lets ggplot choose.
+# MIGRATE-BEGIN: dp-trends-xbreaks
 XBREAKS <- NULL
+# MIGRATE-END: dp-trends-xbreaks
 
 # EDIT: optional. Each entry is a filter, given as a function of the data that
 # returns TRUE for the rows to keep. Every trend is drawn once per entry with
 # the same axes, so the figures can be read side by side. The default draws the
 # whole cohort only. A second entry might be
 #   complex = function(d) d$complex == 1
+# MIGRATE-BEGIN: dp-trends-subgroups
 SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)))
+# MIGRATE-END: dp-trends-subgroups
 ```
 
 ```{r}

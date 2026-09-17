@@ -68,7 +68,7 @@ test_that("a template sits in the folder its row files it under", {
   # form would have failed `dp-variable`, which is ALREADY scheduled in batch
   # 3, the moment anyone wrote it. The job catalog carries `folder` per row,
   # keyed on (prefix, qualifier), and is consulted first; the taxonomy answers
-  # for rows the catalog does not have and whenever the catalog is absent.
+  # for rows the catalog does not have. Without the catalog the test skips.
   # See issue #97 and `dev/specs/2026-09-09-eda-templates-design.md` §8.3.
   #
   # The taxonomy is NOT the loser here: "every template directory is
@@ -157,6 +157,15 @@ test_that("the catalog's folder wins over the taxonomy's", {
     expect_identical(got, "descriptive")
     expect_false(identical(got, "graphs"))
   })
+})
+
+test_that("package folder authority matches the qualified catalog row or falls back", {
+  catalog <- data.frame(prefix = c("dp", "dp"), qualifier = c("postage", "trends"),
+                        folder = c("descriptive", "graphs"))
+  expect_identical(hvtiRtemplates:::.template_folder_authority("dp", "postage", catalog), "descriptive")
+  expect_identical(hvtiRtemplates:::.template_folder_authority("ac", NA_character_, catalog), "distributions")
+  expect_identical(hvtiRtemplates:::.template_folder_authority("dp", "postage", NULL), "graphs")
+  expect_error(hvtiRtemplates:::.template_folder_authority("dp", "postage", rbind(catalog, catalog)), "more than one row")
 })
 
 test_that("a template with no catalog row falls back to the taxonomy", {

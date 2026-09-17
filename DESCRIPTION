@@ -24,6 +24,7 @@ Description: Versioned analysis job templates for the clinical investigations
 Depends:
     R (>= 4.1.0)
 Imports:
+    digest,
     hvtiRutilities (>= 1.1.12),
     stats
 Remotes:
@@ -35,6 +36,7 @@ Remotes:
     ehrlinger/hvtiPlotR
 Suggests:
     arrow,
+    ggplot2,
     hvtiPlotR (>= 2.7.14),
     hvtiRtables (>= 1.0.1),
     hvtiRdatabuild (>= 0.2.1),
@@ -42,8 +44,11 @@ Suggests:
     hvtiRlifetables (>= 0.1.2),
     jsonlite,
     knitr,
+    officer,
+    patchwork (>= 1.1.0),
     quarto,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    withr
 VignetteBuilder: quarto
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0

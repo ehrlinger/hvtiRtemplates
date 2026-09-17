@@ -73,6 +73,9 @@ answer, because `%inc` had nothing to pin.
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
 | `hvti_non_prefixes()` | leading name fields that are utilities, not analysis prefixes |
 | `add_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` | the scaffolded job's path, invisibly |
+| `open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` | the job's path, invisibly; creates it with `add_job()` when missing, opens it unchanged when it exists |
+| `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
+| `migrate_job(source, endpoint, type, prefix, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
 
 Templates are `<prefix>[-<qualifier>].qmd` in a numbered directory
 (`20_distributions/ac.qmd`); a job is
@@ -85,3 +88,42 @@ are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-postage`; other
 prefixes remain unqualified. It is `NULL` and the column is `NA` for a prefix
 with a single template. Naming no qualifier where a prefix carries several is
 an error listing the choices, never a silent pick of the first.
+
+## Migrate a legacy job
+
+For a study with SAS programs already in `descriptive/` and `graphs/`, first
+adopt its directory with `hvtiRutilities::study_setup(..., adopt = TRUE)` and
+register its built datasets with `register_data()`. The tutorial
+[Migrate a legacy study to R jobs](articles/legacy-study-migration.html)
+walks through adoption, study and named-subset registration, migration, and
+output review using synthetic data.
+
+From that study's root, migrate a descriptive-table job with:
+
+```r
+job <- hvtiRtemplates::migrate_job(
+  source = "descriptive/dc.tables.sas",
+  endpoint = "cohort", type = "eda", prefix = "dc", qualifier = "tables",
+  lst = "descriptive/dc.tables.lst", log = "descriptive/dc.tables.log",
+  reference = "documents/general.rtf", dir = "."
+)
+```
+
+Use your study's source and evidence filenames. `lst`, `log`, and `reference`
+are optional; supplied files must exist beneath `dir`. The call writes
+`descriptive/cohort-eda-dc-tables.qmd` and
+`descriptive/cohort-eda-dc-tables-migration.md` in a study with bare folders.
+It preserves the evidence files and refuses to overwrite either output.
+
+Migration supports `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-postage`.
+Each adapter reads a defined source shape. Only deterministic extraction can
+remove an `EDIT:` marker; uncertain choices remain in the job and report for
+you to resolve before rendering. Logs, listings, and RTF/DOCX references help
+you check the translation but do not supply missing analysis choices.
+
+The table job replaces the SAS RTF output with an editable CORR DOCX through
+`hv_tbl_summary()`, `hv_man_table()`, `hv_man_table_save()`, and
+`hv_check_docx()`. It writes beneath `documents/<endpoint>-<type>/` and stops
+on a structural finding. Compare the rows, summaries, precision, and footnotes
+with the legacy reference before accepting the document; the structural check
+does not establish numerical agreement.

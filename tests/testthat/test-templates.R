@@ -153,9 +153,61 @@ test_that("every template carries an edit-guard chunk", {
     src <- readLines(f, warn = FALSE)
     expect_true(any(grepl("label: edit-guard", src, fixed = TRUE)),
                 info = paste("no edit-guard chunk in", basename(f)))
-    expect_true(any(grepl("HVTI_TEMPLATE_DRAFT", src, fixed = TRUE)),
-                info = paste("edit-guard has no draft escape in", basename(f)))
+    expect_true(any(grepl("HVTI_TEMPLATE_STRICT", src, fixed = TRUE)),
+                info = paste("edit-guard has no strict switch in", basename(f)))
   }
+})
+
+test_that("every edit-guard drafts by default and stops when strict", {
+  # The test above only proves the switch is NAMED. This one runs each
+  # template's own guard chunk, so an inverted branch, a dropped banner, or an
+  # unrecognised value that drafts instead of stopping fails here. The chunk
+  # is run outside Quarto with knitr::current_input() pointed at a job file,
+  # which is the one thing a render supplies to it.
+  skip_if_not_installed("knitr")
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+
+  guard_code <- function(f) {
+    src <- readLines(f, warn = FALSE)
+    at <- grep("#| label: edit-guard", src, fixed = TRUE)
+    end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
+    src[(at + 1L):(end - 1L)]
+  }
+  job <- tempfile(fileext = ".qmd")
+  local_mocked_bindings(current_input = function(...) job, .package = "knitr")
+  old <- Sys.getenv("HVTI_TEMPLATE_STRICT", unset = NA)
+  # eval() runs this package's own shipped template chunk, the code under test.
+  run <- function(code, strict) {
+    if (is.na(strict)) Sys.unsetenv("HVTI_TEMPLATE_STRICT") else Sys.setenv(HVTI_TEMPLATE_STRICT = strict)
+    capture.output(eval(parse(text = code), envir = new.env()))
+  }
+  marker <- paste0("# ", paste0("ED", "IT", ":"), " choose the endpoint")
+
+  # tryCatch(finally =) rather than withr, which this package does not suggest.
+  tryCatch(for (f in tl$file) {
+    code <- guard_code(f)
+    info <- basename(f)
+
+    writeLines("finished job", job)
+    expect_silent(out <- run(code, NA))
+    expect_length(out, 0L)
+
+    writeLines(c("some prose", marker), job)
+    for (v in list(NA, "0", "false", "no", "FALSE")) {
+      expect_warning(out <- run(code, v), "Rendering as a draft", info = info)
+      expect_true(any(grepl("DRAFT", out, fixed = TRUE)), info = paste(info, v))
+      expect_true(any(grepl("choose the endpoint", out, fixed = TRUE)),
+                  info = paste(info, v))
+    }
+    for (v in c("1", "true", "yes")) {
+      expect_error(run(code, v), "unresolved", info = paste(info, v))
+    }
+    expect_error(run(code, "ture"), "HVTI_TEMPLATE_STRICT is 'ture'", info = info)
+  }, finally = {
+    unlink(job)
+    if (is.na(old)) Sys.unsetenv("HVTI_TEMPLATE_STRICT") else Sys.setenv(HVTI_TEMPLATE_STRICT = old)
+  })
 })
 
 test_that("no template writes the edit marker token literally", {
@@ -201,7 +253,8 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "sas_variable_block", "covariate_audit", "covariates_to_numeric",
     "imputed_levels", "pool_collinear_pairs", "selection_crowding",  # >= 1.1.4
     "concept_map", "verify_manifest", "proc_means",
-    "study_dir", "proc_contents", "built_path"  # >= 1.1.12
+    "study_dir", "proc_contents", "built_path", "study_root",  # >= 1.1.12
+    "label_map", "get_label"
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")
@@ -447,6 +500,17 @@ test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
 # template name has to be able to say which. See
 # dev/specs/2026-09-02-dp-dc-decomposition-design.md, which decided this.
 
+test_that("dc-tables carries the registered-data and checked Word pipeline contract", {
+  src <- readLines(template_path("dc", "tables"), warn = FALSE)
+  fence <- grepl("^```", src)
+  code <- sub("#.*$", "", src[cumsum(fence) %% 2 == 1 & !fence])
+  for (required in c(
+    "hvtiRtables::hv_tbl_summary(", "hvtiRtables::hv_man_table(",
+    "hvtiRtables::hv_man_table_save(", "hvtiRtables::hv_check_docx(",
+    'study_dir("documents"', "dataset = DATASET"
+  )) expect_true(any(grepl(required, code, fixed = TRUE)), info = required)
+})
+
 test_that("a qualified template name parses into three fields", {
   f <- hvtiRtemplates:::.template_fields("dp-trends.qmd")
   expect_equal(f$prefix, "dp")
@@ -562,4 +626,52 @@ test_that("a genuinely mixed prefix still reports as mixed", {
     file = c("a.qmd", "b.qmd"), stringsAsFactors = FALSE
   )
   expect_error(hvtiRtemplates:::.select_template(tl, "dp", "trends"), "mixes")
+})
+
+test_that("no template resolves its root from _quarto.yml", {
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+  for (f in tl$file) {
+    src <- readLines(f, warn = FALSE)
+    expect_false(any(grepl("file.exists(\"_quarto.yml\")", src, fixed = TRUE)), info = basename(f))
+    expect_true(any(grepl("hvtiRutilities::study_root(", src, fixed = TRUE)), info = basename(f))
+  }
+})
+
+test_that("every template's root resolves to the study from any depth", {
+  # Runs each template's own root lines with knitr::current_input() mocked to
+  # a job file two levels below the study, then with it NULL (interactive
+  # chunk execution) from a working directory inside the study.
+  skip_if_not_installed("knitr")
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+
+  root <- tempfile("root-lookup-")
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Root lookup", study_tracker_id = 1L))
+  root <- normalizePath(root)
+  deep <- file.path(root, "30_analyses", "sub")
+  dir.create(deep, recursive = TRUE)
+  job <- file.path(deep, "job.qmd")
+
+  root_code <- function(f) {
+    src <- readLines(f, warn = FALSE)
+    i <- grep("^\\.in <- knitr::current_input", src)
+    src[c(i, i + 1L)]
+  }
+  input <- job
+  local_mocked_bindings(current_input = function(...) input, .package = "knitr")
+  for (f in tl$file) {
+    code <- root_code(f)
+    expect_length(code, 2L)
+    env <- new.env()
+    input <- job
+    eval(parse(text = code), envir = env)
+    expect_identical(normalizePath(env$.root), root, info = basename(f))
+
+    input <- NULL
+    old <- setwd(deep)
+    tryCatch(eval(parse(text = code), envir = env), finally = setwd(old))
+    expect_identical(normalizePath(env$.root), root, info = paste(basename(f), "interactive"))
+  }
 })

@@ -1,5 +1,20 @@
 # hvtiRtemplates (unreleased)
 
+* **Templates find the study root through `_study.yml`.** Each template calls
+  `hvtiRutilities::study_root()` in place of looking for `_quarto.yml` in `.`
+  or `..`, so a study needs no `_quarto.yml`, and a job renders the same from
+  the Render button, `quarto render` or `render_job()`, at any depth. A study
+  must have been adopted with `hvtiRutilities::study_setup()`.
+
+* **`open_job()` finds the study root and opens or creates a job.** Called
+  from anywhere inside a study, it resolves the root through the nearest
+  `_study.yml` at or above `dir`, creates the job with `add_job()` when it
+  does not exist, and opens an existing job as it stands, never overwriting
+  it.
+
+* `render_job()` renders a job from its own directory: a draft by default,
+  and with `final = TRUE` a render that stops on an unfinished job.
+
 * **The `dc-general` job template ships**, replacing `descriptive/dc.general`:
   overall statistics through `hvtiRutilities::proc_contents()` and
   `proc_means()`, then base-R contingency tables, cumulative distributions
@@ -22,6 +37,65 @@
   prints the dataset, file and dimensions it read, so a report says which
   data it describes. `vignette("sas-to-r-descriptive")` gains a "Which data a job
   reads" section covering the same ground for the biostatistics team.
+
+* **Unworked `EDIT:` markers no longer stop a render; the job renders as a
+  draft.** Every template's edit guard used to stop a render while any marker
+  remained, unless `HVTI_TEMPLATE_DRAFT` was set. The default is now the draft:
+  the render warns and the report opens with a DRAFT banner listing the open
+  markers, so an author iterates towards a finished report and the banner goes
+  when the last marker does. The guard only stops blocking: a section still
+  holding a template placeholder stops with its own error, so a fresh job
+  renders as far as the markers already worked. `HVTI_TEMPLATE_DRAFT` is gone
+  from the templates. Set `HVTI_TEMPLATE_STRICT=1` to make an unfinished job
+  stop, as a final render should; unset, `0`, `false` and `no` draft, and any
+  other value stops. **This applies to jobs scaffolded from now on.** A job
+  file is a copy of its template, so a job created before this release keeps
+  the old guard: it still stops by default, still needs
+  `HVTI_TEMPLATE_DRAFT=1` to draft, and ignores `HVTI_TEMPLATE_STRICT`. To
+  move one over, replace its `edit-guard` chunk with the current template's.
+  `vignette("sas-to-r-descriptive")` gains a section on the draft banner and
+  the markers.
+
+* `migrate_job()` reads a legacy SAS job and writes the matching template job
+  plus an evidence report, preserving the source and refusing to overwrite
+  either output. The template and its qualifier are read from the SAS
+  filename (`<prefix>.<qualifier>.sas`), and `prefix`/`qualifier` override
+  that reading when a source does not follow it; a `qualifier` given alone
+  is used with the prefix from the filename. The study root is found
+  from `_study.yml` above the source, and `dir` overrides that when the
+  source sits outside the study. Relative `source`, `lst`, `log` and
+  `reference` paths resolve against the working directory, and `dir` only
+  locates the root. The listing and log default to the same-named files
+  beside the source, `lst`/`log` override them, and the report says whether
+  each was supplied, found or not found. A
+  template with no migration adapter yet is still scaffolded, every `EDIT:`
+  marker kept, with a report that says plainly that the migration is manual.
+  Only deterministic extraction can remove an `EDIT:` marker; uncertain
+  choices remain for review. The three descriptive templates listed below
+  and the existing trends template have migration adapters.
+  Log messages are withheld; reports keep their locations, severity, SAS error
+  codes and recognized aggregate counts for review. Source text the report
+  quotes is masked for every template: string literal contents, R raw
+  strings included, comment bodies, `%let` values, whole even when a
+  macro-quoted value such as `%str(a;b)` holds a semicolon, `%put` text,
+  unquoted `title` and `footnote` text, and digit runs of five or more become
+  placeholders such as `"[string]"` or `title2 [text];`, and Quarto prose and
+  YAML are withheld. `dc-tables`
+  group headings, which come from SAS comments, appear in the report as
+  `[heading]` and in the job as `GROUPS` keys. The job itself is not masked. Outputs are placed by hard link. Where the
+  filesystem refuses links, the prepared file is renamed into place after a
+  check that the target is still absent, so a concurrent writer can race that
+  check. A failed placement removes only the outputs that call placed. When `DATASET` is
+  unresolved, the `dc-tables`, `dc-gfup`, `dp-postage` and `dp-trends` jobs
+  stop before reading data and point to the migration report.
+* `dc-tables` writes editable CORR DOCX output in place of the SAS RTF through
+  `hv_tbl_summary()`, `hv_man_table()`, `hv_man_table_save()`, and
+  `hv_check_docx()`. Structural findings stop the job. `dc-gfup` checks
+  registered follow-up intervals with identifiers disabled; `dp-postage`
+  writes numbered PNG pages through `hv_eda()` and `patchwork`.
+* `vignette("legacy-study-migration")` teaches adoption of an existing study,
+  separate registration of study and named-subset data, all four migrations,
+  marker review, and output checks with synthetic data.
 
 * **Three descriptive job templates ship: `dc-tables`, `dc-gfup` and
   `dp-postage`**, with `vignette("sas-to-r-descriptive")` walking a SAS user

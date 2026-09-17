@@ -48,16 +48,11 @@ is the part resampling noise moves.
 
 ```{r}
 #| label: setup
-# This file runs either from the directory it was scaffolded into or from the
-# project root. Resolve which, so that no path in this document needs editing:
-# forgetting one of several ../ paths is the instantiation mistake that would
-# otherwise be easy to make and quiet when made.
-.root <- if (file.exists("_quarto.yml")) "." else ".."
-if (!file.exists(file.path(.root, "_quarto.yml"))) {
-  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
-       "resolved. Render this from the project root or from the job directory.",
-       call. = FALSE)
-}
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
 # TemporalHazard is deliberately absent: a Cox screen never touches it. The
 # runner calls hvtiRbootstrap::boot_select() with fit_cox() and converts the
 # result with boot_bag(). survival is the study's dependency, loaded by the
@@ -133,28 +128,28 @@ if (!is.null(.cur)) {
       length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
       paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
       "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
-      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
-      "draft banner. Any other value, including 0, leaves this guard strict."
+      "marker and delete it."
     )
-    # Only the documented values enable draft mode. nzchar() alone would treat
-    # HVTI_TEMPLATE_DRAFT=0 as ON, silently downgrading this stop() to a
-    # warning for someone whose shell profile sets it to 0 meaning OFF -- a
-    # switch whose enablement does not mean what it says, which is the same
-    # defect this guard exists to catch. An unrecognised value falls through to
-    # strict on purpose: the author then sees the stop and re-reads the docs,
-    # which is the safe direction to be wrong in.
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+    # A job renders as a draft by default, so an author can iterate on a
+    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
+    # turns the draft into a stop for a final render. Only unset, 0, false
+    # and no mean "not strict": an unrecognised value stops on purpose, so a
+    # mistyped switch is seen rather than quietly ignored, which is the safe
+    # direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
       # The banner is not optional. A draft render that looks like a finished
       # one is the same defect with an extra step: the warning scrolls past in
       # a log, while the .html is the artifact that gets sent to someone.
-      warning(.msg, call. = FALSE)
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
       cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+      cat("Unresolved markers remain. **The numbers below are not",
           "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
       cat(":::\n\n")
     } else {
-      stop(.msg, call. = FALSE)
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
     }
   }
 }

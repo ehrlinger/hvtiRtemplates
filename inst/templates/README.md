@@ -14,10 +14,10 @@ refuses to overwrite an existing job.
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
 | `40_graphs/hs.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
 | `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `40_graphs/` or `graphs/` |
-| `10_descriptive/dc-tables.qmd` | descriptive tables and correlations | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dc-gfup.qmd` | goodness-of-follow-up tables | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-gfup.qmd` | recorded follow-up interval checks | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dp-postage.qmd` | EDA postage-stamp sweep | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dp-postage.qmd` | EDA panels on numbered PNG pages | `10_descriptive/` or `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `30_analyses/` or `analyses/` |
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
@@ -34,8 +34,13 @@ the taxonomy folder it scaffolds into:
 ```
 
 The name is the authority: `template_list()` reads the prefix and qualifier
-from it and the folder from the directory, stripping the ordering digits, and
-the test suite checks them against `hvti_taxonomy()`.
+from it and the folder from the directory, stripping the ordering digits.
+The placement test requires the job catalog and skips when it is absent.
+Its internal lookup helper uses the catalog's `(prefix, qualifier)` row and
+falls back to `hvti_taxonomy()` when the catalog or matching row is absent.
+The catalog places `dp-postage` in `descriptive/` and `dp-trends` in `graphs/`;
+the prefix-wide taxonomy cannot distinguish those jobs. A separate test checks
+that every template directory names a taxonomy folder even without the catalog.
 
 ⚠️ **The digits are ASSIGNED, not derived.** `estimates` is 90 though it is
 fifth in the taxonomy, because it holds saved output rather than jobs. The
@@ -188,6 +193,28 @@ its absence read as "templated".
 
 ## Editing a scaffolded job
 
+`migrate_job()` can prefill `dc-tables`, `dc-gfup`, `dp-trends`, and
+`dp-postage` from their supported legacy source shapes. It writes a report
+beside the job with evidence checksums, source lines, translated values, and
+unresolved choices. The existing source and evidence files remain in place.
+Only deterministic extraction can remove a marker. Review inferred values,
+unsupported cleaning, and presentation choices against the source and study
+protocol before removing their `EDIT:` markers.
+
+The table job writes an editable CORR DOCX under
+`documents/<endpoint>-<type>/`, replacing the SAS RTF output. Its
+`hv_tbl_summary()` -> `hv_man_table()` -> `hv_man_table_save()` ->
+`hv_check_docx()` path stops on document-format findings. Compare its numerical
+and presentation choices with the RTF reference yourself. Follow-up checks use
+registered intervals; they do not establish completeness against a close date.
+Trend figures and numbered postage PNG pages go under
+`graphs/<endpoint>-<type>/`, including when the postage job itself lives in
+`descriptive/`.
+
+`vignette("legacy-study-migration", package = "hvtiRtemplates")` shows
+adoption, separate study and named-dataset registration, all four migrations,
+marker review, and rendering in a disposable synthetic study.
+
 Every line a study must change is marked `EDIT:`. Work through them in order;
 the markers are placed so that a job which still contains one has not been
 finished. The comments around them record why a choice matters, not merely what
@@ -195,28 +222,44 @@ to type — several exist because the alternative fails quietly rather than
 loudly.
 
 **That property is enforced, not merely stated.** Each template carries an
-`edit-guard` chunk that scans the rendering file and stops if any marker
-remains, listing the ones it found. Until 1.0.5 it was a convention only, and
-an unedited `ac` template rendered green over a meaningless stratification: the
-`derive` chunk indexed a placeholder column, and when a column is absent
-`!is.na(d$<col>)` is `logical(0)`, which makes the assignment a **silent no-op**
-rather than an error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/27)).
+`edit-guard` chunk that scans the rendering file for markers and lists the ones
+it found. Until 1.0.5 it was a convention only, and an unedited `ac` template
+rendered green over a meaningless stratification: the `derive` chunk indexed a
+placeholder column, and when a column is absent `!is.na(d$<col>)` is
+`logical(0)`, which makes the assignment a **silent no-op** rather than an
+error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/27)).
 
-To render a partly-worked job while drafting, set `HVTI_TEMPLATE_DRAFT=1`:
+**A job with markers left renders as a draft.** The guard warns, and the
+report opens with a DRAFT banner naming the unresolved markers, so the author
+renders as they work and the banner goes when the last marker does. The guard
+only stops blocking: a section still holding a template placeholder, such as a
+column the study does not have, stops with its own error, so a fresh job
+renders as far as the markers already worked. It is deliberate: a draft render that
+looks like a finished one is the same defect with an extra step, and the
+`.html` is what gets sent to someone.
 
-```sh
-HVTI_TEMPLATE_DRAFT=1 quarto render <endpoint>-<type>-ac.qmd
+`open_job()` and `render_job()` are the intended way to scaffold and render a
+job from R, from anywhere inside the study:
+
+```r
+job <- open_job("ac", "dead_pa", "hz")   # creates the job with add_job(), or
+                                          # opens it unchanged if it exists
+render_job(job)                          # draft, as far as the markers worked
+render_job(job, final = TRUE)            # the accepted result: stops instead
+                                          # of drafting if a marker remains
 ```
 
-`1`, `true` and `yes` enable it, case-insensitively. **Any other value leaves
-the guard strict**, `0` included — a variable set to `0` meaning "off" must not
-switch the guard off by being non-empty, and an unrecognised value fails toward
-the stop so the author sees it rather than getting a quiet draft.
+Rendering outside R with a bare `quarto render` also works, and drafts by
+default; to make it stop on an unfinished job instead, set the same variable
+`render_job()` sets for you:
 
-The guard then warns instead of stopping, **and the report carries a DRAFT
-banner naming the unresolved markers**. The banner is deliberate: a draft render
-that looks like a finished one is the same defect with an extra step, and the
-`.html` is what gets sent to someone.
+```sh
+HVTI_TEMPLATE_STRICT=1 quarto render <endpoint>-<type>-ac.qmd
+```
+
+Unset, `0`, `false` and `no` leave the job rendering as a draft, case-insensitively.
+**Any other value stops**, `1`, `true` and `yes` included, so a mistyped value
+fails toward the stop and the author sees it rather than getting a quiet draft.
 
 The guard does not catch a marker that was worked *wrongly* — a placeholder
 replaced with a mistyped column name leaves nothing to scan for. That case is
