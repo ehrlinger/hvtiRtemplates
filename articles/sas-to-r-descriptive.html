@@ -129,9 +129,9 @@
 </table></section><section class="level2"><h2 id="five-steps-for-every-job">Five steps for every job<a class="anchor" aria-label="anchor" href="#five-steps-for-every-job"></a>
 </h2>
 <ol type="1">
-<li>Scaffold the job. For example, <code>add_job("dc", "cohort", "eda", qualifier = "tables")</code> writes <code>10_descriptive/cohort-eda-dc-tables.qmd</code> in a new study.</li>
-<li>Work the <code>EDIT:</code> markers, rendering from the study root with <code>quarto render 10_descriptive/cohort-eda-dc-tables.qmd</code> as you go. Unfinished work renders as a draft, as far as the markers you have worked.</li>
-<li>Stop when every marker is gone and the draft banner with it.</li>
+<li>Scaffold the job. For example, <code>job &lt;- open_job("dc", "cohort", "eda", qualifier = "tables")</code> writes <code>10_descriptive/cohort-eda-dc-tables.qmd</code> in a new study and opens it in the editor.</li>
+<li>Work the <code>EDIT:</code> markers, rendering <code>render_job(job)</code> as you go. Unfinished work renders as a draft, as far as the markers you have worked.</li>
+<li>Stop when every marker is gone and the draft banner with it. Render the accepted result with <code>render_job(job, final = TRUE)</code>, which stops instead of drafting if a marker remains.</li>
 <li>Compare the result with the SAS <code>.lst</code>, section by section.</li>
 <li>Keep the authored job flat in <code>10_descriptive/</code>; its generated artifacts are filed beneath <code>10_descriptive/cohort-eda/</code>.</li>
 </ol></section><section class="level2"><h2 id="the-draft-banner-and-edit-markers">The draft banner and <code>EDIT:</code> markers<a class="anchor" aria-label="anchor" href="#the-draft-banner-and-edit-markers"></a>
@@ -151,20 +151,23 @@ Unresolved markers remain. The numbers below are not a result.
 <div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-n</span> <span class="st">"EDIT:"</span> 10_descriptive/cohort-eda-dc-tables.qmd</span></code></pre></div>
 <p>The guard scans the whole file, so a marker in the prose, inside an HTML comment, counts as much as one in a code chunk. When the last marker goes, so does the banner.</p>
 <p>For a final render, such as the one that goes to an investigator, make an unfinished job stop rather than render as a draft:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="va">HVTI_TEMPLATE_STRICT</span><span class="op">=</span>1 <span class="ex">quarto</span> render 10_descriptive/cohort-eda-dc-tables.qmd</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/render_job.html">render_job</a></span><span class="op">(</span><span class="va">job</span>, final <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Rendering outside R with a bare <code>quarto render</code> also works, and drafts by default; to make it stop on an unfinished job instead, set the same variable <code><a href="../reference/render_job.html">render_job()</a></code> sets for you:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="va">HVTI_TEMPLATE_STRICT</span><span class="op">=</span>1 <span class="ex">quarto</span> render 10_descriptive/cohort-eda-dc-tables.qmd</span></code></pre></div>
 <p>The render then fails at the <code>edit-guard</code> chunk with the same list. Unset, <code>0</code>, <code>false</code> and <code>no</code> leave draft rendering on; any other value stops, so a mistyped setting errs toward the stop.</p>
 </section><section class="level2"><h2 id="which-data-a-job-reads">Which data a job reads<a class="anchor" aria-label="anchor" href="#which-data-a-job-reads"></a>
 </h2>
 <p>A SAS job names its dataset in a <code>set</code> statement, so the answer is in the code. An R job takes it from <code>_study.yml</code>, which can offer the same study more than one way. The descriptive jobs choose with two settings at the top of their <code>data</code> chunk, and every rendered report prints what they chose:</p>
 <pre><code>Data read: dataset `builtr` (builtr.sas7bdat), 2514 rows, 135 columns.</code></pre>
 <p><code>_study.yml</code> can declare three kinds of data:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">built</span><span class="kw">:</span><span class="at"> built.sas7bdat</span><span class="co">            # the study dataset</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">additional_datasets</span><span class="kw">:</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">builtr</span><span class="kw">:</span><span class="co">                        # another file, read as it stands</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">built</span><span class="kw">:</span><span class="at"> builtr.sas7bdat</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">analysis_sets</span><span class="kw">:</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">eda</span><span class="kw">:</span><span class="co">                           # columns kept and rows excluded, written by R</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="at">    ...</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">built</span><span class="kw">:</span><span class="at"> built.sas7bdat</span><span class="co">            # the study dataset</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">additional_datasets</span><span class="kw">:</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">builtr</span><span class="kw">:</span><span class="co">                        # another file, read as it stands</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">built</span><span class="kw">:</span><span class="at"> builtr.sas7bdat</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">analysis_sets</span><span class="kw">:</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">eda</span><span class="kw">:</span><span class="co">                           # columns kept and rows excluded, written by R</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="at">    ...</span></span></code></pre></div>
 <table class="table caption-top">
 <colgroup>
 <col style="width: 25%">
@@ -218,7 +221,7 @@ Unresolved markers remain. The numbers below are not a result.
 <pre class="sas"><code>%desc_tab(vartype=category,   varlist=female diabetes nyha_pr);
 %desc_tab(vartype=continuous, varlist=age bmi, perctile=15 50 85);</code></pre>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_correlation_data.html" class="external-link">sample_correlation_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
 <span><span class="va">d</span><span class="op">$</span><span class="va">female</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, length.out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">groups</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -752,7 +755,7 @@ Unresolved markers remain. The numbers below are not a result.
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiRtables</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRtables/reference/hv_correlation_table.html" class="external-link">hv_correlation_table</a></span><span class="op">(</span></span>
 <span>  <span class="va">d</span>,</span>
 <span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"glucose"</span>, <span class="st">"creatinine"</span><span class="op">)</span>,</span>
@@ -778,7 +781,7 @@ Unresolved markers remain. The numbers below are not a result.
   var iv_dead iv_fup;
 run;</code></pre>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"hvtiRutilities"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/generate_survival_data.html" class="external-link">generate_survival_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
 <span>  <span class="va">d</span><span class="op">$</span><span class="va">iv_fup</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">iv_dead</span>, <span class="fl">0.85</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">iv_dead</span><span class="op">)</span></span>
@@ -804,10 +807,10 @@ run;</code></pre>
 <a class="anchor" aria-label="anchor" href="#trends-over-operation-year-dp-trends"></a>
 </h2>
 <p>The shipped <code>dp-trends</code> template replaces hand-built annual summaries and per-series <code>smooth.spline(df = 6)</code> calls with <code>hv_trends()</code>. Its smoother is LOESS, not the SAS-era smoothing spline, so compare the old and new figures by shape rather than pointwise equality.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/smooth.spline.html" class="external-link">smooth.spline</a></span><span class="op">(</span><span class="va">year</span>, <span class="va">annual_mean</span>, df <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"hvtiPlotR"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_eda_data.html" class="external-link">sample_eda_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">120</span><span class="op">)</span></span>
 <span>  <span class="va">trend_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">year</span>, value <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">ef</span>, group <span class="op">=</span> <span class="st">"EF"</span><span class="op">)</span></span>
@@ -828,10 +831,10 @@ run;</code></pre>
 <a class="anchor" aria-label="anchor" href="#eda-postage-stamps-dp-postage"></a>
 </h2>
 <p>The older <code>Function_DataPlotting()</code> loops become one <code>hv_eda()</code> call per entry in <code>VARS</code>. Character and factor columns produce bars. A numeric column produces bars only when it has at most six distinct non-missing values and every value is a non-negative whole number no greater than six; otherwise it produces a scatter panel. The template lays those panels out in printable pages.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">v</span> <span class="kw">in</span> <span class="va">variables</span><span class="op">)</span> <span class="fu">Function_DataPlotting</span><span class="op">(</span><span class="va">data</span>, <span class="va">v</span>, <span class="st">"year"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiPlotR</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiPlotR/reference/sample_eda_data.html" class="external-link">sample_eda_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">120</span><span class="op">)</span></span>
 <span><span class="va">variables</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>male <span class="op">=</span> <span class="st">"Male"</span>, ef <span class="op">=</span> <span class="st">"Ejection fraction"</span><span class="op">)</span></span>
 <span><span class="va">panels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">variables</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">{</span></span>
@@ -844,7 +847,7 @@ run;</code></pre>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">panels</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>

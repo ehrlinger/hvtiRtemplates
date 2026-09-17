@@ -73,5 +73,6 @@ invisible(hvtiRutilities::study_setup(
 add_job("ac", "dead_pa", "hz", dir = d)
 list.files(d, recursive = TRUE)
 #> [1] "20_distributions/dead_pa-hz-ac.qmd" "_study.yml"                        
+#> [3] "add-job-example.Rproj"             
 unlink(d, recursive = TRUE)
 ```

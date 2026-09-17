@@ -139,6 +139,15 @@
 <td><code>add_job(prefix, endpoint, type, dir = ".", qualifier = NULL)</code></td>
 <td>the scaffolded job’s path, invisibly</td>
 </tr>
+<tr>
+<td><code>open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)</code></td>
+<td>the job’s path, invisibly; creates it with <code><a href="reference/add_job.html">add_job()</a></code> when missing, opens it unchanged when it exists</td>
+</tr>
+<tr>
+<td><code>render_job(path, final = FALSE, quiet = FALSE)</code></td>
+<td>
+<code>path</code>, invisibly; renders a draft, or with <code>final = TRUE</code> a render that stops on an unfinished job</td>
+</tr>
 </tbody>
 </table>
 <p>Templates are <code>&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in a numbered directory (<code>20_distributions/ac.qmd</code>); a job is <code>&lt;endpoint&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in the study’s matching taxonomy folder. New studies use numbered folders and existing bare-folder studies keep their layout. The ordinal that once prefixed filenames was dropped in 1.1.0.</p>

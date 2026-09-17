@@ -71,6 +71,8 @@ SAS arrangement could not answer, because `%inc` had nothing to pin.
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
 | [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html) | leading name fields that are utilities, not analysis prefixes |
 | `add_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` | the scaffolded job’s path, invisibly |
+| `open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` | the job’s path, invisibly; creates it with [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md) when missing, opens it unchanged when it exists |
+| `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
 
 Templates are `<prefix>[-<qualifier>].qmd` in a numbered directory
 (`20_distributions/ac.qmd`); a job is
