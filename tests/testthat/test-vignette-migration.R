@@ -4,10 +4,17 @@ legacy_vignette_path <- function() {
   system.file("doc", "legacy-study-migration.qmd", package = "hvtiRtemplates")
 }
 
-test_that("legacy migration vignette declares the complete workflow", {
+# The source is in the checkout (devtools::test()) and in the installed doc/
+# folder (R CMD check). An install without built vignettes, as under covr, has
+# neither, and that is a missing input rather than a failing vignette.
+skip_without_vignette <- function() {
   path <- legacy_vignette_path()
-  expect_true(file.exists(path))
-  if (!file.exists(path)) return(invisible(NULL))
+  skip_if_not(file.exists(path), "vignette source not available")
+  path
+}
+
+test_that("legacy migration vignette declares the complete workflow", {
+  path <- skip_without_vignette()
   txt <- readLines(path, warn = FALSE)
   expect_true(any(grepl("adopt = TRUE", txt, fixed = TRUE)))
   expect_true(any(grepl('role = "study"', txt, fixed = TRUE)))
@@ -18,9 +25,7 @@ test_that("legacy migration vignette declares the complete workflow", {
 })
 
 test_that("the tutorial creates four reviewed jobs from its own disposable evidence", {
-  path <- legacy_vignette_path()
-  expect_true(file.exists(path))
-  if (!file.exists(path)) return(invisible(NULL))
+  path <- skip_without_vignette()
   lines <- readLines(path, warn = FALSE)
   starts <- which(lines == "```{r}")
   code <- character()
@@ -87,7 +92,7 @@ test_that("the final migration verifier returns four lasting rendered fixtures",
 test_that("the tutorial embeds its PNG before temporary study cleanup", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
-  lines <- readLines(legacy_vignette_path(), warn = FALSE)
+  lines <- readLines(skip_without_vignette(), warn = FALSE)
   setup <- lines[grepl("^root <-", lines)]
   start <- match("#| label: inspect-outputs", lines)
   end <- start + match("```", lines[-seq_len(start)])
