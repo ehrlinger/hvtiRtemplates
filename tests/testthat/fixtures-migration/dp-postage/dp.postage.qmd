@@ -1,0 +1,21 @@
+---
+title: "Synthetic EDA sweep"
+---
+
+```{r}
+dta_filename <- "built.csv"
+pref_time_var <- "iv_dead"
+variables <- c("dead", "iv_dead", "iv_fup", "year", "female", "race_grp",
+               "repair", "age", "bmi", "treatment", "hx_chf", "lvmassi",
+               "iv_opyrs", "panel1", "panel2", "panel3", "panel4", "panel5")
+exclude <- character(0)
+ncol <- 4L
+nrow <- 4L
+unique_limit <- 6L
+show_percent <- FALSE
+pref_color_var <- "repair"
+stratify_by <- "female"
+alpha <- 0.4
+scale_x_continuous(limits = c(0, 5))
+d$age <- d$age + 1
+```

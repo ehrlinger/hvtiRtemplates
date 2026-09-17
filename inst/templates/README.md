@@ -14,9 +14,9 @@ refuses to overwrite an existing job.
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
 | `40_graphs/hs.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
 | `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `40_graphs/` or `graphs/` |
-| `10_descriptive/dc-tables.qmd` | descriptive tables and correlations | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dc-gfup.qmd` | goodness-of-follow-up tables | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dp-postage.qmd` | EDA postage-stamp sweep | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-gfup.qmd` | recorded follow-up interval checks | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dp-postage.qmd` | EDA panels on numbered PNG pages | `10_descriptive/` or `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `30_analyses/` or `analyses/` |
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
@@ -33,8 +33,13 @@ the taxonomy folder it scaffolds into:
 ```
 
 The name is the authority: `template_list()` reads the prefix and qualifier
-from it and the folder from the directory, stripping the ordering digits, and
-the test suite checks them against `hvti_taxonomy()`.
+from it and the folder from the directory, stripping the ordering digits.
+The placement test requires the job catalog and skips when it is absent.
+Its internal lookup helper uses the catalog's `(prefix, qualifier)` row and
+falls back to `hvti_taxonomy()` when the catalog or matching row is absent.
+The catalog places `dp-postage` in `descriptive/` and `dp-trends` in `graphs/`;
+the prefix-wide taxonomy cannot distinguish those jobs. A separate test checks
+that every template directory names a taxonomy folder even without the catalog.
 
 ⚠️ **The digits are ASSIGNED, not derived.** `estimates` is 90 though it is
 fifth in the taxonomy, because it holds saved output rather than jobs. The
@@ -186,6 +191,28 @@ question is for. `hs` was missing from this list before it was corrected, and
 its absence read as "templated".
 
 ## Editing a scaffolded job
+
+`migrate_job()` can prefill `dc-tables`, `dc-gfup`, `dp-trends`, and
+`dp-postage` from their supported legacy source shapes. It writes a report
+beside the job with evidence checksums, source lines, translated values, and
+unresolved choices. The existing source and evidence files remain in place.
+Only deterministic extraction can remove a marker. Review inferred values,
+unsupported cleaning, and presentation choices against the source and study
+protocol before removing their `EDIT:` markers.
+
+The table job writes an editable CORR DOCX under
+`documents/<endpoint>-<type>/`, replacing the SAS RTF output. Its
+`hv_tbl_summary()` -> `hv_man_table()` -> `hv_man_table_save()` ->
+`hv_check_docx()` path stops on document-format findings. Compare its numerical
+and presentation choices with the RTF reference yourself. Follow-up checks use
+registered intervals; they do not establish completeness against a close date.
+Trend figures and numbered postage PNG pages go under
+`graphs/<endpoint>-<type>/`, including when the postage job itself lives in
+`descriptive/`.
+
+`vignette("legacy-study-migration", package = "hvtiRtemplates")` shows
+adoption, separate study and named-dataset registration, all four migrations,
+marker review, and rendering in a disposable synthetic study.
 
 Every line a study must change is marked `EDIT:`. Work through them in order;
 the markers are placed so that a job which still contains one has not been

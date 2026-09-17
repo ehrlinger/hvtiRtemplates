@@ -3,6 +3,7 @@
 export(add_job)
 export(hvti_non_prefixes)
 export(hvti_taxonomy)
+export(migrate_job)
 export(open_job)
 export(render_job)
 export(template_list)

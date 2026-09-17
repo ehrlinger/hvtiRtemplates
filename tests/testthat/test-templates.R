@@ -253,7 +253,8 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "sas_variable_block", "covariate_audit", "covariates_to_numeric",
     "imputed_levels", "pool_collinear_pairs", "selection_crowding",  # >= 1.1.4
     "concept_map", "verify_manifest", "proc_means",
-    "study_dir", "built_path", "study_root"  # >= 1.1.12
+    "study_dir", "built_path", "study_root",  # >= 1.1.12
+    "label_map", "get_label"
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")
@@ -498,6 +499,17 @@ test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
 # `graphs/dp` is trends, spaghetti, procs and more under one prefix, so a
 # template name has to be able to say which. See
 # dev/specs/2026-09-02-dp-dc-decomposition-design.md, which decided this.
+
+test_that("dc-tables carries the registered-data and checked Word pipeline contract", {
+  src <- readLines(template_path("dc", "tables"), warn = FALSE)
+  fence <- grepl("^```", src)
+  code <- sub("#.*$", "", src[cumsum(fence) %% 2 == 1 & !fence])
+  for (required in c(
+    "hvtiRtables::hv_tbl_summary(", "hvtiRtables::hv_man_table(",
+    "hvtiRtables::hv_man_table_save(", "hvtiRtables::hv_check_docx(",
+    'study_dir("documents"', "dataset = DATASET"
+  )) expect_true(any(grepl(required, code, fixed = TRUE)), info = required)
+})
 
 test_that("a qualified template name parses into three fields", {
   f <- hvtiRtemplates:::.template_fields("dp-trends.qmd")

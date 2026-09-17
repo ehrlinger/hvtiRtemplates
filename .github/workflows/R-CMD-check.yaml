@@ -48,11 +48,19 @@ jobs:
       # any::pkgload is for the roadmap-guard step below: test_local() loads
       # the package from source through pkgload rather than through
       # R CMD check, which is a separate code path with its own dependency.
+      # local::. is for the Windows leg. legacy-study-migration.qmd calls
+      # library(hvtiRtemplates), and on Windows the R process Quarto starts
+      # during R CMD build does not find the temporary library R CMD build
+      # installed the package into, although R_LIBS names it. Upstream is
+      # quarto-dev/quarto-r#217, still open, and installing the package from
+      # the checkout is the workaround given there. On the other legs the
+      # temporary library comes first, so the vignette builds as before.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
             any::rcmdcheck
             any::pkgload
+            local::.
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
