@@ -46,9 +46,11 @@
       calls[[i]]$start, paste0(types[[i]], ": ", paste(variables, collapse = ", ")),
       "Declared vartype and source row order."
     ))
+    # A heading is a SAS comment body. It becomes a GROUPS key in the job, but
+    # reports carry no source-comment text, so the report row names a placeholder.
     for (group in names(parsed)) {
       translated <- rbind(translated, record(calls[[i]]$start,
-                                             paste0(group, ": ", paste(parsed[[group]], collapse = ", ")),
+                                             paste0("[heading]: ", paste(parsed[[group]], collapse = ", ")),
                                              "Source comment heading and grouped rows."))
     }
     presentation <- setdiff(names(args[[i]]), c("input", "by", "varlist", "vartype"))

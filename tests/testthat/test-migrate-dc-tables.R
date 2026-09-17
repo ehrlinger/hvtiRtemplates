@@ -72,9 +72,10 @@ test_that("dc-tables migrates desc_tab groups and types", {
   ))
   expect_identical(env$COMPARE, "none")
   report <- paste(readLines(sub("[.]qmd$", "-migration.md", out)), collapse = "\n")
-  for (value in c("byvalue", "countpersig", "outrtf", 'title3 "[string]";', "Follow-up")) {
+  for (value in c("byvalue", "countpersig", "outrtf", 'title3 "[string]";', "[heading]: iv_dead")) {
     expect_match(report, value, fixed = TRUE)
   }
+  expect_false(grepl("Follow-up", report, fixed = TRUE))
   expect_match(report, "BINARY: female, repair", fixed = TRUE)
   expect_match(paste(txt, collapse = "\n"), "EDIT: review SAS presentation choices", fixed = TRUE)
 })

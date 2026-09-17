@@ -101,3 +101,13 @@ test_that("masking keeps statement shape while hiding values", {
   expect_identical(r, "x <- c(\"[string]\", '[string]') # [comment]")
   expect_identical(.migration_mask_source("x = \"unterminated MRN", "sas"), "x = \"[string]")
 })
+
+test_that("dc-tables group headings reach the job but not the report", {
+  root <- migration_study_fixture("dc-tables")
+  source <- file.path(root, "descriptive", "dc.tables.sas")
+  writeLines("%desc_tab(vartype=continuous,input=built,varlist=/* SENTINEL_HEADING */ age);", source)
+  job <- migrate_job(source, "cohort", "eda", "dc", "tables", dir = root)
+  expect_no_sentinel(masked_report(job), "SENTINEL_HEADING")
+  expect_match(masked_report(job), "[heading]: age", fixed = TRUE)
+  expect_true(any(grepl("SENTINEL_HEADING", readLines(job, warn = FALSE), fixed = TRUE)))
+})
