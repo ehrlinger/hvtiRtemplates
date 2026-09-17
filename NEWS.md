@@ -1,5 +1,13 @@
 # hvtiRtemplates (unreleased)
 
+* **The `hz` template renders again.** Its `phases` chunk read the order of
+  `theta` through TemporalHazard's internal `.hzr_phase_theta_names()`, which
+  changed shape once `hzr_theta_names()` was exported, so every `hz` job
+  stopped there. It now calls `hzr_theta_names(phases)` and stops with a clear
+  message on TemporalHazard older than 1.2.8. A job already scaffolded from the
+  old template needs the same edit to its `phases` chunk. `TemporalHazard
+  (>= 1.2.8)` joins `Suggests` so the test that runs that chunk runs in CI.
+
 * A migration test no longer warns on Windows while removing its temporary
   folder link (#124).
 

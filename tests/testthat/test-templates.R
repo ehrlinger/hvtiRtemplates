@@ -675,3 +675,26 @@ test_that("every template's root resolves to the study from any depth", {
     expect_identical(normalizePath(env$.root), root, info = paste(basename(f), "interactive"))
   }
 })
+
+test_that("the hz template reads theta names through TemporalHazard's exported API", {
+  # .hzr_phase_theta_names() was internal and changed signature once
+  # hzr_theta_names() was exported (TemporalHazard 1.2.8, temporal_hazard#186),
+  # so reaching into the namespace stopped every hz render at the phases chunk.
+  src <- readLines(template_path("hz"), warn = FALSE)
+  code <- sub("#.*$", "", src)
+  expect_false(any(grepl("hzr_phase_theta_names|getFromNamespace|TemporalHazard:::", code)))
+
+  at <- grep("#| label: phases", src, fixed = TRUE)
+  end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
+  chunk <- src[(at + 1L):(end - 1L)]
+  expect_true(any(grepl("hzr_theta_names(phases)", chunk, fixed = TRUE)))
+
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  skip_if_not_installed("knitr")
+  env <- new.env()
+  suppressPackageStartupMessages(library(TemporalHazard))
+  local_mocked_bindings(kable = function(x, ...) x, .package = "knitr")
+  eval(parse(text = chunk), envir = env)
+  expect_identical(env$theta_table$parameter, TemporalHazard::hzr_theta_names(env$phases))
+  expect_gt(nrow(env$theta_table), 0L)
+})
