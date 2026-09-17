@@ -25,14 +25,11 @@ result.
 
 ```{r}
 #| label: setup
-# This file runs either from the directory it was scaffolded into or from the
-# project root. Resolve which, so that no path in this document needs editing.
-.root <- if (file.exists("_quarto.yml")) "." else ".."
-if (!file.exists(file.path(.root, "_quarto.yml"))) {
-  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
-       "resolved. Render this from the project root or from the job directory.",
-       call. = FALSE)
-}
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(hvtiRutilities)

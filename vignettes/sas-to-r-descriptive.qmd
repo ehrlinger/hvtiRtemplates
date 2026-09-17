@@ -46,12 +46,14 @@ hvtiR::status()
 ## Five steps for every job
 
 1. Scaffold the job. For example,
-   `add_job("dc", "cohort", "eda", qualifier = "tables")` writes
-   `10_descriptive/cohort-eda-dc-tables.qmd` in a new study.
-2. Work the `EDIT:` markers, rendering from the study root with
-   `quarto render 10_descriptive/cohort-eda-dc-tables.qmd` as you go.
-   Unfinished work renders as a draft, as far as the markers you have worked.
-3. Stop when every marker is gone and the draft banner with it.
+   `job <- open_job("dc", "cohort", "eda", qualifier = "tables")` writes
+   `10_descriptive/cohort-eda-dc-tables.qmd` in a new study and opens it in the
+   editor.
+2. Work the `EDIT:` markers, rendering `render_job(job)` as you go. Unfinished
+   work renders as a draft, as far as the markers you have worked.
+3. Stop when every marker is gone and the draft banner with it. Render the
+   accepted result with `render_job(job, final = TRUE)`, which stops instead
+   of drafting if a marker remains.
 4. Compare the result with the SAS `.lst`, section by section.
 5. Keep the authored job flat in `10_descriptive/`; its generated artifacts
    are filed beneath `10_descriptive/cohort-eda/`.
@@ -98,6 +100,14 @@ does the banner.
 
 For a final render, such as the one that goes to an investigator, make an
 unfinished job stop rather than render as a draft:
+
+```r
+render_job(job, final = TRUE)
+```
+
+Rendering outside R with a bare `quarto render` also works, and drafts by
+default; to make it stop on an unfinished job instead, set the same variable
+`render_job()` sets for you:
 
 ```sh
 HVTI_TEMPLATE_STRICT=1 quarto render 10_descriptive/cohort-eda-dc-tables.qmd

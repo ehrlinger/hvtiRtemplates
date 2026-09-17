@@ -1,8 +1,8 @@
 # hvtiRtemplates
 
 Analysis job templates for the HVTI CORR group, plus the prefix taxonomy that names them.
-Five exports across three source files: `hvti_taxonomy()`, `hvti_non_prefixes()`,
-`template_list()`, `template_path()` and `add_job()`.
+Seven exports across five source files: `hvti_taxonomy()`, `hvti_non_prefixes()`,
+`template_list()`, `template_path()`, `add_job()`, `open_job()` and `render_job()`.
 
 The package is small; the **templates are the product**. `inst/templates/README.md` promises
 that files there are supported and runnable, and that promise is the reason most of the rules

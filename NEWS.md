@@ -1,5 +1,20 @@
 # hvtiRtemplates (unreleased)
 
+* **Templates find the study root through `_study.yml`.** Each template calls
+  `hvtiRutilities::study_root()` in place of looking for `_quarto.yml` in `.`
+  or `..`, so a study needs no `_quarto.yml`, and a job renders the same from
+  the Render button, `quarto render` or `render_job()`, at any depth. A study
+  must have been adopted with `hvtiRutilities::study_setup()`.
+
+* **`open_job()` finds the study root and opens or creates a job.** Called
+  from anywhere inside a study, it resolves the root through the nearest
+  `_study.yml` at or above `dir`, creates the job with `add_job()` when it
+  does not exist, and opens an existing job as it stands, never overwriting
+  it.
+
+* `render_job()` renders a job from its own directory: a draft by default,
+  and with `final = TRUE` a render that stops on an unfinished job.
+
 * **The descriptive templates can read a named dataset.** `dc-tables`,
   `dc-gfup` and `dp-postage` gain `DATASET`, passed to
   `read_built(dataset = )` when `ANALYSIS_SET` is `NULL`, so a job can read an
