@@ -5,7 +5,8 @@
   changed shape once `hzr_theta_names()` was exported, so every `hz` job
   stopped there. It now calls `hzr_theta_names(phases)` and stops with a clear
   message on TemporalHazard older than 1.2.8. A job already scaffolded from the
-  old template needs the same edit to its `phases` chunk.
+  old template needs the same edit to its `phases` chunk. `TemporalHazard
+  (>= 1.2.8)` joins `Suggests` so the test that runs that chunk runs in CI.
 
 * **Templates find the study root through `_study.yml`.** Each template calls
   `hvtiRutilities::study_root()` in place of looking for `_quarto.yml` in `.`

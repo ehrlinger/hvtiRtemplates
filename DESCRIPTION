@@ -33,7 +33,8 @@ Remotes:
     ehrlinger/hvtiRdatabuild,
     ehrlinger/hvtiRbootstrap,
     ehrlinger/hvtiRlifetables,
-    ehrlinger/hvtiPlotR
+    ehrlinger/hvtiPlotR,
+    ehrlinger/TemporalHazard
 Suggests:
     arrow,
     ggplot2,
@@ -47,6 +48,7 @@ Suggests:
     officer,
     patchwork (>= 1.1.0),
     quarto,
+    TemporalHazard (>= 1.2.8),
     testthat (>= 3.0.0),
     withr
 VignetteBuilder: quarto
