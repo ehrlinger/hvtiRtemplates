@@ -582,9 +582,9 @@ test_that(".path_within compares at a separator boundary, and by case only on Wi
   expect_true(.path_within("/x.sas", "/"))
   expect_false(.path_within("/TMP/AB/x.sas", "/tmp/ab", windows = FALSE))
   expect_true(.path_within("C:/Users/RunnerAdmin/Temp/x.sas", "c:/users/runneradmin/temp", windows = TRUE))
-  expect_true(.path_within("C:\\Users\\a\\x.sas", "C:/Users/a/", windows = TRUE))
-  expect_true(.path_within("C:/Users/a/x.sas", "C:\\Users\\a", windows = TRUE))
-  expect_false(.path_within("C:\\Users\\ab\\x.sas", "C:/Users/a", windows = TRUE))
+  expect_true(.path_within("C:\\Data\\a\\x.sas", "C:/Data/a/", windows = TRUE))
+  expect_true(.path_within("C:/Data/a/x.sas", "C:\\Data\\a", windows = TRUE))
+  expect_false(.path_within("C:\\Data\\ab\\x.sas", "C:/Data/a", windows = TRUE))
   expect_true(.path_within("C:/x.sas", "C:/", windows = TRUE))
 })
 
