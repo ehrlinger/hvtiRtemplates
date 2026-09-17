@@ -34,9 +34,10 @@ affordances live in `CLAUDE.md`, which imports this file.
 
 | workflow | fails on |
 |----|----|
-| `R-CMD-check.yaml` | `R CMD check` across platforms |
+| `R-CMD-check.yaml` | `R CMD check` across platforms, plus one step on `ubuntu-latest` (release), **Run the catalog-reading guards against the source tree**: `test_local(filter = "roadmap\|taxonomy")` with `HVTI_ROADMAP_STRICT=1`, where a skip is a failure. The expected pattern is a **nonzero `SKIP`** on every check leg, because the tarball carries no catalog, beside **`SKIP 0`** on that step (measured 2026-09-17: `SKIP 4`/`SKIP 5` against `SKIP 0 \| PASS 22`). A skip on the strict step, or a step missing from the log, is an untested gate. See below |
 | `check-manual.yaml` | the PDF manual build. ⚠️ **Post-merge only**, see below |
-| `lint.yaml` | [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html) |
+| `house-style.yaml` | `.claude/house-style.md` drifting from the vault sources it is composed from. The file is generated, so a hand edit fails too |
+| `lint.yaml` | two jobs. `lint`, [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html). `docs-current`, **PRs only**: runs `roxygen2::roxygenise()` with roxygen2 pinned and fails if `man/`, `NAMESPACE` or `DESCRIPTION` change, so a PR that skips `devtools::document()` fails here |
 | `pkgdown.yaml` | the site build |
 | `spec-counts.yaml` | three checks. `check-spec-counts.py`, the prose in `dev/specs/` must agree with the generated map. `check-flow-counts.py`, every `data-check` anchored number in the job flow diagrams must agree with the maps they copy from. `check-roadmap-counts.py`, the roadmap ledger and `inst/templates/` must agree **in both directions**, so a template no ledger row claims fails the PR just as a row claiming an absent template does. Editing a count without regenerating fails the PR |
 | `test-coverage.yaml` | coverage upload |

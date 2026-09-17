@@ -60,11 +60,14 @@
 <th>fails on</th>
 </tr></thead><tbody><tr><td><code>R-CMD-check.yaml</code></td>
 <td>
-<code>R CMD check</code> across platforms</td>
+<code>R CMD check</code> across platforms, plus one step on <code>ubuntu-latest</code> (release), <strong>Run the catalog-reading guards against the source tree</strong>: <code>test_local(filter = "roadmap\|taxonomy")</code> with <code>HVTI_ROADMAP_STRICT=1</code>, where a skip is a failure. The expected pattern is a <strong>nonzero <code>SKIP</code></strong> on every check leg, because the tarball carries no catalog, beside <strong><code>SKIP 0</code></strong> on that step (measured 2026-09-17: <code>SKIP 4</code>/<code>SKIP 5</code> against <code>SKIP 0 \| PASS 22</code>). A skip on the strict step, or a step missing from the log, is an untested gate. See below</td>
 </tr><tr><td><code>check-manual.yaml</code></td>
 <td>the PDF manual build. ⚠️ <strong>Post-merge only</strong>, see below</td>
+</tr><tr><td><code>house-style.yaml</code></td>
+<td>
+<code>.claude/house-style.md</code> drifting from the vault sources it is composed from. The file is generated, so a hand edit fails too</td>
 </tr><tr><td><code>lint.yaml</code></td>
-<td><code><a href="https://lintr.r-lib.org/reference/lint.html" class="external-link">lintr::lint_package()</a></code></td>
+<td>two jobs. <code>lint</code>, <code><a href="https://lintr.r-lib.org/reference/lint.html" class="external-link">lintr::lint_package()</a></code>. <code>docs-current</code>, <strong>PRs only</strong>: runs <code>roxygen2::roxygenise()</code> with roxygen2 pinned and fails if <code>man/</code>, <code>NAMESPACE</code> or <code>DESCRIPTION</code> change, so a PR that skips <code>devtools::document()</code> fails here</td>
 </tr><tr><td><code>pkgdown.yaml</code></td>
 <td>the site build</td>
 </tr><tr><td><code>spec-counts.yaml</code></td>
