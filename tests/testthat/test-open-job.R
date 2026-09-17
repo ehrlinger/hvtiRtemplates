@@ -1,7 +1,7 @@
 new_study <- function(pattern) {
   root <- tempfile(pattern)
   suppressMessages(hvtiRutilities::study_setup(root, study = "Open job test", study_tracker_id = 1L))
-  normalizePath(root)
+  normalizePath(root, winslash = "/", mustWork = FALSE)
 }
 
 test_that("open_job creates a missing job under the study root found from a subdirectory", {
@@ -10,7 +10,10 @@ test_that("open_job creates a missing job under the study root found from a subd
 
   out <- open_job("ac", "dead", "eda", dir = file.path(root, "20_distributions"))
 
-  expect_identical(out, file.path(root, "20_distributions", "dead-eda-ac.qmd"))
+  expect_identical(
+    normalizePath(out, winslash = "/", mustWork = FALSE),
+    normalizePath(file.path(root, "20_distributions", "dead-eda-ac.qmd"), winslash = "/", mustWork = FALSE)
+  )
   expect_true(file.exists(out))
 })
 
@@ -22,7 +25,10 @@ test_that("open_job opens an existing job without changing it", {
 
   expect_message(again <- open_job("ac", "dead", "eda", dir = root), "already exists")
 
-  expect_identical(again, first)
+  expect_identical(
+    normalizePath(again, winslash = "/", mustWork = FALSE),
+    normalizePath(first, winslash = "/", mustWork = FALSE)
+  )
   expect_identical(readLines(first), "worked on")
 })
 
@@ -48,6 +54,23 @@ test_that("open_job reports an invalid field under its own name, not add_job()'s
 
   expect_error(open_job("ac", "a-b", "eda", dir = root), "^open_job\\(\\): `endpoint`")
   expect_false(file.exists(file.path(root, "20_distributions", "a-b-eda-ac.qmd")))
+})
+
+test_that("open_job's positional argument order matches add_job's", {
+  # add_job()'s fourth positional argument is dir, with qualifier fifth and
+  # named-only in practice; open_job() must accept dir in that same slot, or
+  # a caller moving from an add_job() call to open_job() with the same
+  # positional arguments gets an error that misreads dir as qualifier.
+  root <- new_study("openjob-positional-")
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+
+  out <- open_job("ac", "demo", "eda", root)
+
+  expect_identical(
+    normalizePath(out, winslash = "/", mustWork = FALSE),
+    normalizePath(file.path(root, "20_distributions", "demo-eda-ac.qmd"), winslash = "/", mustWork = FALSE)
+  )
+  expect_true(file.exists(out))
 })
 
 test_that("open_job returns exactly the path add_job would write, qualified and not", {

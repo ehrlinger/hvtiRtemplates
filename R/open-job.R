@@ -26,7 +26,7 @@
 #' open_job("ac", "dead", "eda", dir = root)
 #' unlink(root, recursive = TRUE)
 #' @export
-open_job <- function(prefix, endpoint, type, qualifier = NULL, dir = ".") {
+open_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
   root <- hvtiRutilities::study_root(dir)
   row <- tryCatch(
     .select_template(template_list(), prefix, qualifier),

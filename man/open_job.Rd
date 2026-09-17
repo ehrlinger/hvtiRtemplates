@@ -4,7 +4,7 @@
 \alias{open_job}
 \title{Open a job, creating it from its template if needed}
 \usage{
-open_job(prefix, endpoint, type, qualifier = NULL, dir = ".")
+open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
@@ -17,14 +17,14 @@ match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
 \item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.
 Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{endpoint}.}
 
+\item{dir}{Character. Any directory inside the study. Defaults to the
+working directory.}
+
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
 \code{dp}. Required only where a prefix carries more than one template;
 omitting it there is an error naming the choices, never a silent pick.
 Restricted to \code{[A-Za-z0-9_]+}, because \code{-} separates the
 filename's fields.}
-
-\item{dir}{Character. Any directory inside the study. Defaults to the
-working directory.}
 }
 \value{
 The path to the job file, invisibly.

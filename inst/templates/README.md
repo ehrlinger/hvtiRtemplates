@@ -210,7 +210,20 @@ renders as far as the markers already worked. It is deliberate: a draft render t
 looks like a finished one is the same defect with an extra step, and the
 `.html` is what gets sent to someone.
 
-For a final render, make an unfinished job stop instead:
+`open_job()` and `render_job()` are the intended way to scaffold and render a
+job from R, from anywhere inside the study:
+
+```r
+job <- open_job("ac", "dead_pa", "hz")   # creates the job with add_job(), or
+                                          # opens it unchanged if it exists
+render_job(job)                          # draft, as far as the markers worked
+render_job(job, final = TRUE)            # the accepted result: stops instead
+                                          # of drafting if a marker remains
+```
+
+Rendering outside R with a bare `quarto render` also works, and drafts by
+default; to make it stop on an unfinished job instead, set the same variable
+`render_job()` sets for you:
 
 ```sh
 HVTI_TEMPLATE_STRICT=1 quarto render <endpoint>-<type>-ac.qmd
