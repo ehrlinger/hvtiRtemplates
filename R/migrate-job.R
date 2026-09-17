@@ -32,42 +32,85 @@
 #' @param source Path to one legacy source job.
 #' @param endpoint Endpoint field for the new job's filename.
 #' @param type Analysis-type field for the new job's filename.
-#' @param prefix Template prefix, such as \code{"dc"}.
-#' @param qualifier Template qualifier, such as \code{"tables"}.
-#'   Filename fields must match \code{[A-Za-z0-9_]+}.
-#' @param lst Optional path to a SAS listing.
-#' @param log Optional path to a SAS log.
+#' @param prefix Template prefix, such as \code{"dc"}. Read from the SAS
+#'   filename when \code{NULL}.
+#' @param qualifier Template qualifier, such as \code{"tables"}. Read from the
+#'   SAS filename when \code{NULL}. Filename fields must match
+#'   \code{[A-Za-z0-9_]+}.
+#' @param lst Optional path to a SAS listing. Defaults to the same-named file
+#'   beside \code{source} when present.
+#' @param log Optional path to a SAS log. Defaults to the same-named file
+#'   beside \code{source} when present.
 #' @param reference Optional vector of paths to output references, such as
 #'   RTF or DOCX files. They record comparison targets, not analysis choices.
-#' @param dir Existing study root. Defaults to the current directory.
+#' @param dir Any directory in the study. Defaults to the directory of
+#'   \code{source}.
 #'
 #' @return The migrated job path, invisibly. The report is written beside it.
 #' @seealso \code{\link{add_job}}, \code{\link{template_list}}
 #' @export
-migrate_job <- function(source, endpoint, type, prefix, qualifier = NULL,
-                        lst = NULL, log = NULL, reference = NULL, dir = ".") {
-  .check_field("endpoint", endpoint)
-  .check_field("type", type)
-  .check_field("prefix", prefix)
-  if (!is.null(qualifier)) .check_field("qualifier", qualifier)
-  .check_scalar_string("dir", dir)
-  root <- normalizePath(dir, winslash = "/", mustWork = TRUE)
-  if (!dir.exists(root)) stop("migrate_job(): study root must be a directory.", call. = FALSE)
+migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
+                        lst = NULL, log = NULL, reference = NULL, dir = NULL) {
+  .check_field("endpoint", endpoint, fn = "migrate_job")
+  .check_field("type", type, fn = "migrate_job")
   .check_scalar_string("source", source)
-  if (!is.null(lst)) .check_scalar_string("lst", lst)
-  if (!is.null(log)) .check_scalar_string("log", log)
+  if (!file.exists(source)) stop("migrate_job(): source not found: ", source, call. = FALSE)
+  source <- normalizePath(source, winslash = "/")
+  if (!is.null(prefix)) .check_field("prefix", prefix, fn = "migrate_job")
+  if (!is.null(qualifier)) .check_field("qualifier", qualifier, fn = "migrate_job")
+  root <- if (is.null(dir)) hvtiRutilities::study_root(dirname(source)) else hvtiRutilities::study_root(dir)
+  root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  for (arg in c("lst", "log")) {
+    given <- get(arg)
+    if (!is.null(given)) {
+      .check_scalar_string(arg, given)
+      if (!file.exists(given)) stop("migrate_job(): `", arg, "` not found: ", given, call. = FALSE)
+    }
+  }
+  if (is.null(lst)) lst <- .default_evidence(source, "lst")
+  if (is.null(log)) log <- .default_evidence(source, "log")
   if (!is.null(reference) && (!is.character(reference) || !length(reference) ||
                                 anyNA(reference) || any(!nzchar(reference)))) {
     stop("migrate_job(): `reference` must contain existing file paths.", call. = FALSE)
   }
+  tpl <- .infer_template(source, prefix, qualifier)
+  prefix <- tpl$prefix
+  qualifier <- tpl$qualifier
   paths <- c(source = source, lst = lst, log = log, reference = reference)
   paths <- vapply(paths, .migration_path, character(1L), root = root)
-  row <- .select_template(template_list(), prefix, qualifier)
+  row <- tryCatch(
+    .select_template(template_list(), prefix, qualifier),
+    error = function(e) stop("migrate_job(): ", conditionMessage(e), call. = FALSE)
+  )
   adapter <- .migration_adapter(prefix, qualifier)
   evidence <- .migration_evidence(paths, root)
   template <- .migration_template(row, endpoint, type, root)
   result <- adapter(evidence, template$lines)
   .migration_finish(template, evidence, result)
+}
+
+# A corpus job is <prefix>.<variable>[.<more>].sas. For a prefix with
+# qualified templates the second field must name one of them; otherwise the
+# choice is the author's, and guessing is the defect add_job() refuses.
+.infer_template <- function(source, prefix, qualifier) {
+  if (!is.null(prefix)) return(list(prefix = prefix, qualifier = qualifier))
+  fields <- strsplit(basename(source), ".", fixed = TRUE)[[1L]]
+  tl <- template_list()
+  if (length(fields) < 3L || !fields[[1L]] %in% tl$prefix) {
+    stop("migrate_job(): cannot read a template prefix from '", basename(source),
+         "'; pass `prefix` (and `qualifier`).", call. = FALSE)
+  }
+  prefix <- fields[[1L]]
+  quals <- tl$qualifier[tl$prefix == prefix]
+  if (all(is.na(quals))) return(list(prefix = prefix, qualifier = NULL))
+  if (fields[[2L]] %in% quals) return(list(prefix = prefix, qualifier = fields[[2L]]))
+  stop("migrate_job(): '", basename(source), "' does not name a ", prefix, " template; pass `qualifier` as one of: ",
+       paste(sort(quals), collapse = ", "), ".", call. = FALSE)
+}
+
+.default_evidence <- function(source, suffix) {
+  path <- sub("[.][^.]+$", paste0(".", suffix), source)
+  if (file.exists(path)) path else NULL
 }
 
 .migration_template <- function(row, endpoint, type, root) {

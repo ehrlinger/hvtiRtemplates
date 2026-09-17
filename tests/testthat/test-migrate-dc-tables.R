@@ -178,7 +178,15 @@ test_that("dc-tables stops on actual CORR structural findings", {
 test_that("dc-tables leaves an unresolved split when registered data cannot prove it", {
   for (mode in c("missing", "unknown", "empty")) {
     root <- migration_study_fixture("dc-tables")
-    if (mode == "missing") unlink(file.path(root, "_study.yml"))
+    if (mode == "missing") {
+      # migrate_job() now resolves `dir` through hvtiRutilities::study_root(),
+      # which requires _study.yml, so a missing study config is caught before
+      # the adapter ever runs -- this mode can no longer reach the adapter's
+      # own classification fallback below.
+      unlink(file.path(root, "_study.yml"))
+      expect_error(tables_migrate(root, evidence = FALSE), "_study.yml")
+      next
+    }
     if (mode == "unknown") {
       source <- readLines(file.path(root, "descriptive", "dc.tables.sas"))
       tables_source(root, gsub("input=built", "input=unregistered", source, fixed = TRUE))

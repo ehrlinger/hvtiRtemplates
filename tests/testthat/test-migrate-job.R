@@ -1,6 +1,26 @@
+test_that(".infer_template reads prefix and qualifier from a corpus job name", {
+  expect_identical(.infer_template("x/dc.tables.ods.sas", NULL, NULL), list(prefix = "dc", qualifier = "tables"))
+  expect_identical(.infer_template("x/ac.dead.sas", NULL, NULL), list(prefix = "ac", qualifier = NULL))
+  expect_identical(.infer_template("x/odd_name.sas", "dp", "trends"), list(prefix = "dp", qualifier = "trends"))
+})
+
+test_that(".infer_template refuses a qualified prefix it cannot resolve", {
+  expect_error(.infer_template("x/dc.custom.sas", NULL, NULL), "tables")
+  expect_error(.infer_template("x/oddname.sas", NULL, NULL), "prefix")
+})
+
+test_that(".default_evidence finds a same-stem listing and log", {
+  d <- tempfile("evidence-")
+  dir.create(d)
+  on.exit(unlink(d, recursive = TRUE), add = TRUE)
+  src <- file.path(d, "dc.tables.ods.sas")
+  file.create(src, file.path(d, "dc.tables.ods.lst"))
+  expect_identical(.default_evidence(src, "lst"), file.path(d, "dc.tables.ods.lst"))
+  expect_null(.default_evidence(src, "log"))
+})
+
 test_that("migrate_job refuses unsupported and out-of-root sources", {
-  root <- withr::local_tempdir()
-  dir.create(file.path(root, "descriptive"))
+  root <- migration_study_fixture()
   src <- withr::local_tempfile(fileext = ".sas")
   writeLines("proc means; run;", src)
   expect_error(migrate_job(src, "cohort", "eda", "ac", dir = root), "beneath the study root")
@@ -316,7 +336,7 @@ test_that("output folder links cannot redirect migration outside the study", {
 })
 
 test_that("public validation follows source links", {
-  root <- withr::local_tempdir()
+  root <- migration_study_fixture()
   outside <- withr::local_tempfile(fileext = ".sas")
   writeLines("proc means; run;", outside)
   source <- file.path(root, "job.sas")
@@ -326,7 +346,7 @@ test_that("public validation follows source links", {
 })
 
 test_that("public validation checks all optional evidence and filename fields", {
-  root <- withr::local_tempdir()
+  root <- migration_study_fixture()
   outside <- withr::local_tempfile(fileext = ".sas")
   writeLines("proc means; run;", outside)
   inside <- file.path(root, "inside.sas")

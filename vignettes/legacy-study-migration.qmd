@@ -160,9 +160,9 @@ accepting its summary statistics and display.
 ```{r}
 #| label: migrate-tables
 tables <- migrate_job(
-  "descriptive/dc.tables.sas", "cohort", "eda", "dc", qualifier = "tables",
-  lst = "descriptive/dc.tables.lst", log = "descriptive/dc.tables.log",
-  reference = "documents/general.rtf", dir = root
+  file.path(root, "descriptive/dc.tables.sas"), "cohort", "eda", "dc", qualifier = "tables",
+  lst = file.path(root, "descriptive/dc.tables.lst"), log = file.path(root, "descriptive/dc.tables.log"),
+  reference = file.path(root, "documents/general.rtf"), dir = root
 )
 ```
 
@@ -176,7 +176,7 @@ remain disabled.
 ```{r}
 #| label: migrate-gfup
 gfup <- migrate_job(
-  "descriptive/dc.gfup.sas", "cohort", "eda", "dc", qualifier = "gfup",
+  file.path(root, "descriptive/dc.gfup.sas"), "cohort", "eda", "dc", qualifier = "gfup",
   dir = root
 )
 ```
@@ -190,7 +190,7 @@ legacy output before treating a method change as equivalent.
 ```{r}
 #| label: migrate-trends
 trends <- migrate_job(
-  "graphs/dp.trends.sas", "cohort", "eda", "dp", qualifier = "trends",
+  file.path(root, "graphs/dp.trends.sas"), "cohort", "eda", "dp", qualifier = "trends",
   dir = root
 )
 ```
@@ -204,7 +204,7 @@ variable and arranges the four panels on one PNG page.
 ```{r}
 #| label: migrate-postage
 postage <- migrate_job(
-  "descriptive/dp.postage.sas", "cohort", "eda", "dp", qualifier = "postage",
+  file.path(root, "descriptive/dp.postage.sas"), "cohort", "eda", "dp", qualifier = "postage",
   dir = root
 )
 jobs <- c(tables = tables, gfup = gfup, trends = trends, postage = postage)

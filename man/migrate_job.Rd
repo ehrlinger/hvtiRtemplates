@@ -8,12 +8,12 @@ migrate_job(
   source,
   endpoint,
   type,
-  prefix,
+  prefix = NULL,
   qualifier = NULL,
   lst = NULL,
   log = NULL,
   reference = NULL,
-  dir = "."
+  dir = NULL
 )
 }
 \arguments{
@@ -23,19 +23,24 @@ migrate_job(
 
 \item{type}{Analysis-type field for the new job's filename.}
 
-\item{prefix}{Template prefix, such as \code{"dc"}.}
+\item{prefix}{Template prefix, such as \code{"dc"}. Read from the SAS
+filename when \code{NULL}.}
 
-\item{qualifier}{Template qualifier, such as \code{"tables"}.
-Filename fields must match \code{[A-Za-z0-9_]+}.}
+\item{qualifier}{Template qualifier, such as \code{"tables"}. Read from the
+SAS filename when \code{NULL}. Filename fields must match
+\code{[A-Za-z0-9_]+}.}
 
-\item{lst}{Optional path to a SAS listing.}
+\item{lst}{Optional path to a SAS listing. Defaults to the same-named file
+beside \code{source} when present.}
 
-\item{log}{Optional path to a SAS log.}
+\item{log}{Optional path to a SAS log. Defaults to the same-named file
+beside \code{source} when present.}
 
 \item{reference}{Optional vector of paths to output references, such as
 RTF or DOCX files. They record comparison targets, not analysis choices.}
 
-\item{dir}{Existing study root. Defaults to the current directory.}
+\item{dir}{Any directory in the study. Defaults to the directory of
+\code{source}.}
 }
 \value{
 The migrated job path, invisibly. The report is written beside it.
