@@ -79,8 +79,10 @@ stays as it is, now under `.root`.
 No dependency changes: `hvtiRutilities (>= 1.1.12)` already provides
 `study_root()`.
 
-### 4.2 `open_job(prefix, endpoint, type, qualifier = NULL, dir = ".")`
+### 4.2 `open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)`
 
+- Arguments in the same order as `add_job()`, so a call moved from one to the
+  other keeps its positional `dir`.
 - Resolves the root with `study_root(dir)`.
 - If the job file is absent, creates it through `add_job()`, keeping every rule
   `add_job()` enforces: refuse an ambiguous prefix, validate names, never
