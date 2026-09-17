@@ -76,10 +76,17 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
                         lst = NULL, log = NULL, reference = NULL, dir = NULL) {
   .check_field("endpoint", endpoint, fn = "migrate_job")
   .check_field("type", type, fn = "migrate_job")
-  .check_scalar_string("source", source)
+  # The shared string check speaks for template selection; these arguments
+  # are migrate_job()'s own, so its errors carry this function's label.
+  check_string <- function(what, x) {
+    tryCatch(.check_scalar_string(what, x), error = function(e) {
+      stop("migrate_job(): ", sub("^template selection: ", "", conditionMessage(e)), call. = FALSE)
+    })
+  }
+  check_string("source", source)
   if (!is.null(prefix)) .check_field("prefix", prefix, fn = "migrate_job")
   if (!is.null(qualifier)) .check_field("qualifier", qualifier, fn = "migrate_job")
-  if (!is.null(dir)) .check_scalar_string("dir", dir)
+  if (!is.null(dir)) check_string("dir", dir)
   # Relative paths resolve against the working directory, as in any R
   # function; `dir` only locates the study root. Each path is resolved once,
   # and the existence check and the evidence both use that resolution.
@@ -94,7 +101,7 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   for (arg in c("lst", "log")) {
     given <- get(arg)
     if (!is.null(given)) {
-      .check_scalar_string(arg, given)
+      check_string(arg, given)
       assign(arg, resolve(paste0("`", arg, "`"), given))
     } else {
       assign(arg, .default_evidence(source, arg))

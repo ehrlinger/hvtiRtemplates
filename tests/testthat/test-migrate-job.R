@@ -519,3 +519,14 @@ test_that("a rename fallback failure removes only the output this call placed", 
   expect_identical(readLines(file.path(root, "notes.txt")), "unrelated")
   expect_setequal(list.files(root, all.files = TRUE, no.. = TRUE), c("job-migration.md", "notes.txt"))
 })
+
+test_that("migrate_job() labels its own argument validation", {
+  root <- migration_study_fixture("dc-tables")
+  source <- file.path(root, "descriptive", "dc.tables.sas")
+  expect_error(migrate_job(source, "cohort", "eda", "dc", "tables", dir = 5),
+               "^migrate_job\\(\\): `dir` must be a single non-empty")
+  expect_error(migrate_job(5, "cohort", "eda", "dc", "tables", dir = root),
+               "^migrate_job\\(\\): `source` must be a single non-empty")
+  expect_error(migrate_job(source, "cohort", "eda", "dc", "tables", lst = NA_character_, dir = root),
+               "^migrate_job\\(\\): `lst` must be a single non-empty")
+})
