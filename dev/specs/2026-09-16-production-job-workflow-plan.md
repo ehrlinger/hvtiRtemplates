@@ -293,7 +293,7 @@ git commit -m "feat: templates find the study root through _study.yml"
 
 **Interfaces:**
 - Consumes: `add_job(prefix, endpoint, type, dir, qualifier)`; internal `.select_template(template_list(), prefix, qualifier)`; `hvtiRutilities::study_root()`, `hvtiRutilities::study_dir()`.
-- Produces: `open_job(prefix, endpoint, type, qualifier = NULL, dir = ".")` returning the job path invisibly; internal `.open_in_editor(path)` returning `invisible(path)`, reused by Task 7.
+- Produces: `open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` (same order as `add_job()`) returning the job path invisibly; internal `.open_in_editor(path)` returning `invisible(path)`, reused by Task 7.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -374,21 +374,19 @@ Create `R/open-job.R`:
 #' @seealso \code{\link{add_job}}, \code{\link{render_job}}
 #' @examples
 #' root <- file.path(tempdir(), "open-job-example")
-#' hvtiRutilities::study_setup(root, study = "Example", study_tracker_id = 1L)
+#' suppressMessages(hvtiRutilities::study_setup(root, study = "Example", study_tracker_id = 1L))
 #' open_job("ac", "dead", "eda", dir = root)
 #' unlink(root, recursive = TRUE)
 #' @export
-open_job <- function(prefix, endpoint, type, qualifier = NULL, dir = ".") {
+open_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
   root <- hvtiRutilities::study_root(dir)
   row <- tryCatch(
     .select_template(template_list(), prefix, qualifier),
     error = function(e) stop("open_job(): ", conditionMessage(e), call. = FALSE)
   )
-  .check_field("endpoint", endpoint)
-  .check_field("type", type)
-  stem <- paste0(endpoint, "-", type, "-", prefix,
-                 if (!is.na(row$qualifier[[1L]])) paste0("-", row$qualifier[[1L]]) else "")
-  out <- file.path(hvtiRutilities::study_dir(row$folder[[1L]], root = root), paste0(stem, ".qmd"))
+  .check_field("endpoint", endpoint, fn = "open_job")
+  .check_field("type", type, fn = "open_job")
+  out <- .job_path(row, endpoint, type, root)
   if (file.exists(out)) {
     message("open_job(): '", out, "' already exists; opening it unchanged.")
   } else {
@@ -702,13 +700,13 @@ Replace the head of `migrate_job()` up to and including `adapter <- .migration_a
 ```r
 migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
                         lst = NULL, log = NULL, reference = NULL, dir = NULL) {
-  .check_field("endpoint", endpoint)
-  .check_field("type", type)
+  .check_field("endpoint", endpoint, fn = "migrate_job")
+  .check_field("type", type, fn = "migrate_job")
   .check_scalar_string("source", source)
   if (!file.exists(source)) stop("migrate_job(): source not found: ", source, call. = FALSE)
   source <- normalizePath(source, winslash = "/")
-  if (!is.null(prefix)) .check_field("prefix", prefix)
-  if (!is.null(qualifier)) .check_field("qualifier", qualifier)
+  if (!is.null(prefix)) .check_field("prefix", prefix, fn = "migrate_job")
+  if (!is.null(qualifier)) .check_field("qualifier", qualifier, fn = "migrate_job")
   root <- if (is.null(dir)) hvtiRutilities::study_root(dirname(source)) else hvtiRutilities::study_root(dir)
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
   for (arg in c("lst", "log")) {
@@ -874,3 +872,18 @@ Run `/code-review` locally, paying attention to the patient-level withholding pa
 ## Maintainer step (not an agent task)
 
 Before using PR 2's templates in production, remove the test jobs already scaffolded into production studies.
+
+## Changes made during execution (2026-09-16)
+
+Tasks 1 to 5 shipped with these departures from the text above, each from a review finding. The code blocks above have been synced to them; this list says why.
+
+- **`open_job()` takes `add_job()`'s argument order**, `dir` fourth and `qualifier` fifth. The plan's order made `open_job("ac", "demo", "eda", root)` read the path as a qualifier and fail with "no template qualified <path>". Spec §4.2 updated.
+- **`.check_field(arg, value, fn = "add_job")` takes a caller label**, so `open_job()` (and, in Task 7, `migrate_job()`) name themselves in field errors instead of blaming `add_job()`.
+- **`.job_path(row, endpoint, type, root)` in `R/add-job.R`** is the one rule for a job's path, used by `add_job()` and `open_job()`. The plan duplicated the stem logic, which could let the two disagree about which file "already exists".
+- **`render_job()` rejects a directory path.** `file.exists()` is TRUE for a directory, so `render_job(root)` would have rendered the whole project.
+- **`study_setup()` detects a hidden `.Rproj`** (`all.files = TRUE`) before writing one.
+- **Path tests normalise with `winslash = "/"`** on both sides; `dirname()` returns `/` on Windows.
+- **Docs teach `job <- open_job(...)`, `render_job(job)` and `render_job(job, final = TRUE)`** in the vignette and `inst/templates/README.md`, with the shell `HVTI_TEMPLATE_STRICT=1 quarto render` form kept as the outside-R alternative.
+
+Not a change: `knitr::current_input(dir = TRUE)` returns the absolute path of the input FILE (under Quarto, the `.rmarkdown` intermediate beside the job), so `dirname()` of it is the job's directory. Probed 2026-09-16 with knitr 1.51 and Quarto 1.10.0.
+
