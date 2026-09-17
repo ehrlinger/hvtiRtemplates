@@ -178,7 +178,7 @@ test_that("postage does not require databuild for registered data but validates 
   selection <- data[seq.int(first_if, length(data))]
   env$ANALYSIS_SET <- NULL
   env$DATASET <- ""
-  expect_error(eval(selection, env), "non-empty")
+  expect_error(eval(selection, env), "DATASET must be set")
   env$DATASET <- "study"
   env$ANALYSIS_SET <- "eda"
   if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
