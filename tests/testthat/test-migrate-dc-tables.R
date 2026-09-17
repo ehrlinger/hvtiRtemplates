@@ -72,7 +72,7 @@ test_that("dc-tables migrates desc_tab groups and types", {
   ))
   expect_identical(env$COMPARE, "none")
   report <- paste(readLines(sub("[.]qmd$", "-migration.md", out)), collapse = "\n")
-  for (value in c("byvalue", "countpersig", "outrtf", "General Descriptive Analyses", "Follow-up")) {
+  for (value in c("byvalue", "countpersig", "outrtf", 'title3 "[string]";', "Follow-up")) {
     expect_match(report, value, fixed = TRUE)
   }
   expect_match(report, "BINARY: female, repair", fixed = TRUE)
@@ -286,6 +286,8 @@ test_that("dc-tables retains complete title statements and their starting lines"
   ))
   out <- tables_migrate(root, evidence = FALSE)
   report <- paste(readLines(sub("[.]qmd$", "-migration.md", out)), collapse = "\n")
-  expect_match(report, 'line=1; text=title3\n  "General; Descriptive Analyses"\n  "continued title text";', fixed = TRUE)
-  expect_match(report, 'line=4; text=TiTlE4 "Same-line title";', fixed = TRUE)
+  # The report keeps each title statement's shape and masks its text.
+  expect_match(report, 'line=1; text=title3\n  "[string]"\n  "[string]";', fixed = TRUE)
+  expect_match(report, 'line=4; text=TiTlE4 "[string]";', fixed = TRUE)
+  expect_false(grepl("Descriptive Analyses|Same-line title", report))
 })

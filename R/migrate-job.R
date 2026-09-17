@@ -21,7 +21,12 @@
 #' Its report replaces the \code{.qmd} extension with \code{-migration.md} and
 #' records study-relative evidence paths, SHA-256 checksums, the package
 #' version, translated choices, unresolved choices, and ignored material.
-#' Absolute paths within quoted source text are redacted. SAS log errors
+#' Source text quoted in the report is masked, whichever converter ran:
+#' string literal contents, SAS and R comment bodies, \code{\%let} values and
+#' digit runs of five or more are replaced by placeholders such as
+#' \code{"[string]"}, and Quarto or R Markdown prose and YAML are withheld.
+#' Statement keywords, variable names and operators remain. Absolute paths in
+#' any remaining text are redacted. The job is not masked. SAS log errors
 #' leave a blocking \code{EDIT:} marker in the generated job.
 #' Listings, RTF files and log messages may contain patient observations.
 #' Their text is withheld; locations remain available for local review.
@@ -258,6 +263,112 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   invisible(result)
 }
 
+# Reports are pasted into issues and agent sessions, so source text is masked
+# here, at the one layer every converter's report passes through. Statement
+# shape survives; string contents, comment bodies, macro values and long
+# digit runs do not. The job itself is unaffected.
+.migration_mask_source <- function(text, language = c("sas", "r")) {
+  language <- match.arg(language)
+  vapply(as.character(text), .migration_mask_one, character(1L), language = language, USE.NAMES = FALSE)
+}
+
+.migration_mask_one <- function(x, language) {
+  if (is.na(x) || !nzchar(x)) return(x)
+  chars <- strsplit(x, "", fixed = TRUE)[[1L]]
+  n <- length(chars)
+  find_from <- function(target, from) {
+    hit <- if (from <= n) which(chars[seq.int(from, n)] %in% target) else integer()
+    if (length(hit)) from + hit[[1L]] - 1L else n + 1L
+  }
+  out <- character()
+  i <- 1L
+  statement_start <- TRUE
+  while (i <= n) {
+    ch <- chars[[i]]
+    nx <- if (i < n) chars[[i + 1L]] else ""
+    if (ch %in% c("'", "\"")) {
+      j <- i + 1L
+      while (j <= n) {
+        if (language == "r" && chars[[j]] == "\\") {
+          j <- j + 2L
+        } else if (chars[[j]] == ch && language == "sas" && j < n && chars[[j + 1L]] == ch) {
+          j <- j + 2L
+        } else if (chars[[j]] == ch) {
+          break
+        } else {
+          j <- j + 1L
+        }
+      }
+      out <- c(out, ch, "[string]", if (j <= n) ch)
+      i <- j + 1L
+      statement_start <- FALSE
+    } else if (language == "r" && ch == "#") {
+      out <- c(out, "# [comment]")
+      i <- find_from("\n", i)
+    } else if (language == "sas" && ch == "/" && nx == "*") {
+      close <- n + 1L
+      if (i + 2L < n) {
+        stars <- which(chars[seq.int(i + 2L, n - 1L)] == "*" & chars[seq.int(i + 3L, n)] == "/")
+        if (length(stars)) close <- i + 1L + stars[[1L]]
+      }
+      out <- c(out, "/* [comment] */")
+      i <- close + 2L
+    } else if (language == "sas" && ((ch == "%" && nx == "*") || (ch == "*" && statement_start))) {
+      end <- find_from(";", i)
+      out <- c(out, if (ch == "%") "%* [comment]" else "* [comment]", if (end <= n) ";")
+      i <- end + 1L
+      statement_start <- TRUE
+    } else {
+      out <- c(out, ch)
+      if (ch == ";") {
+        statement_start <- TRUE
+      } else if (nzchar(trimws(ch))) {
+        statement_start <- FALSE
+      }
+      i <- i + 1L
+    }
+  }
+  masked <- paste(out, collapse = "")
+  if (language == "sas") masked <- gsub("(?i)(%let\\s+[^=;]*=)[^;]*", "\\1 [value]", masked, perl = TRUE)
+  gsub("[0-9]{5,}", "[number]", masked)
+}
+
+# In a Quarto or R Markdown source only fenced code is quoted; prose and the
+# YAML header can name patients and are never copied into the report.
+.migration_code_lines <- function(lines) {
+  code <- logical(length(lines))
+  inside <- FALSE
+  for (i in seq_along(lines)) {
+    if (!inside && grepl("^\\s*```+\\s*\\{", lines[[i]])) {
+      inside <- TRUE
+      code[[i]] <- TRUE
+    } else if (inside) {
+      code[[i]] <- TRUE
+      if (grepl("^\\s*```+\\s*$", lines[[i]])) inside <- FALSE
+    }
+  }
+  code
+}
+
+.migration_mask_rows <- function(rows, evidence) {
+  if (!is.data.frame(rows) || !nrow(rows)) return(rows)
+  source <- evidence$paths[["source"]]
+  language <- if (!is.null(source) && !grepl("[.]sas$", source, ignore.case = TRUE)) "r" else "sas"
+  columns <- setdiff(names(rows)[vapply(rows, function(x) is.character(x) || is.factor(x), logical(1L))], "reason")
+  for (column in columns) rows[[column]] <- .migration_mask_source(rows[[column]], language)
+  if (!is.null(source) && grepl("[.][qR]md$", source, ignore.case = TRUE) && all(c("line", "text") %in% names(rows))) {
+    code <- .migration_code_lines(evidence$source$text)
+    prose <- vapply(seq_len(nrow(rows)), function(i) {
+      first <- suppressWarnings(as.integer(rows$line[[i]]))
+      if (is.na(first)) return(FALSE)
+      span <- first + seq_len(max(1L, lengths(strsplit(rows$text[[i]], "\n", fixed = TRUE)))) - 1L
+      any(span < 1L | span > length(code)) || !all(code[span])
+    }, logical(1L))
+    rows$text[prose] <- "[prose withheld]"
+  }
+  rows
+}
+
 .migration_redact_text <- function(text) {
   absolute <- "(?:[A-Za-z]:[/\\\\]|\\\\\\\\|/)"
   quoted <- paste0("(?s)([\"'])", absolute, ".*?\\1")
@@ -266,7 +377,7 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   # their field's next statement delimiter, including any path components
   # containing spaces. This runs before fields are joined into report rows.
   unquoted <- paste0(
-    "(?<![[:alnum:]_./\\\\])", absolute,
+    "(?<![[:alnum:]_./*\\\\])(?!/\\*)", absolute,
     "[^[:space:]\"'<>;|)\\]}][^\\r\\n\"'<>;|)\\]}]*"
   )
   gsub(unquoted, "[absolute path]", text, perl = TRUE)
@@ -297,11 +408,11 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
     if (!converter) c("**No converter: every choice is manual.** This template has no migration adapter yet; ",
                       "the job is the plain scaffold and the evidence below is for porting by hand.", "") else character(),
     section("Evidence (SHA-256)", evidence$files, redact = FALSE),
-    section("Translated", result$translated),
-    section("Unresolved", result$unresolved),
-    section("Ignored", result$ignored),
+    section("Translated", .migration_mask_rows(result$translated, evidence)),
+    section("Unresolved", .migration_mask_rows(result$unresolved, evidence)),
+    section("Ignored", .migration_mask_rows(result$ignored, evidence)),
     section("Log findings", log),
-    section("Listing facts", evidence$lst),
+    section("Listing facts", .migration_mask_rows(evidence$lst, evidence)),
     "## Completion checklist", "",
     "- [ ] Resolve every EDIT: marker using the source evidence.",
     "- [ ] Review log errors and warnings before interpreting results.",

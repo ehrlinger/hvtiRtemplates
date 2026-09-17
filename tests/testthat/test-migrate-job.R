@@ -188,7 +188,7 @@ test_that("migration reports include decisions, provenance and checklist without
   }
   expect_false(grepl(root, report, fixed = TRUE))
   expect_false(grepl("/studies/private", report, fixed = TRUE))
-  expect_match(report, "[absolute path]", fixed = TRUE)
+  expect_match(report, "%inc '[string]';", fixed = TRUE)
 })
 
 test_that("report redaction removes complete quoted paths across operating systems", {
@@ -213,10 +213,12 @@ test_that("report redaction removes complete quoted paths across operating syste
   evidence$lst <- data.frame(line = 1:3, text = paste0('Output: "', paths, '"'))
   report <- .migration_report(evidence, result, "dc-tables")
   for (i in seq_along(paths)) {
-    expect_true(paste0("- line=", i, "; text=%include '[absolute path]';; marker=EDIT: review include") %in% report)
+    # Masking hides the quoted path in the report; redaction still removes it wherever text is not masked.
+    expect_true(paste0("- line=", i, "; text=%include '[string]';; marker=EDIT: review include") %in% report)
+    expect_identical(.migration_redact_text(paste0("%include '", paths[[i]], "';")), "%include '[absolute path]';")
     expected <- paste0("- line=", i, "; severity=warning; text=SAS log message content withheld; review the source locally.")
     expect_true(expected %in% report)
-    expect_true(paste0("- line=", i, '; text=Output: "[absolute path]"') %in% report)
+    expect_true(paste0("- line=", i, '; text=Output: "[string]"') %in% report)
   }
   expect_false(any(grepl("Alpha|Synthetic|vars[.]sas|datasets", report)))
 })
