@@ -1,5 +1,8 @@
 # hvtiRtemplates (unreleased)
 
+* A migration test no longer warns on Windows while removing its temporary
+  folder link (#124).
+
 * **Templates find the study root through `_study.yml`.** Each template calls
   `hvtiRutilities::study_root()` in place of looking for `_quarto.yml` in `.`
   or `..`, so a study needs no `_quarto.yml`, and a job renders the same from
