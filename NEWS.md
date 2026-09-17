@@ -1,3 +1,12 @@
+# hvtiRtemplates (unreleased)
+
+* Requires `hvtiRutilities` 1.2.0 or newer, up from 1.1.12. That release ports
+  SAS `PROC FREQ` and `PROC UNIVARIATE` as `proc_freq()` and `proc_univariate()`,
+  and corrects `proc_means()` weighted `nobs`, weighted `stderr` and the mode of a
+  single observation. No template calls the new procedures yet; the floor moves so
+  a template that adopts them, or a job that weights `proc_means()`, cannot be
+  installed against a release where those results were wrong.
+
 # hvtiRtemplates 1.2.0
 
 * **The `hz` template renders again.** Its `phases` chunk read the order of
