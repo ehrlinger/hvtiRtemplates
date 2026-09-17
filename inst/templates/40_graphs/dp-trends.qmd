@@ -183,6 +183,10 @@ set_path <- function(kind, file) {
 # MIGRATE-BEGIN: dp-trends-data
 DATASET <- "study"
 # MIGRATE-END: dp-trends-data
+if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
+  stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
+       "In a migrated job, see the migration report beside this job.", call. = FALSE)
+}
 d <- read_built(study_config(.root), dataset = DATASET)
 
 # EDIT: the calendar year of operation, as a WHOLE year. hv_trends() puts one

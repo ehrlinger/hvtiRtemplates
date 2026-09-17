@@ -144,6 +144,10 @@ UNIQUE_LIMIT <- 6L
 SHOW_PERCENT <- FALSE
 # MIGRATE-END: dp-postage-config
 if (is.null(ANALYSIS_SET)) {
+  if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
+    stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
+         "In a migrated job, see the migration report beside this job.", call. = FALSE)
+  }
   d <- read_built(dataset = DATASET)
 } else if (!identical(DATASET, "study")) {
   stop("An analysis set is written from the study dataset, not `", DATASET,

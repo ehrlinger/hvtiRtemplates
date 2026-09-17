@@ -120,3 +120,32 @@ test_that("descriptive templates read a named additional dataset", {
                  info = basename(template))
   }
 })
+
+test_that("converter templates name DATASET before reading unresolved data", {
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  templates <- file.path(normalizePath(template_root), c(
+    "10_descriptive/dc-tables.qmd", "10_descriptive/dc-gfup.qmd",
+    "10_descriptive/dp-postage.qmd", "40_graphs/dp-trends.qmd"
+  ))
+  for (template in templates) {
+    code <- extract_chunk(template, "data")
+    # The manifest check needs a real study; this test is about DATASET alone.
+    code <- code[!vapply(code, function(expr) any(grepl("verify_manifest", deparse(expr))), logical(1))]
+    has_set <- any(vapply(code, function(expr) {
+      is.call(expr) && identical(expr[[1L]], quote(`<-`)) && identical(expr[[2L]], quote(ANALYSIS_SET))
+    }, logical(1)))
+    if (has_set) code <- set_assignment(code, "ANALYSIS_SET", NULL)
+    for (value in list(NA_character_, NULL, "", c("study", "builtr"), 1)) {
+      env <- new.env(parent = globalenv())
+      env$.root <- "."
+      env$read_built <- function(...) stop("read_built() was reached")
+      env$study_config <- function(...) list()
+      expect_error(
+        eval(set_assignment(code, "DATASET", value), envir = env),
+        "DATASET.*_study[.]yml.*\"study\".*migration report",
+        info = paste(basename(template), deparse(value))
+      )
+    }
+  }
+})
