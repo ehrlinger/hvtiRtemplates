@@ -13,9 +13,12 @@
 #' \code{EDIT:} marker kept, the evidence travels with it, and the report
 #' says the migration adapter is not yet available.
 #'
-#' Source and evidence files must be readable files beneath \code{dir}.
-#' Relative paths are resolved from that study root, and symbolic links are
-#' checked after resolution. The evidence files are never modified.
+#' Relative \code{source}, \code{lst}, \code{log} and \code{reference} paths
+#' resolve against the working directory, as in any R function; \code{dir}
+#' only locates the study root. Each file must exist, be readable and lie
+#' beneath that root, and symbolic links are checked after resolution. The
+#' evidence files are never modified. The report records whether the listing
+#' and log were supplied, found beside the source, or not found.
 #'
 #' The job uses the filename and study folder selected by \code{\link{add_job}}.
 #' Its report replaces the \code{.qmd} extension with \code{-migration.md} and
@@ -37,22 +40,27 @@
 #' removed. The destination filesystem must support hard links within each
 #' output directory, which provide atomic creation without overwriting.
 #'
-#' @param source Path to one legacy source job.
+#' @param source Path to one legacy source job, relative to the working
+#'   directory or absolute.
 #' @param endpoint Endpoint field for the new job's filename.
 #' @param type Analysis-type field for the new job's filename.
 #' @param prefix Template prefix, such as \code{"dc"}. Read from the SAS
 #'   filename when \code{NULL}.
 #' @param qualifier Template qualifier, such as \code{"tables"}. Read from the
-#'   SAS filename when \code{NULL}. Filename fields must match
-#'   \code{[A-Za-z0-9_]+}.
-#' @param lst Optional path to a SAS listing. Defaults to the same-named file
-#'   beside \code{source} when present.
-#' @param log Optional path to a SAS log. Defaults to the same-named file
-#'   beside \code{source} when present.
+#'   SAS filename when \code{NULL}. When given without \code{prefix}, the
+#'   prefix is read from the filename and this qualifier is used. Filename
+#'   fields must match \code{[A-Za-z0-9_]+}.
+#' @param lst Optional path to a SAS listing, relative to the working
+#'   directory or absolute. Defaults to the same-named file beside
+#'   \code{source} when present.
+#' @param log Optional path to a SAS log, relative to the working directory
+#'   or absolute. Defaults to the same-named file beside \code{source} when
+#'   present.
 #' @param reference Optional vector of paths to output references, such as
-#'   RTF or DOCX files. They record comparison targets, not analysis choices.
-#' @param dir Any directory in the study. Defaults to the directory of
-#'   \code{source}.
+#'   RTF or DOCX files, relative to the working directory or absolute. They
+#'   record comparison targets, not analysis choices.
+#' @param dir Any directory in the study, used only to locate the study root.
+#'   Defaults to the directory of \code{source}.
 #'
 #' @return The migrated job path, invisibly. The report is written beside it.
 #' @seealso \code{\link{add_job}}, \code{\link{template_list}}
@@ -62,24 +70,35 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   .check_field("endpoint", endpoint, fn = "migrate_job")
   .check_field("type", type, fn = "migrate_job")
   .check_scalar_string("source", source)
-  if (!file.exists(source)) stop("migrate_job(): source not found: ", source, call. = FALSE)
-  source <- normalizePath(source, winslash = "/")
   if (!is.null(prefix)) .check_field("prefix", prefix, fn = "migrate_job")
   if (!is.null(qualifier)) .check_field("qualifier", qualifier, fn = "migrate_job")
+  if (!is.null(dir)) .check_scalar_string("dir", dir)
+  # Relative paths resolve against the working directory, as in any R
+  # function; `dir` only locates the study root. Each path is resolved once,
+  # and the existence check and the evidence both use that resolution.
+  resolve <- function(arg, path) {
+    if (!file.exists(path)) stop("migrate_job(): ", arg, " not found: ", path, call. = FALSE)
+    normalizePath(path, winslash = "/")
+  }
+  source <- resolve("source", source)
   root <- if (is.null(dir)) hvtiRutilities::study_root(dirname(source)) else hvtiRutilities::study_root(dir)
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  found <- c(lst = "supplied", log = "supplied")
   for (arg in c("lst", "log")) {
     given <- get(arg)
     if (!is.null(given)) {
       .check_scalar_string(arg, given)
-      if (!file.exists(given)) stop("migrate_job(): `", arg, "` not found: ", given, call. = FALSE)
+      assign(arg, resolve(paste0("`", arg, "`"), given))
+    } else {
+      assign(arg, .default_evidence(source, arg))
+      found[[arg]] <- if (is.null(get(arg))) "not found beside source" else "found beside source"
     }
   }
-  if (is.null(lst)) lst <- .default_evidence(source, "lst")
-  if (is.null(log)) log <- .default_evidence(source, "log")
-  if (!is.null(reference) && (!is.character(reference) || !length(reference) ||
-                                anyNA(reference) || any(!nzchar(reference)))) {
-    stop("migrate_job(): `reference` must contain existing file paths.", call. = FALSE)
+  if (!is.null(reference)) {
+    if (!is.character(reference) || !length(reference) || anyNA(reference) || any(!nzchar(reference))) {
+      stop("migrate_job(): `reference` must contain existing file paths.", call. = FALSE)
+    }
+    reference <- vapply(reference, resolve, character(1L), arg = "`reference`", USE.NAMES = FALSE)
   }
   tpl <- .infer_template(source, prefix, qualifier)
   prefix <- tpl$prefix
@@ -92,6 +111,7 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   )
   adapter <- .migration_adapter(prefix, qualifier)
   evidence <- .migration_evidence(paths, root)
+  evidence$found <- found
   template <- .migration_template(row, endpoint, type, root)
   result <- adapter(evidence, template$lines)
   .migration_finish(template, evidence, result)
@@ -104,11 +124,15 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   if (!is.null(prefix)) return(list(prefix = prefix, qualifier = qualifier))
   fields <- strsplit(basename(source), ".", fixed = TRUE)[[1L]]
   tl <- template_list()
-  if (length(fields) < 3L || !fields[[1L]] %in% tl$prefix) {
+  needed <- if (is.null(qualifier)) 3L else 2L
+  if (length(fields) < needed || !fields[[1L]] %in% tl$prefix) {
     stop("migrate_job(): cannot read a template prefix from '", basename(source),
          "'; pass `prefix` (and `qualifier`).", call. = FALSE)
   }
   prefix <- fields[[1L]]
+  # A qualifier the caller names wins over the filename; .select_template()
+  # validates it against the prefix read here.
+  if (!is.null(qualifier)) return(list(prefix = prefix, qualifier = qualifier))
   quals <- tl$qualifier[tl$prefix == prefix]
   if (all(is.na(quals))) return(list(prefix = prefix, qualifier = NULL))
   if (fields[[2L]] %in% quals) return(list(prefix = prefix, qualifier = fields[[2L]]))
@@ -155,7 +179,6 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
 }
 
 .migration_path <- function(path, root) {
-  if (!grepl("^(/|[A-Za-z]:[/\\\\]|\\\\\\\\)", path)) path <- file.path(root, path)
   resolved <- normalizePath(path, winslash = "/", mustWork = TRUE)
   if (!startsWith(resolved, paste0(root, "/"))) {
     stop("migrate_job(): evidence must be beneath the study root: ", path, call. = FALSE)
@@ -408,6 +431,11 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
     if (!converter) c("**No converter: every choice is manual.** This template has no migration adapter yet; ",
                       "the job is the plain scaffold and the evidence below is for porting by hand.", "") else character(),
     section("Evidence (SHA-256)", evidence$files, redact = FALSE),
+    if (!is.null(evidence$found)) {
+      c(paste0("- Listing: ", evidence$found[["lst"]]), paste0("- Log: ", evidence$found[["log"]]), "")
+    } else {
+      character()
+    },
     section("Translated", .migration_mask_rows(result$translated, evidence)),
     section("Unresolved", .migration_mask_rows(result$unresolved, evidence)),
     section("Ignored", .migration_mask_rows(result$ignored, evidence)),
@@ -426,7 +454,8 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   labels <- c("migration job", "migration report")
   if (identical(out, report_path)) stop("Migration outputs must have distinct paths.", call. = FALSE)
   if (any(vapply(targets, .migration_target_exists, logical(1L)))) {
-    stop("Migration output already exists; refusing to overwrite.", call. = FALSE)
+    existing <- targets[vapply(targets, .migration_target_exists, logical(1L))]
+    stop("Migration output already exists; refusing to overwrite: ", paste(existing, collapse = ", "), call. = FALSE)
   }
   staged <- character()
   placed <- character()

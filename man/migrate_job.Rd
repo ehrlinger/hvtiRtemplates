@@ -17,7 +17,8 @@ migrate_job(
 )
 }
 \arguments{
-\item{source}{Path to one legacy source job.}
+\item{source}{Path to one legacy source job, relative to the working
+directory or absolute.}
 
 \item{endpoint}{Endpoint field for the new job's filename.}
 
@@ -27,20 +28,24 @@ migrate_job(
 filename when \code{NULL}.}
 
 \item{qualifier}{Template qualifier, such as \code{"tables"}. Read from the
-SAS filename when \code{NULL}. Filename fields must match
-\code{[A-Za-z0-9_]+}.}
+SAS filename when \code{NULL}. When given without \code{prefix}, the
+prefix is read from the filename and this qualifier is used. Filename
+fields must match \code{[A-Za-z0-9_]+}.}
 
-\item{lst}{Optional path to a SAS listing. Defaults to the same-named file
-beside \code{source} when present.}
+\item{lst}{Optional path to a SAS listing, relative to the working
+directory or absolute. Defaults to the same-named file beside
+\code{source} when present.}
 
-\item{log}{Optional path to a SAS log. Defaults to the same-named file
-beside \code{source} when present.}
+\item{log}{Optional path to a SAS log, relative to the working directory
+or absolute. Defaults to the same-named file beside \code{source} when
+present.}
 
 \item{reference}{Optional vector of paths to output references, such as
-RTF or DOCX files. They record comparison targets, not analysis choices.}
+RTF or DOCX files, relative to the working directory or absolute. They
+record comparison targets, not analysis choices.}
 
-\item{dir}{Any directory in the study. Defaults to the directory of
-\code{source}.}
+\item{dir}{Any directory in the study, used only to locate the study root.
+Defaults to the directory of \code{source}.}
 }
 \value{
 The migrated job path, invisibly. The report is written beside it.
@@ -58,15 +63,23 @@ template with no converter yet still migrates: it is scaffolded with every
 \code{EDIT:} marker kept, the evidence travels with it, and the report
 says the migration adapter is not yet available.
 
-Source and evidence files must be readable files beneath \code{dir}.
-Relative paths are resolved from that study root, and symbolic links are
-checked after resolution. The evidence files are never modified.
+Relative \code{source}, \code{lst}, \code{log} and \code{reference} paths
+resolve against the working directory, as in any R function; \code{dir}
+only locates the study root. Each file must exist, be readable and lie
+beneath that root, and symbolic links are checked after resolution. The
+evidence files are never modified. The report records whether the listing
+and log were supplied, found beside the source, or not found.
 
 The job uses the filename and study folder selected by \code{\link{add_job}}.
 Its report replaces the \code{.qmd} extension with \code{-migration.md} and
 records study-relative evidence paths, SHA-256 checksums, the package
 version, translated choices, unresolved choices, and ignored material.
-Absolute paths within quoted source text are redacted. SAS log errors
+Source text quoted in the report is masked, whichever converter ran:
+string literal contents, SAS and R comment bodies, \code{\%let} values and
+digit runs of five or more are replaced by placeholders such as
+\code{"[string]"}, and Quarto or R Markdown prose and YAML are withheld.
+Statement keywords, variable names and operators remain. Absolute paths in
+any remaining text are redacted. The job is not masked. SAS log errors
 leave a blocking \code{EDIT:} marker in the generated job.
 Listings, RTF files and log messages may contain patient observations.
 Their text is withheld; locations remain available for local review.

@@ -404,3 +404,66 @@ test_that("synthetic migration studies register both complete cohorts", {
   expect_equal(nrow(hvtiRutilities::read_built(cfg, dataset = "complete_cases")), 24L)
   expect_true(all(dir.exists(file.path(root, c("datasets", "descriptive", "graphs", "documents")))))
 })
+
+test_that("a qualifier given without a prefix is honoured, not ignored", {
+  expect_identical(.infer_template("x/dc.gfup.sas", NULL, "tables"), list(prefix = "dc", qualifier = "tables"))
+  root <- migration_study_fixture("dc-gfup")
+  source <- file.path(root, "descriptive", "dc.gfup.sas")
+  writeLines(c("%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);"), source)
+  job <- migrate_job(source, "cohort", "eda", qualifier = "tables", dir = root)
+  expect_identical(basename(job), "cohort-eda-dc-tables.qmd")
+  expect_error(migrate_job(source, "cohort", "eda", qualifier = "nosuch", dir = root), "migrate_job\\(\\).*nosuch")
+})
+
+test_that("relative evidence paths resolve against the working directory, not the study root", {
+  root <- migration_study_fixture("dc-tables")
+  withr::local_dir(dirname(root))
+  study <- basename(root)
+  job <- migrate_job(
+    file.path(study, "descriptive", "dc.tables.sas"), "cohort", "eda",
+    lst = file.path(study, "descriptive", "dc.tables.lst"),
+    log = file.path(study, "descriptive", "dc.tables.log"),
+    reference = file.path(study, "documents", "general.rtf"), dir = root
+  )
+  report <- paste(readLines(sub("[.]qmd$", "-migration.md", job)), collapse = "\n")
+  expect_match(report, "role=lst; path=descriptive/dc.tables.lst", fixed = TRUE)
+  expect_match(report, "path=documents/general.rtf", fixed = TRUE)
+  # Root-relative spellings exist only beneath the study, so from here they are missing.
+  for (argument in c("lst", "log", "reference")) {
+    args <- list(source = file.path(root, "descriptive", "dc.tables.sas"), endpoint = "again", type = "eda", dir = root)
+    args[[argument]] <- switch(argument, lst = "descriptive/dc.tables.lst", log = "descriptive/dc.tables.log",
+                               reference = "documents/general.rtf")
+    expect_error(do.call(migrate_job, args), paste0("migrate_job\\(\\): `", argument, "` not found: ", args[[argument]]))
+  }
+  expect_error(migrate_job("descriptive/dc.tables.sas", "again", "eda", dir = root),
+               "migrate_job\\(\\): source not found: descriptive/dc.tables.sas")
+})
+
+test_that("dir and reference are validated with labelled errors", {
+  root <- migration_study_fixture("dc-tables")
+  source <- file.path(root, "descriptive", "dc.tables.sas")
+  expect_error(migrate_job(source, "cohort", "eda", dir = 5), "`dir`")
+  expect_error(migrate_job(source, "cohort", "eda", dir = NA_character_), "`dir`")
+  expect_error(migrate_job(source, "cohort", "eda", reference = file.path(root, "absent.rtf"), dir = root),
+               "migrate_job\\(\\): `reference` not found: .*absent.rtf")
+})
+
+test_that("the report says whether same-stem listing and log were found", {
+  root <- migration_study_fixture("dc-tables")
+  source <- file.path(root, "descriptive", "dc.tables.sas")
+  unlink(file.path(root, "descriptive", "dc.tables.log"))
+  job <- migrate_job(source, "cohort", "eda", dir = root)
+  report <- readLines(sub("[.]qmd$", "-migration.md", job))
+  expect_true("- Listing: found beside source" %in% report)
+  expect_true("- Log: not found beside source" %in% report)
+  job <- migrate_job(source, "again", "eda", log = file.path(root, "descriptive", "dc.tables.lst"), dir = root)
+  expect_true("- Log: supplied" %in% readLines(sub("[.]qmd$", "-migration.md", job)))
+})
+
+test_that("the overwrite refusal names the existing path", {
+  root <- withr::local_tempdir()
+  out <- file.path(root, "job.qmd")
+  writeLines("keep", out)
+  expect_error(.write_migration_pair("job", "report", out, file.path(root, "job-migration.md")),
+               paste0("refusing to overwrite.*", out), fixed = FALSE)
+})
