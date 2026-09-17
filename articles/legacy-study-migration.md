@@ -47,7 +47,7 @@ state is a separate operation.
 
 study_setup(root, study = "Synthetic legacy study",
             study_tracker_id = 42L, adopt = TRUE)
-#> Study: /tmp/RtmpDMvL1n/file1c9b48cc64fd
+#> Study: /tmp/RtmpNMyWdZ/file1c81628fe6f2
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -59,7 +59,7 @@ study_setup(root, study = "Synthetic legacy study",
 #> 0 .R  |  0 .qmd/.Rmd  |  5 .sas  |  0 provenance sidecars
 register_data(root, built = "built.csv", event = "dead", time = "iv_dead",
               role = "study", population = "Synthetic full cohort")
-#> Study: /tmp/RtmpDMvL1n/file1c9b48cc64fd
+#> Study: /tmp/RtmpNMyWdZ/file1c81628fe6f2
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -72,7 +72,7 @@ register_data(root, built = "built.csv", event = "dead", time = "iv_dead",
 register_data(root, built = "complete_cases.csv", event = "dead",
               time = "iv_dead", dataset = "complete_cases",
               role = "named", population = "Synthetic complete cases")
-#> Study: /tmp/RtmpDMvL1n/file1c9b48cc64fd
+#> Study: /tmp/RtmpNMyWdZ/file1c81628fe6f2
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -85,7 +85,7 @@ register_data(root, built = "complete_cases.csv", event = "dead",
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  5 .sas  |  0 provenance sidecars
 study_status(root)
-#> Study: /tmp/RtmpDMvL1n/file1c9b48cc64fd
+#> Study: /tmp/RtmpNMyWdZ/file1c81628fe6f2
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
