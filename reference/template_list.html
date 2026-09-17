@@ -79,33 +79,35 @@ folder, including when the catalog is absent.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">template_list</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          name prefix qualifier        folder</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     dc-gfup     dc      gfup   descriptive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   dc-tables     dc    tables   descriptive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  dp-postage     dp   postage   descriptive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4          ac     ac      &lt;NA&gt; distributions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5          hz     hz      &lt;NA&gt; distributions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6          bc     bc      &lt;NA&gt;      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7          bh     bh      &lt;NA&gt;      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8          bl     bl      &lt;NA&gt;      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9          br     br      &lt;NA&gt;      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10         hm     hm      &lt;NA&gt;      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11  dp-trends     dp    trends        graphs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12         hp     hp      &lt;NA&gt;        graphs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13         hs     hs      &lt;NA&gt;        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  dc-general     dc   general   descriptive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     dc-gfup     dc      gfup   descriptive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   dc-tables     dc    tables   descriptive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  dp-postage     dp   postage   descriptive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5          ac     ac      &lt;NA&gt; distributions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6          hz     hz      &lt;NA&gt; distributions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7          bc     bc      &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8          bh     bh      &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9          bl     bl      &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10         br     br      &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11         hm     hm      &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12  dp-trends     dp    trends        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13         hp     hp      &lt;NA&gt;        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14         hs     hs      &lt;NA&gt;        graphs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                      file</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-tables.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dp-postage.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4        /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5        /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/hz.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bc.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bh.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bl.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/br.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10            /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/hm.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11       /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-general.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-tables.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dp-postage.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5        /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6        /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/hz.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bc.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bh.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bl.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10            /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/br.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11            /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/hm.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12       /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -36,31 +36,33 @@ catalog is absent.
 ``` r
 template_list()
 #>          name prefix qualifier        folder
-#> 1     dc-gfup     dc      gfup   descriptive
-#> 2   dc-tables     dc    tables   descriptive
-#> 3  dp-postage     dp   postage   descriptive
-#> 4          ac     ac      <NA> distributions
-#> 5          hz     hz      <NA> distributions
-#> 6          bc     bc      <NA>      analyses
-#> 7          bh     bh      <NA>      analyses
-#> 8          bl     bl      <NA>      analyses
-#> 9          br     br      <NA>      analyses
-#> 10         hm     hm      <NA>      analyses
-#> 11  dp-trends     dp    trends        graphs
-#> 12         hp     hp      <NA>        graphs
-#> 13         hs     hs      <NA>        graphs
+#> 1  dc-general     dc   general   descriptive
+#> 2     dc-gfup     dc      gfup   descriptive
+#> 3   dc-tables     dc    tables   descriptive
+#> 4  dp-postage     dp   postage   descriptive
+#> 5          ac     ac      <NA> distributions
+#> 6          hz     hz      <NA> distributions
+#> 7          bc     bc      <NA>      analyses
+#> 8          bh     bh      <NA>      analyses
+#> 9          bl     bl      <NA>      analyses
+#> 10         br     br      <NA>      analyses
+#> 11         hm     hm      <NA>      analyses
+#> 12  dp-trends     dp    trends        graphs
+#> 13         hp     hp      <NA>        graphs
+#> 14         hs     hs      <NA>        graphs
 #>                                                                                      file
-#> 1     /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd
-#> 2   /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-tables.qmd
-#> 3  /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dp-postage.qmd
-#> 4        /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd
-#> 5        /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/hz.qmd
-#> 6             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bc.qmd
-#> 7             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bh.qmd
-#> 8             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bl.qmd
-#> 9             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/br.qmd
-#> 10            /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/hm.qmd
-#> 11       /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
-#> 12              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
-#> 13              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd
+#> 1  /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-general.qmd
+#> 2     /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd
+#> 3   /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-tables.qmd
+#> 4  /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dp-postage.qmd
+#> 5        /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd
+#> 6        /home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/hz.qmd
+#> 7             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bc.qmd
+#> 8             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bh.qmd
+#> 9             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bl.qmd
+#> 10            /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/br.qmd
+#> 11            /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/hm.qmd
+#> 12       /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
+#> 13              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
+#> 14              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd
 ```
