@@ -47,7 +47,7 @@ state is a separate operation.
 
 study_setup(root, study = "Synthetic legacy study",
             study_tracker_id = 42L, adopt = TRUE)
-#> Study: /tmp/Rtmp7XINXV/file1bbf606ceb3a
+#> Study: /tmp/RtmpPg8GMx/file1c0c477edb5e
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -59,7 +59,7 @@ study_setup(root, study = "Synthetic legacy study",
 #> 0 .R  |  0 .qmd/.Rmd  |  5 .sas  |  0 provenance sidecars
 register_data(root, built = "built.csv", event = "dead", time = "iv_dead",
               role = "study", population = "Synthetic full cohort")
-#> Study: /tmp/Rtmp7XINXV/file1bbf606ceb3a
+#> Study: /tmp/RtmpPg8GMx/file1c0c477edb5e
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -72,7 +72,7 @@ register_data(root, built = "built.csv", event = "dead", time = "iv_dead",
 register_data(root, built = "complete_cases.csv", event = "dead",
               time = "iv_dead", dataset = "complete_cases",
               role = "named", population = "Synthetic complete cases")
-#> Study: /tmp/Rtmp7XINXV/file1bbf606ceb3a
+#> Study: /tmp/RtmpPg8GMx/file1c0c477edb5e
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -85,7 +85,7 @@ register_data(root, built = "complete_cases.csv", event = "dead",
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  5 .sas  |  0 provenance sidecars
 study_status(root)
-#> Study: /tmp/Rtmp7XINXV/file1bbf606ceb3a
+#> Study: /tmp/RtmpPg8GMx/file1c0c477edb5e
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -203,7 +203,7 @@ cat(paste(readLines(reports[["tables"]]), collapse = "\n"))
 
 ## Migration report
 
-Template: hvtiRtemplates 1.1.0 / dc-tables
+Template: hvtiRtemplates 1.2.0 / dc-tables
 
 ### Evidence (SHA-256)
 
@@ -605,7 +605,7 @@ distribution_report <- sub("[.]qmd$", "-migration.md", distribution)
 cat(head(readLines(distribution_report), 6L), sep = "\n")
 #> # Migration report
 #> 
-#> Template: hvtiRtemplates 1.1.0 / ac
+#> Template: hvtiRtemplates 1.2.0 / ac
 #> 
 #> **No converter: every choice is manual.** This template has no migration adapter yet; 
 #> the job is the plain scaffold and the evidence below is for porting by hand.

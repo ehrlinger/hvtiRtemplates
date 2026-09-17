@@ -1,5 +1,392 @@
 # Changelog
 
+## hvtiRtemplates 1.2.0
+
+- **The `hz` template renders again.** Its `phases` chunk read the order
+  of `theta` through TemporalHazard’s internal
+  `.hzr_phase_theta_names()`, which changed shape once
+  `hzr_theta_names()` was exported, so every `hz` job stopped there. It
+  now calls `hzr_theta_names(phases)` and stops with a clear message on
+  TemporalHazard older than 1.2.8. A job already scaffolded from the old
+  template needs the same edit to its `phases` chunk.
+  `TemporalHazard (>= 1.2.8)` joins `Suggests` so the test that runs
+  that chunk runs in CI.
+
+- A migration test no longer warns on Windows while removing its
+  temporary folder link
+  ([\#124](https://github.com/ehrlinger/hvtiRtemplates/issues/124)).
+
+- **Templates find the study root through `_study.yml`.** Each template
+  calls
+  [`hvtiRutilities::study_root()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_root.html)
+  in place of looking for `_quarto.yml` in `.` or `..`, so a study needs
+  no `_quarto.yml`, and a job renders the same from the Render button,
+  `quarto render` or
+  [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md),
+  at any depth. A study must have been adopted with
+  [`hvtiRutilities::study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html).
+
+- **[`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+  finds the study root and opens or creates a job.** Called from
+  anywhere inside a study, it resolves the root through the nearest
+  `_study.yml` at or above `dir`, creates the job with
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  when it does not exist, and opens an existing job as it stands, never
+  overwriting it.
+
+- [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  renders a job from its own directory: a draft by default, and with
+  `final = TRUE` a render that stops on an unfinished job.
+
+- **The `dc-general` job template ships**, replacing
+  `descriptive/dc.general`: overall statistics through
+  [`hvtiRutilities::proc_contents()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html)
+  and `proc_means()`, then base-R contingency tables, cumulative
+  distributions (SAS `QNTLDEF=5` quantiles and the five lowest and
+  highest values) and a Pearson pairwise-correlation sweep. `ID_COL` is
+  off by default, so no patient identifier reaches the report unless a
+  study author sets it. `KEY_COLS` keeps identifier columns, `ccfid` by
+  default, out of the overall statistics too. It reads data the same
+  three ways as the other descriptive templates, `DATASET` or
+  `ANALYSIS_SET`.
+
+- **The descriptive templates can read a named dataset.** `dc-tables`,
+  `dc-gfup` and `dp-postage` gain `DATASET`, passed to
+  `read_built(dataset = )` when `ANALYSIS_SET` is `NULL`, so a job can
+  read an extract declared under `additional_datasets:` in `_study.yml`,
+  such as a column subset written for R. Naming such a dataset in
+  `ANALYSIS_SET` failed with “No analysis set”, because analysis sets
+  and additional datasets are separate registries. Pairing an analysis
+  set with a dataset other than `"study"` now stops, since a set is
+  always derived from the study dataset. Each job now explains the three
+  data routes above its `data` chunk and prints the dataset, file and
+  dimensions it read, so a report says which data it describes.
+  [`vignette("sas-to-r-descriptive")`](https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.md)
+  gains a “Which data a job reads” section covering the same ground for
+  the biostatistics team.
+
+- **Unworked `EDIT:` markers no longer stop a render; the job renders as
+  a draft.** Every template’s edit guard used to stop a render while any
+  marker remained, unless `HVTI_TEMPLATE_DRAFT` was set. The default is
+  now the draft: the render warns and the report opens with a DRAFT
+  banner listing the open markers, so an author iterates towards a
+  finished report and the banner goes when the last marker does. The
+  guard only stops blocking: a section still holding a template
+  placeholder stops with its own error, so a fresh job renders as far as
+  the markers already worked. `HVTI_TEMPLATE_DRAFT` is gone from the
+  templates. Set `HVTI_TEMPLATE_STRICT=1` to make an unfinished job
+  stop, as a final render should; unset, `0`, `false` and `no` draft,
+  and any other value stops. **This applies to jobs scaffolded from now
+  on.** A job file is a copy of its template, so a job created before
+  this release keeps the old guard: it still stops by default, still
+  needs `HVTI_TEMPLATE_DRAFT=1` to draft, and ignores
+  `HVTI_TEMPLATE_STRICT`. To move one over, replace its `edit-guard`
+  chunk with the current template’s.
+  [`vignette("sas-to-r-descriptive")`](https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.md)
+  gains a section on the draft banner and the markers.
+
+- [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  reads a legacy SAS job and writes the matching template job plus an
+  evidence report, preserving the source and refusing to overwrite
+  either output. The template and its qualifier are read from the SAS
+  filename (`<prefix>.<qualifier>.sas`), and `prefix`/`qualifier`
+  override that reading when a source does not follow it; a `qualifier`
+  given alone is used with the prefix from the filename. The study root
+  is found from `_study.yml` above the source, and `dir` overrides that
+  when the source sits outside the study. Relative `source`, `lst`,
+  `log` and `reference` paths resolve against the working directory, and
+  `dir` only locates the root. The listing and log default to the
+  same-named files beside the source, `lst`/`log` override them, and the
+  report says whether each was supplied, found or not found. A template
+  with no migration adapter yet is still scaffolded, every `EDIT:`
+  marker kept, with a report that says plainly that the migration is
+  manual. Only deterministic extraction can remove an `EDIT:` marker;
+  uncertain choices remain for review. The three descriptive templates
+  listed below and the existing trends template have migration adapters.
+  Log messages are withheld; reports keep their locations, severity, SAS
+  error codes and recognized aggregate counts for review. Source text
+  the report quotes is masked for every template: string literal
+  contents, R raw strings included, comment bodies, `%let` values, whole
+  even when a macro-quoted value such as `%str(a;b)` holds a semicolon,
+  `%put` text, unquoted `title` and `footnote` text, and digit runs of
+  five or more become placeholders such as `"[string]"` or
+  `title2 [text];`, and Quarto prose and YAML are withheld. `dc-tables`
+  group headings, which come from SAS comments, appear in the report as
+  `[heading]` and in the job as `GROUPS` keys. The job itself is not
+  masked. Outputs are placed by hard link. Where the filesystem refuses
+  links, the prepared file is renamed into place after a check that the
+  target is still absent, so a concurrent writer can race that check. A
+  failed placement removes only the outputs that call placed. When
+  `DATASET` is unresolved, the `dc-tables`, `dc-gfup`, `dp-postage` and
+  `dp-trends` jobs stop before reading data and point to the migration
+  report.
+
+- `dc-tables` writes editable CORR DOCX output in place of the SAS RTF
+  through `hv_tbl_summary()`, `hv_man_table()`, `hv_man_table_save()`,
+  and `hv_check_docx()`. Structural findings stop the job. `dc-gfup`
+  checks registered follow-up intervals with identifiers disabled;
+  `dp-postage` writes numbered PNG pages through `hv_eda()` and
+  `patchwork`.
+
+- [`vignette("legacy-study-migration")`](https://ehrlinger.github.io/hvtiRtemplates/articles/legacy-study-migration.md)
+  teaches adoption of an existing study, separate registration of study
+  and named-subset data, all four migrations, marker review, and output
+  checks with synthetic data.
+
+- **Three descriptive job templates ship: `dc-tables`, `dc-gfup` and
+  `dp-postage`**, with
+  [`vignette("sas-to-r-descriptive")`](https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.md)
+  walking a SAS user from `descriptive/dc.tables*`, `dc.gfup`,
+  `dp.trends` and the EDA postage stamps to the R job that replaces
+  each. `dc-tables` carries the correlation variant on
+  [`hvtiRtables::hv_correlation_table()`](https://ehrlinger.github.io/hvtiRtables/reference/hv_correlation_table.html)
+  and
+  [`hvtiPlotR::hv_correlation_matrix()`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_correlation_matrix.html);
+  `dp-postage` is thin over
+  [`hvtiPlotR::hv_eda()`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_eda.html).
+  The job-catalog pin advances to `hvtiR` `v1.1.11` in both workflows,
+  and the roadmap is re-rendered: 44 templates are in scope and 13 are
+  on disk.
+
+- **[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  replaces `new_job()` and follows the study’s directory layout.** New
+  studies receive jobs in numbered folders such as `20_distributions/`;
+  adopted legacy studies retain bare folders such as `distributions/`.
+  Mixed layouts are rejected. This requires `hvtiRutilities` 1.1.12.
+
+- **The job-catalog pin advances to `hvtiR` `v1.1.10`**, in both
+  `R-CMD-check.yaml` and `spec-counts.yaml`, and the roadmap is
+  re-rendered from it. 1.1.10 carries
+  [hvtiR#73](https://github.com/ehrlinger/hvtiR/pull/73) and
+  [hvtiR#74](https://github.com/ehrlinger/hvtiR/pull/74): TemporalHazard
+  functions named on the hazard rows, the relabelled names, and `pm`’s
+  row dropped now that it folds into `lm`. It moves together with
+  [hvtiRutilities#113](https://github.com/ehrlinger/hvtiRutilities/pull/113),
+  which drops `pm` from
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
+  because `test-roadmap.R` checks catalog and taxonomy against each
+  other both ways. The propensity-matching workflow reads 2 of 9, with
+  `pm` no longer a member. 44 templates in scope, 10 on disk, unchanged.
+
+- **The job-catalog pin advances to `hvtiR` `v1.1.9`**, in both
+  `R-CMD-check.yaml` and `spec-counts.yaml`, and the roadmap is
+  re-rendered from it. 1.1.9 carries
+  [hvtiR#61](https://github.com/ehrlinger/hvtiR/pull/61),
+  [hvtiR#63](https://github.com/ehrlinger/hvtiR/pull/63) and
+  [hvtiR#64](https://github.com/ehrlinger/hvtiR/pull/64). The roadmap
+  now schedules 44 templates, not 43: `dc-trends` and `dp-boxplot` join
+  from the 2026-09-10 triage, and `pm` leaves, because it folds into
+  `lm` and is `retire` over `hvtiRpropensity::bs_count()`. `lm` counts
+  470 studies and is `thin` over `hvtiRpropensity`, `si` and `mi` count
+  jobs (1 and 18), and the measured `dc` and `dp` rows show R counts for
+  the first time. The propensity-matching workflow reads 3 of 10,
+  because `pm` is now owed elsewhere. Ten templates are on disk,
+  unchanged.
+
+- **`deade` and `deadl` are not landmark jobs, but the early/late
+  landmark split is a real construct.** The per-folder parse design
+  (section 8) now records the check. Both names are hazard-phase bagging
+  output from the `bh` template: every `dead[elc]*` file on the share is
+  a dataset, and no program is named `deade` or `deadl`. Nine programs
+  carry the string inside a longer name, eight `deadexpl` jobs (death
+  before explant) and `dc.deadlate`. Separately, job pairs such as
+  `lg.dead.early` and `lg.dead.late` (10 and 8 studies) or
+  `dc.dead.early` and `dc.dead.late` (4 and 5) split follow-up at a
+  cutoff: the early job censors at it, and the late job keeps only those
+  who reach it. No taxonomy row names the construct; the job catalog
+  records it as a shared `landmark` option from
+  [hvtiR#61](https://github.com/ehrlinger/hvtiR/pull/61), shipped in
+  `v1.1.9`.
+
+- **`40_graphs/dp-trends.qmd` ships**, the first of the EDA templates
+  and the first QUALIFIED template: a job is scaffolded with
+  `add_job("dp", "cohort", "eda", qualifier = "trends")` and lands at
+  `40_graphs/cohort-eda-dp-trends.qmd` in a new study. It is thin over
+  [`hvtiPlotR::hv_trends()`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html),
+  which takes one row per patient and computes the per-year points
+  itself, so the job never aggregates by hand. Of 50 trends job files
+  across 24 studies, none used it. One job draws a list of figures,
+  optionally once per subgroup on shared axes.
+
+  The set key for an EDA job is `(subject, eda)`: `ENDPOINT` names what
+  is described, `cohort` by default, and `TYPE` is always `eda`.
+
+  It stops, rather than drawing, on an operation year outside 1900 to
+  next year (the wrong-origin mistake), on a fractional year (which
+  would draw one “annual” point per patient), on a year missing for
+  every patient, on a percent column holding anything but 0/1 or
+  logical, on a subgroup filter that is not one TRUE/FALSE per patient,
+  and on a subgroup that selects nobody, and it prints each figure’s
+  dropped rows. Axis limits zoom through `coord_cartesian()` rather than
+  dropping patients before the smooth is fitted. `hvtiPlotR (>= 2.7.7)`
+  joins `Suggests` and `Remotes`; 2.7.7 rather than 2.7.6 because the
+  dropped-row count arrived part-way through 2.7.6 without a version
+  bump. The Suggests-bound test now covers hvtiPlotR.
+
+  Design: `dev/specs/2026-09-10-dp-trends-template-design.md`.
+
+- **The job-catalog pin advances to `hvtiR` `v1.1.8`**, in both
+  `R-CMD-check.yaml` and `spec-counts.yaml`. 1.1.8 carries one catalog
+  change, [hvtiR#60](https://github.com/ehrlinger/hvtiR/pull/60):
+  `dp-trends` is `shipped`. The pin moves in the pull request that adds
+  the file, as the design’s section 5 requires, because at `v1.1.7` the
+  row was still `queued` and `spec-counts` failed on a template no
+  ledger row claimed.
+
+- **The job-catalog pin advances to `hvtiR` `v1.1.7`**, in both
+  `R-CMD-check.yaml` and `spec-counts.yaml`, which
+  `tools/check_pin_currency.py` requires to agree. 1.1.7 carries the EDA
+  batch’s catalog changes
+  ([hvtiR#57](https://github.com/ehrlinger/hvtiR/pull/57),
+  [hvtiR#58](https://github.com/ehrlinger/hvtiR/pull/58)): `dp-postage`
+  joins the catalog, and `dc-general`, `dc-tables` and `dc-gfup` move
+  into batch 3. The roadmap is re-rendered to match: 43 templates in
+  scope, a `dp-postage` row with no blocker, and `descriptive` spanning
+  batches 3 to 4.
+
+- **`hvtiRlifetables (>= 0.1.2)` is now declared, in `DESCRIPTION` and
+  in `40_graphs/hs.qmd`.** The template has called `us_cohort_curve()`
+  since 1.0.16, but nothing recorded which version provides it.
+  `DESCRIPTION` did not name the package, and the template had no floor
+  check, so a study on 0.1.1 failed with “could not find function”
+  part-way through a render, after the model had been read and every
+  prediction made. It is now a versioned `Suggests` with a `Remotes`
+  entry, as `hvtiRbootstrap` is, and the setup chunk refuses below 0.1.2
+  before anything is read.
+
+  The floor is 0.1.2 because that is where the function was introduced.
+  The 1.0.16 entry below says it “landed in 0.1.3”, which is wrong:
+  0.1.3 changed only the package’s own tests.
+
+  The test comparing `DESCRIPTION`‘s bounds with the templates’ floors
+  now covers both packages, and FAILS rather than skips when a template
+  enforces a floor `DESCRIPTION` does not declare. That is the case it
+  could not see before, and the one this entry fixes.
+
+- **A template’s expected folder now comes from the job catalog, not
+  from
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
+  alone.** The taxonomy maps a prefix to ONE folder, but a prefix may
+  span several: `dp` is `graphs` for `trends`, `gfup`, `spaghetti` and
+  `procs`, and `distributions` for `variable`. The old check asserted
+  `tl$folder == tx$folder[match(tl$prefix, tx$prefix)]`, so it would
+  have rejected `dp-variable` the moment anyone wrote it, and
+  `dp-variable` is already scheduled in batch 3. The catalog records
+  `folder` per row, keyed on `(prefix, qualifier)`, and is consulted
+  first; the taxonomy answers for rows the catalog does not have and
+  whenever the catalog is absent. See
+  [\#97](https://github.com/ehrlinger/hvtiRtemplates/issues/97).
+
+  ⚠️ **The fallback does not skip.** A missing catalog leaves the
+  taxonomy answering for every template rather than the check quietly
+  passing, because the taxonomy still catches a template filed under a
+  folder no study uses, which is most of this guard’s value. A silently
+  skipped guard is worse than no guard.
+
+  ⚠️ **The change had no CI coverage when it was first pushed, and ten
+  green checks said otherwise.** `R-CMD-check.yaml`’s strict step ran
+  `filter = "roadmap"`, so `test-taxonomy.R` executed only inside
+  `R CMD check`, where the catalog is always absent and the new lookup
+  always took the taxonomy fallback. The filter is now
+  `roadmap|taxonomy`, and five tests drive the lookup against a
+  temporary catalog so the catalog-first branch is asserted rather than
+  merely executed. A test filter naming one file silently decides which
+  code paths CI exercises; widen it whenever a test starts reading the
+  catalog.
+
+  The ledger helpers moved from `test-roadmap.R` to a new
+  `helper-ledger.R`, because testthat gives each test file its own
+  environment and `test-taxonomy.R` needs them too. A second copy of the
+  path resolution was the alternative, and a copied authority free to
+  drift is what retired the `FOLDER_ORDINAL` guard.
+
+- **`spec-counts` now fails when the two hvtiR pins disagree with each
+  other** (`tools/check_pin_currency.py`). `R-CMD-check.yaml` and
+  `spec-counts.yaml` check the job catalog out independently, and
+  advancing one while forgetting the other is the realistic mistake – it
+  leaves this repository validating against two different catalogs with
+  both sides green.
+
+- ⚠️ **The path filters were widened in the same commit, and that is the
+  load-bearing half.** They matched `spec-counts.yaml` but not
+  `R-CMD-check.yaml`, so a pull request advancing only the latter’s
+  `ref:` started no job at all and went green unverified – the exact
+  silent-drift failure this workflow’s own header warns about, aimed at
+  the guard being added.
+
+- 🔴 **It also rejects refs that are not immutable tag pins**, added
+  after review found the first version passed states it forbids:
+  `ref: main` in both workflows agrees with itself, and so does an empty
+  `ref:`, and both resolve to mutable default-branch behaviour.
+  **Equality is not pinning.** An empty `ref:` was the sharp edge — a
+  missing `ref:` line yields `None` and was always rejected, but `ref:`
+  with nothing after it yields `""`, which is not `None` and slipped
+  through while the docstring claimed otherwise. A commit SHA is
+  immutable and still rejected: hvtiR’s `jobs-pin-drift` compares these
+  against its newest *tag name*, so a SHA reads as permanently stale.
+
+- **Lagging hvtiR’s newest tag is deliberately NOT a failure here.**
+  That alarm belongs to hvtiR’s `jobs-pin-drift`, on a schedule with a
+  grace period; failing every pull request the moment hvtiR cuts a tag
+  would redden reviews for a reason unrelated to the change under
+  review. This check answers the narrower question that only this
+  repository can answer, in the pull request that caused it.
+
+- **The job-catalog pin advances to `hvtiR` `v1.1.6`**, in both
+  `R-CMD-check.yaml` and `spec-counts.yaml`. They are pinned
+  independently and both must move; advancing one leaves the other
+  validating against the old catalog with its guards still green.
+  `v1.1.5` predates the `si` and `mi` imputation rows
+  ([hvtiR#54](https://github.com/ehrlinger/hvtiR/pull/54)), so until now
+  `test-roadmap.R` was checked against a 53-row catalog while `hvtiR`
+  shipped 55.
+
+- **The roadmap document is regenerated against the new catalog**, which
+  is the half of a pin bump that is easy to miss.
+  `dev/specs/2026-08-29-template-conversion-roadmap.md` is rendered from
+  the catalog, so advancing the pin without re-rendering leaves a
+  checked-in document contradicting the very catalog it was just pointed
+  at. 40 templates in scope becomes 42, with queued rows for `mi` and
+  `si`. ⚠️ Their “blocked on” cells differ and both are correct: `mi` is
+  blocked on `hvtiRimputation` because `impute_multiple()` is unbuilt,
+  while `si` is blocked on nothing because `impute_mean()` has shipped.
+
+- Reading the catalog by tag is still the right call – a dependency
+  would invert the family, since `hvtiR` installs it, and tracking
+  `main` would let an edit there fail every pull request here. What was
+  missing is that nothing reported when the pin aged. `hvtiR` 1.1.6 adds
+  that detector, and it now reads these two files directly: it will not
+  consider the family current until both refs name its newest tag.
+
+- **`bl`, `br` and `bc` now require `hvtiRbootstrap >= 0.9.3`**, and the
+  reason is not a missing function. Below 0.9.3, `boot_select()`
+  recorded `sle` and `sls` on the screen and then selected on AIC
+  regardless, so the `boot_provenance()` table these reports print named
+  an entry and a stay criterion the screen had never applied – directly
+  above the frequencies a reader attributes to them. A blank would have
+  been obvious; a plausible number that describes nothing is not.
+  0.9.3’s renamed bag columns do *not* affect these templates, which
+  read `$boot$replicates` and rebuild the matrix themselves rather than
+  reading `$boot$summary`.
+
+- **The reports also refuse a bag *produced* below 0.9.3.** The version
+  guard at the top of each one checks the `hvtiRbootstrap` installed
+  where the report renders, which is not the version that matters: the
+  report reads a bag some runner wrote earlier. A 0.9.2 bag survives
+  0.9.3’s own documented migration, passes `boot_validate()`, and would
+  render an AIC-selected screen beneath the entry and stay criteria it
+  never used. `bag$engine` is now checked as well, and an absent, `NA`
+  or unparseable one is refused rather than crashed on.
+
+- **`bh` deliberately stays at `>= 0.9.0`.** Its screen comes from
+  `TemporalHazard`, whose own stepwise has always honoured `slentry` and
+  `slstay`; `hvtiRbootstrap` is only the reporting layer there. Raising
+  it would assert a dependency the template does not have.
+
+- The Phase 3 render gate moves to 0.9.3 as well, because it *runs* a
+  screen: below that, the bags it produces are not the bags these
+  templates now declare they need.
+
 ## hvtiRtemplates 1.1.0
 
 ### Breaking

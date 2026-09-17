@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,7 +95,7 @@
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">study_setup</span><span class="op">(</span><span class="va">root</span>, study <span class="op">=</span> <span class="st">"Synthetic legacy study"</span>,</span>
 <span>            study_tracker_id <span class="op">=</span> <span class="fl">42L</span>, adopt <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp7XINXV/file1bbf606ceb3a</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpPg8GMx/file1c0c477edb5e</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -107,7 +107,7 @@
 <span><span class="co">#&gt; 0 .R  |  0 .qmd/.Rmd  |  5 .sas  |  0 provenance sidecars</span></span>
 <span><span class="fu">register_data</span><span class="op">(</span><span class="va">root</span>, built <span class="op">=</span> <span class="st">"built.csv"</span>, event <span class="op">=</span> <span class="st">"dead"</span>, time <span class="op">=</span> <span class="st">"iv_dead"</span>,</span>
 <span>              role <span class="op">=</span> <span class="st">"study"</span>, population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp7XINXV/file1bbf606ceb3a</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpPg8GMx/file1c0c477edb5e</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -120,7 +120,7 @@
 <span><span class="fu">register_data</span><span class="op">(</span><span class="va">root</span>, built <span class="op">=</span> <span class="st">"complete_cases.csv"</span>, event <span class="op">=</span> <span class="st">"dead"</span>,</span>
 <span>              time <span class="op">=</span> <span class="st">"iv_dead"</span>, dataset <span class="op">=</span> <span class="st">"complete_cases"</span>,</span>
 <span>              role <span class="op">=</span> <span class="st">"named"</span>, population <span class="op">=</span> <span class="st">"Synthetic complete cases"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp7XINXV/file1bbf606ceb3a</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpPg8GMx/file1c0c477edb5e</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -133,7 +133,7 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 0 .R  |  0 .qmd/.Rmd  |  5 .sas  |  0 provenance sidecars</span></span>
 <span><span class="fu">study_status</span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp7XINXV/file1bbf606ceb3a</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpPg8GMx/file1c0c477edb5e</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -210,7 +210,7 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">reports</span><span class="op">[[</span><span class="st">"tables"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </section><section class="section level2"><h2 id="migration-report">Migration report<a class="anchor" aria-label="anchor" href="#migration-report"></a>
 </h2>
-<p>Template: hvtiRtemplates 1.1.0 / dc-tables</p>
+<p>Template: hvtiRtemplates 1.2.0 / dc-tables</p>
 <section class="level2"><h3 id="evidence-sha-256">Evidence (SHA-256)<a class="anchor" aria-label="anchor" href="#evidence-sha-256"></a>
 </h3>
 <ul>
@@ -537,7 +537,7 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">distribution_report</span><span class="op">)</span>, <span class="fl">6L</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # Migration report</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Template: hvtiRtemplates 1.1.0 / ac</span></span>
+<span><span class="co">#&gt; Template: hvtiRtemplates 1.2.0 / ac</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; **No converter: every choice is manual.** This template has no migration adapter yet; </span></span>
 <span><span class="co">#&gt; the job is the plain scaffold and the evidence below is for porting by hand.</span></span></code></pre></div>
