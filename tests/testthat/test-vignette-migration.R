@@ -9,7 +9,7 @@ legacy_vignette_path <- function() {
 # neither, and that is a missing input rather than a failing vignette.
 skip_without_vignette <- function() {
   path <- legacy_vignette_path()
-  skip_if_not(file.exists(path), "vignette source not available")
+  testthat::skip_if_not(file.exists(path), "vignette source not available")
   path
 }
 

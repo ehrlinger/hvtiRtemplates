@@ -28,7 +28,7 @@ masked_report <- function(job) {
 }
 
 expect_no_sentinel <- function(text, sentinels, info = NULL) {
-  for (sentinel in sentinels) expect_false(grepl(sentinel, text, fixed = TRUE), info = paste(info, sentinel))
+  for (sentinel in sentinels) testthat::expect_false(grepl(sentinel, text, fixed = TRUE), info = paste(info, sentinel))
 }
 
 test_that("reports mask literals, comments, long numbers and macro values for every SAS converter", {
