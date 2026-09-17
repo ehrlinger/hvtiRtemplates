@@ -374,8 +374,16 @@ test_that("log errors add a blocking review marker to the generated job", {
 test_that("output folder links cannot redirect migration outside the study", {
   root <- withr::local_tempdir()
   outside <- withr::local_tempdir()
-  linked <- suppressWarnings(file.symlink(outside, file.path(root, "descriptive")))
+  link <- file.path(root, "descriptive")
+  linked <- suppressWarnings(file.symlink(outside, link))
   skip_if_not(linked, "This platform does not permit creating symbolic links.")
+  # R's recursive unlink() on Windows deletes a directory reparse point as a
+  # junction and warns on a true symbolic link, so remove the link itself
+  # first; rmdir removes a directory link without touching its target.
+  if (.Platform$OS.type == "windows") {
+    windows_link <- normalizePath(link, winslash = "\\\\", mustWork = FALSE)
+    withr::defer(system2("cmd", c("/c", "rmdir", shQuote(windows_link)), stdout = FALSE, stderr = FALSE))
+  }
   row <- .select_template(template_list(), "dc", "tables")
   expect_error(.migration_template(row, "cohort", "eda", root), "beneath the study root")
   expect_length(list.files(outside, all.files = TRUE, no.. = TRUE), 0L)
@@ -494,7 +502,7 @@ test_that("the overwrite refusal names the existing path", {
   out <- file.path(root, "job.qmd")
   writeLines("keep", out)
   expect_error(.write_migration_pair("job", "report", out, file.path(root, "job-migration.md")),
-               paste0("refusing to overwrite.*", out), fixed = FALSE)
+               paste0("refusing to overwrite: ", .canonical_path(out)), fixed = TRUE)
 })
 
 test_that("pair placement falls back to renaming the prepared file when hard links fail", {
@@ -527,7 +535,8 @@ test_that("the rename fallback refuses an existing target by path and leaves it 
   out <- file.path(root, "job.qmd")
   report <- file.path(root, "job-migration.md")
   writeLines("keep", report)
-  expect_error(.write_migration_pair("job", "report", out, report), paste0("refusing to overwrite.*", report))
+  expect_error(.write_migration_pair("job", "report", out, report),
+               paste0("refusing to overwrite: ", .canonical_path(report)), fixed = TRUE)
   expect_identical(readLines(report), "keep")
   expect_identical(list.files(root, all.files = TRUE, no.. = TRUE), "job-migration.md")
 })
@@ -542,7 +551,8 @@ test_that("a rename fallback failure removes only the output this call placed", 
   writeLines("unrelated", file.path(root, "notes.txt"))
   out <- file.path(root, "job.qmd")
   report <- file.path(root, "job-migration.md")
-  expect_error(.write_migration_pair("job", "report", out, report), paste0("refusing to overwrite.*", report))
+  expect_error(.write_migration_pair("job", "report", out, report),
+               paste0("refusing to overwrite an existing target: ", .canonical_path(report)), fixed = TRUE)
   expect_false(file.exists(out))
   expect_identical(readLines(report), "another writer")
   expect_identical(readLines(file.path(root, "notes.txt")), "unrelated")
@@ -558,4 +568,40 @@ test_that("migrate_job() labels its own argument validation", {
                "^migrate_job\\(\\): `source` must be a single non-empty")
   expect_error(migrate_job(source, "cohort", "eda", "dc", "tables", lst = NA_character_, dir = root),
                "^migrate_job\\(\\): `lst` must be a single non-empty")
+})
+
+test_that(".path_within compares at a separator boundary, and by case only on Windows", {
+  expect_true(.path_within("/tmp/ab/x.sas", "/tmp/ab"))
+  expect_true(.path_within("/tmp/ab/x.sas", "/tmp/ab/"))
+  expect_false(.path_within("/tmp/abc/x.sas", "/tmp/ab"))
+  expect_false(.path_within("/tmp/ab", "/tmp/ab"))
+  expect_true(.path_within("/x.sas", "/"))
+  expect_false(.path_within("/TMP/AB/x.sas", "/tmp/ab", windows = FALSE))
+  expect_true(.path_within("C:/Users/RunnerAdmin/Temp/x.sas", "c:/users/runneradmin/temp", windows = TRUE))
+  expect_true(.path_within("C:\\Users\\a\\x.sas", "C:/Users/a/", windows = TRUE))
+  expect_true(.path_within("C:/Users/a/x.sas", "C:\\Users\\a", windows = TRUE))
+  expect_false(.path_within("C:\\Users\\ab\\x.sas", "C:/Users/a", windows = TRUE))
+  expect_true(.path_within("C:/x.sas", "C:/", windows = TRUE))
+})
+
+test_that(".canonical_path resolves the parent and keeps the final component as given", {
+  root <- withr::local_tempdir()
+  canonical_root <- normalizePath(root, winslash = "/")
+  expect_identical(.canonical_path(file.path(root, "absent.qmd")), paste0(canonical_root, "/absent.qmd"))
+  expect_identical(.canonical_path(file.path(root, "new", "deeper", "job.qmd")),
+                   paste0(canonical_root, "/new/deeper/job.qmd"))
+  writeLines("x", file.path(root, "present.qmd"))
+  expect_identical(.canonical_path(paste0(root, "/present.qmd")), paste0(canonical_root, "/present.qmd"))
+  expect_false(grepl("\\\\", .canonical_path(file.path(root, "absent.qmd"))))
+})
+
+test_that("evidence under an unresolved spelling of the root is still beneath it", {
+  root <- withr::local_tempdir()
+  source <- file.path(root, "job.sas")
+  writeLines("proc means; run;", source)
+  # tempdir() is unresolved on macOS (/var -> /private/var) and an 8.3 short
+  # name on Windows; the root must be accepted in the spelling it was given.
+  evidence <- .migration_evidence(c(source = source), root)
+  expect_identical(evidence$root, normalizePath(root, winslash = "/"))
+  expect_identical(unname(evidence$paths[["source"]]), "job.sas")
 })

@@ -7,7 +7,7 @@ numbered_output_chunk <- function(job, label) {
 
 test_that("numbered migrated jobs save and embed figures in their logical folders", {
   for (kind in c("dp-trends", "dc-tables")) {
-    root <- normalizePath(migration_study_fixture(kind))
+    root <- normalizePath(migration_study_fixture(kind), winslash = "/")
     bare <- c("datasets", "descriptive", "distributions", "analyses", "graphs", "documents", "estimates")
     numbered <- paste0(c("00", "10", "20", "30", "40", "50", "90"), "_", bare)
     for (i in seq_along(bare)) {

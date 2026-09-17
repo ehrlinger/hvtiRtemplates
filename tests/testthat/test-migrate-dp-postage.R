@@ -21,7 +21,7 @@ test_that("postage migration selects registered data and explicit ordered EDA co
   source <- file.path(root, "descriptive", "dp.postage.qmd")
   bytes <- readBin(source, "raw", n = file.info(source)$size)
   job <- migrate_job(source, "cohort", "eda", "dp", "postage", dir = root)
-  expect_identical(dirname(job), normalizePath(file.path(root, "descriptive")))
+  expect_identical(dirname(job), normalizePath(file.path(root, "descriptive"), winslash = "/"))
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built,
                        study_config = hvtiRutilities::study_config))
   withr::local_dir(root)
