@@ -115,11 +115,10 @@ ledger_rows_or_null <- function() {
 # The taxonomy answers for any template the catalog has no row for, and for
 # every template when the catalog is absent.
 #
-# ⚠️ Deliberately does NOT skip when the catalog is missing. The taxonomy
-# fallback still catches a template filed under a folder no study uses, which
-# is most of this check's value. A silently skipped guard is worse than no
-# guard, which is the discipline require_ledger() states and this must not
-# quietly opt out of.
+# This helper does not skip when the catalog is missing; it answers from the
+# taxonomy. Its caller, the placement test in test-taxonomy.R, does skip then,
+# because a prefix spanning folders has no single taxonomy answer. The
+# directory-name test beside it still runs without the catalog.
 expected_template_folders <- function(tl) {
   rows <- ledger_rows_or_null()
   catalog <- if (!length(rows)) {

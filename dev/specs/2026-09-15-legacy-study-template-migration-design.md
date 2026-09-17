@@ -104,7 +104,9 @@ migrate_job(
 
 The template-specific adapter owns interpretation. It returns replacements for
 known template fields plus a structured report of translated, unresolved, and
-ignored source material. An unsupported template is an error. The common layer
+ignored source material. A template without a converter is scaffolded with
+every marker kept and a "No converter" report (see
+`2026-09-16-production-job-workflow-design.md`, section 4.4). The common layer
 never falls back to a generic translator.
 
 The first release registers four adapters, including the already shipped

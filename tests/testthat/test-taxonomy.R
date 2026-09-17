@@ -68,7 +68,7 @@ test_that("a template sits in the folder its row files it under", {
   # form would have failed `dp-variable`, which is ALREADY scheduled in batch
   # 3, the moment anyone wrote it. The job catalog carries `folder` per row,
   # keyed on (prefix, qualifier), and is consulted first; the taxonomy answers
-  # for rows the catalog does not have and whenever the catalog is absent.
+  # for rows the catalog does not have. Without the catalog the test skips.
   # See issue #97 and `dev/specs/2026-09-09-eda-templates-design.md` §8.3.
   #
   # The taxonomy is NOT the loser here: "every template directory is
