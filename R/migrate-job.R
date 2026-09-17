@@ -183,8 +183,7 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   folder <- hvtiRutilities::study_dir(row$folder[[1L]], root = root)
   if (.migration_target_exists(folder)) {
     resolved <- normalizePath(folder, winslash = "/", mustWork = TRUE)
-    study_root <- normalizePath(root, winslash = "/", mustWork = TRUE)
-    if (!startsWith(resolved, paste0(study_root, "/"))) {
+    if (!.path_within(resolved, normalizePath(root, winslash = "/", mustWork = TRUE))) {
       stop("migrate_job(): output must remain beneath the study root.", call. = FALSE)
     }
   }
@@ -209,13 +208,35 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
 
 .migration_path <- function(path, root) {
   resolved <- normalizePath(path, winslash = "/", mustWork = TRUE)
-  if (!startsWith(resolved, paste0(root, "/"))) {
-    stop("migrate_job(): evidence must be beneath the study root: ", path, call. = FALSE)
+  if (!.path_within(resolved, root)) {
+    stop("migrate_job(): evidence must be beneath the study root: ", .canonical_path(path), call. = FALSE)
   }
   if (dir.exists(resolved) || file.access(resolved, 4L) != 0L) {
-    stop("migrate_job(): evidence must be a readable file: ", path, call. = FALSE)
+    stop("migrate_job(): evidence must be a readable file: ", .canonical_path(path), call. = FALSE)
   }
   resolved
+}
+
+# One spelling for a path the package reports. The parent is resolved, so a
+# Windows 8.3 short name (RUNNER~1) becomes the long name and every separator
+# is "/"; the final component is kept as given, so a link names itself rather
+# than its target, and a path that does not exist yet still has a spelling.
+.canonical_path <- function(path) {
+  parent <- dirname(path)
+  if (identical(parent, path)) return(normalizePath(path, winslash = "/", mustWork = FALSE))
+  parent <- if (dir.exists(parent)) normalizePath(parent, winslash = "/", mustWork = TRUE) else .canonical_path(parent)
+  paste0(sub("/+$", "", parent), "/", basename(path))
+}
+
+# Whether `path` lies strictly beneath `root`. Both should already be resolved
+# by normalizePath(): a string prefix alone would accept /tmp/abc as inside
+# /tmp/ab, hence the "/" boundary, and Windows paths differ only by case.
+.path_within <- function(path, root, windows = .Platform$OS.type == "windows") {
+  if (windows) {
+    path <- tolower(gsub("\\\\", "/", path))
+    root <- tolower(gsub("\\\\", "/", root))
+  }
+  startsWith(path, paste0(sub("/+$", "", root), "/"))
 }
 
 .migration_adapters <- function() {
@@ -282,6 +303,7 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
 .migration_evidence <- function(paths, root) {
   # c(source = named_path) inherits the caller's name as source.filename.
   names(paths) <- sub("^(source|lst|log|reference)[.].*$", "\\1", names(paths))
+  root <- normalizePath(root, winslash = "/", mustWork = TRUE)
   paths <- vapply(paths, .migration_path, character(1L), root = root)
   relative <- substring(unname(paths), nchar(root) + 2L)
   optional_text <- function(name) {
@@ -510,7 +532,8 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   if (identical(out, report_path)) stop("Migration outputs must have distinct paths.", call. = FALSE)
   if (any(vapply(targets, .migration_target_exists, logical(1L)))) {
     existing <- targets[vapply(targets, .migration_target_exists, logical(1L))]
-    stop("Migration output already exists; refusing to overwrite: ", paste(existing, collapse = ", "), call. = FALSE)
+    stop("Migration output already exists; refusing to overwrite: ",
+         paste(vapply(existing, .canonical_path, character(1L)), collapse = ", "), call. = FALSE)
   }
   staged <- character()
   placed <- character()
@@ -532,7 +555,8 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
     )
   }
   refuse <- function(i) {
-    stop("Could not place ", labels[[i]], "; refusing to overwrite an existing target: ", targets[[i]], call. = FALSE)
+    stop("Could not place ", labels[[i]], "; refusing to overwrite an existing target: ", .canonical_path(targets[[i]]),
+         call. = FALSE)
   }
   for (i in seq_along(targets)) {
     # Both files are complete before publication, and the refusal is checked
@@ -546,7 +570,7 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
       # and the rename can still be replaced: a residual race, accepted.
       if (.migration_target_exists(targets[[i]])) refuse(i)
       if (!suppressWarnings(file.rename(staged[[i]], targets[[i]]))) {
-        stop("Could not place ", labels[[i]], ": hard links are unsupported and the rename failed: ", targets[[i]],
+        stop("Could not place ", labels[[i]], ": hard links are unsupported and the rename failed: ", .canonical_path(targets[[i]]),
              call. = FALSE)
       }
     }
