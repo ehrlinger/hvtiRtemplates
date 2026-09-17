@@ -1,5 +1,51 @@
 # hvtiRtemplates (unreleased)
 
+* **Templates find the study root through `_study.yml`.** Each template calls
+  `hvtiRutilities::study_root()` in place of looking for `_quarto.yml` in `.`
+  or `..`, so a study needs no `_quarto.yml`, and a job renders the same from
+  the Render button, `quarto render` or `render_job()`, at any depth. A study
+  must have been adopted with `hvtiRutilities::study_setup()`.
+
+* **`open_job()` finds the study root and opens or creates a job.** Called
+  from anywhere inside a study, it resolves the root through the nearest
+  `_study.yml` at or above `dir`, creates the job with `add_job()` when it
+  does not exist, and opens an existing job as it stands, never overwriting
+  it.
+
+* `render_job()` renders a job from its own directory: a draft by default,
+  and with `final = TRUE` a render that stops on an unfinished job.
+
+* **The descriptive templates can read a named dataset.** `dc-tables`,
+  `dc-gfup` and `dp-postage` gain `DATASET`, passed to
+  `read_built(dataset = )` when `ANALYSIS_SET` is `NULL`, so a job can read an
+  extract declared under `additional_datasets:` in `_study.yml`, such as a
+  column subset written for R. Naming such a dataset in `ANALYSIS_SET` failed
+  with "No analysis set", because analysis sets and additional datasets are
+  separate registries. Pairing an analysis set with a dataset other than
+  `"study"` now stops, since a set is always derived from the study dataset.
+  Each job now explains the three data routes above its `data` chunk and
+  prints the dataset, file and dimensions it read, so a report says which
+  data it describes. `vignette("sas-to-r-descriptive")` gains a "Which data a job
+  reads" section covering the same ground for the biostatistics team.
+
+* **Unworked `EDIT:` markers no longer stop a render; the job renders as a
+  draft.** Every template's edit guard used to stop a render while any marker
+  remained, unless `HVTI_TEMPLATE_DRAFT` was set. The default is now the draft:
+  the render warns and the report opens with a DRAFT banner listing the open
+  markers, so an author iterates towards a finished report and the banner goes
+  when the last marker does. The guard only stops blocking: a section still
+  holding a template placeholder stops with its own error, so a fresh job
+  renders as far as the markers already worked. `HVTI_TEMPLATE_DRAFT` is gone
+  from the templates. Set `HVTI_TEMPLATE_STRICT=1` to make an unfinished job
+  stop, as a final render should; unset, `0`, `false` and `no` draft, and any
+  other value stops. **This applies to jobs scaffolded from now on.** A job
+  file is a copy of its template, so a job created before this release keeps
+  the old guard: it still stops by default, still needs
+  `HVTI_TEMPLATE_DRAFT=1` to draft, and ignores `HVTI_TEMPLATE_STRICT`. To
+  move one over, replace its `edit-guard` chunk with the current template's.
+  `vignette("sas-to-r-descriptive")` gains a section on the draft banner and
+  the markers.
+
 * `migrate_job()` fills the four EDA templates (`dc-tables`, `dc-gfup`,
   `dp-trends`, and `dp-postage`) from their supported legacy source shapes.
   It writes a QMD and an evidence report, preserves source files, and refuses
@@ -26,6 +72,7 @@
   `hvtiPlotR::hv_eda()`. The job-catalog pin advances to `hvtiR` `v1.1.11`
   in both workflows, and the roadmap is re-rendered: 44 templates are in scope
   and 13 are on disk.
+
 * **`add_job()` replaces `new_job()` and follows the study's directory layout.**
   New studies receive jobs in numbered folders such as `20_distributions/`;
   adopted legacy studies retain bare folders such as `distributions/`. Mixed

@@ -23,12 +23,11 @@ follow-up; they do not establish completeness against a close date.
 
 ```{r}
 #| label: setup
-.root <- if (file.exists("_quarto.yml")) "." else ".."
-if (!file.exists(file.path(.root, "_quarto.yml"))) {
-  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
-       "resolved. Render this from the project root or from the job directory.",
-       call. = FALSE)
-}
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages(library(hvtiRutilities))
 if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
@@ -50,18 +49,19 @@ if (!is.null(.cur)) {
       length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
       paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
       "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
-      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
-      "draft banner. Any other value, including 0, leaves this guard strict."
+      "marker and delete it."
     )
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
-      warning(.msg, call. = FALSE)
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
       cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+      cat("Unresolved markers remain. **The numbers below are not",
           "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
       cat(":::\n\n")
     } else {
-      stop(.msg, call. = FALSE)
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
     }
   }
 }
@@ -86,7 +86,8 @@ if (!is.null(.current)) {
 }
 
 set_path <- function(kind, file) {
-  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(ENDPOINT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }
@@ -94,29 +95,59 @@ set_path <- function(kind, file) {
 
 ## Data
 
+<!-- How this job finds its data. Read this before touching the chunk below.
+
+     A study can offer a job data three ways, and `_study.yml` says which exist:
+
+     1. The study dataset: the file named by `built:`. `DATASET <- "study"`
+        with `ANALYSIS_SET <- NULL`.
+     2. An additional dataset: any file declared under `additional_datasets:`,
+        for example a column subset written for R. Set `DATASET` to its
+        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: no
+        rows are excluded.
+     3. An analysis set: declared under `analysis_sets:` with the columns kept
+        and the rows excluded, then written once with
+        `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
+        and leave `DATASET` as "study", because a set is always cut from the
+        study dataset. The report shows its exclusions in order.
+
+     A name under `additional_datasets:` is not an analysis set, so putting it
+     in `ANALYSIS_SET` stops with "No analysis set". Whichever route is taken,
+     the report prints the dataset, file and dimensions it read, so a reader
+     never has to ask which data a table describes. -->
+
 ```{r}
 #| label: data
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+# EDIT: the built dataset this job reads. "study" is the file named by built:
+# in _study.yml; any other name must be declared under additional_datasets:,
+# such as a column subset written for R. Analysis sets are derived from
+# "study" only, so another dataset needs ANALYSIS_SET <- NULL.
 # EDIT: the analysis set this job reads: declare its columns and excluded rows
 # under analysis_sets: in _study.yml, then write it with
-# hvtiRdatabuild::write_analysis_set(). Alternatively, set ANALYSIS_SET to NULL
-# and select a registered DATASET ("study" for the whole built cohort).
+# hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
+# cohort is the intended population.
 # MIGRATE-BEGIN: dc-gfup-data
-DATASET <- NULL
+DATASET <- "study"
 ANALYSIS_SET <- "eda"
 # MIGRATE-END: dc-gfup-data
-if (is.null(DATASET) == is.null(ANALYSIS_SET)) {
-  stop("Select exactly one of DATASET and ANALYSIS_SET.", call. = FALSE)
-}
-if (!is.null(DATASET)) {
-  cfg <- study_config(.root)
-  d <- read_built(cfg, dataset = DATASET)
+if (is.null(ANALYSIS_SET)) {
+  d <- read_built(dataset = DATASET)
+} else if (!identical(DATASET, "study")) {
+  stop("An analysis set is written from the study dataset, not `", DATASET,
+       "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
 } else {
   d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
   knitr::kable(attr(d, "attrition"), caption = paste0(
     "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
   ))
 }
+cat("Data read: ", if (is.null(ANALYSIS_SET)) {
+  paste0("dataset `", DATASET, "` (",
+         basename(hvtiRutilities::built_path(dataset = DATASET)), ")")
+} else {
+  paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
+}, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
 ```
 
 ```{r}

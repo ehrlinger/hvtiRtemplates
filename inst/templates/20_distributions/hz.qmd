@@ -33,16 +33,11 @@ parity** — a parity job borrows the ordinal of the job it checks and lives in
 
 ```{r}
 #| label: setup
-# This file runs either from the directory it was scaffolded into or from the
-# project root. Resolve which, so that no path in this document needs editing:
-# forgetting one of several ../ paths is the instantiation mistake that would
-# otherwise be easy to make and quiet when made.
-.root <- if (file.exists("_quarto.yml")) "." else ".."
-if (!file.exists(file.path(.root, "_quarto.yml"))) {
-  stop("Neither . nor .. contains _quarto.yml, so the project root cannot be ",
-       "resolved. Render this from the project root or from the job directory.",
-       call. = FALSE)
-}
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(TemporalHazard)
@@ -87,41 +82,41 @@ if (!is.null(.cur)) {
       length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
       paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
       "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it.\nTo render a partly-worked draft anyway, set ",
-      "HVTI_TEMPLATE_DRAFT to 1, true or yes -- the report then carries a ",
-      "draft banner. Any other value, including 0, leaves this guard strict."
+      "marker and delete it."
     )
-    # Only the documented values enable draft mode. nzchar() alone would treat
-    # HVTI_TEMPLATE_DRAFT=0 as ON, silently downgrading this stop() to a
-    # warning for someone whose shell profile sets it to 0 meaning OFF -- a
-    # switch whose enablement does not mean what it says, which is the same
-    # defect this guard exists to catch. An unrecognised value falls through to
-    # strict on purpose: the author then sees the stop and re-reads the docs,
-    # which is the safe direction to be wrong in.
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_DRAFT")) %in% c("1", "true", "yes")) {
+    # A job renders as a draft by default, so an author can iterate on a
+    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
+    # turns the draft into a stop for a final render. Only unset, 0, false
+    # and no mean "not strict": an unrecognised value stops on purpose, so a
+    # mistyped switch is seen rather than quietly ignored, which is the safe
+    # direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
       # The banner is not optional. A draft render that looks like a finished
       # one is the same defect with an extra step: the warning scrolls past in
       # a log, while the .html is the artifact that gets sent to someone.
-      warning(.msg, call. = FALSE)
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
       cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Rendered with `HVTI_TEMPLATE_DRAFT` set. **The numbers below are not",
+      cat("Unresolved markers remain. **The numbers below are not",
           "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
       cat(":::\n\n")
     } else {
-      stop(.msg, call. = FALSE)
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
     }
   }
 }
 ```
 
-<!-- The two values below are written by new_job() from the endpoint/type it
+<!-- The two values below are written by add_job() from the endpoint/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
      document is computed from them, so no output path below needs editing.
 
      Do NOT hand-edit these declarations: the render-time guard below checks
      them against this file's own name and stops if they disagree. To put
-     this job in a different set, call new_job() again with the new
+     this job in a different set, call add_job() again with the new
      endpoint/type rather than editing this copy in place.
 
      A set is keyed on (endpoint, analysis type), not on the endpoint alone.
@@ -135,7 +130,7 @@ if (!is.null(.cur)) {
 ENDPOINT <- "dead_pa"
 TYPE     <- "hz"
 
-# `new_job()` writes ENDPOINT/TYPE from the same values it put in this file's
+# `add_job()` writes ENDPOINT/TYPE from the same values it put in this file's
 # name, but a hand-edited declaration can drift from it afterward. set_path()
 # below resolves from the declarations, not the filename, so a drifted
 # declaration would silently write into ANOTHER set's artifact directory --
@@ -170,7 +165,8 @@ if (!is.null(.current)) {
 # Created on first use rather than up front, so a job that writes nothing leaves
 # no empty directories behind.
 set_path <- function(kind, file) {
-  d <- file.path(.root, kind, paste0(ENDPOINT, "-", TYPE))
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(ENDPOINT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }

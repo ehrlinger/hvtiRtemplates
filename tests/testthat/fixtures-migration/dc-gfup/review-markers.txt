@@ -1,4 +1,5 @@
 <!-- EDIT: name the job this replaces (descriptive/dc.gfup). -->
+# EDIT: the built dataset this job reads. "study" is the file named by built:
 # EDIT: the analysis set this job reads: declare its columns and excluded rows
 # EDIT: review unresolved migration evidence and confirm follow-up units in years.
 # EDIT: optional event-coding cross-tabs, each a vector of column names.

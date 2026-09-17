@@ -1,3 +1,4 @@
 <!-- EDIT: name the job this replaces (tp.dp.EDA_barplots_scatterplots*.R). -->
-# EDIT: select the registered dataset or analysis set this job reads.
+# EDIT: the built dataset this job reads. "study" is the file named by built:
+# EDIT: the analysis set this job reads: declare its columns and excluded rows
 # EDIT: review unresolved postage source choices in the migration report.

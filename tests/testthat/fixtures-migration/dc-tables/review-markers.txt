@@ -1,4 +1,5 @@
 <!-- EDIT: name the job this replaces (descriptive/dc.tables.*) and say whether it
+# EDIT: the built dataset this job reads. "study" is the file named by built:
 # EDIT: the analysis set this job reads: the columns and excluded rows declared
 # EDIT: the variables to report, grouped. Each name is a section heading and
 # EDIT: review SAS presentation choices in the migration report.

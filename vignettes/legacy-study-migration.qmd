@@ -39,7 +39,6 @@ root <- withr::local_tempdir(.local_envir = environment())
 folders <- c("datasets", "descriptive", "distributions", "analyses",
              "graphs", "documents", "estimates")
 for (folder in folders) dir.create(file.path(root, folder))
-writeLines(c("project:", "  type: default"), file.path(root, "_quarto.yml"))
 i <- seq_len(40L)
 built <- data.frame(
   dead = i %% 2L, iv_dead = i / 10, iv_fup = i / 10 + 1,
@@ -254,6 +253,7 @@ acknowledge <- function(job, reviewed_lines) {
 #| code-fold: true
 acknowledge(tables, c(
   "<!-- EDIT: name the job this replaces (descriptive/dc.tables.*) and say whether it",
+  "# EDIT: the built dataset this job reads. \"study\" is the file named by built:",
   "# EDIT: the analysis set this job reads: the columns and excluded rows declared",
   "# EDIT: the variables to report, grouped. Each name is a section heading and",
   "# EDIT: review SAS presentation choices in the migration report.",
@@ -263,6 +263,7 @@ acknowledge(tables, c(
 ))
 acknowledge(gfup, c(
   "<!-- EDIT: name the job this replaces (descriptive/dc.gfup). -->",
+  "# EDIT: the built dataset this job reads. \"study\" is the file named by built:",
   "# EDIT: the analysis set this job reads: declare its columns and excluded rows",
   "# EDIT: review unresolved migration evidence and confirm follow-up units in years.",
   "# EDIT: optional event-coding cross-tabs, each a vector of column names."
@@ -277,7 +278,8 @@ acknowledge(trends, c(
 ))
 acknowledge(postage, c(
   "<!-- EDIT: name the job this replaces (tp.dp.EDA_barplots_scatterplots*.R). -->",
-  "# EDIT: select the registered dataset or analysis set this job reads.",
+  "# EDIT: the built dataset this job reads. \"study\" is the file named by built:",
+  "# EDIT: the analysis set this job reads: declare its columns and excluded rows",
   "# EDIT: review unresolved postage source choices in the migration report."
 ))
 ```
@@ -294,8 +296,9 @@ stopifnot(all(remaining == 0L))
 ## Render and inspect the output
 
 Render each job from its own directory so its guard can read the authored QMD.
-The guard stops if a marker remains. The commands below use the normal render
-path with every analysis guard active.
+A job with a marker left renders as a draft, and stops only when
+`HVTI_TEMPLATE_STRICT` is set. The commands below use the normal render path
+with every analysis guard active.
 
 ```{r}
 #| label: render-jobs

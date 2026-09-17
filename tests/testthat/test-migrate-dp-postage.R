@@ -24,6 +24,7 @@ test_that("postage migration selects registered data and explicit ordered EDA co
   expect_identical(dirname(job), normalizePath(file.path(root, "descriptive")))
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built,
                        study_config = hvtiRutilities::study_config))
+  withr::local_dir(root)
   capture.output(eval(postage_chunk(job, "data"), env))
   expect_identical(env$DATASET, "study")
   expect_null(env$ANALYSIS_SET)
@@ -108,8 +109,8 @@ test_that("postage template validates selection and plotting settings before sav
   expect_error({
     selection <- data[seq.int(which(vapply(data, function(x) is.call(x) && identical(x[[1]], as.name("if")), logical(1)))[1],
                               length(data))]
-    eval(selection, list2env(list(DATASET = "study", ANALYSIS_SET = "eda")))
-  }, "exactly one")
+    eval(selection, list2env(list(DATASET = "complete_cases", ANALYSIS_SET = "eda")))
+  }, "written from the study dataset")
   spec <- postage_chunk(job, "spec")
   expect_no_error(eval(spec, env))
   for (field in c("X_VAR", "VARIABLES", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SHOW_PERCENT")) {
@@ -175,12 +176,10 @@ test_that("postage does not require databuild for registered data but validates 
   data <- postage_chunk(job, "data")
   first_if <- which(vapply(data, function(x) is.call(x) && identical(x[[1L]], as.name("if")), logical(1L)))[1L]
   selection <- data[seq.int(first_if, length(data))]
-  env$DATASET <- NULL
   env$ANALYSIS_SET <- NULL
-  expect_error(eval(selection, env), "exactly one")
   env$DATASET <- ""
-  expect_error(eval(selection, env), "non-empty name")
-  env$DATASET <- NULL
+  expect_error(eval(selection, env), "non-empty")
+  env$DATASET <- "study"
   env$ANALYSIS_SET <- "eda"
   if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
     expect_error(eval(selection, env), "hvtiRdatabuild >= 0.2.1", fixed = TRUE)

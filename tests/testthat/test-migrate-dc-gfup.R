@@ -43,7 +43,8 @@ test_that("dc-gfup extracts agreed fields with source evidence and keeps identif
   env$.root <- root
   env$read_built <- hvtiRutilities::read_built
   env$study_config <- hvtiRutilities::study_config
-  eval(gfup_chunk(out, "data"), env)
+  withr::local_dir(root)
+  capture.output(eval(gfup_chunk(out, "data"), env))
   eval(gfup_chunk(out, "spec"), env)
   capture.output(eval(gfup_chunk(out, "qc"), env))
   expect_identical(nrow(env$d), 40L)
@@ -208,20 +209,19 @@ test_that("dc-gfup ignores assignment-like strings and comments", {
   expect_identical(env$FOLLOWUP, c("iv_dead", "iv_fup"))
 })
 
-test_that("dc-gfup dataset selection rejects both or neither and reads named data", {
+test_that("dc-gfup dataset selection refuses a set cut from another dataset and reads named data", {
   root <- migration_study_fixture("dc-gfup")
   code <- gfup_chunk(template_path("dc", "gfup"), "data")
   assignments <- vapply(code, function(x) {
     is.call(x) && identical(x[[1L]], quote(`<-`)) && as.character(x[[2L]]) %in% c("DATASET", "ANALYSIS_SET")
   }, logical(1))
   code <- code[!assignments]
-  env <- list2env(list(.root = root, DATASET = "study", ANALYSIS_SET = "eda",
+  env <- list2env(list(.root = root, DATASET = "complete_cases", ANALYSIS_SET = "eda",
                        read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config))
-  expect_error(eval(code, env), "exactly one")
-  env$DATASET <- env$ANALYSIS_SET <- NULL
-  expect_error(eval(code, env), "exactly one")
-  env$DATASET <- "complete_cases"
-  eval(code, env)
+  withr::local_dir(root)
+  expect_error(eval(code, env), "written from the study dataset")
+  env$ANALYSIS_SET <- NULL
+  capture.output(eval(code, env))
   expect_identical(nrow(env$d), 24L)
   evidence <- gfup_evidence(root)
   evidence$source$text <- sub("set built;", "set complete_cases;", evidence$source$text, fixed = TRUE)

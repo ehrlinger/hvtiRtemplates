@@ -2,7 +2,6 @@ migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame()) 
   root <- withr::local_tempdir(.local_envir = .local_envir)
   folders <- c("datasets", "descriptive", "distributions", "analyses", "graphs", "documents", "estimates")
   for (folder in folders) dir.create(file.path(root, folder))
-  writeLines(c("project:", "  type: default"), file.path(root, "_quarto.yml"))
   i <- seq_len(40L)
   built <- data.frame(
     dead = i %% 2L, iv_dead = i / 10, iv_fup = i / 10 + 1,

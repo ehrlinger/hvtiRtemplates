@@ -9,19 +9,19 @@ refuses to overwrite an existing job.
 
 | template | job type | a job scaffolds into |
 |---|---|---|
-| `20_distributions/ac.qmd` | actuarial life tables | `distributions/` |
-| `20_distributions/hz.qmd` | multiphase parametric hazard fit | `distributions/` |
-| `40_graphs/hp.qmd` | nomogram and hazard figures | `graphs/` |
-| `40_graphs/hs.qmd` | patient-level predictions and expected survival | `graphs/` |
-| `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `graphs/` |
-| `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `descriptive/` |
-| `10_descriptive/dc-gfup.qmd` | recorded follow-up interval checks | `descriptive/` |
-| `10_descriptive/dp-postage.qmd` | EDA panels on numbered PNG pages | `descriptive/` |
-| `30_analyses/hm.qmd` | multivariable hazard model | `analyses/` |
-| `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `analyses/` |
-| `30_analyses/br.qmd` | bootstrap variable selection, linear | `analyses/` |
-| `30_analyses/bc.qmd` | bootstrap variable selection, Cox | `analyses/` |
-| `30_analyses/bh.qmd` | bootstrap variable selection | `analyses/` |
+| `20_distributions/ac.qmd` | actuarial life tables | `20_distributions/` or `distributions/` |
+| `20_distributions/hz.qmd` | multiphase parametric hazard fit | `20_distributions/` or `distributions/` |
+| `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
+| `40_graphs/hs.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
+| `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `40_graphs/` or `graphs/` |
+| `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-gfup.qmd` | recorded follow-up interval checks | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dp-postage.qmd` | EDA panels on numbered PNG pages | `10_descriptive/` or `descriptive/` |
+| `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
+| `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `30_analyses/` or `analyses/` |
+| `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
+| `30_analyses/bc.qmd` | bootstrap variable selection, Cox | `30_analyses/` or `analyses/` |
+| `30_analyses/bh.qmd` | bootstrap variable selection | `30_analyses/` or `analyses/` |
 
 A template is named `<prefix>.qmd`, or `<prefix>-<qualifier>.qmd` where one
 prefix carries several job types, and lives in a numbered directory named for
@@ -221,28 +221,44 @@ to type — several exist because the alternative fails quietly rather than
 loudly.
 
 **That property is enforced, not merely stated.** Each template carries an
-`edit-guard` chunk that scans the rendering file and stops if any marker
-remains, listing the ones it found. Until 1.0.5 it was a convention only, and
-an unedited `ac` template rendered green over a meaningless stratification: the
-`derive` chunk indexed a placeholder column, and when a column is absent
-`!is.na(d$<col>)` is `logical(0)`, which makes the assignment a **silent no-op**
-rather than an error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/27)).
+`edit-guard` chunk that scans the rendering file for markers and lists the ones
+it found. Until 1.0.5 it was a convention only, and an unedited `ac` template
+rendered green over a meaningless stratification: the `derive` chunk indexed a
+placeholder column, and when a column is absent `!is.na(d$<col>)` is
+`logical(0)`, which makes the assignment a **silent no-op** rather than an
+error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/27)).
 
-To render a partly-worked job while drafting, set `HVTI_TEMPLATE_DRAFT=1`:
+**A job with markers left renders as a draft.** The guard warns, and the
+report opens with a DRAFT banner naming the unresolved markers, so the author
+renders as they work and the banner goes when the last marker does. The guard
+only stops blocking: a section still holding a template placeholder, such as a
+column the study does not have, stops with its own error, so a fresh job
+renders as far as the markers already worked. It is deliberate: a draft render that
+looks like a finished one is the same defect with an extra step, and the
+`.html` is what gets sent to someone.
 
-```sh
-HVTI_TEMPLATE_DRAFT=1 quarto render <endpoint>-<type>-ac.qmd
+`open_job()` and `render_job()` are the intended way to scaffold and render a
+job from R, from anywhere inside the study:
+
+```r
+job <- open_job("ac", "dead_pa", "hz")   # creates the job with add_job(), or
+                                          # opens it unchanged if it exists
+render_job(job)                          # draft, as far as the markers worked
+render_job(job, final = TRUE)            # the accepted result: stops instead
+                                          # of drafting if a marker remains
 ```
 
-`1`, `true` and `yes` enable it, case-insensitively. **Any other value leaves
-the guard strict**, `0` included — a variable set to `0` meaning "off" must not
-switch the guard off by being non-empty, and an unrecognised value fails toward
-the stop so the author sees it rather than getting a quiet draft.
+Rendering outside R with a bare `quarto render` also works, and drafts by
+default; to make it stop on an unfinished job instead, set the same variable
+`render_job()` sets for you:
 
-The guard then warns instead of stopping, **and the report carries a DRAFT
-banner naming the unresolved markers**. The banner is deliberate: a draft render
-that looks like a finished one is the same defect with an extra step, and the
-`.html` is what gets sent to someone.
+```sh
+HVTI_TEMPLATE_STRICT=1 quarto render <endpoint>-<type>-ac.qmd
+```
+
+Unset, `0`, `false` and `no` leave the job rendering as a draft, case-insensitively.
+**Any other value stops**, `1`, `true` and `yes` included, so a mistyped value
+fails toward the stop and the author sees it rather than getting a quiet draft.
 
 The guard does not catch a marker that was worked *wrongly* — a placeholder
 replaced with a mistyped column name leaves nothing to scan for. That case is

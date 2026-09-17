@@ -20,8 +20,20 @@ test_that("every template is free of study identifiers", {
   }
 })
 
-test_that("add_job writes into the taxonomy folder with all four fields", {
+test_that("every template names the current job scaffolder", {
+  tl <- template_list()
+  for (i in seq_len(nrow(tl))) {
+    txt <- readLines(tl$file[[i]], warn = FALSE)
+    expect_false(
+      any(grepl("new_job", txt, fixed = TRUE)),
+      label = paste("template", tl$name[[i]], "mentions removed new_job()")
+    )
+  }
+})
+
+test_that("add_job preserves a legacy study layout", {
   dir <- tempfile("newjob-")
+  dir.create(file.path(dir, "distributions"), recursive = TRUE)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   out <- add_job("ac", "dead_pa", "hz", dir = dir)
   expect_true(file.exists(out))
@@ -30,8 +42,10 @@ test_that("add_job writes into the taxonomy folder with all four fields", {
 
 test_that("add_job follows a numbered study layout", {
   dir <- tempfile("addjob-numbered-")
-  dir.create(file.path(dir, "20_distributions"), recursive = TRUE)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(
+    dir, study = "Numbered layout test", study_tracker_id = 1L
+  ))
 
   out <- add_job("ac", "dead_pa", "hz", dir = dir)
 
@@ -187,4 +201,31 @@ test_that("the ac template resolves artifact paths from its set markers", {
   txt <- readLines(template_path("ac"), warn = FALSE)
   expect_true(any(grepl("set_path <- function\\(kind, file\\)", txt)))
   expect_true(any(grepl("paste0\\(ENDPOINT, \"-\", TYPE\\)", txt)))
+})
+
+test_that("template artifact paths follow a numbered study layout", {
+  root <- tempfile("template-paths-")
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(
+    root, study = "Template paths", study_tracker_id = 1L
+  ))
+
+  for (template in template_list()$file) {
+    lines <- readLines(template, warn = FALSE)
+    label <- grep("^#\\| label: set$", lines)
+    end <- label + which(lines[-seq_len(label)] == "```")[[1L]]
+    code <- parse(text = lines[(label + 1L):(end - 1L)])
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    eval(code, envir = env)
+
+    path <- env$set_path("estimates", "result.rds")
+
+    expect_equal(
+      path,
+      file.path(root, "90_estimates",
+                paste0(env$ENDPOINT, "-", env$TYPE), "result.rds"),
+      info = basename(template)
+    )
+  }
 })

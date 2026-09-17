@@ -41,6 +41,9 @@
 #'
 #' @examples
 #' d <- file.path(tempdir(), "add-job-example")
+#' invisible(hvtiRutilities::study_setup(
+#'   d, study = "Example", study_tracker_id = 1L
+#' ))
 #' add_job("ac", "dead_pa", "hz", dir = d)
 #' list.files(d, recursive = TRUE)
 #' unlink(d, recursive = TRUE)
@@ -64,16 +67,7 @@ add_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
 
   out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = dir)
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
-  # The job carries the template's qualifier. A job scaffolded from
-  # dp-trends.qmd is a trends job, and a filename that drops that says only
-  # "some dp job", which is the thing the template split exists to fix.
-  #
-  # No ordinal in the filename: the taxonomy folder records placement. The
-  # shared resolver keeps a numbered new study and a bare legacy study in its
-  # own directory scheme.
-  stem <- paste0(endpoint, "-", type, "-", prefix,
-                 if (!is.na(row$qualifier[[1L]])) paste0("-", row$qualifier[[1L]]) else "")
-  out <- file.path(out_dir, paste0(stem, ".qmd"))
+  out <- .job_path(row, endpoint, type, dir)
 
   if (file.exists(out)) {
     stop("add_job(): '", out, "' already exists; refusing to overwrite.",
@@ -101,15 +95,39 @@ add_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
 # produce a filename the naming scheme cannot parse back: not length-1,
 # `NA`, or outside `[A-Za-z0-9_]+` -- which also excludes a leading `../`
 # that would otherwise write outside the taxonomy folder.
-.check_field <- function(arg, value) {
+#
+# `fn` labels the message with the caller's own name, so a bad field blames
+# whichever exported function was actually called -- open_job() shares this
+# validator with add_job() and must not have its errors say "add_job():".
+.check_field <- function(arg, value, fn = "add_job") {
   ok <- is.character(value) && length(value) == 1L && !is.na(value) &&
     grepl("^[A-Za-z0-9_]+$", value)
   if (!ok) {
-    stop("add_job(): `", arg, "` must be a single non-NA string matching ",
+    stop(fn, "(): `", arg, "` must be a single non-NA string matching ",
          "'^[A-Za-z0-9_]+$' (it becomes a '-'-separated filename field, so '-' ",
          "is reserved as the separator and '.' to the extension); got ",
          paste(deparse(value), collapse = ", "), ".", call. = FALSE)
   }
+}
+
+# Full path for the job the selected template row scaffolds into: the study's
+# taxonomy folder (numbered or legacy, resolved by hvtiRutilities::study_dir())
+# joined to the endpoint/type/prefix[/qualifier] stem. Shared by add_job(),
+# which writes here, and open_job(), which only needs to test the path for
+# existence and must not create the directory as a side effect of looking.
+#
+# The job carries the template's qualifier. A job scaffolded from
+# dp-trends.qmd is a trends job, and a filename that drops that says only
+# "some dp job", which is the thing the template split exists to fix.
+#
+# No ordinal in the filename: the taxonomy folder records placement. The
+# shared resolver keeps a numbered new study and a bare legacy study in its
+# own directory scheme.
+.job_path <- function(row, endpoint, type, root) {
+  out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = root)
+  stem <- paste0(endpoint, "-", type, "-", row$prefix[[1L]],
+                 if (!is.na(row$qualifier[[1L]])) paste0("-", row$qualifier[[1L]]) else "")
+  file.path(out_dir, paste0(stem, ".qmd"))
 }
 
 # Rewrite the template's ENDPOINT/TYPE declarations to the values `add_job()`

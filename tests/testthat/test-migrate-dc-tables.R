@@ -56,7 +56,6 @@ test_that("dc-tables blocks local DATA-step filters and transformed measurements
 
 test_that("dc-tables migrates desc_tab groups and types", {
   root <- migration_study_fixture("dc-tables")
-  expect_true(file.exists(file.path(root, "_quarto.yml")))
   out <- tables_migrate(root)
   txt <- readLines(out, warn = FALSE)
   for (line in c(
@@ -107,7 +106,7 @@ tables_chunk <- function(job, label) {
   parse(text = lines[seq.int(start + 1L, end - 1L)])
 }
 
-test_that("dc-tables rejects ambiguous selectors and reads a named registered dataset", {
+test_that("dc-tables refuses a set cut from another dataset and reads a named registered dataset", {
   root <- migration_study_fixture("dc-tables")
   template <- template_path("dc", "tables")
   env <- new.env()
@@ -119,14 +118,12 @@ test_that("dc-tables rejects ambiguous selectors and reads a named registered da
     is.call(x) && identical(x[[1L]], quote(`<-`)) && as.character(x[[2L]]) %in% c("DATASET", "ANALYSIS_SET")
   }, logical(1))
   code <- code[!assign]
-  env$DATASET <- "study"
-  env$ANALYSIS_SET <- "eda"
-  expect_error(eval(code, env), "exactly one|both|ambiguous")
-  env$DATASET <- NULL
-  env$ANALYSIS_SET <- NULL
-  expect_error(eval(code, env), "exactly one|selector|select")
+  withr::local_dir(root)
   env$DATASET <- "complete_cases"
-  eval(code, env)
+  env$ANALYSIS_SET <- "eda"
+  expect_error(eval(code, env), "written from the study dataset")
+  env$ANALYSIS_SET <- NULL
+  capture.output(eval(code, env))
   expect_equal(nrow(env$d), 24L)
 })
 
