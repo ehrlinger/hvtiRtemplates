@@ -83,6 +83,9 @@ writeLines(c(
   "%let ncol=2;", "%let nrow=2;", "%let unique_limit=6;",
   "%let show_percent=0;"
 ), file.path(root, "descriptive", "dp.postage.sas"))
+writeLines(c(
+  "proc univariate data=built; var age; run;"
+), file.path(root, "distributions", "ac.age.sas"))
 legacy_files <- list.files(root, recursive = TRUE, full.names = TRUE)
 legacy_checksums <- tools::md5sum(legacy_files)
 ```
@@ -160,9 +163,8 @@ accepting its summary statistics and display.
 ```{r}
 #| label: migrate-tables
 tables <- migrate_job(
-  file.path(root, "descriptive/dc.tables.sas"), "cohort", "eda", "dc", qualifier = "tables",
-  lst = file.path(root, "descriptive/dc.tables.lst"), log = file.path(root, "descriptive/dc.tables.log"),
-  reference = file.path(root, "documents/general.rtf"), dir = root
+  file.path(root, "descriptive", "dc.tables.sas"), "cohort", "eda",
+  reference = file.path(root, "documents", "general.rtf")
 )
 ```
 
@@ -175,10 +177,7 @@ remain disabled.
 
 ```{r}
 #| label: migrate-gfup
-gfup <- migrate_job(
-  file.path(root, "descriptive/dc.gfup.sas"), "cohort", "eda", "dc", qualifier = "gfup",
-  dir = root
-)
+gfup <- migrate_job(file.path(root, "descriptive", "dc.gfup.sas"), "cohort", "eda")
 ```
 
 ### Trends
@@ -189,10 +188,7 @@ legacy output before treating a method change as equivalent.
 
 ```{r}
 #| label: migrate-trends
-trends <- migrate_job(
-  file.path(root, "graphs/dp.trends.sas"), "cohort", "eda", "dp", qualifier = "trends",
-  dir = root
-)
+trends <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda")
 ```
 
 ### Postage stamps on the named subset
@@ -203,10 +199,7 @@ variable and arranges the four panels on one PNG page.
 
 ```{r}
 #| label: migrate-postage
-postage <- migrate_job(
-  file.path(root, "descriptive/dp.postage.sas"), "cohort", "eda", "dp", qualifier = "postage",
-  dir = root
-)
+postage <- migrate_job(file.path(root, "descriptive", "dp.postage.sas"), "cohort", "eda")
 jobs <- c(tables = tables, gfup = gfup, trends = trends, postage = postage)
 reports <- sub("[.]qmd$", "-migration.md", jobs)
 ```
@@ -295,15 +288,15 @@ stopifnot(all(remaining == 0L))
 
 ## Render and inspect the output
 
-Render each job from its own directory so its guard can read the authored QMD.
-A job with a marker left renders as a draft, and stops only when
-`HVTI_TEMPLATE_STRICT` is set. The commands below use the normal render path
-with every analysis guard active.
+`render_job()` renders each job from its own directory so its guard can read
+the authored QMD. A job with a marker left renders as a draft by default;
+`final = TRUE` makes an unresolved marker stop the render instead, which is
+what an accepted result requires.
 
 ```{r}
 #| label: render-jobs
 for (job in jobs) {
-  quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE)
+  render_job(job, final = TRUE, quiet = FALSE)
 }
 ```
 
@@ -334,3 +327,16 @@ Open the Word file to compare row order, labels, counts, summaries, precision
 and footnotes with the legacy reference. Inspect each trend and postage figure
 for variable selection, axes and cohort. Record any methodological differences
 alongside the migration report before using the output in a study document.
+
+## A job with no converter
+
+Not every prefix has a migration adapter yet. `migrate_job()` still scaffolds
+the template, keeps every `EDIT:` marker for manual review, and its report
+says so plainly.
+
+```{r}
+#| label: migrate-no-converter
+distribution <- migrate_job(file.path(root, "distributions", "ac.age.sas"), "cohort", "eda")
+distribution_report <- sub("[.]qmd$", "-migration.md", distribution)
+cat(head(readLines(distribution_report), 6L), sep = "\n")
+```

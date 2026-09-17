@@ -12,8 +12,8 @@ test_that("legacy migration vignette declares the complete workflow", {
   expect_true(any(grepl("adopt = TRUE", txt, fixed = TRUE)))
   expect_true(any(grepl('role = "study"', txt, fixed = TRUE)))
   expect_true(any(grepl('role = "named"', txt, fixed = TRUE)))
-  for (qualifier in c("tables", "gfup", "trends", "postage")) {
-    expect_true(any(grepl(paste0('qualifier = "', qualifier, '"'), txt, fixed = TRUE)))
+  for (source in c("dc.tables.sas", "dc.gfup.sas", "dp.trends.sas", "dp.postage.sas")) {
+    expect_true(any(grepl(source, txt, fixed = TRUE)))
   }
 })
 
@@ -52,7 +52,7 @@ test_that("the tutorial creates four reviewed jobs from its own disposable evide
     skip_if_not_installed("quarto")
     skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
     for (job in env$jobs[c("trends", "postage")]) {
-      quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
+      render_job(job, final = TRUE, quiet = TRUE)
       expect_true(file.exists(sub("[.]qmd$", ".html", job)))
     }
     figures <- file.path(env$root, "graphs", "cohort-eda",

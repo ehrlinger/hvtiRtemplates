@@ -46,12 +46,19 @@
   `vignette("sas-to-r-descriptive")` gains a section on the draft banner and
   the markers.
 
-* `migrate_job()` fills the four EDA templates (`dc-tables`, `dc-gfup`,
-  `dp-trends`, and `dp-postage`) from their supported legacy source shapes.
-  It writes a QMD and an evidence report, preserves source files, and refuses
-  overwrite. Only deterministic extraction can remove an `EDIT:` marker;
-  uncertain choices remain for review. The three descriptive templates listed
-  below and the existing trends template now have migration adapters.
+* `migrate_job()` reads a legacy SAS job and writes the matching template job
+  plus an evidence report, preserving the source and refusing to overwrite
+  either output. The template and its qualifier are read from the SAS
+  filename (`<prefix>.<qualifier>.sas`), and `prefix`/`qualifier` override
+  that reading when a source does not follow it. The study root is found
+  from `_study.yml` above the source, and `dir` overrides that when the
+  source sits outside the study. The listing and log default to the
+  same-named files beside the source, and `lst`/`log` override them. A
+  template with no migration adapter yet is still scaffolded, every `EDIT:`
+  marker kept, with a report that says plainly that the migration is manual.
+  Only deterministic extraction can remove an `EDIT:` marker; uncertain
+  choices remain for review. The three descriptive templates listed below
+  and the existing trends template have migration adapters.
   Log messages are withheld; reports keep their locations, severity, SAS error
   codes and recognized aggregate counts for review.
 * `dc-tables` writes editable CORR DOCX output in place of the SAS RTF through
