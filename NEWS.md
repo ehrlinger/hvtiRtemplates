@@ -18,6 +18,16 @@
 * `render_job()` renders a job from its own directory: a draft by default,
   and with `final = TRUE` a render that stops on an unfinished job.
 
+* **The `dc-general` job template ships**, replacing `descriptive/dc.general`:
+  overall statistics through `hvtiRutilities::proc_contents()` and
+  `proc_means()`, then base-R contingency tables, cumulative distributions
+  (SAS `QNTLDEF=5` quantiles and the five lowest and highest values) and a
+  Pearson pairwise-correlation sweep. `ID_COL` is off by default, so no
+  patient identifier reaches the report unless a study author sets it.
+  `KEY_COLS` keeps identifier columns, `ccfid` by default, out of the overall
+  statistics too. It reads data the same three ways as the other descriptive
+  templates, `DATASET` or `ANALYSIS_SET`.
+
 * **The descriptive templates can read a named dataset.** `dc-tables`,
   `dc-gfup` and `dp-postage` gain `DATASET`, passed to
   `read_built(dataset = )` when `ANALYSIS_SET` is `NULL`, so a job can read an

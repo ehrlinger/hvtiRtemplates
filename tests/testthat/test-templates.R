@@ -253,7 +253,7 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "sas_variable_block", "covariate_audit", "covariates_to_numeric",
     "imputed_levels", "pool_collinear_pairs", "selection_crowding",  # >= 1.1.4
     "concept_map", "verify_manifest", "proc_means",
-    "study_dir", "built_path", "study_root",  # >= 1.1.12
+    "study_dir", "proc_contents", "built_path", "study_root",  # >= 1.1.12
     "label_map", "get_label"
   )
   skip_if_not_installed("hvtiRutilities")
