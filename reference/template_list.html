@@ -67,8 +67,12 @@ the intended starting point for a new analysis job.</p>
 types, and lives in a numbered directory named for the taxonomy folder it
 scaffolds into, so <code>folder</code> is read from the tree rather than looked
 up. The directory's leading digits order the folders and are stripped from
-<code>folder</code>. <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy</a></code> is a cross-check
-on that, enforced by the test suite, not a source for it.</p>
+<code>folder</code>. The placement test requires the job catalog and skips when
+it is absent. Its internal lookup helper uses the catalog's
+<code>(prefix, qualifier)</code> row, falling back to
+<code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy</a></code> when the catalog or matching row is absent.
+A separate test checks that every template directory names a taxonomy
+folder, including when the catalog is absent.</p>
     </div>
 
     <div class="section level2">

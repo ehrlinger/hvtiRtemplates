@@ -4,6 +4,8 @@
 
 - [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
   : Scaffold a new analysis job from a template
+- [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  : Migrate a legacy job into a supported analysis template
 - [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
   : Open a job, creating it from its template if needed
 - [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)

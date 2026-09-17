@@ -22,10 +22,14 @@ A template is named `<prefix>.qmd`, or `<prefix>-<qualifier>.qmd` where
 one prefix carries several job types, and lives in a numbered directory
 named for the taxonomy folder it scaffolds into, so `folder` is read
 from the tree rather than looked up. The directory's leading digits
-order the folders and are stripped from `folder`.
+order the folders and are stripped from `folder`. The placement test
+requires the job catalog and skips when it is absent. Its internal
+lookup helper uses the catalog's `(prefix, qualifier)` row, falling back
+to
 [`hvti_taxonomy`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
-is a cross-check on that, enforced by the test suite, not a source for
-it.
+when the catalog or matching row is absent. A separate test checks that
+every template directory names a taxonomy folder, including when the
+catalog is absent.
 
 ## Examples
 

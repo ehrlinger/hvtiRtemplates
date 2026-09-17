@@ -1,15 +1,16 @@
 # hvtiRtemplates
 
 Analysis job templates for the HVTI CORR group, plus the prefix taxonomy
-that names them. Seven exports across five source files:
+that names them. Eight exports across eleven source files:
 [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
 [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html),
 [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
 [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md),
 [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
-[`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+[`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md),
+[`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
 and
-[`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md).
+[`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md).
 
 The package is small; the **templates are the product**.
 `inst/templates/README.md` promises that files there are supported and
