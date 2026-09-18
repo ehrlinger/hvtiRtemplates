@@ -118,28 +118,8 @@ test_that("a template sits in the folder its row files it under", {
 # drive the lookup with a temporary catalog rather than the real one so they do
 # not go stale when the real catalog is edited.
 
-# Write `rows` as a catalog to a temp file and point HVTI_JOBS at it for the
-# duration of `code`. Base R rather than withr: this package does not Suggest
-# it, and adding a dependency to reach one helper is a poor trade.
-with_temp_catalog <- function(rows, code) {
-  # require_jsonlite(), not testthat::skip_if_not_installed(). The latter skips
-  # silently even under HVTI_ROADMAP_STRICT, so these five tests could drop out
-  # of the strict step with it still reporting green, which is the defect this
-  # block exists to prevent. require_jsonlite() is a hard stop there and a skip
-  # everywhere else. Raised by Copilot on #98. The nolint is because
-  # object_usage_linter checks function bodies and cannot see a helper
-  # defined in helper-ledger.R; testthat loads that file before this one.
-  require_jsonlite() # nolint: object_usage_linter.
-  path <- tempfile(fileext = ".json")
-  writeLines(jsonlite::toJSON(list(jobs = rows), auto_unbox = TRUE), path)
-  old <- Sys.getenv("HVTI_JOBS", unset = NA)
-  Sys.setenv(HVTI_JOBS = path)
-  on.exit({
-    if (is.na(old)) Sys.unsetenv("HVTI_JOBS") else Sys.setenv(HVTI_JOBS = old)
-    unlink(path)
-  }, add = TRUE)
-  force(code)
-}
+# `with_temp_catalog()` lives in helper-ledger.R since 2026-09-17, so
+# test-roadmap.R can drive its intake guard from a temporary catalog too.
 
 # One template row as template_list() would report it.
 .tl <- function(prefix, qualifier, folder) {

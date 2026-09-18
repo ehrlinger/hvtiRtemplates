@@ -6,8 +6,13 @@
   a SKIP. The strict CI step expects `SKIP 0`, but `HVTI_ROADMAP_STRICT` only
   promotes the helper-driven skips to hard stops and `stop_on_failure` does
   not fire on a skip, so the gate would have gone quiet under a green check.
-  It now asserts over the whole set, which is still an assertion when the set
-  is empty. Found when `rfr`, `sid` and `vt` left intake.
+  Its logic now lives in a helper that returns a value, so the check is an
+  assertion at any row count, and a new test drives the empty case from a
+  temporary catalog. That matters because CI reads the real catalog from a
+  pinned `hvtiR` tag, which still has intake rows, so the empty path would
+  otherwise never run there. `with_temp_catalog()` moves to `helper-ledger.R`
+  so both test files can use it. Found when `rfr`, `sid` and `vt` left
+  intake.
 
 * Requires `hvtiRutilities` 1.2.0 or newer, up from 1.1.12. That release ports
   SAS `PROC FREQ` and `PROC UNIVARIATE` as `proc_freq()` and `proc_univariate()`,

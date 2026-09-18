@@ -134,3 +134,43 @@ expected_template_folders <- function(tl) {
     hvtiRtemplates:::.template_folder_authority(tl$prefix[i], tl$qualifier[i], catalog)
   }, character(1L))
 }
+
+# Moved here from test-taxonomy.R on 2026-09-17, when test-roadmap.R needed it
+# too; see the header of this file for why a helper, and never a second copy.
+# Write `rows` as a catalog to a temp file and point HVTI_JOBS at it for the
+# duration of `code`. Base R rather than withr: this package does not Suggest
+# it, and adding a dependency to reach one helper is a poor trade.
+with_temp_catalog <- function(rows, code) {
+  # require_jsonlite(), not testthat::skip_if_not_installed(). The latter skips
+  # silently even under HVTI_ROADMAP_STRICT, so a test built on this could drop out
+  # of the strict step with it still reporting green, which is the defect this
+  # block exists to prevent. require_jsonlite() is a hard stop there and a skip
+  # everywhere else. Raised by Copilot on #98.
+  require_jsonlite()
+  path <- tempfile(fileext = ".json")
+  writeLines(jsonlite::toJSON(list(jobs = rows), auto_unbox = TRUE), path)
+  old <- Sys.getenv("HVTI_JOBS", unset = NA)
+  Sys.setenv(HVTI_JOBS = path)
+  on.exit({
+    if (is.na(old)) Sys.unsetenv("HVTI_JOBS") else Sys.setenv(HVTI_JOBS = old)
+    unlink(path)
+  }, add = TRUE)
+  force(code)
+}
+
+# The intake rows that do not say what they block on, by prefix.
+#
+# The intake guard's logic lives here, as a function returning a VALUE, rather
+# than as assertions inside a loop in the test. A loop over zero rows makes no
+# expectation, testthat reports that as an empty test, and an empty test is a
+# SKIP -- which the strict CI step cannot see, because HVTI_ROADMAP_STRICT only
+# promotes the helper-driven skips. `expect_identical(<this>, character(0))`
+# is an assertion however many rows there are, zero included.
+intake_without_blocker <- function(rows) {
+  intake <- Filter(function(r) identical(r$status, "intake"), rows)
+  named <- vapply(intake, function(r) {
+    b <- r$blocked_on
+    is.character(b) && length(b) == 1L && nzchar(b)
+  }, logical(1))
+  vapply(intake[!named], function(r) r$prefix, character(1))
+}
