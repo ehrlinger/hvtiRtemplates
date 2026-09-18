@@ -25,6 +25,7 @@ test_that("postage migration selects registered data and explicit ordered EDA co
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built,
                        study_config = hvtiRutilities::study_config))
   withr::local_dir(root)
+  eval(postage_chunk(job, "study-choices"), env)
   capture.output(eval(postage_chunk(job, "data"), env))
   expect_identical(env$DATASET, "study")
   expect_null(env$ANALYSIS_SET)
@@ -171,6 +172,7 @@ test_that("postage does not require databuild for registered data but validates 
   # The full setup and registered-data branch run with the actual dependencies.
   withr::local_dir(dirname(job))
   eval(postage_chunk(job, "setup"), env)
+  eval(postage_chunk(job, "study-choices"), env)
   capture.output(eval(postage_chunk(job, "data"), env))
   expect_equal(nrow(env$d), 40L)
   data <- postage_chunk(job, "data")

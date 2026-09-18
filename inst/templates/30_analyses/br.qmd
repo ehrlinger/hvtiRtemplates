@@ -221,10 +221,12 @@ set_path <- function(kind, file) {
 # is what keeps a screen filed against the set whose candidates it screened.
 ```
 
-## The screen
+## Study choices
+
+Edit these values for this study before rendering.
 
 ```{r}
-#| label: expect
+#| label: study-choices
 # EDIT: what this run was LAUNCHED as, not what happens to be on disk.
 #
 # Nothing in this file knows how many replicates the runner was asked for, so
@@ -237,6 +239,46 @@ EXPECT_BOOT <- 1000L   # EDIT: %bootreg(resampl=) -- valid models wanted
 # EDIT: the file your runner wrote its screen to, under this set's estimates
 # directory. It must match the runner exactly.
 BOOT_FILE <- "bagging.rds"
+
+# EDIT: from YOUR .sas %bootreg call. Its documented defaults are
+# resampl=1000, sle=0.10, sls=0.05, but real jobs override them -- and the
+# entry and stay levels decide what each replicate selected, so a report
+# quoting the defaults when the run used something else is describing a
+# different screen. Read them off the call and paste it above.
+#
+# RETAIN_PCT is the reliability cutoff this report calls "retained". It is a
+# reporting decision, not something the run recorded: the entry and stay levels
+# above governed each replicate's stepwise fit, and neither of them says how
+# often a variable must survive to be worth carrying forward.
+RETAIN_PCT <- 50
+
+# A linear screen has no phases: a candidate is offered once, so one term is
+# one screening decision and there is nothing to split a term name on.
+#
+# boot_frequencies() and boot_concepts() take phase = NULL for exactly this
+# case, and it is the same code path bh drives with a term-splitting rule. One
+# implementation serves both, which is the whole reason this file is thin.
+#
+# Do NOT supply a rule here to "be safe". A rule that matches nothing still
+# adds a phase column of empty strings, and every grouped table below would
+# then group by a column that says nothing -- silently, since no count changes
+# and no error is raised.
+PHASE_OF <- NULL
+
+# Concept groups to report.
+CLUSTERS <- list(
+  Age = c("age", "ln_age")
+)
+
+# Correlation cutoff for near-duplicate candidates.
+COLLINEAR_R <- 0.99
+```
+
+## The screen
+
+```{r}
+#| label: expect
+# Settings for this section are in Study choices.
 ```
 
 ```{r}
@@ -502,30 +544,7 @@ be read against each other.
 
 ```{r}
 #| label: criteria
-# EDIT: from YOUR .sas %bootreg call. Its documented defaults are
-# resampl=1000, sle=0.10, sls=0.05, but real jobs override them -- and the
-# entry and stay levels decide what each replicate selected, so a report
-# quoting the defaults when the run used something else is describing a
-# different screen. Read them off the call and paste it above.
-#
-# RETAIN_PCT is the reliability cutoff this report calls "retained". It is a
-# reporting decision, not something the run recorded: the entry and stay levels
-# above governed each replicate's stepwise fit, and neither of them says how
-# often a variable must survive to be worth carrying forward.
-RETAIN_PCT <- 50
-
-# A linear screen has no phases: a candidate is offered once, so one term is
-# one screening decision and there is nothing to split a term name on.
-#
-# boot_frequencies() and boot_concepts() take phase = NULL for exactly this
-# case, and it is the same code path bh drives with a term-splitting rule. One
-# implementation serves both, which is the whole reason this file is thin.
-#
-# Do NOT supply a rule here to "be safe". A rule that matches nothing still
-# adds a phase column of empty strings, and every grouped table below would
-# then group by a column that says nothing -- silently, since no count changes
-# and no error is raised.
-PHASE_OF <- NULL
+# Settings for this section are in Study choices.
 ```
 
 ```{r}
@@ -685,9 +704,6 @@ coefs[cbind(reps$replicate, match(reps$parameter, terms))] <- reps$estimate
 # candidate once, so a term is one screening decision. Naming a term that no
 # replicate carries is refused rather than reported as 0%: a typo that grouped
 # nothing would otherwise read as a concept nobody selected.
-CLUSTERS <- list(
-  Age = c("age", "ln_age")
-)
 
 clusters <- boot_clusters(coefs, CLUSTERS)
 clusters
@@ -705,7 +721,6 @@ says the pool cannot tell them apart.
 # 0.99 finds near-duplicates -- a variable and its rescaling, a dummy and its
 # complement. Lower it to see the pool's structure rather than only its
 # accidents.
-COLLINEAR_R <- 0.99
 
 # Read to CORRELATE the pool, not to re-run anything. The screen already
 # happened; this describes the data it ran against.

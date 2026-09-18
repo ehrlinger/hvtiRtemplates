@@ -116,34 +116,12 @@ set_path <- function(kind, file) {
 }
 ```
 
-## Data
+## Study choices
 
-<!-- How this job finds its data. Read this before touching the chunk below.
-
-     A study can offer a job data three ways, and `_study.yml` says which exist:
-
-     1. The study dataset: the file named by `built:`. `DATASET <- "study"`
-        with `ANALYSIS_SET <- NULL`.
-     2. An additional dataset: any file declared under `additional_datasets:`,
-        for example a column subset written for R. Set `DATASET` to its
-        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: no
-        rows are excluded.
-     3. An analysis set: declared under `analysis_sets:` with the columns kept
-        and the rows excluded, then written once with
-        `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
-        and leave `DATASET` as "study", because a set is always cut from the
-        study dataset. The report shows its exclusions in order.
-
-     A name under `additional_datasets:` is not an analysis set, so putting it
-     in `ANALYSIS_SET` stops with "No analysis set". Whichever route is taken,
-     the report prints the dataset, file and dimensions it read, so a reader
-     never has to ask which data a table describes. -->
+Set the values in this chunk before rendering.
 
 ```{r}
-#| label: data
-# The checksum of every dataset in manifest.yaml is checked before anything is
-# read, so a result can name the data that produced it. It stops on a mismatch.
-hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+#| label: study-choices
 # EDIT: the built dataset this job reads. "study" is the file named by built:
 # in _study.yml; any other name must be declared under additional_datasets:,
 # such as a column subset written for R. Analysis sets are derived from
@@ -156,31 +134,7 @@ hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 DATASET <- "study"
 ANALYSIS_SET <- "eda"
 # MIGRATE-END: dc-tables-data
-if (is.null(ANALYSIS_SET)) {
-  if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
-    stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
-         "In a migrated job, see the migration report beside this job.", call. = FALSE)
-  }
-  d <- read_built(dataset = DATASET)
-} else if (!identical(DATASET, "study")) {
-  stop("An analysis set is written from the study dataset, not `", DATASET,
-       "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
-} else {
-  d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
-  knitr::kable(attr(d, "attrition"), caption = paste0(
-    "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
-  ))
-}
-cat("Data read: ", if (is.null(ANALYSIS_SET)) {
-  paste0("dataset `", DATASET, "` (",
-         basename(hvtiRutilities::built_path(dataset = DATASET)), ")")
-} else {
-  paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
-}, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
-```
 
-```{r}
-#| label: spec
 # EDIT: the variables to report, grouped. Each name is a section heading and
 # becomes a row group in the table, in this order. These are the /* Demography */
 # style banners from the SAS varlist; carry them across unchanged so the R table
@@ -214,6 +168,58 @@ OVERRIDES <- list()
 #   list(vars = c("glu_pr", "creat_pr"), with = "a1c_pr", by = "a1c_grp")
 CORR <- NULL
 ```
+
+## Data
+
+<!-- How this job finds its data. Read this before touching the chunk below.
+
+     A study can offer a job data three ways, and `_study.yml` says which exist:
+
+     1. The study dataset: the file named by `built:`. `DATASET <- "study"`
+        with `ANALYSIS_SET <- NULL`.
+     2. An additional dataset: any file declared under `additional_datasets:`,
+        for example a column subset written for R. Set `DATASET` to its
+        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: no
+        rows are excluded.
+     3. An analysis set: declared under `analysis_sets:` with the columns kept
+        and the rows excluded, then written once with
+        `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
+        and leave `DATASET` as "study", because a set is always cut from the
+        study dataset. The report shows its exclusions in order.
+
+     A name under `additional_datasets:` is not an analysis set, so putting it
+     in `ANALYSIS_SET` stops with "No analysis set". Whichever route is taken,
+     the report prints the dataset, file and dimensions it read, so a reader
+     never has to ask which data a table describes. -->
+
+```{r}
+#| label: data
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+if (is.null(ANALYSIS_SET)) {
+  if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
+    stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
+         "In a migrated job, see the migration report beside this job.", call. = FALSE)
+  }
+  d <- read_built(dataset = DATASET)
+} else if (!identical(DATASET, "study")) {
+  stop("An analysis set is written from the study dataset, not `", DATASET,
+       "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
+} else {
+  d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
+  knitr::kable(attr(d, "attrition"), caption = paste0(
+    "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
+  ))
+}
+cat("Data read: ", if (is.null(ANALYSIS_SET)) {
+  paste0("dataset `", DATASET, "` (",
+         basename(hvtiRutilities::built_path(dataset = DATASET)), ")")
+} else {
+  paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
+}, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
+```
+
 
 ```{r}
 #| label: helpers

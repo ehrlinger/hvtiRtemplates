@@ -98,6 +98,34 @@ set_path <- function(kind, file) {
 }
 ```
 
+## Study choices
+
+Set the values in this chunk before rendering.
+
+```{r}
+#| label: study-choices
+# EDIT: the built dataset this job reads. "study" is the file named by built:
+# in _study.yml; any other name must be declared under additional_datasets:,
+# such as a column subset written for R. Analysis sets are derived from
+# "study" only, so another dataset needs ANALYSIS_SET <- NULL.
+# EDIT: the analysis set this job reads: declare its columns and excluded rows
+# under analysis_sets: in _study.yml, then write it with
+# hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
+# cohort is the intended population.
+# MIGRATE-BEGIN: dp-postage-config
+DATASET <- "study"
+ANALYSIS_SET <- "eda"
+X_VAR <- "year"                    # EDIT: reference time or year
+VARIABLES <- c("age", "female")     # EDIT: variables shown as panels
+EXCLUDE <- character(0)
+GRID_NCOL <- 4L
+GRID_NROW <- 4L
+UNIQUE_LIMIT <- 6L
+SHOW_PERCENT <- FALSE
+# MIGRATE-END: dp-postage-config
+
+```
+
 ## Data
 
 <!-- How this job finds its data. Read this before touching the chunk below.
@@ -124,25 +152,6 @@ set_path <- function(kind, file) {
 ```{r}
 #| label: data
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
-# EDIT: the built dataset this job reads. "study" is the file named by built:
-# in _study.yml; any other name must be declared under additional_datasets:,
-# such as a column subset written for R. Analysis sets are derived from
-# "study" only, so another dataset needs ANALYSIS_SET <- NULL.
-# EDIT: the analysis set this job reads: declare its columns and excluded rows
-# under analysis_sets: in _study.yml, then write it with
-# hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
-# cohort is the intended population.
-# MIGRATE-BEGIN: dp-postage-config
-DATASET <- "study"
-ANALYSIS_SET <- "eda"
-X_VAR <- "year"                    # EDIT: reference time or year
-VARIABLES <- c("age", "female")     # EDIT: variables shown as panels
-EXCLUDE <- character(0)
-GRID_NCOL <- 4L
-GRID_NROW <- 4L
-UNIQUE_LIMIT <- 6L
-SHOW_PERCENT <- FALSE
-# MIGRATE-END: dp-postage-config
 if (is.null(ANALYSIS_SET)) {
   if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
     stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",

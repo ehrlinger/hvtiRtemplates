@@ -175,6 +175,26 @@ set_path <- function(kind, file) {
 # shape parameters at these converged values, both by set. The write itself is
 # in the `save` chunk at the foot of this file, not here.
 ```
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+```{r}
+#| label: study-choices
+# Model phases and fixed parameters.
+# EDIT: phases and the fixed set on each.
+phases <- list(
+  early = hzr_phase("cdf", t_half = 1, nu = 1, m = 1),
+  late  = hzr_phase("g3", tau = 1, gamma = 1, alpha = 1, eta = 1,
+                    fixed = c("tau", "gamma", "alpha"))
+)
+
+# Starting values in the order returned by hzr_theta_names(phases).
+# EDIT: starting values from the SAS estimates.
+theta0 <- c(log(1), log(1), 1, 1,
+            log(1), log(1), 1, 1, 1)
+```
 ## Cohort
 
 <!-- EDIT: this chunk, choosing ONE of the two shapes below.
@@ -261,12 +281,7 @@ the parameter block — a phase that contributed nothing still prints nothing.
 
 ```{r}
 #| label: phases
-# EDIT: your phases, and the `fixed` set on each.
-phases <- list(
-  early = hzr_phase("cdf", t_half = 1, nu = 1, m = 1),
-  late  = hzr_phase("g3", tau = 1, gamma = 1, alpha = 1, eta = 1,
-                    fixed = c("tau", "gamma", "alpha"))
-)
+# your phases, and the `fixed` set on each.
 
 # The names, IN ORDER, that theta must supply. Read from the package rather
 # than written as a literal: the count and the order are properties of the
@@ -320,10 +335,8 @@ produces a fit, not an error.
 ```{r}
 #| label: start
 # ---- Shape A: seed from the SAS job's converged estimates -------------------
-# EDIT: your SAS estimates, on their NATURAL scale, wrapped per `theta_names`
+# your SAS estimates, on their NATURAL scale, wrapped per `theta_names`
 # above -- log() for the log-scale positions, bare for the rest.
-theta0 <- c(log(1), log(1), 1, 1,
-            log(1), log(1), 1, 1, 1)
 
 # ---- Shape B: neutral shapes, data-derived time scale -----------------------
 # EDIT: delete Shape A above and uncomment this.

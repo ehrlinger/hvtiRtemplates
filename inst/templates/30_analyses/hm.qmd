@@ -178,6 +178,42 @@ set_path <- function(kind, file) {
 # set, so a model can never be filed against a different set than the shapes it
 # was built on. The write is in the `save` chunk at the foot of this file.
 ```
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+```{r}
+#| label: study-choices
+# Follow-up time, event, and SAS source for covariates.
+# EDIT: time and event variables.
+TIME   <- "iu_dead"
+
+EVENT  <- "idead"
+
+# EDIT: SAS job and macro holding covariate blocks.
+SAS_JOB   <- c("analyses", "hm.dead.sas")
+
+SAS_MACRO <- "^\\s*%macro\\s+model\\s*;"
+
+# Phase shape and scale parameters.
+# EDIT: phase shape and scale parameter names.
+SHAPE_PARAMS <- c("early.log_mu", "early.log_t_half", "early.nu", "early.m",
+                  "late.log_mu", "late.log_tau", "late.gamma", "late.alpha",
+                  "late.eta")
+
+# Selection levels and maximum number of steps.
+# EDIT: selection settings from the SAS job.
+SLENTRY   <- 0.1     # SAS sle=
+
+SLSTAY    <- 0.07    # SAS sls=
+
+MAX_STEPS <- 50L     # SAS maxsteps=
+
+# Calibration horizon.
+# EDIT: calibration horizon.
+DECILE_TIME <- 10
+```
 ## Cohort
 
 <!-- EDIT: this chunk, choosing ONE of the two shapes below.
@@ -257,12 +293,10 @@ it. Only the names are taken: the `name=value` coefficients in a block are the
 
 ```{r}
 #| label: vars
-# EDIT: your time, event and interval-censoring variables -- SAS `time`,
+# your time, event and interval-censoring variables -- SAS `time`,
 # `event`, and the flag named by `icensor X=`.
-TIME   <- "iu_dead"
-EVENT  <- "idead"
 
-# EDIT: the SAS job to read the candidate blocks from, and the macro inside it
+# the SAS job to read the candidate blocks from, and the macro inside it
 # that holds the model. Naming the MACRO matters: a job commonly defines
 # several, and they do not agree.
 #
@@ -270,8 +304,6 @@ EVENT  <- "idead"
 # whose variable list is another study's variables entirely, pasted in and left
 # there; the `.lst` shows only the macro that ran. Read the `.sas` and check
 # which macro is actually called before naming it here.
-SAS_JOB   <- c("analyses", "hm.dead.sas")
-SAS_MACRO <- "^\\s*%macro\\s+model\\s*;"
 ```
 
 ```{r}
@@ -364,12 +396,9 @@ reading a coefficient.
 hz_art <- readRDS(set_path("estimates", "hz.rds"))
 hz_fit <- hz_art$deterministic
 
-# EDIT: the shape/scale parameter names your phase specification produces.
+# the shape/scale parameter names your phase specification produces.
 # Named explicitly so that anything else in coef() is a covariate -- including
 # a dummy column, which would otherwise be silently counted as a shape.
-SHAPE_PARAMS <- c("early.log_mu", "early.log_t_half", "early.nu", "early.m",
-                  "late.log_mu", "late.log_tau", "late.gamma", "late.alpha",
-                  "late.eta")
 
 # `fixed` is what makes stage 1 stage 1: shapes held, covariates free.
 make_phases <- function(hold_shapes) {
@@ -563,11 +592,8 @@ indefinite at `beta = 0`. Consider `"wald"`, and say which you used.
 
 ```{r}
 #| label: selection
-# EDIT: the levels from YOUR .sas `selection` statement, and the path your
+# the levels from YOUR .sas `selection` statement, and the path your
 # companion runner writes to.
-SLENTRY   <- 0.1     # SAS sle=
-SLSTAY    <- 0.07    # SAS sls=
-MAX_STEPS <- 50L     # SAS maxsteps=
 sel_rds   <- set_path("estimates", "hm-selection.rds")
 
 if (!file.exists(sel_rds)) {
@@ -684,8 +710,7 @@ predicted risk and compare observed against expected within each group.
 
 ```{r}
 #| label: calibration
-# EDIT: the horizon, in the time unit of TIME. SAS: %deciles(..., time=10).
-DECILE_TIME <- 10
+# the horizon, in the time unit of TIME. SAS: %deciles(..., time=10).
 
 dec <- hzr_deciles(reported, time = DECILE_TIME, groups = 10)
 

@@ -1,5 +1,9 @@
 # hvtiRtemplates (unreleased)
 
+* All 14 shipped job templates put editable study choices in one chunk near
+  the top. Reading data and building output happen below those choices; SAS
+  migration continues to fill the same settings.
+
 * **The intake-row guard no longer goes quiet when intake is empty.** It
   asserted inside a `for` over the intake rows, so with none left it made no
   expectation at all; testthat reports that as an empty test, which reports as
