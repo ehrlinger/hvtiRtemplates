@@ -14,7 +14,9 @@
   so both test files can use it. Found when `rfr`, `sid` and `vt` left
   intake.
 
-* Requires `hvtiRutilities` 1.2.1 or newer, up from 1.1.12. 1.2.0 ports SAS
+* Requires `hvtiRutilities` 1.2.1 or newer, up from 1.1.12 in the 1.2.0
+  release. (`main` briefly carried a 1.2.0 floor that never shipped; this entry
+  describes the change between releases.) 1.2.0 ports SAS
   `PROC FREQ` and `PROC UNIVARIATE` as `proc_freq()` and `proc_univariate()`,
   and corrects `proc_means()` weighted `nobs`, weighted `stderr` and the mode of
   a single observation. 1.2.1 adds `cache_fit()` and puts `rfr`, `sid` and `vt`
