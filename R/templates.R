@@ -208,13 +208,10 @@ template_path <- function(prefix, qualifier = NULL) {
 .template_folder_authority <- function(prefix, qualifier, catalog = NULL) {
   fallback <- hvti_taxonomy()$folder[match(prefix, hvti_taxonomy()$prefix)]
   if (is.null(catalog) || !nrow(catalog)) return(fallback)
-  if ("destination" %in% names(catalog)) {
-    catalog <- catalog[is.na(catalog$destination) | catalog$destination == "hvtiRtemplates", , drop = FALSE]
-  }
   if (anyDuplicated(catalog[c("prefix", "qualifier")])) {
     dup <- catalog[duplicated(catalog[c("prefix", "qualifier")]), , drop = FALSE]
     names <- ifelse(is.na(dup$qualifier), dup$prefix, paste(dup$prefix, dup$qualifier, sep = "-"))
-    stop("job catalog has more than one row routed to hvtiRtemplates for the same (prefix, qualifier): ",
+    stop("template catalog has more than one row for the same (prefix, qualifier): ",
          paste(names, collapse = ", "), call. = FALSE)
   }
   same_qualifier <- if (is.null(qualifier) || is.na(qualifier)) {

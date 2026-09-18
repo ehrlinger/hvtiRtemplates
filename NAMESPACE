@@ -6,6 +6,7 @@ export(hvti_taxonomy)
 export(migrate_job)
 export(open_job)
 export(render_job)
+export(template_catalog)
 export(template_list)
 export(template_path)
 importFrom(hvtiRutilities,

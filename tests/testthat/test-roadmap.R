@@ -1,27 +1,5 @@
-# The roadmap ledger's vocabulary must match the taxonomy's.
-#
-# This lives in R rather than beside the other roadmap guards in Python for one
-# reason: it needs `hvti_taxonomy()`, and R is where that already is. The
-# Python guard checks everything the filesystem can answer on its own; this
-# checks the one thing it cannot.
-#
-# The catalog itself no longer lives in this repo. It moved to the sibling
-# package `hvtiR`, at `inst/extdata/jobs.json`. `ledger_path()`,
-# `require_ledger()`, `require_jsonlite()` and `ledger_rows()` moved to
-# `helper-ledger.R` on 2026-09-09, because `test-taxonomy.R` needs them too
-# and testthat gives each test file its own environment.
-#
-# This test deliberately covers ALL 53 rows, not only the ones destined for
-# hvtiRtemplates. The Python disk/doc checks filter to this repo's rows
-# because they ask "does a template exist for this". This file asks a
-# different question: does the catalog's vocabulary match `hvti_taxonomy()`.
-# A row routed to another package (hvtiPlotR, say) still has to name a real
-# taxonomy prefix, so no destination filter belongs here.
-#
-# On a built tarball the sibling checkout is absent and `HVTI_JOBS` is unset,
-# so the catalog cannot be found. `require_ledger()` skips there, or stops
-# under HVTI_ROADMAP_STRICT; without it every check of a built package would
-# fail on a file that is deliberately not part of it.
+# Check the local template catalog against the taxonomy vocabulary.
+# Legacy umbrella labels remain in the taxonomy but owe no template.
 
 test_that("every taxonomy prefix has a roadmap row", {
   require_ledger()
@@ -29,7 +7,9 @@ test_that("every taxonomy prefix has a roadmap row", {
 
   rows <- ledger_rows()
   in_ledger <- vapply(rows, function(r) r$prefix, character(1))
-  tx <- stats::na.omit(hvti_taxonomy()$prefix)
+  taxonomy <- hvti_taxonomy()
+  expect_true("umbrella" %in% names(taxonomy))
+  tx <- taxonomy$prefix[!is.na(taxonomy$prefix) & !taxonomy$umbrella]
 
   # Direction one: nothing the taxonomy names may be unscheduled. A prefix
   # added upstream in hvtiRutilities fails here until the roadmap accounts for

@@ -1,8 +1,8 @@
 # The template catalog: every job type is a template here
 
 **Date:** 2026-09-18
-**Status:** Draft for approval. The model in §2 and four of the five questions
-in §9 were decided by John Ehrlinger on 2026-09-18; §9 question 4 stays open.
+**Status:** Approved by John Ehrlinger on 2026-09-18. The strict CI step
+question in §9 remains open until Step 1's first CI run.
 **Supersedes, once approved:** `hvtiR:dev/specs/2026-09-04-job-catalog-design.md`,
 which moved this catalog to `hvtiR` as a routing table.
 

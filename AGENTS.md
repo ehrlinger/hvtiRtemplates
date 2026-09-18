@@ -24,7 +24,7 @@ imports this file.
 
 | workflow | fails on |
 |---|---|
-| `R-CMD-check.yaml` | `R CMD check` across platforms, plus one step on `ubuntu-latest` (release), **Run the catalog-reading guards against the source tree**: `test_local(filter = "roadmap\|taxonomy")` with `HVTI_ROADMAP_STRICT=1`, where a skip is a failure. The expected pattern is a **nonzero `SKIP`** on every check leg, because the tarball carries no catalog, beside **`SKIP 0`** on that step (measured 2026-09-17: `SKIP 4`/`SKIP 5` against `SKIP 0 \| PASS 22`). A skip on the strict step, or a step missing from the log, is an untested gate. See below |
+| `R-CMD-check.yaml` | `R CMD check` across platforms. The catalog now ships in the tarball, so catalog-reading tests should run on every leg. The separate source-tree strict step remains for the first CI run; compare its result with each check leg before deciding whether to retire it. |
 | `check-manual.yaml` | the PDF manual build. ⚠️ **Post-merge only**, see below |
 | `house-style.yaml` | `.claude/house-style.md` drifting from the vault sources it is composed from. The file is generated, so a hand edit fails too |
 | `lint.yaml` | two jobs. `lint`, `lintr::lint_package()`. `docs-current`, **PRs only**: runs `roxygen2::roxygenise()` with roxygen2 pinned and fails if `man/`, `NAMESPACE` or `DESCRIPTION` change, so a PR that skips `devtools::document()` fails here |
@@ -58,10 +58,10 @@ per-platform summary lines did.
 
 ⚠️ **And a test FILTER silently decides which code paths CI exercises at all.**
 `R-CMD-check.yaml` runs one extra step, scoped to a single matrix leg, that loads the
-package from the source tree with `HVTI_JOBS` pointed at a checked-out catalog. It is the
-only place the catalog-reading tests actually run, because the tarball `R CMD check` builds
-has no catalog. That step takes a `filter=`, which is ONE regular expression matched against
-test-file names, so it is widened by alternation (`roadmap|taxonomy`), not by adding to a list:
+package from the source tree. The local catalog ships in the tarball, so these
+tests now run on every check leg as well. Compare their results with the
+separate source-tree step on the first CI run. That step takes a `filter=`
+matched against test-file names (`roadmap|taxonomy`):
 
 ```sh
 gh run view <run-id> --log | grep -E "SKIP [0-9]+ \| PASS"   # read EVERY step, not just the check legs

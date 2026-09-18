@@ -33,8 +33,24 @@ unmounted. The output records which corpus it read.
 import argparse, collections, glob, json, os, re, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_TEMPLATE_CATALOG = os.path.normpath(os.path.join(
+    HERE, "..", "..", "..", "inst", "extdata", "templates.json"))
 sys.path.insert(0, HERE)
 import macro_library_files
+
+
+def template_rows_by_prefix(path):
+    """Read every qualified row, keeping all rows for a shared prefix."""
+    with open(path, encoding="utf-8") as fh:
+        rows = json.load(fh)["templates"]
+    if not isinstance(rows, list):
+        raise ValueError("templates must be an array")
+    by_prefix = {}
+    for row in rows:
+        by_prefix.setdefault(row["prefix"], []).append(row)
+    return by_prefix
+
+
 # $MACROS first -- the same fileref SAS and the corpus use -- then the
 # workstation default. See macro_library_files.macro_dir().
 MACRO_DIR = macro_library_files.macro_dir()
@@ -47,14 +63,9 @@ MIN_POPULATION_STUDIES = 50
 
 # ---------------------------------------------------------------- prefix owners
 #
-# NOT hvtiR's jobs.json. That catalog's `destination` is who owes the TEMPLATE
-# JOB, and it reads "hvtiRtemplates" on 42 of its 55 rows -- voting macro
-# ownership through it sends four fifths of the library to one package and
-# returns a full, plausible allocation over a vote that never varied. What is
-# needed here is the DOMAIN owner, which is this map, carried forward verbatim
-# from 2026-08-14-macro-allocation-scan.py. Disagreement with the catalog's
-# `replaced_by` is reported (see owner_map_vs_catalog) rather than resolved
-# silently in either direction.
+# The local template catalog says which jobs are owed here; it cannot identify
+# the DOMAIN owner of a SAS macro. This map does, carried forward from the
+# 2026-08-14 allocation scan. Differences from catalog `uses` are diagnostics.
 OWNER = {}
 for _p in "bd vars dt".split():           OWNER[_p] = "hvtiRdatabuild"
 for _p in "hp np lp dp fp cp gp mp".split(): OWNER[_p] = "hvtiPlotR"
@@ -64,10 +75,7 @@ for _p in "bh bl bc bn br bq".split():    OWNER[_p] = "hvtiRbootstrap"
 OWNER["dc"] = "hvtiRtables"
 OWNER["vars_base_only"] = "hvtiRdatabuild"
 
-# hvtiR is the routing table, not a code home: it imports only cli/jsonlite/utils
-# and nothing imports it, deliberately, so jobs() can load a destination package
-# to validate a routing without suggesting its own dependents. A macro allocated
-# into it would invert that. Enforced, not documented.
+# hvtiR is an installer and registry, not a macro implementation home.
 NEVER_A_DESTINATION = {"hvtiR"}
 
 # Dependency edges that already exist, read from DESCRIPTION on 2026-09-09.
@@ -485,36 +493,23 @@ def main():
             "cran_boundary_violation": dependent in CRAN_PACKAGES,
         })
 
-    # ---- the catalog: one row per prefix, joining WHERE THE TEMPLATE LANDS to
-    # WHERE ITS MACROS LAND. These are two different questions with two
-    # different authorities, and conflating them is the trap this scan started
-    # from:
-    #   template/job destination -> hvtiR's jobs.json `destination` (who owes
-    #       the R job that replaces the SAS template)
-    #   macro destination        -> this scan (who owns the domain primitive)
-    # A row is backlog-ready when its job destination is known AND every macro
-    # component it reaches has a destination.
-    cat_path = os.environ.get("HVTI_JOBS") or os.path.expanduser(
-        "~/Documents/GitHub/hvtiR/inst/extdata/jobs.json")
+    # ---- the catalog: template rows are all owed by hvtiRtemplates. This
+    # prefix-level scan may meet several qualified template rows, so keep the
+    # full list rather than silently selecting the first qualifier.
+    cat_path = os.environ.get("HVTI_TEMPLATES") or DEFAULT_TEMPLATE_CATALOG
     #
     # The read FAILS LOUD. It used to swallow OSError into an empty dict, and
     # on the first server run that turned "the catalog is not on this machine"
-    # into "29 prefixes, 0 backlog-ready, 29 without a job destination" -- a
+    # into "29 prefixes, 0 backlog-ready, 29 without a template row" -- a
     # complete, plausible table over a file that was never opened. That is the
     # defect this emitter exists to refuse, sitting inside the emitter.
     #
-    # $HVTI_JOBS set but unreadable is fatal, on the same rule as $MACROS: an
-    # operator who named a path meant that path. The DEFAULT path missing is
-    # not fatal -- the catalog is one section and the allocation is the
-    # product -- but it is recorded in the artifact and shouted on stderr, and
-    # the counts read null rather than zero so nothing downstream can mistake
-    # "not read" for "read, and empty".
+    # A missing local catalog is a packaging defect. An explicit override is
+    # likewise an assertion about a path and must fail when unreadable.
     catalog_rows, cat_by_prefix = [], {}
     cat_error = None
     try:
-        with open(cat_path) as fh:
-            for r in json.load(fh)["jobs"]:
-                cat_by_prefix.setdefault(r["prefix"], r)
+        cat_by_prefix = template_rows_by_prefix(cat_path)
     except (OSError, KeyError, ValueError) as exc:
         # Type and errno only. str(exc) on an OSError embeds the full path,
         # which on a workstation is /Users/<name>/... -- the site identifier
@@ -525,18 +520,9 @@ def main():
                      + (f"[errno {_errno}] " if _errno is not None else "")
                      + (getattr(exc, "strerror", None) or "unreadable"))
         cat_by_prefix = {}
-        if os.environ.get("HVTI_JOBS"):
-            sys.exit(
-                f"FATAL: $HVTI_JOBS is set to {os.environ['HVTI_JOBS']!r} and "
-                f"could not be read.\n       {cat_error}\n"
-                f"       Unset it to fall back to the default path, or point "
-                f"it at the jobs.json catalog.")
-        print(f"WARNING: job catalog not read ({cat_error}).\n"
-              f"         Looked at: {cat_path}\n"
-              f"         The catalog section of the output is NULL, not empty."
-              f" Set $HVTI_JOBS to read it.", file=sys.stderr)
+        sys.exit(f"FATAL: template catalog not read at {cat_path}: {cat_error}")
     for pre in sorted(set(pre_jobs) | set(OWNER)):
-        cat = cat_by_prefix.get(pre, {})
+        cat = cat_by_prefix.get(pre, [])
         comps, blocked_on, needs = {}, [], set()
         owner = OWNER.get(pre)
         for b in sorted(pre_macros.get(pre, ())):
@@ -554,10 +540,11 @@ def main():
         catalog_rows.append({
             "prefix": pre,
             "domain_owner": owner,
-            "job_destination": cat.get("destination"),
-            "job_disposition": cat.get("disposition"),
-            "job_status": cat.get("status"),
-            "folder": cat.get("folder"),
+            "template_package": "hvtiRtemplates" if cat else None,
+            "template_rows": [{"qualifier": r.get("qualifier"),
+                               "disposition": r.get("disposition"),
+                               "status": r.get("status"),
+                               "folder": r.get("folder")} for r in cat],
             "n_jobs": pre_jobs.get(pre, 0),
             "n_studies": len(pre_studies.get(pre, ())),
             "n_macro_components": len(comps),
@@ -565,7 +552,7 @@ def main():
             "needs_dependency_on": sorted(needs),
             "cran_boundary_blocked_on": cran_block,
             "blocked_on_unallocated": sorted(blocked_on),
-            "backlog_ready": bool(owner and cat.get("destination")
+            "backlog_ready": bool(owner and cat
                                   and not blocked_on and not cran_block),
         })
 
@@ -623,17 +610,15 @@ def main():
                  "A vote that does not vary is not a measurement -- check the "
                  "OWNER map and the corpus prefix parse before trusting this.")
 
-    # ---- does the OWNER map disagree with the catalog's replaced_by?
+    # ---- does the DOMAIN owner appear among template functions already used?
     disagree = []
-    try:
-        for r in json.load(open(cat_path))["jobs"]:
-            named = {x.split("::")[0] for x in (r.get("replaced_by") or [])}
+    for grouped in cat_by_prefix.values():
+        for r in grouped:
+            named = {x.split("::")[0] for x in (r.get("uses") or [])}
             mine = OWNER.get(r["prefix"])
             if named and mine and mine not in named:
                 disagree.append({"prefix": r["prefix"], "owner_map": mine,
-                                 "catalog_replaced_by": sorted(named)})
-    except (OSError, KeyError, ValueError) as e:
-        disagree = [{"error": f"catalog not read: {e}"}]
+                                 "catalog_uses": sorted(named)})
 
     res = {
         "_provenance": {
@@ -669,11 +654,8 @@ def main():
         "allocation_trust": trust,
         # NOT catalog rows. One row per prefix in `set(pre_jobs) | set(OWNER)`,
         # built from what THIS scan measured -- n_jobs, n_studies and the macro
-        # components each prefix reaches. Only `job_destination`,
-        # `job_disposition`, `job_status` and `folder` come from jobs.json, and
-        # those are null when it was not read. Emitting the whole list as null
-        # in that case would discard the scan's own measurements along with the
-        # catalog's, which is a worse artifact, not a safer one.
+        # components each prefix reaches. `template_rows` comes from the local
+        # catalog; the other fields are this scan's own measurements.
         "catalog": catalog_rows,
         # `catalog_read` first, and every count null when it is false. A zero
         # here is indistinguishable from "nothing was ready" unless the reader
@@ -692,9 +674,9 @@ def main():
                               sum(1 for r in catalog_rows if r["backlog_ready"])),
             "no_domain_owner": (None if cat_error else
                                 sum(1 for r in catalog_rows if not r["domain_owner"])),
-            "no_job_destination": (None if cat_error else
+            "no_template_row": (None if cat_error else
                                    sum(1 for r in catalog_rows
-                                       if not r["job_destination"])),
+                                       if not r["template_rows"])),
             "blocked_on_unallocated": (None if cat_error else
                                        sum(1 for r in catalog_rows
                                            if r["blocked_on_unallocated"])),
@@ -702,7 +684,7 @@ def main():
                                       sum(1 for r in catalog_rows
                                           if r["cran_boundary_blocked_on"])),
         },
-        "owner_map_vs_catalog": disagree,
+        "owner_map_vs_uses": disagree,
         "unknown_prefixes": dict(unknown_prefix.most_common(30)),
         "files": detail,
     }
@@ -721,11 +703,11 @@ def main():
     cc = res["catalog_counts"]
     if not cc["catalog_read"]:
         print(f"\ncatalog: NOT READ -- {cc['catalog_error']}. "
-              f"Counts are null, not zero. Set $HVTI_JOBS.")
+              f"Counts are null, not zero. Check templates.json.")
     else:
         print(f"\ncatalog: {cc['prefix_rows']} prefixes, {cc['backlog_ready']} backlog-ready, "
               f"{cc['no_domain_owner']} without a domain owner, "
-              f"{cc['no_job_destination']} without a job destination, "
+              f"{cc['no_template_row']} without a template row, "
               f"{cc['cran_boundary_blocked']} CRAN-boundary blocked")
     print(f"\nwrote {a.out}")
 

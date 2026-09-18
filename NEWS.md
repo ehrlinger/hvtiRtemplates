@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* The 55-row template catalog now ships as `inst/extdata/templates.json` and
+  is available through `template_catalog()`. Roadmap checks read this local
+  catalog, the two CI catalog pins are removed, and the `hvtiRutilities`
+  minimum is 1.3.0 for its machine-readable umbrella marker. The separate
+  strict CI check remains until its first run shows whether it is redundant.
+
 * **The intake-row guard no longer goes quiet when intake is empty.** It
   asserted inside a `for` over the intake rows, so with none left it made no
   expectation at all; testthat reports that as an empty test, which reports as
