@@ -95,7 +95,7 @@
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">study_setup</span><span class="op">(</span><span class="va">root</span>, study <span class="op">=</span> <span class="st">"Synthetic legacy study"</span>,</span>
 <span>            study_tracker_id <span class="op">=</span> <span class="fl">42L</span>, adopt <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp2v4s60/file1c6fdd3c708</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpblAp3E/file1c1697379e6</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -107,7 +107,7 @@
 <span><span class="co">#&gt; 0 .R  |  0 .qmd/.Rmd  |  5 .sas  |  0 provenance sidecars</span></span>
 <span><span class="fu">register_data</span><span class="op">(</span><span class="va">root</span>, built <span class="op">=</span> <span class="st">"built.csv"</span>, event <span class="op">=</span> <span class="st">"dead"</span>, time <span class="op">=</span> <span class="st">"iv_dead"</span>,</span>
 <span>              role <span class="op">=</span> <span class="st">"study"</span>, population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp2v4s60/file1c6fdd3c708</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpblAp3E/file1c1697379e6</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -120,7 +120,7 @@
 <span><span class="fu">register_data</span><span class="op">(</span><span class="va">root</span>, built <span class="op">=</span> <span class="st">"complete_cases.csv"</span>, event <span class="op">=</span> <span class="st">"dead"</span>,</span>
 <span>              time <span class="op">=</span> <span class="st">"iv_dead"</span>, dataset <span class="op">=</span> <span class="st">"complete_cases"</span>,</span>
 <span>              role <span class="op">=</span> <span class="st">"named"</span>, population <span class="op">=</span> <span class="st">"Synthetic complete cases"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp2v4s60/file1c6fdd3c708</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpblAp3E/file1c1697379e6</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -133,7 +133,7 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 0 .R  |  0 .qmd/.Rmd  |  5 .sas  |  0 provenance sidecars</span></span>
 <span><span class="fu">study_status</span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp2v4s60/file1c6fdd3c708</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpblAp3E/file1c1697379e6</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -293,6 +293,7 @@
 <span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">acknowledge</span><span class="op">(</span><span class="va">trends</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"&lt;!-- EDIT: name the job this replaces (an older graphs/dp.trends job) and list"</span>,</span>
+<span>  <span class="st">"# EDIT: choose a dataset registered in _study.yml."</span>,</span>
 <span>  <span class="st">"# EDIT: the calendar year of operation, as a WHOLE year. hv_trends() puts one"</span>,</span>
 <span>  <span class="st">"# EDIT: one entry per figure. `cols` are the columns drawn together: several"</span>,</span>
 <span>  <span class="st">"# EDIT: optional. x-axis breaks shared by every figure, e.g. seq(1985, 2025, 5)."</span>,</span>
@@ -328,23 +329,23 @@
 <span><span class="co">#&gt; [31m</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; processing file: cohort-eda-dc-tables.qmd</span></span>
-<span><span class="co">#&gt; [39m1/17              </span></span>
-<span><span class="co">#&gt; 2/17 [setup]      </span></span>
-<span><span class="co">#&gt; 3/17              </span></span>
-<span><span class="co">#&gt; 4/17 [edit-guard] </span></span>
-<span><span class="co">#&gt; 5/17              </span></span>
-<span><span class="co">#&gt; 6/17 [set]        </span></span>
-<span><span class="co">#&gt; 7/17              </span></span>
-<span><span class="co">#&gt; 8/17 [data]       </span></span>
-<span><span class="co">#&gt; 9/17              </span></span>
-<span><span class="co">#&gt; 10/17 [spec]       </span></span>
-<span><span class="co">#&gt; 11/17              </span></span>
-<span><span class="co">#&gt; 12/17 [helpers]    </span></span>
-<span><span class="co">#&gt; 13/17              </span></span>
-<span><span class="co">#&gt; 14/17 [table]      </span></span>
-<span><span class="co">#&gt; 15/17              </span></span>
-<span><span class="co">#&gt; 16/17 [correlation]</span></span>
-<span><span class="co">#&gt; 17/17              </span></span>
+<span><span class="co">#&gt; [39m1/17                </span></span>
+<span><span class="co">#&gt; 2/17 [setup]        </span></span>
+<span><span class="co">#&gt; 3/17                </span></span>
+<span><span class="co">#&gt; 4/17 [edit-guard]   </span></span>
+<span><span class="co">#&gt; 5/17                </span></span>
+<span><span class="co">#&gt; 6/17 [set]          </span></span>
+<span><span class="co">#&gt; 7/17                </span></span>
+<span><span class="co">#&gt; 8/17 [study-choices]</span></span>
+<span><span class="co">#&gt; 9/17                </span></span>
+<span><span class="co">#&gt; 10/17 [data]         </span></span>
+<span><span class="co">#&gt; 11/17                </span></span>
+<span><span class="co">#&gt; 12/17 [helpers]      </span></span>
+<span><span class="co">#&gt; 13/17                </span></span>
+<span><span class="co">#&gt; 14/17 [table]        </span></span>
+<span><span class="co">#&gt; 15/17                </span></span>
+<span><span class="co">#&gt; 16/17 [correlation]  </span></span>
+<span><span class="co">#&gt; 17/17                </span></span>
 <span><span class="co">#&gt; [31moutput file: cohort-eda-dc-tables.knit.md</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [39m[1mpandoc [22m</span></span>
@@ -372,21 +373,21 @@
 <span><span class="co">#&gt; [31m</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; processing file: cohort-eda-dc-gfup.qmd</span></span>
-<span><span class="co">#&gt; [39m1/15             </span></span>
-<span><span class="co">#&gt; 2/15 [setup]     </span></span>
-<span><span class="co">#&gt; 3/15             </span></span>
-<span><span class="co">#&gt; 4/15 [edit-guard]</span></span>
-<span><span class="co">#&gt; 5/15             </span></span>
-<span><span class="co">#&gt; 6/15 [set]       </span></span>
-<span><span class="co">#&gt; 7/15             </span></span>
-<span><span class="co">#&gt; 8/15 [data]      </span></span>
-<span><span class="co">#&gt; 9/15             </span></span>
-<span><span class="co">#&gt; 10/15 [spec]      </span></span>
-<span><span class="co">#&gt; 11/15             </span></span>
-<span><span class="co">#&gt; 12/15 [qc]        </span></span>
-<span><span class="co">#&gt; 13/15             </span></span>
-<span><span class="co">#&gt; 14/15 [checks]    </span></span>
-<span><span class="co">#&gt; 15/15             </span></span>
+<span><span class="co">#&gt; [39m1/15                </span></span>
+<span><span class="co">#&gt; 2/15 [setup]        </span></span>
+<span><span class="co">#&gt; 3/15                </span></span>
+<span><span class="co">#&gt; 4/15 [edit-guard]   </span></span>
+<span><span class="co">#&gt; 5/15                </span></span>
+<span><span class="co">#&gt; 6/15 [set]          </span></span>
+<span><span class="co">#&gt; 7/15                </span></span>
+<span><span class="co">#&gt; 8/15 [study-choices]</span></span>
+<span><span class="co">#&gt; 9/15                </span></span>
+<span><span class="co">#&gt; 10/15 [data]         </span></span>
+<span><span class="co">#&gt; 11/15                </span></span>
+<span><span class="co">#&gt; 12/15 [qc]           </span></span>
+<span><span class="co">#&gt; 13/15                </span></span>
+<span><span class="co">#&gt; 14/15 [checks]       </span></span>
+<span><span class="co">#&gt; 15/15                </span></span>
 <span><span class="co">#&gt; [31moutput file: cohort-eda-dc-gfup.knit.md</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [39m[1mpandoc [22m</span></span>
@@ -414,21 +415,21 @@
 <span><span class="co">#&gt; [31m</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; processing file: cohort-eda-dp-trends.qmd</span></span>
-<span><span class="co">#&gt; [39m1/15             </span></span>
-<span><span class="co">#&gt; 2/15 [setup]     </span></span>
-<span><span class="co">#&gt; 3/15             </span></span>
-<span><span class="co">#&gt; 4/15 [edit-guard]</span></span>
-<span><span class="co">#&gt; 5/15             </span></span>
-<span><span class="co">#&gt; 6/15 [set]       </span></span>
-<span><span class="co">#&gt; 7/15             </span></span>
-<span><span class="co">#&gt; 8/15 [data]      </span></span>
-<span><span class="co">#&gt; 9/15             </span></span>
-<span><span class="co">#&gt; 10/15 [trends]    </span></span>
-<span><span class="co">#&gt; 11/15             </span></span>
-<span><span class="co">#&gt; 12/15 [helpers]   </span></span>
-<span><span class="co">#&gt; 13/15             </span></span>
-<span><span class="co">#&gt; 14/15 [figures]   </span></span>
-<span><span class="co">#&gt; 15/15             </span></span>
+<span><span class="co">#&gt; [39m1/15                </span></span>
+<span><span class="co">#&gt; 2/15 [setup]        </span></span>
+<span><span class="co">#&gt; 3/15                </span></span>
+<span><span class="co">#&gt; 4/15 [edit-guard]   </span></span>
+<span><span class="co">#&gt; 5/15                </span></span>
+<span><span class="co">#&gt; 6/15 [set]          </span></span>
+<span><span class="co">#&gt; 7/15                </span></span>
+<span><span class="co">#&gt; 8/15 [study-choices]</span></span>
+<span><span class="co">#&gt; 9/15                </span></span>
+<span><span class="co">#&gt; 10/15 [data]         </span></span>
+<span><span class="co">#&gt; 11/15                </span></span>
+<span><span class="co">#&gt; 12/15 [helpers]      </span></span>
+<span><span class="co">#&gt; 13/15                </span></span>
+<span><span class="co">#&gt; 14/15 [figures]      </span></span>
+<span><span class="co">#&gt; 15/15                </span></span>
 <span><span class="co">#&gt; [31moutput file: cohort-eda-dp-trends.knit.md</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [39m[1mpandoc [22m</span></span>
@@ -456,21 +457,23 @@
 <span><span class="co">#&gt; [31m</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; processing file: cohort-eda-dp-postage.qmd</span></span>
-<span><span class="co">#&gt; [39m1/15             </span></span>
-<span><span class="co">#&gt; 2/15 [setup]     </span></span>
-<span><span class="co">#&gt; 3/15             </span></span>
-<span><span class="co">#&gt; 4/15 [edit-guard]</span></span>
-<span><span class="co">#&gt; 5/15             </span></span>
-<span><span class="co">#&gt; 6/15 [set]       </span></span>
-<span><span class="co">#&gt; 7/15             </span></span>
-<span><span class="co">#&gt; 8/15 [data]      </span></span>
-<span><span class="co">#&gt; 9/15             </span></span>
-<span><span class="co">#&gt; 10/15 [spec]      </span></span>
-<span><span class="co">#&gt; 11/15             </span></span>
-<span><span class="co">#&gt; 12/15 [helpers]   </span></span>
-<span><span class="co">#&gt; 13/15             </span></span>
-<span><span class="co">#&gt; 14/15 [pages]     </span></span>
-<span><span class="co">#&gt; 15/15             </span></span>
+<span><span class="co">#&gt; [39m1/17                </span></span>
+<span><span class="co">#&gt; 2/17 [setup]        </span></span>
+<span><span class="co">#&gt; 3/17                </span></span>
+<span><span class="co">#&gt; 4/17 [edit-guard]   </span></span>
+<span><span class="co">#&gt; 5/17                </span></span>
+<span><span class="co">#&gt; 6/17 [set]          </span></span>
+<span><span class="co">#&gt; 7/17                </span></span>
+<span><span class="co">#&gt; 8/17 [study-choices]</span></span>
+<span><span class="co">#&gt; 9/17                </span></span>
+<span><span class="co">#&gt; 10/17 [data]         </span></span>
+<span><span class="co">#&gt; 11/17                </span></span>
+<span><span class="co">#&gt; 12/17 [spec]         </span></span>
+<span><span class="co">#&gt; 13/17                </span></span>
+<span><span class="co">#&gt; 14/17 [helpers]      </span></span>
+<span><span class="co">#&gt; 15/17                </span></span>
+<span><span class="co">#&gt; 16/17 [pages]        </span></span>
+<span><span class="co">#&gt; 17/17                </span></span>
 <span><span class="co">#&gt; [31moutput file: cohort-eda-dp-postage.knit.md</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [39m[1mpandoc [22m</span></span>

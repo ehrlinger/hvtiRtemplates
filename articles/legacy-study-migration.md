@@ -47,7 +47,7 @@ state is a separate operation.
 
 study_setup(root, study = "Synthetic legacy study",
             study_tracker_id = 42L, adopt = TRUE)
-#> Study: /tmp/Rtmp2v4s60/file1c6fdd3c708
+#> Study: /tmp/RtmpblAp3E/file1c1697379e6
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -59,7 +59,7 @@ study_setup(root, study = "Synthetic legacy study",
 #> 0 .R  |  0 .qmd/.Rmd  |  5 .sas  |  0 provenance sidecars
 register_data(root, built = "built.csv", event = "dead", time = "iv_dead",
               role = "study", population = "Synthetic full cohort")
-#> Study: /tmp/Rtmp2v4s60/file1c6fdd3c708
+#> Study: /tmp/RtmpblAp3E/file1c1697379e6
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -72,7 +72,7 @@ register_data(root, built = "built.csv", event = "dead", time = "iv_dead",
 register_data(root, built = "complete_cases.csv", event = "dead",
               time = "iv_dead", dataset = "complete_cases",
               role = "named", population = "Synthetic complete cases")
-#> Study: /tmp/Rtmp2v4s60/file1c6fdd3c708
+#> Study: /tmp/RtmpblAp3E/file1c1697379e6
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -85,7 +85,7 @@ register_data(root, built = "complete_cases.csv", event = "dead",
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  5 .sas  |  0 provenance sidecars
 study_status(root)
-#> Study: /tmp/Rtmp2v4s60/file1c6fdd3c708
+#> Study: /tmp/RtmpblAp3E/file1c1697379e6
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -336,6 +336,7 @@ acknowledge(gfup, c(
 ))
 acknowledge(trends, c(
   "<!-- EDIT: name the job this replaces (an older graphs/dp.trends job) and list",
+  "# EDIT: choose a dataset registered in _study.yml.",
   "# EDIT: the calendar year of operation, as a WHOLE year. hv_trends() puts one",
   "# EDIT: one entry per figure. `cols` are the columns drawn together: several",
   "# EDIT: optional. x-axis breaks shared by every figure, e.g. seq(1985, 2025, 5).",
@@ -377,23 +378,23 @@ for (job in jobs) {
 #> [31m
 #> 
 #> processing file: cohort-eda-dc-tables.qmd
-#> [39m1/17              
-#> 2/17 [setup]      
-#> 3/17              
-#> 4/17 [edit-guard] 
-#> 5/17              
-#> 6/17 [set]        
-#> 7/17              
-#> 8/17 [data]       
-#> 9/17              
-#> 10/17 [spec]       
-#> 11/17              
-#> 12/17 [helpers]    
-#> 13/17              
-#> 14/17 [table]      
-#> 15/17              
-#> 16/17 [correlation]
-#> 17/17              
+#> [39m1/17                
+#> 2/17 [setup]        
+#> 3/17                
+#> 4/17 [edit-guard]   
+#> 5/17                
+#> 6/17 [set]          
+#> 7/17                
+#> 8/17 [study-choices]
+#> 9/17                
+#> 10/17 [data]         
+#> 11/17                
+#> 12/17 [helpers]      
+#> 13/17                
+#> 14/17 [table]        
+#> 15/17                
+#> 16/17 [correlation]  
+#> 17/17                
 #> [31moutput file: cohort-eda-dc-tables.knit.md
 #> 
 #> [39m[1mpandoc [22m
@@ -421,21 +422,21 @@ for (job in jobs) {
 #> [31m
 #> 
 #> processing file: cohort-eda-dc-gfup.qmd
-#> [39m1/15             
-#> 2/15 [setup]     
-#> 3/15             
-#> 4/15 [edit-guard]
-#> 5/15             
-#> 6/15 [set]       
-#> 7/15             
-#> 8/15 [data]      
-#> 9/15             
-#> 10/15 [spec]      
-#> 11/15             
-#> 12/15 [qc]        
-#> 13/15             
-#> 14/15 [checks]    
-#> 15/15             
+#> [39m1/15                
+#> 2/15 [setup]        
+#> 3/15                
+#> 4/15 [edit-guard]   
+#> 5/15                
+#> 6/15 [set]          
+#> 7/15                
+#> 8/15 [study-choices]
+#> 9/15                
+#> 10/15 [data]         
+#> 11/15                
+#> 12/15 [qc]           
+#> 13/15                
+#> 14/15 [checks]       
+#> 15/15                
 #> [31moutput file: cohort-eda-dc-gfup.knit.md
 #> 
 #> [39m[1mpandoc [22m
@@ -463,21 +464,21 @@ for (job in jobs) {
 #> [31m
 #> 
 #> processing file: cohort-eda-dp-trends.qmd
-#> [39m1/15             
-#> 2/15 [setup]     
-#> 3/15             
-#> 4/15 [edit-guard]
-#> 5/15             
-#> 6/15 [set]       
-#> 7/15             
-#> 8/15 [data]      
-#> 9/15             
-#> 10/15 [trends]    
-#> 11/15             
-#> 12/15 [helpers]   
-#> 13/15             
-#> 14/15 [figures]   
-#> 15/15             
+#> [39m1/15                
+#> 2/15 [setup]        
+#> 3/15                
+#> 4/15 [edit-guard]   
+#> 5/15                
+#> 6/15 [set]          
+#> 7/15                
+#> 8/15 [study-choices]
+#> 9/15                
+#> 10/15 [data]         
+#> 11/15                
+#> 12/15 [helpers]      
+#> 13/15                
+#> 14/15 [figures]      
+#> 15/15                
 #> [31moutput file: cohort-eda-dp-trends.knit.md
 #> 
 #> [39m[1mpandoc [22m
@@ -505,21 +506,23 @@ for (job in jobs) {
 #> [31m
 #> 
 #> processing file: cohort-eda-dp-postage.qmd
-#> [39m1/15             
-#> 2/15 [setup]     
-#> 3/15             
-#> 4/15 [edit-guard]
-#> 5/15             
-#> 6/15 [set]       
-#> 7/15             
-#> 8/15 [data]      
-#> 9/15             
-#> 10/15 [spec]      
-#> 11/15             
-#> 12/15 [helpers]   
-#> 13/15             
-#> 14/15 [pages]     
-#> 15/15             
+#> [39m1/17                
+#> 2/17 [setup]        
+#> 3/17                
+#> 4/17 [edit-guard]   
+#> 5/17                
+#> 6/17 [set]          
+#> 7/17                
+#> 8/17 [study-choices]
+#> 9/17                
+#> 10/17 [data]         
+#> 11/17                
+#> 12/17 [spec]         
+#> 13/17                
+#> 14/17 [helpers]      
+#> 15/17                
+#> 16/17 [pages]        
+#> 17/17                
 #> [31moutput file: cohort-eda-dp-postage.knit.md
 #> 
 #> [39m[1mpandoc [22m
