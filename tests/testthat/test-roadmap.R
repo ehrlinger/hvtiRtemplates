@@ -45,10 +45,17 @@ test_that("every roadmap row is a taxonomy prefix, unless it is intake", {
   rows <- ledger_rows()
   tx <- as.character(stats::na.omit(hvti_taxonomy()$prefix))
 
-  # Direction two, with one exemption. `rfr`, `sid` and `vt` are PROPOSED and
-  # deliberately not in the taxonomy yet -- they block on a PR to
-  # hvtiRutilities. They carry status "intake" to say so. Any other row naming
-  # a prefix the taxonomy does not have is a typo or a stale row, and fails.
+  # Direction two, with one exemption: a row at status "intake" names a prefix
+  # that is PROPOSED and not in the taxonomy yet, and says so. Any other row
+  # naming a prefix the taxonomy does not have is a typo or a stale row, and
+  # fails.
+  #
+  # ⭐ The three rows this exemption was written for -- `rfr`, `sid` and `vt`
+  # -- landed in `hvti_taxonomy()` via hvtiRutilities PR #127 (on its `main`,
+  # in no release yet, so NOT in 1.2.0) and left intake on 2026-09-17, so the
+  # exemption currently covers nothing. It stays because it is the MECHANISM,
+  # not a special case for those three, and the next proposed prefix needs
+  # it. Do not remove it on the grounds that intake is empty today.
   live <- Filter(function(r) !identical(r$status, "intake"), rows)
   live_prefixes <- vapply(live, function(r) r$prefix, character(1))
   expect_true(all(live_prefixes %in% tx),
@@ -60,15 +67,49 @@ test_that("an intake row names what it blocks on", {
   require_ledger()
   require_jsonlite()
 
-  intake <- Filter(function(r) identical(r$status, "intake"), ledger_rows())
-
   # An intake row without a blocker is indistinguishable from a forgotten one.
   # The blocker is what tells a reader why it is not scheduled.
-  for (r in intake) {
-    expect_true(!is.null(r$blocked_on) && nzchar(r$blocked_on),
-                label = paste("intake row", r$prefix, "has no blocked_on"))
-  }
+  #
+  # ⚠️ This asserted inside a `for` over the intake rows until 2026-09-17.
+  # Intake is legitimately EMPTY whenever every proposed prefix has landed, as
+  # it did that day when `rfr`, `sid` and `vt` left it, and a `for` over zero
+  # rows makes no expectation: testthat reports an empty test as a SKIP, and
+  # the strict CI step cannot see that kind (HVTI_ROADMAP_STRICT promotes only
+  # the helper-driven skips). The logic now lives in intake_without_blocker(),
+  # which returns a value, so this is an assertion at any row count. The
+  # empty case is covered below from a temporary catalog, because CI reads the
+  # real one from a PINNED hvtiR tag and cannot be relied on to be empty.
+  missing <- intake_without_blocker(ledger_rows())
+  expect_identical(missing, character(0),
+                   label = paste("intake rows with no blocked_on:",
+                                 paste(missing, collapse = ", ")))
 })
+
+test_that("the intake guard asserts on an empty intake, and still catches", {
+  # Regression for the defect above, driven from TEMPORARY catalogs so it does
+  # not depend on what the real one happens to hold. CI checks hvtiR out at a
+  # pinned tag whose catalog still has intake rows, so without this the empty
+  # path would never run there and a revert to the `for` loop would stay green
+  # until the pin moved. Raised by Copilot on #131.
+  shipped <- list(prefix = "ac", status = "shipped")
+  # No intake rows at all: an assertion is still made, and it passes.
+  with_temp_catalog(list(shipped), {
+    expect_identical(intake_without_blocker(ledger_rows()), character(0))
+  })
+  # An intake row that names its blocker passes.
+  named <- list(prefix = "zz", status = "intake",
+                blocked_on = "hvtiRutilities#1")
+  with_temp_catalog(list(shipped, named), {
+    expect_identical(intake_without_blocker(ledger_rows()), character(0))
+  })
+  # One with no blocker, or an empty one, is caught and named.
+  absent <- list(prefix = "zz", status = "intake")
+  empty <- list(prefix = "yy", status = "intake", blocked_on = "")
+  with_temp_catalog(list(shipped, absent, empty), {
+    expect_identical(intake_without_blocker(ledger_rows()), c("zz", "yy"))
+  })
+})
+
 
 # ⭐ RETIRED 2026-09-03: "the guard's folder map still matches the taxonomy".
 #
