@@ -1,8 +1,8 @@
 # The template catalog: every job type is a template here
 
 **Date:** 2026-09-18
-**Status:** Draft. The model in §2 was decided by John Ehrlinger on
-2026-09-18; the open questions in §9 are not.
+**Status:** Draft for approval. The model in §2 and four of the five questions
+in §9 were decided by John Ehrlinger on 2026-09-18; §9 question 4 stays open.
 **Supersedes, once approved:** `hvtiR:dev/specs/2026-09-04-job-catalog-design.md`,
 which moved this catalog to `hvtiR` as a routing table.
 
@@ -51,7 +51,9 @@ that is what it still is.
 ## 4. The catalog after this change
 
 **`inst/extdata/templates.json`** in `hvtiRtemplates`: **55 rows, 44
-prefixes**, every row a template owed here.
+prefixes**, every row a template owed here. It is read by a new exported
+accessor, **`template_catalog()`**, named to sit clearly apart from
+`template_list()`, which lists the templates on disk rather than the catalog.
 
 | field | change |
 |---|---|
@@ -109,29 +111,43 @@ What that retires in the family:
 
 - ⚠️ **Dropping `rf`/`rfsrc` trips a guard.** `test-roadmap.R`'s "every
   taxonomy prefix has a roadmap row" would fail, since the taxonomy keeps
-  both. The guard needs an exemption for the demoted umbrellas; §9 question 2
-  asks how to mark them.
-- **Removing an exported function.** `hvtiR::jobs()` is exported. A search of
+  both. Decided: the guard **derives** its exemption from a new column in
+  `hvti_taxonomy()` (§8 step 0), rather than hard-coding two prefixes.
+- **`hvti_taxonomy()` changes shape.** The new column changes an exported
+  function's output. Measured: the only test anywhere that asserts its exact
+  column set is `hvtiRutilities`' own shape test, so the change stays inside
+  the repository that makes it. The version digit is John's.
+- **Removing an exported function.** `hvtiR::jobs()` is removed **in one
+  step**, without a deprecation cycle (John: no one uses it yet). A search of
   every tracked file in the family's repositories on 2026-09-18 found no
-  caller outside `hvtiR`; study code outside git was not searched. Removing an
-  export is a breaking change, and the version digit is John's.
+  caller outside `hvtiR`; study code outside git was not searched. The
+  version digit is John's.
 - **Two catalogs exist briefly.** See §8.
 - **The tarball grows** by the catalog, 41 KB of JSON today.
 
 ## 8. Migration order
 
+0. **`hvtiRutilities`:** add a logical column **`umbrella`** to
+   `hvti_taxonomy()`, `TRUE` for `rf` and `rfsrc` and `FALSE` elsewhere
+   (`NA` for the `estimates` artifact row, which has no prefix). Update the
+   shape test and the roxygen, which today records the demotion only in the
+   rows' wording. Release it; the version digit is John's, since an exported
+   function's output changes.
 1. **`hvtiRtemplates`, one pull request.** Add `inst/extdata/templates.json`,
    converted from `hvtiR` `v1.1.15`'s `jobs.json` by a script committed beside
    it: drop `rf` and `rfsrc`; drop `destination`; rename `replaced_by` to
    `uses`; set `status: queued` on the 8 former off-destination rows. Carry
    the rules in §5 over as tests here, adapted from `hvtiR`'s. Point
    `helper-ledger.R`, `roadmap_render.py` and the count scripts at the local
-   file. Drop both `hvtiR` checkouts and retire `check_pin_currency.py`. Add the
-   umbrella exemption, add `ggRandomForests` and `hvtiRpropensity` to
+   file. Drop both `hvtiR` checkouts and retire `check_pin_currency.py`.
+   Exempt `hvti_taxonomy()$umbrella` rows from the direction-one guard and
+   raise the `hvtiRutilities` floor to the release from step 0. Add `ggRandomForests` and `hvtiRpropensity` to
    `Suggests`, re-render the roadmap (47 in scope becomes 55), and update
    `AGENTS.md`. NEWS entry.
-2. **`hvtiR`:** retire everything in §6. NEWS entry and a version bump whose
-   digit John chooses, since an export goes.
+2. **`hvtiR`:** retire everything in §6, and mark
+   `dev/specs/2026-09-04-job-catalog-design.md` superseded, pointing here.
+   NEWS entry and a version bump whose digit John chooses, since an export
+   goes.
 3. **`hvtiRutilities`:** its `hvti_taxonomy()` notes cite `hvtiR::jobs()` and
    the `retire` disposition. Both go stale in step 2; rewrite them to point at
    the template catalog.
@@ -141,25 +157,29 @@ that nothing here reads any more. That is the drift the 2026-09-04 design
 existed to prevent, so keep the window short and **freeze catalog edits in
 `hvtiR`** from the moment step 1 merges.
 
-## 9. Open questions
+## 9. Questions
 
-1. **Accessor name, and export or not.** `templates()` would sit beside the
-   existing `template_list()`, which lists templates on disk. Two
-   similar-sounding exports with different sources invite confusion.
-   Alternatives: `template_catalog()`, or keep the reader internal, since
-   today only tests and tooling read it.
-2. **How are the umbrella prefixes marked for the direction-one guard?** An
-   explicit `c("rf", "rfsrc")` in the test is simplest. A machine-readable
-   marker in `hvti_taxonomy()` (a new column) would let the guard derive it,
-   but it changes that function's output shape for every consumer.
-3. **Deprecate `hvtiR::jobs()` first, or remove it in one step?** No caller
-   was found, which argues for removal.
-4. **Is the strict CI step still needed** once the catalog ships in the
-   tarball? That should be measured on a real run, not assumed.
-5. **Do older specs get annotated?** The ML roadmap
-   (`2026-09-17-ml-family-roadmap-design.md` §2) says `sid`/`vt` catalog rows
-   "are repointed to `hvtiRforests`". Under this model there is no
-   `destination` to repoint; `blocked_on: hvtiRforests#1` is the whole story.
+**Decided by John, 2026-09-18:**
+
+1. **Accessor:** `template_catalog()`, exported. Not `templates()`, which would
+   sit beside `template_list()` with a different source.
+2. **Umbrella marker:** a machine-readable `umbrella` column in
+   `hvti_taxonomy()`, accepting the change to its output shape (§7, §8 step 0).
+3. **`hvtiR::jobs()`:** removed in one step, no deprecation cycle.
+5. **Older specs are annotated.** The ML roadmap
+   (`2026-09-17-ml-family-roadmap-design.md` §2) said the `sid`/`vt` catalog
+   rows "are repointed to `hvtiRforests`". Under this model there is no
+   `destination` to repoint, and `blocked_on: hvtiRforests#1` is the whole
+   story. That spec carries a dated note saying so. The 2026-09-04 design in
+   `hvtiR` gets a superseded marker in §8 step 2.
+
+**Open:**
+
+4. **Is the separate strict CI step still needed** once the catalog ships in
+   the tarball? It exists because the check legs could not see the catalog.
+   Measure it on step 1's first CI run: if every check leg then reads
+   `SKIP 0` for the catalog-reading tests, the step is redundant. Keep it
+   until that run says so.
 
 ## 10. Out of scope
 
