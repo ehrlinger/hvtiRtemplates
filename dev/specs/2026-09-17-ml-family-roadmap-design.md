@@ -38,9 +38,9 @@ repointed to `hvtiRforests` once that package exists (sub-project 3). The
 `rf*` rows' `replaced_by` guidance (`gg_*` functions) stays valid for plotting;
 templates call those functions.
 
-> **Note, 2026-09-18.** Superseded in part by
-> `2026-09-18-template-catalog-design.md`. There is no `destination` to
-> repoint: that field is removed, every catalog row is a template owed in
+> **Note, 2026-09-18.** The "Consequence for the job catalog" paragraph above
+> is **historical**, superseded by `2026-09-18-template-catalog-design.md`: do
+> not repoint anything. There is no `destination` to repoint: that field is removed, every catalog row is a template owed in
 > `hvtiRtemplates`, and `sid`/`vt` carry `blocked_on: hvtiRforests#1`, which
 > is the whole of their dependency on `hvtiRforests`. `replaced_by` is renamed
 > `uses`. The package boundaries in this section are unchanged.

@@ -22,6 +22,13 @@ hvtiR; the allocation map is generated, guarded by `check-spec-counts.py`, and
 changes when the scan's owner table is next regenerated. Until both land, the
 two sources disagree with this spec, and this spec is the later decision.
 
+> **Note, 2026-09-18.** The job-catalog half of the table above is
+> **historical**. Under `2026-09-18-template-catalog-design.md` the catalog
+> moves to `hvtiRtemplates` as `templates.json`, `destination` is removed and
+> `replaced_by` becomes `uses`. `dc-stddiff` is a template owed here, blocked
+> on `hvtiRpropensity#34`; its row changes land in `hvtiRtemplates`, not
+> `hvtiR`.
+
 ## 1. Decisions taken 2026-09-16
 
 - **`hvtiRpropensity` owns standardized differences**, not `hvtiRutilities`.

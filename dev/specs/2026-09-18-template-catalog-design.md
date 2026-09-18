@@ -45,8 +45,9 @@ at `v1.1.15`, 57 rows:
 
 So `destination` is redundant, `replaced_by` is misnamed, and `retire`
 describes two labels rather than any job. The catalog was a template ledger
-before 2026-09-04 (`dev/specs/artifacts/2026-08-29-template-roadmap.json`), and
-that is what it still is.
+before 2026-09-04 (`dev/specs/artifacts/2026-08-29-template-roadmap.json`,
+deleted in `5f224cc` when the catalog moved and recoverable from git history),
+and that is what it still is.
 
 ## 4. The catalog after this change
 
@@ -54,6 +55,17 @@ that is what it still is.
 prefixes**, every row a template owed here. It is read by a new exported
 accessor, **`template_catalog()`**, named to sit clearly apart from
 `template_list()`, which lists the templates on disk rather than the catalog.
+
+Its contract mirrors `hvtiR::jobs()`, so no caller has to relearn it:
+
+- **Returns** a data frame, one row per template row. `uses`, `upstream`,
+  `downstream` and `workflows` are list-columns, since each holds an array.
+- **Errors** name the row and the field when a scalar field holds more than one
+  value or a count field holds something other than an integer, as
+  `jobs()` does today.
+- **A missing or unreadable file is an error, not an empty result.** The
+  catalog ships inside the package, so its absence is a packaging defect and
+  must not read as "no templates".
 
 | field | change |
 |---|---|
@@ -85,13 +97,25 @@ Rule 3 needs every `uses` package installed. `uses` names six:
 `ggRandomForests` (11 entries), `hvtiPlotR` (18), `TemporalHazard` (12),
 `hvtiRutilities` (4), `hvtiRtables` (4) and `hvtiRpropensity` (2). This package
 already imports or suggests four. **`ggRandomForests` and `hvtiRpropensity`
-join `Suggests`**, which the `rfs`/`rfc`/`rfr` templates will need anyway. CI
-installs all six, and a skip on this rule is a failure there, as the 2026-09-04
-design required.
+join both `Suggests` and `Remotes`**: `Remotes` because CRAN's
+`ggRandomForests` is 3.5.3 while `main` is 4.0.0, and `hvtiRpropensity` is not
+on CRAN. `ggRandomForests` is also what the `rfs`/`rfc`/`rfr` templates call;
+`hvtiRpropensity` is there for the two `uses` entries on existing rows, and
+`dc-stddiff` is blocked on it. CI installs every `uses` package, and a skip
+on this rule is a failure there, as the 2026-09-04 design required.
+
+⚠️ **`uses` must list every direct call, not only the plotting layer.** Today
+it lists the six packages above because it was inherited from
+`replaced_by`, which only ever recorded replacements. A template that fits a
+forest calls `randomForestSRC::rfsrc()` directly, so ML sub-project 2 adds
+that entry to `uses` and `randomForestSRC` to `Suggests` when it writes the
+`rfs`/`rfc`/`rfr` templates. Rule 3 then holds it to the same test as any
+other call.
 
 ## 6. What `hvtiR` keeps
 
-**Nothing catalog-related.** It goes back to being the installer and registry.
+**Nothing of the job catalog.** It goes back to being the installer and
+registry.
 Retired: `inst/extdata/jobs.json`, `jobs()` and its Rd page, the
 `job-catalog.qmd` vignette, `test-jobs.R` and `test-jobs-routing.R`,
 `tools/check_jobs_pin.py` and its test, the `jobs-pin-drift` workflow, and the
@@ -116,46 +140,60 @@ What that retires in the family:
 - **`hvti_taxonomy()` changes shape.** The new column changes an exported
   function's output. Measured: the only test anywhere that asserts its exact
   column set is `hvtiRutilities`' own shape test, so the change stays inside
-  the repository that makes it. The version digit is John's.
+  the repository that makes it. **Minor bump, `hvtiRutilities` 1.3.0** (John).
 - **Removing an exported function.** `hvtiR::jobs()` is removed **in one
   step**, without a deprecation cycle (John: no one uses it yet). A search of
   every tracked file in the family's repositories on 2026-09-18 found no
-  caller outside `hvtiR`; study code outside git was not searched. The
-  version digit is John's.
+  caller outside `hvtiR`; study code outside git was not searched. **Minor
+  bump, `hvtiR` 1.2.0** (John).
 - **Two catalogs exist briefly.** See §8.
 - **The tarball grows** by the catalog, 41 KB of JSON today.
 
 ## 8. Migration order
 
-0. **`hvtiRutilities`:** add a logical column **`umbrella`** to
-   `hvti_taxonomy()`, `TRUE` for `rf` and `rfsrc` and `FALSE` elsewhere
-   (`NA` for the `estimates` artifact row, which has no prefix). Update the
-   shape test and the roxygen, which today records the demotion only in the
-   rows' wording. Release it; the version digit is John's, since an exported
-   function's output changes.
+0. **Prerequisites, in either order.**
+   - **`hvtiR`: a freeze guard.** A test that fails if
+     `inst/extdata/jobs.json` differs from its `v1.1.15` content by checksum.
+     It turns the freeze in the ⚠️ note below from a convention into a check,
+     and step 2 deletes it along with the file.
+   - **`hvtiRutilities`: the `umbrella` column.** Add a logical column
+     **`umbrella`** to `hvti_taxonomy()`, `TRUE` for `rf` and `rfsrc` and
+     `FALSE` elsewhere (`NA` for the `estimates` artifact row, which has no
+     prefix). Update the shape test and the roxygen, which today records the
+     demotion only in the rows' wording. Release it as **1.3.0**: a minor
+     bump, John's decision (2026-09-18), since an exported function's output
+     changes.
 1. **`hvtiRtemplates`, one pull request.** Add `inst/extdata/templates.json`,
    converted from `hvtiR` `v1.1.15`'s `jobs.json` by a script committed beside
    it: drop `rf` and `rfsrc`; drop `destination`; rename `replaced_by` to
    `uses`; set `status: queued` on the 8 former off-destination rows. Carry
    the rules in §5 over as tests here, adapted from `hvtiR`'s. Point
    `helper-ledger.R`, `roadmap_render.py` and the count scripts at the local
-   file. Drop both `hvtiR` checkouts and retire `check_pin_currency.py`.
+   file, **and migrate them to the new schema**, since a path change alone
+   leaves them reading the old one: `check-roadmap-counts.py`'s required
+   `FIELDS` drop `destination` and rename `replaced_by` to `uses`;
+   `roadmap_render.py` drops its `destination` filter and routing labels; the
+   generated roadmap's preamble and the tests' prose stop saying the catalog
+   lives in `hvtiR`. Add `template_catalog()` and run `devtools::document()`,
+   committing the generated `man/` and `NAMESPACE`, which the `docs-current`
+   check requires. Drop both `hvtiR` checkouts and retire `check_pin_currency.py`.
    Exempt `hvti_taxonomy()$umbrella` rows from the direction-one guard and
    raise the `hvtiRutilities` floor to the release from step 0. Add `ggRandomForests` and `hvtiRpropensity` to
    `Suggests`, re-render the roadmap (47 in scope becomes 55), and update
    `AGENTS.md`. NEWS entry.
 2. **`hvtiR`:** retire everything in §6, and mark
    `dev/specs/2026-09-04-job-catalog-design.md` superseded, pointing here.
-   NEWS entry and a version bump whose digit John chooses, since an export
-   goes.
+   NEWS entry and a **minor** bump to **1.2.0** (John, 2026-09-18), since an
+   export goes. Delete step 0's freeze guard with the file.
 3. **`hvtiRutilities`:** its `hvti_taxonomy()` notes cite `hvtiR::jobs()` and
    the `retire` disposition. Both go stale in step 2; rewrite them to point at
    the template catalog.
 
 ⚠️ **Between steps 1 and 2 `hvtiR` still ships `jobs.json`,** a second copy
 that nothing here reads any more. That is the drift the 2026-09-04 design
-existed to prevent, so keep the window short and **freeze catalog edits in
-`hvtiR`** from the moment step 1 merges.
+existed to prevent, so keep the window short. The freeze is **enforced, not
+asked for**: step 0's guard fails any edit to `hvtiR`'s `jobs.json` until step
+2 removes it.
 
 ## 9. Questions
 
@@ -170,7 +208,10 @@ existed to prevent, so keep the window short and **freeze catalog edits in
    (`2026-09-17-ml-family-roadmap-design.md` §2) said the `sid`/`vt` catalog
    rows "are repointed to `hvtiRforests`". Under this model there is no
    `destination` to repoint, and `blocked_on: hvtiRforests#1` is the whole
-   story. That spec carries a dated note saying so. The 2026-09-04 design in
+   story. That spec carries a dated note saying so, and so does
+   `2026-09-16-standardized-difference-design.md`, which names `hvtiR`'s
+   `jobs.json` and its `destination`/`replaced_by` as the source of truth for
+   the `dc-stddiff` row. The 2026-09-04 design in
    `hvtiR` gets a superseded marker in §8 step 2.
 
 **Open:**
