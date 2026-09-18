@@ -93,6 +93,36 @@ set_path <- function(kind, file) {
 }
 ```
 
+## Study choices
+
+Set the values in this chunk before rendering.
+
+```{r}
+#| label: study-choices
+# EDIT: the built dataset this job reads. "study" is the file named by built:
+# in _study.yml; any other name must be declared under additional_datasets:,
+# such as a column subset written for R. Analysis sets are derived from
+# "study" only, so another dataset needs ANALYSIS_SET <- NULL.
+# EDIT: the analysis set this job reads: declare its columns and excluded rows
+# under analysis_sets: in _study.yml, then write it with
+# hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
+# cohort is the intended population.
+# MIGRATE-BEGIN: dc-gfup-data
+DATASET <- "study"
+ANALYSIS_SET <- "eda"
+# MIGRATE-END: dc-gfup-data
+
+# MIGRATE-BEGIN: dc-gfup-config
+EVENT <- "dead"       # EDIT: binary event indicator, 1=event and 0=censored
+FOLLOWUP <- "iv_dead" # EDIT: registered follow-up interval(s), in years
+IDENTIFIER <- NULL    # EDIT: opt in only for local review
+MAX_REVIEW_ROWS <- 25L
+# MIGRATE-END: dc-gfup-config
+# EDIT: optional event-coding cross-tabs, each a vector of column names.
+# Missing values are shown. Use list() when no additional checks are needed.
+CHECKS <- list()
+```
+
 ## Data
 
 <!-- How this job finds its data. Read this before touching the chunk below.
@@ -119,18 +149,6 @@ set_path <- function(kind, file) {
 ```{r}
 #| label: data
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
-# EDIT: the built dataset this job reads. "study" is the file named by built:
-# in _study.yml; any other name must be declared under additional_datasets:,
-# such as a column subset written for R. Analysis sets are derived from
-# "study" only, so another dataset needs ANALYSIS_SET <- NULL.
-# EDIT: the analysis set this job reads: declare its columns and excluded rows
-# under analysis_sets: in _study.yml, then write it with
-# hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
-# cohort is the intended population.
-# MIGRATE-BEGIN: dc-gfup-data
-DATASET <- "study"
-ANALYSIS_SET <- "eda"
-# MIGRATE-END: dc-gfup-data
 if (is.null(ANALYSIS_SET)) {
   if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
     stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
@@ -154,18 +172,6 @@ cat("Data read: ", if (is.null(ANALYSIS_SET)) {
 }, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
 ```
 
-```{r}
-#| label: spec
-# MIGRATE-BEGIN: dc-gfup-config
-EVENT <- "dead"       # EDIT: binary event indicator, 1=event and 0=censored
-FOLLOWUP <- "iv_dead" # EDIT: registered follow-up interval(s), in years
-IDENTIFIER <- NULL    # EDIT: opt in only for local review
-MAX_REVIEW_ROWS <- 25L
-# MIGRATE-END: dc-gfup-config
-# EDIT: optional event-coding cross-tabs, each a vector of column names.
-# Missing values are shown. Use list() when no additional checks are needed.
-CHECKS <- list()
-```
 
 ## Follow-up checks
 

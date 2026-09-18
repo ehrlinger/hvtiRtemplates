@@ -204,10 +204,12 @@ set_path <- function(kind, file) {
 # is what keeps a screen filed against the set whose candidates it screened.
 ```
 
-## The screen
+## Study choices
+
+Edit these values for this study before rendering.
 
 ```{r}
-#| label: expect
+#| label: study-choices
 # EDIT: what this run was LAUNCHED as, not what happens to be on disk.
 #
 # Nothing in a chunk knows how many siblings it was launched alongside, so these
@@ -226,6 +228,43 @@ EXPECT_BOOT   <- 500L   # EDIT: %hazboot(resampl=) -- total replicates wanted
 # does not match finds nothing, while a prefix that matches TOO MUCH pools
 # chunks from another run -- and no downstream check can see that.
 BOOT_PREFIX <- "bh"
+
+# EDIT: from YOUR .sas %hazboot call. The two studies this template was
+# extracted from disagree -- 500/0.07/0.05 and 1000/0.12/0.1 -- so there is no
+# default here to fall back on. Read them off the call and paste it above.
+#
+# RETAIN_PCT is the reliability cutoff this report calls "retained". It is a
+# reporting decision, not something the run recorded: the entry and stay levels
+# above governed each replicate's stepwise fit, and neither of them says how
+# often a variable must survive to be worth carrying forward.
+RETAIN_PCT <- 50
+
+# EDIT: how a term's name splits into phase and variable. Terms are named
+# `<phase>.<variable>`, so one variable offered to two phases is two independent
+# screening decisions and must not be pooled into one row.
+#
+# boot_frequencies() and boot_concepts() also accept PHASE_OF = NULL, for a
+# single-phase screen, and that is what lets one reporting code path serve the
+# forthcoming bl, br and bc templates. This template is not that case: it
+# reports a multiphase hazard screen, and every table and the figure below
+# assume a phase column throughout. PHASE_OF must name a real rule here.
+PHASE_OF <- function(term) sub("[.].*$", "", term)
+
+# Concept groups to report.
+CLUSTERS <- list(
+  early.Age  = c("early.age", "early.ln_age"),
+  const.Age  = c("const.age", "const.ln_age")
+)
+
+# Correlation cutoff for near-duplicate candidates.
+COLLINEAR_R <- 0.99
+```
+
+## The screen
+
+```{r}
+#| label: expect
+# Settings for this section are in Study choices.
 ```
 
 ```{r}
@@ -450,26 +489,7 @@ resampling noise alone.
 
 ```{r}
 #| label: criteria
-# EDIT: from YOUR .sas %hazboot call. The two studies this template was
-# extracted from disagree -- 500/0.07/0.05 and 1000/0.12/0.1 -- so there is no
-# default here to fall back on. Read them off the call and paste it above.
-#
-# RETAIN_PCT is the reliability cutoff this report calls "retained". It is a
-# reporting decision, not something the run recorded: the entry and stay levels
-# above governed each replicate's stepwise fit, and neither of them says how
-# often a variable must survive to be worth carrying forward.
-RETAIN_PCT <- 50
-
-# EDIT: how a term's name splits into phase and variable. Terms are named
-# `<phase>.<variable>`, so one variable offered to two phases is two independent
-# screening decisions and must not be pooled into one row.
-#
-# boot_frequencies() and boot_concepts() also accept PHASE_OF = NULL, for a
-# single-phase screen, and that is what lets one reporting code path serve the
-# forthcoming bl, br and bc templates. This template is not that case: it
-# reports a multiphase hazard screen, and every table and the figure below
-# assume a phase column throughout. PHASE_OF must name a real rule here.
-PHASE_OF <- function(term) sub("[.].*$", "", term)
+# Settings for this section are in Study choices.
 ```
 
 ```{r}
@@ -629,10 +649,6 @@ coefs[cbind(reps$replicate, match(reps$parameter, terms))] <- reps$estimate
 # offered to two phases is two screening decisions. Naming a term that no
 # replicate carries is refused rather than reported as 0%: a typo that grouped
 # nothing would otherwise read as a concept nobody selected.
-CLUSTERS <- list(
-  early.Age  = c("early.age", "early.ln_age"),
-  const.Age  = c("const.age", "const.ln_age")
-)
 
 clusters <- boot_clusters(coefs, CLUSTERS)
 clusters
@@ -650,7 +666,6 @@ says the pool cannot tell them apart.
 # 0.99 finds near-duplicates -- a variable and its rescaling, a dummy and its
 # complement. Lower it to see the pool's structure rather than only its
 # accidents.
-COLLINEAR_R <- 0.99
 
 # Read to CORRELATE the pool, not to re-run anything. The screen already
 # happened; this describes the data it ran against.

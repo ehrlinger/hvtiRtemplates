@@ -179,6 +179,30 @@ set_path <- function(kind, file) {
 # set_path("graphs", ...). Same key, so a figure can never be filed against a
 # different set than the fit it was drawn from.
 ```
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+```{r}
+#| label: study-choices
+# Upstream fit and actuarial estimate to plot.
+# EDIT: upstream fit and actuarial estimate to plot.
+FIT_NAME <- "deterministic"
+KM_NAME <- "overall"
+
+# Table horizons and curve limit.
+# EDIT: reporting and plotting horizons.
+years <- c(30 / 365.2425, 3 / 12, 6 / 12, 1:10)   # reporting: the table
+
+t_max <- 3                                        # plotting: the curves
+
+# Follow-up time and event columns.
+# EDIT: time and event variables fitted in hz.
+TIME  <- "iu_dead"
+
+EVENT <- "idead"
+```
 ## Upstream
 
 ```{r}
@@ -189,13 +213,13 @@ set_path <- function(kind, file) {
 ac_art <- readRDS(set_path("estimates", "ac.rds"))
 hz_art <- readRDS(set_path("estimates", "hz.rds"))
 
-# EDIT: which fit and which life table this job plots.
+# which fit and which life table this job plots.
 #
 # ⚠️ A STRATIFIED hp job reads the PER-STRATUM fits and never the overall one.
 # Getting that backwards does not error -- it draws a plausible figure of the
 # wrong thing. Read the SAS job to see which `est.` datasets it opens.
-fit <- hz_art$deterministic
-km  <- ac_art$overall
+fit <- hz_art[[FIT_NAME]]
+km  <- ac_art[[KM_NAME]]
 
 stopifnot(!is.null(fit), !is.null(km))
 ```
@@ -222,8 +246,6 @@ stopifnot(!is.null(fit), !is.null(km))
 
 ```{r}
 #| label: grid
-years <- c(30 / 365.2425, 3 / 12, 6 / 12, 1:10)   # reporting: the table
-t_max <- 3                                        # plotting: the curves
 t_plot <- exp(seq(-8, log(t_max), length.out = 1000))
 ```
 
@@ -234,13 +256,11 @@ t_plot <- exp(seq(-8, log(t_max), length.out = 1000))
 # shape, not an estimate supported by data, and nothing in the output marks it.
 # So the grid is checked against the actual end of follow-up.
 #
-# EDIT: the time and event variables your hz job fitted on. BOTH are needed:
+# the time and event variables your hz job fitted on. BOTH are needed:
 # the bound must be computed over the SAME rows the fit used. `hz` drops rows
 # missing either one, so max() over all non-missing times would include
 # patients the fit never saw and could OVERSTATE follow-up -- which weakens
 # this guard in the one direction that matters, by making it under-warn.
-TIME  <- "iu_dead"
-EVENT <- "idead"
 
 d <- read_built()
 fitted_rows <- !is.na(d[[TIME]]) & !is.na(d[[EVENT]])

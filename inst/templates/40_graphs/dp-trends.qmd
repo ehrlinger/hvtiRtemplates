@@ -176,13 +176,56 @@ set_path <- function(kind, file) {
 }
 ```
 
+## Study choices
+
+Set the values in this chunk before rendering.
+
+```{r}
+#| label: study-choices
+# EDIT: choose a dataset registered in _study.yml.
+# MIGRATE-BEGIN: dp-trends-data
+DATASET <- "study"
+# MIGRATE-END: dp-trends-data
+
+# EDIT: one entry per figure. `cols` are the columns drawn together: several
+# columns become several series in one figure, which is how a set of 0/1
+# indicators such as NYHA class I to IV is shown. `kind` says how to read them:
+#   "percent"     0/1 or logical, drawn as the percent of patients with it
+#   "continuous"  a measurement, drawn on its own scale
+# `labels` names the series in the legend (default: the column names). Fixing
+# `ylim` and `ybreaks` keeps figures for different subgroups comparable; either
+# may be set alone, and `ylim` zooms without dropping any patient.
+# `summary` is the per-year point drawn under the smooth. Percent trends must
+# use "mean" (the default); continuous trends may use "mean" or "median".
+# MIGRATE-BEGIN: dp-trends-trends
+TRENDS <- list(
+  chf = list(cols = "hx_chf", kind = "percent", labels = "Heart failure",
+             ylab = "Patients (%)", ylim = c(0, 100), ybreaks = seq(0, 100, 20)),
+  lvmass = list(cols = "plvmassi", kind = "continuous", labels = "LV mass index",
+                ylab = "LV mass index", ylim = NULL, ybreaks = NULL)
+)
+# MIGRATE-END: dp-trends-trends
+
+# EDIT: optional. x-axis breaks shared by every figure, e.g. seq(1985, 2025, 5).
+# NULL lets ggplot choose.
+# MIGRATE-BEGIN: dp-trends-xbreaks
+XBREAKS <- NULL
+# MIGRATE-END: dp-trends-xbreaks
+
+# EDIT: optional. Each entry is a filter, given as a function of the data that
+# returns TRUE for the rows to keep. Every trend is drawn once per entry with
+# the same axes, so the figures can be read side by side. The default draws the
+# whole cohort only. A second entry might be
+#   complex = function(d) d$complex == 1
+# MIGRATE-BEGIN: dp-trends-subgroups
+SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)))
+# MIGRATE-END: dp-trends-subgroups
+```
+
 ## Data
 
 ```{r}
 #| label: data
-# MIGRATE-BEGIN: dp-trends-data
-DATASET <- "study"
-# MIGRATE-END: dp-trends-data
 if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
   stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
        "In a migrated job, see the migration report beside this job.", call. = FALSE)
@@ -233,45 +276,6 @@ knitr::kable(data.frame(
   value    = c(nrow(d), sum(is.na(d$year)),
                min(d$year, na.rm = TRUE), max(d$year, na.rm = TRUE))
 ))
-```
-
-## What is trended
-
-```{r}
-#| label: trends
-# EDIT: one entry per figure. `cols` are the columns drawn together: several
-# columns become several series in one figure, which is how a set of 0/1
-# indicators such as NYHA class I to IV is shown. `kind` says how to read them:
-#   "percent"     0/1 or logical, drawn as the percent of patients with it
-#   "continuous"  a measurement, drawn on its own scale
-# `labels` names the series in the legend (default: the column names). Fixing
-# `ylim` and `ybreaks` keeps figures for different subgroups comparable; either
-# may be set alone, and `ylim` zooms without dropping any patient.
-# `summary` is the per-year point drawn under the smooth. Percent trends must
-# use "mean" (the default); continuous trends may use "mean" or "median".
-# MIGRATE-BEGIN: dp-trends-trends
-TRENDS <- list(
-  chf = list(cols = "hx_chf", kind = "percent", labels = "Heart failure",
-             ylab = "Patients (%)", ylim = c(0, 100), ybreaks = seq(0, 100, 20)),
-  lvmass = list(cols = "plvmassi", kind = "continuous", labels = "LV mass index",
-                ylab = "LV mass index", ylim = NULL, ybreaks = NULL)
-)
-# MIGRATE-END: dp-trends-trends
-
-# EDIT: optional. x-axis breaks shared by every figure, e.g. seq(1985, 2025, 5).
-# NULL lets ggplot choose.
-# MIGRATE-BEGIN: dp-trends-xbreaks
-XBREAKS <- NULL
-# MIGRATE-END: dp-trends-xbreaks
-
-# EDIT: optional. Each entry is a filter, given as a function of the data that
-# returns TRUE for the rows to keep. Every trend is drawn once per entry with
-# the same axes, so the figures can be read side by side. The default draws the
-# whole cohort only. A second entry might be
-#   complex = function(d) d$complex == 1
-# MIGRATE-BEGIN: dp-trends-subgroups
-SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)))
-# MIGRATE-END: dp-trends-subgroups
 ```
 
 ```{r}

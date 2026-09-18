@@ -5,6 +5,16 @@ extract_chunk <- function(path, label) {
   parse(text = lines[(chunk_label + 1L):(chunk_end - 1L)])
 }
 
+data_route_chunks <- function(path) {
+  lines <- readLines(path, warn = FALSE)
+  choices <- if (any(grepl("#| label: study-choices", lines, fixed = TRUE))) {
+    extract_chunk(path, "study-choices")
+  } else {
+    expression()
+  }
+  list(choices = choices, data = extract_chunk(path, "data"))
+}
+
 use_whole_cohort <- function(code) {
   assignment <- vapply(code, function(expr) {
     is.call(expr) && identical(expr[[1L]], quote(`<-`)) &&
@@ -48,9 +58,10 @@ test_that("descriptive templates can read the whole cohort", {
     env <- new.env(parent = globalenv())
     env$.root <- "."
     env$read_built <- hvtiRutilities::read_built
-
+    chunks <- data_route_chunks(template)
+    if (length(chunks$choices)) eval(use_whole_cohort(chunks$choices), envir = env)
     result <- withVisible(eval(
-      use_whole_cohort(extract_chunk(template, "data")), envir = env
+      if (length(chunks$choices)) chunks$data else use_whole_cohort(chunks$data), envir = env
     ))
 
     expect_equal(env$d, built, info = basename(template))
@@ -104,20 +115,26 @@ test_that("descriptive templates read a named additional dataset", {
   old_wd <- setwd(root)
   on.exit(setwd(old_wd), add = TRUE)
   for (template in templates) {
-    code <- set_assignment(extract_chunk(template, "data"), "DATASET", "builtr")
+    chunks <- data_route_chunks(template)
+    code <- set_assignment(if (length(chunks$choices)) chunks$choices else chunks$data,
+                           "DATASET", "builtr")
 
     env <- new.env(parent = globalenv())
     env$.root <- "."
     env$read_built <- hvtiRutilities::read_built
     eval(set_assignment(code, "ANALYSIS_SET", NULL), envir = env)
+    if (length(chunks$choices)) eval(chunks$data, envir = env)
     expect_equal(env$d, subset, info = basename(template))
 
     # An analysis set derives from the study dataset, so pairing one with a
     # named dataset must stop rather than silently read the wrong parent.
     env <- new.env(parent = globalenv())
     env$.root <- "."
-    expect_error(eval(code, envir = env), "written from the study dataset",
-                 info = basename(template))
+    expect_error({
+      eval(code, envir = env)
+      if (length(chunks$choices)) eval(chunks$data, envir = env)
+    }, "written from the study dataset",
+    info = basename(template))
   }
 })
 
@@ -129,22 +146,26 @@ test_that("converter templates name DATASET before reading unresolved data", {
     "10_descriptive/dp-postage.qmd", "40_graphs/dp-trends.qmd"
   ))
   for (template in templates) {
-    code <- extract_chunk(template, "data")
+    chunks <- data_route_chunks(template)
+    code <- chunks$data
     # The manifest check needs a real study; this test is about DATASET alone.
     code <- code[!vapply(code, function(expr) any(grepl("verify_manifest", deparse(expr))), logical(1))]
-    has_set <- any(vapply(code, function(expr) {
+    choices <- if (length(chunks$choices)) chunks$choices else code
+    has_set <- any(vapply(choices, function(expr) {
       is.call(expr) && identical(expr[[1L]], quote(`<-`)) && identical(expr[[2L]], quote(ANALYSIS_SET))
     }, logical(1)))
-    if (has_set) code <- set_assignment(code, "ANALYSIS_SET", NULL)
+    if (has_set) choices <- set_assignment(choices, "ANALYSIS_SET", NULL)
     for (value in list(NA_character_, NULL, "", c("study", "builtr"), 1)) {
       env <- new.env(parent = globalenv())
       env$.root <- "."
       env$read_built <- function(...) stop("read_built() was reached")
       env$study_config <- function(...) list()
-      expect_error(
-        eval(set_assignment(code, "DATASET", value), envir = env),
-        "DATASET.*_study[.]yml.*\"study\".*migration report",
-        info = paste(basename(template), deparse(value))
+      expect_error({
+        eval(set_assignment(choices, "DATASET", value), envir = env)
+        if (length(chunks$choices)) eval(code, envir = env)
+      },
+      "DATASET.*_study[.]yml.*\"study\".*migration report",
+      info = paste(basename(template), deparse(value))
       )
     }
   }

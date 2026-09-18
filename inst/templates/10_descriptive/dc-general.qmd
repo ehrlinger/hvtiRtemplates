@@ -95,6 +95,38 @@ set_path <- function(kind, file) {
 }
 ```
 
+## Study choices
+
+Edit these values for this study before rendering.
+
+```{r}
+#| label: study-choices
+# EDIT: the built dataset this job reads.
+DATASET <- "study"
+
+# EDIT: the analysis set, or NULL for a whole additional dataset.
+ANALYSIS_SET <- "eda"
+
+# EDIT: grouped categorical variables.
+CATEGORICAL <- list(
+  Demography = c("female")
+)
+
+# EDIT: grouped continuous variables.
+CONTINUOUS <- list(
+  Demography = c("age")
+)
+
+# EDIT: variables in the correlation sweep.
+CORR_VARS <- unlist(CONTINUOUS, use.names = FALSE)
+
+# EDIT: identifier columns excluded from summaries.
+KEY_COLS <- "ccfid"
+
+# EDIT: leave NULL to keep identifiers out of reports.
+ID_COL <- NULL
+```
+
 ## Data
 
 <!-- How this job finds its data. Read this before touching the chunk below.
@@ -121,16 +153,14 @@ set_path <- function(kind, file) {
 ```{r}
 #| label: data
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
-# EDIT: the built dataset this job reads. "study" is the file named by built:
+# The built dataset "study" is the file named by built:
 # in _study.yml; any other name must be declared under additional_datasets:,
 # such as a column subset written for R. Analysis sets are derived from
 # "study" only, so another dataset needs ANALYSIS_SET <- NULL.
-DATASET <- "study"
-# EDIT: the analysis set this job reads: declare its columns and excluded rows
+# Declare the analysis set's columns and excluded rows
 # under analysis_sets: in _study.yml, then write it with
 # hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
 # cohort is the intended population.
-ANALYSIS_SET <- "eda"
 if (is.null(ANALYSIS_SET)) {
   if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
     stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\".",
@@ -156,29 +186,20 @@ cat("Data read: ", if (is.null(ANALYSIS_SET)) {
 
 ```{r}
 #| label: spec
-# EDIT: categorical variables, grouped. Each name is a section heading, in this
+# categorical variables, grouped. Each name is a section heading, in this
 # order. Carry the /* Demography */ banners across from the SAS %macro freq
 # tables list. Missing values are tabulated as their own level (missprint).
-CATEGORICAL <- list(
-  Demography = c("female")
-)
-# EDIT: continuous variables, grouped the same way (the SAS %macro cdfs var
+# continuous variables, grouped the same way (the SAS %macro cdfs var
 # list).
-CONTINUOUS <- list(
-  Demography = c("age")
-)
-# EDIT: variables for the pairwise correlation sweep (SAS proc corr nosimple
+# variables for the pairwise correlation sweep (SAS proc corr nosimple
 # rank). Defaults to every continuous variable; character() skips the section.
-CORR_VARS <- unlist(CONTINUOUS, use.names = FALSE)
-# EDIT: identifier columns, kept out of every summary. The overall statistics
+# Identifier columns are kept out of every summary. The overall statistics
 # would otherwise print their minimum and maximum, and each of those is one
 # patient's identifier. Name every key column the data carry; character()
 # only if there are none.
-KEY_COLS <- "ccfid"
-# EDIT: leave NULL. A column name (the SAS job used id ccfid) labels the extreme
+# A column name (the SAS job used id ccfid) labels the extreme
 # values with it, which puts patient identifiers in the report: a report
 # rendered that way must not be circulated.
-ID_COL <- NULL
 ```
 
 ```{r}
