@@ -176,11 +176,12 @@
   [hvtiR#64](https://github.com/ehrlinger/hvtiR/pull/64). The roadmap
   now schedules 44 templates, not 43: `dc-trends` and `dp-boxplot` join
   from the 2026-09-10 triage, and `pm` leaves, because it folds into
-  `lm` and is `retire` over `hvtiRpropensity::bs_count()`. `lm` counts
-  470 studies and is `thin` over `hvtiRpropensity`, `si` and `mi` count
-  jobs (1 and 18), and the measured `dc` and `dp` rows show R counts for
-  the first time. The propensity-matching workflow reads 3 of 10,
-  because `pm` is now owed elsewhere. Ten templates are on disk,
+  `lm` and is `retire` over
+  [`hvtiRpropensity::bs_count()`](https://ehrlinger.github.io/hvtiRpropensity/reference/bs_count.html).
+  `lm` counts 470 studies and is `thin` over `hvtiRpropensity`, `si` and
+  `mi` count jobs (1 and 18), and the measured `dc` and `dp` rows show R
+  counts for the first time. The propensity-matching workflow reads 3 of
+  10, because `pm` is now owed elsewhere. Ten templates are on disk,
   unchanged.
 
 - **`deade` and `deadl` are not landmark jobs, but the early/late

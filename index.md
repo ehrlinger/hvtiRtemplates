@@ -66,6 +66,7 @@ SAS arrangement could not answer, because `%inc` had nothing to pin.
 
 | Function | Returns |
 |----|----|
+| [`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md) | all 55 template jobs, including queued work and dependencies |
 | [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html) | the analysis prefix table: prefix, name, folder, description |
 | [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md) | supported templates: name, prefix, qualifier, folder, file |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
