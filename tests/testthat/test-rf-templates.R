@@ -42,3 +42,12 @@ test_that("rfs-fit refuses a patient with no outcome", {
   expect_error(rf_run("rfs", "fit", c("set", "study-choices", "read"), env, rfs_choices),
                "no time or status")
 })
+
+test_that("rf_skip_unless_stack does not error on a package with no floor", {
+  # "utils" is always installed and has no row in rf_pkg_floors, so this
+  # exercises the no-floor fallback -- the branch a `[[` lookup made
+  # unreachable, since it throws "subscript out of bounds" for a missing
+  # name instead of the NA that `[` returns.
+  expect_no_error(rf_skip_unless_stack("utils"))
+  expect_no_condition(rf_skip_unless_stack("utils"), class = "skip")
+})

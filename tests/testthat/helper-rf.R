@@ -90,8 +90,11 @@ rf_template_packages <- function(prefix, qualifier) {
 # one is recorded, then attaches exactly those packages.
 rf_skip_unless_stack <- function(pkgs) {
   for (pkg in pkgs) {
-    floor <- rf_pkg_floors[[pkg]]
-    if (is.null(floor)) {
+    # Single-bracket indexing on this named character vector returns NA for
+    # an absent name; `[[` throws "subscript out of bounds" instead, which
+    # made the is.null() fallback below unreachable.
+    floor <- rf_pkg_floors[pkg]
+    if (is.na(floor)) {
       testthat::skip_if_not_installed(pkg)
     } else {
       testthat::skip_if_not_installed(pkg, minimum_version = floor)
