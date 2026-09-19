@@ -89,8 +89,8 @@ expected_template_folders <- function(tl) {
 # it, and adding a dependency to reach one helper is a poor trade.
 with_temp_catalog <- function(rows, code) {
   # require_jsonlite(), not testthat::skip_if_not_installed(). The latter skips
-  # silently even under HVTI_ROADMAP_STRICT, so a test built on this could drop out
-  # of the strict step with it still reporting green, which is the defect this
+  # silently, so a test built on this could drop out of R CMD check with the
+  # leg still reporting green, which is the defect this
   # block exists to prevent. require_jsonlite() always stops when missing.
   require_jsonlite()
   path <- tempfile(fileext = ".json")
@@ -109,8 +109,7 @@ with_temp_catalog <- function(rows, code) {
 # The intake guard's logic lives here, as a function returning a VALUE, rather
 # than as assertions inside a loop in the test. A loop over zero rows makes no
 # expectation, testthat reports that as an empty test, and an empty test is a
-# SKIP -- which the strict CI step cannot see, because HVTI_ROADMAP_STRICT only
-# promotes the helper-driven skips. `expect_identical(<this>, character(0))`
+# SKIP -- which a green check does not show. `expect_identical(<this>, character(0))`
 # is an assertion however many rows there are, zero included.
 intake_without_blocker <- function(rows) {
   intake <- Filter(function(r) identical(r$status, "intake"), rows)

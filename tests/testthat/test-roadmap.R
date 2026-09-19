@@ -54,11 +54,10 @@ test_that("an intake row names what it blocks on", {
   # Intake is legitimately EMPTY whenever every proposed prefix has landed, as
   # it did that day when `rfr`, `sid` and `vt` left it, and a `for` over zero
   # rows makes no expectation: testthat reports an empty test as a SKIP, and
-  # the strict CI step cannot see that kind (HVTI_ROADMAP_STRICT promotes only
-  # the helper-driven skips). The logic now lives in intake_without_blocker(),
-  # which returns a value, so this is an assertion at any row count. The
-  # empty case is covered below from a temporary catalog, because CI reads the
-  # real one from a PINNED hvtiR tag and cannot be relied on to be empty.
+  # a green check does not show that kind. The logic now lives in
+  # intake_without_blocker(), which returns a value, so this is an assertion
+  # at any row count. The empty case is covered below from a temporary
+  # catalog, because the real one cannot be relied on to be empty.
   missing <- intake_without_blocker(ledger_rows())
   expect_identical(missing, character(0),
                    label = paste("intake rows with no blocked_on:",

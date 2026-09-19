@@ -68,11 +68,3 @@ jobs:
           upload-snapshots: true
           build_args: 'c("--no-manual")'
 
-      # Keep the source-tree guard for the first CI run. The catalog now
-      # ships in the tarball; compare check-leg skips before retiring it.
-      - name: Run the catalog-reading guards against the source tree
-        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
-        env:
-          HVTI_ROADMAP_STRICT: 1
-        run: testthat::test_local(".", filter = "roadmap|taxonomy", stop_on_failure = TRUE)
-        shell: Rscript {0}

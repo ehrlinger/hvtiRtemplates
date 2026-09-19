@@ -24,7 +24,7 @@ imports this file.
 
 | workflow | fails on |
 |---|---|
-| `R-CMD-check.yaml` | `R CMD check` across platforms. The catalog now ships in the tarball, so catalog-reading tests should run on every leg. The separate source-tree strict step remains for the first CI run; compare its result with each check leg before deciding whether to retire it. |
+| `R-CMD-check.yaml` | `R CMD check` across platforms. The template catalog ships in the tarball, so the catalog-reading tests run on **every** leg: expect `SKIP 0` on macOS and Ubuntu and `SKIP 1` on Windows, the one being `test-add-job.R`'s deliberate `skip_on_os("windows")` (POSIX mode bits do not govern writability there). Any other skip is a gate that stopped running |
 | `check-manual.yaml` | the PDF manual build. ⚠️ **Post-merge only**, see below |
 | `house-style.yaml` | `.claude/house-style.md` drifting from the vault sources it is composed from. The file is generated, so a hand edit fails too |
 | `lint.yaml` | two jobs. `lint`, `lintr::lint_package()`. `docs-current`, **PRs only**: runs `roxygen2::roxygenise()` with roxygen2 pinned and fails if `man/`, `NAMESPACE` or `DESCRIPTION` change, so a PR that skips `devtools::document()` fails here |
@@ -56,12 +56,14 @@ through ten CI runs and two code reviews. Three independent causes, each hidden 
 last. Nothing in a conclusion, a check mark, or a review surfaced it; only the
 per-platform summary lines did.
 
-⚠️ **And a test FILTER silently decides which code paths CI exercises at all.**
-`R-CMD-check.yaml` runs one extra step, scoped to a single matrix leg, that loads the
-package from the source tree. The local catalog ships in the tarball, so these
-tests now run on every check leg as well. Compare their results with the
-separate source-tree step on the first CI run. That step takes a `filter=`
-matched against test-file names (`roadmap|taxonomy`):
+⚠️ **A test FILTER silently decides which code paths CI exercises at all.** This repo ran
+one for four weeks: a strict step, scoped to one matrix leg, that loaded the source tree with
+`filter = "roadmap|taxonomy"`, because the catalog then lived in `hvtiR` and the tarball
+could not see it. **Retired 2026-09-19**, once the catalog shipped in the tarball: the first
+CI run after the move read `SKIP 0 | PASS 2641` on every macOS and Ubuntu leg and
+`SKIP 1 | PASS 2640` on Windows, so the strict step's 23 tests ran everywhere already. Any
+filter you add later carries the same risk, so read every step's summary, not the check
+mark:
 
 ```sh
 gh run view <run-id> --log | grep -E "SKIP [0-9]+ \| PASS"   # read EVERY step, not just the check legs
@@ -76,8 +78,7 @@ PASS 231` on the check legs beside `SKIP 0 | PASS 5` on the strict step, five be
 roadmap file alone. Widened to `"roadmap|taxonomy"` in
 [#98](https://github.com/ehrlinger/hvtiRtemplates/pull/98).
 
-**Widen the filter whenever a test starts reading the catalog**, and when a change adds a
-branch that only runs with the catalog present, assert it: every template shipped today
+**When a change adds a branch that only runs with the catalog present, assert it:** every template shipped today
 sits in the folder `hvti_taxonomy()` names, so catalog and taxonomy agree and a regression
 to taxonomy-only stays green. Drive such a test from a TEMPORARY catalog, so it covers the
 divergent case and does not go stale when the real one is edited. Prove it by mutation, not

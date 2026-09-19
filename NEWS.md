@@ -8,7 +8,9 @@
   is available through `template_catalog()`. Roadmap checks read this local
   catalog, the two CI catalog pins are removed, and the `hvtiRutilities`
   minimum is 1.3.0 for its machine-readable umbrella marker. The separate
-  strict CI check remains until its first run shows whether it is redundant.
+  strict CI step is retired: with the catalog in the tarball, the first CI
+  run showed every check leg running the catalog tests (`SKIP 0` on macOS and
+  Ubuntu; `SKIP 1` on Windows, a deliberate POSIX-permissions skip).
 
 * **The intake-row guard no longer goes quiet when intake is empty.** It
   asserted inside a `for` over the intake rows, so with none left it made no
