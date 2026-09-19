@@ -30,4 +30,14 @@ test_that("malformed scalar fields name the row and field", {
     list(prefix = "ab", sas_breadth = 1.5)
   )), auto_unbox = TRUE), path)
   expect_error(.template_catalog_from(path), "row 1.*sas_breadth")
+  # A JSON boolean or a numeric string is not an integer count, although
+  # as.integer() turns TRUE into 1 and "3" into 3 without complaint.
+  writeLines(jsonlite::toJSON(list(templates = list(
+    list(prefix = "ab", r_jobs = TRUE)
+  )), auto_unbox = TRUE), path)
+  expect_error(.template_catalog_from(path), "row 1.*r_jobs")
+  writeLines(jsonlite::toJSON(list(templates = list(
+    list(prefix = "ab", r_jobs = "3")
+  )), auto_unbox = TRUE), path)
+  expect_error(.template_catalog_from(path), "row 1.*r_jobs")
 })

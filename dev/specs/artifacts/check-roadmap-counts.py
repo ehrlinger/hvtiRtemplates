@@ -70,7 +70,9 @@ def check_schema(rows):
                        f"unqualified template, else a string [A-Za-z0-9_]+")
         for field in INT_OR_NULL_FIELDS:
             v = r.get(field)
-            if v is not None and not isinstance(v, int):
+            # bool is a subclass of int, so isinstance(True, int) is True; a
+            # JSON true in a count field must still fail (Codex review, #134).
+            if v is not None and (not isinstance(v, int) or isinstance(v, bool)):
                 bad.append(f"`{where}` has non-integer {field} {v!r}; "
                            f"use null for unmeasured")
         # Keyed on (prefix, qualifier), not prefix alone. `graphs/dp` is

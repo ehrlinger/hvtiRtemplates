@@ -50,8 +50,12 @@ template_catalog <- function() {
     vapply(seq_along(raw), function(i) {
       value <- scalar(raw[[i]], i, field)
       if (is.null(value)) return(NA_integer_)
-      result <- suppressWarnings(as.integer(value))
-      if ((is.na(result) && !is.na(value)) ||
+      # Require a JSON number before coercing. as.integer() accepts TRUE as 1
+      # and "3" as 3, so without this a boolean or a string count passed as an
+      # integer instead of erroring (Codex review on #134).
+      result <- if (is.numeric(value)) suppressWarnings(as.integer(value)) else NA_integer_
+      if (!is.numeric(value) ||
+            (is.na(result) && !is.na(value)) ||
             (!is.na(result) && !identical(as.numeric(value), as.numeric(result)))) {
         stop("template_catalog(): row ", i, " (prefix '", raw[[i]]$prefix,
              "') gives '", value, "' for '", field,
