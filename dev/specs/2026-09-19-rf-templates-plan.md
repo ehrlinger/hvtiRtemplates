@@ -43,7 +43,7 @@
 | `.lintr` | six file keys |
 | `inst/templates/README.md` | six table rows and the migration mapping |
 | `NEWS.md` | one unreleased entry |
-| `dev/specs/2026-09-17-ml-family-roadmap-design.md` | re-rendered generated tables, by script only |
+|  `dev/specs/2026-08-29-template-conversion-roadmap.md` | re-rendered generated tables, by script only |
 
 ---
 
@@ -161,7 +161,7 @@ Expected: all PASS. `test-template-catalog-rules.R` checks that every `uses` ent
 - [ ] **Step 8: Commit**
 
 ```bash
-git add inst/extdata/templates.json DESCRIPTION tests/testthat/test-template-catalog.R dev/specs/2026-09-17-ml-family-roadmap-design.md
+git add inst/extdata/templates.json DESCRIPTION tests/testthat/test-template-catalog.R tests/testthat/test-template-catalog-rules.R dev/specs/2026-08-29-template-conversion-roadmap.md
 git commit -m "catalog: split rfs/rfc/rfr into fit and explain rows
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
