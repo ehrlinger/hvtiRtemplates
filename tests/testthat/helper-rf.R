@@ -113,3 +113,14 @@ rf_env <- function(data, .local_envir = parent.frame()) {
   env$read_built <- function(...) data
   env
 }
+
+# An explain job needs a fit in the same set first; this runs one. Defined
+# here rather than in test-rf-templates.R so it resolves rf_env/rf_run in the
+# SAME file: object_usage_linter's codetools check only runs on `function(...)`
+# literals (not on a block passed to test_that()), and it resolves symbols
+# from the file's own top-level bindings, not across test files.
+rf_fit_first <- function(prefix, data, choices, .local_envir = parent.frame()) {
+  env <- rf_env(data, .local_envir)
+  rf_run(prefix, "fit", c("set", "study-choices", "read", "fit", "save"), env, choices)
+  env
+}

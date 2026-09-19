@@ -467,7 +467,7 @@ test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
 
   for (pkg in c(
     "hvtiRbootstrap", "hvtiRdatabuild", "hvtiRlifetables", "hvtiPlotR",
-    "hvtiRtables", "randomForestSRC", "ggRandomForests"
+    "hvtiRtables", "randomForestSRC", "ggRandomForests", "varPro"
   )) {
     floors <- package_version(character(0))
     pat <- paste0('packageVersion\\("', pkg, '"\\)\\s*<\\s*"[0-9.]+"')
