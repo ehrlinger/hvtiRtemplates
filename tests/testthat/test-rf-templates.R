@@ -9,7 +9,7 @@ rfs_choices <- list(TIME = "time", STATUS = "status",
                     NTREE = 50, SEED = 1)
 
 test_that("rfs-fit grows a survival forest and saves the handoff", {
-  rf_skip_unless_stack()
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
   env <- rf_env(rfs_data())
   rf_run("rfs", "fit", c("set", "study-choices", "read", "fit", "diagnostics", "save"), env, rfs_choices)
 
@@ -26,7 +26,7 @@ test_that("rfs-fit grows a survival forest and saves the handoff", {
 })
 
 test_that("rfs-fit refuses a status that is not 0/1", {
-  rf_skip_unless_stack()
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
   d <- rfs_data()
   d$status <- d$status + 1L   # 1/2 coding: randomForestSRC would read 2 as a competing event
   env <- rf_env(d)
@@ -35,7 +35,7 @@ test_that("rfs-fit refuses a status that is not 0/1", {
 })
 
 test_that("rfs-fit refuses a patient with no outcome", {
-  rf_skip_unless_stack()
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
   d <- rfs_data()
   d$time[3] <- NA
   env <- rf_env(d)

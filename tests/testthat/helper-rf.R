@@ -61,17 +61,45 @@ rf_run <- function(prefix, qualifier, labels, env, choices = list()) {
   invisible(env)
 }
 
-rf_skip_unless_stack <- function() {
-  testthat::skip_if_not_installed("randomForestSRC", minimum_version = "3.7.0")
-  testthat::skip_if_not_installed("varPro", minimum_version = "3.2.0")
-  testthat::skip_if_not_installed("ggRandomForests", minimum_version = "4.0.0")
-  testthat::skip_if_not_installed("hvtiRutilities", minimum_version = "1.3.0")
-  suppressPackageStartupMessages({
-    library(randomForestSRC)
-    library(varPro)
-    library(ggRandomForests)
-    library(hvtiRutilities)
-  })
+# Version floors verified end-to-end on 2026-09-19. Keyed by package name so
+# a package a template does not use is never looked up here.
+rf_pkg_floors <- c(
+  randomForestSRC  = "3.7.0",
+  varPro           = "3.2.0",
+  ggRandomForests  = "4.0.0",
+  hvtiRutilities   = "1.3.0"
+)
+
+# Parses the `library(...)` calls out of a template's own `setup` chunk, so
+# a test attaches exactly what the template attaches -- never a fixed stack
+# borrowed from whichever template was written first. This is what makes a
+# template that forgets a `library()` call in its own setup fail ITS OWN
+# tests instead of riding on a package a sibling test happened to attach
+# earlier in the session -- the coverage hole AGENTS.md records biting
+# hvtiRlifetables. It is also what keeps a fit template (no varPro) from
+# skipping on a varPro problem it does not have.
+rf_template_packages <- function(prefix, qualifier) {
+  src <- readLines(template_path(prefix, qualifier), warn = FALSE)
+  setup <- rf_chunk(src, "setup")
+  calls <- regmatches(setup, regexpr("library\\([[:alnum:].]+\\)", setup))
+  calls <- calls[nzchar(calls)]
+  sub("^library\\(([[:alnum:].]+)\\)$", "\\1", calls)
+}
+
+# Skips only on the packages `pkgs` names, at the floor recorded above when
+# one is recorded, then attaches exactly those packages.
+rf_skip_unless_stack <- function(pkgs) {
+  for (pkg in pkgs) {
+    floor <- rf_pkg_floors[[pkg]]
+    if (is.null(floor)) {
+      testthat::skip_if_not_installed(pkg)
+    } else {
+      testthat::skip_if_not_installed(pkg, minimum_version = floor)
+    }
+  }
+  suppressPackageStartupMessages(
+    for (pkg in pkgs) library(pkg, character.only = TRUE)
+  )
 }
 
 # A fresh environment whose read_built() returns `data` instead of reading a
