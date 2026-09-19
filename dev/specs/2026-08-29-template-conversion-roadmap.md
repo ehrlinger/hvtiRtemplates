@@ -5,9 +5,8 @@
 **Design:** `2026-08-29-template-conversion-roadmap-design.md`, which argues
 every decision recorded here. Read it before changing anything.
 
-The taxonomy names 42 analysis prefixes and three more are proposed. Nine
-templates ship. This is the queue for the rest, and the ledger behind it is
-`inst/extdata/jobs.json` in `ehrlinger/hvtiR`, not anything in this repo.
+The catalog records 55 template rows across 44 prefixes; 14 templates ship.
+This is the queue for the rest, backed by `inst/extdata/templates.json` here.
 
 ## How to read this
 
@@ -29,10 +28,8 @@ exemplars, which is a finding, not a gap.
 
 ## Changing this document
 
-Do not hand-edit the generated tables. The catalog moved out of this repo: it now lives at
-`inst/extdata/jobs.json` in `ehrlinger/hvtiR`. Editing the copy that used to live here does
-nothing, because the renderer no longer reads it. Edit the catalog in `hvtiR`, resolved either
-through the `HVTI_JOBS` environment variable or a sibling checkout (`../hvtiR`), then run:
+Do not hand-edit the generated tables. Edit `inst/extdata/templates.json`,
+then run:
 
 ```sh
 python3 dev/specs/artifacts/roadmap_render.py
@@ -43,11 +40,11 @@ row has no template on disk.
 
 <!-- BEGIN GENERATED -->
 
-> Generated from the job catalog in `hvtiR` (`inst/extdata/jobs.json`) by
+> Generated from this package's template catalog (`inst/extdata/templates.json`) by
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**47 templates in scope**, of which 14 exist on disk.
+**55 templates in scope**, of which 14 exist on disk.
 
 ## By family
 
@@ -89,7 +86,11 @@ row has no template on disk.
 | `mp` | queued | 82 | 41 | 4 | — |
 | `np` | queued | 248 | 241 | 45 | — |
 | `rp` | queued | 76 | 68 | 5 | — |
+| `ce` | queued | 131 | 128 | 1 | hvtiPlotR#134 |
+| `cp` | queued | 5 | 4 | 1 | hvtiPlotR#135 |
 | `dp-boxplot` | queued | — | 9 | 2 | — |
+| `fp` | queued | 19 | 11 | 11 | hvtiPlotR#133 |
+| `gp` | queued | 50 | 50 | 2 | hvtiPlotR#136 |
 
 ### descriptive (batches 3–4)
 
@@ -101,15 +102,19 @@ row has no template on disk.
 | `dc-dead` | queued | — | 171 | 0 | — |
 | `lg` | queued | 367 | 362 | 0 | — |
 | `rg` | queued | 45 | 45 | 0 | — |
+| `dc-stddiff` | queued | — | 120 | 0 | hvtiRpropensity#34 |
 | `dc-trends` | queued | — | 43 | 0 | — |
 
 ### machine-learning (unscheduled)
 
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
+| `nb` | queued | 21 | 18 | 19 | ggBoostedTrees#9 |
 | `rfc` | queued | 19 | 11 | 12 | — |
 | `rfr` | queued | — | — | — | — |
 | `rfs` | queued | 25 | 9 | 10 | — |
+| `sid` | queued | — | — | — | hvtiRforests#1 |
+| `vt` | queued | — | — | — | hvtiRforests#1 |
 
 ### models (batch 6)
 
@@ -150,7 +155,7 @@ row has no template on disk.
 
 ## By workflow
 
-A workflow spans the whole family, not just this repo's rows: a member owed by another package still counts toward the denominator below, and is marked with the package that owes it. That member is complete when that package ships the function, which this repo cannot see, so its `disposition` stands in -- `retire` means the function already exists in the owning package, `build` means it does not yet.
+A workflow spans all template rows in this package. A member is complete when its template is shipped, being revisited, or in flight.
 
 ### hazard-chain — 5/5
 
@@ -160,9 +165,9 @@ Members: `ac`, `hm`, `hp`, `hs`, `hz`
 
 ### propensity-matching — 2/9
 
-Members: `bd`, `bl`, `cm`, `dc-stddiff` (hvtiRpropensity), `hp`, `lm`, `lp`, `rm`, `rp`
+Members: `bd`, `bl`, `cm`, `dc-stddiff`, `hp`, `lm`, `lp`, `rm`, `rp`
 
-Outstanding here: `bd`, `cm`, `lm`, `lp`, `rm`, `rp`; owed by another package: `dc-stddiff` (hvtiRpropensity).
+Outstanding: `bd`, `cm`, `dc-stddiff`, `lm`, `lp`, `rm`, `rp`.
 
 <!-- END GENERATED -->
 

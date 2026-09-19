@@ -39,14 +39,14 @@ on:
       - 'inst/templates/**'
       - '.github/workflows/spec-counts.yaml'
       - '.github/workflows/R-CMD-check.yaml'
-      - 'tools/check_pin_currency.py'
+      - 'inst/extdata/templates.json'
   pull_request:
     paths:
       - 'dev/specs/**'
       - 'inst/templates/**'
       - '.github/workflows/spec-counts.yaml'
       - '.github/workflows/R-CMD-check.yaml'
-      - 'tools/check_pin_currency.py'
+      - 'inst/extdata/templates.json'
 
 permissions: read-all
 
@@ -58,29 +58,9 @@ jobs:
         with:
           persist-credentials: false
 
-      # The job catalog check-roadmap-counts.py reads no longer lives in this
-      # repo -- it moved to the sibling package hvtiR, at
-      # inst/extdata/jobs.json. This checkout puts a copy where HVTI_JOBS can
-      # point at it, pinned to a tag rather than hvtiR's main so that editing
-      # the catalog in that repo cannot fail every pull request here.
-      - uses: actions/checkout@v4
-        with:
-          repository: ehrlinger/hvtiR
-          ref: v1.1.15
-          path: .hvtiR
-          persist-credentials: false
-
-      - run: echo "HVTI_JOBS=$GITHUB_WORKSPACE/.hvtiR/inst/extdata/jobs.json" >> "$GITHUB_ENV"
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-
-      # First, because every check below reads the catalog these two
-      # workflows pin. If they disagree, the rest are validating
-      # against a catalog that is arbitrary between them.
-      - name: The two hvtiR pins agree with each other
-        run: python3 tools/check_pin_currency.py
 
       - name: Spec prose agrees with the generated map
         run: python3 dev/specs/artifacts/check-spec-counts.py

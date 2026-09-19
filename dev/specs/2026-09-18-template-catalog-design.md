@@ -1,8 +1,8 @@
 # The template catalog: every job type is a template here
 
 **Date:** 2026-09-18
-**Status:** Draft for approval. The model in §2 and four of the five questions
-in §9 were decided by John Ehrlinger on 2026-09-18; §9 question 4 stays open.
+**Status:** Approved by John Ehrlinger on 2026-09-18. All §9 questions are
+settled; question 4 was answered by step 1's first CI run on 2026-09-19.
 **Supersedes, once approved:** `hvtiR:dev/specs/2026-09-04-job-catalog-design.md`,
 which moved this catalog to `hvtiR` as a routing table.
 
@@ -216,11 +216,13 @@ asked for**: step 0's guard fails any edit to `hvtiR`'s `jobs.json` until step
 
 **Open:**
 
-4. **Is the separate strict CI step still needed** once the catalog ships in
-   the tarball? It exists because the check legs could not see the catalog.
-   Measure it on step 1's first CI run: if every check leg then reads
-   `SKIP 0` for the catalog-reading tests, the step is redundant. Keep it
-   until that run says so.
+4. **The separate strict CI step is retired** (John, 2026-09-19). It existed
+   because the check legs could not see the catalog. Step 1's first CI run
+   (`1389a1e`) measured every check leg with the catalog in the tarball:
+   `SKIP 0 | PASS 2641` on macOS and all three Ubuntu legs, and
+   `SKIP 1 | PASS 2640` on Windows, the one skip being `test-add-job.R`'s
+   deliberate `skip_on_os("windows")`. The strict step's 23 tests
+   (`SKIP 0 | PASS 23`) were therefore already running everywhere.
 
 ## 10. Out of scope
 

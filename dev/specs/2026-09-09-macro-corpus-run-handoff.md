@@ -88,6 +88,12 @@ Two findings that change what to expect:
 
 ## 4. The catalog is the deliverable, and it answers two questions
 
+**2026-09-18 update:** The scan now reads this package's
+`inst/extdata/templates.json`. Every cataloged job is owed by
+`hvtiRtemplates`; its output lists qualified `template_rows` per prefix and
+uses `no_template_row` for unmatched prefixes. The `jobs.json` routing
+description below records the original September 9 run.
+
 `res["catalog"]`, one row per prefix. The two landing questions have **different
 authorities** and conflating them is the trap this scan started from:
 

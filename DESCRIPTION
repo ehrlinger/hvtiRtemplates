@@ -25,7 +25,8 @@ Depends:
     R (>= 4.1.0)
 Imports:
     digest,
-    hvtiRutilities (>= 1.2.1),
+    hvtiRutilities (>= 1.3.0),
+    jsonlite,
     stats
 Remotes:
     ehrlinger/hvtiRutilities,
@@ -34,16 +35,19 @@ Remotes:
     ehrlinger/hvtiRbootstrap,
     ehrlinger/hvtiRlifetables,
     ehrlinger/hvtiPlotR,
-    ehrlinger/TemporalHazard
+    ehrlinger/TemporalHazard,
+    ehrlinger/ggRandomForests,
+    ehrlinger/hvtiRpropensity
 Suggests:
     arrow,
+    ggRandomForests,
     ggplot2,
     hvtiPlotR (>= 2.7.14),
     hvtiRtables (>= 1.0.1),
     hvtiRdatabuild (>= 0.2.1),
     hvtiRbootstrap (>= 0.9.3),
     hvtiRlifetables (>= 0.1.2),
-    jsonlite,
+    hvtiRpropensity,
     knitr,
     officer,
     patchwork (>= 1.1.0),

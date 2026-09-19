@@ -68,6 +68,7 @@ answer, because `%inc` had nothing to pin.
 
 | Function | Returns |
 |---|---|
+| `template_catalog()` | all 55 template jobs, including queued work and dependencies |
 | `hvti_taxonomy()` | the analysis prefix table: prefix, name, folder, description |
 | `template_list()` | supported templates: name, prefix, qualifier, folder, file |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |

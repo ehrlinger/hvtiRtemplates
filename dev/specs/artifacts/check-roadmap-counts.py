@@ -1,25 +1,5 @@
 #!/usr/bin/env python3
-"""Fail if the job catalog disagrees with the templates on disk.
-
-The catalog is authoritative for status, family and batch; `inst/templates/`
-is authoritative for what actually ships. This checks they agree, in both
-directions -- a row claiming a template that is absent is a lie, and a
-template no row claims is a template nobody scheduled.
-
-The catalog itself no longer lives in this repo. It moved to the sibling
-package `hvtiR` (`inst/extdata/jobs.json`), which now owns every job type
-across the family and routes each one to the package that owes it. This
-script only cares about the rows routed here; `roadmap_render.load_catalog()`
-does both the path resolution and the routing filter, so both scripts share
-one copy of that logic instead of two that can drift.
-
-Deliberately does NOT read `hvti_taxonomy()`. That needs R, and this runs in a
-Python step. The vocabulary check lives in `tests/testthat/test-roadmap.R`,
-where R is already present. Splitting them keeps each guard in the language
-that already has what it needs.
-
-Exit 0 = agree. Exit 1 = drift, with every mismatch listed.
-"""
+"""Check the local template catalog against the files and roadmap on disk."""
 import os
 import re
 import sys
@@ -38,7 +18,7 @@ FIELDS = ["prefix", "qualifier", "name", "folder", "family", "kind", "status",
           "batch", "sas_breadth", "sas_breadth_jobs", "r_exemplars",
           "r_jobs", "upstream",
           "downstream", "workflows", "blocked_on", "spec", "note",
-          "disposition", "destination", "replaced_by"]
+          "disposition", "uses"]
 
 # A row in one of these states asserts a template exists on disk. Every other
 # state asserts it does not. `revisit` counts as shipped: the file is there and
@@ -90,7 +70,9 @@ def check_schema(rows):
                        f"unqualified template, else a string [A-Za-z0-9_]+")
         for field in INT_OR_NULL_FIELDS:
             v = r.get(field)
-            if v is not None and not isinstance(v, int):
+            # bool is a subclass of int, so isinstance(True, int) is True; a
+            # JSON true in a count field must still fail (Codex review, #134).
+            if v is not None and (not isinstance(v, int) or isinstance(v, bool)):
                 bad.append(f"`{where}` has non-integer {field} {v!r}; "
                            f"use null for unmeasured")
         # Keyed on (prefix, qualifier), not prefix alone. `graphs/dp` is
