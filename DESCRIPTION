@@ -37,10 +37,12 @@ Remotes:
     ehrlinger/hvtiPlotR,
     ehrlinger/TemporalHazard,
     ehrlinger/ggRandomForests,
-    ehrlinger/hvtiRpropensity
+    ehrlinger/hvtiRpropensity,
+    ehrlinger/randomForestSRC,
+    ehrlinger/varPro
 Suggests:
     arrow,
-    ggRandomForests,
+    ggRandomForests (>= 4.0.0),
     ggplot2,
     hvtiPlotR (>= 2.7.14),
     hvtiRtables (>= 1.0.1),
@@ -52,8 +54,10 @@ Suggests:
     officer,
     patchwork (>= 1.1.0),
     quarto,
+    randomForestSRC (>= 3.7.0),
     TemporalHazard (>= 1.2.8),
     testthat (>= 3.0.0),
+    varPro (>= 3.2.0),
     withr
 VignetteBuilder: quarto
 Config/testthat/edition: 3

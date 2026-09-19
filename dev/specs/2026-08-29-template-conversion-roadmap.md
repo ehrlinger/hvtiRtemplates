@@ -44,7 +44,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**55 templates in scope**, of which 14 exist on disk.
+**58 templates in scope**, of which 14 exist on disk.
 
 ## By family
 
@@ -110,9 +110,12 @@ row has no template on disk.
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
 | `nb` | queued | 21 | 18 | 19 | ggBoostedTrees#9 |
-| `rfc` | queued | 19 | 11 | 12 | — |
-| `rfr` | queued | — | — | — | — |
-| `rfs` | queued | 25 | 9 | 10 | — |
+| `rfc-explain` | queued | — | — | — | — |
+| `rfc-fit` | queued | 19 | 11 | 12 | — |
+| `rfr-explain` | queued | — | — | — | — |
+| `rfr-fit` | queued | — | — | 6 | — |
+| `rfs-explain` | queued | — | — | — | — |
+| `rfs-fit` | queued | 25 | 9 | 10 | — |
 | `sid` | queued | — | — | — | hvtiRforests#1 |
 | `vt` | queued | — | — | — | hvtiRforests#1 |
 
