@@ -30,8 +30,8 @@ test_that("numbered migrated jobs save and embed figures in their logical folder
     ))
     eval(numbered_output_chunk(job, "set"), env)
     if (trends) {
+      eval(numbered_output_chunk(job, "study-choices"), env)
       capture.output(eval(numbered_output_chunk(job, "data"), env))
-      eval(numbered_output_chunk(job, "trends"), env)
       eval(numbered_output_chunk(job, "helpers"), env)
     } else {
       env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))

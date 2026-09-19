@@ -694,6 +694,9 @@ test_that("the hz template reads theta names through TemporalHazard's exported A
   env <- new.env()
   suppressPackageStartupMessages(library(TemporalHazard))
   local_mocked_bindings(kable = function(x, ...) x, .package = "knitr")
+  choices_at <- grep("#| label: study-choices", src, fixed = TRUE)
+  choices_end <- choices_at + which(src[(choices_at + 1L):length(src)] == "```")[1L]
+  eval(parse(text = src[(choices_at + 1L):(choices_end - 1L)]), envir = env)
   eval(parse(text = chunk), envir = env)
   expect_identical(env$theta_table$parameter, TemporalHazard::hzr_theta_names(env$phases))
   expect_gt(nrow(env$theta_table), 0L)

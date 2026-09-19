@@ -35,8 +35,8 @@ test_that("dp-trends migrates explicit year and ordered trend intent into execut
   expect_true("d$year <- floor(d$iv_opyrs) + 1985" %in% txt)
   expect_true("XBREAKS <- seq(1985, 2025, 5)" %in% txt)
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config))
+  eval(trends_chunk(out, "study-choices"), env)
   capture.output(eval(trends_chunk(out, "data"), env))
-  eval(trends_chunk(out, "trends"), env)
   eval(trends_chunk(out, "helpers"), env)
   expect_identical(env$DATASET, "study")
   expect_equal(env$d$year, 1986:2025)
@@ -106,8 +106,8 @@ test_that("dp-trends executes its plotting engine and retains long-data and subg
     labs = ggplot2::labs, scale_y_continuous = ggplot2::scale_y_continuous, scale_x_continuous = ggplot2::scale_x_continuous,
     coord_cartesian = ggplot2::coord_cartesian
   ))
+  eval(trends_chunk(out, "study-choices"), env)
   capture.output(eval(trends_chunk(out, "data"), env))
-  eval(trends_chunk(out, "trends"), env)
   eval(trends_chunk(out, "helpers"), env)
   # Run the template's own set_path closure; only current_input is naturally
   # absent when chunks execute outside knitr, as its documented guard allows.

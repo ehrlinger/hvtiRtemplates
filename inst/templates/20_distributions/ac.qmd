@@ -173,6 +173,29 @@ set_path <- function(kind, file) {
 # saveRDS(fit, set_path("estimates", "ac.rds"))
 ```
 
+## Study choices
+
+Edit these values for this study before rendering.
+
+```{r}
+#| label: study-choices
+# EDIT: each derived category and its source variable.
+DERIVED <- c(cat_a = "src_a")
+
+# EDIT: stratification variables.
+STRATA <- c("cat_a")
+
+# EDIT: time and status variables.
+TIME   <- "iv_dead"
+
+STATUS <- "dead"
+
+# EDIT: reporting horizons and their labels.
+grid <- c(30 / 365.2425, 0.5, 1, 5, 10)
+
+labs <- c("30 days", "6 months", "1 year", "5 years", "10 years")
+```
+
 ## Cohort
 
 <!-- EDIT: this chunk, choosing ONE of the two shapes below.
@@ -283,8 +306,7 @@ knitr::kable(as.data.frame(table(cat_a = d$cat_a), stringsAsFactors = FALSE))
 #     source variable is missing keeps the INITIAL value and silently joins the
 #     top category. That is a missingness stratum wearing a clinical label.
 
-# EDIT: each derived category and the variable it was derived FROM.
-DERIVED <- c(cat_a = "src_a")
+# Each derived category names the variable it was derived FROM.
 
 # DERIVED is maintained by hand and can drift from derive_cats() above -- a
 # category renamed there, or a source renamed here. Either way d[[src]] is NULL,
@@ -351,9 +373,7 @@ choice, so it is not marked as an edit; change it only if your job overrides
 #| label: km-helpers
 CLEVEL <- 0.68268948
 
-# EDIT: your time and status variables.
-TIME   <- "iv_dead"
-STATUS <- "dead"
+# your time and status variables.
 
 km_fit <- function(dd) {
   ok <- !is.na(dd[[TIME]]) & !is.na(dd[[STATUS]])
@@ -475,10 +495,8 @@ at or before each horizon.
 
 ```{r}
 #| label: horizons
-# EDIT: your reporting horizons, in the time unit of TIME (years here).
+# your reporting horizons, in the time unit of TIME (years here).
 # A wrong grid does not error — it produces a plausible-looking table.
-grid <- c(30 / 365.2425, 0.5, 1, 5, 10)
-labs <- c("30 days", "6 months", "1 year", "5 years", "10 years")
 
 at_horizon <- function(fit, g) {
   i <- which(fit$time <= g)
@@ -521,8 +539,8 @@ stratum_row <- function(s) {
   )
 }
 
-# EDIT: your stratification variables.
-for (v in c("cat_a")) {
+# your stratification variables.
+for (v in STRATA) {
   fit <- km_by(d, v)
   print(knitr::kable(
     do.call(rbind, lapply(split(fit, fit$stratum), stratum_row)),

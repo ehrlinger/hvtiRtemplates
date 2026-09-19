@@ -199,6 +199,33 @@ set_path <- function(kind, file) {
 # set, so a model can never be filed against a different set than the shapes it
 # was built on. The write is in the `save` chunk at the foot of this file.
 ```
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+```{r}
+#| label: study-choices
+# Follow-up column and prediction horizons.
+# EDIT: time and prediction horizons.
+TIME     <- "iu_dead"
+
+HORIZONS <- c(1, 5, 10)
+
+# Population survival matching columns and life table.
+# EDIT: population survival matching and life table settings.
+AGE_COL   <- "age"
+
+MALE_COL  <- "male"
+
+OTHER_COL <- "other"
+
+VINTAGE   <- NULL
+
+TABLE     <- "sexrace"
+
+SCALE     <- "years"
+```
 ## Cohort and model
 
 <!-- EDIT: choose the cohort shape, exactly as the `hm` job did.
@@ -262,8 +289,6 @@ if (length(missing_cols)) {
 
 ```{r}
 #| label: horizons
-TIME     <- "iu_dead"
-HORIZONS <- c(1, 5, 10)
 
 # A `hazard` object carries `call`, `call_env`, `spec`, `data`, `fit`,
 # `legacy_args` and `engine` -- there is NO `formula` slot, and `spec` holds
@@ -450,12 +475,6 @@ knitr::kable(summary_tbl, row.names = FALSE, digits = 4,
 
 ```{r}
 #| label: expected
-AGE_COL   <- "age"
-MALE_COL  <- "male"
-OTHER_COL <- "other"
-VINTAGE   <- NULL
-TABLE     <- "sexrace"
-SCALE     <- "years"
 
 # Two failure modes, both caught here rather than inside us_matched(): unset,
 # and set to something that is not a vintage. The second matters because the

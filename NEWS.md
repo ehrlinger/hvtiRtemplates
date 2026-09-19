@@ -1,5 +1,9 @@
 # hvtiRtemplates (unreleased)
 
+* All 14 shipped job templates put editable study choices in one chunk near
+  the top. Reading data and building output happen below those choices; SAS
+  migration continues to fill the same settings.
+
 * The 55-row template catalog now ships as `inst/extdata/templates.json` and
   is available through `template_catalog()`. Roadmap checks read this local
   catalog, the two CI catalog pins are removed, and the `hvtiRutilities`
