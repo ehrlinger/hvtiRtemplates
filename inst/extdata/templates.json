@@ -824,7 +824,7 @@
       "folder": "analyses",
       "family": "machine-learning",
       "kind": "job",
-      "status": "queued",
+      "status": "shipped",
       "batch": null,
       "sas_breadth": 25,
       "r_exemplars": 10,
