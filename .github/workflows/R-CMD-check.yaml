@@ -44,6 +44,12 @@ jobs:
           use-public-rspm: always
           rtools-version: '44'
 
+      # Posit macOS binaries such as gdtools link against libXrender under
+      # /opt/X11. GitHub's macOS runner does not include that runtime.
+      - name: Install XQuartz on macOS
+        if: runner.os == 'macOS'
+        run: brew install --cask xquartz
+
       # DESCRIPTION carries real dependencies -- hvtiRutilities via Remotes:
       # plus stats under Imports -- and jsonlite, quarto, and testthat under
       # Suggests. setup-r-dependencies detects the .qmd files and installs the
