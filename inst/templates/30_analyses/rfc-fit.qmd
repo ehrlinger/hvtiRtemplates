@@ -276,8 +276,12 @@ cached there on its own, so it can be recomputed without regrowing the forest.
 err <- gg_error(forest)
 plot(err)
 
-# Out-of-bag ROC curve, and the area under it.
-roc <- gg_roc(forest)
+# Out-of-bag ROC curve, and the area under it. which_outcome = 2 names the
+# second factor level, the event under a 0/1 or "no"/"yes" coding; ggRandomForests
+# does not yet support "all" for a classification forest and falls back to class
+# 1 with a warning otherwise. A study whose outcome carries more than two
+# levels must name the class it cares about here.
+roc <- gg_roc(forest, which_outcome = 2)
 plot(roc)
 auc <- calc_auc(roc)
 auc

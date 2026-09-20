@@ -250,6 +250,9 @@ plot(gg_vimp(vi))
 
 # A classification forest reports importance per class as well as overall;
 # the ranking uses the overall column, so no variable is counted twice.
+#
+# Minimal depth ranks by how near the root a variable first splits, a second
+# opinion that needs no permutation. Cheap, so not cached.
 imp <- vi$importance[, "all"]
 ranked <- names(sort(imp, decreasing = TRUE))
 depth <- max.subtree(forest)$order[, 1]
