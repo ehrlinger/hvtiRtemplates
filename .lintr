@@ -137,5 +137,15 @@ exclusions: list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
+    ),
+    "inst/templates/30_analyses/rfr-fit.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
+    "inst/templates/30_analyses/rfr-explain.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
     )
   )

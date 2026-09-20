@@ -193,3 +193,38 @@ test_that("no explain template grows a forest", {
     expect_false(any(grepl(grows_forest, code)), info = basename(f))
   }
 })
+
+# Regression data for rfr: airquality's Ozone against the other columns, with
+# the rows missing an outcome dropped -- na.impute below covers the predictors.
+rfr_data <- function() datasets::airquality[!is.na(datasets::airquality$Ozone), ]
+rfr_choices <- list(RESPONSE = "Ozone", PREDICTORS = c("Solar.R", "Wind", "Temp", "Month", "Day"),
+                    NTREE = 50, SEED = 1, NA_ACTION = "na.impute")
+
+test_that("rfr-fit grows a regression forest, imputing missing predictors", {
+  rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
+  env <- rf_env(rfr_data())
+  rf_run("rfr", "fit", c("set", "study-choices", "read", "fit", "diagnostics", "save"), env, rfr_choices)
+  expect_identical(env$forest$family, "regr")
+  expect_identical(env$forest$n, nrow(rfr_data()))   # na.impute kept every patient
+  expect_true(file.exists(file.path(env$CACHE_DIR, "rfr.rds")))
+  for (p in list(env$err, env$pred)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
+})
+
+test_that("rfr-fit refuses a non-numeric outcome", {
+  rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
+  d <- rfr_data()
+  d$Ozone <- factor(d$Ozone)
+  env <- rf_env(d)
+  expect_error(rf_run("rfr", "fit", c("set", "study-choices", "read"), env, rfr_choices), "must be numeric")
+})
+
+test_that("rfr-explain runs VarPro on a forest grown with missing predictors", {
+  rf_skip_unless_stack(rf_template_packages("rfr", "explain"))
+  fit_env <- rf_fit_first("rfr", rfr_data(), rfr_choices)
+  env <- new.env(parent = globalenv())
+  env$.root <- fit_env$.root
+  rf_run("rfr", "explain", explain_labels, env, list(TOP_K = 2, SEED = 1))
+  expect_true(anyNA(env$frame))   # the raw training data, not imputed.data
+  expect_s3_class(env$vp, "varpro")
+  for (p in list(env$pd, env$pv)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
+})
