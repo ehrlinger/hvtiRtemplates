@@ -20,8 +20,8 @@ format:
 ---
 
 <!-- EDIT: name the job this replaces (an `rfsrc.*` or `rf.*` job with a
-     continuous outcome), and say which outcome and candidate
-     predictors it used. -->
+     continuous outcome), and say which outcome and candidate predictors it
+     used. -->
 
 Replaces `analyses/<job>`: describe its outcome and candidate predictors here.
 
@@ -146,7 +146,7 @@ if (!is.null(.cur)) {
 
 ```{r}
 #| label: set
-ENDPOINT <- "dead"
+ENDPOINT <- "los"
 TYPE     <- "rfr"
 
 # `add_job()` writes ENDPOINT/TYPE from the same values it put in this file's

@@ -144,7 +144,7 @@ if (!is.null(.cur)) {
 
 ```{r}
 #| label: set
-ENDPOINT <- "dead"
+ENDPOINT <- "los"
 TYPE     <- "rfr"
 
 # `add_job()` writes ENDPOINT/TYPE from the same values it put in this file's

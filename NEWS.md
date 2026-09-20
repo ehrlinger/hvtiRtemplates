@@ -1,6 +1,15 @@
 # hvtiRtemplates (unreleased)
 
-* All 14 shipped job templates put editable study choices in one chunk near
+* Six random forest templates: `rfs`, `rfc` and `rfr`, for survival,
+  classification and continuous outcomes, each as a `fit` job and an `explain`
+  job. The fit job grows the forest through `hvtiRutilities::cache_fit()` and
+  saves it for the explain job, which reads it back for VIMP, VarPro and
+  dependence plots and never refits. Old `rfsrc.*` and `rf.*` jobs map onto
+  the three by outcome; `inst/templates/README.md` has the table.
+  `randomForestSRC (>= 3.7.0)` and `varPro (>= 3.2.0)` join Suggests, and
+  `ggRandomForests` rises to `>= 4.0.0`.
+
+* All 20 shipped job templates put editable study choices in one chunk near
   the top. Reading data and building output happen below those choices; SAS
   migration continues to fill the same settings.
 
