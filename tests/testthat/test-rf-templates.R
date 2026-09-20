@@ -43,6 +43,26 @@ test_that("rfs-fit refuses a patient with no outcome", {
                "no time or status")
 })
 
+test_that("rfs-fit refuses outcomes and duplicate names among predictors", {
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
+  for (outcome in c("time", "status")) {
+    env <- rf_env(rfs_data())
+    expect_error(
+      rf_run("rfs", "fit", c("set", "study-choices", "read"), env,
+             utils::modifyList(rfs_choices, list(PREDICTORS = c(outcome, "age")))),
+      "outcome.*PREDICTORS",
+      info = outcome
+    )
+  }
+
+  env <- rf_env(rfs_data())
+  expect_error(
+    rf_run("rfs", "fit", c("set", "study-choices", "read"), env,
+           utils::modifyList(rfs_choices, list(PREDICTORS = c("age", "age")))),
+    "PREDICTORS.*more than once"
+  )
+})
+
 test_that("rf_skip_unless_stack does not error on a package with no floor", {
   # "utils" is always installed and has no row in rf_pkg_floors, so this
   # exercises the no-floor fallback -- the branch a `[[` lookup made
@@ -143,7 +163,7 @@ rfc_data <- function() {
 }
 rfc_choices <- list(RESPONSE = "Species",
                     PREDICTORS = c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width"),
-                    NTREE = 50, SEED = 1)
+                    ROC_CLASS = "virginica", NTREE = 50, SEED = 1)
 
 test_that("rfc-fit grows a classification forest from a character outcome", {
   rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
@@ -155,15 +175,56 @@ test_that("rfc-fit grows a classification forest from a character outcome", {
   for (p in list(env$err, env$roc)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
 })
 
-test_that("rfc-fit calls gg_roc with an explicit which_outcome", {
-  # Decided 2026-09-19: a bare gg_roc(forest) warns "falling back to class 1"
-  # into the rendered report and silently reports one class against the rest
-  # for a multi-level outcome. Strip comments first, the way the
-  # no-explain-grows-a-forest test above does, so a comment that merely
-  # mentions which_outcome cannot satisfy this.
-  src <- readLines(template_path("rfc", "fit"), warn = FALSE)
-  code <- paste(sub("#.*$", "", rf_chunk(src, "diagnostics")), collapse = "\n")
-  expect_true(grepl("gg_roc\\s*\\([^)]*which_outcome\\s*=", code, perl = TRUE))
+test_that("rfc-fit selects the named ROC class regardless of factor order", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
+  d <- rfc_data()
+  d$Species <- factor(d$Species, levels = c("virginica", "versicolor"))
+  choices <- utils::modifyList(rfc_choices, list(ROC_CLASS = "virginica"))
+  env <- rf_env(d)
+  rf_run("rfc", "fit", c("set", "study-choices", "read", "fit", "diagnostics"), env, choices)
+
+  expected <- ggRandomForests::gg_roc(env$forest, which_outcome = 1L)
+  expect_equal(as.data.frame(env$roc), as.data.frame(expected))
+})
+
+test_that("rfc-fit refuses an unknown ROC class", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
+  env <- rf_env(rfc_data())
+  choices <- utils::modifyList(rfc_choices, list(ROC_CLASS = "not-a-species"))
+  expect_error(
+    rf_run("rfc", "fit", c("set", "study-choices", "read"), env, choices),
+    "ROC_CLASS.*not an observed level"
+  )
+})
+
+test_that("rfc-fit refuses its untouched ROC class choice for a 0/1 outcome", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
+  d <- rfc_data()
+  d$event <- as.integer(d$Species == "virginica")
+  choices <- rfc_choices[names(rfc_choices) != "ROC_CLASS"]
+  choices$RESPONSE <- "event"
+  env <- rf_env(d)
+  expect_error(
+    rf_run("rfc", "fit", c("set", "study-choices", "read"), env, choices),
+    "ROC_CLASS"
+  )
+})
+
+test_that("rfc-fit refuses its outcome and duplicate names among predictors", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
+  env <- rf_env(rfc_data())
+  expect_error(
+    rf_run("rfc", "fit", c("set", "study-choices", "read"), env,
+           utils::modifyList(rfc_choices, list(PREDICTORS = c("Species", "Sepal.Length")))),
+    "outcome.*PREDICTORS"
+  )
+
+  env <- rf_env(rfc_data())
+  expect_error(
+    rf_run("rfc", "fit", c("set", "study-choices", "read"), env,
+           utils::modifyList(rfc_choices, list(PREDICTORS = c("Sepal.Length", "Sepal.Length")))),
+    "PREDICTORS.*more than once"
+  )
 })
 
 test_that("rfc-explain ranks by overall importance, not per class", {
@@ -227,6 +288,23 @@ test_that("rfr-fit refuses a non-numeric outcome", {
   d$Ozone <- factor(d$Ozone)
   env <- rf_env(d)
   expect_error(rf_run("rfr", "fit", c("set", "study-choices", "read"), env, rfr_choices), "must be numeric")
+})
+
+test_that("rfr-fit refuses its outcome and duplicate names among predictors", {
+  rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
+  env <- rf_env(rfr_data())
+  expect_error(
+    rf_run("rfr", "fit", c("set", "study-choices", "read"), env,
+           utils::modifyList(rfr_choices, list(PREDICTORS = c("Ozone", "Wind")))),
+    "outcome.*PREDICTORS"
+  )
+
+  env <- rf_env(rfr_data())
+  expect_error(
+    rf_run("rfr", "fit", c("set", "study-choices", "read"), env,
+           utils::modifyList(rfr_choices, list(PREDICTORS = c("Wind", "Wind")))),
+    "PREDICTORS.*more than once"
+  )
 })
 
 test_that("rfr-explain runs VarPro on a forest grown with missing predictors", {

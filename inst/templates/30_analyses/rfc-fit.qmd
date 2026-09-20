@@ -202,6 +202,11 @@ Edit these values for this study before rendering.
 # forest rather than a regression on the codes.
 RESPONSE <- "dead"
 
+# EDIT: the class whose one-versus-rest ROC curve and AUC this report should
+# show. Use its label after RESPONSE becomes a factor: "1" for a 0/1 outcome,
+# "yes" for no/yes, or the clinical category of interest for multiclass data.
+ROC_CLASS <- NA_character_
+
 # EDIT: the candidate predictors. Name them rather than taking every column: a
 # built dataset carries identifiers, dates and derived outcomes, and a forest
 # will split on a date that quietly encodes follow-up.
@@ -229,6 +234,14 @@ REFIT <- FALSE
 ```{r}
 #| label: read
 d <- read_built()
+.outcomes <- intersect(RESPONSE, PREDICTORS)
+if (length(.outcomes)) {
+  stop("Do not include the outcome variable in PREDICTORS: ", .outcomes, ".", call. = FALSE)
+}
+.duplicated <- unique(PREDICTORS[duplicated(PREDICTORS)])
+if (length(.duplicated)) {
+  stop("PREDICTORS names a variable more than once: ", paste(.duplicated, collapse = ", "), ".", call. = FALSE)
+}
 .missing <- setdiff(c(RESPONSE, PREDICTORS), names(d))
 if (length(.missing)) {
   stop("Not in the built dataset: ", paste(.missing, collapse = ", "), call. = FALSE)
@@ -246,6 +259,12 @@ if (any(.no_outcome)) {
 # A numeric 0/1 outcome grows a REGRESSION forest, whose "probabilities" can
 # fall outside 0 and 1 and whose error is a mean squared error. Nothing warns.
 d[[RESPONSE]] <- factor(d[[RESPONSE]])
+if (!is.character(ROC_CLASS) || length(ROC_CLASS) != 1L || is.na(ROC_CLASS) || !nzchar(ROC_CLASS) ||
+      !ROC_CLASS %in% levels(d[[RESPONSE]])) {
+  stop("ROC_CLASS must name one observed level of ", RESPONSE, "; ", deparse(ROC_CLASS),
+       " is not an observed level. Choose one of: ", paste(levels(d[[RESPONSE]]), collapse = ", "), ".", call. = FALSE)
+}
+ROC_OUTCOME <- match(ROC_CLASS, levels(d[[RESPONSE]]))
 ```
 
 ## Forest
@@ -276,12 +295,11 @@ cached there on its own, so it can be recomputed without regrowing the forest.
 err <- gg_error(forest)
 plot(err)
 
-# Out-of-bag ROC curve, and the area under it. which_outcome = 2 names the
-# second factor level, the event under a 0/1 or "no"/"yes" coding; ggRandomForests
-# does not yet support "all" for a classification forest and falls back to class
-# 1 with a warning otherwise. A study whose outcome carries more than two
-# levels must name the class it cares about here.
-roc <- gg_roc(forest, which_outcome = 2)
+# Out-of-bag one-versus-rest ROC curve, and the area under it, for the class
+# named explicitly above. ggRandomForests selects by factor-level position,
+# so ROC_OUTCOME maps the study's label to its position instead of letting
+# factor ordering decide what this report means.
+roc <- gg_roc(forest, which_outcome = ROC_OUTCOME)
 plot(roc)
 auc <- calc_auc(roc)
 auc

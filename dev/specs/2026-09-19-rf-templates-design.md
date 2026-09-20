@@ -78,11 +78,17 @@ template carries, copied from `hm.qmd`.
    **not** marked `EDIT:`; the house name check; and `set_path(kind, file)`.
 5. **`study-choices`**, every line marked `EDIT:`:
    - The outcome: `TIME` and `STATUS` for `rfs`, `RESPONSE` for `rfc` and `rfr`.
+   - `ROC_CLASS` for `rfc`, naming the class whose one-versus-rest ROC curve
+     and AUC the report shows.
    - `PREDICTORS`, `NTREE`, `SEED` and `NA_ACTION` (`"na.omit"` or
      `"na.impute"`; the classification and regression exemplars impute).
    - `REFIT = FALSE`, passed to every `cache_fit()` call (§5).
 6. **Read.** Read the built dataset with `read_built()`, keep the predictors and
-   the outcome, and stop if the outcome has missing values.
+   the outcome, and stop if the outcome has missing values. Refuse duplicated
+   predictor names or an outcome named among the predictors before subsetting,
+   since base R otherwise creates a renamed outcome copy that leaks the target
+   into the forest. For `rfc`, validate `ROC_CLASS` against the observed factor
+   levels and map its label to the numeric position `gg_roc()` requires.
 7. **Fit.** `cache_fit()` writes `<dir>/<name>.rds`, and its default `dir` is the
    study's estimates folder, not the set's, so every call passes the set's:
    `CACHE_DIR <- dirname(set_path("estimates", "<prefix>.rds"))`, then
@@ -93,7 +99,8 @@ template carries, copied from `hm.qmd`.
 8. **Diagnostics.** `gg_error()` for OOB error against the number of trees, then
    the outcome's performance plots:
    - `rfs`: `gg_rfsrc()`, predicted survival curves, and `gg_brier()`.
-   - `rfc`: `gg_roc()`, with `calc_auc()` on its result.
+   - `rfc`: `gg_roc(which_outcome = ROC_OUTCOME)`, with `calc_auc()` on its
+     result, where `ROC_OUTCOME` is derived from the study's `ROC_CLASS` label.
    - `rfr`: `gg_rfsrc()`, predicted against observed.
 
    `gg_brier()` supports right-censored survival forests only (measured,
@@ -246,6 +253,9 @@ recorded in the README, in `NEWS.md` and in each fit template's header.
   - Explain stops with "run `<prefix>-fit` first" when the forest is missing.
   - After a change to `TOP_K` with `REFIT = FALSE`, the partial step raises
     `hvtiRutilities_stale_cache` and the VIMP step does not.
+  - Every fit template refuses its outcome or duplicate names in `PREDICTORS`.
+  - `rfc-fit` selects `ROC_CLASS` by label regardless of factor ordering and
+    refuses a class absent from the observed outcome.
   - No explain template calls `rfsrc(`: a static check on the files, so the
     no-refit promise is enforced and not only documented.
 - **Proved by mutation.** Remove the missing-forest stop, or add an `rfsrc(`

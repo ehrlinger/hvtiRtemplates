@@ -229,6 +229,14 @@ REFIT <- FALSE
 ```{r}
 #| label: read
 d <- read_built()
+.outcomes <- intersect(c(TIME, STATUS), PREDICTORS)
+if (length(.outcomes)) {
+  stop("Do not include outcome variable(s) in PREDICTORS: ", paste(.outcomes, collapse = ", "), ".", call. = FALSE)
+}
+.duplicated <- unique(PREDICTORS[duplicated(PREDICTORS)])
+if (length(.duplicated)) {
+  stop("PREDICTORS names a variable more than once: ", paste(.duplicated, collapse = ", "), ".", call. = FALSE)
+}
 .missing <- setdiff(c(TIME, STATUS, PREDICTORS), names(d))
 if (length(.missing)) {
   stop("Not in the built dataset: ", paste(.missing, collapse = ", "), call. = FALSE)

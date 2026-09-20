@@ -5,7 +5,9 @@
   job. The fit job grows the forest through `hvtiRutilities::cache_fit()` and
   saves it for the explain job, which reads it back for VIMP, VarPro and
   dependence plots and never refits. Old `rfsrc.*` and `rf.*` jobs map onto
-  the three by outcome; `inst/templates/README.md` has the table.
+  the three by outcome; `inst/templates/README.md` has the table. Fit jobs
+  refuse outcomes or duplicate names in `PREDICTORS`, and `rfc-fit` requires
+  the study to name the class whose one-versus-rest ROC curve it reports.
   `randomForestSRC (>= 3.7.0)` and `varPro (>= 3.2.0)` join Suggests, and
   `ggRandomForests` rises to `>= 4.0.0`.
 
