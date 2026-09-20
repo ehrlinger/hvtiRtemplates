@@ -19,7 +19,10 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
+          # CRAN's R 4.6 arm64 knitr 1.52 binary is Zstandard-compressed, which
+          # pak 0.11.1 rejects as an unknown archive type. Build only knitr
+          # from source on macOS; keep binary resolution everywhere else.
+          - {os: macos-latest,   r: 'release', extra-packages: 'knitr?source'}
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
@@ -61,10 +64,10 @@ jobs:
             any::rcmdcheck
             any::pkgload
             local::.
+            ${{ matrix.config.extra-packages }}
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
           build_args: 'c("--no-manual")'
-
