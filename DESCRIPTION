@@ -37,9 +37,7 @@ Remotes:
     ehrlinger/hvtiPlotR,
     ehrlinger/TemporalHazard,
     ehrlinger/ggRandomForests,
-    ehrlinger/hvtiRpropensity,
-    ehrlinger/randomForestSRC,
-    ehrlinger/varPro
+    ehrlinger/hvtiRpropensity
 Suggests:
     arrow,
     ggRandomForests (>= 4.0.0),

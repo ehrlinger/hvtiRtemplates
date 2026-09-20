@@ -155,6 +155,17 @@ test_that("rfc-fit grows a classification forest from a character outcome", {
   for (p in list(env$err, env$roc)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
 })
 
+test_that("rfc-fit calls gg_roc with an explicit which_outcome", {
+  # Decided 2026-09-19: a bare gg_roc(forest) warns "falling back to class 1"
+  # into the rendered report and silently reports one class against the rest
+  # for a multi-level outcome. Strip comments first, the way the
+  # no-explain-grows-a-forest test above does, so a comment that merely
+  # mentions which_outcome cannot satisfy this.
+  src <- readLines(template_path("rfc", "fit"), warn = FALSE)
+  code <- paste(sub("#.*$", "", rf_chunk(src, "diagnostics")), collapse = "\n")
+  expect_true(grepl("gg_roc\\s*\\([^)]*which_outcome\\s*=", code, perl = TRUE))
+})
+
 test_that("rfc-explain ranks by overall importance, not per class", {
   rf_skip_unless_stack(rf_template_packages("rfc", "explain"))
   fit_env <- rf_fit_first("rfc", rfc_data(), rfc_choices)
