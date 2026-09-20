@@ -27,9 +27,11 @@ here.
 
 An `rfs-explain` job never grows a forest. It reads `rfs.rds`, which the fit
 job writes, and rebuilds the training data and the model from the forest
-itself, so every number below describes that forest and no other. Each
-expensive step is cached on its own: changing how many variables get
-dependence plots recomputes the partials and nothing else.
+itself. VIMP, minimal depth and the partial-dependence plots all describe
+that saved forest and no other; VarPro grows its own forests on the same
+training data, so its panel and partial describe forests VarPro grew, not
+the saved one. Each expensive step is cached on its own: changing how many
+variables get dependence plots recomputes the partials and nothing else.
 
 ```{r}
 #| label: setup

@@ -92,19 +92,72 @@ test_that("a changed TOP_K makes only the partial caches stale", {
   again <- new.env(parent = globalenv())
   again$.root <- fit_env$.root
   rf_run("rfs", "explain", c("set", "study-choices", "forest", "importance", "select", "varpro"), again, choices)
-  expect_error(rf_run("rfs", "explain", "dependence", again), class = "hvtiRutilities_stale_cache")
+  # "only" is the claim under test: the error must name rfs-partial, the
+  # cache the dependence chunk hits first, not merely be A stale-cache error,
+  # which any cache going stale for any reason would also satisfy.
+  expect_error(rf_run("rfs", "explain", "dependence", again),
+               regexp = "rfs-partial", class = "hvtiRutilities_stale_cache")
 
   again$REFIT <- TRUE
   rf_run("rfs", "explain", "dependence", again)
-  expect_length(again$sel, 3L)
+  # again$sel is unchanged since the earlier `select` chunk (the `dependence`
+  # chunk never touches it), so asserting on it would be tautological. The
+  # recomputed partial (a gg_partial_rfsrc list of $continuous/$categorical
+  # frames, one row per variable/level) is what REFIT actually produces.
+  pd_vars <- unique(c(as.character(again$pd$continuous$name), as.character(again$pd$categorical$name)))
+  expect_length(pd_vars, 3L)
+})
+
+test_that("PARTIAL_VARS names the dependence variables explicitly", {
+  rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
+  fit_env <- rf_fit_first("rfs", rfs_data(), rfs_choices)
+  env <- new.env(parent = globalenv())
+  env$.root <- fit_env$.root
+  chosen <- c("age", "karno")
+  rf_run("rfs", "explain", explain_labels, env,
+         list(PARTIAL_VARS = chosen, TIMES = c(30, 90), SEED = 1))
+
+  expect_identical(env$sel, chosen)
+  pd_vars <- unique(c(as.character(env$pd$continuous$name), as.character(env$pd$categorical$name)))
+  expect_setequal(pd_vars, chosen)
+})
+
+test_that("PARTIAL_VARS refuses a variable the forest was not grown on", {
+  rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
+  fit_env <- rf_fit_first("rfs", rfs_data(), rfs_choices)
+  env <- new.env(parent = globalenv())
+  env$.root <- fit_env$.root
+  expect_error(
+    rf_run("rfs", "explain", c("set", "study-choices", "forest", "importance", "select"), env,
+           list(PARTIAL_VARS = "not_a_variable", SEED = 1)),
+    "not grown on"
+  )
 })
 
 test_that("no explain template grows a forest", {
   # The design's central promise: an explanation describes the forest the fit
   # job saved. A refit here, however helpful it looks when the handoff is
   # missing, would explain a different forest in a report that says otherwise.
-  for (f in grep("-explain[.]qmd$", template_list()$file, value = TRUE)) {
+  #
+  # A plain \brfsrc\( misses several forest-growing entry points a study
+  # author could reach for just as easily: rfsrc.fast() (the one someone
+  # would use on a slow study), imbalanced(), sidClustering() and
+  # tune.rfsrc(), which all grow forests internally, plus a call written as
+  # `rfsrc (x, y)` with a stray space or wrapped in do.call("rfsrc", ...).
+  # \\s* before the paren covers the spaced form; the do.call alternative
+  # covers the string-dispatched one.
+  grow_fns <- c("rfsrc", "rfsrc\\.fast", "imbalanced", "sidClustering", "tune\\.rfsrc")
+  direct <- paste0("\\b(", paste(grow_fns, collapse = "|"), ")\\s*\\(")
+  via_do_call <- paste0("do\\.call\\(\\s*[\"'](", paste(grow_fns, collapse = "|"), ")[\"']")
+  grows_forest <- paste0(direct, "|", via_do_call)
+
+  templates <- grep("-explain[.]qmd$", template_list()$file, value = TRUE)
+  # A found-nothing loop makes zero assertions, which testthat reports as an
+  # empty test (a silent SKIP) rather than a failure. This keeps the test
+  # from going vacuous if the explain templates are ever renamed or moved.
+  expect_true(length(templates) > 0)
+  for (f in templates) {
     code <- sub("#.*$", "", readLines(f, warn = FALSE))
-    expect_false(any(grepl("\\brfsrc\\(", code)), info = basename(f))
+    expect_false(any(grepl(grows_forest, code)), info = basename(f))
   }
 })
