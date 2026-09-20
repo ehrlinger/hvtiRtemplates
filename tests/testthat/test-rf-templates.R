@@ -134,6 +134,38 @@ test_that("PARTIAL_VARS refuses a variable the forest was not grown on", {
   )
 })
 
+# Classification data for rfc: two iris species, so the outcome is binary as
+# most clinical classification outcomes are.
+rfc_data <- function() {
+  d <- datasets::iris[datasets::iris$Species != "setosa", ]
+  d$Species <- as.character(d$Species)   # the fit must make it a factor itself
+  d
+}
+rfc_choices <- list(RESPONSE = "Species",
+                    PREDICTORS = c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width"),
+                    NTREE = 50, SEED = 1)
+
+test_that("rfc-fit grows a classification forest from a character outcome", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
+  env <- rf_env(rfc_data())
+  rf_run("rfc", "fit", c("set", "study-choices", "read", "fit", "diagnostics", "save"), env, rfc_choices)
+  expect_identical(env$forest$family, "class")
+  expect_true(file.exists(file.path(env$CACHE_DIR, "rfc.rds")))
+  expect_true(is.numeric(env$auc) && env$auc > 0.5)
+  for (p in list(env$err, env$roc)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
+})
+
+test_that("rfc-explain ranks by overall importance, not per class", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "explain"))
+  fit_env <- rf_fit_first("rfc", rfc_data(), rfc_choices)
+  env <- new.env(parent = globalenv())
+  env$.root <- fit_env$.root
+  rf_run("rfc", "explain", explain_labels, env, list(TOP_K = 2, SEED = 1))
+  expect_false(anyDuplicated(env$ranked) > 0)
+  expect_length(env$sel, 2L)
+  for (p in list(env$pd, env$pv)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
+})
+
 test_that("no explain template grows a forest", {
   # The design's central promise: an explanation describes the forest the fit
   # job saved. A refit here, however helpful it looks when the handoff is
