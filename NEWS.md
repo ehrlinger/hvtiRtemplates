@@ -1,4 +1,4 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.2.1
 
 * Eight qualified `lm` templates now cover binary, ordinal and nominal outcome
   models; the corresponding three propensity shapes; saved binary-model
