@@ -18,11 +18,34 @@ test_that("study setup vignette declares the complete workflow", {
   txt <- readLines(path, warn = FALSE)
   expect_true(any(grepl("adopt = TRUE", txt, fixed = TRUE)))
   expect_true(any(grepl('role = "study"', txt, fixed = TRUE)))
-  for (source in c("dc.tables.sas", "dc.gfup.sas", "dp.trends.sas", "dp.postage.sas")) {
-    expect_true(any(grepl(source, txt, fixed = TRUE)))
-  }
+  expect_true(any(grepl('qualifier = "general"', txt, fixed = TRUE)))
+  expect_true(any(grepl('qualifier = "tables"', txt, fixed = TRUE)))
+  expect_true(any(grepl('qualifier = "postage"', txt, fixed = TRUE)))
   expect_true(any(grepl("renv::init()", txt, fixed = TRUE)))
   expect_true(any(grepl("renv::snapshot()", txt, fixed = TRUE)))
+  expect_false(any(grepl("inventory-adoption-cleanup", txt, fixed = TRUE)))
+  expect_false(any(grepl("cleanup_targets", txt, fixed = TRUE)))
+  article <- paste(txt, collapse = " ")
+  expect_true(grepl("requires both `event` and `time`", article,
+                    fixed = TRUE))
+})
+
+test_that("the SAS guide uses adopted-study paths and loads its packages", {
+  path <- testthat::test_path(
+    "..", "..", "vignettes", "sas-to-r-descriptive.qmd"
+  )
+  testthat::skip_if_not(file.exists(path), "vignette source not available")
+  text <- readLines(path, warn = FALSE)
+  article <- paste(text, collapse = "\n")
+
+  expect_true(grepl("library(hvtiRutilities)", article, fixed = TRUE))
+  expect_true(grepl("library(hvtiRtemplates)", article, fixed = TRUE))
+  expect_false(grepl(
+    "10_descriptive/cohort-eda-dc-tables.qmd", article, fixed = TRUE
+  ))
+  expect_true(grepl(
+    "descriptive/cohort-eda-dc-tables.qmd", article, fixed = TRUE
+  ))
 })
 
 test_that("tutorials use the RStudio project as the study root", {
@@ -72,74 +95,30 @@ test_that("the tutorial adopts an existing study before analysis", {
   for (start in starts) {
     end <- start + match("```", lines[-seq_len(start)])
     chunk <- lines[seq.int(start + 1L, end - 1L)]
-    if (any(chunk %in% c("#| label: render-jobs", "#| label: inspect-outputs"))) next
     code <- c(code, chunk)
   }
   env <- new.env(parent = environment())
   # A single evaluation keeps the vignette's deferred cleanup after assertions.
   checks <- quote({
     expect_true(exists("adopted_root", envir = env, inherits = FALSE))
-    expect_false(dir.exists(file.path(env$adopted_root, ".git")))
-    expect_length(list.files(
-      env$adopted_root, pattern = "^tp", recursive = TRUE,
-      include.dirs = TRUE, all.files = TRUE, no.. = TRUE
-    ), 0L)
+    expect_true(dir.exists(file.path(env$adopted_root, ".git")))
+    expect_true(file.exists(file.path(env$adopted_root, "tp.shared.sas")))
+    expect_true(file.exists(file.path(
+      env$adopted_root, "descriptive", "templates", "ordinary.sas"
+    )))
     expect_true(file.exists(file.path(env$adopted_root, "datasets", "eda.parquet")))
     expect_equal(env$cohorts$rows, 40L)
     expect_equal(env$cohorts$events, 20L)
     expect_named(
-      env$adopted_jobs,
+      env$study_jobs,
       c("general", "tables", "gfup", "trends", "postage")
     )
-    expect_true(all(file.exists(env$adopted_jobs)))
-    expect_length(env$jobs, 4L)
-    expect_true(all(file.exists(env$jobs)))
-    expect_true(all(file.exists(env$reports)))
+    expect_true(all(file.exists(env$study_jobs)))
     expect_identical(unname(tools::md5sum(env$legacy_files)), unname(env$legacy_checksums))
-    for (job in env$jobs) {
-      expect_false(any(grepl("EDIT:", readLines(job), fixed = TRUE)))
-    }
-    expect_match(paste(readLines(env$jobs[["postage"]]), collapse = "\n"),
-                 'DATASET <- "study"', fixed = TRUE)
     expect_true(all(c("datasets", "descriptive", "distributions", "analyses", "graphs", "documents", "estimates") %in%
                       list.dirs(env$root, recursive = FALSE, full.names = FALSE)))
-    # These tutorial jobs use registered data and can render independently of
-    # the tables/follow-up templates' hvtiRdatabuild version requirement.
-    skip_if_not_installed("hvtiPlotR", "2.7.14")
-    skip_if_not_installed("quarto")
-    skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
-    for (job in env$jobs[c("trends", "postage")]) {
-      render_job(job, final = TRUE, quiet = TRUE)
-      expect_true(file.exists(sub("[.]qmd$", ".html", job)))
-    }
-    figures <- file.path(env$root, "graphs", "cohort-eda",
-                         c("dp-trends-hx_chf-all.png", "dp-trends-lvmassi-all.png", "dp-postage-page-01.png"))
-    expect_true(all(file.exists(figures)))
-    expect_true(all(file.info(figures)$size > 1000L))
   })
   capture.output(eval(as.expression(c(as.list(parse(text = code)), list(checks))), env))
-})
-
-test_that("adoption cleanup removes only inventoried legacy scaffolding", {
-  lines <- readLines(skip_without_vignette(), warn = FALSE)
-  start <- match("#| label: inventory-adoption-cleanup", lines)
-  end <- start + match("```", lines[-seq_len(start)])
-  code <- parse(text = lines[seq.int(start + 1L, end - 1L)])
-
-  adopted_root <- withr::local_tempdir()
-  dir.create(file.path(adopted_root, ".git"))
-  writeLines("current git", file.path(adopted_root, ".git", "HEAD"))
-  dir.create(file.path(adopted_root, "descriptive"))
-  nested_tp <- file.path(adopted_root, "descriptive", "tp.dc.tables.sas")
-  writeLines("nested template", nested_tp)
-  retained <- file.path(adopted_root, "descriptive", "dc.tables.sas")
-  writeLines("study-authored job", retained)
-  env <- list2env(list(adopted_root = adopted_root))
-
-  expect_no_error(eval(code, env))
-  expect_false(dir.exists(file.path(adopted_root, ".git")))
-  expect_false(file.exists(nested_tp))
-  expect_true(file.exists(retained))
 })
 
 test_that("EDA declaration preserves other sets and refuses replacement", {
@@ -203,37 +182,4 @@ test_that("the final migration verifier returns four lasting rendered fixtures",
   }
   expect_true(any(grepl("[.]docx$", results[["dc-tables"]]$outputs)))
   expect_equal(sum(grepl("dp-postage-page-[0-9]+[.]png$", results[["dp-postage"]]$outputs)), 2L)
-})
-
-test_that("the tutorial embeds its PNG before temporary study cleanup", {
-  skip_if_not_installed("quarto")
-  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
-  lines <- readLines(skip_without_vignette(), warn = FALSE)
-  setup <- lines[grepl("^workspace <-", lines)]
-  start <- match("#| label: inspect-outputs", lines)
-  end <- start + match("```", lines[-seq_len(start)])
-  expressions <- parse(text = lines[seq.int(start + 1L, end - 1L)])
-  image <- expressions[vapply(expressions, function(x) {
-    any(grepl("knitr::", deparse(x), fixed = TRUE))
-  }, logical(1L))]
-  fixture <- withr::local_tempdir()
-  path <- file.path(fixture, "image-lifetime.qmd")
-  # Use the article's actual lifetime and image-output expressions, isolating
-  # Pandoc conversion from unrelated template dependency requirements.
-  writeLines(c(
-    "---", 'title: "Temporary study image"', "format:", "  html:",
-    "    embed-resources: true", "---", "```{r}", "#| echo: false",
-    setup, "root <- workspace", 'writeLines(root, "study-root.txt")',
-    'png <- file.path(root, "postage.png")',
-    "grDevices::png(png, width = 480, height = 320)",
-    "graphics::plot(1:3, c(2, 1, 3))", "invisible(grDevices::dev.off())",
-    'writeLines(knitr::image_uri(png), "expected-image.txt")',
-    unlist(lapply(image, deparse)), "```"
-  ), path)
-  quarto::quarto_render(path, execute_dir = fixture, quiet = TRUE)
-  html <- paste(readLines(file.path(fixture, "image-lifetime.html"), warn = FALSE), collapse = "\n")
-  uri <- readLines(file.path(fixture, "expected-image.txt"))
-  expect_false(dir.exists(readLines(file.path(fixture, "study-root.txt"))))
-  expect_true(grepl(paste0('src="', uri, '"'), html, fixed = TRUE))
-  expect_false(grepl('src="[^"]*postage[.]png', html))
 })

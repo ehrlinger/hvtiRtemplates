@@ -11,64 +11,59 @@ format:
     embed-resources: true
 ---
 
-This tutorial starts with a study that already has working directories and an
-existing dataset. It may also contain older SAS or R jobs, but those are not
-required. We will open that directory as an RStudio
-Project, remove obsolete setup files, adopt the study into the hvtiR contract,
-register its data, write an `eda` analysis set and create the descriptive and
-EDA jobs used before a specific analysis begins.
+This tutorial starts with an existing study directory and an existing dataset.
+It takes the study through identity setup, data registration, an `eda` analysis
+set, descriptive tables and EDA plots. A later tutorial can then begin with a
+specific analysis type instead of repeating this setup.
 
-The result is not an analysis result yet. It is a reproducible starting point:
-the study has a known root, a recorded data contract and jobs whose remaining
-study decisions are visible as `EDIT:` markers.
+Adoption is additive. It creates the hvtiR study contract without renaming the
+legacy working directories or deleting old files. In particular, this workflow
+leaves `.git`, `tp.*` files and copied `templates/` directories untouched.
 
-The executable example uses 40 synthetic observations in one existing study
-dataset. Every file stays in a temporary directory. During rendering, that
-directory is removed after the R chunks run; the displayed figure is embedded
-before cleanup. Run the chunks in order in one interactive session to inspect
-the files yourself. For the statistical mapping behind the jobs, see
+The executable example uses one 40-row synthetic dataset. Its files stay in a
+temporary directory and disappear after the article renders. For translating
+existing SAS descriptive jobs, see
 [From SAS descriptive jobs to R](sas-to-r-descriptive.html).
 
-The render steps require Quarto and the packages declared by the job templates,
-including `hvtiRdatabuild >= 0.2.1`, `hvtiRtables >= 1.0.1`, and
-`hvtiPlotR >= 2.7.14`. A missing or older dependency stops the render and names
-the required version.
-
-## Open the existing study in RStudio
+## Open the study as an RStudio Project
 
 In RStudio, choose **File > New Project > Existing Directory** and select the
-study directory. Open the resulting `.Rproj` file whenever you work on the
-study. RStudio starts the session in that directory, so the project supplies
-the study root. Do not change the working directory manually.
+study directory. Open that `.Rproj` whenever you work on the study. RStudio
+starts the session in the project directory, so there is no working-directory
+step to remember or repeat.
 
-Before changing anything, confirm that R is looking at the intended directory:
+Confirm the location before changing the study:
 
 ```r
 project_root <- getwd()
 normalizePath(project_root)
 ```
 
-`getwd()` reads the location RStudio established; it does not change it. The
-tutorial's executable chunks use `adopted_root` only because they build a
-disposable study while this page renders. In a real study, pass
-`project_root` to the initial adoption call. After `_study.yml` exists, hvtiR
-functions such as `study_root()`, `open_job()` and `render_job()` find the root
-for themselves.
+`getwd()` reads the location established by RStudio; it does not change it.
+The executable example below uses an explicit temporary path only because it
+cannot open an RStudio Project while pkgdown renders the page.
 
-### Choose the R version before adoption
+### Select the R version
 
 If the study already has an `renv.lock`, its `R` `Version` entry records the R
-version the study is already pinned to. Select that version in RStudio and keep
-it for the adoption. Do not silently move an already pinned study to a new R
-version.
+version to preserve. Select that version in RStudio and restart the session.
+Do not silently upgrade an already pinned study.
 
-If there is no `renv.lock`, select **R 4.6** in RStudio before continuing. The
-first `renv::snapshot()` will then record R 4.6 for the study instead of the
-older 4.4.1 default. Restart the R session after changing versions and confirm
-the active version:
+If the study is not already pinned, select **R 4.6** instead of the older 4.4.1
+default, restart the session and confirm the active version:
 
 ```r
 R.version.string
+```
+
+### Load the study packages
+
+Install the hvtiR family once with `hvtiR::install()`. In the study session,
+attach the two packages used throughout this tutorial:
+
+```r
+library(hvtiRutilities)
+library(hvtiRtemplates)
 ```
 
 ```{r}
@@ -86,109 +81,37 @@ for (folder in folders) dir.create(file.path(adopted_root, folder))
 i <- seq_len(40L)
 built <- data.frame(
   ccfid = i,
-  dead = i %% 2L, iv_dead = i / 10, iv_fup = i / 10 + 1,
-  year = 2000L + i %% 10L, female = i %% 2L, race_grp = 1L + i %% 3L,
-  repair = as.integer(i %% 3L == 0L), age = 40 + i, bmi = 20 + i / 10,
-  hx_chf = as.integer(i %% 4L == 0L), lvmassi = 80 + i,
+  dead = i %% 2L,
+  iv_dead = i / 10,
+  iv_fup = i / 10 + 1,
+  year = 2000L + i %% 10L,
+  female = i %% 2L,
+  race_grp = 1L + i %% 3L,
+  repair = as.integer(i %% 3L == 0L),
+  age = 40 + i,
+  bmi = 20 + i / 10,
+  hx_chf = as.integer(i %% 4L == 0L),
+  lvmassi = 80 + i,
   iv_opyrs = i + 0.25
 )
-utils::write.csv(built, file.path(adopted_root, "datasets", "built.csv"), row.names = FALSE)
-writeLines(c(
-  'title "Synthetic descriptive tables";',
-  "%desc_tab(vartype=category, input=built, by=,",
-  "  varlist=/* Demography */ female race_grp /* Procedure */ repair);",
-  "%desc_tab(vartype=continuous, input=built, by=,",
-  "  varlist=/* Demography */ age bmi /* Follow-up */ iv_dead);"
-), file.path(adopted_root, "descriptive", "dc.tables.sas"))
-writeLines(c("Synthetic descriptive tables", "Demography", "Procedure", "Follow-up"),
-           file.path(adopted_root, "descriptive", "dc.tables.lst"))
-writeLines("NOTE: There were 40 observations read from the data set BUILT.",
-           file.path(adopted_root, "descriptive", "dc.tables.log"))
-writeLines("{\\rtf1\\ansi Synthetic descriptive tables\\par Demography\\par Procedure\\par Follow-up}",
-           file.path(adopted_root, "documents", "general.rtf"))
-writeLines(c(
-  "data followup; set built; run;",
-  "proc sort data=followup; by dead; run;",
-  "proc means data=followup; var iv_dead iv_fup; by dead; run;",
-  "proc print data=followup; var iv_dead iv_fup; if dead=0; run;"
-), file.path(adopted_root, "descriptive", "dc.gfup.sas"))
-writeLines(c(
-  "data trends; set built; year=floor(iv_opyrs)+1985; run;",
-  "%let percent = hx_chf;", "%let continuous = lvmassi;",
-  "label hx_chf = 'Heart failure';", "label lvmassi = 'LV mass index';",
-  "axis1 order=(1985 to 2025 by 5);", "axis2 order=(0 to 100 by 20);",
-  "axis3 order=(80 to 140 by 10);", "proc gplot data=trends;",
-  "plot hx_chf*year / haxis=axis1 vaxis=axis2;",
-  "plot lvmassi*year / haxis=axis1 vaxis=axis3; run; quit;"
-), file.path(adopted_root, "graphs", "dp.trends.sas"))
-writeLines(c(
-  "set built;", "%let pref_time_var=year;",
-  "%let variables=age bmi female repair;", "%let exclude=;",
-  "%let ncol=2;", "%let nrow=2;", "%let unique_limit=6;",
-  "%let show_percent=0;"
-), file.path(adopted_root, "descriptive", "dp.postage.sas"))
-writeLines(c(
-  "proc univariate data=built; var age; run;"
-), file.path(adopted_root, "distributions", "ac.age.sas"))
+utils::write.csv(
+  built, file.path(adopted_root, "datasets", "built.csv"), row.names = FALSE
+)
 dir.create(file.path(adopted_root, ".git"))
 writeLines("ref: refs/heads/main", file.path(adopted_root, ".git", "HEAD"))
 writeLines("obsolete copied template", file.path(adopted_root, "tp.shared.sas"))
-```
-
-## Clean up the old scaffolding
-
-An adopted study keeps its bare working-directory names and all study-authored
-programs, logs, listings, and output. Before adoption, inventory two pieces of
-old scaffolding that should not become part of the study contract:
-
-- a local `.git` repository left by the former setup process; and
-- obsolete copied template files beginning with `tp` anywhere in the study
-  working directories.
-
-Do not remove either with a broad wildcard. Confirm the study root and inspect
-the exact matches first. The final call below permanently deletes only those
-paths; there is no backup step. Stop before `unlink()` if the inventory contains
-anything that should remain.
-
-```{r}
-#| label: inventory-adoption-cleanup
-normalizePath(adopted_root)
-legacy_git <- file.path(adopted_root, ".git")
-legacy_tp <- list.files(
-  adopted_root, pattern = "^tp", recursive = TRUE, full.names = TRUE,
-  include.dirs = TRUE, all.files = TRUE, no.. = TRUE
-)
-cleanup_targets <- c(if (dir.exists(legacy_git)) legacy_git, legacy_tp)
-cleanup_targets
-
-if (length(cleanup_targets)) {
-  cleanup_status <- unlink(cleanup_targets, recursive = TRUE)
-  stopifnot(cleanup_status == 0L)
-}
-stopifnot(
-  !file.exists(legacy_git),
-  !any(file.exists(cleanup_targets)),
-  length(list.files(
-    adopted_root, pattern = "^tp", recursive = TRUE, include.dirs = TRUE,
-    all.files = TRUE, no.. = TRUE
-  )) == 0L
+dir.create(file.path(adopted_root, "descriptive", "templates"))
+writeLines(
+  "obsolete copied template",
+  file.path(adopted_root, "descriptive", "templates", "ordinary.sas")
 )
 ```
 
-This cleanup concerns obsolete copied scaffolding. It does not remove
-study-authored jobs such as `descriptive/dp.postage.sas`. Inventory the
-remaining study files and record their checksums before adoption.
+## Adopt the existing study
 
-```{r}
-#| label: before-adoption
-legacy_files <- list.files(adopted_root, recursive = TRUE, full.names = TRUE)
-legacy_checksums <- tools::md5sum(legacy_files)
-list.files(adopted_root, recursive = TRUE)
-```
-
-`adopt = TRUE` is additive. It records identity and environment files while
-preserving the legacy layout and study-authored files. In the real RStudio
-session, use the root you confirmed at the start:
+`study_setup()` writes `_study.yml`, environment defaults and a project file
+when one is missing. With `adopt = TRUE`, it keeps the existing directory
+layout and every existing study file. Use the title and ID from Study Tracker:
 
 ```r
 study_setup(
@@ -198,69 +121,119 @@ study_setup(
   adopt = TRUE
 )
 study_root()
+study_status()
 ```
 
-The executable example passes its temporary root explicitly:
+The current API requires `root` for this first call. Passing the location that
+RStudio established makes the project and the study contract agree. Once
+`_study.yml` exists, `study_root()`, `open_job()` and `render_job()` find it
+from anywhere inside the project.
+
+The executable example records checksums before adoption and confirms that its
+legacy files are unchanged afterward:
 
 ```{r}
-#| label: adopt-register
-study_setup(adopted_root, study = "Synthetic legacy study",
-            study_tracker_id = 42L, adopt = TRUE)
-register_data(adopted_root, built = "built.csv", event = "dead", time = "iv_dead",
-              role = "study", population = "Synthetic full cohort")
-study_status(adopted_root)
-stopifnot(identical(unname(tools::md5sum(legacy_files)),
-                    unname(legacy_checksums)))
+#| label: adopt-study
+legacy_files <- list.files(
+  adopted_root, recursive = TRUE, full.names = TRUE, all.files = TRUE
+)
+legacy_checksums <- tools::md5sum(legacy_files)
+study_setup(
+  adopted_root,
+  study = "Synthetic legacy study",
+  study_tracker_id = 42L,
+  adopt = TRUE
+)
+stopifnot(identical(
+  unname(tools::md5sum(legacy_files)), unname(legacy_checksums)
+))
+root <- adopted_root
 ```
+
+### Clean up legacy scaffolding separately
+
+Adoption does not need cleanup to succeed. Leave `.git`, `tp.*` and
+`templates/` in place during this tutorial. A separate operational command is
+being built to inventory adopted studies and remove those items in a controlled
+maintenance pass. It will require `_study.yml`, show every target before
+deletion, avoid following symlinks and require separate confirmation before
+removing `.git`.
+
+Until that command is deployed, do not substitute a recursive wildcard in the
+RStudio Console.
 
 ## Pin the package environment
 
-`study_setup()` reports a missing `renv.lock` until the study initializes its
-package environment. If the study was not already pinned, do this after
-selecting R 4.6 and restarting RStudio. It is not executed in the temporary
-example because `renv::init()` changes the active R project. Snapshot again
-after installing the packages used by the study and whenever an accepted
-result needs a new reproducible package state.
+`study_status()` reports a missing `renv.lock` until the study initializes its
+package environment. For an unpinned study, do this after selecting R 4.6 and
+restarting RStudio:
 
 ```r
 renv::init()
 
-# Install or update the hvtiR packages used by the study, then record them.
+# Install or update the packages used by the study, then record them.
 renv::snapshot()
 ```
 
-## Register and verify the data
+Snapshot again when an accepted result needs a new reproducible package state.
+The temporary example does not run `renv::init()` because it changes the active
+R project while the article renders.
 
-Registration turns an existing data file into a checked study input. It records
-the file checksum, its role and the expected cohort counts. The synthetic study
-has one 40-row study dataset. A real EDA study may not
-yet have an event or follow-up-time field; both `event` and `time` may be
-`NULL`. Supply them only when they are part of the data contract.
+## Register the existing dataset
+
+Registration records the input filename, checksum, population and expected
+cohort counts. A later job verifies that contract before describing the data.
+
+In `hvtiRutilities 1.3.0`, the default study dataset requires both `event` and
+`time`, even during EDA. Use legitimate columns from the data contract:
+
+```r
+register_data(
+  built = "built.csv",
+  event = "dead",
+  time = "iv_dead",
+  role = "study",
+  population = "Patients meeting the study inclusion criteria"
+)
+verify_manifest()
+```
+
+Do not invent an outcome or follow-up field merely to complete setup. If the
+study does not yet have meaningful `event` and `time` columns, stop here until
+the planned utilities update supports that study state. The descriptive jobs
+below depend on a registered study dataset.
 
 ```{r}
-#| label: cohort-counts
-root <- adopted_root
-cfg <- study_config(root)
-study_data <- read_built(cfg, dataset = "study")
-study_counts <- cohort_counts(study_data, cfg, dataset = "study")
+#| label: register-data
+register_data(
+  adopted_root,
+  built = "built.csv",
+  event = "dead",
+  time = "iv_dead",
+  role = "study",
+  population = "Synthetic full cohort"
+)
+verify_manifest(file.path(adopted_root, "manifest.yaml"))
+cfg <- study_config(adopted_root)
+study_data <- read_built(cfg)
+counts <- cohort_counts(study_data, cfg)
 cohorts <- data.frame(
   dataset = "study",
-  rows = study_counts$n,
-  events = study_counts$n_events
+  rows = counts$n,
+  events = counts$n_events
 )
 cohorts
 ```
 
-The counts are a checkpoint, not decoration. Compare them with the data build
-or protocol before proceeding. Further filtering inside a job needs its own
-reference counts and checks.
+Compare these counts with the data build or protocol before proceeding. They
+are the first check that registration describes the intended population.
 
 ## Write the EDA analysis set
 
-An analysis set is a declared, reproducible view of the registered study
-dataset. Add its definition under `analysis_sets:` in `_study.yml`. Name the
-patient identifier, the columns to keep, ordered exclusions, and expected
-counts. This synthetic set keeps every row:
+An analysis set is a reproducible view of the registered study dataset. Its
+declaration names the identifier, columns to keep, ordered exclusions and
+expected counts. Add an `eda` entry to `_study.yml`; this synthetic example
+keeps every row:
 
 ```yaml
 analysis_sets:
@@ -274,11 +247,17 @@ analysis_sets:
       n_events: 20
 ```
 
-Write the set after its declaration. `write_analysis_set()` records its link
-to the registered dataset and stops later reads if either the source data or
-the declaration changes. The helper below preserves other analysis sets and
-refuses to replace an existing `eda` definition; review and rename an existing
-set deliberately instead of overwriting it.
+Then write the declared set:
+
+```r
+hvtiRdatabuild::write_analysis_set("eda", study_config())
+```
+
+`write_analysis_set()` records the connection to the registered input. A job
+stops if either the input checksum or the declaration changes later.
+
+The executable helper preserves other analysis sets and refuses to replace an
+existing `eda` definition:
 
 ```{r}
 #| label: write-eda-set
@@ -290,7 +269,7 @@ declare_eda <- function(root) {
     stop("analysis_sets in _study.yml must be a mapping.", call. = FALSE)
   }
   if (!is.null(raw$analysis_sets$eda)) {
-    stop("This study already has an eda analysis set; review it before changing it.",
+    stop("This study already has an eda analysis set; review it first.",
          call. = FALSE)
   }
   raw$analysis_sets$eda <- list(
@@ -310,277 +289,111 @@ declare_eda <- function(root) {
 declare_eda(adopted_root)
 ```
 
-## Add the pre-analysis jobs
+## Create the descriptive and EDA jobs
 
-Three jobs form the general descriptive and EDA starting point. Add the other
-two only when the required study fields exist. `open_job()` is the interactive
-entry point: it creates a missing job and opens it, or opens an existing job
-without overwriting edits. The executable example uses `add_job()` so
-rendering this article does not open editor windows.
+`open_job()` creates a missing job and opens it in RStudio. If the job already
+exists, it opens the study-authored file without replacing any edits.
 
-| job | purpose | output |
-|:--|:--|:--|
-| `dc-general` | contents, frequencies, distributions, correlations | HTML report |
-| `dc-tables` | formatted descriptive table and optional correlations | HTML and DOCX |
-| `dp-postage` | one small EDA panel per selected variable | HTML and PNG pages |
-| `dc-gfup` (optional) | follow-up distributions and event checks | HTML report |
-| `dp-trends` (optional) | cohort characteristics over calendar or operation time | HTML and PNG |
+### Understand the name
 
-### Name the EDA job set
+Each call supplies four fields. `prefix` and `qualifier` select a template;
+the other two fields keep related outputs together:
 
-`open_job()` needs four pieces of a job name. Two select the template, and two
-keep the study's related jobs together:
+- `dc` means descriptive computation and `dp` means descriptive plot.
+- Qualifiers such as `general`, `tables` and `postage` select one template in
+  that family.
+- During EDA there may be no modeled endpoint or analysis method. `cohort`
+  names the subject being described and `eda` names the stage. These are
+  organizational labels, not invented analysis choices.
 
-- `prefix` is the broad job family: `dc` for descriptive computation or `dp`
-  for a descriptive plot.
-- `qualifier` selects the particular template within that family, such as
-  `tables` or `postage`.
-- The next two values name the output set. During EDA there may be no clinical
-  endpoint or analysis method yet. Use a subject label such as `cohort` and the
-  stage label `eda`; they are organizational names, not claims that an outcome
-  model has been chosen.
+For example, `open_job("dc", "cohort", "eda", qualifier = "tables")`
+creates `descriptive/cohort-eda-dc-tables.qmd` in an adopted legacy study.
+Its HTML report stays beside the QMD, while its Word table goes under
+`documents/cohort-eda/`. Plot jobs follow the same naming pattern, but trend
+QMDs and HTML reports belong in `graphs/`, and plot PNGs go under
+`graphs/cohort-eda/`.
 
-For example, the call for descriptive tables creates
-`descriptive/cohort-eda-dc-tables.qmd` in an adopted study. The authored QMD
-stays flat in `descriptive/`; generated files are filed beneath the
-`cohort-eda/` output directory. Use the same subject and stage for all related
-jobs so their filenames and outputs form one coherent set.
+### Start with the generally applicable jobs
 
-From the RStudio Console, create the three general jobs:
+Create general checks and descriptive tables for every registered study:
 
 ```r
 general <- open_job("dc", "cohort", "eda", qualifier = "general")
 tables <- open_job("dc", "cohort", "eda", qualifier = "tables")
+```
+
+The EDA postage template is also part of this stage, but it requires a
+meaningful `X_VAR` for the horizontal axis. Create it when the dataset has an
+appropriate reference date, calendar year or follow-up measure:
+
+```r
 postage <- open_job("dp", "cohort", "eda", qualifier = "postage")
 ```
 
-If the registered data have a meaningful event indicator and follow-up time,
-add `dc-gfup`. If they have a meaningful calendar or operation-time field, add
-`dp-trends`:
+Two additional jobs are conditional. Add `dc-gfup` only when the registered
+event and follow-up fields answer a real completeness question. Add `dp-trends`
+only when the data have a meaningful calendar or operation-time field:
 
 ```r
 gfup <- open_job("dc", "cohort", "eda", qualifier = "gfup")
 trends <- open_job("dp", "cohort", "eda", qualifier = "trends")
 ```
 
-In a real study, use `open_job()` for each row, work its `EDIT:` markers from
-top to bottom, and render drafts as you go. Use `render_job(job, final = TRUE)`
-only after every marker is resolved. The descriptive, follow-up, and postage
-jobs can read the `eda` analysis set. The trends job reads a registered dataset
-directly. Choose the whole study dataset or a named dataset only when it is the
-intended population.
+The synthetic data have all of those fields, so the executable example
+scaffolds all five jobs without opening editor windows:
+
+```{r}
+#| label: scaffold-example-jobs
+study_jobs <- c(
+  general = add_job("dc", "cohort", "eda", adopted_root, "general"),
+  tables = add_job("dc", "cohort", "eda", adopted_root, "tables"),
+  gfup = add_job("dc", "cohort", "eda", adopted_root, "gfup"),
+  trends = add_job("dp", "cohort", "eda", adopted_root, "trends"),
+  postage = add_job("dp", "cohort", "eda", adopted_root, "postage")
+)
+study_jobs
+```
+
+## Work the jobs and generate output
+
+Each new job contains `EDIT:` markers for decisions that cannot come from the
+template: variables, labels, groups, units and output choices. Work from the
+top of the file downward. To list what remains in the job currently open in
+RStudio:
+
+```r
+job <- tables
+grep("EDIT:", readLines(job), value = TRUE)
+```
+
+Render a draft while markers remain. The report carries a draft banner so its
+numbers cannot be mistaken for an accepted result:
+
+```r
+render_job(job)
+```
+
+After every marker is resolved, render the accepted output:
+
+```r
+render_job(job, final = TRUE)
+```
+
+The HTML report stays beside its QMD in `descriptive/` or `graphs/`. The
+descriptive Word table is filed under `documents/cohort-eda/`; trend and
+postage PNGs are filed under `graphs/cohort-eda/`. Open those artifacts and
+check the population, variables, labels, counts, summaries and axes—not merely
+that the files exist.
+
+If the study has older SAS jobs, continue with
+[From SAS descriptive jobs to R](sas-to-r-descriptive.html). That article owns
+the detailed source mapping and migration workflow so adoption itself remains
+short and non-destructive.
 
 ### When registered data change
 
 Do not overwrite a registered dataset and run `update_manifest()` alone.
 Registration also records cohort metadata in `_study.yml`, so that shortcut
-can leave the two authoritative files disagreeing. Keep the existing extract
-unchanged until `hvtiRutilities` provides a coordinated update operation, then
-re-write every dependent analysis set and re-render these jobs.
-
-## Migrate one job at a time
-
-Each call selects one template and its source-specific adapter. The source
-supplies analysis choices; logs, listings and RTF/DOCX references add evidence.
-Migration writes an editable QMD and a report beside it. Existing jobs or
-reports stop the call, so keep your edited job when you repeat this workflow.
-
-### General descriptive and EDA checks
-
-The adopted study has no single legacy source that represents the full
-`dc-general` template. Scaffold that job directly, then review its editable
-choices against the registered data and protocol.
-
-```{r}
-#| label: add-adopted-general
-general <- add_job("dc", "cohort", "eda", root, "general")
-```
-
-### Descriptive tables
-
-The `%desc_tab` calls supply the variable groups and types. The migrated job
-will write one editable Word table. Review the SAS presentation choices before
-accepting its summary statistics and display.
-
-```{r}
-#| label: migrate-tables
-tables <- migrate_job(
-  file.path(root, "descriptive", "dc.tables.sas"), "cohort", "eda",
-  reference = file.path(root, "documents", "general.rtf")
-)
-```
-
-### Goodness of follow-up
-
-This job reads the registered event and follow-up fields. Confirm the time
-units from the data build. Its recorded-interval checks do not establish
-completeness against an administrative close date, and patient identifiers
-remain disabled.
-
-```{r}
-#| label: migrate-gfup
-gfup <- migrate_job(file.path(root, "descriptive", "dc.gfup.sas"), "cohort", "eda")
-```
-
-### Trends
-
-The explicit year origin and interval expression define whole operation years.
-`hv_trends()` owns the summaries and smoothing; compare these figures with
-legacy output before treating a method change as equivalent.
-
-```{r}
-#| label: migrate-trends
-trends <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda")
-```
-
-### Postage stamps
-
-This source says `set built;`, so the adapter keeps the registered study
-dataset. It makes a panel for each chosen variable and arranges the four panels
-on one PNG page.
-
-```{r}
-#| label: migrate-postage
-postage <- migrate_job(file.path(root, "descriptive", "dp.postage.sas"), "cohort", "eda")
-jobs <- c(tables = tables, gfup = gfup, trends = trends, postage = postage)
-adopted_jobs <- c(general = general, jobs)
-reports <- sub("[.]qmd$", "-migration.md", jobs)
-```
-
-## Read the reports and resolve the markers
-
-Read all four reports before editing the jobs. They record translated values,
-unresolved decisions, ignored source sections, checksums, and evidence line
-numbers. This first report includes the synthetic listing, log and RTF.
-
-```{r}
-#| label: migration-report
-#| results: asis
-cat(paste(readLines(reports[["tables"]]), collapse = "\n"))
-```
-
-For this synthetic example we accept the migrated groups and the whole cohort
-for all four jobs. We choose no group
-comparison, median summaries with the 15th and 85th percentiles, no table
-abbreviations or correlations, and `dc-tables.docx` as the Word filename.
-Follow-up intervals are years and no extra event cross-tabs are needed.
-The trend figures use the stated year origin, breaks and variable labels with
-no subgroup filter. Postage uses the four stated variables and a 2-by-2 grid.
-
-The following helper acknowledges only exact, reviewed comment lines. It is a
-way to repeat these synthetic decisions while rendering this article. In a
-study job, edit each marked choice against the source and protocol, then remove
-that marker. Replacing every marker without review can turn an incomplete
-migration into a misleading finished report.
-
-```{r}
-#| label: review-helper
-acknowledge <- function(job, reviewed_lines) {
-  text <- readLines(job, warn = FALSE)
-  stopifnot(all(reviewed_lines %in% text))
-  selected <- text %in% reviewed_lines
-  text[selected] <- gsub("EDIT:", "REVIEWED:", text[selected], fixed = TRUE)
-  writeLines(text, job)
-}
-```
-
-```{r}
-#| label: review-synthetic-choices
-#| code-fold: true
-acknowledge(tables, c(
-  "<!-- EDIT: name the job this replaces (descriptive/dc.tables.*) and say whether it",
-  "# EDIT: the built dataset this job reads. \"study\" is the file named by built:",
-  "# EDIT: the analysis set this job reads: the columns and excluded rows declared",
-  "# EDIT: the variables to report, grouped. Each name is a section heading and",
-  "# EDIT: review SAS presentation choices in the migration report.",
-  "# EDIT: confirm comparison, summaries, percentiles, abbreviations and Word filename.",
-  "# EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you",
-  "# EDIT: NULL skips the correlation variant (dc.tables.ods_<topic>.sas). To run"
-))
-acknowledge(gfup, c(
-  "<!-- EDIT: name the job this replaces (descriptive/dc.gfup). -->",
-  "# EDIT: the built dataset this job reads. \"study\" is the file named by built:",
-  "# EDIT: the analysis set this job reads: declare its columns and excluded rows",
-  "# EDIT: review unresolved migration evidence and confirm follow-up units in years.",
-  "# EDIT: optional event-coding cross-tabs, each a vector of column names."
-))
-acknowledge(trends, c(
-  "<!-- EDIT: name the job this replaces (an older graphs/dp.trends job) and list",
-  "# EDIT: choose a dataset registered in _study.yml.",
-  "# EDIT: the calendar year of operation, as a WHOLE year. hv_trends() puts one",
-  "# EDIT: one entry per figure. `cols` are the columns drawn together: several",
-  "# EDIT: optional. x-axis breaks shared by every figure, e.g. seq(1985, 2025, 5).",
-  "# EDIT: optional. Each entry is a filter, given as a function of the data that",
-  "# EDIT: review source filters and subgroup intent before accepting the whole cohort."
-))
-acknowledge(postage, c(
-  "<!-- EDIT: name the job this replaces (tp.dp.EDA_barplots_scatterplots*.R). -->",
-  "# EDIT: the built dataset this job reads. \"study\" is the file named by built:",
-  "# EDIT: the analysis set this job reads: declare its columns and excluded rows",
-  "# EDIT: review unresolved postage source choices in the migration report."
-))
-```
-
-```{r}
-#| label: check-reviewed-jobs
-remaining <- vapply(jobs, function(job) {
-  sum(grepl("EDIT:", readLines(job), fixed = TRUE))
-}, integer(1L))
-remaining
-stopifnot(all(remaining == 0L))
-```
-
-## Render and inspect the output
-
-`render_job()` renders each job from its own directory so its guard can read
-the authored QMD. A job with a marker left renders as a draft by default;
-`final = TRUE` makes an unresolved marker stop the render instead, which is
-what an accepted result requires.
-
-```{r}
-#| label: render-jobs
-for (job in jobs) {
-  render_job(job, final = TRUE, quiet = FALSE)
-}
-```
-
-The authored jobs and migration reports stay flat in their legacy folders.
-Generated figures and the Word table go under the `cohort-eda/` output set.
-Check both the artifact paths and their contents: a file existing is only the
-first check. The Word structural check catches document-format defects; it
-does not prove numerical agreement with SAS.
-
-```{r}
-#| label: inspect-outputs
-outputs <- list.files(root, pattern = "[.](html|docx|png)$", recursive = TRUE)
-outputs
-word <- file.path(root, "documents", "cohort-eda", "dc-tables.docx")
-png <- file.path(root, "graphs", "cohort-eda", "dp-postage-page-01.png")
-stopifnot(file.exists(word), file.exists(png))
-hvtiRtables::hv_check_docx(word)
-# Embed while the PNG exists; study cleanup runs before HTML conversion.
-knitr::asis_output(paste0(
-  '<img src="', knitr::image_uri(png),
-  '" alt="Postage stamp plots for the study cohort">'
-))
-stopifnot(identical(unname(tools::md5sum(legacy_files)),
-                    unname(legacy_checksums)))
-```
-
-Open the Word file to compare row order, labels, counts, summaries, precision
-and footnotes with the legacy reference. Inspect each trend and postage figure
-for variable selection, axes and cohort. Record any methodological differences
-alongside the migration report before using the output in a study document.
-
-## A job with no converter
-
-Not every prefix has a migration adapter yet. `migrate_job()` still scaffolds
-the template, keeps every `EDIT:` marker for manual review, and its report
-says so plainly.
-
-```{r}
-#| label: migrate-no-converter
-distribution <- migrate_job(file.path(root, "distributions", "ac.age.sas"), "cohort", "eda")
-distribution_report <- sub("[.]qmd$", "-migration.md", distribution)
-cat(head(readLines(distribution_report), 6L), sep = "\n")
-```
+can leave the two authoritative files disagreeing. Keep the registered extract
+unchanged until `hvtiRutilities` provides its coordinated update operation;
+then rewrite dependent analysis sets and rerender their jobs.
