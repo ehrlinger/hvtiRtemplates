@@ -25,6 +25,23 @@ the same numbers when the method is the same, and an explicit difference when
 the R job makes a different choice. It does not mean translating every SAS
 statement line by line.
 
+## Open the study first
+
+Open the study's `.Rproj` file in RStudio before creating or rendering a job.
+The project establishes the study root; do not change it manually. Confirm that
+the project has already been adopted and that its registered data still match
+the manifest:
+
+```r
+study_root()
+study_status()
+verify_manifest()
+```
+
+The descriptive jobs can be the first jobs in a study. At this stage there may
+be no modeled endpoint or analysis type. In the examples below, `cohort` names
+the subject being described and `eda` names the stage of work.
+
 ## Install once
 
 Install the hvtiR package set, then check it before starting a study job:
@@ -57,6 +74,11 @@ hvtiR::status()
 4. Compare the result with the SAS `.lst`, section by section.
 5. Keep the authored job flat in `10_descriptive/`; its generated artifacts
    are filed beneath `10_descriptive/cohort-eda/`.
+
+The filename records the choices in the call. `cohort-eda` is the shared job
+set, `dc` is the descriptive-computation prefix, and `tables` selects the table
+template within that prefix. These are organizational labels. When no outcome
+or model has been chosen, do not invent one merely to name an EDA job.
 
 ## The draft banner and `EDIT:` markers
 

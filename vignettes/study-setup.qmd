@@ -1,8 +1,8 @@
 ---
-title: "Set up an hvtiR study for descriptive and EDA work"
+title: "Adopt an existing study for descriptive and EDA work"
 author: "John Ehrlinger"
 vignette: >
-  %\VignetteIndexEntry{Set up a study for descriptive and EDA work}
+  %\VignetteIndexEntry{Adopt a study for descriptive and EDA work}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 format:
@@ -11,27 +11,65 @@ format:
     embed-resources: true
 ---
 
-This is the common first tutorial for an hvtiR study. Start on one of two paths:
+This tutorial starts with a study that already has working directories and an
+existing dataset. It may also contain older SAS or R jobs, but those are not
+required. We will open that directory as an RStudio
+Project, remove obsolete setup files, adopt the study into the hvtiR contract,
+register its data, write an `eda` analysis set and create the descriptive and
+EDA jobs used before a specific analysis begins.
 
-1. create a study that has no files yet; or
-2. adopt an existing study without rewriting its working directories.
+The result is not an analysis result yet. It is a reproducible starting point:
+the study has a known root, a recorded data contract and jobs whose remaining
+study decisions are visible as `EDIT:` markers.
 
-Both paths meet at the same study contract. From there, register the data,
-write an `eda` analysis set, and create the five jobs used before a specific
-analysis begins: general checks, descriptive tables, goodness of follow-up,
-trends, and EDA postage stamps.
-
-The executable example builds both paths from 40 synthetic observations and a
-named 24-row subset. Every file stays in a temporary directory. During
-rendering, that directory is removed after the R chunks run; the displayed
-figure is embedded before cleanup. Run the chunks in order in one interactive
-session to inspect the files yourself. For the statistical mapping behind the
-jobs, see [From SAS descriptive jobs to R](sas-to-r-descriptive.html).
+The executable example uses 40 synthetic observations in one existing study
+dataset. Every file stays in a temporary directory. During rendering, that
+directory is removed after the R chunks run; the displayed figure is embedded
+before cleanup. Run the chunks in order in one interactive session to inspect
+the files yourself. For the statistical mapping behind the jobs, see
+[From SAS descriptive jobs to R](sas-to-r-descriptive.html).
 
 The render steps require Quarto and the packages declared by the job templates,
 including `hvtiRdatabuild >= 0.2.1`, `hvtiRtables >= 1.0.1`, and
 `hvtiPlotR >= 2.7.14`. A missing or older dependency stops the render and names
 the required version.
+
+## Open the existing study in RStudio
+
+In RStudio, choose **File > New Project > Existing Directory** and select the
+study directory. Open the resulting `.Rproj` file whenever you work on the
+study. RStudio starts the session in that directory, so the project supplies
+the study root. Do not change the working directory manually.
+
+Before changing anything, confirm that R is looking at the intended directory:
+
+```r
+project_root <- getwd()
+normalizePath(project_root)
+```
+
+`getwd()` reads the location RStudio established; it does not change it. The
+tutorial's executable chunks use `adopted_root` only because they build a
+disposable study while this page renders. In a real study, pass
+`project_root` to the initial adoption call. After `_study.yml` exists, hvtiR
+functions such as `study_root()`, `open_job()` and `render_job()` find the root
+for themselves.
+
+### Choose the R version before adoption
+
+If the study already has an `renv.lock`, its `R` `Version` entry records the R
+version the study is already pinned to. Select that version in RStudio and keep
+it for the adoption. Do not silently move an already pinned study to a new R
+version.
+
+If there is no `renv.lock`, select **R 4.6** in RStudio before continuing. The
+first `renv::snapshot()` will then record R 4.6 for the study instead of the
+older 4.4.1 default. Restart the R session after changing versions and confirm
+the active version:
+
+```r
+R.version.string
+```
 
 ```{r}
 #| label: synthetic-setup
@@ -40,9 +78,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(hvtiRutilities)
 library(hvtiRtemplates)
 workspace <- withr::local_tempdir(.local_envir = environment())
-new_root <- file.path(workspace, "new-study")
 adopted_root <- file.path(workspace, "legacy-study")
-adoption_backup <- file.path(workspace, "legacy-study-pre-hvtiR")
 folders <- c("datasets", "descriptive", "distributions", "analyses",
              "graphs", "documents", "estimates")
 dir.create(adopted_root)
@@ -57,7 +93,6 @@ built <- data.frame(
   iv_opyrs = i + 0.25
 )
 utils::write.csv(built, file.path(adopted_root, "datasets", "built.csv"), row.names = FALSE)
-utils::write.csv(built[1:24, ], file.path(adopted_root, "datasets", "complete_cases.csv"), row.names = FALSE)
 writeLines(c(
   'title "Synthetic descriptive tables";',
   "%desc_tab(vartype=category, input=built, by=,",
@@ -87,7 +122,7 @@ writeLines(c(
   "plot lvmassi*year / haxis=axis1 vaxis=axis3; run; quit;"
 ), file.path(adopted_root, "graphs", "dp.trends.sas"))
 writeLines(c(
-  "set complete_cases;", "%let pref_time_var=year;",
+  "set built;", "%let pref_time_var=year;",
   "%let variables=age bmi female repair;", "%let exclude=;",
   "%let ncol=2;", "%let nrow=2;", "%let unique_limit=6;",
   "%let show_percent=0;"
@@ -100,58 +135,7 @@ writeLines("ref: refs/heads/main", file.path(adopted_root, ".git", "HEAD"))
 writeLines("obsolete copied template", file.path(adopted_root, "tp.shared.sas"))
 ```
 
-## Path A: create a new study
-
-A new study begins at a path that does not exist. `study_setup()` creates the
-numbered working directories, `_study.yml`, an R project, `.Renviron`, and
-`.renvignore`. Use the study's real Study Tracker ID and title.
-
-```{r}
-#| label: create-study
-study_setup(
-  new_root,
-  study = "Synthetic new study",
-  study_tracker_id = 43L
-)
-list.dirs(new_root, recursive = FALSE, full.names = FALSE)
-```
-
-The data build comes next. Put its outputs in `00_datasets/`, then register the
-default study dataset. Register a distinctly named dataset only when a job must
-read a second file as it stands.
-
-```{r}
-#| label: register-new-study
-utils::write.csv(
-  built,
-  file.path(new_root, "00_datasets", "built.csv"),
-  row.names = FALSE
-)
-utils::write.csv(
-  built[1:24, ],
-  file.path(new_root, "00_datasets", "complete_cases.csv"),
-  row.names = FALSE
-)
-register_data(
-  new_root,
-  built = "built.csv",
-  event = "dead",
-  time = "iv_dead",
-  role = "study",
-  population = "Synthetic full cohort"
-)
-register_data(
-  new_root,
-  built = "complete_cases.csv",
-  event = "dead",
-  time = "iv_dead",
-  dataset = "complete_cases",
-  role = "named",
-  population = "Synthetic complete cases"
-)
-```
-
-## Path B: clean up and adopt an existing study
+## Clean up the old scaffolding
 
 An adopted study keeps its bare working-directory names and all study-authored
 programs, logs, listings, and output. Before adoption, inventory two pieces of
@@ -161,10 +145,10 @@ old scaffolding that should not become part of the study contract:
 - obsolete copied template files beginning with `tp` anywhere in the study
   working directories.
 
-Do not remove either by a broad wildcard. Confirm the study root, inspect the
-exact matches, and choose a backup outside that root. Moving them makes the
-cleanup recoverable. A real study needs a second person to confirm the
-inventory and backup destination before the move.
+Do not remove either with a broad wildcard. Confirm the study root and inspect
+the exact matches first. The final call below permanently deletes only those
+paths; there is no backup step. Stop before `unlink()` if the inventory contains
+anything that should remain.
 
 ```{r}
 #| label: inventory-adoption-cleanup
@@ -174,58 +158,16 @@ legacy_tp <- list.files(
   adopted_root, pattern = "^tp", recursive = TRUE, full.names = TRUE,
   include.dirs = TRUE, all.files = TRUE, no.. = TRUE
 )
-legacy_git
-legacy_tp
+cleanup_targets <- c(if (dir.exists(legacy_git)) legacy_git, legacy_tp)
+cleanup_targets
 
-backup_legacy_scaffolding <- function(study_root, backup) {
-  study_root <- normalizePath(study_root, mustWork = TRUE)
-  backup <- file.path(
-    normalizePath(dirname(backup), mustWork = TRUE), basename(backup)
-  )
-  if (startsWith(backup, paste0(study_root, .Platform$file.sep))) {
-    stop("Choose an adoption backup outside the study root.", call. = FALSE)
-  }
-  if (file.exists(backup) || dir.exists(backup)) {
-    stop("The adoption backup path already exists; choose a new empty path.",
-         call. = FALSE)
-  }
-
-  git <- file.path(study_root, ".git")
-  tp <- list.files(
-    study_root, pattern = "^tp", recursive = TRUE, full.names = TRUE,
-    include.dirs = TRUE, all.files = TRUE, no.. = TRUE
-  )
-  sources <- c(if (dir.exists(git)) git, tp)
-  if (length(sources) == 0L) return(invisible(character()))
-  relative <- substring(sources, nchar(study_root) + 2L)
-  destinations <- file.path(backup, relative)
-
-  if (!dir.create(backup)) {
-    stop("Could not create the adoption backup.", call. = FALSE)
-  }
-  moved <- logical(length(sources))
-  complete <- FALSE
-  on.exit({
-    if (!complete) {
-      for (i in rev(which(moved))) file.rename(destinations[[i]], sources[[i]])
-      unlink(backup, recursive = TRUE)
-    }
-  })
-  for (i in seq_along(sources)) {
-    dir.create(dirname(destinations[[i]]), recursive = TRUE,
-               showWarnings = FALSE)
-    if (!file.rename(sources[[i]], destinations[[i]])) {
-      stop("Could not move legacy scaffolding; every earlier move was rolled back.",
-           call. = FALSE)
-    }
-    moved[[i]] <- TRUE
-  }
-  complete <- TRUE
-  invisible(destinations)
+if (length(cleanup_targets)) {
+  cleanup_status <- unlink(cleanup_targets, recursive = TRUE)
+  stopifnot(cleanup_status == 0L)
 }
-legacy_moved <- backup_legacy_scaffolding(adopted_root, adoption_backup)
 stopifnot(
-  !dir.exists(file.path(adopted_root, ".git")),
+  !file.exists(legacy_git),
+  !any(file.exists(cleanup_targets)),
   length(list.files(
     adopted_root, pattern = "^tp", recursive = TRUE, include.dirs = TRUE,
     all.files = TRUE, no.. = TRUE
@@ -245,8 +187,20 @@ list.files(adopted_root, recursive = TRUE)
 ```
 
 `adopt = TRUE` is additive. It records identity and environment files while
-preserving the legacy layout. Recovery of missing study state is a separate
-operation.
+preserving the legacy layout and study-authored files. In the real RStudio
+session, use the root you confirmed at the start:
+
+```r
+study_setup(
+  root = project_root,
+  study = "Study title from Study Tracker",
+  study_tracker_id = 42L,
+  adopt = TRUE
+)
+study_root()
+```
+
+The executable example passes its temporary root explicitly:
 
 ```{r}
 #| label: adopt-register
@@ -254,9 +208,6 @@ study_setup(adopted_root, study = "Synthetic legacy study",
             study_tracker_id = 42L, adopt = TRUE)
 register_data(adopted_root, built = "built.csv", event = "dead", time = "iv_dead",
               role = "study", population = "Synthetic full cohort")
-register_data(adopted_root, built = "complete_cases.csv", event = "dead",
-              time = "iv_dead", dataset = "complete_cases",
-              role = "named", population = "Synthetic complete cases")
 study_status(adopted_root)
 stopifnot(identical(unname(tools::md5sum(legacy_files)),
                     unname(legacy_checksums)))
@@ -265,13 +216,13 @@ stopifnot(identical(unname(tools::md5sum(legacy_files)),
 ## Pin the package environment
 
 `study_setup()` reports a missing `renv.lock` until the study initializes its
-package environment. Do this in the real study root for either path; it is not
-executed in this temporary example because `renv::init()` changes the active R
-project. Snapshot again after installing the packages used by the study and
-whenever an accepted result needs a new reproducible package state.
+package environment. If the study was not already pinned, do this after
+selecting R 4.6 and restarting RStudio. It is not executed in the temporary
+example because `renv::init()` changes the active R project. Snapshot again
+after installing the packages used by the study and whenever an accepted
+result needs a new reproducible package state.
 
 ```r
-setwd("/path/to/the/study")
 renv::init()
 
 # Install or update the hvtiR packages used by the study, then record them.
@@ -280,31 +231,29 @@ renv::snapshot()
 
 ## Register and verify the data
 
-From this point the same calls work with either path. This example continues
-with the adopted study so the next section can demonstrate migration from SAS.
-Registration records the checksum and cohort counts for each dataset. The
-study cohort has 40 observations; the named subset has 24.
+Registration turns an existing data file into a checked study input. It records
+the file checksum, its role and the expected cohort counts. The synthetic study
+has one 40-row study dataset. A real EDA study may not
+yet have an event or follow-up-time field; both `event` and `time` may be
+`NULL`. Supply them only when they are part of the data contract.
 
 ```{r}
 #| label: cohort-counts
 root <- adopted_root
 cfg <- study_config(root)
 study_data <- read_built(cfg, dataset = "study")
-subset_data <- read_built(cfg, dataset = "complete_cases")
 study_counts <- cohort_counts(study_data, cfg, dataset = "study")
-subset_counts <- cohort_counts(subset_data, cfg, dataset = "complete_cases")
 cohorts <- data.frame(
-  dataset = c("study", "complete_cases"),
-  rows = c(study_counts$n, subset_counts$n),
-  events = c(study_counts$n_events, subset_counts$n_events)
+  dataset = "study",
+  rows = study_counts$n,
+  events = study_counts$n_events
 )
 cohorts
 ```
 
-The named registration preserves the study-wide counts. A job using
-`complete_cases` must check that dataset's contract; checking the 40-row study
-contract cannot establish that a 24-row job cohort is correct. Further
-filtering inside a job needs its own reference counts and checks.
+The counts are a checkpoint, not decoration. Compare them with the data build
+or protocol before proceeding. Further filtering inside a job needs its own
+reference counts and checks.
 
 ## Write the EDA analysis set
 
@@ -358,45 +307,60 @@ declare_eda <- function(root) {
   fs::file_move(replacement, cfg_file)
   hvtiRdatabuild::write_analysis_set("eda", study_config(root))
 }
-declare_eda(new_root)
 declare_eda(adopted_root)
 ```
 
 ## Add the pre-analysis jobs
 
-These five jobs complete the descriptive and EDA stage. `open_job()` is the
-interactive entry point: it creates a missing job and opens it, or opens an
-existing job without overwriting edits. The executable example uses
-`add_job()` so rendering this article does not open five editor windows.
+Three jobs form the general descriptive and EDA starting point. Add the other
+two only when the required study fields exist. `open_job()` is the interactive
+entry point: it creates a missing job and opens it, or opens an existing job
+without overwriting edits. The executable example uses `add_job()` so
+rendering this article does not open editor windows.
 
 | job | purpose | output |
 |:--|:--|:--|
 | `dc-general` | contents, frequencies, distributions, correlations | HTML report |
 | `dc-tables` | formatted descriptive table and optional correlations | HTML and DOCX |
-| `dc-gfup` | follow-up distributions and event checks | HTML report |
-| `dp-trends` | cohort characteristics over operation year | HTML and PNG |
 | `dp-postage` | one small EDA panel per selected variable | HTML and PNG pages |
+| `dc-gfup` (optional) | follow-up distributions and event checks | HTML report |
+| `dp-trends` (optional) | cohort characteristics over calendar or operation time | HTML and PNG |
 
-From the study root, create and open each job with:
+### Name the EDA job set
+
+`open_job()` needs four pieces of a job name. Two select the template, and two
+keep the study's related jobs together:
+
+- `prefix` is the broad job family: `dc` for descriptive computation or `dp`
+  for a descriptive plot.
+- `qualifier` selects the particular template within that family, such as
+  `tables` or `postage`.
+- The next two values name the output set. During EDA there may be no clinical
+  endpoint or analysis method yet. Use a subject label such as `cohort` and the
+  stage label `eda`; they are organizational names, not claims that an outcome
+  model has been chosen.
+
+For example, the call for descriptive tables creates
+`descriptive/cohort-eda-dc-tables.qmd` in an adopted study. The authored QMD
+stays flat in `descriptive/`; generated files are filed beneath the
+`cohort-eda/` output directory. Use the same subject and stage for all related
+jobs so their filenames and outputs form one coherent set.
+
+From the RStudio Console, create the three general jobs:
 
 ```r
 general <- open_job("dc", "cohort", "eda", qualifier = "general")
 tables <- open_job("dc", "cohort", "eda", qualifier = "tables")
-gfup <- open_job("dc", "cohort", "eda", qualifier = "gfup")
-trends <- open_job("dp", "cohort", "eda", qualifier = "trends")
 postage <- open_job("dp", "cohort", "eda", qualifier = "postage")
 ```
 
-```{r}
-#| label: add-new-study-jobs
-new_jobs <- c(
-  general = add_job("dc", "cohort", "eda", new_root, "general"),
-  tables = add_job("dc", "cohort", "eda", new_root, "tables"),
-  gfup = add_job("dc", "cohort", "eda", new_root, "gfup"),
-  trends = add_job("dp", "cohort", "eda", new_root, "trends"),
-  postage = add_job("dp", "cohort", "eda", new_root, "postage")
-)
-new_jobs
+If the registered data have a meaningful event indicator and follow-up time,
+add `dc-gfup`. If they have a meaningful calendar or operation-time field, add
+`dp-trends`:
+
+```r
+gfup <- open_job("dc", "cohort", "eda", qualifier = "gfup")
+trends <- open_job("dp", "cohort", "eda", qualifier = "trends")
 ```
 
 In a real study, use `open_job()` for each row, work its `EDIT:` markers from
@@ -469,11 +433,11 @@ legacy output before treating a method change as equivalent.
 trends <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda")
 ```
 
-### Postage stamps on the named subset
+### Postage stamps
 
-This source says `set complete_cases;`. The adapter resolves that name to the
-registered subset, so this job reads 24 rows. It makes a panel for each chosen
-variable and arranges the four panels on one PNG page.
+This source says `set built;`, so the adapter keeps the registered study
+dataset. It makes a panel for each chosen variable and arranges the four panels
+on one PNG page.
 
 ```{r}
 #| label: migrate-postage
@@ -495,8 +459,8 @@ numbers. This first report includes the synthetic listing, log and RTF.
 cat(paste(readLines(reports[["tables"]]), collapse = "\n"))
 ```
 
-For this synthetic example we accept the migrated groups, the whole cohort for
-the first three jobs, and the named subset for postage. We choose no group
+For this synthetic example we accept the migrated groups and the whole cohort
+for all four jobs. We choose no group
 comparison, median summaries with the 15th and 85th percentiles, no table
 abbreviations or correlations, and `dc-tables.docx` as the Word filename.
 Follow-up intervals are years and no extra event cross-tabs are needed.
@@ -597,7 +561,7 @@ hvtiRtables::hv_check_docx(word)
 # Embed while the PNG exists; study cleanup runs before HTML conversion.
 knitr::asis_output(paste0(
   '<img src="', knitr::image_uri(png),
-  '" alt="Postage stamp plots for the named subset">'
+  '" alt="Postage stamp plots for the study cohort">'
 ))
 stopifnot(identical(unname(tools::md5sum(legacy_files)),
                     unname(legacy_checksums)))

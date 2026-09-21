@@ -18,12 +18,36 @@ test_that("study setup vignette declares the complete workflow", {
   txt <- readLines(path, warn = FALSE)
   expect_true(any(grepl("adopt = TRUE", txt, fixed = TRUE)))
   expect_true(any(grepl('role = "study"', txt, fixed = TRUE)))
-  expect_true(any(grepl('role = "named"', txt, fixed = TRUE)))
   for (source in c("dc.tables.sas", "dc.gfup.sas", "dp.trends.sas", "dp.postage.sas")) {
     expect_true(any(grepl(source, txt, fixed = TRUE)))
   }
   expect_true(any(grepl("renv::init()", txt, fixed = TRUE)))
   expect_true(any(grepl("renv::snapshot()", txt, fixed = TRUE)))
+})
+
+test_that("tutorials use the RStudio project as the study root", {
+  tutorials <- c(
+    testthat::test_path("..", "..", "vignettes", "study-setup.qmd"),
+    testthat::test_path(
+      "..", "..", "vignettes", "sas-to-r-descriptive.qmd"
+    )
+  )
+  testthat::skip_if_not(all(file.exists(tutorials)),
+                        "vignette sources not available")
+
+  for (tutorial in tutorials) {
+    text <- readLines(tutorial, warn = FALSE)
+    expect_false(any(grepl("setwd[[:space:]]*[(]", text)))
+    expect_true(any(grepl("RStudio", text, fixed = TRUE)))
+    expect_true(any(grepl(".Rproj", text, fixed = TRUE)))
+  }
+})
+
+test_that("adoption preserves a pinned R version and otherwise uses R 4.6", {
+  text <- readLines(skip_without_vignette(), warn = FALSE)
+  expect_true(any(grepl("renv.lock", text, fixed = TRUE)))
+  expect_true(any(grepl("already pinned", text, fixed = TRUE)))
+  expect_true(any(grepl("R 4.6", text, fixed = TRUE)))
 })
 
 test_that("the released legacy article name points to study setup", {
@@ -40,7 +64,7 @@ test_that("the released legacy article name points to study setup", {
   expect_true(any(grepl("study-setup.html", txt, fixed = TRUE)))
 })
 
-test_that("the tutorial sets up new and adopted studies before analysis", {
+test_that("the tutorial adopts an existing study before analysis", {
   path <- skip_without_vignette()
   lines <- readLines(path, warn = FALSE)
   starts <- which(lines == "```{r}")
@@ -54,27 +78,15 @@ test_that("the tutorial sets up new and adopted studies before analysis", {
   env <- new.env(parent = environment())
   # A single evaluation keeps the vignette's deferred cleanup after assertions.
   checks <- quote({
-    expect_true(exists("new_root", envir = env, inherits = FALSE))
     expect_true(exists("adopted_root", envir = env, inherits = FALSE))
-    expect_true(all(dir.exists(file.path(
-      env$new_root,
-      c("00_datasets", "10_descriptive", "20_distributions", "30_analyses",
-        "40_graphs", "50_documents", "90_estimates")
-    ))))
     expect_false(dir.exists(file.path(env$adopted_root, ".git")))
-    expect_length(Sys.glob(file.path(env$adopted_root, "tp*")), 0L)
-    expect_true(dir.exists(env$adoption_backup))
-    expect_true(dir.exists(file.path(env$adoption_backup, ".git")))
-    expect_true(length(Sys.glob(file.path(env$adoption_backup, "tp*"))) > 0L)
-    expect_named(
-      env$new_jobs,
-      c("general", "tables", "gfup", "trends", "postage")
-    )
-    expect_true(all(file.exists(env$new_jobs)))
-    expect_true(file.exists(file.path(env$new_root, "00_datasets", "eda.parquet")))
+    expect_length(list.files(
+      env$adopted_root, pattern = "^tp", recursive = TRUE,
+      include.dirs = TRUE, all.files = TRUE, no.. = TRUE
+    ), 0L)
     expect_true(file.exists(file.path(env$adopted_root, "datasets", "eda.parquet")))
-    expect_equal(env$cohorts$rows, c(40L, 24L))
-    expect_equal(env$cohorts$events, c(20L, 12L))
+    expect_equal(env$cohorts$rows, 40L)
+    expect_equal(env$cohorts$events, 20L)
     expect_named(
       env$adopted_jobs,
       c("general", "tables", "gfup", "trends", "postage")
@@ -88,7 +100,7 @@ test_that("the tutorial sets up new and adopted studies before analysis", {
       expect_false(any(grepl("EDIT:", readLines(job), fixed = TRUE)))
     }
     expect_match(paste(readLines(env$jobs[["postage"]]), collapse = "\n"),
-                 'DATASET <- "complete_cases"', fixed = TRUE)
+                 'DATASET <- "study"', fixed = TRUE)
     expect_true(all(c("datasets", "descriptive", "distributions", "analyses", "graphs", "documents", "estimates") %in%
                       list.dirs(env$root, recursive = FALSE, full.names = FALSE)))
     # These tutorial jobs use registered data and can render independently of
@@ -108,91 +120,26 @@ test_that("the tutorial sets up new and adopted studies before analysis", {
   capture.output(eval(as.expression(c(as.list(parse(text = code)), list(checks))), env))
 })
 
-test_that("adoption cleanup refuses an existing backup before moving files", {
+test_that("adoption cleanup removes only inventoried legacy scaffolding", {
   lines <- readLines(skip_without_vignette(), warn = FALSE)
   start <- match("#| label: inventory-adoption-cleanup", lines)
   end <- start + match("```", lines[-seq_len(start)])
   code <- parse(text = lines[seq.int(start + 1L, end - 1L)])
 
   adopted_root <- withr::local_tempdir()
-  adoption_backup <- withr::local_tempdir()
   dir.create(file.path(adopted_root, ".git"))
   writeLines("current git", file.path(adopted_root, ".git", "HEAD"))
-  writeLines("current template", file.path(adopted_root, "tp.shared.sas"))
-  writeLines("earlier backup", file.path(adoption_backup, "tp.shared.sas"))
-  env <- list2env(list(
-    adopted_root = adopted_root,
-    adoption_backup = adoption_backup
-  ))
-
-  expect_error(eval(code, env), "backup path already exists")
-  expect_true(dir.exists(file.path(adopted_root, ".git")))
-  expect_true(file.exists(file.path(adopted_root, "tp.shared.sas")))
-  expect_identical(
-    readLines(file.path(adoption_backup, "tp.shared.sas")),
-    "earlier backup"
-  )
-})
-
-test_that("adoption cleanup finds nested tp files and permits no legacy git", {
-  lines <- readLines(skip_without_vignette(), warn = FALSE)
-  start <- match("#| label: inventory-adoption-cleanup", lines)
-  end <- start + match("```", lines[-seq_len(start)])
-  code <- parse(text = lines[seq.int(start + 1L, end - 1L)])
-
-  adopted_root <- withr::local_tempdir()
   dir.create(file.path(adopted_root, "descriptive"))
   nested_tp <- file.path(adopted_root, "descriptive", "tp.dc.tables.sas")
   writeLines("nested template", nested_tp)
-  adoption_backup <- tempfile(
-    pattern = "adoption-backup-", tmpdir = dirname(adopted_root)
-  )
-  withr::defer(unlink(adoption_backup, recursive = TRUE),
-               envir = testthat::teardown_env())
-  env <- list2env(list(
-    adopted_root = adopted_root,
-    adoption_backup = adoption_backup
-  ))
+  retained <- file.path(adopted_root, "descriptive", "dc.tables.sas")
+  writeLines("study-authored job", retained)
+  env <- list2env(list(adopted_root = adopted_root))
 
   expect_no_error(eval(code, env))
+  expect_false(dir.exists(file.path(adopted_root, ".git")))
   expect_false(file.exists(nested_tp))
-  expect_true(file.exists(file.path(
-    adoption_backup, "descriptive", "tp.dc.tables.sas"
-  )))
-  expect_false(dir.exists(file.path(adoption_backup, ".git")))
-})
-
-test_that("adoption cleanup rolls back every move after a later failure", {
-  lines <- readLines(skip_without_vignette(), warn = FALSE)
-  start <- match("#| label: inventory-adoption-cleanup", lines)
-  end <- start + match("```", lines[-seq_len(start)])
-  code <- parse(text = lines[seq.int(start + 1L, end - 1L)])
-
-  adopted_root <- withr::local_tempdir()
-  adoption_backup <- tempfile(
-    pattern = "adoption-backup-", tmpdir = dirname(adopted_root)
-  )
-  withr::defer(unlink(adoption_backup, recursive = TRUE),
-               envir = testthat::teardown_env())
-  dir.create(file.path(adopted_root, ".git"))
-  writeLines("current git", file.path(adopted_root, ".git", "HEAD"))
-  writeLines("current template", file.path(adopted_root, "tp.shared.sas"))
-  calls <- 0L
-  fail_second_rename <- function(from, to) {
-    calls <<- calls + 1L
-    if (calls == 2L) return(FALSE)
-    base::file.rename(from, to)
-  }
-  env <- list2env(list(
-    adopted_root = adopted_root,
-    adoption_backup = adoption_backup,
-    file.rename = fail_second_rename
-  ))
-
-  expect_error(eval(code, env), "Could not move legacy scaffolding")
-  expect_true(dir.exists(file.path(adopted_root, ".git")))
-  expect_true(file.exists(file.path(adopted_root, "tp.shared.sas")))
-  expect_false(file.exists(adoption_backup) || dir.exists(adoption_backup))
+  expect_true(file.exists(retained))
 })
 
 test_that("EDA declaration preserves other sets and refuses replacement", {
