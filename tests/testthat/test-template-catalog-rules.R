@@ -5,7 +5,7 @@ catalog_rows <- function() {
 
 test_that("every catalog row has a unique template key and a live disposition", {
   rows <- catalog_rows()
-  expect_length(rows, 55L)
+  expect_length(rows, 58L)
   keys <- vapply(rows, function(r) paste(r$prefix, r$qualifier, sep = "\r"), character(1))
   expect_identical(anyDuplicated(keys), 0L)
   expect_true(all(vapply(rows, function(r) {

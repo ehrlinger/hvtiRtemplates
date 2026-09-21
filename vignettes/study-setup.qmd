@@ -158,7 +158,8 @@ programs, logs, listings, and output. Before adoption, inventory two pieces of
 old scaffolding that should not become part of the study contract:
 
 - a local `.git` repository left by the former setup process; and
-- obsolete copied template files beginning with `tp` at the study root.
+- obsolete copied template files beginning with `tp` anywhere in the study
+  working directories.
 
 Do not remove either by a broad wildcard. Confirm the study root, inspect the
 exact matches, and choose a backup outside that root. Moving them makes the
@@ -169,28 +170,70 @@ inventory and backup destination before the move.
 #| label: inventory-adoption-cleanup
 normalizePath(adopted_root)
 legacy_git <- file.path(adopted_root, ".git")
-legacy_tp <- Sys.glob(file.path(adopted_root, "tp*"))
+legacy_tp <- list.files(
+  adopted_root, pattern = "^tp", recursive = TRUE, full.names = TRUE,
+  include.dirs = TRUE, all.files = TRUE, no.. = TRUE
+)
 legacy_git
 legacy_tp
 
-if (file.exists(adoption_backup) || dir.exists(adoption_backup)) {
-  stop("The adoption backup path already exists; choose a new empty path.",
-       call. = FALSE)
+backup_legacy_scaffolding <- function(study_root, backup) {
+  study_root <- normalizePath(study_root, mustWork = TRUE)
+  backup <- file.path(
+    normalizePath(dirname(backup), mustWork = TRUE), basename(backup)
+  )
+  if (startsWith(backup, paste0(study_root, .Platform$file.sep))) {
+    stop("Choose an adoption backup outside the study root.", call. = FALSE)
+  }
+  if (file.exists(backup) || dir.exists(backup)) {
+    stop("The adoption backup path already exists; choose a new empty path.",
+         call. = FALSE)
+  }
+
+  git <- file.path(study_root, ".git")
+  tp <- list.files(
+    study_root, pattern = "^tp", recursive = TRUE, full.names = TRUE,
+    include.dirs = TRUE, all.files = TRUE, no.. = TRUE
+  )
+  sources <- c(if (dir.exists(git)) git, tp)
+  if (length(sources) == 0L) return(invisible(character()))
+  relative <- substring(sources, nchar(study_root) + 2L)
+  destinations <- file.path(backup, relative)
+
+  if (!dir.create(backup)) {
+    stop("Could not create the adoption backup.", call. = FALSE)
+  }
+  moved <- logical(length(sources))
+  complete <- FALSE
+  on.exit({
+    if (!complete) {
+      for (i in rev(which(moved))) file.rename(destinations[[i]], sources[[i]])
+      unlink(backup, recursive = TRUE)
+    }
+  })
+  for (i in seq_along(sources)) {
+    dir.create(dirname(destinations[[i]]), recursive = TRUE,
+               showWarnings = FALSE)
+    if (!file.rename(sources[[i]], destinations[[i]])) {
+      stop("Could not move legacy scaffolding; every earlier move was rolled back.",
+           call. = FALSE)
+    }
+    moved[[i]] <- TRUE
+  }
+  complete <- TRUE
+  invisible(destinations)
 }
-if (!dir.create(adoption_backup)) {
-  stop("Could not create the adoption backup.", call. = FALSE)
-}
-stopifnot(file.rename(legacy_git, file.path(adoption_backup, ".git")))
-for (path in legacy_tp) {
-  stopifnot(file.rename(path, file.path(adoption_backup, basename(path))))
-}
+legacy_moved <- backup_legacy_scaffolding(adopted_root, adoption_backup)
 stopifnot(
   !dir.exists(file.path(adopted_root, ".git")),
-  length(Sys.glob(file.path(adopted_root, "tp*"))) == 0L
+  length(list.files(
+    adopted_root, pattern = "^tp", recursive = TRUE, include.dirs = TRUE,
+    all.files = TRUE, no.. = TRUE
+  )) == 0L
 )
 ```
 
-This cleanup concerns obsolete root-level scaffolding. It does not remove
+This cleanup concerns obsolete copied scaffolding. It does not remove
 study-authored jobs such as `descriptive/dp.postage.sas`. Inventory the
 remaining study files and record their checksums before adoption.
 
@@ -217,6 +260,22 @@ register_data(adopted_root, built = "complete_cases.csv", event = "dead",
 study_status(adopted_root)
 stopifnot(identical(unname(tools::md5sum(legacy_files)),
                     unname(legacy_checksums)))
+```
+
+## Pin the package environment
+
+`study_setup()` reports a missing `renv.lock` until the study initializes its
+package environment. Do this in the real study root for either path; it is not
+executed in this temporary example because `renv::init()` changes the active R
+project. Snapshot again after installing the packages used by the study and
+whenever an accepted result needs a new reproducible package state.
+
+```r
+setwd("/path/to/the/study")
+renv::init()
+
+# Install or update the hvtiR packages used by the study, then record them.
+renv::snapshot()
 ```
 
 ## Register and verify the data
@@ -268,20 +327,35 @@ analysis_sets:
 
 Write the set after its declaration. `write_analysis_set()` records its link
 to the registered dataset and stops later reads if either the source data or
-the declaration changes.
+the declaration changes. The helper below preserves other analysis sets and
+refuses to replace an existing `eda` definition; review and rename an existing
+set deliberately instead of overwriting it.
 
 ```{r}
 #| label: write-eda-set
 declare_eda <- function(root) {
   cfg_file <- file.path(root, "_study.yml")
   raw <- yaml::read_yaml(cfg_file)
-  raw$analysis_sets <- list(eda = list(
+  if (is.null(raw$analysis_sets)) raw$analysis_sets <- list()
+  if (!is.list(raw$analysis_sets)) {
+    stop("analysis_sets in _study.yml must be a mapping.", call. = FALSE)
+  }
+  if (!is.null(raw$analysis_sets$eda)) {
+    stop("This study already has an eda analysis set; review it before changing it.",
+         call. = FALSE)
+  }
+  raw$analysis_sets$eda <- list(
     id = "ccfid",
     vars = names(built),
     exclude = list(),
     expect = list(n = 40L, n_events = 20L)
-  ))
-  yaml::write_yaml(raw, cfg_file)
+  )
+  replacement <- tempfile(
+    pattern = "_study-", tmpdir = dirname(cfg_file), fileext = ".yml"
+  )
+  on.exit(unlink(replacement))
+  yaml::write_yaml(raw, replacement)
+  fs::file_move(replacement, cfg_file)
   hvtiRdatabuild::write_analysis_set("eda", study_config(root))
 }
 declare_eda(new_root)
@@ -347,6 +421,17 @@ supplies analysis choices; logs, listings and RTF/DOCX references add evidence.
 Migration writes an editable QMD and a report beside it. Existing jobs or
 reports stop the call, so keep your edited job when you repeat this workflow.
 
+### General descriptive and EDA checks
+
+The adopted study has no single legacy source that represents the full
+`dc-general` template. Scaffold that job directly, then review its editable
+choices against the registered data and protocol.
+
+```{r}
+#| label: add-adopted-general
+general <- add_job("dc", "cohort", "eda", root, "general")
+```
+
 ### Descriptive tables
 
 The `%desc_tab` calls supply the variable groups and types. The migrated job
@@ -394,6 +479,7 @@ variable and arranges the four panels on one PNG page.
 #| label: migrate-postage
 postage <- migrate_job(file.path(root, "descriptive", "dp.postage.sas"), "cohort", "eda")
 jobs <- c(tables = tables, gfup = gfup, trends = trends, postage = postage)
+adopted_jobs <- c(general = general, jobs)
 reports <- sub("[.]qmd$", "-migration.md", jobs)
 ```
 

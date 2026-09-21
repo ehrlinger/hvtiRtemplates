@@ -254,7 +254,8 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "imputed_levels", "pool_collinear_pairs", "selection_crowding",  # >= 1.1.4
     "concept_map", "verify_manifest", "proc_means",
     "study_dir", "proc_contents", "built_path", "study_root",  # >= 1.1.12
-    "label_map", "get_label"
+    "label_map", "get_label",
+    "cache_fit"  # >= 1.3.0, the floor DESCRIPTION declares
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")
@@ -466,7 +467,7 @@ test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
 
   for (pkg in c(
     "hvtiRbootstrap", "hvtiRdatabuild", "hvtiRlifetables", "hvtiPlotR",
-    "hvtiRtables"
+    "hvtiRtables", "randomForestSRC", "ggRandomForests", "varPro"
   )) {
     floors <- package_version(character(0))
     pat <- paste0('packageVersion\\("', pkg, '"\\)\\s*<\\s*"[0-9.]+"')

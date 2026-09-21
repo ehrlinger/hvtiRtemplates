@@ -1,0 +1,18 @@
+---
+title: "Legacy study migration tutorial has moved"
+author: "John Ehrlinger"
+vignette: >
+  %\VignetteIndexEntry{Legacy study migration tutorial has moved}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+format:
+  html:
+    toc: false
+    embed-resources: true
+---
+
+The adoption and migration workflow is now part of
+[Set up an hvtiR study for descriptive and EDA work](study-setup.html). The
+replacement tutorial covers both new and adopted studies, including recoverable
+cleanup of legacy scaffolding, data registration, the EDA analysis set, and all
+five pre-analysis jobs.

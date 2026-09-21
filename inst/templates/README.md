@@ -23,6 +23,12 @@ refuses to overwrite an existing job.
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
 | `30_analyses/bc.qmd` | bootstrap variable selection, Cox | `30_analyses/` or `analyses/` |
 | `30_analyses/bh.qmd` | bootstrap variable selection | `30_analyses/` or `analyses/` |
+| `30_analyses/rfs-fit.qmd` | random survival forest, grown and checked | `30_analyses/` or `analyses/` |
+| `30_analyses/rfs-explain.qmd` | importance, VarPro and dependence for an `rfs` forest | `30_analyses/` or `analyses/` |
+| `30_analyses/rfc-fit.qmd` | classification forest, grown and checked | `30_analyses/` or `analyses/` |
+| `30_analyses/rfc-explain.qmd` | importance, VarPro and dependence for an `rfc` forest | `30_analyses/` or `analyses/` |
+| `30_analyses/rfr-fit.qmd` | regression forest, grown and checked | `30_analyses/` or `analyses/` |
+| `30_analyses/rfr-explain.qmd` | importance, VarPro and dependence for an `rfr` forest | `30_analyses/` or `analyses/` |
 
 A template is named `<prefix>.qmd`, or `<prefix>-<qualifier>.qmd` where one
 prefix carries several job types, and lives in a numbered directory named for
@@ -47,9 +53,29 @@ fifth in the taxonomy, because it holds saved output rather than jobs. The
 decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
-qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends` and `dp-postage`;
-the other prefixes here remain unqualified. A prefix is wholly qualified or
-wholly unqualified, never half-decomposed.
+qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`,
+`dp-postage`, `rfs-fit`, `rfs-explain`, `rfc-fit`, `rfc-explain`, `rfr-fit`
+and `rfr-explain`; the other prefixes here remain unqualified. A prefix is
+wholly qualified or wholly unqualified, never half-decomposed.
+
+### Random forest jobs
+
+The random forest templates come in pairs. The `fit` job grows the forest and
+saves it as `<prefix>.rds` in its set's estimates folder; the `explain` job
+reads that file and never grows its own, so every explanation describes the
+forest that was checked. Scaffold both into the same set, for example
+`add_job("rfs", "dead", "rfs", qualifier = "fit")` and
+`add_job("rfs", "dead", "rfs", qualifier = "explain")`, and render the fit job
+first.
+
+Older studies name these jobs `rfsrc.*` or `rf.*`, whatever the outcome. They
+map by the outcome in the job's fit call, not by the name:
+
+| old job | outcome | template |
+|---|---|---|
+| `rfsrc.*`, `rf.*` | survival | `rfs` |
+| `rfsrc.*`, `rf.*` | classification or binary | `rfc` |
+| `rfsrc.*`, `rf.*` | continuous | `rfr` |
 
 ## Where a scaffolded job lands
 
