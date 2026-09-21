@@ -84,11 +84,12 @@ bare-folder studies keep their layout. The ordinal that once prefixed
 filenames was dropped in 1.1.0.
 
 `qualifier` names a job type within a prefix. The current qualified
-templates are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`, and
-`dp-postage`; other prefixes remain unqualified. It is `NULL` and the
-column is `NA` for a prefix with a single template. Naming no qualifier
-where a prefix carries several is an error listing the choices, never a
-silent pick of the first.
+families are `dc`, `dp`, `rfs`, `rfc`, `rfr`, and `lm`. The `lm` choices
+are `binary`, `ordinal`, `nominal`, `propensity_binary`,
+`propensity_ordinal`, `propensity_nominal`, `checkpred`, and
+`balancing_count`. It is `NULL` and the column is `NA` for a prefix with
+a single template. Naming no qualifier where a prefix carries several is
+an error listing the choices, never a silent pick of the first.
 
 ## Migrate a legacy job
 
