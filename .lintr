@@ -98,6 +98,46 @@ exclusions: list(
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
+    "inst/templates/30_analyses/lm-binary.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
+    "inst/templates/30_analyses/lm-ordinal.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
+    "inst/templates/30_analyses/lm-nominal.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
+    "inst/templates/30_analyses/lm-propensity_binary.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
+    "inst/templates/30_analyses/lm-propensity_ordinal.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
+    "inst/templates/30_analyses/lm-propensity_nominal.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
+    "inst/templates/30_analyses/lm-checkpred.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
+    "inst/templates/30_analyses/lm-balancing_count.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
     "inst/templates/30_analyses/bl.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,

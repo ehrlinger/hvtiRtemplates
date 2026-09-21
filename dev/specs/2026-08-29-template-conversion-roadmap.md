@@ -44,7 +44,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**65 templates in scope**, of which 20 exist on disk.
+**65 templates in scope**, of which 28 exist on disk.
 
 ## By family
 
@@ -125,14 +125,14 @@ row has no template on disk.
 |---|---|---|---|---|---|
 | `cm` | queued | 35 | 35 | 2 | — |
 | `gm` | queued | 77 | 73 | 0 | — |
-| `lm-balancing_count` | queued | — | 549 | 0 | — |
-| `lm-binary` | queued | — | 1172 | 1 | — |
-| `lm-checkpred` | queued | — | 863 | 0 | — |
-| `lm-nominal` | queued | — | 524 | 0 | — |
-| `lm-ordinal` | queued | — | 535 | 0 | — |
-| `lm-propensity_binary` | queued | — | 1134 | 1 | — |
-| `lm-propensity_nominal` | queued | — | 1049 | 0 | — |
-| `lm-propensity_ordinal` | queued | — | 819 | 0 | — |
+| `lm-balancing_count` | shipped | — | 549 | 0 | — |
+| `lm-binary` | shipped | — | 1172 | 1 | — |
+| `lm-checkpred` | shipped | — | 863 | 0 | — |
+| `lm-nominal` | shipped | — | 524 | 0 | — |
+| `lm-ordinal` | shipped | — | 535 | 0 | — |
+| `lm-propensity_binary` | shipped | — | 1134 | 1 | — |
+| `lm-propensity_nominal` | shipped | — | 1049 | 0 | — |
+| `lm-propensity_ordinal` | shipped | — | 819 | 0 | — |
 | `ls` | queued | 34 | 32 | 0 | — |
 | `mm` | queued | 59 | 56 | 1 | — |
 | `nm` | queued | 122 | 121 | 1 | — |
@@ -173,11 +173,11 @@ Members: `ac`, `hm`, `hp`, `hs`, `hz`
 
 **Complete.**
 
-### propensity-matching — 2/12
+### propensity-matching — 6/12
 
 Members: `bd`, `bl`, `cm`, `dc-stddiff`, `hp`, `lm-balancing_count`, `lm-propensity_binary`, `lm-propensity_nominal`, `lm-propensity_ordinal`, `lp`, `rm`, `rp`
 
-Outstanding: `bd`, `cm`, `dc-stddiff`, `lm-balancing_count`, `lm-propensity_binary`, `lm-propensity_nominal`, `lm-propensity_ordinal`, `lp`, `rm`, `rp`.
+Outstanding: `bd`, `cm`, `dc-stddiff`, `lp`, `rm`, `rp`.
 
 <!-- END GENERATED -->
 

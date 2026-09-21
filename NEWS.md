@@ -1,5 +1,12 @@
 # hvtiRtemplates (unreleased)
 
+* Eight qualified `lm` templates now cover binary, ordinal and nominal outcome
+  models; the corresponding three propensity shapes; saved binary-model
+  validation without refitting; and count balancing scores. They use
+  `hvtiRpropensity 0.1.6` model bundles, retain per-imputation fits, display
+  Rubin-pooled estimates and covariance, and save their reviewed bundles below
+  the analysis set's `estimates/` directory.
+
 * **The study setup tutorial now covers both entry paths through the complete
   pre-analysis workflow.** It creates a numbered study or adopts a legacy
   study after moving `tp*` scaffolding and any old `.git` directory to a new,
@@ -24,11 +31,11 @@
   `randomForestSRC (>= 3.7.0)` and `varPro (>= 3.2.0)` join Suggests, and
   `ggRandomForests` rises to `>= 4.0.0`.
 
-* All 20 shipped job templates put editable study choices in one chunk near
+* All 28 shipped job templates put editable study choices in one chunk near
   the top. Reading data and building output happen below those choices; SAS
   migration continues to fill the same settings.
 
-* The 55-row template catalog now ships as `inst/extdata/templates.json` and
+* The 65-row template catalog now ships as `inst/extdata/templates.json` and
   is available through `template_catalog()`. Roadmap checks read this local
   catalog, the two CI catalog pins are removed, and the `hvtiRutilities`
   minimum is 1.3.0 for its machine-readable umbrella marker. The separate

@@ -22,7 +22,7 @@ test_that("the template catalog ships every owed job type", {
                 "balancing_count")
   expect_setequal(lm$qualifier, expected)
   expect_false(anyNA(lm$qualifier))
-  expect_true(all(lm$status == "queued"))
+  expect_true(all(lm$status == "shipped"))
 })
 
 test_that("a missing catalog is an error", {

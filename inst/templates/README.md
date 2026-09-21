@@ -54,9 +54,29 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`,
-`dp-postage`, `rfs-fit`, `rfs-explain`, `rfc-fit`, `rfc-explain`, `rfr-fit`
-and `rfr-explain`; the other prefixes here remain unqualified. A prefix is
-wholly qualified or wholly unqualified, never half-decomposed.
+`dp-postage`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
+`lm` jobs described below. The other prefixes here remain unqualified. A
+prefix is wholly qualified or wholly unqualified, never half-decomposed.
+
+### Logistic-model jobs
+
+The `lm` family separates outcome models from propensity and validation jobs:
+
+| qualifier | purpose | engine |
+|---|---|---|
+| `binary` | binary outcome model | `fit_logistic()` |
+| `ordinal` | proportional-odds outcome model | `fit_logistic()` |
+| `nominal` | generalized-logit outcome model | `fit_logistic()` |
+| `propensity_binary` | binary-treatment propensity score | `ps_logistic()` |
+| `propensity_ordinal` | ordered-treatment propensity score | `ps_ordinal()` |
+| `propensity_nominal` | nominal-treatment propensity score | `ps_nominal()` |
+| `checkpred` | validate a saved binary bundle without refitting | `validate_logistic()` |
+| `balancing_count` | Poisson or negative-binomial count balancing score | `bs_count()` |
+
+All eight retain fitted models and display coefficient and covariance output;
+stacked-imputation jobs also display Rubin-pooled inference. Scaffold one with
+its qualifier, for example
+`add_job("lm", "mortality", "analysis", qualifier = "binary")`.
 
 ### Random forest jobs
 
