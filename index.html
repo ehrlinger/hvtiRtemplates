@@ -164,7 +164,7 @@
 <div class="section level2">
 <h2 id="migrate-a-legacy-job">Migrate a legacy job<a class="anchor" aria-label="anchor" href="#migrate-a-legacy-job"></a>
 </h2>
-<p>For a study with SAS programs already in <code>descriptive/</code> and <code>graphs/</code>, first adopt its directory with <code>hvtiRutilities::study_setup(..., adopt = TRUE)</code> and register its built datasets with <code>register_data()</code>. The tutorial <a href="articles/legacy-study-migration.html">Migrate a legacy study to R jobs</a> walks through adoption, study and named-subset registration, migration, and output review using synthetic data.</p>
+<p>For a study with SAS programs already in <code>descriptive/</code> and <code>graphs/</code>, first adopt its directory with <code>hvtiRutilities::study_setup(..., adopt = TRUE)</code> and register its built datasets with <code>register_data()</code>. The tutorial <a href="articles/study-setup.html">Set up an hvtiR study for descriptive and EDA work</a> walks through new-study creation, recoverable legacy cleanup and adoption, data registration, the EDA analysis set, all five pre-analysis jobs, and output review using synthetic data.</p>
 <p>From that study’s root, migrate a descriptive-table job with:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">job</span> <span class="op">&lt;-</span> <span class="fu">hvtiRtemplates</span><span class="fu">::</span><span class="fu"><a href="reference/migrate_job.html">migrate_job</a></span><span class="op">(</span></span>

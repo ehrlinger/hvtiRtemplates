@@ -95,11 +95,12 @@ silent pick of the first.
 For a study with SAS programs already in `descriptive/` and `graphs/`,
 first adopt its directory with
 `hvtiRutilities::study_setup(..., adopt = TRUE)` and register its built
-datasets with `register_data()`. The tutorial [Migrate a legacy study to
-R
-jobs](https://ehrlinger.github.io/hvtiRtemplates/articles/legacy-study-migration.md)
-walks through adoption, study and named-subset registration, migration,
-and output review using synthetic data.
+datasets with `register_data()`. The tutorial [Set up an hvtiR study for
+descriptive and EDA
+work](https://ehrlinger.github.io/hvtiRtemplates/articles/study-setup.md)
+walks through new-study creation, recoverable legacy cleanup and
+adoption, data registration, the EDA analysis set, all five pre-analysis
+jobs, and output review using synthetic data.
 
 From that study’s root, migrate a descriptive-table job with:
 
