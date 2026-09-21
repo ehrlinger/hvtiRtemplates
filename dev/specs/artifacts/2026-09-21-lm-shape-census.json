@@ -1,0 +1,76 @@
+{
+  "date": "2026-09-21",
+  "corpus_programs": 12065,
+  "sas_breadth": 1222,
+  "sas_breadth_jobs": 1220,
+  "manual_review_programs": 25,
+  "misfiled_programs": 15,
+  "traversal_errors": 0,
+  "unreadable_candidates": 0,
+  "shapes": {
+    "binary": {
+      "sas_programs": 3393,
+      "sas_studies": 1172,
+      "r_jobs": 1,
+      "r_studies": 1,
+      "mi_programs": 1781,
+      "two_study_gate": true
+    },
+    "ordinal": {
+      "sas_programs": 1110,
+      "sas_studies": 535,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 8,
+      "two_study_gate": true
+    },
+    "nominal": {
+      "sas_programs": 531,
+      "sas_studies": 524,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 3,
+      "two_study_gate": true
+    },
+    "propensity_binary": {
+      "sas_programs": 3077,
+      "sas_studies": 1134,
+      "r_jobs": 1,
+      "r_studies": 1,
+      "mi_programs": 2389,
+      "two_study_gate": true
+    },
+    "propensity_ordinal": {
+      "sas_programs": 837,
+      "sas_studies": 819,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 5,
+      "two_study_gate": true
+    },
+    "propensity_nominal": {
+      "sas_programs": 1637,
+      "sas_studies": 1049,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 566,
+      "two_study_gate": true
+    },
+    "checkpred": {
+      "sas_programs": 872,
+      "sas_studies": 863,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 7,
+      "two_study_gate": true
+    },
+    "balancing_count": {
+      "sas_programs": 568,
+      "sas_studies": 549,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 547,
+      "two_study_gate": true
+    }
+  }
+}

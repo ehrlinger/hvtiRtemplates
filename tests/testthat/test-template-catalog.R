@@ -1,7 +1,7 @@
 test_that("the template catalog ships every owed job type", {
   catalog <- template_catalog()
   expect_s3_class(catalog, "data.frame")
-  expect_equal(nrow(catalog), 58L)
+  expect_equal(nrow(catalog), 65L)
   expect_equal(length(unique(catalog$prefix)), 44L)
   expect_false(any(c("destination", "replaced_by") %in% names(catalog)))
   expect_true(all(c("uses", "upstream", "downstream", "workflows") %in% names(catalog)))
@@ -15,6 +15,14 @@ test_that("the template catalog ships every owed job type", {
   # Explain rows carry no census counts: the counts describe the prefix, and
   # repeating them on both halves would double its breadth in the ledger.
   expect_true(all(is.na(rf$r_exemplars[rf$qualifier == "explain"])))
+
+  lm <- catalog[catalog$prefix == "lm", ]
+  expected <- c("binary", "ordinal", "nominal", "propensity_binary",
+                "propensity_ordinal", "propensity_nominal", "checkpred",
+                "balancing_count")
+  expect_setequal(lm$qualifier, expected)
+  expect_false(anyNA(lm$qualifier))
+  expect_true(all(lm$status == "shipped"))
 })
 
 test_that("a missing catalog is an error", {

@@ -1,0 +1,109 @@
+---
+title: "Binary logistic model"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+Fits a binary outcome model and preserves the fitted model, predictions, and
+pooled inference. For stacked imputations, coefficients and covariance use
+Rubin pooling while patient predictions are averaged across imputations.
+
+```{r}
+#| label: setup
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(hvtiRpropensity)
+  library(hvtiRutilities)
+})
+if (utils::packageVersion("hvtiRpropensity") < "0.1.6") {
+  stop("This template needs hvtiRpropensity >= 0.1.6.", call. = FALSE)
+}
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+                   paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"))
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      warning(.msg, "\nRendering as a draft; remove every marker for a final result.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n", .msg, "\n:::\n", sep = "")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'.", call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: set
+ENDPOINT <- "outcome"
+TYPE     <- "analysis"
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root), paste0(ENDPOINT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+```
+
+## Study choices
+
+```{r}
+#| label: study-choices
+DATASET <- "study"                         # EDIT: registered dataset name.
+OUTCOME <- "outcome"                       # EDIT: binary outcome column.
+PREDICTORS <- c("age", "female")           # EDIT: model terms from the reviewed specification.
+OUTCOME_LEVELS <- c("no", "yes")           # EDIT: both accepted values, non-event then event.
+EVENT_LEVEL <- "yes"                       # EDIT: clinically meaningful event value.
+ID <- "id"                                 # EDIT: stable patient identifier.
+IMPUTATION <- NULL                          # EDIT: imputation column, or NULL for one dataset.
+```
+
+```{r}
+#| label: read
+d <- read_built(cfg = study_config(start = .root), dataset = DATASET)
+required_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
+needed <- unique(c(all.vars(required_formula), ID, IMPUTATION))
+missing <- setdiff(needed, names(d))
+if (length(missing)) stop("Missing model columns: ", paste(missing, collapse = ", "), call. = FALSE)
+```
+
+```{r}
+#| label: fit
+model_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
+fit <- hvtiRpropensity::fit_logistic(
+  model_formula, d, family = "binary", outcome_col = OUTCOME, id_col = ID,
+  imputation_col = IMPUTATION, outcome_levels = OUTCOME_LEVELS,
+  event_level = EVENT_LEVEL, prediction_prefix = "predicted"
+)
+```
+
+## Fit health and pooled inference
+
+```{r}
+#| label: results
+knitr::kable(fit$tables$fit_status)
+knitr::kable(fit$tables$estimates)
+knitr::kable(fit$tables$covariance)
+```
+
+```{r}
+#| label: save
+MODEL_PATH <- set_path("estimates", "lm-binary.rds")
+saveRDS(fit, MODEL_PATH)
+MODEL_PATH
+```
