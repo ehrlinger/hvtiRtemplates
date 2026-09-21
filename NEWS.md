@@ -1,9 +1,9 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.2.1
 
 * Eight qualified `lm` templates now cover binary, ordinal and nominal outcome
   models; the corresponding three propensity shapes; saved binary-model
   validation without refitting; and count balancing scores. They use
-  `hvtiRpropensity 0.1.6` model bundles, retain per-imputation fits, display
+  `hvtiRpropensity 0.1.7` model bundles, retain per-imputation fits, display
   Rubin-pooled estimates and covariance, and save their reviewed bundles below
   the analysis set's `estimates/` directory.
 

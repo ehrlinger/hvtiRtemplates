@@ -12,12 +12,12 @@ test_that("the lm family ships eight engine-specific templates", {
   for (qualifier in names(lm_qualifiers)) {
     src <- readLines(template_path("lm", qualifier), warn = FALSE)
     expect_true(any(grepl(paste0(lm_qualifiers[[qualifier]], "\\("), src)), info = qualifier)
-    expect_true(any(grepl("hvtiRpropensity >= 0.1.6", src, fixed = TRUE)), info = qualifier)
+    expect_true(any(grepl("hvtiRpropensity >= 0.1.7", src, fixed = TRUE)), info = qualifier)
   }
 })
 
 test_that("lm-binary fits and saves a model bundle", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.6")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   env <- new.env(parent = globalenv())
   env$d <- lm_data()
   env$set_path <- function(kind, file) tempfile(fileext = file)
@@ -31,7 +31,7 @@ test_that("lm-binary fits and saves a model bundle", {
 })
 
 test_that("lm-binary validates variables inside model terms", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.6")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   env <- new.env(parent = globalenv())
   env$.root <- tempdir()
   env$read_built <- function(...) lm_data()
@@ -45,7 +45,7 @@ test_that("lm-binary validates variables inside model terms", {
 })
 
 test_that("lm outcome templates fit every declared family", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.6")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   d <- lm_mi_data()
   cases <- list(
     ordinal = list(OUTCOME = "ordinal", PREDICTORS = c("age", "female"),
@@ -71,7 +71,7 @@ test_that("lm outcome templates fit every declared family", {
 })
 
 test_that("lm propensity and count templates expose pooled inference", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.6")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   d <- lm_mi_data()
   cases <- list(
     propensity_binary = list(TREATMENT = "treatment", PREDICTORS = c("age", "female"),
@@ -106,7 +106,7 @@ test_that("lm propensity and count templates expose pooled inference", {
 })
 
 test_that("lm-checkpred applies the saved bundle without fitting", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.6")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   d <- lm_data()
   model <- hvtiRpropensity::fit_logistic(
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
@@ -133,7 +133,7 @@ test_that("lm-checkpred applies the saved bundle without fitting", {
 })
 
 test_that("lm-checkpred refuses to overwrite its source bundle", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.6")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   d <- lm_data()
   model <- hvtiRpropensity::fit_logistic(
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
@@ -153,7 +153,7 @@ test_that("lm-checkpred refuses to overwrite its source bundle", {
 })
 
 test_that("every lm template scaffolds and renders", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.6")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   for (qualifier in names(lm_qualifiers)) {
