@@ -25,8 +25,8 @@ rf_chunk <- function(src, label) {
 #
 # DEVIATION, second: hvtiRutilities::cache_fit() (>= 1.3.0) records provenance
 # through record_provenance(), which hard-stops -- discarding the fit it just
-# computed -- unless the study's default dataset carries a registered file and
-# a cohort contract. A real study always has both by the time any job runs, so
+# computed -- unless the study's default dataset carries a registered file. A
+# real study always has one by the time any job runs, so
 # this is not a template gap; it is this smoke fixture skipping a setup step a
 # real study never skips. register_data() needs an actual file to read, so one
 # is written here -- content is irrelevant, since rf_env() overrides
@@ -41,7 +41,7 @@ rf_study <- function(.local_envir = parent.frame()) {
           file.path(hvtiRutilities::study_dir("datasets", root), "cohort.rds"))
   utils::capture.output(suppressMessages(
     hvtiRutilities::register_data(
-      root, built = "cohort.rds", event = "event", time = "time", population = "RF smoke"
+      root, built = "cohort.rds", population = "RF smoke"
     )
   ))
   root

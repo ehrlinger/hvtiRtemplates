@@ -89,7 +89,7 @@ test_that("dc-tables only classifies from the selected registered data", {
   d$female <- rep(1:3, 8)
   utils::write.csv(d, path, row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(
-    root, built = "categorical.csv", event = "dead", time = "iv_dead",
+    root, built = "categorical.csv",
     dataset = "categorical", role = "named", population = "Synthetic categorical fixture"
   ))
   out <- tables_migrate(root)
