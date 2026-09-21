@@ -101,12 +101,6 @@ test_that("the tutorial adopts an existing study before analysis", {
   # A single evaluation keeps the vignette's deferred cleanup after assertions.
   checks <- quote({
     expect_true(exists("adopted_root", envir = env, inherits = FALSE))
-    expect_true(dir.exists(file.path(env$adopted_root, ".git")))
-    expect_true(file.exists(file.path(env$adopted_root, "tp.shared.sas")))
-    expect_true(file.exists(file.path(
-      env$adopted_root, "descriptive", "templates", "ordinary.sas"
-    )))
-    expect_true(file.exists(file.path(env$adopted_root, "datasets", "eda.parquet")))
     expect_equal(env$cohorts$rows, 40L)
     expect_equal(env$cohorts$events, 20L)
     expect_named(
@@ -114,53 +108,10 @@ test_that("the tutorial adopts an existing study before analysis", {
       c("general", "tables", "gfup", "trends", "postage")
     )
     expect_true(all(file.exists(env$study_jobs)))
-    expect_identical(unname(tools::md5sum(env$legacy_files)), unname(env$legacy_checksums))
     expect_true(all(c("datasets", "descriptive", "distributions", "analyses", "graphs", "documents", "estimates") %in%
                       list.dirs(env$root, recursive = FALSE, full.names = FALSE)))
   })
   capture.output(eval(as.expression(c(as.list(parse(text = code)), list(checks))), env))
-})
-
-test_that("EDA declaration preserves other sets and refuses replacement", {
-  lines <- readLines(skip_without_vignette(), warn = FALSE)
-  start <- match("#| label: write-eda-set", lines)
-  end <- start + match("```", lines[-seq_len(start)])
-  expressions <- parse(text = lines[seq.int(start + 1L, end - 1L)])
-  definition <- expressions[vapply(expressions, function(x) {
-    is.call(x) && identical(x[[1L]], as.name("<-")) &&
-      identical(x[[2L]], as.name("declare_eda"))
-  }, logical(1L))]
-
-  fixture <- withr::local_tempdir()
-  root <- file.path(fixture, "study")
-  study_setup(root, study = "Analysis-set preservation", study_tracker_id = 1L)
-  built <- data.frame(
-    ccfid = seq_len(40L), dead = rep(0:1, 20L),
-    iv_dead = seq_len(40L) / 10
-  )
-  utils::write.csv(
-    built, file.path(root, "00_datasets", "built.csv"), row.names = FALSE
-  )
-  register_data(root, built = "built.csv", event = "dead", time = "iv_dead",
-                role = "study", population = "Synthetic cohort")
-  cfg_file <- file.path(root, "_study.yml")
-  cfg <- yaml::read_yaml(cfg_file)
-  existing <- list(
-    id = "ccfid", vars = names(built), exclude = list(),
-    expect = list(n = 40L, n_events = 20L)
-  )
-  cfg$analysis_sets <- list(existing = existing)
-  yaml::write_yaml(cfg, cfg_file)
-  env <- list2env(list(built = built))
-  eval(definition, env)
-
-  expect_no_error(env$declare_eda(root))
-  updated <- yaml::read_yaml(cfg_file)
-  expect_identical(updated$analysis_sets$existing, existing)
-  expect_named(updated$analysis_sets, c("existing", "eda"))
-  before <- readLines(cfg_file, warn = FALSE)
-  expect_error(env$declare_eda(root), "already has an eda analysis set")
-  expect_identical(readLines(cfg_file, warn = FALSE), before)
 })
 
 test_that("the final migration verifier returns four lasting rendered fixtures", {

@@ -30,7 +30,7 @@ statement line by line.
 Install the hvtiR package set, then check it before starting a study job:
 
 ```r
-hvtiR::install()
+pak::pak("ehrlinger/hvtiR")
 hvtiR::status()
 ```
 
