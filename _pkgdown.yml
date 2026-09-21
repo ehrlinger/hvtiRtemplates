@@ -21,6 +21,7 @@ articles:
   - title: Tutorials
     contents:
       - sas-to-r-descriptive
+      - study-setup
       - legacy-study-migration
 
 footer:

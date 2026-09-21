@@ -1,5 +1,18 @@
 # hvtiRtemplates (unreleased)
 
+* **The study setup tutorial now covers both entry paths through the complete
+  pre-analysis workflow.** It creates a numbered study or adopts a legacy
+  study after moving `tp*` scaffolding and any old `.git` directory to a new,
+  reviewed backup. Both paths register data and declare and write the
+  `eda` analysis set. The new-study path scaffolds `dc-general`, `dc-tables`,
+  `dc-gfup`, `dp-trends`, and `dp-postage`; the adopted-study path adds
+  `dc-general` and demonstrates the four supported legacy migrations. The
+  tutorial also warns that
+  `update_manifest()` alone cannot safely refresh a registered dataset while
+  `_study.yml` still carries cohort metadata. `fs` and `yaml` join `Suggests`
+  because the executable article writes the synthetic analysis-set
+  declarations it teaches without replacing other sets.
+
 * Six random forest templates: `rfs`, `rfc` and `rfr`, for survival,
   classification and continuous outcomes, each as a `fit` job and an `explain`
   job. The fit job grows the forest through `hvtiRutilities::cache_fit()` and

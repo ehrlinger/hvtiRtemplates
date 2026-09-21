@@ -40,6 +40,7 @@ Remotes:
     ehrlinger/hvtiRpropensity
 Suggests:
     arrow,
+    fs,
     ggRandomForests (>= 4.0.0),
     ggplot2,
     hvtiPlotR (>= 2.7.14),
@@ -56,7 +57,8 @@ Suggests:
     TemporalHazard (>= 1.2.8),
     testthat (>= 3.0.0),
     varPro (>= 3.2.0),
-    withr
+    withr,
+    yaml
 VignetteBuilder: quarto
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0
