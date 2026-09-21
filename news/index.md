@@ -41,14 +41,15 @@
 - **The `dc-general` job template ships**, replacing
   `descriptive/dc.general`: overall statistics through
   [`hvtiRutilities::proc_contents()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html)
-  and `proc_means()`, then base-R contingency tables, cumulative
-  distributions (SAS `QNTLDEF=5` quantiles and the five lowest and
-  highest values) and a Pearson pairwise-correlation sweep. `ID_COL` is
-  off by default, so no patient identifier reaches the report unless a
-  study author sets it. `KEY_COLS` keeps identifier columns, `ccfid` by
-  default, out of the overall statistics too. It reads data the same
-  three ways as the other descriptive templates, `DATASET` or
-  `ANALYSIS_SET`.
+  and
+  [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html),
+  then base-R contingency tables, cumulative distributions (SAS
+  `QNTLDEF=5` quantiles and the five lowest and highest values) and a
+  Pearson pairwise-correlation sweep. `ID_COL` is off by default, so no
+  patient identifier reaches the report unless a study author sets it.
+  `KEY_COLS` keeps identifier columns, `ccfid` by default, out of the
+  overall statistics too. It reads data the same three ways as the other
+  descriptive templates, `DATASET` or `ANALYSIS_SET`.
 
 - **The descriptive templates can read a named dataset.** `dc-tables`,
   `dc-gfup` and `dp-postage` gain `DATASET`, passed to
@@ -649,10 +650,11 @@ template, and no ordinal will ever be issued again.
   against a screen a study ran.** No R job found on the share calls
   `boot_select()`, so no `bl`, `br` or `bc` bag existed to read. The
   gate screens a real built dataset instead, which exercises real
-  variable names, a real correlation structure and `read_built()`; what
-  it does not exercise is a candidate pool a study author chose. `bc` is
-  the weakest of the three: of the 16 studies with a `bc` job, none has
-  an R exemplar.
+  variable names, a real correlation structure and
+  [`read_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html);
+  what it does not exercise is a candidate pool a study author chose.
+  `bc` is the weakest of the three: of the 16 studies with a `bc` job,
+  none has an R exemplar.
 
 - **Ordinals 04.02, 04.03 and 04.04** are free minors in `analyses`.
   `04.06` remains retired and unissuable.
@@ -841,11 +843,12 @@ template, and no ordinal will ever be issued again.
   `%cluster` contribution.** `boot_clusters()` counts replicates
   retaining any member of a list you declare and computes no correlation
   at all, so the section’s claim to group “by DATA” described the SAS
-  macro rather than the R helper. A `pool_collinear_pairs()` chunk now
-  makes it true. The two are kept apart deliberately: a declaration says
-  a clinician treats several variables as one thing, a correlation says
-  the pool cannot tell them apart, and only the second is a property of
-  the data.
+  macro rather than the R helper. A
+  [`pool_collinear_pairs()`](https://ehrlinger.github.io/hvtiRutilities/reference/pool_collinear_pairs.html)
+  chunk now makes it true. The two are kept apart deliberately: a
+  declaration says a clinician treats several variables as one thing, a
+  correlation says the pool cannot tell them apart, and only the second
+  is a property of the data.
 
   This is why the template now reads the built dataset. The one failure
   that introduces is guarded: a build that moved since the screen ran
@@ -1010,12 +1013,15 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
     (temporal_hazard#130): it declines the strongest candidates, because
     the observed information goes indefinite at `beta = 0`.
 
-  Covariates are **read out of the SAS job** with `sas_variable_block()`
+  Covariates are **read out of the SAS job** with
+  [`sas_variable_block()`](https://ehrlinger.github.io/hvtiRutilities/reference/sas_variable_block.html)
   rather than transcribed, taking only names — a `name=value` block
-  carries the other study’s converged answers. `covariate_audit()` then
-  stops the render rather than fitting a model whose covariates are not
-  what the job specifies, and `pool_collinear_pairs()` reports exact
-  complements like `male`/`female`.
+  carries the other study’s converged answers.
+  [`covariate_audit()`](https://ehrlinger.github.io/hvtiRutilities/reference/covariate_audit.html)
+  then stops the render rather than fitting a model whose covariates are
+  not what the job specifies, and
+  [`pool_collinear_pairs()`](https://ehrlinger.github.io/hvtiRutilities/reference/pool_collinear_pairs.html)
+  reports exact complements like `male`/`female`.
 
   The fit is **two stages**, mirroring what the SAS job does: shapes
   held at the `hz` fit while covariates are screened, then freed.
@@ -1075,10 +1081,12 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
   whether `DESCRIPTION` needs bumping. The scan reads code chunks only:
   a test that fires on prose is a test that gets deleted.
 
-- The `03.01-ac` template’s local `imputed_levels()` is removed in
-  favour of the `hvtiRutilities` export. The two were identical, and the
-  duplicate arrived only because hvtiRutilities#47 lifted the same
-  function out of the same study. \# hvtiRtemplates 1.0.7
+- The `03.01-ac` template’s local
+  [`imputed_levels()`](https://ehrlinger.github.io/hvtiRutilities/reference/imputed_levels.html)
+  is removed in favour of the `hvtiRutilities` export. The two were
+  identical, and the duplicate arrived only because hvtiRutilities#47
+  lifted the same function out of the same study. \# hvtiRtemplates
+  1.0.7
 
 ### New features
 
@@ -1351,10 +1359,12 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
   path needs editing, and marks every study-specific line `EDIT:`.
 
   The cohort section offers two shapes, because the choice is not
-  cosmetic: a job analysing the whole study uses `assert_cohort()`,
+  cosmetic: a job analysing the whole study uses
+  [`assert_cohort()`](https://ehrlinger.github.io/hvtiRutilities/reference/assert_cohort.html),
   while a job analysing a filtered subset must supply its own gate —
-  `_study.yml` records the study cohort, so `assert_cohort()` would pass
-  while the job ran on a cohort nobody checked.
+  `_study.yml` records the study cohort, so
+  [`assert_cohort()`](https://ehrlinger.github.io/hvtiRutilities/reference/assert_cohort.html)
+  would pass while the job ran on a cohort nobody checked.
 
   `hz` and `hp` are deliberately absent: each exists in only one study,
   and a template extracted from a single example encodes that study’s

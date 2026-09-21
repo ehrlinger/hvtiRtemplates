@@ -19,12 +19,34 @@ hvtiR::install()
 hvtiR::status()
 ```
 
+## Open the study first
+
+Open the study’s `.Rproj` file in RStudio before creating or rendering a
+job. The project establishes the study root; do not change it manually.
+Attach the study packages, then confirm that the project has already
+been adopted and that its registered data still match the manifest:
+
+``` r
+
+library(hvtiRutilities)
+library(hvtiRtemplates)
+
+study_root()
+study_status()
+verify_manifest()
+```
+
+The descriptive jobs can be the first jobs in a study. At this stage
+there may be no modeled endpoint or analysis type. In the examples
+below, `cohort` names the subject being described and `eda` names the
+stage of work.
+
 ## The map
 
 | SAS job | R job | template | engine |
 |:---|:---|:---|:---|
 | `descriptive/dc.tables.ods.sas` (`%desc_tab`) | `dc-tables` | `10_descriptive/dc-tables.qmd` | `hv_tbl_summary()`; `hv_correlation_table()` and `hv_correlation_matrix()` |
-| `descriptive/dc.gfup.sas` | `dc-gfup` | `10_descriptive/dc-gfup.qmd` | `proc_means()` |
+| `descriptive/dc.gfup.sas` | `dc-gfup` | `10_descriptive/dc-gfup.qmd` | [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |
 | `graphs/dp.trends.R` | `dp-trends` | `40_graphs/dp-trends.qmd` | `hv_trends()` |
 | `tp.dp.EDA_barplots_scatterplots*.R` | `dp-postage` | `10_descriptive/dp-postage.qmd` | `hv_eda()` |
 
@@ -32,8 +54,10 @@ hvtiR::status()
 
 1.  Scaffold the job. For example,
     `job <- open_job("dc", "cohort", "eda", qualifier = "tables")`
-    writes `10_descriptive/cohort-eda-dc-tables.qmd` in a new study and
-    opens it in the editor.
+    writes `descriptive/cohort-eda-dc-tables.qmd` in an adopted legacy
+    study and opens it in the editor. `study_dir("descriptive")`
+    resolves the actual directory, including `10_descriptive/` in a
+    numbered-layout study.
 2.  Work the `EDIT:` markers, rendering `render_job(job)` as you go.
     Unfinished work renders as a draft, as far as the markers you have
     worked.
@@ -41,8 +65,19 @@ hvtiR::status()
     the accepted result with `render_job(job, final = TRUE)`, which
     stops instead of drafting if a marker remains.
 4.  Compare the result with the SAS `.lst`, section by section.
-5.  Keep the authored job flat in `10_descriptive/`; its generated
-    artifacts are filed beneath `10_descriptive/cohort-eda/`.
+5.  Keep the authored QMD and its HTML report flat in the job’s working
+    directory: `descriptive/` for the computation and postage jobs, or
+    `graphs/` for trends. The tables job writes its Word file under
+    `documents/cohort-eda/`; the plot jobs write PNG files under
+    `graphs/cohort-eda/`.
+    [`study_dir()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html)
+    resolves each directory in either study layout.
+
+The filename records the choices in the call. `cohort-eda` is the shared
+job set, `dc` is the descriptive-computation prefix, and `tables`
+selects the table template within that prefix. These are organizational
+labels. When no outcome or model has been chosen, do not invent one
+merely to name an EDA job.
 
 ## The draft banner and `EDIT:` markers
 
@@ -73,10 +108,11 @@ of the file down, and each render gets further.
 
 Each listed line is the start of a marker. Read the comment around it,
 make the change it asks for, delete the marker line, and render again.
-To see what is left:
+To see what is left from the RStudio Console:
 
-``` sh
-grep -n "EDIT:" 10_descriptive/cohort-eda-dc-tables.qmd
+``` r
+
+grep("EDIT:", readLines(job), value = TRUE)
 ```
 
 The guard scans the whole file, so a marker in the prose, inside an HTML
@@ -91,19 +127,10 @@ an unfinished job stop rather than render as a draft:
 render_job(job, final = TRUE)
 ```
 
-Rendering outside R with a bare `quarto render` also works, and drafts
-by default; to make it stop on an unfinished job instead, set the same
-variable
 [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
-sets for you:
-
-``` sh
-HVTI_TEMPLATE_STRICT=1 quarto render 10_descriptive/cohort-eda-dc-tables.qmd
-```
-
-The render then fails at the `edit-guard` chunk with the same list.
-Unset, `0`, `false` and `no` leave draft rendering on; any other value
-stops, so a mistyped setting errs toward the stop.
+runs Quarto from the job’s own directory, so the same call works for
+adopted and numbered study layouts. A final render fails at the
+`edit-guard` chunk with the unresolved list.
 
 ## Which data a job reads
 
@@ -147,9 +174,10 @@ Three things catch people:
   with a `DATASET` other than `"study"` stops rather than quietly using
   the study dataset instead.
 
-Before any of this, `verify_manifest()` checks every file’s checksum
-against `manifest.yaml`. A stop on that first line means the data
-changed, not that a setting is wrong.
+Before any of this,
+[`verify_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html)
+checks every file’s checksum against `manifest.yaml`. A stop on that
+first line means the data changed, not that a setting is wrong.
 
 ## Descriptive tables and correlations: `dc-tables`
 
@@ -208,7 +236,8 @@ hvtiRtables::hv_correlation_table(
 
 ## Goodness of follow-up: `dc-gfup`
 
-The SAS `proc means` and `proc univariate` calls become `proc_means()`.
+The SAS `proc means` and `proc univariate` calls become
+[`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html).
 The R job reports follow-up distributions overall, by vital status, and
 among survivors. It deliberately omits the patient-level listing: a
 rendered report should answer the completeness question without exposing
@@ -308,13 +337,13 @@ panels[[2]]
 ## Where the numbers differ
 
 Percentiles use SAS `QNTLDEF=5`, equivalent to R’s `type = 2`;
-`proc_means()` and the table engine already make that choice. Pin
-`type = 2` in any hand-written
-[`quantile()`](https://rdrr.io/r/stats/quantile.html) call. `N` is the
-non-missing count, not always the number of rows. Continuous-variable
-p-values are non-parametric. Correlation intervals are 68% Fisher
-intervals by default. Finally, `%desc_tab` wrote separate categorical
-and continuous RTF files; the R job writes one DOCX table.
+[`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html)
+and the table engine already make that choice. Pin `type = 2` in any
+hand-written [`quantile()`](https://rdrr.io/r/stats/quantile.html) call.
+`N` is the non-missing count, not always the number of rows.
+Continuous-variable p-values are non-parametric. Correlation intervals
+are 68% Fisher intervals by default. Finally, `%desc_tab` wrote separate
+categorical and continuous RTF files; the R job writes one DOCX table.
 
 ## What is not ported
 

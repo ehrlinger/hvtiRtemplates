@@ -82,6 +82,17 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu">status</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</section><section class="level2"><h2 id="open-the-study-first">Open the study first<a class="anchor" aria-label="anchor" href="#open-the-study-first"></a>
+</h2>
+<p>Open the study’s <code>.Rproj</code> file in RStudio before creating or rendering a job. The project establishes the study root; do not change it manually. Attach the study packages, then confirm that the project has already been adopted and that its registered data still match the manifest:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ehrlinger/hvtiRutilities" class="external-link">hvtiRutilities</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ehrlinger/hvtiRtemplates" class="external-link">hvtiRtemplates</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_root.html" class="external-link">study_root</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_status.html" class="external-link">study_status</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html" class="external-link">verify_manifest</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>The descriptive jobs can be the first jobs in a study. At this stage there may be no modeled endpoint or analysis type. In the examples below, <code>cohort</code> names the subject being described and <code>eda</code> names the stage of work.</p>
 </section><section class="level2"><h2 id="the-map">The map<a class="anchor" aria-label="anchor" href="#the-map"></a>
 </h2>
 <table class="table caption-top">
@@ -111,7 +122,7 @@
 <td style="text-align: left;"><code>descriptive/dc.gfup.sas</code></td>
 <td style="text-align: left;"><code>dc-gfup</code></td>
 <td style="text-align: left;"><code>10_descriptive/dc-gfup.qmd</code></td>
-<td style="text-align: left;"><code>proc_means()</code></td>
+<td style="text-align: left;"><code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html" class="external-link">proc_means()</a></code></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><code>graphs/dp.trends.R</code></td>
@@ -129,12 +140,14 @@
 </table></section><section class="level2"><h2 id="five-steps-for-every-job">Five steps for every job<a class="anchor" aria-label="anchor" href="#five-steps-for-every-job"></a>
 </h2>
 <ol type="1">
-<li>Scaffold the job. For example, <code>job &lt;- open_job("dc", "cohort", "eda", qualifier = "tables")</code> writes <code>10_descriptive/cohort-eda-dc-tables.qmd</code> in a new study and opens it in the editor.</li>
+<li>Scaffold the job. For example, <code>job &lt;- open_job("dc", "cohort", "eda", qualifier = "tables")</code> writes <code>descriptive/cohort-eda-dc-tables.qmd</code> in an adopted legacy study and opens it in the editor. <code>study_dir("descriptive")</code> resolves the actual directory, including <code>10_descriptive/</code> in a numbered-layout study.</li>
 <li>Work the <code>EDIT:</code> markers, rendering <code>render_job(job)</code> as you go. Unfinished work renders as a draft, as far as the markers you have worked.</li>
 <li>Stop when every marker is gone and the draft banner with it. Render the accepted result with <code>render_job(job, final = TRUE)</code>, which stops instead of drafting if a marker remains.</li>
 <li>Compare the result with the SAS <code>.lst</code>, section by section.</li>
-<li>Keep the authored job flat in <code>10_descriptive/</code>; its generated artifacts are filed beneath <code>10_descriptive/cohort-eda/</code>.</li>
-</ol></section><section class="level2"><h2 id="the-draft-banner-and-edit-markers">The draft banner and <code>EDIT:</code> markers<a class="anchor" aria-label="anchor" href="#the-draft-banner-and-edit-markers"></a>
+<li>Keep the authored QMD and its HTML report flat in the job’s working directory: <code>descriptive/</code> for the computation and postage jobs, or <code>graphs/</code> for trends. The tables job writes its Word file under <code>documents/cohort-eda/</code>; the plot jobs write PNG files under <code>graphs/cohort-eda/</code>. <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir()</a></code> resolves each directory in either study layout.</li>
+</ol>
+<p>The filename records the choices in the call. <code>cohort-eda</code> is the shared job set, <code>dc</code> is the descriptive-computation prefix, and <code>tables</code> selects the table template within that prefix. These are organizational labels. When no outcome or model has been chosen, do not invent one merely to name an EDA job.</p>
+</section><section class="level2"><h2 id="the-draft-banner-and-edit-markers">The draft banner and <code>EDIT:</code> markers<a class="anchor" aria-label="anchor" href="#the-draft-banner-and-edit-markers"></a>
 </h2>
 <p>Every line a study author has to change carries an <code>EDIT:</code> marker. Markers left in a job do not stop its render; while any remain, the report opens with a banner:</p>
 <pre><code>DRAFT -- this job is unfinished
@@ -147,15 +160,14 @@ Unresolved markers remain. The numbers below are not a result.
   ...</code></pre>
 <p>The render log carries the same list as a warning. The banner says the numbers are not a result because some of them may still come from the template’s placeholder choices rather than your study.</p>
 <p>The banner does not mean every section will run. A section whose marker is not yet worked still reads the template’s placeholders, and most of those stop with their own error rather than draw a table from nothing. A new <code>dc-tables</code> job, for instance, stops with “Unknown table variable(s)” until <code>GROUPS</code> names your columns, and before that if the <code>eda</code> analysis set has not been written. Work the markers from the top of the file down, and each render gets further.</p>
-<p>Each listed line is the start of a marker. Read the comment around it, make the change it asks for, delete the marker line, and render again. To see what is left:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-n</span> <span class="st">"EDIT:"</span> 10_descriptive/cohort-eda-dc-tables.qmd</span></code></pre></div>
+<p>Each listed line is the start of a marker. Read the comment around it, make the change it asks for, delete the marker line, and render again. To see what is left from the RStudio Console:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"EDIT:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">job</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>The guard scans the whole file, so a marker in the prose, inside an HTML comment, counts as much as one in a code chunk. When the last marker goes, so does the banner.</p>
 <p>For a final render, such as the one that goes to an investigator, make an unfinished job stop rather than render as a draft:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/render_job.html">render_job</a></span><span class="op">(</span><span class="va">job</span>, final <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p>Rendering outside R with a bare <code>quarto render</code> also works, and drafts by default; to make it stop on an unfinished job instead, set the same variable <code><a href="../reference/render_job.html">render_job()</a></code> sets for you:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="va">HVTI_TEMPLATE_STRICT</span><span class="op">=</span>1 <span class="ex">quarto</span> render 10_descriptive/cohort-eda-dc-tables.qmd</span></code></pre></div>
-<p>The render then fails at the <code>edit-guard</code> chunk with the same list. Unset, <code>0</code>, <code>false</code> and <code>no</code> leave draft rendering on; any other value stops, so a mistyped setting errs toward the stop.</p>
+<p><code><a href="../reference/render_job.html">render_job()</a></code> runs Quarto from the job’s own directory, so the same call works for adopted and numbered study layouts. A final render fails at the <code>edit-guard</code> chunk with the unresolved list.</p>
 </section><section class="level2"><h2 id="which-data-a-job-reads">Which data a job reads<a class="anchor" aria-label="anchor" href="#which-data-a-job-reads"></a>
 </h2>
 <p>A SAS job names its dataset in a <code>set</code> statement, so the answer is in the code. An R job takes it from <code>_study.yml</code>, which can offer the same study more than one way. The descriptive jobs choose with two settings at the top of their <code>data</code> chunk, and every rendered report prints what they chose:</p>
@@ -213,7 +225,7 @@ Unresolved markers remain. The numbers below are not a result.
 <li>
 <strong>An analysis set is always cut from the study dataset.</strong> Pairing one with a <code>DATASET</code> other than <code>"study"</code> stops rather than quietly using the study dataset instead.</li>
 </ul>
-<p>Before any of this, <code>verify_manifest()</code> checks every file’s checksum against <code>manifest.yaml</code>. A stop on that first line means the data changed, not that a setting is wrong.</p>
+<p>Before any of this, <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html" class="external-link">verify_manifest()</a></code> checks every file’s checksum against <code>manifest.yaml</code>. A stop on that first line means the data changed, not that a setting is wrong.</p>
 </section><section class="level2"><h2 id="descriptive-tables-and-correlations-dc-tables">Descriptive tables and correlations: <code>dc-tables</code>
 <a class="anchor" aria-label="anchor" href="#descriptive-tables-and-correlations-dc-tables"></a>
 </h2>
@@ -775,7 +787,7 @@ Unresolved markers remain. The numbers below are not a result.
 </section><section class="level2"><h2 id="goodness-of-follow-up-dc-gfup">Goodness of follow-up: <code>dc-gfup</code>
 <a class="anchor" aria-label="anchor" href="#goodness-of-follow-up-dc-gfup"></a>
 </h2>
-<p>The SAS <code>proc means</code> and <code>proc univariate</code> calls become <code>proc_means()</code>. The R job reports follow-up distributions overall, by vital status, and among survivors. It deliberately omits the patient-level listing: a rendered report should answer the completeness question without exposing an identifier.</p>
+<p>The SAS <code>proc means</code> and <code>proc univariate</code> calls become <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html" class="external-link">proc_means()</a></code>. The R job reports follow-up distributions overall, by vital status, and among survivors. It deliberately omits the patient-level listing: a rendered report should answer the completeness question without exposing an identifier.</p>
 <pre class="sas"><code>proc means data=built n mean std min max;
   class dead;
   var iv_dead iv_fup;
@@ -858,7 +870,7 @@ run;</code></pre>
 </div>
 </section><section class="level2"><h2 id="where-the-numbers-differ">Where the numbers differ<a class="anchor" aria-label="anchor" href="#where-the-numbers-differ"></a>
 </h2>
-<p>Percentiles use SAS <code>QNTLDEF=5</code>, equivalent to R’s <code>type = 2</code>; <code>proc_means()</code> and the table engine already make that choice. Pin <code>type = 2</code> in any hand-written <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile()</a></code> call. <code>N</code> is the non-missing count, not always the number of rows. Continuous-variable p-values are non-parametric. Correlation intervals are 68% Fisher intervals by default. Finally, <code>%desc_tab</code> wrote separate categorical and continuous RTF files; the R job writes one DOCX table.</p>
+<p>Percentiles use SAS <code>QNTLDEF=5</code>, equivalent to R’s <code>type = 2</code>; <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html" class="external-link">proc_means()</a></code> and the table engine already make that choice. Pin <code>type = 2</code> in any hand-written <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile()</a></code> call. <code>N</code> is the non-missing count, not always the number of rows. Continuous-variable p-values are non-parametric. Correlation intervals are 68% Fisher intervals by default. Finally, <code>%desc_tab</code> wrote separate categorical and continuous RTF files; the R job writes one DOCX table.</p>
 </section><section class="level2"><h2 id="what-is-not-ported">What is not ported<a class="anchor" aria-label="anchor" href="#what-is-not-ported"></a>
 </h2>
 <p>The templates do not reproduce RTF output; they produce DOCX and self-contained HTML instead. They also do not reproduce identified patient listings. Use the distribution summaries to assess completeness, then investigate any necessary patient-level records inside the governed study environment rather than in a portable report.</p>
