@@ -1,5 +1,94 @@
 # Changelog
 
+## hvtiRtemplates 1.2.1
+
+- Eight qualified `lm` templates now cover binary, ordinal and nominal
+  outcome models; the corresponding three propensity shapes; saved
+  binary-model validation without refitting; and count balancing scores.
+  They use `hvtiRpropensity 0.1.7` model bundles, retain per-imputation
+  fits, display Rubin-pooled estimates and covariance, and save their
+  reviewed bundles below the analysis set’s `estimates/` directory.
+
+- **The study setup tutorial now follows one adoption path through the
+  complete pre-analysis workflow.** It starts from an existing dataset
+  opened as an RStudio Project, preserves an existing R-version pin or
+  selects R 4.6 when none exists, and adopts the study without changing
+  its working-directory layout or deleting `.git`, `tp.*` or copied
+  template directories. Cleanup is deferred to a separate operational
+  command. The tutorial registers data, declares and writes the `eda`
+  analysis set, and explains how the descriptive and plot job names work
+  before an endpoint or analysis type has been chosen. It also warns
+  that
+  [`update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
+  alone cannot safely refresh a registered dataset while `_study.yml`
+  still carries cohort metadata. `fs` and `yaml` join `Suggests` because
+  the executable article writes the synthetic analysis-set declarations
+  it teaches without replacing other sets.
+
+- Six random forest templates: `rfs`, `rfc` and `rfr`, for survival,
+  classification and continuous outcomes, each as a `fit` job and an
+  `explain` job. The fit job grows the forest through
+  [`hvtiRutilities::cache_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_fit.html)
+  and saves it for the explain job, which reads it back for VIMP, VarPro
+  and dependence plots and never refits. Old `rfsrc.*` and `rf.*` jobs
+  map onto the three by outcome; `inst/templates/README.md` has the
+  table. Fit jobs refuse outcomes or duplicate names in `PREDICTORS`,
+  and `rfc-fit` requires the study to name the class whose
+  one-versus-rest ROC curve it reports. `randomForestSRC (>= 3.7.0)` and
+  `varPro (>= 3.2.0)` join Suggests, and `ggRandomForests` rises to
+  `>= 4.0.0`.
+
+- All 28 shipped job templates put editable study choices in one chunk
+  near the top. Reading data and building output happen below those
+  choices; SAS migration continues to fill the same settings.
+
+- The 65-row template catalog now ships as `inst/extdata/templates.json`
+  and is available through
+  [`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md).
+  Roadmap checks read this local catalog, the two CI catalog pins are
+  removed, and the `hvtiRutilities` minimum is 1.3.0 for its
+  machine-readable umbrella marker. The separate strict CI step is
+  retired: with the catalog in the tarball, the first CI run showed
+  every check leg running the catalog tests (`SKIP 0` on macOS and
+  Ubuntu; `SKIP 1` on Windows, a deliberate POSIX-permissions skip).
+
+- **The intake-row guard no longer goes quiet when intake is empty.** It
+  asserted inside a `for` over the intake rows, so with none left it
+  made no expectation at all; testthat reports that as an empty test,
+  which reports as a SKIP. The strict CI step expects `SKIP 0`, but
+  `HVTI_ROADMAP_STRICT` only promotes the helper-driven skips to hard
+  stops and `stop_on_failure` does not fire on a skip, so the gate would
+  have gone quiet under a green check. Its logic now lives in a helper
+  that returns a value, so the check is an assertion at any row count,
+  and a new test drives the empty case from a temporary catalog. That
+  matters because CI reads the real catalog from a pinned `hvtiR` tag,
+  which still has intake rows, so the empty path would otherwise never
+  run there. `with_temp_catalog()` moves to `helper-ledger.R` so both
+  test files can use it. Found when `rfr`, `sid` and `vt` left intake.
+
+- Requires `hvtiRutilities` 1.2.1 or newer, up from 1.1.12 in the 1.2.0
+  release. (`main` briefly carried a 1.2.0 floor that never shipped;
+  this entry describes the change between releases.) 1.2.0 ports SAS
+  `PROC FREQ` and `PROC UNIVARIATE` as
+  [`proc_freq()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_freq.html)
+  and
+  [`proc_univariate()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_univariate.html),
+  and corrects
+  [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html)
+  weighted `nobs`, weighted `stderr` and the mode of a single
+  observation. 1.2.1 adds
+  [`cache_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_fit.html)
+  and puts `rfr`, `sid` and `vt` in
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
+  which the job catalog this package now reads (`hvtiR` 1.1.15) depends
+  on: with 1.2.0 the catalog names three prefixes the taxonomy lacks. No
+  template calls the new functions yet, so nothing renders differently.
+  The floor binds when `hvtiRtemplates` is installed or loaded; a copied
+  job rendered with a bare `quarto render` is not covered, and a job
+  that comes to need a newer function carries its own
+  [`packageVersion()`](https://rdrr.io/r/utils/packageDescription.html)
+  guard, as `dc-tables` does for its dependencies.
+
 ## hvtiRtemplates 1.2.0
 
 - **The `hz` template renders again.** Its `phases` chunk read the order
