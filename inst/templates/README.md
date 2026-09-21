@@ -211,9 +211,10 @@ Trend figures and numbered postage PNG pages go under
 `graphs/<endpoint>-<type>/`, including when the postage job itself lives in
 `descriptive/`.
 
-`vignette("legacy-study-migration", package = "hvtiRtemplates")` shows
-adoption, separate study and named-dataset registration, all four migrations,
-marker review, and rendering in a disposable synthetic study.
+`vignette("study-setup", package = "hvtiRtemplates")` shows new-study setup,
+recoverable cleanup and adoption, study and named-dataset registration, the
+EDA analysis set, all five pre-analysis jobs, migration, marker review, and
+rendering in disposable synthetic studies.
 
 Every line a study must change is marked `EDIT:`. Work through them in order;
 the markers are placed so that a job which still contains one has not been

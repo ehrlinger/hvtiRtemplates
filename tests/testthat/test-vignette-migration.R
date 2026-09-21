@@ -1,19 +1,19 @@
-legacy_vignette_path <- function() {
-  source <- testthat::test_path("..", "..", "vignettes", "legacy-study-migration.qmd")
+study_setup_vignette_path <- function() {
+  source <- testthat::test_path("..", "..", "vignettes", "study-setup.qmd")
   if (file.exists(source)) return(source)
-  system.file("doc", "legacy-study-migration.qmd", package = "hvtiRtemplates")
+  system.file("doc", "study-setup.qmd", package = "hvtiRtemplates")
 }
 
 # The source is in the checkout (devtools::test()) and in the installed doc/
 # folder (R CMD check). An install without built vignettes, as under covr, has
 # neither, and that is a missing input rather than a failing vignette.
 skip_without_vignette <- function() {
-  path <- legacy_vignette_path()
+  path <- study_setup_vignette_path()
   testthat::skip_if_not(file.exists(path), "vignette source not available")
   path
 }
 
-test_that("legacy migration vignette declares the complete workflow", {
+test_that("study setup vignette declares the complete workflow", {
   path <- skip_without_vignette()
   txt <- readLines(path, warn = FALSE)
   expect_true(any(grepl("adopt = TRUE", txt, fixed = TRUE)))
@@ -24,7 +24,7 @@ test_that("legacy migration vignette declares the complete workflow", {
   }
 })
 
-test_that("the tutorial creates four reviewed jobs from its own disposable evidence", {
+test_that("the tutorial sets up new and adopted studies before analysis", {
   path <- skip_without_vignette()
   lines <- readLines(path, warn = FALSE)
   starts <- which(lines == "```{r}")
@@ -38,6 +38,25 @@ test_that("the tutorial creates four reviewed jobs from its own disposable evide
   env <- new.env(parent = environment())
   # A single evaluation keeps the vignette's deferred cleanup after assertions.
   checks <- quote({
+    expect_true(exists("new_root", envir = env, inherits = FALSE))
+    expect_true(exists("adopted_root", envir = env, inherits = FALSE))
+    expect_true(all(dir.exists(file.path(
+      env$new_root,
+      c("00_datasets", "10_descriptive", "20_distributions", "30_analyses",
+        "40_graphs", "50_documents", "90_estimates")
+    ))))
+    expect_false(dir.exists(file.path(env$adopted_root, ".git")))
+    expect_length(Sys.glob(file.path(env$adopted_root, "tp*")), 0L)
+    expect_true(dir.exists(env$adoption_backup))
+    expect_true(dir.exists(file.path(env$adoption_backup, ".git")))
+    expect_true(length(Sys.glob(file.path(env$adoption_backup, "tp*"))) > 0L)
+    expect_named(
+      env$new_jobs,
+      c("general", "tables", "gfup", "trends", "postage")
+    )
+    expect_true(all(file.exists(env$new_jobs)))
+    expect_true(file.exists(file.path(env$new_root, "00_datasets", "eda.parquet")))
+    expect_true(file.exists(file.path(env$adopted_root, "datasets", "eda.parquet")))
     expect_equal(env$cohorts$rows, c(40L, 24L))
     expect_equal(env$cohorts$events, c(20L, 12L))
     expect_length(env$jobs, 4L)
@@ -68,6 +87,32 @@ test_that("the tutorial creates four reviewed jobs from its own disposable evide
   capture.output(eval(as.expression(c(as.list(parse(text = code)), list(checks))), env))
 })
 
+test_that("adoption cleanup refuses an existing backup before moving files", {
+  lines <- readLines(skip_without_vignette(), warn = FALSE)
+  start <- match("#| label: inventory-adoption-cleanup", lines)
+  end <- start + match("```", lines[-seq_len(start)])
+  code <- parse(text = lines[seq.int(start + 1L, end - 1L)])
+
+  adopted_root <- withr::local_tempdir()
+  adoption_backup <- withr::local_tempdir()
+  dir.create(file.path(adopted_root, ".git"))
+  writeLines("current git", file.path(adopted_root, ".git", "HEAD"))
+  writeLines("current template", file.path(adopted_root, "tp.shared.sas"))
+  writeLines("earlier backup", file.path(adoption_backup, "tp.shared.sas"))
+  env <- list2env(list(
+    adopted_root = adopted_root,
+    adoption_backup = adoption_backup
+  ))
+
+  expect_error(eval(code, env), "backup path already exists")
+  expect_true(dir.exists(file.path(adopted_root, ".git")))
+  expect_true(file.exists(file.path(adopted_root, "tp.shared.sas")))
+  expect_identical(
+    readLines(file.path(adoption_backup, "tp.shared.sas")),
+    "earlier backup"
+  )
+})
+
 test_that("the final migration verifier returns four lasting rendered fixtures", {
   expect_true(exists("render_all_migration_fixtures", mode = "function"))
   if (!exists("render_all_migration_fixtures", mode = "function")) return(invisible(NULL))
@@ -93,7 +138,7 @@ test_that("the tutorial embeds its PNG before temporary study cleanup", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   lines <- readLines(skip_without_vignette(), warn = FALSE)
-  setup <- lines[grepl("^root <-", lines)]
+  setup <- lines[grepl("^workspace <-", lines)]
   start <- match("#| label: inspect-outputs", lines)
   end <- start + match("```", lines[-seq_len(start)])
   expressions <- parse(text = lines[seq.int(start + 1L, end - 1L)])
@@ -107,7 +152,7 @@ test_that("the tutorial embeds its PNG before temporary study cleanup", {
   writeLines(c(
     "---", 'title: "Temporary study image"', "format:", "  html:",
     "    embed-resources: true", "---", "```{r}", "#| echo: false",
-    setup, 'writeLines(root, "study-root.txt")',
+    setup, "root <- workspace", 'writeLines(root, "study-root.txt")',
     'png <- file.path(root, "postage.png")',
     "grDevices::png(png, width = 480, height = 320)",
     "graphics::plot(1:3, c(2, 1, 3))", "invisible(grDevices::dev.off())",

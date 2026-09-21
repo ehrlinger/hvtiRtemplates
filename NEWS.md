@@ -1,5 +1,17 @@
 # hvtiRtemplates (unreleased)
 
+* **The study setup tutorial now covers both entry paths through the complete
+  pre-analysis workflow.** It creates a numbered study or adopts a legacy
+  study after moving root-level `tp*` scaffolding and the old `.git` directory
+  to a new, reviewed backup. Both paths register data and declare and write the
+  `eda` analysis set. The new-study path scaffolds `dc-general`, `dc-tables`,
+  `dc-gfup`, `dp-trends`, and `dp-postage`; the adopted-study path demonstrates
+  the four supported legacy migrations. The tutorial also warns that
+  `update_manifest()` alone cannot safely refresh a registered dataset while
+  `_study.yml` still carries cohort metadata. `yaml` joins `Suggests` because
+  the executable article writes the synthetic analysis-set declarations it
+  teaches.
+
 * All 14 shipped job templates put editable study choices in one chunk near
   the top. Reading data and building output happen below those choices; SAS
   migration continues to fill the same settings.
