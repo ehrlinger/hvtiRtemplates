@@ -112,10 +112,9 @@ operation.
 #| label: adopt-register
 study_setup(root, study = "Synthetic legacy study",
             study_tracker_id = 42L, adopt = TRUE)
-register_data(root, built = "built.csv", event = "dead", time = "iv_dead",
+register_data(root, built = "built.csv",
               role = "study", population = "Synthetic full cohort")
-register_data(root, built = "complete_cases.csv", event = "dead",
-              time = "iv_dead", dataset = "complete_cases",
+register_data(root, built = "complete_cases.csv", dataset = "complete_cases",
               role = "named", population = "Synthetic complete cases")
 study_status(root)
 stopifnot(identical(unname(tools::md5sum(legacy_files)),
