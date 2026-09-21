@@ -1,17 +1,18 @@
 # hvtiRtemplates (unreleased)
 
-* **The study setup tutorial now covers both entry paths through the complete
-  pre-analysis workflow.** It creates a numbered study or adopts a legacy
-  study after moving `tp*` scaffolding and any old `.git` directory to a new,
-  reviewed backup. Both paths register data and declare and write the
-  `eda` analysis set. The new-study path scaffolds `dc-general`, `dc-tables`,
-  `dc-gfup`, `dp-trends`, and `dp-postage`; the adopted-study path adds
-  `dc-general` and demonstrates the four supported legacy migrations. The
-  tutorial also warns that
-  `update_manifest()` alone cannot safely refresh a registered dataset while
-  `_study.yml` still carries cohort metadata. `fs` and `yaml` join `Suggests`
-  because the executable article writes the synthetic analysis-set
-  declarations it teaches without replacing other sets.
+* **The study setup tutorial now follows one adoption path through the complete
+  pre-analysis workflow.** It starts from an existing dataset opened as an
+  RStudio Project, preserves an existing R-version pin or selects R 4.6 when
+  none exists, and adopts the study without changing its working-directory
+  layout or deleting `.git`, `tp.*` or copied template directories. Cleanup is
+  deferred to a separate operational command. The tutorial registers data,
+  declares and writes the `eda` analysis set, and explains how the descriptive
+  and plot job names work before an endpoint or analysis type has been chosen.
+  It also warns that `update_manifest()` alone cannot safely refresh a
+  registered dataset while `_study.yml` still carries cohort metadata. `fs`
+  and `yaml` join `Suggests` because the executable article writes the
+  synthetic analysis-set declarations it teaches without replacing other
+  sets.
 
 * Six random forest templates: `rfs`, `rfc` and `rfr`, for survival,
   classification and continuous outcomes, each as a `fit` job and an `explain`
