@@ -35,21 +35,27 @@ catalog is absent.
 
 ``` r
 template_list()
-#>          name prefix qualifier        folder
-#> 1  dc-general     dc   general   descriptive
-#> 2     dc-gfup     dc      gfup   descriptive
-#> 3   dc-tables     dc    tables   descriptive
-#> 4  dp-postage     dp   postage   descriptive
-#> 5          ac     ac      <NA> distributions
-#> 6          hz     hz      <NA> distributions
-#> 7          bc     bc      <NA>      analyses
-#> 8          bh     bh      <NA>      analyses
-#> 9          bl     bl      <NA>      analyses
-#> 10         br     br      <NA>      analyses
-#> 11         hm     hm      <NA>      analyses
-#> 12  dp-trends     dp    trends        graphs
-#> 13         hp     hp      <NA>        graphs
-#> 14         hs     hs      <NA>        graphs
+#>           name prefix qualifier        folder
+#> 1   dc-general     dc   general   descriptive
+#> 2      dc-gfup     dc      gfup   descriptive
+#> 3    dc-tables     dc    tables   descriptive
+#> 4   dp-postage     dp   postage   descriptive
+#> 5           ac     ac      <NA> distributions
+#> 6           hz     hz      <NA> distributions
+#> 7           bc     bc      <NA>      analyses
+#> 8           bh     bh      <NA>      analyses
+#> 9           bl     bl      <NA>      analyses
+#> 10          br     br      <NA>      analyses
+#> 11          hm     hm      <NA>      analyses
+#> 12 rfc-explain    rfc   explain      analyses
+#> 13     rfc-fit    rfc       fit      analyses
+#> 14 rfr-explain    rfr   explain      analyses
+#> 15     rfr-fit    rfr       fit      analyses
+#> 16 rfs-explain    rfs   explain      analyses
+#> 17     rfs-fit    rfs       fit      analyses
+#> 18   dp-trends     dp    trends        graphs
+#> 19          hp     hp      <NA>        graphs
+#> 20          hs     hs      <NA>        graphs
 #>                                                                                      file
 #> 1  /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-general.qmd
 #> 2     /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd
@@ -62,7 +68,13 @@ template_list()
 #> 9             /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/bl.qmd
 #> 10            /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/br.qmd
 #> 11            /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/hm.qmd
-#> 12       /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
-#> 13              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
-#> 14              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd
+#> 12   /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfc-explain.qmd
+#> 13       /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfc-fit.qmd
+#> 14   /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfr-explain.qmd
+#> 15       /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfr-fit.qmd
+#> 16   /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfs-explain.qmd
+#> 17       /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfs-fit.qmd
+#> 18       /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
+#> 19              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
+#> 20              /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd
 ```
