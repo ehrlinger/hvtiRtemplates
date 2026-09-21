@@ -776,7 +776,7 @@ template, and no ordinal will ever be issued again.
 ### `graphs/06.02-hs.qmd`
 
 - Now calls
-  [`hvtiRlifetables::us_cohort_curve()`](https://ehrlinger.github.io/hvtiRlifetables/reference/us_cohort_curve.html)
+  [`hvtiRlifetables::us_cohort_curve()`](https://rdrr.io/pkg/hvtiRlifetables/man/us_cohort_curve.html)
   instead of deriving the cohort expected-survival curve inline. The
   template shipped that derivation deliberately, as the specification
   for

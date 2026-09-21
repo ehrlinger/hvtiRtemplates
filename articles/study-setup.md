@@ -2,14 +2,11 @@
 
 This tutorial starts with an existing study directory and an existing
 dataset. It takes the study through identity setup, data registration,
-an `eda` analysis set, descriptive tables and EDA plots. A later
-tutorial can then begin with a specific analysis type instead of
-repeating this setup.
+descriptive tables and EDA plots. A later tutorial can then begin with a
+specific analysis type instead of repeating this setup.
 
 Adoption is additive. It creates the hvtiR study contract without
-renaming the legacy working directories or deleting old files. In
-particular, this workflow leaves `.git`, `tp.*` files and copied
-`templates/` directories untouched.
+renaming the legacy working directories or deleting old files.
 
 The executable example uses one 40-row synthetic dataset. Its files stay
 in a temporary directory and disappear after the article renders. For
@@ -28,14 +25,13 @@ Confirm the location before changing the study:
 
 ``` r
 
-project_root <- getwd()
-normalizePath(project_root)
+normalizePath(".")
 ```
 
-[`getwd()`](https://rdrr.io/r/base/getwd.html) reads the location
-established by RStudio; it does not change it. The executable example
-below uses an explicit temporary path only because it cannot open an
-RStudio Project while pkgdown renders the page.
+When the Console is already at the study root, use `"."` anywhere a
+function asks for `root`. The executable example below uses an explicit
+temporary path only because it cannot open an RStudio Project while
+pkgdown renders the page.
 
 ### Select the R version
 
@@ -53,8 +49,17 @@ R.version.string
 
 ### Load the study packages
 
-Install the hvtiR family once with `hvtiR::install()`. In the study
-session, attach the two packages used throughout this tutorial:
+Install or update the hvtiR family, then check whether anything else is
+missing or out of date:
+
+``` r
+
+pak::pak("ehrlinger/hvtiR")
+hvtiR::status()
+```
+
+In the study session, attach the two packages used throughout this
+tutorial:
 
 ``` r
 
@@ -72,7 +77,7 @@ every existing study file. Use the title and ID from Study Tracker:
 ``` r
 
 study_setup(
-  root = project_root,
+  root = ".",
   study = "Study title from Study Tracker",
   study_tracker_id = 42L,
   adopt = TRUE
@@ -81,31 +86,25 @@ study_root()
 study_status()
 ```
 
-The current API requires `root` for this first call. Passing the
-location that RStudio established makes the project and the study
-contract agree. Once `_study.yml` exists,
+The current API requires `root` for this first call. Here `"."` is the
+project directory that RStudio established. Once `_study.yml` exists,
 [`study_root()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_root.html),
 [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
 and
 [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
 find it from anywhere inside the project.
 
-The executable example records checksums before adoption and confirms
-that its legacy files are unchanged afterward:
+The executable example uses its temporary directory instead:
 
 ``` r
 
-legacy_files <- list.files(
-  adopted_root, recursive = TRUE, full.names = TRUE, all.files = TRUE
-)
-legacy_checksums <- tools::md5sum(legacy_files)
 study_setup(
   adopted_root,
   study = "Synthetic legacy study",
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/RtmpUVt6Xd/file1e12710c455b/legacy-study
+#> Study: /tmp/RtmpDTxWzI/file1dbc44da93fd/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -114,31 +113,29 @@ study_setup(
 #> [ ] cohort — requires a registered default dataset
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
-#> 0 .R  |  0 .qmd/.Rmd  |  2 .sas  |  0 provenance sidecars
-stopifnot(identical(
-  unname(tools::md5sum(legacy_files)), unname(legacy_checksums)
-))
+#> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
 root <- adopted_root
 ```
-
-### Clean up legacy scaffolding separately
-
-Adoption does not need cleanup to succeed. Leave `.git`, `tp.*` and
-`templates/` in place during this tutorial. A separate operational
-command is being built to inventory adopted studies and remove those
-items in a controlled maintenance pass. It will require `_study.yml`,
-show every target before deletion, avoid following symlinks and require
-separate confirmation before removing `.git`.
-
-Until that command is deployed, do not substitute a recursive wildcard
-in the RStudio Console.
 
 ## Pin the package environment
 
 [`study_status()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_status.html)
 reports a missing `renv.lock` until the study initializes its package
 environment. For an unpinned study, do this after selecting R 4.6 and
-restarting RStudio:
+restarting RStudio.
+
+First open RStudio’s Terminal tab at the study root and run:
+
+``` sh
+organize_templates.sh
+```
+
+This `qhsprograms` script creates `templates/` under each first-level
+study folder, moves that folder’s `tp*` files into it and replaces the
+root `.renvignore` with the centrally managed copy used for dependency
+discovery. Before running it, make sure a destination `templates/`
+directory does not already contain a same-named file. Then return to the
+Console:
 
 ``` r
 
@@ -189,7 +186,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpUVt6Xd/file1e12710c455b/legacy-study
+#> Study: /tmp/RtmpDTxWzI/file1dbc44da93fd/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -198,7 +195,7 @@ register_data(
 #> [x] cohort — N=40 / events=20 / censored=20
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
-#> 0 .R  |  0 .qmd/.Rmd  |  2 .sas  |  0 provenance sidecars
+#> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
 verify_manifest(file.path(adopted_root, "manifest.yaml"))
 cfg <- study_config(adopted_root)
 study_data <- read_built(cfg)
@@ -217,67 +214,33 @@ Compare these counts with the data build or protocol before proceeding.
 They are the first check that registration describes the intended
 population.
 
-## Write the EDA analysis set
+### If EDA uses a subset
 
-An analysis set is a reproducible view of the registered study dataset.
-Its declaration names the identifier, columns to keep, ordered
-exclusions and expected counts. Add an `eda` entry to `_study.yml`; this
-synthetic example keeps every row:
-
-``` yaml
-analysis_sets:
-  eda:
-    id: ccfid
-    vars: [ccfid, dead, iv_dead, iv_fup, year, female, race_grp, repair,
-           age, bmi, hx_chf, lvmassi, iv_opyrs]
-    exclude: []
-    expect:
-      n: 40
-      n_events: 20
-```
-
-Then write the declared set:
+The jobs can read the registered study dataset directly. If EDA needs a
+subset, create it with a stated rule, save it as a separate dataset and
+register that file too. For example:
 
 ``` r
 
-hvtiRdatabuild::write_analysis_set("eda", study_config())
+study_data <- read_built(study_config())
+eda <- subset(study_data, age >= 50)  # Replace with the study's actual rule.
+utils::write.csv(
+  eda, file.path(study_dir("datasets"), "eda.csv"), row.names = FALSE
+)
+register_data(
+  built = "eda.csv",
+  event = "dead",
+  time = "iv_dead",
+  dataset = "eda",
+  role = "named",
+  population = "Patients age 50 or older"
+)
 ```
 
-`write_analysis_set()` records the connection to the registered input. A
-job stops if either the input checksum or the declaration changes later.
-
-The executable helper preserves other analysis sets and refuses to
-replace an existing `eda` definition:
-
-``` r
-
-declare_eda <- function(root) {
-  cfg_file <- file.path(root, "_study.yml")
-  raw <- yaml::read_yaml(cfg_file)
-  if (is.null(raw$analysis_sets)) raw$analysis_sets <- list()
-  if (!is.list(raw$analysis_sets)) {
-    stop("analysis_sets in _study.yml must be a mapping.", call. = FALSE)
-  }
-  if (!is.null(raw$analysis_sets$eda)) {
-    stop("This study already has an eda analysis set; review it first.",
-         call. = FALSE)
-  }
-  raw$analysis_sets$eda <- list(
-    id = "ccfid",
-    vars = names(built),
-    exclude = list(),
-    expect = list(n = 40L, n_events = 20L)
-  )
-  replacement <- tempfile(
-    pattern = "_study-", tmpdir = dirname(cfg_file), fileext = ".yml"
-  )
-  on.exit(unlink(replacement))
-  yaml::write_yaml(raw, replacement)
-  fs::file_move(replacement, cfg_file)
-  hvtiRdatabuild::write_analysis_set("eda", study_config(root))
-}
-declare_eda(adopted_root)
-```
+In a job that uses this subset, set `DATASET <- "eda"` and
+`ANALYSIS_SET <- NULL`. When the whole registered study dataset is the
+intended population, use `DATASET <- "study"` and `ANALYSIS_SET <- NULL`
+instead.
 
 ## Create the descriptive and EDA jobs
 
@@ -348,44 +311,34 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/RtmpUVt6Xd/file1e12710c455b/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
+#> "/tmp/RtmpDTxWzI/file1dbc44da93fd/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
 #>                                                                                tables 
-#>  "/tmp/RtmpUVt6Xd/file1e12710c455b/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
+#>  "/tmp/RtmpDTxWzI/file1dbc44da93fd/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/RtmpUVt6Xd/file1e12710c455b/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
+#>    "/tmp/RtmpDTxWzI/file1dbc44da93fd/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
 #>                                                                                trends 
-#>       "/tmp/RtmpUVt6Xd/file1e12710c455b/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
+#>       "/tmp/RtmpDTxWzI/file1dbc44da93fd/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
 #>                                                                               postage 
-#> "/tmp/RtmpUVt6Xd/file1e12710c455b/legacy-study/descriptive/cohort-eda-dp-postage.qmd"
+#> "/tmp/RtmpDTxWzI/file1dbc44da93fd/legacy-study/descriptive/cohort-eda-dp-postage.qmd"
 ```
 
 ## Work the jobs and generate output
 
 Each new job contains `EDIT:` markers for decisions that cannot come
 from the template: variables, labels, groups, units and output choices.
-Work from the top of the file downward. To list what remains in the job
-currently open in RStudio:
+[`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+opens the QMD in RStudio’s file editor. Edit the file there, working
+from the top marker downward. Use the chunk Run button as you work, then
+choose **Run \> Run All** to generate the output in one interactive
+pass.
 
-``` r
-
-job <- tables
-grep("EDIT:", readLines(job), value = TRUE)
-```
-
-Render a draft while markers remain. The report carries a draft banner
-so its numbers cannot be mistaken for an accepted result:
-
-``` r
-
-render_job(job)
-```
-
-After every marker is resolved, render the accepted output:
-
-``` r
-
-render_job(job, final = TRUE)
-```
+When every marker is resolved, click **Render**. Rendering starts at the
+top in a clean session, much like running a SAS job from beginning to
+end. It catches a job that only worked because an object was left in the
+interactive session. Render every edited job before leaving the study so
+the saved QMD is still in an executable state. If you want the same
+final check from the Console, run `render_job(tables, final = TRUE)`,
+substituting the job you edited.
 
 The HTML report stays beside its QMD in `descriptive/` or `graphs/`. The
 descriptive Word table is filed under `documents/cohort-eda/`; trend and
@@ -406,5 +359,6 @@ Do not overwrite a registered dataset and run
 alone. Registration also records cohort metadata in `_study.yml`, so
 that shortcut can leave the two authoritative files disagreeing. Keep
 the registered extract unchanged until `hvtiRutilities` provides its
-coordinated update operation; then rewrite dependent analysis sets and
-rerender their jobs.
+coordinated update operation; then re-register any named datasets
+derived from it, rewrite dependent analysis sets and rerender their
+jobs.

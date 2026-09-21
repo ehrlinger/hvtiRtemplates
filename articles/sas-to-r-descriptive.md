@@ -15,7 +15,7 @@ job:
 
 ``` r
 
-hvtiR::install()
+pak::pak("ehrlinger/hvtiR")
 hvtiR::status()
 ```
 
