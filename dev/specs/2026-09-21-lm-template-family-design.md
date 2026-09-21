@@ -31,12 +31,17 @@ beside qualified rows would create a choice callers cannot name consistently.
 
 ## 2. Evidence and scope
 
-The catalog measures `lm` at 621 studies by all-extension breadth, 470 studies
-with an `lm` or retired `pm` program, and 10 studies with an R-side `lm` job.
-A 2026-09-11 content scan found 1,824 of 1,872 `lm` SAS programs running
-`PROC LOGISTIC`; at least 1,014 name a propensity or balancing score. The
-library contains binary, ordinal, generalized-logit, multiply-imputed and
-prediction-check templates.
+The 2026-09-21 content census scanned 12,065 candidate SAS programs in 1,220
+study roots (1,222 roots across all program extensions). It classified the
+eight admitted shapes at the following study breadths: binary 1,172, ordinal
+535, nominal 524, binary propensity 1,134, ordinal propensity 819, nominal
+propensity 1,049, prediction checking 863 and count balancing 549. The
+corresponding program counts are recorded in the catalog and public census
+artifact. Multiple-imputation use is substantial rather than exceptional:
+1,781 binary, 2,389 binary-propensity and 547 count-balancing programs use it.
+The scan completed with no traversal or unreadable-candidate errors; 25
+syntax-ambiguous programs received manual review and 15 semantically misfiled
+programs were excluded from the interface.
 
 Those filenames are discovery evidence, not the interface. Before a qualifier
 ships, a content census must classify the actual model statement and establish
@@ -240,10 +245,10 @@ The unqualified catalog row is replaced atomically by eight qualified rows.
 Each row records its content-derived SAS-program and R-exemplar counts,
 upstream API, status and evidence note. The prefix-wide `sas_breadth` value
 cannot be attributed to semantic shapes and is not copied onto any qualifier;
-the family note retains the old 621-study all-extension breadth and 470-study
-program breadth once. Until a row's two-study gate and upstream dependency are
-satisfied, it remains `queued`; the family may contain queued and shipped
-rows, but never an unqualified row.
+the family note instead records the corpus-wide scan totals once. Until a
+row's two-study gate and upstream dependency are satisfied, it remains
+`queued`; the family may contain queued and shipped rows, but never an
+unqualified row.
 
 The change regenerates the roadmap tables and updates the supported-template
 README, package README, NEWS and dependency floors. Every shipped template has
