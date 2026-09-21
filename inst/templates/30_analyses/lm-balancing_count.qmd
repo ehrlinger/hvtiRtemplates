@@ -22,7 +22,7 @@ suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.1.6") stop("This template needs hvtiRpropensity >= 0.1.6.", call. = FALSE)
+if (utils::packageVersion("hvtiRpropensity") < "0.1.7") stop("This template needs hvtiRpropensity >= 0.1.7.", call. = FALSE)
 ```
 
 ```{r}
