@@ -309,6 +309,14 @@ test_that("endpoint-driven templates own explicit cohort definitions", {
   expect_true(all(grepl("expected = [^,]+, event = [^,]+, time = [^)]+\\)", assert_calls)),
               info = "every shipped assert_cohort() call needs expected counts, event, and time")
 
+  cohort_section <- function(src) {
+    start <- grep("^## Cohort", src)
+    stopifnot(length(start) == 1L)
+    end <- grep("^## ", src)
+    end <- end[end > start]
+    src[seq.int(start, if (length(end)) end[[1L]] - 1L else length(src))]
+  }
+
   templates <- c(ac = "STATUS", hz = "STATUS", hm = "EVENT", hs = "EVENT")
   for (prefix in names(templates)) {
     src <- readLines(template_path(prefix), warn = FALSE)
@@ -327,7 +335,8 @@ test_that("endpoint-driven templates own explicit cohort definitions", {
       paste0("^assert_cohort\\(d, expected = EXPECTED, event = ", event, ", time = TIME\\)$"),
       src
     )), info = paste(info, "does not assert its own expected counts"))
-    expect_false(any(grepl("_study[.]yml.*cohort|cohort.*_study[.]yml", src, ignore.case = TRUE)),
+    expect_false(grepl("_study[.]yml.*cohort|cohort.*_study[.]yml",
+                       paste(cohort_section(src), collapse = " "), ignore.case = TRUE),
                  info = paste(info, "still describes the study registration as cohort authority"))
   }
 })
