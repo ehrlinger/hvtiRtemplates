@@ -50,6 +50,7 @@ unpackaged file. They arrive once it has a home.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
 .provenance_data <- list()
+.provenance_artifacts <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(TemporalHazard)
@@ -260,7 +261,13 @@ assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 # The model, not a refit. `hm.rds` is written by the hm job in this same set,
 # so a prediction can never be filed against a different set than the model it
 # came from.
-hm_art <- readRDS(set_path("estimates", "hm.rds"))
+.hm_read <- hvtiRtemplates:::.read_handoff(
+  set_path("estimates", "hm.rds"), "hazard-regression-model",
+  hvtiRutilities::study_config(start = .root), "the hm job"
+)
+hm_art <- .hm_read$value
+.provenance_data <- c(.hm_read$lineage$data, .provenance_data)
+.provenance_artifacts <- c(.hm_read$lineage$artifacts, list(.hm_read$record))
 fit    <- hm_art$reported
 
 # The covariates the model was actually fitted on. Taken from the artifact
@@ -594,10 +601,20 @@ because the expected curve carries no sampling error of its own here.
 # `clevel` travels with the estimates for the same reason `vintage` does: a
 # confidence limit whose coverage has to be inferred later is a number waiting
 # to be misread, and 0.68268948 is not the coverage anyone assumes.
-saveRDS(list(pred = pred, expected = expected, obs_vs_exp = obs_vs_exp,
-             horizons = HORIZONS, covariates = COVARIATES, vintage = VINTAGE,
-             clevel = CLEVEL),
-        set_path("estimates", "hs.rds"))
+hs_art <- list(pred = pred, expected = expected, obs_vs_exp = obs_vs_exp,
+               horizons = HORIZONS, covariates = COVARIATES, vintage = VINTAGE,
+               clevel = CLEVEL)
+hs_art <- hvtiRtemplates:::.attach_handoff_lineage(
+  hs_art,
+  data = .provenance_data,
+  artifacts = .provenance_artifacts,
+  analysis = list(
+    time = list(variable = TIME),
+    event = list(variable = EVENT, event = 1L, censored = 0L)
+  ),
+  cohort = cc
+)
+saveRDS(hs_art, set_path("estimates", "hs.rds"))
 ```
 
 ```{r}
@@ -607,6 +624,7 @@ saveRDS(list(pred = pred, expected = expected, obs_vs_exp = obs_vs_exp,
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
+  artifacts = .provenance_artifacts,
   extra = list(
     subject = SUBJECT,
     type = TYPE,

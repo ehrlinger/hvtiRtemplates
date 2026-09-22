@@ -47,6 +47,7 @@ first. It was not.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
 .provenance_data <- list()
+.provenance_artifacts <- list()
 suppressPackageStartupMessages({
   library(TemporalHazard)
   library(hvtiRbootstrap)
@@ -230,6 +231,10 @@ EXPECT_BOOT   <- 500L   # EDIT: %hazboot(resampl=) -- total replicates wanted
 # chunks from another run -- and no downstream check can see that.
 BOOT_PREFIX <- "bh"
 
+# External producers that cannot attach hvti_provenance must put their original
+# provenance_data() records here. Leave empty for package-produced bags.
+BOOTSTRAP_DATA <- list()
+
 # EDIT: from YOUR .sas %hazboot call. The two studies this template was
 # extracted from disagree -- 500/0.07/0.05 and 1000/0.12/0.1 -- so there is no
 # default here to fall back on. Read them off the call and paste it above.
@@ -289,9 +294,24 @@ if (length(.chunk_files)) {
   # cap, and refuses two chunks sharing a seed. Every one of those failures is
   # silent on its own -- it shows up as a slightly different frequency, never
   # as an error -- which is why the refusal belongs here rather than in a note.
-  bag <- boot_pool_chunks(lapply(.chunk_files, readRDS))
+  .cfg <- study_config(start = .root)
+  .chunk_reads <- lapply(.chunk_files, hvtiRtemplates:::.read_bootstrap_artifact,
+                         role = "bootstrap-chunk", cfg = .cfg, explicit_data = BOOTSTRAP_DATA)
+  bag <- boot_pool_chunks(lapply(.chunk_reads, `[[`, "value"))
+  .chunk_lineage <- lapply(.chunk_reads, `[[`, "lineage")
+  .combined <- hvtiRtemplates:::.combine_handoff_lineage(.chunk_lineage)
+  .bootstrap_lineage <- .combined
+  .provenance_data <- .combined$data
+  .provenance_artifacts <- c(.combined$artifacts, lapply(.chunk_reads, `[[`, "record"))
 } else if (file.exists(.single_file)) {
-  bag <- readRDS(.single_file)
+  .cfg <- study_config(start = .root)
+  .bag_read <- hvtiRtemplates:::.read_bootstrap_artifact(
+    .single_file, "bootstrap-bag", .cfg, BOOTSTRAP_DATA
+  )
+  bag <- .bag_read$value
+  .provenance_data <- .bag_read$lineage$data
+  .provenance_artifacts <- c(.bag_read$lineage$artifacts, list(.bag_read$record))
+  .bootstrap_lineage <- .bag_read$lineage
 } else {
   stop("No bootstrap output found. This screen is a long job -- days, not ",
        "minutes -- and is run from a companion script rather than inside this ",
@@ -755,11 +775,15 @@ if (normalizePath(report_file, mustWork = FALSE) %in% inputs) {
        "report do not collide.", call. = FALSE)
 }
 
-saveRDS(list(freq = freq, retained = retained, concept = concept,
-             crowding = crowding, clusters = clusters,
-             provenance = provenance, retain_pct = RETAIN_PCT,
-             expect_chunks = EXPECT_CHUNKS, expect_boot = EXPECT_BOOT),
-        report_file)
+report <- list(freq = freq, retained = retained, concept = concept,
+               crowding = crowding, clusters = clusters,
+               provenance = provenance, retain_pct = RETAIN_PCT,
+               expect_chunks = EXPECT_CHUNKS, expect_boot = EXPECT_BOOT)
+report <- hvtiRtemplates:::.attach_handoff_lineage(
+  report, data = .provenance_data, artifacts = .provenance_artifacts,
+  analysis = .bootstrap_lineage$analysis, cohort = .bootstrap_lineage$cohort
+)
+saveRDS(report, report_file)
 ```
 
 ```{r}
@@ -769,9 +793,11 @@ saveRDS(list(freq = freq, retained = retained, concept = concept,
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
-  extra = list(
-    subject = SUBJECT,
-    type = TYPE
+  artifacts = .provenance_artifacts,
+  extra = c(
+    list(subject = SUBJECT, type = TYPE),
+    if (is.null(.bootstrap_lineage$analysis)) list() else list(analysis = .bootstrap_lineage$analysis),
+    if (is.null(.bootstrap_lineage$cohort)) list() else list(cohort = .bootstrap_lineage$cohort)
   )
 ))
 ```

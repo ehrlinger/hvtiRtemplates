@@ -167,11 +167,8 @@ set_path <- function(kind, file) {
   file.path(d, file)
 }
 
-# EDIT: uncomment to persist a result for a downstream job in this set. An `hz`
-# fit or an `hp` figure reads what `ac` leaves here, and reads it by set, so a
-# job that persists nothing cannot be chained from.
-#
-# saveRDS(fit, set_path("estimates", "ac.rds"))
+# The overall life table is saved after it is fitted. `hp` reads that exact
+# handoff by set and refuses an older lineage-free artifact.
 ```
 
 ## Study choices
@@ -472,6 +469,16 @@ report_unknown <- function(fit, var) {
 #| label: km-overall
 km <- km_fit(d)
 knitr::kable(head(readable(km), 20), caption = "Overall life table (first 20 rows)")
+ac_art <- hvtiRtemplates:::.attach_handoff_lineage(
+  list(overall = km),
+  data = .provenance_data,
+  analysis = list(
+    time = list(variable = TIME),
+    event = list(variable = STATUS, event = 1L, censored = 0L)
+  ),
+  cohort = cc
+)
+saveRDS(ac_art, set_path("estimates", "ac.rds"))
 ```
 
 Survival at reporting horizons, read off the step function as the last estimate

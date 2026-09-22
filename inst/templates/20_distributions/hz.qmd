@@ -597,9 +597,18 @@ quantity that actually reaches a clinician.
 #| label: save
 # `hp` plots what this writes and `hm` fixes its shape parameters at these
 # values, both by set. A job that persists nothing cannot be chained from.
-saveRDS(list(deterministic = fit_det, noconserve = fit_nc,
-             phases = phases, theta0 = theta0),
-        set_path("estimates", "hz.rds"))
+hz_art <- list(deterministic = fit_det, noconserve = fit_nc,
+               phases = phases, theta0 = theta0)
+hz_art <- hvtiRtemplates:::.attach_handoff_lineage(
+  hz_art,
+  data = .provenance_data,
+  analysis = list(
+    time = list(variable = TIME),
+    event = list(variable = STATUS, event = 1L, censored = 0L)
+  ),
+  cohort = cc
+)
+saveRDS(hz_art, set_path("estimates", "hz.rds"))
 ```
 
 ```{r}

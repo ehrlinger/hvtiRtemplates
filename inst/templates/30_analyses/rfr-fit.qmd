@@ -311,6 +311,12 @@ plot(pred)
 # cache on purpose: cache_fit() stores a keyed record rather than the bare
 # forest, so the cache is this job's internals and this file is its interface.
 # The price is the forest on disk twice.
+forest <- hvtiRtemplates:::.attach_handoff_lineage(
+  forest,
+  data = .provenance_data,
+  analysis = list(outcome = list(variable = RESPONSE, kind = "continuous")),
+  cohort = list(n = as.integer(length(forest$yvar)))
+)
 saveRDS(forest, set_path("estimates", "rfr.rds"))
 ```
 

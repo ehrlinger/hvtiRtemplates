@@ -41,6 +41,7 @@ the ordinal of the job it checks and lives in `parity/`.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
 .provenance_data <- list()
+.provenance_artifacts <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(TemporalHazard)
@@ -377,7 +378,13 @@ reading a coefficient.
 # The shape values come from the companion hz job, NOT from a literal. This is
 # what "builds on the HZ fit" means concretely: SAS holds the shapes with
 # `fixthalf fixnu fixm fixeta` while it screens covariates.
-hz_art <- readRDS(set_path("estimates", "hz.rds"))
+.hz_path <- set_path("estimates", "hz.rds")
+.hz_read <- hvtiRtemplates:::.read_handoff(
+  .hz_path, "hazard-shape-model", hvtiRutilities::study_config(start = .root), "the hz job"
+)
+hz_art <- .hz_read$value
+.provenance_data <- c(.hz_read$lineage$data, .provenance_data)
+.provenance_artifacts <- c(.hz_read$lineage$artifacts, list(.hz_read$record))
 hz_fit <- hz_art$deterministic
 
 # the shape/scale parameter names your phase specification produces.
@@ -591,7 +598,13 @@ if (!file.exists(sel_rds)) {
   )
   knitr::kable(not_run)
 } else {
-  sel <- readRDS(sel_rds)
+  .selection_read <- hvtiRtemplates:::.read_handoff(
+    sel_rds, "selection", hvtiRutilities::study_config(start = .root), "the companion hm selection runner"
+  )
+  sel <- .selection_read$value
+  .provenance_data <- c(.selection_read$lineage$data, .provenance_data)
+  .provenance_artifacts <- c(.provenance_artifacts, .selection_read$lineage$artifacts,
+                             list(.selection_read$record))
   summary_tbl <- data.frame(
     slentry        = sel$slentry,
     slstay         = sel$slstay,
@@ -622,7 +635,7 @@ if (!file.exists(sel_rds)) {
 # The screen reports p = 0.000 for those entries either way, so this is the
 # only place a reader would find out.
 if (file.exists(sel_rds)) {
-  sel <- readRDS(sel_rds)
+  sel <- .selection_read$value
   # A screen that admitted nothing is a real outcome, not a broken run: it says
   # no candidate cleared the entry level. Report that and skip the check, since
   # which.max() on an empty vector is integer(0) and data.frame() then fails
@@ -671,7 +684,7 @@ if (file.exists(sel_rds)) {
 # nobody listed is still counted as separate variables. It understates and
 # never overstates.
 if (file.exists(sel_rds)) {
-  sel <- readRDS(sel_rds)
+  sel <- .selection_read$value
   al  <- if (is.null(sel$concept_aliases)) character(0) else sel$concept_aliases
   cr  <- selection_crowding(sel$selected, aliases = al)
   redundant <- if (nrow(cr)) sum(cr$n_forms) - nrow(cr) else 0L
@@ -730,9 +743,19 @@ knitr::kable(utils::tail(gof[, intersect(c("time", "km_surv", "par_surv",
 #| label: save
 # `hs` builds patient-level predictions from this model and `bh` bootstraps
 # this screen, both by set.
-saveRDS(list(reported = reported, stage1 = stage1, stage2 = stage2,
-             covariates = COVARIATES, audit = audit, deciles = dec),
-        set_path("estimates", "hm.rds"))
+hm_art <- list(reported = reported, stage1 = stage1, stage2 = stage2,
+               covariates = COVARIATES, audit = audit, deciles = dec)
+hm_art <- hvtiRtemplates:::.attach_handoff_lineage(
+  hm_art,
+  data = .provenance_data,
+  artifacts = .provenance_artifacts,
+  analysis = list(
+    time = list(variable = TIME),
+    event = list(variable = EVENT, event = 1L, censored = 0L)
+  ),
+  cohort = cc
+)
+saveRDS(hm_art, set_path("estimates", "hm.rds"))
 ```
 
 ```{r}
@@ -742,6 +765,7 @@ saveRDS(list(reported = reported, stage1 = stage1, stage2 = stage2,
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
+  artifacts = .provenance_artifacts,
   extra = list(
     subject = SUBJECT,
     type = TYPE,

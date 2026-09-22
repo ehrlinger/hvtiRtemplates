@@ -17,6 +17,14 @@
   errors. Records always carry the runtime subject and type and add only the
   analysis and observed-cohort facts the job actually used.
 
+* Saved model and report handoffs now carry immutable `hvti_provenance`
+  lineage. Random-forest explainers, logistic validation, bootstrap reports,
+  and the actuarial-to-hazard graph chain retain their producers' data records
+  and hash every artifact they read. A package handoff without lineage stops
+  with rebuild guidance; external bootstrap artifacts instead require explicit
+  original data records. The `ac` template now saves its overall life table as
+  the real upstream artifact consumed by `hp`.
+
 # hvtiRtemplates 1.2.1
 
 * Eight qualified `lm` templates now cover binary, ordinal and nominal outcome

@@ -225,7 +225,11 @@ if (!file.exists(.handoff)) {
   stop("No forest at ", .handoff, ". Render the rfc-fit job in this set first; ",
        "this job explains that forest and never grows its own.", call. = FALSE)
 }
-forest <- readRDS(.handoff)
+.cfg <- study_config(start = .root)
+.forest_read <- hvtiRtemplates:::.read_handoff(.handoff, "forest", .cfg, "the rfc-fit job")
+forest <- .forest_read$value
+.provenance_data <- .forest_read$lineage$data
+.provenance_artifacts <- c(.forest_read$lineage$artifacts, list(.forest_read$record))
 if (!identical(forest$family, "class")) {
   stop("rfc.rds holds a '", forest$family, "' forest, not a classification forest.", call. = FALSE)
 }
@@ -316,6 +320,7 @@ plot(pv)
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
+  artifacts = .provenance_artifacts,
   extra = list(
     subject = SUBJECT,
     type = TYPE,

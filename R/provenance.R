@@ -284,6 +284,117 @@
   list(value = value, record = before)
 }
 
+.handoff_lineage <- function(data, artifacts = list(), analysis = NULL,
+                             cohort = NULL) {
+  if (!is.list(data)) stop("Handoff lineage data must be a list of provenance records.", call. = FALSE)
+  if (!is.list(artifacts)) stop("Handoff lineage artifacts must be a list of provenance records.", call. = FALSE)
+  list(data = data, artifacts = artifacts, analysis = analysis, cohort = cohort)
+}
+
+.attach_handoff_lineage <- function(object, data, artifacts = list(),
+                                    analysis = NULL, cohort = NULL) {
+  attr(object, "hvti_provenance") <- .handoff_lineage(data, artifacts, analysis, cohort)
+  object
+}
+
+.validate_handoff_lineage <- function(object, path, rebuild) {
+  lineage <- attr(object, "hvti_provenance", exact = TRUE)
+  required <- c("data", "artifacts", "analysis", "cohort")
+  valid <- is.list(lineage) && identical(names(lineage), required) &&
+    is.list(lineage$data) && is.list(lineage$artifacts)
+  if (!valid) {
+    stop(
+      "The package handoff '", path, "' has no complete hvti_provenance lineage. ",
+      "Rebuild it by rendering ", rebuild, " with the current template.",
+      call. = FALSE
+    )
+  }
+  if (!length(lineage$data)) {
+    stop(
+      "The package handoff '", path, "' has no source data lineage. ",
+      "Rebuild it by rendering ", rebuild, " with the current template.",
+      call. = FALSE
+    )
+  }
+  lineage
+}
+
+.read_handoff <- function(path, role, cfg, rebuild) {
+  before <- hvtiRutilities::provenance_artifact(path, role = role, cfg = cfg)
+  value <- readRDS(path)
+  after <- hvtiRutilities::provenance_artifact(path, role = role, cfg = cfg)
+  if (!identical(before[c("bytes", "sha256")], after[c("bytes", "sha256")])) {
+    stop("The artifact changed while it was read; discard this render and read it again.", call. = FALSE)
+  }
+  list(
+    value = value,
+    record = before,
+    lineage = .validate_handoff_lineage(value, path, rebuild)
+  )
+}
+
+.read_bootstrap_artifact <- function(path, role, cfg, explicit_data) {
+  before <- hvtiRutilities::provenance_artifact(path, role = role, cfg = cfg)
+  value <- readRDS(path)
+  after <- hvtiRutilities::provenance_artifact(path, role = role, cfg = cfg)
+  if (!identical(before[c("bytes", "sha256")], after[c("bytes", "sha256")])) {
+    stop("The bootstrap artifact changed while it was read; discard this render and read it again.", call. = FALSE)
+  }
+  lineage <- attr(value, "hvti_provenance", exact = TRUE)
+  missing_data <- is.null(lineage) ||
+    (is.list(lineage) && is.list(lineage$data) && !length(lineage$data))
+  if (missing_data) {
+    if (!is.list(explicit_data) || !length(explicit_data)) {
+      stop(
+        "This bootstrap artifact has no carried lineage. Re-run its producer with hvti_provenance lineage, ",
+        "or supply the original provenance_data() records explicitly in BOOTSTRAP_DATA.",
+        call. = FALSE
+      )
+    }
+    complete_shape <- is.list(lineage) &&
+      identical(names(lineage), c("data", "artifacts", "analysis", "cohort")) &&
+      is.list(lineage$data) && is.list(lineage$artifacts)
+    if (is.null(lineage)) {
+      lineage <- .handoff_lineage(explicit_data)
+    } else if (complete_shape) {
+      lineage <- .handoff_lineage(
+        explicit_data, lineage$artifacts, lineage$analysis, lineage$cohort
+      )
+    } else {
+      .validate_handoff_lineage(value, path, "the bootstrap producer")
+    }
+    attr(value, "hvti_provenance") <- lineage
+    lineage <- .validate_handoff_lineage(value, path, "the bootstrap producer")
+  } else {
+    lineage <- .validate_handoff_lineage(value, path, "the bootstrap producer")
+  }
+  list(value = value, record = before, lineage = lineage)
+}
+
+.combine_handoff_lineage <- function(lineages = list(), data = list(),
+                                     artifacts = list(), analysis = NULL,
+                                     cohort = NULL) {
+  carried_data <- unlist(lapply(lineages, `[[`, "data"), recursive = FALSE)
+  carried_artifacts <- unlist(lapply(lineages, `[[`, "artifacts"), recursive = FALSE)
+  common <- function(field) {
+    values <- lapply(lineages, `[[`, field)
+    values <- values[!vapply(values, is.null, logical(1L))]
+    if (!length(values)) return(NULL)
+    if (!all(vapply(values[-1L], identical, logical(1L), values[[1L]]))) {
+      stop("Input handoffs disagree on their ", field, " lineage.", call. = FALSE)
+    }
+    values[[1L]]
+  }
+  if (is.null(analysis)) analysis <- common("analysis")
+  if (is.null(cohort)) cohort <- common("cohort")
+  .handoff_lineage(
+    data = c(carried_data, data),
+    artifacts = c(carried_artifacts, artifacts),
+    analysis = analysis,
+    cohort = cohort
+  )
+}
+
 .provenance_source_frozen <- function(path) {
   if (!requireNamespace("quarto", quietly = TRUE)) {
     stop("The quarto R package is required to resolve frozen execution metadata.", call. = FALSE)

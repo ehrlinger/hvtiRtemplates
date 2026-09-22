@@ -71,6 +71,7 @@ template_provenance_call_count <- function(path) {
 capture_provenance <- function(path, env) {
   captured <- NULL
   if (!exists(".provenance_data", envir = env, inherits = FALSE)) env$.provenance_data <- list()
+  if (!exists(".provenance_artifacts", envir = env, inherits = FALSE)) env$.provenance_artifacts <- list()
   testthat::local_mocked_bindings(
     .embed_provenance = function(input, data, artifacts = list(), extra = NULL, ...) {
       captured <<- list(input = input, data = data, artifacts = artifacts, extra = extra)
@@ -222,7 +223,7 @@ test_that("only templates with a local dataset choice override the dataset", {
 
 test_that("identity-only templates do not invent analysis or cohort blocks", {
   identity_only <- c(
-    "dc-general", "dc-tables", "dp-postage", "dp-trends", "bc", "bh", "bl", "br",
+    "dc-general", "dc-tables", "dp-postage", "dp-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal"
   )

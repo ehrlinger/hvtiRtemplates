@@ -81,7 +81,7 @@ GROUPS <- 10L                              # EDIT: calibration-group count justi
 #| label: read
 .cfg <- study_config(start = .root)
 .data_read <- hvtiRtemplates:::.provenance_read(
-  DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET)
+  DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET), role = "validation"
 )
 d <- .data_read$value
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
@@ -91,7 +91,12 @@ d <- .data_read$value
 #| label: model
 MODEL_PATH <- set_path("estimates", MODEL_FILE)
 if (!file.exists(MODEL_PATH)) stop("Saved model not found: ", MODEL_PATH, call. = FALSE)
-model <- readRDS(MODEL_PATH)
+.model_read <- hvtiRtemplates:::.read_handoff(
+  MODEL_PATH, "source-model", hvtiRutilities::study_config(start = .root), "the source lm job"
+)
+model <- .model_read$value
+.provenance_data <- c(.model_read$lineage$data, .provenance_data)
+.provenance_artifacts <- c(.model_read$lineage$artifacts, list(.model_read$record))
 ```
 
 ```{r}
@@ -114,6 +119,12 @@ if (identical(normalizePath(MODEL_PATH, mustWork = FALSE),
               normalizePath(VALIDATION_PATH, mustWork = FALSE))) {
   stop("Validation output would overwrite the source model: ", MODEL_PATH, call. = FALSE)
 }
+validation <- hvtiRtemplates:::.attach_handoff_lineage(
+  validation,
+  data = .provenance_data,
+  artifacts = .provenance_artifacts,
+  analysis = .model_read$lineage$analysis
+)
 saveRDS(validation, VALIDATION_PATH)
 ```
 
@@ -124,6 +135,7 @@ saveRDS(validation, VALIDATION_PATH)
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
+  artifacts = .provenance_artifacts,
   extra = list(subject = SUBJECT, type = TYPE)
 ))
 ```

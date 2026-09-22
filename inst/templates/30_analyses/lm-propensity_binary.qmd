@@ -86,7 +86,7 @@ IMPUTATION <- NULL                          # EDIT: imputation column, or NULL.
 #| label: read
 .cfg <- study_config(start = .root)
 .data_read <- hvtiRtemplates:::.provenance_read(
-  DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET)
+  DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET), role = "training"
 )
 d <- .data_read$value
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
@@ -114,6 +114,9 @@ knitr::kable(fit$tables$group_counts)
 ```{r}
 #| label: save
 MODEL_PATH <- set_path("estimates", "lm-propensity_binary.rds")
+fit <- hvtiRtemplates:::.attach_handoff_lineage(
+  fit, data = if (exists(".provenance_data")) .provenance_data else list()
+)
 saveRDS(fit, MODEL_PATH)
 ```
 
