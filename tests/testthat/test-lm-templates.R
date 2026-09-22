@@ -19,6 +19,12 @@ test_that("the lm family ships eight engine-specific templates", {
 test_that("LM set markers must agree with the rendered job filename", {
   qualifiers <- names(lm_qualifiers)
   expect_length(qualifiers, 8L)
+  template_dir <- system.file(
+    "templates", "30_analyses", package = "hvtiRtemplates"
+  )
+  if (!nzchar(template_dir)) {
+    template_dir <- testthat::test_path("..", "..", "inst", "templates", "30_analyses")
+  }
 
   testthat::local_mocked_bindings(
     current_input = function(...) file.path(tempdir(), "other-eda-lm.qmd"),
@@ -26,9 +32,8 @@ test_that("LM set markers must agree with the rendered job filename", {
   )
 
   for (qualifier in qualifiers) {
-    source <- readLines(testthat::test_path(
-      "..", "..", "inst", "templates", "30_analyses", paste0("lm-", qualifier, ".qmd")
-    ), warn = FALSE)
+    source <- readLines(file.path(template_dir, paste0("lm-", qualifier, ".qmd")),
+                        warn = FALSE)
     env <- new.env(parent = globalenv())
     env$.root <- tempdir()
 

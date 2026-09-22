@@ -1,5 +1,7 @@
 test_that("NEWS separates endpoint-neutral contract changes as unreleased", {
-  news <- readLines(testthat::test_path("..", "..", "NEWS.md"), warn = FALSE)
+  path <- testthat::test_path("..", "..", "NEWS.md")
+  testthat::skip_if_not(file.exists(path), "NEWS source not available")
+  news <- readLines(path, warn = FALSE)
   unreleased <- match("# hvtiRtemplates (unreleased)", news)
   release <- match("# hvtiRtemplates 1.2.1", news)
 
