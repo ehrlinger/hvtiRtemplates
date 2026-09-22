@@ -121,7 +121,7 @@ stopifnot(identical(unname(tools::md5sum(legacy_files)),
                     unname(legacy_checksums)))
 ```
 
-Registration records the file checksum and cohort counts for each dataset.
+Registration records the datasets and their file checksums, not cohort counts.
 The study cohort has 40 observations; the named subset has 24. We use its first
 24 rows only to make this example deterministic. A real complete-case dataset
 needs a stated exclusion rule in its data build.
@@ -131,8 +131,8 @@ needs a stated exclusion rule in its data build.
 cfg <- study_config(root)
 study_data <- read_built(cfg, dataset = "study")
 subset_data <- read_built(cfg, dataset = "complete_cases")
-study_counts <- cohort_counts(study_data, cfg, dataset = "study")
-subset_counts <- cohort_counts(subset_data, cfg, dataset = "complete_cases")
+study_counts <- cohort_counts(study_data, event = "dead", time = "iv_dead")
+subset_counts <- cohort_counts(subset_data, event = "dead", time = "iv_dead")
 cohorts <- data.frame(
   dataset = c("study", "complete_cases"),
   rows = c(study_counts$n, subset_counts$n),
@@ -141,10 +141,11 @@ cohorts <- data.frame(
 cohorts
 ```
 
-The named registration preserves the study-wide counts. A job using
-`complete_cases` must check that dataset's contract; checking the 40-row study
-contract cannot establish that a 24-row job cohort is correct. Further
-filtering inside a job needs its own reference counts and checks.
+This tutorial explicitly computes analysis-specific counts from the dataset
+each job reads. A job using `complete_cases` must check those 24-row counts;
+the 40-row study counts cannot establish that a different job cohort is
+correct. Further filtering inside a job needs its own reference counts and
+checks.
 
 ## Migrate one job at a time
 
