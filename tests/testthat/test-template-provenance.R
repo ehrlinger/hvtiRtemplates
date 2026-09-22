@@ -345,3 +345,99 @@ test_that("event-time provenance chunks retain observed STATUS and EVENT cohorts
     expect_identical(record$extra$cohort, cc, info = prefix)
   }
 })
+
+make_provenance_study <- function(root) {
+  suppressMessages(hvtiRutilities::study_setup(
+    root, "Provenance render", 42L, adopt = TRUE
+  ))
+  data <- data.frame(id = 1:3, dead = c(1L, 0L, 0L), iv_dead = 1:3)
+  utils::write.csv(
+    data,
+    file.path(hvtiRutilities::study_dir("datasets", root), "cohort.csv"),
+    row.names = FALSE
+  )
+  suppressMessages(hvtiRutilities::register_data(root, "cohort.csv"))
+  invisible(root)
+}
+
+write_provenance_job <- function(root, stem, prefix, definitions) {
+  path <- file.path(root, paste0(stem, ".qmd"))
+  chunk <- provenance_chunk(template_by_name(prefix))
+  writeLines(c(
+    "---", "format: html", "---", "",
+    "```{r}",
+    ".in <- knitr::current_input(dir = TRUE)",
+    definitions,
+    "```", "",
+    chunk
+  ), path)
+  path
+}
+
+render_provenance_job <- function(job, root) {
+  quarto::quarto_render(job, execute_dir = root, quiet = TRUE)
+}
+
+test_that("an endpoint-free render writes a stem-matched sidecar without invented blocks", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- make_provenance_study(withr::local_tempdir())
+  job <- write_provenance_job(
+    root, "cohort-eda-dc-general", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "eda"', 'DATASET <- "study"')
+  )
+
+  render_provenance_job(job, root)
+
+  sidecar <- file.path(root, "cohort-eda-dc-general.provenance.json")
+  record <- jsonlite::fromJSON(sidecar, simplifyVector = FALSE)
+  expect_true(file.exists(file.path(root, "cohort-eda-dc-general.html")))
+  expect_true(file.exists(sidecar))
+  expect_identical(record$job, "cohort-eda-dc-general")
+  expect_true(all(names(hvtiRutilities:::.provenance_required()) %in% names(record)))
+  expect_identical(record$subject, "cohort")
+  expect_identical(record$type, "eda")
+  expect_false(any(c("analysis", "cohort") %in% names(record)))
+})
+
+test_that("an endpoint-driven render writes its local coding and observed cohort", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- make_provenance_study(withr::local_tempdir())
+  job <- write_provenance_job(
+    root, "death-hz-hz", "hz",
+    c(
+      'SUBJECT <- "death"', 'TYPE <- "hz"',
+      'TIME <- "iv_dead"', 'STATUS <- "dead"',
+      "cc <- list(n = 3L, n_events = 1L, n_censored = 2L)"
+    )
+  )
+
+  render_provenance_job(job, root)
+
+  record <- jsonlite::fromJSON(
+    file.path(root, "death-hz-hz.provenance.json"),
+    simplifyVector = FALSE
+  )
+  expect_identical(record$analysis$time$variable, "iv_dead")
+  expect_identical(record$analysis$event$variable, "dead")
+  expect_identical(record$analysis$event$event, 1L)
+  expect_identical(record$analysis$event$censored, 0L)
+  expect_identical(record$cohort, list(n = 3L, n_events = 1L, n_censored = 2L))
+})
+
+test_that("a sidecar write failure fails the render", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- make_provenance_study(withr::local_tempdir())
+  job <- write_provenance_job(
+    root, "cohort-eda-dc-general", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "eda"', 'DATASET <- "study"')
+  )
+  dir.create(file.path(root, "cohort-eda-dc-general.provenance.json"))
+
+  expect_error(
+    render_provenance_job(job, root),
+    "[Rr]ender|[Pp]rovenance|[Ss]idecar"
+  )
+})

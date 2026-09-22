@@ -8,6 +8,11 @@
   topic such as `cohort`. Jobs now own their outcome and cohort definitions;
   dataset registration does not choose them.
 
+* Every scaffolded job now writes a same-stem `.provenance.json` sidecar at
+  render time. The record always carries the runtime subject and type, adds
+  only analysis and observed-cohort facts the job actually used, and fails the
+  render if the sidecar cannot be written.
+
 * Six random forest templates: `rfs`, `rfc` and `rfr`, for survival,
   classification and continuous outcomes, each as a `fit` job and an `explain`
   job. The fit job grows the forest through `hvtiRutilities::cache_fit()` and
