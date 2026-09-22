@@ -78,6 +78,13 @@ answer, because `%inc` had nothing to pin.
 | `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
 | `migrate_job(source, subject, type, prefix, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
 
+`add_job()` also installs idempotent Quarto pre-render and post-render hooks in
+the study without replacing existing project settings or user hooks. Every
+managed render captures the registered data actually read, embeds its runtime
+payload in the completed HTML, and publishes a same-stem
+`.provenance.json` beside Quarto's actual output. A failed render or publication
+leaves no current sidecar.
+
 Templates are `<prefix>[-<qualifier>].qmd` in a numbered directory
 (`20_distributions/ac.qmd`); a job is
 `<subject>-<type>-<prefix>[-<qualifier>].qmd` in the study's matching taxonomy

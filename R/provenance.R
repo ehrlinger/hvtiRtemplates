@@ -1,0 +1,325 @@
+.provenance_hook_files <- function() {
+  c(
+    pre = file.path(".hvtiR", "hooks", "hvti-provenance-pre-render.R"),
+    post = file.path(".hvtiR", "hooks", "hvti-provenance-post-render.R")
+  )
+}
+
+.provenance_hook_command <- function(which = c("pre", "post")) {
+  which <- match.arg(which)
+  .provenance_hook_files()[[which]]
+}
+
+.provenance_hooks <- function(value, name) {
+  if (is.null(value)) return(character())
+  if (is.character(value) && all(!is.na(value)) && all(nzchar(value))) return(value)
+  if (is.list(value)) {
+    ok <- vapply(value, function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x), logical(1L))
+    if (all(ok)) return(unlist(value, use.names = FALSE))
+  }
+  stop("_quarto.yml: project ", name, " must be a command or a list of commands.", call. = FALSE)
+}
+
+.read_quarto_config <- function(path) {
+  if (!file.exists(path)) return(list())
+  tryCatch(
+    yaml::read_yaml(path),
+    error = function(e) stop("_quarto.yml could not be parsed: ", conditionMessage(e), call. = FALSE)
+  )
+}
+
+.install_provenance_hooks <- function(root) {
+  root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  config_path <- file.path(root, "_quarto.yml")
+  config <- .read_quarto_config(config_path)
+  if (is.null(config)) config <- list()
+  if (!is.list(config) || (length(config) && is.null(names(config)))) {
+    stop("_quarto.yml must contain a named mapping.", call. = FALSE)
+  }
+
+  project <- config$project
+  if (is.null(project)) {
+    project <- list()
+  } else if (is.character(project) && length(project) == 1L && !is.na(project)) {
+    project <- list(type = project)
+  } else if (!is.list(project) || is.null(names(project))) {
+    stop("_quarto.yml: `project` must be a mapping or a scalar project type.", call. = FALSE)
+  }
+
+  for (which in c("pre", "post")) {
+    name <- paste0(which, "-render")
+    commands <- .provenance_hooks(project[[name]], name)
+    command <- .provenance_hook_command(which)
+    project[[name]] <- c(commands[commands != command], command)
+  }
+  config$project <- project
+
+  hook_files <- .provenance_hook_files()
+  hook_dir <- file.path(root, dirname(hook_files[[1L]]))
+  if (!dir.exists(hook_dir)) dir.create(hook_dir, recursive = TRUE)
+  for (file in hook_files) {
+    source <- system.file("hooks", basename(file), package = "hvtiRtemplates")
+    if (!nzchar(source) || !file.exists(source)) {
+      stop("add_job(): installed provenance hook is missing: ", basename(file), ".", call. = FALSE)
+    }
+    if (!file.copy(source, file.path(root, file), overwrite = TRUE)) {
+      stop("add_job(): could not install provenance hook: ", file, ".", call. = FALSE)
+    }
+  }
+
+  temporary <- tempfile(pattern = "_quarto-", tmpdir = root, fileext = ".yml")
+  on.exit(if (file.exists(temporary)) unlink(temporary), add = TRUE)
+  yaml::write_yaml(config, temporary)
+  if (!file.copy(temporary, config_path, overwrite = TRUE)) {
+    stop("add_job(): could not update _quarto.yml.", call. = FALSE)
+  }
+  invisible(config_path)
+}
+
+.assert_provenance_hooks <- function(root) {
+  path <- file.path(root, "_quarto.yml")
+  config <- .read_quarto_config(path)
+  project <- config$project
+  if (!is.list(project)) {
+    stop("Provenance hooks are not configured. Run add_job() in this study.", call. = FALSE)
+  }
+  for (which in c("pre", "post")) {
+    name <- paste0(which, "-render")
+    commands <- .provenance_hooks(project[[name]], name)
+    command <- .provenance_hook_command(which)
+    if (!length(commands) || !identical(utils::tail(commands, 1L), command)) {
+      stop("Provenance ", name, " hook is missing or is not last. Run add_job() again.", call. = FALSE)
+    }
+  }
+  missing <- .provenance_hook_files()[!file.exists(file.path(root, .provenance_hook_files()))]
+  if (length(missing)) {
+    stop("Provenance hook file is missing: ", missing[[1L]], ". Run add_job() again.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+.provenance_source <- function(input, root) {
+  if (!is.character(input) || length(input) != 1L || is.na(input) || !nzchar(input)) {
+    stop("Cannot resolve the canonical render input without one path.", call. = FALSE)
+  }
+  root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  input_path <- if (grepl("^(/|[A-Za-z]:[/\\\\])", input)) input else file.path(getwd(), input)
+  input_path <- normalizePath(input_path, winslash = "/", mustWork = FALSE)
+  extension <- tolower(tools::file_ext(input_path))
+  if (identical(extension, "qmd") && file.exists(input_path)) {
+    candidates <- input_path
+  } else if (identical(extension, "rmarkdown")) {
+    stem <- paste0(tools::file_path_sans_ext(basename(input_path)), ".qmd")
+    adjacent <- file.path(dirname(input_path), stem)
+    recursive <- list.files(root, pattern = paste0("^", .regex_escape(stem), "$"), recursive = TRUE, full.names = TRUE)
+    candidates <- unique(c(adjacent[file.exists(adjacent)], recursive))
+  } else {
+    candidates <- character()
+  }
+  candidates <- unique(normalizePath(candidates, winslash = "/", mustWork = TRUE))
+  if (!length(candidates)) {
+    stop("Cannot resolve a canonical authored .qmd input from '", input, "'.", call. = FALSE)
+  }
+  if (length(candidates) != 1L) {
+    stop("The render input '", input, "' is ambiguous across ", length(candidates), " authored .qmd files.", call. = FALSE)
+  }
+  prefix <- paste0(root, "/")
+  if (!startsWith(candidates, prefix)) {
+    stop("The canonical render input is outside the study root: ", candidates, ".", call. = FALSE)
+  }
+  substring(candidates, nchar(prefix) + 1L)
+}
+
+.regex_escape <- function(x) {
+  gsub("([][{}()+*^$|\\\\.?])", "\\\\\\1", x)
+}
+
+.provenance_state_path <- function(root) {
+  file.path(root, ".hvtiR", "provenance-render.json")
+}
+
+.write_json_atomic <- function(value, path) {
+  if (!dir.exists(dirname(path))) dir.create(dirname(path), recursive = TRUE)
+  temporary <- tempfile(pattern = paste0(".", basename(path), "-"), tmpdir = dirname(path), fileext = ".tmp")
+  on.exit(if (file.exists(temporary)) unlink(temporary), add = TRUE)
+  jsonlite::write_json(value, temporary, auto_unbox = TRUE, null = "null", pretty = TRUE)
+  if (!file.copy(temporary, path, overwrite = TRUE)) {
+    stop("Could not write render provenance state: ", path, ".", call. = FALSE)
+  }
+  invisible(path)
+}
+
+.read_provenance_state <- function(root) {
+  path <- .provenance_state_path(root)
+  if (!file.exists(path)) {
+    stop("The provenance pre-render hook did not create render state. Run add_job() to install the study hooks.", call. = FALSE)
+  }
+  tryCatch(
+    jsonlite::read_json(path, simplifyVector = FALSE),
+    error = function(e) stop("The provenance render state is malformed: ", conditionMessage(e), call. = FALSE)
+  )
+}
+
+.quarto_project_files <- function(name, root) {
+  value <- Sys.getenv(name, unset = NA_character_)
+  if (is.na(value) || !nzchar(value)) {
+    stop(name, " is not set by Quarto.", call. = FALSE)
+  }
+  if (startsWith(value, "@")) {
+    list_path <- substring(value, 2L)
+    value <- paste(readLines(list_path, warn = FALSE), collapse = "\n")
+  } else if (!grepl("\n", value, fixed = TRUE) && file.exists(value) &&
+               !tolower(tools::file_ext(value)) %in% c("qmd", "rmarkdown", "html", "htm")) {
+    value <- paste(readLines(value, warn = FALSE), collapse = "\n")
+  }
+  files <- strsplit(value, "\n", fixed = TRUE)[[1L]]
+  files <- files[nzchar(files)]
+  vapply(files, function(path) {
+    if (grepl("^(/|[A-Za-z]:[/\\\\])", path)) path else file.path(root, path)
+  }, character(1L), USE.NAMES = FALSE)
+}
+
+.provenance_read <- function(dataset, cfg, reader, role = "analysis") {
+  if (!is.function(reader)) stop(".provenance_read(): `reader` must be a function.", call. = FALSE)
+  before <- hvtiRutilities::provenance_data(dataset = dataset, cfg = cfg, role = role)
+  value <- reader()
+  after <- hvtiRutilities::provenance_data(dataset = dataset, cfg = cfg, role = role)
+  if (!identical(before[c("bytes", "sha256")], after[c("bytes", "sha256")])) {
+    stop("The registered dataset changed while it was read; discard this render and read it again.", call. = FALSE)
+  }
+  list(value = value, record = before)
+}
+
+.provenance_html <- function(payload) {
+  json <- jsonlite::toJSON(payload, auto_unbox = TRUE, null = "null", digits = NA)
+  json <- gsub("&", paste0("\\", "u0026"), json, fixed = TRUE)
+  json <- gsub("<", paste0("\\", "u003c"), json, fixed = TRUE)
+  json <- gsub(">", paste0("\\", "u003e"), json, fixed = TRUE)
+  paste0(
+    "<!-- hvti-provenance-managed -->\n",
+    '<script type="application/json" id="hvti-provenance">', json, "</script>"
+  )
+}
+
+.extract_provenance <- function(html, managed = grepl("<!-- hvti-provenance-managed -->", html, fixed = TRUE)) {
+  opener <- '<script type="application/json" id="hvti-provenance">'
+  starts <- gregexpr(opener, html, fixed = TRUE)[[1L]]
+  if (length(starts) == 1L && starts[[1L]] == -1L) {
+    if (managed) stop("Managed HTML is missing its provenance payload.", call. = FALSE)
+    return(NULL)
+  }
+  if (length(starts) != 1L) stop("Managed HTML must contain exactly one provenance payload.", call. = FALSE)
+  start <- starts[[1L]] + nchar(opener)
+  remainder <- substring(html, start)
+  close <- regexpr("</script>", remainder, fixed = TRUE)[[1L]]
+  if (close < 1L) stop("Managed HTML contains a malformed provenance payload element.", call. = FALSE)
+  json <- substring(remainder, 1L, close - 1L)
+  tryCatch(
+    jsonlite::fromJSON(json, simplifyVector = FALSE),
+    error = function(e) stop("Managed HTML contains malformed provenance JSON: ", conditionMessage(e), call. = FALSE)
+  )
+}
+
+.provenance_pre_render <- function(root = Sys.getenv("QUARTO_PROJECT_DIR", unset = getwd()), inputs = NULL) {
+  root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  .assert_provenance_hooks(root)
+  if (is.null(inputs)) inputs <- .quarto_project_files("QUARTO_PROJECT_INPUT_FILES", root)
+  sources <- unique(vapply(inputs, .provenance_source, character(1L), root = root))
+  managed <- sources[vapply(file.path(root, sources), function(path) {
+    any(grepl("hvtiRtemplates:::.embed_provenance(", readLines(path, warn = FALSE), fixed = TRUE))
+  }, logical(1L))]
+
+  sidecars <- list.files(root, pattern = "[.]provenance[.]json$", recursive = TRUE, full.names = TRUE)
+  for (sidecar in sidecars) {
+    record <- tryCatch(
+      jsonlite::read_json(sidecar, simplifyVector = FALSE),
+      error = function(e) stop("Cannot inspect existing provenance sidecar '", sidecar, "': ", conditionMessage(e), call. = FALSE)
+    )
+    if (is.character(record$source) && length(record$source) == 1L && record$source %in% sources) unlink(sidecar)
+  }
+
+  state <- list(
+    render_id = digest::digest(list(Sys.time(), Sys.getpid(), stats::runif(1L)), algo = "sha256"),
+    managed_sources = as.list(managed),
+    source_sha256 = stats::setNames(
+      lapply(file.path(root, managed), digest::digest, algo = "sha256", file = TRUE),
+      managed
+    ),
+    frozen = isTRUE(.read_quarto_config(file.path(root, "_quarto.yml"))$execute$freeze) ||
+      identical(.read_quarto_config(file.path(root, "_quarto.yml"))$execute$freeze, "auto")
+  )
+  .write_json_atomic(state, .provenance_state_path(root))
+  invisible(state)
+}
+
+.embed_provenance <- function(input, data, artifacts = list(), extra = list(), cfg = hvtiRutilities::study_config()) {
+  root <- normalizePath(cfg$root, winslash = "/", mustWork = TRUE)
+  project <- Sys.getenv("QUARTO_PROJECT_DIR", unset = NA_character_)
+  if (is.na(project) || !identical(normalizePath(project, winslash = "/", mustWork = TRUE), root)) {
+    stop("This managed job must be rendered through its configured Quarto study project. Run add_job() to install the hooks.",
+         call. = FALSE)
+  }
+  .assert_provenance_hooks(root)
+  source <- .provenance_source(input, root)
+  state <- .read_provenance_state(root)
+  managed <- unlist(state$managed_sources, use.names = FALSE)
+  if (!source %in% managed) {
+    stop("The provenance pre-render hook did not register this managed source: ", source, ".", call. = FALSE)
+  }
+  if (any(c("source", ".hvti_render_id", ".hvti_source_sha256") %in% names(extra))) {
+    stop("Template provenance extras may not replace the source or render identity.", call. = FALSE)
+  }
+  payload <- hvtiRutilities::capture_provenance(
+    job = tools::file_path_sans_ext(basename(source)),
+    data = data,
+    artifacts = artifacts,
+    extra = c(extra, list(
+      source = source,
+      .hvti_render_id = state$render_id,
+      .hvti_source_sha256 = state$source_sha256[[source]]
+    )),
+    cfg = cfg
+  )
+  .provenance_html(payload)
+}
+
+.provenance_post_render <- function(root = Sys.getenv("QUARTO_PROJECT_DIR", unset = getwd()), outputs = NULL) {
+  root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  state_path <- .provenance_state_path(root)
+  state <- .read_provenance_state(root)
+  on.exit(if (file.exists(state_path)) unlink(state_path), add = TRUE)
+  if (is.null(outputs)) outputs <- .quarto_project_files("QUARTO_PROJECT_OUTPUT_FILES", root)
+  outputs <- outputs[tolower(tools::file_ext(outputs)) %in% c("html", "htm")]
+  expected <- unlist(state$managed_sources, use.names = FALSE)
+  seen <- character()
+  published <- character()
+  ok <- FALSE
+  on.exit(if (!ok && length(published)) unlink(published), add = TRUE)
+
+  for (output in outputs) {
+    html <- paste(readLines(output, warn = FALSE), collapse = "\n")
+    managed <- grepl("<!-- hvti-provenance-managed -->", html, fixed = TRUE)
+    payload <- .extract_provenance(html, managed = managed)
+    if (is.null(payload)) next
+    if (!is.character(payload$source) || length(payload$source) != 1L || !payload$source %in% expected) {
+      stop("Managed HTML carries a provenance source not registered for this render.", call. = FALSE)
+    }
+    frozen <- isTRUE(state$frozen) &&
+      identical(payload$.hvti_source_sha256, state$source_sha256[[payload$source]])
+    if (!identical(payload$.hvti_render_id, state$render_id) && !frozen) {
+      stop("Managed HTML carries a stale provenance payload from another render.", call. = FALSE)
+    }
+    if (payload$source %in% seen) stop("A managed source produced more than one provenance payload.", call. = FALSE)
+    seen <- c(seen, payload$source)
+    payload$.hvti_render_id <- NULL
+    payload$.hvti_source_sha256 <- NULL
+    hvtiRutilities::publish_provenance(output, payload)
+    published <- c(published, hvtiRutilities::provenance_path(output))
+  }
+  missing <- setdiff(expected, seen)
+  if (length(missing)) {
+    stop("Managed output is missing a current provenance payload for source: ", missing[[1L]], ".", call. = FALSE)
+  }
+  ok <- TRUE
+  invisible(published)
+}

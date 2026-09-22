@@ -61,9 +61,9 @@ test_that("lm-binary fits and saves a model bundle", {
 test_that("lm-binary validates variables inside model terms", {
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   env <- new.env(parent = globalenv())
-  env$.root <- tempdir()
-  env$read_built <- function(...) lm_data()
-  env$study_config <- function(...) NULL
+  env$.root <- lm_study()
+  env$read_built <- hvtiRutilities::read_built
+  env$study_config <- hvtiRutilities::study_config
   choices <- list(OUTCOME = "outcome", PREDICTORS = c("age", "I(age^2)"),
                   OUTCOME_LEVELS = c("none", "event"), EVENT_LEVEL = "event",
                   ID = "id", IMPUTATION = NULL)

@@ -37,6 +37,20 @@ lm_mi_data <- function(n = 120L) {
   rbind(first, second)
 }
 
+lm_study <- function(.local_envir = parent.frame()) {
+  root <- withr::local_tempdir("lm-study-", .local_envir = .local_envir)
+  suppressMessages(hvtiRutilities::study_setup(
+    root, study = "LM chunk test", study_tracker_id = 42L, adopt = TRUE
+  ))
+  utils::write.csv(
+    lm_data(),
+    file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
+    row.names = FALSE
+  )
+  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv"))
+  root
+}
+
 lm_render_fixture <- function(qualifier, .local_envir = parent.frame()) {
   root <- tempfile("lm-study-")
   withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)

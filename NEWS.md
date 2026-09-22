@@ -8,10 +8,14 @@
   topic such as `cohort`. Jobs now own their outcome and cohort definitions;
   dataset registration does not choose them.
 
-* Every scaffolded job now writes a same-stem `.provenance.json` sidecar at
-  render time. The record always carries the runtime subject and type, adds
-  only analysis and observed-cohort facts the job actually used, and fails the
-  render if the sidecar cannot be written.
+* Every scaffolded job now captures provenance while it executes, safely
+  embeds that payload in its completed HTML, and publishes a same-stem
+  `.provenance.json` sidecar through study-level Quarto hooks. `add_job()`
+  installs the hooks idempotently without replacing existing project settings
+  or user hooks. Publication follows Quarto's actual output paths, invalidates
+  only the inputs being rendered, and fails closed after render or publication
+  errors. Records always carry the runtime subject and type and add only the
+  analysis and observed-cohort facts the job actually used.
 
 # hvtiRtemplates 1.2.1
 

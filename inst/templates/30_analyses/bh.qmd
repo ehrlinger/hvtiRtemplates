@@ -46,6 +46,7 @@ first. It was not.
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
 suppressPackageStartupMessages({
   library(TemporalHazard)
   library(hvtiRbootstrap)
@@ -669,7 +670,12 @@ says the pool cannot tell them apart.
 
 # Read to CORRELATE the pool, not to re-run anything. The screen already
 # happened; this describes the data it ran against.
-d <- read_built()
+.cfg <- study_config(start = .root)
+.data_read <- hvtiRtemplates:::.provenance_read(
+  "study", .cfg, function() read_built(cfg = .cfg)
+)
+d <- .data_read$value
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
 
 # A build that moved since the screen ran would leave these correlations
 # describing one dataset and every frequency above describing another, with
@@ -758,17 +764,14 @@ saveRDS(list(freq = freq, retained = retained, concept = concept,
 
 ```{r}
 #| label: provenance
-#| include: false
-if (is.null(.in) || !is.character(.in) || length(.in) != 1L || is.na(.in) || !nzchar(.in)) {
-  stop("Cannot record provenance without the current render input.", call. = FALSE)
-}
-.job_stem <- tools::file_path_sans_ext(basename(.in))
-.output <- file.path(dirname(.in), paste0(.job_stem, ".html"))
-hvtiRutilities::record_provenance(
-  .output,
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
   extra = list(
     subject = SUBJECT,
     type = TYPE
   )
-)
+))
 ```

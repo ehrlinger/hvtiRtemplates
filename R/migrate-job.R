@@ -192,7 +192,8 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
   list(
     lines = readLines(staged, warn = FALSE),
     out = file.path(folder, basename(staged)),
-    name = row$name[[1L]]
+    name = row$name[[1L]],
+    root = root
   )
 }
 
@@ -204,7 +205,14 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
   }
   report <- .migration_report(evidence, result, template$name, converter = !isFALSE(result$converter))
   report_path <- sub("[.]qmd$", "-migration.md", template$out)
-  .write_migration_pair(lines, report, template$out, report_path)
+  outputs <- .write_migration_pair(lines, report, template$out, report_path)
+  tryCatch(
+    .install_provenance_hooks(template$root),
+    error = function(e) {
+      unlink(outputs)
+      stop(conditionMessage(e), call. = FALSE)
+    }
+  )
   .open_in_editor(template$out)
 }
 

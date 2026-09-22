@@ -52,6 +52,11 @@ several methods, and the jobs those chains share would otherwise collide. A
 death-hazard set and a death random-forest-survival set both begin from the
 same life table, so keyed on the subject alone both would be written to one
 filename.
+
+Scaffolding also installs the study's Quarto provenance hooks. Existing
+pre-render and post-render commands and unrelated project settings are
+preserved, while the provenance publisher is kept last. Repeated calls are
+idempotent.
 }
 \examples{
 d <- file.path(tempdir(), "add-job-example")

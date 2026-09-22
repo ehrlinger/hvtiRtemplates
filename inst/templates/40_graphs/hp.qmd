@@ -40,6 +40,7 @@ parity job borrows the ordinal of the job it checks and lives in `parity/`.
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(TemporalHazard)
@@ -262,7 +263,12 @@ t_plot <- exp(seq(-8, log(t_max), length.out = 1000))
 # patients the fit never saw and could OVERSTATE follow-up -- which weakens
 # this guard in the one direction that matters, by making it under-warn.
 
-d <- read_built()
+.cfg <- study_config(start = .root)
+.data_read <- hvtiRtemplates:::.provenance_read(
+  "study", .cfg, function() read_built(cfg = .cfg)
+)
+d <- .data_read$value
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
 fitted_rows <- !is.na(d[[TIME]]) & !is.na(d[[EVENT]])
 cc <- cohort_counts(d, event = EVENT, time = TIME)
 maxfup <- max(as.numeric(d[[TIME]][fitted_rows]))
@@ -483,14 +489,11 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 
 ```{r}
 #| label: provenance
-#| include: false
-if (is.null(.in) || !is.character(.in) || length(.in) != 1L || is.na(.in) || !nzchar(.in)) {
-  stop("Cannot record provenance without the current render input.", call. = FALSE)
-}
-.job_stem <- tools::file_path_sans_ext(basename(.in))
-.output <- file.path(dirname(.in), paste0(.job_stem, ".html"))
-hvtiRutilities::record_provenance(
-  .output,
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
   extra = list(
     subject = SUBJECT,
     type = TYPE,
@@ -500,5 +503,5 @@ hvtiRutilities::record_provenance(
     ),
     cohort = cc
   )
-)
+))
 ```

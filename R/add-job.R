@@ -20,6 +20,11 @@
 #' same life table, so keyed on the subject alone both would be written to one
 #' filename.
 #'
+#' Scaffolding also installs the study's Quarto provenance hooks. Existing
+#' pre-render and post-render commands and unrelated project settings are
+#' preserved, while the provenance publisher is kept last. Repeated calls are
+#' idempotent.
+#'
 #' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
 #'   \code{dp}. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
@@ -91,6 +96,7 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
   ok <- FALSE
   on.exit(if (!ok) unlink(out), add = TRUE)
   .set_markers(out, subject, type)
+  .install_provenance_hooks(dir)
   ok <- TRUE
   invisible(out)
 }

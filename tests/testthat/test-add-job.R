@@ -71,6 +71,22 @@ test_that("add_job follows a numbered study layout", {
     out,
     file.path(dir, "20_distributions", "dead_pa-hz-ac.qmd")
   )
+  config <- yaml::read_yaml(file.path(dir, "_quarto.yml"))
+  expect_identical(tail(config$project$`pre-render`, 1L), .provenance_hook_command("pre"))
+  expect_identical(tail(config$project$`post-render`, 1L), .provenance_hook_command("post"))
+  expect_true(all(file.exists(file.path(dir, .provenance_hook_files()))))
+})
+
+test_that("add_job leaves no job when provenance hooks cannot be installed", {
+  dir <- tempfile("addjob-malformed-quarto-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(
+    dir, study = "Malformed Quarto", study_tracker_id = 1L
+  ))
+  writeLines("project: [", file.path(dir, "_quarto.yml"))
+
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "_quarto[.]yml")
+  expect_false(file.exists(file.path(dir, "20_distributions", "dead_pa-hz-ac.qmd")))
 })
 
 test_that("add_job refuses a mixed study layout", {

@@ -32,14 +32,14 @@ provenance_expressions <- function(path) {
   parse(text = chunk[-c(1L, length(chunk))])
 }
 
-is_record_provenance_call <- function(expr) {
+is_embed_provenance_call <- function(expr) {
   if (!is.call(expr)) return(FALSE)
   fun <- expr[[1L]]
   direct <- is.call(fun) &&
-    identical(as.character(fun[[1L]]), "::") &&
-    identical(as.character(fun[[2L]]), "hvtiRutilities") &&
-    identical(as.character(fun[[3L]]), "record_provenance")
-  direct
+    identical(as.character(fun[[1L]]), ":::") &&
+    identical(as.character(fun[[2L]]), "hvtiRtemplates") &&
+    identical(as.character(fun[[3L]]), ".embed_provenance")
+  direct || (identical(expr[[1L]], as.name("cat")) && length(expr) == 2L && is_embed_provenance_call(expr[[2L]]))
 }
 
 r_chunk_expressions <- function(path) {
@@ -51,10 +51,10 @@ r_chunk_expressions <- function(path) {
   })
 }
 
-record_provenance_call_count <- function(expr) {
-  direct <- as.integer(is_record_provenance_call(expr))
-  nested <- if (is.call(expr)) {
-    sum(vapply(as.list(expr)[-1L], record_provenance_call_count, integer(1L)))
+embed_provenance_call_count <- function(expr) {
+  direct <- as.integer(is_embed_provenance_call(expr))
+  nested <- if (!direct && is.call(expr)) {
+    sum(vapply(as.list(expr)[-1L], embed_provenance_call_count, integer(1L)))
   } else {
     0L
   }
@@ -64,18 +64,19 @@ record_provenance_call_count <- function(expr) {
 template_provenance_call_count <- function(path) {
   chunks <- r_chunk_expressions(path)
   sum(vapply(chunks, function(chunk) {
-    sum(vapply(chunk, record_provenance_call_count, integer(1L)))
+    sum(vapply(chunk, embed_provenance_call_count, integer(1L)))
   }, integer(1L)))
 }
 
 capture_provenance <- function(path, env) {
   captured <- NULL
+  if (!exists(".provenance_data", envir = env, inherits = FALSE)) env$.provenance_data <- list()
   testthat::local_mocked_bindings(
-    record_provenance = function(output, extra = NULL, dataset = "study", ...) {
-      captured <<- list(output = output, extra = extra, dataset = dataset)
-      invisible(output)
+    .embed_provenance = function(input, data, artifacts = list(), extra = NULL, ...) {
+      captured <<- list(input = input, data = data, artifacts = artifacts, extra = extra)
+      ""
     },
-    .package = "hvtiRutilities"
+    .package = "hvtiRtemplates"
   )
   eval(provenance_expressions(path), envir = env)
   captured
@@ -86,7 +87,7 @@ test_that("provenance_chunk rejects an unlabeled later chunk", {
   writeLines(c(
     "```{r}",
     "#| label: provenance",
-    "hvtiRutilities::record_provenance(.output)",
+    "cat(hvtiRtemplates:::.embed_provenance(.in, data = list()))",
     "```",
     "```{r}",
     "invisible(NULL)",
@@ -100,9 +101,9 @@ test_that("provenance calls outside the final chunk do not satisfy the contract"
   path <- tempfile(fileext = ".qmd")
   writeLines(c(
     "```{r}",
-    "hvtiRutilities::record_provenance(.output)",
+    "cat(hvtiRtemplates:::.embed_provenance(.in, data = list()))",
     "```",
-    "# hvtiRutilities::record_provenance(.output)",
+    "# hvtiRtemplates:::.embed_provenance(.in, data = list())",
     "```{r}",
     "#| label: provenance",
     "invisible(NULL)",
@@ -110,14 +111,14 @@ test_that("provenance calls outside the final chunk do not satisfy the contract"
   ), path)
 
   expressions <- provenance_expressions(path)
-  expect_false(any(vapply(expressions, is_record_provenance_call, logical(1L))))
+  expect_false(any(vapply(expressions, is_embed_provenance_call, logical(1L))))
 })
 
 test_that("nested provenance calls do not satisfy the contract", {
   cases <- c(
-    if_false = "if (FALSE) hvtiRutilities::record_provenance(.output)",
-    quoted = "quote(hvtiRutilities::record_provenance(.output))",
-    braced = "{ hvtiRutilities::record_provenance(.output); invisible(NULL) }"
+    if_false = "if (FALSE) hvtiRtemplates:::.embed_provenance(.in, data = list())",
+    quoted = "quote(hvtiRtemplates:::.embed_provenance(.in, data = list()))",
+    braced = "{ hvtiRtemplates:::.embed_provenance(.in, data = list()); invisible(NULL) }"
   )
 
   for (name in names(cases)) {
@@ -130,25 +131,25 @@ test_that("nested provenance calls do not satisfy the contract", {
     ), path)
 
     expressions <- provenance_expressions(path)
-    expect_false(any(vapply(expressions, is_record_provenance_call, logical(1L))), info = name)
+    expect_false(any(vapply(expressions, is_embed_provenance_call, logical(1L))), info = name)
   }
 })
 
-test_that("provenance calls are unique across all R chunks", {
+test_that("embedded provenance calls are unique across all R chunks", {
   path <- tempfile(fileext = ".qmd")
   writeLines(c(
     "```{r}",
-    "if (FALSE) hvtiRutilities::record_provenance(.output)",
+    "if (FALSE) hvtiRtemplates:::.embed_provenance(.in, data = list())",
     "```",
     "```{r}",
     "#| label: provenance",
-    "hvtiRutilities::record_provenance(.output)",
+    "cat(hvtiRtemplates:::.embed_provenance(.in, data = list()))",
     "```"
   ), path)
   expect_false(template_provenance_call_count(path) == 1L)
 })
 
-test_that("every shipped template ends with one direct provenance chunk", {
+test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- template_list()
   expect_equal(nrow(templates), 28L)
 
@@ -165,22 +166,34 @@ test_that("every shipped template ends with one direct provenance chunk", {
     expect_identical(chunk_end, tail(nonblank, 1L), info = info)
     expect_identical(tail(grep("^#\\| label: ", source, value = TRUE), 1L),
                      "#| label: provenance", info = info)
-    expect_equal(sum(vapply(expressions, is_record_provenance_call, logical(1L))), 1L, info = info)
+    expect_equal(sum(vapply(expressions, is_embed_provenance_call, logical(1L))), 1L, info = info)
     expect_equal(template_provenance_call_count(path), 1L, info = info)
+    expect_true(any(grepl("data = .provenance_data", chunk, fixed = TRUE)), info = info)
+    expect_false(any(grepl("record_provenance", source, fixed = TRUE)), info = info)
     expect_true(any(grepl("subject = SUBJECT", chunk, fixed = TRUE)), info = info)
     expect_true(any(grepl("type = TYPE", chunk, fixed = TRUE)), info = info)
   }
 })
 
-test_that("provenance paths come only from the recovered render input", {
+test_that("provenance payloads take only the recovered render input", {
   for (path in template_list()$file) {
     chunk <- provenance_chunk(path)
     info <- basename(path)
-    expect_true(any(grepl("file_path_sans_ext(basename(.in))", chunk, fixed = TRUE)), info = info)
-    expect_true(any(grepl("file.path(dirname(.in), paste0(.job_stem, \".html\"))", chunk, fixed = TRUE)),
-                info = info)
-    expect_true(any(grepl("is.null(.in)", chunk, fixed = TRUE)), info = info)
+    expect_true(any(grepl(".embed_provenance(", chunk, fixed = TRUE)), info = info)
+    expect_true(any(grepl(".in,", chunk, fixed = TRUE)), info = info)
     expect_false(any(grepl("getwd()", chunk, fixed = TRUE)), info = info)
+  }
+})
+
+test_that("registered data provenance is captured in the chunk that reads it", {
+  for (path in template_list()$file) {
+    chunks <- r_chunk_expressions(path)
+    for (chunk in chunks) {
+      text <- paste(vapply(chunk, deparse1, character(1L)), collapse = "\n")
+      if (grepl("read_built(", text, fixed = TRUE)) {
+        expect_true(grepl(".provenance_read(", text, fixed = TRUE), info = basename(path))
+      }
+    }
   }
 })
 
@@ -192,7 +205,7 @@ test_that("only templates with a local dataset choice override the dataset", {
   )
   templates <- template_list()
   observed <- templates$name[vapply(templates$file, function(path) {
-    any(grepl("dataset = DATASET", provenance_chunk(path), fixed = TRUE))
+    any(grepl("DATASET, .cfg", readLines(path, warn = FALSE), fixed = TRUE))
   }, logical(1L))]
 
   expect_setequal(observed, expected)
@@ -277,7 +290,7 @@ test_that("RF provenance chunks record the fitted objects they consume", {
     fit$.in <- file.path(fit$.root, paste0(prefix, "-fit.rmarkdown"))
 
     fit_record <- capture_provenance(template_by_name(paste0(prefix, "-fit")), fit)
-    expect_identical(fit_record$output, file.path(fit$.root, paste0(prefix, "-fit.html")), info = prefix)
+    expect_identical(fit_record$input, fit$.in, info = prefix)
 
     explain <- new.env(parent = globalenv())
     explain$.root <- fit$.root
@@ -287,7 +300,7 @@ test_that("RF provenance chunks record the fitted objects they consume", {
     explain$.in <- file.path(explain$.root, paste0(prefix, "-explain.rmarkdown"))
 
     explain_record <- capture_provenance(template_by_name(paste0(prefix, "-explain")), explain)
-    expect_identical(explain_record$output, file.path(explain$.root, paste0(prefix, "-explain.html")),
+    expect_identical(explain_record$input, explain$.in,
                      info = prefix)
 
     records <- list(fit = list(record = fit_record, env = fit), explain = list(record = explain_record, env = explain))
@@ -347,7 +360,7 @@ test_that("event-time provenance chunks retain observed STATUS and EVENT cohorts
     env$cc <- cc
 
     record <- capture_provenance(template_by_name(prefix), env)
-    expect_identical(record$output, file.path(tempdir(), paste0(prefix, "-provenance.html")), info = prefix)
+    expect_identical(record$input, env$.in, info = prefix)
     expect_identical(record$extra$analysis$time$variable, env$TIME, info = prefix)
     expect_identical(record$extra$analysis$event$variable, env[[case$event]], info = prefix)
     expect_identical(record$extra$cohort, cc, info = prefix)
@@ -365,16 +378,24 @@ make_provenance_study <- function(root) {
     row.names = FALSE
   )
   suppressMessages(hvtiRutilities::register_data(root, "cohort.csv"))
+  .install_provenance_hooks(root)
   invisible(root)
 }
 
-write_provenance_job <- function(root, stem, prefix, definitions) {
+write_provenance_job <- function(root, stem, prefix, definitions, output_file = NULL) {
   path <- file.path(root, paste0(stem, ".qmd"))
   chunk <- provenance_chunk(template_by_name(prefix))
+  frontmatter <- c("---", "format: html")
+  if (!is.null(output_file)) frontmatter <- c(frontmatter, paste0("output-file: ", output_file))
   writeLines(c(
-    "---", "format: html", "---", "",
+    frontmatter, "---", "",
     "```{r}",
     ".in <- knitr::current_input(dir = TRUE)",
+    ".cfg <- hvtiRutilities::study_config(start = Sys.getenv(\"QUARTO_PROJECT_DIR\"))",
+    ".data_read <- hvtiRtemplates:::.provenance_read(",
+    "  \"study\", .cfg, function() hvtiRutilities::read_built(cfg = .cfg)",
+    ")",
+    ".provenance_data <- list(.data_read$record)",
     definitions,
     "```", "",
     chunk
@@ -453,6 +474,109 @@ test_that("a sidecar write failure fails the render", {
   expect_s3_class(failure, "error")
   expect_match(
     paste(output, collapse = "\n"),
-    "record_provenance\\(\\): could not write the provenance sidecar"
+    "publish_provenance\\(\\): could not (write|publish) the provenance sidecar"
   )
+})
+
+test_that("render_job publishes provenance through the same project hooks", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- make_provenance_study(withr::local_tempdir())
+  job <- write_provenance_job(
+    root, "cohort-wrapper-dc-general", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "wrapper"', 'DATASET <- "study"')
+  )
+
+  render_job(job, quiet = TRUE)
+
+  expect_true(file.exists(file.path(root, "cohort-wrapper-dc-general.provenance.json")))
+})
+
+test_that("project renders publish renamed outputs and ignore unmanaged documents", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- make_provenance_study(withr::local_tempdir())
+  first <- write_provenance_job(
+    root, "cohort-first-dc-general", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "first"', 'DATASET <- "study"'),
+    output_file = "renamed-first.html"
+  )
+  second <- write_provenance_job(
+    root, "cohort-second-dc-general", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "second"', 'DATASET <- "study"')
+  )
+  unmanaged <- file.path(root, "notes.qmd")
+  writeLines(c("---", "format: html", "---", "", "Ordinary project notes."), unmanaged)
+  config <- yaml::read_yaml(file.path(root, "_quarto.yml"))
+  config$project$`output-dir` <- "rendered"
+  config$project$render <- list(basename(first), basename(second), basename(unmanaged))
+  yaml::write_yaml(config, file.path(root, "_quarto.yml"))
+
+  quarto::quarto_render(root, execute_dir = root, quiet = TRUE)
+
+  expect_true(file.exists(file.path(root, "rendered", "renamed-first.html")))
+  expect_true(file.exists(file.path(root, "rendered", "renamed-first.provenance.json")))
+  expect_true(file.exists(file.path(root, "rendered", "cohort-second-dc-general.provenance.json")))
+  expect_true(file.exists(file.path(root, "rendered", "notes.html")))
+  expect_false(file.exists(file.path(root, "rendered", "notes.provenance.json")))
+})
+
+test_that("a Pandoc failure after execution leaves no stale sidecar", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- make_provenance_study(withr::local_tempdir())
+  job <- write_provenance_job(
+    root, "cohort-pandoc-dc-general", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "pandoc"', 'DATASET <- "study"')
+  )
+  render_provenance_job(job, root)
+  sidecar <- file.path(root, "cohort-pandoc-dc-general.provenance.json")
+  expect_true(file.exists(sidecar))
+  source <- readLines(job, warn = FALSE)
+  source <- append(source, "filters: [missing-provenance-filter.lua]", after = 2L)
+  writeLines(source, job)
+
+  expect_error(render_provenance_job(job, root), "quarto CLI")
+  expect_false(file.exists(sidecar))
+})
+
+test_that("existing later hooks run before publication so the checksum covers their changes", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- make_provenance_study(withr::local_tempdir())
+  job <- write_provenance_job(
+    root, "cohort-hook-dc-general", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "hook"', 'DATASET <- "study"')
+  )
+  writeLines(c(
+    'outputs <- strsplit(Sys.getenv("QUARTO_PROJECT_OUTPUT_FILES"), "\\n", fixed = TRUE)[[1L]]',
+    'outputs <- outputs[tolower(tools::file_ext(outputs)) == "html"]',
+    'for (path in outputs) write("<!-- later-user-hook -->", path, append = TRUE)'
+  ), file.path(root, "later-hook.R"))
+  config <- yaml::read_yaml(file.path(root, "_quarto.yml"))
+  config$project$`post-render` <- c(config$project$`post-render`, "later-hook.R")
+  yaml::write_yaml(config, file.path(root, "_quarto.yml"))
+  .install_provenance_hooks(root)
+
+  render_provenance_job(job, root)
+
+  html <- file.path(root, "cohort-hook-dc-general.html")
+  record <- jsonlite::read_json(hvtiRutilities::provenance_path(html), simplifyVector = FALSE)
+  expect_true(any(grepl("later-user-hook", readLines(html, warn = FALSE), fixed = TRUE)))
+  expect_identical(record$output$sha256, digest::digest(html, algo = "sha256", file = TRUE))
+})
+
+test_that("a managed standalone render without configured hooks fails", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- withr::local_tempdir()
+  make_provenance_study(root)
+  unlink(c(file.path(root, "_quarto.yml"), file.path(root, ".hvtiR")), recursive = TRUE)
+  job <- write_provenance_job(
+    root, "cohort-standalone-dc-general", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "standalone"', 'DATASET <- "study"')
+  )
+
+  expect_error(render_provenance_job(job, root), "quarto CLI")
+  expect_false(file.exists(file.path(root, "cohort-standalone-dc-general.provenance.json")))
 })

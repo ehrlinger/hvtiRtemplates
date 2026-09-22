@@ -28,6 +28,12 @@ render only and restores its previous value afterwards, including after an
 error. The job's own edit guard decides whether it is finished; this
 function does not search for markers itself, so it cannot disagree with a
 render started from the editor or from Quarto.
+
+Jobs scaffolded by \code{\link{add_job}} capture their data provenance while
+executing and embed it in the completed HTML. The same project hooks used by
+the Render button and bare Quarto commands then publish a same-stem
+\code{.provenance.json} sidecar beside the actual output. A failed render or
+publication leaves no current sidecar.
 }
 \seealso{
 \code{\link{open_job}}

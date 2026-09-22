@@ -111,6 +111,7 @@ rf_env <- function(data, .local_envir = parent.frame()) {
   env <- new.env(parent = globalenv())
   env$.root <- rf_study(.local_envir)
   env$read_built <- function(...) data
+  env$.provenance_data <- list()
   env
 }
 

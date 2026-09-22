@@ -41,6 +41,7 @@ the distribution of a single variable is `dp-variable`.
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(hvtiRutilities)
@@ -230,7 +231,12 @@ if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar
   stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
        "In a migrated job, see the migration report beside this job.", call. = FALSE)
 }
-d <- read_built(study_config(.root), dataset = DATASET)
+.cfg <- study_config(start = .root)
+.data_read <- hvtiRtemplates:::.provenance_read(
+  DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET)
+)
+d <- .data_read$value
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
 
 # EDIT: the calendar year of operation, as a WHOLE year. hv_trends() puts one
 # summary point at every distinct value of x, so x must be the year itself.
@@ -392,18 +398,14 @@ shape and not point by point. `plot(tr, span = ...)` changes the smoothing.
 
 ```{r}
 #| label: provenance
-#| include: false
-if (is.null(.in) || !is.character(.in) || length(.in) != 1L || is.na(.in) || !nzchar(.in)) {
-  stop("Cannot record provenance without the current render input.", call. = FALSE)
-}
-.job_stem <- tools::file_path_sans_ext(basename(.in))
-.output <- file.path(dirname(.in), paste0(.job_stem, ".html"))
-hvtiRutilities::record_provenance(
-  .output,
-  dataset = DATASET,
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
   extra = list(
     subject = SUBJECT,
     type = TYPE
   )
-)
+))
 ```

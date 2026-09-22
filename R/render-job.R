@@ -13,6 +13,12 @@
 #' function does not search for markers itself, so it cannot disagree with a
 #' render started from the editor or from Quarto.
 #'
+#' Jobs scaffolded by \code{\link{add_job}} capture their data provenance while
+#' executing and embed it in the completed HTML. The same project hooks used by
+#' the Render button and bare Quarto commands then publish a same-stem
+#' \code{.provenance.json} sidecar beside the actual output. A failed render or
+#' publication leaves no current sidecar.
+#'
 #' @param path Character. Path to a job \code{.qmd} file.
 #' @param final Logical. \code{TRUE} for the accepted result.
 #' @param quiet Logical. Passed to \code{quarto::quarto_render()}.
