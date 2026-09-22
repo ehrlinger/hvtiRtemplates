@@ -214,8 +214,9 @@ if (is.null(ANALYSIS_SET)) {
        "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
 } else {
   .cfg <- study_config(start = .root)
-  .data_read <- hvtiRtemplates:::.provenance_read(
-    "study", .cfg,
+  .analysis_set_path <- file.path(study_dir("datasets", .root), paste0(ANALYSIS_SET, ".parquet"))
+  .data_read <- hvtiRtemplates:::.provenance_file_read(
+    paste0("analysis_set:", ANALYSIS_SET), .analysis_set_path, .cfg,
     function() hvtiRdatabuild::read_analysis_set(ANALYSIS_SET, cfg = .cfg),
     role = paste0("analysis_set:", ANALYSIS_SET)
   )

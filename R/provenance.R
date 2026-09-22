@@ -22,10 +22,73 @@
 
 .read_quarto_config <- function(path) {
   if (!file.exists(path)) return(list())
+  lines <- readLines(path, warn = FALSE)
+  yaml_11_string <- "(y|yes|n|no|on|off)"
+  mapping <- paste0("^([[:space:]]*[^#][^:]*:[[:space:]]*)", yaml_11_string, "([[:space:]]*(#.*)?)$")
+  sequence <- paste0("^([[:space:]]*-[[:space:]]*)", yaml_11_string, "([[:space:]]*(#.*)?)$")
+  lines <- sub(mapping, "\\1'\\2'\\3", lines, ignore.case = TRUE)
+  lines <- sub(sequence, "\\1'\\2'\\3", lines, ignore.case = TRUE)
   tryCatch(
-    yaml::read_yaml(path),
+    yaml::yaml.load(paste(lines, collapse = "\n")),
     error = function(e) stop("_quarto.yml could not be parsed: ", conditionMessage(e), call. = FALSE)
   )
+}
+
+.write_quarto_config <- function(config, path) {
+  lines <- strsplit(yaml::as.yaml(config), "\n", fixed = TRUE)[[1L]]
+  mapping_yes <- "^([[:space:]]*[^#][^:]*:[[:space:]]*)yes([[:space:]]*(#.*)?)$"
+  mapping_no <- "^([[:space:]]*[^#][^:]*:[[:space:]]*)no([[:space:]]*(#.*)?)$"
+  sequence_yes <- "^([[:space:]]*-[[:space:]]*)yes([[:space:]]*(#.*)?)$"
+  sequence_no <- "^([[:space:]]*-[[:space:]]*)no([[:space:]]*(#.*)?)$"
+  lines <- sub(mapping_yes, "\\1true\\2", lines)
+  lines <- sub(mapping_no, "\\1false\\2", lines)
+  lines <- sub(sequence_yes, "\\1true\\2", lines)
+  lines <- sub(sequence_no, "\\1false\\2", lines)
+  writeLines(lines, path)
+}
+
+.yaml_command <- function(command) {
+  line <- strsplit(yaml::as.yaml(list(value = command)), "\n", fixed = TRUE)[[1L]][[1L]]
+  sub("^value:[[:space:]]*", "", line)
+}
+
+.project_bounds <- function(lines) {
+  start <- grep("^project[[:space:]]*:", lines)
+  if (length(start) != 1L) return(NULL)
+  following <- if (start < length(lines)) seq.int(start + 1L, length(lines)) else integer()
+  end <- following[grepl("^[^[:space:]#][^:]*[[:space:]]*:", lines[following])][1L]
+  if (is.na(end)) end <- length(lines) + 1L
+  c(start = start, end = end)
+}
+
+.project_hook_lines <- function(lines, name, commands) {
+  bounds <- .project_bounds(lines)
+  start <- bounds[["start"]]
+  end <- bounds[["end"]]
+  body <- if (end > start + 1L) seq.int(start + 1L, end - 1L) else integer()
+  content <- body[nzchar(trimws(lines[body])) & !grepl("^[[:space:]]*#", lines[body])]
+  indent <- if (length(content)) min(nchar(sub("^([[:space:]]*).*", "\\1", lines[content]))) else 2L
+  key_pattern <- paste0("^[[:space:]]{", indent, "}", name, "[[:space:]]*:")
+  key <- body[grepl(key_pattern, lines[body])]
+  if (length(key) > 1L) stop("_quarto.yml contains more than one project ", name, " key.", call. = FALSE)
+  if (length(key)) {
+    later <- if (key < length(lines)) seq.int(key + 1L, length(lines)) else integer()
+    next_key <- later[
+      nzchar(trimws(lines[later])) &
+        !grepl("^[[:space:]]*#", lines[later]) &
+        !grepl("^[[:space:]]*-", lines[later]) &
+        nchar(sub("^([[:space:]]*).*", "\\1", lines[later])) <= indent
+    ][1L]
+    if (is.na(next_key)) next_key <- length(lines) + 1L
+    lines <- lines[-seq.int(key, next_key - 1L)]
+    bounds <- .project_bounds(lines)
+    end <- bounds[["end"]]
+  }
+  block <- c(
+    paste0(strrep(" ", indent), name, ":"),
+    paste0(strrep(" ", indent + 2L), "- ", vapply(commands, .yaml_command, character(1L)))
+  )
+  append(lines, block, after = end - 1L)
 }
 
 .install_provenance_hooks <- function(root) {
@@ -46,13 +109,14 @@
     stop("_quarto.yml: `project` must be a mapping or a scalar project type.", call. = FALSE)
   }
 
+  installed <- list()
   for (which in c("pre", "post")) {
     name <- paste0(which, "-render")
     commands <- .provenance_hooks(project[[name]], name)
     command <- .provenance_hook_command(which)
     project[[name]] <- c(commands[commands != command], command)
+    installed[[name]] <- project[[name]]
   }
-  config$project <- project
 
   hook_files <- .provenance_hook_files()
   hook_dir <- file.path(root, dirname(hook_files[[1L]]))
@@ -69,7 +133,24 @@
 
   temporary <- tempfile(pattern = "_quarto-", tmpdir = root, fileext = ".yml")
   on.exit(if (file.exists(temporary)) unlink(temporary), add = TRUE)
-  yaml::write_yaml(config, temporary)
+  lines <- if (file.exists(config_path)) readLines(config_path, warn = FALSE) else character()
+  bounds <- .project_bounds(lines)
+  if (is.null(bounds)) {
+    lines <- c(lines, if (length(lines) && nzchar(utils::tail(lines, 1L))) "", "project:")
+  } else {
+    project_line <- lines[bounds[["start"]]]
+    inline <- sub("^project[[:space:]]*:[[:space:]]*", "", project_line)
+    if (nzchar(inline)) {
+      if (!is.character(config$project) || length(config$project) != 1L) {
+        stop("_quarto.yml: inline project mappings cannot be updated safely; use a project block.", call. = FALSE)
+      }
+      lines[bounds[["start"]]] <- "project:"
+      lines <- append(lines, paste0("  type: ", inline), after = bounds[["start"]])
+    }
+  }
+  for (name in names(installed)) lines <- .project_hook_lines(lines, name, installed[[name]])
+  writeLines(lines, temporary)
+  .read_quarto_config(temporary)
   if (!file.copy(temporary, config_path, overwrite = TRUE)) {
     stop("add_job(): could not update _quarto.yml.", call. = FALSE)
   }
@@ -161,16 +242,15 @@
 }
 
 .quarto_project_files <- function(name, root) {
-  value <- Sys.getenv(name, unset = NA_character_)
+  file_name <- sub("^QUARTO_PROJECT_", "QUARTO_USE_FILE_FOR_PROJECT_", name)
+  list_path <- Sys.getenv(file_name, unset = NA_character_)
+  if (!is.na(list_path) && nzchar(list_path)) {
+    value <- paste(readLines(list_path, warn = FALSE), collapse = "\n")
+  } else {
+    value <- Sys.getenv(name, unset = NA_character_)
+  }
   if (is.na(value) || !nzchar(value)) {
     stop(name, " is not set by Quarto.", call. = FALSE)
-  }
-  if (startsWith(value, "@")) {
-    list_path <- substring(value, 2L)
-    value <- paste(readLines(list_path, warn = FALSE), collapse = "\n")
-  } else if (!grepl("\n", value, fixed = TRUE) && file.exists(value) &&
-               !tolower(tools::file_ext(value)) %in% c("qmd", "rmarkdown", "html", "htm")) {
-    value <- paste(readLines(value, warn = FALSE), collapse = "\n")
   }
   files <- strsplit(value, "\n", fixed = TRUE)[[1L]]
   files <- files[nzchar(files)]
@@ -188,6 +268,35 @@
     stop("The registered dataset changed while it was read; discard this render and read it again.", call. = FALSE)
   }
   list(value = value, record = before)
+}
+
+.provenance_file_read <- function(dataset, path, cfg, reader, role = "analysis") {
+  if (!is.function(reader)) stop(".provenance_file_read(): `reader` must be a function.", call. = FALSE)
+  snapshot <- function() {
+    c(list(dataset = dataset), hvtiRutilities::provenance_artifact(path = path, role = role, cfg = cfg))
+  }
+  before <- snapshot()
+  value <- reader()
+  after <- snapshot()
+  if (!identical(before[c("bytes", "sha256")], after[c("bytes", "sha256")])) {
+    stop("The data file changed while it was read; discard this render and read it again.", call. = FALSE)
+  }
+  list(value = value, record = before)
+}
+
+.provenance_source_frozen <- function(path) {
+  if (!requireNamespace("quarto", quietly = TRUE)) {
+    stop("The quarto R package is required to resolve frozen execution metadata.", call. = FALSE)
+  }
+  profile <- Sys.getenv("QUARTO_PROFILE", unset = NA_character_)
+  metadata <- quarto::quarto_inspect(
+    path,
+    profile = if (is.na(profile) || !nzchar(profile)) NULL else strsplit(profile, ",", fixed = TRUE)[[1L]],
+    quiet = TRUE
+  )
+  any(vapply(metadata$formats, function(format) {
+    isTRUE(format$execute$freeze) || identical(format$execute$freeze, "auto")
+  }, logical(1L)))
 }
 
 .provenance_html <- function(payload) {
@@ -224,12 +333,16 @@
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
   .assert_provenance_hooks(root)
   if (is.null(inputs)) inputs <- .quarto_project_files("QUARTO_PROJECT_INPUT_FILES", root)
-  sources <- unique(vapply(inputs, .provenance_source, character(1L), root = root))
+  extensions <- tolower(tools::file_ext(inputs))
+  candidates <- inputs[extensions %in% c("qmd", "rmarkdown")]
+  sources <- unique(vapply(candidates, .provenance_source, character(1L), root = root))
   managed <- sources[vapply(file.path(root, sources), function(path) {
     any(grepl("hvtiRtemplates:::.embed_provenance(", readLines(path, warn = FALSE), fixed = TRUE))
   }, logical(1L))]
 
-  sidecars <- list.files(root, pattern = "[.]provenance[.]json$", recursive = TRUE, full.names = TRUE)
+  sidecars <- list.files(
+    root, pattern = "[.]provenance[.]json$", recursive = TRUE, full.names = TRUE, all.files = TRUE
+  )
   for (sidecar in sidecars) {
     record <- tryCatch(
       jsonlite::read_json(sidecar, simplifyVector = FALSE),
@@ -245,8 +358,7 @@
       lapply(file.path(root, managed), digest::digest, algo = "sha256", file = TRUE),
       managed
     ),
-    frozen = isTRUE(.read_quarto_config(file.path(root, "_quarto.yml"))$execute$freeze) ||
-      identical(.read_quarto_config(file.path(root, "_quarto.yml"))$execute$freeze, "auto")
+    frozen_sources = as.list(managed[vapply(file.path(root, managed), .provenance_source_frozen, logical(1L))])
   )
   .write_json_atomic(state, .provenance_state_path(root))
   invisible(state)
@@ -304,7 +416,7 @@
     if (!is.character(payload$source) || length(payload$source) != 1L || !payload$source %in% expected) {
       stop("Managed HTML carries a provenance source not registered for this render.", call. = FALSE)
     }
-    frozen <- isTRUE(state$frozen) &&
+    frozen <- payload$source %in% unlist(state$frozen_sources, use.names = FALSE) &&
       identical(payload$.hvti_source_sha256, state$source_sha256[[payload$source]])
     if (!identical(payload$.hvti_render_id, state$render_id) && !frozen) {
       stop("Managed HTML carries a stale provenance payload from another render.", call. = FALSE)

@@ -197,6 +197,15 @@ test_that("registered data provenance is captured in the chunk that reads it", {
   }
 })
 
+test_that("analysis-set branches capture the parquet file they read", {
+  for (prefix in c("dc-general", "dc-gfup", "dc-tables", "dp-postage")) {
+    source <- readLines(template_by_name(prefix), warn = FALSE)
+    info <- prefix
+    expect_true(any(grepl(".provenance_file_read(", source, fixed = TRUE)), info = info)
+    expect_true(any(grepl('paste0(ANALYSIS_SET, ".parquet")', source, fixed = TRUE)), info = info)
+  }
+})
+
 test_that("only templates with a local dataset choice override the dataset", {
   expected <- c(
     "dc-general", "dc-gfup", "dc-tables", "dp-postage", "dp-trends",
@@ -492,6 +501,28 @@ test_that("render_job publishes provenance through the same project hooks", {
   expect_true(file.exists(file.path(root, "cohort-wrapper-dc-general.provenance.json")))
 })
 
+test_that("direct Quarto supports its file-backed input and output lists", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- make_provenance_study(withr::local_tempdir())
+  job <- write_provenance_job(
+    root, "cohort-file-backed-dc-general", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "file-backed"', 'DATASET <- "study"')
+  )
+  input_list <- tempfile("quarto-inputs-")
+  output_list <- tempfile("quarto-outputs-")
+  withr::local_envvar(
+    QUARTO_USE_FILE_FOR_PROJECT_INPUT_FILES = input_list,
+    QUARTO_USE_FILE_FOR_PROJECT_OUTPUT_FILES = output_list
+  )
+
+  render_provenance_job(job, root)
+
+  expect_identical(readLines(input_list, warn = FALSE), basename(job))
+  expect_identical(readLines(output_list, warn = FALSE), "cohort-file-backed-dc-general.html")
+  expect_true(file.exists(file.path(root, "cohort-file-backed-dc-general.provenance.json")))
+})
+
 test_that("project renders publish renamed outputs and ignore unmanaged documents", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
@@ -505,7 +536,7 @@ test_that("project renders publish renamed outputs and ignore unmanaged document
     root, "cohort-second-dc-general", "dc-general",
     c('SUBJECT <- "cohort"', 'TYPE <- "second"', 'DATASET <- "study"')
   )
-  unmanaged <- file.path(root, "notes.qmd")
+  unmanaged <- file.path(root, "notes.md")
   writeLines(c("---", "format: html", "---", "", "Ordinary project notes."), unmanaged)
   config <- yaml::read_yaml(file.path(root, "_quarto.yml"))
   config$project$`output-dir` <- "rendered"
@@ -519,6 +550,30 @@ test_that("project renders publish renamed outputs and ignore unmanaged document
   expect_true(file.exists(file.path(root, "rendered", "cohort-second-dc-general.provenance.json")))
   expect_true(file.exists(file.path(root, "rendered", "notes.html")))
   expect_false(file.exists(file.path(root, "rendered", "notes.provenance.json")))
+})
+
+test_that("document-level frozen renders retain their original execution payload", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- make_provenance_study(withr::local_tempdir())
+  job <- write_provenance_job(
+    root, "cohort-frozen-dc-general", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "frozen"', 'DATASET <- "study"')
+  )
+  source <- readLines(job, warn = FALSE)
+  source <- append(source, c("execute:", "  freeze: true"), after = 1L)
+  writeLines(source, job)
+  config <- .read_quarto_config(file.path(root, "_quarto.yml"))
+  config$project$render <- list(basename(job))
+  .write_quarto_config(config, file.path(root, "_quarto.yml"))
+
+  quarto::quarto_render(root, execute_dir = root, quiet = TRUE)
+  sidecar <- file.path(root, "cohort-frozen-dc-general.provenance.json")
+  first <- jsonlite::read_json(sidecar, simplifyVector = FALSE)
+  quarto::quarto_render(root, execute_dir = root, quiet = TRUE)
+  second <- jsonlite::read_json(sidecar, simplifyVector = FALSE)
+
+  expect_identical(second$rendered, first$rendered)
 })
 
 test_that("a Pandoc failure after execution leaves no stale sidecar", {

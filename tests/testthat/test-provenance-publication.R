@@ -47,7 +47,6 @@ test_that("hook installation preserves scalar and list hooks and unrelated setti
   for (name in names(cases)) {
     root <- make_hook_study(withr::local_tempdir())
     yaml::write_yaml(cases[[name]], file.path(root, "_quarto.yml"))
-
     .install_provenance_hooks(root)
     config <- read_quarto_config(root)
 
@@ -58,6 +57,16 @@ test_that("hook installation preserves scalar and list hooks and unrelated setti
     expect_true(all(unlist(cases[[name]]$project[c("pre-render", "post-render")]) %in%
                       unlist(config$project[c("pre-render", "post-render")])), info = name)
   }
+})
+
+test_that("hook installation preserves YAML 1.2 string scalars", {
+  root <- make_hook_study(withr::local_tempdir())
+  writeLines(c("title: On", "project:", "  type: default"), file.path(root, "_quarto.yml"))
+
+  .install_provenance_hooks(root)
+
+  expect_identical(.read_quarto_config(file.path(root, "_quarto.yml"))$title, "On")
+  expect_true("title: On" %in% readLines(file.path(root, "_quarto.yml"), warn = FALSE))
 })
 
 test_that("hook installation refuses malformed Quarto configuration", {
@@ -133,6 +142,29 @@ test_that("data capture brackets the actual read and rejects changing bytes", {
   )
 })
 
+test_that("file data capture snapshots the file actually read", {
+  root <- make_hook_study(withr::local_tempdir())
+  cfg <- hvtiRutilities::study_config(root)
+  path <- file.path(hvtiRutilities::study_dir("datasets", root), "named.parquet")
+  write("original", path)
+
+  captured <- .provenance_file_read("analysis_set:named", path, cfg, function() readLines(path),
+                                    role = "analysis_set:named")
+  expect_identical(
+    captured$record$path,
+    file.path(basename(hvtiRutilities::study_dir("datasets", root)), "named.parquet")
+  )
+  expect_identical(captured$record$sha256, digest::digest(path, algo = "sha256", file = TRUE))
+  expect_error(
+    .provenance_file_read("analysis_set:named", path, cfg, function() {
+      value <- readLines(path)
+      write("changed", path)
+      value
+    }),
+    "changed while it was read"
+  )
+})
+
 test_that("pre-render invalidates only matching sources and post-render rejects stale payloads", {
   root <- make_hook_study(withr::local_tempdir())
   .install_provenance_hooks(root)
@@ -176,8 +208,50 @@ test_that("Quarto file lists may be direct or file-backed", {
 
   list_file <- tempfile(fileext = ".txt")
   writeLines(paths, list_file)
-  withr::local_envvar(QUARTO_PROJECT_INPUT_FILES = paste0("@", list_file))
+  withr::local_envvar(QUARTO_PROJECT_INPUT_FILES = NA, QUARTO_USE_FILE_FOR_PROJECT_INPUT_FILES = list_file)
   expect_identical(.quarto_project_files("QUARTO_PROJECT_INPUT_FILES", root), file.path(root, paths))
+})
+
+test_that("pre-render ignores unmanaged non-QMD inputs", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  managed <- file.path(root, "managed.qmd")
+  notes <- file.path(root, "notes.md")
+  writeLines("hvtiRtemplates:::.embed_provenance()", managed)
+  writeLines("ordinary markdown", notes)
+
+  state <- .provenance_pre_render(root, inputs = c(managed, notes))
+
+  expect_identical(unlist(state$managed_sources, use.names = FALSE), "managed.qmd")
+})
+
+test_that("pre-render invalidates matching sidecars in hidden output directories", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  managed <- file.path(root, "managed.qmd")
+  writeLines("hvtiRtemplates:::.embed_provenance()", managed)
+  dir.create(file.path(root, ".rendered"))
+  output <- file.path(root, ".rendered", "managed.html")
+  writeLines("html", output)
+  payload <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, payload)
+
+  .provenance_pre_render(root, inputs = managed)
+
+  expect_false(file.exists(hvtiRutilities::provenance_path(output)))
+})
+
+test_that("document-level freeze is resolved by Quarto", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required")
+  root <- make_hook_study(withr::local_tempdir())
+  source <- file.path(root, "frozen.qmd")
+  writeLines(c("---", "format: html", "execute:", "  freeze: true", "---", "", "text"), source)
+
+  expect_true(.provenance_source_frozen(source))
 })
 
 test_that("post-render fails when a managed source has no payload", {
@@ -197,8 +271,7 @@ test_that("frozen HTML retains its execution payload when the source is unchange
   root <- make_hook_study(withr::local_tempdir())
   .install_provenance_hooks(root)
   config <- read_quarto_config(root)
-  config$execute <- list(freeze = TRUE)
-  yaml::write_yaml(config, file.path(root, "_quarto.yml"))
+  .write_quarto_config(within(config, execute <- list(freeze = TRUE)), file.path(root, "_quarto.yml"))
   source <- file.path(root, "managed.qmd")
   output <- file.path(root, "managed.html")
   writeLines("hvtiRtemplates:::.embed_provenance()", source)
