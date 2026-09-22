@@ -23,7 +23,7 @@
 #' suppressMessages(hvtiRutilities::study_setup(
 #'   root, study = "Example", study_tracker_id = 1L
 #' ))
-#' open_job("ac", "dead", "eda", dir = root)
+#' open_job(prefix = "ac", subject = "death", type = "eda", dir = root)
 #' unlink(root, recursive = TRUE)
 #' @export
 open_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {

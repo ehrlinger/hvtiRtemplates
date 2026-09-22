@@ -1,7 +1,9 @@
 # hvtiRtemplates (unreleased)
 
-* Job sets are now named by **subject**, the leading grouping topic in
-  `<subject>-<type>-<prefix>[-<qualifier>].qmd`, rather than by `endpoint`.
+* **Breaking:** `add_job()`, `open_job()`, and `migrate_job()` rename their
+  public `endpoint` argument to `subject`, and templates rename their
+  `ENDPOINT` marker to `SUBJECT`. Job sets are now named by **subject**, the
+  leading grouping topic in `<subject>-<type>-<prefix>[-<qualifier>].qmd`.
   A subject can be a statistical endpoint such as `death`, or an endpoint-free
   topic such as `cohort`. Jobs now own their outcome and cohort definitions;
   dataset registration does not choose them.

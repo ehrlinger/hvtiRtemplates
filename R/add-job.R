@@ -50,7 +50,7 @@
 #' invisible(hvtiRutilities::study_setup(
 #'   d, study = "Example", study_tracker_id = 1L
 #' ))
-#' add_job("ac", "dead_pa", "hz", dir = d)
+#' add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
 #' list.files(d, recursive = TRUE)
 #' unlink(d, recursive = TRUE)
 add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {

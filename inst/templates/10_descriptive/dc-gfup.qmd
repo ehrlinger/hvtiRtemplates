@@ -114,7 +114,7 @@ ANALYSIS_SET <- "eda"
 
 # MIGRATE-BEGIN: dc-gfup-config
 EVENT <- "dead"       # EDIT: binary event indicator, 1=event and 0=censored
-FOLLOWUP <- "iv_dead" # EDIT: registered follow-up interval(s), in years
+FOLLOWUP <- "iv_dead" # EDIT: follow-up interval(s) this job checks, in years
 IDENTIFIER <- NULL    # EDIT: opt in only for local review
 MAX_REVIEW_ROWS <- 25L
 # MIGRATE-END: dc-gfup-config

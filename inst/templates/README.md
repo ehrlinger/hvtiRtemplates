@@ -233,7 +233,7 @@ The table job writes an editable CORR DOCX under
 `hv_tbl_summary()` -> `hv_man_table()` -> `hv_man_table_save()` ->
 `hv_check_docx()` path stops on document-format findings. Compare its numerical
 and presentation choices with the RTF reference yourself. Follow-up checks use
-registered intervals; they do not establish completeness against a close date.
+the job's declared intervals; they do not establish completeness against a close date.
 Trend figures and numbered postage PNG pages go under
 `graphs/<subject>-<type>/`, including when the postage job itself lives in
 `descriptive/`.
