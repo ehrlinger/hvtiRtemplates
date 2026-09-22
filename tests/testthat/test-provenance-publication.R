@@ -69,6 +69,29 @@ test_that("hook installation preserves YAML 1.2 string scalars", {
   expect_true("title: On" %in% readLines(file.path(root, "_quarto.yml"), warn = FALSE))
 })
 
+test_that("hook installation preserves project comments and multiline commands", {
+  root <- make_hook_study(withr::local_tempdir())
+  path <- file.path(root, "_quarto.yml")
+  writeLines(c(
+    "project: # keep this comment",
+    "  type: default",
+    "  pre-render: |",
+    "    echo first",
+    "    echo second"
+  ), path)
+  before <- .read_quarto_config(path)$project$`pre-render`
+
+  .install_provenance_hooks(root)
+  first <- readLines(path, warn = FALSE)
+  .install_provenance_hooks(root)
+  config <- .read_quarto_config(path)
+
+  expect_identical(readLines(path, warn = FALSE), first)
+  expect_true("project: # keep this comment" %in% readLines(path, warn = FALSE))
+  expect_identical(config$project$`pre-render`[[1L]], before)
+  expect_identical(utils::tail(config$project$`pre-render`, 1L), .provenance_hook_command("pre"))
+})
+
 test_that("hook installation refuses malformed Quarto configuration", {
   root <- make_hook_study(withr::local_tempdir())
   writeLines("project: [", file.path(root, "_quarto.yml"))

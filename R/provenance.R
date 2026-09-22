@@ -48,8 +48,7 @@
 }
 
 .yaml_command <- function(command) {
-  line <- strsplit(yaml::as.yaml(list(value = command)), "\n", fixed = TRUE)[[1L]][[1L]]
-  sub("^value:[[:space:]]*", "", line)
+  as.character(jsonlite::toJSON(command, auto_unbox = TRUE))
 }
 
 .project_bounds <- function(lines) {
@@ -140,7 +139,8 @@
   } else {
     project_line <- lines[bounds[["start"]]]
     inline <- sub("^project[[:space:]]*:[[:space:]]*", "", project_line)
-    if (nzchar(inline)) {
+    inline_value <- trimws(sub("[[:space:]]+#.*$", "", inline))
+    if (nzchar(inline_value) && !startsWith(inline_value, "#")) {
       if (!is.character(config$project) || length(config$project) != 1L) {
         stop("_quarto.yml: inline project mappings cannot be updated safely; use a project block.", call. = FALSE)
       }
