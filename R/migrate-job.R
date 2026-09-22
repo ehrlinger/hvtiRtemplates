@@ -49,7 +49,9 @@
 #'
 #' @param source Path to one legacy source job, relative to the working
 #'   directory or absolute.
-#' @param endpoint Endpoint field for the new job's filename.
+#' @param subject Grouping topic for the new job's filename. It is a
+#'   statistical endpoint only when the job analyses one; an endpoint-free
+#'   job may use a topic such as \code{"cohort"}.
 #' @param type Analysis-type field for the new job's filename.
 #' @param prefix Template prefix, such as \code{"dc"}. Read from the SAS
 #'   filename when \code{NULL}. When given without \code{qualifier}, the

@@ -73,16 +73,22 @@ answer, because `%inc` had nothing to pin.
 | `template_list()` | supported templates: name, prefix, qualifier, folder, file |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
 | `hvti_non_prefixes()` | leading name fields that are utilities, not analysis prefixes |
-| `add_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` | the scaffolded job's path, invisibly |
-| `open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)` | the job's path, invisibly; creates it with `add_job()` when missing, opens it unchanged when it exists |
+| `add_job(prefix, subject, type, dir = ".", qualifier = NULL)` | the scaffolded job's path, invisibly |
+| `open_job(prefix, subject, type, dir = ".", qualifier = NULL)` | job path; creates a missing job or opens an existing one |
 | `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
-| `migrate_job(source, endpoint, type, prefix, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
+| `migrate_job(source, subject, type, prefix, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
 
 Templates are `<prefix>[-<qualifier>].qmd` in a numbered directory
 (`20_distributions/ac.qmd`); a job is
-`<endpoint>-<type>-<prefix>[-<qualifier>].qmd` in the study's matching taxonomy
+`<subject>-<type>-<prefix>[-<qualifier>].qmd` in the study's matching taxonomy
 folder. New studies use numbered folders and existing bare-folder studies keep
 their layout. The ordinal that once prefixed filenames was dropped in 1.1.0.
+
+The subject groups a job set. It is a statistical endpoint when the job analyses
+one, such as `death`; it can instead be an endpoint-free topic such as `cohort`,
+`treatment`, or `labs`. Each job owns its outcome variables, coding, filters,
+and any cohort definition. Dataset registration records the data, not a
+study-wide endpoint or cohort.
 
 `qualifier` names a job type within a prefix. The current qualified templates
 are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-postage`; other
@@ -104,7 +110,7 @@ From that study's root, migrate a descriptive-table job with:
 ```r
 job <- hvtiRtemplates::migrate_job(
   source = "descriptive/dc.tables.sas",
-  endpoint = "cohort", type = "eda", prefix = "dc", qualifier = "tables",
+  subject = "cohort", type = "eda", prefix = "dc", qualifier = "tables",
   lst = "descriptive/dc.tables.lst", log = "descriptive/dc.tables.log",
   reference = "documents/general.rtf", dir = "."
 )
@@ -124,7 +130,7 @@ you check the translation but do not supply missing analysis choices.
 
 The table job replaces the SAS RTF output with an editable CORR DOCX through
 `hv_tbl_summary()`, `hv_man_table()`, `hv_man_table_save()`, and
-`hv_check_docx()`. It writes beneath `documents/<endpoint>-<type>/` and stops
+`hv_check_docx()`. It writes beneath `documents/<subject>-<type>/` and stops
 on a structural finding. Compare the rows, summaries, precision, and footnotes
 with the legacy reference before accepting the document; the structural check
 does not establish numerical agreement.

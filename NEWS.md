@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* Job sets are now named by **subject**, the leading grouping topic in
+  `<subject>-<type>-<prefix>[-<qualifier>].qmd`, rather than by `endpoint`.
+  A subject can be a statistical endpoint such as `death`, or an endpoint-free
+  topic such as `cohort`. Jobs now own their outcome and cohort definitions;
+  dataset registration does not choose them.
+
 * Six random forest templates: `rfs`, `rfc` and `rfr`, for survival,
   classification and continuous outcomes, each as a `fit` job and an `explain`
   job. The fit job grows the forest through `hvtiRutilities::cache_fit()` and

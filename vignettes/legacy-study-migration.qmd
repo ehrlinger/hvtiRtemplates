@@ -149,6 +149,12 @@ checks.
 
 ## Migrate one job at a time
 
+The first two migration fields name the job set: its subject and type. Here
+`"cohort"` is an endpoint-free subject that groups descriptive work; it does
+not claim that the cohort is an outcome. A job that analyses death or stroke
+may use that endpoint as its subject and declares its own outcome variables,
+coding, filters, and cohort definition.
+
 Each call selects one template and its source-specific adapter. The source
 supplies analysis choices; logs, listings and RTF/DOCX references add evidence.
 Migration writes an editable QMD and a report beside it. Existing jobs or
@@ -170,10 +176,10 @@ tables <- migrate_job(
 
 ### Goodness of follow-up
 
-This job reads the registered event and follow-up fields. Confirm the time
-units from the data build. Its recorded-interval checks do not establish
-completeness against an administrative close date, and patient identifiers
-remain disabled.
+This job declares the event and follow-up fields it uses; registration records
+the dataset without choosing them. Confirm the time units from the data build.
+Its recorded-interval checks do not establish completeness against an
+administrative close date, and patient identifiers remain disabled.
 
 ```{r}
 #| label: migrate-gfup

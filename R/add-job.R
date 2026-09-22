@@ -2,7 +2,7 @@
 #'
 #' @description
 #' Copies a supported job template into the taxonomy folder it belongs to,
-#' named \code{<endpoint>-<type>-<prefix>[-<qualifier>].qmd}. Refuses to overwrite an
+#' named \code{<subject>-<type>-<prefix>[-<qualifier>].qmd}. Refuses to overwrite an
 #' existing job: a job file accumulates a study's edits, and silently replacing
 #' one would discard them.
 #'
@@ -10,11 +10,15 @@
 #' A job is identified by three or four fields. One or two come from the
 #' template, its \code{prefix} and, where the prefix carries several job types,
 #' its \code{qualifier}; two come from the caller. The pair
-#' \code{(endpoint, type)} names the \strong{set} the job belongs to, and both
-#' are required: one endpoint is analysed by several methods, and the jobs those
-#' chains share would otherwise collide. A death-hazard set and a death
-#' random-forest-survival set both begin from the same life table, so keyed on
-#' the endpoint alone both would be written to one filename.
+#' \code{(subject, type)} names the \strong{set} the job belongs to, and both
+#' are required. The subject is the grouping topic, not necessarily a
+#' statistical endpoint. An endpoint-driven job may use \code{"death"}; an
+#' endpoint-free job may use \code{"cohort"}, \code{"treatment"}, or
+#' \code{"labs"} without inventing an outcome. One subject can be analysed by
+#' several methods, and the jobs those chains share would otherwise collide. A
+#' death-hazard set and a death random-forest-survival set both begin from the
+#' same life table, so keyed on the subject alone both would be written to one
+#' filename.
 #'
 #' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
 #'   \code{dp}. Required only where a prefix carries more than one template;
@@ -23,11 +27,13 @@
 #'   filename's fields.
 #' @param prefix Job type: one of the prefixes reported by
 #'   \code{\link{template_list}}.
-#' @param endpoint The endpoint this job analyses, e.g. \code{"dead_pa"}. Must
+#' @param subject Grouping topic for the job set, e.g. \code{"death"} or
+#'   \code{"cohort"}. A subject names a statistical endpoint only when the
+#'   job analyses one. Must
 #'   match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
 #'   \code{.} separates the extension, so neither may appear here.
 #' @param type The analysis type the job's set belongs to, e.g. \code{"hz"}.
-#'   Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{endpoint}.
+#'   Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.
 #' @param dir The study root to write into. The taxonomy folder beneath it is
 #'   created if it does not exist.
 #'
