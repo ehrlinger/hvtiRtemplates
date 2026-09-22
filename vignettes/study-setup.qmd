@@ -322,9 +322,12 @@ short and non-destructive.
 
 ### When registered data change
 
-Do not overwrite a registered dataset and run `update_manifest()` alone.
-Registration also records cohort metadata in `_study.yml`, so that shortcut
-can leave the two authoritative files disagreeing. Keep the registered extract
-unchanged until `hvtiRutilities` provides its coordinated update operation;
-then re-register any named datasets derived from it, rewrite dependent analysis
+Registration is endpoint-neutral: it records the dataset file, its population
+description and manifest facts, but does not declare a study-wide endpoint or
+cohort. For a catalog-pinned registration, first review a published candidate
+with `hvtiRutilities::review_data_update()`, supplying its exact release ID.
+The review describes structural drift without changing either manifest. After
+reviewing the candidate, call `hvtiRutilities::adopt_data_update()` with that
+same exact release ID. Adoption repeats the review and updates `_study.yml` and
+`manifest.yaml` together as a recoverable pair. Then review dependent analysis
 sets and rerender their jobs.

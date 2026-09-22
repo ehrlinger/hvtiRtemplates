@@ -1,3 +1,18 @@
+# hvtiRtemplates (unreleased)
+
+* **Breaking:** `add_job()`, `open_job()`, and `migrate_job()` rename their
+  public `endpoint` argument to `subject`, and templates rename their
+  `ENDPOINT` marker to `SUBJECT`. Job sets are now named by **subject**, the
+  leading grouping topic in `<subject>-<type>-<prefix>[-<qualifier>].qmd`.
+  A subject can be a statistical endpoint such as `death`, or an endpoint-free
+  topic such as `cohort`. Jobs now own their outcome and cohort definitions;
+  dataset registration does not choose them.
+
+* Every scaffolded job now writes a same-stem `.provenance.json` sidecar at
+  render time. The record always carries the runtime subject and type, adds
+  only analysis and observed-cohort facts the job actually used, and fails the
+  render if the sidecar cannot be written.
+
 # hvtiRtemplates 1.2.1
 
 * Eight qualified `lm` templates now cover binary, ordinal and nominal outcome
@@ -20,19 +35,6 @@
   and `yaml` join `Suggests` because the executable article writes the
   synthetic analysis-set declarations it teaches without replacing other
   sets.
-
-* **Breaking:** `add_job()`, `open_job()`, and `migrate_job()` rename their
-  public `endpoint` argument to `subject`, and templates rename their
-  `ENDPOINT` marker to `SUBJECT`. Job sets are now named by **subject**, the
-  leading grouping topic in `<subject>-<type>-<prefix>[-<qualifier>].qmd`.
-  A subject can be a statistical endpoint such as `death`, or an endpoint-free
-  topic such as `cohort`. Jobs now own their outcome and cohort definitions;
-  dataset registration does not choose them.
-
-* Every scaffolded job now writes a same-stem `.provenance.json` sidecar at
-  render time. The record always carries the runtime subject and type, adds
-  only analysis and observed-cohort facts the job actually used, and fails the
-  render if the sidecar cannot be written.
 
 * Six random forest templates: `rfs`, `rfc` and `rfr`, for survival,
   classification and continuous outcomes, each as a `fit` job and an `explain`

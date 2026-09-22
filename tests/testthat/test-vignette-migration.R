@@ -30,6 +30,17 @@ test_that("study setup vignette declares the complete workflow", {
                     fixed = TRUE))
 })
 
+test_that("study setup explains endpoint-neutral coordinated data updates", {
+  article <- paste(readLines(skip_without_vignette(), warn = FALSE), collapse = " ")
+
+  expect_true(grepl("endpoint-neutral", article, fixed = TRUE))
+  expect_true(grepl("review_data_update()", article, fixed = TRUE))
+  expect_true(grepl("adopt_data_update()", article, fixed = TRUE))
+  expect_true(grepl("exact release ID", article, fixed = TRUE))
+  expect_false(grepl("Registration also records cohort metadata", article, fixed = TRUE))
+  expect_false(grepl("provides its coordinated update operation", article, fixed = TRUE))
+})
+
 test_that("the SAS guide uses adopted-study paths and loads its packages", {
   path <- testthat::test_path(
     "..", "..", "vignettes", "sas-to-r-descriptive.qmd"
