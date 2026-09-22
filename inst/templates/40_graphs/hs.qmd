@@ -206,9 +206,13 @@ Edit these values for this study before rendering.
 
 ```{r}
 #| label: study-choices
-# Follow-up column and prediction horizons.
-# EDIT: time and prediction horizons.
+# Follow-up and event columns, expected counts, and prediction horizons.
+# EDIT: time, event, expected counts, and prediction horizons.
 TIME     <- "iu_dead"
+
+EVENT    <- "idead"
+
+EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_)
 
 HORIZONS <- c(1, 5, 10)
 
@@ -228,17 +232,21 @@ SCALE     <- "years"
 ```
 ## Cohort and model
 
-<!-- EDIT: choose the cohort shape, exactly as the `hm` job did.
-
-     The rows this job predicts for MUST be the rows the model was fitted on,
-     or the predictions describe a cohort the model never saw. That failure is
-     silent: `predict()` returns a number for any row you hand it, whatever
-     cohort it came from. -->
+<!-- EDIT: apply the same filter, event, time, and expected counts as the `hm`
+     job. The rows this job predicts for MUST be the rows the model was fitted
+     on, or the predictions describe a cohort the model never saw. That failure
+     is silent: `predict()` returns a number for any row you hand it, whatever
+     cohort it came from. The invalid expected counts make an unedited job stop
+     before it can predict for an unreconciled cohort. -->
 
 ```{r}
 #| label: cohort
 d <- read_built()
-assert_cohort(d)
+# EDIT: apply the same job filter as hm, before both the observed counts and gate.
+#
+# d <- d[!is.na(d$<flag>) & d$<flag> == 1, , drop = FALSE]
+cc <- cohort_counts(d, event = EVENT, time = TIME)
+assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 ```
 
 ```{r}

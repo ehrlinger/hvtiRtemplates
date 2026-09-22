@@ -286,6 +286,52 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
                            paste(setdiff(unique(used), declared), collapse = ", ")))
 })
 
+test_that("endpoint-driven templates own explicit cohort definitions", {
+  # `_study.yml` registers a dataset; it cannot know which rows or endpoint a
+  # later job will analyse. These templates must therefore carry the event,
+  # time, and SAS-reconciled counts their own cohort gates use. Removing an
+  # argument or restoring the old study-owned prose must make this contract
+  # fail before an incomplete job can render as checked.
+  tl <- template_list()
+  template_code <- lapply(tl$file, function(f) {
+    src <- readLines(f, warn = FALSE)
+    fence <- grepl("^```", src)
+    src[cumsum(fence) %% 2 == 1 & !fence]
+  })
+  helper_calls <- unlist(lapply(template_code, function(code) {
+    code[grepl("\\b(assert_cohort|cohort_counts)\\(", code)]
+  }), use.names = FALSE)
+  count_calls <- helper_calls[grepl("\\bcohort_counts\\(", helper_calls)]
+  assert_calls <- helper_calls[grepl("\\bassert_cohort\\(", helper_calls)]
+
+  expect_true(all(grepl("event = [^,]+, time = [^)]+\\)", count_calls)),
+              info = "every shipped cohort_counts() call needs its job event and time")
+  expect_true(all(grepl("expected = [^,]+, event = [^,]+, time = [^)]+\\)", assert_calls)),
+              info = "every shipped assert_cohort() call needs expected counts, event, and time")
+
+  templates <- c(ac = "STATUS", hz = "STATUS", hm = "EVENT", hs = "EVENT")
+  for (prefix in names(templates)) {
+    src <- readLines(template_path(prefix), warn = FALSE)
+    event <- templates[[prefix]]
+    info <- paste0(prefix, ".qmd")
+
+    expect_true(any(grepl(
+      "^EXPECTED <- list\\(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_\\)$",
+      src
+    )), info = paste(info, "has no deliberately invalid expected counts"))
+    expect_true(any(grepl(
+      paste0("^cc <- cohort_counts\\(d, event = ", event, ", time = TIME\\)$"),
+      src
+    )), info = paste(info, "does not count its own event and time columns"))
+    expect_true(any(grepl(
+      paste0("^assert_cohort\\(d, expected = EXPECTED, event = ", event, ", time = TIME\\)$"),
+      src
+    )), info = paste(info, "does not assert its own expected counts"))
+    expect_false(any(grepl("_study[.]yml.*cohort|cohort.*_study[.]yml", src, ignore.case = TRUE)),
+                 info = paste(info, "still describes the study registration as cohort authority"))
+  }
+})
+
 test_that("the bh template reports through hvtiRbootstrap, not its own copy", {
   src <- readLines(template_path("bh"), warn = FALSE)
   code <- sub("#.*$", "", src)          # and not in a code comment either

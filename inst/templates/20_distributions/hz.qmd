@@ -194,48 +194,30 @@ phases <- list(
 # EDIT: starting values from the SAS estimates.
 theta0 <- c(log(1), log(1), 1, 1,
             log(1), log(1), 1, 1, 1)
+
+# EDIT: time, status, and counts from the SAS reference for the rows this job
+# analyses. Leave these invalid defaults in place until the job is reconciled.
+TIME   <- "iv_dead"
+
+STATUS <- "dead"
+
+EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_)
 ```
 ## Cohort
 
-<!-- EDIT: this chunk, choosing ONE of the two shapes below.
-
-     The distinction is whether the rows this job analyses are the whole study
-     or a subset of it, and it is not cosmetic. `_study.yml` records the STUDY
-     cohort, derived from the whole built dataset. A job that analyses a
-     filtered subset has a different N, and `assert_cohort()` will gate the
-     wrong number — it will pass while the job runs on a cohort nobody checked.
-
-     Shape A — the job analyses the whole study cohort. Use the package data
-     contract, and the gate is `assert_cohort()`.
-
-     Shape B — the job analyses a filtered subset (an availability flag, a
-     procedure subgroup). `read_built()` still reads the data, but the filter
-     and the gate are the JOB's, and the expected counts come from the SAS
-     reference rather than from `_study.yml`. -->
+<!-- EDIT: apply this job's filter after reading the data, if it has one. The
+     expected counts, event, and time are this job's contract with its SAS
+     reference; the invalid defaults make an unedited job stop rather than
+     silently accept an unreconciled cohort. -->
 
 ```{r}
 #| label: cohort
-# ---- Shape A: whole-study cohort ------------------------------------------
 d <- read_built()
-assert_cohort(d)
-cc <- cohort_counts(d)
-
-# ---- Shape B: filtered job cohort -----------------------------------------
-# EDIT: delete Shape A above and uncomment this, supplying the filter and the
-# counts the SAS reference reports. Do NOT reuse assert_cohort(): it checks
-# _study.yml, which describes the whole study and not this job.
+# EDIT: apply this job's filter here, before both the observed counts and gate.
 #
-# d <- read_built()
 # d <- d[!is.na(d$<flag>) & d$<flag> == 1, , drop = FALSE]
-# EXPECTED <- list(n = <N>, n_events = <E>, n_censored = <C>)
-# cc <- list(n          = nrow(d),
-#            n_events   = sum(d[[STATUS]] == 1, na.rm = TRUE),
-#            n_censored = nrow(d) - sum(d[[STATUS]] == 1, na.rm = TRUE))
-# if (!identical(lapply(cc, as.integer), lapply(EXPECTED, as.integer))) {
-#   stop("Cohort gate FAILED: expected ", paste(unlist(EXPECTED), collapse = "/"),
-#        ", got ", paste(unlist(cc), collapse = "/"),
-#        ". The analysis must not run on an unreconciled cohort.", call. = FALSE)
-# }
+cc <- cohort_counts(d, event = STATUS, time = TIME)
+assert_cohort(d, expected = EXPECTED, event = STATUS, time = TIME)
 
 knitr::kable(data.frame(
   quantity = c("n_analysable", "n_events", "n_censored"),
