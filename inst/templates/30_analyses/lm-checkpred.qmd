@@ -1,0 +1,116 @@
+---
+title: "Validate a saved binary logistic model"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+Applies a saved `lm-binary` bundle to a declared validation cohort. This job
+never refits, updates, or overwrites the source model.
+
+```{r}
+#| label: setup
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(hvtiRpropensity)
+  library(hvtiRutilities)
+})
+if (utils::packageVersion("hvtiRpropensity") < "0.1.7") stop("This template needs hvtiRpropensity >= 0.1.7.", call. = FALSE)
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+                   paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"))
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      warning(.msg, "\nRendering as a draft; remove every marker for a final result.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n", .msg, "\n:::\n", sep = "")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'.", call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: set
+SUBJECT  <- "outcome"
+TYPE     <- "analysis"
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root), paste0(SUBJECT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+```
+
+```{r}
+#| label: study-choices
+DATASET <- "validation"                    # EDIT: registered validation dataset.
+MODEL_FILE <- "lm-binary.rds"              # EDIT: reviewed source bundle in this set's estimates.
+OUTCOME <- "outcome"                       # EDIT: validation outcome column.
+GROUPS <- 10L                              # EDIT: calibration-group count justified for this cohort size.
+```
+
+```{r}
+#| label: read
+d <- read_built(cfg = study_config(start = .root), dataset = DATASET)
+```
+
+```{r}
+#| label: model
+MODEL_PATH <- set_path("estimates", MODEL_FILE)
+if (!file.exists(MODEL_PATH)) stop("Saved model not found: ", MODEL_PATH, call. = FALSE)
+model <- readRDS(MODEL_PATH)
+```
+
+```{r}
+#| label: validate
+validation <- hvtiRpropensity::validate_logistic(
+  model, d, outcome_col = OUTCOME, prediction_col = "predicted", groups = GROUPS
+)
+```
+
+```{r}
+#| label: results
+knitr::kable(validation$tables$performance)
+knitr::kable(validation$tables$calibration)
+```
+
+```{r}
+#| label: save
+VALIDATION_PATH <- set_path("estimates", "lm-checkpred.rds")
+if (identical(normalizePath(MODEL_PATH, mustWork = FALSE),
+              normalizePath(VALIDATION_PATH, mustWork = FALSE))) {
+  stop("Validation output would overwrite the source model: ", MODEL_PATH, call. = FALSE)
+}
+saveRDS(validation, VALIDATION_PATH)
+```
+
+```{r}
+#| label: provenance
+#| include: false
+if (is.null(.in) || !is.character(.in) || length(.in) != 1L || is.na(.in) || !nzchar(.in)) {
+  stop("Cannot record provenance without the current render input.", call. = FALSE)
+}
+.job_stem <- tools::file_path_sans_ext(basename(.in))
+.output <- file.path(dirname(.in), paste0(.job_stem, ".html"))
+hvtiRutilities::record_provenance(
+  .output,
+  dataset = DATASET,
+  extra = list(subject = SUBJECT, type = TYPE)
+)
+```

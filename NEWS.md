@@ -1,4 +1,25 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.2.1
+
+* Eight qualified `lm` templates now cover binary, ordinal and nominal outcome
+  models; the corresponding three propensity shapes; saved binary-model
+  validation without refitting; and count balancing scores. They use
+  `hvtiRpropensity 0.1.7` model bundles, retain per-imputation fits, display
+  Rubin-pooled estimates and covariance, and save their reviewed bundles below
+  the analysis set's `estimates/` directory.
+
+* **The study setup tutorial now follows one adoption path through the complete
+  pre-analysis workflow.** It starts from an existing dataset opened as an
+  RStudio Project, preserves an existing R-version pin or selects R 4.6 when
+  none exists, and adopts the study without changing its working-directory
+  layout or deleting `.git`, `tp.*` or copied template directories. Cleanup is
+  deferred to a separate operational command. The tutorial registers data,
+  declares and writes the `eda` analysis set, and explains how the descriptive
+  and plot job names work before an endpoint or analysis type has been chosen.
+  It also warns that `update_manifest()` alone cannot safely refresh a
+  registered dataset while `_study.yml` still carries cohort metadata. `fs`
+  and `yaml` join `Suggests` because the executable article writes the
+  synthetic analysis-set declarations it teaches without replacing other
+  sets.
 
 * **Breaking:** `add_job()`, `open_job()`, and `migrate_job()` rename their
   public `endpoint` argument to `subject`, and templates rename their
@@ -24,11 +45,11 @@
   `randomForestSRC (>= 3.7.0)` and `varPro (>= 3.2.0)` join Suggests, and
   `ggRandomForests` rises to `>= 4.0.0`.
 
-* All 20 shipped job templates put editable study choices in one chunk near
+* All 28 shipped job templates put editable study choices in one chunk near
   the top. Reading data and building output happen below those choices; SAS
   migration continues to fill the same settings.
 
-* The 55-row template catalog now ships as `inst/extdata/templates.json` and
+* The 65-row template catalog now ships as `inst/extdata/templates.json` and
   is available through `template_catalog()`. Roadmap checks read this local
   catalog, the two CI catalog pins are removed, and the `hvtiRutilities`
   minimum is 1.3.0 for its machine-readable umbrella marker. The separate

@@ -150,7 +150,7 @@ test_that("provenance calls are unique across all R chunks", {
 
 test_that("every shipped template ends with one direct provenance chunk", {
   templates <- template_list()
-  expect_equal(nrow(templates), 20L)
+  expect_equal(nrow(templates), 28L)
 
   for (path in templates$file) {
     source <- readLines(path, warn = FALSE)
@@ -185,7 +185,11 @@ test_that("provenance paths come only from the recovered render input", {
 })
 
 test_that("only templates with a local dataset choice override the dataset", {
-  expected <- c("dc-general", "dc-gfup", "dc-tables", "dp-postage", "dp-trends")
+  expected <- c(
+    "dc-general", "dc-gfup", "dc-tables", "dp-postage", "dp-trends",
+    "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
+    "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal"
+  )
   templates <- template_list()
   observed <- templates$name[vapply(templates$file, function(path) {
     any(grepl("dataset = DATASET", provenance_chunk(path), fixed = TRUE))
@@ -195,7 +199,11 @@ test_that("only templates with a local dataset choice override the dataset", {
 })
 
 test_that("identity-only templates do not invent analysis or cohort blocks", {
-  identity_only <- c("dc-general", "dc-tables", "dp-postage", "dp-trends", "bc", "bh", "bl", "br")
+  identity_only <- c(
+    "dc-general", "dc-tables", "dp-postage", "dp-trends", "bc", "bh", "bl", "br",
+    "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
+    "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal"
+  )
   for (prefix in identity_only) {
     chunk <- provenance_chunk(template_by_name(prefix))
     expect_false(any(grepl("analysis =", chunk, fixed = TRUE)), info = prefix)

@@ -1,8 +1,8 @@
 Package: hvtiRtemplates
 Type: Package
 Title: Analysis Job Templates for the HVTI CORR Group
-Version: 1.2.0
-Date: 2026-09-17
+Version: 1.2.1
+Date: 2026-09-21
 Authors@R: c(
     person(
       "John", "Ehrlinger",
@@ -40,6 +40,7 @@ Remotes:
     ehrlinger/hvtiRpropensity
 Suggests:
     arrow,
+    fs,
     ggRandomForests (>= 4.0.0),
     ggplot2,
     hvtiPlotR (>= 2.7.14),
@@ -47,8 +48,10 @@ Suggests:
     hvtiRdatabuild (>= 0.2.1),
     hvtiRbootstrap (>= 0.9.3),
     hvtiRlifetables (>= 0.1.2),
-    hvtiRpropensity,
+    hvtiRpropensity (>= 0.1.7),
     knitr,
+    MASS,
+    nnet,
     officer,
     patchwork (>= 1.1.0),
     quarto,
@@ -56,7 +59,8 @@ Suggests:
     TemporalHazard (>= 1.2.8),
     testthat (>= 3.0.0),
     varPro (>= 3.2.0),
-    withr
+    withr,
+    yaml
 VignetteBuilder: quarto
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0

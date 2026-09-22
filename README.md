@@ -90,19 +90,22 @@ one, such as `death`; it can instead be an endpoint-free topic such as `cohort`,
 and any cohort definition. Dataset registration records the data, not a
 study-wide endpoint or cohort.
 
-`qualifier` names a job type within a prefix. The current qualified templates
-are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-postage`; other
-prefixes remain unqualified. It is `NULL` and the column is `NA` for a prefix
-with a single template. Naming no qualifier where a prefix carries several is
-an error listing the choices, never a silent pick of the first.
+`qualifier` names a job type within a prefix. The current qualified families
+are `dc`, `dp`, `rfs`, `rfc`, `rfr`, and `lm`. The `lm` choices are `binary`,
+`ordinal`, `nominal`, `propensity_binary`, `propensity_ordinal`,
+`propensity_nominal`, `checkpred`, and `balancing_count`. It is `NULL` and the
+column is `NA` for a prefix with a single template. Naming no qualifier where
+a prefix carries several is an error listing the choices, never a silent pick
+of the first.
 
 ## Migrate a legacy job
 
 For a study with SAS programs already in `descriptive/` and `graphs/`, first
 adopt its directory with `hvtiRutilities::study_setup(..., adopt = TRUE)` and
 register its built datasets with `register_data()`. The tutorial
-[Migrate a legacy study to R jobs](articles/legacy-study-migration.html)
-walks through adoption, study and named-subset registration, migration, and
+[Set up an hvtiR study for descriptive and EDA work](articles/study-setup.html)
+walks through new-study creation, recoverable legacy cleanup and adoption,
+data registration, the EDA analysis set, all five pre-analysis jobs, and
 output review using synthetic data.
 
 From that study's root, migrate a descriptive-table job with:
