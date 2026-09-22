@@ -374,8 +374,8 @@ write_provenance_job <- function(root, stem, prefix, definitions) {
   path
 }
 
-render_provenance_job <- function(job, root) {
-  quarto::quarto_render(job, execute_dir = root, quiet = TRUE)
+render_provenance_job <- function(job, root, quiet = TRUE) {
+  quarto::quarto_render(job, execute_dir = root, quiet = quiet)
 }
 
 test_that("an endpoint-free render writes a stem-matched sidecar without invented blocks", {
@@ -436,8 +436,15 @@ test_that("a sidecar write failure fails the render", {
   )
   dir.create(file.path(root, "cohort-eda-dc-general.provenance.json"))
 
-  expect_error(
-    render_provenance_job(job, root),
-    "[Rr]ender|[Pp]rovenance|[Ss]idecar"
+  output <- capture.output(
+    failure <- tryCatch(
+      render_provenance_job(job, root, quiet = FALSE),
+      error = identity
+    )
+  )
+  expect_s3_class(failure, "error")
+  expect_match(
+    paste(output, collapse = "\n"),
+    "record_provenance\\(\\): could not write the provenance sidecar"
   )
 })
