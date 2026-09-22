@@ -42,6 +42,32 @@ is_record_provenance_call <- function(expr) {
   direct
 }
 
+r_chunk_expressions <- function(path) {
+  source <- readLines(path, warn = FALSE)
+  starts <- which(source == "```{r}")
+  lapply(starts, function(start) {
+    end <- start + which(source[(start + 1L):length(source)] == "```")[[1L]]
+    parse(text = source[(start + 1L):(end - 1L)])
+  })
+}
+
+record_provenance_call_count <- function(expr) {
+  direct <- as.integer(is_record_provenance_call(expr))
+  nested <- if (is.call(expr)) {
+    sum(vapply(as.list(expr)[-1L], record_provenance_call_count, integer(1L)))
+  } else {
+    0L
+  }
+  direct + nested
+}
+
+template_provenance_call_count <- function(path) {
+  chunks <- r_chunk_expressions(path)
+  sum(vapply(chunks, function(chunk) {
+    sum(vapply(chunk, record_provenance_call_count, integer(1L)))
+  }, integer(1L)))
+}
+
 test_that("provenance_chunk rejects an unlabeled later chunk", {
   path <- tempfile(fileext = ".qmd")
   writeLines(c(
@@ -95,6 +121,20 @@ test_that("nested provenance calls do not satisfy the contract", {
   }
 })
 
+test_that("provenance calls are unique across all R chunks", {
+  path <- tempfile(fileext = ".qmd")
+  writeLines(c(
+    "```{r}",
+    "if (FALSE) hvtiRutilities::record_provenance(.output)",
+    "```",
+    "```{r}",
+    "#| label: provenance",
+    "hvtiRutilities::record_provenance(.output)",
+    "```"
+  ), path)
+  expect_false(template_provenance_call_count(path) == 1L)
+})
+
 test_that("every shipped template ends with one direct provenance chunk", {
   templates <- template_list()
   expect_equal(nrow(templates), 20L)
@@ -113,6 +153,7 @@ test_that("every shipped template ends with one direct provenance chunk", {
     expect_identical(tail(grep("^#\\| label: ", source, value = TRUE), 1L),
                      "#| label: provenance", info = info)
     expect_equal(sum(vapply(expressions, is_record_provenance_call, logical(1L))), 1L, info = info)
+    expect_equal(template_provenance_call_count(path), 1L, info = info)
     expect_true(any(grepl("subject = SUBJECT", chunk, fixed = TRUE)), info = info)
     expect_true(any(grepl("type = TYPE", chunk, fixed = TRUE)), info = info)
   }
