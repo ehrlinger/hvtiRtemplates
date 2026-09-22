@@ -47,8 +47,8 @@
 #' add_job("ac", "dead_pa", "hz", dir = d)
 #' list.files(d, recursive = TRUE)
 #' unlink(d, recursive = TRUE)
-add_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
-  .check_field("endpoint", endpoint)
+add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
+  .check_field("subject", subject)
   .check_field("type", type)
   if (!is.null(qualifier)) .check_field("qualifier", qualifier)
 
@@ -67,7 +67,7 @@ add_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
 
   out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = dir)
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
-  out <- .job_path(row, endpoint, type, dir)
+  out <- .job_path(row, subject, type, dir)
 
   if (file.exists(out)) {
     stop("add_job(): '", out, "' already exists; refusing to overwrite.",
@@ -84,7 +84,7 @@ add_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
   # the wrong cause.
   ok <- FALSE
   on.exit(if (!ok) unlink(out), add = TRUE)
-  .set_markers(out, endpoint, type)
+  .set_markers(out, subject, type)
   ok <- TRUE
   invisible(out)
 }
@@ -123,9 +123,9 @@ add_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
 # No ordinal in the filename: the taxonomy folder records placement. The
 # shared resolver keeps a numbered new study and a bare legacy study in its
 # own directory scheme.
-.job_path <- function(row, endpoint, type, root) {
+.job_path <- function(row, subject, type, root) {
   out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = root)
-  stem <- paste0(endpoint, "-", type, "-", row$prefix[[1L]],
+  stem <- paste0(subject, "-", type, "-", row$prefix[[1L]],
                  if (!is.na(row$qualifier[[1L]])) paste0("-", row$qualifier[[1L]]) else "")
   file.path(out_dir, paste0(stem, ".qmd"))
 }

@@ -8,7 +8,7 @@ test_that("open_job creates a missing job under the study root found from a subd
   root <- new_study("openjob-new-")
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
 
-  out <- open_job("ac", "dead", "eda", dir = file.path(root, "20_distributions"))
+  out <- open_job(prefix = "ac", subject = "dead", type = "eda", dir = file.path(root, "20_distributions"))
 
   expect_identical(
     normalizePath(out, winslash = "/", mustWork = FALSE),
@@ -20,10 +20,10 @@ test_that("open_job creates a missing job under the study root found from a subd
 test_that("open_job opens an existing job without changing it", {
   root <- new_study("openjob-existing-")
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
-  first <- open_job("ac", "dead", "eda", dir = root)
+  first <- open_job(prefix = "ac", subject = "dead", type = "eda", dir = root)
   writeLines("worked on", first)
 
-  expect_message(again <- open_job("ac", "dead", "eda", dir = root), "already exists")
+  expect_message(again <- open_job(prefix = "ac", subject = "dead", type = "eda", dir = root), "already exists")
 
   expect_identical(
     normalizePath(again, winslash = "/", mustWork = FALSE),
@@ -35,24 +35,24 @@ test_that("open_job opens an existing job without changing it", {
 test_that("open_job refuses an ambiguous prefix", {
   root <- new_study("openjob-ambiguous-")
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
-  expect_error(open_job("dc", "dead", "eda", dir = root), "open_job\\(\\):")
+  expect_error(open_job(prefix = "dc", subject = "dead", type = "eda", dir = root), "open_job\\(\\):")
 })
 
 test_that("open_job outside a study names study_setup", {
   dir <- tempfile("openjob-nostudy-")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  expect_error(open_job("ac", "dead", "eda", dir = dir), "_study.yml")
+  expect_error(open_job(prefix = "ac", subject = "dead", type = "eda", dir = dir), "_study.yml")
 })
 
 test_that("open_job reports an invalid field under its own name, not add_job()'s", {
   # .check_field() hardcoded "add_job():" in its message; open_job() calls it
-  # too, so a bad endpoint blamed the wrong function. The .select_template()
+  # too, so a bad subject blamed the wrong function. The .select_template()
   # error two lines above IS relabelled "open_job():" -- this closes the gap.
   root <- new_study("openjob-badfield-")
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
 
-  expect_error(open_job("ac", "a-b", "eda", dir = root), "^open_job\\(\\): `endpoint`")
+  expect_error(open_job(prefix = "ac", subject = "a-b", type = "eda", dir = root), "^open_job\\(\\): `subject`")
   expect_false(file.exists(file.path(root, "20_distributions", "a-b-eda-ac.qmd")))
 })
 
@@ -85,12 +85,12 @@ test_that("open_job returns exactly the path add_job would write, qualified and 
     ))
     root <- normalizePath(root)
 
-    out <- open_job(spec$prefix, "dead", "eda", qualifier = spec$qualifier, dir = root)
+    out <- open_job(prefix = spec$prefix, subject = "dead", type = "eda", qualifier = spec$qualifier, dir = root)
     expect_true(file.exists(out), label = spec$prefix)
     expect_true(grepl(spec$pattern, basename(out), fixed = TRUE), label = spec$prefix)
 
     expect_error(
-      add_job(spec$prefix, "dead", "eda", qualifier = spec$qualifier, dir = root),
+      add_job(prefix = spec$prefix, subject = "dead", type = "eda", qualifier = spec$qualifier, dir = root),
       "already exists",
       label = spec$prefix
     )

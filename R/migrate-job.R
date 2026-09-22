@@ -74,9 +74,9 @@
 #' @return The migrated job path, invisibly. The report is written beside it.
 #' @seealso \code{\link{add_job}}, \code{\link{template_list}}
 #' @export
-migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
+migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
                         lst = NULL, log = NULL, reference = NULL, dir = NULL) {
-  .check_field("endpoint", endpoint, fn = "migrate_job")
+  .check_field("subject", subject, fn = "migrate_job")
   .check_field("type", type, fn = "migrate_job")
   # The shared string check speaks for template selection; these arguments
   # are migrate_job()'s own, so its errors carry this function's label.
@@ -128,7 +128,7 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   adapter <- .migration_adapter(prefix, qualifier)
   evidence <- .migration_evidence(paths, root)
   evidence$found <- found
-  template <- .migration_template(row, endpoint, type, root)
+  template <- .migration_template(row, subject, type, root)
   result <- adapter(evidence, template$lines)
   .migration_finish(template, evidence, result)
 }
@@ -174,12 +174,12 @@ migrate_job <- function(source, endpoint, type, prefix = NULL, qualifier = NULL,
   if (file.exists(path)) path else NULL
 }
 
-.migration_template <- function(row, endpoint, type, root) {
+.migration_template <- function(row, subject, type, root) {
   staging <- tempfile(pattern = "migration-stage-")
   dir.create(staging)
   on.exit(unlink(staging, recursive = TRUE), add = TRUE)
   qualifier <- if (is.na(row$qualifier[[1L]])) NULL else row$qualifier[[1L]]
-  staged <- add_job(row$prefix[[1L]], endpoint, type, dir = staging, qualifier = qualifier)
+  staged <- add_job(row$prefix[[1L]], subject, type, dir = staging, qualifier = qualifier)
   folder <- hvtiRutilities::study_dir(row$folder[[1L]], root = root)
   if (.migration_target_exists(folder)) {
     resolved <- normalizePath(folder, winslash = "/", mustWork = TRUE)
