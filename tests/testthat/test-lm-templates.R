@@ -16,6 +16,29 @@ test_that("the lm family ships eight engine-specific templates", {
   }
 })
 
+test_that("LM set markers must agree with the rendered job filename", {
+  qualifiers <- names(lm_qualifiers)
+  expect_length(qualifiers, 8L)
+
+  testthat::local_mocked_bindings(
+    current_input = function(...) file.path(tempdir(), "other-eda-lm.qmd"),
+    .package = "knitr"
+  )
+
+  for (qualifier in qualifiers) {
+    source <- readLines(testthat::test_path(
+      "..", "..", "inst", "templates", "30_analyses", paste0("lm-", qualifier, ".qmd")
+    ), warn = FALSE)
+    env <- new.env(parent = globalenv())
+    env$.root <- tempdir()
+
+    expect_error(
+      eval(parse(text = lm_chunk(source, "set")), envir = env),
+      "but declares SUBJECT", info = qualifier
+    )
+  }
+})
+
 test_that("lm-binary fits and saves a model bundle", {
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   env <- new.env(parent = globalenv())
