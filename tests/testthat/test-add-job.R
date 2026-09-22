@@ -101,18 +101,18 @@ test_that("add_job distinguishes two analysis types over one subject", {
   # Certifying the paths differ is not enough: add_job() writes subject/type
   # into the FILENAME, and a body that still says the template's placeholder
   # values silently resolves set_path() into the OTHER set's directory. Each
-  # written file's ENDPOINT/TYPE declarations must match its own name.
+  # written file's SUBJECT/TYPE declarations must match its own name.
   for (path in c(a, b)) {
     fields <- strsplit(sub("[.]qmd$", "", basename(path)), "-", fixed = TRUE)[[1L]]
     txt <- readLines(path, warn = FALSE)
-    declared_endpoint <- sub('^ENDPOINT <- "(.*)"$', "\\1", grep("^ENDPOINT <- ", txt, value = TRUE))
+    declared_subject <- sub('^SUBJECT <- "(.*)"$', "\\1", grep("^SUBJECT <- ", txt, value = TRUE))
     declared_type     <- sub('^TYPE\\s+<- "(.*)"$', "\\1", grep("^TYPE\\s+<- ", txt, value = TRUE))
-    expect_equal(declared_endpoint, fields[[1L]], label = paste("declared ENDPOINT in", path))
+    expect_equal(declared_subject, fields[[1L]], label = paste("declared SUBJECT in", path))
     expect_equal(declared_type, fields[[2L]], label = paste("declared TYPE in", path))
   }
 })
 
-test_that("add_job errors when the template lacks the ENDPOINT/TYPE marker lines", {
+test_that("add_job errors when the template lacks the SUBJECT/TYPE marker lines", {
   # `.set_markers()` must fail loudly rather than hand back a job that looks
   # scaffolded but silently kept whatever the fake template happened to say.
   fake_template <- tempfile("fake-template-", fileext = ".qmd")
@@ -131,7 +131,7 @@ test_that("add_job errors when the template lacks the ENDPOINT/TYPE marker lines
 
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  expect_error(add_job(prefix = "zz", subject = "dead_pa", type = "hz", dir = dir), "ENDPOINT")
+  expect_error(add_job(prefix = "zz", subject = "dead_pa", type = "hz", dir = dir), "SUBJECT")
 
   # The failure is after the copy, so the defect Finding 1 exists to prevent
   # -- a job named for one set but declaring the template's placeholder set
@@ -198,7 +198,7 @@ test_that("add_job errors when the copy fails rather than returning a dead path"
                "failed to write")
 })
 
-test_that("every template declares ENDPOINT/TYPE markers add_job() can substitute", {
+test_that("every template declares SUBJECT and TYPE markers", {
   # The markers are the interface: add_job() hard-stops for any template
   # lacking them (see .set_markers()), so the contract has to hold for every
   # template on disk, not just `ac` -- otherwise the next template to be
@@ -206,19 +206,19 @@ test_that("every template declares ENDPOINT/TYPE markers add_job() can substitut
   tl <- template_list()
   for (i in seq_len(nrow(tl))) {
     txt <- readLines(tl$file[[i]], warn = FALSE)
-    label <- paste("template", tl$name[[i]])
-    expect_true(any(grepl("^ENDPOINT\\s+<- ", txt)), label = label)
-    expect_true(any(grepl("^TYPE\\s+<- ", txt)), label = label)
+    expect_length(grep("^SUBJECT\\s+<- ", txt), 1L)
+    expect_length(grep("^TYPE\\s+<- ", txt), 1L)
+    expect_length(grep("^ENDPOINT\\s+<- ", txt), 0L)
   }
 })
 
 test_that("the ac template resolves artifact paths from its set markers", {
-  # A template that computes artifact paths from anything but ENDPOINT/TYPE
+  # A template that computes artifact paths from anything but SUBJECT/TYPE
   # would need a path edited by hand -- the mistake the markers exist to
   # prevent.
   txt <- readLines(template_path("ac"), warn = FALSE)
   expect_true(any(grepl("set_path <- function\\(kind, file\\)", txt)))
-  expect_true(any(grepl("paste0\\(ENDPOINT, \"-\", TYPE\\)", txt)))
+  expect_true(any(grepl("paste0\\(SUBJECT, \"-\", TYPE\\)", txt)))
 })
 
 test_that("template artifact paths follow a numbered study layout", {
@@ -242,7 +242,7 @@ test_that("template artifact paths follow a numbered study layout", {
     expect_equal(
       path,
       file.path(root, "90_estimates",
-                paste0(env$ENDPOINT, "-", env$TYPE), "result.rds"),
+                paste0(env$SUBJECT, "-", env$TYPE), "result.rds"),
       info = basename(template)
     )
   }

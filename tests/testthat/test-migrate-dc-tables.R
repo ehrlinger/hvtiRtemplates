@@ -133,7 +133,7 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   out <- tables_migrate(root)
   env <- new.env()
   env$.root <- root
-  env$ENDPOINT <- "cohort"
+  env$SUBJECT <- "cohort"
   env$TYPE <- "eda"
   env$OVERRIDES <- list()
   env$study_dir <- hvtiRutilities::study_dir

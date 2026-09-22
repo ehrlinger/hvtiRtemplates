@@ -89,7 +89,7 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
   invisible(out)
 }
 
-# `endpoint` and `type` are written straight into the filename, which is
+# `subject` and `type` are written straight into the filename, which is
 # `-`-separated and ends in a `.`-separated extension, so neither character
 # may appear in either field. Reject anything else that would
 # produce a filename the naming scheme cannot parse back: not length-1,
@@ -112,7 +112,7 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
 
 # Full path for the job the selected template row scaffolds into: the study's
 # taxonomy folder (numbered or legacy, resolved by hvtiRutilities::study_dir())
-# joined to the endpoint/type/prefix[/qualifier] stem. Shared by add_job(),
+# joined to the subject/type/prefix[/qualifier] stem. Shared by add_job(),
 # which writes here, and open_job(), which only needs to test the path for
 # existence and must not create the directory as a side effect of looking.
 #
@@ -130,28 +130,28 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
   file.path(out_dir, paste0(stem, ".qmd"))
 }
 
-# Rewrite the template's ENDPOINT/TYPE declarations to the values `add_job()`
+# Rewrite the template's SUBJECT/TYPE declarations to the values `add_job()`
 # already put in the filename, so a scaffolded job arrives self-consistent
 # rather than naming one set and declaring another. `set_path()` in the job
 # body resolves from the declarations, not the filename, so a mismatch would
 # silently write into another set's artifact directory -- exactly the
-# collision the (endpoint, type) key exists to prevent.
+# collision the (subject, type) key exists to prevent.
 #
 # Each line is required to appear exactly once: a template whose markers moved
 # or were removed must fail loudly here rather than hand back a job that looks
 # scaffolded but silently kept the template's placeholder values.
 #
-# Requires `endpoint` and `type` to already be validated by .check_field():
+# Requires `subject` and `type` to already be validated by .check_field():
 # they are interpolated straight into an R string literal with no escaping,
 # so an unvalidated `"` or `\` would emit a syntactically broken job. A future
 # caller (a planned `add_job_set()`) must run .check_field() first too.
-.set_markers <- function(path, endpoint, type) {
+.set_markers <- function(path, subject, type) {
   txt <- readLines(path, warn = FALSE)
 
-  i_endpoint <- grep("^ENDPOINT\\s+<- ", txt)
-  if (length(i_endpoint) != 1L) {
-    stop("add_job(): '", path, "' has ", length(i_endpoint), " lines matching ",
-         "'^ENDPOINT\\\\s+<- ', expected exactly 1; cannot substitute the set markers.",
+  i_subject <- grep("^SUBJECT\\s+<- ", txt)
+  if (length(i_subject) != 1L) {
+    stop("add_job(): '", path, "' has ", length(i_subject), " lines matching ",
+         "'^SUBJECT\\\\s+<- ', expected exactly 1; cannot substitute the set markers.",
          call. = FALSE)
   }
   i_type <- grep("^TYPE\\s+<- ", txt)
@@ -162,8 +162,8 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
   }
 
   # Keep the alignment style of the original lines: TYPE is padded so its
-  # `<-` lines up under ENDPOINT's.
-  txt[[i_endpoint]] <- paste0("ENDPOINT <- \"", endpoint, "\"")
-  txt[[i_type]]     <- paste0("TYPE     <- \"", type, "\"")
+  # `<-` lines up under SUBJECT's.
+  txt[[i_subject]] <- paste0("SUBJECT <- \"", subject, "\"")
+  txt[[i_type]]    <- paste0("TYPE    <- \"", type, "\"")
   writeLines(txt, path)
 }

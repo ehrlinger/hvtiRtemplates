@@ -112,7 +112,7 @@ if (!is.null(.cur)) {
 }
 ```
 
-<!-- The two values below are written by add_job() from the endpoint/type it
+<!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
      document is computed from them, so no output path below needs editing.
@@ -120,24 +120,24 @@ if (!is.null(.cur)) {
      Do NOT hand-edit these declarations: the render-time guard below checks
      them against this file's own name and stops if they disagree. To put
      this job in a different set, call add_job() again with the new
-     endpoint/type rather than editing this copy in place.
+     subject/type rather than editing this copy in place.
 
-     A set is keyed on (endpoint, analysis type), not on the endpoint alone.
-     One endpoint is analysed by several methods -- parametric hazard, random
+     A set is keyed on (subject, analysis type), not on the subject alone.
+     One subject may be analysed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
      Two sets keyed on `dead_pa` alone would write their life tables to the
      same file. -->
 
 ```{r}
 #| label: set
-ENDPOINT <- "dead_pa"
-TYPE     <- "hz"
+SUBJECT <- "dead_pa"
+TYPE    <- "hz"
 
-# `add_job()` writes ENDPOINT/TYPE from the same values it put in this file's
+# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
 # name, but a hand-edited declaration can drift from it afterward. set_path()
 # below resolves from the declarations, not the filename, so a drifted
 # declaration would silently write into ANOTHER set's artifact directory --
-# exactly the collision the (endpoint, type) key exists to prevent, re-entered
+# exactly the collision the (subject, type) key exists to prevent, re-entered
 # through the body instead of the name.
 #
 # knitr::current_input() is NULL outside a render (a study author running
@@ -146,16 +146,16 @@ TYPE     <- "hz"
 .current <- knitr::current_input()
 if (!is.null(.current)) {
   # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<endpoint>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
+  # `<subject>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
   # `.qmd` this was scaffolded as. Strip whatever extension is actually present
   # rather than hard-coding one, so this doesn't depend on a build-tool detail
   # staying the same.
   .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
-  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (endpoint '", .name_endpoint, "', type '",
-         .name_type, "'), but declares ENDPOINT = \"", ENDPOINT, "\", TYPE = \"", TYPE,
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
+         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
          "\". Fix the declaration or the filename before rendering.", call. = FALSE)
   }
 }
@@ -169,7 +169,7 @@ if (!is.null(.current)) {
 # no empty directories behind.
 set_path <- function(kind, file) {
   d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(ENDPOINT, "-", TYPE))
+                 paste0(SUBJECT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }

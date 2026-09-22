@@ -326,8 +326,8 @@ test_that("template staging delegates names and declarations without publishing 
     row <- .select_template(template_list(), "dc", "tables")
     prepared <- .migration_template(row, subject = "mortality", type = "eda", root = root)
     expect_identical(prepared$out, file.path(root, folder, "mortality-eda-dc-tables.qmd"))
-    expect_true('ENDPOINT <- "mortality"' %in% prepared$lines)
-    expect_true('TYPE     <- "eda"' %in% prepared$lines)
+    expect_true('SUBJECT <- "mortality"' %in% prepared$lines)
+    expect_true('TYPE    <- "eda"' %in% prepared$lines)
     expect_length(list.files(root, recursive = TRUE, all.files = TRUE), 0L)
   }
 })
