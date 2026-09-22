@@ -39,7 +39,7 @@ is_record_provenance_call <- function(expr) {
     identical(as.character(fun[[1L]]), "::") &&
     identical(as.character(fun[[2L]]), "hvtiRutilities") &&
     identical(as.character(fun[[3L]]), "record_provenance")
-  direct || any(vapply(as.list(expr)[-1L], is_record_provenance_call, logical(1L)))
+  direct
 }
 
 test_that("provenance_chunk rejects an unlabeled later chunk", {
@@ -72,6 +72,27 @@ test_that("provenance calls outside the final chunk do not satisfy the contract"
 
   expressions <- provenance_expressions(path)
   expect_false(any(vapply(expressions, is_record_provenance_call, logical(1L))))
+})
+
+test_that("nested provenance calls do not satisfy the contract", {
+  cases <- c(
+    if_false = "if (FALSE) hvtiRutilities::record_provenance(.output)",
+    quoted = "quote(hvtiRutilities::record_provenance(.output))",
+    braced = "{ hvtiRutilities::record_provenance(.output); invisible(NULL) }"
+  )
+
+  for (name in names(cases)) {
+    path <- tempfile(fileext = ".qmd")
+    writeLines(c(
+      "```{r}",
+      "#| label: provenance",
+      cases[[name]],
+      "```"
+    ), path)
+
+    expressions <- provenance_expressions(path)
+    expect_false(any(vapply(expressions, is_record_provenance_call, logical(1L))), info = name)
+  }
 })
 
 test_that("every shipped template ends with one direct provenance chunk", {
