@@ -255,7 +255,7 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "concept_map", "verify_manifest", "proc_means",
     "study_dir", "proc_contents", "built_path", "study_root",  # >= 1.1.12
     "label_map", "get_label",
-    "cache_fit"  # >= 1.3.0, the floor DESCRIPTION declares
+    "cache_fit", "record_provenance"  # >= 1.3.0, the floor DESCRIPTION declares
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")

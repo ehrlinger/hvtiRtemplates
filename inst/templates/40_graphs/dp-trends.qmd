@@ -389,3 +389,20 @@ The smooth is LOESS, `hv_trends()`'s default, with `span = 0.75`. Older jobs use
 `smooth.spline(df = 6)`, which is not reproduced: the two differ at the ends of
 the year range, where data is thinnest, so compare against an older figure by its
 shape and not point by point. `plot(tr, span = ...)` changes the smoothing.
+
+```{r}
+#| label: provenance
+#| include: false
+if (is.null(.in) || !is.character(.in) || length(.in) != 1L || is.na(.in) || !nzchar(.in)) {
+  stop("Cannot record provenance without the current render input.", call. = FALSE)
+}
+.job_stem <- tools::file_path_sans_ext(basename(.in))
+.output <- file.path(dirname(.in), paste0(.job_stem, ".html"))
+hvtiRutilities::record_provenance(
+  .output,
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE
+  )
+)
+```

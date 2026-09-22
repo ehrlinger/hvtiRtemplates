@@ -366,3 +366,20 @@ highest extremes are listed largest first (SAS lists them ascending). The SAS
 job printed `ccfid` beside every extreme value so an author could look the
 patient up; this job prints the values alone unless `ID_COL` is set in the
 spec chunk.
+
+```{r}
+#| label: provenance
+#| include: false
+if (is.null(.in) || !is.character(.in) || length(.in) != 1L || is.na(.in) || !nzchar(.in)) {
+  stop("Cannot record provenance without the current render input.", call. = FALSE)
+}
+.job_stem <- tools::file_path_sans_ext(basename(.in))
+.output <- file.path(dirname(.in), paste0(.job_stem, ".html"))
+hvtiRutilities::record_provenance(
+  .output,
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE
+  )
+)
+```

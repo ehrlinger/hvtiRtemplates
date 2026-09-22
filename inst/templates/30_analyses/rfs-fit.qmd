@@ -158,7 +158,7 @@ TYPE    <- "rfs"
 .current <- knitr::current_input()
 if (!is.null(.current)) {
   # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
+  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
   # `.qmd` this was scaffolded as. Strip whatever extension is actually present
   # rather than hard-coding one, so this doesn't depend on a build-tool detail
   # staying the same.
@@ -306,4 +306,21 @@ plot(brier)
 # forest, so the cache is this job's internals and this file is its interface.
 # The price is the forest on disk twice.
 saveRDS(forest, set_path("estimates", "rfs.rds"))
+```
+
+```{r}
+#| label: provenance
+#| include: false
+if (is.null(.in) || !is.character(.in) || length(.in) != 1L || is.na(.in) || !nzchar(.in)) {
+  stop("Cannot record provenance without the current render input.", call. = FALSE)
+}
+.job_stem <- tools::file_path_sans_ext(basename(.in))
+.output <- file.path(dirname(.in), paste0(.job_stem, ".html"))
+hvtiRutilities::record_provenance(
+  .output,
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE
+  )
+)
 ```

@@ -206,9 +206,10 @@ test_that("every template declares SUBJECT and TYPE markers", {
   tl <- template_list()
   for (i in seq_len(nrow(tl))) {
     txt <- readLines(tl$file[[i]], warn = FALSE)
-    expect_length(grep("^SUBJECT\\s+<- ", txt), 1L)
-    expect_length(grep("^TYPE\\s+<- ", txt), 1L)
-    expect_length(grep("^ENDPOINT\\s+<- ", txt), 0L)
+    info <- basename(tl$file[[i]])
+    expect_equal(length(grep("^SUBJECT\\s+<- ", txt)), 1L, info = info)
+    expect_equal(length(grep("^TYPE\\s+<- ", txt)), 1L, info = info)
+    expect_equal(length(grep("^ENDPOINT\\s+<- ", txt)), 0L, info = info)
   }
 })
 
