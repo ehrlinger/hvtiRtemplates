@@ -68,6 +68,19 @@ template_provenance_call_count <- function(path) {
   }, integer(1L)))
 }
 
+capture_provenance <- function(path, env) {
+  captured <- NULL
+  testthat::local_mocked_bindings(
+    record_provenance = function(output, extra = NULL, dataset = "study", ...) {
+      captured <<- list(output = output, extra = extra, dataset = dataset)
+      invisible(output)
+    },
+    .package = "hvtiRutilities"
+  )
+  eval(provenance_expressions(path), envir = env)
+  captured
+}
+
 test_that("provenance_chunk rejects an unlabeled later chunk", {
   path <- tempfile(fileext = ".qmd")
   writeLines(c(
@@ -172,10 +185,13 @@ test_that("provenance paths come only from the recovered render input", {
 })
 
 test_that("only templates with a local dataset choice override the dataset", {
-  for (prefix in c("dc-general", "dc-gfup", "dc-tables", "dp-postage", "dp-trends")) {
-    expect_true(any(grepl("dataset = DATASET", provenance_chunk(template_by_name(prefix)), fixed = TRUE)),
-                info = prefix)
-  }
+  expected <- c("dc-general", "dc-gfup", "dc-tables", "dp-postage", "dp-trends")
+  templates <- template_list()
+  observed <- templates$name[vapply(templates$file, function(path) {
+    any(grepl("dataset = DATASET", provenance_chunk(path), fixed = TRUE))
+  }, logical(1L))]
+
+  expect_setequal(observed, expected)
 })
 
 test_that("identity-only templates do not invent analysis or cohort blocks", {
@@ -206,5 +222,126 @@ test_that("forest templates take analysis identity and counts from runtime objec
     expect_true(any(grepl("forest$yvar", chunk, fixed = TRUE)), info = prefix)
     expect_true(any(grepl("cohort =", chunk, fixed = TRUE)), info = prefix)
     expect_false(any(grepl("variable = SUBJECT", chunk, fixed = TRUE)), info = prefix)
+  }
+})
+
+test_that("RF provenance chunks record the fitted objects they consume", {
+  rf_cases <- list(
+    rfs = list(
+      data = function() {
+        data_env <- new.env()
+        utils::data("veteran", package = "randomForestSRC", envir = data_env)
+        data_env$veteran
+      },
+      choices = list(
+        TIME = "time", STATUS = "status",
+        PREDICTORS = c("trt", "celltype", "karno", "diagtime", "age", "prior"), NTREE = 50, SEED = 1
+      )
+    ),
+    rfc = list(
+      data = function() {
+        data <- datasets::iris[datasets::iris$Species != "setosa", ]
+        data$Species <- as.character(data$Species)
+        data
+      },
+      choices = list(
+        RESPONSE = "Species",
+        PREDICTORS = c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width"),
+        ROC_CLASS = "virginica", NTREE = 50, SEED = 1
+      )
+    ),
+    rfr = list(
+      data = function() datasets::airquality[!is.na(datasets::airquality$Ozone), ],
+      choices = list(
+        RESPONSE = "Ozone", PREDICTORS = c("Solar.R", "Wind", "Temp", "Month", "Day"),
+        NTREE = 50, SEED = 1, NA_ACTION = "na.impute"
+      )
+    )
+  )
+
+  for (prefix in names(rf_cases)) {
+    rf_skip_unless_stack(rf_template_packages(prefix, "fit"))
+    case <- rf_cases[[prefix]]
+    fit <- rf_env(case$data())
+    suppressWarnings(rf_run(prefix, "fit", c("set", "study-choices", "read", "fit", "save"), fit, case$choices))
+    fit$SUBJECT <- "provenance"
+    fit$TYPE <- "fit"
+    fit$.in <- file.path(fit$.root, paste0(prefix, "-fit.rmarkdown"))
+
+    fit_record <- capture_provenance(template_by_name(paste0(prefix, "-fit")), fit)
+    expect_identical(fit_record$output, file.path(fit$.root, paste0(prefix, "-fit.html")), info = prefix)
+
+    explain <- new.env(parent = globalenv())
+    explain$.root <- fit$.root
+    rf_run(prefix, "explain", c("set", "study-choices", "forest"), explain)
+    explain$SUBJECT <- "provenance"
+    explain$TYPE <- "explain"
+    explain$.in <- file.path(explain$.root, paste0(prefix, "-explain.rmarkdown"))
+
+    explain_record <- capture_provenance(template_by_name(paste0(prefix, "-explain")), explain)
+    expect_identical(explain_record$output, file.path(explain$.root, paste0(prefix, "-explain.html")),
+                     info = prefix)
+
+    records <- list(fit = list(record = fit_record, env = fit), explain = list(record = explain_record, env = explain))
+    for (qualifier in names(records)) {
+      record <- records[[qualifier]]$record
+      env <- records[[qualifier]]$env
+      expect_identical(record$extra$subject, "provenance", info = paste(prefix, qualifier))
+      expect_identical(record$extra$type, qualifier, info = paste(prefix, qualifier))
+
+      if (identical(prefix, "rfs")) {
+        time <- if (identical(qualifier, "fit")) env$TIME else env$forest$yvar.names[[1L]]
+        status <- if (identical(qualifier, "fit")) env$STATUS else env$forest$yvar.names[[2L]]
+        event <- env$forest$yvar[[status]]
+        expect_identical(record$extra$analysis$time$variable, time, info = qualifier)
+        expect_identical(record$extra$analysis$event$variable, status, info = qualifier)
+        expect_identical(record$extra$analysis$event$event, 1L, info = qualifier)
+        expect_identical(record$extra$analysis$event$censored, 0L, info = qualifier)
+        expect_identical(record$extra$cohort, list(
+          n = as.integer(nrow(env$forest$yvar)),
+          n_events = as.integer(sum(event == 1)),
+          n_censored = as.integer(sum(event == 0))
+        ), info = qualifier)
+      } else {
+        variable <- if (identical(qualifier, "fit")) env$RESPONSE else env$forest$yvar.names[[1L]]
+        kind <- if (identical(prefix, "rfc")) "classification" else "continuous"
+        expect_identical(record$extra$analysis$outcome$variable, variable, info = qualifier)
+        expect_identical(record$extra$analysis$outcome$kind, kind, info = qualifier)
+        expect_identical(record$extra$cohort, list(n = as.integer(length(env$forest$yvar))), info = qualifier)
+        if (identical(prefix, "rfc")) {
+          expect_identical(record$extra$analysis$outcome$observed_levels, levels(env$forest$yvar), info = qualifier)
+          if (identical(qualifier, "fit")) {
+            expect_identical(record$extra$analysis$outcome$target_level, env$ROC_CLASS)
+          } else {
+            expect_null(record$extra$analysis$outcome$target_level)
+          }
+        }
+      }
+    }
+  }
+})
+
+test_that("event-time provenance chunks retain observed STATUS and EVENT cohorts", {
+  cases <- list(
+    ac = list(event = "STATUS", time = "TIME", data = data.frame(time = c(1, 2, NA), status = c(1, 0, 1))),
+    hm = list(event = "EVENT", time = "TIME", data = data.frame(time = c(1, 2, 3), event = c(1, 0, 1)))
+  )
+
+  for (prefix in names(cases)) {
+    case <- cases[[prefix]]
+    cc <- hvtiRutilities::cohort_counts(case$data, event = tolower(case$event), time = tolower(case$time))
+    env <- new.env(parent = globalenv())
+    env$.in <- file.path(tempdir(), paste0(prefix, "-provenance.rmarkdown"))
+    env$SUBJECT <- "provenance"
+    env$TYPE <- "event-time"
+    env$TIME <- tolower(case$time)
+    env[[case$event]] <- tolower(case$event)
+    env$cc <- cc
+
+    record <- capture_provenance(template_by_name(prefix), env)
+    expect_identical(record$output, file.path(tempdir(), paste0(prefix, "-provenance.html")), info = prefix)
+    expect_identical(record$extra$analysis$time$variable, env$TIME, info = prefix)
+    expect_identical(record$extra$analysis$event$variable, env[[case$event]], info = prefix)
+    expect_identical(record$extra$cohort, cc, info = prefix)
   }
 })
