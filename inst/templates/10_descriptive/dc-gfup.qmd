@@ -253,9 +253,15 @@ if (is.null(.in) || !is.character(.in) || length(.in) != 1L || is.na(.in) || !nz
 .output <- file.path(dirname(.in), paste0(.job_stem, ".html"))
 hvtiRutilities::record_provenance(
   .output,
+  dataset = DATASET,
   extra = list(
     subject = SUBJECT,
-    type = TYPE
+    type = TYPE,
+    analysis = list(
+      event = list(variable = EVENT, event = 1L, censored = 0L),
+      followup = list(variable = FOLLOWUP)
+    ),
+    cohort = as.list(cohort_counts[1L, , drop = FALSE])
   )
 )
 ```

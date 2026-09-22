@@ -316,11 +316,22 @@ if (is.null(.in) || !is.character(.in) || length(.in) != 1L || is.na(.in) || !nz
 }
 .job_stem <- tools::file_path_sans_ext(basename(.in))
 .output <- file.path(dirname(.in), paste0(.job_stem, ".html"))
+.forest_event <- forest$yvar[[STATUS]]
+.forest_cohort <- list(
+  n = as.integer(nrow(forest$yvar)),
+  n_events = as.integer(sum(.forest_event == 1)),
+  n_censored = as.integer(sum(.forest_event == 0))
+)
 hvtiRutilities::record_provenance(
   .output,
   extra = list(
     subject = SUBJECT,
-    type = TYPE
+    type = TYPE,
+    analysis = list(
+      time = list(variable = TIME),
+      event = list(variable = STATUS, event = 1L, censored = 0L)
+    ),
+    cohort = .forest_cohort
   )
 )
 ```

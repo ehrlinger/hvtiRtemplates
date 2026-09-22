@@ -170,3 +170,41 @@ test_that("provenance paths come only from the recovered render input", {
     expect_false(any(grepl("getwd()", chunk, fixed = TRUE)), info = info)
   }
 })
+
+test_that("only templates with a local dataset choice override the dataset", {
+  for (prefix in c("dc-general", "dc-gfup", "dc-tables", "dp-postage", "dp-trends")) {
+    expect_true(any(grepl("dataset = DATASET", provenance_chunk(template_by_name(prefix)), fixed = TRUE)),
+                info = prefix)
+  }
+})
+
+test_that("identity-only templates do not invent analysis or cohort blocks", {
+  identity_only <- c("dc-general", "dc-tables", "dp-postage", "dp-trends", "bc", "bh", "bl", "br")
+  for (prefix in identity_only) {
+    chunk <- provenance_chunk(template_by_name(prefix))
+    expect_false(any(grepl("analysis =", chunk, fixed = TRUE)), info = prefix)
+    expect_false(any(grepl("cohort =", chunk, fixed = TRUE)), info = prefix)
+  }
+})
+
+test_that("event-time templates record local coding and observed counts", {
+  event_names <- c(ac = "STATUS", hz = "STATUS", hm = "EVENT", hp = "EVENT", hs = "EVENT")
+  for (prefix in names(event_names)) {
+    chunk <- provenance_chunk(template_by_name(prefix))
+    event <- event_names[[prefix]]
+    expect_true(any(grepl("variable = TIME", chunk, fixed = TRUE)), info = prefix)
+    expect_true(any(grepl(paste0("variable = ", event), chunk, fixed = TRUE)), info = prefix)
+    expect_true(any(grepl("event = 1L", chunk, fixed = TRUE)), info = prefix)
+    expect_true(any(grepl("censored = 0L", chunk, fixed = TRUE)), info = prefix)
+    expect_true(any(grepl("cohort = cc", chunk, fixed = TRUE)), info = prefix)
+  }
+})
+
+test_that("forest templates take analysis identity and counts from runtime objects", {
+  for (prefix in c("rfs-fit", "rfs-explain", "rfc-fit", "rfc-explain", "rfr-fit", "rfr-explain")) {
+    chunk <- provenance_chunk(template_by_name(prefix))
+    expect_true(any(grepl("forest$yvar", chunk, fixed = TRUE)), info = prefix)
+    expect_true(any(grepl("cohort =", chunk, fixed = TRUE)), info = prefix)
+    expect_false(any(grepl("variable = SUBJECT", chunk, fixed = TRUE)), info = prefix)
+  }
+})

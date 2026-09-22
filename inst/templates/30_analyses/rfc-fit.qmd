@@ -328,7 +328,16 @@ hvtiRutilities::record_provenance(
   .output,
   extra = list(
     subject = SUBJECT,
-    type = TYPE
+    type = TYPE,
+    analysis = list(
+      outcome = list(
+        variable = RESPONSE,
+        kind = "classification",
+        observed_levels = levels(forest$yvar),
+        target_level = ROC_CLASS
+      )
+    ),
+    cohort = list(n = as.integer(length(forest$yvar)))
   )
 )
 ```

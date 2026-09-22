@@ -264,6 +264,7 @@ t_plot <- exp(seq(-8, log(t_max), length.out = 1000))
 
 d <- read_built()
 fitted_rows <- !is.na(d[[TIME]]) & !is.na(d[[EVENT]])
+cc <- cohort_counts(d, event = EVENT, time = TIME)
 maxfup <- max(as.numeric(d[[TIME]][fitted_rows]))
 
 # BOTH horizons are checked. A curve drawn past the end of follow-up is the
@@ -492,7 +493,12 @@ hvtiRutilities::record_provenance(
   .output,
   extra = list(
     subject = SUBJECT,
-    type = TYPE
+    type = TYPE,
+    analysis = list(
+      time = list(variable = TIME),
+      event = list(variable = EVENT, event = 1L, censored = 0L)
+    ),
+    cohort = cc
   )
 )
 ```

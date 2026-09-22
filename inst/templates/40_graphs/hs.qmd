@@ -606,7 +606,12 @@ hvtiRutilities::record_provenance(
   .output,
   extra = list(
     subject = SUBJECT,
-    type = TYPE
+    type = TYPE,
+    analysis = list(
+      time = list(variable = TIME),
+      event = list(variable = EVENT, event = 1L, censored = 0L)
+    ),
+    cohort = cc
   )
 )
 ```
