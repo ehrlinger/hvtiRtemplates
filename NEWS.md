@@ -8,6 +8,9 @@
   topic such as `cohort`. Jobs now own their outcome and cohort definitions;
   dataset registration does not choose them.
 
+* Requires hvtiRutilities 1.4.0, whose endpoint-neutral study registration
+  the subject-based jobs depend on.
+
 * Every scaffolded job now captures provenance while it executes, safely
   embeds that payload in its completed HTML, and publishes a same-stem
   `.provenance.json` sidecar through study-level Quarto hooks. `add_job()`
