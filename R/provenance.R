@@ -697,13 +697,27 @@
   )
 }
 
-.provenance_source_frozen <- function(path) {
+.provenance_source_frozen <- function(source, root) {
+  # Quarto can only reuse execution results it has stored under _freeze/, so a
+  # source without an entry there is not frozen, whatever the configuration
+  # says. Deciding that without Quarto keeps the common, unfrozen render free
+  # of both the quarto R package and a CLI lookup that fails inside a hook
+  # when Quarto is not on PATH, as with the copy bundled in RStudio.
+  if (!dir.exists(file.path(root, "_freeze", tools::file_path_sans_ext(source)))) return(FALSE)
   if (!requireNamespace("quarto", quietly = TRUE)) {
     stop("The quarto R package is required to resolve frozen execution metadata.", call. = FALSE)
   }
+  bin <- Sys.getenv("QUARTO_BIN_PATH", unset = "")
+  if (!nzchar(Sys.getenv("QUARTO_PATH", unset = "")) && nzchar(bin)) {
+    binary <- file.path(bin, if (.Platform$OS.type == "windows") "quarto.exe" else "quarto")
+    if (file.exists(binary)) {
+      Sys.setenv(QUARTO_PATH = binary)
+      on.exit(Sys.unsetenv("QUARTO_PATH"), add = TRUE)
+    }
+  }
   profile <- Sys.getenv("QUARTO_PROFILE", unset = NA_character_)
   metadata <- quarto::quarto_inspect(
-    path,
+    file.path(root, source),
     profile = if (is.na(profile) || !nzchar(profile)) NULL else strsplit(profile, ",", fixed = TRUE)[[1L]],
     quiet = TRUE
   )
@@ -743,8 +757,74 @@
   )
 }
 
+.provenance_lock_path <- function(root) {
+  file.path(root, ".hvtiR", "provenance-render.lock")
+}
+
+# The render's owner is the Quarto process that runs the hooks and the knitr
+# session alike. Its start time guards against a reused process id.
+.provenance_render_owner <- function() {
+  parent <- ps::ps_parent()
+  list(pid = ps::ps_pid(parent), created = sprintf("%.6f", as.numeric(ps::ps_create_time(parent))))
+}
+
+.provenance_owner_alive <- function(owner) {
+  tryCatch({
+    handle <- ps::ps_handle(as.integer(owner$pid))
+    ps::ps_is_running(handle) && identical(sprintf("%.6f", as.numeric(ps::ps_create_time(handle))), owner$created)
+  }, error = function(e) FALSE)
+}
+
+# One render at a time per study: the render state, the sidecar backups and the
+# abandoned-render recovery are all study-wide, so a second concurrent render
+# would recover the first one's live state as though it had crashed.
+.acquire_provenance_lock <- function(root) {
+  lock <- .provenance_lock_path(root)
+  owner_path <- file.path(lock, "owner.json")
+  owner <- .provenance_render_owner()
+  if (!dir.exists(dirname(lock))) dir.create(dirname(lock), recursive = TRUE)
+  for (attempt in 1:2) {
+    if (dir.create(lock, showWarnings = FALSE)) {
+      jsonlite::write_json(owner, owner_path, auto_unbox = TRUE)
+      return(invisible(TRUE))
+    }
+    current <- tryCatch(jsonlite::read_json(owner_path), error = function(e) NULL)
+    if (identical(current, owner)) return(invisible(FALSE))
+    # An owner file not yet written belongs to a render that has only just
+    # taken the lock, unless the lock has been sitting there for a while.
+    unwritten_recently <- is.null(current) &&
+      difftime(Sys.time(), file.info(lock)$mtime, units = "secs") < 60
+    if (unwritten_recently || (!is.null(current) && .provenance_owner_alive(current))) {
+      stop("Another Quarto render is in progress in this study",
+           if (!is.null(current)) paste0(" (process ", current$pid, ")"),
+           ". Wait for it to finish, then render again.", call. = FALSE)
+    }
+    # The owner is gone. Moving its lock aside is atomic, so of two renders
+    # that both find it stale, only one takes it over.
+    stale <- tempfile(pattern = ".provenance-render.lock-stale-", tmpdir = dirname(lock))
+    if (.rename_provenance_file(lock, stale)) unlink(stale, recursive = TRUE)
+  }
+  stop("Could not take the provenance render lock: ", lock, ".", call. = FALSE)
+}
+
+.release_provenance_lock <- function(root) {
+  lock <- .provenance_lock_path(root)
+  current <- tryCatch(jsonlite::read_json(file.path(lock, "owner.json")), error = function(e) NULL)
+  if (identical(current, .provenance_render_owner())) unlink(lock, recursive = TRUE)
+  invisible(NULL)
+}
+
 .provenance_pre_render <- function(root = Sys.getenv("QUARTO_PROJECT_DIR", unset = getwd()), inputs = NULL) {
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  .acquire_provenance_lock(root)
+  ok <- FALSE
+  on.exit(if (!ok) .release_provenance_lock(root), add = TRUE)
+  state <- .provenance_pre_render_locked(root, inputs)
+  ok <- TRUE
+  invisible(state)
+}
+
+.provenance_pre_render_locked <- function(root, inputs) {
   .recover_abandoned_render(root)
   .assert_provenance_hooks(root)
   if (is.null(inputs)) inputs <- .quarto_project_files("QUARTO_PROJECT_INPUT_FILES", root)
@@ -787,7 +867,7 @@
       lapply(file.path(root, managed), digest::digest, algo = "sha256", file = TRUE),
       managed
     ),
-    frozen_sources = as.list(managed[vapply(file.path(root, managed), .provenance_source_frozen, logical(1L))]),
+    frozen_sources = as.list(managed[vapply(managed, .provenance_source_frozen, logical(1L), root = root)]),
     sidecar_backups = backups,
     replacement_started = list(),
     committed = FALSE
@@ -830,6 +910,11 @@
 
 .provenance_post_render <- function(root = Sys.getenv("QUARTO_PROJECT_DIR", unset = getwd()), outputs = NULL) {
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  on.exit(.release_provenance_lock(root), add = TRUE)
+  .provenance_post_render_locked(root, outputs)
+}
+
+.provenance_post_render_locked <- function(root, outputs) {
   state_path <- .provenance_state_path(root)
   state <- .read_provenance_state(root)
   backups <- .provenance_sidecar_backups(state)

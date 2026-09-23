@@ -27,6 +27,7 @@ Imports:
     digest,
     hvtiRutilities (>= 1.4.0),
     jsonlite,
+    ps,
     stats,
     yaml
 Remotes:

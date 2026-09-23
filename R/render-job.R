@@ -22,6 +22,11 @@
 #' only when its recorded output hash still matches. Otherwise they withhold the
 #' sidecar and retain its recovery backup with a warning.
 #'
+#' One job renders at a time in a study. A render started while another is
+#' still running in the same study stops with a message naming the running
+#' Quarto process; render again once it finishes. A lock left by a render that
+#' crashed is taken over automatically.
+#'
 #' @param path Character. Path to a job \code{.qmd} file.
 #' @param final Logical. \code{TRUE} for the accepted result.
 #' @param quiet Logical. Passed to \code{quarto::quarto_render()}.

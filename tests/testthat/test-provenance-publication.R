@@ -414,8 +414,34 @@ test_that("document-level freeze is resolved by Quarto", {
   root <- make_hook_study(withr::local_tempdir())
   source <- file.path(root, "frozen.qmd")
   writeLines(c("---", "format: html", "execute:", "  freeze: true", "---", "", "text"), source)
+  dir.create(file.path(root, "_freeze", "frozen"), recursive = TRUE)
 
-  expect_true(.provenance_source_frozen(source))
+  expect_true(.provenance_source_frozen("frozen.qmd", root))
+})
+
+test_that("a source with no stored freeze results is unfrozen without asking Quarto", {
+  root <- make_hook_study(withr::local_tempdir())
+  writeLines(c("---", "format: html", "execute:", "  freeze: true", "---", "", "text"), file.path(root, "frozen.qmd"))
+  withr::local_envvar(QUARTO_PATH = file.path(root, "no-such-quarto"), PATH = "")
+
+  expect_false(.provenance_source_frozen("frozen.qmd", root))
+})
+
+test_that("freeze resolution finds the Quarto that runs the hook when it is not on PATH", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required")
+  binary <- normalizePath(quarto::quarto_path(), mustWork = TRUE)
+  root <- make_hook_study(withr::local_tempdir())
+  writeLines(c("---", "format: html", "execute:", "  freeze: true", "---", "", "text"), file.path(root, "frozen.qmd"))
+  dir.create(file.path(root, "_freeze", "frozen"), recursive = TRUE)
+  # Drop only the directories that hold a quarto launcher; the launcher itself needs the rest.
+  path <- strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed = TRUE)[[1L]]
+  path <- path[!file.exists(file.path(path, "quarto")) & !file.exists(file.path(path, "quarto.exe"))]
+  withr::local_envvar(QUARTO_PATH = NA, QUARTO_BIN_PATH = dirname(binary), PATH = paste(path, collapse = .Platform$path.sep))
+  expect_identical(unname(Sys.which("quarto")), "")
+
+  expect_true(.provenance_source_frozen("frozen.qmd", root))
+  expect_identical(Sys.getenv("QUARTO_PATH", unset = NA_character_), NA_character_)
 })
 
 test_that("Quarto omits post-render after a document execution error", {
@@ -906,6 +932,8 @@ test_that("frozen HTML retains its execution payload when the source is unchange
     list(source = "managed.qmd")
   )
   hvtiRutilities::publish_provenance(output, prior)
+  # The original render stored its execution results here; Quarto reuses them.
+  dir.create(file.path(root, "_freeze", "managed"), recursive = TRUE)
   state <- .provenance_pre_render(root, inputs = source)
   payload <- c(
     hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
@@ -923,4 +951,66 @@ test_that("frozen HTML retains its execution payload when the source is unchange
   record <- jsonlite::read_json(hvtiRutilities::provenance_path(output), simplifyVector = FALSE)
   expect_identical(record$rendered, original_rendered)
   expect_false(file.exists(state$sidecar_backups[[1L]]$backup))
+})
+
+test_that("a second concurrent render in one study stops without touching the first", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  first <- list(pid = 101L, created = "1.000000")
+  second <- list(pid = 202L, created = "2.000000")
+  source <- file.path(root, "managed.qmd")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+
+  testthat::with_mocked_bindings(
+    .provenance_pre_render(root, inputs = source),
+    .provenance_render_owner = function() first,
+    .package = "hvtiRtemplates"
+  )
+  state_before <- .provenance_file_state(.provenance_state_path(root))
+
+  expect_error(
+    testthat::with_mocked_bindings(
+      .provenance_pre_render(root, inputs = source),
+      .provenance_render_owner = function() second,
+      .provenance_owner_alive = function(owner) TRUE,
+      .package = "hvtiRtemplates"
+    ),
+    "Another Quarto render is in progress in this study [(]process 101[)]"
+  )
+  expect_identical(.provenance_file_state(.provenance_state_path(root)), state_before)
+  expect_identical(jsonlite::read_json(file.path(.provenance_lock_path(root), "owner.json")), first)
+})
+
+test_that("a lock whose render has exited is taken over", {
+  root <- withr::local_tempdir()
+  dead <- list(pid = 101L, created = "1.000000")
+  live <- list(pid = 202L, created = "2.000000")
+  testthat::with_mocked_bindings(.acquire_provenance_lock(root), .provenance_render_owner = function() dead,
+                                 .package = "hvtiRtemplates")
+
+  testthat::with_mocked_bindings(
+    expect_true(.acquire_provenance_lock(root)),
+    .provenance_render_owner = function() live,
+    .provenance_owner_alive = function(owner) FALSE,
+    .package = "hvtiRtemplates"
+  )
+  expect_identical(jsonlite::read_json(file.path(.provenance_lock_path(root), "owner.json")), live)
+  expect_length(list.files(file.path(root, ".hvtiR"), pattern = "stale", all.files = TRUE), 0L)
+})
+
+test_that("the owning render re-enters its lock and post-render releases it", {
+  root <- withr::local_tempdir()
+  owner <- list(pid = 101L, created = "1.000000")
+  testthat::local_mocked_bindings(.provenance_render_owner = function() owner, .package = "hvtiRtemplates")
+
+  expect_true(.acquire_provenance_lock(root))
+  expect_false(.acquire_provenance_lock(root))
+  expect_error(.provenance_post_render(root, outputs = character()), "did not create render state")
+  expect_false(dir.exists(.provenance_lock_path(root)))
+})
+
+test_that("the render owner is the live process that launched this one", {
+  owner <- .provenance_render_owner()
+  expect_true(.provenance_owner_alive(owner))
+  expect_false(.provenance_owner_alive(list(pid = owner$pid, created = "0.000000")))
 })

@@ -37,6 +37,11 @@ that leaves the prior HTML untouched also leaves its sidecar in place. If
 publication fails after an output changes, the hooks expose a prior sidecar
 only when its recorded output hash still matches. Otherwise they withhold the
 sidecar and retain its recovery backup with a warning.
+
+One job renders at a time in a study. A render started while another is
+still running in the same study stops with a message naming the running
+Quarto process; render again once it finishes. A lock left by a render that
+crashed is taken over automatically.
 }
 \seealso{
 \code{\link{open_job}}
