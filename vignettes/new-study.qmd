@@ -30,16 +30,9 @@ already built from the source extract. Building that file is a separate step;
 this guide begins once it exists. Keep it on the study share: patient data
 never enter a git repository.
 
-Create the study directory, open it in RStudio as a Project
-(**File > New Project > Existing Directory**) and work from its `.Rproj` from
-then on. Select the R version and load the hvtiR packages as described in
-[Adopt an existing study](study-setup.html#open-the-study-as-an-rstudio-project).
-Those steps are the same for a new study, so they are kept in one place.
-
-```r
-library(hvtiRutilities)
-library(hvtiRtemplates)
-```
+The study itself must exist in Study Tracker before its directory does. Create
+the study record there first and note its Study Tracker ID: every later step
+takes its identity from that record.
 
 ```{r}
 #| label: synthetic-setup
@@ -61,9 +54,19 @@ delivered <- data.frame(
 
 ## Create the study
 
-`study_setup()` turns an empty directory into a study. It writes `_study.yml`,
-which names the study and its Study Tracker ID, an RStudio project file,
-environment defaults, and the numbered folders every job is placed in:
+Create the directory with the `study-setup` command from `qhsprograms`, giving
+it the Study Tracker ID and the directory name. Preview first; the dry run
+writes nothing:
+
+```sh
+study-setup --dry-run 42 example_study
+study-setup 42 example_study
+```
+
+`study-setup` reads the Tracker record, read-only, and turns the new directory
+into a study. It writes `_study.yml`, which carries the study's name and
+Tracker ID, an RStudio project file, environment defaults, `renv`, and the
+numbered folders every job is placed in:
 
 | folder | holds |
 |---|---|
@@ -78,15 +81,20 @@ environment defaults, and the numbered folders every job is placed in:
 `90_estimates` is numbered last on purpose. It holds results, not jobs, and a
 job that needs another job's result reads it from there.
 
+Now open the directory in RStudio as a Project (**File > New Project >
+Existing Directory**) and work from its `.Rproj` from then on. Select the R
+version and load the hvtiR packages as described in
+[Adopt an existing study](study-setup.html#open-the-study-as-an-rstudio-project):
+
 ```r
-study_setup(
-  root = ".",
-  study = "Study title from Study Tracker",
-  study_tracker_id = 42L
-)
+library(hvtiRutilities)
+library(hvtiRtemplates)
 ```
 
-The executable example uses its temporary directory:
+Underneath, `study-setup` calls `hvtiRutilities::study_setup()` with the
+Tracker record's values. This article cannot reach Study Tracker while it
+renders, so the executable example calls `study_setup()` directly, in a
+temporary directory:
 
 ```{r}
 #| label: create-study

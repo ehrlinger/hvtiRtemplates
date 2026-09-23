@@ -20,6 +20,8 @@ test_that("the new-study guide starts from an empty study and a delivered datase
   article <- new_study_article()
 
   expect_false(grepl("adopt = TRUE", article, fixed = TRUE))
+  expect_true(grepl("Study Tracker", article, fixed = TRUE))
+  expect_true(grepl("study-setup --dry-run", article, fixed = TRUE))
   expect_true(grepl("study_setup(", article, fixed = TRUE))
   expect_true(grepl("register_data(", article, fixed = TRUE))
   expect_true(grepl('role = "study"', article, fixed = TRUE))
