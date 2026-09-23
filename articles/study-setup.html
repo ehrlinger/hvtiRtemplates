@@ -75,6 +75,7 @@
 
     <p>This tutorial starts with an existing study directory and an existing dataset. It takes the study through identity setup, data registration, descriptive tables and EDA plots. A later tutorial can then begin with a specific analysis type instead of repeating this setup.</p>
 <p>Adoption is additive. It creates the hvtiR study contract without renaming the legacy working directories or deleting old files.</p>
+<p>If the study does not exist yet and you are starting from a newly delivered dataset, follow <a href="new-study.html">Start a new study</a> instead.</p>
 <p>The executable example uses one 40-row synthetic dataset. Its files stay in a temporary directory and disappear after the article renders. For translating existing SAS descriptive jobs, see <a href="sas-to-r-descriptive.html">From SAS descriptive jobs to R</a>.</p>
 <section class="level2"><h2 id="open-the-study-as-an-rstudio-project">Open the study as an RStudio Project<a class="anchor" aria-label="anchor" href="#open-the-study-as-an-rstudio-project"></a>
 </h2>
@@ -121,7 +122,7 @@
 <span>  study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  adopt <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpGFN5fc/file1df669b3a986/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -163,7 +164,7 @@
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpGFN5fc/file1df669b3a986/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -232,16 +233,16 @@
 <span>  postage <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"postage"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">study_jobs</span></span>
-<span><span class="co">#&gt;                                                                             general </span></span>
-<span><span class="co">#&gt; "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-general.qmd" </span></span>
-<span><span class="co">#&gt;                                                                              tables </span></span>
-<span><span class="co">#&gt;  "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-tables.qmd" </span></span>
-<span><span class="co">#&gt;                                                                                gfup </span></span>
-<span><span class="co">#&gt;    "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" </span></span>
-<span><span class="co">#&gt;                                                                              trends </span></span>
-<span><span class="co">#&gt;       "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/graphs/cohort-eda-dp-trends.qmd" </span></span>
-<span><span class="co">#&gt;                                                                             postage </span></span>
-<span><span class="co">#&gt; "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dp-postage.qmd"</span></span></code></pre></div>
+<span><span class="co">#&gt;                                                                               general </span></span>
+<span><span class="co">#&gt; "/tmp/RtmpGFN5fc/file1df669b3a986/legacy-study/descriptive/cohort-eda-dc-general.qmd" </span></span>
+<span><span class="co">#&gt;                                                                                tables </span></span>
+<span><span class="co">#&gt;  "/tmp/RtmpGFN5fc/file1df669b3a986/legacy-study/descriptive/cohort-eda-dc-tables.qmd" </span></span>
+<span><span class="co">#&gt;                                                                                  gfup </span></span>
+<span><span class="co">#&gt;    "/tmp/RtmpGFN5fc/file1df669b3a986/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" </span></span>
+<span><span class="co">#&gt;                                                                                trends </span></span>
+<span><span class="co">#&gt;       "/tmp/RtmpGFN5fc/file1df669b3a986/legacy-study/graphs/cohort-eda-dp-trends.qmd" </span></span>
+<span><span class="co">#&gt;                                                                               postage </span></span>
+<span><span class="co">#&gt; "/tmp/RtmpGFN5fc/file1df669b3a986/legacy-study/descriptive/cohort-eda-dp-postage.qmd"</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="work-the-jobs-and-generate-output">Work the jobs and generate output<a class="anchor" aria-label="anchor" href="#work-the-jobs-and-generate-output"></a>
 </h2>

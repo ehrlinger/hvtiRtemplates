@@ -8,6 +8,11 @@ specific analysis type instead of repeating this setup.
 Adoption is additive. It creates the hvtiR study contract without
 renaming the legacy working directories or deleting old files.
 
+If the study does not exist yet and you are starting from a newly
+delivered dataset, follow [Start a new
+study](https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.md)
+instead.
+
 The executable example uses one 40-row synthetic dataset. Its files stay
 in a temporary directory and disappear after the article renders. For
 translating existing SAS descriptive jobs, see [From SAS descriptive
@@ -104,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study
+#> Study: /tmp/RtmpGFN5fc/file1df669b3a986/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -178,7 +183,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study
+#> Study: /tmp/RtmpGFN5fc/file1df669b3a986/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -293,16 +298,16 @@ study_jobs <- c(
   postage = add_job("dp", "cohort", "eda", adopted_root, "postage")
 )
 study_jobs
-#>                                                                             general 
-#> "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
-#>                                                                              tables 
-#>  "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
-#>                                                                                gfup 
-#>    "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
-#>                                                                              trends 
-#>       "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
-#>                                                                             postage 
-#> "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dp-postage.qmd"
+#>                                                                               general 
+#> "/tmp/RtmpGFN5fc/file1df669b3a986/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
+#>                                                                                tables 
+#>  "/tmp/RtmpGFN5fc/file1df669b3a986/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
+#>                                                                                  gfup 
+#>    "/tmp/RtmpGFN5fc/file1df669b3a986/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
+#>                                                                                trends 
+#>       "/tmp/RtmpGFN5fc/file1df669b3a986/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
+#>                                                                               postage 
+#> "/tmp/RtmpGFN5fc/file1df669b3a986/legacy-study/descriptive/cohort-eda-dp-postage.qmd"
 ```
 
 ## Work the jobs and generate output

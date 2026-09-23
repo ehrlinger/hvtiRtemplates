@@ -3,9 +3,10 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   legacy-study-migration: legacy-study-migration.html
+  new-study: new-study.html
   sas-to-r-descriptive: sas-to-r-descriptive.html
   study-setup: study-setup.html
-last_built: 2026-09-23T15:21Z
+last_built: 2026-09-23T16:26Z
 urls:
   reference: https://ehrlinger.github.io/hvtiRtemplates/reference
   article: https://ehrlinger.github.io/hvtiRtemplates/articles
