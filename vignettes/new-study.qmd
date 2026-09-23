@@ -65,8 +65,8 @@ study-setup 42 example_study
 
 `study-setup` reads the Tracker record, read-only, and turns the new directory
 into a study. It writes `_study.yml`, which carries the study's name and
-Tracker ID, an RStudio project file, environment defaults, `renv`, and the
-numbered folders every job is placed in:
+Tracker ID, a README linking the Tracker record, an RStudio project file,
+environment defaults, `renv`, and the numbered folders every job is placed in:
 
 | folder | holds |
 |---|---|

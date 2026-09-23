@@ -54,8 +54,9 @@ at a time.
    `study-setup.qmd` for the RStudio project, R version and `renv` steps.
 2. **Create the study.** Create the Study Tracker record first, then run the
    `qhsprograms` `study-setup` command (`--dry-run`, then for real) with its
-   Tracker ID; it calls `study_setup()` underneath, which the executable
-   example calls directly because the vignette cannot reach Study Tracker. The numbered layout (`00_datasets`, `10_descriptive`,
+   Tracker ID. The command calls `study_setup()` underneath. The executable
+   example calls `study_setup()` directly, because the vignette cannot reach
+   Study Tracker. The numbered layout (`00_datasets`, `10_descriptive`,
    `20_distributions`, `30_analyses`, `40_graphs`, `50_documents`,
    `90_estimates`), what each folder holds, and why `90_estimates` holds saved
    output rather than jobs. `_study.yml` and what it identifies.
