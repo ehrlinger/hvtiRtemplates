@@ -221,17 +221,228 @@ test_that("only templates with a local dataset choice override the dataset", {
   expect_setequal(observed, expected)
 })
 
-test_that("identity-only templates do not invent analysis or cohort blocks", {
+test_that("endpoint-free templates do not invent analysis or cohort blocks", {
   identity_only <- c(
-    "dc-general", "dc-tables", "dp-postage", "dp-trends",
-    "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
-    "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal"
+    "dc-general", "dc-tables", "dp-postage", "dp-trends"
   )
   for (prefix in identity_only) {
     chunk <- provenance_chunk(template_by_name(prefix))
     expect_false(any(grepl("analysis =", chunk, fixed = TRUE)), info = prefix)
     expect_false(any(grepl("cohort =", chunk, fixed = TRUE)), info = prefix)
   }
+})
+
+test_that("all logistic templates publish runtime analysis and cohort metadata", {
+  qualifiers <- c(
+    "binary", "ordinal", "nominal", "propensity_binary",
+    "propensity_ordinal", "propensity_nominal", "checkpred", "balancing_count"
+  )
+  for (qualifier in qualifiers) {
+    chunk <- provenance_chunk(template_by_name(paste0("lm-", qualifier)))
+    expect_true(any(grepl("analysis =", chunk, fixed = TRUE)), info = qualifier)
+    expect_true(any(grepl("cohort =", chunk, fixed = TRUE)), info = qualifier)
+  }
+})
+
+test_that("logistic fit provenance is derived from runtime metadata and status tables", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  d <- lm_mi_data()
+  cases <- list(
+    binary = list(
+      choices = list(
+        OUTCOME = "outcome", PREDICTORS = c("age", "female"),
+        OUTCOME_LEVELS = c("none", "event"), EVENT_LEVEL = "event",
+        ID = "id", IMPUTATION = "imp"
+      ),
+      target = "outcome", variable = "outcome", levels = c("none", "event"),
+      coding = list(event_level = "event"), method = "glm.fit:binomial(logit)"
+    ),
+    ordinal = list(
+      choices = list(
+        OUTCOME = "ordinal", PREDICTORS = c("age", "female"),
+        OUTCOME_LEVELS = c("low", "middle", "high"), ID = "id", IMPUTATION = "imp"
+      ),
+      target = "outcome", variable = "ordinal", levels = c("low", "middle", "high"),
+      coding = list(cumulative_direction = "P(Y <= level) = logistic(threshold - linear predictor)"),
+      method = "polr:logistic"
+    ),
+    nominal = list(
+      choices = list(
+        OUTCOME = "nominal", PREDICTORS = c("age", "female"),
+        OUTCOME_LEVELS = c("reference", "level_b", "level_c"),
+        REFERENCE_LEVEL = "reference", ID = "id", IMPUTATION = "imp"
+      ),
+      target = "outcome", variable = "nominal", levels = c("reference", "level_b", "level_c"),
+      coding = list(reference_level = "reference"), method = "multinom"
+    ),
+    propensity_binary = list(
+      choices = list(
+        TREATMENT = "treatment", PREDICTORS = c("age", "female"),
+        TREATMENT_LEVELS = c("control", "treated"), TREATED_LEVEL = "treated",
+        ID = "id", IMPUTATION = "imp"
+      ),
+      target = "treatment", variable = "treatment", levels = c("control", "treated"),
+      coding = list(treated_level = "treated"), method = "logistic-MI"
+    ),
+    propensity_ordinal = list(
+      choices = list(
+        TREATMENT = "treatment_ordinal", PREDICTORS = c("age", "female"),
+        TREATMENT_LEVELS = c("low", "middle", "high"), ID = "id", IMPUTATION = "imp"
+      ),
+      target = "treatment", variable = "treatment_ordinal", levels = c("low", "middle", "high"),
+      coding = list(cumulative_direction = "P(Y <= level) = logistic(threshold - linear predictor)"),
+      method = "ordinal-logistic-MI"
+    ),
+    propensity_nominal = list(
+      choices = list(
+        TREATMENT = "treatment_nominal", PREDICTORS = c("age", "female"),
+        TREATMENT_LEVELS = c("reference", "level_b", "level_c"),
+        REFERENCE_LEVEL = "reference", ID = "id", IMPUTATION = "imp"
+      ),
+      target = "treatment", variable = "treatment_nominal", levels = c("reference", "level_b", "level_c"),
+      coding = list(reference_level = "reference"), method = "nominal-logistic-MI"
+    ),
+    balancing_count = list(
+      choices = list(
+        OUTCOME = "count", PREDICTORS = c("age", "female"), ID = "id", IMPUTATION = "imp",
+        DISTRIBUTION = "poisson", N_STRATA = 5L
+      ),
+      target = "exposure", variable = "count", levels = NULL, coding = list(),
+      method = "balancing-poisson-MI"
+    )
+  )
+
+  for (qualifier in names(cases)) {
+    case <- cases[[qualifier]]
+    env <- new.env(parent = globalenv())
+    env$d <- d
+    env$SUBJECT <- "runtime"
+    env$TYPE <- "metadata"
+    env$.in <- file.path(tempdir(), paste0("lm-", qualifier, ".rmarkdown"))
+    env$.provenance_data <- list()
+    env$set_path <- function(kind, file) tempfile(fileext = ".rds")
+    lm_run(qualifier, c("study-choices", "fit", "save"), env, case$choices)
+    record <- capture_provenance(template_by_name(paste0("lm-", qualifier)), env)
+    meta <- env$fit$meta
+    status <- env$fit$tables$fit_status
+
+    target <- record$extra$analysis[[case$target]]
+    expect_identical(target$variable, case$variable, info = qualifier)
+    if (!is.null(case$levels)) {
+      expect_identical(target$accepted_levels, case$levels, info = qualifier)
+      expect_identical(target$observed_levels, case$levels, info = qualifier)
+    }
+    for (field in names(case$coding)) {
+      expect_identical(target[[field]], case$coding[[field]], info = qualifier)
+    }
+    expect_identical(record$extra$analysis$model$formula, paste(deparse(meta$formula), collapse = " "), info = qualifier)
+    expect_identical(record$extra$analysis$model$family, meta$model_family, info = qualifier)
+    expect_identical(record$extra$analysis$model$predictors, attr(stats::terms(meta$formula), "term.labels"), info = qualifier)
+    expect_identical(record$extra$analysis$model$imputation,
+                     list(variable = "imp", n = 2L, stacked = TRUE), info = qualifier)
+    if (!is.null(case$method)) {
+      expect_identical(record$extra$analysis$model$method, case$method, info = qualifier)
+    } else {
+      expect_null(record$extra$analysis$model$method, info = qualifier)
+    }
+
+    expect_identical(record$extra$cohort$count_unit, "stacked_imputation_rows", info = qualifier)
+    expect_identical(record$extra$cohort$n_input, as.integer(sum(status$n_input)), info = qualifier)
+    expect_identical(record$extra$cohort$n_analyzed, as.integer(sum(status$n_analyzed)), info = qualifier)
+    expect_identical(record$extra$cohort$n_excluded, as.integer(sum(status$n_excluded)), info = qualifier)
+    expect_identical(record$extra$cohort$n_unique_people_input, status$n_input[[1L]], info = qualifier)
+    expect_identical(record$extra$cohort$by_imputation,
+                     unname(lapply(seq_len(nrow(status)), function(i) {
+                       as.list(status[i, c("imputation", "n_input", "n_analyzed", "n_excluded")])
+                     })), info = qualifier)
+    lineage <- attr(env$fit, "hvti_provenance", exact = TRUE)
+    expect_identical(lineage$analysis, record$extra$analysis, info = qualifier)
+    expect_identical(lineage$cohort, record$extra$cohort, info = qualifier)
+  }
+})
+
+test_that("single-dataset logistic provenance reports rows without claiming unique people", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  env <- new.env(parent = globalenv())
+  env$d <- lm_data()
+  env$SUBJECT <- "runtime"
+  env$TYPE <- "metadata"
+  env$.in <- file.path(tempdir(), "lm-binary.rmarkdown")
+  lm_run("binary", c("study-choices", "fit"), env, list(
+    OUTCOME = "outcome", PREDICTORS = c("age", "female"),
+    OUTCOME_LEVELS = c("none", "event"), EVENT_LEVEL = "event",
+    ID = "id", IMPUTATION = NULL
+  ))
+  record <- capture_provenance(template_by_name("lm-binary"), env)
+  status <- env$fit$tables$fit_status
+
+  expect_identical(record$extra$cohort$count_unit, "rows")
+  expect_identical(record$extra$cohort$n_input, status$n_input[[1L]])
+  expect_identical(record$extra$cohort$n_analyzed, status$n_analyzed[[1L]])
+  expect_identical(record$extra$cohort$n_excluded, status$n_excluded[[1L]])
+  expect_identical(record$extra$cohort$by_imputation, list(as.list(status[1L, c(
+    "imputation", "n_input", "n_analyzed", "n_excluded"
+  )])))
+  expect_null(record$extra$cohort$n_unique_people_input)
+})
+
+test_that("lm-checkpred separates carried training metadata from runtime validation metadata", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  root <- lm_study()
+  cfg <- hvtiRutilities::study_config(root)
+  d <- lm_data()
+  model <- hvtiRpropensity::fit_logistic(
+    outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
+    id_col = "id", outcome_levels = c("none", "event"), event_level = "event"
+  )
+  training_analysis <- list(outcome = list(variable = "outcome", event_level = "event"))
+  training_cohort <- list(n_input = nrow(d), n_analyzed = nrow(d), n_excluded = 0L)
+  model <- hvtiRtemplates:::.attach_handoff_lineage(
+    model,
+    data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training")),
+    analysis = training_analysis,
+    cohort = training_cohort
+  )
+  bundle_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
+  dir.create(bundle_dir, recursive = TRUE)
+  saveRDS(model, file.path(bundle_dir, "lm-binary.rds"))
+
+  d$age[c(1L, 3L)] <- NA_real_
+  env <- new.env(parent = globalenv())
+  env$.root <- root
+  env$d <- d
+  env$.provenance_data <- list(hvtiRutilities::provenance_data(cfg = cfg, role = "validation"))
+  env$set_path <- function(kind, file) file.path(bundle_dir, file)
+  env$SUBJECT <- "runtime"
+  env$TYPE <- "validation"
+  env$.in <- file.path(root, "lm-checkpred.rmarkdown")
+  lm_run("checkpred", c("study-choices", "model", "validate"), env,
+         list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 10L))
+  record <- capture_provenance(template_by_name("lm-checkpred"), env)
+  meta <- env$validation$meta
+
+  expect_identical(record$extra$analysis$training, training_analysis)
+  expect_identical(record$extra$analysis$validation$outcome, list(
+    variable = meta$outcome_col,
+    accepted_levels = meta$outcome_levels,
+    observed_levels = meta$outcome_levels,
+    event_level = meta$event_level
+  ))
+  expect_identical(record$extra$analysis$validation$model$formula,
+                   paste(deparse(meta$formula), collapse = " "))
+  expect_identical(record$extra$analysis$validation$model$family, meta$model_family)
+  expect_identical(record$extra$analysis$validation$model$method, "glm.fit:binomial(logit)")
+  expect_identical(record$extra$analysis$validation$model$predictors,
+                   attr(stats::terms(meta$formula), "term.labels"))
+  expect_identical(record$extra$cohort$training, training_cohort)
+  expect_identical(record$extra$cohort$validation, list(
+    count_unit = "validation_rows",
+    n_input = meta$n_input,
+    n_analyzed = meta$n_analyzed,
+    n_excluded = meta$n_excluded
+  ))
+  expect_identical(vapply(record$data, `[[`, character(1L), "role"), c("training", "validation"))
+  expect_identical(record$artifacts[[1L]]$role, "source-model")
 })
 
 test_that("event-time templates record local coding and observed counts", {

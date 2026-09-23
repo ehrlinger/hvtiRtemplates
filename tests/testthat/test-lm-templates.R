@@ -140,10 +140,12 @@ test_that("lm-checkpred applies the saved bundle without fitting", {
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
     id_col = "id", outcome_levels = c("none", "event"), event_level = "event"
   )
+  model_provenance <- hvtiRtemplates:::.lm_fit_provenance(model)
   root <- lm_study()
   cfg <- hvtiRutilities::study_config(root)
   model <- hvtiRtemplates:::.attach_handoff_lineage(
-    model, data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training"))
+    model, data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training")),
+    analysis = model_provenance$analysis, cohort = model_provenance$cohort
   )
   bundle_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
   dir.create(bundle_dir, recursive = TRUE)
@@ -175,10 +177,12 @@ test_that("lm-checkpred refuses to overwrite its source bundle", {
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
     id_col = "id", outcome_levels = c("none", "event"), event_level = "event"
   )
+  model_provenance <- hvtiRtemplates:::.lm_fit_provenance(model)
   root <- lm_study()
   cfg <- hvtiRutilities::study_config(root)
   model <- hvtiRtemplates:::.attach_handoff_lineage(
-    model, data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training"))
+    model, data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training")),
+    analysis = model_provenance$analysis, cohort = model_provenance$cohort
   )
   bundle_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
   dir.create(bundle_dir, recursive = TRUE)

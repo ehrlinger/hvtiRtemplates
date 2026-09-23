@@ -95,6 +95,12 @@ if (!file.exists(MODEL_PATH)) stop("Saved model not found: ", MODEL_PATH, call. 
   MODEL_PATH, "source-model", hvtiRutilities::study_config(start = .root), "the source lm job"
 )
 model <- .model_read$value
+if (is.null(.model_read$lineage$analysis) || is.null(.model_read$lineage$cohort)) {
+  stop(
+    "The source model has no runtime analysis and cohort metadata. Rebuild it by rendering the source lm job.",
+    call. = FALSE
+  )
+}
 .provenance_data <- c(.model_read$lineage$data, .provenance_data)
 .provenance_artifacts <- c(.model_read$lineage$artifacts, list(.model_read$record))
 ```
@@ -119,11 +125,21 @@ if (identical(normalizePath(MODEL_PATH, mustWork = FALSE),
               normalizePath(VALIDATION_PATH, mustWork = FALSE))) {
   stop("Validation output would overwrite the source model: ", MODEL_PATH, call. = FALSE)
 }
+.validation_provenance <- hvtiRtemplates:::.lm_validation_provenance(validation)
+.validation_analysis <- list(
+  training = .model_read$lineage$analysis,
+  validation = .validation_provenance$analysis
+)
+.validation_cohort <- list(
+  training = .model_read$lineage$cohort,
+  validation = .validation_provenance$cohort
+)
 validation <- hvtiRtemplates:::.attach_handoff_lineage(
   validation,
   data = .provenance_data,
   artifacts = .provenance_artifacts,
-  analysis = .model_read$lineage$analysis
+  analysis = .validation_analysis,
+  cohort = .validation_cohort
 )
 saveRDS(validation, VALIDATION_PATH)
 ```
@@ -132,10 +148,22 @@ saveRDS(validation, VALIDATION_PATH)
 #| label: provenance
 #| echo: false
 #| results: asis
+.validation_provenance <- hvtiRtemplates:::.lm_validation_provenance(validation)
+.validation_analysis <- list(
+  training = .model_read$lineage$analysis,
+  validation = .validation_provenance$analysis
+)
+.validation_cohort <- list(
+  training = .model_read$lineage$cohort,
+  validation = .validation_provenance$cohort
+)
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
   artifacts = .provenance_artifacts,
-  extra = list(subject = SUBJECT, type = TYPE)
+  extra = list(
+    subject = SUBJECT, type = TYPE,
+    analysis = .validation_analysis, cohort = .validation_cohort
+  )
 ))
 ```

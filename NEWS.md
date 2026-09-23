@@ -25,6 +25,15 @@
   original data records. The `ac` template now saves its overall life table as
   the real upstream artifact consumed by `hp`.
 
+* All eight logistic-family templates now record their runtime model and
+  cohort metadata. Records distinguish outcomes, treatments and count
+  exposures; retain accepted and observed levels and applicable coding; and
+  report the fitted formula, family, method, predictors, imputation details,
+  and analysed-row accounting. Stacked-imputation totals are labelled as
+  stacked rows and accompanied by per-imputation counts. `lm-checkpred` keeps
+  the source model's training metadata separate from the validation cohort it
+  observes.
+
 # hvtiRtemplates 1.2.1
 
 * Eight qualified `lm` templates now cover binary, ordinal and nominal outcome

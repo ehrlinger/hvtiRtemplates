@@ -110,8 +110,10 @@ knitr::kable(fit$tables$group_counts)
 ```{r}
 #| label: save
 MODEL_PATH <- set_path("estimates", "lm-propensity_nominal.rds")
+.fit_provenance <- hvtiRtemplates:::.lm_fit_provenance(fit)
 fit <- hvtiRtemplates:::.attach_handoff_lineage(
-  fit, data = if (exists(".provenance_data")) .provenance_data else list()
+  fit, data = if (exists(".provenance_data")) .provenance_data else list(),
+  analysis = .fit_provenance$analysis, cohort = .fit_provenance$cohort
 )
 saveRDS(fit, MODEL_PATH)
 ```
@@ -120,9 +122,13 @@ saveRDS(fit, MODEL_PATH)
 #| label: provenance
 #| echo: false
 #| results: asis
+.fit_provenance <- hvtiRtemplates:::.lm_fit_provenance(fit)
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
-  extra = list(subject = SUBJECT, type = TYPE)
+  extra = list(
+    subject = SUBJECT, type = TYPE,
+    analysis = .fit_provenance$analysis, cohort = .fit_provenance$cohort
+  )
 ))
 ```

@@ -68,9 +68,12 @@ test_that("lm-checkpred distinguishes training, validation, and model lineage", 
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
     id_col = "id", outcome_levels = c("none", "event"), event_level = "event"
   )
+  model_provenance <- hvtiRtemplates:::.lm_fit_provenance(model)
   model <- hvtiRtemplates:::.attach_handoff_lineage(
     model,
-    data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training"))
+    data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training")),
+    analysis = model_provenance$analysis,
+    cohort = model_provenance$cohort
   )
   model_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
   dir.create(model_dir, recursive = TRUE)
@@ -90,6 +93,10 @@ test_that("lm-checkpred distinguishes training, validation, and model lineage", 
   validation_lineage <- attr(readRDS(env$VALIDATION_PATH), "hvti_provenance", exact = TRUE)
   expect_identical(vapply(validation_lineage$data, `[[`, character(1L), "role"), c("training", "validation"))
   expect_identical(validation_lineage$artifacts[[1L]]$role, "source-model")
+  expect_identical(validation_lineage$analysis$training, model_provenance$analysis)
+  expect_identical(validation_lineage$cohort$training, model_provenance$cohort)
+  expect_identical(validation_lineage$analysis$validation$outcome$variable, "outcome")
+  expect_identical(validation_lineage$cohort$validation$n_input, nrow(d))
 })
 
 test_that("lm-checkpred rejects a lineage-free source model", {
@@ -100,6 +107,7 @@ test_that("lm-checkpred rejects a lineage-free source model", {
   saveRDS(list(), file.path(model_dir, "lm-binary.rds"))
   env <- new.env(parent = globalenv())
   env$.root <- root
+  env$.provenance_data <- list()
   env$set_path <- function(kind, file) file.path(model_dir, file)
 
   expect_error(
@@ -108,6 +116,43 @@ test_that("lm-checkpred rejects a lineage-free source model", {
     "rebuild.*lm",
     ignore.case = TRUE
   )
+})
+
+test_that("lm-checkpred rejects source lineage without runtime model metadata", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  root <- lm_study()
+  cfg <- hvtiRutilities::study_config(root)
+  raw_model <- hvtiRpropensity::fit_logistic(
+    outcome ~ age + female, lm_data(), family = "binary", outcome_col = "outcome",
+    id_col = "id", outcome_levels = c("none", "event"), event_level = "event"
+  )
+  data_record <- hvtiRutilities::provenance_data(cfg = cfg, role = "training")
+  model_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
+  dir.create(model_dir, recursive = TRUE)
+  cases <- list(
+    missing_analysis = list(analysis = NULL, cohort = list(n_input = 120L)),
+    missing_cohort = list(analysis = list(outcome = list(variable = "outcome")), cohort = NULL)
+  )
+
+  for (name in names(cases)) {
+    case <- cases[[name]]
+    model <- hvtiRtemplates:::.attach_handoff_lineage(
+      raw_model, data = list(data_record), analysis = case$analysis, cohort = case$cohort
+    )
+    saveRDS(model, file.path(model_dir, "lm-binary.rds"))
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    env$.provenance_data <- list()
+    env$set_path <- function(kind, file) file.path(model_dir, file)
+
+    expect_error(
+      lm_run("checkpred", c("study-choices", "model"), env,
+             list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 10L)),
+      "runtime analysis and cohort metadata.*rebuild",
+      ignore.case = TRUE,
+      info = name
+    )
+  }
 })
 
 test_that("bootstrap artifact reads hash every chunk and preserve explicit lineage", {
