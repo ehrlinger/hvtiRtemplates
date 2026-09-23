@@ -94,6 +94,10 @@
   file.copy(from, to, overwrite = overwrite)
 }
 
+.rename_provenance_file <- function(from, to) {
+  suppressWarnings(file.rename(from, to))
+}
+
 .provenance_file_state <- function(path) {
   if (!file.exists(path)) return(list(exists = FALSE))
   info <- file.info(path)
@@ -104,17 +108,49 @@
   )
 }
 
-.restore_provenance_file <- function(path, state) {
+.backup_provenance_file <- function(path, state) {
+  if (!state$exists) return(NA_character_)
+  backup <- tempfile(pattern = paste0(".", basename(path), "-backup-"), tmpdir = dirname(path))
+  keep <- FALSE
+  on.exit(if (!keep && file.exists(backup)) unlink(backup), add = TRUE)
+  if (!.copy_provenance_file(path, backup, overwrite = FALSE)) {
+    stop("Could not preserve the pre-install file '", path, "'.", call. = FALSE)
+  }
+  Sys.chmod(backup, mode = state$mode)
+  if (!identical(.provenance_file_state(backup), state)) {
+    stop("The recovery backup for '", path, "' did not match the original file.", call. = FALSE)
+  }
+  keep <- TRUE
+  backup
+}
+
+.restore_provenance_file <- function(path, state, backup = NA_character_) {
   if (!state$exists) {
-    if (file.exists(path)) unlink(path)
+    if (file.exists(path) && unlink(path) != 0L) {
+      stop("Could not remove the newly installed file.", call. = FALSE)
+    }
     return(invisible(NULL))
   }
-  if (!dir.exists(dirname(path))) dir.create(dirname(path), recursive = TRUE)
-  connection <- file(path, open = "wb")
-  on.exit(close(connection), add = TRUE)
-  writeBin(state$contents, connection)
-  Sys.chmod(path, mode = state$mode)
-  invisible(NULL)
+  if (is.na(backup) || !file.exists(backup)) {
+    stop("The recovery backup is missing.", call. = FALSE)
+  }
+  staging <- tempfile(pattern = paste0(".", basename(path), "-restore-"), tmpdir = dirname(path))
+  on.exit(if (file.exists(staging)) unlink(staging), add = TRUE)
+  if (!.copy_provenance_file(backup, staging, overwrite = FALSE)) {
+    stop("Could not stage the recovery backup.", call. = FALSE)
+  }
+  Sys.chmod(staging, mode = state$mode)
+  if (!.provenance_file_unchanged(staging, state)) {
+    stop("The staged recovery file did not match the original.", call. = FALSE)
+  }
+  if (.rename_provenance_file(staging, path)) {
+    if (!.provenance_file_unchanged(path, state)) {
+      stop("The atomically restored file did not match the original.", call. = FALSE)
+    }
+    unlink(backup)
+    return(invisible(NULL))
+  }
+  stop("Could not atomically restore the recovery backup.", call. = FALSE)
 }
 
 .provenance_file_unchanged <- function(path, state) {
@@ -181,19 +217,38 @@
   hook_dir_existed <- dir.exists(hook_dir)
   targets <- c(config_path, file.path(root, hook_files))
   states <- lapply(targets, .provenance_file_state)
+  backups <- rep(NA_character_, length(targets))
+  mutation_started <- FALSE
   ok <- FALSE
   on.exit({
-    if (!ok) {
+    if (ok || !mutation_started) {
+      existing_backups <- backups[!is.na(backups) & file.exists(backups)]
+      if (length(existing_backups)) unlink(existing_backups)
+    } else {
       failures <- character()
+      preserve <- rep(FALSE, length(targets))
       for (i in rev(seq_along(targets))) {
-        if (.provenance_file_unchanged(targets[[i]], states[[i]])) next
         tryCatch(
-          .restore_provenance_file(targets[[i]], states[[i]]),
+          {
+            if (.provenance_file_unchanged(targets[[i]], states[[i]])) {
+              if (!is.na(backups[[i]]) && file.exists(backups[[i]])) unlink(backups[[i]])
+            } else {
+              .restore_provenance_file(targets[[i]], states[[i]], backups[[i]])
+            }
+          },
           error = function(error) {
-            failures <<- c(failures, paste0(targets[[i]], ": ", conditionMessage(error)))
+            recovery <- if (!is.na(backups[[i]]) && file.exists(backups[[i]])) {
+              preserve[[i]] <<- TRUE
+              paste0(" Original bytes remain at '", backups[[i]], "'.")
+            } else {
+              " No recovery backup is available."
+            }
+            failures <<- c(failures, paste0(targets[[i]], ": ", conditionMessage(error), recovery))
           }
         )
       }
+      disposable <- backups[!preserve & !is.na(backups) & file.exists(backups)]
+      if (length(disposable)) unlink(disposable)
       if (length(failures)) {
         warning("Provenance hook rollback could not restore: ", paste(failures, collapse = "; "), call. = FALSE)
       }
@@ -202,6 +257,10 @@
       }
     }
   }, add = TRUE)
+  for (i in seq_along(targets)) {
+    backups[[i]] <- .backup_provenance_file(targets[[i]], states[[i]])
+  }
+  mutation_started <- TRUE
   if (!dir.exists(hook_dir)) dir.create(hook_dir, recursive = TRUE)
   for (i in seq_along(hook_files)) {
     if (!.copy_provenance_file(hook_sources[[i]], file.path(root, hook_files[[i]]), overwrite = TRUE)) {

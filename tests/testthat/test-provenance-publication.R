@@ -117,9 +117,9 @@ test_that("hook installation restores preexisting files when config publication 
         if (identical(basename(to), "_quarto.yml")) return(FALSE)
         file.copy(from, to, overwrite = overwrite)
       },
-      .restore_provenance_file = function(path, state) {
+      .restore_provenance_file = function(path, state, backup = NA_character_) {
         if (identical(basename(path), "_quarto.yml")) stop("config is locked")
-        real_restore(path, state)
+        real_restore(path, state, backup)
       },
       .package = "hvtiRtemplates"
     ),
@@ -128,9 +128,51 @@ test_that("hook installation restores preexisting files when config publication 
 
   expect_identical(readLines(config_path, warn = FALSE), config_before)
   expect_identical(unname(vapply(hook_paths, readLines, character(1L), warn = FALSE)), hook_before)
+  expect_length(list.files(dirname(hook_paths[[1L]]), pattern = "-backup-", all.files = TRUE), 0L)
 })
 
-test_that("one rollback error does not prevent restoring other hook files", {
+test_that("backup copy failures leave no partial recovery file", {
+  root <- withr::local_tempdir()
+  path <- file.path(root, "pre-render-provenance.R")
+  writeLines("existing pre hook", path)
+  state <- .provenance_file_state(path)
+
+  expect_error(
+    testthat::with_mocked_bindings(
+      .backup_provenance_file(path, state),
+      .copy_provenance_file = function(from, to, overwrite = FALSE) {
+        writeBin(as.raw(1:3), to)
+        FALSE
+      },
+      .package = "hvtiRtemplates"
+    ),
+    "Could not preserve"
+  )
+  expect_length(list.files(root, pattern = "-backup-", all.files = TRUE), 0L)
+})
+
+test_that("failed atomic restoration retains the exact recovery backup", {
+  root <- withr::local_tempdir()
+  path <- file.path(root, "pre-render-provenance.R")
+  writeLines("existing pre hook", path)
+  state <- .provenance_file_state(path)
+  backup <- .backup_provenance_file(path, state)
+  writeLines("new pre hook", path)
+
+  expect_error(
+    testthat::with_mocked_bindings(
+      .restore_provenance_file(path, state, backup),
+      .rename_provenance_file = function(from, to) FALSE,
+      .package = "hvtiRtemplates"
+    ),
+    "Could not atomically restore"
+  )
+  expect_identical(readLines(path, warn = FALSE), "new pre hook")
+  expect_identical(.provenance_file_state(backup), state)
+  expect_length(list.files(root, pattern = "-restore-", all.files = TRUE), 0L)
+})
+
+test_that("one rollback inspection error does not prevent restoring other hook files", {
   root <- make_hook_study(withr::local_tempdir())
   config_path <- file.path(root, "_quarto.yml")
   writeLines(c("project:", "  type: default"), config_path)
@@ -139,29 +181,38 @@ test_that("one rollback error does not prevent restoring other hook files", {
   dir.create(dirname(hook_paths[[1L]]), recursive = TRUE)
   hook_before <- c("existing pre hook", "existing post hook")
   Map(writeLines, hook_before, hook_paths)
-  real_restore <- .restore_provenance_file
+  pre_hook_bytes <- readBin(hook_paths[[1L]], "raw", n = file.info(hook_paths[[1L]])$size)
+  real_unchanged <- .provenance_file_unchanged
 
-  expect_warning(
-    expect_error(
+  rollback_warning <- NULL
+  expect_error(
+    withCallingHandlers(
       testthat::with_mocked_bindings(
         .install_provenance_hooks(root),
         .copy_provenance_file = function(from, to, overwrite = FALSE) {
           if (identical(basename(to), "_quarto.yml")) return(FALSE)
           file.copy(from, to, overwrite = overwrite)
         },
-        .restore_provenance_file = function(path, state) {
-          if (identical(path, normalizePath(hook_paths[[1L]], mustWork = FALSE))) stop("pre hook is locked")
-          real_restore(path, state)
+        .provenance_file_unchanged = function(path, state) {
+          if (identical(path, normalizePath(hook_paths[[1L]], mustWork = FALSE))) stop("pre hook is unreadable")
+          real_unchanged(path, state)
         },
         .package = "hvtiRtemplates"
       ),
-      "could not update _quarto[.]yml"
+      warning = function(warning) {
+        rollback_warning <<- conditionMessage(warning)
+        invokeRestart("muffleWarning")
+      }
     ),
-    "rollback could not restore"
+    "could not update _quarto[.]yml"
   )
 
   expect_identical(readLines(config_path, warn = FALSE), config_before)
   expect_identical(readLines(hook_paths[[2L]], warn = FALSE), hook_before[[2L]])
+  expect_match(rollback_warning, "Original bytes remain at")
+  recovery_path <- sub(".*Original bytes remain at '([^']+)'.*", "\\1", rollback_warning)
+  expect_true(file.exists(recovery_path))
+  expect_identical(readBin(recovery_path, "raw", n = file.info(recovery_path)$size), pre_hook_bytes)
 })
 
 test_that("render inputs resolve to one canonical study-relative qmd", {
