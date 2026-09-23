@@ -26,7 +26,11 @@ at a time.
 ### Out of scope
 
 - Building the analysis dataset from a raw extract (`hvtiRdatabuild`). Linked,
-  not taught.
+  not taught. **Planned follow-up (John Ehrlinger, 2026-09-23):** amend this
+  guide to start *without* a study dataset, with building it as the first
+  step. That waits on the template package learning to build datasets (a
+  `00_datasets` build template); the guide follows the package, not the other
+  way round.
 - RStudio project, R version and `renv` pinning. Already covered by
   `study-setup.qmd`, and linked rather than copied, so the two cannot drift.
 - Rendering any job during the vignette build (section 4).
