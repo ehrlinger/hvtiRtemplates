@@ -140,12 +140,12 @@
 <td>leading name fields that are utilities, not analysis prefixes</td>
 </tr>
 <tr>
-<td><code>add_job(prefix, endpoint, type, dir = ".", qualifier = NULL)</code></td>
+<td><code>add_job(prefix, subject, type, dir = ".", qualifier = NULL)</code></td>
 <td>the scaffolded job’s path, invisibly</td>
 </tr>
 <tr>
-<td><code>open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)</code></td>
-<td>the job’s path, invisibly; creates it with <code><a href="reference/add_job.html">add_job()</a></code> when missing, opens it unchanged when it exists</td>
+<td><code>open_job(prefix, subject, type, dir = ".", qualifier = NULL)</code></td>
+<td>job path; creates a missing job or opens an existing one</td>
 </tr>
 <tr>
 <td><code>render_job(path, final = FALSE, quiet = FALSE)</code></td>
@@ -153,12 +153,14 @@
 <code>path</code>, invisibly; renders a draft, or with <code>final = TRUE</code> a render that stops on an unfinished job</td>
 </tr>
 <tr>
-<td><code>migrate_job(source, endpoint, type, prefix, ...)</code></td>
+<td><code>migrate_job(source, subject, type, prefix, ...)</code></td>
 <td>the migrated job’s path, invisibly; writes an evidence report beside it</td>
 </tr>
 </tbody>
 </table>
-<p>Templates are <code>&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in a numbered directory (<code>20_distributions/ac.qmd</code>); a job is <code>&lt;endpoint&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in the study’s matching taxonomy folder. New studies use numbered folders and existing bare-folder studies keep their layout. The ordinal that once prefixed filenames was dropped in 1.1.0.</p>
+<p><code><a href="reference/add_job.html">add_job()</a></code> also installs idempotent Quarto pre-render and post-render hooks in the study without replacing existing project settings or user hooks. Every managed render captures the registered data actually read, embeds its runtime payload in the completed HTML, and publishes a same-stem <code>.provenance.json</code> beside Quarto’s actual output. A failed render leaves the prior completed HTML and sidecar together when the output stays untouched. If publication fails after an output changes, the hooks expose a prior sidecar only when its recorded output hash still matches. Otherwise they withhold the sidecar and retain its recovery backup with a warning.</p>
+<p>Templates are <code>&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in a numbered directory (<code>20_distributions/ac.qmd</code>); a job is <code>&lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in the study’s matching taxonomy folder. New studies use numbered folders and existing bare-folder studies keep their layout. The ordinal that once prefixed filenames was dropped in 1.1.0.</p>
+<p>The subject groups a job set. It is a statistical endpoint when the job analyses one, such as <code>death</code>; it can instead be an endpoint-free topic such as <code>cohort</code>, <code>treatment</code>, or <code>labs</code>. Each job owns its outcome variables, coding, filters, and any cohort definition. Dataset registration records the data, not a study-wide endpoint or cohort.</p>
 <p><code>qualifier</code> names a job type within a prefix. The current qualified families are <code>dc</code>, <code>dp</code>, <code>rfs</code>, <code>rfc</code>, <code>rfr</code>, and <code>lm</code>. The <code>lm</code> choices are <code>binary</code>, <code>ordinal</code>, <code>nominal</code>, <code>propensity_binary</code>, <code>propensity_ordinal</code>, <code>propensity_nominal</code>, <code>checkpred</code>, and <code>balancing_count</code>. It is <code>NULL</code> and the column is <code>NA</code> for a prefix with a single template. Naming no qualifier where a prefix carries several is an error listing the choices, never a silent pick of the first.</p>
 </div>
 <div class="section level2">
@@ -169,13 +171,13 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">job</span> <span class="op">&lt;-</span> <span class="fu">hvtiRtemplates</span><span class="fu">::</span><span class="fu"><a href="reference/migrate_job.html">migrate_job</a></span><span class="op">(</span></span>
 <span>  source <span class="op">=</span> <span class="st">"descriptive/dc.tables.sas"</span>,</span>
-<span>  endpoint <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span>, prefix <span class="op">=</span> <span class="st">"dc"</span>, qualifier <span class="op">=</span> <span class="st">"tables"</span>,</span>
+<span>  subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span>, prefix <span class="op">=</span> <span class="st">"dc"</span>, qualifier <span class="op">=</span> <span class="st">"tables"</span>,</span>
 <span>  lst <span class="op">=</span> <span class="st">"descriptive/dc.tables.lst"</span>, log <span class="op">=</span> <span class="st">"descriptive/dc.tables.log"</span>,</span>
 <span>  reference <span class="op">=</span> <span class="st">"documents/general.rtf"</span>, dir <span class="op">=</span> <span class="st">"."</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Use your study’s source and evidence filenames. <code>lst</code>, <code>log</code>, and <code>reference</code> are optional; supplied files must exist beneath <code>dir</code>. The call writes <code>descriptive/cohort-eda-dc-tables.qmd</code> and <code>descriptive/cohort-eda-dc-tables-migration.md</code> in a study with bare folders. It preserves the evidence files and refuses to overwrite either output.</p>
 <p>Migration supports <code>dc-tables</code>, <code>dc-gfup</code>, <code>dp-trends</code>, and <code>dp-postage</code>. Each adapter reads a defined source shape. Only deterministic extraction can remove an <code>EDIT:</code> marker; uncertain choices remain in the job and report for you to resolve before rendering. Logs, listings, and RTF/DOCX references help you check the translation but do not supply missing analysis choices.</p>
-<p>The table job replaces the SAS RTF output with an editable CORR DOCX through <code>hv_tbl_summary()</code>, <code>hv_man_table()</code>, <code>hv_man_table_save()</code>, and <code>hv_check_docx()</code>. It writes beneath <code>documents/&lt;endpoint&gt;-&lt;type&gt;/</code> and stops on a structural finding. Compare the rows, summaries, precision, and footnotes with the legacy reference before accepting the document; the structural check does not establish numerical agreement.</p>
+<p>The table job replaces the SAS RTF output with an editable CORR DOCX through <code>hv_tbl_summary()</code>, <code>hv_man_table()</code>, <code>hv_man_table_save()</code>, and <code>hv_check_docx()</code>. It writes beneath <code>documents/&lt;subject&gt;-&lt;type&gt;/</code> and stops on a structural finding. Compare the rows, summaries, precision, and footnotes with the legacy reference before accepting the document; the structural check does not establish numerical agreement.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

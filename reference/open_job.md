@@ -8,7 +8,7 @@ opened as it stands, never overwritten.
 ## Usage
 
 ``` r
-open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)
+open_job(prefix, subject, type, dir = ".", qualifier = NULL)
 ```
 
 ## Arguments
@@ -18,16 +18,17 @@ open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)
   Job type: one of the prefixes reported by
   [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md).
 
-- endpoint:
+- subject:
 
-  The endpoint this job analyses, e.g. `"dead_pa"`. Must match
-  `^[A-Za-z0-9_]+$`: `-` separates the filename's fields and `.`
-  separates the extension, so neither may appear here.
+  Grouping topic for the job set, e.g. `"death"` or `"cohort"`. A
+  subject names a statistical endpoint only when the job analyses one.
+  Must match `^[A-Za-z0-9_]+$`: `-` separates the filename's fields and
+  `.` separates the extension, so neither may appear here.
 
 - type:
 
   The analysis type the job's set belongs to, e.g. `"hz"`. Must match
-  `^[A-Za-z0-9_]+$`, for the same reason as `endpoint`.
+  `^[A-Za-z0-9_]+$`, for the same reason as `subject`.
 
 - dir:
 
@@ -65,16 +66,15 @@ root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L
 ))
-#> Study: /tmp/Rtmp0g85SL/open-job-example
+#> Study: /tmp/RtmpXO1FdU/open-job-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
-#> [ ] cohort — requires a registered default dataset
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
-open_job("ac", "dead", "eda", dir = root)
+open_job(prefix = "ac", subject = "death", type = "eda", dir = root)
 unlink(root, recursive = TRUE)
 ```

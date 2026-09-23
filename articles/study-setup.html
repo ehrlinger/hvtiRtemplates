@@ -121,13 +121,12 @@
 <span>  study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  adopt <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
 <span><span class="co">#&gt; [ ] manifest.yaml — no manifest.yaml; register_data() creates it</span></span>
 <span><span class="co">#&gt; [ ] dataset — no default dataset registered; run register_data()</span></span>
-<span><span class="co">#&gt; [ ] cohort — requires a registered default dataset</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars</span></span>
@@ -147,52 +146,39 @@
 <p>Snapshot again when an accepted result needs a new reproducible package state. The temporary example does not run <code>renv::init()</code> because it changes the active R project while the article renders.</p>
 </section><section class="level2"><h2 id="register-the-existing-dataset">Register the existing dataset<a class="anchor" aria-label="anchor" href="#register-the-existing-dataset"></a>
 </h2>
-<p>Registration records the input filename, checksum, population and expected cohort counts. A later job verifies that contract before describing the data.</p>
-<p>In <code>hvtiRutilities 1.3.0</code>, the default study dataset requires both <code>event</code> and <code>time</code>, even during EDA. Use legitimate columns from the data contract:</p>
+<p>Registration records the input filename, checksum and population. It does not declare a study-wide endpoint or cohort: an endpoint-free descriptive job and an event-time analysis can read the same dataset with different valid job definitions.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  built <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
-<span>  event <span class="op">=</span> <span class="st">"dead"</span>,</span>
-<span>  time <span class="op">=</span> <span class="st">"iv_dead"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Patients meeting the study inclusion criteria"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html" class="external-link">verify_manifest</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>Do not invent an outcome or follow-up field merely to complete setup. If the study does not yet have meaningful <code>event</code> and <code>time</code> columns, stop here until the planned utilities update supports that study state. The descriptive jobs below depend on a registered study dataset.</p>
+<p>Do not invent an outcome or follow-up field during setup. Each analysis job declares its own outcome variables, coding, filters and cohort checks. The descriptive jobs below depend only on a registered study dataset.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  <span class="va">adopted_root</span>,</span>
 <span>  built <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
-<span>  event <span class="op">=</span> <span class="st">"dead"</span>,</span>
-<span>  time <span class="op">=</span> <span class="st">"iv_dead"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
 <span><span class="co">#&gt; [x] manifest.yaml — 1 dataset entry verified by checksum</span></span>
 <span><span class="co">#&gt; [x] dataset — built.csv</span></span>
-<span><span class="co">#&gt; [x] cohort — N=40 / events=20 / censored=20</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars</span></span>
 <span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html" class="external-link">verify_manifest</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">adopted_root</span>, <span class="st">"manifest.yaml"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_config.html" class="external-link">study_config</a></span><span class="op">(</span><span class="va">adopted_root</span><span class="op">)</span></span>
 <span><span class="va">study_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html" class="external-link">read_built</a></span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span></span>
-<span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/cohort_counts.html" class="external-link">cohort_counts</a></span><span class="op">(</span><span class="va">study_data</span>, <span class="va">cfg</span><span class="op">)</span></span>
-<span><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  dataset <span class="op">=</span> <span class="st">"study"</span>,</span>
-<span>  rows <span class="op">=</span> <span class="va">counts</span><span class="op">$</span><span class="va">n</span>,</span>
-<span>  events <span class="op">=</span> <span class="va">counts</span><span class="op">$</span><span class="va">n_events</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">cohorts</span></span>
-<span><span class="co">#&gt;   dataset rows events</span></span>
-<span><span class="co">#&gt; 1   study   40     20</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">study_data</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 40</span></span></code></pre></div>
 </div>
-<p>Compare these counts with the data build or protocol before proceeding. They are the first check that registration describes the intended population.</p>
+<p>Compare the registered file and its manifest checksum with the data build before proceeding. A job that filters this data, or analyses an event and follow-up time, must derive and check its own reference counts.</p>
 <section class="level3"><h3 id="if-eda-uses-a-subset">If EDA uses a subset<a class="anchor" aria-label="anchor" href="#if-eda-uses-a-subset"></a>
 </h3>
 <p>The jobs can read the registered study dataset directly. If EDA needs a subset, create it with a stated rule, save it as a separate dataset and register that file too. For example:</p>
@@ -204,8 +190,6 @@
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  built <span class="op">=</span> <span class="st">"eda.csv"</span>,</span>
-<span>  event <span class="op">=</span> <span class="st">"dead"</span>,</span>
-<span>  time <span class="op">=</span> <span class="st">"iv_dead"</span>,</span>
 <span>  dataset <span class="op">=</span> <span class="st">"eda"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"named"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Patients age 50 or older"</span></span>
@@ -248,16 +232,16 @@
 <span>  postage <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"postage"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">study_jobs</span></span>
-<span><span class="co">#&gt;                                                                              general </span></span>
-<span><span class="co">#&gt; "/tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study/descriptive/cohort-eda-dc-general.qmd" </span></span>
-<span><span class="co">#&gt;                                                                               tables </span></span>
-<span><span class="co">#&gt;  "/tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study/descriptive/cohort-eda-dc-tables.qmd" </span></span>
-<span><span class="co">#&gt;                                                                                 gfup </span></span>
-<span><span class="co">#&gt;    "/tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" </span></span>
-<span><span class="co">#&gt;                                                                               trends </span></span>
-<span><span class="co">#&gt;       "/tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study/graphs/cohort-eda-dp-trends.qmd" </span></span>
-<span><span class="co">#&gt;                                                                              postage </span></span>
-<span><span class="co">#&gt; "/tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study/descriptive/cohort-eda-dp-postage.qmd"</span></span></code></pre></div>
+<span><span class="co">#&gt;                                                                             general </span></span>
+<span><span class="co">#&gt; "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-general.qmd" </span></span>
+<span><span class="co">#&gt;                                                                              tables </span></span>
+<span><span class="co">#&gt;  "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-tables.qmd" </span></span>
+<span><span class="co">#&gt;                                                                                gfup </span></span>
+<span><span class="co">#&gt;    "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" </span></span>
+<span><span class="co">#&gt;                                                                              trends </span></span>
+<span><span class="co">#&gt;       "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/graphs/cohort-eda-dp-trends.qmd" </span></span>
+<span><span class="co">#&gt;                                                                             postage </span></span>
+<span><span class="co">#&gt; "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dp-postage.qmd"</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="work-the-jobs-and-generate-output">Work the jobs and generate output<a class="anchor" aria-label="anchor" href="#work-the-jobs-and-generate-output"></a>
 </h2>
@@ -267,7 +251,7 @@
 <p>If the study has older SAS jobs, continue with <a href="sas-to-r-descriptive.html">From SAS descriptive jobs to R</a>. That article owns the detailed source mapping and migration workflow so adoption itself remains short and non-destructive.</p>
 <section class="level3"><h3 id="when-registered-data-change">When registered data change<a class="anchor" aria-label="anchor" href="#when-registered-data-change"></a>
 </h3>
-<p>Do not overwrite a registered dataset and run <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html" class="external-link">update_manifest()</a></code> alone. Registration also records cohort metadata in <code>_study.yml</code>, so that shortcut can leave the two authoritative files disagreeing. Keep the registered extract unchanged until <code>hvtiRutilities</code> provides its coordinated update operation; then re-register any named datasets derived from it, rewrite dependent analysis sets and rerender their jobs.</p>
+<p>Registration is endpoint-neutral: it records the dataset file, its population description and manifest facts, but does not declare a study-wide endpoint or cohort. For a catalog-pinned registration, first review a published candidate with <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/review_data_update.html" class="external-link">hvtiRutilities::review_data_update()</a></code>, supplying its exact release ID. The review describes structural drift without changing either manifest. After reviewing the candidate, call <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/adopt_data_update.html" class="external-link">hvtiRutilities::adopt_data_update()</a></code> with that same exact release ID. Adoption repeats the review and updates <code>_study.yml</code> and <code>manifest.yaml</code> together as a recoverable pair. Then review dependent analysis sets and rerender their jobs.</p>
 </section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

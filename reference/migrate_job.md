@@ -10,7 +10,7 @@ job.
 ``` r
 migrate_job(
   source,
-  endpoint,
+  subject,
   type,
   prefix = NULL,
   qualifier = NULL,
@@ -28,9 +28,11 @@ migrate_job(
   Path to one legacy source job, relative to the working directory or
   absolute.
 
-- endpoint:
+- subject:
 
-  Endpoint field for the new job's filename.
+  Grouping topic for the new job's filename. It is a statistical
+  endpoint only when the job analyses one; an endpoint-free job may use
+  a topic such as `"cohort"`.
 
 - type:
 

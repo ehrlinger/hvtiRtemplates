@@ -54,7 +54,7 @@ it. Review the remaining <code>EDIT:</code> markers before rendering the job.</p
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">migrate_job</span><span class="op">(</span></span>
 <span>  <span class="va">source</span>,</span>
-<span>  <span class="va">endpoint</span>,</span>
+<span>  <span class="va">subject</span>,</span>
 <span>  <span class="va">type</span>,</span>
 <span>  prefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  qualifier <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -74,8 +74,10 @@ it. Review the remaining <code>EDIT:</code> markers before rendering the job.</p
 directory or absolute.</p></dd>
 
 
-<dt id="arg-endpoint">endpoint<a class="anchor" aria-label="anchor" href="#arg-endpoint"></a></dt>
-<dd><p>Endpoint field for the new job's filename.</p></dd>
+<dt id="arg-subject">subject<a class="anchor" aria-label="anchor" href="#arg-subject"></a></dt>
+<dd><p>Grouping topic for the new job's filename. It is a
+statistical endpoint only when the job analyses one; an endpoint-free
+job may use a topic such as <code>"cohort"</code>.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>

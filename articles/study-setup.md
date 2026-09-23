@@ -104,13 +104,12 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study
+#> Study: /tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
-#> [ ] cohort — requires a registered default dataset
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
@@ -151,68 +150,54 @@ changes the active R project while the article renders.
 
 ## Register the existing dataset
 
-Registration records the input filename, checksum, population and
-expected cohort counts. A later job verifies that contract before
-describing the data.
-
-In `hvtiRutilities 1.3.0`, the default study dataset requires both
-`event` and `time`, even during EDA. Use legitimate columns from the
-data contract:
+Registration records the input filename, checksum and population. It
+does not declare a study-wide endpoint or cohort: an endpoint-free
+descriptive job and an event-time analysis can read the same dataset
+with different valid job definitions.
 
 ``` r
 
 register_data(
   built = "built.csv",
-  event = "dead",
-  time = "iv_dead",
   role = "study",
   population = "Patients meeting the study inclusion criteria"
 )
 verify_manifest()
 ```
 
-Do not invent an outcome or follow-up field merely to complete setup. If
-the study does not yet have meaningful `event` and `time` columns, stop
-here until the planned utilities update supports that study state. The
-descriptive jobs below depend on a registered study dataset.
+Do not invent an outcome or follow-up field during setup. Each analysis
+job declares its own outcome variables, coding, filters and cohort
+checks. The descriptive jobs below depend only on a registered study
+dataset.
 
 ``` r
 
 register_data(
   adopted_root,
   built = "built.csv",
-  event = "dead",
-  time = "iv_dead",
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study
+#> Study: /tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv
-#> [x] cohort — N=40 / events=20 / censored=20
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
 verify_manifest(file.path(adopted_root, "manifest.yaml"))
 cfg <- study_config(adopted_root)
 study_data <- read_built(cfg)
-counts <- cohort_counts(study_data, cfg)
-cohorts <- data.frame(
-  dataset = "study",
-  rows = counts$n,
-  events = counts$n_events
-)
-cohorts
-#>   dataset rows events
-#> 1   study   40     20
+nrow(study_data)
+#> [1] 40
 ```
 
-Compare these counts with the data build or protocol before proceeding.
-They are the first check that registration describes the intended
-population.
+Compare the registered file and its manifest checksum with the data
+build before proceeding. A job that filters this data, or analyses an
+event and follow-up time, must derive and check its own reference
+counts.
 
 ### If EDA uses a subset
 
@@ -229,8 +214,6 @@ utils::write.csv(
 )
 register_data(
   built = "eda.csv",
-  event = "dead",
-  time = "iv_dead",
   dataset = "eda",
   role = "named",
   population = "Patients age 50 or older"
@@ -310,16 +293,16 @@ study_jobs <- c(
   postage = add_job("dp", "cohort", "eda", adopted_root, "postage")
 )
 study_jobs
-#>                                                                              general 
-#> "/tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
-#>                                                                               tables 
-#>  "/tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
-#>                                                                                 gfup 
-#>    "/tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
-#>                                                                               trends 
-#>       "/tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
-#>                                                                              postage 
-#> "/tmp/RtmpThWWXZ/file1e547c20b2c/legacy-study/descriptive/cohort-eda-dp-postage.qmd"
+#>                                                                             general 
+#> "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
+#>                                                                              tables 
+#>  "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
+#>                                                                                gfup 
+#>    "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
+#>                                                                              trends 
+#>       "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
+#>                                                                             postage 
+#> "/tmp/Rtmp6kSw8A/file1e7a93f34e/legacy-study/descriptive/cohort-eda-dp-postage.qmd"
 ```
 
 ## Work the jobs and generate output
@@ -354,11 +337,14 @@ adoption itself remains short and non-destructive.
 
 ### When registered data change
 
-Do not overwrite a registered dataset and run
-[`update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
-alone. Registration also records cohort metadata in `_study.yml`, so
-that shortcut can leave the two authoritative files disagreeing. Keep
-the registered extract unchanged until `hvtiRutilities` provides its
-coordinated update operation; then re-register any named datasets
-derived from it, rewrite dependent analysis sets and rerender their
-jobs.
+Registration is endpoint-neutral: it records the dataset file, its
+population description and manifest facts, but does not declare a
+study-wide endpoint or cohort. For a catalog-pinned registration, first
+review a published candidate with
+[`hvtiRutilities::review_data_update()`](https://ehrlinger.github.io/hvtiRutilities/reference/review_data_update.html),
+supplying its exact release ID. The review describes structural drift
+without changing either manifest. After reviewing the candidate, call
+[`hvtiRutilities::adopt_data_update()`](https://ehrlinger.github.io/hvtiRutilities/reference/adopt_data_update.html)
+with that same exact release ID. Adoption repeats the review and updates
+`_study.yml` and `manifest.yaml` together as a recoverable pair. Then
+review dependent analysis sets and rerender their jobs.
