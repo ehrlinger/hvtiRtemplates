@@ -37,6 +37,20 @@ lm_mi_data <- function(n = 120L) {
   rbind(first, second)
 }
 
+lm_study <- function(.local_envir = parent.frame()) {
+  root <- withr::local_tempdir("lm-study-", .local_envir = .local_envir)
+  suppressMessages(hvtiRutilities::study_setup(
+    root, study = "LM chunk test", study_tracker_id = 42L, adopt = TRUE
+  ))
+  utils::write.csv(
+    lm_data(),
+    file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
+    row.names = FALSE
+  )
+  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv"))
+  root
+}
+
 lm_render_fixture <- function(qualifier, .local_envir = parent.frame()) {
   root <- tempfile("lm-study-")
   withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
@@ -47,8 +61,7 @@ lm_render_fixture <- function(qualifier, .local_envir = parent.frame()) {
   ))
   utils::write.csv(d, file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(
-    root, built = "built.csv", event = "outcome", time = "time",
-    role = "study", population = "Synthetic cohort"
+    root, built = "built.csv", role = "study", population = "Synthetic cohort"
   ))
   job <- add_job("lm", "outcome", "analysis", dir = root, qualifier = qualifier)
   replacements <- switch(
@@ -76,6 +89,15 @@ lm_render_fixture <- function(qualifier, .local_envir = parent.frame()) {
     model <- hvtiRpropensity::fit_logistic(
       model_formula, d, family = "binary", outcome_col = "outcome",
       id_col = "id", outcome_levels = c("none", "event"), event_level = "event"
+    )
+    model_provenance <- hvtiRtemplates:::.lm_fit_provenance(model)
+    model <- hvtiRtemplates:::.attach_handoff_lineage(
+      model,
+      data = list(hvtiRutilities::provenance_data(
+        cfg = hvtiRutilities::study_config(root), role = "training"
+      )),
+      analysis = model_provenance$analysis,
+      cohort = model_provenance$cohort
     )
     model_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
     dir.create(model_dir, recursive = TRUE, showWarnings = FALSE)

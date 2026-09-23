@@ -16,6 +16,34 @@ test_that("the lm family ships eight engine-specific templates", {
   }
 })
 
+test_that("LM set markers must agree with the rendered job filename", {
+  qualifiers <- names(lm_qualifiers)
+  expect_length(qualifiers, 8L)
+  template_dir <- system.file(
+    "templates", "30_analyses", package = "hvtiRtemplates"
+  )
+  if (!nzchar(template_dir)) {
+    template_dir <- testthat::test_path("..", "..", "inst", "templates", "30_analyses")
+  }
+
+  testthat::local_mocked_bindings(
+    current_input = function(...) file.path(tempdir(), "other-eda-lm.qmd"),
+    .package = "knitr"
+  )
+
+  for (qualifier in qualifiers) {
+    source <- readLines(file.path(template_dir, paste0("lm-", qualifier, ".qmd")),
+                        warn = FALSE)
+    env <- new.env(parent = globalenv())
+    env$.root <- tempdir()
+
+    expect_error(
+      eval(parse(text = lm_chunk(source, "set")), envir = env),
+      "but declares SUBJECT", info = qualifier
+    )
+  }
+})
+
 test_that("lm-binary fits and saves a model bundle", {
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   env <- new.env(parent = globalenv())
@@ -33,9 +61,9 @@ test_that("lm-binary fits and saves a model bundle", {
 test_that("lm-binary validates variables inside model terms", {
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   env <- new.env(parent = globalenv())
-  env$.root <- tempdir()
-  env$read_built <- function(...) lm_data()
-  env$study_config <- function(...) NULL
+  env$.root <- lm_study()
+  env$read_built <- hvtiRutilities::read_built
+  env$study_config <- hvtiRutilities::study_config
   choices <- list(OUTCOME = "outcome", PREDICTORS = c("age", "I(age^2)"),
                   OUTCOME_LEVELS = c("none", "event"), EVENT_LEVEL = "event",
                   ID = "id", IMPUTATION = NULL)
@@ -112,13 +140,23 @@ test_that("lm-checkpred applies the saved bundle without fitting", {
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
     id_col = "id", outcome_levels = c("none", "event"), event_level = "event"
   )
-  bundle_dir <- withr::local_tempdir()
+  model_provenance <- hvtiRtemplates:::.lm_fit_provenance(model)
+  root <- lm_study()
+  cfg <- hvtiRutilities::study_config(root)
+  model <- hvtiRtemplates:::.attach_handoff_lineage(
+    model, data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training")),
+    analysis = model_provenance$analysis, cohort = model_provenance$cohort
+  )
+  bundle_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
+  dir.create(bundle_dir, recursive = TRUE)
   path <- file.path(bundle_dir, "lm-binary.rds")
   validation_path <- file.path(bundle_dir, "lm-checkpred.rds")
   saveRDS(model, path)
   before <- readBin(path, "raw", n = file.info(path)$size)
   env <- new.env(parent = globalenv())
+  env$.root <- root
   env$d <- d
+  env$.provenance_data <- list(hvtiRutilities::provenance_data(cfg = cfg, role = "validation"))
   env$set_path <- function(kind, file) file.path(bundle_dir, file)
   testthat::local_mocked_bindings(
     fit_logistic = function(...) stop("checkpred refitted a model", call. = FALSE),
@@ -139,12 +177,22 @@ test_that("lm-checkpred refuses to overwrite its source bundle", {
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
     id_col = "id", outcome_levels = c("none", "event"), event_level = "event"
   )
-  bundle_dir <- withr::local_tempdir()
+  model_provenance <- hvtiRtemplates:::.lm_fit_provenance(model)
+  root <- lm_study()
+  cfg <- hvtiRutilities::study_config(root)
+  model <- hvtiRtemplates:::.attach_handoff_lineage(
+    model, data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training")),
+    analysis = model_provenance$analysis, cohort = model_provenance$cohort
+  )
+  bundle_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
+  dir.create(bundle_dir, recursive = TRUE)
   path <- file.path(bundle_dir, "lm-checkpred.rds")
   saveRDS(model, path)
   before <- readBin(path, "raw", n = file.info(path)$size)
   env <- new.env(parent = globalenv())
+  env$.root <- root
   env$d <- d
+  env$.provenance_data <- list(hvtiRutilities::provenance_data(cfg = cfg, role = "validation"))
   env$set_path <- function(kind, file) file.path(bundle_dir, file)
   lm_run("checkpred", c("study-choices", "model", "validate"), env,
          list(MODEL_FILE = "lm-checkpred.rds", OUTCOME = "outcome", GROUPS = 10L))

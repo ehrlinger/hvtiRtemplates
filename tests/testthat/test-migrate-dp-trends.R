@@ -102,7 +102,7 @@ test_that("dp-trends executes its plotting engine and retains long-data and subg
   out <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda", "dp", "trends", dir = root)
   env <- list2env(list(
     .root = root, read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config,
-    ENDPOINT = "cohort", TYPE = "eda", hv_trends = hvtiPlotR::hv_trends, theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript,
+    SUBJECT = "cohort", TYPE = "eda", hv_trends = hvtiPlotR::hv_trends, theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript,
     labs = ggplot2::labs, scale_y_continuous = ggplot2::scale_y_continuous, scale_x_continuous = ggplot2::scale_x_continuous,
     coord_cartesian = ggplot2::coord_cartesian
   ))

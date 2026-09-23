@@ -28,6 +28,7 @@ follow-up; they do not establish completeness against a close date.
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages(library(hvtiRutilities))
 if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
@@ -69,17 +70,17 @@ if (!is.null(.cur)) {
 
 ```{r}
 #| label: set
-ENDPOINT <- "cohort"
-TYPE     <- "eda"
+SUBJECT <- "cohort"
+TYPE    <- "eda"
 
 .current <- knitr::current_input()
 if (!is.null(.current)) {
   .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
-  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (endpoint '", .name_endpoint,
-         "', type '", .name_type, "'), but declares ENDPOINT = \"", ENDPOINT,
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject,
+         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
          "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.",
          call. = FALSE)
   }
@@ -87,7 +88,7 @@ if (!is.null(.current)) {
 
 set_path <- function(kind, file) {
   d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(ENDPOINT, "-", TYPE))
+                 paste0(SUBJECT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }
@@ -114,7 +115,7 @@ ANALYSIS_SET <- "eda"
 
 # MIGRATE-BEGIN: dc-gfup-config
 EVENT <- "dead"       # EDIT: binary event indicator, 1=event and 0=censored
-FOLLOWUP <- "iv_dead" # EDIT: registered follow-up interval(s), in years
+FOLLOWUP <- "iv_dead" # EDIT: follow-up interval(s) this job checks, in years
 IDENTIFIER <- NULL    # EDIT: opt in only for local review
 MAX_REVIEW_ROWS <- 25L
 # MIGRATE-END: dc-gfup-config
@@ -154,12 +155,25 @@ if (is.null(ANALYSIS_SET)) {
     stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
          "In a migrated job, see the migration report beside this job.", call. = FALSE)
   }
-  d <- read_built(dataset = DATASET)
+  .cfg <- study_config(start = .root)
+  .data_read <- hvtiRtemplates:::.provenance_read(
+    DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET)
+  )
+  d <- .data_read$value
+  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
 } else if (!identical(DATASET, "study")) {
   stop("An analysis set is written from the study dataset, not `", DATASET,
        "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
 } else {
-  d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
+  .cfg <- study_config(start = .root)
+  .analysis_set_path <- file.path(study_dir("datasets", .root), paste0(ANALYSIS_SET, ".parquet"))
+  .data_read <- hvtiRtemplates:::.provenance_file_read(
+    paste0("analysis_set:", ANALYSIS_SET), .analysis_set_path, .cfg,
+    function() hvtiRdatabuild::read_analysis_set(ANALYSIS_SET, cfg = .cfg),
+    role = paste0("analysis_set:", ANALYSIS_SET)
+  )
+  d <- .data_read$value
+  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
   knitr::kable(attr(d, "attrition"), caption = paste0(
     "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
   ))
@@ -241,4 +255,23 @@ if (length(unknown_checks)) {
   stop("Unknown event-check column(s): ", paste(unknown_checks, collapse = ", "), call. = FALSE)
 }
 for (cc in CHECKS) print(as.data.frame(table(d[cc], useNA = "ifany")))
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE,
+    analysis = list(
+      event = list(variable = EVENT, event = 1L, censored = 0L),
+      followup = list(variable = FOLLOWUP)
+    ),
+    cohort = as.list(cohort_counts[1L, , drop = FALSE])
+  )
+))
 ```

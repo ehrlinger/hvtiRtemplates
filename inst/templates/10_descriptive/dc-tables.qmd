@@ -31,6 +31,7 @@ test them; a p-value here is a prompt for an analysis, not a result.
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(hvtiRutilities)
@@ -87,30 +88,30 @@ if (!is.null(.cur)) {
 }
 ```
 
-<!-- The two values below are written by add_job() from the endpoint/type it
+<!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. Every
      artifact path in this document is computed from them. -->
 
 ```{r}
 #| label: set
-ENDPOINT <- "cohort"
-TYPE     <- "eda"
+SUBJECT <- "cohort"
+TYPE    <- "eda"
 
 .current <- knitr::current_input()
 if (!is.null(.current)) {
   .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
-  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (endpoint '", .name_endpoint, "', type '",
-         .name_type, "'), but declares ENDPOINT = \"", ENDPOINT, "\", TYPE = \"", TYPE,
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
+         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
          "\". Fix the declaration or the filename before rendering.", call. = FALSE)
   }
 }
 
 set_path <- function(kind, file) {
   dir <- file.path(hvtiRutilities::study_dir(kind, .root),
-                   paste0(ENDPOINT, "-", TYPE))
+                   paste0(SUBJECT, "-", TYPE))
   if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
   file.path(dir, file)
 }
@@ -202,12 +203,25 @@ if (is.null(ANALYSIS_SET)) {
     stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
          "In a migrated job, see the migration report beside this job.", call. = FALSE)
   }
-  d <- read_built(dataset = DATASET)
+  .cfg <- study_config(start = .root)
+  .data_read <- hvtiRtemplates:::.provenance_read(
+    DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET)
+  )
+  d <- .data_read$value
+  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
 } else if (!identical(DATASET, "study")) {
   stop("An analysis set is written from the study dataset, not `", DATASET,
        "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
 } else {
-  d <- hvtiRdatabuild::read_analysis_set(ANALYSIS_SET)
+  .cfg <- study_config(start = .root)
+  .analysis_set_path <- file.path(study_dir("datasets", .root), paste0(ANALYSIS_SET, ".parquet"))
+  .data_read <- hvtiRtemplates:::.provenance_file_read(
+    paste0("analysis_set:", ANALYSIS_SET), .analysis_set_path, .cfg,
+    function() hvtiRdatabuild::read_analysis_set(ANALYSIS_SET, cfg = .cfg),
+    role = paste0("analysis_set:", ANALYSIS_SET)
+  )
+  d <- .data_read$value
+  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
   knitr::kable(attr(d, "attrition"), caption = paste0(
     "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
   ))
@@ -309,7 +323,7 @@ if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
       !grepl("^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$", WORD_FILE)) {
   stop("WORD_FILE must be a plain .docx filename within this set.", call. = FALSE)
 }
-word_path <- file.path(study_dir("documents", .root), paste0(ENDPOINT, "-", TYPE), WORD_FILE)
+word_path <- file.path(study_dir("documents", .root), paste0(SUBJECT, "-", TYPE), WORD_FILE)
 dir.create(dirname(word_path), recursive = TRUE, showWarnings = FALSE)
 hvtiRtables::hv_man_table_save(ft, word_path, abbreviations = ABBREVIATIONS)
 check <- hvtiRtables::hv_check_docx(word_path)
@@ -340,6 +354,20 @@ if (is.null(CORR)) {
   png(set_path("descriptive", fname), width = 10, height = 10, units = "in", res = 150)
   print(plot(cm) + theme_hv_manuscript())
   invisible(dev.off())
-  cat("\n![Scatter-plot matrix](", file.path(paste0(ENDPOINT, "-", TYPE), fname), ")\n", sep = "")
+  cat("\n![Scatter-plot matrix](", file.path(paste0(SUBJECT, "-", TYPE), fname), ")\n", sep = "")
 }
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE
+  )
+))
 ```

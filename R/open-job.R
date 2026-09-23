@@ -23,22 +23,22 @@
 #' suppressMessages(hvtiRutilities::study_setup(
 #'   root, study = "Example", study_tracker_id = 1L
 #' ))
-#' open_job("ac", "dead", "eda", dir = root)
+#' open_job(prefix = "ac", subject = "death", type = "eda", dir = root)
 #' unlink(root, recursive = TRUE)
 #' @export
-open_job <- function(prefix, endpoint, type, dir = ".", qualifier = NULL) {
+open_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
   root <- hvtiRutilities::study_root(dir)
   row <- tryCatch(
     .select_template(template_list(), prefix, qualifier),
     error = function(e) stop("open_job(): ", conditionMessage(e), call. = FALSE)
   )
-  .check_field("endpoint", endpoint, fn = "open_job")
+  .check_field("subject", subject, fn = "open_job")
   .check_field("type", type, fn = "open_job")
-  out <- .job_path(row, endpoint, type, root)
+  out <- .job_path(row, subject, type, root)
   if (file.exists(out)) {
     message("open_job(): '", out, "' already exists; opening it unchanged.")
   } else {
-    out <- add_job(prefix, endpoint, type, dir = root, qualifier = qualifier)
+    out <- add_job(prefix, subject, type, dir = root, qualifier = qualifier)
   }
   .open_in_editor(out)
 }

@@ -43,7 +43,7 @@
       if (field %in% derived) {
         unresolved <- rbind(unresolved, record(row, "Filter names a locally assigned event; the field remains disabled."))
       } else {
-        translated <- rbind(translated, record(row, "Censored subset evidence; the full registered cohort remains in the report."))
+        translated <- rbind(translated, record(row, "Censored subset evidence; cohort selection remains a job-specific choice."))
       }
     } else if (input_statement[[i]]) {
       # Resolve the complete SET evidence together after reading all statements.

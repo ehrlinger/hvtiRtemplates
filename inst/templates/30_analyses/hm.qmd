@@ -40,6 +40,8 @@ the ordinal of the job it checks and lives in `parity/`.
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+.provenance_artifacts <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(TemporalHazard)
@@ -112,7 +114,7 @@ if (!is.null(.cur)) {
 }
 ```
 
-<!-- The two values below are written by add_job() from the endpoint/type it
+<!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
      document is computed from them, so no output path below needs editing.
@@ -120,24 +122,24 @@ if (!is.null(.cur)) {
      Do NOT hand-edit these declarations: the render-time guard below checks
      them against this file's own name and stops if they disagree. To put
      this job in a different set, call add_job() again with the new
-     endpoint/type rather than editing this copy in place.
+     subject/type rather than editing this copy in place.
 
-     A set is keyed on (endpoint, analysis type), not on the endpoint alone.
-     One endpoint is analysed by several methods -- parametric hazard, random
+     A set is keyed on (subject, analysis type), not on the subject alone.
+     One subject may be analysed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
      Two sets keyed on `dead_pa` alone would write their life tables to the
      same file. -->
 
 ```{r}
 #| label: set
-ENDPOINT <- "dead_pa"
-TYPE     <- "hz"
+SUBJECT <- "dead_pa"
+TYPE    <- "hz"
 
-# `add_job()` writes ENDPOINT/TYPE from the same values it put in this file's
+# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
 # name, but a hand-edited declaration can drift from it afterward. set_path()
 # below resolves from the declarations, not the filename, so a drifted
 # declaration would silently write into ANOTHER set's artifact directory --
-# exactly the collision the (endpoint, type) key exists to prevent, re-entered
+# exactly the collision the (subject, type) key exists to prevent, re-entered
 # through the body instead of the name.
 #
 # knitr::current_input() is NULL outside a render (a study author running
@@ -146,16 +148,16 @@ TYPE     <- "hz"
 .current <- knitr::current_input()
 if (!is.null(.current)) {
   # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<endpoint>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
+  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
   # `.qmd` this was scaffolded as. Strip whatever extension is actually present
   # rather than hard-coding one, so this doesn't depend on a build-tool detail
   # staying the same.
   .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
-  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (endpoint '", .name_endpoint, "', type '",
-         .name_type, "'), but declares ENDPOINT = \"", ENDPOINT, "\", TYPE = \"", TYPE,
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
+         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
          "\". Fix the declaration or the filename before rendering.", call. = FALSE)
   }
 }
@@ -169,7 +171,7 @@ if (!is.null(.current)) {
 # no empty directories behind.
 set_path <- function(kind, file) {
   d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(ENDPOINT, "-", TYPE))
+                 paste0(SUBJECT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }
@@ -190,6 +192,10 @@ Edit these values for this study before rendering.
 TIME   <- "iu_dead"
 
 EVENT  <- "idead"
+
+# EDIT: counts from the SAS reference for the rows this job analyses. Leave
+# these invalid defaults in place until the job's filter and endpoint agree.
+EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_)
 
 # EDIT: SAS job and macro holding covariate blocks.
 SAS_JOB   <- c("analyses", "hm.dead.sas")
@@ -216,45 +222,24 @@ DECILE_TIME <- 10
 ```
 ## Cohort
 
-<!-- EDIT: this chunk, choosing ONE of the two shapes below.
-
-     The distinction is whether the rows this job analyses are the whole study
-     or a subset of it, and it is not cosmetic. `_study.yml` records the STUDY
-     cohort, derived from the whole built dataset. A job that analyses a
-     filtered subset has a different N, and `assert_cohort()` will gate the
-     wrong number — it will pass while the job runs on a cohort nobody checked.
-
-     Shape A — the job analyses the whole study cohort. Use the package data
-     contract, and the gate is `assert_cohort()`.
-
-     Shape B — the job analyses a filtered subset (an availability flag, a
-     procedure subgroup). `read_built()` still reads the data, but the filter
-     and the gate are the JOB's, and the expected counts come from the SAS
-     reference rather than from `_study.yml`. -->
+<!-- EDIT: apply this job's filter after reading the data, if it has one. The
+     expected counts, event, and time are this job's contract with its SAS
+     reference; the invalid defaults make an unedited job stop rather than
+     silently accept an unreconciled cohort. -->
 
 ```{r}
 #| label: cohort
-# ---- Shape A: whole-study cohort ------------------------------------------
-d <- read_built()
-assert_cohort(d)
-cc <- cohort_counts(d)
-
-# ---- Shape B: filtered job cohort -----------------------------------------
-# EDIT: delete Shape A above and uncomment this, supplying the filter and the
-# counts the SAS reference reports. Do NOT reuse assert_cohort(): it checks
-# _study.yml, which describes the whole study and not this job.
+.cfg <- study_config(start = .root)
+.data_read <- hvtiRtemplates:::.provenance_read(
+  "study", .cfg, function() read_built(cfg = .cfg)
+)
+d <- .data_read$value
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
+# EDIT: apply this job's filter here, before both the observed counts and gate.
 #
-# d <- read_built()
 # d <- d[!is.na(d$<flag>) & d$<flag> == 1, , drop = FALSE]
-# EXPECTED <- list(n = <N>, n_events = <E>, n_censored = <C>)
-# cc <- list(n          = nrow(d),
-#            n_events   = sum(d[[STATUS]] == 1, na.rm = TRUE),
-#            n_censored = nrow(d) - sum(d[[STATUS]] == 1, na.rm = TRUE))
-# if (!identical(lapply(cc, as.integer), lapply(EXPECTED, as.integer))) {
-#   stop("Cohort gate FAILED: expected ", paste(unlist(EXPECTED), collapse = "/"),
-#        ", got ", paste(unlist(cc), collapse = "/"),
-#        ". The analysis must not run on an unreconciled cohort.", call. = FALSE)
-# }
+cc <- cohort_counts(d, event = EVENT, time = TIME)
+assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 
 knitr::kable(data.frame(
   quantity = c("n_analysable", "n_events", "n_censored"),
@@ -393,7 +378,13 @@ reading a coefficient.
 # The shape values come from the companion hz job, NOT from a literal. This is
 # what "builds on the HZ fit" means concretely: SAS holds the shapes with
 # `fixthalf fixnu fixm fixeta` while it screens covariates.
-hz_art <- readRDS(set_path("estimates", "hz.rds"))
+.hz_path <- set_path("estimates", "hz.rds")
+.hz_read <- hvtiRtemplates:::.read_handoff(
+  .hz_path, "hazard-shape-model", hvtiRutilities::study_config(start = .root), "the hz job"
+)
+hz_art <- .hz_read$value
+.provenance_data <- c(.hz_read$lineage$data, .provenance_data)
+.provenance_artifacts <- c(.hz_read$lineage$artifacts, list(.hz_read$record))
 hz_fit <- hz_art$deterministic
 
 # the shape/scale parameter names your phase specification produces.
@@ -607,7 +598,13 @@ if (!file.exists(sel_rds)) {
   )
   knitr::kable(not_run)
 } else {
-  sel <- readRDS(sel_rds)
+  .selection_read <- hvtiRtemplates:::.read_handoff(
+    sel_rds, "selection", hvtiRutilities::study_config(start = .root), "the companion hm selection runner"
+  )
+  sel <- .selection_read$value
+  .provenance_data <- c(.selection_read$lineage$data, .provenance_data)
+  .provenance_artifacts <- c(.provenance_artifacts, .selection_read$lineage$artifacts,
+                             list(.selection_read$record))
   summary_tbl <- data.frame(
     slentry        = sel$slentry,
     slstay         = sel$slstay,
@@ -638,7 +635,7 @@ if (!file.exists(sel_rds)) {
 # The screen reports p = 0.000 for those entries either way, so this is the
 # only place a reader would find out.
 if (file.exists(sel_rds)) {
-  sel <- readRDS(sel_rds)
+  sel <- .selection_read$value
   # A screen that admitted nothing is a real outcome, not a broken run: it says
   # no candidate cleared the entry level. Report that and skip the check, since
   # which.max() on an empty vector is integer(0) and data.frame() then fails
@@ -687,7 +684,7 @@ if (file.exists(sel_rds)) {
 # nobody listed is still counted as separate variables. It understates and
 # never overstates.
 if (file.exists(sel_rds)) {
-  sel <- readRDS(sel_rds)
+  sel <- .selection_read$value
   al  <- if (is.null(sel$concept_aliases)) character(0) else sel$concept_aliases
   cr  <- selection_crowding(sel$selected, aliases = al)
   redundant <- if (nrow(cr)) sum(cr$n_forms) - nrow(cr) else 0L
@@ -746,7 +743,37 @@ knitr::kable(utils::tail(gof[, intersect(c("time", "km_surv", "par_surv",
 #| label: save
 # `hs` builds patient-level predictions from this model and `bh` bootstraps
 # this screen, both by set.
-saveRDS(list(reported = reported, stage1 = stage1, stage2 = stage2,
-             covariates = COVARIATES, audit = audit, deciles = dec),
-        set_path("estimates", "hm.rds"))
+hm_art <- list(reported = reported, stage1 = stage1, stage2 = stage2,
+               covariates = COVARIATES, audit = audit, deciles = dec)
+hm_art <- hvtiRtemplates:::.attach_handoff_lineage(
+  hm_art,
+  data = .provenance_data,
+  artifacts = .provenance_artifacts,
+  analysis = list(
+    time = list(variable = TIME),
+    event = list(variable = EVENT, event = 1L, censored = 0L)
+  ),
+  cohort = cc
+)
+saveRDS(hm_art, set_path("estimates", "hm.rds"))
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  artifacts = .provenance_artifacts,
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE,
+    analysis = list(
+      time = list(variable = TIME),
+      event = list(variable = EVENT, event = 1L, censored = 0L)
+    ),
+    cohort = cc
+  )
+))
 ```

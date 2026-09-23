@@ -26,8 +26,19 @@ test_that("study setup vignette declares the complete workflow", {
   expect_false(any(grepl("inventory-adoption-cleanup", txt, fixed = TRUE)))
   expect_false(any(grepl("cleanup_targets", txt, fixed = TRUE)))
   article <- paste(txt, collapse = " ")
-  expect_true(grepl("requires both `event` and `time`", article,
+  expect_true(grepl("does not declare a study-wide endpoint or cohort", article,
                     fixed = TRUE))
+})
+
+test_that("study setup explains endpoint-neutral coordinated data updates", {
+  article <- paste(readLines(skip_without_vignette(), warn = FALSE), collapse = " ")
+
+  expect_true(grepl("endpoint-neutral", article, fixed = TRUE))
+  expect_true(grepl("review_data_update()", article, fixed = TRUE))
+  expect_true(grepl("adopt_data_update()", article, fixed = TRUE))
+  expect_true(grepl("exact release ID", article, fixed = TRUE))
+  expect_false(grepl("Registration also records cohort metadata", article, fixed = TRUE))
+  expect_false(grepl("provides its coordinated update operation", article, fixed = TRUE))
 })
 
 test_that("the SAS guide uses adopted-study paths and loads its packages", {
@@ -101,8 +112,7 @@ test_that("the tutorial adopts an existing study before analysis", {
   # A single evaluation keeps the vignette's deferred cleanup after assertions.
   checks <- quote({
     expect_true(exists("adopted_root", envir = env, inherits = FALSE))
-    expect_equal(env$cohorts$rows, 40L)
-    expect_equal(env$cohorts$events, 20L)
+    expect_equal(nrow(env$study_data), 40L)
     expect_named(
       env$study_jobs,
       c("general", "tables", "gfup", "trends", "postage")

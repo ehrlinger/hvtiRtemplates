@@ -21,10 +21,16 @@ test_that("a prefix given without a qualifier still reads the qualifier from the
   root <- migration_study_fixture()
   source <- file.path(root, "descriptive", "dc.tables.ods.sas")
   writeLines("%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);", source)
-  expect_identical(basename(migrate_job(source, "cohort", "eda", prefix = "dc", dir = root)), "cohort-eda-dc-tables.qmd")
+  job <- migrate_job(
+    source = source, subject = "cohort", type = "eda", prefix = "dc", dir = root
+  )
+  expect_identical(basename(job), "cohort-eda-dc-tables.qmd")
   custom <- file.path(root, "descriptive", "dc.custom.sas")
   writeLines("proc means; run;", custom)
-  expect_error(migrate_job(custom, "cohort", "eda", prefix = "dc", dir = root), "migrate_job\\(\\).*name one with `qualifier`")
+  expect_error(
+    migrate_job(source = custom, subject = "cohort", type = "eda", prefix = "dc", dir = root),
+    "migrate_job\\(\\).*name one with `qualifier`"
+  )
 })
 
 test_that(".default_evidence has no default for a source without an extension", {
@@ -52,7 +58,7 @@ test_that("migrate_job refuses out-of-root sources", {
   root <- migration_study_fixture()
   src <- withr::local_tempfile(fileext = ".sas")
   writeLines("proc means; run;", src)
-  expect_error(migrate_job(src, "cohort", "eda", "ac", dir = root), "beneath the study root")
+  expect_error(migrate_job(source = src, subject = "cohort", type = "eda", prefix = "ac", dir = root), "beneath the study root")
 })
 
 test_that("migrate_job scaffolds a template with no converter and says so", {
@@ -62,7 +68,7 @@ test_that("migrate_job scaffolds a template with no converter and says so", {
   src <- file.path(root, "20_distributions", "ac.dead.sas")
   writeLines(c("proc lifetest data=built;", "run;"), src)
 
-  out <- migrate_job(src, "dead", "eda")
+  out <- migrate_job(source = src, subject = "dead", type = "eda")
 
   expect_identical(basename(out), "dead-eda-ac.qmd")
   tpl <- readLines(template_path("ac"), warn = FALSE)
@@ -78,7 +84,8 @@ test_that("optional evidence must exist when supplied", {
   source <- file.path(root, "descriptive", "dc.tables.sas")
   writeLines("%desc_tab(vartype=continuous, varlist=age);", source)
   expect_error(
-    migrate_job(source, "cohort", "eda", "dc", "tables", log = file.path(root, "missing.log"), dir = root),
+    migrate_job(source = source, subject = "cohort", type = "eda", prefix = "dc", qualifier = "tables",
+                log = file.path(root, "missing.log"), dir = root),
     "missing.log"
   )
 })
@@ -317,10 +324,10 @@ test_that("template staging delegates names and declarations without publishing 
     root <- withr::local_tempdir()
     dir.create(file.path(root, folder))
     row <- .select_template(template_list(), "dc", "tables")
-    prepared <- .migration_template(row, "mortality", "eda", root)
+    prepared <- .migration_template(row, subject = "mortality", type = "eda", root = root)
     expect_identical(prepared$out, file.path(root, folder, "mortality-eda-dc-tables.qmd"))
-    expect_true('ENDPOINT <- "mortality"' %in% prepared$lines)
-    expect_true('TYPE     <- "eda"' %in% prepared$lines)
+    expect_true('SUBJECT <- "mortality"' %in% prepared$lines)
+    expect_true('TYPE    <- "eda"' %in% prepared$lines)
     expect_length(list.files(root, recursive = TRUE, all.files = TRUE), 0L)
   }
 })
@@ -331,7 +338,7 @@ test_that("migration completion publishes the prepared job and report beside int
   source <- file.path(root, "descriptive", "job.sas")
   writeLines("proc means; run;", source)
   evidence <- .migration_evidence(c(source = source), normalizePath(root, winslash = "/"))
-  prepared <- .migration_template(.select_template(template_list(), "dc", "tables"), "cohort", "eda", root)
+  prepared <- .migration_template(.select_template(template_list(), "dc", "tables"), subject = "cohort", type = "eda", root = root)
   result <- list(regions = character(), translated = data.frame(), unresolved = data.frame(), ignored = data.frame())
   out <- .migration_finish(prepared, evidence, result)
   expect_identical(out, file.path(root, "descriptive", "cohort-eda-dc-tables.qmd"))
@@ -348,7 +355,7 @@ test_that("failed region replacement never exposes the intermediate template", {
   source <- file.path(root, "job.sas")
   writeLines("proc means; run;", source)
   evidence <- .migration_evidence(c(source = source), normalizePath(root, winslash = "/"))
-  prepared <- .migration_template(.select_template(template_list(), "dc", "tables"), "cohort", "eda", root)
+  prepared <- .migration_template(.select_template(template_list(), "dc", "tables"), subject = "cohort", type = "eda", root = root)
   result <- list(regions = c(nonexistent = "new"), translated = data.frame(),
                  unresolved = data.frame(), ignored = data.frame())
   expect_error(.migration_finish(prepared, evidence, result), "exactly one")
@@ -362,7 +369,7 @@ test_that("log errors add a blocking review marker to the generated job", {
   log <- file.path(root, "job.log")
   writeLines("ERROR: failed run", log)
   evidence <- .migration_evidence(c(source = source, log = log), normalizePath(root, winslash = "/"))
-  prepared <- .migration_template(.select_template(template_list(), "dc", "tables"), "cohort", "eda", root)
+  prepared <- .migration_template(.select_template(template_list(), "dc", "tables"), subject = "cohort", type = "eda", root = root)
   result <- list(regions = character(), translated = data.frame(), unresolved = data.frame(), ignored = data.frame())
   out <- .migration_finish(prepared, evidence, result)
   expect_true(any(grepl("EDIT: resolve SAS log errors", readLines(out), fixed = TRUE)))
@@ -394,7 +401,7 @@ test_that("output folder links cannot redirect migration outside the study", {
     })
   }
   row <- .select_template(template_list(), "dc", "tables")
-  expect_error(.migration_template(row, "cohort", "eda", root), "beneath the study root")
+  expect_error(.migration_template(row, subject = "cohort", type = "eda", root = root), "beneath the study root")
   expect_length(list.files(outside, all.files = TRUE, no.. = TRUE), 0L)
 })
 
@@ -405,7 +412,10 @@ test_that("public validation follows source links", {
   source <- file.path(root, "job.sas")
   linked <- suppressWarnings(file.symlink(outside, source))
   skip_if_not(linked, "This platform does not permit creating symbolic links.")
-  expect_error(migrate_job(source, "cohort", "eda", "dc", "tables", dir = root), "beneath the study root")
+  expect_error(
+    migrate_job(source = source, subject = "cohort", type = "eda", prefix = "dc", qualifier = "tables", dir = root),
+    "beneath the study root"
+  )
 })
 
 test_that("public validation checks all optional evidence and filename fields", {
@@ -415,14 +425,20 @@ test_that("public validation checks all optional evidence and filename fields", 
   inside <- file.path(root, "inside.sas")
   writeLines("proc means; run;", inside)
   for (argument in c("lst", "log", "reference")) {
-    args <- list(source = inside, endpoint = "cohort", type = "eda", prefix = "dc", qualifier = "tables", dir = root)
+    args <- list(source = inside, subject = "cohort", type = "eda", prefix = "dc", qualifier = "tables", dir = root)
     args[[argument]] <- outside
     expect_error(do.call(migrate_job, args), "beneath the study root")
   }
-  expect_error(migrate_job(inside, "bad-name", "eda", "dc", "tables", dir = root), "endpoint")
-  expect_error(migrate_job(inside, "cohort", "eda", "dc", "tables", lst = root, dir = root), "beneath|readable file")
   expect_error(
-    migrate_job(inside, "cohort", "eda", "dc", "tables",
+    migrate_job(source = inside, subject = "bad-name", type = "eda", prefix = "dc", qualifier = "tables", dir = root),
+    "subject"
+  )
+  expect_error(
+    migrate_job(source = inside, subject = "cohort", type = "eda", prefix = "dc", qualifier = "tables", lst = root, dir = root),
+    "beneath|readable file"
+  )
+  expect_error(
+    migrate_job(source = inside, subject = "cohort", type = "eda", prefix = "dc", qualifier = "tables",
                 reference = c(inside, file.path(root, "missing.rtf")), dir = root),
     "missing.rtf"
   )
@@ -456,9 +472,12 @@ test_that("a qualifier given without a prefix is honoured, not ignored", {
   root <- migration_study_fixture("dc-gfup")
   source <- file.path(root, "descriptive", "dc.gfup.sas")
   writeLines(c("%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);"), source)
-  job <- migrate_job(source, "cohort", "eda", qualifier = "tables", dir = root)
+  job <- migrate_job(source = source, subject = "cohort", type = "eda", qualifier = "tables", dir = root)
   expect_identical(basename(job), "cohort-eda-dc-tables.qmd")
-  expect_error(migrate_job(source, "cohort", "eda", qualifier = "nosuch", dir = root), "migrate_job\\(\\).*nosuch")
+  expect_error(
+    migrate_job(source = source, subject = "cohort", type = "eda", qualifier = "nosuch", dir = root),
+    "migrate_job\\(\\).*nosuch"
+  )
 })
 
 test_that("relative evidence paths resolve against the working directory, not the study root", {
@@ -466,7 +485,7 @@ test_that("relative evidence paths resolve against the working directory, not th
   withr::local_dir(dirname(root))
   study <- basename(root)
   job <- migrate_job(
-    file.path(study, "descriptive", "dc.tables.sas"), "cohort", "eda",
+    source = file.path(study, "descriptive", "dc.tables.sas"), subject = "cohort", type = "eda",
     lst = file.path(study, "descriptive", "dc.tables.lst"),
     log = file.path(study, "descriptive", "dc.tables.log"),
     reference = file.path(study, "documents", "general.rtf"), dir = root
@@ -476,21 +495,21 @@ test_that("relative evidence paths resolve against the working directory, not th
   expect_match(report, "path=documents/general.rtf", fixed = TRUE)
   # Root-relative spellings exist only beneath the study, so from here they are missing.
   for (argument in c("lst", "log", "reference")) {
-    args <- list(source = file.path(root, "descriptive", "dc.tables.sas"), endpoint = "again", type = "eda", dir = root)
+    args <- list(source = file.path(root, "descriptive", "dc.tables.sas"), subject = "again", type = "eda", dir = root)
     args[[argument]] <- switch(argument, lst = "descriptive/dc.tables.lst", log = "descriptive/dc.tables.log",
                                reference = "documents/general.rtf")
     expect_error(do.call(migrate_job, args), paste0("migrate_job\\(\\): `", argument, "` not found: ", args[[argument]]))
   }
-  expect_error(migrate_job("descriptive/dc.tables.sas", "again", "eda", dir = root),
+  expect_error(migrate_job(source = "descriptive/dc.tables.sas", subject = "again", type = "eda", dir = root),
                "migrate_job\\(\\): source not found: descriptive/dc.tables.sas")
 })
 
 test_that("dir and reference are validated with labelled errors", {
   root <- migration_study_fixture("dc-tables")
   source <- file.path(root, "descriptive", "dc.tables.sas")
-  expect_error(migrate_job(source, "cohort", "eda", dir = 5), "`dir`")
-  expect_error(migrate_job(source, "cohort", "eda", dir = NA_character_), "`dir`")
-  expect_error(migrate_job(source, "cohort", "eda", reference = file.path(root, "absent.rtf"), dir = root),
+  expect_error(migrate_job(source = source, subject = "cohort", type = "eda", dir = 5), "`dir`")
+  expect_error(migrate_job(source = source, subject = "cohort", type = "eda", dir = NA_character_), "`dir`")
+  expect_error(migrate_job(source = source, subject = "cohort", type = "eda", reference = file.path(root, "absent.rtf"), dir = root),
                "migrate_job\\(\\): `reference` not found: .*absent.rtf")
 })
 
@@ -498,11 +517,14 @@ test_that("the report says whether same-stem listing and log were found", {
   root <- migration_study_fixture("dc-tables")
   source <- file.path(root, "descriptive", "dc.tables.sas")
   unlink(file.path(root, "descriptive", "dc.tables.log"))
-  job <- migrate_job(source, "cohort", "eda", dir = root)
+  job <- migrate_job(source = source, subject = "cohort", type = "eda", dir = root)
   report <- readLines(sub("[.]qmd$", "-migration.md", job))
   expect_true("- Listing: found beside source" %in% report)
   expect_true("- Log: not found beside source" %in% report)
-  job <- migrate_job(source, "again", "eda", log = file.path(root, "descriptive", "dc.tables.lst"), dir = root)
+  job <- migrate_job(
+    source = source, subject = "again", type = "eda",
+    log = file.path(root, "descriptive", "dc.tables.lst"), dir = root
+  )
   expect_true("- Log: supplied" %in% readLines(sub("[.]qmd$", "-migration.md", job)))
 })
 
@@ -571,12 +593,14 @@ test_that("a rename fallback failure removes only the output this call placed", 
 test_that("migrate_job() labels its own argument validation", {
   root <- migration_study_fixture("dc-tables")
   source <- file.path(root, "descriptive", "dc.tables.sas")
-  expect_error(migrate_job(source, "cohort", "eda", "dc", "tables", dir = 5),
+  expect_error(migrate_job(source = source, subject = "cohort", type = "eda", prefix = "dc", qualifier = "tables", dir = 5),
                "^migrate_job\\(\\): `dir` must be a single non-empty")
-  expect_error(migrate_job(5, "cohort", "eda", "dc", "tables", dir = root),
+  expect_error(migrate_job(source = 5, subject = "cohort", type = "eda", prefix = "dc", qualifier = "tables", dir = root),
                "^migrate_job\\(\\): `source` must be a single non-empty")
-  expect_error(migrate_job(source, "cohort", "eda", "dc", "tables", lst = NA_character_, dir = root),
-               "^migrate_job\\(\\): `lst` must be a single non-empty")
+  expect_error(migrate_job(
+    source = source, subject = "cohort", type = "eda", prefix = "dc", qualifier = "tables", lst = NA_character_, dir = root
+  ),
+  "^migrate_job\\(\\): `lst` must be a single non-empty")
 })
 
 test_that(".path_within compares at a separator boundary, and by case only on Windows", {

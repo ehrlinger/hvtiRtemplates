@@ -1,13 +1,13 @@
 ---
-title: "Legacy study migration tutorial has moved"
+title: "Migrate a legacy SAS study"
 author: "John Ehrlinger"
 vignette: >
-  %\VignetteIndexEntry{Legacy study migration tutorial has moved}
+  %\VignetteIndexEntry{Migrate a legacy SAS study}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 format:
   html:
-    toc: false
+    toc: true
     embed-resources: true
 ---
 

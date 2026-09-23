@@ -40,6 +40,8 @@ parity job borrows the ordinal of the job it checks and lives in `parity/`.
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+.provenance_artifacts <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(TemporalHazard)
@@ -112,7 +114,7 @@ if (!is.null(.cur)) {
 }
 ```
 
-<!-- The two values below are written by add_job() from the endpoint/type it
+<!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
      document is computed from them, so no output path below needs editing.
@@ -120,24 +122,24 @@ if (!is.null(.cur)) {
      Do NOT hand-edit these declarations: the render-time guard below checks
      them against this file's own name and stops if they disagree. To put
      this job in a different set, call add_job() again with the new
-     endpoint/type rather than editing this copy in place.
+     subject/type rather than editing this copy in place.
 
-     A set is keyed on (endpoint, analysis type), not on the endpoint alone.
-     One endpoint is analysed by several methods -- parametric hazard, random
+     A set is keyed on (subject, analysis type), not on the subject alone.
+     One subject may be analysed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
      Two sets keyed on `dead_pa` alone would write their life tables to the
      same file. -->
 
 ```{r}
 #| label: set
-ENDPOINT <- "dead_pa"
-TYPE     <- "hz"
+SUBJECT <- "dead_pa"
+TYPE    <- "hz"
 
-# `add_job()` writes ENDPOINT/TYPE from the same values it put in this file's
+# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
 # name, but a hand-edited declaration can drift from it afterward. set_path()
 # below resolves from the declarations, not the filename, so a drifted
 # declaration would silently write into ANOTHER set's artifact directory --
-# exactly the collision the (endpoint, type) key exists to prevent, re-entered
+# exactly the collision the (subject, type) key exists to prevent, re-entered
 # through the body instead of the name.
 #
 # knitr::current_input() is NULL outside a render (a study author running
@@ -146,16 +148,16 @@ TYPE     <- "hz"
 .current <- knitr::current_input()
 if (!is.null(.current)) {
   # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<endpoint>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
+  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
   # `.qmd` this was scaffolded as. Strip whatever extension is actually present
   # rather than hard-coding one, so this doesn't depend on a build-tool detail
   # staying the same.
   .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
-  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (endpoint '", .name_endpoint, "', type '",
-         .name_type, "'), but declares ENDPOINT = \"", ENDPOINT, "\", TYPE = \"", TYPE,
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
+         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
          "\". Fix the declaration or the filename before rendering.", call. = FALSE)
   }
 }
@@ -169,7 +171,7 @@ if (!is.null(.current)) {
 # no empty directories behind.
 set_path <- function(kind, file) {
   d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(ENDPOINT, "-", TYPE))
+                 paste0(SUBJECT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }
@@ -210,8 +212,41 @@ EVENT <- "idead"
 # hp overlays the actuarial estimate with the parametric fit, so it READS both
 # upstream artifacts by set rather than recomputing either. A job that
 # recomputes its upstream can silently disagree with it.
-ac_art <- readRDS(set_path("estimates", "ac.rds"))
-hz_art <- readRDS(set_path("estimates", "hz.rds"))
+.cfg <- study_config(start = .root)
+.ac_read <- hvtiRtemplates:::.read_handoff(
+  set_path("estimates", "ac.rds"), "actuarial-estimate", .cfg, "the ac job"
+)
+.hz_read <- hvtiRtemplates:::.read_handoff(
+  set_path("estimates", "hz.rds"), "hazard-model", .cfg, "the hz job"
+)
+.source_identity <- function(records) {
+  required <- c("dataset", "path", "bytes", "sha256")
+  lapply(records, function(record) {
+    if (!is.list(record) || !all(required %in% names(record))) {
+      stop("The ac and hz handoffs have incomplete source data lineage. Rebuild both upstream jobs.", call. = FALSE)
+    }
+    record[required]
+  })
+}
+if (!identical(.source_identity(.ac_read$lineage$data), .source_identity(.hz_read$lineage$data))) {
+  stop("The ac and hz handoffs have incompatible source data lineage. Rebuild both from the same source data.",
+       call. = FALSE)
+}
+for (.field in c("analysis", "cohort")) {
+  .ac_field <- .ac_read$lineage[[.field]]
+  .hz_field <- .hz_read$lineage[[.field]]
+  if (is.null(.ac_field) || is.null(.hz_field) || !identical(.ac_field, .hz_field)) {
+    stop("The ac and hz handoffs have incompatible ", .field,
+         " lineage. Rebuild both with matching analysis choices and cohort.", call. = FALSE)
+  }
+}
+ac_art <- .ac_read$value
+hz_art <- .hz_read$value
+.provenance_data <- c(.ac_read$lineage$data, .hz_read$lineage$data)
+.provenance_artifacts <- c(
+  .ac_read$lineage$artifacts, list(.ac_read$record),
+  .hz_read$lineage$artifacts, list(.hz_read$record)
+)
 
 # which fit and which life table this job plots.
 #
@@ -262,8 +297,14 @@ t_plot <- exp(seq(-8, log(t_max), length.out = 1000))
 # patients the fit never saw and could OVERSTATE follow-up -- which weakens
 # this guard in the one direction that matters, by making it under-warn.
 
-d <- read_built()
+.cfg <- study_config(start = .root)
+.data_read <- hvtiRtemplates:::.provenance_read(
+  "study", .cfg, function() read_built(cfg = .cfg)
+)
+d <- .data_read$value
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
 fitted_rows <- !is.na(d[[TIME]]) & !is.na(d[[EVENT]])
+cc <- cohort_counts(d, event = EVENT, time = TIME)
 maxfup <- max(as.numeric(d[[TIME]][fitted_rows]))
 
 # BOTH horizons are checked. A curve drawn past the end of follow-up is the
@@ -478,4 +519,24 @@ knitr::include_graphics(set_path("graphs", "hp-phases.png"))
 # The nomogram is the deliverable, so it is written as CSV as well as printed:
 # a table in an HTML report cannot be joined against anything.
 write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  artifacts = .provenance_artifacts,
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE,
+    analysis = list(
+      time = list(variable = TIME),
+      event = list(variable = EVENT, event = 1L, censored = 0L)
+    ),
+    cohort = cc
+  )
+))
 ```

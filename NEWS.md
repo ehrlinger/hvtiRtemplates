@@ -1,3 +1,46 @@
+# hvtiRtemplates (unreleased)
+
+* **Breaking:** `add_job()`, `open_job()`, and `migrate_job()` rename their
+  public `endpoint` argument to `subject`, and templates rename their
+  `ENDPOINT` marker to `SUBJECT`. Job sets are now named by **subject**, the
+  leading grouping topic in `<subject>-<type>-<prefix>[-<qualifier>].qmd`.
+  A subject can be a statistical endpoint such as `death`, or an endpoint-free
+  topic such as `cohort`. Jobs now own their outcome and cohort definitions;
+  dataset registration does not choose them.
+
+* Requires hvtiRutilities 1.4.0, whose endpoint-neutral study registration
+  the subject-based jobs depend on.
+
+* Every scaffolded job now captures provenance while it executes, safely
+  embeds that payload in its completed HTML, and publishes a same-stem
+  `.provenance.json` sidecar through study-level Quarto hooks. `add_job()`
+  installs the hooks idempotently without replacing existing project settings
+  or user hooks. Publication follows Quarto's actual output paths, invalidates
+  only the inputs being rendered, preserves prior sidecars when a failed render
+  leaves its outputs untouched, and durably tracks multi-output publication.
+  Failed publication removes partial new sidecars and restores a prior sidecar
+  only while its recorded output hash still matches, retaining mismatched
+  backups for explicit recovery.
+  Records always carry the runtime subject and type and add only the analysis
+  and observed-cohort facts the job actually used.
+
+* Saved model and report handoffs now carry immutable `hvti_provenance`
+  lineage. Random-forest explainers, logistic validation, bootstrap reports,
+  and the actuarial-to-hazard graph chain retain their producers' data records
+  and hash every artifact they read. A package handoff without lineage stops
+  with rebuild guidance; external bootstrap artifacts instead require explicit
+  original data records. The `ac` template now saves its overall life table as
+  the real upstream artifact consumed by `hp`.
+
+* All eight logistic-family templates now record their runtime model and
+  cohort metadata. Records distinguish outcomes, treatments and count
+  exposures; retain accepted and observed levels and applicable coding; and
+  report the fitted formula, family, method, predictors, imputation details,
+  and analysed-row accounting. Stacked-imputation totals are labelled as
+  stacked rows and accompanied by per-imputation counts. `lm-checkpred` keeps
+  the source model's training metadata separate from the validation cohort it
+  observes.
+
 # hvtiRtemplates 1.2.1
 
 * Eight qualified `lm` templates now cover binary, ordinal and nominal outcome

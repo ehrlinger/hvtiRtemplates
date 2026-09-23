@@ -4,18 +4,20 @@
 \alias{open_job}
 \title{Open a job, creating it from its template if needed}
 \usage{
-open_job(prefix, endpoint, type, dir = ".", qualifier = NULL)
+open_job(prefix, subject, type, dir = ".", qualifier = NULL)
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
 \code{\link{template_list}}.}
 
-\item{endpoint}{The endpoint this job analyses, e.g. \code{"dead_pa"}. Must
+\item{subject}{Grouping topic for the job set, e.g. \code{"death"} or
+\code{"cohort"}. A subject names a statistical endpoint only when the
+job analyses one. Must
 match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
 \code{.} separates the extension, so neither may appear here.}
 
 \item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.
-Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{endpoint}.}
+Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
 
 \item{dir}{Character. Any directory inside the study. Defaults to the
 working directory.}
@@ -45,7 +47,7 @@ root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L
 ))
-open_job("ac", "dead", "eda", dir = root)
+open_job(prefix = "ac", subject = "death", type = "eda", dir = root)
 unlink(root, recursive = TRUE)
 }
 \seealso{

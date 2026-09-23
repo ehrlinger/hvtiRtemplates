@@ -48,7 +48,7 @@ test_that("descriptive templates can read the whole cohort", {
   utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
   suppressWarnings(
     suppressMessages(hvtiRutilities::register_data(
-      root, built = "built.csv", event = "dead", time = "iv_dead"
+      root, built = "built.csv"
     ))
   )
 
@@ -104,10 +104,10 @@ test_that("descriptive templates read a named additional dataset", {
   utils::write.csv(subset, file.path(data_dir, "builtr.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages({
     hvtiRutilities::register_data(
-      root, built = "built.csv", event = "dead", time = "iv_dead"
+      root, built = "built.csv"
     )
     hvtiRutilities::register_data(
-      root, built = "builtr.csv", event = "dead", time = "iv_dead",
+      root, built = "builtr.csv",
       dataset = "builtr", role = "named"
     )
   }))

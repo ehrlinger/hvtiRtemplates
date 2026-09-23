@@ -99,10 +99,11 @@ map by the outcome in the job's fit call, not by the name:
 
 ## Where a scaffolded job lands
 
-`add_job("ac", "dead_pa", "hz")` writes
-`20_distributions/dead_pa-hz-ac.qmd` in a new study. Three fields, `-`
-separated:
-**endpoint, type, prefix**.
+`add_job("ac", "death", "hz")` writes
+`20_distributions/death-hz-ac.qmd` in a new study. Three fields, `-`
+separated: **subject, type, prefix**. The subject groups a job set. It names a
+statistical endpoint only when the job analyses one; an endpoint-free job can
+instead use a topic such as `cohort`, `treatment`, or `labs`.
 
 The study layout decides the folder. New studies use the numbered taxonomy;
 an adopted legacy study with bare folders keeps `distributions/`. A study that
@@ -113,8 +114,8 @@ A job scaffolded from a qualified template carries the qualifier as a fourth
 field, so `add_job("dp", "cohort", "eda", qualifier = "trends")` writes
 `40_graphs/cohort-eda-dp-trends.qmd` in a new study. A filename that drops the qualifier says
 only "some `dp` job", which is what splitting the templates exists to fix.
-An EDA job's set key is `(subject, eda)`: the endpoint field names what is
-described, and the type is always `eda`.
+An EDA job's set key is `(subject, eda)`: the subject names what is described,
+and the type is always `eda`.
 
 ⭐ **The ordinal was dropped in 1.1.0.** A job named
 `dead_pa-hz-03.01-ac.qmd` is from before that change; `03.01` was the taxonomy
@@ -123,7 +124,7 @@ folder's position and a per-folder key, and both are gone. See
 
 The layout rule is one sentence, and it holds in every folder:
 
-> **Authored files sit flat. Generated artifacts sit under `<endpoint>-<type>/`.**
+> **Authored files sit flat. Generated artifacts sit under `<subject>-<type>/`.**
 
 ```
 <study_root>/
@@ -132,13 +133,13 @@ The layout rule is one sentence, and it holds in every folder:
 └── graphs/         dead_pa-hz-hp.qmd         dead_pa-hz/hp-fig1.png
 ```
 
-**A set is keyed on `(endpoint, analysis type)`, not on the endpoint alone.**
-One endpoint is analysed by several methods, and those chains share their
+**A set is keyed on `(subject, analysis type)`, not on the subject alone.**
+One subject can be analysed by several methods, and those chains share their
 upstream — a death-hazard set and a death random-forest-survival set both begin
-from the same life table. Keyed on the endpoint alone, both would be written to
-`dead_pa-ac.qmd`. The cost of carrying the type on every job is that the
-shared upstream runs once per set rather than once per endpoint; the benefit is
-that a set is self-contained and uniformly named.
+from the same life table. Keyed on the subject alone, both would be written to
+`death-ac.qmd`. The cost of carrying the type on every job is that the shared
+upstream runs once per set rather than once per subject; the benefit is that a
+set is self-contained and uniformly named.
 
 The full design, including what was rejected and why, is in
 `dev/specs/2026-08-21-template-set-layout-design.md`.
@@ -248,13 +249,13 @@ unsupported cleaning, and presentation choices against the source and study
 protocol before removing their `EDIT:` markers.
 
 The table job writes an editable CORR DOCX under
-`documents/<endpoint>-<type>/`, replacing the SAS RTF output. Its
+`documents/<subject>-<type>/`, replacing the SAS RTF output. Its
 `hv_tbl_summary()` -> `hv_man_table()` -> `hv_man_table_save()` ->
 `hv_check_docx()` path stops on document-format findings. Compare its numerical
 and presentation choices with the RTF reference yourself. Follow-up checks use
-registered intervals; they do not establish completeness against a close date.
+the job's declared intervals; they do not establish completeness against a close date.
 Trend figures and numbered postage PNG pages go under
-`graphs/<endpoint>-<type>/`, including when the postage job itself lives in
+`graphs/<subject>-<type>/`, including when the postage job itself lives in
 `descriptive/`.
 
 `vignette("study-setup", package = "hvtiRtemplates")` shows new-study setup,
@@ -301,12 +302,23 @@ default; to make it stop on an unfinished job instead, set the same variable
 `render_job()` sets for you:
 
 ```sh
-HVTI_TEMPLATE_STRICT=1 quarto render <endpoint>-<type>-ac.qmd
+HVTI_TEMPLATE_STRICT=1 quarto render <subject>-<type>-ac.qmd
 ```
 
 Unset, `0`, `false` and `no` leave the job rendering as a draft, case-insensitively.
 **Any other value stops**, `1`, `true` and `yes` included, so a mistyped value
 fails toward the stop and the author sees it rather than getting a quiet draft.
+
+`add_job()` installs the study's Quarto provenance hooks without replacing
+existing project settings or hooks. A managed job captures the registered data
+it actually reads and embeds the runtime payload in its HTML; after Quarto has
+finished the output, the post-render hook publishes the matching
+`.provenance.json` beside that actual output. Rendering a copied job outside
+its configured study stops with a setup message instead of writing a sidecar
+directly. A failed render preserves the prior sidecar while its output stays
+unchanged. If publication fails after the output changes, the hooks withhold a
+prior sidecar whose recorded hash no longer matches and report the retained
+recovery backup.
 
 The guard does not catch a marker that was worked *wrongly* — a placeholder
 replaced with a mistyped column name leaves nothing to scan for. That case is

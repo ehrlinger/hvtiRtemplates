@@ -46,6 +46,8 @@ first. It was not.
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
 .root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+.provenance_artifacts <- list()
 suppressPackageStartupMessages({
   library(TemporalHazard)
   library(hvtiRbootstrap)
@@ -137,7 +139,7 @@ if (!is.null(.cur)) {
 }
 ```
 
-<!-- The two values below are written by add_job() from the endpoint/type it
+<!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
      document is computed from them, so no output path below needs editing.
@@ -145,24 +147,24 @@ if (!is.null(.cur)) {
      Do NOT hand-edit these declarations: the render-time guard below checks
      them against this file's own name and stops if they disagree. To put
      this job in a different set, call add_job() again with the new
-     endpoint/type rather than editing this copy in place.
+     subject/type rather than editing this copy in place.
 
-     A set is keyed on (endpoint, analysis type), not on the endpoint alone.
-     One endpoint is analysed by several methods -- parametric hazard, random
+     A set is keyed on (subject, analysis type), not on the subject alone.
+     One subject may be analysed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
      Two sets keyed on `dead_pa` alone would write their life tables to the
      same file. -->
 
 ```{r}
 #| label: set
-ENDPOINT <- "dead_pa"
-TYPE     <- "hz"
+SUBJECT <- "dead_pa"
+TYPE    <- "hz"
 
-# `add_job()` writes ENDPOINT/TYPE from the same values it put in this file's
+# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
 # name, but a hand-edited declaration can drift from it afterward. set_path()
 # below resolves from the declarations, not the filename, so a drifted
 # declaration would silently write into ANOTHER set's artifact directory --
-# exactly the collision the (endpoint, type) key exists to prevent, re-entered
+# exactly the collision the (subject, type) key exists to prevent, re-entered
 # through the body instead of the name.
 #
 # knitr::current_input() is NULL outside a render (a study author running
@@ -171,16 +173,16 @@ TYPE     <- "hz"
 .current <- knitr::current_input()
 if (!is.null(.current)) {
   # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<endpoint>-<type>-<ordinal>-<prefix>.rmarkdown` here rather than the
+  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
   # `.qmd` this was scaffolded as. Strip whatever extension is actually present
   # rather than hard-coding one, so this doesn't depend on a build-tool detail
   # staying the same.
   .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
-  .name_endpoint <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_endpoint, ENDPOINT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (endpoint '", .name_endpoint, "', type '",
-         .name_type, "'), but declares ENDPOINT = \"", ENDPOINT, "\", TYPE = \"", TYPE,
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
+         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
          "\". Fix the declaration or the filename before rendering.", call. = FALSE)
   }
 }
@@ -194,7 +196,7 @@ if (!is.null(.current)) {
 # no empty directories behind.
 set_path <- function(kind, file) {
   d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(ENDPOINT, "-", TYPE))
+                 paste0(SUBJECT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }
@@ -228,6 +230,10 @@ EXPECT_BOOT   <- 500L   # EDIT: %hazboot(resampl=) -- total replicates wanted
 # does not match finds nothing, while a prefix that matches TOO MUCH pools
 # chunks from another run -- and no downstream check can see that.
 BOOT_PREFIX <- "bh"
+
+# External producers that cannot attach hvti_provenance must put their original
+# provenance_data() records here. Leave empty for package-produced bags.
+BOOTSTRAP_DATA <- list()
 
 # EDIT: from YOUR .sas %hazboot call. The two studies this template was
 # extracted from disagree -- 500/0.07/0.05 and 1000/0.12/0.1 -- so there is no
@@ -288,9 +294,24 @@ if (length(.chunk_files)) {
   # cap, and refuses two chunks sharing a seed. Every one of those failures is
   # silent on its own -- it shows up as a slightly different frequency, never
   # as an error -- which is why the refusal belongs here rather than in a note.
-  bag <- boot_pool_chunks(lapply(.chunk_files, readRDS))
+  .cfg <- study_config(start = .root)
+  .chunk_reads <- lapply(.chunk_files, hvtiRtemplates:::.read_bootstrap_artifact,
+                         role = "bootstrap-chunk", cfg = .cfg, explicit_data = BOOTSTRAP_DATA)
+  bag <- boot_pool_chunks(lapply(.chunk_reads, `[[`, "value"))
+  .chunk_lineage <- lapply(.chunk_reads, `[[`, "lineage")
+  .combined <- hvtiRtemplates:::.combine_handoff_lineage(.chunk_lineage)
+  .bootstrap_lineage <- .combined
+  .provenance_data <- .combined$data
+  .provenance_artifacts <- c(.combined$artifacts, lapply(.chunk_reads, `[[`, "record"))
 } else if (file.exists(.single_file)) {
-  bag <- readRDS(.single_file)
+  .cfg <- study_config(start = .root)
+  .bag_read <- hvtiRtemplates:::.read_bootstrap_artifact(
+    .single_file, "bootstrap-bag", .cfg, BOOTSTRAP_DATA
+  )
+  bag <- .bag_read$value
+  .provenance_data <- .bag_read$lineage$data
+  .provenance_artifacts <- c(.bag_read$lineage$artifacts, list(.bag_read$record))
+  .bootstrap_lineage <- .bag_read$lineage
 } else {
   stop("No bootstrap output found. This screen is a long job -- days, not ",
        "minutes -- and is run from a companion script rather than inside this ",
@@ -337,7 +358,7 @@ boot_validate(bag)
 ```
 
 ```{r}
-#| label: provenance
+#| label: bootstrap-provenance
 # CPU cost, NOT wall clock. boot_pool_chunks() SUMS elapsed across chunks, so on
 # a chunked run this is total compute; chunks run in parallel finish in a
 # fraction of it. Reported in hours because the minutes figure reads as a
@@ -669,7 +690,12 @@ says the pool cannot tell them apart.
 
 # Read to CORRELATE the pool, not to re-run anything. The screen already
 # happened; this describes the data it ran against.
-d <- read_built()
+.cfg <- study_config(start = .root)
+.data_read <- hvtiRtemplates:::.provenance_read(
+  "study", .cfg, function() read_built(cfg = .cfg)
+)
+d <- .data_read$value
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
 
 # A build that moved since the screen ran would leave these correlations
 # describing one dataset and every frequency above describing another, with
@@ -749,9 +775,29 @@ if (normalizePath(report_file, mustWork = FALSE) %in% inputs) {
        "report do not collide.", call. = FALSE)
 }
 
-saveRDS(list(freq = freq, retained = retained, concept = concept,
-             crowding = crowding, clusters = clusters,
-             provenance = provenance, retain_pct = RETAIN_PCT,
-             expect_chunks = EXPECT_CHUNKS, expect_boot = EXPECT_BOOT),
-        report_file)
+report <- list(freq = freq, retained = retained, concept = concept,
+               crowding = crowding, clusters = clusters,
+               provenance = provenance, retain_pct = RETAIN_PCT,
+               expect_chunks = EXPECT_CHUNKS, expect_boot = EXPECT_BOOT)
+report <- hvtiRtemplates:::.attach_handoff_lineage(
+  report, data = .provenance_data, artifacts = .provenance_artifacts,
+  analysis = .bootstrap_lineage$analysis, cohort = .bootstrap_lineage$cohort
+)
+saveRDS(report, report_file)
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  artifacts = .provenance_artifacts,
+  extra = c(
+    list(subject = SUBJECT, type = TYPE),
+    if (is.null(.bootstrap_lineage$analysis)) list() else list(analysis = .bootstrap_lineage$analysis),
+    if (is.null(.bootstrap_lineage$cohort)) list() else list(cohort = .bootstrap_lineage$cohort)
+  )
+))
 ```

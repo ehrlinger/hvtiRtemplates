@@ -9,6 +9,24 @@ test_that("add_job replaces new_job in the public API", {
   expect_false("new_job" %in% exports)
 })
 
+test_that("job APIs name the grouping field subject", {
+  expect_true("subject" %in% names(formals(add_job)))
+  expect_true("subject" %in% names(formals(open_job)))
+  expect_true("subject" %in% names(formals(migrate_job)))
+  expect_false("endpoint" %in% names(formals(add_job)))
+  expect_false("endpoint" %in% names(formals(open_job)))
+  expect_false("endpoint" %in% names(formals(migrate_job)))
+})
+
+test_that("subjects remain safe filename fields", {
+  dir <- tempfile("subject-field-")
+  dir.create(file.path(dir, "distributions"), recursive = TRUE)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  expect_error(add_job(prefix = "ac", subject = "../death", type = "hz", dir = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = "death-event", type = "hz", dir = dir), "subject")
+})
+
 test_that("every template is free of study identifiers", {
   tl <- template_list()
   for (i in seq_len(nrow(tl))) {
@@ -35,7 +53,7 @@ test_that("add_job preserves a legacy study layout", {
   dir <- tempfile("newjob-")
   dir.create(file.path(dir, "distributions"), recursive = TRUE)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  out <- add_job("ac", "dead_pa", "hz", dir = dir)
+  out <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
   expect_true(file.exists(out))
   expect_equal(out, file.path(dir, "distributions", "dead_pa-hz-ac.qmd"))
 })
@@ -47,12 +65,48 @@ test_that("add_job follows a numbered study layout", {
     dir, study = "Numbered layout test", study_tracker_id = 1L
   ))
 
-  out <- add_job("ac", "dead_pa", "hz", dir = dir)
+  out <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
 
   expect_equal(
     out,
     file.path(dir, "20_distributions", "dead_pa-hz-ac.qmd")
   )
+  config <- yaml::read_yaml(file.path(dir, "_quarto.yml"))
+  expect_identical(tail(config$project$`pre-render`, 1L), .provenance_hook_command("pre"))
+  expect_identical(tail(config$project$`post-render`, 1L), .provenance_hook_command("post"))
+  expect_true(all(file.exists(file.path(dir, .provenance_hook_files()))))
+})
+
+test_that("add_job leaves no job when provenance hooks cannot be installed", {
+  dir <- tempfile("addjob-malformed-quarto-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(
+    dir, study = "Malformed Quarto", study_tracker_id = 1L
+  ))
+  writeLines("project: [", file.path(dir, "_quarto.yml"))
+
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "_quarto[.]yml")
+  expect_false(file.exists(file.path(dir, "20_distributions", "dead_pa-hz-ac.qmd")))
+})
+
+test_that("add_job rejects inline project mappings without installing hook files", {
+  dir <- tempfile("addjob-inline-quarto-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(
+    dir, study = "Inline Quarto", study_tracker_id = 1L
+  ))
+  config_path <- file.path(dir, "_quarto.yml")
+  writeLines("project: {type: default}", config_path)
+  before <- readLines(config_path, warn = FALSE)
+
+  expect_error(
+    add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir),
+    "inline project mappings"
+  )
+
+  expect_identical(readLines(config_path, warn = FALSE), before)
+  expect_false(any(file.exists(file.path(dir, .provenance_hook_files()))))
+  expect_false(file.exists(file.path(dir, "20_distributions", "dead_pa-hz-ac.qmd")))
 })
 
 test_that("add_job refuses a mixed study layout", {
@@ -61,7 +115,7 @@ test_that("add_job refuses a mixed study layout", {
   dir.create(file.path(dir, "30_analyses"), recursive = TRUE)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
-  expect_error(add_job("ac", "dead_pa", "hz", dir = dir), "mixed")
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "mixed")
   expect_false(file.exists(file.path(
     dir,
     "distributions",
@@ -69,32 +123,32 @@ test_that("add_job refuses a mixed study layout", {
   )))
 })
 
-test_that("add_job distinguishes two analysis types over one endpoint", {
+test_that("add_job distinguishes two analysis types over one subject", {
   # This is the collision the type field exists to prevent. A death-hazard set
   # and a death-RFS set share the same Kaplan-Meier upstream, so keyed on
-  # endpoint alone both would be `dead_pa-ac.qmd` -- two sets, one file.
+  # subject alone both would be `dead_pa-ac.qmd` -- two sets, one file.
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  a <- add_job("ac", "dead_pa", "hz", dir = dir)
-  b <- add_job("ac", "dead_pa", "rfs", dir = dir)
+  a <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
+  b <- add_job(prefix = "ac", subject = "dead_pa", type = "rfs", dir = dir)
   expect_false(a == b)
   expect_true(all(file.exists(c(a, b))))
 
-  # Certifying the paths differ is not enough: add_job() writes endpoint/type
+  # Certifying the paths differ is not enough: add_job() writes subject/type
   # into the FILENAME, and a body that still says the template's placeholder
   # values silently resolves set_path() into the OTHER set's directory. Each
-  # written file's ENDPOINT/TYPE declarations must match its own name.
+  # written file's SUBJECT/TYPE declarations must match its own name.
   for (path in c(a, b)) {
     fields <- strsplit(sub("[.]qmd$", "", basename(path)), "-", fixed = TRUE)[[1L]]
     txt <- readLines(path, warn = FALSE)
-    declared_endpoint <- sub('^ENDPOINT <- "(.*)"$', "\\1", grep("^ENDPOINT <- ", txt, value = TRUE))
+    declared_subject <- sub('^SUBJECT <- "(.*)"$', "\\1", grep("^SUBJECT <- ", txt, value = TRUE))
     declared_type     <- sub('^TYPE\\s+<- "(.*)"$', "\\1", grep("^TYPE\\s+<- ", txt, value = TRUE))
-    expect_equal(declared_endpoint, fields[[1L]], label = paste("declared ENDPOINT in", path))
+    expect_equal(declared_subject, fields[[1L]], label = paste("declared SUBJECT in", path))
     expect_equal(declared_type, fields[[2L]], label = paste("declared TYPE in", path))
   }
 })
 
-test_that("add_job errors when the template lacks the ENDPOINT/TYPE marker lines", {
+test_that("add_job errors when the template lacks the SUBJECT/TYPE marker lines", {
   # `.set_markers()` must fail loudly rather than hand back a job that looks
   # scaffolded but silently kept whatever the fake template happened to say.
   fake_template <- tempfile("fake-template-", fileext = ".qmd")
@@ -113,7 +167,7 @@ test_that("add_job errors when the template lacks the ENDPOINT/TYPE marker lines
 
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  expect_error(add_job("zz", "dead_pa", "hz", dir = dir), "ENDPOINT")
+  expect_error(add_job(prefix = "zz", subject = "dead_pa", type = "hz", dir = dir), "SUBJECT")
 
   # The failure is after the copy, so the defect Finding 1 exists to prevent
   # -- a job named for one set but declaring the template's placeholder set
@@ -123,9 +177,9 @@ test_that("add_job errors when the template lacks the ENDPOINT/TYPE marker lines
   expect_false(file.exists(out))
 })
 
-test_that("add_job rejects endpoint/type shapes that would break the filename", {
+test_that("add_job rejects subject/type shapes that would break the filename", {
   # `-` is the field separator and `.` separates the extension, so neither
-  # may appear in `endpoint` or `type`; both must also be a single non-NA
+  # may appear in `subject` or `type`; both must also be a single non-NA
   # string. Verified misbehaviour this guards against: "" collapses a field,
   # NA writes the string "NA" into the path, character(0) recycles silently,
   # a length-2 vector reaches `if()` and errors opaquely, "dead-pa" adds a
@@ -133,27 +187,27 @@ test_that("add_job rejects endpoint/type shapes that would break the filename", 
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
-  expect_error(add_job("ac", "", "hz", dir = dir), "endpoint")
-  expect_error(add_job("ac", "dead_pa", "", dir = dir), "type")
-  expect_error(add_job("ac", NA_character_, "hz", dir = dir), "endpoint")
-  expect_error(add_job("ac", character(0), "hz", dir = dir), "endpoint")
-  expect_error(add_job("ac", c("a", "b"), "hz", dir = dir), "endpoint")
-  expect_error(add_job("ac", "dead-pa", "hz", dir = dir), "endpoint")
-  expect_error(add_job("ac", "../esc", "hz", dir = dir), "endpoint")
+  expect_error(add_job(prefix = "ac", subject = "", type = "hz", dir = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "", dir = dir), "type")
+  expect_error(add_job(prefix = "ac", subject = NA_character_, type = "hz", dir = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = character(0), type = "hz", dir = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = c("a", "b"), type = "hz", dir = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = "dead-pa", type = "hz", dir = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = "../esc", type = "hz", dir = dir), "subject")
 })
 
 test_that("add_job refuses an unknown prefix, naming the valid ones", {
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  expect_error(add_job("zz", "dead_pa", "hz", dir = dir), "ac")
+  expect_error(add_job(prefix = "zz", subject = "dead_pa", type = "hz", dir = dir), "ac")
 })
 
 test_that("add_job refuses to overwrite an existing job", {
   # A job file accumulates a study's edits; silently replacing one discards them.
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  add_job("ac", "dead_pa", "hz", dir = dir)
-  expect_error(add_job("ac", "dead_pa", "hz", dir = dir), "already exists")
+  add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "already exists")
 })
 
 test_that("add_job errors when the copy fails rather than returning a dead path", {
@@ -176,11 +230,11 @@ test_that("add_job errors when the copy fails rather than returning a dead path"
   # `file.copy()` also warns ("cannot create file ... Permission denied") on its
   # way to returning FALSE. That warning is useful in real use; here it would
   # just leave the suite with a WARN, so only the error is under test.
-  expect_error(suppressWarnings(add_job("ac", "dead_pa", "hz", dir = dir)),
+  expect_error(suppressWarnings(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)),
                "failed to write")
 })
 
-test_that("every template declares ENDPOINT/TYPE markers add_job() can substitute", {
+test_that("every template declares SUBJECT and TYPE markers", {
   # The markers are the interface: add_job() hard-stops for any template
   # lacking them (see .set_markers()), so the contract has to hold for every
   # template on disk, not just `ac` -- otherwise the next template to be
@@ -188,19 +242,20 @@ test_that("every template declares ENDPOINT/TYPE markers add_job() can substitut
   tl <- template_list()
   for (i in seq_len(nrow(tl))) {
     txt <- readLines(tl$file[[i]], warn = FALSE)
-    label <- paste("template", tl$name[[i]])
-    expect_true(any(grepl("^ENDPOINT\\s+<- ", txt)), label = label)
-    expect_true(any(grepl("^TYPE\\s+<- ", txt)), label = label)
+    info <- basename(tl$file[[i]])
+    expect_equal(length(grep("^SUBJECT\\s+<- ", txt)), 1L, info = info)
+    expect_equal(length(grep("^TYPE\\s+<- ", txt)), 1L, info = info)
+    expect_equal(length(grep("^ENDPOINT\\s+<- ", txt)), 0L, info = info)
   }
 })
 
 test_that("the ac template resolves artifact paths from its set markers", {
-  # A template that computes artifact paths from anything but ENDPOINT/TYPE
+  # A template that computes artifact paths from anything but SUBJECT/TYPE
   # would need a path edited by hand -- the mistake the markers exist to
   # prevent.
   txt <- readLines(template_path("ac"), warn = FALSE)
   expect_true(any(grepl("set_path <- function\\(kind, file\\)", txt)))
-  expect_true(any(grepl("paste0\\(ENDPOINT, \"-\", TYPE\\)", txt)))
+  expect_true(any(grepl("paste0\\(SUBJECT, \"-\", TYPE\\)", txt)))
 })
 
 test_that("template artifact paths follow a numbered study layout", {
@@ -224,7 +279,7 @@ test_that("template artifact paths follow a numbered study layout", {
     expect_equal(
       path,
       file.path(root, "90_estimates",
-                paste0(env$ENDPOINT, "-", env$TYPE), "result.rds"),
+                paste0(env$SUBJECT, "-", env$TYPE), "result.rds"),
       info = basename(template)
     )
   }
