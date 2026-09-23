@@ -211,7 +211,8 @@ synthetic study:
 ```
 
 Read it as a receipt. `data` names the registered file and the checksum of the
-bytes the job read. `packages`, omitted here, lists every package version.
+bytes the job read. `packages` and `renv_lock`, omitted here, record every
+package version and the study's lockfile.
 `output` carries the checksum of the HTML it describes, so a sidecar can be
 matched to its report and to nothing else.
 
