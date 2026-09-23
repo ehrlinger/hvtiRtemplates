@@ -107,22 +107,16 @@ the manner of `test-vignette-migration.R`:
 `new-study.qmd` is also added to the existing "tutorials use the RStudio project
 as the study root" test, so it inherits the no-`setwd()` and `.Rproj` checks.
 
-⚠️ **These source-reading tests do not run in CI.** The existing vignette tests
-skip on every CI leg ("vignette source not available", measured on run
-35869828048: SKIP 2 on macOS and Ubuntu, SKIP 3 on Windows, both vignette skips
-included). Tests written the same way inherit that. They are a local check under
-`devtools::test()` only, and the spec does not count them as a gate.
+**These tests run in CI.** Like `skip_without_vignette()` in
+`test-vignette-migration.R`, the new helper falls back from the source tree to
+`system.file("doc", "new-study.qmd")`, which `R CMD check` installs. Only tests
+that read `test_path()` alone skip on CI (the SAS-guide and tutorials tests,
+the two skips on every leg). Adding `new-study.qmd` to the tutorials test
+therefore adds no new skip, and the expected summaries stay SKIP 2 on macOS and
+Ubuntu and SKIP 3 on Windows.
 
-The CI gate is the vignette build itself. `R CMD check` re-builds vignette
-outputs on every leg, and section 4 makes every reader-facing chunk execute, so
-a renamed argument or a wrong qualifier fails the check on all platforms.
-
-To keep the skip count legible, all source-reading assertions go in **one**
-`test_that()` block with its own guard. The expected CI summaries after this
-change are therefore SKIP 3 on macOS and Ubuntu and SKIP 4 on Windows, and the
-PR description states that number so a reader can tell an expected skip from a
-new one. Whether the vignette tests should run in CI at all is a separate
-question, raised as a follow-up rather than folded in here.
+The vignette build is the second gate: `R CMD check` re-builds vignette outputs
+on every leg, and every reader-facing chunk executes.
 
 ## 6. Definition of done
 
