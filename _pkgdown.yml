@@ -20,8 +20,9 @@ template:
 articles:
   - title: Tutorials
     contents:
-      - sas-to-r-descriptive
+      - new-study
       - study-setup
+      - sas-to-r-descriptive
       - legacy-study-migration
 
 footer:

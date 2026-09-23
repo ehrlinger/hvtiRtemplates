@@ -19,6 +19,9 @@ type instead of repeating this setup.
 Adoption is additive. It creates the hvtiR study contract without renaming the
 legacy working directories or deleting old files.
 
+If the study does not exist yet and you are starting from a newly delivered
+dataset, follow [Start a new study](new-study.html) instead.
+
 The executable example uses one 40-row synthetic dataset. Its files stay in a
 temporary directory and disappear after the article renders. For translating
 existing SAS descriptive jobs, see
