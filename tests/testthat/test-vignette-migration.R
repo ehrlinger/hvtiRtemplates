@@ -25,6 +25,7 @@ test_that("study setup vignette declares the complete workflow", {
   expect_true(any(grepl("renv::snapshot()", txt, fixed = TRUE)))
   expect_false(any(grepl("inventory-adoption-cleanup", txt, fixed = TRUE)))
   expect_false(any(grepl("cleanup_targets", txt, fixed = TRUE)))
+  expect_true(any(grepl("new-study.html", txt, fixed = TRUE)))
   article <- paste(txt, collapse = " ")
   expect_true(grepl("does not declare a study-wide endpoint or cohort", article,
                     fixed = TRUE))
@@ -64,7 +65,8 @@ test_that("tutorials use the RStudio project as the study root", {
     testthat::test_path("..", "..", "vignettes", "study-setup.qmd"),
     testthat::test_path(
       "..", "..", "vignettes", "sas-to-r-descriptive.qmd"
-    )
+    ),
+    testthat::test_path("..", "..", "vignettes", "new-study.qmd")
   )
   testthat::skip_if_not(all(file.exists(tutorials)),
                         "vignette sources not available")

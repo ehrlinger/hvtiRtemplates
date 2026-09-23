@@ -41,6 +41,11 @@
   the source model's training metadata separate from the validation cohort it
   observes.
 
+* New vignette, "Start a new study from a delivered dataset", takes a study
+  from an empty directory through registration, a first descriptive job and
+  its provenance sidecar, to a first `ac`, `hz` and `hp` chain. It complements
+  "Adopt an existing study".
+
 # hvtiRtemplates 1.2.1
 
 * Eight qualified `lm` templates now cover binary, ordinal and nominal outcome
