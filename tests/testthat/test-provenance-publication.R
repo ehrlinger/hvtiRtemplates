@@ -194,7 +194,7 @@ test_that("one rollback inspection error does not prevent restoring other hook f
           file.copy(from, to, overwrite = overwrite)
         },
         .provenance_file_unchanged = function(path, state) {
-          if (identical(path, normalizePath(hook_paths[[1L]], mustWork = FALSE))) stop("pre hook is unreadable")
+          if (identical(path, normalizePath(hook_paths[[1L]], winslash = "/", mustWork = FALSE))) stop("pre hook is unreadable")
           real_unchanged(path, state)
         },
         .package = "hvtiRtemplates"
@@ -247,6 +247,13 @@ test_that("embedded payloads are HTML-safe and exactly recoverable", {
   expect_false(grepl("</script><script>", html, fixed = TRUE))
   expect_true(grepl("\\u003c", html, fixed = TRUE))
   expect_true(grepl("\\u0026", html, fixed = TRUE))
+  expect_identical(.extract_provenance(html, managed = TRUE), payload)
+})
+
+test_that("a payload past the millionth character is still recovered", {
+  payload <- list(job = "one")
+  html <- paste0(strrep("\u00e9", 1100000L), .provenance_html(payload))
+
   expect_identical(.extract_provenance(html, managed = TRUE), payload)
 })
 

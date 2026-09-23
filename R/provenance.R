@@ -732,7 +732,8 @@
   }
   if (length(starts) != 1L) stop("Managed HTML must contain exactly one provenance payload.", call. = FALSE)
   start <- starts[[1L]] + nchar(opener)
-  remainder <- substring(html, start)
+  # An explicit `last`: before R 4.6, substring() defaulted to last = 1000000L, and a self-contained page is larger.
+  remainder <- substring(html, start, nchar(html))
   close <- regexpr("</script>", remainder, fixed = TRUE)[[1L]]
   if (close < 1L) stop("Managed HTML contains a malformed provenance payload element.", call. = FALSE)
   json <- substring(remainder, 1L, close - 1L)
