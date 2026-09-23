@@ -82,8 +82,11 @@ answer, because `%inc` had nothing to pin.
 the study without replacing existing project settings or user hooks. Every
 managed render captures the registered data actually read, embeds its runtime
 payload in the completed HTML, and publishes a same-stem
-`.provenance.json` beside Quarto's actual output. A failed render or publication
-leaves no current sidecar.
+`.provenance.json` beside Quarto's actual output. A failed render leaves the
+prior completed HTML and sidecar together when the output stays untouched. If
+publication fails after an output changes, the hooks expose a prior sidecar only
+when its recorded output hash still matches. Otherwise they withhold the
+sidecar and retain its recovery backup with a warning.
 
 Templates are `<prefix>[-<qualifier>].qmd` in a numbered directory
 (`20_distributions/ac.qmd`); a job is

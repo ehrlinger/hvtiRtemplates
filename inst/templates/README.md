@@ -315,7 +315,10 @@ it actually reads and embeds the runtime payload in its HTML; after Quarto has
 finished the output, the post-render hook publishes the matching
 `.provenance.json` beside that actual output. Rendering a copied job outside
 its configured study stops with a setup message instead of writing a sidecar
-directly. If rendering or publication fails, no current sidecar remains.
+directly. A failed render preserves the prior sidecar while its output stays
+unchanged. If publication fails after the output changes, the hooks withhold a
+prior sidecar whose recorded hash no longer matches and report the retained
+recovery backup.
 
 The guard does not catch a marker that was worked *wrongly* — a placeholder
 replaced with a mistyped column name leaves nothing to scan for. That case is

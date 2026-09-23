@@ -303,7 +303,7 @@ test_that("file data capture snapshots the file actually read", {
   )
 })
 
-test_that("pre-render invalidates only matching sources and post-render rejects stale payloads", {
+test_that("sidecar publication replaces matching sources and withholds stale rollback pairs", {
   root <- make_hook_study(withr::local_tempdir())
   .install_provenance_hooks(root)
   managed <- file.path(root, "managed.qmd")
@@ -320,8 +320,10 @@ test_that("pre-render invalidates only matching sources and post-render rejects 
   }
 
   state <- .provenance_pre_render(root, inputs = managed)
-  expect_false(file.exists(file.path(root, "managed.provenance.json")))
+  expect_true(file.exists(file.path(root, "managed.provenance.json")))
   expect_true(file.exists(file.path(root, "other.provenance.json")))
+  expect_length(state$sidecar_backups, 1L)
+  expect_true(file.exists(state$sidecar_backups[[1L]]$backup))
 
   current <- c(
     hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
@@ -330,12 +332,24 @@ test_that("pre-render invalidates only matching sources and post-render rejects 
   writeLines(.provenance_html(current), file.path(root, "managed.html"))
   .provenance_post_render(root, outputs = file.path(root, "managed.html"))
   expect_true(file.exists(file.path(root, "managed.provenance.json")))
+  expect_false(file.exists(state$sidecar_backups[[1L]]$backup))
 
+  prior_bytes <- readBin(file.path(root, "managed.provenance.json"), "raw",
+                         n = file.info(file.path(root, "managed.provenance.json"))$size)
   state <- .provenance_pre_render(root, inputs = managed)
   current$.hvti_render_id <- "stale"
   writeLines(.provenance_html(current), file.path(root, "managed.html"))
-  expect_error(.provenance_post_render(root, outputs = file.path(root, "managed.html")), "stale")
+  expect_warning(
+    expect_error(.provenance_post_render(root, outputs = file.path(root, "managed.html")), "stale"),
+    "does not match the current output"
+  )
   expect_false(file.exists(file.path(root, "managed.provenance.json")))
+  expect_identical(
+    readBin(state$sidecar_backups[[1L]]$backup, "raw",
+            n = file.info(state$sidecar_backups[[1L]]$backup)$size),
+    prior_bytes
+  )
+  expect_false(file.exists(.provenance_state_path(root)))
 })
 
 test_that("Quarto file lists may be direct or file-backed", {
@@ -363,7 +377,7 @@ test_that("pre-render ignores unmanaged non-QMD inputs", {
   expect_identical(unlist(state$managed_sources, use.names = FALSE), "managed.qmd")
 })
 
-test_that("pre-render invalidates matching sidecars in hidden output directories", {
+test_that("pre-render preserves matching sidecars in hidden output directories", {
   root <- make_hook_study(withr::local_tempdir())
   .install_provenance_hooks(root)
   managed <- file.path(root, "managed.qmd")
@@ -377,9 +391,14 @@ test_that("pre-render invalidates matching sidecars in hidden output directories
   )
   hvtiRutilities::publish_provenance(output, payload)
 
-  .provenance_pre_render(root, inputs = managed)
+  state <- .provenance_pre_render(root, inputs = managed)
 
-  expect_false(file.exists(hvtiRutilities::provenance_path(output)))
+  expect_true(file.exists(hvtiRutilities::provenance_path(output)))
+  expect_identical(
+    state$sidecar_backups[[1L]]$path,
+    .provenance_normalize_path(hvtiRutilities::provenance_path(output))
+  )
+  expect_true(file.exists(state$sidecar_backups[[1L]]$backup))
 })
 
 test_that("document-level freeze is resolved by Quarto", {
@@ -392,17 +411,478 @@ test_that("document-level freeze is resolved by Quarto", {
   expect_true(.provenance_source_frozen(source))
 })
 
-test_that("post-render fails when a managed source has no payload", {
+test_that("Quarto omits post-render after a document execution error", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required")
+  root <- withr::local_tempdir()
+  writeLines(c(
+    "project:",
+    "  type: default",
+    "  pre-render: pre.R",
+    "  post-render: post.R"
+  ), file.path(root, "_quarto.yml"))
+  writeLines("writeLines('pre', 'pre-ran')", file.path(root, "pre.R"))
+  writeLines("writeLines('post', 'post-ran')", file.path(root, "post.R"))
+  input <- file.path(root, "fail.qmd")
+  fence <- paste(rep("\u0060", 3L), collapse = "")
+  writeLines(c(
+    "---",
+    "title: failure",
+    "format: html",
+    "---",
+    "",
+    paste0(fence, "{r}"),
+    "stop('deliberate render failure')",
+    fence
+  ), input)
+
+  expect_error(quarto::quarto_render(input, execute_dir = root, quiet = TRUE), "Error running quarto CLI")
+
+  expect_true(file.exists(file.path(root, "pre-ran")))
+  expect_false(file.exists(file.path(root, "post-ran")))
+})
+
+test_that("a render failure before post-render leaves the prior sidecar in place", {
   root <- make_hook_study(withr::local_tempdir())
   .install_provenance_hooks(root)
   source <- file.path(root, "managed.qmd")
   output <- file.path(root, "managed.html")
   writeLines("hvtiRtemplates:::.embed_provenance()", source)
   writeLines("<html>payload missing</html>", output)
+  prior <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, prior)
+  sidecar <- hvtiRutilities::provenance_path(output)
+  prior_bytes <- readBin(sidecar, "raw", n = file.info(sidecar)$size)
+
   .provenance_pre_render(root, inputs = source)
 
+  expect_identical(readBin(sidecar, "raw", n = file.info(sidecar)$size), prior_bytes)
   expect_error(.provenance_post_render(root, outputs = output), "missing a current provenance payload")
+  expect_identical(readBin(sidecar, "raw", n = file.info(sidecar)$size), prior_bytes)
+  restored <- jsonlite::read_json(sidecar, simplifyVector = FALSE)
+  expect_identical(restored$output$sha256, digest::digest(output, algo = "sha256", file = TRUE))
+})
+
+test_that("a multi-output failure removes partial sidecars and withholds mismatched prior ones", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  sources <- file.path(root, c("one.qmd", "two.qmd"))
+  outputs <- file.path(root, c("one.html", "two.html"))
+  writeLines("hvtiRtemplates:::.embed_provenance()", sources[[1L]])
+  writeLines("hvtiRtemplates:::.embed_provenance()", sources[[2L]])
+  writeLines("old one", outputs[[1L]])
+  writeLines("old two", outputs[[2L]])
+  old_two <- c(
+    hvtiRutilities::capture_provenance("two", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "two.qmd")
+  )
+  hvtiRutilities::publish_provenance(outputs[[2L]], old_two)
+  two_sidecar <- hvtiRutilities::provenance_path(outputs[[2L]])
+  old_two_bytes <- readBin(two_sidecar, "raw", n = file.info(two_sidecar)$size)
+
+  state <- .provenance_pre_render(root, inputs = sources)
+  current_one <- c(
+    hvtiRutilities::capture_provenance("one", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "one.qmd", .hvti_render_id = state$render_id)
+  )
+  writeLines(.provenance_html(current_one), outputs[[1L]])
+  writeLines("<html>two failed</html>", outputs[[2L]])
+
+  expect_warning(
+    expect_error(.provenance_post_render(root, outputs = outputs), "missing a current provenance payload"),
+    "does not match the current output"
+  )
+  expect_false(file.exists(hvtiRutilities::provenance_path(outputs[[1L]])))
+  expect_false(file.exists(two_sidecar))
+  expect_identical(
+    readBin(state$sidecar_backups[[1L]]$backup, "raw", n = file.info(state$sidecar_backups[[1L]]$backup)$size),
+    old_two_bytes
+  )
+  prior_record <- jsonlite::read_json(state$sidecar_backups[[1L]]$backup, simplifyVector = FALSE)
+  expect_false(identical(prior_record$output$sha256, digest::digest(outputs[[2L]], algo = "sha256", file = TRUE)))
+  expect_false(file.exists(.provenance_state_path(root)))
+})
+
+test_that("a failed sidecar restoration warns with the retained backup path", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  source <- file.path(root, "managed.qmd")
+  output <- file.path(root, "managed.html")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  writeLines("old html", output)
+  prior <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, prior)
+  state <- .provenance_pre_render(root, inputs = source)
+  unlink(hvtiRutilities::provenance_path(output))
+
+  rollback_warning <- NULL
+  expect_error(
+    withCallingHandlers(
+      testthat::with_mocked_bindings(
+        .provenance_post_render(root, outputs = output),
+        .restore_provenance_file = function(...) stop("sidecar is locked"),
+        .package = "hvtiRtemplates"
+      ),
+      warning = function(warning) {
+        rollback_warning <<- conditionMessage(warning)
+        invokeRestart("muffleWarning")
+      }
+    ),
+    "missing a current provenance payload"
+  )
+
+  expect_match(rollback_warning, "sidecar is locked")
+  expect_match(rollback_warning, state$sidecar_backups[[1L]]$backup, fixed = TRUE)
+  expect_true(file.exists(state$sidecar_backups[[1L]]$backup))
+})
+
+test_that("abandoned recovery removes a durably recorded partial publication", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  source <- file.path(root, "managed.qmd")
+  output <- file.path(root, "managed.html")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  writeLines("new html", output)
+  state <- .provenance_pre_render(root, inputs = source)
+  sidecar <- .provenance_normalize_path(hvtiRutilities::provenance_path(output))
+  payload <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  state$replacement_started <- list(sidecar)
+  .write_json_atomic(state, .provenance_state_path(root))
+  hvtiRutilities::publish_provenance(output, payload)
+
+  .recover_abandoned_render(root)
+
+  expect_false(file.exists(sidecar))
+  expect_false(file.exists(.provenance_state_path(root)))
+})
+
+test_that("an interrupted portable state replacement recovers the prior complete state", {
+  root <- withr::local_tempdir()
+  dir.create(file.path(root, ".hvtiR"))
+  path <- .provenance_state_path(root)
+  .write_json_atomic(list(value = "old"), path)
+  real_rename <- .rename_provenance_file
+  calls <- 0L
+
+  expect_error(
+    testthat::with_mocked_bindings(
+      .write_json_atomic(list(value = "new"), path),
+      .rename_provenance_file = function(from, to) {
+        calls <<- calls + 1L
+        if (calls == 1L) return(FALSE)
+        if (calls == 2L) return(real_rename(from, to))
+        stop("simulated interrupted state replacement")
+      },
+      .package = "hvtiRtemplates"
+    ),
+    "simulated interrupted state replacement"
+  )
+
+  expect_identical(.read_provenance_state(root)$value, "old")
+  expect_true(file.exists(path))
+})
+
+test_that("post-render persists replacement intent before publishing", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  source <- file.path(root, "managed.qmd")
+  output <- file.path(root, "managed.html")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  state <- .provenance_pre_render(root, inputs = source)
+  payload <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd", .hvti_render_id = state$render_id)
+  )
+  writeLines(.provenance_html(payload), output)
+  observed <- NULL
+
+  expect_error(
+    testthat::with_mocked_bindings(
+      .provenance_post_render(root, outputs = output),
+      publish_provenance = function(...) {
+        observed <<- .read_provenance_state(root)
+        stop("simulated publication crash")
+      },
+      .package = "hvtiRutilities"
+    ),
+    "simulated publication crash"
+  )
+
+  expect_identical(
+    unlist(observed$replacement_started, use.names = FALSE),
+    .provenance_normalize_path(hvtiRutilities::provenance_path(output))
+  )
+})
+
+test_that("abandoned recovery withholds a prior sidecar when its output changed", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  source <- file.path(root, "managed.qmd")
+  output <- file.path(root, "managed.html")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  writeLines("old html", output)
+  prior <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, prior)
+  state <- .provenance_pre_render(root, inputs = source)
+  sidecar <- hvtiRutilities::provenance_path(output)
+  backup <- state$sidecar_backups[[1L]]$backup
+  prior_record <- jsonlite::read_json(backup, simplifyVector = FALSE)
+  writeLines("new html", output)
+
+  expect_warning(.recover_abandoned_render(root), backup, fixed = TRUE)
+
+  expect_false(file.exists(sidecar))
+  expect_true(file.exists(backup))
+  expect_false(file.exists(.provenance_state_path(root)))
+  expect_false(identical(prior_record$output$sha256, digest::digest(output, algo = "sha256", file = TRUE)))
+
+  current <- .provenance_pre_render(root, inputs = source)
+  expect_length(current$sidecar_backups, 0L)
+  expect_true(file.exists(.provenance_state_path(root)))
+})
+
+test_that("committed abandoned recovery tolerates already removed backups", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  source <- file.path(root, "managed.qmd")
+  output <- file.path(root, "managed.html")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  writeLines("old html", output)
+  prior <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, prior)
+  state <- .provenance_pre_render(root, inputs = source)
+  writeLines("new html", output)
+  current <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  sidecar <- .provenance_normalize_path(hvtiRutilities::provenance_path(output))
+  hvtiRutilities::publish_provenance(output, current)
+  current_bytes <- readBin(sidecar, "raw", n = file.info(sidecar)$size)
+  state$replacement_started <- list(sidecar)
+  state$committed <- TRUE
+  .write_json_atomic(state, .provenance_state_path(root))
+  unlink(state$sidecar_backups[[1L]]$backup)
+
+  .recover_abandoned_render(root)
+
+  expect_identical(readBin(sidecar, "raw", n = file.info(sidecar)$size), current_bytes)
+  expect_false(file.exists(.provenance_state_path(root)))
+})
+
+test_that("committed abandoned recovery removes surviving backups without rollback", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  source <- file.path(root, "managed.qmd")
+  output <- file.path(root, "managed.html")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  writeLines("old html", output)
+  prior <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, prior)
+  state <- .provenance_pre_render(root, inputs = source)
+  writeLines("new html", output)
+  current <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  sidecar <- .provenance_normalize_path(hvtiRutilities::provenance_path(output))
+  hvtiRutilities::publish_provenance(output, current)
+  current_bytes <- readBin(sidecar, "raw", n = file.info(sidecar)$size)
+  backup <- state$sidecar_backups[[1L]]$backup
+  state$replacement_started <- list(sidecar)
+  state$committed <- TRUE
+  .write_json_atomic(state, .provenance_state_path(root))
+
+  .recover_abandoned_render(root)
+
+  expect_identical(readBin(sidecar, "raw", n = file.info(sidecar)$size), current_bytes)
+  expect_false(file.exists(backup))
+  expect_false(file.exists(.provenance_state_path(root)))
+})
+
+test_that("a locked prior-state fallback cannot displace committed primary state", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  source <- file.path(root, "managed.qmd")
+  output <- file.path(root, "managed.html")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  writeLines("old html", output)
+  prior <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, prior)
+  state <- .provenance_pre_render(root, inputs = source)
+  writeLines("new html", output)
+  current <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  sidecar <- .provenance_normalize_path(hvtiRutilities::provenance_path(output))
+  hvtiRutilities::publish_provenance(output, current)
+  current_bytes <- readBin(sidecar, "raw", n = file.info(sidecar)$size)
+  state$replacement_started <- list(sidecar)
+  state$committed <- TRUE
+  state_path <- .provenance_state_path(root)
+  .write_json_atomic(state, state_path)
+  previous <- .provenance_prior_state_path(state_path)
+  stale <- state
+  stale$committed <- FALSE
+  jsonlite::write_json(stale, previous, auto_unbox = TRUE, null = "null", pretty = TRUE)
+  real_unlink <- .unlink_provenance_state
+
+  expect_error(
+    testthat::with_mocked_bindings(
+      .recover_abandoned_render(root),
+      .unlink_provenance_state = function(path) {
+        if (identical(path, previous)) return(1L)
+        real_unlink(path)
+      },
+      .package = "hvtiRtemplates"
+    ),
+    previous,
+    fixed = TRUE
+  )
+  expect_true(file.exists(state_path))
+  expect_true(file.exists(previous))
+  expect_identical(readBin(sidecar, "raw", n = file.info(sidecar)$size), current_bytes)
+
+  .recover_abandoned_render(root)
+  next_state <- .provenance_pre_render(root, inputs = source)
+
+  expect_identical(readBin(sidecar, "raw", n = file.info(sidecar)$size), current_bytes)
+  expect_length(next_state$sidecar_backups, 1L)
+})
+
+test_that("multi-sidecar recovery retries after a later restore fails", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  sources <- file.path(root, c("one.qmd", "two.qmd"))
+  outputs <- file.path(root, c("one.html", "two.html"))
+  sidecars <- vapply(outputs, hvtiRutilities::provenance_path, character(1L))
+  for (i in seq_along(sources)) {
+    writeLines("hvtiRtemplates:::.embed_provenance()", sources[[i]])
+    writeLines(paste("old", i), outputs[[i]])
+    prior <- c(
+      hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+      list(source = basename(sources[[i]]))
+    )
+    hvtiRutilities::publish_provenance(outputs[[i]], prior)
+  }
+  state <- .provenance_pre_render(root, inputs = sources)
+  unlink(sidecars)
+  real_restore <- .restore_provenance_file
+  calls <- 0L
+
+  expect_error(
+    testthat::with_mocked_bindings(
+      .recover_abandoned_render(root),
+      .restore_provenance_file = function(...) {
+        calls <<- calls + 1L
+        if (calls == 2L) stop("second restore locked")
+        real_restore(...)
+      },
+      .package = "hvtiRtemplates"
+    ),
+    "second restore locked"
+  )
+  expect_true(all(file.exists(vapply(state$sidecar_backups, `[[`, character(1L), "backup"))))
+  expect_true(file.exists(.provenance_state_path(root)))
+
+  .recover_abandoned_render(root)
+
+  expect_true(all(file.exists(sidecars)))
+  for (i in seq_along(outputs)) {
+    restored <- jsonlite::read_json(sidecars[[i]], simplifyVector = FALSE)
+    expect_identical(restored$output$sha256, digest::digest(outputs[[i]], algo = "sha256", file = TRUE))
+  }
+  expect_false(any(file.exists(vapply(state$sidecar_backups, `[[`, character(1L), "backup"))))
+  expect_false(file.exists(.provenance_state_path(root)))
+})
+
+test_that("pre-render cleans an abandoned backup when the sidecar is unchanged", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  source <- file.path(root, "managed.qmd")
+  output <- file.path(root, "managed.html")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  writeLines("old html", output)
+  prior <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, prior)
+
+  abandoned <- .provenance_pre_render(root, inputs = source)
+  current <- .provenance_pre_render(root, inputs = source)
+
+  expect_false(file.exists(abandoned$sidecar_backups[[1L]]$backup))
+  expect_true(file.exists(current$sidecar_backups[[1L]]$backup))
+  expect_length(list.files(root, pattern = "-backup-", recursive = TRUE, all.files = TRUE), 1L)
+})
+
+test_that("pre-render recovers an abandoned sidecar before starting another render", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  source <- file.path(root, "managed.qmd")
+  output <- file.path(root, "managed.html")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  writeLines("old html", output)
+  prior <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, prior)
+  sidecar <- hvtiRutilities::provenance_path(output)
+  prior_bytes <- readBin(sidecar, "raw", n = file.info(sidecar)$size)
+
+  abandoned <- .provenance_pre_render(root, inputs = source)
+  unlink(sidecar)
+  current <- .provenance_pre_render(root, inputs = source)
+
+  expect_identical(readBin(sidecar, "raw", n = file.info(sidecar)$size), prior_bytes)
+  restored <- jsonlite::read_json(sidecar, simplifyVector = FALSE)
+  expect_identical(restored$output$sha256, digest::digest(output, algo = "sha256", file = TRUE))
+  expect_false(file.exists(abandoned$sidecar_backups[[1L]]$backup))
+  expect_true(file.exists(current$sidecar_backups[[1L]]$backup))
+})
+
+test_that("a successful unmanaged render retires the source's old sidecar", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  source <- file.path(root, "ordinary.qmd")
+  output <- file.path(root, "ordinary.html")
+  writeLines("ordinary source", source)
+  writeLines("ordinary html", output)
+  prior <- c(
+    hvtiRutilities::capture_provenance("ordinary", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "ordinary.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, prior)
+
+  state <- .provenance_pre_render(root, inputs = source)
+  .provenance_post_render(root, outputs = output)
+
   expect_false(file.exists(hvtiRutilities::provenance_path(output)))
+  expect_false(file.exists(state$sidecar_backups[[1L]]$backup))
 })
 
 test_that("frozen HTML retains its execution payload when the source is unchanged", {
@@ -413,6 +893,12 @@ test_that("frozen HTML retains its execution payload when the source is unchange
   source <- file.path(root, "managed.qmd")
   output <- file.path(root, "managed.html")
   writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  writeLines("old html", output)
+  prior <- c(
+    hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
+    list(source = "managed.qmd")
+  )
+  hvtiRutilities::publish_provenance(output, prior)
   state <- .provenance_pre_render(root, inputs = source)
   payload <- c(
     hvtiRutilities::capture_provenance("managed", data = list(), cfg = hvtiRutilities::study_config(root)),
@@ -429,4 +915,5 @@ test_that("frozen HTML retains its execution payload when the source is unchange
 
   record <- jsonlite::read_json(hvtiRutilities::provenance_path(output), simplifyVector = FALSE)
   expect_identical(record$rendered, original_rendered)
+  expect_false(file.exists(state$sidecar_backups[[1L]]$backup))
 })

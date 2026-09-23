@@ -333,8 +333,16 @@
   gsub("([][{}()+*^$|\\\\.?])", "\\\\\\1", x)
 }
 
+.provenance_normalize_path <- function(path) {
+  file.path(normalizePath(dirname(path), winslash = "/", mustWork = TRUE), basename(path))
+}
+
 .provenance_state_path <- function(root) {
   file.path(root, ".hvtiR", "provenance-render.json")
+}
+
+.provenance_prior_state_path <- function(path) {
+  paste0(path, ".previous")
 }
 
 .write_json_atomic <- function(value, path) {
@@ -342,14 +350,37 @@
   temporary <- tempfile(pattern = paste0(".", basename(path), "-"), tmpdir = dirname(path), fileext = ".tmp")
   on.exit(if (file.exists(temporary)) unlink(temporary), add = TRUE)
   jsonlite::write_json(value, temporary, auto_unbox = TRUE, null = "null", pretty = TRUE)
-  if (!file.copy(temporary, path, overwrite = TRUE)) {
+  previous <- .provenance_prior_state_path(path)
+  if (!file.exists(path)) {
+    if (!.rename_provenance_file(temporary, path)) {
+      stop("Could not publish render provenance state: ", path, ".", call. = FALSE)
+    }
+    return(invisible(path))
+  }
+  if (.rename_provenance_file(temporary, path)) {
+    if (file.exists(previous)) unlink(previous)
+    return(invisible(path))
+  }
+  if (file.exists(previous) && unlink(previous) != 0L) {
+    stop("Could not clear the prior render provenance state fallback: ", previous, ".", call. = FALSE)
+  }
+  if (!.rename_provenance_file(path, previous)) {
+    stop("Could not preserve the prior render provenance state: ", path, ".", call. = FALSE)
+  }
+  if (!.rename_provenance_file(temporary, path)) {
+    .rename_provenance_file(previous, path)
     stop("Could not write render provenance state: ", path, ".", call. = FALSE)
   }
+  if (file.exists(previous)) unlink(previous)
   invisible(path)
 }
 
 .read_provenance_state <- function(root) {
   path <- .provenance_state_path(root)
+  previous <- .provenance_prior_state_path(path)
+  if (!file.exists(path) && file.exists(previous) && !.rename_provenance_file(previous, path)) {
+    path <- previous
+  }
   if (!file.exists(path)) {
     stop("The provenance pre-render hook did not create render state. Run add_job() to install the study hooks.", call. = FALSE)
   }
@@ -357,6 +388,159 @@
     jsonlite::read_json(path, simplifyVector = FALSE),
     error = function(e) stop("The provenance render state is malformed: ", conditionMessage(e), call. = FALSE)
   )
+}
+
+.unlink_provenance_state <- function(path) {
+  unlink(path)
+}
+
+.remove_provenance_state <- function(root) {
+  path <- .provenance_state_path(root)
+  paths <- c(.provenance_prior_state_path(path), path)
+  for (candidate in paths[file.exists(paths)]) {
+    if (.unlink_provenance_state(candidate) != 0L) return(candidate)
+  }
+  character()
+}
+
+.provenance_sidecar_backups <- function(state) {
+  backups <- state$sidecar_backups
+  if (!is.list(backups)) {
+    stop("The provenance render state has malformed sidecar backups.", call. = FALSE)
+  }
+  valid <- vapply(backups, function(backup) {
+    is.list(backup) &&
+      is.character(backup$path) && length(backup$path) == 1L && !is.na(backup$path) && nzchar(backup$path) &&
+      is.character(backup$backup) && length(backup$backup) == 1L && !is.na(backup$backup) && nzchar(backup$backup)
+  }, logical(1L))
+  if (!all(valid)) {
+    stop("The provenance render state has malformed sidecar backups.", call. = FALSE)
+  }
+  backups
+}
+
+.provenance_render_progress <- function(state) {
+  replacements <- state$replacement_started
+  committed <- state$committed
+  valid_replacements <- is.list(replacements) && all(vapply(replacements, function(path) {
+    is.character(path) && length(path) == 1L && !is.na(path) && nzchar(path)
+  }, logical(1L)))
+  if (!valid_replacements || !is.logical(committed) || length(committed) != 1L || is.na(committed)) {
+    stop("The provenance render state has malformed publication progress.", call. = FALSE)
+  }
+  list(replacements = unlist(replacements, use.names = FALSE), committed = committed)
+}
+
+.provenance_pair_matches <- function(record) {
+  prior <- tryCatch(
+    jsonlite::read_json(record$backup, simplifyVector = FALSE),
+    error = function(error) stop("Cannot read the recovery backup: ", conditionMessage(error), call. = FALSE)
+  )
+  output <- prior$output
+  valid <- is.list(output) &&
+    is.character(output$file) && length(output$file) == 1L && !is.na(output$file) && nzchar(output$file) &&
+    identical(basename(output$file), output$file) &&
+    is.character(output$sha256) && length(output$sha256) == 1L && !is.na(output$sha256) && nzchar(output$sha256)
+  if (!valid) stop("The recovery backup has malformed output identity.", call. = FALSE)
+  path <- file.path(dirname(record$path), output$file)
+  file.exists(path) && !dir.exists(path) && identical(digest::digest(path, algo = "sha256", file = TRUE), output$sha256)
+}
+
+.cleanup_provenance_backups <- function(backups) {
+  failures <- character()
+  paths <- unique(vapply(backups, `[[`, character(1L), "backup"))
+  for (path in paths[file.exists(paths)]) {
+    if (unlink(path) != 0L) failures <- c(failures, paste0(path, ": could not remove the recovery backup."))
+  }
+  failures
+}
+
+.restore_provenance_sidecars <- function(backups, remove = character()) {
+  failures <- character()
+  withheld <- character()
+  cleanup <- character()
+  backed_up <- vapply(backups, `[[`, character(1L), "path")
+  for (record in backups) {
+    tryCatch(
+      {
+        state <- .provenance_file_state(record$backup)
+        if (!state$exists) stop("The recovery backup is missing.", call. = FALSE)
+        matches <- .provenance_pair_matches(record)
+        if (!matches) {
+          if (file.exists(record$path) && unlink(record$path) != 0L) {
+            stop("Could not withhold the sidecar whose output changed.", call. = FALSE)
+          }
+          withheld <- c(
+            withheld,
+            paste0(
+              record$path, ": its recorded output hash does not match the current output. ",
+              "The sidecar was withheld; recovery bytes remain at '", record$backup, "'."
+            )
+          )
+          next
+        }
+        if (!.provenance_file_unchanged(record$path, state)) {
+          working <- .backup_provenance_file(record$backup, state)
+          tryCatch(
+            .restore_provenance_file(record$path, state, working),
+            finally = if (file.exists(working)) unlink(working)
+          )
+        }
+        cleanup <- c(cleanup, record$backup)
+      },
+      error = function(error) {
+        failures <<- c(
+          failures,
+          paste0(record$path, ": ", conditionMessage(error), " Original bytes remain at '", record$backup, "'.")
+        )
+      }
+    )
+  }
+  for (path in setdiff(unique(remove), backed_up)) {
+    if (file.exists(path) && unlink(path) != 0L) {
+      failures <- c(failures, paste0(path, ": could not remove the unpublished sidecar."))
+    }
+  }
+  list(failures = failures, withheld = withheld, cleanup = cleanup)
+}
+
+.recover_abandoned_render <- function(root) {
+  state_path <- .provenance_state_path(root)
+  previous <- .provenance_prior_state_path(state_path)
+  if (!file.exists(state_path) && !file.exists(previous)) return(invisible(NULL))
+  state <- .read_provenance_state(root)
+  backups <- .provenance_sidecar_backups(state)
+  progress <- .provenance_render_progress(state)
+  if (progress$committed) {
+    failures <- character()
+    withheld <- character()
+    cleanup <- vapply(backups, `[[`, character(1L), "backup")
+  } else {
+    rollback <- .restore_provenance_sidecars(backups, progress$replacements)
+    failures <- rollback$failures
+    withheld <- rollback$withheld
+    cleanup <- rollback$cleanup
+  }
+  if (length(failures)) {
+    stop("Could not recover the prior provenance render: ", paste(failures, collapse = "; "), call. = FALSE)
+  }
+  state_failures <- .remove_provenance_state(root)
+  if (length(state_failures)) {
+    stop("Could not remove the recovered provenance render state: ",
+         paste(state_failures, collapse = "; "), ".", call. = FALSE)
+  }
+  cleanup_failures <- .cleanup_provenance_backups(
+    lapply(unique(cleanup), function(path) list(backup = path))
+  )
+  if (length(cleanup_failures)) {
+    warning("Recovered provenance but could not remove recovery backups: ",
+            paste(cleanup_failures, collapse = "; "), call. = FALSE)
+  }
+  if (length(withheld)) {
+    warning("Recovered the prior provenance render with withheld sidecars: ",
+            paste(withheld, collapse = "; "), call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 .quarto_project_files <- function(name, root) {
@@ -560,6 +744,7 @@
 
 .provenance_pre_render <- function(root = Sys.getenv("QUARTO_PROJECT_DIR", unset = getwd()), inputs = NULL) {
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  .recover_abandoned_render(root)
   .assert_provenance_hooks(root)
   if (is.null(inputs)) inputs <- .quarto_project_files("QUARTO_PROJECT_INPUT_FILES", root)
   extensions <- tolower(tools::file_ext(inputs))
@@ -572,12 +757,26 @@
   sidecars <- list.files(
     root, pattern = "[.]provenance[.]json$", recursive = TRUE, full.names = TRUE, all.files = TRUE
   )
+  backups <- list()
+  state_written <- FALSE
+  on.exit({
+    if (!state_written && length(backups)) {
+      backup_paths <- vapply(backups, `[[`, character(1L), "backup")
+      unlink(backup_paths[file.exists(backup_paths)])
+    }
+  }, add = TRUE)
   for (sidecar in sidecars) {
     record <- tryCatch(
       jsonlite::read_json(sidecar, simplifyVector = FALSE),
       error = function(e) stop("Cannot inspect existing provenance sidecar '", sidecar, "': ", conditionMessage(e), call. = FALSE)
     )
-    if (is.character(record$source) && length(record$source) == 1L && record$source %in% sources) unlink(sidecar)
+    if (is.character(record$source) && length(record$source) == 1L && record$source %in% sources) {
+      state <- .provenance_file_state(sidecar)
+      backups[[length(backups) + 1L]] <- list(
+        path = .provenance_normalize_path(sidecar),
+        backup = .backup_provenance_file(sidecar, state)
+      )
+    }
   }
 
   state <- list(
@@ -587,9 +786,13 @@
       lapply(file.path(root, managed), digest::digest, algo = "sha256", file = TRUE),
       managed
     ),
-    frozen_sources = as.list(managed[vapply(file.path(root, managed), .provenance_source_frozen, logical(1L))])
+    frozen_sources = as.list(managed[vapply(file.path(root, managed), .provenance_source_frozen, logical(1L))]),
+    sidecar_backups = backups,
+    replacement_started = list(),
+    committed = FALSE
   )
   .write_json_atomic(state, .provenance_state_path(root))
+  state_written <- TRUE
   invisible(state)
 }
 
@@ -628,14 +831,55 @@
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
   state_path <- .provenance_state_path(root)
   state <- .read_provenance_state(root)
-  on.exit(if (file.exists(state_path)) unlink(state_path), add = TRUE)
+  backups <- .provenance_sidecar_backups(state)
+  progress <- .provenance_render_progress(state)
+  if (progress$committed || length(progress$replacements)) {
+    stop("The provenance render state already contains publication progress.", call. = FALSE)
+  }
   if (is.null(outputs)) outputs <- .quarto_project_files("QUARTO_PROJECT_OUTPUT_FILES", root)
   outputs <- outputs[tolower(tools::file_ext(outputs)) %in% c("html", "htm")]
   expected <- unlist(state$managed_sources, use.names = FALSE)
   seen <- character()
   published <- character()
   ok <- FALSE
-  on.exit(if (!ok && length(published)) unlink(published), add = TRUE)
+  on.exit({
+    if (ok) {
+      state_failures <- .remove_provenance_state(root)
+      if (length(state_failures)) {
+        warning("Published provenance but could not remove render state: ",
+                paste(state_failures, collapse = "; "), ".", call. = FALSE)
+      } else {
+        failures <- .cleanup_provenance_backups(backups)
+        if (length(failures)) {
+          warning("Published provenance but could not remove recovery backups: ",
+                  paste(failures, collapse = "; "), call. = FALSE)
+        }
+      }
+    } else {
+      rollback <- .restore_provenance_sidecars(backups, unlist(state$replacement_started, use.names = FALSE))
+      if (length(rollback$failures)) {
+        warning("Provenance publication rollback could not restore: ",
+                paste(rollback$failures, collapse = "; "), call. = FALSE)
+      } else {
+        state_failures <- .remove_provenance_state(root)
+        if (length(state_failures)) {
+          warning("Provenance publication rollback could not remove render state: ",
+                  paste(state_failures, collapse = "; "), ".", call. = FALSE)
+        } else {
+          cleanup <- lapply(unique(rollback$cleanup), function(path) list(backup = path))
+          cleanup_failures <- .cleanup_provenance_backups(cleanup)
+          if (length(cleanup_failures)) {
+            warning("Provenance publication rollback could not remove recovery backups: ",
+                    paste(cleanup_failures, collapse = "; "), call. = FALSE)
+          }
+        }
+        if (length(rollback$withheld)) {
+          warning("Provenance publication rollback withheld sidecars: ",
+                  paste(rollback$withheld, collapse = "; "), call. = FALSE)
+        }
+      }
+    }
+  }, add = TRUE)
 
   for (output in outputs) {
     html <- paste(readLines(output, warn = FALSE), collapse = "\n")
@@ -654,13 +898,25 @@
     seen <- c(seen, payload$source)
     payload$.hvti_render_id <- NULL
     payload$.hvti_source_sha256 <- NULL
+    sidecar <- .provenance_normalize_path(hvtiRutilities::provenance_path(output))
+    state$replacement_started <- c(state$replacement_started, list(sidecar))
+    .write_json_atomic(state, state_path)
     hvtiRutilities::publish_provenance(output, payload)
-    published <- c(published, hvtiRutilities::provenance_path(output))
+    published <- c(published, sidecar)
   }
   missing <- setdiff(expected, seen)
   if (length(missing)) {
     stop("Managed output is missing a current provenance payload for source: ", missing[[1L]], ".", call. = FALSE)
   }
+  prior <- vapply(backups, `[[`, character(1L), "path")
+  retired <- setdiff(prior, published)
+  for (sidecar in retired) {
+    if (file.exists(sidecar) && unlink(sidecar) != 0L) {
+      stop("Could not retire the prior provenance sidecar: ", sidecar, ".", call. = FALSE)
+    }
+  }
+  state$committed <- TRUE
+  .write_json_atomic(state, state_path)
   ok <- TRUE
   invisible(published)
 }

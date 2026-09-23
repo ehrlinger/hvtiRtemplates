@@ -788,7 +788,7 @@ test_that("document-level frozen renders retain their original execution payload
   expect_identical(second$rendered, first$rendered)
 })
 
-test_that("a Pandoc failure after execution leaves no stale sidecar", {
+test_that("a Pandoc failure after execution keeps the prior HTML-sidecar pair", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   root <- make_provenance_study(withr::local_tempdir())
@@ -797,14 +797,18 @@ test_that("a Pandoc failure after execution leaves no stale sidecar", {
     c('SUBJECT <- "cohort"', 'TYPE <- "pandoc"', 'DATASET <- "study"')
   )
   render_provenance_job(job, root)
+  html <- file.path(root, "cohort-pandoc-dc-general.html")
   sidecar <- file.path(root, "cohort-pandoc-dc-general.provenance.json")
   expect_true(file.exists(sidecar))
+  html_before <- readBin(html, "raw", n = file.info(html)$size)
+  sidecar_before <- readBin(sidecar, "raw", n = file.info(sidecar)$size)
   source <- readLines(job, warn = FALSE)
   source <- append(source, "filters: [missing-provenance-filter.lua]", after = 2L)
   writeLines(source, job)
 
   expect_error(render_provenance_job(job, root), "quarto CLI")
-  expect_false(file.exists(sidecar))
+  expect_identical(readBin(html, "raw", n = file.info(html)$size), html_before)
+  expect_identical(readBin(sidecar, "raw", n = file.info(sidecar)$size), sidecar_before)
 })
 
 test_that("existing later hooks run before publication so the checksum covers their changes", {

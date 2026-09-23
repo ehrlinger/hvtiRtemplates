@@ -13,9 +13,13 @@
   `.provenance.json` sidecar through study-level Quarto hooks. `add_job()`
   installs the hooks idempotently without replacing existing project settings
   or user hooks. Publication follows Quarto's actual output paths, invalidates
-  only the inputs being rendered, and fails closed after render or publication
-  errors. Records always carry the runtime subject and type and add only the
-  analysis and observed-cohort facts the job actually used.
+  only the inputs being rendered, preserves prior sidecars when a failed render
+  leaves its outputs untouched, and durably tracks multi-output publication.
+  Failed publication removes partial new sidecars and restores a prior sidecar
+  only while its recorded output hash still matches, retaining mismatched
+  backups for explicit recovery.
+  Records always carry the runtime subject and type and add only the analysis
+  and observed-cohort facts the job actually used.
 
 * Saved model and report handoffs now carry immutable `hvti_provenance`
   lineage. Random-forest explainers, logistic validation, bootstrap reports,
