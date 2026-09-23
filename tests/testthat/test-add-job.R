@@ -89,6 +89,26 @@ test_that("add_job leaves no job when provenance hooks cannot be installed", {
   expect_false(file.exists(file.path(dir, "20_distributions", "dead_pa-hz-ac.qmd")))
 })
 
+test_that("add_job rejects inline project mappings without installing hook files", {
+  dir <- tempfile("addjob-inline-quarto-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(
+    dir, study = "Inline Quarto", study_tracker_id = 1L
+  ))
+  config_path <- file.path(dir, "_quarto.yml")
+  writeLines("project: {type: default}", config_path)
+  before <- readLines(config_path, warn = FALSE)
+
+  expect_error(
+    add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir),
+    "inline project mappings"
+  )
+
+  expect_identical(readLines(config_path, warn = FALSE), before)
+  expect_false(any(file.exists(file.path(dir, .provenance_hook_files()))))
+  expect_false(file.exists(file.path(dir, "20_distributions", "dead_pa-hz-ac.qmd")))
+})
+
 test_that("add_job refuses a mixed study layout", {
   dir <- tempfile("addjob-mixed-")
   dir.create(file.path(dir, "distributions"), recursive = TRUE)

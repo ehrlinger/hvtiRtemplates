@@ -90,6 +90,37 @@
   append(lines, block, after = end - 1L)
 }
 
+.copy_provenance_file <- function(from, to, overwrite = FALSE) {
+  file.copy(from, to, overwrite = overwrite)
+}
+
+.provenance_file_state <- function(path) {
+  if (!file.exists(path)) return(list(exists = FALSE))
+  info <- file.info(path)
+  list(
+    exists = TRUE,
+    contents = readBin(path, "raw", n = info$size),
+    mode = info$mode
+  )
+}
+
+.restore_provenance_file <- function(path, state) {
+  if (!state$exists) {
+    if (file.exists(path)) unlink(path)
+    return(invisible(NULL))
+  }
+  if (!dir.exists(dirname(path))) dir.create(dirname(path), recursive = TRUE)
+  connection <- file(path, open = "wb")
+  on.exit(close(connection), add = TRUE)
+  writeBin(state$contents, connection)
+  Sys.chmod(path, mode = state$mode)
+  invisible(NULL)
+}
+
+.provenance_file_unchanged <- function(path, state) {
+  identical(.provenance_file_state(path), state)
+}
+
 .install_provenance_hooks <- function(root) {
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
   config_path <- file.path(root, "_quarto.yml")
@@ -117,19 +148,6 @@
     installed[[name]] <- project[[name]]
   }
 
-  hook_files <- .provenance_hook_files()
-  hook_dir <- file.path(root, dirname(hook_files[[1L]]))
-  if (!dir.exists(hook_dir)) dir.create(hook_dir, recursive = TRUE)
-  for (file in hook_files) {
-    source <- system.file("hooks", basename(file), package = "hvtiRtemplates")
-    if (!nzchar(source) || !file.exists(source)) {
-      stop("add_job(): installed provenance hook is missing: ", basename(file), ".", call. = FALSE)
-    }
-    if (!file.copy(source, file.path(root, file), overwrite = TRUE)) {
-      stop("add_job(): could not install provenance hook: ", file, ".", call. = FALSE)
-    }
-  }
-
   temporary <- tempfile(pattern = "_quarto-", tmpdir = root, fileext = ".yml")
   on.exit(if (file.exists(temporary)) unlink(temporary), add = TRUE)
   lines <- if (file.exists(config_path)) readLines(config_path, warn = FALSE) else character()
@@ -151,9 +169,50 @@
   for (name in names(installed)) lines <- .project_hook_lines(lines, name, installed[[name]])
   writeLines(lines, temporary)
   .read_quarto_config(temporary)
-  if (!file.copy(temporary, config_path, overwrite = TRUE)) {
+
+  hook_files <- .provenance_hook_files()
+  hook_sources <- file.path(system.file("hooks", package = "hvtiRtemplates"), basename(hook_files))
+  missing_source <- !nzchar(hook_sources) | !file.exists(hook_sources)
+  if (any(missing_source)) {
+    stop("add_job(): installed provenance hook is missing: ",
+         basename(hook_files[missing_source][[1L]]), ".", call. = FALSE)
+  }
+  hook_dir <- file.path(root, dirname(hook_files[[1L]]))
+  hook_dir_existed <- dir.exists(hook_dir)
+  targets <- c(config_path, file.path(root, hook_files))
+  states <- lapply(targets, .provenance_file_state)
+  ok <- FALSE
+  on.exit({
+    if (!ok) {
+      failures <- character()
+      for (i in rev(seq_along(targets))) {
+        if (.provenance_file_unchanged(targets[[i]], states[[i]])) next
+        tryCatch(
+          .restore_provenance_file(targets[[i]], states[[i]]),
+          error = function(error) {
+            failures <<- c(failures, paste0(targets[[i]], ": ", conditionMessage(error)))
+          }
+        )
+      }
+      if (length(failures)) {
+        warning("Provenance hook rollback could not restore: ", paste(failures, collapse = "; "), call. = FALSE)
+      }
+      if (!hook_dir_existed && dir.exists(hook_dir) && !length(list.files(hook_dir, all.files = TRUE, no.. = TRUE))) {
+        unlink(hook_dir)
+      }
+    }
+  }, add = TRUE)
+  if (!dir.exists(hook_dir)) dir.create(hook_dir, recursive = TRUE)
+  for (i in seq_along(hook_files)) {
+    if (!.copy_provenance_file(hook_sources[[i]], file.path(root, hook_files[[i]]), overwrite = TRUE)) {
+      stop("add_job(): could not install provenance hook: ", hook_files[[i]], ".", call. = FALSE)
+    }
+  }
+
+  if (!.copy_provenance_file(temporary, config_path, overwrite = TRUE)) {
     stop("add_job(): could not update _quarto.yml.", call. = FALSE)
   }
+  ok <- TRUE
   invisible(config_path)
 }
 

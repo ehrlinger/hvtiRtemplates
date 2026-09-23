@@ -100,6 +100,70 @@ test_that("hook installation refuses malformed Quarto configuration", {
   expect_identical(readLines(file.path(root, "_quarto.yml"), warn = FALSE), "project: [")
 })
 
+test_that("hook installation restores preexisting files when config publication fails", {
+  root <- make_hook_study(withr::local_tempdir())
+  config_path <- file.path(root, "_quarto.yml")
+  writeLines(c("project:", "  type: default"), config_path)
+  config_before <- readLines(config_path, warn = FALSE)
+  hook_paths <- file.path(root, .provenance_hook_files())
+  dir.create(dirname(hook_paths[[1L]]), recursive = TRUE)
+  hook_before <- c("existing pre hook", "existing post hook")
+  Map(writeLines, hook_before, hook_paths)
+  real_restore <- .restore_provenance_file
+  expect_error(
+    testthat::with_mocked_bindings(
+      .install_provenance_hooks(root),
+      .copy_provenance_file = function(from, to, overwrite = FALSE) {
+        if (identical(basename(to), "_quarto.yml")) return(FALSE)
+        file.copy(from, to, overwrite = overwrite)
+      },
+      .restore_provenance_file = function(path, state) {
+        if (identical(basename(path), "_quarto.yml")) stop("config is locked")
+        real_restore(path, state)
+      },
+      .package = "hvtiRtemplates"
+    ),
+    "could not update _quarto[.]yml"
+  )
+
+  expect_identical(readLines(config_path, warn = FALSE), config_before)
+  expect_identical(unname(vapply(hook_paths, readLines, character(1L), warn = FALSE)), hook_before)
+})
+
+test_that("one rollback error does not prevent restoring other hook files", {
+  root <- make_hook_study(withr::local_tempdir())
+  config_path <- file.path(root, "_quarto.yml")
+  writeLines(c("project:", "  type: default"), config_path)
+  config_before <- readLines(config_path, warn = FALSE)
+  hook_paths <- file.path(root, .provenance_hook_files())
+  dir.create(dirname(hook_paths[[1L]]), recursive = TRUE)
+  hook_before <- c("existing pre hook", "existing post hook")
+  Map(writeLines, hook_before, hook_paths)
+  real_restore <- .restore_provenance_file
+
+  expect_warning(
+    expect_error(
+      testthat::with_mocked_bindings(
+        .install_provenance_hooks(root),
+        .copy_provenance_file = function(from, to, overwrite = FALSE) {
+          if (identical(basename(to), "_quarto.yml")) return(FALSE)
+          file.copy(from, to, overwrite = overwrite)
+        },
+        .restore_provenance_file = function(path, state) {
+          if (identical(path, normalizePath(hook_paths[[1L]], mustWork = FALSE))) stop("pre hook is locked")
+          real_restore(path, state)
+        },
+        .package = "hvtiRtemplates"
+      ),
+      "could not update _quarto[.]yml"
+    ),
+    "rollback could not restore"
+  )
+
+  expect_identical(readLines(config_path, warn = FALSE), config_before)
+  expect_identical(readLines(hook_paths[[2L]], warn = FALSE), hook_before[[2L]])
+})
+
 test_that("render inputs resolve to one canonical study-relative qmd", {
   root <- make_hook_study(withr::local_tempdir())
   dir.create(file.path(root, "10_descriptive"), showWarnings = FALSE)

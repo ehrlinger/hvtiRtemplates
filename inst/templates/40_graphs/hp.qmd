@@ -219,6 +219,27 @@ EVENT <- "idead"
 .hz_read <- hvtiRtemplates:::.read_handoff(
   set_path("estimates", "hz.rds"), "hazard-model", .cfg, "the hz job"
 )
+.source_identity <- function(records) {
+  required <- c("dataset", "path", "bytes", "sha256")
+  lapply(records, function(record) {
+    if (!is.list(record) || !all(required %in% names(record))) {
+      stop("The ac and hz handoffs have incomplete source data lineage. Rebuild both upstream jobs.", call. = FALSE)
+    }
+    record[required]
+  })
+}
+if (!identical(.source_identity(.ac_read$lineage$data), .source_identity(.hz_read$lineage$data))) {
+  stop("The ac and hz handoffs have incompatible source data lineage. Rebuild both from the same source data.",
+       call. = FALSE)
+}
+for (.field in c("analysis", "cohort")) {
+  .ac_field <- .ac_read$lineage[[.field]]
+  .hz_field <- .hz_read$lineage[[.field]]
+  if (is.null(.ac_field) || is.null(.hz_field) || !identical(.ac_field, .hz_field)) {
+    stop("The ac and hz handoffs have incompatible ", .field,
+         " lineage. Rebuild both with matching analysis choices and cohort.", call. = FALSE)
+  }
+}
 ac_art <- .ac_read$value
 hz_art <- .hz_read$value
 .provenance_data <- c(.ac_read$lineage$data, .hz_read$lineage$data)

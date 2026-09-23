@@ -270,25 +270,91 @@ test_that("hp reads the exact ac and hz chain artifacts and carried data", {
   root <- rf_study()
   cfg <- hvtiRutilities::study_config(root)
   record <- hvtiRutilities::provenance_data(cfg = cfg, role = "training")
+  analysis <- list(
+    time = list(variable = "time"),
+    event = list(variable = "event", event = 1L, censored = 0L)
+  )
+  cohort <- list(n = 2L, n_events = 1L, n_censored = 1L)
   artifact_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "death-hz")
   dir.create(artifact_dir, recursive = TRUE)
   ac_path <- file.path(artifact_dir, "ac.rds")
   hz_path <- file.path(artifact_dir, "hz.rds")
-  ac <- hvtiRtemplates:::.attach_handoff_lineage(list(overall = data.frame(time = 1)), data = list(record))
-  hz <- hvtiRtemplates:::.attach_handoff_lineage(list(deterministic = list(ok = TRUE)), data = list(record))
+  ac <- hvtiRtemplates:::.attach_handoff_lineage(
+    list(overall = data.frame(time = 1)), data = list(record), analysis = analysis, cohort = cohort
+  )
+  hz <- hvtiRtemplates:::.attach_handoff_lineage(
+    list(deterministic = list(ok = TRUE)), data = list(record), analysis = analysis, cohort = cohort
+  )
   saveRDS(ac, ac_path)
   saveRDS(hz, hz_path)
+
+  data_path <- file.path(hvtiRutilities::study_dir("datasets", root), "cohort.rds")
+  saveRDS(data.frame(time = c(2, 3), event = c(1, 0)), data_path)
+  current_hash <- lineage_sha256(data_path)
 
   env <- new.env(parent = globalenv())
   env$.root <- root
   env$FIT_NAME <- "deterministic"
   env$KM_NAME <- "overall"
+  env$TIME <- "time"
+  env$EVENT <- "event"
+  env$years <- 1
+  env$t_max <- 1
   env$set_path <- function(kind, file) file.path(artifact_dir, file)
   eval(parse(text = rf_chunk(readLines(template_path("hp"), warn = FALSE), "read-upstream")), envir = env)
+  eval(parse(text = rf_chunk(readLines(template_path("hp"), warn = FALSE), "followup-gate")), envir = env)
 
   expect_identical(vapply(env$.provenance_artifacts, `[[`, character(1L), "sha256"),
                    c(lineage_sha256(ac_path), lineage_sha256(hz_path)))
-  expect_length(env$.provenance_data, 2L)
+  expect_identical(vapply(env$.provenance_data, `[[`, character(1L), "sha256"),
+                   c(record$sha256, record$sha256, current_hash))
+})
+
+test_that("hp rejects incompatible ac and hz producer lineage", {
+  root <- rf_study()
+  cfg <- hvtiRutilities::study_config(root)
+  record <- hvtiRutilities::provenance_data(cfg = cfg, role = "training")
+  analysis <- list(
+    time = list(variable = "time"),
+    event = list(variable = "event", event = 1L, censored = 0L)
+  )
+  cohort <- list(n = 2L, n_events = 1L, n_censored = 1L)
+  artifact_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "death-hz")
+  dir.create(artifact_dir, recursive = TRUE)
+  ac_path <- file.path(artifact_dir, "ac.rds")
+  hz_path <- file.path(artifact_dir, "hz.rds")
+  ac <- hvtiRtemplates:::.attach_handoff_lineage(
+    list(overall = data.frame(time = 1)), data = list(record), analysis = analysis, cohort = cohort
+  )
+  saveRDS(ac, ac_path)
+
+  cases <- list(
+    `source data` = list(data = list(within(record, sha256 <- paste0("bad", sha256))),
+                         analysis = analysis, cohort = cohort),
+    analysis = list(data = list(record), analysis = within(analysis, time$variable <- "other"), cohort = cohort),
+    cohort = list(data = list(record), analysis = analysis, cohort = within(cohort, n <- 3L))
+  )
+  source <- readLines(template_path("hp"), warn = FALSE)
+  for (field in names(cases)) {
+    lineage <- cases[[field]]
+    hz <- hvtiRtemplates:::.attach_handoff_lineage(
+      list(deterministic = list(ok = TRUE)), data = lineage$data,
+      analysis = lineage$analysis, cohort = lineage$cohort
+    )
+    saveRDS(hz, hz_path)
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    env$FIT_NAME <- "deterministic"
+    env$KM_NAME <- "overall"
+    env$set_path <- function(kind, file) file.path(artifact_dir, file)
+
+    expect_error(
+      eval(parse(text = rf_chunk(source, "read-upstream")), envir = env),
+      field,
+      fixed = TRUE,
+      info = field
+    )
+  }
 })
 
 test_that("hazard chain templates attach, require, and publish lineage", {
