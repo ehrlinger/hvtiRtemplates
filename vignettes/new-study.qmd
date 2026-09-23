@@ -211,3 +211,97 @@ If a render fails, the report and sidecar already on disk are left as they
 were. A new sidecar is only ever published beside the HTML it describes. One
 job renders at a time in a study; a second render started while one is running
 stops and asks you to wait.
+
+## A first analysis chain: death
+
+Most analyses are chains: one job saves a result that the next reads. The
+hazard chain has three jobs. `ac` computes the actuarial life table, `hz`
+fits the parametric hazard model, and `hp` plots the two together.
+
+```r
+open_job("ac", subject = "death", type = "hz")
+open_job("hz", subject = "death", type = "hz")
+open_job("hp", subject = "death", type = "hz")
+```
+
+All three share one subject and one type, and that is what connects them. The
+pair `("death", "hz")` names a set, and each job writes and reads its saved
+results in the set's own folder, `90_estimates/death-hz/`. `hp` finds `ac.rds`
+and `hz.rds` there without a path to edit. A second analysis of the same
+endpoint, a random survival forest say, takes a different type and so a
+different folder; the two chains cannot overwrite each other's life table.
+
+```{r}
+#| label: scaffold-chain
+chain <- c(
+  ac = add_job("ac", subject = "death", type = "hz", dir = new_root),
+  hz = add_job("hz", subject = "death", type = "hz", dir = new_root),
+  hp = add_job("hp", subject = "death", type = "hz", dir = new_root)
+)
+sub(paste0(new_root, "/"), "", chain, fixed = TRUE)
+```
+
+The filenames read `death-hz-ac.qmd`, `death-hz-hz.qmd` and `death-hz-hp.qmd`:
+subject, type, then the template. `hz` appears twice in the second because the
+set is named for its method and the job is that method's template.
+
+```{=html}
+<figure style="margin: 1.5rem 0;">
+<svg viewBox="0 0 640 210" role="img" aria-labelledby="chain-title" style="width: 100%; height: auto; color: inherit;"
+     xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" font-size="13">
+  <title id="chain-title">The death hazard chain: ac and hz save handoffs that hp reads</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="currentColor" stroke-width="1.5">
+    <rect x="10" y="20" width="150" height="46" rx="6"/>
+    <rect x="10" y="130" width="150" height="46" rx="6"/>
+    <rect x="245" y="20" width="150" height="46" rx="6" stroke-dasharray="4 3"/>
+    <rect x="245" y="130" width="150" height="46" rx="6" stroke-dasharray="4 3"/>
+    <rect x="480" y="75" width="150" height="46" rx="6"/>
+    <path d="M160,43 L243,43" marker-end="url(#arrow)"/>
+    <path d="M160,153 L243,153" marker-end="url(#arrow)"/>
+    <path d="M395,43 C440,43 440,90 478,95" marker-end="url(#arrow)"/>
+    <path d="M395,153 C440,153 440,106 478,101" marker-end="url(#arrow)"/>
+  </g>
+  <g fill="currentColor" text-anchor="middle">
+    <text x="85" y="41">death-hz-ac.qmd</text>
+    <text x="85" y="58" font-size="11">actuarial life table</text>
+    <text x="85" y="151">death-hz-hz.qmd</text>
+    <text x="85" y="168" font-size="11">parametric hazard</text>
+    <text x="320" y="41">ac.rds</text>
+    <text x="320" y="58" font-size="11">90_estimates/death-hz/</text>
+    <text x="320" y="151">hz.rds</text>
+    <text x="320" y="168" font-size="11">90_estimates/death-hz/</text>
+    <text x="555" y="96">death-hz-hp.qmd</text>
+    <text x="555" y="113" font-size="11">overlay plot</text>
+    <text x="320" y="200" font-size="11">each job also publishes a .provenance.json beside its HTML</text>
+  </g>
+</svg>
+<figcaption>Solid boxes are jobs; dashed boxes are the saved handoffs they share through the set's folder.</figcaption>
+</figure>
+```
+
+Render in chain order: `ac`, then `hz`, then `hp`. Each saved handoff carries
+its own lineage, the registered data it was built from, so `hp` can check its
+inputs before it plots them. It stops, with a message saying which job to
+rerun, when a handoff has no lineage or when `ac` and `hz` were built from
+different data. Rerender both upstream jobs after the registered data change.
+`hp`'s sidecar then lists the data both handoffs were built from and each
+handoff's checksum.
+
+## Where to go next
+
+`template_list()` lists every template with its prefix, qualifier and folder:
+
+```{r}
+#| label: templates
+head(template_list()[, c("name", "prefix", "qualifier", "folder")], 10)
+```
+
+The other chains follow the same pattern: a fitting job saves a handoff that
+later jobs read. The random forest jobs (`rfc`, `rfr`, `rfs`) pair a `-fit`
+job with an `-explain` job; the logistic family (`lm`) fits and validates
+outcome and propensity models; `bh` reports bootstrap variable selection.
