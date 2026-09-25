@@ -1,4 +1,4 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.2.2
 
 * `dc-gfup` and `dp-gfup` compute through shared functions, so the EDA report
   can call the same ones: `hvtiRutilities::followup_check()` for the follow-up
