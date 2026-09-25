@@ -66,6 +66,10 @@
   registration, a first descriptive job and its provenance sidecar, to a first
   `ac`, `hz` and `hp` chain. It complements "Adopt an existing study".
 
+* The provenance test that asserts an embedded payload carries exactly one
+  `<script` tag now counts real matches. `gregexpr()` reports no match as a
+  length-one `-1`, so the old assertion also passed when the tag was missing.
+
 # hvtiRtemplates 1.2.1
 
 * Eight qualified `lm` templates now cover binary, ordinal and nominal outcome
