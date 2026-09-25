@@ -60,7 +60,7 @@
 <th>fails on</th>
 </tr></thead><tbody><tr><td><code>R-CMD-check.yaml</code></td>
 <td>
-<code>R CMD check</code> across platforms. The template catalog ships in the tarball, so the catalog-reading tests run on <strong>every</strong> leg: expect <code>SKIP 0</code> on macOS and Ubuntu and <code>SKIP 1</code> on Windows, the one being <code>test-add-job.R</code>’s deliberate <code>skip_on_os("windows")</code> (POSIX mode bits do not govern writability there). Any other skip is a gate that stopped running</td>
+<code>R CMD check</code> across platforms. The template catalog ships in the tarball, so the catalog-reading tests run on <strong>every</strong> leg: expect <code>SKIP 0</code> on macOS and Ubuntu and <code>SKIP 1</code> on Windows, the one being <code>test-add-job.R</code>’s deliberate <code>skip_on_os("windows")</code> (POSIX mode bits do not govern writability there). Any other skip is a gate that stopped running: from #138 (2026-09-21) until #150, two <code>test-vignette-migration.R</code> tests read <code>vignettes/</code> with no fallback to the installed <code>doc/</code>, so every leg ran two skips high and nobody noticed. A vignette test must read <code>system.file("doc", ...)</code> when the checkout is absent. Expect <code>WARN 1</code> on every leg: <code>test-rf-templates.R</code>’s rfr-explain test, where <code>varpro()</code> reports the observations it drops for missing values</td>
 </tr><tr><td><code>check-manual.yaml</code></td>
 <td>the PDF manual build. ⚠️ <strong>Post-merge only</strong>, see below</td>
 </tr><tr><td><code>house-style.yaml</code></td>
