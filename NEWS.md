@@ -1,5 +1,9 @@
 # hvtiRtemplates (unreleased)
 
+* Two vignette tests, on the SAS guide and on the tutorials' study root, now
+  read the installed `doc/` copy when the source checkout is absent. Under
+  `R CMD check` they had skipped on every platform since 2026-09-21.
+
 * `dp-postage` draws in sections. `SECTIONS <- c("continuous", "percent",
   "count")` replaces `SHOW_PERCENT`, so one render shows the categorical
   variables both as percentages and as counts, with the same year bins. Each

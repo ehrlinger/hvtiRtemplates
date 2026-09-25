@@ -1,8 +1,10 @@
-study_setup_vignette_path <- function() {
-  source <- testthat::test_path("..", "..", "vignettes", "study-setup.qmd")
+vignette_source_path <- function(name) {
+  source <- testthat::test_path("..", "..", "vignettes", name)
   if (file.exists(source)) return(source)
-  system.file("doc", "study-setup.qmd", package = "hvtiRtemplates")
+  system.file("doc", name, package = "hvtiRtemplates")
 }
+
+study_setup_vignette_path <- function() vignette_source_path("study-setup.qmd")
 
 # The source is in the checkout (devtools::test()) and in the installed doc/
 # folder (R CMD check). An install without built vignettes, as under covr, has
@@ -43,9 +45,7 @@ test_that("study setup explains endpoint-neutral coordinated data updates", {
 })
 
 test_that("the SAS guide uses adopted-study paths and loads its packages", {
-  path <- testthat::test_path(
-    "..", "..", "vignettes", "sas-to-r-descriptive.qmd"
-  )
+  path <- vignette_source_path("sas-to-r-descriptive.qmd")
   testthat::skip_if_not(file.exists(path), "vignette source not available")
   text <- readLines(path, warn = FALSE)
   article <- paste(text, collapse = "\n")
@@ -61,12 +61,9 @@ test_that("the SAS guide uses adopted-study paths and loads its packages", {
 })
 
 test_that("tutorials use the RStudio project as the study root", {
-  tutorials <- c(
-    testthat::test_path("..", "..", "vignettes", "study-setup.qmd"),
-    testthat::test_path(
-      "..", "..", "vignettes", "sas-to-r-descriptive.qmd"
-    ),
-    testthat::test_path("..", "..", "vignettes", "new-study.qmd")
+  tutorials <- vapply(
+    c("study-setup.qmd", "sas-to-r-descriptive.qmd", "new-study.qmd"),
+    vignette_source_path, character(1)
   )
   testthat::skip_if_not(all(file.exists(tutorials)),
                         "vignette sources not available")
