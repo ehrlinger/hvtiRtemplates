@@ -4,6 +4,10 @@
   read the installed `doc/` copy when the source checkout is absent. Under
   `R CMD check` they had skipped on every platform since 2026-09-21.
 
+* The legacy-article vignette test uses the same checkout-then-`doc/` lookup,
+  and the `rfr-explain` test silences varPro 3.3.0's notice that it drops rows
+  with missing values, so `R CMD check` reports no warnings.
+
 * `dp-postage` draws in sections. `SECTIONS <- c("continuous", "percent",
   "count")` replaces `SHOW_PERCENT`, so one render shows the categorical
   variables both as percentages and as counts, with the same year bins. Each

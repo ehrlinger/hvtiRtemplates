@@ -84,14 +84,7 @@ test_that("adoption preserves a pinned R version and otherwise uses R 4.6", {
 })
 
 test_that("the released legacy article name points to study setup", {
-  legacy <- testthat::test_path(
-    "..", "..", "vignettes", "legacy-study-migration.qmd"
-  )
-  if (!file.exists(legacy)) {
-    legacy <- system.file(
-      "doc", "legacy-study-migration.qmd", package = "hvtiRtemplates"
-    )
-  }
+  legacy <- vignette_source_path("legacy-study-migration.qmd")
   testthat::skip_if_not(file.exists(legacy), "vignette source not available")
   txt <- readLines(legacy, warn = FALSE)
   expect_true(any(grepl("study-setup.html", txt, fixed = TRUE)))
