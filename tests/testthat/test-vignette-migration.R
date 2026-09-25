@@ -144,5 +144,6 @@ test_that("the final migration verifier returns four lasting rendered fixtures",
     expect_true(all(file.exists(result$outputs)))
   }
   expect_true(any(grepl("[.]docx$", results[["dc-tables"]]$outputs)))
-  expect_equal(sum(grepl("dp-postage-page-[0-9]+[.]png$", results[["dp-postage"]]$outputs)), 2L)
+  expect_true(all(sprintf("dp-postage-%s-page-01.png", c("continuous", "percent", "count")) %in%
+                    basename(results[["dp-postage"]]$outputs)))
 })
