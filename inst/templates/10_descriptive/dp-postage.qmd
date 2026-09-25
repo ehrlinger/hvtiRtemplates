@@ -299,10 +299,10 @@ for (section in SECTIONS) {
     ggplot2::ggsave(file, pages[[i]] & theme_hv_manuscript(base_size = 8),
                     width = 11, height = 8.5, units = "in", dpi = 150)
     on_page <- attr(pages[[i]], "variables")
-    # Link relative to this document, which sits in the descriptive folder
-    # beside graphs/. Quarto rewrites an absolute path into a broken relative
-    # one and then cannot embed the image.
-    link <- file.path("..", basename(dirname(dirname(file))), basename(dirname(file)), basename(file))
+    # Link relative to wherever this document sits. Quarto rewrites an absolute
+    # path into a broken relative one and then cannot embed the image, and a
+    # fixed "../graphs" would break for a job kept in a subfolder.
+    link <- xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd())
     cat("\n### Page ", i, "\n\n![", paste(labels[on_page], collapse = ", "), "](", link, ")\n\n", sep = "")
     page_files <- c(page_files, file)
   }
