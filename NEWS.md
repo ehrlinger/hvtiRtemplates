@@ -1,5 +1,9 @@
 # hvtiRtemplates (unreleased)
 
+* Two vignette tests, on the SAS guide and on the tutorials' study root, now
+  read the installed `doc/` copy when the source checkout is absent. Under
+  `R CMD check` they had skipped on every platform since 2026-09-21.
+
 * New vignette, *The template catalog*: every template with a one-line
   description, the `add_job()` call that scaffolds it, and a delivery light
   (shipped, in progress, not yet on the way), grouped by study folder, followed
