@@ -24,7 +24,8 @@ while alive and red once dead. The dashed diagonal is the follow-up a patient
 far below the diagonal is someone whose follow-up stopped early, and a band of
 them is a follow-up problem to settle before any time-related analysis.
 
-The engine is `hvtiPlotR::hv_followup()`. The tables that go with this figure
+The engine is `hvtiPlotR::hv_followup_panels()`, which the EDA report also
+calls, so its follow-up panels are these. The tables that go with this figure
 are the `dc-gfup` job, which reads the same analysis set.
 
 ```{r}
@@ -41,8 +42,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
-  stop("This job needs hvtiPlotR >= 2.7.14 for hv_followup(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.7.17") {
+  stop("This job needs hvtiPlotR >= 2.7.17 for hv_followup_panels(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
@@ -228,103 +229,22 @@ cat("Data read: ", if (is.null(ANALYSIS_SET)) {
 
 ```{r}
 #| label: window
-is_name <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
-if (!is_name(OPYRS)) stop("OPYRS must name one column.", call. = FALSE)
-if (!is.numeric(ORIGIN_YEAR) || length(ORIGIN_YEAR) != 1L || is.na(ORIGIN_YEAR) ||
-      ORIGIN_YEAR != round(ORIGIN_YEAR)) {
-  stop("ORIGIN_YEAR must be one whole calendar year.", call. = FALSE)
-}
-if (!is.list(PANELS) || !length(PANELS) || is.null(names(PANELS)) || any(!nzchar(names(PANELS)))) {
-  stop("PANELS must be a named list with at least one entry.", call. = FALSE)
-}
-if (!is.list(EVENTS) || (length(EVENTS) && (is.null(names(EVENTS)) || any(!nzchar(names(EVENTS)))))) {
-  stop("EVENTS must be a named list, or list() for none.", call. = FALSE)
-}
-# Each name is also a figure's filename, so a name used twice, within a list
-# or across both, would overwrite the first figure without a word.
-.dup <- unique(c(names(PANELS), names(EVENTS))[duplicated(c(names(PANELS), names(EVENTS)))])
-if (length(.dup)) {
-  stop("PANELS and EVENTS names must be distinct across both lists: ",
-       paste(.dup, collapse = ", "), " is used twice.", call. = FALSE)
-}
-for (nm in names(PANELS)) {
-  if (!is_name(PANELS[[nm]]$status) || !is_name(PANELS[[nm]]$time)) {
-    stop("PANELS entry `", nm, "` needs one `status` and one `time` column.", call. = FALSE)
-  }
-}
-for (nm in names(EVENTS)) {
-  e <- EVENTS[[nm]]
-  if (!all(vapply(e[c("event", "time", "death", "death_time")], is_name, logical(1L)))) {
-    stop("EVENTS entry `", nm, "` needs one `event`, `time`, `death` and `death_time` column.",
-         call. = FALSE)
-  }
-}
-
-# Every column named anywhere above, checked at once, so a job with three
-# misspellings says so in one render rather than three.
-status_cols <- unique(c(vapply(PANELS, `[[`, "", "status"),
-                        unlist(lapply(EVENTS, `[`, c("event", "death")), use.names = FALSE)))
-time_cols <- unique(c(vapply(PANELS, `[[`, "", "time"),
-                      unlist(lapply(EVENTS, `[`, c("time", "death_time")), use.names = FALSE)))
-unknown <- setdiff(c(OPYRS, status_cols, time_cols), names(d))
-if (length(unknown)) {
-  stop("Column(s) not in the data: ", paste(unknown, collapse = ", "), ".", call. = FALSE)
-}
-not_numeric <- Filter(function(v) !is.numeric(d[[v]]), c(OPYRS, time_cols))
-if (length(not_numeric)) {
-  stop("Interval column(s) must be numeric years: ", paste(not_numeric, collapse = ", "), ".",
-       call. = FALSE)
-}
-not_binary <- Filter(function(v) {
-  x <- d[[v]]
-  (!is.numeric(x) && !is.logical(x)) || any(!is.na(x) & !x %in% c(0, 1))
-}, status_cols)
-if (length(not_binary)) {
-  stop("Indicator column(s) must be 1/0 or logical: ", paste(not_binary, collapse = ", "), ".",
-       call. = FALSE)
-}
-
-opyrs <- d[[OPYRS]]
-if (all(is.na(opyrs))) stop("`", OPYRS, "` is missing for every patient.", call. = FALSE)
-# hv_followup() starts the diagonal at ORIGIN_YEAR, so the study window has to
-# start there too. An operation before the origin would sit left of the line.
-if (any(opyrs < 0, na.rm = TRUE)) {
-  stop(sum(opyrs < 0, na.rm = TRUE), " patient(s) have a negative `", OPYRS, "`, an ",
-       "operation before ORIGIN_YEAR = ", ORIGIN_YEAR, ". Check the origin.", call. = FALSE)
-}
-# A plausible window, not a precise one: it catches the wrong-origin mistake,
-# which lands decades out.
-.this_year <- as.integer(format(Sys.Date(), "%Y"))
-op_year <- ORIGIN_YEAR + opyrs
-if (ORIGIN_YEAR < 1900 || any(op_year > .this_year + 1, na.rm = TRUE)) {
-  stop("Operations fall outside 1900 to ", .this_year + 1, " (", floor(min(op_year, na.rm = TRUE)),
-       " to ", floor(max(op_year, na.rm = TRUE)), "). Check ORIGIN_YEAR.", call. = FALSE)
-}
-
-year_days <- 365.2425
-study_start <- as.Date(paste0(ORIGIN_YEAR, "-01-01"))
-study_end <- study_start + round(max(opyrs, na.rm = TRUE) * year_days)
-if (is.null(CLOSE_DATE)) {
-  reach <- max(vapply(time_cols, function(v) max(opyrs + d[[v]], na.rm = TRUE), numeric(1L)))
-  close_date <- max(study_end, study_start + round(reach * year_days))
-  close_source <- "estimated: the latest operation plus follow-up in the data"
-} else {
-  close_date <- as.Date(CLOSE_DATE)
-  if (length(close_date) != 1L || is.na(close_date)) {
-    stop("CLOSE_DATE must be NULL or one date, as.Date(\"YYYY-MM-DD\").", call. = FALSE)
-  }
-  if (close_date < study_end) {
-    stop("CLOSE_DATE (", close_date, ") is before the last operation (", study_end, ").",
-         call. = FALSE)
-  }
-  close_source <- "set in CLOSE_DATE"
-}
+# hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
+# names every missing column at once, refuses a name used twice and the
+# wrong-origin mistake, and works out the window the panels share: from
+# 1 January of ORIGIN_YEAR, where hv_followup() draws its diagonal, to the last
+# operation. The EDA report calls the same function, so its panels are these.
+fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
+                                    panels = PANELS, events = EVENTS, close_date = CLOSE_DATE)
+close_date <- fp$meta$close_date
+# Name the edit point a reader can find in this file, not the function's argument.
+close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
 
 knitr::kable(data.frame(
   quantity = c("patients", "operation year missing", "first operation", "last operation",
                "close date", "close date is"),
-  value = c(nrow(d), sum(is.na(opyrs)), format(study_start + round(min(opyrs, na.rm = TRUE) * year_days)),
-            format(study_end), format(close_date), close_source)
+  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, format(fp$meta$first_operation),
+            format(fp$meta$study_end), format(close_date), close_source)
 ))
 ```
 
@@ -348,41 +268,25 @@ show_figure <- function(p, fname, title) {
   invisible(dev.off())
   cat("![", title, "](", file.path(paste0(SUBJECT, "-", TYPE), fname), ")\n\n", sep = "")
 }
-followup_args <- list(data = d, iv_opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
-                      study_start = study_start, study_end = study_end,
-                      close_date = close_date, tolower_names = FALSE)
+plots <- plot(fp, alpha = ALPHA)
 panel_counts <- list()
-
-for (nm in names(PANELS)) {
-  pn <- PANELS[[nm]]
-  gf <- do.call(hv_followup, c(followup_args, list(
-    death_col = pn$status, death_time_col = pn$time, death_levels = c("Alive", "Dead")
-  )))
-  title <- if (is.null(pn$title)) nm else pn$title
-  panel_counts[[nm]] <- list(drawn = gf$meta$n_patients, excluded = gf$meta$n_excluded)
-  cat("\n### ", title, "\n\n", gf$meta$n_patients, " of ", gf$meta$n_input,
-      " patients drawn; ", gf$meta$n_excluded, " missing a column this panel needs.\n\n", sep = "")
-  p <- plot(gf, alpha = ALPHA) +
-    scale_colour_manual(values = c(Alive = COLOURS[["alive"]], Dead = COLOURS[["dead"]])) +
-    scale_shape_manual(values = c(Alive = 1, Dead = 4))
-  show_figure(p, paste0("dp-gfup-", nm, ".png"), title)
-}
-
-for (nm in names(EVENTS)) {
-  e <- EVENTS[[nm]]
-  label <- if (is.null(e$label)) nm else e$label
-  levels <- c("No event", label, "Death")
-  gf <- do.call(hv_followup, c(followup_args, list(
-    death_col = e$death, death_time_col = e$death_time, event_col = e$event,
-    event_time_col = e$time, event_levels = levels
-  )))
-  panel_counts[[nm]] <- list(drawn = gf$meta$n_event_patients, excluded = gf$meta$n_event_excluded)
-  cat("\n### ", label, "\n\n", gf$meta$n_event_patients, " patients drawn; ",
-      gf$meta$n_event_excluded, " missing a column this panel needs.\n\n", sep = "")
-  p <- plot(gf, type = "event", alpha = ALPHA) +
-    scale_colour_manual(values = stats::setNames(COLOURS[c("alive", "event", "dead")], levels)) +
-    scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
-  show_figure(p, paste0("dp-gfup-", nm, ".png"), label)
+for (i in seq_len(nrow(fp$data))) {
+  row <- fp$data[i, ]
+  nm <- row$panel
+  panel_counts[[nm]] <- list(drawn = row$n_drawn, excluded = row$n_excluded)
+  cat("\n### ", row$title, "\n\n", row$n_drawn, " patients drawn; ", row$n_excluded,
+      " missing a column this panel needs.\n\n", sep = "")
+  if (row$type == "followup") {
+    p <- plots[[nm]] +
+      scale_colour_manual(values = c(Alive = COLOURS[["alive"]], Dead = COLOURS[["dead"]])) +
+      scale_shape_manual(values = c(Alive = 1, Dead = 4))
+  } else {
+    levels <- c("No event", row$title, "Death")
+    p <- plots[[nm]] +
+      scale_colour_manual(values = stats::setNames(COLOURS[c("alive", "event", "dead")], levels)) +
+      scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
+  }
+  show_figure(p, paste0("dp-gfup-", nm, ".png"), row$title)
 }
 ```
 

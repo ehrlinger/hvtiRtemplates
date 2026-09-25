@@ -53,7 +53,7 @@ test_that("dp-gfup refuses a two-digit origin year", {
     NULL
   }, error = function(e) conditionMessage(e))
   expect_false(is.null(err))
-  expect_match(paste(err, collapse = "\n"), "Check ORIGIN_YEAR")
+  expect_match(paste(err, collapse = "\n"), "Check `origin_year`")
 })
 
 test_that("dp-gfup refuses a name shared by PANELS and EVENTS", {
@@ -73,4 +73,22 @@ test_that("dp-gfup refuses a name shared by PANELS and EVENTS", {
   }, error = function(e) conditionMessage(e))
   expect_false(is.null(err))
   expect_match(paste(err, collapse = "\n"), "all is used twice")
+})
+
+test_dp_gfup_window <- function(close_date) {
+  job <- template_path("dp", "gfup")
+  lines <- readLines(job, warn = FALSE)
+  start <- match("#| label: window", lines)
+  end <- start + match("```", lines[-seq_len(start)])
+  env <- list2env(list(d = hvtiPlotR::sample_goodness_followup_data(n = 60, seed = 3), OPYRS = "iv_opyrs",
+                       ORIGIN_YEAR = 1990, CLOSE_DATE = close_date, EVENTS = list(),
+                       PANELS = list(all = list(status = "dead", time = "iv_dead"))))
+  suppressWarnings(eval(parse(text = lines[seq.int(start + 1L, end - 1L)]), env))
+  env$close_source
+}
+
+test_that("dp-gfup reports the close date's source by the job's own edit point", {
+  skip_if_not_installed("hvtiPlotR", "2.7.17")
+  expect_identical(test_dp_gfup_window(as.Date("2023-01-01")), "set in CLOSE_DATE")
+  expect_match(test_dp_gfup_window(NULL), "estimated")
 })

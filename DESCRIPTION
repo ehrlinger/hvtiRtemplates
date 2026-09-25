@@ -25,7 +25,7 @@ Depends:
     R (>= 4.1.0)
 Imports:
     digest,
-    hvtiRutilities (>= 1.4.0),
+    hvtiRutilities (>= 1.4.1),
     jsonlite,
     ps,
     stats,
@@ -45,7 +45,7 @@ Suggests:
     fs,
     ggRandomForests (>= 4.0.0),
     ggplot2,
-    hvtiPlotR (>= 2.7.16),
+    hvtiPlotR (>= 2.7.17),
     hvtiRtables (>= 1.0.1),
     hvtiRdatabuild (>= 0.2.1),
     hvtiRbootstrap (>= 0.9.3),
