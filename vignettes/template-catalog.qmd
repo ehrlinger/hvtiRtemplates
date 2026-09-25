@@ -1,0 +1,137 @@
+---
+title: "The template catalog"
+author: "John Ehrlinger"
+date: today
+vignette: >
+  %\VignetteIndexEntry{The template catalog}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+format:
+  html:
+    toc: true
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", echo = FALSE)
+library(hvtiRtemplates)
+```
+
+## What is here
+
+Every analysis job an HVTI study runs starts from a template: a Quarto file
+with the study-specific lines marked `EDIT:`. This page lists them all, what
+each one does, and how close each is to being delivered. It is built from the
+package's own catalog when the page is rendered, so a template added, renamed
+or shipped shows up here without anyone remembering to update the page.
+
+A template becomes a job in your study with `add_job()`. The first argument is
+the template's prefix, then the subject and type that name the job's set, and
+the qualifier when the prefix has one:
+
+```r
+add_job("dp", "cohort", "eda", qualifier = "gfup")
+```
+
+In a new study that writes `40_graphs/cohort-eda-dp-gfup.qmd`; a legacy study
+that already uses bare folder names gets `graphs/cohort-eda-dp-gfup.qmd`. The
+job refuses to overwrite an existing file, because a job accumulates a study's
+edits.
+
+## Delivery
+
+```{r}
+#| label: delivery
+catalog <- template_catalog()
+on_disk <- template_list()
+key <- function(prefix, qualifier) paste(prefix, ifelse(is.na(qualifier), "", qualifier))
+catalog <- catalog[catalog$kind == "job", , drop = FALSE]
+
+light <- ifelse(
+  catalog$status == "shipped", "green",
+  ifelse(catalog$status %in% c("revisit", "in-flight") |
+           (catalog$status == "queued" & is.na(catalog$blocked_on) & !is.na(catalog$batch)),
+         "yellow", "red")
+)
+catalog$light <- c(green = "\U0001F7E2 Shipped", yellow = "\U0001F7E1 In progress",
+                   red = "\U0001F534 Not yet on the way")[light]
+catalog$template <- ifelse(is.na(catalog$qualifier), catalog$prefix,
+                           paste0(catalog$prefix, "-", catalog$qualifier))
+catalog$template <- paste0("`", catalog$template, "`")
+
+counts <- table(factor(light, levels = c("green", "yellow", "red")))
+```
+
+Each template carries a light.
+
+- 🟢 **Shipped** (`r counts[["green"]]`): on disk and supported. Scaffold it
+  and use it.
+- 🟡 **In progress** (`r counts[["yellow"]]`): on disk but being reworked, or
+  scheduled into a delivery batch with nothing blocking it.
+- 🔴 **Not yet on the way** (`r counts[["red"]]`): waiting on a function in
+  another package, or not yet scheduled. The job type is known and counted;
+  for now, write it by hand.
+
+## Available now
+
+Every template on disk, grouped by the study folder a job lands in, named
+without its digits (`graphs` is `40_graphs` in a new study). `add_job()`
+places each one; you do not choose the folder.
+
+```{r}
+#| label: shipped
+#| results: asis
+# The known folders first, in study order, then any folder added since, so a
+# template in a new folder is listed rather than silently skipped.
+folders <- c("datasets", "descriptive", "distributions", "analyses", "graphs",
+             "documents", "estimates")
+here <- catalog[key(catalog$prefix, catalog$qualifier) %in%
+                  key(on_disk$prefix, on_disk$qualifier), , drop = FALSE]
+here$scaffold <- ifelse(
+  is.na(here$qualifier),
+  sprintf("`add_job(\"%s\", subject, type)`", here$prefix),
+  sprintf("`add_job(\"%s\", subject, type, qualifier = \"%s\")`", here$prefix, here$qualifier)
+)
+for (f in unique(c(intersect(folders, here$folder), sort(here$folder)))) {
+  rows <- here[here$folder == f, , drop = FALSE]
+  rows <- rows[order(rows$template), , drop = FALSE]
+  cat("\n### ", f, "\n\n", sep = "")
+  cat(knitr::kable(data.frame(
+    Delivery = rows$light, Template = rows$template,
+    Description = rows$description, Scaffold = rows$scaffold
+  ), row.names = FALSE), sep = "\n")
+  cat("\n")
+}
+```
+
+## Coming
+
+Job types the SAS library and the study corpus carry that have no template
+yet. **SAS jobs** counts the distinct studies with a SAS job of that type, so a
+larger number is a template more studies are waiting for. *Unmeasured* means
+nobody has counted it yet, which is not the same as zero.
+
+```{r}
+#| label: coming
+coming <- catalog[!key(catalog$prefix, catalog$qualifier) %in%
+                    key(on_disk$prefix, on_disk$qualifier), , drop = FALSE]
+coming <- coming[order(coming$light != "\U0001F7E1 In progress",
+                       -ifelse(is.na(coming$sas_breadth_jobs), -1, coming$sas_breadth_jobs)), ]
+what <- ifelse(is.na(coming$description), coming$name, coming$description)
+knitr::kable(data.frame(
+  Delivery = coming$light, Template = coming$template, Description = what,
+  `SAS jobs` = ifelse(is.na(coming$sas_breadth_jobs), "unmeasured", coming$sas_breadth_jobs),
+  `Waiting on` = ifelse(is.na(coming$blocked_on), "", coming$blocked_on),
+  check.names = FALSE
+), row.names = FALSE)
+```
+
+## Where to read more
+
+- `template_catalog()` returns this table with every field the catalog keeps,
+  including the design note behind each row.
+- `inst/templates/README.md` in the package source explains the naming and
+  the folder layout.
+- The *From SAS descriptive jobs to R* vignette walks through running the
+  descriptive templates against a study.

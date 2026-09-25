@@ -24,6 +24,9 @@ articles:
       - study-setup
       - sas-to-r-descriptive
       - legacy-study-migration
+  - title: Reference
+    contents:
+      - template-catalog
 
 footer:
   structure:
