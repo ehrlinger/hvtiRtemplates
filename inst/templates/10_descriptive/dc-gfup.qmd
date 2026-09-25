@@ -33,6 +33,10 @@ is the `dp-gfup` job; read the same analysis set there.
 .provenance_data <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages(library(hvtiRutilities))
+if (utils::packageVersion("hvtiRutilities") < "1.4.1") {
+  stop("This job needs hvtiRutilities >= 1.4.1 for followup_check(); ",
+       utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
+}
 if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
   stop("This job needs hvtiRdatabuild >= 0.2.1 for read_analysis_set(); ",
        utils::packageVersion("hvtiRdatabuild"), " is installed.", call. = FALSE)
@@ -205,48 +209,20 @@ before sharing a report that contains an identifier.
 show_table <- function(x, caption) {
   cat("\n", knitr::kable(x, caption = caption, row.names = FALSE), "\n", sep = "\n")
 }
-field_names <- function(x) is.character(x) && length(x) > 0L && !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
-if (!field_names(EVENT) || length(EVENT) != 1L) stop("EVENT must name one column.", call. = FALSE)
-if (!field_names(FOLLOWUP)) stop("FOLLOWUP must name one or more distinct columns.", call. = FALSE)
-if (!is.null(IDENTIFIER) && (!field_names(IDENTIFIER) || length(IDENTIFIER) != 1L)) {
-  stop("IDENTIFIER must be NULL or one column name.", call. = FALSE)
-}
-if (!is.numeric(MAX_REVIEW_ROWS) || length(MAX_REVIEW_ROWS) != 1L || is.na(MAX_REVIEW_ROWS) ||
-      !is.finite(MAX_REVIEW_ROWS) || MAX_REVIEW_ROWS < 1 || MAX_REVIEW_ROWS != floor(MAX_REVIEW_ROWS)) {
-  stop("MAX_REVIEW_ROWS must be one positive integer.", call. = FALSE)
-}
-needed <- unique(c(EVENT, FOLLOWUP, IDENTIFIER))
-unknown <- setdiff(needed, names(d))
-if (length(unknown)) {
-  stop("Unknown follow-up column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
-}
-event <- d[[EVENT]]
-if ((!is.numeric(event) && !is.logical(event)) || any(!is.na(event) & !event %in% c(0, 1))) {
-  stop("EVENT must be binary (0=censored, 1=event; missing is allowed).", call. = FALSE)
-}
-if (!all(vapply(d[FOLLOWUP], is.numeric, logical(1L)))) stop("FOLLOWUP columns must be numeric.", call. = FALSE)
-cohort_counts <- data.frame(full = nrow(d), event = sum(event == 1, na.rm = TRUE),
-                            censored = sum(event == 0, na.rm = TRUE), missing_event = sum(is.na(event)))
+# The checks and tables are hvtiRutilities::followup_check(), the function the
+# EDA report calls too, so the two reports cannot disagree. It checks every
+# choice above before computing anything, and names every missing column at once.
+fc <- hvtiRutilities::followup_check(d, event = EVENT, followup = FOLLOWUP,
+                                     identifier = IDENTIFIER, max_rows = MAX_REVIEW_ROWS)
+cohort_counts <- fc$cohort
+followup_qc <- fc$intervals
+followup_means <- fc$means
+review_rows <- fc$review
 show_table(cohort_counts, "Cohort: event, censored and missing event status")
-followup_qc <- do.call(rbind, lapply(FOLLOWUP, function(variable) {
-  x <- d[[variable]]
-  observed <- x[!is.na(x)]
-  q <- if (length(observed)) stats::quantile(observed, c(0, .25, .5, .75, 1), names = FALSE) else rep(NA_real_, 5L)
-  data.frame(interval = variable, missing = sum(is.na(x)), negative = sum(x < 0, na.rm = TRUE),
-             zero = sum(x == 0, na.rm = TRUE), min = q[[1L]], q1 = q[[2L]], median = q[[3L]], q3 = q[[4L]],
-             mean = if (length(observed)) mean(observed) else NA_real_, sd = stats::sd(observed), max = q[[5L]])
-}))
 show_table(followup_qc, "Follow-up intervals: missing, negative and zero values")
-subsets <- list(full = d, event = d[!is.na(event) & event == 1, , drop = FALSE],
-                censored = d[!is.na(event) & event == 0, , drop = FALSE])
-st <- c("n", "nmiss", "mean", "std", "min", "p25", "median", "p75", "max")
-followup_means <- lapply(subsets, function(data) hvtiRutilities::proc_means(data, vars = FOLLOWUP, stats = st))
 for (nm in names(followup_means)) {
   show_table(followup_means[[nm]], paste0("Follow-up, ", nm, " (proc_means)"))
 }
-suspicious <- is.na(event) | Reduce(`|`, lapply(d[FOLLOWUP], function(x) is.na(x) | x <= 0))
-review_rows <- d[head(which(suspicious), MAX_REVIEW_ROWS), needed, drop = FALSE]
-rownames(review_rows) <- NULL
 show_table(review_rows, paste0("Suspicious rows, first ", MAX_REVIEW_ROWS, " at most"))
 ```
 

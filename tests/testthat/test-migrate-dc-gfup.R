@@ -85,9 +85,9 @@ test_that("dc-gfup validates every field and row cap before summarizing", {
   d <- data.frame(dead = c(0, 1), iv_dead = c(1, 2), iv_fup = c(2, 3))
   cases <- list(
     list(field = "EVENT", value = "absent", error = "Unknown"),
-    list(field = "EVENT", value = c("dead", "iv_dead"), error = "EVENT"),
+    list(field = "EVENT", value = c("dead", "iv_dead"), error = "`event` must name one column"),
     list(field = "FOLLOWUP", value = "absent", error = "Unknown"),
-    list(field = "FOLLOWUP", value = character(), error = "FOLLOWUP"),
+    list(field = "FOLLOWUP", value = character(), error = "`followup` must name"),
     list(field = "IDENTIFIER", value = "absent", error = "Unknown"),
     list(field = "MAX_REVIEW_ROWS", value = 0, error = "positive integer"),
     list(field = "MAX_REVIEW_ROWS", value = 1.5, error = "positive integer"),

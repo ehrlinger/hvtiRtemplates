@@ -53,7 +53,7 @@ test_that("dp-gfup refuses a two-digit origin year", {
     NULL
   }, error = function(e) conditionMessage(e))
   expect_false(is.null(err))
-  expect_match(paste(err, collapse = "\n"), "Check ORIGIN_YEAR")
+  expect_match(paste(err, collapse = "\n"), "Check `origin_year`")
 })
 
 test_that("dp-gfup refuses a name shared by PANELS and EVENTS", {

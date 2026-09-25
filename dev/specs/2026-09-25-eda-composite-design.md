@@ -1,14 +1,18 @@
 # EDA report as a composite: `dp-postage` sections and `dp-eda`
 
 **Date:** 2026-09-25
-**Status:** design. Sections 3 and 4 decided by John Ehrlinger on 2026-09-25.
-Section 4.1 is proposed. Section 7 is open. Nothing is built.
+**Status:** design. Sections 3 and 4 decided by John Ehrlinger on 2026-09-25,
+and section 7.3's function names and homes the same day. Section 4.1 is
+proposed; the rest of section 7 is open. Built so far: `hv_eda_pages()`
+(hvtiPlotR 2.7.16), `dp-postage` in sections (hvtiRtemplates #148),
+`followup_check()` (hvtiRutilities 1.4.1) and `hv_followup_panels()`
+(hvtiPlotR 2.7.17), with `dc-gfup` and `dp-gfup` calling the last two.
 **Reads with:** `2026-09-09-eda-templates-design.md`, which scheduled the EDA
 rows this note reshapes, and `2026-09-02-dp-dc-decomposition-design.md`, which
 named the `dp` qualifiers.
-**Packages:** `hvtiRtemplates` for the templates, `hvtiPlotR` for the section
-function (section 5), and a home to be decided for the follow-up table
-function (section 4.1).
+**Packages:** `hvtiRtemplates` for the templates; `hvtiPlotR` for the section
+function (section 5) and the follow-up panels; `hvtiRutilities` for the
+follow-up tables (section 4.1).
 
 This note is self-contained. It assumes no memory of the session that produced
 it.
@@ -136,7 +140,8 @@ was written the same day and overtaken, and `dc-general` still uses
 
 **`dc-gfup`'s tables are template code today.** Sharing them through functions
 means moving the cohort-count and interval checks into a function that
-`dc-gfup` and `dp-eda` both call. Its home and name are open (section 7).
+`dc-gfup` and `dp-eda` both call: `hvtiRutilities::followup_check()`,
+decided 2026-09-25 (section 7.3).
 
 A standalone `dp-postage` prints its sections' tables too, so the guarantee of
 section 4 holds for tables as well as figures.
@@ -192,10 +197,14 @@ report over hundreds of variables can be navigated from the table of contents.
 2. **Derived variables.** Year and month of operation should be built in the
    data build, not derived in a job. That is a question for the SAS
    programmers and blocks nothing here: `X_VAR` names whatever column exists.
-3. **The follow-up functions.** Where `dc-gfup`'s cohort and interval
-   checks, and `dp-gfup`'s panel loop, live once they leave the templates:
-   `hvtiRutilities` beside `proc_means()` for the tables, `hvtiPlotR` beside
-   `hv_followup()` for the panels, is the likely split.
+3. **The follow-up functions. Decided 2026-09-25.** `dc-gfup`'s cohort and
+   interval checks are `hvtiRutilities::followup_check()`, beside
+   `proc_means()`. `dp-gfup`'s checks, study window and panel loop are
+   `hvtiPlotR::hv_followup_panels()` with its `plot()` method, beside
+   `hv_followup()`. Not `cohort_counts()`: that counts the analysable cohort
+   and drops rows with a missing time, which is a different question.
+   Each was checked `identical()` to the template code it replaced before the
+   templates switched over.
 4. **Acceptance.** Lauren's current EDA report is the reference output for
    the R sections, and the SAS EDA output is the acceptance test. Which study
    and which SAS output are not yet named.

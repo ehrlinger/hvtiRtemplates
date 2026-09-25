@@ -1,5 +1,14 @@
 # hvtiRtemplates (unreleased)
 
+* `dc-gfup` and `dp-gfup` compute through shared functions, so the EDA report
+  can call the same ones: `hvtiRutilities::followup_check()` for the follow-up
+  tables and `hvtiPlotR::hv_followup_panels()` for the panels and their study
+  window. The numbers and figures are unchanged. The validation errors now
+  come from those functions and name their arguments (`` `event` ``,
+  `` `origin_year` `` and so on) rather than the template's `EDIT:`
+  constants, and `dc-gfup`'s unknown-column error reads "Unknown column(s)".
+  Needs hvtiRutilities 1.4.1 and hvtiPlotR 2.7.17.
+
 * Two vignette tests, on the SAS guide and on the tutorials' study root, now
   read the installed `doc/` copy when the source checkout is absent. Under
   `R CMD check` they had skipped on every platform since 2026-09-21.
