@@ -6,8 +6,9 @@ Section 4.1 is proposed. Section 7 is open. Nothing is built.
 **Reads with:** `2026-09-09-eda-templates-design.md`, which scheduled the EDA
 rows this note reshapes, and `2026-09-02-dp-dc-decomposition-design.md`, which
 named the `dp` qualifiers.
-**Packages:** `hvtiRtemplates` for the templates, `hvtiPlotR` for the one
-function they need (section 5).
+**Packages:** `hvtiRtemplates` for the templates, `hvtiPlotR` for the section
+function (section 5), and a home to be decided for the follow-up table
+function (section 4.1).
 
 This note is self-contained. It assumes no memory of the session that produced
 it.
@@ -138,8 +139,9 @@ hv_eda_pages(data, x_col, section = c("continuous", "percent", "count"),
 - Tested there with `vdiffr` snapshots. `hvtiRtemplates` keeps its render
   tests.
 
-This moves pagination out of `dp-postage` and into the package. It is the only
-new code the design needs outside the templates.
+This moves pagination out of `dp-postage` and into the package. With the
+follow-up table function of section 4.1, it is the new code the design needs
+outside the templates.
 
 ## 6. Chunk labels and pages
 
