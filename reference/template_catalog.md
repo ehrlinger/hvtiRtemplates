@@ -15,7 +15,8 @@ template_catalog()
 
 A data frame. \`uses\`, \`upstream\`, \`downstream\`, and \`workflows\`
 are list columns of character vectors. Unmeasured counts are
-\`NA_integer\_\`.
+\`NA_integer\_\`. `description` is a one-sentence summary, given for
+every template on disk and `NA` for most queued ones.
 
 ## Examples
 
