@@ -242,6 +242,19 @@ test_that("dc-tables merges repeated headings and rejects conflicting groups or 
   }
 })
 
+test_that("dc-tables names an unclosed group heading instead of misparsing it", {
+  # Through migrate_job() an unclosed `/*` comments out the rest of the file, the call included.
+  for (varlist in c("/* D age bmi", "/* D */ age /* P bmi")) {
+    root <- migration_study_fixture("dc-tables")
+    tables_source(root, paste0("%desc_tab(vartype=continuous,input=built,varlist=", varlist, ");"))
+    expect_error(tables_migrate(root, evidence = FALSE), "requires a %desc_tab call", fixed = TRUE)
+    expect_false(file.exists(file.path(root, "descriptive", "cohort-eda-dc-tables.qmd")))
+    expect_error(.dc_tables_groups(varlist), "not closed", fixed = TRUE)
+  }
+  # A `/*` inside a closed heading is heading text, because SAS comments do not nest.
+  expect_identical(.dc_tables_groups("/* D /* x */ age"), list(`D /* x` = "age"))
+})
+
 test_that("dc-tables reports an empty RTF reference without failing migration", {
   root <- migration_study_fixture("dc-tables")
   writeLines(character(), file.path(root, "documents", "general.rtf"))

@@ -214,6 +214,10 @@
   }
   # Parse each original comment segment with the shared helper, then merge.
   # The helper deliberately rejects duplicate headings within a single input.
+  # SAS comments do not nest, so a `/*` left after removing closed comments is unclosed.
+  if (grepl("/*", gsub("(?s)/\\*.*?\\*/", "", varlist, perl = TRUE), fixed = TRUE)) {
+    stop("A /* group */ heading in a %desc_tab varlist is not closed.", call. = FALSE)
+  }
   starts <- gregexpr("(?s)/\\*.*?\\*/", varlist, perl = TRUE)[[1L]]
   groups <- list()
   for (i in seq_along(starts)) {

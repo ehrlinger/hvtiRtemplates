@@ -70,6 +70,13 @@
   `<script` tag now counts real matches. `gregexpr()` reports no match as a
   length-one `-1`, so the old assertion also passed when the tag was missing.
 
+* The `dc-tables` group-heading parser now names an unclosed `/*` heading
+  rather than failing with "subscript out of bounds" or folding the next group
+  into the last. `migrate_job()` never reaches it today, because the comment
+  masker treats an unclosed `/*` as running to end of file and the migration
+  already stops for want of a `%desc_tab` call. The guard keeps a later parser
+  change from reopening the confusing error.
+
 # hvtiRtemplates 1.2.1
 
 * Eight qualified `lm` templates now cover binary, ordinal and nominal outcome
