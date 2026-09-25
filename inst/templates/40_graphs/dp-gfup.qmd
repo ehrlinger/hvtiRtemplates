@@ -289,9 +289,9 @@ if (any(opyrs < 0, na.rm = TRUE)) {
 # which lands decades out.
 .this_year <- as.integer(format(Sys.Date(), "%Y"))
 op_year <- ORIGIN_YEAR + opyrs
-if (any(op_year > .this_year + 1, na.rm = TRUE)) {
-  stop("Operations fall after ", .this_year + 1, " (latest ", floor(max(op_year, na.rm = TRUE)),
-       "). Check ORIGIN_YEAR.", call. = FALSE)
+if (ORIGIN_YEAR < 1900 || any(op_year > .this_year + 1, na.rm = TRUE)) {
+  stop("Operations fall outside 1900 to ", .this_year + 1, " (", floor(min(op_year, na.rm = TRUE)),
+       " to ", floor(max(op_year, na.rm = TRUE)), "). Check ORIGIN_YEAR.", call. = FALSE)
 }
 
 year_days <- 365.2425

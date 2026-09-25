@@ -42,3 +42,16 @@ test_that("dp-gfup names every missing column in one error", {
   expect_false(is.null(err))
   expect_match(paste(err, collapse = "\n"), "not in the data: nope1, nope2")
 })
+
+test_that("dp-gfup refuses a two-digit origin year", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  s <- scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85")))
+  err <- tryCatch({
+    utils::capture.output(quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = FALSE),
+                          type = "message")
+    NULL
+  }, error = function(e) conditionMessage(e))
+  expect_false(is.null(err))
+  expect_match(paste(err, collapse = "\n"), "Check ORIGIN_YEAR")
+})
