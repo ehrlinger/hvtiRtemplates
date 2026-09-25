@@ -55,3 +55,22 @@ test_that("dp-gfup refuses a two-digit origin year", {
   expect_false(is.null(err))
   expect_match(paste(err, collapse = "\n"), "Check ORIGIN_YEAR")
 })
+
+test_that("dp-gfup refuses a name shared by PANELS and EVENTS", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  edits <- c(base_edits, list(
+    "^EVENTS <- list\\(\\)$" = paste0(
+      "EVENTS <- list(all = list(event = \"repair\", time = \"iv_fup\", ",
+      "death = \"dead\", death_time = \"iv_dead\"))"
+    )
+  ))
+  s <- scaffold_gfup(edits)
+  err <- tryCatch({
+    utils::capture.output(quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = FALSE),
+                          type = "message")
+    NULL
+  }, error = function(e) conditionMessage(e))
+  expect_false(is.null(err))
+  expect_match(paste(err, collapse = "\n"), "all is used twice")
+})

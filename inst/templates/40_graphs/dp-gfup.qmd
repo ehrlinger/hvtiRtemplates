@@ -240,6 +240,13 @@ if (!is.list(PANELS) || !length(PANELS) || is.null(names(PANELS)) || any(!nzchar
 if (!is.list(EVENTS) || (length(EVENTS) && (is.null(names(EVENTS)) || any(!nzchar(names(EVENTS)))))) {
   stop("EVENTS must be a named list, or list() for none.", call. = FALSE)
 }
+# Each name is also a figure's filename, so a name used twice, within a list
+# or across both, would overwrite the first figure without a word.
+.dup <- unique(c(names(PANELS), names(EVENTS))[duplicated(c(names(PANELS), names(EVENTS)))])
+if (length(.dup)) {
+  stop("PANELS and EVENTS names must be distinct across both lists: ",
+       paste(.dup, collapse = ", "), " is used twice.", call. = FALSE)
+}
 for (nm in names(PANELS)) {
   if (!is_name(PANELS[[nm]]$status) || !is_name(PANELS[[nm]]$time)) {
     stop("PANELS entry `", nm, "` needs one `status` and one `time` column.", call. = FALSE)
