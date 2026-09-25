@@ -11,3 +11,6 @@ __pycache__/
 .hvtiR/
 /doc/
 /Meta/
+
+# Local findings reports; may quote PHI-adjacent content
+reports/

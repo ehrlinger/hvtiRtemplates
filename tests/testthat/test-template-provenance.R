@@ -152,7 +152,7 @@ test_that("embedded provenance calls are unique across all R chunks", {
 
 test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- template_list()
-  expect_equal(nrow(templates), 28L)
+  expect_equal(nrow(templates), 29L)
 
   for (path in templates$file) {
     source <- readLines(path, warn = FALSE)
@@ -199,7 +199,7 @@ test_that("registered data provenance is captured in the chunk that reads it", {
 })
 
 test_that("analysis-set branches capture the parquet file they read", {
-  for (prefix in c("dc-general", "dc-gfup", "dc-tables", "dp-postage")) {
+  for (prefix in c("dc-general", "dc-gfup", "dc-tables", "dp-gfup", "dp-postage")) {
     source <- readLines(template_by_name(prefix), warn = FALSE)
     info <- prefix
     expect_true(any(grepl(".provenance_file_read(", source, fixed = TRUE)), info = info)
@@ -209,7 +209,7 @@ test_that("analysis-set branches capture the parquet file they read", {
 
 test_that("only templates with a local dataset choice override the dataset", {
   expected <- c(
-    "dc-general", "dc-gfup", "dc-tables", "dp-postage", "dp-trends",
+    "dc-general", "dc-gfup", "dc-tables", "dp-gfup", "dp-postage", "dp-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal"
   )

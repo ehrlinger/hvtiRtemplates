@@ -20,6 +20,8 @@ then review missing, negative and zero intervals. Follow-up units must be
 years. Derive any close-date or potential-follow-up measures in the data build
 and register them before selecting them here. These tables describe recorded
 follow-up; they do not establish completeness against a close date.
+The figure, each patient's follow-up against the diagonal a close date allows,
+is the `dp-gfup` job; read the same analysis set there.
 
 ```{r}
 #| label: setup
@@ -198,6 +200,11 @@ before sharing a report that contains an identifier.
 
 ```{r}
 #| label: qc
+#| results: asis
+# Tables, not console output: a report reader should not have to parse print().
+show_table <- function(x, caption) {
+  cat("\n", knitr::kable(x, caption = caption, row.names = FALSE), "\n", sep = "\n")
+}
 field_names <- function(x) is.character(x) && length(x) > 0L && !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
 if (!field_names(EVENT) || length(EVENT) != 1L) stop("EVENT must name one column.", call. = FALSE)
 if (!field_names(FOLLOWUP)) stop("FOLLOWUP must name one or more distinct columns.", call. = FALSE)
@@ -220,7 +227,7 @@ if ((!is.numeric(event) && !is.logical(event)) || any(!is.na(event) & !event %in
 if (!all(vapply(d[FOLLOWUP], is.numeric, logical(1L)))) stop("FOLLOWUP columns must be numeric.", call. = FALSE)
 cohort_counts <- data.frame(full = nrow(d), event = sum(event == 1, na.rm = TRUE),
                             censored = sum(event == 0, na.rm = TRUE), missing_event = sum(is.na(event)))
-print(cohort_counts, row.names = FALSE)
+show_table(cohort_counts, "Cohort: event, censored and missing event status")
 followup_qc <- do.call(rbind, lapply(FOLLOWUP, function(variable) {
   x <- d[[variable]]
   observed <- x[!is.na(x)]
@@ -229,16 +236,18 @@ followup_qc <- do.call(rbind, lapply(FOLLOWUP, function(variable) {
              zero = sum(x == 0, na.rm = TRUE), min = q[[1L]], q1 = q[[2L]], median = q[[3L]], q3 = q[[4L]],
              mean = if (length(observed)) mean(observed) else NA_real_, sd = stats::sd(observed), max = q[[5L]])
 }))
-print(followup_qc, row.names = FALSE)
+show_table(followup_qc, "Follow-up intervals: missing, negative and zero values")
 subsets <- list(full = d, event = d[!is.na(event) & event == 1, , drop = FALSE],
                 censored = d[!is.na(event) & event == 0, , drop = FALSE])
 st <- c("n", "nmiss", "mean", "std", "min", "p25", "median", "p75", "max")
 followup_means <- lapply(subsets, function(data) hvtiRutilities::proc_means(data, vars = FOLLOWUP, stats = st))
-print(followup_means)
+for (nm in names(followup_means)) {
+  show_table(followup_means[[nm]], paste0("Follow-up, ", nm, " (proc_means)"))
+}
 suspicious <- is.na(event) | Reduce(`|`, lapply(d[FOLLOWUP], function(x) is.na(x) | x <= 0))
 review_rows <- d[head(which(suspicious), MAX_REVIEW_ROWS), needed, drop = FALSE]
 rownames(review_rows) <- NULL
-print(review_rows, row.names = FALSE)
+show_table(review_rows, paste0("Suspicious rows, first ", MAX_REVIEW_ROWS, " at most"))
 ```
 
 The QC quartiles use R's default interpolated quantiles. `proc_means()` uses
@@ -250,11 +259,15 @@ an equivalent follow-up definition by itself.
 
 ```{r}
 #| label: checks
+#| results: asis
 unknown_checks <- setdiff(unlist(CHECKS, use.names = FALSE), names(d))
 if (length(unknown_checks)) {
   stop("Unknown event-check column(s): ", paste(unknown_checks, collapse = ", "), call. = FALSE)
 }
-for (cc in CHECKS) print(as.data.frame(table(d[cc], useNA = "ifany")))
+for (cc in CHECKS) {
+  cat("\n", knitr::kable(as.data.frame(table(d[cc], useNA = "ifany")),
+                         caption = paste(cc, collapse = " by ")), "\n", sep = "\n")
+}
 ```
 
 ```{r}
