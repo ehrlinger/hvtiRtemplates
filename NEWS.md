@@ -1,5 +1,16 @@
 # hvtiRtemplates (unreleased)
 
+* New `dp-gfup` template (`40_graphs/`): the goodness-of-follow-up figure over
+  `hvtiPlotR::hv_followup()`. One panel per death indicator and an optional
+  panel per non-fatal event; blue is alive, red is dead, and points are drawn
+  at alpha 0.5. The close date is an edit point, estimated from the data when
+  left `NULL`, and the report says which it drew. Every column named in the
+  study choices is checked at once, so one render lists every missing name.
+
+* `dc-gfup` now renders its cohort, interval, `proc_means()`, suspicious-row
+  and cross-tab results as tables rather than printed console output, and
+  points to `dp-gfup` for the figure.
+
 * **Breaking:** `add_job()`, `open_job()`, and `migrate_job()` rename their
   public `endpoint` argument to `subject`, and templates rename their
   `ENDPOINT` marker to `SUBJECT`. Job sets are now named by **subject**, the
