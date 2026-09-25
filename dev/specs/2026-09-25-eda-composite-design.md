@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-25
 **Status:** design. Sections 3 and 4 decided by John Ehrlinger on 2026-09-25.
-Section 7 is open. Nothing is built.
+Section 4.1 is proposed. Section 7 is open. Nothing is built.
 **Reads with:** `2026-09-09-eda-templates-design.md`, which scheduled the EDA
 rows this note reshapes, and `2026-09-02-dp-dc-decomposition-design.md`, which
 named the `dp` qualifiers.
@@ -57,10 +57,10 @@ author could not get by editing one line. Rejected on that ground: separate
 the identifier and `EXCLUDE`. Named variables are checked all at once, and the
 error lists every name not in the data. Both decided in the 2026-09-24 review.
 
-`migrate_job()` prefills `dp-postage` today. A migrated job that set
-`SHOW_PERCENT <- TRUE` becomes `SECTIONS <- c("continuous", "percent")`, and
-`FALSE` becomes `c("continuous", "count")`, so a migrated job draws what the
-old job drew.
+**No migration mapping,** decided 2026-09-25. These templates are in their
+first round of use, so no job depends on `SHOW_PERCENT` yet. `migrate_job()`
+stops reading it, and a migrated `dp-postage` job starts from the default
+`SECTIONS`.
 
 ## 4. Decided: `dp-eda` shares code through functions, not text
 
@@ -86,6 +86,33 @@ Because `dp-eda` and the section templates call the same functions with the
 same arguments, **a section in `dp-eda` is the same figure as the standalone
 job.** That is the guarantee the include design was after, reached through
 the functions instead.
+
+## 4.1 Proposed: a table beside each figure section
+
+The figures show shape; a reader checking data quality also wants the numbers.
+Each section of `dp-eda` carries the table that goes with it, over **exactly
+the variables on that section's pages**, so a figure and its table can never
+describe different variables.
+
+| section | table | from |
+|---|---|---|
+| overview, first | every variable: type, label, missing count | `hvtiRutilities::proc_contents()` |
+| follow-up | cohort, event and censored counts; missing, negative and zero intervals | `dc-gfup`'s tables, see below |
+| continuous | n, missing, mean, SD, quartiles, range | `hvtiRutilities::proc_means()` |
+| categorical | each level's n and percent, missing shown | `hvtiRutilities::proc_freq()` |
+
+One categorical table serves both the percent and count sections, because a
+table can carry both columns where a figure needs two.
+
+**`dc-gfup`'s tables are template code today.** Sharing them through functions
+means moving the cohort-count and interval checks into a function that
+`dc-gfup` and `dp-eda` both call. Its home and name are open (section 7).
+
+A standalone `dp-postage` prints its sections' tables too, so the guarantee of
+section 4 holds for tables as well as figures.
+
+**Not included:** `dc-tables`. That is the formatted manuscript table, written
+to Word for researchers, and a different job from checking the data.
 
 ## 5. Needed in `hvtiPlotR`: one paginated section function
 
@@ -129,14 +156,18 @@ report over hundreds of variables can be navigated from the table of contents.
 2. **Derived variables.** Year and month of operation should be built in the
    data build, not derived in a job. That is a question for the SAS
    programmers and blocks nothing here: `X_VAR` names whatever column exists.
-3. **Acceptance.** Lauren's current EDA report is the reference output for
+3. **The follow-up table function.** Where `dc-gfup`'s cohort and interval
+   checks live once they leave the template: `hvtiRutilities`, beside
+   `proc_means()`, is the likely home.
+4. **Acceptance.** Lauren's current EDA report is the reference output for
    the R sections, and the SAS EDA output is the acceptance test. Which study
    and which SAS output are not yet named.
 
 ## 8. Order of work
 
 1. `hv_eda_pages()` in `hvtiPlotR`, with snapshot tests.
-2. `dp-postage` moves to `hv_eda_pages()` and `SECTIONS`, with the
-   `VARIABLES <- NULL` default and the all-missing-names error. `migrate_job()`
-   maps `SHOW_PERCENT` as in section 3.
-3. `dp-eda`, and its catalog row, `.lintr` key and render test.
+2. The follow-up table function, and `dc-gfup` calling it.
+3. `dp-postage` moves to `hv_eda_pages()` and `SECTIONS`, with the
+   `VARIABLES <- NULL` default, the all-missing-names error and its section
+   tables. `migrate_job()` stops reading `SHOW_PERCENT`.
+4. `dp-eda`, and its catalog row, `.lintr` key and render test.
