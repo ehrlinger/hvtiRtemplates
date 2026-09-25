@@ -35,8 +35,10 @@
 
 The rule from the review: an event is red, censored is blue, missing is light grey; otherwise ColorBrewer Set1, falling back to Set3 when the levels outrun it; points at alpha 0.5; a single-level plot draws blue.
 
+**Precedence, so a one-level plot is not ambiguous:** a level named as the event, censored or missing keeps its semantic colour even when it is the only level, so an all-censored panel is blue and a missing-only one is light grey. The single-level blue rule applies only to a sole level with no semantic role, which Set1 would otherwise draw red.
+
 - [ ] **Design note first** (in hvtiPlotR `dev/`): name and shape of the helper. Working proposal: `hv_palette(levels, event = NULL, censored = NULL, missing = "(Missing)")` returning a named colour vector, plus `scale_colour_hv()` / `scale_fill_hv()` wrappers. Colours stay the caller's choice per CONTRIBUTING, so this is an opt-in scale, not a default inside constructors.
-- [ ] Implement with tests: event and censored levels take red and blue whatever their position; missing takes light grey; Set1 order for the rest; Set3 beyond Set1's nine; a single level is blue.
+- [ ] Implement with tests: event and censored levels take red and blue whatever their position; missing takes light grey; Set1 order for the rest; Set3 beyond Set1's nine; a sole non-semantic level is blue; a sole event level is red, a sole censored level blue, a sole missing level light grey.
 - [ ] Worked example in `vignettes/plot-functions.qmd` and a row in the SAS migration guide (CONTRIBUTING steps 6 and 7).
 - [ ] NEWS, `lintr` 0, full suite, local `/code-review`, PR.
 - [ ] After merge: bump to **2.7.18** (separate PR), release gate, tag and release.
@@ -61,7 +63,7 @@ A study keeps one list of its own abbreviations (`CABG`, `LV`, `AV`, …) so eve
 - [x] Design note: hvtiRutilities [#162](https://github.com/ehrlinger/hvtiRutilities/pull/162). Group default in `inst/extdata/abbreviations.yml`, study overrides in `_study.yml` `abbreviations:`, `study_abbreviations(cfg)` merges them live; precedence job, then study, then default, then the initials rule. Needs only hvtiRutilities, so it ships in 1.4.2 and 1.2.3.
 - [ ] John settles the note's §8: the starter list (proposed: a census of labels across studies), curation after, and whether an `add_abbreviation()` helper is wanted.
 - [ ] Build in Phase 2 alongside smart truncation: the default file, `study_abbreviations()`, `study_config()` validation of the block, tests per the note's §6.
-- [ ] In Phase 3c: the templates merge `study_abbreviations(.cfg)` with their `ABBREVIATIONS` (job entries win, compared ignoring case) and record the merged list in provenance.
+- [ ] In Phase 3c: the templates call `study_abbreviations(.cfg, extra = ABBREVIATIONS)`, which merges and validates all three levels, and record its result, with each entry's level, in provenance.
 
 ## Phase 3: hvtiRtemplates (release 1.2.3)
 
@@ -80,10 +82,10 @@ Phases 1 and 2 must be released before 3b and 3c can raise their floors; 3a and 
 - [ ] Floors: `hvtiRutilities (>= 1.4.2)`; the helper allow-list test gains nothing new unless a new function is called.
 
 ### 3d. `dp-eda`, the composite template
-- [ ] `inst/templates/10_descriptive/dp-eda.qmd`, following design §4 and §6: the usual setup, data and `study-choices` chunks; `PANELS`/`EVENTS`/`CLOSE_DATE`/`ORIGIN_YEAR` as `dp-gfup` has them; `VARIABLES`/`EXCLUDE`/`SECTIONS`/`ALPHA`/palette/`LABEL_MAX`/`ABBREVIATIONS` as `dp-postage` has them.
+- [ ] `inst/templates/10_descriptive/dp-eda.qmd`, following design §4 and §6: the usual setup, data and `study-choices` chunks, with `DATASET` and `ANALYSIS_SET`; `OPYRS`, `ORIGIN_YEAR`, `CLOSE_DATE`, `PANELS` and `EVENTS` as `dp-gfup` has them; `X_VAR`, `VARIABLES`, `EXCLUDE`, `SECTIONS`, `GRID_NCOL`, `GRID_NROW`, `UNIQUE_LIMIT`, `ALPHA`, the palette, `LABEL_MAX` and `ABBREVIATIONS` as `dp-postage` has them. Without the grid and uniqueness settings the pages could not match the standalone job's.
 - [ ] Sections, in order: overview table (`proc_contents()`); follow-up (`followup_check()` tables and `hv_followup_panels()` figures); continuous, percent and count (`hv_eda_pages()` with `proc_means()` and one `proc_freq()` table). Chunk labels prefixed by section (`gfup-`, `cont-`, `pct-`, `cnt-`). Each page gets a heading and a caption naming its variables.
 - [ ] Same-figure guarantee: a test that renders `dp-eda` and `dp-postage` on the same fixture and compares their page structure, so the composite cannot drift from the standalone job.
-- [ ] Catalog row (`dp`, qualifier `eda`, folder `descriptive`) with a `description`; re-render the roadmap; `.lintr` file key; `inst/templates/README.md` row; `test-eda-configuration.R` and `test-template-provenance.R` inventories; render tests including an embed check and a subfolder job (the two ways `dp-postage` broke before #148 merged).
+- [ ] Catalog row (`dp`, qualifier `eda`, folder `descriptive`) with a `description`; re-render the roadmap; `.lintr` file key; `inst/templates/README.md` row; `test-eda-configuration.R`, `test-template-provenance.R` and `test-template-data-routes.R` inventories (the last hard-codes the descriptive templates for the whole-cohort, named-dataset and converter routes); render tests including an embed check and a subfolder job (the two ways `dp-postage` broke before #148 merged).
 - [ ] NEWS entry.
 
 ### 3e. Before the version bump
@@ -101,7 +103,7 @@ Phases 1 and 2 must be released before 3b and 3c can raise their floors; 3a and 
 - [ ] Bump PR: `# hvtiRtemplates (unreleased)` to `# hvtiRtemplates 1.2.3`; `DESCRIPTION` `Version` and `Date`.
 - [ ] Release gate on the bump PR's head: CRAN Cookbook spot-checks (`DESCRIPTION`, `\value`, `\dontrun`), `R CMD check --as-cran` with the PDF manual from a clean `git archive` (TeX on `PATH`), `urlchecker`, reverse dependencies (none today).
 - [ ] After merge: confirm the merge tree equals the gated tree, tag, publish the release from the NEWS section.
-- [ ] Then the hvtiR catalog refresh and its bump (deferred from 1.2.2 on 2026-09-25).
+- [ ] Then the hvtiR package-registry refresh and its bump (deferred from 1.2.2 on 2026-09-25): hvtiR's `inst/extdata/catalog.csv` records each family package's version. It is not this repo's template catalog (`inst/extdata/templates.json`), whose `dp-eda` row lands in Phase 3d.
 
 ## Order and parallelism
 
