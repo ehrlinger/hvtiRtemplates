@@ -1,5 +1,147 @@
 # Changelog
 
+## hvtiRtemplates 1.2.2
+
+- `DESCRIPTION`: a plain `&` in the Description (`\&` is not a valid
+  escape there and printed a literal backslash), and a copyright holder
+  in <Authors@R>. Both from the 1.2.2 release gate’s CRAN Cookbook
+  audit.
+
+- `dc-gfup` and `dp-gfup` compute through shared functions, so the EDA
+  report can call the same ones:
+  [`hvtiRutilities::followup_check()`](https://ehrlinger.github.io/hvtiRutilities/reference/followup_check.html)
+  for the follow-up tables and
+  [`hvtiPlotR::hv_followup_panels()`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_followup_panels.html)
+  for the panels and their study window. The numbers and figures are
+  unchanged. The validation errors now come from those functions and
+  name their arguments (`` `event` ``, `` `origin_year` `` and so on)
+  rather than the template’s `EDIT:` constants, and `dc-gfup`’s
+  unknown-column error reads “Unknown column(s)”. Needs hvtiRutilities
+  1.4.1 and hvtiPlotR 2.7.17.
+
+- Two vignette tests, on the SAS guide and on the tutorials’ study root,
+  now read the installed `doc/` copy when the source checkout is absent.
+  Under `R CMD check` they had skipped on every platform since
+  2026-09-21.
+
+- The legacy-article vignette test uses the same checkout-then-`doc/`
+  lookup, and the `rfr-explain` test silences varPro 3.3.0’s notice that
+  it drops rows with missing values, so `R CMD check` reports no
+  warnings.
+
+- `dp-postage` draws in sections.
+  `SECTIONS <- c("continuous", "percent", "count")` replaces
+  `SHOW_PERCENT`, so one render shows the categorical variables both as
+  percentages and as counts, with the same year bins. Each section opens
+  with its table:
+  [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html)
+  for continuous variables, and one
+  [`proc_freq()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_freq.html)
+  table, missing counted, for the categorical ones. `VARIABLES <- NULL`
+  is the new default and draws every column except `X_VAR`, `EXCLUDE`
+  and any column that looks like an identifier or a date, which the
+  report lists. `ALPHA` (0.5) sets point transparency. The pages come
+  from
+  [`hvtiPlotR::hv_eda_pages()`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_eda_pages.html),
+  so the job needs hvtiPlotR 2.7.16.
+
+- [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  no longer carries a legacy `show_percent` into a `dp-postage` job; it
+  records it as replaced by `SECTIONS`, whose default draws both views.
+  A legacy point alpha now carries over into `ALPHA`, and a job with no
+  variable list starts from `VARIABLES <- NULL`.
+
+- New vignette, *The template catalog*: every template with a one-line
+  description, the
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  call that scaffolds it, and a delivery light (shipped, in progress,
+  not yet on the way), grouped by study folder, followed by the queued
+  job types ordered by how many studies carry them. It is built from the
+  catalog when rendered, so it cannot fall out of date.
+
+- [`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md)
+  gains a `description` column. Every template on disk has one, which a
+  test and `check-roadmap-counts.py` both enforce.
+
+- New `dp-gfup` template (`40_graphs/`): the goodness-of-follow-up
+  figure over
+  [`hvtiPlotR::hv_followup()`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_followup.html).
+  One panel per death indicator and an optional panel per non-fatal
+  event; blue is alive, red is dead, and points are drawn at alpha 0.5.
+  The close date is an edit point, estimated from the data when left
+  `NULL`, and the report says which it drew. Every column named in the
+  study choices is checked at once, so one render lists every missing
+  name.
+
+- `dc-gfup` now renders its cohort, interval,
+  [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html),
+  suspicious-row and cross-tab results as tables rather than printed
+  console output, and points to `dp-gfup` for the figure.
+
+- **Breaking:**
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
+  [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md),
+  and
+  [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  rename their public `endpoint` argument to `subject`, and templates
+  rename their `ENDPOINT` marker to `SUBJECT`. Job sets are now named by
+  **subject**, the leading grouping topic in
+  `<subject>-<type>-<prefix>[-<qualifier>].qmd`. A subject can be a
+  statistical endpoint such as `death`, or an endpoint-free topic such
+  as `cohort`. Jobs now own their outcome and cohort definitions;
+  dataset registration does not choose them.
+
+- Requires hvtiRutilities 1.4.0 or later, whose endpoint-neutral study
+  registration the subject-based jobs depend on. The floor is now 1.4.1,
+  for
+  [`followup_check()`](https://ehrlinger.github.io/hvtiRutilities/reference/followup_check.html)
+  (see the `dc-gfup` entry above).
+
+- Every scaffolded job now captures provenance while it executes, safely
+  embeds that payload in its completed HTML, and publishes a same-stem
+  `.provenance.json` sidecar through study-level Quarto hooks.
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  installs the hooks idempotently without replacing existing project
+  settings or user hooks. Publication follows Quarto’s actual output
+  paths, invalidates only the inputs being rendered, preserves prior
+  sidecars when a failed render leaves its outputs untouched, and
+  durably tracks multi-output publication. Failed publication removes
+  partial new sidecars and restores a prior sidecar only while its
+  recorded output hash still matches, retaining mismatched backups for
+  explicit recovery. Records always carry the runtime subject and type
+  and add only the analysis and observed-cohort facts the job actually
+  used.
+
+- Saved model and report handoffs now carry immutable `hvti_provenance`
+  lineage. Random-forest explainers, logistic validation, bootstrap
+  reports, and the actuarial-to-hazard graph chain retain their
+  producers’ data records and hash every artifact they read. A package
+  handoff without lineage stops with rebuild guidance; external
+  bootstrap artifacts instead require explicit original data records.
+  The `ac` template now saves its overall life table as the real
+  upstream artifact consumed by `hp`.
+
+- All eight logistic-family templates now record their runtime model and
+  cohort metadata. Records distinguish outcomes, treatments and count
+  exposures; retain accepted and observed levels and applicable coding;
+  and report the fitted formula, family, method, predictors, imputation
+  details, and analysed-row accounting. Stacked-imputation totals are
+  labelled as stacked rows and accompanied by per-imputation counts.
+  `lm-checkpred` keeps the source model’s training metadata separate
+  from the validation cohort it observes.
+
+- New vignette, “Start a new study from a delivered dataset”, takes a
+  study from its Study Tracker record and the `study-setup` command
+  through registration, a first descriptive job and its provenance
+  sidecar, to a first `ac`, `hz` and `hp` chain. It complements “Adopt
+  an existing study”.
+
+- The provenance test that asserts an embedded payload carries exactly
+  one `<script` tag now counts real matches.
+  [`gregexpr()`](https://rdrr.io/r/base/grep.html) reports no match as a
+  length-one `-1`, so the old assertion also passed when the tag was
+  missing.
+
 ## hvtiRtemplates 1.2.1
 
 - Eight qualified `lm` templates now cover binary, ordinal and nominal
