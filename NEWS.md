@@ -1,5 +1,9 @@
 # hvtiRtemplates 1.2.2
 
+* `DESCRIPTION`: a plain `&` in the Description (`\&` is not a valid escape
+  there and printed a literal backslash), and a copyright holder in
+  Authors@R. Both from the 1.2.2 release gate's CRAN Cookbook audit.
+
 * `dc-gfup` and `dp-gfup` compute through shared functions, so the EDA report
   can call the same ones: `hvtiRutilities::followup_check()` for the follow-up
   tables and `hvtiPlotR::hv_followup_panels()` for the panels and their study
