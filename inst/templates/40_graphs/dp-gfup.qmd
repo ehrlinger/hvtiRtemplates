@@ -237,7 +237,8 @@ cat("Data read: ", if (is.null(ANALYSIS_SET)) {
 fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
                                     panels = PANELS, events = EVENTS, close_date = CLOSE_DATE)
 close_date <- fp$meta$close_date
-close_source <- fp$meta$close_source
+# Name the edit point a reader can find in this file, not the function's argument.
+close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
 
 knitr::kable(data.frame(
   quantity = c("patients", "operation year missing", "first operation", "last operation",
