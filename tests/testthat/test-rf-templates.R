@@ -312,7 +312,16 @@ test_that("rfr-explain runs VarPro on a forest grown with missing predictors", {
   fit_env <- rf_fit_first("rfr", rfr_data(), rfr_choices)
   env <- new.env(parent = globalenv())
   env$.root <- fit_env$.root
-  rf_run("rfr", "explain", explain_labels, env, list(TOP_K = 2, SEED = 1))
+  # varPro 3.3.0 warns that it drops the rows with missing values; 3.2.0, the
+  # floor, drops them silently. Muffle that one message so the test holds on
+  # both and any other warning still reaches the summary.
+  withCallingHandlers(
+    rf_run("rfr", "explain", explain_labels, env, list(TOP_K = 2, SEED = 1)),
+    warning = function(w) {
+      if (grepl("^varpro\\(\\): omitted [0-9]+ of [0-9]+ observations with missing values",
+                conditionMessage(w))) invokeRestart("muffleWarning")
+    }
+  )
   expect_true(anyNA(env$frame))   # the raw training data, not imputed.data
   expect_s3_class(env$vp, "varpro")
   for (p in list(env$pd, env$pv)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
