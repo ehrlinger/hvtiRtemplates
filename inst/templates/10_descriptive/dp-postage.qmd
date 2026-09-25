@@ -301,8 +301,11 @@ for (section in SECTIONS) {
     on_page <- attr(pages[[i]], "variables")
     # Link relative to wherever this document sits. Quarto rewrites an absolute
     # path into a broken relative one and then cannot embed the image, and a
-    # fixed "../graphs" would break for a job kept in a subfolder.
-    link <- xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd())
+    # fixed "../graphs" would break for a job kept in a subfolder. error = FALSE
+    # returns the path unchanged when no relative path exists (two Windows
+    # drives), so the page is still saved rather than the render stopping.
+    link <- xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd(),
+                                error = FALSE)
     cat("\n### Page ", i, "\n\n![", paste(labels[on_page], collapse = ", "), "](", link, ")\n\n", sep = "")
     page_files <- c(page_files, file)
   }
