@@ -131,7 +131,7 @@ test_that("the final migration verifier returns four lasting rendered fixtures",
   if (!exists("render_all_migration_fixtures", mode = "function")) return(invisible(NULL))
   skip_if_not_installed("hvtiRdatabuild", "0.2.1")
   skip_if_not_installed("hvtiRtables", "1.0.1")
-  skip_if_not_installed("hvtiPlotR", "2.7.14")
+  skip_if_not_installed("hvtiPlotR", "2.7.16")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   results <- render_all_migration_fixtures()

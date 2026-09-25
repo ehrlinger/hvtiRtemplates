@@ -280,6 +280,9 @@ test_that("postage VARIABLES = NULL draws every column but ids, dates and exclus
   env$VARIABLES <- NULL
   env$SECTIONS <- c("continuous", "percentage")
   expect_error(eval(spec, env), "SECTIONS")
+  # A repeated section would draw twice over the same page files.
+  env$SECTIONS <- c("percent", "percent")
+  expect_error(eval(spec, env), "SECTIONS")
 })
 
 test_that("postage migration records a legacy show_percent as ignored, not translated", {
@@ -308,5 +311,6 @@ test_that("postage embeds its pages when the job sits in a subfolder", {
   html <- paste(readLines(sub("[.]qmd$", ".html", nested), warn = FALSE), collapse = "\n")
   pngs <- list.files(file.path(root, "graphs", "cohort-eda"), pattern = "^dp-postage-.*[.]png$")
   expect_gte(length(pngs), 1L)
-  expect_identical(length(gregexpr("src=\"data:image/png", html)[[1L]]), length(pngs))
+  # regmatches(), not length(gregexpr()): no match returns -1, whose length is 1.
+  expect_identical(length(regmatches(html, gregexpr("src=\"data:image/png", html))[[1L]]), length(pngs))
 })
