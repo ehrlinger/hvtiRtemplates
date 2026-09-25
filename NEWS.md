@@ -60,8 +60,9 @@
   topic such as `cohort`. Jobs now own their outcome and cohort definitions;
   dataset registration does not choose them.
 
-* Requires hvtiRutilities 1.4.0, whose endpoint-neutral study registration
-  the subject-based jobs depend on.
+* Requires hvtiRutilities 1.4.0 or later, whose endpoint-neutral study
+  registration the subject-based jobs depend on. The floor is now 1.4.1, for
+  `followup_check()` (see the `dc-gfup` entry above).
 
 * Every scaffolded job now captures provenance while it executes, safely
   embeds that payload in its completed HTML, and publishes a same-stem
