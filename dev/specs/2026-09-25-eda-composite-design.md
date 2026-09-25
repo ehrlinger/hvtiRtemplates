@@ -2,8 +2,8 @@
 
 **Date:** 2026-09-25
 **Status:** design. Sections 3 and 4 decided by John Ehrlinger on 2026-09-25,
-and section 7.3's function names and homes the same day. Section 4.1 is
-proposed; the rest of section 7 is open. Built so far: `hv_eda_pages()`
+and section 7.3's function names and homes the same day. Section 4.1 decided
+2026-09-25 as well; the rest of section 7 is open. Built so far: `hv_eda_pages()`
 (hvtiPlotR 2.7.16), `dp-postage` in sections (hvtiRtemplates #148),
 `followup_check()` (hvtiRutilities 1.4.1) and `hv_followup_panels()`
 (hvtiPlotR 2.7.17), with `dc-gfup` and `dp-gfup` calling the last two.
@@ -115,7 +115,7 @@ same arguments, **a section in `dp-eda` is the same figure as the standalone
 job.** That is the guarantee the include design was after, reached through
 the functions instead.
 
-## 4.1 Proposed: a table beside each figure section
+## 4.1 Decided: a table beside each figure section
 
 The figures show shape; a reader checking data quality also wants the numbers.
 Each section of `dp-eda` carries the table that goes with it, over **exactly
