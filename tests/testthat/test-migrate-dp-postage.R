@@ -46,21 +46,6 @@ test_that("postage migration selects registered data and explicit ordered EDA co
   expect_equal(ncol(hvtiRutilities::read_built(hvtiRutilities::study_config(other))), 13L)
 })
 
-test_that("postage pages preserve order and reject invalid dimensions", {
-  env <- new.env()
-  spec <- postage_chunk(template_path("dp", "postage"), "spec")
-  positive <- which(vapply(spec, function(x) is.call(x) && identical(x[[2L]], as.name("positive_whole")), logical(1L)))
-  eval(spec[positive], env)
-  eval(postage_chunk(template_path("dp", "postage"), "helpers"), env)
-  expect_identical(env$.postage_pages(letters[1:18], 4L, 4L),
-                   list(letters[1:16], letters[17:18]))
-  expect_identical(env$.postage_pages(list(), 4L, 4L), list())
-  for (bad in list(0, -1, 1.5, NA_real_, Inf, "4", c(1, 2))) {
-    expect_error(env$.postage_pages(letters, bad, 4L), "positive whole")
-    expect_error(env$.postage_pages(letters, 4L, bad), "positive whole")
-  }
-})
-
 test_that("postage handles SAS controls without executing source cleaning or unsupported choices", {
   root <- migration_study_fixture()
   lines <- c("* %let pref_time_var=wrong;", "SET complete_cases;",
@@ -76,7 +61,10 @@ test_that("postage handles SAS controls without executing source cleaning or uns
   expect_identical(env$EXCLUDE, "bmi")
   expect_identical(env$GRID_NCOL, 2L)
   expect_identical(env$GRID_NROW, 1L)
-  expect_true(all(8:12 %in% result$unresolved$line))
+  expect_true(all(c(8:9, 11:12) %in% result$unresolved$line))
+  # A literal alpha now carries over; the template has an ALPHA edit point.
+  expect_identical(env$ALPHA, 0.2)
+  expect_true(10L %in% result$translated$line)
   expect_false(any(grepl("age\\+1|axis1|wrong|repair", result$regions)))
 })
 
@@ -94,7 +82,7 @@ test_that("postage accepts literal QMD controls only and keeps incomplete choice
   }
   lines[4L] <- 'variables <- system("touch should-never-exist")'
   result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
-  expect_identical(postage_config(result)$VARIABLES, character())
+  expect_null(postage_config(result)$VARIABLES)
   expect_true(4L %in% result$unresolved$line)
   expect_false(any(grepl("system|touch", result$regions)))
   expect_match(result$regions[[1L]], "EDIT:", fixed = TRUE)
@@ -106,7 +94,8 @@ test_that("postage template validates selection and plotting settings before sav
   # Run validation separately from the template's editable declarations.
   env <- list2env(list(d = data.frame(year = 1:10, age = 41:50, patient_id = 11:20, visit_date = 21:30),
                        X_VAR = "year", VARIABLES = "age", EXCLUDE = character(),
-                       GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L, SHOW_PERCENT = FALSE))
+                       GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
+                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5))
   expect_error({
     selection <- data[seq.int(which(vapply(data, function(x) is.call(x) && identical(x[[1]], as.name("if")), logical(1)))[1],
                               length(data))]
@@ -114,7 +103,7 @@ test_that("postage template validates selection and plotting settings before sav
   }, "written from the study dataset")
   spec <- postage_chunk(job, "spec")
   expect_no_error(eval(spec, env))
-  for (field in c("X_VAR", "VARIABLES", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SHOW_PERCENT")) {
+  for (field in c("X_VAR", "VARIABLES", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SECTIONS", "ALPHA")) {
     original <- env[[field]]
     env[[field]] <- NA
     expect_error(eval(spec, env), info = field)
@@ -136,10 +125,17 @@ test_that("postage renders real eighteen-panel pages under the logical graphs ro
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   out <- render_migrated_fixture("dp-postage")
-  expected <- file.path(out$root, "graphs", "cohort-eda", sprintf("dp-postage-page-%02d.png", 1:2))
+  expected <- file.path(out$root, "graphs", "cohort-eda",
+                        sprintf("dp-postage-%s-page-01.png", c("continuous", "percent", "count")))
   expect_true(all(expected %in% out$outputs))
   expect_true(all(file.info(expected)$size > 1000))
-  expect_true(file.exists(sub("[.]qmd$", ".html", out$job)))
+  html <- sub("[.]qmd$", ".html", out$job)
+  expect_true(file.exists(html))
+  # The PNGs existing is not the report showing them: an absolute image path
+  # rendered with every file saved and nothing embedded.
+  embedded <- regmatches(paste(readLines(html, warn = FALSE), collapse = "\n"),
+                         gregexpr("src=\"data:image/png", paste(readLines(html, warn = FALSE), collapse = "\n")))[[1L]]
+  expect_gte(length(embedded), length(expected))
 })
 
 test_that("postage routes actual pages through numbered study folders and embeds the saved files", {
@@ -151,16 +147,17 @@ test_that("postage routes actual pages through numbered study folders and embeds
   expect_true(all(file.rename(file.path(root, folders), file.path(root, numbered))))
   env <- list2env(list(
     .root = root, d = d, X_VAR = "iv_dead", VARIABLES = c("age", "bmi", "lvmassi"), EXCLUDE = character(),
-    GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SHOW_PERCENT = FALSE,
+    GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
     get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
     theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript
   ))
   job <- template_path("dp", "postage")
-  for (label in c("set", "spec", "helpers")) eval(postage_chunk(job, label), env)
-  paths <- eval(postage_chunk(job, "pages"), env)
-  expected <- file.path(root, "40_graphs", "cohort-eda", sprintf("dp-postage-page-%02d.png", 1:2))
+  for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
+  capture.output(paths <- eval(postage_chunk(job, "pages"), env))
+  # All three are continuous, so only that section draws pages: two at 2 x 1.
+  expected <- file.path(root, "40_graphs", "cohort-eda", sprintf("dp-postage-continuous-page-%02d.png", 1:2))
   expect_identical(as.character(paths), expected)
-  expect_equal(lengths(env$pages), c(2L, 1L))
+  expect_identical(lapply(env$pages, attr, "variables"), list(c("age", "bmi"), "lvmassi"))
   expect_true(all(file.info(expected)$size > 1000))
   expect_false(dir.exists(file.path(root, "graphs")))
 })
@@ -217,7 +214,7 @@ test_that("postage leaves disabled QMD chunks inactive and conditional chunks un
   expect_true(8L %in% result$ignored$line)
   lines <- c("```{r}", "#| eval: !expr run_eda", 'variables <- "age"', "```")
   result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
-  expect_identical(postage_config(result)$VARIABLES, character())
+  expect_null(postage_config(result)$VARIABLES)
   expect_true(3L %in% result$unresolved$line)
 })
 
@@ -242,7 +239,7 @@ test_that("postage preserves boolean-prefixed eval expressions as unresolved", {
       env <- postage_config(result)
       expect_identical(env$DATASET, NA_character_, info = paste(header, collapse = " "))
       expect_identical(env$X_VAR, NA_character_)
-      expect_identical(env$VARIABLES, character())
+      expect_null(env$VARIABLES)
       source_rows <- length(header) + 1:4
       expect_true(all(source_rows %in% result$unresolved$line))
       expect_false(any(source_rows %in% result$ignored$line))
@@ -262,8 +259,58 @@ test_that("postage recognizes complete inline boolean eval options", {
       expect_identical(postage_config(result)$VARIABLES, "age")
       expect_true(all(2:4 %in% result$translated$line))
     } else {
-      expect_identical(postage_config(result)$VARIABLES, character())
+      expect_null(postage_config(result)$VARIABLES)
       expect_true(all(2:4 %in% result$ignored$line))
     }
   }
+})
+
+test_that("postage VARIABLES = NULL draws every column but ids, dates and exclusions, and says so", {
+  spec <- postage_chunk(template_path("dp", "postage"), "spec")
+  env <- list2env(list(d = data.frame(year = 1:10, age = 41:50, patient_id = 11:20, op_date = Sys.Date() + 0:9,
+                                      female = rep(0:1, 5), bmi = 21:30),
+                       X_VAR = "year", VARIABLES = NULL, EXCLUDE = "bmi",
+                       GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
+                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5))
+  out <- capture.output(eval(spec, env))
+  expect_identical(env$VARIABLES, c("age", "female"))
+  expect_match(paste(out, collapse = " "), "patient_id, op_date")
+  env$VARIABLES <- c("age", "nope1", "nope2")
+  expect_error(eval(spec, env), "nope1, nope2")
+  env$VARIABLES <- NULL
+  env$SECTIONS <- c("continuous", "percentage")
+  expect_error(eval(spec, env), "SECTIONS")
+  # A repeated section would draw twice over the same page files.
+  env$SECTIONS <- c("percent", "percent")
+  expect_error(eval(spec, env), "SECTIONS")
+})
+
+test_that("postage migration records a legacy show_percent as ignored, not translated", {
+  root <- migration_study_fixture()
+  lines <- c("```{r}", 'dta_filename <- "built.csv"', 'pref_time_var <- "iv_dead"', "show_percent <- TRUE", "```")
+  result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+  env <- postage_config(result)
+  expect_true(4L %in% result$ignored$line)
+  expect_match(result$ignored$reason[result$ignored$line == 4L], "replaced by SECTIONS")
+  expect_identical(env$SECTIONS, c("continuous", "percent", "count"))
+  expect_false(exists("SHOW_PERCENT", envir = env, inherits = FALSE))
+  expect_null(env$VARIABLES)
+})
+
+test_that("postage embeds its pages when the job sits in a subfolder", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  root <- migration_study_fixture(NULL)
+  job <- add_job("dp", "cohort", "eda", dir = root, qualifier = "postage")
+  nested <- file.path(dirname(job), "eda", basename(job))
+  dir.create(dirname(nested))
+  lines <- sub('^ANALYSIS_SET <- "eda"', "ANALYSIS_SET <- NULL", readLines(job, warn = FALSE))
+  writeLines(lines, nested)
+  unlink(job)
+  quarto::quarto_render(nested, execute_dir = dirname(nested), quiet = TRUE)
+  html <- paste(readLines(sub("[.]qmd$", ".html", nested), warn = FALSE), collapse = "\n")
+  pngs <- list.files(file.path(root, "graphs", "cohort-eda"), pattern = "^dp-postage-.*[.]png$")
+  expect_gte(length(pngs), 1L)
+  # regmatches(), not length(gregexpr()): no match returns -1, whose length is 1.
+  expect_identical(length(regmatches(html, gregexpr("src=\"data:image/png", html))[[1L]]), length(pngs))
 })

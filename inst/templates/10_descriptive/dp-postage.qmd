@@ -15,9 +15,16 @@ format:
 Replaces an older EDA bar-plot and scatter-plot sweep.
 
 A `dp-postage` job is the data-checking sweep over a new build: one small panel
-per variable against operation year, bars for categorical variables and points
-for continuous ones, pages of them. It is for finding coding errors, drift and
-missingness before any analysis. It is not a figure for a manuscript.
+per variable against operation year, pages of them, with a table beside each
+section. It is for finding coding errors, drift and missingness before any
+analysis. It is not a figure for a manuscript.
+
+The sweep has three sections, and `SECTIONS` picks which to draw: continuous
+variables as points, then categorical variables as percentages, then the same
+categorical variables as counts. The percent and count pages bin the year the
+same way, so their bars line up. The pages come from `hvtiPlotR::hv_eda_pages()`,
+the same function the EDA report draws through, so a section here is the same
+figure as that section of the report.
 
 ```{r}
 #| label: setup
@@ -33,8 +40,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
-  stop("This job needs hvtiPlotR >= 2.7.14 for hv_eda(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.7.16") {
+  stop("This job needs hvtiPlotR >= 2.7.16 for hv_eda_pages(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (!requireNamespace("patchwork", quietly = TRUE)) {
@@ -113,16 +120,25 @@ Set the values in this chunk before rendering.
 # under analysis_sets: in _study.yml, then write it with
 # hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
 # cohort is the intended population.
+# VARIABLES is NULL to draw every column, or the columns to draw, in page
+# order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
+# identifier or a date, and the report lists what it left out; name such a
+# column here to draw it anyway. A named column that is not in the data stops
+# the render, and the error lists every missing name at once.
+# SECTIONS is any of "continuous", "percent" and "count", in the order to
+# draw them. ALPHA is point transparency for continuous panels: 0.5 lets a dense
+# cohort read as a distribution rather than a blob.
 # MIGRATE-BEGIN: dp-postage-config
 DATASET <- "study"
 ANALYSIS_SET <- "eda"
 X_VAR <- "year"                    # EDIT: reference time or year
-VARIABLES <- c("age", "female")     # EDIT: variables shown as panels
+VARIABLES <- NULL                  # EDIT: NULL draws every column, or name them
 EXCLUDE <- character(0)
 GRID_NCOL <- 4L
 GRID_NROW <- 4L
 UNIQUE_LIMIT <- 6L
-SHOW_PERCENT <- FALSE
+SECTIONS <- c("continuous", "percent", "count")
+ALPHA <- 0.5
 # MIGRATE-END: dp-postage-config
 
 ```
@@ -194,60 +210,107 @@ cat("Data read: ", if (is.null(ANALYSIS_SET)) {
 
 ```{r}
 #| label: spec
-# Variable order is page order. Labels come from the registered dataset.
-# Character and factor columns become bars. Numeric columns become bars only
-# for a small set of non-negative integers; other numeric columns become points.
+# Variable order is page order. Character and factor columns become bars.
+# Numeric columns become bars only for a small set of non-negative integers;
+# other numeric columns become points.
 column_names <- function(x) is.character(x) && !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
 if (!column_names(X_VAR) || length(X_VAR) != 1L) stop("X_VAR must name one column.", call. = FALSE)
-if (!column_names(VARIABLES) || !length(VARIABLES)) stop("VARIABLES must name distinct columns.", call. = FALSE)
+if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
+  stop("VARIABLES must be NULL or name distinct columns.", call. = FALSE)
+}
 if (!column_names(EXCLUDE)) stop("EXCLUDE must name distinct columns.", call. = FALSE)
 positive_whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x > 0 && x == floor(x)
 for (value in list(GRID_NCOL, GRID_NROW, UNIQUE_LIMIT)) {
   if (!positive_whole(value)) stop("Grid dimensions and UNIQUE_LIMIT must be positive whole numbers.", call. = FALSE)
 }
-if (!is.logical(SHOW_PERCENT) || length(SHOW_PERCENT) != 1L || is.na(SHOW_PERCENT)) {
-  stop("SHOW_PERCENT must be TRUE or FALSE.", call. = FALSE)
+if (!column_names(SECTIONS) || !length(SECTIONS) || !all(SECTIONS %in% c("continuous", "percent", "count"))) {
+  stop("SECTIONS must be one or more of \"continuous\", \"percent\" and \"count\".", call. = FALSE)
+}
+if (!is.numeric(ALPHA) || length(ALPHA) != 1L || is.na(ALPHA) || ALPHA < 0 || ALPHA > 1) {
+  stop("ALPHA must be one number from 0 to 1.", call. = FALSE)
 }
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
-VARIABLES <- setdiff(VARIABLES, EXCLUDE)
-if (!length(VARIABLES)) stop("No EDA variables remain after exclusions.", call. = FALSE)
-suspect <- grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", VARIABLES, ignore.case = TRUE) |
-  vapply(d[VARIABLES], function(x) inherits(x, c("Date", "POSIXt")), logical(1L))
-if (any(suspect)) {
-  warning("Selected likely identifier or date field(s): ", paste(VARIABLES[suspect], collapse = ", "), call. = FALSE)
+looks_like_id <- function(v) {
+  grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
+    vapply(d[v], function(x) inherits(x, c("Date", "POSIXt")), logical(1L))
 }
+if (is.null(VARIABLES)) {
+  candidates <- setdiff(names(d), c(X_VAR, EXCLUDE))
+  left_out <- candidates[looks_like_id(candidates)]
+  VARIABLES <- setdiff(candidates, left_out)
+  if (length(left_out)) {
+    cat("Left out as identifier or date columns (name them in VARIABLES to draw them):",
+        paste(left_out, collapse = ", "), "\n")
+  }
+} else {
+  VARIABLES <- setdiff(VARIABLES, EXCLUDE)
+  suspect <- looks_like_id(VARIABLES)
+  if (any(suspect)) {
+    warning("Selected likely identifier or date field(s): ", paste(VARIABLES[suspect], collapse = ", "), call. = FALSE)
+  }
+}
+if (!length(VARIABLES)) stop("No EDA variables remain after exclusions.", call. = FALSE)
 ```
 
 ## Pages
 
-```{r}
-#| label: helpers
-.postage_pages <- function(plots, ncol, nrow) {
-  for (value in list(ncol, nrow)) {
-    if (!positive_whole(value)) stop("Postage grid dimensions must be positive whole numbers.", call. = FALSE)
-  }
-  unname(split(plots, ceiling(seq_along(plots) / (ncol * nrow))))
-}
-```
+Each section opens with its table: summary statistics for the continuous
+variables, and one frequency table for the categorical variables, shown once
+under whichever categorical section comes first. Missing values are counted as a
+level, so a percentage is out of every patient, not only those with a value.
 
 ```{r}
 #| label: pages
 #| results: asis
-plots <- lapply(VARIABLES, function(variable) {
-  plot(hvtiPlotR::hv_eda(d, x_col = X_VAR, y_col = variable,
-                         y_label = get_label(label_map(d), variable),
-                         unique_limit = UNIQUE_LIMIT, show_percent = SHOW_PERCENT)) +
-    theme_hv_manuscript(base_size = 8)
-})
-pages <- .postage_pages(plots, GRID_NCOL, GRID_NROW)
-page_plots <- lapply(pages, patchwork::wrap_plots, ncol = GRID_NCOL, nrow = GRID_NROW)
-page_files <- character(length(pages))
-for (i in seq_along(pages)) {
-  page_files[i] <- set_path("graphs", sprintf("dp-postage-page-%02d.png", i))
-  ggplot2::ggsave(page_files[i], page_plots[[i]], width = 11, height = 8.5, units = "in", dpi = 150)
+# Labels come from the dataset; a variable without one is shown by its name.
+.labels <- label_map(d)
+labels <- stats::setNames(.labels$label, .labels$key)
+titles <- c(continuous = "Continuous variables", percent = "Categorical variables, percent",
+            count = "Categorical variables, counts")
+page_files <- character(0)
+freq_shown <- FALSE
+for (section in SECTIONS) {
+  sec <- hvtiPlotR::hv_eda_pages(d, x_col = X_VAR, section = section, vars = VARIABLES,
+                                 labels = labels, unique_limit = UNIQUE_LIMIT)
+  cat("\n## ", titles[[section]], " (", sec$meta$n_vars, ")\n\n", sep = "")
+  if (!sec$meta$n_vars) {
+    cat("No selected variable belongs to this section.\n\n")
+    next
+  }
+  vars <- sec$data$variable
+  if (section == "continuous") {
+    stats <- hvtiRutilities::proc_means(d, vars = vars, stats = c("n", "nmiss", "mean", "std", "min",
+                                                                  "p25", "median", "p75", "max"))
+    cat(knitr::kable(stats, digits = 2, row.names = FALSE, caption = "Continuous variables"), sep = "\n")
+  } else if (!freq_shown) {
+    freq <- do.call(rbind, lapply(vars, function(v) {
+      f <- hvtiRutilities::proc_freq(d, v, missing = TRUE)
+      level <- as.character(f[[1L]])
+      data.frame(variable = v, level = ifelse(is.na(level), "(missing)", level),
+                 n = f$Frequency, percent = round(f$Percent, 1))
+    }))
+    cat(knitr::kable(freq, row.names = FALSE, caption = "Categorical variables, missing counted"), sep = "\n")
+    freq_shown <- TRUE
+  }
+  pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
+  for (i in seq_along(pages)) {
+    file <- set_path("graphs", sprintf("dp-postage-%s-page-%02d.png", section, i))
+    ggplot2::ggsave(file, pages[[i]] & theme_hv_manuscript(base_size = 8),
+                    width = 11, height = 8.5, units = "in", dpi = 150)
+    on_page <- attr(pages[[i]], "variables")
+    # Link relative to wherever this document sits. Quarto rewrites an absolute
+    # path into a broken relative one and then cannot embed the image, and a
+    # fixed "../graphs" would break for a job kept in a subfolder. error = FALSE
+    # returns the path unchanged when no relative path exists (two Windows
+    # drives), so the page is still saved rather than the render stopping.
+    link <- xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd(),
+                                error = FALSE)
+    cat("\n### Page ", i, "\n\n![", paste(labels[on_page], collapse = ", "), "](", link, ")\n\n", sep = "")
+    page_files <- c(page_files, file)
+  }
 }
-knitr::include_graphics(page_files)
+invisible(page_files)
 ```
 
 ```{r}

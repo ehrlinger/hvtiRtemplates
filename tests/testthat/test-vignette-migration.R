@@ -131,7 +131,7 @@ test_that("the final migration verifier returns four lasting rendered fixtures",
   if (!exists("render_all_migration_fixtures", mode = "function")) return(invisible(NULL))
   skip_if_not_installed("hvtiRdatabuild", "0.2.1")
   skip_if_not_installed("hvtiRtables", "1.0.1")
-  skip_if_not_installed("hvtiPlotR", "2.7.14")
+  skip_if_not_installed("hvtiPlotR", "2.7.16")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   results <- render_all_migration_fixtures()
@@ -144,5 +144,6 @@ test_that("the final migration verifier returns four lasting rendered fixtures",
     expect_true(all(file.exists(result$outputs)))
   }
   expect_true(any(grepl("[.]docx$", results[["dc-tables"]]$outputs)))
-  expect_equal(sum(grepl("dp-postage-page-[0-9]+[.]png$", results[["dp-postage"]]$outputs)), 2L)
+  expect_true(all(sprintf("dp-postage-%s-page-01.png", c("continuous", "percent", "count")) %in%
+                    basename(results[["dp-postage"]]$outputs)))
 })

@@ -13,8 +13,12 @@
   declarations <- unlist(lapply(statements, `[[`, "declared"), use.names = FALSE)
   repeated <- unique(declarations[duplicated(declarations)])
   if (length(repeated)) stop("Multiple declarations of postage controls: ", paste(repeated, collapse = ", "), call. = FALSE)
-  config <- list(DATASET = NA_character_, ANALYSIS_SET = NULL, X_VAR = NA_character_, VARIABLES = character(),
-                 EXCLUDE = character(), GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L, SHOW_PERCENT = FALSE)
+  # SHOW_PERCENT is recognised but not carried over: SECTIONS replaced it, and
+  # its default draws both the percent and the count pages, so a migrated job
+  # keeps the categorical view its legacy job drew.
+  config <- list(DATASET = NA_character_, ANALYSIS_SET = NULL, X_VAR = NA_character_, VARIABLES = NULL,
+                 EXCLUDE = character(), GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
+                 SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5)
   decisions <- list(translated = list(), unresolved = list(), ignored = list())
   for (statement in statements) {
     field <- statement$field
@@ -23,11 +27,13 @@
     if (isTRUE(statement$inactive)) {
       category <- "ignored"
       reason <- "Non-executable source text or inactive comment."
-    } else if (!is.null(field) && field %in% c("COLOR", "STRATA", "ALPHA")) {
+    } else if (identical(field, "SHOW_PERCENT")) {
+      category <- "ignored"
+      reason <- "SHOW_PERCENT is replaced by SECTIONS, whose default draws both the percent and the count pages."
+    } else if (!is.null(field) && field %in% c("COLOR", "STRATA")) {
       reason <- switch(field,
                        COLOR = "The color choice remains unresolved: hv_eda() has no color-variable argument.",
-                       STRATA = "Stratification remains unresolved: the template draws the selected dataset without strata.",
-                       ALPHA = "Point alpha remains unresolved: hv_eda() exposes no common alpha control.")
+                       STRATA = "Stratification remains unresolved: the template draws the selected dataset without strata.")
     } else if (grepl("scale_[xy]|^axis[0-9]", statement$text, ignore.case = TRUE)) {
       reason <- "Scale choice remains unresolved: categorical and continuous panels need separate axis review."
     } else if (!is.null(field) && isTRUE(statement$literal$ok)) {
@@ -41,8 +47,8 @@
         valid <- is.numeric(value) && length(value) == 1L && !is.na(value) && is.finite(value) &&
           value > 0 && value <= .Machine$integer.max && value == floor(value)
         if (valid) value <- as.integer(value)
-      } else if (field == "SHOW_PERCENT") {
-        valid <- is.logical(value) && length(value) == 1L && !is.na(value)
+      } else if (field == "ALPHA") {
+        valid <- is.numeric(value) && length(value) == 1L && !is.na(value) && value >= 0 && value <= 1
       }
       if (valid && field == "DATASET") {
         selection <- .dc_tables_dataset(evidence$root, tolower(tools::file_path_sans_ext(basename(value))))
@@ -64,7 +70,8 @@
     do.call(rbind, rows)
   })
   region <- vapply(names(config), function(name) paste0(name, " <- ", paste(deparse(config[[name]]), collapse = " ")), character(1L))
-  incomplete <- is.na(config$DATASET) || is.na(config$X_VAR) || !length(config$VARIABLES)
+  # VARIABLES may stay NULL: the template then draws every column.
+  incomplete <- is.na(config$DATASET) || is.na(config$X_VAR)
   if (nrow(decisions$unresolved) || incomplete) {
     region <- c(region, "# EDIT: review unresolved postage source choices in the migration report.")
   }
@@ -187,6 +194,8 @@
         field <- unname(aliases[tolower(parts[2L])])
         raw <- trimws(parts[3L])
         if (field %in% c("GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT") && grepl("^[0-9]+$", raw)) {
+          value <- as.numeric(raw)
+        } else if (field == "ALPHA" && grepl("^[0-9]*[.]?[0-9]+$", raw)) {
           value <- as.numeric(raw)
         } else if (field == "SHOW_PERCENT" && toupper(raw) %in% c("TRUE", "FALSE")) {
           value <- toupper(raw) == "TRUE"
