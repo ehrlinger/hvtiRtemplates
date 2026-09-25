@@ -29,7 +29,7 @@
 1. **Version: 1.2.3.**
 2. **A table beside each EDA section: yes.** Design §4.1 is now decided.
 3. **Acceptance: Lauren does the testing**, and may have an example study to use; the SAS EDA output to compare against comes with it. Needed for Phase 4 only.
-4. **Study abbreviation lists: start designing now.** The design is Phase 2b. For 1.2.3 the templates take an `ABBREVIATIONS` `EDIT:` point either way; whether the study list itself ships in this release depends on how quickly the design settles (see Phase 2b).
+4. **Study abbreviation lists: designed, and in this release.** A curated group default in hvtiRutilities that a study's `_study.yml` overrides, read live by `study_abbreviations()` and recorded in each job's provenance; no hvtiRdatabuild change. Design: hvtiRutilities [#162](https://github.com/ehrlinger/hvtiRutilities/pull/162), `dev/specs/2026-09-25-study-abbreviations-design.md`.
 
 ## Phase 1: hvtiPlotR palette helper (release 2.7.18)
 
@@ -58,9 +58,10 @@ Implements hvtiRutilities spec §4.2 in `label_map()`: labels that differ in `la
 
 A study keeps one list of its own abbreviations (`CABG`, `LV`, `AV`, …) so every job shortens labels the same way, instead of each job repeating them in an `EDIT:` point. hvtiRutilities spec §4.2.1 sketched it; this phase turns the sketch into a design.
 
-- [ ] Design note in hvtiRutilities `dev/specs/`: where the list lives, who writes it, how jobs read it, how a job's own `ABBREVIATIONS` combine with it, and how it stays out of the stored labels.
-- [ ] John decides the open points in the note.
-- [ ] If the design needs only hvtiRutilities (reading the list with `study_config()`), it can ship in 1.4.2 and in 1.2.3's templates. If it needs the analysis-set sidecar (hvtiRdatabuild), it ships in the release after, and 1.2.3 uses the `EDIT:` point alone.
+- [x] Design note: hvtiRutilities [#162](https://github.com/ehrlinger/hvtiRutilities/pull/162). Group default in `inst/extdata/abbreviations.yml`, study overrides in `_study.yml` `abbreviations:`, `study_abbreviations(cfg)` merges them live; precedence job, then study, then default, then the initials rule. Needs only hvtiRutilities, so it ships in 1.4.2 and 1.2.3.
+- [ ] John settles the note's §8: the starter list (proposed: a census of labels across studies), curation after, and whether an `add_abbreviation()` helper is wanted.
+- [ ] Build in Phase 2 alongside smart truncation: the default file, `study_abbreviations()`, `study_config()` validation of the block, tests per the note's §6.
+- [ ] In Phase 3c: the templates merge `study_abbreviations(.cfg)` with their `ABBREVIATIONS` (job entries win, compared ignoring case) and record the merged list in provenance.
 
 ## Phase 3: hvtiRtemplates (release 1.2.3)
 
