@@ -169,8 +169,9 @@ pages <- plot(sec, ncol = 4L, nrow = 4L, alpha = 0.5)
   `hvtiRutilities::label_map()` output, and pick up smart truncation
   (`hvtiRutilities` spec section 4.2) when it lands.
 - **`alpha = 0.5`**, and the shared palette once the palette helper exists.
-- Tested there with `vdiffr` snapshots. `hvtiRtemplates` keeps its render
-  tests.
+- Tested there with `expect_snapshot()` of each page's structure (titles,
+  layers, row counts, x bins, fill levels), that package's snapshot practice;
+  it does not use `vdiffr`. `hvtiRtemplates` keeps its render tests.
 
 This moves pagination out of `dp-postage` and into the package. With the
 follow-up table function of section 4.1, it is the new code the design needs
