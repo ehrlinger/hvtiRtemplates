@@ -23,5 +23,5 @@ are list columns of character vectors. Unmeasured counts are
 table(template_catalog()$status)
 #> 
 #>  queued revisit shipped 
-#>      37       1      27 
+#>      36       1      28 
 ```

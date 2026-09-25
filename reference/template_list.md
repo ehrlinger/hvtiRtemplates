@@ -61,9 +61,10 @@ template_list()
 #> 23               rfr-fit    rfr                fit      analyses
 #> 24           rfs-explain    rfs            explain      analyses
 #> 25               rfs-fit    rfs                fit      analyses
-#> 26             dp-trends     dp             trends        graphs
-#> 27                    hp     hp               <NA>        graphs
-#> 28                    hs     hs               <NA>        graphs
+#> 26               dp-gfup     dp               gfup        graphs
+#> 27             dp-trends     dp             trends        graphs
+#> 28                    hp     hp               <NA>        graphs
+#> 29                    hs     hs               <NA>        graphs
 #>                                                                                              file
 #> 1          /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-general.qmd
 #> 2             /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd
@@ -90,7 +91,8 @@ template_list()
 #> 23               /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfr-fit.qmd
 #> 24           /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfs-explain.qmd
 #> 25               /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfs-fit.qmd
-#> 26               /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
-#> 27                      /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
-#> 28                      /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd
+#> 26                 /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-gfup.qmd
+#> 27               /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
+#> 28                      /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
+#> 29                      /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs.qmd
 ```
