@@ -1,0 +1,396 @@
+---
+title: "Goodness of follow-up, graph"
+# Carried in the file rather than inherited from _quarto.yml. A file meant to be
+# COPIED should not depend on settings from the directory it happens to sit in.
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the job this replaces (an older graphs/dp.gfup job) and list
+     the panels it drew: all deaths, systematic deaths, an event panel. -->
+
+Replaces `graphs/dp.gfup`: list the follow-up panels it draws.
+
+A `dp-gfup` job draws the goodness-of-follow-up figure. Every patient is one
+point: the year of operation across, the follow-up recorded for them up, blue
+while alive and red once dead. The dashed diagonal is the follow-up a patient
+**could** have had, from their operation to the close date. A censored patient
+far below the diagonal is someone whose follow-up stopped early, and a band of
+them is a follow-up problem to settle before any time-related analysis.
+
+The engine is `hvtiPlotR::hv_followup()`. The tables that go with this figure
+are the `dc-gfup` job, which reads the same analysis set.
+
+```{r}
+#| label: setup
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(hvtiRutilities)
+  library(hvtiPlotR)
+  library(ggplot2)
+})
+if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
+  stop("This job needs hvtiPlotR >= 2.7.14 for hv_followup(); ",
+       utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
+}
+if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
+  stop("This job needs hvtiRdatabuild >= 0.2.1 for read_analysis_set(); ",
+       utils::packageVersion("hvtiRdatabuild"), " is installed.", call. = FALSE)
+}
+```
+
+```{r}
+#| label: edit-guard
+#| results: asis
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it."
+    )
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Unresolved markers remain. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: set
+SUBJECT <- "cohort"
+TYPE    <- "eda"
+
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject,
+         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
+         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.",
+         call. = FALSE)
+  }
+}
+
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(SUBJECT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+```
+## Study choices
+
+Set the values in this chunk before rendering. Left as they are, they draw the
+all-deaths panel for the `eda` analysis set, so the job runs before it is tuned.
+
+```{r}
+#| label: study-choices
+# EDIT: the built dataset this job reads. "study" is the file named by built:
+# in _study.yml; any other name must be declared under additional_datasets:.
+# Analysis sets are derived from "study" only, so another dataset needs
+# ANALYSIS_SET <- NULL. Read the same set as this study's dc-gfup job, so the
+# figure and the tables describe the same patients.
+DATASET <- "study"
+ANALYSIS_SET <- "eda"
+
+# EDIT: the years-since-origin interval to the operation, and that origin. The
+# origin differs between studies, and a wrong one slides every point along the
+# x-axis without any other symptom, which is why the operation years are
+# checked and printed below.
+OPYRS <- "iv_opyrs"
+ORIGIN_YEAR <- 1990
+
+# EDIT: the close date of follow-up, as.Date("YYYY-MM-DD"). NULL estimates it
+# as the latest operation date plus follow-up in the data, which is the date
+# follow-up is known to reach, not the date it was closed; the report says
+# which one it drew.
+CLOSE_DATE <- NULL
+
+# EDIT: one entry per death panel. `status` is the 1/0 death indicator and
+# `time` its follow-up in years. A study that ascertains deaths two ways draws
+# both, for example
+#   systematic = list(status = "deads", time = "iv_deads", title = "Systematic deaths")
+PANELS <- list(
+  all = list(status = "dead", time = "iv_dead", title = "All deaths")
+)
+
+# EDIT: optional event panels, one entry per non-fatal event. `event` and
+# `time` are the event's indicator and interval; `death` and `death_time` the
+# death it competes with. A flagged event counts only when it comes strictly
+# before death, so ties go to death. list() draws none. For example
+#   reop = list(event = "ev_reop", time = "iv_reop", death = "dead",
+#               death_time = "iv_dead", label = "Reoperation")
+EVENTS <- list()
+
+# EDIT: point transparency. 0.5 lets a dense cohort read as a distribution
+# rather than a blob; raise it for a small one.
+ALPHA <- 0.5
+
+# Red is dead and blue is alive, in every job. A non-fatal event is green.
+# These are ColorBrewer Set1's red, blue and green.
+COLOURS <- c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A")
+```
+
+## Data
+
+<!-- How this job finds its data. Read this before touching the chunk below.
+
+     A study can offer a job data three ways, and `_study.yml` says which exist:
+
+     1. The study dataset: the file named by `built:`. `DATASET <- "study"`
+        with `ANALYSIS_SET <- NULL`.
+     2. An additional dataset: any file declared under `additional_datasets:`,
+        for example a column subset written for R. Set `DATASET` to its
+        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: no
+        rows are excluded.
+     3. An analysis set: declared under `analysis_sets:` with the columns kept
+        and the rows excluded, then written once with
+        `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
+        and leave `DATASET` as "study", because a set is always cut from the
+        study dataset. The report shows its exclusions in order.
+
+     A name under `additional_datasets:` is not an analysis set, so putting it
+     in `ANALYSIS_SET` stops with "No analysis set". Whichever route is taken,
+     the report prints the dataset, file and dimensions it read, so a reader
+     never has to ask which data a table describes. -->
+
+```{r}
+#| label: data
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+if (is.null(ANALYSIS_SET)) {
+  if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
+    stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
+         "In a migrated job, see the migration report beside this job.", call. = FALSE)
+  }
+  .cfg <- study_config(start = .root)
+  .data_read <- hvtiRtemplates:::.provenance_read(
+    DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET)
+  )
+  d <- .data_read$value
+  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
+} else if (!identical(DATASET, "study")) {
+  stop("An analysis set is written from the study dataset, not `", DATASET,
+       "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
+} else {
+  .cfg <- study_config(start = .root)
+  .analysis_set_path <- file.path(study_dir("datasets", .root), paste0(ANALYSIS_SET, ".parquet"))
+  .data_read <- hvtiRtemplates:::.provenance_file_read(
+    paste0("analysis_set:", ANALYSIS_SET), .analysis_set_path, .cfg,
+    function() hvtiRdatabuild::read_analysis_set(ANALYSIS_SET, cfg = .cfg),
+    role = paste0("analysis_set:", ANALYSIS_SET)
+  )
+  d <- .data_read$value
+  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
+  knitr::kable(attr(d, "attrition"), caption = paste0(
+    "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
+  ))
+}
+cat("Data read: ", if (is.null(ANALYSIS_SET)) {
+  paste0("dataset `", DATASET, "` (",
+         basename(hvtiRutilities::built_path(dataset = DATASET)), ")")
+} else {
+  paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
+}, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
+```
+
+
+
+## Operation years and the close date
+
+```{r}
+#| label: window
+is_name <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
+if (!is_name(OPYRS)) stop("OPYRS must name one column.", call. = FALSE)
+if (!is.numeric(ORIGIN_YEAR) || length(ORIGIN_YEAR) != 1L || is.na(ORIGIN_YEAR) ||
+      ORIGIN_YEAR != round(ORIGIN_YEAR)) {
+  stop("ORIGIN_YEAR must be one whole calendar year.", call. = FALSE)
+}
+if (!is.list(PANELS) || !length(PANELS) || is.null(names(PANELS)) || any(!nzchar(names(PANELS)))) {
+  stop("PANELS must be a named list with at least one entry.", call. = FALSE)
+}
+if (!is.list(EVENTS) || (length(EVENTS) && (is.null(names(EVENTS)) || any(!nzchar(names(EVENTS)))))) {
+  stop("EVENTS must be a named list, or list() for none.", call. = FALSE)
+}
+for (nm in names(PANELS)) {
+  if (!is_name(PANELS[[nm]]$status) || !is_name(PANELS[[nm]]$time)) {
+    stop("PANELS entry `", nm, "` needs one `status` and one `time` column.", call. = FALSE)
+  }
+}
+for (nm in names(EVENTS)) {
+  e <- EVENTS[[nm]]
+  if (!all(vapply(e[c("event", "time", "death", "death_time")], is_name, logical(1L)))) {
+    stop("EVENTS entry `", nm, "` needs one `event`, `time`, `death` and `death_time` column.",
+         call. = FALSE)
+  }
+}
+
+# Every column named anywhere above, checked at once, so a job with three
+# misspellings says so in one render rather than three.
+status_cols <- unique(c(vapply(PANELS, `[[`, "", "status"),
+                        unlist(lapply(EVENTS, `[`, c("event", "death")), use.names = FALSE)))
+time_cols <- unique(c(vapply(PANELS, `[[`, "", "time"),
+                      unlist(lapply(EVENTS, `[`, c("time", "death_time")), use.names = FALSE)))
+unknown <- setdiff(c(OPYRS, status_cols, time_cols), names(d))
+if (length(unknown)) {
+  stop("Column(s) not in the data: ", paste(unknown, collapse = ", "), ".", call. = FALSE)
+}
+not_numeric <- Filter(function(v) !is.numeric(d[[v]]), c(OPYRS, time_cols))
+if (length(not_numeric)) {
+  stop("Interval column(s) must be numeric years: ", paste(not_numeric, collapse = ", "), ".",
+       call. = FALSE)
+}
+not_binary <- Filter(function(v) {
+  x <- d[[v]]
+  (!is.numeric(x) && !is.logical(x)) || any(!is.na(x) & !x %in% c(0, 1))
+}, status_cols)
+if (length(not_binary)) {
+  stop("Indicator column(s) must be 1/0 or logical: ", paste(not_binary, collapse = ", "), ".",
+       call. = FALSE)
+}
+
+opyrs <- d[[OPYRS]]
+if (all(is.na(opyrs))) stop("`", OPYRS, "` is missing for every patient.", call. = FALSE)
+# hv_followup() starts the diagonal at ORIGIN_YEAR, so the study window has to
+# start there too. An operation before the origin would sit left of the line.
+if (any(opyrs < 0, na.rm = TRUE)) {
+  stop(sum(opyrs < 0, na.rm = TRUE), " patient(s) have a negative `", OPYRS, "`, an ",
+       "operation before ORIGIN_YEAR = ", ORIGIN_YEAR, ". Check the origin.", call. = FALSE)
+}
+# A plausible window, not a precise one: it catches the wrong-origin mistake,
+# which lands decades out.
+.this_year <- as.integer(format(Sys.Date(), "%Y"))
+op_year <- ORIGIN_YEAR + opyrs
+if (any(op_year > .this_year + 1, na.rm = TRUE)) {
+  stop("Operations fall after ", .this_year + 1, " (latest ", floor(max(op_year, na.rm = TRUE)),
+       "). Check ORIGIN_YEAR.", call. = FALSE)
+}
+
+year_days <- 365.2425
+study_start <- as.Date(paste0(ORIGIN_YEAR, "-01-01"))
+study_end <- study_start + round(max(opyrs, na.rm = TRUE) * year_days)
+if (is.null(CLOSE_DATE)) {
+  reach <- max(vapply(time_cols, function(v) max(opyrs + d[[v]], na.rm = TRUE), numeric(1L)))
+  close_date <- max(study_end, study_start + round(reach * year_days))
+  close_source <- "estimated: the latest operation plus follow-up in the data"
+} else {
+  close_date <- as.Date(CLOSE_DATE)
+  if (length(close_date) != 1L || is.na(close_date)) {
+    stop("CLOSE_DATE must be NULL or one date, as.Date(\"YYYY-MM-DD\").", call. = FALSE)
+  }
+  if (close_date < study_end) {
+    stop("CLOSE_DATE (", close_date, ") is before the last operation (", study_end, ").",
+         call. = FALSE)
+  }
+  close_source <- "set in CLOSE_DATE"
+}
+
+knitr::kable(data.frame(
+  quantity = c("patients", "operation year missing", "first operation", "last operation",
+               "close date", "close date is"),
+  value = c(nrow(d), sum(is.na(opyrs)), format(study_start + round(min(opyrs, na.rm = TRUE) * year_days)),
+            format(study_end), format(close_date), close_source)
+))
+```
+
+## Figures
+
+A point below the diagonal is follow-up short of what the close date allows. A
+dead patient's point is where the death was recorded, so it is expected below
+the line; it is the **blue** points drifting below it that need an explanation.
+
+```{r}
+#| label: figures
+#| results: asis
+# The image link is relative to THIS document, which always sits in graphs/, so
+# it is <set>/<file> whichever directory the render executes from. The file
+# itself is written through set_path(), which resolves from the project root.
+show_figure <- function(p, fname, title) {
+  p <- p + labs(x = "Year of operation", y = "Follow-up (years)", colour = NULL, shape = NULL) +
+    theme_hv_manuscript()
+  png(set_path("graphs", fname), width = 7, height = 6, units = "in", res = 150)
+  print(p)
+  invisible(dev.off())
+  cat("![", title, "](", file.path(paste0(SUBJECT, "-", TYPE), fname), ")\n\n", sep = "")
+}
+followup_args <- list(data = d, iv_opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
+                      study_start = study_start, study_end = study_end,
+                      close_date = close_date, tolower_names = FALSE)
+panel_counts <- list()
+
+for (nm in names(PANELS)) {
+  pn <- PANELS[[nm]]
+  gf <- do.call(hv_followup, c(followup_args, list(
+    death_col = pn$status, death_time_col = pn$time, death_levels = c("Alive", "Dead")
+  )))
+  title <- if (is.null(pn$title)) nm else pn$title
+  panel_counts[[nm]] <- list(drawn = gf$meta$n_patients, excluded = gf$meta$n_excluded)
+  cat("\n### ", title, "\n\n", gf$meta$n_patients, " of ", gf$meta$n_input,
+      " patients drawn; ", gf$meta$n_excluded, " missing a column this panel needs.\n\n", sep = "")
+  p <- plot(gf, alpha = ALPHA) +
+    scale_colour_manual(values = c(Alive = COLOURS[["alive"]], Dead = COLOURS[["dead"]])) +
+    scale_shape_manual(values = c(Alive = 1, Dead = 4))
+  show_figure(p, paste0("dp-gfup-", nm, ".png"), title)
+}
+
+for (nm in names(EVENTS)) {
+  e <- EVENTS[[nm]]
+  label <- if (is.null(e$label)) nm else e$label
+  levels <- c("No event", label, "Death")
+  gf <- do.call(hv_followup, c(followup_args, list(
+    death_col = e$death, death_time_col = e$death_time, event_col = e$event,
+    event_time_col = e$time, event_levels = levels
+  )))
+  panel_counts[[nm]] <- list(drawn = gf$meta$n_event_patients, excluded = gf$meta$n_event_excluded)
+  cat("\n### ", label, "\n\n", gf$meta$n_event_patients, " patients drawn; ",
+      gf$meta$n_event_excluded, " missing a column this panel needs.\n\n", sep = "")
+  p <- plot(gf, type = "event", alpha = ALPHA) +
+    scale_colour_manual(values = stats::setNames(COLOURS[c("alive", "event", "dead")], levels)) +
+    scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
+  show_figure(p, paste0("dp-gfup-", nm, ".png"), label)
+}
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE,
+    followup = list(origin_year = ORIGIN_YEAR, close_date = format(close_date),
+                    close_date_source = close_source, panels = panel_counts)
+  )
+))
+```

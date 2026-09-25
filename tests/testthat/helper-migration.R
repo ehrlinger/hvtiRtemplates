@@ -99,3 +99,17 @@ render_all_migration_fixtures <- function() {
   roots <- lapply(kinds, migration_study_fixture, .local_envir = caller)
   stats::setNames(Map(render_migrated_fixture, kinds, roots), kinds)
 }
+
+# Scaffold a dp-gfup job in a synthetic study and replace whole lines by pattern.
+scaffold_gfup <- function(edits, .local_envir = parent.frame()) {
+  root <- migration_study_fixture(NULL, .local_envir = .local_envir)
+  job <- add_job("dp", "cohort", "eda", dir = root, qualifier = "gfup")
+  lines <- readLines(job, warn = FALSE)
+  for (pattern in names(edits)) {
+    hit <- grep(pattern, lines)
+    if (length(hit) != 1L) stop("Expected one line matching ", pattern)
+    lines[hit] <- edits[[pattern]]
+  }
+  writeLines(lines, job)
+  list(root = root, job = job)
+}

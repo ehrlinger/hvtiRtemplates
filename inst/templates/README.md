@@ -14,6 +14,7 @@ refuses to overwrite an existing job.
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
 | `40_graphs/hs.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
 | `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `40_graphs/` or `graphs/` |
+| `40_graphs/dp-gfup.qmd` | goodness-of-follow-up figure (EDA) | `40_graphs/` or `graphs/` |
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-gfup.qmd` | recorded follow-up interval checks | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
@@ -54,7 +55,7 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`,
-`dp-postage`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
+`dp-gfup`, `dp-postage`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
 `lm` jobs described below. The other prefixes here remain unqualified. A
 prefix is wholly qualified or wholly unqualified, never half-decomposed.
 
