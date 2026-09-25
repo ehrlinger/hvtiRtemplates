@@ -55,3 +55,15 @@ test_that("malformed scalar fields name the row and field", {
   )), auto_unbox = TRUE), path)
   expect_error(.template_catalog_from(path), "row 1.*r_jobs")
 })
+
+test_that("every template on disk has a catalog description", {
+  # The template-catalog vignette prints this as the template's one line; a
+  # shipped template without one would print a blank row.
+  catalog <- template_catalog()
+  on_disk <- template_list()
+  key <- function(prefix, qualifier) paste(prefix, ifelse(is.na(qualifier), "", qualifier))
+  desc <- catalog$description[match(key(on_disk$prefix, on_disk$qualifier),
+                                    key(catalog$prefix, catalog$qualifier))]
+  expect_false(anyNA(desc), info = paste(on_disk$name[is.na(desc)], collapse = ", "))
+  expect_true(all(nzchar(trimws(desc[!is.na(desc)]))))
+})

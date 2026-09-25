@@ -6,6 +6,8 @@
 #'
 #' @return A data frame. `uses`, `upstream`, `downstream`, and `workflows` are
 #'   list columns of character vectors. Unmeasured counts are `NA_integer_`.
+#'   \code{description} is a one-sentence summary, given for every template on
+#'   disk and \code{NA} for most queued ones.
 #' @export
 #' @examples
 #' table(template_catalog()$status)
@@ -66,7 +68,8 @@ template_catalog <- function() {
   }
   out <- data.frame(
     prefix = chr("prefix"), qualifier = chr("qualifier"),
-    name = chr("name"), folder = chr("folder"), family = chr("family"),
+    name = chr("name"), description = chr("description"),
+    folder = chr("folder"), family = chr("family"),
     kind = chr("kind"), status = chr("status"),
     disposition = chr("disposition"), batch = int("batch"),
     sas_breadth = int("sas_breadth"),

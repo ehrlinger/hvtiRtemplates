@@ -9,6 +9,8 @@ template_catalog()
 \value{
 A data frame. `uses`, `upstream`, `downstream`, and `workflows` are
   list columns of character vectors. Unmeasured counts are `NA_integer_`.
+  \code{description} is a one-sentence summary, given for every template on
+  disk and \code{NA} for most queued ones.
 }
 \description{
 The catalog records one row per job type, including templates still queued

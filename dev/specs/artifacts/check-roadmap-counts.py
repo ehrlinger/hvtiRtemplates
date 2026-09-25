@@ -25,6 +25,11 @@ FIELDS = ["prefix", "qualifier", "name", "folder", "family", "kind", "status",
 # incomplete, which is a different claim from absent.
 ON_DISK = {"shipped", "revisit", "in-flight"}
 
+# Optional everywhere, required on a row that asserts a template on disk:
+# the template-catalog vignette prints it as that template's one-line
+# description, and a shipped template with none would print a blank.
+OPTIONAL_FIELDS = ["description"]
+
 
 
 # A measured zero and an unmeasured field must stay distinguishable: nine
@@ -43,7 +48,10 @@ def check_schema(rows):
     for i, r in enumerate(rows):
         where = r.get("prefix") or f"row {i}"
         missing = [f for f in FIELDS if f not in r]
-        extra = [k for k in r if k not in FIELDS]
+        extra = [k for k in r if k not in FIELDS and k not in OPTIONAL_FIELDS]
+        if r.get("status") in ON_DISK and not (
+                isinstance(r.get("description"), str) and r["description"].strip()):
+            bad.append(f"`{where}` is on disk but has no `description`")
         if missing:
             bad.append(f"`{where}` is missing field(s): {', '.join(missing)}")
         if extra:
