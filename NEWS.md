@@ -1,5 +1,14 @@
 # hvtiRtemplates (unreleased)
 
+* New vignette, *The template catalog*: every template with a one-line
+  description, the `add_job()` call that scaffolds it, and a delivery light
+  (shipped, in progress, not yet on the way), grouped by study folder, followed
+  by the queued job types ordered by how many studies carry them. It is built
+  from the catalog when rendered, so it cannot fall out of date.
+
+* `template_catalog()` gains a `description` column. Every template on disk
+  has one, which a test and `check-roadmap-counts.py` both enforce.
+
 * New `dp-gfup` template (`40_graphs/`): the goodness-of-follow-up figure over
   `hvtiPlotR::hv_followup()`. One panel per death indicator and an optional
   panel per non-fatal event; blue is alive, red is dead, and points are drawn
