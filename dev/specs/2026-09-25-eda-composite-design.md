@@ -55,20 +55,43 @@ author could not get by editing one line. Rejected on that ground: separate
 `dp-postage_cont`, `dp-postage_pct` and `dp-postage_n` templates.
 
 `VARIABLES <- NULL` (the default) means every column except the x variable,
-the identifier and `EXCLUDE`. Named variables are checked all at once, and the
-error lists every name not in the data. Both decided in the 2026-09-24 review.
+`EXCLUDE`, and any column that looks like an identifier or a date. Named
+variables are checked all at once, and the error lists every name not in the
+data. Both decided in the 2026-09-24 review.
+
+**What "looks like an identifier or a date" means** is the rule `dp-postage`
+already applies: a name matching `(^|_)(id|identifier|date|datetime)($|_)` or
+ending `_dt`, case-insensitive, or a `Date` or `POSIXt` column. Today that rule
+only **warns** about a named variable. Under the default it **excludes**, and
+the report lists every column it excluded, so the choice is visible and a
+study author can name the column in `VARIABLES` to draw it anyway. Naming a
+column still only warns, as now.
+
+The rule lives in the template, not in `hv_eda_pages()`. The plotting function
+takes the variables it is given (`vars = NULL` there means every column but
+`x_col`), because only the study side knows which columns identify patients.
 
 **No migration mapping,** decided 2026-09-25. These templates are in their
-first round of use, so no job depends on `SHOW_PERCENT` yet. `migrate_job()`
-stops reading it, and a migrated `dp-postage` job starts from the default
-`SECTIONS`.
+first round of use, so no job depends on `SHOW_PERCENT` yet. This is a
+deliberate change to `migrate_job()`: `R/migrate-dp-postage.R` stops reading
+`SHOW_PERCENT`, and its migration tests change with it. A migrated
+`dp-postage` job starts from the default `SECTIONS`, which draws **both** the
+percent and the count sections, so no migrated job loses the categorical view
+its legacy job drew; it gains the other one.
 
 ## 4. Decided: `dp-eda` shares code through functions, not text
 
 `dp-eda` is a complete template in `10_descriptive/`, with the usual `EDIT:`
-study choices. It calls `hv_followup()` once and the section function of
+study choices. Its follow-up section carries `dp-gfup`'s `PANELS` and `EVENTS`
+edit points and draws one figure per entry, calling `hv_followup()` for each
+exactly as `dp-gfup` does, so a study with a systematic-deaths panel or an
+event panel gets them in the report too. It then calls the section function of
 section 5 once for each of `continuous`, `percent` and `count`. It does not
 include other files.
+
+`dp-gfup`'s panel loop, with its validation, is template code today. It moves
+into a function beside the follow-up table function of section 4.1, so the
+two templates share it rather than copy it.
 
 **Quarto includes were considered and rejected.** `add_job()` copies one file
 into a study. A `{{< include _setup.qmd >}}` would name a file that was never
@@ -105,6 +128,12 @@ describe different variables.
 One categorical table serves both the percent and count sections, because a
 table can carry both columns where a figure needs two.
 
+`proc_freq()` has been exported by `hvtiRutilities` since 1.2.0
+(2026-09-16), below this package's 1.4.0 floor, so it adds no dependency.
+`2026-09-16-dc-general-template-design.md` records adding it as rejected; that
+was written the same day and overtaken, and `dc-general` still uses
+`table(..., useNA = "ifany")`.
+
 **`dc-gfup`'s tables are template code today.** Sharing them through functions
 means moving the cohort-count and interval checks into a function that
 `dc-gfup` and `dp-eda` both call. Its home and name are open (section 7).
@@ -117,15 +146,19 @@ to Word for researchers, and a different job from checking the data.
 
 ## 5. Needed in `hvtiPlotR`: one paginated section function
 
+Built in [hvtiPlotR#154](https://github.com/ehrlinger/hvtiPlotR/pull/154), as
+that package's constructor-and-method pair rather than one function:
+
 ```r
-hv_eda_pages(data, x_col, section = c("continuous", "percent", "count"),
-             vars = NULL, labels = NULL, ncol = 4L, nrow = 4L,
-             unique_limit = 6L, type_overrides = NULL, alpha = 0.5)
+sec   <- hv_eda_pages(data, x_col, section = c("continuous", "percent", "count"),
+                      vars = NULL, labels = NULL, unique_limit = 6L,
+                      unique_bound = 100, type_overrides = NULL)
+pages <- plot(sec, ncol = 4L, nrow = 4L, alpha = 0.5)
 ```
 
-- **Returns a list of pages**, each a `patchwork` grid, with the variables on
-  it as an attribute, so a template can print a heading and a caption naming
-  them. It prints nothing.
+- **`plot()` returns a list of pages**, each a `patchwork` grid, with the
+  variables on it as `attr(page, "variables")`, so a template can print a
+  heading and a caption naming them. It prints nothing.
 - **`section` selects by class.** `continuous` keeps the variables
   `eda_classify_var()` calls continuous; `percent` and `count` keep the
   categorical ones and differ only in `show_percent`.
@@ -158,9 +191,10 @@ report over hundreds of variables can be navigated from the table of contents.
 2. **Derived variables.** Year and month of operation should be built in the
    data build, not derived in a job. That is a question for the SAS
    programmers and blocks nothing here: `X_VAR` names whatever column exists.
-3. **The follow-up table function.** Where `dc-gfup`'s cohort and interval
-   checks live once they leave the template: `hvtiRutilities`, beside
-   `proc_means()`, is the likely home.
+3. **The follow-up functions.** Where `dc-gfup`'s cohort and interval
+   checks, and `dp-gfup`'s panel loop, live once they leave the templates:
+   `hvtiRutilities` beside `proc_means()` for the tables, `hvtiPlotR` beside
+   `hv_followup()` for the panels, is the likely split.
 4. **Acceptance.** Lauren's current EDA report is the reference output for
    the R sections, and the SAS EDA output is the acceptance test. Which study
    and which SAS output are not yet named.
@@ -168,7 +202,8 @@ report over hundreds of variables can be navigated from the table of contents.
 ## 8. Order of work
 
 1. `hv_eda_pages()` in `hvtiPlotR`, with snapshot tests.
-2. The follow-up table function, and `dc-gfup` calling it.
+2. The follow-up table function and panel function, and `dc-gfup` and
+   `dp-gfup` calling them.
 3. `dp-postage` moves to `hv_eda_pages()` and `SECTIONS`, with the
    `VARIABLES <- NULL` default, the all-missing-names error and its section
    tables. `migrate_job()` stops reading `SHOW_PERCENT`.
