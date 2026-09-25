@@ -1,4 +1,4 @@
-# Next release: "EDA complete" Release Plan
+# hvtiRtemplates 1.2.3: "EDA complete" Release Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -24,12 +24,12 @@
 | smart truncation | spec §4.2 merged (hvtiRutilities #149), not built |
 | `dc-general` edit block | Lauren's note, not done |
 
-## Decisions needed before or during the work
+## Decisions (John Ehrlinger, 2026-09-25)
 
-1. **Version number.** The release adds a template and changes defaults in two others. The house rule makes minor and major John's call; the plan assumes the patch **1.2.3** unless John names 1.3.0.
-2. **Confirm §4.1, a table beside each EDA section.** Proposed on 2026-09-25 and built into `dp-postage` (#148), but not marked decided in the spec. Phase 3 assumes yes.
-3. **The acceptance study.** Which study, and which SAS EDA output, `dp-eda` is checked against (design §7.4). Needed for Phase 4 only.
-4. **Whether a study's abbreviation list reaches `read_built()`** (hvtiRutilities spec §4.2.1). This plan takes the smaller path: the abbreviation list is a template `EDIT:` point passed to `label_map()`, and the analysis-set sidecar route is deferred (see Out of scope).
+1. **Version: 1.2.3.**
+2. **A table beside each EDA section: yes.** Design §4.1 is now decided.
+3. **Acceptance: Lauren does the testing**, and may have an example study to use; the SAS EDA output to compare against comes with it. Needed for Phase 4 only.
+4. **Study abbreviation lists: start designing now.** The design is Phase 2b. For 1.2.3 the templates take an `ABBREVIATIONS` `EDIT:` point either way; whether the study list itself ships in this release depends on how quickly the design settles (see Phase 2b).
 
 ## Phase 1: hvtiPlotR palette helper (release 2.7.18)
 
@@ -53,6 +53,14 @@ Implements hvtiRutilities spec §4.2 in `label_map()`: labels that differ in `la
 - [ ] Property test of the invariant; tests for each step, the initials collision, the supplied list, and the name fallback. Prove the invariant test by mutation (disable step 3, watch it fail).
 - [ ] NEWS, `lintr` 0 (install first; see that repo's AGENTS.md), full suite, local `/code-review`, PR.
 - [ ] After merge: bump to **1.4.2**, release gate (with TeX on `PATH`), reverse dependencies hvtiRtemplates and hvtiRdatabuild, tag and release.
+
+## Phase 2b: design the study abbreviation list
+
+A study keeps one list of its own abbreviations (`CABG`, `LV`, `AV`, …) so every job shortens labels the same way, instead of each job repeating them in an `EDIT:` point. hvtiRutilities spec §4.2.1 sketched it; this phase turns the sketch into a design.
+
+- [ ] Design note in hvtiRutilities `dev/specs/`: where the list lives, who writes it, how jobs read it, how a job's own `ABBREVIATIONS` combine with it, and how it stays out of the stored labels.
+- [ ] John decides the open points in the note.
+- [ ] If the design needs only hvtiRutilities (reading the list with `study_config()`), it can ship in 1.4.2 and in 1.2.3's templates. If it needs the analysis-set sidecar (hvtiRdatabuild), it ships in the release after, and 1.2.3 uses the `EDIT:` point alone.
 
 ## Phase 3: hvtiRtemplates (release 1.2.3)
 
@@ -78,18 +86,18 @@ Phases 1 and 2 must be released before 3b and 3c can raise their floors; 3a and 
 - [ ] NEWS entry.
 
 ### 3e. Before the version bump
-- [ ] Mark design §4.1 decided (or change 3d if John says no) and record the Phase 1 and 2 function names in the design's status block.
+- [ ] Record the Phase 1 and 2 function names in the design's status block.
 - [ ] Full suite, `lintr` 0, spec-count checks, local `/code-review` on every substantive push.
 
 ## Phase 4: acceptance with Lauren
 
-- [ ] Scaffold `dp-eda` on the acceptance study (decision 3) and render it.
-- [ ] Walk it with Lauren against her current EDA report and the SAS EDA output: every variable present, sections split correctly, percent and count bars aligned, labels distinguishable, colours per the rule.
+- [ ] Lauren scaffolds `dp-eda` on her example study (decision 3) and renders it.
+- [ ] She checks it against her current EDA report and the SAS EDA output: every variable present, sections split correctly, percent and count bars aligned, labels distinguishable, colours per the rule.
 - [ ] Anything that fails becomes an issue; fixes land before the bump.
 
 ## Phase 5: release
 
-- [ ] Bump PR: `# hvtiRtemplates (unreleased)` to the version from decision 1; `DESCRIPTION` `Version` and `Date`.
+- [ ] Bump PR: `# hvtiRtemplates (unreleased)` to `# hvtiRtemplates 1.2.3`; `DESCRIPTION` `Version` and `Date`.
 - [ ] Release gate on the bump PR's head: CRAN Cookbook spot-checks (`DESCRIPTION`, `\value`, `\dontrun`), `R CMD check --as-cran` with the PDF manual from a clean `git archive` (TeX on `PATH`), `urlchecker`, reverse dependencies (none today).
 - [ ] After merge: confirm the merge tree equals the gated tree, tag, publish the release from the NEWS section.
 - [ ] Then the hvtiR catalog refresh and its bump (deferred from 1.2.2 on 2026-09-25).
@@ -99,6 +107,7 @@ Phases 1 and 2 must be released before 3b and 3c can raise their floors; 3a and 
 ```
 Phase 1 (hvtiPlotR) ──► 2.7.18 ──┐
 Phase 2 (hvtiRutilities) ► 1.4.2 ─┼─► 3b, 3c ─► 3e ─► Phase 4 ─► Phase 5
+Phase 2b (abbrev design) ─────────┤
 3a, 3d skeleton (no new deps) ────┘
 ```
 
@@ -116,7 +125,6 @@ Phases 1, 2, 3a and a `dp-eda` skeleton on today's defaults can run in parallel.
 |---|---|
 | batch-3 templates (`lp`, `np`, `dp-variable`, `rp`, `mp`, `dp-spaghetti`, `dp-procs`) | the release after this one |
 | `dp-spaghetti` as a fifth EDA section (design §7.1) | decide when `dp-spaghetti` ships |
-| a study abbreviation list recorded in the analysis-set sidecar (hvtiRutilities §4.2.1, needs hvtiRdatabuild) | a later release; this one uses a template `EDIT:` point |
 | a Kaplan-Meier connector argument (review, 2026-09-24) | hvtiPlotR, when Lauren's `%KAPLAN` research answers what `ac` plots |
 | updating an existing job to a newer template | its own design note |
 | year and month of operation built in the data build | the SAS programmers (design §7.2) |
