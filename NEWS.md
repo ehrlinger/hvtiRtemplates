@@ -1,4 +1,8 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.2.2
+
+* `DESCRIPTION`: a plain `&` in the Description (`\&` is not a valid escape
+  there and printed a literal backslash), and a copyright holder in
+  Authors@R. Both from the 1.2.2 release gate's CRAN Cookbook audit.
 
 * `dc-gfup` and `dp-gfup` compute through shared functions, so the EDA report
   can call the same ones: `hvtiRutilities::followup_check()` for the follow-up
@@ -60,8 +64,9 @@
   topic such as `cohort`. Jobs now own their outcome and cohort definitions;
   dataset registration does not choose them.
 
-* Requires hvtiRutilities 1.4.0, whose endpoint-neutral study registration
-  the subject-based jobs depend on.
+* Requires hvtiRutilities 1.4.0 or later, whose endpoint-neutral study
+  registration the subject-based jobs depend on. The floor is now 1.4.1, for
+  `followup_check()` (see the `dc-gfup` entry above).
 
 * Every scaffolded job now captures provenance while it executes, safely
   embeds that payload in its completed HTML, and publishes a same-stem
