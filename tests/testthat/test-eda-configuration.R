@@ -10,7 +10,7 @@ test_that("jobs present their study choices before reading data", {
     `dc-general.qmd` = c("DATASET", "ANALYSIS_SET", "CATEGORICAL", "CONTINUOUS", "KEY_COLS"),
     `dc-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "EVENT", "FOLLOWUP", "CHECKS"),
     `dc-tables.qmd` = c("DATASET", "ANALYSIS_SET", "GROUPS", "WORD_FILE", "CORR"),
-    `dp-postage.qmd` = c("DATASET", "ANALYSIS_SET", "X_VAR", "VARIABLES", "GRID_NCOL"),
+    `dp-postage.qmd` = c("DATASET", "ANALYSIS_SET", "X_VAR", "VARIABLES", "GRID_NCOL", "SECTIONS", "ALPHA"),
     `ac.qmd` = c("DERIVED", "TIME", "STATUS", "grid", "labs"),
     `hz.qmd` = c("phases", "theta0"),
     `bc.qmd` = c("EXPECT_BOOT", "BOOT_FILE", "RETAIN_PCT", "CLUSTERS", "COLLINEAR_R"),

@@ -4,6 +4,21 @@
   read the installed `doc/` copy when the source checkout is absent. Under
   `R CMD check` they had skipped on every platform since 2026-09-21.
 
+* `dp-postage` draws in sections. `SECTIONS <- c("continuous", "percent",
+  "count")` replaces `SHOW_PERCENT`, so one render shows the categorical
+  variables both as percentages and as counts, with the same year bins. Each
+  section opens with its table: `proc_means()` for continuous variables, and
+  one `proc_freq()` table, missing counted, for the categorical ones.
+  `VARIABLES <- NULL` is the new default and draws every column except `X_VAR`,
+  `EXCLUDE` and any column that looks like an identifier or a date, which the
+  report lists. `ALPHA` (0.5) sets point transparency. The pages come from
+  `hvtiPlotR::hv_eda_pages()`, so the job needs hvtiPlotR 2.7.16.
+
+* `migrate_job()` no longer carries a legacy `show_percent` into a
+  `dp-postage` job; it records it as replaced by `SECTIONS`, whose default
+  draws both views. A legacy point alpha now carries over into `ALPHA`, and a
+  job with no variable list starts from `VARIABLES <- NULL`.
+
 * New vignette, *The template catalog*: every template with a one-line
   description, the `add_job()` call that scaffolds it, and a delivery light
   (shipped, in progress, not yet on the way), grouped by study folder, followed
@@ -69,6 +84,10 @@
   from its Study Tracker record and the `study-setup` command through
   registration, a first descriptive job and its provenance sidecar, to a first
   `ac`, `hz` and `hp` chain. It complements "Adopt an existing study".
+
+* The provenance test that asserts an embedded payload carries exactly one
+  `<script` tag now counts real matches. `gregexpr()` reports no match as a
+  length-one `-1`, so the old assertion also passed when the tag was missing.
 
 # hvtiRtemplates 1.2.1
 

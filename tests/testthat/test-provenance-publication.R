@@ -243,7 +243,7 @@ test_that("embedded payloads are HTML-safe and exactly recoverable", {
   )
   html <- .provenance_html(payload)
 
-  expect_length(gregexpr("<script", html, fixed = TRUE)[[1L]], 1L)
+  expect_length(regmatches(html, gregexpr("<script", html, fixed = TRUE))[[1L]], 1L)
   expect_false(grepl("</script><script>", html, fixed = TRUE))
   expect_true(grepl("\\u003c", html, fixed = TRUE))
   expect_true(grepl("\\u0026", html, fixed = TRUE))
