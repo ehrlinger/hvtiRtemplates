@@ -34,8 +34,10 @@ the qualifier when the prefix has one:
 add_job("dp", "cohort", "eda", qualifier = "gfup")
 ```
 
-That writes `graphs/cohort-eda-dp-gfup.qmd` in the study. The job refuses to
-overwrite an existing file, because a job accumulates a study's edits.
+In a new study that writes `40_graphs/cohort-eda-dp-gfup.qmd`; a legacy study
+that already uses bare folder names gets `graphs/cohort-eda-dp-gfup.qmd`. The
+job refuses to overwrite an existing file, because a job accumulates a study's
+edits.
 
 ## Delivery
 
@@ -73,12 +75,15 @@ Each template carries a light.
 
 ## Available now
 
-Every template on disk, grouped by the study folder a job lands in.
-`add_job()` places each one; you do not choose the folder.
+Every template on disk, grouped by the study folder a job lands in, named
+without its digits (`graphs` is `40_graphs` in a new study). `add_job()`
+places each one; you do not choose the folder.
 
 ```{r}
 #| label: shipped
 #| results: asis
+# The known folders first, in study order, then any folder added since, so a
+# template in a new folder is listed rather than silently skipped.
 folders <- c("datasets", "descriptive", "distributions", "analyses", "graphs",
              "documents", "estimates")
 here <- catalog[key(catalog$prefix, catalog$qualifier) %in%
@@ -88,7 +93,7 @@ here$scaffold <- ifelse(
   sprintf("`add_job(\"%s\", subject, type)`", here$prefix),
   sprintf("`add_job(\"%s\", subject, type, qualifier = \"%s\")`", here$prefix, here$qualifier)
 )
-for (f in intersect(folders, here$folder)) {
+for (f in unique(c(intersect(folders, here$folder), sort(here$folder)))) {
   rows <- here[here$folder == f, , drop = FALSE]
   rows <- rows[order(rows$template), , drop = FALSE]
   cat("\n### ", f, "\n\n", sep = "")

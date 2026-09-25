@@ -47,7 +47,6 @@ on:
       - '.github/workflows/spec-counts.yaml'
       - '.github/workflows/R-CMD-check.yaml'
       - 'inst/extdata/templates.json'
-      - 'inst/extdata/templates.json'
 
 permissions: read-all
 
