@@ -1592,6 +1592,36 @@
       ]
     },
     {
+      "prefix": "dp",
+      "qualifier": "eda",
+      "name": "Descriptive plot: EDA report",
+      "description": "The whole data-checking report in one render: every column's contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table.",
+      "folder": "descriptive",
+      "family": "plots",
+      "kind": "job",
+      "status": "shipped",
+      "batch": 3,
+      "sas_breadth": null,
+      "sas_breadth_jobs": null,
+      "r_exemplars": null,
+      "r_jobs": null,
+      "upstream": [],
+      "downstream": [],
+      "workflows": [],
+      "blocked_on": null,
+      "spec": "dev/specs/2026-09-25-eda-composite-design.md",
+      "note": "A composite, not a new shape: its sections are dp-gfup, dc-gfup's tables and dp-postage, drawn through the same package functions (hv_followup_panels(), followup_check(), hv_eda_pages()) with the same arguments, so each section is the standalone job's figure. test-dp-eda.R checks that byte for byte against dp-postage. Asked for in the 2026-09-24 template review. Counts are null for the reason dp-postage's are: the legacy EDA report is named by dataset, not by an `eda` field.",
+      "disposition": "thin",
+      "uses": [
+        "hvtiPlotR::hv_followup_panels",
+        "hvtiPlotR::hv_eda_pages",
+        "hvtiRutilities::followup_check",
+        "hvtiRutilities::proc_contents",
+        "hvtiRutilities::proc_means",
+        "hvtiRutilities::proc_freq"
+      ]
+    },
+    {
       "prefix": "dc",
       "qualifier": "trends",
       "name": "Descriptive: trends",
