@@ -36,7 +36,7 @@ test_that("descriptive templates can read the whole cohort", {
   }
   template_dir <- normalizePath(template_dir)
   templates <- file.path(template_dir, c(
-    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dp-postage.qmd"
+    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dp-postage.qmd", "dp-eda.qmd"
   ))
   root <- file.path(tempdir(), "whole-cohort-study")
   unlink(root, recursive = TRUE)
@@ -90,7 +90,7 @@ test_that("descriptive templates read a named additional dataset", {
   }
   template_dir <- normalizePath(template_dir)
   templates <- file.path(template_dir, c(
-    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dp-postage.qmd"
+    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dp-postage.qmd", "dp-eda.qmd"
   ))
   root <- file.path(tempdir(), "named-dataset-study")
   unlink(root, recursive = TRUE)
@@ -143,7 +143,7 @@ test_that("converter templates name DATASET before reading unresolved data", {
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
   templates <- file.path(normalizePath(template_root), c(
     "10_descriptive/dc-tables.qmd", "10_descriptive/dc-gfup.qmd",
-    "10_descriptive/dp-postage.qmd", "40_graphs/dp-trends.qmd"
+    "10_descriptive/dp-postage.qmd", "10_descriptive/dp-eda.qmd", "40_graphs/dp-trends.qmd"
   ))
   for (template in templates) {
     chunks <- data_route_chunks(template)
