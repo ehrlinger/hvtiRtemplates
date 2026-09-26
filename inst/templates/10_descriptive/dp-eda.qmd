@@ -1,5 +1,5 @@
 ---
-title: "EDA postage stamps"
+title: "EDA report"
 format:
   html:
     theme: cosmo
@@ -10,21 +10,22 @@ format:
     embed-resources: true
 ---
 
-<!-- EDIT: name the job this replaces (tp.dp.EDA_barplots_scatterplots*.R). -->
+<!-- EDIT: name the EDA report this replaces, or delete this line for a new study. -->
 
-Replaces an older EDA bar-plot and scatter-plot sweep.
+Replaces an older EDA report.
 
-A `dp-postage` job is the data-checking sweep over a new build: one small panel
-per variable against operation year, pages of them, with a table beside each
-section. It is for finding coding errors, drift and missingness before any
-analysis. It is not a figure for a manuscript.
+A `dp-eda` job is the whole data-checking report over a new build, in one
+render: an overview of every column, goodness of follow-up, then continuous
+variables, categorical variables as percentages and categorical variables as
+counts, each with its table. It is written for the biostatistician choosing
+variables for an analysis set, not for a manuscript.
 
-The sweep has three sections, and `SECTIONS` picks which to draw: continuous
-variables as points, then categorical variables as percentages, then the same
-categorical variables as counts. The percent and count pages bin the year the
-same way, so their bars line up. The pages come from `hvtiPlotR::hv_eda_pages()`,
-the same function the EDA report draws through, so a section here is the same
-figure as that section of the report.
+Each section is also a job of its own, and draws through the same function:
+the follow-up section is `dp-gfup` (`hvtiPlotR::hv_followup_panels()`) with
+the tables of `dc-gfup` (`hvtiRutilities::followup_check()`), and the other
+three are `dp-postage` (`hvtiPlotR::hv_eda_pages()`). Given the same choices, a
+section here is the same figure as the standalone job, so this report and a
+standalone job cannot disagree about the data.
 
 ```{r}
 #| label: setup
@@ -40,8 +41,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.7.16") {
-  stop("This job needs hvtiPlotR >= 2.7.16 for hv_eda_pages(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.7.17") {
+  stop("This job needs hvtiPlotR >= 2.7.17 for hv_eda_pages() and hv_followup_panels(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (!requireNamespace("patchwork", quietly = TRUE)) {
@@ -108,7 +109,8 @@ set_path <- function(kind, file) {
 
 ## Study choices
 
-Set the values in this chunk before rendering.
+Set the values in this chunk before rendering. Left as they are, they draw the
+all-deaths follow-up panel and every column of the `eda` analysis set.
 
 ```{r}
 #| label: study-choices
@@ -120,27 +122,66 @@ Set the values in this chunk before rendering.
 # under analysis_sets: in _study.yml, then write it with
 # hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
 # cohort is the intended population.
+DATASET <- "study"
+ANALYSIS_SET <- "eda"
+
+# Follow-up. These are dp-gfup's choices, and mean what they mean there.
+# EDIT: the years-since-origin interval to the operation, and that origin. The
+# origin differs between studies, and a wrong one slides every point along the
+# x-axis without any other symptom, which is why the operation years are
+# checked and printed below.
+OPYRS <- "iv_opyrs"
+ORIGIN_YEAR <- 1990
+
+# EDIT: the close date of follow-up, as.Date("YYYY-MM-DD"). NULL estimates it
+# as the latest operation date plus follow-up in the data, which is the date
+# follow-up is known to reach, not the date it was closed; the report says
+# which one it drew.
+CLOSE_DATE <- NULL
+
+# EDIT: one entry per death panel. `status` is the 1/0 death indicator and
+# `time` its follow-up in years. Each panel also gets dc-gfup's tables, over
+# the same two columns. A study that ascertains deaths two ways draws both,
+# for example
+#   systematic = list(status = "deads", time = "iv_deads", title = "Systematic deaths")
+PANELS <- list(
+  all = list(status = "dead", time = "iv_dead", title = "All deaths")
+)
+
+# EDIT: optional event panels, one entry per non-fatal event. `event` and
+# `time` are the event's indicator and interval; `death` and `death_time` the
+# death it competes with. A flagged event counts only when it comes strictly
+# before death, so ties go to death. list() draws none. For example
+#   reop = list(event = "ev_reop", time = "iv_reop", death = "dead",
+#               death_time = "iv_dead", label = "Reoperation")
+EVENTS <- list()
+
+# Variables. These are dp-postage's choices, and mean what they mean there.
+# X_VAR is the reference time every panel is drawn against.
 # VARIABLES is NULL to draw every column, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
-# column here to draw it anyway. A named column that is not in the data stops
-# the render, and the error lists every missing name at once.
-# SECTIONS is any of "continuous", "percent" and "count", in the order to
-# draw them. ALPHA is point transparency for continuous panels: 0.5 lets a dense
-# cohort read as a distribution rather than a blob.
-# MIGRATE-BEGIN: dp-postage-config
-DATASET <- "study"
-ANALYSIS_SET <- "eda"
+# column here to draw it anyway. The follow-up columns are drawn too, as
+# dp-postage draws them, so a section here stays the standalone job's figure.
+# A named column that is not in the data stops the render, and the error
+# lists every missing name at once.
+# SECTIONS is any of "followup", "continuous", "percent" and "count". The
+# report keeps this order whatever order they are named in, so the report
+# reads the same across studies.
+# ALPHA is point transparency, for the follow-up figures and the continuous
+# panels: 0.5 lets a dense cohort read as a distribution rather than a blob.
 X_VAR <- "year"                    # EDIT: reference time or year
 VARIABLES <- NULL                  # EDIT: NULL draws every column, or name them
 EXCLUDE <- character(0)
 GRID_NCOL <- 4L
 GRID_NROW <- 4L
 UNIQUE_LIMIT <- 6L
-SECTIONS <- c("continuous", "percent", "count")
+SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
-# MIGRATE-END: dp-postage-config
 
+# Red is dead and blue is alive, in every job. A non-fatal event is green.
+# These are ColorBrewer Set1's red, blue and green, as dp-gfup draws them.
+COLOURS <- c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A")
 ```
 
 ## Data
@@ -208,11 +249,11 @@ cat("Data read: ", if (is.null(ANALYSIS_SET)) {
 }, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
 ```
 
+
 ```{r}
 #| label: spec
-# Variable order is page order. Character and factor columns become bars.
-# Numeric columns become bars only for a small set of non-negative integers;
-# other numeric columns become points.
+# The follow-up choices are checked by hv_followup_panels() below; these are
+# dp-postage's checks of the variable choices, unchanged.
 column_names <- function(x) is.character(x) && !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
 if (!column_names(X_VAR) || length(X_VAR) != 1L) stop("X_VAR must name one column.", call. = FALSE)
 if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
@@ -223,8 +264,9 @@ positive_whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && i
 for (value in list(GRID_NCOL, GRID_NROW, UNIQUE_LIMIT)) {
   if (!positive_whole(value)) stop("Grid dimensions and UNIQUE_LIMIT must be positive whole numbers.", call. = FALSE)
 }
-if (!column_names(SECTIONS) || !length(SECTIONS) || !all(SECTIONS %in% c("continuous", "percent", "count"))) {
-  stop("SECTIONS must be one or more of \"continuous\", \"percent\" and \"count\".", call. = FALSE)
+all_sections <- c("followup", "continuous", "percent", "count")
+if (!column_names(SECTIONS) || !length(SECTIONS) || !all(SECTIONS %in% all_sections)) {
+  stop("SECTIONS must be one or more of \"followup\", \"continuous\", \"percent\" and \"count\".", call. = FALSE)
 }
 if (!is.numeric(ALPHA) || length(ALPHA) != 1L || is.na(ALPHA) || ALPHA < 0 || ALPHA > 1) {
   stop("ALPHA must be one number from 0 to 1.", call. = FALSE)
@@ -260,66 +302,174 @@ if (is.null(VARIABLES)) {
   }
 }
 if (!length(VARIABLES)) stop("No EDA variables remain after exclusions.", call. = FALSE)
-```
 
-## Pages
-
-Each section opens with its table: summary statistics for the continuous
-variables, and one frequency table for the categorical variables, shown once
-under whichever categorical section comes first. Missing values are counted as a
-level, so a percentage is out of every patient, not only those with a value.
-
-```{r}
-#| label: pages
-#| results: asis
 # Labels come from the dataset; a variable without one is shown by its name.
 .labels <- label_map(d)
 labels <- stats::setNames(.labels$label, .labels$key)
+
+show_table <- function(x, caption, digits = getOption("digits")) {
+  cat("\n", knitr::kable(x, caption = caption, digits = digits, row.names = FALSE), "\n", sep = "\n")
+}
+# Link each saved figure relative to wherever this document sits. Quarto
+# rewrites an absolute path into a broken relative one and then cannot embed
+# the image, and a fixed "../graphs" would break for a job kept in a subfolder.
+# error = FALSE returns the path unchanged when no relative path exists (two
+# Windows drives), so the figure is still saved rather than the render stopping.
+figure_link <- function(file) {
+  xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd(), error = FALSE)
+}
+figure_files <- character(0)
+```
+
+## Overview
+
+Every column of the data this report read, in dataset order, with its type,
+label and share missing. A column the sections below leave out is still
+listed here.
+
+```{r}
+#| label: overview-contents
+#| results: asis
+contents <- hvtiRutilities::proc_contents(d, order = "varnum")
+show_table(contents$variables[, c("variable", "type", "label", "n_unique", "pct_missing")],
+           paste0("Contents: ", nrow(d), " rows, ", ncol(d), " columns"))
+```
+
+```{r}
+#| label: gfup-heading
+#| results: asis
+#| eval: !expr '"followup" %in% SECTIONS'
+cat("\n## Goodness of follow-up\n\n")
+cat("A point below the diagonal is follow-up short of what the close date allows. ",
+    "A dead patient's point is where the death was recorded, so it is expected below ",
+    "the line; it is the **blue** points drifting below it that need an explanation.\n\n", sep = "")
+```
+
+```{r}
+#| label: gfup-window
+#| results: asis
+#| eval: !expr '"followup" %in% SECTIONS'
+# hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
+# names every missing column at once, refuses a name used twice and the
+# wrong-origin mistake, and works out the window the panels share. dp-gfup
+# calls it with the same arguments, so these are that job's panels.
+fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
+                                    panels = PANELS, events = EVENTS, close_date = CLOSE_DATE)
+close_date <- fp$meta$close_date
+# Name the edit point a reader can find in this file, not the function's argument.
+close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
+show_table(data.frame(
+  quantity = c("patients", "operation year missing", "first operation", "last operation",
+               "close date", "close date is"),
+  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, format(fp$meta$first_operation),
+            format(fp$meta$study_end), format(close_date), close_source)
+), "Operation years and the close date")
+```
+
+```{r}
+#| label: gfup-panels
+#| results: asis
+#| eval: !expr '"followup" %in% SECTIONS'
+# Each death panel gets dc-gfup's tables over its own two columns, through
+# hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
+# selected, so the report carries no patient-level column; run dc-gfup to review
+# the suspicious rows themselves.
+plots <- plot(fp, alpha = ALPHA)
+panel_counts <- list()
+for (i in seq_len(nrow(fp$data))) {
+  row <- fp$data[i, ]
+  nm <- row$panel
+  panel_counts[[nm]] <- list(drawn = row$n_drawn, excluded = row$n_excluded)
+  cat("\n### ", row$title, "\n\n", row$n_drawn, " patients drawn; ", row$n_excluded,
+      " missing a column this panel needs.\n\n", sep = "")
+  if (row$type == "followup") {
+    fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time)
+    show_table(fc$cohort, "Cohort: event, censored and missing event status")
+    show_table(fc$intervals, "Follow-up interval: missing, negative and zero values")
+    p <- plots[[nm]] +
+      scale_colour_manual(values = c(Alive = COLOURS[["alive"]], Dead = COLOURS[["dead"]])) +
+      scale_shape_manual(values = c(Alive = 1, Dead = 4))
+  } else {
+    levels <- c("No event", row$title, "Death")
+    p <- plots[[nm]] +
+      scale_colour_manual(values = stats::setNames(COLOURS[c("alive", "event", "dead")], levels)) +
+      scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
+  }
+  p <- p + labs(x = "Year of operation", y = "Follow-up (years)", colour = NULL, shape = NULL) +
+    theme_hv_manuscript()
+  file <- set_path("graphs", paste0("dp-eda-gfup-", nm, ".png"))
+  ggplot2::ggsave(file, p, width = 7, height = 6, units = "in", dpi = 150)
+  cat("![", row$title, "](", figure_link(file), ")\n\n", sep = "")
+  figure_files <- c(figure_files, file)
+}
+```
+
+```{r}
+#| label: sections
+# One section of hv_eda_pages() pages with its table, drawn exactly as
+# dp-postage draws it. One categorical table serves the percent and the count
+# sections, shown under whichever comes first, because a table can carry both
+# columns where a figure needs two. Missing values are counted as a level, so
+# a percentage is out of every patient, not only those with a value.
 titles <- c(continuous = "Continuous variables", percent = "Categorical variables, percent",
             count = "Categorical variables, counts")
-page_files <- character(0)
-freq_shown <- FALSE
-for (section in SECTIONS) {
+freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
+draw_section <- function(section) {
   sec <- hvtiPlotR::hv_eda_pages(d, x_col = X_VAR, section = section, vars = VARIABLES,
                                  labels = labels, unique_limit = UNIQUE_LIMIT)
   cat("\n## ", titles[[section]], " (", sec$meta$n_vars, ")\n\n", sep = "")
   if (!sec$meta$n_vars) {
     cat("No selected variable belongs to this section.\n\n")
-    next
+    return(invisible(character(0)))
   }
   vars <- sec$data$variable
   if (section == "continuous") {
     stats <- hvtiRutilities::proc_means(d, vars = vars, stats = c("n", "nmiss", "mean", "std", "min",
                                                                   "p25", "median", "p75", "max"))
-    cat(knitr::kable(stats, digits = 2, row.names = FALSE, caption = "Continuous variables"), sep = "\n")
-  } else if (!freq_shown) {
+    show_table(stats, "Continuous variables", digits = 2)
+  } else if (identical(section, freq_section)) {
     freq <- do.call(rbind, lapply(vars, function(v) {
       f <- hvtiRutilities::proc_freq(d, v, missing = TRUE)
       level <- as.character(f[[1L]])
       data.frame(variable = v, level = ifelse(is.na(level), "(missing)", level),
                  n = f$Frequency, percent = round(f$Percent, 1))
     }))
-    cat(knitr::kable(freq, row.names = FALSE, caption = "Categorical variables, missing counted"), sep = "\n")
-    freq_shown <- TRUE
+    show_table(freq, "Categorical variables, missing counted")
   }
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
+  files <- character(0)
   for (i in seq_along(pages)) {
-    file <- set_path("graphs", sprintf("dp-postage-%s-page-%02d.png", section, i))
+    file <- set_path("graphs", sprintf("dp-eda-%s-page-%02d.png", section, i))
     ggplot2::ggsave(file, pages[[i]] & theme_hv_manuscript(base_size = 8),
                     width = 11, height = 8.5, units = "in", dpi = 150)
     on_page <- attr(pages[[i]], "variables")
-    # Link relative to wherever this document sits. Quarto rewrites an absolute
-    # path into a broken relative one and then cannot embed the image, and a
-    # fixed "../graphs" would break for a job kept in a subfolder. error = FALSE
-    # returns the path unchanged when no relative path exists (two Windows
-    # drives), so the page is still saved rather than the render stopping.
-    link <- xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd(),
-                                error = FALSE)
-    cat("\n### Page ", i, "\n\n![", paste(labels[on_page], collapse = ", "), "](", link, ")\n\n", sep = "")
-    page_files <- c(page_files, file)
+    cat("\n### ", titles[[section]], ", page ", i, "\n\n![", paste(labels[on_page], collapse = ", "),
+        "](", figure_link(file), ")\n\n", sep = "")
+    files <- c(files, file)
   }
+  invisible(files)
 }
-invisible(page_files)
+```
+
+```{r}
+#| label: cont-pages
+#| results: asis
+#| eval: !expr '"continuous" %in% SECTIONS'
+figure_files <- c(figure_files, draw_section("continuous"))
+```
+
+```{r}
+#| label: pct-pages
+#| results: asis
+#| eval: !expr '"percent" %in% SECTIONS'
+figure_files <- c(figure_files, draw_section("percent"))
+```
+
+```{r}
+#| label: cnt-pages
+#| results: asis
+#| eval: !expr '"count" %in% SECTIONS'
+figure_files <- c(figure_files, draw_section("count"))
 ```
 
 ```{r}
@@ -331,7 +481,12 @@ cat(hvtiRtemplates:::.embed_provenance(
   data = .provenance_data,
   extra = list(
     subject = SUBJECT,
-    type = TYPE
+    type = TYPE,
+    sections = SECTIONS,
+    followup = if ("followup" %in% SECTIONS) {
+      list(origin_year = ORIGIN_YEAR, close_date = format(close_date),
+           close_date_source = close_source, panels = panel_counts)
+    }
   )
 ))
 ```

@@ -113,3 +113,25 @@ scaffold_gfup <- function(edits, .local_envir = parent.frame()) {
   writeLines(lines, job)
   list(root = root, job = job)
 }
+
+# Scaffold any <prefix>-<qualifier> job as cohort-eda in a synthetic study,
+# replace whole lines by pattern, and optionally move it into a subfolder of
+# its taxonomy folder, the layout that once broke image embedding.
+scaffold_job <- function(prefix, qualifier, edits, kind = NULL, root = NULL, subfolder = NULL,
+                         .local_envir = parent.frame()) {
+  if (is.null(root)) root <- migration_study_fixture(kind, .local_envir = .local_envir)
+  job <- add_job(prefix, "cohort", "eda", dir = root, qualifier = qualifier)
+  lines <- readLines(job, warn = FALSE)
+  for (pattern in names(edits)) {
+    hit <- grep(pattern, lines)
+    if (length(hit) != 1L) stop("Expected one line matching ", pattern)
+    lines[hit] <- edits[[pattern]]
+  }
+  if (!is.null(subfolder)) {
+    unlink(job)
+    job <- file.path(dirname(job), subfolder, basename(job))
+    dir.create(dirname(job))
+  }
+  writeLines(lines, job)
+  list(root = root, job = job)
+}

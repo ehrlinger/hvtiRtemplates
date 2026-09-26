@@ -1,6 +1,7 @@
 test_that("jobs present their study choices before reading data", {
   files <- c("10_descriptive/dc-general.qmd", "10_descriptive/dc-gfup.qmd",
-             "10_descriptive/dc-tables.qmd", "10_descriptive/dp-postage.qmd",
+             "10_descriptive/dc-tables.qmd", "10_descriptive/dp-eda.qmd",
+             "10_descriptive/dp-postage.qmd",
              "20_distributions/ac.qmd", "20_distributions/hz.qmd",
              "30_analyses/bc.qmd", "30_analyses/bh.qmd", "30_analyses/bl.qmd",
              "30_analyses/br.qmd", "30_analyses/hm.qmd", "40_graphs/dp-gfup.qmd",
@@ -10,6 +11,8 @@ test_that("jobs present their study choices before reading data", {
     `dc-general.qmd` = c("DATASET", "ANALYSIS_SET", "CATEGORICAL", "CONTINUOUS", "KEY_COLS"),
     `dc-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "EVENT", "FOLLOWUP", "CHECKS"),
     `dc-tables.qmd` = c("DATASET", "ANALYSIS_SET", "GROUPS", "WORD_FILE", "CORR"),
+    `dp-eda.qmd` = c("DATASET", "ANALYSIS_SET", "OPYRS", "ORIGIN_YEAR", "CLOSE_DATE", "PANELS", "EVENTS",
+                     "X_VAR", "VARIABLES", "GRID_NCOL", "SECTIONS", "ALPHA"),
     `dp-postage.qmd` = c("DATASET", "ANALYSIS_SET", "X_VAR", "VARIABLES", "GRID_NCOL", "SECTIONS", "ALPHA"),
     `ac.qmd` = c("DERIVED", "TIME", "STATUS", "grid", "labs"),
     `hz.qmd` = c("phases", "theta0"),

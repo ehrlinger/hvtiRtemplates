@@ -285,6 +285,31 @@ test_that("postage VARIABLES = NULL draws every column but ids, dates and exclus
   expect_error(eval(spec, env), "SECTIONS")
 })
 
+test_that("postage VARIABLES = NULL leaves out identifiers written without a separator", {
+  spec <- postage_chunk(template_path("dp", "postage"), "spec")
+  # ccfid, the CCF patient identifier, has no "_" before "id", so the token rule
+  # alone drew it as one bar per patient. carotid, steroid and case end the same
+  # way and are study variables, so a bare id$ would be the opposite defect.
+  n <- 12L
+  env <- list2env(list(d = data.frame(year = seq_len(n), age = 40 + seq_len(n), ccfid = 1000L + seq_len(n),
+                                      patientid = sprintf("P%03d", seq_len(n)), mrn = 5000L + seq_len(n),
+                                      surgeon_note = sprintf("note %d", seq_len(n)),
+                                      carotid = rep(0:1, 6), steroid = rep(0:1, 6), case = rep(0:1, 6)),
+                       X_VAR = "year", VARIABLES = NULL, EXCLUDE = character(),
+                       GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
+                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5))
+  out <- capture.output(eval(spec, env))
+  expect_identical(env$VARIABLES, c("age", "carotid", "steroid", "case"))
+  expect_match(paste(out, collapse = " "), "ccfid, patientid, mrn, surgeon_note")
+  # Below ten values a distinct character column is kept: a small check frame
+  # is not a register.
+  env$d <- env$d[1:9, ]
+  env$VARIABLES <- NULL
+  capture.output(eval(spec, env))
+  expect_true("surgeon_note" %in% env$VARIABLES)
+  expect_false("ccfid" %in% env$VARIABLES)
+})
+
 test_that("postage migration records a legacy show_percent as ignored, not translated", {
   root <- migration_study_fixture()
   lines <- c("```{r}", 'dta_filename <- "built.csv"', 'pref_time_var <- "iv_dead"', "show_percent <- TRUE", "```")

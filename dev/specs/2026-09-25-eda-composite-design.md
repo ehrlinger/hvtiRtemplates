@@ -63,11 +63,30 @@ author could not get by editing one line. Rejected on that ground: separate
 variables are checked all at once, and the error lists every name not in the
 data. Both decided in the 2026-09-24 review.
 
-**What "looks like an identifier or a date" means** is the rule `dp-postage`
-already applies: a name matching `(^|_)(id|identifier|date|datetime)($|_)` or
-ending `_dt`, case-insensitive, or a `Date` or `POSIXt` column. Today that rule
-only **warns** about a named variable. Under the default it **excludes**, and
-the report lists every column it excluded, so the choice is visible and a
+**What "looks like an identifier or a date" means** is three tests, any one of
+which is enough, all case-insensitive:
+
+- a name matching `(^|_)(id|identifier|date|datetime)($|_)` or ending `_dt`,
+  the rule `dp-postage` shipped with;
+- a name matching `^((ccf|pat|patient|study|subject|record|case)_?(id|num|no)|mrn)$`,
+  added 2026-09-26 because the first rule wants `id` as its own token and so
+  passed `ccfid`, the CCF patient identifier, and `patientid`;
+- a `Date` or `POSIXt` column, or a character or factor column with ten or
+  more non-missing values, every one of them different.
+
+Decided by John on 2026-09-26, over three alternatives. A bare trailing `id$`
+was declined because it takes `carotid`, `steroid`, `thyroid`, `lipid` and
+`uric_acid`, dropping study variables as silently as the old rule kept
+identifiers, and an exemption list for it has no end. A name list alone misses
+an identifier under a name nobody listed; the cardinality test alone misses a
+numeric `ccfid`, which would be drawn as points. The stems require their
+suffix, so a `case` or `study` column is not taken for one: `case` is often a
+case-control indicator. The floor of ten keeps a small check frame with
+distinct labels from losing its columns. The two templates carry the rule
+byte for byte; each has its own test proving `ccfid` is left out.
+
+Before this default, the rule only **warned** about a named variable. Under
+the default it **excludes**, and the report lists every column it excluded, so the choice is visible and a
 study author can name the column in `VARIABLES` to draw it anyway. Naming a
 column still only warns, as now.
 
