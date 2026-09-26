@@ -66,3 +66,22 @@ test_that("dp-eda leaves out a section not named in SECTIONS", {
   # The heading, not the folded source that prints it.
   expect_false(grepl("<h2[^>]*>[^<]*Goodness of follow-up", text))
 })
+
+test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a separator", {
+  # The spec chunk, not a render: dp-postage's test covers the rule's edges, and
+  # this one proves dp-eda carries the same rule rather than an older copy.
+  lines <- readLines(template_path("dp", "eda"), warn = FALSE)
+  start <- match("#| label: spec", lines)
+  end <- start + match("```", lines[-seq_len(start)])
+  spec <- parse(text = lines[seq.int(start + 1L, end - 1L)])
+  n <- 12L
+  env <- list2env(list(d = data.frame(year = seq_len(n), age = 40 + seq_len(n), ccfid = 1000L + seq_len(n),
+                                      patientid = sprintf("P%03d", seq_len(n)), carotid = rep(0:1, 6)),
+                       X_VAR = "year", VARIABLES = NULL, EXCLUDE = character(),
+                       GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
+                       SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
+                       label_map = function(d) data.frame(key = names(d), label = names(d))))
+  out <- capture.output(eval(spec, env))
+  expect_identical(env$VARIABLES, c("age", "carotid"))
+  expect_match(paste(out, collapse = " "), "ccfid, patientid")
+})
