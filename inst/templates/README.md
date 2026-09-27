@@ -19,6 +19,7 @@ refuses to overwrite an existing job.
 | `10_descriptive/dc-gfup.qmd` | recorded follow-up interval checks | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dp-postage.qmd` | EDA panels on numbered PNG pages | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dp-eda.qmd` | the whole EDA report: overview, follow-up, then the postage sections, each with its table | `10_descriptive/` or `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `30_analyses/` or `analyses/` |
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
@@ -55,7 +56,7 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`,
-`dp-gfup`, `dp-postage`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
+`dp-gfup`, `dp-postage`, `dp-eda`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
 `lm` jobs described below. The other prefixes here remain unqualified. A
 prefix is wholly qualified or wholly unqualified, never half-decomposed.
 
