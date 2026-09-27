@@ -231,9 +231,18 @@ if (!is.numeric(ALPHA) || length(ALPHA) != 1L || is.na(ALPHA) || ALPHA < 0 || AL
 }
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
+# A name rule and a data rule. The names catch ccfid and patientid, which have no
+# "_" before "id"; a bare "id$" would also take carotid and steroid. The data rule
+# catches an identifier under a name nobody listed: text in which every value
+# differs, once there are ten or more of them.
 looks_like_id <- function(v) {
   grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
-    vapply(d[v], function(x) inherits(x, c("Date", "POSIXt")), logical(1L))
+    grepl("^((ccf|pat|patient|study|subject|record|case)_?(id|num|no)|mrn)$", v, ignore.case = TRUE) |
+    vapply(d[v], function(x) {
+      seen <- x[!is.na(x)]
+      inherits(x, c("Date", "POSIXt")) ||
+        ((is.character(x) || is.factor(x)) && length(seen) >= 10L && !anyDuplicated(seen))
+    }, logical(1L))
 }
 if (is.null(VARIABLES)) {
   candidates <- setdiff(names(d), c(X_VAR, EXCLUDE))

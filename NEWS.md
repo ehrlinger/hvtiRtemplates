@@ -12,6 +12,17 @@
   floors. The house palette and smart label truncation follow once those
   packages release them.
 
+* `dp-postage` and `dp-eda` leave out identifiers written without a
+  separator. Under `VARIABLES <- NULL` a column named `ccfid` or `patientid`
+  passed the identifier rule, which wanted `id` as its own `_`-delimited
+  token, and was drawn as one bar per patient and listed in the frequency
+  table. The rule now also takes `ccfid`, `patid`, `patientid`, `studyid`,
+  `subjectid`, `recordid`, `caseid` (each also with `_`, `num` or `no`) and
+  `mrn`, and any text or factor column of ten or more values in which every
+  value differs. A bare trailing `id` was declined: it would take `carotid`
+  and `steroid`. The report lists what it left out, and naming a column in
+  `VARIABLES` still draws it.
+
 # hvtiRtemplates 1.2.2
 
 * `DESCRIPTION`: a plain `&` in the Description (`\&` is not a valid escape
