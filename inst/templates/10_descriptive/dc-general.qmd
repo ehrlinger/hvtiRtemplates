@@ -369,8 +369,8 @@ Percentages in the contingency tables are over non-missing rows, as SAS
 percent. Quantiles are SAS `QNTLDEF=5`, the `proc univariate` default. The
 highest extremes are listed largest first (SAS lists them ascending). The SAS
 job printed `ccfid` beside every extreme value so an author could look the
-patient up; this job prints the values alone unless `ID_COL` is set in the
-spec chunk.
+patient up; this job prints the values alone unless `ID_COL` is set under
+Study choices.
 
 ```{r}
 #| label: provenance
