@@ -13,19 +13,28 @@ eda_edits <- list(
 test_that("dp-eda renders every section into one self-contained report", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
-  s <- scaffold_job("dp", "eda", eda_edits, kind = "dp-postage")
+  # An event panel too: its colour and shape mapping is this template's own
+  # code, not hv_followup_panels()'s, so test-dp-gfup.R does not cover it here.
+  edits <- c(eda_edits, list(
+    "^EVENTS <- list\\(\\)$" = paste0(
+      "EVENTS <- list(repair = list(event = \"repair\", time = \"iv_fup\", ",
+      "death = \"dead\", death_time = \"iv_dead\", label = \"Repair\"))"
+    )
+  ))
+  s <- scaffold_job("dp", "eda", edits, kind = "dp-postage")
   quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
   html <- sub("[.]qmd$", ".html", s$job)
   expect_true(file.exists(html))
   graphs <- file.path(s$root, "graphs", "cohort-eda")
   pages <- sprintf("dp-eda-%s-page-01.png", c("continuous", "percent", "count"))
-  pngs <- file.path(graphs, c("dp-eda-gfup-all.png", pages))
+  pngs <- file.path(graphs, c("dp-eda-gfup-all.png", "dp-eda-gfup-repair.png", pages))
   expect_true(all(file.exists(pngs)))
   text <- paste(readLines(html, warn = FALSE), collapse = "\n")
   for (heading in c("Overview", "Goodness of follow-up", "Continuous variables",
                     "Categorical variables, percent", "Categorical variables, counts")) {
     expect_match(text, paste0("<h2[^>]*>[^<]*", heading), info = heading)
   }
+  expect_match(text, "<h3[^>]*>[^<]*Repair")
   # embed-resources: every saved figure is inside the report. An image Quarto
   # could not find is left as a file link and would not be counted here.
   # regmatches(), not length(gregexpr()): no match returns -1, whose length is 1.
@@ -65,4 +74,42 @@ test_that("dp-eda leaves out a section not named in SECTIONS", {
   expect_identical(length(regmatches(text, gregexpr("src=\"data:image/png", text))[[1L]]), n_png)
   # The heading, not the folded source that prints it.
   expect_false(grepl("<h2[^>]*>[^<]*Goodness of follow-up", text))
+})
+
+test_that("dp-eda colours every point of an event panel from COLOURS", {
+  # A manual scale whose names miss one of the panel's levels still draws: the
+  # unmatched points go grey and ggplot says nothing while any level matches.
+  # Only the built plot shows it, so this runs the template's own chunks.
+  withr::local_package("ggplot2")
+  withr::local_package("hvtiPlotR")
+  withr::local_package("hvtiRutilities")
+  root <- migration_study_fixture(NULL)
+  job <- add_job("dp", "cohort", "eda", dir = root, qualifier = "eda")
+  chunk <- function(label) {
+    lines <- readLines(job, warn = FALSE)
+    start <- match(paste0("#| label: ", label), lines)
+    end <- start + match("```", lines[-seq_len(start)])
+    parse(text = lines[seq.int(start + 1L, end - 1L)])
+  }
+  env <- new.env(parent = globalenv())
+  env$.root <- root
+  env$.provenance_data <- list()
+  env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  for (label in c("set", "study-choices")) eval(chunk(label), env)
+  env$ORIGIN_YEAR <- 1980
+  env$EVENTS <- list(repair = list(event = "repair", time = "iv_fup", death = "dead",
+                                   death_time = "iv_dead", label = "Repair"))
+  # The fixture carries no labels, and label_map() says so; that notice only.
+  withCallingHandlers(
+    utils::capture.output(for (label in c("spec", "gfup-window", "gfup-panels")) eval(chunk(label), env)),
+    warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning")
+  )
+  # The loop leaves p as the last panel drawn, the event panel.
+  expect_identical(env$nm, "repair")
+  built <- ggplot2::ggplot_build(env$p)
+  points <- Filter(function(layer) "shape" %in% names(layer), built$data)
+  colours <- unlist(lapply(points, `[[`, "colour"))
+  expect_gt(length(colours), 0L)
+  expect_true(all(colours %in% env$COLOURS), info = paste(setdiff(colours, env$COLOURS), collapse = ", "))
+  expect_true(env$COLOURS[["event"]] %in% colours)
 })

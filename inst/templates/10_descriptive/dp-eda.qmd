@@ -45,6 +45,10 @@ if (utils::packageVersion("hvtiPlotR") < "2.7.17") {
   stop("This job needs hvtiPlotR >= 2.7.17 for hv_eda_pages() and hv_followup_panels(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
+if (utils::packageVersion("hvtiRutilities") < "1.4.1") {
+  stop("This job needs hvtiRutilities >= 1.4.1 for followup_check(); ",
+       utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
+}
 if (!requireNamespace("patchwork", quietly = TRUE)) {
   stop("This job needs the patchwork package. Install it, then re-render.", call. = FALSE)
 }
