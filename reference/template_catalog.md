@@ -24,5 +24,5 @@ every template on disk and `NA` for most queued ones.
 table(template_catalog()$status)
 #> 
 #>  queued revisit shipped 
-#>      36       1      28 
+#>      36       1      29 
 ```

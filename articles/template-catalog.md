@@ -28,7 +28,7 @@ existing file, because a job accumulates a study’s edits.
 
 Each template carries a light.
 
-- 🟢 **Shipped** (28): on disk and supported. Scaffold it and use it.
+- 🟢 **Shipped** (29): on disk and supported. Scaffold it and use it.
 - 🟡 **In progress** (21): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
 - 🔴 **Not yet on the way** (16): waiting on a function in another
@@ -49,6 +49,7 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `dc-general` | First look at a built cohort: what the data contain, how each categorical variable breaks down, how each continuous variable is distributed, and which variables move together. | `add_job("dc", subject, type, qualifier = "general")` |
 | 🟢 Shipped | `dc-gfup` | Checks recorded follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals. | `add_job("dc", subject, type, qualifier = "gfup")` |
 | 🟢 Shipped | `dc-tables` | The formatted descriptive table: every reported variable under its section heading, categorical as n (%) and continuous as the summary you choose, written to Word. | `add_job("dc", subject, type, qualifier = "tables")` |
+| 🟢 Shipped | `dp-eda` | The whole data-checking report in one render: every column’s contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table. | `add_job("dp", subject, type, qualifier = "eda")` |
 | 🟢 Shipped | `dp-postage` | Data-checking sweep over a new build: one small panel per variable against operation year, to find coding errors, drift and missingness. Not a manuscript figure. | `add_job("dp", subject, type, qualifier = "postage")` |
 
 ### distributions
