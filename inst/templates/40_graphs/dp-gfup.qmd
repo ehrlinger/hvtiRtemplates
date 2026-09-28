@@ -270,7 +270,7 @@ show_figure <- function(p, fname, title) {
   invisible(dev.off())
   cat("![", title, "](", file.path(paste0(SUBJECT, "-", TYPE), fname), ")\n\n", sep = "")
 }
-if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices.", call. = FALSE)
+if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in (edit-)study-choices.", call. = FALSE)
 if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLORS) == 3L &&
                             setequal(names(COLORS), c("alive", "dead", "event")))) {
   stop("COLORS must be NULL or name exactly alive, dead and event.", call. = FALSE)

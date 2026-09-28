@@ -1,6 +1,6 @@
 extract_chunk <- function(path, label) {
   lines <- readLines(path, warn = FALSE)
-  # A chunk holding an EDIT: marker is labelled edit-<label>; either names it.
+  # A chunk holding an EDIT: marker is labeled edit-<label>; either names it.
   chunk_label <- grep(paste0("^#\\| label: (edit-)?", label, "$"), lines)
   chunk_end <- chunk_label + which(lines[-seq_len(chunk_label)] == "```")[[1L]]
   parse(text = lines[(chunk_label + 1L):(chunk_end - 1L)])

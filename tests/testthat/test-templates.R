@@ -760,7 +760,7 @@ test_that("the hz template reads theta names through TemporalHazard's exported A
   expect_gt(nrow(env$theta_table), 0L)
 })
 
-test_that("a chunk is labelled edit- exactly when it holds an EDIT marker", {
+test_that("a chunk is labeled edit- exactly when it holds an EDIT marker", {
   # The labels make the editor's chunk outline a list of the work a job still
   # needs. That holds only in both directions: a marker in an unprefixed chunk
   # is missing from the list, and a prefixed chunk with no marker is a false

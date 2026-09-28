@@ -1,6 +1,6 @@
 # hvtiRtemplates (unreleased)
 
-* Every template chunk holding an `EDIT:` marker is now labelled `edit-`, so
+* Every template chunk holding an `EDIT:` marker is now labeled `edit-`, so
   the editor's chunk outline lists the work a job still needs:
   `study-choices` is `edit-study-choices`, and ten templates carry further
   `edit-` chunks such as `edit-cohort` and `edit-derive`. The marker guard,

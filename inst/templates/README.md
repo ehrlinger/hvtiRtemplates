@@ -267,7 +267,7 @@ rendering in disposable synthetic studies.
 
 Every line a study must change is marked `EDIT:`. Work through them in order;
 the markers are placed so that a job which still contains one has not been
-finished. **Every chunk holding a marker is labelled `edit-`**, so the
+finished. **Every chunk holding a marker is labeled `edit-`**, so the
 editor's chunk outline lists the work to do: `edit-study-choices` first, then
 any others such as `edit-cohort`. Markers in prose, outside a chunk, are found
 by searching for `EDIT:`, and the guard below lists them all. The comments around them record why a choice matters, not merely what

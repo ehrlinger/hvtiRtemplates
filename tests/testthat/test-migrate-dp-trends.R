@@ -5,7 +5,7 @@ trends_evidence <- function(root, lines = NULL) {
 
 trends_chunk <- function(job, label) {
   lines <- readLines(job, warn = FALSE)
-  # A chunk holding an EDIT: marker is labelled edit-<label>; either names it.
+  # A chunk holding an EDIT: marker is labeled edit-<label>; either names it.
   start <- grep(paste0("^#\\| label: (edit-)?", label, "$"), lines)[[1L]]
   end <- start + match("```", lines[-seq_len(start)])
   parse(text = lines[seq.int(start + 1L, end - 1L)])
