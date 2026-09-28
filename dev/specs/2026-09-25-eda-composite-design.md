@@ -68,9 +68,11 @@ which is enough, all case-insensitive:
 
 - a name matching `(^|_)(id|identifier|date|datetime)($|_)` or ending `_dt`,
   the rule `dp-postage` shipped with;
-- a name matching `^((ccf|pat|patient|study|subject|record|case)_?(id|num|no)|mrn)$`,
+- a name matching `^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|mrn`,
   added 2026-09-26 because the first rule wants `id` as its own token and so
-  passed `ccfid`, the CCF patient identifier, and `patientid`;
+  passed `ccfid`, the CCF patient identifier, and `patientid`. Widened on
+  2026-09-28 to any name holding `mrn` (`mrn_num`, `pt_mrn`), which no study
+  variable spells;
 - a `Date` or `POSIXt` column, or a character or factor column with ten or
   more non-missing values, every one of them different.
 

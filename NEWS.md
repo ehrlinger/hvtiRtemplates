@@ -17,11 +17,13 @@
   passed the identifier rule, which wanted `id` as its own `_`-delimited
   token, and was drawn as one bar per patient and listed in the frequency
   table. The rule now also takes `ccfid`, `patid`, `patientid`, `studyid`,
-  `subjectid`, `recordid`, `caseid` (each also with `_`, `num` or `no`) and
-  `mrn`, and any text or factor column of ten or more values in which every
-  value differs. A bare trailing `id` was declined: it would take `carotid`
+  `subjectid`, `recordid`, `caseid` (each also with `_`, `num` or `no`),
+  any name holding `mrn` (`mrn_num`, `pt_mrn`), and any text or factor
+  column of ten or more values in which every value differs. A bare trailing `id` was declined: it would take `carotid`
   and `steroid`. The report lists what it left out, and naming a column in
-  `VARIABLES` still draws it.
+  `VARIABLES` still draws it. `dp-eda`'s overview table leaves identifiers
+  out too, whatever `VARIABLES` says, and names them beneath the table; date
+  columns stay in it, because their share missing is worth seeing.
 
 * `dc-general` explains each study choice where it is made. The notes on
   `CATEGORICAL`, `CONTINUOUS`, `CORR_VARS`, `KEY_COLS` and `ID_COL` sat in a

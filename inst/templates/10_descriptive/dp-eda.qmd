@@ -280,12 +280,13 @@ if (!is.numeric(ALPHA) || length(ALPHA) != 1L || is.na(ALPHA) || ALPHA < 0 || AL
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
 # A name rule and a data rule. The names catch ccfid and patientid, which have no
-# "_" before "id"; a bare "id$" would also take carotid and steroid. The data rule
+# "_" before "id"; a bare "id$" would also take carotid and steroid. Any name
+# holding "mrn" is taken (mrn_num, pt_mrn): no study variable spells it. The data rule
 # catches an identifier under a name nobody listed: text in which every value
 # differs, once there are ten or more of them.
 looks_like_id <- function(v) {
   grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
-    grepl("^((ccf|pat|patient|study|subject|record|case)_?(id|num|no)|mrn)$", v, ignore.case = TRUE) |
+    grepl("^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|mrn", v, ignore.case = TRUE) |
     vapply(d[v], function(x) {
       seen <- x[!is.na(x)]
       inherits(x, c("Date", "POSIXt")) ||
@@ -331,14 +332,22 @@ figure_files <- character(0)
 
 Every column of the data this report read, in dataset order, with its type,
 label and share missing. A column the sections below leave out is still
-listed here.
+listed here, unless it looks like an identifier: those are named below the
+table and not described.
 
 ```{r}
 #| label: overview-contents
 #| results: asis
+# The same rule the sections use, applied whatever VARIABLES says, less its date
+# half: a date's share missing is worth seeing, an identifier's is not.
+is_date <- vapply(d, inherits, logical(1L), c("Date", "POSIXt")) |
+  grepl("(^|_)(date|datetime)($|_)|_dt$", names(d), ignore.case = TRUE)
+id_cols <- names(d)[looks_like_id(names(d)) & !is_date]
 contents <- hvtiRutilities::proc_contents(d, order = "varnum")
-show_table(contents$variables[, c("variable", "type", "label", "n_unique", "pct_missing")],
+shown <- contents$variables[!contents$variables$variable %in% id_cols, ]
+show_table(shown[, c("variable", "type", "label", "n_unique", "pct_missing")],
            paste0("Contents: ", nrow(d), " rows, ", ncol(d), " columns"))
+if (length(id_cols)) cat("Identifier columns, not described:", paste(id_cols, collapse = ", "), "\n")
 ```
 
 ```{r}
