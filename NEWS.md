@@ -23,6 +23,12 @@
   and `steroid`. The report lists what it left out, and naming a column in
   `VARIABLES` still draws it.
 
+* `dc-general` explains each study choice where it is made. The notes on
+  `CATEGORICAL`, `CONTINUOUS`, `CORR_VARS`, `KEY_COLS` and `ID_COL` sat in a
+  `spec` chunk ninety lines below the settings they describe; they now sit
+  beside them in `study-choices`, and the empty chunk is gone. No change to
+  what the job does. From Lauren's 2026-09-24 review.
+
 # hvtiRtemplates 1.2.2
 
 * `DESCRIPTION`: a plain `&` in the Description (`\&` is not a valid escape

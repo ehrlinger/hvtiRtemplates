@@ -19,10 +19,10 @@
 | `hv_eda_pages()`, `hv_followup_panels()` | shipped, hvtiPlotR 2.7.17 |
 | `followup_check()` | shipped, hvtiRutilities 1.4.1 |
 | `dp-postage` in `SECTIONS`, `dc-gfup`/`dp-gfup` on the shared functions | shipped, hvtiRtemplates 1.2.2 |
-| `dp-eda` | not started; design §4 and §6 decided, §4.1 (tables) proposed |
+| `dp-eda` | merged, #155 (2026-09-26) |
 | palette | decided in the review, not built; `dp-gfup` hard-codes `COLOURS`, `dp-postage` uses ggplot defaults |
 | smart truncation | spec §4.2 merged (hvtiRutilities #149), not built |
-| `dc-general` edit block | Lauren's note, not done |
+| `dc-general` edit block | done, 3a (2026-09-27) |
 
 ## Decisions (John Ehrlinger, 2026-09-25)
 
@@ -70,23 +70,26 @@ A study keeps one list of its own abbreviations (`CABG`, `LV`, `AV`, …) so eve
 Phases 1 and 2 must be released before 3b and 3c can raise their floors; 3a and the skeleton of 3d need neither and can start at once.
 
 ### 3a. `dc-general`: explain the groupings where they are asked for
-- [ ] Move the label and grouping explanation from the `spec` chunk into the `study-choices` edit block, where `CATEGORICAL` and `CONTINUOUS` are set. Prose only; no behaviour change. NEWS line.
+- [x] Move the label and grouping explanation from the `spec` chunk into the `study-choices` edit block, where `CATEGORICAL` and `CONTINUOUS` are set. Prose only; no behaviour change. NEWS line.
 
 ### 3b. Palette in the EDA templates (needs hvtiPlotR 2.7.18)
-- [ ] `dp-gfup`: replace the hard-coded `COLOURS` with the helper; keep a palette `EDIT:` point so a study can switch to Set3 or its own colours.
-- [ ] `dp-postage`: apply the helper to categorical pages (`page & scale_fill_hv(...)`), missing in light grey.
+- [ ] `dp-gfup` and `dp-eda`'s follow-up section: replace the hard-coded `COLOURS` with the helper; keep a palette `EDIT:` point so a study can switch to Set3 or its own colours.
+- [ ] `dp-postage` and `dp-eda`: apply the helper to categorical pages (`page & scale_fill_hv(...)`), missing in light grey.
 - [ ] Floors: `hvtiPlotR (>= 2.7.18)` in `DESCRIPTION`, the templates' setup guards, and the Suggests-bounds test.
 
 ### 3c. Labels in the EDA templates (needs hvtiRutilities 1.4.2)
-- [ ] `dp-postage`: `LABEL_MAX` (default 40) and `ABBREVIATIONS` (default `NULL`) edit points, passed to `label_map()`; print the abbreviation key under each section when one was used.
+- [ ] `dp-postage` and `dp-eda`: `LABEL_MAX` (default 40) and `ABBREVIATIONS` (default `NULL`) edit points, passed to `label_map()`; print the abbreviation key under each section when one was used.
 - [ ] Floors: `hvtiRutilities (>= 1.4.2)`; the helper allow-list test gains nothing new unless a new function is called.
 
 ### 3d. `dp-eda`, the composite template
-- [ ] `inst/templates/10_descriptive/dp-eda.qmd`, following design §4 and §6: the usual setup, data and `study-choices` chunks, with `DATASET` and `ANALYSIS_SET`; `OPYRS`, `ORIGIN_YEAR`, `CLOSE_DATE`, `PANELS` and `EVENTS` as `dp-gfup` has them; `X_VAR`, `VARIABLES`, `EXCLUDE`, `SECTIONS`, `GRID_NCOL`, `GRID_NROW`, `UNIQUE_LIMIT`, `ALPHA`, the palette, `LABEL_MAX` and `ABBREVIATIONS` as `dp-postage` has them. Without the grid and uniqueness settings the pages could not match the standalone job's.
-- [ ] Sections, in order: overview table (`proc_contents()`); follow-up (`followup_check()` tables and `hv_followup_panels()` figures); continuous, percent and count (`hv_eda_pages()` with `proc_means()` and one `proc_freq()` table). Chunk labels prefixed by section (`gfup-`, `cont-`, `pct-`, `cnt-`). Each page gets a heading and a caption naming its variables.
-- [ ] Same-figure guarantee: a test that renders `dp-eda` and `dp-postage` on the same fixture and compares their page structure, so the composite cannot drift from the standalone job.
-- [ ] Catalog row (`dp`, qualifier `eda`, folder `descriptive`) with a `description`; re-render the roadmap; `.lintr` file key; `inst/templates/README.md` row; `test-eda-configuration.R`, `test-template-provenance.R` and `test-template-data-routes.R` inventories (the last hard-codes the descriptive templates for the whole-cohort, named-dataset and converter routes); render tests including an embed check and a subfolder job (the two ways `dp-postage` broke before #148 merged).
-- [ ] NEWS entry.
+
+Shipped in #155 (2026-09-26), with the identifier-rule fix in #156.
+
+- [x] `inst/templates/10_descriptive/dp-eda.qmd`, following design §4 and §6: the usual setup, data and `study-choices` chunks, with `DATASET` and `ANALYSIS_SET`; `OPYRS`, `ORIGIN_YEAR`, `CLOSE_DATE`, `PANELS` and `EVENTS` as `dp-gfup` has them; `X_VAR`, `VARIABLES`, `EXCLUDE`, `SECTIONS`, `GRID_NCOL`, `GRID_NROW`, `UNIQUE_LIMIT` and `ALPHA` as `dp-postage` has them. Without the grid and uniqueness settings the pages could not match the standalone job's. The palette, `LABEL_MAX` and `ABBREVIATIONS` exist in neither template yet; 3b and 3c add them to both.
+- [x] Sections, in order: overview table (`proc_contents()`); follow-up (`followup_check()` tables and `hv_followup_panels()` figures); continuous, percent and count (`hv_eda_pages()` with `proc_means()` and one `proc_freq()` table). Chunk labels prefixed by section (`gfup-`, `cont-`, `pct-`, `cnt-`). Each page gets a heading and a caption naming its variables.
+- [x] Same-figure guarantee: a test that renders `dp-eda` and `dp-postage` on the same fixture and compares their page structure, so the composite cannot drift from the standalone job.
+- [x] Catalog row (`dp`, qualifier `eda`, folder `descriptive`) with a `description`; re-render the roadmap; `.lintr` file key; `inst/templates/README.md` row; `test-eda-configuration.R`, `test-template-provenance.R` and `test-template-data-routes.R` inventories (the last hard-codes the descriptive templates for the whole-cohort, named-dataset and converter routes); render tests including an embed check and a subfolder job (the two ways `dp-postage` broke before #148 merged).
+- [x] NEWS entry.
 
 ### 3e. Before the version bump
 - [ ] Record the Phase 1 and 2 function names in the design's status block.

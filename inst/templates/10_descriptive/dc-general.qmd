@@ -108,23 +108,32 @@ DATASET <- "study"
 # EDIT: the analysis set, or NULL for a whole additional dataset.
 ANALYSIS_SET <- "eda"
 
-# EDIT: grouped categorical variables.
+# EDIT: grouped categorical variables. Each name is a section heading, in this
+# order. Carry the /* Demography */ banners across from the SAS %macro freq
+# tables list. Missing values are tabulated as their own level (missprint).
 CATEGORICAL <- list(
   Demography = c("female")
 )
 
-# EDIT: grouped continuous variables.
+# EDIT: continuous variables, grouped the same way (the SAS %macro cdfs var
+# list).
 CONTINUOUS <- list(
   Demography = c("age")
 )
 
-# EDIT: variables in the correlation sweep.
+# EDIT: variables for the pairwise correlation sweep (SAS proc corr nosimple
+# rank). Defaults to every continuous variable; character() skips the section.
 CORR_VARS <- unlist(CONTINUOUS, use.names = FALSE)
 
-# EDIT: identifier columns excluded from summaries.
+# EDIT: identifier columns, kept out of every summary. The overall statistics
+# would otherwise print their minimum and maximum, and each of those is one
+# patient's identifier. Name every key column the data carry; character()
+# only if there are none.
 KEY_COLS <- "ccfid"
 
-# EDIT: leave NULL to keep identifiers out of reports.
+# EDIT: leave NULL to keep identifiers out of reports. A column name (the SAS
+# job used id ccfid) labels the extreme values with it, which puts patient
+# identifiers in the report: a report rendered that way must not be circulated.
 ID_COL <- NULL
 ```
 
@@ -196,24 +205,6 @@ cat("Data read: ", if (is.null(ANALYSIS_SET)) {
 } else {
   paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
 }, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
-```
-
-```{r}
-#| label: spec
-# categorical variables, grouped. Each name is a section heading, in this
-# order. Carry the /* Demography */ banners across from the SAS %macro freq
-# tables list. Missing values are tabulated as their own level (missprint).
-# continuous variables, grouped the same way (the SAS %macro cdfs var
-# list).
-# variables for the pairwise correlation sweep (SAS proc corr nosimple
-# rank). Defaults to every continuous variable; character() skips the section.
-# Identifier columns are kept out of every summary. The overall statistics
-# would otherwise print their minimum and maximum, and each of those is one
-# patient's identifier. Name every key column the data carry; character()
-# only if there are none.
-# A column name (the SAS job used id ccfid) labels the extreme
-# values with it, which puts patient identifiers in the report: a report
-# rendered that way must not be circulated.
 ```
 
 ```{r}
@@ -378,8 +369,8 @@ Percentages in the contingency tables are over non-missing rows, as SAS
 percent. Quantiles are SAS `QNTLDEF=5`, the `proc univariate` default. The
 highest extremes are listed largest first (SAS lists them ascending). The SAS
 job printed `ccfid` beside every extreme value so an author could look the
-patient up; this job prints the values alone unless `ID_COL` is set in the
-spec chunk.
+patient up; this job prints the values alone unless `ID_COL` is set under
+Study choices.
 
 ```{r}
 #| label: provenance
