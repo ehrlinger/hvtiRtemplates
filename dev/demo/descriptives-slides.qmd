@@ -285,6 +285,5 @@ Rscript dev/demo/descriptives-demo.R ~/eda-demo-all
 
 ## Still to come
 
-- **House palette**: event red, censored blue, missing light grey, otherwise ColorBrewer Set1. This needs the next hvtiPlotR release. Today the EDA pages use ggplot's default colours.
 - **Shorter labels that stay distinct**, with a study abbreviation list. This needs the next hvtiRutilities release.
 - **Acceptance**: Lauren checks `dp-eda` on a real study against the SAS EDA output.
