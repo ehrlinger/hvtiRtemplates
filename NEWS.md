@@ -8,9 +8,9 @@
   section calls the function its standalone job calls (`hv_followup_panels()`,
   `followup_check()`, `hv_eda_pages()`) with the same arguments, so a section
   is that job's figure; `test-dp-eda.R` checks the pages byte for byte against
-  `dp-postage`. Needs hvtiPlotR 2.7.18 and hvtiRutilities 1.4.1, the current
-  floors. It draws in the house colors (below); smart label truncation
-  follows once hvtiRutilities releases it.
+  `dp-postage`. Needs hvtiPlotR 2.7.18 and hvtiRutilities 1.4.2, the current
+  floors. It draws in the house colors and shortens labels in the house
+  style (both below).
 
 * `dp-postage` and `dp-eda` leave out identifiers written without a
   separator. Under `VARIABLES <- NULL` a column named `ccfid` or `patientid`
@@ -55,6 +55,19 @@
   `hvtiPlotR::scale_colour_hv()` keeps its spelling until hvtiPlotR ships
   `scale_color_hv()`. `tools/check-us-spelling.sh` now fails the lint workflow
   on a British spelling.
+
+* **`dp-postage` and `dp-eda` keep shortened labels distinct**, through
+  `hvtiRutilities::label_map()`. Two new edit points: `LABEL_MAX` (default
+  40), the longest label a figure or table shows, and `ABBREVIATIONS`
+  (default `NULL`), the job's own abbreviations as `c("Phrase" = "Abbrev")`.
+  The job merges them over the study's `abbreviations:` in `_study.yml` and the
+  group default list with `hvtiRutilities::study_abbreviations()`, so every
+  job in a study shortens labels the same way. Labels that share a heading
+  over the cap show it abbreviated (`Surgical procedure: ...` becomes
+  `SP: ...`), and each section prints a key of the abbreviations its labels
+  show. The cap and the merged list, with each entry's level, are recorded in
+  the report's provenance. Needs hvtiRutilities 1.4.2, now the floor; a
+  migrated `dp-postage` job keeps both edit points at their defaults.
 
 # hvtiRtemplates 1.2.2
 

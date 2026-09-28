@@ -44,6 +44,10 @@ if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
   stop("This job needs hvtiPlotR >= 2.7.18 for hv_eda_pages() and scale_fill_hv(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
+if (utils::packageVersion("hvtiRutilities") < "1.4.2") {
+  stop("This job needs hvtiRutilities >= 1.4.2 for study_abbreviations(); ",
+       utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
+}
 if (!requireNamespace("patchwork", quietly = TRUE)) {
   stop("This job needs the patchwork package. Install it, then re-render.", call. = FALSE)
 }
@@ -140,6 +144,18 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dp-postage-config
+
+# EDIT: the longest label a figure or table shows, in characters. Longer labels
+# are shortened so that two labels that differ never read the same: a shared
+# heading is abbreviated, then the label is cut and marked. Inf shows every
+# label whole.
+LABEL_MAX <- 40
+
+# EDIT: this job's own abbreviations, beyond the study's list, as
+# c("Phrase" = "Abbrev"); NA drops one the study or group list supplies. NULL
+# uses the study's list alone. The study's list is the abbreviations: block in
+# _study.yml, over the group default shipped in hvtiRutilities.
+ABBREVIATIONS <- NULL
 
 ```
 
@@ -274,8 +290,23 @@ level, so a percentage is out of every patient, not only those with a value.
 #| label: pages
 #| results: asis
 # Labels come from the dataset; a variable without one is shown by its name.
-.labels <- label_map(d)
+# Shortened labels stay distinct, using the job's, the study's and the group's
+# abbreviations, merged and checked by study_abbreviations().
+.abbreviations <- hvtiRutilities::study_abbreviations(.cfg, extra = ABBREVIATIONS)
+.labels <- label_map(d, label_max = LABEL_MAX, abbreviations = .abbreviations)
 labels <- stats::setNames(.labels$label, .labels$key)
+# The abbreviations these variables' labels show, as a key under the section.
+abbreviation_key <- function(vars) {
+  used <- attr(.labels, "abbreviations")
+  shown <- labels[vars]
+  hit <- vapply(used$abbreviation, function(a) {
+    any(grepl(paste0("(?<![[:alnum:]])", gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", a), "(?![[:alnum:]])"), shown, perl = TRUE))
+  }, logical(1L))
+  if (any(hit)) {
+    cat("\nAbbreviations: ", paste(used$abbreviation[hit], used$expansion[hit], sep = " = ", collapse = "; "), ".\n\n",
+        sep = "")
+  }
+}
 titles <- c(continuous = "Continuous variables", percent = "Categorical variables, percent",
             count = "Categorical variables, counts")
 page_files <- character(0)
@@ -319,6 +350,7 @@ for (section in SECTIONS) {
     cat("\n### Page ", i, "\n\n![", paste(labels[on_page], collapse = ", "), "](", link, ")\n\n", sep = "")
     page_files <- c(page_files, file)
   }
+  abbreviation_key(vars)
 }
 invisible(page_files)
 ```
@@ -332,7 +364,10 @@ cat(hvtiRtemplates:::.embed_provenance(
   data = .provenance_data,
   extra = list(
     subject = SUBJECT,
-    type = TYPE
+    type = TYPE,
+    label_max = LABEL_MAX,
+    abbreviations = data.frame(phrase = names(.abbreviations), abbreviation = unname(.abbreviations),
+                               source = attr(.abbreviations, "source"))
   )
 ))
 ```

@@ -149,7 +149,8 @@ test_that("postage routes actual pages through numbered study folders and embeds
     .root = root, d = d, X_VAR = "iv_dead", VARIABLES = c("age", "bmi", "lvmassi"), EXCLUDE = character(),
     GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
     get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
-    theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv
+    theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
+    .cfg = hvtiRutilities::study_config(root), LABEL_MAX = 40, ABBREVIATIONS = NULL
   ))
   job <- template_path("dp", "postage")
   for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
@@ -176,7 +177,8 @@ test_that("postage draws its categorical pages in the role colors", {
     VARIABLES = c("female", "hx_chf"), EXCLUDE = character(), GRID_NCOL = 2L, GRID_NROW = 1L,
     UNIQUE_LIMIT = 6L, SECTIONS = "percent", ALPHA = 0.5,
     get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
-    theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv
+    theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
+    .cfg = hvtiRutilities::study_config(root), LABEL_MAX = 40, ABBREVIATIONS = NULL
   ))
   job <- template_path("dp", "postage")
   for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
@@ -186,6 +188,35 @@ test_that("postage draws its categorical pages in the role colors", {
   fills <- unique(unlist(lapply(seq_along(page), function(k) ggplot2::ggplot_build(page[[k]])$data[[1L]]$fill)))
   expect_true(all(fills %in% c(hvtiPlotR::hv_ppt_palette("light"), "#CCCCCC")), info = paste(fills, collapse = ", "))
   expect_true("#0072B2" %in% fills)
+})
+
+test_that("postage shortens labels that share a heading and prints their key", {
+  # Two labels over LABEL_MAX share a heading: both show its abbreviation, and
+  # the section says what it stands for. A job's own entry beats the initials.
+  root <- migration_study_fixture("dp-postage")
+  local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"
+  attr(d$hx_chf, "label") <- "Surgical procedure: mitral valve repair with annuloplasty ring"
+  run_pages <- function(abbreviations) {
+    env <- list2env(list(
+      .root = root, d = d, X_VAR = "iv_dead", VARIABLES = c("female", "hx_chf"), EXCLUDE = character(),
+      GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SECTIONS = "percent", ALPHA = 0.5,
+      get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
+      theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
+      .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = abbreviations
+    ))
+    job <- template_path("dp", "postage")
+    for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
+    out <- suppressWarnings(utils::capture.output(eval(postage_chunk(job, "pages"), env)))
+    list(labels = unname(env$labels[c("female", "hx_chf")]), text = paste(out, collapse = "\n"))
+  }
+  initials <- run_pages(NULL)
+  expect_match(initials$labels, "^SP: ")
+  expect_match(initials$text, "Abbreviations: SP = Surgical procedure.", fixed = TRUE)
+  own <- run_pages(c("Surgical procedure" = "Proc"))
+  expect_match(own$labels, "^Proc: ")
+  expect_match(own$text, "Abbreviations: Proc = Surgical procedure.", fixed = TRUE)
 })
 
 test_that("postage does not require databuild for registered data but validates analysis-set mode", {
