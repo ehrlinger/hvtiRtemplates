@@ -103,8 +103,14 @@ bootstrap_hazard <- function(root, job) {
   # Two things hazard() will not take that a Cox fit does. A follow-up of zero
   # has no likelihood (six deaths round to 0.000 years), and a candidate
   # holding NA cannot be scored, so creat_pr would never be tested. Floor
-  # follow-up at one day and impute creatinine at its median, as a SAS runner
-  # would, in the runner's copy only.
+  # follow-up at one day and impute creatinine at its median, in the runner's
+  # copy only. This differs from the hazard family, which moves only the zeros
+  # to 0.00025 years: here the shape-fixing fit has no covariates, and with
+  # six deaths at 0.00025 it runs off to a degenerate early phase (log t_half
+  # near 600, nu near 500) from the default and from hz's starting values,
+  # after which every replicate's refit fails and the screen selects nothing.
+  # The one-day floor gives an early half-life near ten days. Same-day deaths
+  # need a named rule in the templates themselves (hvtiRtemplates#175).
   d$iv_dead <- pmax(d$iv_dead, 1 / 365.25)
   d$creat_pr[is.na(d$creat_pr)] <- stats::median(d$creat_pr, na.rm = TRUE)
 
@@ -142,7 +148,9 @@ bootstrap_hazard <- function(root, job) {
     )
     saveRDS(bootstrap_lineage(chunk, input$record), file.path(dir, sprintf("bh.chunk%02d.rds", k)))
   }
-  invisible(parallel::mclapply(seq_len(bh_chunks), run_chunk, mc.cores = bh_chunks))
+  # mclapply() forks, which Windows cannot; run the chunks one after another there.
+  cores <- if (.Platform$OS.type == "windows") 1L else bh_chunks
+  invisible(parallel::mclapply(seq_len(bh_chunks), run_chunk, mc.cores = cores))
 }
 
 # ---- The jobs ----------------------------------------------------------------

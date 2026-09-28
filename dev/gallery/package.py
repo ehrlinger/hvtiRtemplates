@@ -12,7 +12,7 @@ MD5, so a file shared by every report is stored once. Figures move out too.
 Nothing is re-rendered. Python, not R: URL-decoding the stylesheet in R
 took minutes per report.
 """
-import base64, csv, hashlib, os, re, sys, urllib.parse
+import base64, csv, hashlib, os, re, shutil, sys, urllib.parse
 
 EXT = {"text/css": "css", "application/javascript": "js", "text/javascript": "js",
        "image/png": "png", "image/svg+xml": "svg", "image/jpeg": "jpg",
@@ -28,7 +28,10 @@ def package(root, out, min_bytes=20000):
         sys.exit("The build has failed jobs: " + ", ".join(failed))
     reports = os.path.join(out, "reports")
     assets = os.path.join(reports, "assets")
-    os.makedirs(assets, exist_ok=True)
+    # The reports folder is this tool's alone: clear it, so a template or asset
+    # dropped from the build does not survive into the next publish.
+    shutil.rmtree(reports, ignore_errors=True)
+    os.makedirs(assets)
 
     def extract(match):
         whole, attr, mime, params, payload = match.group(0), *match.groups()
