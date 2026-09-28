@@ -770,7 +770,16 @@ test_that("a chunk is labeled edit- exactly when it holds an EDIT marker", {
   tok <- paste0("ED", "IT", ":")
   for (f in tl$file) {
     src <- readLines(f, warn = FALSE)
-    opens <- grep("^```\\{r", src)
+    # The parser below reads only ```{r} and a bare ``` close. Any other fence
+    # (indented, four backticks, {R}, a label in the header) would let a marker
+    # slip past it silently, so an unrecognized fence fails here instead.
+    fences <- grep("^\\s*`{3,}", src)
+    odd <- fences[!src[fences] %in% c("```{r}", "```")]
+    if (length(odd)) {
+      fail(paste0(basename(f), " has a fence this test cannot read at line(s) ", paste(odd, collapse = ", ")))
+      next
+    }
+    opens <- grep("^```\\{r\\}$", src)
     for (at in opens) {
       end <- at + match("```", src[-seq_len(at)])
       body <- src[(at + 1L):(end - 1L)]

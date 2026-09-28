@@ -2,7 +2,7 @@
 
 * Every template chunk holding an `EDIT:` marker is now labeled `edit-`, so
   the editor's chunk outline lists the work a job still needs:
-  `study-choices` is `edit-study-choices`, and ten templates carry further
+  `study-choices` is `edit-study-choices`, and nine templates carry further
   `edit-` chunks such as `edit-cohort` and `edit-derive`. The marker guard,
   `edit-guard`, is renamed `guard-edits` so it does not read as an edit site.
   A test holds the rule in both directions. Existing jobs keep their old
@@ -36,7 +36,7 @@
 * `dc-general` explains each study choice where it is made. The notes on
   `CATEGORICAL`, `CONTINUOUS`, `CORR_VARS`, `KEY_COLS` and `ID_COL` sat in a
   `spec` chunk ninety lines below the settings they describe; they now sit
-  beside them in `study-choices`, and the empty chunk is gone. No change to
+  beside them in `edit-study-choices`, and the empty chunk is gone. No change to
   what the job does. From Lauren's 2026-09-24 review.
 
 * **The EDA templates draw in the house colors, which are colorblind safe.**
@@ -54,7 +54,7 @@
 * **`dp-gfup`'s `COLOURS` setting is renamed `COLORS`**, and `dp-eda` uses the
   same name. A `study-choices` chunk copied from an older job that still sets
   `COLOURS` stops with "COLOURS is now COLORS" rather than drawing the default
-  colors without a word. Rename the setting in `study-choices`; its values are
+  colors without a word. Rename the setting in `study-choices` (`edit-study-choices` in a new job); its values are
   unchanged.
 
 * The templates, their comments, the reference pages and these notes use US

@@ -50,7 +50,7 @@ suppressPackageStartupMessages({
 # chunk is what makes that TRUE rather than merely stated.
 #
 # Without it an unedited job renders green over a meaningless analysis. The
-# derive chunk below indexes a placeholder column; when that column is absent
+# edit-derive chunk below indexes a placeholder column; when that column is absent
 # `!is.na(d$<col>)` is logical(0), and assignment through a zero-length index
 # is a SILENT no-op in R. Every patient keeps the initial category, every
 # stratified estimate is computed over one dummy stratum, and nothing errors.
