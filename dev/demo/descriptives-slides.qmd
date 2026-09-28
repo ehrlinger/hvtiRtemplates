@@ -197,7 +197,7 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 :::
 ::::
 
-The dashed diagonal is the follow-up the close date allows. Red crosses (deaths) belong below it. The **blue circles scattered below the line** are the patients lost to follow-up early, and they are the ones to explain before any time-related analysis.
+The dashed diagonal is the follow-up the close date allows. Vermillion crosses (deaths) belong below it. The **blue circles scattered below the line** are the patients lost to follow-up early, and they are the ones to explain before any time-related analysis.
 
 ## EDA plots: `dp-postage`
 
@@ -254,6 +254,8 @@ Each section calls the same function as its standalone job, with the same argume
 ::::
 
 The report prints **Continuous variables (8)**, **Categorical variables, percent (7)** and **Categorical variables, counts (7)**, and it lists **patient_id, op_date** as left out.
+
+The colours are the house colours, safe for colourblind readers: each categorical panel runs blue, vermillion, green and on from its own levels, and missing is light grey. The follow-up figures use the same rule, with vermillion for death and blue for alive.
 
 ## Check your output
 
