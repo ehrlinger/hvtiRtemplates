@@ -180,7 +180,7 @@ test_that("add_job errors when the template lacks the SUBJECT/TYPE marker lines"
 test_that("add_job rejects subject/type shapes that would break the filename", {
   # `-` is the field separator and `.` separates the extension, so neither
   # may appear in `subject` or `type`; both must also be a single non-NA
-  # string. Verified misbehaviour this guards against: "" collapses a field,
+  # string. Verified misbehavior this guards against: "" collapses a field,
   # NA writes the string "NA" into the path, character(0) recycles silently,
   # a length-2 vector reaches `if()` and errors opaquely, "dead-pa" adds a
   # fifth field, and "../esc" escapes the taxonomy folder.

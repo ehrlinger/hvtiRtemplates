@@ -47,7 +47,7 @@ its \code{qualifier}; two come from the caller. The pair
 are required. The subject is the grouping topic, not necessarily a
 statistical endpoint. An endpoint-driven job may use \code{"death"}; an
 endpoint-free job may use \code{"cohort"}, \code{"treatment"}, or
-\code{"labs"} without inventing an outcome. One subject can be analysed by
+\code{"labs"} without inventing an outcome. One subject can be analyzed by
 several methods, and the jobs those chains share would otherwise collide. A
 death-hazard set and a death random-forest-survival set both begin from the
 same life table, so keyed on the subject alone both would be written to one

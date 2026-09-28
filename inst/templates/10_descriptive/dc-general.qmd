@@ -231,12 +231,12 @@ if (length(unknown)) {
 numeric_vars <- unique(c(con_vars, CORR_VARS))
 not_numeric <- numeric_vars[!vapply(numeric_vars, function(v) is.numeric(d[[v]]), logical(1))]
 if (length(not_numeric)) {
-  stop("Not numeric, so not summarised as continuous or correlated: ",
+  stop("Not numeric, so not summarized as continuous or correlated: ",
        paste(not_numeric, collapse = ", "), call. = FALSE)
 }
 key_overlap <- intersect(unique(c(cat_vars, con_vars, CORR_VARS)), KEY_COLS)
 if (length(key_overlap)) {
-  stop("Key column(s) cannot be summarised: ", paste(key_overlap, collapse = ", "), call. = FALSE)
+  stop("Key column(s) cannot be summarized: ", paste(key_overlap, collapse = ", "), call. = FALSE)
 }
 overall_vars <- setdiff(names(d)[vapply(d, is.numeric, logical(1))], c(KEY_COLS, ID_COL))
 

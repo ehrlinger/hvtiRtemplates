@@ -82,7 +82,7 @@ suppressPackageStartupMessages({
 # as the rule that produced the frequencies beneath them. A blank would be
 # obvious; a plausible number that describes nothing is not. bh.qmd stays at
 # 0.9.0 on purpose -- its screen comes from TemporalHazard, whose own stepwise
-# always honoured them.
+# always honored them.
 if (utils::packageVersion("hvtiRbootstrap") < "0.9.3") {
   stop("This report needs hvtiRbootstrap >= 0.9.3; ",
        utils::packageVersion("hvtiRbootstrap"), " is installed. boot_bag() ",
@@ -135,7 +135,7 @@ if (!is.null(.cur)) {
     # A job renders as a draft by default, so an author can iterate on a
     # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
     # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognised value stops on purpose, so a
+    # and no mean "not strict": an unrecognized value stops on purpose, so a
     # mistyped switch is seen rather than quietly ignored, which is the safe
     # direction to be wrong in.
     if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
@@ -168,7 +168,7 @@ if (!is.null(.cur)) {
      subject/type rather than editing this copy in place.
 
      A set is keyed on (subject, analysis type), not on the subject alone.
-     One subject may be analysed by several methods -- parametric hazard, random
+     One subject may be analyzed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
      Two sets keyed on `dead_pa` alone would write their life tables to the
      same file. -->
@@ -416,7 +416,7 @@ boot_validate(bag)
 
 # `requested` and `usable` are scalars on a single-phase screen: the pool is
 # offered once. boot_provenance() also accepts the per-phase vectors a
-# multiphase hazard bag carries, and collapses them to one labelled string per
+# multiphase hazard bag carries, and collapses them to one labeled string per
 # row rather than summing -- a pool offered to two phases is one pool seen
 # twice, not twice as many candidates. Nothing here needs that, and nothing
 # here breaks if a future runner supplies it.
@@ -693,7 +693,7 @@ if (!nrow(crowding)) {
 Concept grouping above is by NAME, and a naming convention only reaches what
 its affix rules can reach. Two further groupings matter, and neither is
 derivable from a variable's name: one by DECLARATION, which is clinical
-judgement, and one by the DATA. The SAS job this replaces ran `%cluster` once
+judgment, and one by the DATA. The SAS job this replaces ran `%cluster` once
 per named cluster and covered both.
 
 The three views answer different questions. A name tells you two variables are
@@ -772,7 +772,7 @@ if (!nrow(collinear)) {
 }
 ```
 
-⚠️ **A collinear pair is not a licence to prune.** It says two candidates are
+⚠️ **A collinear pair is not a license to prune.** It says two candidates are
 indistinguishable *in this cohort at this threshold* — a statement about the
 pool, not about the concepts. The no-pruning argument above stands: the same
 measurement that found 57 prunable forms found 16 of them correlating below 0.9.

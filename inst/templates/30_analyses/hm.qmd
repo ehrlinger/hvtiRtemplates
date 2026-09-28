@@ -92,7 +92,7 @@ if (!is.null(.cur)) {
     # A job renders as a draft by default, so an author can iterate on a
     # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
     # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognised value stops on purpose, so a
+    # and no mean "not strict": an unrecognized value stops on purpose, so a
     # mistyped switch is seen rather than quietly ignored, which is the safe
     # direction to be wrong in.
     if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
@@ -125,7 +125,7 @@ if (!is.null(.cur)) {
      subject/type rather than editing this copy in place.
 
      A set is keyed on (subject, analysis type), not on the subject alone.
-     One subject may be analysed by several methods -- parametric hazard, random
+     One subject may be analyzed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
      Two sets keyed on `dead_pa` alone would write their life tables to the
      same file. -->
@@ -368,7 +368,7 @@ if (nrow(collinear)) {
 
 An exact `complement` is a coding duplicate and one of the pair should simply
 not be a candidate. A high correlation between genuinely different measurements
-is a judgement call about what the model can identify — make it here, not after
+is a judgment call about what the model can identify — make it here, not after
 reading a coefficient.
 
 ## Phases
@@ -420,7 +420,7 @@ the shapes, starting from stage 1. **The comparison is reported, not assumed.**
 
 `n_starts > 1` perturbs its restarts randomly, so the fit is not reproducible
 without a seed. The RNG state is saved and restored, so seeding this document
-does not change random behaviour downstream of it.
+does not change random behavior downstream of it.
 
 ```{r}
 #| label: fit
@@ -522,7 +522,7 @@ prefer stage 2.
 
 ```{r}
 #| label: reported
-reported <- stage1   # EDIT: stage2 if the table above favours it
+reported <- stage1   # EDIT: stage2 if the table above favors it
 ```
 
 ## Estimates
@@ -627,7 +627,7 @@ if (!file.exists(sel_rds)) {
 ```{r}
 #| label: selection-monotone
 # A forward selection cannot legitimately LOWER the log-likelihood: adding a
-# term to a nested model can only improve the maximised likelihood. If it
+# term to a nested model can only improve the maximized likelihood. If it
 # drops, the post-entry REFIT landed in a worse optimum than the model it
 # started from -- which happens when collinear transformations of one variable
 # enter in succession -- and every step after that is built on it.

@@ -136,7 +136,7 @@ The layout rule is one sentence, and it holds in every folder:
 ```
 
 **A set is keyed on `(subject, analysis type)`, not on the subject alone.**
-One subject can be analysed by several methods, and those chains share their
+One subject can be analyzed by several methods, and those chains share their
 upstream — a death-hazard set and a death random-forest-survival set both begin
 from the same life table. Keyed on the subject alone, both would be written to
 `death-ac.qmd`. The cost of carrying the type on every job is that the shared

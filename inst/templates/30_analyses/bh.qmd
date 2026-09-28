@@ -117,7 +117,7 @@ if (!is.null(.cur)) {
     # A job renders as a draft by default, so an author can iterate on a
     # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
     # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognised value stops on purpose, so a
+    # and no mean "not strict": an unrecognized value stops on purpose, so a
     # mistyped switch is seen rather than quietly ignored, which is the safe
     # direction to be wrong in.
     if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
@@ -150,7 +150,7 @@ if (!is.null(.cur)) {
      subject/type rather than editing this copy in place.
 
      A set is keyed on (subject, analysis type), not on the subject alone.
-     One subject may be analysed by several methods -- parametric hazard, random
+     One subject may be analyzed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
      Two sets keyed on `dead_pa` alone would write their life tables to the
      same file. -->
@@ -372,7 +372,7 @@ boot_validate(bag)
 # existed as two, one with a selection criterion and one without, and the
 # selection criterion is precisely what decides what a screen selects.
 
-# Summarised, not listed: at 25 chunks the joined seed string is a single
+# Summarized, not listed: at 25 chunks the joined seed string is a single
 # 270-character cell that wrecks the table. Every seed is in the table below.
 
 # `requested` and `usable` are per PHASE, not scalars: a multiphase screen
@@ -382,10 +382,10 @@ boot_validate(bag)
 # on ANY multiphase bag, which is every hazard bag. Found by the first real
 # render, against the study this template was written from.
 #
-# Collapsed to one labelled string per row rather than summed: the pool is
+# Collapsed to one labeled string per row rather than summed: the pool is
 # OFFERED to each phase, so 230 and 230 is one pool seen twice, not 460
 # candidates. Falls back to a bare value when a single-phase run makes it
-# length 1, and to unlabelled values if a future runner drops the names.
+# length 1, and to unlabeled values if a future runner drops the names.
 provenance <- boot_provenance(bag)
 provenance
 ```
@@ -635,7 +635,7 @@ if (!nrow(crowding)) {
 Concept grouping above is by NAME, and a naming convention only reaches what
 its affix rules can reach. Two further groupings matter, and neither is
 derivable from a variable's name: one by DECLARATION, which is clinical
-judgement, and one by the DATA. The SAS job this replaces ran `%cluster` once
+judgment, and one by the DATA. The SAS job this replaces ran `%cluster` once
 per named cluster per phase and covered both.
 
 The three views answer different questions. A name tells you two variables are
@@ -715,7 +715,7 @@ if (!nrow(collinear)) {
 }
 ```
 
-⚠️ **A collinear pair is not a licence to prune.** It says two candidates are
+⚠️ **A collinear pair is not a license to prune.** It says two candidates are
 indistinguishable *in this cohort at this threshold* — a statement about the
 pool, not about the concepts. The no-pruning argument above stands: the same
 measurement that found 57 prunable forms found 16 of them correlating below 0.9.
