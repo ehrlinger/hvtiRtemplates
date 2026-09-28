@@ -255,7 +255,7 @@ Each section calls the same function as its standalone job, with the same argume
 
 The report prints **Continuous variables (8)**, **Categorical variables, percent (7)** and **Categorical variables, counts (7)**, and it lists **patient_id, op_date** as left out.
 
-The colours are the house colours, safe for colourblind readers: each categorical panel runs blue, vermillion, green and on from its own levels, and missing is light grey. The follow-up figures use the same rule, with vermillion for death and blue for alive.
+The colors are the house colors, safe for colorblind readers: each categorical panel runs blue, vermillion, green and on from its own levels, and missing is light gray. The follow-up figures use the same rule, with vermillion for death and blue for alive.
 
 ## Check your output
 
