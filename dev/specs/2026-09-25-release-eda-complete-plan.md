@@ -20,7 +20,7 @@
 | `followup_check()` | shipped, hvtiRutilities 1.4.1 |
 | `dp-postage` in `SECTIONS`, `dc-gfup`/`dp-gfup` on the shared functions | shipped, hvtiRtemplates 1.2.2 |
 | `dp-eda` | merged, #155 (2026-09-26) |
-| palette | decided in the review, not built; `dp-gfup` hard-codes `COLOURS`, `dp-postage` uses ggplot defaults |
+| palette | released, hvtiPlotR 2.7.18 (2026-09-28); the templates adopt it in 3b |
 | smart truncation | spec §4.2 merged (hvtiRutilities #149), not built |
 | `dc-general` edit block | done, 3a (2026-09-27) |
 
@@ -33,15 +33,17 @@
 
 ## Phase 1: hvtiPlotR palette helper (release 2.7.18)
 
+**Done 2026-09-28:** design hvtiPlotR#163, `hv_role_palette()`, `scale_fill_hv()` and `scale_colour_hv()` in #164, released as 2.7.18 (#165). John changed the rule below on 2026-09-27: a colourblind-safe set replaces Set1 and Set3, with event vermillion `#D55E00`, censored blue `#0072B2`, missing `#CCCCCC`, then `hv_ppt_palette("light")` and Tol muted, every colour but missing at least 2:1 on white. The paragraph below is the review's rule as first written. The design note in hvtiPlotR `dev/specs/2026-09-27-hv-palette-design.md` is the rule as built.
+
 The rule from the review: an event is red, censored is blue, missing is light grey; otherwise ColorBrewer Set1, falling back to Set3 when the levels outrun it; points at alpha 0.5; a single-level plot draws blue.
 
 **Precedence, so a one-level plot is not ambiguous:** a level named as the event, censored or missing keeps its semantic colour even when it is the only level, so an all-censored panel is blue and a missing-only one is light grey. The single-level blue rule applies only to a sole level with no semantic role, which Set1 would otherwise draw red.
 
-- [ ] **Design note first** (in hvtiPlotR `dev/`): name and shape of the helper. Working proposal: `hv_palette(levels, event = NULL, censored = NULL, missing = "(Missing)")` returning a named colour vector, plus `scale_colour_hv()` / `scale_fill_hv()` wrappers. Colours stay the caller's choice per CONTRIBUTING, so this is an opt-in scale, not a default inside constructors.
-- [ ] Implement with tests: event and censored levels take red and blue whatever their position; missing takes light grey; Set1 order for the rest; Set3 beyond Set1's nine; a sole non-semantic level is blue; a sole event level is red, a sole censored level blue, a sole missing level light grey.
-- [ ] Worked example in `vignettes/plot-functions.qmd` and a row in the SAS migration guide (CONTRIBUTING steps 6 and 7).
-- [ ] NEWS, `lintr` 0, full suite, local `/code-review`, PR.
-- [ ] After merge: bump to **2.7.18** (separate PR), release gate, tag and release.
+- [x] **Design note first** (in hvtiPlotR `dev/`): name and shape of the helper. Working proposal: `hv_palette(levels, event = NULL, censored = NULL, missing = "(Missing)")` returning a named colour vector, plus `scale_colour_hv()` / `scale_fill_hv()` wrappers. Colours stay the caller's choice per CONTRIBUTING, so this is an opt-in scale, not a default inside constructors.
+- [x] Implement with tests: event and censored levels take red and blue whatever their position; missing takes light grey; Set1 order for the rest; Set3 beyond Set1's nine; a sole non-semantic level is blue; a sole event level is red, a sole censored level blue, a sole missing level light grey.
+- [x] Worked example in `vignettes/plot-functions.qmd` and a row in the SAS migration guide (CONTRIBUTING steps 6 and 7).
+- [x] NEWS, `lintr` 0, full suite, local `/code-review`, PR.
+- [x] After merge: bump to **2.7.18** (separate PR), release gate, tag and release.
 
 ## Phase 2: hvtiRutilities smart truncation (release 1.4.2)
 
@@ -73,9 +75,9 @@ Phases 1 and 2 must be released before 3b and 3c can raise their floors; 3a and 
 - [x] Move the label and grouping explanation from the `spec` chunk into the `study-choices` edit block, where `CATEGORICAL` and `CONTINUOUS` are set. Prose only; no behaviour change. NEWS line.
 
 ### 3b. Palette in the EDA templates (needs hvtiPlotR 2.7.18)
-- [ ] `dp-gfup` and `dp-eda`'s follow-up section: replace the hard-coded `COLOURS` with the helper; keep a palette `EDIT:` point so a study can switch to Set3 or its own colours.
-- [ ] `dp-postage` and `dp-eda`: apply the helper to categorical pages (`page & scale_fill_hv(...)`), missing in light grey.
-- [ ] Floors: `hvtiPlotR (>= 2.7.18)` in `DESCRIPTION`, the templates' setup guards, and the Suggests-bounds test.
+- [x] `dp-gfup` and `dp-eda`'s follow-up section: replace the hard-coded `COLOURS` with the helper; keep a palette `EDIT:` point so a study can choose its own colours. `COLOURS <- NULL` draws `scale_colour_hv()`; naming `alive`, `dead` and `event` overrides it.
+- [x] `dp-postage` and `dp-eda`: apply the helper to categorical pages (`page & scale_fill_hv(...)`), missing in light grey.
+- [x] Floors: `hvtiPlotR (>= 2.7.18)` in `DESCRIPTION`, the templates' setup guards, and the Suggests-bounds test.
 
 ### 3c. Labels in the EDA templates (needs hvtiRutilities 1.4.2)
 - [ ] `dp-postage` and `dp-eda`: `LABEL_MAX` (default 40) and `ABBREVIATIONS` (default `NULL`) edit points, passed to `label_map()`; print the abbreviation key under each section when one was used.

@@ -149,7 +149,7 @@ test_that("postage routes actual pages through numbered study folders and embeds
     .root = root, d = d, X_VAR = "iv_dead", VARIABLES = c("age", "bmi", "lvmassi"), EXCLUDE = character(),
     GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
     get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
-    theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript
+    theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv
   ))
   job <- template_path("dp", "postage")
   for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
@@ -160,6 +160,32 @@ test_that("postage routes actual pages through numbered study folders and embeds
   expect_identical(lapply(env$pages, attr, "variables"), list(c("age", "bmi"), "lvmassi"))
   expect_true(all(file.info(expected)$size > 1000))
   expect_false(dir.exists(file.path(root, "graphs")))
+})
+
+test_that("postage draws its categorical pages in the role colours", {
+  # The page is handed to ggsave() whole, so capture it there and build each
+  # panel: every bar must be a house colour, blue first, missing grey.
+  root <- migration_study_fixture("dp-postage")
+  saved <- list()
+  local_mocked_bindings(ggsave = function(filename, plot, ...) {
+    saved[[basename(filename)]] <<- plot
+    invisible(filename)
+  }, .package = "ggplot2")
+  env <- list2env(list(
+    .root = root, d = hvtiRutilities::read_built(hvtiRutilities::study_config(root)), X_VAR = "iv_dead",
+    VARIABLES = c("female", "hx_chf"), EXCLUDE = character(), GRID_NCOL = 2L, GRID_NROW = 1L,
+    UNIQUE_LIMIT = 6L, SECTIONS = "percent", ALPHA = 0.5,
+    get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
+    theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv
+  ))
+  job <- template_path("dp", "postage")
+  for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
+  suppressWarnings(capture.output(eval(postage_chunk(job, "pages"), env)))
+  expect_identical(names(saved), "dp-postage-percent-page-01.png")
+  page <- saved[[1L]]
+  fills <- unique(unlist(lapply(seq_along(page), function(k) ggplot2::ggplot_build(page[[k]])$data[[1L]]$fill)))
+  expect_true(all(fills %in% c(hvtiPlotR::hv_ppt_palette("light"), "#CCCCCC")), info = paste(fills, collapse = ", "))
+  expect_true("#0072B2" %in% fills)
 })
 
 test_that("postage does not require databuild for registered data but validates analysis-set mode", {
