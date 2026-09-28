@@ -126,5 +126,6 @@ if (sys.nframe() == 0L) {
   built <- gallery_build(root)
   print(built[, c("template", "family", "seconds", "error")], row.names = FALSE)
   saveRDS(built, file.path(root, "gallery-build.rds"))
+  utils::write.csv(built, file.path(root, "gallery-build.csv"), row.names = FALSE)
   if (anyNA(built$report)) quit(status = 1L)
 }
