@@ -467,7 +467,7 @@ test_that("synthetic migration studies register both complete cohorts", {
   expect_true(all(dir.exists(file.path(root, c("datasets", "descriptive", "graphs", "documents")))))
 })
 
-test_that("a qualifier given without a prefix is honoured, not ignored", {
+test_that("a qualifier given without a prefix is honored, not ignored", {
   expect_identical(.infer_template("x/dc.gfup.sas", NULL, "tables"), list(prefix = "dc", qualifier = "tables"))
   root <- migration_study_fixture("dc-gfup")
   source <- file.path(root, "descriptive", "dc.gfup.sas")
@@ -504,7 +504,7 @@ test_that("relative evidence paths resolve against the working directory, not th
                "migrate_job\\(\\): source not found: descriptive/dc.tables.sas")
 })
 
-test_that("dir and reference are validated with labelled errors", {
+test_that("dir and reference are validated with labeled errors", {
   root <- migration_study_fixture("dc-tables")
   source <- file.path(root, "descriptive", "dc.tables.sas")
   expect_error(migrate_job(source = source, subject = "cohort", type = "eda", dir = 5), "`dir`")

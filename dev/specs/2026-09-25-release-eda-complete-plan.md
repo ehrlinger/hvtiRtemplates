@@ -33,14 +33,14 @@
 
 ## Phase 1: hvtiPlotR palette helper (release 2.7.18)
 
-**Done 2026-09-28:** design hvtiPlotR#163, `hv_role_palette()`, `scale_fill_hv()` and `scale_colour_hv()` in #164, released as 2.7.18 (#165). John changed the rule below on 2026-09-27: a colourblind-safe set replaces Set1 and Set3, with event vermillion `#D55E00`, censored blue `#0072B2`, missing `#CCCCCC`, then `hv_ppt_palette("light")` and Tol muted, every colour but missing at least 2:1 on white. The paragraph below is the review's rule as first written. The design note in hvtiPlotR `dev/specs/2026-09-27-hv-palette-design.md` is the rule as built.
+**Done 2026-09-28:** design hvtiPlotR#163, `hv_role_palette()`, `scale_fill_hv()` and `scale_colour_hv()` in #164, released as 2.7.18 (#165). John changed the rule below on 2026-09-27: a colorblind-safe set replaces Set1 and Set3, with event vermillion `#D55E00`, censored blue `#0072B2`, missing `#CCCCCC`, then `hv_ppt_palette("light")` and Tol muted, every color but missing at least 2:1 on white. The paragraph below is the review's rule as first written. The design note in hvtiPlotR `dev/specs/2026-09-27-hv-palette-design.md` is the rule as built.
 
-The rule from the review: an event is red, censored is blue, missing is light grey; otherwise ColorBrewer Set1, falling back to Set3 when the levels outrun it; points at alpha 0.5; a single-level plot draws blue.
+The rule from the review: an event is red, censored is blue, missing is light gray; otherwise ColorBrewer Set1, falling back to Set3 when the levels outrun it; points at alpha 0.5; a single-level plot draws blue.
 
-**Precedence, so a one-level plot is not ambiguous:** a level named as the event, censored or missing keeps its semantic colour even when it is the only level, so an all-censored panel is blue and a missing-only one is light grey. The single-level blue rule applies only to a sole level with no semantic role, which Set1 would otherwise draw red.
+**Precedence, so a one-level plot is not ambiguous:** a level named as the event, censored or missing keeps its semantic color even when it is the only level, so an all-censored panel is blue and a missing-only one is light gray. The single-level blue rule applies only to a sole level with no semantic role, which Set1 would otherwise draw red.
 
-- [x] **Design note first** (in hvtiPlotR `dev/`): name and shape of the helper. Working proposal: `hv_palette(levels, event = NULL, censored = NULL, missing = "(Missing)")` returning a named colour vector, plus `scale_colour_hv()` / `scale_fill_hv()` wrappers. Colours stay the caller's choice per CONTRIBUTING, so this is an opt-in scale, not a default inside constructors.
-- [x] Implement with tests: event and censored levels take red and blue whatever their position; missing takes light grey; Set1 order for the rest; Set3 beyond Set1's nine; a sole non-semantic level is blue; a sole event level is red, a sole censored level blue, a sole missing level light grey.
+- [x] **Design note first** (in hvtiPlotR `dev/`): name and shape of the helper. Working proposal: `hv_palette(levels, event = NULL, censored = NULL, missing = "(Missing)")` returning a named color vector, plus `scale_colour_hv()` / `scale_fill_hv()` wrappers. Colors stay the caller's choice per CONTRIBUTING, so this is an opt-in scale, not a default inside constructors.
+- [x] Implement with tests: event and censored levels take red and blue whatever their position; missing takes light gray; Set1 order for the rest; Set3 beyond Set1's nine; a sole non-semantic level is blue; a sole event level is red, a sole censored level blue, a sole missing level light gray.
 - [x] Worked example in `vignettes/plot-functions.qmd` and a row in the SAS migration guide (CONTRIBUTING steps 6 and 7).
 - [x] NEWS, `lintr` 0, full suite, local `/code-review`, PR.
 - [x] After merge: bump to **2.7.18** (separate PR), release gate, tag and release.
@@ -72,11 +72,11 @@ A study keeps one list of its own abbreviations (`CABG`, `LV`, `AV`, …) so eve
 Phases 1 and 2 must be released before 3b and 3c can raise their floors; 3a and the skeleton of 3d need neither and can start at once.
 
 ### 3a. `dc-general`: explain the groupings where they are asked for
-- [x] Move the label and grouping explanation from the `spec` chunk into the `study-choices` edit block, where `CATEGORICAL` and `CONTINUOUS` are set. Prose only; no behaviour change. NEWS line.
+- [x] Move the label and grouping explanation from the `spec` chunk into the `study-choices` edit block, where `CATEGORICAL` and `CONTINUOUS` are set. Prose only; no behavior change. NEWS line.
 
 ### 3b. Palette in the EDA templates (needs hvtiPlotR 2.7.18)
-- [x] `dp-gfup` and `dp-eda`'s follow-up section: replace the hard-coded `COLOURS` with the helper; keep a palette `EDIT:` point so a study can choose its own colours. `COLOURS <- NULL` draws `scale_colour_hv()`; naming `alive`, `dead` and `event` overrides it.
-- [x] `dp-postage` and `dp-eda`: apply the helper to categorical pages (`page & scale_fill_hv(...)`), missing in light grey.
+- [x] `dp-gfup` and `dp-eda`'s follow-up section: replace the hard-coded `COLOURS` with the helper; keep a palette `EDIT:` point so a study can choose its own colors. `COLOURS <- NULL` draws `scale_colour_hv()`; naming `alive`, `dead` and `event` overrides it.
+- [x] `dp-postage` and `dp-eda`: apply the helper to categorical pages (`page & scale_fill_hv(...)`), missing in light gray.
 - [x] Floors: `hvtiPlotR (>= 2.7.18)` in `DESCRIPTION`, the templates' setup guards, and the Suggests-bounds test.
 
 ### 3c. Labels in the EDA templates (needs hvtiRutilities 1.4.2)
@@ -100,7 +100,7 @@ Shipped in #155 (2026-09-26), with the identifier-rule fix in #156.
 ## Phase 4: acceptance with Lauren
 
 - [ ] Lauren scaffolds `dp-eda` on her example study (decision 3) and renders it.
-- [ ] She checks it against her current EDA report and the SAS EDA output: every variable present, sections split correctly, percent and count bars aligned, labels distinguishable, colours per the rule.
+- [ ] She checks it against her current EDA report and the SAS EDA output: every variable present, sections split correctly, percent and count bars aligned, labels distinguishable, colors per the rule.
 - [ ] Anything that fails becomes an issue; fixes land before the bump.
 
 ## Phase 5: release

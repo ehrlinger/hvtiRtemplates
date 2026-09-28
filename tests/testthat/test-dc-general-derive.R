@@ -93,7 +93,7 @@ test_that("KEY_COLS keeps identifier columns out of the overall statistics", {
 test_that("a KEY_COLS name in CATEGORICAL, CONTINUOUS or CORR_VARS stops", {
   expect_error(
     run_derive(continuous = list(Demography = c("age", "ccfid"))),
-    "Key column\\(s\\) cannot be summarised: ccfid"
+    "Key column\\(s\\) cannot be summarized: ccfid"
   )
 })
 

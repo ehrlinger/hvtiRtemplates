@@ -13,7 +13,7 @@
   declarations <- unlist(lapply(statements, `[[`, "declared"), use.names = FALSE)
   repeated <- unique(declarations[duplicated(declarations)])
   if (length(repeated)) stop("Multiple declarations of postage controls: ", paste(repeated, collapse = ", "), call. = FALSE)
-  # SHOW_PERCENT is recognised but not carried over: SECTIONS replaced it, and
+  # SHOW_PERCENT is recognized but not carried over: SECTIONS replaced it, and
   # its default draws both the percent and the count pages, so a migrated job
   # keeps the categorical view its legacy job drew.
   config <- list(DATASET = NA_character_, ANALYSIS_SET = NULL, X_VAR = NA_character_, VARIABLES = NULL,

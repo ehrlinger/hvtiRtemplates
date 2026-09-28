@@ -73,7 +73,7 @@ at a time.
    pre-render and post-render hooks and `.hvtiR/hooks/`, with existing project
    settings preserved.
 5. **Render and read the provenance.** `render_job()` and the Render button run
-   the same hooks. A fixed, labelled excerpt of a `.provenance.json` sidecar,
+   the same hooks. A fixed, labeled excerpt of a `.provenance.json` sidecar,
    annotated: job, subject and type, the dataset record, and the output hash.
    What happens to a sidecar when a render fails.
 6. **A first analysis chain: death.** Scaffold `ac`, `hz` and `hp`, each with
@@ -98,7 +98,7 @@ at a time.
 - **Nothing renders.** Section 5's sidecar is a static excerpt marked as an
   example. The vignette build therefore needs neither Quarto execution of a job
   nor TemporalHazard or hvtiRpropensity, and adds no measurable check time.
-- The chain figure is inline SVG with colours drawn from CSS variables, so it
+- The chain figure is inline SVG with colors drawn from CSS variables, so it
   reads in the pkgdown site's light and dark themes.
 
 ## 5. Tests

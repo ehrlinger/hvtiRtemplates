@@ -135,7 +135,7 @@ register_data(
 ```
 
 Registration names no endpoint and no cohort. Those belong to the jobs that
-analyse them, so one registered dataset can serve every job in the study.
+analyze them, so one registered dataset can serve every job in the study.
 
 ## Scaffold the first EDA job
 

@@ -99,7 +99,7 @@ by counting assertions: revert the code and confirm the new tests go red.
 - **A new template needs its own key in `.lintr`, and the key must be the FILE.** A directory
   key such as `inst/templates` excludes every linter on that path **wholesale and silently** —
   six real indentation and brace lints in `ac.qmd` vanished from a clean run that way. Only a
-  file key honours a per-linter list. The friction is deliberate: it forces a decision per
+  file key honors a per-linter list. The friction is deliberate: it forces a decision per
   template instead of blanket-exempting the directory.
 - **Templates carry no study identifiers.** `test-add-job.R` asserts that no template matches
   `/studies/`, a study name, or a built-dataset filename. A template that names a study is not
@@ -205,7 +205,7 @@ moved — a template that fails this check cannot be scaffolded at all.
 - **`object_usage_linter` can never pass inside `inst/templates/`.** The templates call
   study-side packages attached with `library()` inside chunks, which lintr does not see, so
   every call reports "no visible global function". That is why the exclusion exists; it is not
-  licence to disable it in `R/`. `TemporalHazard (>= 1.2.8)` has been in `Suggests` since
+  license to disable it in `R/`. `TemporalHazard (>= 1.2.8)` has been in `Suggests` since
   2026-09-17 only so tests can run template chunks against it (#125); it remains the study's
   dependency, not this package's.
 - **`object_name_linter` is excluded for templates on purpose.** `CLEVEL`, `TIME`, `STATUS`,
@@ -298,7 +298,7 @@ substituting a guess.
   one, taking the count from 1 to 2. The mutation returns 200 either way. The consistent
   reading is that `union: true` is a no-op against an outstanding request and only registers
   once the previous one has been fulfilled, which is inference from two observations rather
-  than documented behaviour, so check the count rather than trusting either the 200 or this
+  than documented behavior, so check the count rather than trusting either the 200 or this
   sentence. It is a cheaper signal than the review-count polling below, because it moves
   immediately instead of after the bot finishes. Count it across pages with `wc -l`:
 

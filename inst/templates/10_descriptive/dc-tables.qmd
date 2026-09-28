@@ -161,7 +161,7 @@ ABBREVIATIONS <- character(0) # EDIT: define abbreviations used in the table
 WORD_FILE <- "dc-tables.docx"  # EDIT: choose the Word filename within this set
 # MIGRATE-END: dc-tables-config
 # EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you
-# want summarised as continuous: list(continuous = c("nyha_pr")). list() for none.
+# want summarized as continuous: list(continuous = c("nyha_pr")). list() for none.
 OVERRIDES <- list()
 # EDIT: NULL skips the correlation variant (dc.tables.ods_<topic>.sas). To run
 # it, name the numeric columns, the anchor to correlate them against (NULL for

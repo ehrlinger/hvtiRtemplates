@@ -28,10 +28,10 @@ tests nothing, so a trend here is a prompt for an analysis, not a result.
 
 The engine is `hvtiPlotR::hv_trends()`. It takes one row per patient and computes
 the per-year summary itself, so this job never aggregates by hand. The
-`group_by()`/`summarise()` blocks and the per-series `smooth.spline()` calls that
+`group_by()`/`summarize()` blocks and the per-series `smooth.spline()` calls that
 older trends jobs carry are exactly what it replaces.
 
-Two neighbours are **not** this job. Procedure volume per year is `dp-procs`, and
+Two neighbors are **not** this job. Procedure volume per year is `dp-procs`, and
 the distribution of a single variable is `dp-variable`.
 
 ```{r}
@@ -95,7 +95,7 @@ if (!is.null(.cur)) {
     # A job renders as a draft by default, so an author can iterate on a
     # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
     # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognised value stops on purpose, so a
+    # and no mean "not strict": an unrecognized value stops on purpose, so a
     # mistyped switch is seen rather than quietly ignored, which is the safe
     # direction to be wrong in.
     if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
@@ -126,7 +126,7 @@ if (!is.null(.cur)) {
      as `mv_repair`. TYPE is always `eda`. Every EDA job for one subject then
      shares a set, so its trends, follow-up and postage-stamp figures land
      together under graphs/<subject>-eda/. Decided 2026-09-10, because a trends
-     plot describes a cohort rather than analysing an endpoint.
+     plot describes a cohort rather than analyzing an endpoint.
 
      Do NOT hand-edit these declarations: the render-time guard below checks
      them against this file's own name and stops if they disagree. -->
@@ -371,7 +371,7 @@ for (sg in names(SUBGROUPS)) {
         tr$meta$n_obs, " rows drawn; ", tr$meta$n_missing,
         " missing the year or the value.\n\n", sep = "")
     p <- plot(tr) +
-      labs(x = "Year of operation", y = spec$ylab, colour = NULL, shape = NULL) +
+      labs(x = "Year of operation", y = spec$ylab, color = NULL, shape = NULL) +
       theme_hv_manuscript()
     # Limits through coord_cartesian(), not scale limits. A scale limit DROPS
     # the patients outside it before the smooth is fitted, so the curve would

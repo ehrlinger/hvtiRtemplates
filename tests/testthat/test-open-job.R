@@ -48,7 +48,7 @@ test_that("open_job outside a study names study_setup", {
 test_that("open_job reports an invalid field under its own name, not add_job()'s", {
   # .check_field() hardcoded "add_job():" in its message; open_job() calls it
   # too, so a bad subject blamed the wrong function. The .select_template()
-  # error two lines above IS relabelled "open_job():" -- this closes the gap.
+  # error two lines above IS relabeled "open_job():" -- this closes the gap.
   root <- new_study("openjob-badfield-")
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
 

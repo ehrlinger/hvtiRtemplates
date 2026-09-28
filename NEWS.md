@@ -9,7 +9,7 @@
   `followup_check()`, `hv_eda_pages()`) with the same arguments, so a section
   is that job's figure; `test-dp-eda.R` checks the pages byte for byte against
   `dp-postage`. Needs hvtiPlotR 2.7.18 and hvtiRutilities 1.4.1, the current
-  floors. It draws in the house colours (below); smart label truncation
+  floors. It draws in the house colors (below); smart label truncation
   follows once hvtiRutilities releases it.
 
 * `dp-postage` and `dp-eda` leave out identifiers written without a
@@ -31,17 +31,30 @@
   beside them in `study-choices`, and the empty chunk is gone. No change to
   what the job does. From Lauren's 2026-09-24 review.
 
-* **The EDA templates draw in the house colours, which are colourblind safe.**
-  `dp-postage` and `dp-eda` colour their categorical pages with
+* **The EDA templates draw in the house colors, which are colorblind safe.**
+  `dp-postage` and `dp-eda` color their categorical pages with
   `hvtiPlotR::scale_fill_hv()`: each panel runs blue, vermillion, green and on
-  from its own levels, and missing is light grey. `dp-gfup` and `dp-eda`'s
+  from its own levels, and missing is light gray. `dp-gfup` and `dp-eda`'s
   follow-up section use `scale_colour_hv()`. **The follow-up figures change
-  colour:** dead moves from Set1 red `#E41A1C` to vermillion `#D55E00`, alive
+  color:** dead moves from Set1 red `#E41A1C` to vermillion `#D55E00`, alive
   from `#377EB8` to `#0072B2`, and a non-fatal event from `#4DAF4A` to
-  `#009E73`. The pattern of red, blue and green is kept. `COLOURS` is now
+  `#009E73`. The pattern of red, blue and green is kept. `COLORS` is now
   `NULL` by default; name `alive`, `dead` and `event` to choose your own, and
   `c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A")` restores the
-  earlier colours. Needs hvtiPlotR 2.7.18, now the floor.
+  earlier colors. Needs hvtiPlotR 2.7.18, now the floor.
+
+* **`dp-gfup`'s `COLOURS` setting is renamed `COLORS`**, and `dp-eda` uses the
+  same name. A `study-choices` chunk copied from an older job that still sets
+  `COLOURS` stops with "COLOURS is now COLORS" rather than drawing the default
+  colors without a word. Rename the setting in `study-choices`; its values are
+  unchanged.
+
+* The templates, their comments, the reference pages and these notes use US
+  spelling. The templates call `scale_color_manual()` and `labs(color = )`,
+  which ggplot2 treats as identical to their British spellings.
+  `hvtiPlotR::scale_colour_hv()` keeps its spelling until hvtiPlotR ships
+  `scale_color_hv()`. `tools/check-us-spelling.sh` now fails the lint workflow
+  on a British spelling.
 
 # hvtiRtemplates 1.2.2
 
@@ -138,7 +151,7 @@
   cohort metadata. Records distinguish outcomes, treatments and count
   exposures; retain accepted and observed levels and applicable coding; and
   report the fitted formula, family, method, predictors, imputation details,
-  and analysed-row accounting. Stacked-imputation totals are labelled as
+  and analyzed-row accounting. Stacked-imputation totals are labeled as
   stacked rows and accompanied by per-imputation counts. `lm-checkpred` keeps
   the source model's training metadata separate from the validation cohort it
   observes.
@@ -355,7 +368,7 @@
   `R-CMD-check.yaml` and `spec-counts.yaml`, and the roadmap is re-rendered
   from it. 1.1.10 carries [hvtiR#73](https://github.com/ehrlinger/hvtiR/pull/73)
   and [hvtiR#74](https://github.com/ehrlinger/hvtiR/pull/74): TemporalHazard
-  functions named on the hazard rows, the relabelled names, and `pm`'s row
+  functions named on the hazard rows, the relabeled names, and `pm`'s row
   dropped now that it folds into `lm`. It moves together with
   [hvtiRutilities#113](https://github.com/ehrlinger/hvtiRutilities/pull/113),
   which drops `pm` from `hvti_taxonomy()`, because `test-roadmap.R` checks
@@ -495,7 +508,7 @@
 * 🔴 **It also rejects refs that are not immutable tag pins**, added after
   review found the first version passed states it forbids: `ref: main` in both
   workflows agrees with itself, and so does an empty `ref:`, and both resolve
-  to mutable default-branch behaviour. **Equality is not pinning.** An empty
+  to mutable default-branch behavior. **Equality is not pinning.** An empty
   `ref:` was the sharp edge — a missing `ref:` line yields `None` and was
   always rejected, but `ref:` with nothing after it yields `""`, which is not
   `None` and slipped through while the docstring claimed otherwise. A commit
@@ -547,7 +560,7 @@
   entry and stay criteria it never used. `bag$engine` is now checked as well,
   and an absent, `NA` or unparseable one is refused rather than crashed on.
 * **`bh` deliberately stays at `>= 0.9.0`.** Its screen comes from
-  `TemporalHazard`, whose own stepwise has always honoured `slentry` and
+  `TemporalHazard`, whose own stepwise has always honored `slentry` and
   `slstay`; `hvtiRbootstrap` is only the reporting layer there. Raising it
   would assert a dependency the template does not have.
 * The Phase 3 render gate moves to 0.9.3 as well, because it *runs* a screen:
@@ -627,7 +640,7 @@ ordinal will ever be issued again.
   a second qualifier `binary` (8 studies) and `ordinal` (10) rank fifth and
   sixth, behind `trend` (21), `tavr`, `gastroparesis` and `matched`.
 
-  So it is one job parameterised by variable, which is what the design record
+  So it is one job parameterized by variable, which is what the design record
   said before it talked itself out of it. The row is `dp` / `variable`, 237
   job studies. `qualifier` is `variable` rather than null because a prefix
   must be wholly qualified or wholly unqualified and `graphs/dp` is
@@ -717,7 +730,7 @@ ordinal will ever be issued again.
   this one was prose, and prose is what drifted.
 
   The **acyclic** half of the claim was true throughout, and is now verified
-  by a depth-first colouring rather than asserted. A stale number sitting
+  by a depth-first coloring rather than asserted. A stale number sitting
   beside a correct claim is harder to see than a wrong one on its own.
 
 * **The corpus was re-parsed, and the batch order moved.** The census that
@@ -862,7 +875,7 @@ ordinal will ever be issued again.
   chunk passed `bag$requested` and `bag$usable` to `data.frame()` as if they
   were scalars. They are per **phase**: a real bag carries
   `c(early = 230, late = 230)`, so a length-2 value met a length-13 item column
-  and `data.frame()` errored. Now collapsed to one labelled string per row —
+  and `data.frame()` errored. Now collapsed to one labeled string per row —
   `early 230, late 230` — with fallbacks for a single-phase run and for a runner
   that drops the names.
 
@@ -1044,7 +1057,7 @@ release keeps `04.06-bh` in its filename and needs no rename.</sub>
 
 ## Documentation
 
-- **The institutional SAS licence runs into 2027, not out in 2026.** The wrong date
+- **The institutional SAS license runs into 2027, not out in 2026.** The wrong date
   `2026-09-29` was stated in eleven places: the package `README.md`, the 1.0.0
   provenance note below, and nine statements across the design and artifact records
   in `dev/specs/`. `README.md` is corrected outright, because it states a present
@@ -1058,13 +1071,13 @@ release keeps `04.06-bh` in its filename and needs no rename.</sub>
   entry exists to correct.
 - Two of those statements used the date as a **deadline**, and they came out
   differently. The "forcing function" in the AVR/LV-function parity design keeps its
-  argument: fresh SAS execution genuinely needs a live licence, so the pressure is
+  argument: fresh SAS execution genuinely needs a live license, so the pressure is
   real and simply further out than stated. The macro-allocation design's claim that
-  the licence "bounds the window" for re-running the corpus scan is **withdrawn, not
+  the license "bounds the window" for re-running the corpus scan is **withdrawn, not
   re-dated.** That scan reads `.sas` files as text and never invokes SAS. What
   threatens it is loss of the sources, which are unversioned or unreplicated, and
   the mitigation is a remote rather than a deadline.
-- What the licence date does not bound, in either case, is reading: compiled SAS data
+- What the license date does not bound, in either case, is reading: compiled SAS data
   stays readable well beyond expiry, so what ends is the ability to *run* SAS, not to
   read what it produced.
 
@@ -1176,7 +1189,7 @@ release keeps `04.06-bh` in its filename and needs no rename.</sub>
   The scan reads code chunks only: a test that fires on prose is a test that
   gets deleted.
 
-- The `03.01-ac` template's local `imputed_levels()` is removed in favour of
+- The `03.01-ac` template's local `imputed_levels()` is removed in favor of
   the `hvtiRutilities` export. The two were identical, and the duplicate
   arrived only because hvtiRutilities#47 lifted the same function out of the
   same study.
@@ -1335,7 +1348,7 @@ release keeps `04.06-bh` in its filename and needs no rename.</sub>
   defaults to the study root rather than `"qmd"`. It writes
   `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd` — into the taxonomy folder
   the template belongs to, not a flat `qmd/`. The `type` is required because a
-  set is keyed on `(endpoint, analysis type)`: one endpoint is analysed by
+  set is keyed on `(endpoint, analysis type)`: one endpoint is analyzed by
   several methods and those chains share their upstream, so keyed on the
   endpoint alone two sets would write to one filename.
 - `template_path()`'s argument is renamed from `name` to `prefix`, which is what it
@@ -1415,8 +1428,8 @@ release keeps `04.06-bh` in its filename and needs no rename.</sub>
   marks every study-specific line `EDIT:`.
 
   The cohort section offers two shapes, because the choice is not cosmetic:
-  a job analysing the whole study uses `assert_cohort()`, while a job
-  analysing a filtered subset must supply its own gate — `_study.yml` records
+  a job analyzing the whole study uses `assert_cohort()`, while a job
+  analyzing a filtered subset must supply its own gate — `_study.yml` records
   the study cohort, so `assert_cohort()` would pass while the job ran on a
   cohort nobody checked.
 
@@ -1450,9 +1463,9 @@ every path was purged from every commit with `git filter-repo`. They are not
 recoverable from this repository's history.
 
 Parity checks against the SAS originals therefore need a source outside this
-repository. The institutional SAS licence expires 2026-09-29.
+repository. The institutional SAS license expires 2026-09-29.
 
-**Corrected 2026-08-29: the licence runs into 2027, not out in 2026** (working
+**Corrected 2026-08-29: the license runs into 2027, not out in 2026** (working
 date `2027-09-29`, not yet confirmed). The date above was wrong when 1.0.0
 shipped. It is left as written and corrected here; see the 1.0.10 entry.
 

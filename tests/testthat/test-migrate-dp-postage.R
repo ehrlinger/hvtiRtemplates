@@ -162,9 +162,9 @@ test_that("postage routes actual pages through numbered study folders and embeds
   expect_false(dir.exists(file.path(root, "graphs")))
 })
 
-test_that("postage draws its categorical pages in the role colours", {
+test_that("postage draws its categorical pages in the role colors", {
   # The page is handed to ggsave() whole, so capture it there and build each
-  # panel: every bar must be a house colour, blue first, missing grey.
+  # panel: every bar must be a house color, blue first, missing gray.
   root <- migration_study_fixture("dp-postage")
   saved <- list()
   local_mocked_bindings(ggsave = function(filename, plot, ...) {

@@ -102,7 +102,7 @@ if (!is.null(.cur)) {
     # A job renders as a draft by default, so an author can iterate on a
     # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
     # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognised value stops on purpose, so a
+    # and no mean "not strict": an unrecognized value stops on purpose, so a
     # mistyped switch is seen rather than quietly ignored, which is the safe
     # direction to be wrong in.
     if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
@@ -135,7 +135,7 @@ if (!is.null(.cur)) {
      subject/type rather than editing this copy in place.
 
      A set is keyed on (subject, analysis type), not on the subject alone.
-     One subject may be analysed by several methods -- parametric hazard, random
+     One subject may be analyzed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
      Two sets keyed on `dead_pa` alone would write their life tables to the
      same file. -->

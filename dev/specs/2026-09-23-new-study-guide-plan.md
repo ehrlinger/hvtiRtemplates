@@ -4,7 +4,7 @@
 
 **Goal:** Ship `vignettes/new-study.qmd`, a guide that takes a study from an empty directory and a delivered dataset through a first `ac`/`hz`/`hp` chain.
 
-**Architecture:** One new Quarto vignette whose reader-facing chunks execute for real against a hidden 40-row synthetic dataset in a temporary directory, so the vignette build is the CI gate for every call it shows. Nothing is rendered: the provenance sidecar is a labelled static excerpt, and the chain is an inline SVG figure. A new source-reading test file pins the calls; the existing vignette gets one cross-link.
+**Architecture:** One new Quarto vignette whose reader-facing chunks execute for real against a hidden 40-row synthetic dataset in a temporary directory, so the vignette build is the CI gate for every call it shows. Nothing is rendered: the provenance sidecar is a labeled static excerpt, and the chain is an inline SVG figure. A new source-reading test file pins the calls; the existing vignette gets one cross-link.
 
 **Tech Stack:** R, Quarto vignettes (`quarto::html` engine), testthat 3e, pkgdown, hvtiRutilities (>= 1.4.0).
 
@@ -306,7 +306,7 @@ register_data(
 ```
 
 Registration names no endpoint and no cohort. Those belong to the jobs that
-analyse them, so one registered dataset can serve every job in the study.
+analyze them, so one registered dataset can serve every job in the study.
 
 ## Scaffold the first EDA job
 
@@ -539,7 +539,7 @@ Rscript -e 'devtools::install(upgrade = "never", quiet = TRUE)'
 out="$(mktemp -d)"; quarto render vignettes/new-study.qmd --output-dir "$out"; open "$out/new-study.html"
 ```
 
-Expected: no chunk error; `scaffold-chain` prints the three paths under `20_distributions/` and `40_graphs/`. The figure draws in the text colour. Switch the operating system to dark mode and confirm it is still legible.
+Expected: no chunk error; `scaffold-chain` prints the three paths under `20_distributions/` and `40_graphs/`. The figure draws in the text color. Switch the operating system to dark mode and confirm it is still legible.
 
 - [ ] **Step 5: Commit**
 

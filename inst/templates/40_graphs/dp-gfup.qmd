@@ -156,11 +156,11 @@ EVENTS <- list()
 # rather than a blob; raise it for a small one.
 ALPHA <- 0.5
 
-# EDIT: NULL draws the house colours through hvtiPlotR::scale_colour_hv(): dead
-# vermillion, alive blue and a non-fatal event green, all colourblind safe. Name
+# EDIT: NULL draws the house colors through hvtiPlotR::scale_colour_hv(): dead
+# vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
 # all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
 # event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
-COLOURS <- NULL
+COLORS <- NULL
 ```
 
 ## Data
@@ -263,23 +263,24 @@ the line; it is the **blue** points drifting below it that need an explanation.
 # it is <set>/<file> whichever directory the render executes from. The file
 # itself is written through set_path(), which resolves from the project root.
 show_figure <- function(p, fname, title) {
-  p <- p + labs(x = "Year of operation", y = "Follow-up (years)", colour = NULL, shape = NULL) +
+  p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript()
   png(set_path("graphs", fname), width = 7, height = 6, units = "in", res = 150)
   print(p)
   invisible(dev.off())
   cat("![", title, "](", file.path(paste0(SUBJECT, "-", TYPE), fname), ")\n\n", sep = "")
 }
-if (!is.null(COLOURS) && !(is.character(COLOURS) && !anyNA(COLOURS) && length(COLOURS) == 3L &&
-                             setequal(names(COLOURS), c("alive", "dead", "event")))) {
-  stop("COLOURS must be NULL or name exactly alive, dead and event.", call. = FALSE)
+if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in study-choices.", call. = FALSE)
+if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLORS) == 3L &&
+                            setequal(names(COLORS), c("alive", "dead", "event")))) {
+  stop("COLORS must be NULL or name exactly alive, dead and event.", call. = FALSE)
 }
 # Dead or Death is the event and Alive or No event the censored level, so a
-# non-fatal event takes the house rule's next colour, green.
-status_colours <- function(levels) {
-  if (is.null(COLOURS)) return(scale_colour_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
+# non-fatal event takes the house rule's next color, green.
+status_colors <- function(levels) {
+  if (is.null(COLORS)) return(scale_colour_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
   keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
-  scale_colour_manual(values = stats::setNames(COLOURS[keys], levels))
+  scale_color_manual(values = stats::setNames(COLORS[keys], levels))
 }
 plots <- plot(fp, alpha = ALPHA)
 panel_counts <- list()
@@ -291,12 +292,12 @@ for (i in seq_len(nrow(fp$data))) {
       " missing a column this panel needs.\n\n", sep = "")
   if (row$type == "followup") {
     p <- plots[[nm]] +
-      status_colours(c("Alive", "Dead")) +
+      status_colors(c("Alive", "Dead")) +
       scale_shape_manual(values = c(Alive = 1, Dead = 4))
   } else {
     levels <- c("No event", row$title, "Death")
     p <- plots[[nm]] +
-      status_colours(levels) +
+      status_colors(levels) +
       scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
   }
   show_figure(p, paste0("dp-gfup-", nm, ".png"), row$title)

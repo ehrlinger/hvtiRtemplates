@@ -55,7 +55,7 @@ scan() {  # $1 = extended regex. 0 = matches, 1 = none, >1 = error
 }
 
 # Class patterns — each matches a category, never a specific site value.
-#   1. any host under the organisation's INTERNAL domains. Deliberately not
+#   1. any host under the organization's INTERNAL domains. Deliberately not
 #      bare `ccf.org`: public-facing addresses under that domain are legitimate
 #      in citations. The leading class also excludes an `@`, so mail addresses
 #      do not trip it.

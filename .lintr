@@ -44,7 +44,7 @@ linters: linters_with_defaults(
 # The key is the FILE, not the directory `inst/templates`. A directory key
 # excludes every linter on that path wholesale and silently -- with it, the six
 # real indentation/brace lints in ac.qmd disappeared from a clean run. Only a
-# file key honours the per-linter list. A new template therefore needs its own
+# file key honors the per-linter list. A new template therefore needs its own
 # entry here, which is the right amount of friction: it forces a decision per
 # template rather than blanket-exempting the directory.
 exclusions: list(

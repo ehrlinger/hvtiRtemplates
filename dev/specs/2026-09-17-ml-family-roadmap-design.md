@@ -18,7 +18,7 @@ It decides no template contents.
 ## 2. Dependency rule
 
 **Internal `hvtiR*` packages depend on the public packages, never the
-reverse.** The public modelling layer is:
+reverse.** The public modeling layer is:
 
 - TemporalHazard
 - ggRandomForests
@@ -66,7 +66,7 @@ Each sub-project gets its own design, plan and PRs.
 |---|---|---|---|
 | 1 | `cache_fit()` | `hvtiRutilities` | spec: `hvtiRutilities/dev/specs/2026-09-17-cache-fit-design.md` (PR #123) |
 | 2 | `rf*` base templates | `hvtiRtemplates` | `rfs`, `rfc`, `rfr`; owns the `rfsrc` to outcome-axis migration story from the parent roadmap |
-| 3 | `sid` | `hvtiRforests` (created here) + `hvtiRtemplates` | SID + PAM, choose K, cluster summaries parameterised by K, per-cluster varPro |
+| 3 | `sid` | `hvtiRforests` (created here) + `hvtiRtemplates` | SID + PAM, choose K, cluster summaries parameterized by K, per-cluster varPro |
 | 4 | `vt` | `hvtiRforests` + `hvtiRtemplates` | eligibility, per-arm fits, swapped-arm prediction, RMST difference, outcomes |
 
 Order rationale: each layer builds on the one below; `rf*` precedes `sid` and

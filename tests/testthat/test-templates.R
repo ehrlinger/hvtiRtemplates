@@ -103,7 +103,7 @@ test_that("no two templates share a (prefix, qualifier) pair", {
 test_that("a prefix is either wholly qualified or wholly unqualified", {
   # A mixed prefix would offer `<none>` in the ambiguity menu while
   # `.select_template()` has no way to ask for it, so the error would name a
-  # choice the API cannot honour. Decomposing a prefix means naming every job
+  # choice the API cannot honor. Decomposing a prefix means naming every job
   # under it, not just the new ones.
   tl <- template_list()
   mixed <- vapply(
@@ -161,7 +161,7 @@ test_that("every template carries an edit-guard chunk", {
 test_that("every edit-guard drafts by default and stops when strict", {
   # The test above only proves the switch is NAMED. This one runs each
   # template's own guard chunk, so an inverted branch, a dropped banner, or an
-  # unrecognised value that drafts instead of stopping fails here. The chunk
+  # unrecognized value that drafts instead of stopping fails here. The chunk
   # is run outside Quarto with knitr::current_input() pointed at a job file,
   # which is the one thing a render supplies to it.
   skip_if_not_installed("knitr")
@@ -290,7 +290,7 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
 
 test_that("endpoint-driven templates own explicit cohort definitions", {
   # `_study.yml` registers a dataset; it cannot know which rows or endpoint a
-  # later job will analyse. These templates must therefore carry the event,
+  # later job will analyze. These templates must therefore carry the event,
   # time, and SAS-reconciled counts their own cohort gates use. Removing an
   # argument or restoring the old study-owned prose must make this contract
   # fail before an incomplete job can render as checked.
@@ -494,7 +494,7 @@ test_that("bl, br and bc refuse a bag PRODUCED below 0.9.3", {
 
 test_that("bh has no producer guard, because its producer is TemporalHazard", {
   # bh's screen comes from hzr_bootstrap(), whose own stepwise has always
-  # honoured slentry and slstay. bag$engine there is not an hvtiRbootstrap
+  # honored slentry and slstay. bag$engine there is not an hvtiRbootstrap
   # version at all, so a guard demanding >= 0.9.3 of it would refuse every
   # valid hazard bag.
   expect_null(.producer_guard("bh"))
