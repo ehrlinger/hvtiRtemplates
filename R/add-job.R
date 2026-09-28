@@ -31,7 +31,9 @@
 #'   Restricted to \code{[A-Za-z0-9_]+}, because \code{-} separates the
 #'   filename's fields.
 #' @param prefix Job type: one of the prefixes reported by
-#'   \code{\link{template_list}}.
+#'   \code{\link{template_list}}, or a template's full name as reported in
+#'   its \code{name} column, e.g. \code{"dp-trends"}. A full name carries the
+#'   qualifier, so \code{qualifier} must then be left \code{NULL}.
 #' @param subject Grouping topic for the job set, e.g. \code{"death"} or
 #'   \code{"cohort"}. A subject names a statistical endpoint only when the
 #'   job analyses one. Must

@@ -7,7 +7,9 @@
 template_path(prefix, qualifier = NULL)
 }
 \arguments{
-\item{prefix}{Analysis prefix, e.g. \code{"ac"}. See \code{\link{template_list}}.}
+\item{prefix}{Analysis prefix, e.g. \code{"ac"}, or a template's full name,
+e.g. \code{"dp-trends"}, which carries its qualifier and leaves
+\code{qualifier} \code{NULL}. See \code{\link{template_list}}.}
 
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
 \code{dp}. Required only where a prefix carries more than one template;

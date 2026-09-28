@@ -48,7 +48,9 @@ template_list <- function() {
 
 #' Path to a supported template
 #'
-#' @param prefix Analysis prefix, e.g. \code{"ac"}. See \code{\link{template_list}}.
+#' @param prefix Analysis prefix, e.g. \code{"ac"}, or a template's full name,
+#'   e.g. \code{"dp-trends"}, which carries its qualifier and leaves
+#'   \code{qualifier} \code{NULL}. See \code{\link{template_list}}.
 #' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
 #'   \code{dp}. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
@@ -83,6 +85,18 @@ template_path <- function(prefix, qualifier = NULL) {
   # cleanly there, so leaving it unchecked would be a regression as well as a
   # gap. Raised by Copilot on #76.
   .check_scalar_string("prefix", prefix)
+  # A template stem, "dp-trends", names the pair in one string, as
+  # template_list() reports it in `name`. A prefix may never contain "-", so
+  # splitting at the first one is exact. A stem AND a qualifier are two answers
+  # to one question; refusing is safer than preferring either.
+  if (grepl("-", prefix, fixed = TRUE)) {
+    if (!is.null(qualifier)) {
+      stop("template selection: name the template as a stem ('", prefix,
+           "') or as prefix plus qualifier, not both.", call. = FALSE)
+    }
+    qualifier <- sub("^[^-]*-", "", prefix)
+    prefix <- sub("-.*$", "", prefix)
+  }
   if (!is.null(qualifier)) .check_scalar_string("qualifier", qualifier)
   hit <- tl[!is.na(tl$prefix) & tl$prefix == prefix, , drop = FALSE]
   if (!nrow(hit)) {
