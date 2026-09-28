@@ -1,8 +1,9 @@
 # hvtiRtemplates (unreleased)
 
-* `add_job()`, `open_job()` and `template_path()` accept a template's full
-  name, the `name` column of `template_list()`, in place of the prefix and
-  qualifier pair: `add_job("dp-trends", "cohort", "eda")`. Giving a full name
+* `add_job()`, `open_job()`, `template_path()` and `migrate_job()` accept a
+  template's full name, the `name` column of `template_list()`, in place of
+  the prefix and qualifier pair: `add_job("dp-trends", "cohort", "eda")`. An
+  error asking which template now lists the choices by full name. Giving a full name
   and a `qualifier` together is an error rather than a silent preference for
   either. A bare qualifier is not accepted, because `fit`, `explain` and
   `gfup` each name more than one template.

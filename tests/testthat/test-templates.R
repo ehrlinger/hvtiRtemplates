@@ -783,6 +783,18 @@ test_that("a stem and a qualifier together are refused, not reconciled", {
   # other, even when they agree today.
   expect_error(template_path("dp-trends", "trends"), "not both")
   expect_error(template_path("dp-trends", "gfup"), "not both")
+  expect_error(add_job("dp-trends", "cohort", "eda", dir = tempdir(), qualifier = "trends"),
+               "add_job\\(\\).*not both")
+  # A malformed qualifier is reported as itself, not as a clash.
+  for (bad in list(NA_character_, character(0), "")) {
+    expect_error(template_path("dp-trends", bad), "single non-empty, non-NA")
+  }
+})
+
+test_that("the choices on offer are shown by full name, the form a caller can type", {
+  expect_error(template_path("dp"), "name one with `qualifier`, or by its full name")
+  expect_error(template_path("dp"), "dp-trends")
+  expect_error(template_path("ac-foo"), "Available for this prefix: ac")
 })
 
 test_that("every shipped template resolves from its own stem", {

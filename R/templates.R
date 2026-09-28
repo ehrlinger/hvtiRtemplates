@@ -85,23 +85,9 @@ template_path <- function(prefix, qualifier = NULL) {
   # cleanly there, so leaving it unchecked would be a regression as well as a
   # gap. Raised by Copilot on #76.
   .check_scalar_string("prefix", prefix)
-  # A template stem, "dp-trends", names the pair in one string, as
-  # template_list() reports it in `name`. A prefix may never contain "-", so
-  # splitting at the first one is exact. A stem AND a qualifier are two answers
-  # to one question; refusing is safer than preferring either.
-  if (grepl("-", prefix, fixed = TRUE)) {
-    if (!is.null(qualifier)) {
-      stop("template selection: name the template as a stem ('", prefix,
-           "') or as prefix plus qualifier, not both.", call. = FALSE)
-    }
-    if (!grepl("^[^-]+-[^-]+$", prefix)) {
-      stop("template selection: '", prefix, "' is not a template name; ",
-           "expected <prefix>-<qualifier>, e.g. 'dp-trends'.", call. = FALSE)
-    }
-    qualifier <- sub("^[^-]*-", "", prefix)
-    prefix <- sub("-.*$", "", prefix)
-  }
-  if (!is.null(qualifier)) .check_scalar_string("qualifier", qualifier)
+  parts <- .split_template_name(prefix, qualifier)
+  prefix <- parts$prefix
+  qualifier <- parts$qualifier
   hit <- tl[!is.na(tl$prefix) & tl$prefix == prefix, , drop = FALSE]
   if (!nrow(hit)) {
     stop("unknown template: ", prefix,
@@ -153,7 +139,7 @@ template_path <- function(prefix, qualifier = NULL) {
   }
   if (nrow(hit) > 1L) {
     stop("prefix '", prefix, "' carries ", nrow(hit),
-         " templates; name one with `qualifier`. Available: ",
+         " templates; name one with `qualifier`, or by its full name. Available: ",
          .qualifier_menu(hit), call. = FALSE)
   }
   hit
@@ -174,8 +160,30 @@ template_path <- function(prefix, qualifier = NULL) {
 # The qualifiers on offer for a prefix, for an error message. An unqualified
 # template is shown as NA rather than omitted, so a prefix holding one
 # unqualified and two qualified templates reads as the three it is.
+# Each is shown by its full name, "dp-trends", which is also a form a caller
+# can type back.
 .qualifier_menu <- function(hit) {
-  paste(ifelse(is.na(hit$qualifier), "<none>", hit$qualifier), collapse = ", ")
+  paste(ifelse(is.na(hit$qualifier), hit$prefix, paste0(hit$prefix, "-", hit$qualifier)), collapse = ", ")
+}
+
+# Split a template's full name, "dp-trends", into prefix and qualifier, as
+# template_list() reports it in `name`. A prefix may never contain "-", so
+# splitting at the first one is exact. A full name AND a qualifier are two
+# answers to one question; refusing is safer than preferring either. The
+# qualifier is validated first, so a bad one is reported as itself.
+# `prefix` must already be a single string.
+.split_template_name <- function(prefix, qualifier = NULL) {
+  if (!is.null(qualifier)) .check_scalar_string("qualifier", qualifier)
+  if (!grepl("-", prefix, fixed = TRUE)) return(list(prefix = prefix, qualifier = qualifier))
+  if (!is.null(qualifier)) {
+    stop("template selection: name the template by its full name ('", prefix,
+         "') or as prefix plus qualifier, not both.", call. = FALSE)
+  }
+  if (!grepl("^[^-]+-[^-]+$", prefix)) {
+    stop("template selection: '", prefix, "' is not a template name; ",
+         "expected <prefix>-<qualifier>, e.g. 'dp-trends'.", call. = FALSE)
+  }
+  list(prefix = sub("-.*$", "", prefix), qualifier = sub("^[^-]*-", "", prefix))
 }
 
 # Parse a template file name into its fields.
