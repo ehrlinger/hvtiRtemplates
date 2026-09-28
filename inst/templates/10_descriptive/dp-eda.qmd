@@ -55,7 +55,7 @@ if (!requireNamespace("patchwork", quietly = TRUE)) {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 .tok <- paste0("ED", "IT", ":")
 .cur <- knitr::current_input()
@@ -117,7 +117,7 @@ Set the values in this chunk before rendering. Left as they are, they draw the
 all-deaths follow-up panel and every column of the `eda` analysis set.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: the built dataset this job reads. "study" is the file named by built:
 # in _study.yml; any other name must be declared under additional_datasets:,
 # such as a column subset written for R. Analysis sets are derived from

@@ -50,7 +50,7 @@ suppressPackageStartupMessages({
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and
 # README.md says a job that still contains one has not been finished. This
@@ -187,7 +187,7 @@ set_path <- function(kind, file) {
 Edit these values for this study before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # Upstream fit and actuarial estimate to plot.
 # EDIT: upstream fit and actuarial estimate to plot.
 FIT_NAME <- "deterministic"

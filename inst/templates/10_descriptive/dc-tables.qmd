@@ -54,7 +54,7 @@ if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and a job
 # that still contains one has not been finished. This chunk is what makes that
@@ -122,7 +122,7 @@ set_path <- function(kind, file) {
 Set the values in this chunk before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: the built dataset this job reads. "study" is the file named by built:
 # in _study.yml; any other name must be declared under additional_datasets:,
 # such as a column subset written for R. Analysis sets are derived from

@@ -43,7 +43,7 @@ suppressPackageStartupMessages({
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and
 # README.md says a job that still contains one has not been finished. This
@@ -176,7 +176,7 @@ set_path <- function(kind, file) {
 Edit these values for this study before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: each derived category and its source variable.
 DERIVED <- c(cat_a = "src_a")
 
@@ -206,7 +206,7 @@ labs <- c("30 days", "6 months", "1 year", "5 years", "10 years")
      silently accept an unreconciled cohort. -->
 
 ```{r}
-#| label: cohort
+#| label: edit-cohort
 .cfg <- study_config(start = .root)
 .data_read <- hvtiRtemplates:::.provenance_read(
   "study", .cfg, function() read_built(cfg = .cfg)
@@ -244,7 +244,7 @@ decoration.
      Delete this section entirely if the job has no derived strata. -->
 
 ```{r}
-#| label: derive
+#| label: edit-derive
 # EDIT: your study's category derivations, in SAS order.
 derive_cats <- function(d) {
   # Assert the source columns are present BEFORE deriving. Every condition
@@ -546,7 +546,7 @@ Nested stratification — one stratum variable within the levels of another — 
 the same call applied to each subset.
 
 ```{r}
-#| label: km-nested
+#| label: edit-km-nested
 #| eval: false
 # EDIT: your nesting, or delete this chunk if the job has none. It is
 # `eval: false` because the template ships no second category; turn it on once

@@ -44,7 +44,7 @@ test_that("dc-gfup extracts agreed fields with source evidence and keeps identif
   env$read_built <- hvtiRutilities::read_built
   env$study_config <- hvtiRutilities::study_config
   withr::local_dir(root)
-  eval(gfup_chunk(out, "study-choices"), env)
+  eval(gfup_chunk(out, "edit-study-choices"), env)
   capture.output(eval(gfup_chunk(out, "data"), env))
   capture.output(eval(gfup_chunk(out, "qc"), env))
   expect_identical(nrow(env$d), 40L)

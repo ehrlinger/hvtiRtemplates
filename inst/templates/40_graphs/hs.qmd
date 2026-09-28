@@ -71,7 +71,7 @@ if (utils::packageVersion("hvtiRlifetables") < "0.1.2") {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and
 # README.md says a job that still contains one has not been finished. This
@@ -207,7 +207,7 @@ set_path <- function(kind, file) {
 Edit these values for this study before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # Follow-up and event columns, expected counts, and prediction horizons.
 # EDIT: time, event, expected counts, and prediction horizons.
 TIME     <- "iu_dead"
@@ -242,7 +242,7 @@ SCALE     <- "years"
      before it can predict for an unreconciled cohort. -->
 
 ```{r}
-#| label: cohort
+#| label: edit-cohort
 .cfg <- study_config(start = .root)
 .data_read <- hvtiRtemplates:::.provenance_read(
   "study", .cfg, function() read_built(cfg = .cfg)
@@ -539,7 +539,7 @@ expected <- us_matched(
 ```
 
 ```{r}
-#| label: obs-vs-exp
+#| label: edit-obs-vs-exp
 # The cohort average at each horizon, which is what gets overlaid on an
 # actuarial curve. This was derived inline until hvtiRlifetables 0.1.2 shipped
 # `us_cohort_curve()` (hvtiRlifetables#16); it is now one call, and the numbers

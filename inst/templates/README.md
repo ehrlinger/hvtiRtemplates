@@ -267,14 +267,17 @@ rendering in disposable synthetic studies.
 
 Every line a study must change is marked `EDIT:`. Work through them in order;
 the markers are placed so that a job which still contains one has not been
-finished. The comments around them record why a choice matters, not merely what
+finished. **Every chunk holding a marker is labelled `edit-`**, so the
+editor's chunk outline lists the work to do: `edit-study-choices` first, then
+any others such as `edit-cohort`. Markers in prose, outside a chunk, are found
+by searching for `EDIT:`, and the guard below lists them all. The comments around them record why a choice matters, not merely what
 to type — several exist because the alternative fails quietly rather than
 loudly.
 
 **That property is enforced, not merely stated.** Each template carries an
-`edit-guard` chunk that scans the rendering file for markers and lists the ones
+`guard-edits` chunk that scans the rendering file for markers and lists the ones
 it found. Until 1.0.5 it was a convention only, and an unedited `ac` template
-rendered green over a meaningless stratification: the `derive` chunk indexed a
+rendered green over a meaningless stratification: the `derive` chunk, now `edit-derive`, indexed a
 placeholder column, and when a column is absent `!is.na(d$<col>)` is
 `logical(0)`, which makes the assignment a **silent no-op** rather than an
 error ([#27](https://github.com/ehrlinger/hvtiRtemplates/issues/27)).

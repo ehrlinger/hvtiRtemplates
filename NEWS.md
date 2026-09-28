@@ -1,5 +1,13 @@
 # hvtiRtemplates (unreleased)
 
+* Every template chunk holding an `EDIT:` marker is now labelled `edit-`, so
+  the editor's chunk outline lists the work a job still needs:
+  `study-choices` is `edit-study-choices`, and ten templates carry further
+  `edit-` chunks such as `edit-cohort` and `edit-derive`. The marker guard,
+  `edit-guard`, is renamed `guard-edits` so it does not read as an edit site.
+  A test holds the rule in both directions. Existing jobs keep their old
+  labels and still render.
+
 * New template `dp-eda` (`10_descriptive/`), the whole EDA report in one
   render: an overview of every column (`proc_contents()`), goodness of
   follow-up with `dc-gfup`'s tables, then continuous variables, categorical

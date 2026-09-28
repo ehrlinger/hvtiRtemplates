@@ -138,7 +138,7 @@ test_that("every template directory carries ordering digits", {
                                                collapse = ", ")))
 })
 
-test_that("every template carries an edit-guard chunk", {
+test_that("every template carries a guard-edits chunk", {
   # The EDIT: markers are only a convention until something checks them.
   # README.md claims a job still containing one has not been finished; the
   # guard chunk in each template is what makes that true. Issue #27: an
@@ -151,14 +151,14 @@ test_that("every template carries an edit-guard chunk", {
   skip_if(nrow(tl) == 0L, "no templates installed")
   for (f in tl$file) {
     src <- readLines(f, warn = FALSE)
-    expect_true(any(grepl("label: edit-guard", src, fixed = TRUE)),
-                info = paste("no edit-guard chunk in", basename(f)))
+    expect_true(any(grepl("label: guard-edits", src, fixed = TRUE)),
+                info = paste("no guard-edits chunk in", basename(f)))
     expect_true(any(grepl("HVTI_TEMPLATE_STRICT", src, fixed = TRUE)),
-                info = paste("edit-guard has no strict switch in", basename(f)))
+                info = paste("guard-edits has no strict switch in", basename(f)))
   }
 })
 
-test_that("every edit-guard drafts by default and stops when strict", {
+test_that("every guard-edits drafts by default and stops when strict", {
   # The test above only proves the switch is NAMED. This one runs each
   # template's own guard chunk, so an inverted branch, a dropped banner, or an
   # unrecognized value that drafts instead of stopping fails here. The chunk
@@ -170,7 +170,7 @@ test_that("every edit-guard drafts by default and stops when strict", {
 
   guard_code <- function(f) {
     src <- readLines(f, warn = FALSE)
-    at <- grep("#| label: edit-guard", src, fixed = TRUE)
+    at <- grep("#| label: guard-edits", src, fixed = TRUE)
     end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
     src[(at + 1L):(end - 1L)]
   }
@@ -752,10 +752,35 @@ test_that("the hz template reads theta names through TemporalHazard's exported A
   env <- new.env()
   suppressPackageStartupMessages(library(TemporalHazard))
   local_mocked_bindings(kable = function(x, ...) x, .package = "knitr")
-  choices_at <- grep("#| label: study-choices", src, fixed = TRUE)
+  choices_at <- grep("#| label: edit-study-choices", src, fixed = TRUE)
   choices_end <- choices_at + which(src[(choices_at + 1L):length(src)] == "```")[1L]
   eval(parse(text = src[(choices_at + 1L):(choices_end - 1L)]), envir = env)
   eval(parse(text = chunk), envir = env)
   expect_identical(env$theta_table$parameter, TemporalHazard::hzr_theta_names(env$phases))
   expect_gt(nrow(env$theta_table), 0L)
+})
+
+test_that("a chunk is labelled edit- exactly when it holds an EDIT marker", {
+  # The labels make the editor's chunk outline a list of the work a job still
+  # needs. That holds only in both directions: a marker in an unprefixed chunk
+  # is missing from the list, and a prefixed chunk with no marker is a false
+  # entry, which is why the guard is `guard-edits` and not `edit-guard`.
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+  tok <- paste0("ED", "IT", ":")
+  for (f in tl$file) {
+    src <- readLines(f, warn = FALSE)
+    opens <- grep("^```\\{r", src)
+    for (at in opens) {
+      end <- at + match("```", src[-seq_len(at)])
+      body <- src[(at + 1L):(end - 1L)]
+      label <- sub("^#\\| label: *", "", grep("^#\\| label:", body, value = TRUE)[1L])
+      where <- paste0(basename(f), " line ", at, " (", label, ")")
+      if (any(grepl(tok, body, fixed = TRUE))) {
+        expect_true(startsWith(label, "edit-"), info = paste(where, "holds a marker"))
+      } else {
+        expect_false(isTRUE(startsWith(label, "edit-")), info = paste(where, "holds none"))
+      }
+    }
+  }
 })

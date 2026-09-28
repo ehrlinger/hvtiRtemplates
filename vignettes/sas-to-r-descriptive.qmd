@@ -137,7 +137,7 @@ render_job(job, final = TRUE)
 
 `render_job()` runs Quarto from the job's own directory, so the same call works
 for adopted and numbered study layouts. A final render fails at the
-`edit-guard` chunk with the unresolved list.
+`guard-edits` chunk with the unresolved list.
 
 ## Which data a job reads
 

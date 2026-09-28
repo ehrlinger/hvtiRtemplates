@@ -66,7 +66,7 @@ if (utils::packageVersion("varPro") < "3.2.0") {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and
 # README.md says a job that still contains one has not been finished. This
@@ -199,7 +199,7 @@ Edit these values for this study before rendering. The outcome and predictors
 are not here: they come from the forest.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: how many variables get dependence plots, ranked by VIMP. The partials
 # are the expensive step, so keep this small.
 TOP_K <- 8

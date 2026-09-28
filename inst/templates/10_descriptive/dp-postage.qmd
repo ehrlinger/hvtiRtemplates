@@ -50,7 +50,7 @@ if (!requireNamespace("patchwork", quietly = TRUE)) {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 .tok <- paste0("ED", "IT", ":")
 .cur <- knitr::current_input()
@@ -111,7 +111,7 @@ set_path <- function(kind, file) {
 Set the values in this chunk before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: the built dataset this job reads. "study" is the file named by built:
 # in _study.yml; any other name must be declared under additional_datasets:,
 # such as a column subset written for R. Analysis sets are derived from

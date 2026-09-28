@@ -33,8 +33,8 @@ test_that("jobs present their study choices before reading data", {
   }
   for (file in files) {
     lines <- readLines(file.path(root, file), warn = FALSE)
-    config <- grep("^#\\| label: study-choices$", lines)
-    first_work <- grep("^#\\| label: (data|cohort|expect|read-upstream)$", lines)[1L]
+    config <- grep("^#\\| label: edit-study-choices$", lines)
+    first_work <- grep("^#\\| label: (edit-)?(data|cohort|expect|read-upstream)$", lines)[1L]
     expect_true(length(config) == 1L, info = file)
     if (length(config) != 1L) next
     expect_true(config < first_work, info = file)
