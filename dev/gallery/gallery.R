@@ -21,6 +21,7 @@ source(file.path(.gallery_dir, "..", "demo", "demo-study.R"))
 
 # ---- Families ----------------------------------------------------------------
 gallery_families <- list()
+.gallery_env <- environment()
 
 # Called once by each family file.
 gallery_family <- function(name, jobs, columns = function(d) d) {
@@ -31,7 +32,7 @@ gallery_family <- function(name, jobs, columns = function(d) d) {
       stop("Gallery job ", job, " must name its subject and type.", call. = FALSE)
     }
   }
-  gallery_families[[name]] <<- list(columns = columns, jobs = jobs)
+  .gallery_env$gallery_families[[name]] <- list(columns = columns, jobs = jobs)
   invisible(name)
 }
 
@@ -50,9 +51,21 @@ gallery_jobs <- function() {
 # The demo cohort with every family's columns added, labels kept.
 gallery_data <- function() {
   d <- demo_data()
+  owner <- stats::setNames(rep("demo", ncol(d)), names(d))
   for (fam in names(gallery_families)) {
+    before <- d
     d <- gallery_families[[fam]]$columns(d)
     if (!is.data.frame(d)) stop("Family ", fam, "'s columns() must return a data frame.", call. = FALSE)
+    # A family may add columns, or redraw the demo's own; it may not redraw
+    # another family's, which would change that family's reports silently.
+    changed <- names(d)[!names(d) %in% names(before) |
+                          !vapply(names(d), function(v) identical(d[[v]], before[[v]]), logical(1L))]
+    taken <- changed[changed %in% names(owner) & owner[changed] != "demo"]
+    if (length(taken)) {
+      stop("Family ", fam, " redefines column(s) another family defined: ",
+           paste0(taken, " (", owner[taken], ")", collapse = ", "), call. = FALSE)
+    }
+    owner[changed] <- fam
   }
   d
 }
