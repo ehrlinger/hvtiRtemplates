@@ -125,8 +125,8 @@
   cohort metadata. Records distinguish outcomes, treatments and count
   exposures; retain accepted and observed levels and applicable coding;
   and report the fitted formula, family, method, predictors, imputation
-  details, and analysed-row accounting. Stacked-imputation totals are
-  labelled as stacked rows and accompanied by per-imputation counts.
+  details, and analyzed-row accounting. Stacked-imputation totals are
+  labeled as stacked rows and accompanied by per-imputation counts.
   `lm-checkpred` keeps the source model’s training metadata separate
   from the validation cohort it observes.
 
@@ -391,7 +391,7 @@
   re-rendered from it. 1.1.10 carries
   [hvtiR#73](https://github.com/ehrlinger/hvtiR/pull/73) and
   [hvtiR#74](https://github.com/ehrlinger/hvtiR/pull/74): TemporalHazard
-  functions named on the hazard rows, the relabelled names, and `pm`’s
+  functions named on the hazard rows, the relabeled names, and `pm`’s
   row dropped now that it folds into `lm`. It moves together with
   [hvtiRutilities#113](https://github.com/ehrlinger/hvtiRutilities/pull/113),
   which drops `pm` from
@@ -550,7 +550,7 @@
 - 🔴 **It also rejects refs that are not immutable tag pins**, added
   after review found the first version passed states it forbids:
   `ref: main` in both workflows agrees with itself, and so does an empty
-  `ref:`, and both resolve to mutable default-branch behaviour.
+  `ref:`, and both resolve to mutable default-branch behavior.
   **Equality is not pinning.** An empty `ref:` was the sharp edge — a
   missing `ref:` line yields `None` and was always rejected, but `ref:`
   with nothing after it yields `""`, which is not `None` and slipped
@@ -612,7 +612,7 @@
   or unparseable one is refused rather than crashed on.
 
 - **`bh` deliberately stays at `>= 0.9.0`.** Its screen comes from
-  `TemporalHazard`, whose own stepwise has always honoured `slentry` and
+  `TemporalHazard`, whose own stepwise has always honored `slentry` and
   `slstay`; `hvtiRbootstrap` is only the reporting layer there. Raising
   it would assert a dependency the template does not have.
 
@@ -700,7 +700,7 @@ template, and no ordinal will ever be issued again.
   `ordinal` (10) rank fifth and sixth, behind `trend` (21), `tavr`,
   `gastroparesis` and `matched`.
 
-  So it is one job parameterised by variable, which is what the design
+  So it is one job parameterized by variable, which is what the design
   record said before it talked itself out of it. The row is `dp` /
   `variable`, 237 job studies. `qualifier` is `variable` rather than
   null because a prefix must be wholly qualified or wholly unqualified
@@ -799,7 +799,7 @@ template, and no ordinal will ever be issued again.
   the same period; this one was prose, and prose is what drifted.
 
   The **acyclic** half of the claim was true throughout, and is now
-  verified by a depth-first colouring rather than asserted. A stale
+  verified by a depth-first coloring rather than asserted. A stale
   number sitting beside a correct claim is harder to see than a wrong
   one on its own.
 
@@ -959,7 +959,7 @@ template, and no ordinal will ever be issued again.
   were scalars. They are per **phase**: a real bag carries
   `c(early = 230, late = 230)`, so a length-2 value met a length-13 item
   column and [`data.frame()`](https://rdrr.io/r/base/data.frame.html)
-  errored. Now collapsed to one labelled string per row —
+  errored. Now collapsed to one labeled string per row —
   `early 230, late 230` — with fallbacks for a single-phase run and for
   a runner that drops the names.
 
@@ -1161,7 +1161,7 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
 
 ### Documentation
 
-- **The institutional SAS licence runs into 2027, not out in 2026.** The
+- **The institutional SAS license runs into 2027, not out in 2026.** The
   wrong date `2026-09-29` was stated in eleven places: the package
   `README.md`, the 1.0.0 provenance note below, and nine statements
   across the design and artifact records in `dev/specs/`. `README.md` is
@@ -1178,13 +1178,13 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
 - Two of those statements used the date as a **deadline**, and they came
   out differently. The “forcing function” in the AVR/LV-function parity
   design keeps its argument: fresh SAS execution genuinely needs a live
-  licence, so the pressure is real and simply further out than stated.
-  The macro-allocation design’s claim that the licence “bounds the
+  license, so the pressure is real and simply further out than stated.
+  The macro-allocation design’s claim that the license “bounds the
   window” for re-running the corpus scan is **withdrawn, not re-dated.**
   That scan reads `.sas` files as text and never invokes SAS. What
   threatens it is loss of the sources, which are unversioned or
   unreplicated, and the mitigation is a remote rather than a deadline.
-- What the licence date does not bound, in either case, is reading:
+- What the license date does not bound, in either case, is reading:
   compiled SAS data stays readable well beyond expiry, so what ends is
   the ability to *run* SAS, not to read what it produced.
 
@@ -1314,7 +1314,7 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
 
 - The `03.01-ac` template’s local
   [`imputed_levels()`](https://ehrlinger.github.io/hvtiRutilities/reference/imputed_levels.html)
-  is removed in favour of the `hvtiRutilities` export. The two were
+  is removed in favor of the `hvtiRutilities` export. The two were
   identical, and the duplicate arrived only because hvtiRutilities#47
   lifted the same function out of the same study. \# hvtiRtemplates
   1.0.7
@@ -1493,7 +1493,7 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
   `<folder>/<endpoint>-<type>-<NN.MM>-<prefix>.qmd` — into the taxonomy
   folder the template belongs to, not a flat `qmd/`. The `type` is
   required because a set is keyed on `(endpoint, analysis type)`: one
-  endpoint is analysed by several methods and those chains share their
+  endpoint is analyzed by several methods and those chains share their
   upstream, so keyed on the endpoint alone two sets would write to one
   filename.
 - [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)’s
@@ -1590,9 +1590,9 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
   path needs editing, and marks every study-specific line `EDIT:`.
 
   The cohort section offers two shapes, because the choice is not
-  cosmetic: a job analysing the whole study uses
+  cosmetic: a job analyzing the whole study uses
   [`assert_cohort()`](https://ehrlinger.github.io/hvtiRutilities/reference/assert_cohort.html),
-  while a job analysing a filtered subset must supply its own gate —
+  while a job analyzing a filtered subset must supply its own gate —
   `_study.yml` records the study cohort, so
   [`assert_cohort()`](https://ehrlinger.github.io/hvtiRutilities/reference/assert_cohort.html)
   would pass while the job ran on a cohort nobody checked.
@@ -1632,9 +1632,9 @@ before release, and every path was purged from every commit with
 history.
 
 Parity checks against the SAS originals therefore need a source outside
-this repository. The institutional SAS licence expires 2026-09-29.
+this repository. The institutional SAS license expires 2026-09-29.
 
-**Corrected 2026-08-29: the licence runs into 2027, not out in 2026**
+**Corrected 2026-08-29: the license runs into 2027, not out in 2026**
 (working date `2027-09-29`, not yet confirmed). The date above was wrong
 when 1.0.0 shipped. It is left as written and corrected here; see the
 1.0.10 entry.

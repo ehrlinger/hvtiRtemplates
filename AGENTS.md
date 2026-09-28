@@ -124,7 +124,7 @@ confirm the new tests go red.
   the FILE.** A directory key such as `inst/templates` excludes every
   linter on that path **wholesale and silently** — six real indentation
   and brace lints in `ac.qmd` vanished from a clean run that way. Only a
-  file key honours a per-linter list. The friction is deliberate: it
+  file key honors a per-linter list. The friction is deliberate: it
   forces a decision per template instead of blanket-exempting the
   directory.
 - **Templates carry no study identifiers.** `test-add-job.R` asserts
@@ -261,7 +261,7 @@ scaffolded at all.
   templates call study-side packages attached with
   [`library()`](https://rdrr.io/r/base/library.html) inside chunks,
   which lintr does not see, so every call reports “no visible global
-  function”. That is why the exclusion exists; it is not licence to
+  function”. That is why the exclusion exists; it is not license to
   disable it in `R/`. `TemporalHazard (>= 1.2.8)` has been in `Suggests`
   since 2026-09-17 only so tests can run template chunks against it
   (#125); it remains the study’s dependency, not this package’s.
@@ -376,7 +376,7 @@ guess.
   mutation returns 200 either way. The consistent reading is that
   `union: true` is a no-op against an outstanding request and only
   registers once the previous one has been fulfilled, which is inference
-  from two observations rather than documented behaviour, so check the
+  from two observations rather than documented behavior, so check the
   count rather than trusting either the 200 or this sentence. It is a
   cheaper signal than the review-count polling below, because it moves
   immediately instead of after the bot finishes. Count it across pages

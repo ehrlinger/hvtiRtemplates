@@ -77,7 +77,7 @@ directly, in a temporary directory:
 ``` r
 
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L)
-#> Study: /tmp/RtmpkEfJGI/file1ebf50dd285c/new-study
+#> Study: /tmp/RtmppnFZ67/file1ec81c9dc059/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -123,7 +123,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpkEfJGI/file1ebf50dd285c/new-study
+#> Study: /tmp/RtmppnFZ67/file1ec81c9dc059/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -135,7 +135,7 @@ register_data(
 ```
 
 Registration names no endpoint and no cohort. Those belong to the jobs
-that analyse them, so one registered dataset can serve every job in the
+that analyze them, so one registered dataset can serve every job in the
 study.
 
 ## Scaffold the first EDA job

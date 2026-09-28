@@ -57,7 +57,7 @@ names the **set** the job belongs to, and both are required. The subject
 is the grouping topic, not necessarily a statistical endpoint. An
 endpoint-driven job may use `"death"`; an endpoint-free job may use
 `"cohort"`, `"treatment"`, or `"labs"` without inventing an outcome. One
-subject can be analysed by several methods, and the jobs those chains
+subject can be analyzed by several methods, and the jobs those chains
 share would otherwise collide. A death-hazard set and a death
 random-forest-survival set both begin from the same life table, so keyed
 on the subject alone both would be written to one filename.
