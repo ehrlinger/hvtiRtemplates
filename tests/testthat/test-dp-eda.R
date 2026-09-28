@@ -92,7 +92,7 @@ test_that("dp-eda colors every point of an event panel, by the house rule or fro
     end <- start + match("```", lines[-seq_len(start)])
     parse(text = lines[seq.int(start + 1L, end - 1L)])
   }
-  # old = TRUE mimics a edit-study-choices chunk copied from a job older than the rename.
+  # old = TRUE mimics the choices chunk of a job older than the COLORS rename.
   event_panel_colors <- function(colors, old = FALSE) {
     env <- new.env(parent = globalenv())
     env$.root <- root
