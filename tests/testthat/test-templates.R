@@ -773,7 +773,9 @@ test_that(".select_template() resolves a template stem", {
   expect_equal(hvtiRtemplates:::.select_template(tl, "dp-trends")$file, "a.qmd")
   expect_equal(hvtiRtemplates:::.select_template(tl, "ac")$file, "c.qmd")
   expect_error(hvtiRtemplates:::.select_template(tl, "dp-nope"), "no template qualified")
-  expect_error(hvtiRtemplates:::.select_template(tl, "dp-"), "single non-empty")
+  for (bad in c("dp-", "-trends", "dp-trends-x")) {
+    expect_error(hvtiRtemplates:::.select_template(tl, bad), "not a template name", info = bad)
+  }
 })
 
 test_that("a stem and a qualifier together are refused, not reconciled", {

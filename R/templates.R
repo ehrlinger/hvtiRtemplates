@@ -94,6 +94,10 @@ template_path <- function(prefix, qualifier = NULL) {
       stop("template selection: name the template as a stem ('", prefix,
            "') or as prefix plus qualifier, not both.", call. = FALSE)
     }
+    if (!grepl("^[^-]+-[^-]+$", prefix)) {
+      stop("template selection: '", prefix, "' is not a template name; ",
+           "expected <prefix>-<qualifier>, e.g. 'dp-trends'.", call. = FALSE)
+    }
     qualifier <- sub("^[^-]*-", "", prefix)
     prefix <- sub("-.*$", "", prefix)
   }
