@@ -217,7 +217,7 @@ That is the only choice to change. `VARIABLES <- NULL` draws every column except
 `SECTIONS` picks any of `"continuous"`, `"percent"` and `"count"`. Percent and count bin the year the same way, so their bars line up.
 
 ::: {.callout-note}
-The identifier rule catches `patient_id` but not a name with no separator, such as `ccfid`. A fix is in progress. Until it lands, put such a column in `EXCLUDE`.
+The identifier rule catches `patient_id`, names with no separator such as `ccfid` and `patientid`, and any name holding `mrn`. Name a column in `VARIABLES` to draw it anyway.
 :::
 
 ## The whole report: `dp-eda`
@@ -234,7 +234,7 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 
 One render gives:
 
-1. an **overview** of every column: its type, label and share missing;
+1. an **overview** of every column but the identifiers: its type, label and share missing;
 2. **goodness of follow-up**, with `dc-gfup`'s tables for each death panel;
 3. **continuous** variables;
 4. **categorical** variables as **percentages**;
@@ -287,5 +287,4 @@ Rscript dev/demo/descriptives-demo.R ~/eda-demo-all
 
 - **House palette**: event red, censored blue, missing light grey, otherwise ColorBrewer Set1. This needs the next hvtiPlotR release. Today the EDA pages use ggplot's default colours.
 - **Shorter labels that stay distinct**, with a study abbreviation list. This needs the next hvtiRutilities release.
-- **The identifier rule** for names such as `ccfid`.
 - **Acceptance**: Lauren checks `dp-eda` on a real study against the SAS EDA output.
