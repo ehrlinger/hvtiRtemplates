@@ -13,7 +13,7 @@ eda_edits <- list(
 test_that("dp-eda renders every section into one self-contained report", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
-  # An event panel too: its colour and shape mapping is this template's own
+  # An event panel too: its color and shape mapping is this template's own
   # code, not hv_followup_panels()'s, so test-dp-gfup.R does not cover it here.
   edits <- c(eda_edits, list(
     "^EVENTS <- list\\(\\)$" = paste0(
@@ -76,11 +76,11 @@ test_that("dp-eda leaves out a section not named in SECTIONS", {
   expect_false(grepl("<h2[^>]*>[^<]*Goodness of follow-up", text))
 })
 
-test_that("dp-eda colours every point of an event panel, by the house rule or from COLOURS", {
+test_that("dp-eda colors every point of an event panel, by the house rule or from COLORS", {
   # A manual scale whose names miss one of the panel's levels still draws: the
-  # unmatched points go grey and ggplot says nothing while any level matches.
+  # unmatched points go gray and ggplot says nothing while any level matches.
   # Only the built plot shows it, so this runs the template's own chunks, once
-  # with the default COLOURS <- NULL and once with a study's own three.
+  # with the default COLORS <- NULL and once with a study's own three.
   withr::local_package("ggplot2")
   withr::local_package("hvtiPlotR")
   withr::local_package("hvtiRutilities")
@@ -92,14 +92,20 @@ test_that("dp-eda colours every point of an event panel, by the house rule or fr
     end <- start + match("```", lines[-seq_len(start)])
     parse(text = lines[seq.int(start + 1L, end - 1L)])
   }
-  event_panel_colours <- function(colours) {
+  # old = TRUE mimics a study-choices chunk copied from a job older than the rename.
+  event_panel_colors <- function(colors, old = FALSE) {
     env <- new.env(parent = globalenv())
     env$.root <- root
     env$.provenance_data <- list()
     env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
     for (label in c("set", "study-choices")) eval(chunk(label), env)
     env$ORIGIN_YEAR <- 1980
-    env$COLOURS <- colours
+    if (old) {
+      rm("COLORS", envir = env)
+      env$COLOURS <- colors
+    } else {
+      env$COLORS <- colors
+    }
     env$EVENTS <- list(repair = list(event = "repair", time = "iv_fup", death = "dead",
                                      death_time = "iv_dead", label = "Repair"))
     # The fixture carries no labels, and label_map() says so; that notice only.
@@ -115,17 +121,18 @@ test_that("dp-eda colours every point of an event panel, by the house rule or fr
   }
 
   house <- hvtiPlotR::hv_role_palette(c("No event", "Repair", "Death"), event = "Death", censored = "No event")
-  drawn <- event_panel_colours(NULL)
+  drawn <- event_panel_colors(NULL)
   expect_gt(length(drawn), 0L)
   expect_true(all(drawn %in% house), info = paste(setdiff(drawn, house), collapse = ", "))
   expect_true(house[["Repair"]] %in% drawn)
   expect_identical(house[["Repair"]], "#009E73")
 
   own <- c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A")
-  drawn <- event_panel_colours(own)
+  drawn <- event_panel_colors(own)
   expect_true(all(drawn %in% own), info = paste(setdiff(drawn, own), collapse = ", "))
   expect_true(own[["event"]] %in% drawn)
-  expect_error(event_panel_colours(c(alive = "blue", dead = "red")), "COLOURS must be NULL")
+  expect_error(event_panel_colors(c(alive = "blue", dead = "red")), "COLORS must be NULL")
+  expect_error(event_panel_colors(own, old = TRUE), "COLOURS is now COLORS", fixed = TRUE)
 })
 
 test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a separator", {
@@ -170,15 +177,15 @@ test_that("dp-eda's overview leaves out identifiers but keeps dates", {
   expect_match(out, "Identifier columns, not described: ccfid, patientid, mrn_num", fixed = TRUE)
 })
 
-test_that("dp-gfup and dp-eda choose follow-up colours with the same code", {
+test_that("dp-gfup and dp-eda choose follow-up colors with the same code", {
   # dp-eda's copy is drawn and checked above; this keeps dp-gfup's from drifting.
   block <- function(prefix, qualifier) {
     lines <- readLines(template_path(prefix, qualifier), warn = FALSE)
-    start <- grep("^if \\(!is.null\\(COLOURS\\)", lines)
+    start <- grep("^if \\(exists\\(\"COLOURS\"", lines)
     end <- start + match("}", lines[-seq_len(start)])
     end <- end + match("}", lines[-seq_len(end)])
     lines[start:end]
   }
-  expect_length(block("dp", "gfup"), 11L)
+  expect_length(block("dp", "gfup"), 12L)
   expect_identical(block("dp", "gfup"), block("dp", "eda"))
 })
