@@ -8,9 +8,9 @@
   section calls the function its standalone job calls (`hv_followup_panels()`,
   `followup_check()`, `hv_eda_pages()`) with the same arguments, so a section
   is that job's figure; `test-dp-eda.R` checks the pages byte for byte against
-  `dp-postage`. Needs hvtiPlotR 2.7.17 and hvtiRutilities 1.4.1, the current
-  floors. The house palette and smart label truncation follow once those
-  packages release them.
+  `dp-postage`. Needs hvtiPlotR 2.7.18 and hvtiRutilities 1.4.1, the current
+  floors. It draws in the house colours (below); smart label truncation
+  follows once hvtiRutilities releases it.
 
 * `dp-postage` and `dp-eda` leave out identifiers written without a
   separator. Under `VARIABLES <- NULL` a column named `ccfid` or `patientid`
@@ -28,6 +28,18 @@
   `spec` chunk ninety lines below the settings they describe; they now sit
   beside them in `study-choices`, and the empty chunk is gone. No change to
   what the job does. From Lauren's 2026-09-24 review.
+
+* **The EDA templates draw in the house colours, which are colourblind safe.**
+  `dp-postage` and `dp-eda` colour their categorical pages with
+  `hvtiPlotR::scale_fill_hv()`: each panel runs blue, vermillion, green and on
+  from its own levels, and missing is light grey. `dp-gfup` and `dp-eda`'s
+  follow-up section use `scale_colour_hv()`. **The follow-up figures change
+  colour:** dead moves from Set1 red `#E41A1C` to vermillion `#D55E00`, alive
+  from `#377EB8` to `#0072B2`, and a non-fatal event from `#4DAF4A` to
+  `#009E73`. The pattern of red, blue and green is kept. `COLOURS` is now
+  `NULL` by default; name `alive`, `dead` and `event` to choose your own, and
+  `c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A")` restores the
+  earlier colours. Needs hvtiPlotR 2.7.18, now the floor.
 
 # hvtiRtemplates 1.2.2
 

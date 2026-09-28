@@ -76,10 +76,11 @@ test_that("dp-eda leaves out a section not named in SECTIONS", {
   expect_false(grepl("<h2[^>]*>[^<]*Goodness of follow-up", text))
 })
 
-test_that("dp-eda colours every point of an event panel from COLOURS", {
+test_that("dp-eda colours every point of an event panel, by the house rule or from COLOURS", {
   # A manual scale whose names miss one of the panel's levels still draws: the
   # unmatched points go grey and ggplot says nothing while any level matches.
-  # Only the built plot shows it, so this runs the template's own chunks.
+  # Only the built plot shows it, so this runs the template's own chunks, once
+  # with the default COLOURS <- NULL and once with a study's own three.
   withr::local_package("ggplot2")
   withr::local_package("hvtiPlotR")
   withr::local_package("hvtiRutilities")
@@ -91,27 +92,40 @@ test_that("dp-eda colours every point of an event panel from COLOURS", {
     end <- start + match("```", lines[-seq_len(start)])
     parse(text = lines[seq.int(start + 1L, end - 1L)])
   }
-  env <- new.env(parent = globalenv())
-  env$.root <- root
-  env$.provenance_data <- list()
-  env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
-  for (label in c("set", "study-choices")) eval(chunk(label), env)
-  env$ORIGIN_YEAR <- 1980
-  env$EVENTS <- list(repair = list(event = "repair", time = "iv_fup", death = "dead",
-                                   death_time = "iv_dead", label = "Repair"))
-  # The fixture carries no labels, and label_map() says so; that notice only.
-  withCallingHandlers(
-    utils::capture.output(for (label in c("spec", "gfup-window", "gfup-panels")) eval(chunk(label), env)),
-    warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning")
-  )
-  # The loop leaves p as the last panel drawn, the event panel.
-  expect_identical(env$nm, "repair")
-  built <- ggplot2::ggplot_build(env$p)
-  points <- Filter(function(layer) "shape" %in% names(layer), built$data)
-  colours <- unlist(lapply(points, `[[`, "colour"))
-  expect_gt(length(colours), 0L)
-  expect_true(all(colours %in% env$COLOURS), info = paste(setdiff(colours, env$COLOURS), collapse = ", "))
-  expect_true(env$COLOURS[["event"]] %in% colours)
+  event_panel_colours <- function(colours) {
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    env$.provenance_data <- list()
+    env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+    for (label in c("set", "study-choices")) eval(chunk(label), env)
+    env$ORIGIN_YEAR <- 1980
+    env$COLOURS <- colours
+    env$EVENTS <- list(repair = list(event = "repair", time = "iv_fup", death = "dead",
+                                     death_time = "iv_dead", label = "Repair"))
+    # The fixture carries no labels, and label_map() says so; that notice only.
+    withCallingHandlers(
+      utils::capture.output(for (label in c("spec", "gfup-window", "gfup-panels")) eval(chunk(label), env)),
+      warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning")
+    )
+    # The loop leaves p as the last panel drawn, the event panel.
+    expect_identical(env$nm, "repair")
+    built <- ggplot2::ggplot_build(env$p)
+    points <- Filter(function(layer) "shape" %in% names(layer), built$data)
+    unlist(lapply(points, `[[`, "colour"))
+  }
+
+  house <- hvtiPlotR::hv_role_palette(c("No event", "Repair", "Death"), event = "Death", censored = "No event")
+  drawn <- event_panel_colours(NULL)
+  expect_gt(length(drawn), 0L)
+  expect_true(all(drawn %in% house), info = paste(setdiff(drawn, house), collapse = ", "))
+  expect_true(house[["Repair"]] %in% drawn)
+  expect_identical(house[["Repair"]], "#009E73")
+
+  own <- c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A")
+  drawn <- event_panel_colours(own)
+  expect_true(all(drawn %in% own), info = paste(setdiff(drawn, own), collapse = ", "))
+  expect_true(own[["event"]] %in% drawn)
+  expect_error(event_panel_colours(c(alive = "blue", dead = "red")), "COLOURS must be NULL")
 })
 
 test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a separator", {
@@ -131,4 +145,17 @@ test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a sepa
   out <- capture.output(eval(spec, env))
   expect_identical(env$VARIABLES, c("age", "carotid"))
   expect_match(paste(out, collapse = " "), "ccfid, patientid")
+})
+
+test_that("dp-gfup and dp-eda choose follow-up colours with the same code", {
+  # dp-eda's copy is drawn and checked above; this keeps dp-gfup's from drifting.
+  block <- function(prefix, qualifier) {
+    lines <- readLines(template_path(prefix, qualifier), warn = FALSE)
+    start <- grep("^if \\(!is.null\\(COLOURS\\)", lines)
+    end <- start + match("}", lines[-seq_len(start)])
+    end <- end + match("}", lines[-seq_len(end)])
+    lines[start:end]
+  }
+  expect_length(block("dp", "gfup"), 11L)
+  expect_identical(block("dp", "gfup"), block("dp", "eda"))
 })

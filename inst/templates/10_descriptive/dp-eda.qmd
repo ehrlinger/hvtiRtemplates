@@ -41,8 +41,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.7.17") {
-  stop("This job needs hvtiPlotR >= 2.7.17 for hv_eda_pages() and hv_followup_panels(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
+  stop("This job needs hvtiPlotR >= 2.7.18 for hv_eda_pages(), hv_followup_panels() and the role colours; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiRutilities") < "1.4.1") {
@@ -183,9 +183,11 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 
-# Red is dead and blue is alive, in every job. A non-fatal event is green.
-# These are ColorBrewer Set1's red, blue and green, as dp-gfup draws them.
-COLOURS <- c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A")
+# EDIT: NULL draws the house colours through hvtiPlotR::scale_colour_hv(): dead
+# vermillion, alive blue and a non-fatal event green, all colourblind safe. Name
+# all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
+# event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
+COLOURS <- NULL
 ```
 
 ## Data
@@ -378,6 +380,17 @@ show_table(data.frame(
 # hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
 # selected, so the report carries no patient-level column; run dc-gfup to review
 # the suspicious rows themselves.
+if (!is.null(COLOURS) && !(is.character(COLOURS) && !anyNA(COLOURS) && length(COLOURS) == 3L &&
+                             setequal(names(COLOURS), c("alive", "dead", "event")))) {
+  stop("COLOURS must be NULL or name exactly alive, dead and event.", call. = FALSE)
+}
+# Dead or Death is the event and Alive or No event the censored level, so a
+# non-fatal event takes the house rule's next colour, green.
+status_colours <- function(levels) {
+  if (is.null(COLOURS)) return(scale_colour_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
+  keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
+  scale_colour_manual(values = stats::setNames(COLOURS[keys], levels))
+}
 plots <- plot(fp, alpha = ALPHA)
 panel_counts <- list()
 for (i in seq_len(nrow(fp$data))) {
@@ -391,12 +404,12 @@ for (i in seq_len(nrow(fp$data))) {
     show_table(fc$cohort, "Cohort: event, censored and missing event status")
     show_table(fc$intervals, "Follow-up interval: missing, negative and zero values")
     p <- plots[[nm]] +
-      scale_colour_manual(values = c(Alive = COLOURS[["alive"]], Dead = COLOURS[["dead"]])) +
+      status_colours(c("Alive", "Dead")) +
       scale_shape_manual(values = c(Alive = 1, Dead = 4))
   } else {
     levels <- c("No event", row$title, "Death")
     p <- plots[[nm]] +
-      scale_colour_manual(values = stats::setNames(COLOURS[c("alive", "event", "dead")], levels)) +
+      status_colours(levels) +
       scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", colour = NULL, shape = NULL) +
@@ -444,7 +457,7 @@ draw_section <- function(section) {
   files <- character(0)
   for (i in seq_along(pages)) {
     file <- set_path("graphs", sprintf("dp-eda-%s-page-%02d.png", section, i))
-    ggplot2::ggsave(file, pages[[i]] & theme_hv_manuscript(base_size = 8),
+    ggplot2::ggsave(file, pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
                     width = 11, height = 8.5, units = "in", dpi = 150)
     on_page <- attr(pages[[i]], "variables")
     cat("\n### ", titles[[section]], ", page ", i, "\n\n![", paste(labels[on_page], collapse = ", "),

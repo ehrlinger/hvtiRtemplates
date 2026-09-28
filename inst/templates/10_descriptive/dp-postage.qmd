@@ -40,8 +40,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.7.16") {
-  stop("This job needs hvtiPlotR >= 2.7.16 for hv_eda_pages(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
+  stop("This job needs hvtiPlotR >= 2.7.18 for hv_eda_pages() and scale_fill_hv(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (!requireNamespace("patchwork", quietly = TRUE)) {
@@ -305,7 +305,7 @@ for (section in SECTIONS) {
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
   for (i in seq_along(pages)) {
     file <- set_path("graphs", sprintf("dp-postage-%s-page-%02d.png", section, i))
-    ggplot2::ggsave(file, pages[[i]] & theme_hv_manuscript(base_size = 8),
+    ggplot2::ggsave(file, pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
                     width = 11, height = 8.5, units = "in", dpi = 150)
     on_page <- attr(pages[[i]], "variables")
     # Link relative to wherever this document sits. Quarto rewrites an absolute
