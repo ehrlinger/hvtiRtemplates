@@ -68,9 +68,11 @@ which is enough, all case-insensitive:
 
 - a name matching `(^|_)(id|identifier|date|datetime)($|_)` or ending `_dt`,
   the rule `dp-postage` shipped with;
-- a name matching `^((ccf|pat|patient|study|subject|record|case)_?(id|num|no)|mrn)$`,
+- a name matching `^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|mrn`,
   added 2026-09-26 because the first rule wants `id` as its own token and so
-  passed `ccfid`, the CCF patient identifier, and `patientid`;
+  passed `ccfid`, the CCF patient identifier, and `patientid`. Widened on
+  2026-09-28 to any name holding `mrn` (`mrn_num`, `pt_mrn`), which no study
+  variable spells;
 - a `Date` or `POSIXt` column, or a character or factor column with ten or
   more non-missing values, every one of them different.
 
@@ -91,8 +93,11 @@ study author can name the column in `VARIABLES` to draw it anyway. Naming a
 column still only warns, as now.
 
 The rule lives in the template, not in `hv_eda_pages()`. The plotting function
-takes the variables it is given (`vars = NULL` there means every column but
-`x_col`), because only the study side knows which columns identify patients.
+takes the variables it is given, because only the study side knows which
+columns identify patients. One exception, decided by John on 2026-09-28:
+under `vars = NULL`, `hv_eda_pages()` leaves out the stem and `mrn` names
+above and records them in `meta$ignored`, so a direct caller does not draw
+`ccfid` either. The date and cardinality tests stay template-only.
 
 **No migration mapping,** decided 2026-09-25. These templates are in their
 first round of use, so no job depends on `SHOW_PERCENT` yet. This is a

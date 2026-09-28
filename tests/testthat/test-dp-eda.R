@@ -147,6 +147,29 @@ test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a sepa
   expect_match(paste(out, collapse = " "), "ccfid, patientid")
 })
 
+test_that("dp-eda's overview leaves out identifiers but keeps dates", {
+  # Named in VARIABLES, so the spec chunk's NULL branch does not decide this:
+  # the overview applies the rule itself.
+  lines <- readLines(template_path("dp", "eda"), warn = FALSE)
+  chunk <- function(label) {
+    start <- match(paste0("#| label: ", label), lines)
+    end <- start + match("```", lines[-seq_len(start)])
+    parse(text = lines[seq.int(start + 1L, end - 1L)])
+  }
+  n <- 12L
+  env <- list2env(list(d = data.frame(year = seq_len(n), age = 40 + seq_len(n), ccfid = 1000L + seq_len(n),
+                                      patientid = sprintf("P%03d", seq_len(n)), carotid = rep(0:1, 6), mrn_num = 5000L + seq_len(n),
+                                      dt_surg = as.Date("2020-01-01") + seq_len(n)),
+                       X_VAR = "year", VARIABLES = c("age", "ccfid"), EXCLUDE = character(),
+                       GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
+                       SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
+                       label_map = function(d) data.frame(key = names(d), label = names(d))))
+  suppressWarnings(capture.output(eval(chunk("spec"), env)))
+  out <- paste(capture.output(eval(chunk("overview-contents"), env)), collapse = "\n")
+  expect_identical(env$shown$variable, c("year", "age", "carotid", "dt_surg"))
+  expect_match(out, "Identifier columns, not described: ccfid, patientid, mrn_num", fixed = TRUE)
+})
+
 test_that("dp-gfup and dp-eda choose follow-up colours with the same code", {
   # dp-eda's copy is drawn and checked above; this keeps dp-gfup's from drifting.
   block <- function(prefix, qualifier) {

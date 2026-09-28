@@ -319,6 +319,7 @@ test_that("postage VARIABLES = NULL leaves out identifiers written without a sep
   n <- 12L
   env <- list2env(list(d = data.frame(year = seq_len(n), age = 40 + seq_len(n), ccfid = 1000L + seq_len(n),
                                       patientid = sprintf("P%03d", seq_len(n)), mrn = 5000L + seq_len(n),
+                                      pt_mrn_num = 6000L + seq_len(n),
                                       surgeon_note = sprintf("note %d", seq_len(n)),
                                       carotid = rep(0:1, 6), steroid = rep(0:1, 6), case = rep(0:1, 6)),
                        X_VAR = "year", VARIABLES = NULL, EXCLUDE = character(),
@@ -326,7 +327,7 @@ test_that("postage VARIABLES = NULL leaves out identifiers written without a sep
                        SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5))
   out <- capture.output(eval(spec, env))
   expect_identical(env$VARIABLES, c("age", "carotid", "steroid", "case"))
-  expect_match(paste(out, collapse = " "), "ccfid, patientid, mrn, surgeon_note")
+  expect_match(paste(out, collapse = " "), "ccfid, patientid, mrn, pt_mrn_num, surgeon_note")
   # Below ten values a distinct character column is kept: a small check frame
   # is not a register.
   env$d <- env$d[1:9, ]
