@@ -64,8 +64,9 @@
   group default list with `hvtiRutilities::study_abbreviations()`, so every
   job in a study shortens labels the same way. Labels that share a heading
   over the cap show it abbreviated (`Surgical procedure: ...` becomes
-  `SP: ...`), and each section prints a key of the abbreviations its labels
-  show. The cap and the merged list, with each entry's level, are recorded in
+  `SP: ...`), and each section prints a key of the abbreviations its shortened
+  labels show. A wrong `LABEL_MAX` or `ABBREVIATIONS` stops the render with
+  a message naming it, as the other edit points do. The cap and the merged list, with each entry's level, are recorded in
   the report's provenance. Needs hvtiRutilities 1.4.2, now the floor; a
   migrated `dp-postage` job keeps both edit points at their defaults.
 

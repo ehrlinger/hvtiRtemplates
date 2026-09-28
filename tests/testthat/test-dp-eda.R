@@ -19,7 +19,8 @@ test_that("dp-eda renders every section into one self-contained report", {
     "^EVENTS <- list\\(\\)$" = paste0(
       "EVENTS <- list(repair = list(event = \"repair\", time = \"iv_fup\", ",
       "death = \"dead\", death_time = \"iv_dead\", label = \"Repair\"))"
-    )
+    ),
+    "^ABBREVIATIONS <- NULL$" = "ABBREVIATIONS <- c(\"Goodness of follow-up\" = \"GFU\")"
   ))
   s <- scaffold_job("dp", "eda", edits, kind = "dp-postage")
   quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
@@ -44,7 +45,11 @@ test_that("dp-eda renders every section into one self-contained report", {
   # so the report can say which list shaped its labels.
   payload <- unlist(hvtiRtemplates:::.extract_provenance(text, managed = TRUE))
   expect_true(any(grepl("label_max$", names(payload)) & payload == "40"))
-  expect_true(any(grepl("abbreviations", names(payload))) || grepl('"abbreviations":', text, fixed = TRUE))
+  # The job's own entry is recorded with its level, not merely a key.
+  i <- which(payload == "Goodness of follow-up")
+  expect_length(i, 1L)
+  prefix <- sub("phrase$", "", names(payload)[i])
+  expect_identical(unname(payload[paste0(prefix, c("abbreviation", "source"))]), c("GFU", "job"))
 })
 
 test_that("dp-eda draws the same pages as dp-postage over the same data", {
@@ -211,7 +216,7 @@ test_that("dp-postage and dp-eda shorten labels with the same code and edit poin
                  c("^# Shortened labels stay distinct", "^}$"))) {
     expect_identical(block("postage", b[1], b[2]), block("eda", b[1], b[2]), info = b[1])
   }
-  expect_length(block("eda", "^# Shortened labels stay distinct", "^}$"), 17L)
+  expect_length(block("eda", "^# Shortened labels stay distinct", "^}$"), 20L)
   # And each draws the key under its sections.
   for (q in c("postage", "eda")) {
     expect_true(any(grepl("^  abbreviation_key\\(vars\\)$", readLines(template_path("dp", q), warn = FALSE))), info = q)

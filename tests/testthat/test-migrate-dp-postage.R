@@ -95,7 +95,8 @@ test_that("postage template validates selection and plotting settings before sav
   env <- list2env(list(d = data.frame(year = 1:10, age = 41:50, patient_id = 11:20, visit_date = 21:30),
                        X_VAR = "year", VARIABLES = "age", EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
-                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5))
+                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
+                       LABEL_MAX = 40, ABBREVIATIONS = NULL))
   expect_error({
     selection <- data[seq.int(which(vapply(data, function(x) is.call(x) && identical(x[[1]], as.name("if")), logical(1)))[1],
                               length(data))]
@@ -103,12 +104,22 @@ test_that("postage template validates selection and plotting settings before sav
   }, "written from the study dataset")
   spec <- postage_chunk(job, "spec")
   expect_no_error(eval(spec, env))
-  for (field in c("X_VAR", "VARIABLES", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SECTIONS", "ALPHA")) {
+  for (field in c("X_VAR", "VARIABLES", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SECTIONS", "ALPHA",
+                  "LABEL_MAX", "ABBREVIATIONS")) {
     original <- env[[field]]
     env[[field]] <- NA
     expect_error(eval(spec, env), info = field)
     env[[field]] <- original
   }
+  # The two label settings fail naming themselves, not label_map()'s arguments.
+  env$LABEL_MAX <- 3
+  expect_error(eval(spec, env), "LABEL_MAX")
+  env$LABEL_MAX <- Inf
+  expect_no_error(eval(spec, env))
+  env$LABEL_MAX <- 40
+  env$ABBREVIATIONS <- c("SP", "Proc")
+  expect_error(eval(spec, env), "ABBREVIATIONS")
+  env$ABBREVIATIONS <- NULL
   env$VARIABLES <- "absent"
   expect_error(eval(spec, env), "Unknown EDA")
   env$VARIABLES <- c("patient_id", "visit_date")
@@ -217,6 +228,39 @@ test_that("postage shortens labels that share a heading and prints their key", {
   own <- run_pages(c("Surgical procedure" = "Proc"))
   expect_match(own$labels, "^Proc: ")
   expect_match(own$text, "Abbreviations: Proc = Surgical procedure.", fixed = TRUE)
+})
+
+test_that("postage prints a key only under sections whose labels were shortened, from every level", {
+  # A label that already says "SP" in its own words (systolic pressure) is not
+  # a shortened label: its section gets no key claiming SP = Surgical procedure.
+  # The study's list applies unless the job overrides it.
+  root <- migration_study_fixture("dp-postage")
+  local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  attr(d$age, "label") <- "SP at admission (mmHg)"
+  attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"
+  attr(d$hx_chf, "label") <- "Surgical procedure: mitral valve repair with annuloplasty ring"
+  run_pages <- function(cfg, abbreviations) {
+    env <- list2env(list(
+      .root = root, d = d, X_VAR = "iv_dead", VARIABLES = c("age", "female", "hx_chf"), EXCLUDE = character(),
+      GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SECTIONS = c("continuous", "percent"), ALPHA = 0.5,
+      get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
+      theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
+      .cfg = cfg, LABEL_MAX = 40, ABBREVIATIONS = abbreviations
+    ))
+    job <- template_path("dp", "postage")
+    for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
+    out <- suppressWarnings(utils::capture.output(eval(postage_chunk(job, "pages"), env)))
+    list(labels = unname(env$labels[c("female", "hx_chf")]), text = paste(out, collapse = "\n"))
+  }
+  initials <- run_pages(list(), NULL)
+  sections <- strsplit(initials$text, "## Categorical", fixed = TRUE)[[1L]]
+  expect_false(grepl("Abbreviations:", sections[1L], fixed = TRUE))
+  expect_match(sections[2L], "Abbreviations: SP = Surgical procedure.", fixed = TRUE)
+  study <- run_pages(list(abbreviations = list("Surgical procedure" = "SProc")), NULL)
+  expect_match(study$labels, "^SProc: ")
+  job <- run_pages(list(abbreviations = list("Surgical procedure" = "SProc")), c("Surgical procedure" = "Proc"))
+  expect_match(job$labels, "^Proc: ")
 })
 
 test_that("postage does not require databuild for registered data but validates analysis-set mode", {
@@ -328,7 +372,8 @@ test_that("postage VARIABLES = NULL draws every column but ids, dates and exclus
                                       female = rep(0:1, 5), bmi = 21:30),
                        X_VAR = "year", VARIABLES = NULL, EXCLUDE = "bmi",
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
-                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5))
+                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
+                       LABEL_MAX = 40, ABBREVIATIONS = NULL))
   out <- capture.output(eval(spec, env))
   expect_identical(env$VARIABLES, c("age", "female"))
   expect_match(paste(out, collapse = " "), "patient_id, op_date")
@@ -355,7 +400,8 @@ test_that("postage VARIABLES = NULL leaves out identifiers written without a sep
                                       carotid = rep(0:1, 6), steroid = rep(0:1, 6), case = rep(0:1, 6)),
                        X_VAR = "year", VARIABLES = NULL, EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
-                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5))
+                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
+                       LABEL_MAX = 40, ABBREVIATIONS = NULL))
   out <- capture.output(eval(spec, env))
   expect_identical(env$VARIABLES, c("age", "carotid", "steroid", "case"))
   expect_match(paste(out, collapse = " "), "ccfid, patientid, mrn, pt_mrn_num, surgeon_note")

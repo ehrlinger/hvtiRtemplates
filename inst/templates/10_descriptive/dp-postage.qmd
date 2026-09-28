@@ -245,6 +245,13 @@ if (!column_names(SECTIONS) || !length(SECTIONS) || !all(SECTIONS %in% c("contin
 if (!is.numeric(ALPHA) || length(ALPHA) != 1L || is.na(ALPHA) || ALPHA < 0 || ALPHA > 1) {
   stop("ALPHA must be one number from 0 to 1.", call. = FALSE)
 }
+if (!is.numeric(LABEL_MAX) || length(LABEL_MAX) != 1L || is.na(LABEL_MAX) || LABEL_MAX < 4) {
+  stop("LABEL_MAX must be one number, at least 4, or Inf to show every label whole.", call. = FALSE)
+}
+if (!is.null(ABBREVIATIONS) && (!(is.character(ABBREVIATIONS) || is.list(ABBREVIATIONS)) ||
+                                  (length(ABBREVIATIONS) && is.null(names(ABBREVIATIONS))))) {
+  stop('ABBREVIATIONS must be NULL or name each abbreviation by its phrase, c("Phrase" = "Abbrev").', call. = FALSE)
+}
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
 # A name rule and a data rule. The names catch ccfid and patientid, which have no
@@ -296,9 +303,12 @@ level, so a percentage is out of every patient, not only those with a value.
 .labels <- label_map(d, label_max = LABEL_MAX, abbreviations = .abbreviations)
 labels <- stats::setNames(.labels$label, .labels$key)
 # The abbreviations these variables' labels show, as a key under the section.
+# Only shortened labels count: a label that says "SP" in its own words is not
+# using the key's SP.
 abbreviation_key <- function(vars) {
   used <- attr(.labels, "abbreviations")
-  shown <- labels[vars]
+  row <- match(vars, .labels$key)
+  shown <- .labels$label[row][.labels$label[row] != .labels$label_full[row]]
   hit <- vapply(used$abbreviation, function(a) {
     any(grepl(paste0("(?<![[:alnum:]])", gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", a), "(?![[:alnum:]])"), shown, perl = TRUE))
   }, logical(1L))
