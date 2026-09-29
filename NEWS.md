@@ -1,5 +1,10 @@
 # hvtiRtemplates (unreleased)
 
+* The data-route tests pass when run on their own. They evaluated template
+  chunks that call `study_config()` without supplying it, so they depended on
+  an earlier test file having attached hvtiRutilities, and a filtered run
+  errored twice. No change to the templates.
+
 * Every template chunk holding an `EDIT:` marker is now labeled `edit-`, so
   the editor's chunk outline lists the work a job still needs:
   `study-choices` is `edit-study-choices`, and nine templates carry further
