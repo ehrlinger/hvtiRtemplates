@@ -2,13 +2,14 @@
 
 **Date:** 2026-09-29
 **Status:** design. Every decision in sections 2 to 6 was made by John Ehrlinger
-on 2026-09-29, in the order they appear. Nothing is built yet.
+on 2026-09-29, in the order they appear. Section 4's home was corrected the same
+day, before any code: see 4.4. Nothing is built yet.
 **Reads with:** the template audit for the biostats review (a Claude Docs page,
 "HVTI Template Audit for Biostats"), the rendered gallery (`dev/gallery/`), and
 the data-path issues it raised, hvtiRtemplates #173 to #189.
-**Packages:** `hvtiRutilities` for the shared data step (section 4);
-`hvtiRtemplates` for the templates and `migrate_job()`; `hvtiPlotR` for the
-narrowed identifier default in `hv_eda_pages()` (section 6).
+**Packages:** `hvtiRtemplates` for the shared data step (section 4), the
+templates and `migrate_job()`; `hvtiPlotR` for the narrowed identifier default
+in `hv_eda_pages()` (section 6). `hvtiRutilities` is unchanged.
 
 This note is self-contained. It assumes no memory of the session that produced
 it.
@@ -116,7 +117,7 @@ Each family adds only the names it needs, from one vocabulary:
 `EVENT` is the word the reports and the SAS jobs use, and
 `survival::Surv(time, event)`'s own argument name.
 
-## 4. The shared data step: `hvtiRutilities::read_job_data()`
+## 4. The shared data step: `hvtiRtemplates::read_job_data()`
 
 Every template's data chunk is named `data` and is one call:
 
@@ -126,8 +127,8 @@ job_data <- read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
 d <- job_data$data
 ```
 
-It lives in hvtiRutilities, beside `read_built()` and `study_config()`, which the
-templates already call. A fix lands once instead of in 30 copies.
+It is exported from hvtiRtemplates, beside the provenance and hand-off code it
+calls, and documented. A fix lands once instead of in 30 copies.
 
 ### 4.1 What it does, in order
 
@@ -164,22 +165,34 @@ a **Data** table:
 | `age >= 18` | removed 12 (3 had missing age) |
 | Rows kept | 788 rows on 788 patients |
 
-The record is saved with the job's output (its provenance), so the next job in
-a set can reuse it (section 5) and a reader can see what the job ran on.
+The record is saved with the job's output: in the report's embedded provenance,
+and in the `cohort` slot of the hand-off lineage a job attaches to its saved
+artifact (`.attach_handoff_lineage()`), so the next job in a set can reuse it
+(section 5) and a reader can see what the job ran on.
 `EXPECTED` counts stay available as an optional check against the record.
 
 ### 4.3 No study set up
 
-Today a job run outside a study stops with `study_config()`'s message, which
+Today a job run outside a study stops in its `setup` chunk, where
+`hvtiRutilities::study_root()` looks for `_study.yml`, with a message that
 suggests `study-setup --recover`, a server command for recovering a lost
-`_study.yml`. A new analyst needs `study_setup()` instead. The template's `set`
-chunk checks first and stops with:
+`_study.yml`. A new analyst needs `study_setup()` instead. The `setup` chunk
+finds the root through an hvtiRtemplates helper that stops with:
 
 > This job is not inside a set-up study (no `_study.yml` above it). Create one
 > with `hvtiRutilities::study_setup("<study folder>", ...)`, register its data
 > with `register_data()`, then scaffold jobs with `add_job()` or `open_job()`
 > from inside it. If this study had a `_study.yml` and lost it, recover it with
 > `study-setup --recover`.
+
+### 4.4 Why hvtiRtemplates, not hvtiRutilities
+
+The first draft put `read_job_data()` in hvtiRutilities, on the reasoning that
+jobs did not need hvtiRtemplates when they render. They do: every template calls
+`hvtiRtemplates:::.embed_provenance()`, and 27 call `.provenance_read()`, when the
+job renders. hvtiRtemplates imports hvtiRutilities, so a function in hvtiRutilities
+could not call the provenance code this design depends on without a circular
+dependency. Corrected by John on 2026-09-29, before any code.
 
 ## 5. Downstream jobs read the record
 
@@ -215,12 +228,13 @@ Identifiers are now handled once, at read. The consequences elsewhere:
 
 ## 8. Rollout
 
-1. **hvtiRutilities**, next patch release: `read_job_data()`, the missing-study
-   message, tests (section 9).
-2. **hvtiRtemplates**, one PR per family so each Wednesday review sees one
-   family's change; the templates' minimum hvtiRutilities version rises to that
-   release. `migrate_job()` writes the new names for the jobs it creates. There
-   are few existing template jobs, so no translation of old template settings.
+1. **hvtiRtemplates, the function first:** `read_job_data()`, the Data table, the
+   record in the hand-off lineage, the upstream check and the missing-study
+   helper, with a contract test that lists the families not yet converted.
+2. **hvtiRtemplates, one PR per family** after it, so each Wednesday review sees
+   one family's change, each shrinking the contract test's list. `migrate_job()`
+   writes the new names for the jobs it creates. There are few existing template
+   jobs, so no translation of old template settings.
 3. **hvtiPlotR 2.8.1**, independent of the other two.
 
 The hvtiRtemplates 1.2.3 release goes first, without this contract, so it is not
@@ -228,7 +242,7 @@ held up.
 
 ## 9. Testing
 
-- **hvtiRutilities, `read_job_data()` on small synthetic data frames:** each
+- **hvtiRtemplates, `read_job_data()` on small synthetic data frames:** each
   `WHERE` form (`NULL`, one expression, a list), with per-condition counts and
   `NA` rows counted apart; the ID fallback `ccfid`, `MRN`, `eMRN`, then the stop;
   `MRN`/`eMRN` dropped unless serving as the ID, and `pt_mrn` left alone; `KEY`
