@@ -180,7 +180,7 @@ test_that("dp-eda's overview leaves out identifiers but keeps dates", {
   n <- 12L
   env <- list2env(list(d = data.frame(year = seq_len(n), age = 40 + seq_len(n), ccfid = 1000L + seq_len(n),
                                       patientid = sprintf("P%03d", seq_len(n)), carotid = rep(0:1, 6), mrn_num = 5000L + seq_len(n),
-                                      dt_surg = as.Date("2020-01-01") + seq_len(n)),
+                                      bnp_mrna = 0.5 * seq_len(n), dt_surg = as.Date("2020-01-01") + seq_len(n)),
                        X_VAR = "year", VARIABLES = c("age", "ccfid"), EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
@@ -188,7 +188,8 @@ test_that("dp-eda's overview leaves out identifiers but keeps dates", {
                        label_map = function(d, ...) data.frame(key = names(d), label = names(d))))
   suppressWarnings(capture.output(eval(chunk("spec"), env)))
   out <- paste(capture.output(eval(chunk("overview-contents"), env)), collapse = "\n")
-  expect_identical(env$shown$variable, c("year", "age", "carotid", "dt_surg"))
+  # bnp_mrna holds "mrn" but not as a word of its name: a study variable.
+  expect_identical(env$shown$variable, c("year", "age", "carotid", "bnp_mrna", "dt_surg"))
   expect_match(out, "Identifier columns, not described: ccfid, patientid, mrn_num", fixed = TRUE)
 })
 

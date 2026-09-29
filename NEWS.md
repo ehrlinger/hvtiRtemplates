@@ -5,6 +5,11 @@
   an earlier test file having attached hvtiRutilities, and a filtered run
   errored twice. No change to the templates.
 
+* `dp-eda` takes `mrn` as an identifier only as a word of a column name
+  (`mrn`, `mrn_num`, `pt_mrn`), not inside one. It matched `mrn` anywhere, so
+  an mRNA variable such as `bnp_mrna` was left out as an identifier. The rule
+  matches hvtiPlotR's `hv_eda_pages()` (hvtiPlotR#172).
+
 * Every template chunk holding an `EDIT:` marker is now labeled `edit-`, so
   the editor's chunk outline lists the work a job still needs:
   `study-choices` is `edit-study-choices`, and nine templates carry further
