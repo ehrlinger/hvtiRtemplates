@@ -55,11 +55,17 @@
 # Date or POSIXct inlined with `!!`, is a value and is masked.
 .is_maskable_value <- function(e) is.atomic(e) && !is.null(e) && !is.logical(e)
 
+# A condition that uses .data can reach any column, the ID included, through
+# a string such as .data[["ccfid"]], which all.vars() does not see as a column,
+# so it is masked as though it named the ID. The column named inside .data[[ ]]
+# stays visible: it is the condition's shape, not a value.
 .mask_condition <- function(x, cols) {
   text <- if (is.character(x)) x else paste(deparse(x, width.cutoff = 500L), collapse = " ")
   expr <- if (is.character(x)) tryCatch(str2lang(x), error = function(e) NULL) else x
-  if (is.null(expr) || !length(intersect(tolower(all.vars(expr)), tolower(cols)))) return(text)
+  vars <- tolower(all.vars(expr))
+  if (is.null(expr) || !(".data" %in% vars || length(intersect(vars, tolower(cols))))) return(text)
   mask <- function(e) {
+    if (.is_pronoun_lookup(e, ".data")) return(e)
     if (is.call(e)) {
       # Testing e[[i]] in place, never binding it: an empty argument, as in
       # x[, 1], cannot be assigned to a variable.
@@ -74,6 +80,50 @@
   paste(deparse(mask(expr), width.cutoff = 500L, backtick = FALSE), collapse = " ")
 }
 
+.is_pronoun_lookup <- function(e, pronoun) {
+  is.call(e) && length(e) == 3L && (identical(e[[1L]], as.name("$")) || identical(e[[1L]], as.name("[["))) &&
+    identical(e[[2L]], as.name(pronoun))
+}
+
+# A condition is saved as text and re-evaluated by downstream jobs in another
+# environment, so a value it takes from outside the data is fixed into it here:
+# .env$x, .env[["x"]] and a bare symbol that is not a column of `cols` become
+# the value of x in `env`, as rlang::eval_tidy() would find it. Functions, and
+# every symbol in call position, are left alone, as is a symbol found nowhere,
+# so eval_tidy() still names it in its error.
+.resolve_outside <- function(cond, cols, env) {
+  value_of <- function(name) {
+    if (!is.character(name) || length(name) != 1L || !exists(name, envir = env)) return(NULL)
+    value <- get(name, envir = env)
+    if (is.function(value)) NULL else list(value)
+  }
+  walk <- function(e) {
+    if (is.name(e)) {
+      name <- as.character(e)
+      if (name %in% c(cols, ".data", ".env")) return(e)
+      value <- value_of(name)
+      return(if (is.null(value)) e else value[[1L]])
+    }
+    if (!is.call(e)) return(e)
+    if (.is_pronoun_lookup(e, ".env")) {
+      value <- value_of(if (is.name(e[[3L]])) as.character(e[[3L]]) else e[[3L]])
+      return(if (is.null(value)) e else value[[1L]])
+    }
+    # The right side of $, @ and :: names a field, not a variable; a formula or
+    # function has its own scope.
+    head <- e[[1L]]
+    if (is.name(head) && as.character(head) %in% c("$", "@", "::", ":::", "~", "function")) return(e)
+    for (i in seq_along(e)[-1L]) {
+      # Tested in place, never bound: an empty argument, as in x[, 1], cannot
+      # be assigned to a variable.
+      if (is.name(e[[i]]) && !nzchar(as.character(e[[i]]))) next
+      e[[i]] <- walk(e[[i]])
+    }
+    e
+  }
+  walk(cond)
+}
+
 .mask_conditions <- function(x, cols) vapply(as.character(x), .mask_condition, "", cols = cols, USE.NAMES = FALSE)
 
 .apply_where <- function(d, where, env = parent.frame(), cols = character()) {
@@ -81,6 +131,7 @@
   steps <- data.frame(condition = character(), shown = character(), removed = integer(),
                       missing = integer())
   for (cond in conditions) {
+    cond <- .resolve_outside(cond, names(d), env)
     label <- paste(deparse(cond, width.cutoff = 500L), collapse = " ")
     shown <- .mask_condition(cond, cols)
     keep <- tryCatch(rlang::eval_tidy(cond, data = d, env = env), error = function(e) {
@@ -123,6 +174,14 @@
   list(rows = nrow(d), patients = length(unique(d[[id]])))
 }
 
+# Which patients were kept, not only how many: a hash of the sorted KEY values,
+# one string per row with the KEY columns joined by "\r". Sorted by radix, which
+# does not depend on the locale. Only the hash is recorded, never the values.
+.key_hash <- function(d, key) {
+  tuples <- do.call(paste, c(unname(as.list(d[key])), sep = "\r"))
+  digest::digest(sort(unique(tuples), method = "radix"), algo = "sha256")
+}
+
 #' Read a job's data, keep its rows, and record what was done
 #'
 #' @description The shared data step of every analysis template. It reads a
@@ -138,7 +197,10 @@
 #'   \code{dataset} whole. Analysis sets derive from \code{"study"} only.
 #' @param where Rows to keep: \code{NULL}, one condition from \code{quote()}, or
 #'   a list from \code{rlang::exprs()}, all of which must hold. Conditions follow
-#'   \code{dplyr::filter()}: a row where a condition is \code{NA} is dropped.
+#'   \code{dplyr::filter()}: a row where a condition is \code{NA} is dropped. A
+#'   value from outside the data, written \code{.env$min_age} or as a name that
+#'   is not a column, is fixed into the condition when the data are read, so the
+#'   recorded condition rebuilds the same rows wherever it runs.
 #' @param id The patient identifier column. When it is the default
 #'   \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.
 #' @param key Columns that make a row unique; defaults to \code{id}, one row
@@ -149,8 +211,8 @@
 #'   matches its column ignoring case, because
 #'   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
 #'   key and date values are not printed: the record holds counts, and a
-#'   \code{where} condition that mentions the \code{id} or \code{key} columns
-#'   is shown, in the record and in error messages, with its values replaced by
+#'   \code{where} condition that mentions the \code{id} or \code{key} columns,
+#'   or uses \code{.data}, is shown, in the record and in error messages, with its values replaced by
 #'   \code{<value>}. Every setting is checked before the data are read.
 #'
 #' @return A list:
@@ -172,7 +234,10 @@
 #'     \item \code{where_shown}, the same conditions as a report may show them,
 #'       with the values of any condition on \code{id} or \code{key} replaced;
 #'     \item \code{id} and \code{key}, the resolved column names;
-#'     \item \code{rows} and \code{patients}, the counts kept.
+#'     \item \code{rows} and \code{patients}, the counts kept;
+#'     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
+#'       a downstream job can tell that it rebuilt the same patients and not
+#'       only the same counts.
 #'   }
 #'
 #' @examples
@@ -207,7 +272,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   attr(record, "selection") <- list(
     dataset = dataset, analysis_set = analysis_set, where = kept$steps$condition,
     where_shown = kept$steps$shown,
-    id = who$id, key = key, rows = counts$rows, patients = counts$patients
+    id = who$id, key = key, rows = counts$rows, patients = counts$patients,
+    key_hash = .key_hash(kept$data, key)
   )
   list(data = kept$data, record = record, provenance = read$record, attrition = attrition)
 }
@@ -342,6 +408,11 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
          now$rows, " rows on ", now$patients, " patients. This job did not rebuild the upstream cohort: ",
          "WHERE may refer to a variable rather than a value, or the data changed since the upstream job ran. ",
          "Rerun the upstream job.", call. = FALSE)
+  }
+  # A selection recorded before key_hash existed is checked on its counts alone.
+  if (!is.null(upstream$key_hash) && !identical(now$key_hash, upstream$key_hash)) {
+    stop("The patients this job read differ from the upstream job's, though the counts may match. ",
+         "The data changed since the upstream job ran; rerun the upstream job.", call. = FALSE)
   }
   list(job_data = job_data, selection = sel)
 }

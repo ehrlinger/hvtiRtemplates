@@ -316,3 +316,80 @@ test_that("read_job_data() reads an analysis set and keeps its attrition", {
   expect_identical(attr(out$record, "selection")$analysis_set, "eda")
   expect_null(read_job_data(cfg)$attrition)
 })
+
+test_that("a WHERE that reaches a column through .data is masked like one on ID or KEY", {
+  mask <- hvtiRtemplates:::.mask_condition
+  for (cond in list(quote(.data[["ccfid"]] != 9001), quote(.data$ccfid != 9001), quote(.data[["CCFID"]] != 9001))) {
+    shown <- mask(cond, "ccfid")
+    expect_false(grepl("9001", shown, fixed = TRUE), info = shown)
+    expect_match(shown, "<value>", fixed = TRUE)
+  }
+  cfg <- job_study(d_ids)
+  out <- read_job_data(cfg, where = quote(.data[["ccfid"]] != 9001))
+  expect_false(any(grepl("9001", c(out$record$step, out$record$value, attr(out$record, "selection")$where_shown))))
+  bad <- tryCatch(read_job_data(cfg, where = quote(.data[["ccfid"]] + 9001)), error = conditionMessage)
+  expect_match(bad, "TRUE or FALSE")
+  expect_false(grepl("9001", bad, fixed = TRUE))
+})
+
+test_that("a WHERE value from outside the data is fixed into the recorded condition", {
+  cfg <- job_study(d0)
+  upstream <- function(where) {
+    min_age <- 60
+    ids <- c(2L, 3L)
+    read_job_data(cfg, where = where)
+  }
+  bare <- upstream(quote(age >= min_age))
+  expect_identical(attr(bare$record, "selection")$where, "age >= 60")
+  expect_identical(bare$data$ccfid, c(5L, 6L))
+  dollar <- upstream(quote(age >= .env$min_age))
+  expect_identical(attr(dollar$record, "selection")$where, "age >= 60")
+  brackets <- upstream(quote(age >= .env[["min_age"]]))
+  expect_identical(attr(brackets$record, "selection")$where, "age >= 60")
+  # A function name in call position is never replaced; its arguments are.
+  fn <- upstream(quote(round(age) >= min_age))
+  expect_identical(attr(fn$record, "selection")$where, "round(age) >= 60")
+  # A downstream job in an environment where min_age means something else, or
+  # nothing, still rebuilds the upstream rows.
+  for (lineage in list(list(selection = attr(bare$record, "selection")), list(selection = attr(dollar$record, "selection")))) {
+    local({
+      min_age <- 80
+      out <- hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list())
+      expect_identical(out$job_data$data$ccfid, c(5L, 6L))
+    })
+    expect_identical(hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list())$job_data$data$ccfid, c(5L, 6L))
+  }
+})
+
+test_that("an outside value in a WHERE on the ID is recorded but shown masked", {
+  cfg <- job_study(d_ids)
+  ids <- c(9001L, 9005L)
+  out <- read_job_data(cfg, where = quote(!ccfid %in% ids))
+  sel <- attr(out$record, "selection")
+  expect_identical(sel$where, "!ccfid %in% c(9001L, 9005L)")
+  expect_identical(sel$where_shown, "!ccfid %in% <value>")
+  expect_false(any(grepl("9001|9005", c(out$record$step, out$record$value))))
+  expect_identical(out$data$ccfid, c(9002L, 9003L, 9004L, 9006L))
+})
+
+test_that(".read_upstream_job_data() stops when the patients differ though the counts match", {
+  cfg <- job_study(d_ids)
+  up <- read_job_data(cfg, where = quote(age >= 18))
+  sel <- attr(up$record, "selection")
+  expect_match(sel$key_hash, "^[0-9a-f]{64}$")
+  expect_identical(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())$job_data$data$ccfid,
+                   c(9002L, 9003L, 9005L, 9006L))
+  swapped <- d_ids
+  swapped$ccfid[[2L]] <- 9999L
+  cfg_swapped <- job_study(swapped)
+  err <- tryCatch(hvtiRtemplates:::.read_upstream_job_data(cfg_swapped, list(selection = sel), list()),
+                  error = conditionMessage)
+  expect_match(err, "patients.*differ.*counts may match.*rerun the upstream job")
+  expect_false(grepl("9999|900[0-9]", err))
+  expect_false(grepl(sel$key_hash, err, fixed = TRUE))
+  # An older selection with no key_hash is checked on its counts alone.
+  older <- sel
+  older$key_hash <- NULL
+  expect_identical(nrow(hvtiRtemplates:::.read_upstream_job_data(cfg_swapped, list(selection = older), list())$job_data$data),
+                   4L)
+})

@@ -601,12 +601,18 @@
   object
 }
 
+# The two shapes .handoff_lineage() writes, compared exactly, so a repeated
+# or reordered field is not taken for a complete lineage.
+.complete_lineage_shape <- function(lineage) {
+  required <- c("data", "artifacts", "analysis", "cohort")
+  is.list(lineage) &&
+    (identical(names(lineage), required) || identical(names(lineage), c(required, "selection"))) &&
+    is.list(lineage$data) && is.list(lineage$artifacts)
+}
+
 .validate_handoff_lineage <- function(object, path, rebuild) {
   lineage <- attr(object, "hvti_provenance", exact = TRUE)
-  required <- c("data", "artifacts", "analysis", "cohort")
-  valid <- is.list(lineage) && identical(setdiff(names(lineage), "selection"), required) &&
-    is.list(lineage$data) && is.list(lineage$artifacts)
-  if (!valid) {
+  if (!.complete_lineage_shape(lineage)) {
     stop(
       "The package handoff '", path, "' has no complete hvti_provenance lineage. ",
       "Rebuild it by rendering ", rebuild, " with the current template.",
@@ -655,9 +661,7 @@
         call. = FALSE
       )
     }
-    complete_shape <- is.list(lineage) &&
-      identical(setdiff(names(lineage), "selection"), c("data", "artifacts", "analysis", "cohort")) &&
-      is.list(lineage$data) && is.list(lineage$artifacts)
+    complete_shape <- .complete_lineage_shape(lineage)
     if (is.null(lineage)) {
       lineage <- .handoff_lineage(explicit_data)
     } else if (complete_shape) {
@@ -691,9 +695,10 @@
   }
   if (is.null(analysis)) analysis <- common("analysis")
   if (is.null(cohort)) cohort <- common("cohort")
+  # Kept only when every input carries the same selection: an input without
+  # one predates the contract, and its rows are unknown.
   selection_values <- lapply(lineages, `[[`, "selection")
-  selection_values <- selection_values[!vapply(selection_values, is.null, logical(1L))]
-  selection <- if (length(selection_values) &&
+  selection <- if (length(selection_values) && !any(vapply(selection_values, is.null, logical(1L))) &&
                      all(vapply(selection_values[-1L], identical, logical(1L), selection_values[[1L]]))) {
     selection_values[[1L]]
   } else {

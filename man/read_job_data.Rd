@@ -25,7 +25,10 @@ read_job_data(
 
 \item{where}{Rows to keep: \code{NULL}, one condition from \code{quote()}, or
 a list from \code{rlang::exprs()}, all of which must hold. Conditions follow
-\code{dplyr::filter()}: a row where a condition is \code{NA} is dropped.}
+\code{dplyr::filter()}: a row where a condition is \code{NA} is dropped. A
+value from outside the data, written \code{.env$min_age} or as a name that
+is not a column, is fixed into the condition when the data are read, so the
+recorded condition rebuilds the same rows wherever it runs.}
 
 \item{id}{The patient identifier column. When it is the default
 \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.}
@@ -53,7 +56,10 @@ A list:
     \item \code{where_shown}, the same conditions as a report may show them,
       with the values of any condition on \code{id} or \code{key} replaced;
     \item \code{id} and \code{key}, the resolved column names;
-    \item \code{rows} and \code{patients}, the counts kept.
+    \item \code{rows} and \code{patients}, the counts kept;
+    \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
+      a downstream job can tell that it rebuilt the same patients and not
+      only the same counts.
   }
 }
 \description{
@@ -68,8 +74,8 @@ Columns named \code{MRN} or \code{eMRN} (ignoring case) are
   matches its column ignoring case, because
   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
   key and date values are not printed: the record holds counts, and a
-  \code{where} condition that mentions the \code{id} or \code{key} columns
-  is shown, in the record and in error messages, with its values replaced by
+  \code{where} condition that mentions the \code{id} or \code{key} columns,
+  or uses \code{.data}, is shown, in the record and in error messages, with its values replaced by
   \code{<value>}. Every setting is checked before the data are read.
 }
 \examples{

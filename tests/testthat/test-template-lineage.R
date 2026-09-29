@@ -408,3 +408,24 @@ test_that("hazard chain templates attach, require, and publish lineage", {
     sources$hm, fixed = TRUE
   )))
 })
+
+test_that(".combine_handoff_lineage() keeps no selection when any input lacks one", {
+  sel <- list(dataset = "study", where = "age >= 18", id = "ccfid")
+  with_sel <- hvtiRtemplates:::.handoff_lineage(data = list(), selection = sel)
+  without <- hvtiRtemplates:::.handoff_lineage(data = list())
+  expect_null(hvtiRtemplates:::.combine_handoff_lineage(list(with_sel, without))$selection)
+  expect_null(hvtiRtemplates:::.combine_handoff_lineage(list(without, with_sel))$selection)
+})
+
+test_that("a lineage with a repeated field is not a complete lineage", {
+  obj <- list()
+  attr(obj, "hvti_provenance") <- list(
+    data = list(list(dataset = "study")), data = list(), artifacts = list(), analysis = NULL, cohort = NULL
+  )
+  expect_error(hvtiRtemplates:::.validate_handoff_lineage(obj, "x.rds", "hz"), "no complete hvti_provenance")
+  reordered <- list()
+  attr(reordered, "hvti_provenance") <- list(
+    selection = list(), data = list(list(dataset = "study")), artifacts = list(), analysis = NULL, cohort = NULL
+  )
+  expect_error(hvtiRtemplates:::.validate_handoff_lineage(reordered, "x.rds", "hz"), "no complete hvti_provenance")
+})
