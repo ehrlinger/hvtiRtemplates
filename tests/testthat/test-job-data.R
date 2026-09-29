@@ -393,3 +393,15 @@ test_that(".read_upstream_job_data() stops when the patients differ though the c
   expect_identical(nrow(hvtiRtemplates:::.read_upstream_job_data(cfg_swapped, list(selection = older), list())$job_data$data),
                    4L)
 })
+
+test_that("a value fixed into WHERE from outside the data rebuilds exactly", {
+  cut <- 1 / 3
+  d <- data.frame(x = c(cut, 0.3333333333333333, 0.34))
+  steps <- .apply_where(d, quote(x >= cut), environment())
+  expect_identical(eval(str2lang(steps$steps$condition)[[3L]]), cut)
+})
+
+test_that("a typed WHERE value keeps its short text", {
+  steps <- .apply_where(data.frame(x = c(0.05, 0.2)), quote(x >= 0.1), environment())
+  expect_identical(steps$steps$condition, "x >= 0.1")
+})

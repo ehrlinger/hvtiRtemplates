@@ -124,6 +124,16 @@
   walk(cond)
 }
 
+# The recorded text of a condition, which a downstream job parses to rebuild the rows. The default 15
+# significant digits keep a typed 0.1 readable, but can round a value fixed in from outside the data
+# (1/3, a mean), so fall back to 17 digits when the short text does not read back to the same condition.
+.condition_text <- function(cond) {
+  text <- paste(deparse(cond, width.cutoff = 500L), collapse = " ")
+  if (identical(str2lang(text), cond)) return(text)
+  paste(deparse(cond, width.cutoff = 500L, control = c("keepNA", "keepInteger", "niceNames", "showAttributes",
+                                                       "digits17")), collapse = " ")
+}
+
 .mask_conditions <- function(x, cols) vapply(as.character(x), .mask_condition, "", cols = cols, USE.NAMES = FALSE)
 
 .apply_where <- function(d, where, env = parent.frame(), cols = character()) {
@@ -132,7 +142,7 @@
                       missing = integer())
   for (cond in conditions) {
     cond <- .resolve_outside(cond, names(d), env)
-    label <- paste(deparse(cond, width.cutoff = 500L), collapse = " ")
+    label <- .condition_text(cond)
     shown <- .mask_condition(cond, cols)
     keep <- tryCatch(rlang::eval_tidy(cond, data = d, env = env), error = function(e) {
       stop("WHERE condition `", shown, "`: ", conditionMessage(e), call. = FALSE)
