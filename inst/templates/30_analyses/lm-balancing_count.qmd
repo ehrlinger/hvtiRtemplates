@@ -71,30 +71,59 @@ set_path <- function(kind, file) {
 
 ```{r}
 #| label: edit-study-choices
-DATASET <- "study"                         # EDIT: registered dataset name.
+# EDIT: the registered dataset this job reads ("study" is the built dataset).
+DATASET <- "study"
+
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
 OUTCOME <- "count_exposure"                # EDIT: non-negative count exposure.
 PREDICTORS <- c("age", "female")           # EDIT: pre-exposure covariates.
 DISTRIBUTION <- "negbin"                   # EDIT: choose "poisson" or "negbin" from the analysis plan.
 N_STRATA <- 10L                            # EDIT: balancing-score stratum count.
-ID <- "id"                                 # EDIT: stable patient identifier.
 IMPUTATION <- NULL                          # EDIT: imputation column, or NULL.
+# Stacked imputations repeat each patient once per imputation.
+if (!is.null(IMPUTATION)) KEY <- c(ID, IMPUTATION)
 ```
 
 ```{r}
-#| label: read
+#| label: data
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
-.data_read <- hvtiRtemplates:::.provenance_read(
-  DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET), role = "training"
-)
-d <- .data_read$value
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY)
+# This job's data are the model's training data, which lm-checkpred tells from its validation data.
+job_data$provenance$role <- "training"
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+# The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
+.id <- attr(job_data$record, "selection")$id
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+if (!is.null(job_data$attrition)) {
+  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+}
 ```
 
 ```{r}
 #| label: fit
 model_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
 fit <- hvtiRpropensity::bs_count(
-  model_formula, d, outcome_col = OUTCOME, id_col = ID,
+  model_formula, d, outcome_col = OUTCOME, id_col = .id,
   imputation_col = IMPUTATION, dist = DISTRIBUTION,
   n_strata = N_STRATA, covariates = PREDICTORS
 )
@@ -114,7 +143,8 @@ MODEL_PATH <- set_path("estimates", "lm-balancing_count.rds")
 .fit_provenance <- hvtiRtemplates:::.lm_fit_provenance(fit)
 fit <- hvtiRtemplates:::.attach_handoff_lineage(
   fit, data = if (exists(".provenance_data")) .provenance_data else list(),
-  analysis = .fit_provenance$analysis, cohort = .fit_provenance$cohort
+  analysis = .fit_provenance$analysis, cohort = .fit_provenance$cohort,
+  selection = attr(job_data$record, "selection")
 )
 saveRDS(fit, MODEL_PATH)
 ```

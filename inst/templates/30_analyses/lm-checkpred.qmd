@@ -71,20 +71,50 @@ set_path <- function(kind, file) {
 
 ```{r}
 #| label: edit-study-choices
-DATASET <- "validation"                    # EDIT: registered validation dataset.
+# The validation cohort: another registered dataset in DATASET, or rows of the
+# study dataset that the training job did not use, chosen by WHERE.
+# EDIT: the registered dataset this job reads ("study" is the built dataset).
+DATASET <- "study"
+
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
 MODEL_FILE <- "lm-binary.rds"              # EDIT: reviewed source bundle in this set's estimates.
 OUTCOME <- "outcome"                       # EDIT: validation outcome column.
 GROUPS <- 10L                              # EDIT: calibration-group count justified for this cohort size.
 ```
 
 ```{r}
-#| label: read
+#| label: data
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
-.data_read <- hvtiRtemplates:::.provenance_read(
-  DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET), role = "validation"
-)
-d <- .data_read$value
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY)
+# This job's data are the validation data; the saved model carries its training data.
+job_data$provenance$role <- "validation"
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+# The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
+.id <- attr(job_data$record, "selection")$id
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+if (!is.null(job_data$attrition)) {
+  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+}
 ```
 
 ```{r}
@@ -103,6 +133,28 @@ if (is.null(.model_read$lineage$analysis) || is.null(.model_read$lineage$cohort)
 }
 .provenance_data <- c(.model_read$lineage$data, .provenance_data)
 .provenance_artifacts <- c(.model_read$lineage$artifacts, list(.model_read$record))
+```
+
+```{r}
+#| label: training-overlap
+# A validation cohort that shares patients with the training data measures how
+# the model fits its own data, not how it predicts. The saved model keeps its
+# training rows, so this compares patients rather than settings. It reports how
+# many are shared, never which.
+.train_id <- model$meta$id_col
+if (!identical(tolower(.id), tolower(.train_id))) {
+  stop("The validation data identify patients by `", .id, "`, the training data by `", .train_id,
+       "`: set ID so both use the same identifier.", call. = FALSE)
+}
+.validation_ids <- unique(as.character(d[[.id]]))
+.shared <- sum(.validation_ids %in% as.character(model$data[[.train_id]]))
+if (.shared && .shared == length(.validation_ids)) {
+  stop("The validation data are the training data: set DATASET or WHERE to the validation cohort.", call. = FALSE)
+}
+if (.shared) {
+  stop(.shared, " validation patients were in the training data: set DATASET or WHERE to the validation cohort.",
+       call. = FALSE)
+}
 ```
 
 ```{r}
@@ -139,7 +191,8 @@ validation <- hvtiRtemplates:::.attach_handoff_lineage(
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   analysis = .validation_analysis,
-  cohort = .validation_cohort
+  cohort = .validation_cohort,
+  selection = attr(job_data$record, "selection")
 )
 saveRDS(validation, VALIDATION_PATH)
 ```

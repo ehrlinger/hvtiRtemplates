@@ -66,8 +66,8 @@ test_that("lm-binary validates variables inside model terms", {
   env$study_config <- hvtiRutilities::study_config
   choices <- list(OUTCOME = "outcome", PREDICTORS = c("age", "I(age^2)"),
                   OUTCOME_LEVELS = c("none", "event"), EVENT_LEVEL = "event",
-                  ID = "id", IMPUTATION = NULL)
-  lm_run("binary", c("edit-study-choices", "read", "fit"), env, choices)
+                  IMPUTATION = NULL)
+  utils::capture.output(lm_run("binary", c("edit-study-choices", "data", "fit"), env, choices))
   expect_s3_class(env$fit, "lm_fit")
   expect_true("I(age^2)" %in% names(stats::coef(env$fit$models[[1L]])))
 })
@@ -198,6 +198,48 @@ test_that("lm-checkpred refuses to overwrite its source bundle", {
          list(MODEL_FILE = "lm-checkpred.rds", OUTCOME = "outcome", GROUPS = 10L))
   expect_error(lm_run("checkpred", "save", env), "overwrite the source model")
   expect_identical(readBin(path, "raw", n = file.info(path)$size), before)
+})
+
+test_that("lm-checkpred stops when its validation patients were in the training data", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  root <- lm_study()
+  cfg <- hvtiRutilities::study_config(root)
+  bundle_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
+  dir.create(bundle_dir, recursive = TRUE)
+  save_model <- function(train) {
+    model <- hvtiRpropensity::fit_logistic(
+      outcome ~ age + female, train, family = "binary", outcome_col = "outcome",
+      id_col = "ccfid", outcome_levels = c("none", "event"), event_level = "event"
+    )
+    model_provenance <- hvtiRtemplates:::.lm_fit_provenance(model)
+    model <- hvtiRtemplates:::.attach_handoff_lineage(
+      model, data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training")),
+      analysis = model_provenance$analysis, cohort = model_provenance$cohort
+    )
+    saveRDS(model, file.path(bundle_dir, "lm-binary.rds"))
+  }
+  check <- function(choices = list()) {
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    env$study_config <- hvtiRutilities::study_config
+    env$set_path <- function(kind, file) file.path(bundle_dir, file)
+    choices <- utils::modifyList(list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 5L), choices)
+    utils::capture.output(lm_run("checkpred", c("edit-study-choices", "data", "model", "training-overlap"), env, choices))
+    env
+  }
+  d <- lm_data()
+  # The whole training cohort read again.
+  save_model(d)
+  expect_error(check(), "^The validation data are the training data: set DATASET or WHERE to the validation cohort[.]$")
+  # A validation cohort that shares some patients names how many, never which.
+  save_model(d[d$ccfid <= 70, ])
+  err <- tryCatch(check(list(WHERE = quote(ccfid > 60))), error = conditionMessage)
+  expect_identical(err, "10 validation patients were in the training data: set DATASET or WHERE to the validation cohort.")
+  # Identifiers from different columns cannot be compared.
+  expect_error(check(list(ID = "id", WHERE = quote(ccfid > 70))), "identify patients by `id`.*`ccfid`")
+  # A disjoint cohort goes on to validation.
+  env <- check(list(WHERE = quote(ccfid > 70)))
+  expect_identical(nrow(env$d), 50L)
 })
 
 test_that("every lm template scaffolds and renders", {
