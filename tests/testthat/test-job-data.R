@@ -68,3 +68,47 @@ test_that("rows must be unique on KEY; patients are counted on ID", {
   expect_error(hvtiRtemplates:::.check_job_key(long, "visit", "ccfid"),
                "KEY names a column")
 })
+
+job_study <- function(data, .local_envir = parent.frame()) {
+  root <- withr::local_tempdir(.local_envir = .local_envir)
+  suppressMessages(hvtiRutilities::study_setup(root, "Job data", 1L, adopt = TRUE))
+  utils::write.csv(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv"))
+  hvtiRutilities::study_config(start = root)
+}
+
+test_that("read_job_data() reads, selects and records what it did", {
+  cfg <- job_study(d0)
+  out <- read_job_data(cfg, where = rlang::exprs(age >= 18, hx_chf == 1))
+  expect_identical(out$data$ccfid, c(2L, 3L, 5L))
+  expect_false(any(c("MRN", "eMRN") %in% names(out$data)))
+  expect_s3_class(out$record, "data.frame")
+  expect_identical(names(out$record), c("step", "value"))
+  expect_match(paste(out$record$value, collapse = " "), "3 rows on 3 patients")
+  sel <- attr(out$record, "selection")
+  expect_identical(sel$id, "ccfid")
+  expect_identical(sel$key, "ccfid")
+  expect_identical(sel$where, c("age >= 18", "hx_chf == 1"))
+  expect_identical(out$provenance$dataset, "study")
+  # No identifier value reaches the record.
+  expect_false(any(grepl("\\b10[1-6]\\b|\\b20[1-6]\\b", out$record$value)))
+})
+
+test_that("KEY follows the ID when the ID falls back", {
+  cfg <- job_study(d0[-1])
+  out <- read_job_data(cfg)
+  # hvtiRutilities::read_built() lowercases every column name, so the resolved
+  # fallback identifier is "mrn", not the "MRN" it was written to disk under.
+  expect_identical(attr(out$record, "selection")$id, "mrn")
+  expect_identical(attr(out$record, "selection")$key, "mrn")
+  expect_match(paste(out$record$value, collapse = " "), "fell back to mrn")
+})
+
+test_that("an analysis set with another dataset is refused", {
+  cfg <- job_study(d0)
+  expect_error(read_job_data(cfg, dataset = "other", analysis_set = "eda"), "written from the study dataset")
+})
+
+test_that("a job outside a study is told to run study_setup()", {
+  expect_error(hvtiRtemplates:::.find_study_root(withr::local_tempdir()), "study_setup")
+})

@@ -1,5 +1,5 @@
-# The shared data step every template calls. See the design spec at
-# .superpowers/sdd/task-1-brief.md in dev/specs/
+# The shared data step every template calls. See
+# dev/specs/2026-09-29-template-data-contract-design.md for the design.
 
 .job_identifier_names <- c("mrn", "emrn")
 
@@ -80,4 +80,96 @@
          call. = FALSE)
   }
   list(rows = nrow(d), patients = length(unique(d[[id]])))
+}
+
+#' Read a job's data, keep its rows, and record what was done
+#'
+#' @description The shared data step of every analysis template. It reads a
+#'   registered dataset (or an hvtiRdatabuild analysis set), resolves the
+#'   patient identifier, drops the medical record number columns, keeps the rows
+#'   \code{where} selects and checks that rows are unique on \code{key}.
+#'
+#' @param cfg Study configuration, from \code{\link[hvtiRutilities]{study_config}}.
+#' @param dataset Name of a dataset registered in \code{_study.yml};
+#'   \code{"study"} is the built dataset.
+#' @param analysis_set Name of an analysis set written by
+#'   \code{hvtiRdatabuild::write_analysis_set()}, or \code{NULL} to read
+#'   \code{dataset} whole. Analysis sets derive from \code{"study"} only.
+#' @param where Rows to keep: \code{NULL}, one condition from \code{quote()}, or
+#'   a list from \code{rlang::exprs()}, all of which must hold. Conditions follow
+#'   \code{dplyr::filter()}: a row where a condition is \code{NA} is dropped.
+#' @param id The patient identifier column. When it is the default
+#'   \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.
+#' @param key Columns that make a row unique; defaults to \code{id}, one row
+#'   per patient. Add a visit time or date for repeated measures.
+#'
+#' @details Columns named \code{MRN} or \code{eMRN} (ignoring case) are
+#'   dropped unless one is the identifier. No identifier, key or date value is
+#'   ever printed; the record holds counts.
+#'
+#' @return A list: \code{data}, the selected rows; \code{record}, a data frame
+#'   of steps and values to print, carrying the settings used in its
+#'   \code{"selection"} attribute; \code{provenance}, the read's provenance
+#'   record.
+#' @export
+read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = NULL,
+                          id = "ccfid", key = id) {
+  if (!is.character(dataset) || length(dataset) != 1L || is.na(dataset) || !nzchar(dataset)) {
+    stop("DATASET must name one dataset registered in _study.yml, such as \"study\".", call. = FALSE)
+  }
+  if (!is.null(analysis_set) && !identical(dataset, "study")) {
+    stop("An analysis set is written from the study dataset, not `", dataset,
+         "`. Set ANALYSIS_SET <- NULL to read `", dataset, "` whole.", call. = FALSE)
+  }
+  read <- .read_job_source(cfg, dataset, analysis_set)
+  d <- read$value
+  rows_read <- nrow(d)
+  who <- .resolve_job_id(d, id)
+  key <- replace(key, key == id, who$id)
+  ids <- .drop_identifiers(d, who$id)
+  kept <- .apply_where(ids$data, where, env = parent.frame())
+  counts <- .check_job_key(kept$data, key, who$id)
+  record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts)
+  attr(record, "selection") <- list(
+    dataset = dataset, analysis_set = analysis_set, where = kept$steps$condition,
+    id = who$id, key = key, rows = counts$rows, patients = counts$patients
+  )
+  list(data = kept$data, record = record, provenance = read$record)
+}
+
+.read_job_source <- function(cfg, dataset, analysis_set) {
+  if (is.null(analysis_set)) {
+    read <- .provenance_read(dataset, cfg, function() hvtiRutilities::read_built(cfg = cfg, dataset = dataset))
+    read$source <- paste0("dataset `", dataset, "` (", basename(hvtiRutilities::built_path(cfg = cfg, dataset = dataset)), ")")
+    return(read)
+  }
+  if (!requireNamespace("hvtiRdatabuild", quietly = TRUE)) {
+    stop("ANALYSIS_SET needs the hvtiRdatabuild package; install it or set ANALYSIS_SET <- NULL.", call. = FALSE)
+  }
+  path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), paste0(analysis_set, ".parquet"))
+  read <- .provenance_file_read(
+    paste0("analysis_set:", analysis_set), path, cfg,
+    function() hvtiRdatabuild::read_analysis_set(analysis_set, cfg = cfg),
+    role = paste0("analysis_set:", analysis_set)
+  )
+  read$source <- paste0("analysis set `", analysis_set, "` of the study dataset")
+  read
+}
+
+.job_record <- function(source, rows_read, who, dropped, steps, counts) {
+  rows <- list(
+    c("Source", source),
+    c("Rows read", format(rows_read, big.mark = ",")),
+    c("ID", if (who$fallback) paste0("`", who$id, "` (no ccfid; fell back to ", who$id, ")") else paste0("`", who$id, "`")),
+    c("Identifiers dropped", if (length(dropped)) paste0("`", dropped, "`", collapse = ", ") else "none")
+  )
+  for (i in seq_len(nrow(steps))) {
+    rows[[length(rows) + 1L]] <- c(
+      paste0("`", steps$condition[[i]], "`"),
+      paste0("removed ", steps$removed[[i]], if (steps$missing[[i]]) paste0(" (", steps$missing[[i]], " missing)") else "")
+    )
+  }
+  rows[[length(rows) + 1L]] <- c("Rows kept", paste0(format(counts$rows, big.mark = ","), " rows on ",
+                                                     format(counts$patients, big.mark = ","), " patients"))
+  data.frame(step = vapply(rows, `[[`, "", 1L), value = vapply(rows, `[[`, "", 2L))
 }
