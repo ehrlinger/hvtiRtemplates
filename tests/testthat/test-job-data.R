@@ -207,3 +207,56 @@ test_that(".read_upstream_job_data() stops when the rows it rebuilds are not the
   expect_error(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list()),
                "99 rows.*4 rows.*did not rebuild")
 })
+
+test_that(".mask_condition() hides the values of a condition on ID or KEY, and only those", {
+  mask <- hvtiRtemplates:::.mask_condition
+  expect_identical(mask(quote(ccfid != 9001), "ccfid"), "ccfid != <value>")
+  expect_identical(mask(quote(ccfid %in% c(9001, 9002)), "ccfid"), "ccfid %in% c(<value>, <value>)")
+  expect_identical(mask("CCFID == \"A9001\"", "ccfid"), "CCFID == <value>")
+  expect_identical(mask(quote(age >= 18), "ccfid"), "age >= 18")
+  expect_identical(mask(quote(iv_echo > 2.5), c("ccfid", "iv_echo")), "iv_echo > <value>")
+})
+
+d_ids <- data.frame(ccfid = 9001:9006, age = c(15, 40, 55, NA, 70, 80))
+
+test_that("a WHERE on the ID never prints its value, but the selection keeps it to rebuild the rows", {
+  cfg <- job_study(d_ids)
+  out <- read_job_data(cfg, where = rlang::exprs(ccfid != 9001, age >= 18))
+  expect_false(any(grepl("9001", c(out$record$step, out$record$value))))
+  expect_true(any(grepl("age >= 18", out$record$step, fixed = TRUE)))
+  sel <- attr(out$record, "selection")
+  expect_identical(sel$where, c("ccfid != 9001", "age >= 18"))
+  expect_identical(sel$where_shown, c("ccfid != <value>", "age >= 18"))
+  msg <- function(expr) tryCatch({
+    force(expr)
+    ""
+  }, error = conditionMessage)
+  bad <- msg(read_job_data(cfg, where = quote(ccfid + 9001)))
+  expect_match(bad, "TRUE or FALSE")
+  expect_false(grepl("9001", bad))
+  missing_col <- msg(read_job_data(cfg, where = quote(ccfid != nosuch + 9001)))
+  expect_match(missing_col, "nosuch")
+  expect_false(grepl("9001", missing_col))
+  differs <- msg(hvtiRtemplates:::.check_upstream_selection(sel, list(where = quote(ccfid != 9002))))
+  expect_match(differs, "WHERE")
+  expect_false(grepl("900[12]", differs))
+  up <- sel
+  up$rows <- 99L
+  rebuilt <- msg(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = up), list()))
+  expect_match(rebuilt, "did not rebuild")
+  expect_false(grepl("9001", rebuilt))
+})
+
+test_that("an explicit ID or KEY matches its column ignoring case, as read_built() lowercases", {
+  cfg <- job_study(d0[-1])
+  out <- read_job_data(cfg, id = "MRN", key = c("MRN", "AGE"))
+  sel <- attr(out$record, "selection")
+  expect_identical(sel$id, "mrn")
+  expect_identical(sel$key, c("mrn", "age"))
+  expect_false(grepl("fell back", paste(out$record$value, collapse = " ")))
+})
+
+test_that("a WHERE that fails to evaluate names the condition", {
+  cfg <- job_study(d0)
+  expect_error(read_job_data(cfg, where = quote(AGE > 1)), "WHERE condition `AGE > 1`: .*AGE")
+})

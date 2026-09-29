@@ -8,6 +8,8 @@
     stop("ID must name one column, such as \"ccfid\".", call. = FALSE)
   }
   if (id %in% names(d)) return(list(id = id, fallback = FALSE))
+  same <- names(d)[tolower(names(d)) == tolower(id)]
+  if (length(same)) return(list(id = same[[1L]], fallback = FALSE))
   if (identical(id, "ccfid")) {
     for (candidate in c("mrn", "emrn")) {
       hit <- names(d)[tolower(names(d)) == candidate]
@@ -19,6 +21,13 @@
   }
   stop("ID names a column this dataset does not have: ", id,
        ". Change ID in edit-study-choices.", call. = FALSE)
+}
+
+# hvtiRutilities::read_built() lowercases column names, so an explicit
+# setting such as ID <- "MRN" names the column `mrn`.
+.match_columns <- function(cols, present) {
+  hit <- match(tolower(cols), tolower(present))
+  ifelse(cols %in% present | is.na(hit), cols, present[hit])
 }
 
 .drop_identifiers <- function(d, id) {
@@ -38,22 +47,49 @@
        "rlang::exprs().", call. = FALSE)
 }
 
-.apply_where <- function(d, where, env = parent.frame()) {
+# A WHERE condition that mentions the ID or KEY columns is shown with its
+# values replaced by <value>, so no identifier, key or date value reaches a
+# report or a message. The exact text stays in the selection, to rebuild rows.
+.mask_condition <- function(x, cols) {
+  text <- if (is.character(x)) x else paste(deparse(x, width.cutoff = 500L), collapse = " ")
+  expr <- if (is.character(x)) tryCatch(str2lang(x), error = function(e) NULL) else x
+  if (is.null(expr) || !length(intersect(tolower(all.vars(expr)), tolower(cols)))) return(text)
+  mask <- function(e) {
+    if (is.call(e)) {
+      # Testing e[[i]] in place, never binding it: an empty argument, as in
+      # x[, 1], cannot be assigned to a variable.
+      for (i in seq_along(e)[-1L]) {
+        if (is.call(e[[i]]) || is.numeric(e[[i]]) || is.character(e[[i]]) || is.complex(e[[i]])) e[[i]] <- mask(e[[i]])
+      }
+      return(e)
+    }
+    if (is.numeric(e) || is.character(e) || is.complex(e)) return(as.name("<value>"))
+    e
+  }
+  paste(deparse(mask(expr), width.cutoff = 500L, backtick = FALSE), collapse = " ")
+}
+
+.mask_conditions <- function(x, cols) vapply(as.character(x), .mask_condition, "", cols = cols, USE.NAMES = FALSE)
+
+.apply_where <- function(d, where, env = parent.frame(), cols = character()) {
   conditions <- .where_conditions(where)
-  steps <- data.frame(condition = character(), removed = integer(),
+  steps <- data.frame(condition = character(), shown = character(), removed = integer(),
                       missing = integer())
   for (cond in conditions) {
-    keep <- rlang::eval_tidy(cond, data = d, env = env)
     label <- paste(deparse(cond, width.cutoff = 500L), collapse = " ")
+    shown <- .mask_condition(cond, cols)
+    keep <- tryCatch(rlang::eval_tidy(cond, data = d, env = env), error = function(e) {
+      stop("WHERE condition `", shown, "`: ", conditionMessage(e), call. = FALSE)
+    })
     if (!is.logical(keep) ||
           !length(keep) %in% c(1L, nrow(d))) {
       stop("Each WHERE condition must give TRUE or FALSE for every row: ",
-           label, call. = FALSE)
+           shown, call. = FALSE)
     }
     keep <- rep_len(keep, nrow(d))
     missing <- sum(is.na(keep))
     kept <- !is.na(keep) & keep
-    steps[nrow(steps) + 1L, ] <- list(label, sum(!kept), missing)
+    steps[nrow(steps) + 1L, ] <- list(label, shown, sum(!kept), missing)
     d <- d[kept, , drop = FALSE]
   }
   rownames(d) <- NULL
@@ -125,13 +161,14 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   d <- read$value
   rows_read <- nrow(d)
   who <- .resolve_job_id(d, id)
-  key <- replace(key, key == id, who$id)
+  key <- .match_columns(replace(key, key == id, who$id), names(d))
   ids <- .drop_identifiers(d, who$id)
-  kept <- .apply_where(ids$data, where, env = parent.frame())
+  kept <- .apply_where(ids$data, where, env = parent.frame(), cols = c(who$id, key))
   counts <- .check_job_key(kept$data, key, who$id)
   record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts)
   attr(record, "selection") <- list(
     dataset = dataset, analysis_set = analysis_set, where = kept$steps$condition,
+    where_shown = kept$steps$shown,
     id = who$id, key = key, rows = counts$rows, patients = counts$patients
   )
   list(data = kept$data, record = record, provenance = read$record)
@@ -165,7 +202,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   )
   for (i in seq_len(nrow(steps))) {
     rows[[length(rows) + 1L]] <- c(
-      paste0("`", steps$condition[[i]], "`"),
+      paste0("`", steps$shown[[i]], "`"),
       paste0("removed ", steps$removed[[i]], if (steps$missing[[i]]) paste0(" (", steps$missing[[i]], " missing)") else "")
     )
   }
@@ -198,6 +235,11 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     theirs <- as.character(upstream[[field]])
     same <- if (field %in% c("id", "key")) identical(tolower(mine), tolower(theirs)) else identical(as.character(mine), theirs)
     if (!same) {
+      if (field == "where") {
+        cols <- unique(c(upstream$id, upstream$key, settings$id, settings$key))
+        mine <- .mask_conditions(mine, cols)
+        theirs <- .mask_conditions(theirs, cols)
+      }
       stop(.upstream_fields[[field]], " here (", paste(mine, collapse = ", "), ") differs from the upstream job's (",
            paste(theirs, collapse = ", "), "). Leave it NULL to use the upstream value, or rerun ",
            "the upstream job with the new value.", call. = FALSE)
