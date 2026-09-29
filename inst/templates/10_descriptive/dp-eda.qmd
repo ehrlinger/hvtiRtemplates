@@ -427,7 +427,8 @@ show_table(data.frame(
 # hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
 # selected, so the report carries no patient-level column; run dc-gfup to review
 # the suspicious rows themselves.
-if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices (study-choices in a job made before that rename).", call. = FALSE)
+if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
+                                              "(study-choices in a job made before that rename).", call. = FALSE)
 if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLORS) == 3L &&
                             setequal(names(COLORS), c("alive", "dead", "event")))) {
   stop("COLORS must be NULL or name exactly alive, dead and event.", call. = FALSE)

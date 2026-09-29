@@ -201,7 +201,7 @@ test_that("dp-gfup and dp-eda choose follow-up colors with the same code", {
     end <- end + match("}", lines[-seq_len(end)])
     lines[start:end]
   }
-  expect_length(block("dp", "gfup"), 12L)
+  expect_length(block("dp", "gfup"), 13L)
   expect_identical(block("dp", "gfup"), block("dp", "eda"))
 })
 
