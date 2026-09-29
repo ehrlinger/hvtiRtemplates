@@ -431,7 +431,7 @@ test_that("postage VARIABLES = NULL leaves out identifiers written without a sep
   n <- 12L
   env <- list2env(list(d = data.frame(year = seq_len(n), age = 40 + seq_len(n), ccfid = 1000L + seq_len(n),
                                       patientid = sprintf("P%03d", seq_len(n)), mrn = 5000L + seq_len(n),
-                                      eMRN = 7000L + seq_len(n), pt_mrn_num = rep(0:1, 6),
+                                      eMRN = 7000L + seq_len(n), pt_mrn_num = rep(0:1, 6), bnp_mrna = 0.5 * seq_len(n),
                                       surgeon_note = sprintf("note %d", seq_len(n)),
                                       carotid = rep(0:1, 6), steroid = rep(0:1, 6), case = rep(0:1, 6)),
                        X_VAR = "year", VARIABLES = NULL, EXCLUDE = character(),
@@ -439,9 +439,9 @@ test_that("postage VARIABLES = NULL leaves out identifiers written without a sep
                        SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
                        LABEL_MAX = 40, ABBREVIATIONS = NULL))
   out <- capture.output(eval(spec, env))
-  # Only the exact names MRN and eMRN are record numbers: pt_mrn_num is a study
-  # variable like any other.
-  expect_identical(env$VARIABLES, c("age", "pt_mrn_num", "carotid", "steroid", "case"))
+  # Only the exact names MRN and eMRN are record numbers: pt_mrn_num and the
+  # mRNA variable bnp_mrna are study variables like any other.
+  expect_identical(env$VARIABLES, c("age", "pt_mrn_num", "bnp_mrna", "carotid", "steroid", "case"))
   expect_match(paste(out, collapse = " "), "ccfid, patientid, mrn, eMRN, surgeon_note")
   # Below ten values a distinct character column is kept: a small check frame
   # is not a register.
