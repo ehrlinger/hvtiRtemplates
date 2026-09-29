@@ -46,10 +46,6 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
   stop("This job needs hvtiPlotR >= 2.8.0 for hv_followup_panels() and scale_color_hv(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
-  stop("This job needs hvtiRdatabuild >= 0.2.1 for read_analysis_set(); ",
-       utils::packageVersion("hvtiRdatabuild"), " is installed.", call. = FALSE)
-}
 ```
 
 ```{r}

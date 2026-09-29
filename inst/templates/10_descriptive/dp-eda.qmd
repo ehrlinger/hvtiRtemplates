@@ -287,17 +287,19 @@ unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
 # The job's ID and KEY columns are never drawn: they are the columns the data
 # step used, so a ccfid, or the MRN it fell back to, is caught whatever its case.
-# MRN and eMRN are already dropped at read, unless one is the ID. The name rule
-# catches other identifier columns: ccfid and patientid have no "_" before "id",
-# and a bare "id$" would also take carotid and steroid. The date rule and the
-# data rule catch columns that should not be drawn: dates, and text in which
-# every value differs, once there are ten or more of them.
+# MRN and eMRN are already dropped at read, unless one is the ID. The name rules
+# catch other identifier columns and dates: an id or identifier token, such as
+# hosp_id, a date token or a _dt suffix, and the names ccfid and patientid,
+# which have no "_" before "id"; a bare "id$" would also take carotid and
+# steroid. The data rule catches columns that should not be drawn under a name
+# nobody listed: dates, and text in which every value differs, once there are
+# ten or more of them.
 .job_selection <- attr(job_data$record, "selection")
 is_job_key <- function(v) tolower(v) %in% tolower(c(.job_selection$id, .job_selection$key))
 looks_like_id <- function(v) {
   is_job_key(v) |
+    grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
     grepl("^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|^e?mrn$", v, ignore.case = TRUE) |
-    grepl("(^|_)(date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
     vapply(d[v], function(x) {
       seen <- x[!is.na(x)]
       inherits(x, c("Date", "POSIXt")) ||

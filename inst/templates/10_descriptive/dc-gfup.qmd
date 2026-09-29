@@ -37,10 +37,6 @@ if (utils::packageVersion("hvtiRutilities") < "1.4.1") {
   stop("This job needs hvtiRutilities >= 1.4.1 for followup_check(); ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
-  stop("This job needs hvtiRdatabuild >= 0.2.1 for read_analysis_set(); ",
-       utils::packageVersion("hvtiRdatabuild"), " is installed.", call. = FALSE)
-}
 ```
 
 ```{r}

@@ -164,7 +164,8 @@ test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps",
   suppressMessages(hvtiRutilities::study_setup(root, study = "EDA identifiers", study_tracker_id = 1L))
   n <- 12L
   built <- data.frame(year = 2000L + seq_len(n), ccfid = 1000L + seq_len(n), randid = 3000L + seq_len(n),
-                      MRN = 5000L + seq_len(n), study_id = 7000L + seq_len(n), pt_mrn_num = rep(0:1, 6),
+                      MRN = 5000L + seq_len(n), study_id = 7000L + seq_len(n), hosp_id = 9000L + seq_len(n),
+                      pt_mrn_num = rep(0:1, 6),
                       age = 40 + seq_len(n))
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
@@ -192,6 +193,8 @@ test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps",
   expect_false("mrn" %in% tolower(names(env$d)))
   expect_false("ccfid" %in% env$VARIABLES)
   expect_false("study_id" %in% env$VARIABLES)
+  # An id token after a separator is an identifier too, by the generic name rule.
+  expect_false("hosp_id" %in% env$VARIABLES)
   expect_true("pt_mrn_num" %in% env$VARIABLES)
   expect_match(paste(env$out, collapse = " "), "ccfid", fixed = TRUE)
 
