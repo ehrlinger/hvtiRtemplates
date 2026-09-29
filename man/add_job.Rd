@@ -8,7 +8,9 @@ add_job(prefix, subject, type, dir = ".", qualifier = NULL)
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
-\code{\link{template_list}}.}
+\code{\link{template_list}}, or a template's full name as reported in
+its \code{name} column, e.g. \code{"dp-trends"}. A full name carries the
+qualifier, so \code{qualifier} must then be left \code{NULL}.}
 
 \item{subject}{Grouping topic for the job set, e.g. \code{"death"} or
 \code{"cohort"}. A subject names a statistical endpoint only when the

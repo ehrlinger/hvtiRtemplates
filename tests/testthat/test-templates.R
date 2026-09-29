@@ -760,3 +760,47 @@ test_that("the hz template reads theta names through TemporalHazard's exported A
   expect_identical(env$theta_table$parameter, TemporalHazard::hzr_theta_names(env$phases))
   expect_gt(nrow(env$theta_table), 0L)
 })
+
+# ---- template stem ---------------------------------------------------------
+# A template can be named by its filename stem, "dp-trends", as template_list()
+# reports it in `name`. A prefix never contains "-", so the split is exact.
+
+test_that(".select_template() resolves a template stem", {
+  tl <- data.frame(
+    prefix = c("dp", "dp", "ac"), qualifier = c("trends", "gfup", NA_character_),
+    folder = c("graphs", "graphs", "distributions"),
+    file = c("a.qmd", "b.qmd", "c.qmd"), stringsAsFactors = FALSE
+  )
+  expect_equal(hvtiRtemplates:::.select_template(tl, "dp-trends")$file, "a.qmd")
+  expect_equal(hvtiRtemplates:::.select_template(tl, "ac")$file, "c.qmd")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp-nope"), "no template qualified")
+  for (bad in c("dp-", "-trends", "dp-trends-x")) {
+    expect_error(hvtiRtemplates:::.select_template(tl, bad), "not a template name", info = bad)
+  }
+})
+
+test_that("a stem and a qualifier together are refused, not reconciled", {
+  # Two answers to one question. Preferring either would silently discard the
+  # other, even when they agree today.
+  expect_error(template_path("dp-trends", "trends"), "not both")
+  expect_error(template_path("dp-trends", "gfup"), "not both")
+  expect_error(add_job("dp-trends", "cohort", "eda", dir = tempdir(), qualifier = "trends"),
+               "add_job\\(\\).*not both")
+  # A malformed qualifier is reported as itself, not as a clash.
+  for (bad in list(NA_character_, character(0), "")) {
+    expect_error(template_path("dp-trends", bad), "single non-empty, non-NA")
+  }
+})
+
+test_that("the choices on offer are shown by full name, the form a caller can type", {
+  expect_error(template_path("dp"), "name one with `qualifier`, or by its full name")
+  expect_error(template_path("dp"), "dp-trends")
+  expect_error(template_path("ac-foo"), "Available for this prefix: ac")
+})
+
+test_that("every shipped template resolves from its own stem", {
+  tl <- template_list()
+  for (i in seq_len(nrow(tl))) {
+    expect_equal(template_path(tl$name[[i]]), tl$file[[i]], info = tl$name[[i]])
+  }
+})

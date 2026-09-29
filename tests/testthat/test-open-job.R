@@ -96,3 +96,15 @@ test_that("open_job returns exactly the path add_job would write, qualified and 
     )
   }
 })
+
+test_that("add_job() and open_job() accept a template stem", {
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Stem", study_tracker_id = 1L))
+  local_mocked_bindings(.open_in_editor = function(path) invisible(path))
+  out <- add_job("dc-tables", subject = "dead", type = "eda", dir = root)
+  expect_match(basename(out), "^dead-eda-dc-tables[.]qmd$")
+  expect_identical(
+    normalizePath(suppressMessages(open_job("dc-tables", subject = "dead", type = "eda", dir = root))),
+    normalizePath(out)
+  )
+})
