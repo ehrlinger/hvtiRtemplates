@@ -34,11 +34,16 @@ open_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
   )
   .check_field("subject", subject, fn = "open_job")
   .check_field("type", type, fn = "open_job")
+  .warn_if_deprecated(row, "open_job")
   out <- .job_path(row, subject, type, root)
   if (file.exists(out)) {
     message("open_job(): '", out, "' already exists; opening it unchanged.")
   } else {
-    out <- add_job(prefix, subject, type, dir = root, qualifier = qualifier)
+    # Warned above already; add_job()'s own warning would say it twice.
+    out <- withCallingHandlers(
+      add_job(prefix, subject, type, dir = root, qualifier = qualifier),
+      hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning")
+    )
   }
   .open_in_editor(out)
 }

@@ -63,8 +63,12 @@ it. Review the remaining \code{EDIT:} markers before rendering the job.
 }
 \details{
 A converter is available for \code{dc-tables}, \code{dc-gfup},
-\code{dp-trends}, and \code{dp-postage}, each interpreting its own source
-choices; choices the interpreter does not recognize remain for review. A
+\code{dp-trends}, and \code{dp-eda}, each interpreting its own source
+choices; choices the interpreter does not recognize remain for review.
+Legacy EDA reports migrate into \code{dp-eda} with
+\code{SECTIONS <- c("continuous", "percent", "count")}, the pages the
+deprecated \code{dp-postage} drew. Naming a deprecated template, such as
+\code{dp-postage}, warns and writes the job from its replacement. A
 template with no converter yet still migrates: it is scaffolded with every
 \code{EDIT:} marker kept, the evidence travels with it, and the report
 says the migration adapter is not yet available.

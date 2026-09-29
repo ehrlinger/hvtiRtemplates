@@ -7,7 +7,11 @@
 #' @return A data frame. `uses`, `upstream`, `downstream`, and `workflows` are
 #'   list columns of character vectors. Unmeasured counts are `NA_integer_`.
 #'   \code{description} is a one-sentence summary, given for every template on
-#'   disk and \code{NA} for most queued ones.
+#'   disk and \code{NA} for most queued ones. \code{deprecated_by} names the
+#'   template replacing a deprecated one, such as \code{"dp-eda"}, and
+#'   \code{deprecation_note} says how to move to it; both are \code{NA} for a
+#'   supported template. A deprecated template still ships, and
+#'   \code{\link{add_job}} warns when it is used.
 #' @export
 #' @examples
 #' table(template_catalog()$status)
@@ -76,6 +80,7 @@ template_catalog <- function() {
     sas_breadth_jobs = int("sas_breadth_jobs"),
     r_jobs = int("r_jobs"), r_exemplars = int("r_exemplars"),
     blocked_on = chr("blocked_on"), spec = chr("spec"), note = chr("note"),
+    deprecated_by = chr("deprecated_by"), deprecation_note = chr("deprecation_note"),
     stringsAsFactors = FALSE
   )
   for (field in c("uses", "upstream", "downstream", "workflows")) {

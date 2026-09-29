@@ -54,12 +54,48 @@ template_list <- function() {
 #' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
 #'   \code{dp}. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
-#' @return The full path, as \code{character(1)}.
+#' @return The full path, as \code{character(1)}. A template the catalog
+#'   marks deprecated, such as \code{dp-postage}, still resolves, with a
+#'   warning naming its replacement.
 #' @export
 #' @examples
 #' try(template_path("ac"))
 template_path <- function(prefix, qualifier = NULL) {
-  .select_template(template_list(), prefix, qualifier)$file[[1L]]
+  row <- .select_template(template_list(), prefix, qualifier)
+  .warn_if_deprecated(row, "template_path")
+  row$file[[1L]]
+}
+
+# The catalog row marking (prefix, qualifier) deprecated, or NULL. The marker
+# is the catalog's `deprecated_by` field, so deprecating a template is a
+# catalog edit and no template name is written into the code.
+.template_deprecation <- function(prefix, qualifier = NULL) {
+  catalog <- template_catalog()
+  same <- if (is.null(qualifier) || is.na(qualifier)) {
+    is.na(catalog$qualifier)
+  } else {
+    !is.na(catalog$qualifier) & catalog$qualifier == qualifier
+  }
+  hit <- catalog[!is.na(catalog$prefix) & catalog$prefix == prefix & same &
+                   !is.na(catalog$deprecated_by), , drop = FALSE]
+  if (nrow(hit) != 1L) return(NULL)
+  list(name = if (is.na(hit$qualifier)) hit$prefix else paste0(hit$prefix, "-", hit$qualifier),
+       deprecated_by = hit$deprecated_by, note = hit$deprecation_note)
+}
+
+# Warn once when a selected template row is deprecated, naming the caller.
+.warn_if_deprecated <- function(row, fn) {
+  deprecated <- .template_deprecation(row$prefix[[1L]], row$qualifier[[1L]])
+  if (is.null(deprecated)) return(invisible(NULL))
+  .warn_deprecated(paste0(fn, "(): ", deprecated$name, " is deprecated in favor of ",
+                          deprecated$deprecated_by, ". ", deprecated$note))
+}
+
+# The warning carries its own class, so a caller that has already warned, as
+# open_job() has before it calls add_job(), can muffle the repeat.
+.warn_deprecated <- function(message) {
+  warning(structure(class = c("hvtiRtemplates_deprecated", "warning", "condition"),
+                    list(message = message, call = NULL)))
 }
 
 # Resolve (prefix, qualifier) to exactly one template row, or stop.

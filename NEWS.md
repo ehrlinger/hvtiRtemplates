@@ -1,5 +1,25 @@
 # hvtiRtemplates (unreleased)
 
+* `dp-postage` is deprecated in favor of `dp-eda`, and will be removed in the
+  release after 1.2.3. For the same pages, scaffold
+  `add_job("dp", subject, type, qualifier = "eda")` and set
+  `SECTIONS <- c("continuous", "percent", "count")`: the sections call
+  `hv_eda_pages()` with the same arguments, and a test checks that the pages
+  match `dp-postage`'s byte for byte. They are saved as `dp-eda-*.png`.
+  `dp-postage` still scaffolds and renders; `add_job()`, `open_job()` and
+  `template_path()` warn once when it is used. The template catalog marks it
+  with two new fields, `deprecated_by` and `deprecation_note`, which
+  `template_catalog()` returns and the warning reads.
+
+* `migrate_job()` now writes a `dp-eda` job for a legacy EDA report (the
+  `tp.dp.DescriptiveSummary.qmd` and `tp.dp.EDA_barplots_scatterplots*.R`
+  lineage), carrying over the same settings as before, `VARIABLES`, `X_VAR`,
+  `EXCLUDE`, the grid size and `UNIQUE_LIMIT`, and leaving the color and
+  stratification choices for review. The job draws
+  `SECTIONS <- c("continuous", "percent", "count")`, because a legacy EDA
+  report had no follow-up panels. Naming `qualifier = "postage"` warns and
+  writes the `dp-eda` job.
+
 * The data-route tests pass when run on their own. They evaluated template
   chunks that call `study_config()` without supplying it, so they depended on
   an earlier test file having attached hvtiRutilities, and a filtered run

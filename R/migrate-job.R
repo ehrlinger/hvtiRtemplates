@@ -7,8 +7,12 @@
 #'
 #' @details
 #' A converter is available for \code{dc-tables}, \code{dc-gfup},
-#' \code{dp-trends}, and \code{dp-postage}, each interpreting its own source
-#' choices; choices the interpreter does not recognize remain for review. A
+#' \code{dp-trends}, and \code{dp-eda}, each interpreting its own source
+#' choices; choices the interpreter does not recognize remain for review.
+#' Legacy EDA reports migrate into \code{dp-eda} with
+#' \code{SECTIONS <- c("continuous", "percent", "count")}, the pages the
+#' deprecated \code{dp-postage} drew. Naming a deprecated template, such as
+#' \code{dp-postage}, warns and writes the job from its replacement. A
 #' template with no converter yet still migrates: it is scaffolded with every
 #' \code{EDIT:} marker kept, the evidence travels with it, and the report
 #' says the migration adapter is not yet available.
@@ -132,6 +136,17 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
   tpl <- .infer_template(source, prefix, qualifier)
   prefix <- tpl$prefix
   qualifier <- tpl$qualifier
+  # A deprecated template's replacement draws the same output, so the job is
+  # written from the replacement rather than from a template about to go.
+  deprecated <- .template_deprecation(prefix, qualifier)
+  if (!is.null(deprecated)) {
+    .warn_deprecated(paste0("migrate_job(): ", deprecated$name, " is deprecated in favor of ",
+                            deprecated$deprecated_by, ", so this job is written from ",
+                            deprecated$deprecated_by, " instead."))
+    parts <- .split_template_name(deprecated$deprecated_by)
+    prefix <- parts$prefix
+    qualifier <- parts$qualifier
+  }
   paths <- c(source = source, lst = lst, log = log, reference = reference)
   paths <- vapply(paths, .migration_path, character(1L), root = root)
   row <- tryCatch(
@@ -265,7 +280,7 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
     "dc\rtables" = ".migrate_dc_tables",
     "dc\rgfup" = ".migrate_dc_gfup",
     "dp\rtrends" = ".migrate_dp_trends",
-    "dp\rpostage" = ".migrate_dp_postage"
+    "dp\reda" = ".migrate_dp_eda"
   )
 }
 

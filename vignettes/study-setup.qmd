@@ -243,7 +243,7 @@ Each call supplies four fields. `prefix` and `qualifier` select a template;
 the other two fields keep related outputs together:
 
 - `dc` means descriptive computation and `dp` means descriptive plot.
-- Qualifiers such as `general`, `tables` and `postage` select one template in
+- Qualifiers such as `general`, `tables` and `eda` select one template in
   that family.
 - During EDA there may be no modeled endpoint or analysis method. `cohort`
   names the subject being described and `eda` names the stage. These are
@@ -265,13 +265,19 @@ general <- open_job("dc", "cohort", "eda", qualifier = "general")
 tables <- open_job("dc", "cohort", "eda", qualifier = "tables")
 ```
 
-The EDA postage template is also part of this stage, but it requires a
+The EDA report template is also part of this stage, but it requires a
 meaningful `X_VAR` for the horizontal axis. Create it when the dataset has an
 appropriate reference date, calendar year or follow-up measure:
 
 ```r
-postage <- open_job("dp", "cohort", "eda", qualifier = "postage")
+eda <- open_job("dp", "cohort", "eda", qualifier = "eda")
 ```
+
+Its follow-up section needs the death and follow-up fields; take `"followup"`
+out of `SECTIONS` when the data do not have them. The older `dp-postage`
+template drew the variable sections alone. It is deprecated and will be
+removed in the release after 1.2.3; `SECTIONS <- c("continuous", "percent",
+"count")` in a `dp-eda` job draws the same pages.
 
 Two additional jobs are conditional. Add `dc-gfup` only when the registered
 event and follow-up fields answer a real completeness question. Add `dp-trends`
@@ -292,7 +298,7 @@ study_jobs <- c(
   tables = add_job("dc", "cohort", "eda", adopted_root, "tables"),
   gfup = add_job("dc", "cohort", "eda", adopted_root, "gfup"),
   trends = add_job("dp", "cohort", "eda", adopted_root, "trends"),
-  postage = add_job("dp", "cohort", "eda", adopted_root, "postage")
+  eda = add_job("dp", "cohort", "eda", adopted_root, "eda")
 )
 study_jobs
 ```
@@ -314,7 +320,7 @@ an executable state. If you want the same final check from the Console, run
 
 The HTML report stays beside its QMD in `descriptive/` or `graphs/`. The
 descriptive Word table is filed under `documents/cohort-eda/`; trend and
-postage PNGs are filed under `graphs/cohort-eda/`. Open those artifacts and
+EDA PNGs are filed under `graphs/cohort-eda/`. Open those artifacts and
 check the population, variables, labels, counts, summaries and axes—not merely
 that the files exist.
 

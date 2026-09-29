@@ -28,7 +28,14 @@ ON_DISK = {"shipped", "revisit", "in-flight"}
 # Optional everywhere, required on a row that asserts a template on disk:
 # the template-catalog vignette prints it as that template's one-line
 # description, and a shipped template with none would print a blank.
-OPTIONAL_FIELDS = ["description"]
+OPTIONAL_FIELDS = ["description", "deprecated_by", "deprecation_note"]
+
+# A deprecated template still ships, so it keeps an on-disk status and gains
+# these two fields together: `deprecated_by` names the template that replaces
+# it, as a full name such as "dp-eda", and `deprecation_note` is the sentence
+# add_job() appends to its warning. A new status would have had to be taught
+# to every reader of ON_DISK; two optional fields leave them all unchanged.
+DEPRECATION_FIELDS = ["deprecated_by", "deprecation_note"]
 
 
 
@@ -102,6 +109,7 @@ def check_schema(rows):
                            f"at row {seen_prefixes[key]} and row {i}")
             else:
                 seen_prefixes[key] = i
+    bad += check_deprecation(rows)
     # A prefix half-decomposed is a state the ledger could describe and the
     # package would then refuse to use: .select_template() errors on a mixed
     # prefix, because its ambiguity message would offer an unqualified row
@@ -121,6 +129,37 @@ def check_schema(rows):
     return bad
 
 
+
+
+def check_deprecation(rows):
+    """Both deprecation fields or neither, on a shipped row, naming a shipped row.
+
+    A replacement that is itself queued or deprecated would send add_job()'s
+    reader to a template they cannot scaffold, or round a chain of warnings.
+    """
+    bad = []
+    names = {roadmap_render._label(r): r for r in rows if r.get("prefix") is not None}
+    for i, r in enumerate(rows):
+        present = [f for f in DEPRECATION_FIELDS if f in r]
+        if not present:
+            continue
+        where = roadmap_render._label(r) if r.get("prefix") is not None else f"row {i}"
+        if len(present) != len(DEPRECATION_FIELDS):
+            bad.append(f"`{where}` carries {present[0]} without "
+                       f"{[f for f in DEPRECATION_FIELDS if f not in r][0]}")
+            continue
+        if any(not (isinstance(r[f], str) and r[f].strip()) for f in DEPRECATION_FIELDS):
+            bad.append(f"`{where}` has an empty deprecation field")
+            continue
+        if r.get("status") not in ON_DISK:
+            bad.append(f"`{where}` is deprecated but not on disk; a template "
+                       f"that never shipped is dropped, not deprecated")
+        target = names.get(r["deprecated_by"])
+        if target is None or target.get("status") not in ON_DISK or "deprecated_by" in target:
+            bad.append(f"`{where}` is deprecated in favor of "
+                       f"`{r['deprecated_by']}`, which is not a supported "
+                       f"template on disk")
+    return bad
 
 
 def _folder_dirs():
