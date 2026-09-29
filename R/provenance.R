@@ -662,7 +662,7 @@
       lineage <- .handoff_lineage(explicit_data)
     } else if (complete_shape) {
       lineage <- .handoff_lineage(
-        explicit_data, lineage$artifacts, lineage$analysis, lineage$cohort
+        explicit_data, lineage$artifacts, lineage$analysis, lineage$cohort, lineage$selection
       )
     } else {
       .validate_handoff_lineage(value, path, "the bootstrap producer")
@@ -691,11 +691,20 @@
   }
   if (is.null(analysis)) analysis <- common("analysis")
   if (is.null(cohort)) cohort <- common("cohort")
+  selection_values <- lapply(lineages, `[[`, "selection")
+  selection_values <- selection_values[!vapply(selection_values, is.null, logical(1L))]
+  selection <- if (length(selection_values) &&
+                     all(vapply(selection_values[-1L], identical, logical(1L), selection_values[[1L]]))) {
+    selection_values[[1L]]
+  } else {
+    NULL
+  }
   .handoff_lineage(
     data = c(carried_data, data),
     artifacts = c(carried_artifacts, artifacts),
     analysis = analysis,
-    cohort = cohort
+    cohort = cohort,
+    selection = selection
   )
 }
 

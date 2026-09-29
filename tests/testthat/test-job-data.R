@@ -132,3 +132,37 @@ test_that("a downstream job's settings must agree with its upstream selection", 
   expect_error(hvtiRtemplates:::.check_upstream_selection(up, list(event = "reop")), "EVENT")
   expect_identical(hvtiRtemplates:::.check_upstream_selection(NULL, list(id = "ccfid"))$id, "ccfid")
 })
+
+test_that(".check_upstream_selection() ignores fields outside its known five", {
+  out <- hvtiRtemplates:::.check_upstream_selection(list(rows = 10L, id = "ccfid"), list(rows = 5L))
+  expect_identical(out$id, "ccfid")
+  expect_identical(out$rows, 5L)
+})
+
+test_that(".check_upstream_selection() treats NULL settings as an empty list", {
+  out <- hvtiRtemplates:::.check_upstream_selection(list(id = "ccfid"), NULL)
+  expect_identical(out$id, "ccfid")
+})
+
+test_that(".check_upstream_selection() compares a real quote() or exprs() WHERE against the upstream string", {
+  up <- list(where = "age >= 18")
+  expect_identical(
+    hvtiRtemplates:::.check_upstream_selection(up, list(where = quote(age >= 18)))$where,
+    "age >= 18"
+  )
+  expect_error(
+    hvtiRtemplates:::.check_upstream_selection(up, list(where = quote(age >= 65))),
+    "WHERE.*age >= 65.*age >= 18"
+  )
+  up_two <- list(where = c("age >= 18", "hx_chf == 1"))
+  expect_identical(
+    hvtiRtemplates:::.check_upstream_selection(
+      up_two, list(where = rlang::exprs(age >= 18, hx_chf == 1))
+    )$where,
+    c("age >= 18", "hx_chf == 1")
+  )
+  expect_error(
+    hvtiRtemplates:::.check_upstream_selection(up_two, list(where = rlang::exprs(age >= 65, hx_chf == 1))),
+    "WHERE"
+  )
+})
