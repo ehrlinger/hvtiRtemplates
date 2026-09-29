@@ -12,7 +12,9 @@ template_path(prefix, qualifier = NULL)
 
 - prefix:
 
-  Analysis prefix, e.g. `"ac"`. See
+  Analysis prefix, e.g. `"ac"`, or a template's full name, e.g.
+  `"dp-trends"`, which carries its qualifier and leaves `qualifier`
+  `NULL`. See
   [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md).
 
 - qualifier:

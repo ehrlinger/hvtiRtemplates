@@ -40,10 +40,11 @@ migrate_job(
 
 - prefix:
 
-  Template prefix, such as `"dc"`. Read from the SAS filename when
-  `NULL`. When given without `qualifier`, the qualifier is still read
-  from the filename's second field if that field names one of this
-  prefix's templates.
+  Template prefix, such as `"dc"`, or a template's full name, such as
+  `"dc-tables"`, which carries its qualifier and leaves `qualifier`
+  `NULL`. Read from the SAS filename when `NULL`. When given without
+  `qualifier`, the qualifier is still read from the filename's second
+  field if that field names one of this prefix's templates.
 
 - qualifier:
 

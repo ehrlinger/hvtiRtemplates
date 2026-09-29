@@ -85,7 +85,9 @@ job may use a topic such as <code>"cohort"</code>.</p></dd>
 
 
 <dt id="arg-prefix">prefix<a class="anchor" aria-label="anchor" href="#arg-prefix"></a></dt>
-<dd><p>Template prefix, such as <code>"dc"</code>. Read from the SAS
+<dd><p>Template prefix, such as <code>"dc"</code>, or a template's full
+name, such as <code>"dc-tables"</code>, which carries its qualifier and leaves
+<code>qualifier</code> <code>NULL</code>. Read from the SAS
 filename when <code>NULL</code>. When given without <code>qualifier</code>, the
 qualifier is still read from the filename's second field if that field
 names one of this prefix's templates.</p></dd>

@@ -16,7 +16,10 @@ open_job(prefix, subject, type, dir = ".", qualifier = NULL)
 - prefix:
 
   Job type: one of the prefixes reported by
-  [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md).
+  [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
+  or a template's full name as reported in its `name` column, e.g.
+  `"dp-trends"`. A full name carries the qualifier, so `qualifier` must
+  then be left `NULL`.
 
 - subject:
 
@@ -66,7 +69,7 @@ root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L
 ))
-#> Study: /tmp/RtmpiXh3X5/open-job-example
+#> Study: /tmp/Rtmp5v8oy8/open-job-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
