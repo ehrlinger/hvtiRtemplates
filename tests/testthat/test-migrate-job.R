@@ -651,6 +651,12 @@ test_that("migrate_job() accepts a template's full name, as add_job() does", {
                 qualifier = "tables", dir = root),
     "migrate_job\\(\\).*not both"
   )
+  # A filename naming a DIFFERENT qualifier must not override the full name:
+  # the split hands .infer_template() a qualifier, so it never reads field 2.
+  gfup <- file.path(root, "descriptive", "dc.gfup.sas")
+  writeLines("%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);", gfup)
+  job <- migrate_job(source = gfup, subject = "named", type = "eda", prefix = "dc-tables", dir = root)
+  expect_identical(basename(job), "named-eda-dc-tables.qmd")
   expect_error(
     migrate_job(source = source, subject = "other", type = "eda", prefix = "dc-", dir = root),
     "migrate_job\\(\\).*not a template name"
