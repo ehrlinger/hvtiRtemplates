@@ -142,6 +142,10 @@ if (is.null(.model_read$lineage$analysis) || is.null(.model_read$lineage$cohort)
 # training rows, so this compares patients rather than settings. It reports how
 # many are shared, never which.
 .train_id <- model$meta$id_col
+if (!is.character(.train_id) || length(.train_id) != 1L || !.train_id %in% names(model$data)) {
+  stop("The saved model does not keep its training identifiers, so this job cannot check that the validation ",
+       "patients are new: refit it with the current lm-binary template.", call. = FALSE)
+}
 if (!identical(tolower(.id), tolower(.train_id))) {
   stop("The validation data identify patients by `", .id, "`, the training data by `", .train_id,
        "`: set ID so both use the same identifier.", call. = FALSE)

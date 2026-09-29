@@ -240,6 +240,11 @@ test_that("lm-checkpred stops when its validation patients were in the training 
   # A disjoint cohort goes on to validation.
   env <- check(list(WHERE = quote(ccfid > 70)))
   expect_identical(nrow(env$d), 50L)
+  # A saved model without its training identifiers stops rather than skipping the check.
+  model <- readRDS(file.path(bundle_dir, "lm-binary.rds"))
+  model$data$ccfid <- NULL
+  saveRDS(model, file.path(bundle_dir, "lm-binary.rds"))
+  expect_error(check(list(WHERE = quote(ccfid > 70))), "does not keep its training identifiers")
 })
 
 test_that("every lm template scaffolds and renders", {
