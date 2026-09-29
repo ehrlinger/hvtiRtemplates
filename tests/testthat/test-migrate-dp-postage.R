@@ -321,16 +321,16 @@ test_that("postage does not require databuild for registered data but validates 
   eval(postage_chunk(job, "edit-study-choices"), env)
   capture.output(eval(postage_chunk(job, "data"), env))
   expect_equal(nrow(env$d), 40L)
+  # The migrated job reads through read_job_data(), which checks every setting
+  # before reading and asks for hvtiRdatabuild only for an analysis set.
   data <- postage_chunk(job, "data")
-  first_if <- which(vapply(data, function(x) is.call(x) && identical(x[[1L]], as.name("if")), logical(1L)))[1L]
-  selection <- data[seq.int(first_if, length(data))]
   env$ANALYSIS_SET <- NULL
   env$DATASET <- ""
-  expect_error(eval(selection, env), "DATASET must be set")
+  expect_error(eval(data, env), "DATASET must name one dataset")
   env$DATASET <- "study"
   env$ANALYSIS_SET <- "eda"
   if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
-    expect_error(eval(selection, env), "hvtiRdatabuild >= 0.2.1", fixed = TRUE)
+    expect_error(eval(data, env), "hvtiRdatabuild 0.2.1", fixed = TRUE)
   }
 })
 

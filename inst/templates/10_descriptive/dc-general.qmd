@@ -25,7 +25,7 @@ uses base procedures only. The formatted manuscript table is a `dc-tables` job.
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
 .provenance_data <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages(library(hvtiRutilities))
@@ -102,11 +102,24 @@ Edit these values for this study before rendering.
 
 ```{r}
 #| label: edit-study-choices
-# EDIT: the built dataset this job reads.
+# EDIT: the registered dataset this job reads ("study" is the built dataset).
 DATASET <- "study"
 
-# EDIT: the analysis set, or NULL for a whole additional dataset.
-ANALYSIS_SET <- "eda"
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
 
 # EDIT: grouped categorical variables. Each name is a section heading, in this
 # order. Carry the /* Demography */ banners across from the SAS %macro freq
@@ -125,12 +138,6 @@ CONTINUOUS <- list(
 # rank). Defaults to every continuous variable; character() skips the section.
 CORR_VARS <- unlist(CONTINUOUS, use.names = FALSE)
 
-# EDIT: identifier columns, kept out of every summary. The overall statistics
-# would otherwise print their minimum and maximum, and each of those is one
-# patient's identifier. Name every key column the data carry; character()
-# only if there are none.
-KEY_COLS <- "ccfid"
-
 # EDIT: leave NULL to keep identifiers out of reports. A column name (the SAS
 # job used id ccfid) labels the extreme values with it, which puts patient
 # identifiers in the report: a report rendered that way must not be circulated.
@@ -147,8 +154,8 @@ ID_COL <- NULL
         with `ANALYSIS_SET <- NULL`.
      2. An additional dataset: any file declared under `additional_datasets:`,
         for example a column subset written for R. Set `DATASET` to its
-        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: no
-        rows are excluded.
+        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: only
+        `WHERE` removes rows.
      3. An analysis set: declared under `analysis_sets:` with the columns kept
         and the rows excluded, then written once with
         `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
@@ -157,58 +164,30 @@ ID_COL <- NULL
 
      A name under `additional_datasets:` is not an analysis set, so putting it
      in `ANALYSIS_SET` stops with "No analysis set". Whichever route is taken,
-     the report prints the dataset, file and dimensions it read, so a reader
+     the report prints what it read, the identifier it used, the rows each
+     `WHERE` condition removed and the rows and patients kept, so a reader
      never has to ask which data a table describes. -->
 
 ```{r}
 #| label: data
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
-# The built dataset "study" is the file named by built:
-# in _study.yml; any other name must be declared under additional_datasets:,
-# such as a column subset written for R. Analysis sets are derived from
-# "study" only, so another dataset needs ANALYSIS_SET <- NULL.
-# Declare the analysis set's columns and excluded rows
-# under analysis_sets: in _study.yml, then write it with
-# hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
-# cohort is the intended population.
-if (is.null(ANALYSIS_SET)) {
-  if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
-    stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\".",
-         call. = FALSE)
-  }
-  .cfg <- study_config(start = .root)
-  .data_read <- hvtiRtemplates:::.provenance_read(
-    DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET)
-  )
-  d <- .data_read$value
-  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-} else if (!identical(DATASET, "study")) {
-  stop("An analysis set is written from the study dataset, not `", DATASET,
-       "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
-} else {
-  .cfg <- study_config(start = .root)
-  .analysis_set_path <- file.path(study_dir("datasets", .root), paste0(ANALYSIS_SET, ".parquet"))
-  .data_read <- hvtiRtemplates:::.provenance_file_read(
-    paste0("analysis_set:", ANALYSIS_SET), .analysis_set_path, .cfg,
-    function() hvtiRdatabuild::read_analysis_set(ANALYSIS_SET, cfg = .cfg),
-    role = paste0("analysis_set:", ANALYSIS_SET)
-  )
-  d <- .data_read$value
-  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-  knitr::kable(attr(d, "attrition"), caption = paste0(
-    "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
-  ))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+if (!is.null(job_data$attrition)) {
+  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
 }
-cat("Data read: ", if (is.null(ANALYSIS_SET)) {
-  paste0("dataset `", DATASET, "` (",
-         basename(hvtiRutilities::built_path(dataset = DATASET)), ")")
-} else {
-  paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
-}, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
 ```
 
 ```{r}
 #| label: derive
+# The identifier column the data step used: ID as named, or MRN when the data
+# have no ccfid. It is kept out of every summary, because the overall minimum
+# and maximum would each be one patient's identifier.
+.id <- attr(job_data$record, "selection")$id
 PROBS <- c(0, 0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99, 1)
 check_group_names <- function(x, setting) {
   if (!length(x)) return(invisible())
@@ -224,7 +203,7 @@ if (!is.null(ID_COL) && !(is.character(ID_COL) && length(ID_COL) == 1L)) {
 }
 cat_vars <- unlist(CATEGORICAL, use.names = FALSE)
 con_vars <- unlist(CONTINUOUS, use.names = FALSE)
-unknown <- setdiff(unique(c(cat_vars, con_vars, CORR_VARS, ID_COL, KEY_COLS)), names(d))
+unknown <- setdiff(unique(c(cat_vars, con_vars, CORR_VARS, ID_COL, .id)), names(d))
 if (length(unknown)) {
   stop("Unknown column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
 }
@@ -234,11 +213,11 @@ if (length(not_numeric)) {
   stop("Not numeric, so not summarized as continuous or correlated: ",
        paste(not_numeric, collapse = ", "), call. = FALSE)
 }
-key_overlap <- intersect(unique(c(cat_vars, con_vars, CORR_VARS)), KEY_COLS)
+key_overlap <- intersect(unique(c(cat_vars, con_vars, CORR_VARS)), .id)
 if (length(key_overlap)) {
-  stop("Key column(s) cannot be summarized: ", paste(key_overlap, collapse = ", "), call. = FALSE)
+  stop("The ID column cannot be summarized: ", paste(key_overlap, collapse = ", "), call. = FALSE)
 }
-overall_vars <- setdiff(names(d)[vapply(d, is.numeric, logical(1))], c(KEY_COLS, ID_COL))
+overall_vars <- setdiff(names(d)[vapply(d, is.numeric, logical(1))], c(.id, ID_COL))
 
 freqs <- lapply(CATEGORICAL, function(vars) {
   stats::setNames(lapply(vars, function(v) {
@@ -363,7 +342,7 @@ if (nrow(corrs)) {
 }
 ```
 
-`proc_means()` covers every numeric column other than `KEY_COLS` and `ID_COL`.
+`proc_means()` covers every numeric column other than `ID` and `ID_COL`.
 Percentages in the contingency tables are over non-missing rows, as SAS
 `MISSPRINT` computes them; the `(missing)` row shows its count with a blank
 percent. Quantiles are SAS `QNTLDEF=5`, the `proc univariate` default. The

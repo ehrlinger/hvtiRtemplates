@@ -81,8 +81,8 @@
   unresolved <- rbind(unresolved, ignored[private, ])
   ignored <- ignored[!private, ]
   quote_r <- function(x) encodeString(x, quote = '"')
-  data <- c(paste0("DATASET <- ", if (is.na(selection$dataset)) "NA_character_" else quote_r(selection$dataset)),
-            "ANALYSIS_SET <- NULL")
+  # DATASET alone: ANALYSIS_SET, WHERE, ID and KEY keep the template's defaults.
+  data <- paste0("DATASET <- ", if (is.na(selection$dataset)) "NA_character_" else quote_r(selection$dataset))
   if (is.na(selection$dataset)) data <- c(data, "# EDIT: resolve the registered dataset from the migration evidence.")
   config <- c(
     paste0("EVENT <- ", if (length(events)) quote_r(events) else "NA_character_"),

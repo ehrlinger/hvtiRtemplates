@@ -27,11 +27,14 @@ run_derive <- function(d = synthetic(),
                        continuous = list(Demography = "age", Labs = "creat"),
                        corr_vars = c("age", "creat"),
                        id_col = NULL,
-                       key_cols = "ccfid") {
+                       id = "ccfid") {
+  # The derive chunk takes the identifier the data chunk resolved, from
+  # read_job_data()'s record.
+  record <- structure(data.frame(step = character(), value = character()), selection = list(id = id, key = id))
   env <- list2env(
     list(
       d = d, CATEGORICAL = categorical, CONTINUOUS = continuous,
-      CORR_VARS = corr_vars, ID_COL = id_col, KEY_COLS = key_cols
+      CORR_VARS = corr_vars, ID_COL = id_col, job_data = list(record = record)
     ),
     parent = baseenv()
   )
@@ -84,16 +87,26 @@ test_that("percentages are over non-missing rows, as SAS MISSPRINT computes them
   )
 })
 
-test_that("KEY_COLS keeps identifier columns out of the overall statistics", {
+test_that("the ID column is kept out of the overall statistics", {
   overall_vars <- run_derive()$overall_vars
   expect_false("ccfid" %in% overall_vars)
   expect_true("age" %in% overall_vars)
 })
 
-test_that("a KEY_COLS name in CATEGORICAL, CONTINUOUS or CORR_VARS stops", {
+test_that("the resolved ID is kept out, not the ID as set", {
+  # With no ccfid the data step falls back to MRN. Excluding the setting's
+  # "ccfid" would stop on an unknown column and print each MRN's range.
+  d <- synthetic()
+  names(d)[names(d) == "ccfid"] <- "mrn"
+  env <- run_derive(d = d, id = "mrn")
+  expect_identical(env$.id, "mrn")
+  expect_false("mrn" %in% env$overall_vars)
+})
+
+test_that("the ID named in CATEGORICAL, CONTINUOUS or CORR_VARS stops", {
   expect_error(
     run_derive(continuous = list(Demography = c("age", "ccfid"))),
-    "Key column\\(s\\) cannot be summarized: ccfid"
+    "The ID column cannot be summarized: ccfid"
   )
 })
 

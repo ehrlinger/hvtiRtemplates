@@ -13,6 +13,13 @@
   carries, and stops when that hand-off predates it. Templates adopt it
   family by family.
 
+* The descriptive templates and `dp-trends` read their data through
+  `read_job_data()`: `ANALYSIS_SET` defaults to `NULL`, so they run on a newly
+  registered study; `WHERE`, `ID` and `KEY` are new settings; `dc-general`'s
+  `KEY_COLS` is `ID`; and `dp-eda` never draws the job's `ID` or `KEY` columns.
+  The deprecated `dp-postage` keeps its own data step. Every template's setup
+  chunk says to run `study_setup()` when it is not inside a study.
+
 * `dp-postage` is deprecated in favor of `dp-eda`, and will be removed in the
   release after 1.2.3. For the same pages, scaffold
   `add_job("dp", subject, type, qualifier = "eda")` and set

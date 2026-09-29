@@ -693,7 +693,7 @@ test_that("no template resolves its root from _quarto.yml", {
   for (f in tl$file) {
     src <- readLines(f, warn = FALSE)
     expect_false(any(grepl("file.exists(\"_quarto.yml\")", src, fixed = TRUE)), info = basename(f))
-    expect_true(any(grepl("hvtiRutilities::study_root(", src, fixed = TRUE)), info = basename(f))
+    expect_true(any(grepl("hvtiRtemplates:::.find_study_root(", src, fixed = TRUE)), info = basename(f))
   }
 })
 

@@ -122,6 +122,8 @@ test_that("dc-tables refuses a set cut from another dataset and reads a named re
   withr::local_dir(root)
   env$DATASET <- "complete_cases"
   env$ANALYSIS_SET <- "eda"
+  env$WHERE <- NULL
+  env$ID <- env$KEY <- "ccfid"
   expect_error(eval(code, env), "written from the study dataset")
   env$ANALYSIS_SET <- NULL
   capture.output(eval(code, env))

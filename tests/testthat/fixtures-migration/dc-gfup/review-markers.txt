@@ -1,5 +1,8 @@
 <!-- EDIT: name the job this replaces (descriptive/dc.gfup). -->
-# EDIT: the built dataset this job reads. "study" is the file named by built:
-# EDIT: the analysis set this job reads: declare its columns and excluded rows
+# EDIT: the registered dataset this job reads ("study" is the built dataset).
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# EDIT: what makes a row unique; one row per patient unless repeated measures
 # EDIT: review unresolved migration evidence and confirm follow-up units in years.
 # EDIT: optional event-coding cross-tabs, each a vector of column names.

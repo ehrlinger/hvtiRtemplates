@@ -199,11 +199,18 @@ test_that("registered data provenance is captured in the chunk that reads it", {
 })
 
 test_that("analysis-set branches capture the parquet file they read", {
-  for (prefix in c("dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-postage")) {
+  # read_job_data() captures an analysis set's parquet file itself (test-job-data.R),
+  # so only a template that still reads its own analysis set is checked here.
+  for (prefix in "dp-postage") {
     source <- readLines(template_by_name(prefix), warn = FALSE)
     info <- prefix
     expect_true(any(grepl(".provenance_file_read(", source, fixed = TRUE)), info = info)
     expect_true(any(grepl('paste0(ANALYSIS_SET, ".parquet")', source, fixed = TRUE)), info = info)
+  }
+  for (prefix in c("dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-trends")) {
+    source <- readLines(template_by_name(prefix), warn = FALSE)
+    expect_true(any(grepl("analysis_set = ANALYSIS_SET", source, fixed = TRUE)), info = prefix)
+    expect_true(any(grepl("list(job_data$provenance)", source, fixed = TRUE)), info = prefix)
   }
 })
 
@@ -215,7 +222,7 @@ test_that("only templates with a local dataset choice override the dataset", {
   )
   templates <- template_list()
   observed <- templates$name[vapply(templates$file, function(path) {
-    any(grepl("DATASET, .cfg", readLines(path, warn = FALSE), fixed = TRUE))
+    any(grepl("DATASET, .cfg|dataset = DATASET", readLines(path, warn = FALSE)))
   }, logical(1L))]
 
   expect_setequal(observed, expected)
