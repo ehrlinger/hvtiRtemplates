@@ -587,22 +587,24 @@
 }
 
 .handoff_lineage <- function(data, artifacts = list(), analysis = NULL,
-                             cohort = NULL) {
+                             cohort = NULL, selection = NULL) {
   if (!is.list(data)) stop("Handoff lineage data must be a list of provenance records.", call. = FALSE)
   if (!is.list(artifacts)) stop("Handoff lineage artifacts must be a list of provenance records.", call. = FALSE)
-  list(data = data, artifacts = artifacts, analysis = analysis, cohort = cohort)
+  out <- list(data = data, artifacts = artifacts, analysis = analysis, cohort = cohort)
+  if (!is.null(selection)) out$selection <- selection
+  out
 }
 
 .attach_handoff_lineage <- function(object, data, artifacts = list(),
-                                    analysis = NULL, cohort = NULL) {
-  attr(object, "hvti_provenance") <- .handoff_lineage(data, artifacts, analysis, cohort)
+                                    analysis = NULL, cohort = NULL, selection = NULL) {
+  attr(object, "hvti_provenance") <- .handoff_lineage(data, artifacts, analysis, cohort, selection)
   object
 }
 
 .validate_handoff_lineage <- function(object, path, rebuild) {
   lineage <- attr(object, "hvti_provenance", exact = TRUE)
   required <- c("data", "artifacts", "analysis", "cohort")
-  valid <- is.list(lineage) && identical(names(lineage), required) &&
+  valid <- is.list(lineage) && identical(setdiff(names(lineage), "selection"), required) &&
     is.list(lineage$data) && is.list(lineage$artifacts)
   if (!valid) {
     stop(
@@ -654,7 +656,7 @@
       )
     }
     complete_shape <- is.list(lineage) &&
-      identical(names(lineage), c("data", "artifacts", "analysis", "cohort")) &&
+      identical(setdiff(names(lineage), "selection"), c("data", "artifacts", "analysis", "cohort")) &&
       is.list(lineage$data) && is.list(lineage$artifacts)
     if (is.null(lineage)) {
       lineage <- .handoff_lineage(explicit_data)

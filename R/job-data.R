@@ -173,3 +173,23 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                                                      format(counts$patients, big.mark = ","), " patients"))
   data.frame(step = vapply(rows, `[[`, "", 1L), value = vapply(rows, `[[`, "", 2L))
 }
+
+# A downstream job reuses its upstream job's selection. A setting the job sets
+# itself must agree; one left NULL is taken from upstream.
+.check_upstream_selection <- function(upstream, settings) {
+  if (is.null(upstream)) return(settings)
+  names_shown <- c(where = "WHERE", id = "ID", key = "KEY", time = "TIME", event = "EVENT")
+  for (field in intersect(names(settings), names(upstream))) {
+    mine <- settings[[field]]
+    if (is.null(mine)) next
+    if (is.call(mine) || is.list(mine)) {
+      mine <- vapply(.where_conditions(mine), function(x) paste(deparse(x, width.cutoff = 500L), collapse = " "), "")
+    }
+    if (!identical(as.character(mine), as.character(upstream[[field]]))) {
+      stop(names_shown[[field]], " here (", paste(mine, collapse = ", "), ") differs from the upstream job's (",
+           paste(upstream[[field]], collapse = ", "), "). Leave it NULL to use the upstream value, or rerun ",
+           "the upstream job with the new value.", call. = FALSE)
+    }
+  }
+  utils::modifyList(upstream, Filter(Negate(is.null), settings))
+}

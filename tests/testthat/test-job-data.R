@@ -112,3 +112,23 @@ test_that("an analysis set with another dataset is refused", {
 test_that("a job outside a study is told to run study_setup()", {
   expect_error(hvtiRtemplates:::.find_study_root(withr::local_tempdir()), "study_setup")
 })
+
+test_that("a hand-off carries the selection, and older four-slot lineage still validates", {
+  sel <- list(dataset = "study", analysis_set = NULL, where = "age >= 18", id = "ccfid", key = "ccfid",
+              rows = 3L, patients = 3L)
+  obj <- hvtiRtemplates:::.attach_handoff_lineage(list(), data = list(list(dataset = "study")), selection = sel)
+  expect_identical(attr(obj, "hvti_provenance")$selection, sel)
+  old <- hvtiRtemplates:::.attach_handoff_lineage(list(), data = list(list(dataset = "study")))
+  expect_identical(names(attr(old, "hvti_provenance")), c("data", "artifacts", "analysis", "cohort"))
+  expect_silent(hvtiRtemplates:::.validate_handoff_lineage(old, "x.rds", "hz"))
+  expect_silent(hvtiRtemplates:::.validate_handoff_lineage(obj, "x.rds", "hz"))
+})
+
+test_that("a downstream job's settings must agree with its upstream selection", {
+  up <- list(where = "age >= 18", id = "ccfid", key = "ccfid", time = "iv_dead", event = "dead")
+  expect_identical(hvtiRtemplates:::.check_upstream_selection(up, list(where = NULL, id = NULL))$where, "age >= 18")
+  expect_error(hvtiRtemplates:::.check_upstream_selection(up, list(where = "age >= 65")),
+               "WHERE.*age >= 65.*age >= 18")
+  expect_error(hvtiRtemplates:::.check_upstream_selection(up, list(event = "reop")), "EVENT")
+  expect_identical(hvtiRtemplates:::.check_upstream_selection(NULL, list(id = "ccfid"))$id, "ccfid")
+})
