@@ -145,10 +145,11 @@ SECTIONS <- c("continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dp-postage-config
 
-# EDIT: the longest label a figure or table shows, in characters. Longer labels
-# are shortened so that two labels that differ never read the same: a shared
-# heading is abbreviated, then the label is cut and marked. Inf shows every
-# label whole.
+# EDIT: the longest label the figure pages and their captions show, in
+# characters. Longer labels are shortened so that two labels that differ never
+# read the same: a shared heading is abbreviated, then the label is cut and
+# marked. Inf shows every label whole. Tables keep full labels, so a reader can
+# look up what a shortened one stands for.
 LABEL_MAX <- 40
 
 # EDIT: this job's own abbreviations, beyond the study's list, as

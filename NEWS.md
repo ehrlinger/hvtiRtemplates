@@ -67,8 +67,11 @@
   `SP: ...`), and each section prints a key of the abbreviations its shortened
   labels show. A wrong `LABEL_MAX` or `ABBREVIATIONS` stops the render with
   a message naming it, as the other edit points do. The cap and the merged list, with each entry's level, are recorded in
-  the report's provenance. Needs hvtiRutilities 1.4.2, now the floor; a
-  migrated `dp-postage` job keeps both edit points at their defaults.
+  the report's provenance. The settings apply to the figure pages and their
+  captions; tables, including `dp-eda`'s Overview, keep full labels, so a
+  reader can look up what a shortened label stands for. Needs hvtiRutilities
+  1.4.2, now the floor; a migrated `dp-postage` job keeps both edit points at
+  their defaults.
 
 # hvtiRtemplates 1.2.2
 
