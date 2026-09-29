@@ -201,11 +201,24 @@ test_that("postage draws its categorical pages in the role colors", {
   expect_true("#0072B2" %in% fills)
 })
 
+# These tests exercise the job, study and initials levels of the abbreviation
+# list. hvtiRutilities (>= 1.4.3) adds a group default list underneath, which
+# shortens "aortic valve replacement" too; turn it off so each test sees only
+# the level it is about. The group list has its own test below.
+without_group_list <- function(env = parent.frame()) {
+  real <- hvtiRutilities::study_abbreviations
+  testthat::local_mocked_bindings(
+    study_abbreviations = function(cfg, extra = NULL, defaults = TRUE) real(cfg, extra = extra, defaults = FALSE),
+    .package = "hvtiRutilities", .env = env
+  )
+}
+
 test_that("postage shortens labels that share a heading and prints their key", {
   # Two labels over LABEL_MAX share a heading: both show its abbreviation, and
   # the section says what it stands for. A job's own entry beats the initials.
   root <- migration_study_fixture("dp-postage")
   local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  without_group_list()
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"
   attr(d$hx_chf, "label") <- "Surgical procedure: mitral valve repair with annuloplasty ring"
@@ -236,6 +249,7 @@ test_that("postage prints a key only under sections whose labels were shortened,
   # The study's list applies unless the job overrides it.
   root <- migration_study_fixture("dp-postage")
   local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  without_group_list()
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   attr(d$age, "label") <- "SP at admission (mmHg)"
   attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"
@@ -261,6 +275,28 @@ test_that("postage prints a key only under sections whose labels were shortened,
   expect_match(study$labels, "^SProc: ")
   job <- run_pages(list(abbreviations = list("Surgical procedure" = "SProc")), c("Surgical procedure" = "Proc"))
   expect_match(job$labels, "^Proc: ")
+})
+
+test_that("the group abbreviation list shortens further, when it is installed", {
+  skip_if(!length(hvtiRutilities::study_abbreviations(list())), "hvtiRutilities has no group abbreviation list")
+  root <- migration_study_fixture("dp-postage")
+  local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"
+  attr(d$hx_chf, "label") <- "Surgical procedure: mitral valve repair with annuloplasty ring"
+  env <- list2env(list(
+    .root = root, d = d, X_VAR = "iv_dead", VARIABLES = c("female", "hx_chf"), EXCLUDE = character(),
+    GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SECTIONS = "percent", ALPHA = 0.5,
+    get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
+    theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
+    .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL
+  ))
+  job <- template_path("dp", "postage")
+  for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
+  out <- paste(suppressWarnings(utils::capture.output(eval(postage_chunk(job, "pages"), env))), collapse = "\n")
+  # The group list names both procedures; the key lists every entry it used.
+  expect_match(out, "AVR = Aortic valve replacement", fixed = TRUE)
+  expect_match(out, "MVr = Mitral valve repair", fixed = TRUE)
 })
 
 test_that("postage does not require databuild for registered data but validates analysis-set mode", {
