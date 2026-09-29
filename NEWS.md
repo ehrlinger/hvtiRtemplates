@@ -8,6 +8,14 @@
   either. A bare qualifier is not accepted, because `fit`, `explain` and
   `gfup` each name more than one template.
 
+* The EDA abbreviation tests hold once hvtiRutilities carries its group
+  abbreviation list (1.4.3). Four tests assumed the group list was empty and
+  failed on every platform after it merged: they now turn the group list off
+  when testing the job, study and initials levels, `dp-eda`'s provenance check
+  finds its entry by position rather than by a name every row shares, and a
+  new test checks that the group list does shorten labels when it is present.
+  No change to the templates.
+
 * `dp-postage` names its source correctly. Its header said it replaced the
   older `tp.dp.EDA_barplots_scatterplots*.R` sweep; it was built from the
   per-variable grid of the legacy EDA report, `tp.dp.DescriptiveSummary.qmd`,
