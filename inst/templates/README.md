@@ -18,7 +18,7 @@ refuses to overwrite an existing job.
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-gfup.qmd` | recorded follow-up interval checks | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dp-postage.qmd` | EDA panels on numbered PNG pages | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dp-postage.qmd` | **deprecated**, use `dp-eda`: EDA panels on numbered PNG pages | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dp-eda.qmd` | the whole EDA report: overview, follow-up, then the postage sections, each with its table | `10_descriptive/` or `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `30_analyses/` or `analyses/` |
@@ -31,6 +31,11 @@ refuses to overwrite an existing job.
 | `30_analyses/rfc-explain.qmd` | importance, VarPro and dependence for an `rfc` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/rfr-fit.qmd` | regression forest, grown and checked | `30_analyses/` or `analyses/` |
 | `30_analyses/rfr-explain.qmd` | importance, VarPro and dependence for an `rfr` forest | `30_analyses/` or `analyses/` |
+
+`dp-postage` is deprecated in favor of `dp-eda` and will be removed in the
+release after 1.2.3. It still scaffolds and renders, and `add_job()` warns
+when it is used. A `dp-eda` job with
+`SECTIONS <- c("continuous", "percent", "count")` draws the same pages.
 
 A template is named `<prefix>.qmd`, or `<prefix>-<qualifier>.qmd` where one
 prefix carries several job types, and lives in a numbered directory named for
@@ -247,7 +252,7 @@ its absence read as "templated".
 ## Editing a scaffolded job
 
 `migrate_job()` can prefill `dc-tables`, `dc-gfup`, `dp-trends`, and
-`dp-postage` from their supported legacy source shapes. It writes a report
+`dp-eda` from their supported legacy source shapes. It writes a report
 beside the job with evidence checksums, source lines, translated values, and
 unresolved choices. The existing source and evidence files remain in place.
 Only deterministic extraction can remove a marker. Review inferred values,
@@ -260,8 +265,8 @@ The table job writes an editable CORR DOCX under
 `hv_check_docx()` path stops on document-format findings. Compare its numerical
 and presentation choices with the RTF reference yourself. Follow-up checks use
 the job's declared intervals; they do not establish completeness against a close date.
-Trend figures and numbered postage PNG pages go under
-`graphs/<subject>-<type>/`, including when the postage job itself lives in
+Trend figures and numbered EDA PNG pages go under
+`graphs/<subject>-<type>/`, including when the EDA job itself lives in
 `descriptive/`.
 
 `vignette("study-setup", package = "hvtiRtemplates")` shows new-study setup,

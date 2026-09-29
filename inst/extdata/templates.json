@@ -1570,7 +1570,7 @@
       "prefix": "dp",
       "qualifier": "postage",
       "name": "Descriptive plot: postage stamp",
-      "description": "Data-checking sweep over a new build: one small panel per variable against operation year, to find coding errors, drift and missingness. Not a manuscript figure.",
+      "description": "Deprecated in favor of dp-eda, and removed in the release after 1.2.3. Data-checking sweep over a new build: one small panel per variable against operation year, to find coding errors, drift and missingness. Not a manuscript figure.",
       "folder": "descriptive",
       "family": "plots",
       "kind": "job",
@@ -1589,7 +1589,9 @@
       "disposition": "thin",
       "uses": [
         "hvtiPlotR::hv_eda"
-      ]
+      ],
+      "deprecated_by": "dp-eda",
+      "deprecation_note": "It will be removed in the release after hvtiRtemplates 1.2.3. add_job(\"dp\", subject, type, qualifier = \"eda\") with SECTIONS <- c(\"continuous\", \"percent\", \"count\") draws the same pages."
     },
     {
       "prefix": "dp",

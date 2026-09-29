@@ -1,4 +1,8 @@
-.migrate_dp_postage <- function(evidence, template) {
+# Legacy EDA reports, the tp.dp.DescriptiveSummary.qmd and
+# tp.dp.EDA_barplots_scatterplots*.R lineage, migrate into a dp-eda job. They
+# drew the continuous, percent and count pages and no follow-up panels, so
+# SECTIONS names those three, which draws the pages dp-postage drew.
+.migrate_dp_eda <- function(evidence, template) {
   aliases <- c(dta_filename = "DATASET", dataset = "DATASET", pref_time_var = "X_VAR", x_var = "X_VAR",
                variables = "VARIABLES", include = "VARIABLES", varlist = "VARIABLES", exclude = "EXCLUDE",
                ncol = "GRID_NCOL", grid_ncol = "GRID_NCOL", nrow = "GRID_NROW", grid_nrow = "GRID_NROW",
@@ -9,10 +13,10 @@
   inline <- if (sas) .sas_inline_data(evidence$source) else NULL
   if (sas) evidence$source <- inline$source
   lines <- evidence$source$text
-  statements <- if (sas) .postage_sas_controls(evidence$source, aliases) else .postage_r_controls(lines, aliases)
+  statements <- if (sas) .eda_sas_controls(evidence$source, aliases) else .eda_r_controls(lines, aliases)
   declarations <- unlist(lapply(statements, `[[`, "declared"), use.names = FALSE)
   repeated <- unique(declarations[duplicated(declarations)])
-  if (length(repeated)) stop("Multiple declarations of postage controls: ", paste(repeated, collapse = ", "), call. = FALSE)
+  if (length(repeated)) stop("Multiple declarations of EDA controls: ", paste(repeated, collapse = ", "), call. = FALSE)
   # SHOW_PERCENT is recognized but not carried over: SECTIONS replaced it, and
   # its default draws both the percent and the count pages, so a migrated job
   # keeps the categorical view its legacy job drew.
@@ -69,24 +73,31 @@
     if (!length(rows)) return(data.frame(line = integer(), text = character(), reason = character()))
     do.call(rbind, rows)
   })
-  region <- vapply(names(config), function(name) paste0(name, " <- ", paste(deparse(config[[name]]), collapse = " ")), character(1L))
+  declare <- function(names) {
+    vapply(names, function(name) paste0(name, " <- ", paste(deparse(config[[name]]), collapse = " ")), character(1L))
+  }
+  # dp-eda keeps the data choices apart from the variable choices, with the
+  # follow-up choices between them, so each group is its own region.
+  data <- declare(c("DATASET", "ANALYSIS_SET"))
+  variables <- declare(setdiff(names(config), c("DATASET", "ANALYSIS_SET")))
   # VARIABLES may stay NULL: the template then draws every column.
   incomplete <- is.na(config$DATASET) || is.na(config$X_VAR)
   if (nrow(decisions$unresolved) || incomplete) {
-    region <- c(region, "# EDIT: review unresolved postage source choices in the migration report.")
+    variables <- c(variables, "# EDIT: review unresolved EDA source choices in the migration report.")
   }
-  .sas_inline_result(list(regions = c("dp-postage-config" = paste(region, collapse = "\n")),
+  .sas_inline_result(list(regions = c("dp-eda-data" = paste(data, collapse = "\n"),
+                                      "dp-eda-variables" = paste(variables, collapse = "\n")),
                           translated = decisions$translated, unresolved = decisions$unresolved, ignored = decisions$ignored), inline)
 }
 
 # Literal extraction never evaluates legacy code, including calls inside c().
-.postage_literal <- function(x) {
+.eda_literal <- function(x) {
   if (is.null(x) || is.atomic(x)) return(list(ok = TRUE, value = x))
   if (is.call(x) && identical(x[[1L]], as.name("character")) && length(x) == 2L && identical(x[[2L]], 0)) {
     return(list(ok = TRUE, value = character()))
   }
   if (is.call(x) && identical(x[[1L]], as.name("c"))) {
-    values <- lapply(as.list(x)[-1L], .postage_literal)
+    values <- lapply(as.list(x)[-1L], .eda_literal)
     if (all(vapply(values, `[[`, logical(1L), "ok"))) {
       return(list(ok = TRUE, value = unlist(lapply(values, `[[`, "value"), use.names = FALSE)))
     }
@@ -94,7 +105,7 @@
   list(ok = FALSE, value = NULL)
 }
 
-.postage_r_controls <- function(lines, aliases) {
+.eda_r_controls <- function(lines, aliases) {
   # Only R fences contribute executable declarations; prose cannot select data.
   literal_eval <- function(option) {
     if (grepl("^\\s*#\\|", option)) {
@@ -160,7 +171,7 @@
       key <- tolower(as.character(x[[2L]]))
       if (key %in% names(aliases)) {
         field <- unname(aliases[key])
-        literal <- .postage_literal(x[[3L]])
+        literal <- .eda_literal(x[[3L]])
       }
     }
     rows[[length(rows) + 1L]] <- list(line = as.integer(ref[1L]), text = paste(lines[indices], collapse = "\n"),
@@ -175,7 +186,7 @@
   rows[order(vapply(rows, `[[`, integer(1L), "line"))]
 }
 
-.postage_sas_controls <- function(source, aliases) {
+.eda_sas_controls <- function(source, aliases) {
   rows <- .gfup_statements(source)
   lapply(seq_len(nrow(rows)), function(i) {
     code <- rows$code[i]

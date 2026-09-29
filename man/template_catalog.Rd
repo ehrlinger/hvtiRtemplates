@@ -10,7 +10,11 @@ template_catalog()
 A data frame. `uses`, `upstream`, `downstream`, and `workflows` are
   list columns of character vectors. Unmeasured counts are `NA_integer_`.
   \code{description} is a one-sentence summary, given for every template on
-  disk and \code{NA} for most queued ones.
+  disk and \code{NA} for most queued ones. \code{deprecated_by} names the
+  template replacing a deprecated one, such as \code{"dp-eda"}, and
+  \code{deprecation_note} says how to move to it; both are \code{NA} for a
+  supported template. A deprecated template still ships, and
+  \code{\link{add_job}} warns when it is used.
 }
 \description{
 The catalog records one row per job type, including templates still queued

@@ -13,6 +13,37 @@
   carries, and stops when that hand-off predates it. Templates adopt it
   family by family.
 
+* `dp-postage` is deprecated in favor of `dp-eda`, and will be removed in the
+  release after 1.2.3. For the same pages, scaffold
+  `add_job("dp", subject, type, qualifier = "eda")` and set
+  `SECTIONS <- c("continuous", "percent", "count")`: the sections call
+  `hv_eda_pages()` with the same arguments, and a test checks that the pages
+  match `dp-postage`'s byte for byte. They are saved as `dp-eda-*.png`.
+  `dp-postage` still scaffolds and renders; `add_job()`, `open_job()` and
+  `template_path()` warn once when it is used. The template catalog marks it
+  with two new fields, `deprecated_by` and `deprecation_note`, which
+  `template_catalog()` returns and the warning reads.
+
+* `migrate_job()` now writes a `dp-eda` job for a legacy EDA report (the
+  `tp.dp.DescriptiveSummary.qmd` and `tp.dp.EDA_barplots_scatterplots*.R`
+  lineage), carrying over the same settings as before, `VARIABLES`, `X_VAR`,
+  `EXCLUDE`, the grid size and `UNIQUE_LIMIT`, and leaving the color and
+  stratification choices for review. The job draws
+  `SECTIONS <- c("continuous", "percent", "count")`, because a legacy EDA
+  report had no follow-up panels. Naming `qualifier = "postage"` warns and
+  writes the `dp-eda` job.
+
+* `dp-eda` and `dp-postage` take the medical record number as an identifier
+  only under the exact names `MRN` and `eMRN` (ignoring case). They matched
+  `mrn` anywhere in a name, so an mRNA variable such as `bnp_mrna` was left out
+  as an identifier. The rule matches hvtiPlotR's `hv_eda_pages()`
+  (hvtiPlotR#172).
+
+* The data-route tests pass when run on their own. They evaluated template
+  chunks that call `study_config()` without supplying it, so they depended on
+  an earlier test file having attached hvtiRutilities, and a filtered run
+  errored twice. No change to the templates.
+
 * Every template chunk holding an `EDIT:` marker is now labeled `edit-`, so
   the editor's chunk outline lists the work a job still needs:
   `study-choices` is `edit-study-choices`, and nine templates carry further
@@ -61,7 +92,7 @@
   token, and was drawn as one bar per patient and listed in the frequency
   table. The rule now also takes `ccfid`, `patid`, `patientid`, `studyid`,
   `subjectid`, `recordid`, `caseid` (each also with `_`, `num` or `no`),
-  any name holding `mrn` (`mrn_num`, `pt_mrn`), and any text or factor
+  the exact names `MRN` and `eMRN`, and any text or factor
   column of ten or more values in which every value differs. A bare trailing `id` was declined: it would take `carotid`
   and `steroid`. The report lists what it left out, and naming a column in
   `VARIABLES` still draws it. `dp-eda`'s overview table leaves identifiers
@@ -78,7 +109,7 @@
   `dp-postage` and `dp-eda` color their categorical pages with
   `hvtiPlotR::scale_fill_hv()`: each panel runs blue, vermillion, green and on
   from its own levels, and missing is light gray. `dp-gfup` and `dp-eda`'s
-  follow-up section use `scale_colour_hv()`. **The follow-up figures change
+  follow-up section use `scale_color_hv()`. **The follow-up figures change
   color:** dead moves from Set1 red `#E41A1C` to vermillion `#D55E00`, alive
   from `#377EB8` to `#0072B2`, and a non-fatal event from `#4DAF4A` to
   `#009E73`. The pattern of red, blue and green is kept. `COLORS` is now
@@ -94,10 +125,10 @@
 
 * The templates, their comments, the reference pages and these notes use US
   spelling. The templates call `scale_color_manual()` and `labs(color = )`,
-  which ggplot2 treats as identical to their British spellings.
-  `hvtiPlotR::scale_colour_hv()` keeps its spelling until hvtiPlotR ships
-  `scale_color_hv()`. `tools/check-us-spelling.sh` now fails the lint workflow
-  on a British spelling.
+  which ggplot2 treats as identical to their British spellings, and
+  `hvtiPlotR::scale_color_hv()`, which needs hvtiPlotR 2.8.0, now the floor.
+  `tools/check-us-spelling.sh` now fails the lint workflow on a British
+  spelling.
 
 * **`dp-postage` and `dp-eda` keep shortened labels distinct**, through
   `hvtiRutilities::label_map()`. Two new edit points: `LABEL_MAX` (default

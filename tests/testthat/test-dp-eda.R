@@ -59,7 +59,8 @@ test_that("dp-eda draws the same pages as dp-postage over the same data", {
   skip_if_not(quarto::quarto_available())
   root <- migration_study_fixture("dp-postage")
   eda <- scaffold_job("dp", "eda", eda_edits, root = root)
-  postage <- scaffold_job("dp", "postage", eda_edits["^ANALYSIS_SET <- "], root = root)
+  expect_warning(postage <- scaffold_job("dp", "postage", eda_edits["^ANALYSIS_SET <- "], root = root),
+                 class = "hvtiRtemplates_deprecated")
   for (job in c(eda$job, postage$job)) quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
   graphs <- file.path(root, "graphs", "cohort-eda")
   pages <- function(stem) list.files(graphs, paste0("^", stem, "-(continuous|percent|count)-"), full.names = TRUE)
@@ -179,8 +180,9 @@ test_that("dp-eda's overview leaves out identifiers but keeps dates", {
   }
   n <- 12L
   env <- list2env(list(d = data.frame(year = seq_len(n), age = 40 + seq_len(n), ccfid = 1000L + seq_len(n),
-                                      patientid = sprintf("P%03d", seq_len(n)), carotid = rep(0:1, 6), mrn_num = 5000L + seq_len(n),
-                                      dt_surg = as.Date("2020-01-01") + seq_len(n)),
+                                      patientid = sprintf("P%03d", seq_len(n)), carotid = rep(0:1, 6), eMRN = 5000L + seq_len(n),
+                                      mrn_num = rep(0:1, 6),
+                                      bnp_mrna = 0.5 * seq_len(n), dt_surg = as.Date("2020-01-01") + seq_len(n)),
                        X_VAR = "year", VARIABLES = c("age", "ccfid"), EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
@@ -188,8 +190,10 @@ test_that("dp-eda's overview leaves out identifiers but keeps dates", {
                        label_map = function(d, ...) data.frame(key = names(d), label = names(d))))
   suppressWarnings(capture.output(eval(chunk("spec"), env)))
   out <- paste(capture.output(eval(chunk("overview-contents"), env)), collapse = "\n")
-  expect_identical(env$shown$variable, c("year", "age", "carotid", "dt_surg"))
-  expect_match(out, "Identifier columns, not described: ccfid, patientid, mrn_num", fixed = TRUE)
+  # Only the exact names MRN and eMRN are record numbers: bnp_mrna and mrn_num
+  # are study variables.
+  expect_identical(env$shown$variable, c("year", "age", "carotid", "mrn_num", "bnp_mrna", "dt_surg"))
+  expect_match(out, "Identifier columns, not described: ccfid, patientid, eMRN", fixed = TRUE)
 })
 
 test_that("dp-gfup and dp-eda choose follow-up colors with the same code", {
@@ -208,8 +212,9 @@ test_that("dp-gfup and dp-eda choose follow-up colors with the same code", {
 test_that("dp-postage and dp-eda shorten labels with the same code and edit points", {
   # dp-postage's copy is exercised in test-migrate-dp-postage.R; this keeps
   # dp-eda's from drifting from it.
+  tl <- template_list()
   block <- function(qualifier, from, to) {
-    lines <- readLines(template_path("dp", qualifier), warn = FALSE)
+    lines <- readLines(tl$file[tl$name == paste0("dp-", qualifier)], warn = FALSE)
     start <- grep(from, lines)
     end <- start + grep(to, lines[-seq_len(start)])[1L]
     lines[start:end]
@@ -221,6 +226,7 @@ test_that("dp-postage and dp-eda shorten labels with the same code and edit poin
   expect_length(block("eda", "^# Shortened labels stay distinct", "^}$"), 20L)
   # And each draws the key under its sections.
   for (q in c("postage", "eda")) {
-    expect_true(any(grepl("^  abbreviation_key\\(vars\\)$", readLines(template_path("dp", q), warn = FALSE))), info = q)
+    expect_true(any(grepl("^  abbreviation_key\\(vars\\)$", readLines(tl$file[tl$name == paste0("dp-", q)], warn = FALSE))),
+                info = q)
   }
 })

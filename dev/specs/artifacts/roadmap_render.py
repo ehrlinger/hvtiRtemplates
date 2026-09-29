@@ -115,7 +115,12 @@ def render(rows, workflow_rows=None):
                 "|---|---|---|---|---|---|"]
         for r in sorted(fam_rows, key=lambda r: (r["batch"] is None,
                                                  r["batch"] or 0, _label(r))):
-            out.append(f"| `{_label(r)}` | {STATUS_MARK.get(r['status'], r['status'])} | "
+            status = STATUS_MARK.get(r['status'], r['status'])
+            # A deprecated template still ships, so its status stands and
+            # says what replaces it.
+            if r.get("deprecated_by"):
+                status += f", deprecated for `{r['deprecated_by']}`"
+            out.append(f"| `{_label(r)}` | {status} | "
                        f"{_num(r['sas_breadth'])} | "
                        f"{_num(r.get('sas_breadth_jobs'))} | "
                        f"{_num(r['r_exemplars'])} | {r['blocked_on'] or '—'} |")

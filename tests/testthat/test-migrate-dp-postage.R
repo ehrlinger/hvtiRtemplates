@@ -12,15 +12,22 @@ postage_evidence <- function(root, lines, extension = "qmd") {
 
 postage_config <- function(result) {
   env <- new.env()
-  eval(parse(text = result$regions[["dp-postage-config"]]), env)
+  eval(parse(text = unname(result$regions[c("dp-eda-data", "dp-eda-variables")])), env)
   env
+}
+
+# dp-postage is deprecated but still ships, so its own code is still tested
+# here. Read its path from template_list(), not template_path(), which warns.
+postage_template <- function() {
+  tl <- template_list()
+  tl$file[tl$name == "dp-postage"]
 }
 
 test_that("postage migration selects registered data and explicit ordered EDA controls", {
   root <- migration_study_fixture("dp-postage")
   source <- file.path(root, "descriptive", "dp.postage.qmd")
   bytes <- readBin(source, "raw", n = file.info(source)$size)
-  job <- migrate_job(source, "cohort", "eda", "dp", "postage", dir = root)
+  job <- migrate_job(source, "cohort", "eda", "dp", "eda", dir = root)
   expect_identical(dirname(job), normalizePath(file.path(root, "descriptive"), winslash = "/"))
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built,
                        study_config = hvtiRutilities::study_config))
@@ -36,6 +43,10 @@ test_that("postage migration selects registered data and explicit ordered EDA co
                                     "iv_opyrs", "panel1", "panel2", "panel3", "panel4", "panel5"))
   expect_identical(env$GRID_NCOL, 4L)
   expect_identical(env$GRID_NROW, 4L)
+  # A legacy EDA report drew no follow-up panels, so the dp-eda job draws the
+  # three sections dp-postage drew, and no more.
+  expect_identical(basename(job), "cohort-eda-dp-eda.qmd")
+  expect_identical(env$SECTIONS, c("continuous", "percent", "count"))
   expect_identical(readBin(source, "raw", n = file.info(source)$size), bytes)
   report <- paste(readLines(sub("[.]qmd$", "-migration.md", job)), collapse = "\n")
   expect_match(report, "color choice remains unresolved", fixed = TRUE)
@@ -53,7 +64,7 @@ test_that("postage handles SAS controls without executing source cleaning or uns
              "%let exclude=bmi;", "%let ncol=2;", "%let nrow=1;",
              "%let pref_color_var=repair;", "%let stratify_by=female;",
              "%let alpha=0.2;", "axis1 order=(0 to 10 by 2);", "age=age+1;")
-  result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines, "sas"), character())
+  result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines, "sas"), character())
   env <- postage_config(result)
   expect_identical(env$DATASET, "complete_cases")
   expect_identical(env$X_VAR, "iv_dead")
@@ -72,24 +83,24 @@ test_that("postage accepts literal QMD controls only and keeps incomplete choice
   root <- migration_study_fixture()
   lines <- c("```{r}", 'dta_filename <- "built.csv"', 'pref_time_var <- "iv_dead"',
              'variables <- c("age", "bmi")', 'exclude <- "bmi"', "ncol <- 2L", "```")
-  result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+  result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines), character())
   expect_identical(postage_config(result)$VARIABLES, c("age", "bmi"))
   expect_identical(postage_config(result)$EXCLUDE, "bmi")
   for (extra in c('pref_time_var <- "year"', 'if (flag) pref_time_var <- "year"',
                   'pref_time_var <- paste0("iv_", "dead")')) {
     changed <- append(lines, extra, after = 6L)
-    expect_error(hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, changed), character()), "Multiple declarations")
+    expect_error(hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, changed), character()), "Multiple declarations")
   }
   lines[4L] <- 'variables <- system("touch should-never-exist")'
-  result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+  result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines), character())
   expect_null(postage_config(result)$VARIABLES)
   expect_true(4L %in% result$unresolved$line)
   expect_false(any(grepl("system|touch", result$regions)))
-  expect_match(result$regions[[1L]], "EDIT:", fixed = TRUE)
+  expect_match(paste(result$regions, collapse = "\n"), "EDIT:", fixed = TRUE)
 })
 
 test_that("postage template validates selection and plotting settings before saving", {
-  job <- template_path("dp", "postage")
+  job <- postage_template()
   data <- postage_chunk(job, "data")
   # Run validation separately from the template's editable declarations.
   env <- list2env(list(d = data.frame(year = 1:10, age = 41:50, patient_id = 11:20, visit_date = 21:30),
@@ -132,12 +143,13 @@ test_that("postage template validates selection and plotting settings before sav
   expect_error(eval(spec, env), "No EDA variables")
 })
 
-test_that("postage renders real eighteen-panel pages under the logical graphs route", {
+test_that("a migrated legacy EDA report renders real eighteen-panel pages under the logical graphs route", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   out <- render_migrated_fixture("dp-postage")
+  expect_identical(basename(out$job), "cohort-eda-dp-eda.qmd")
   expected <- file.path(out$root, "graphs", "cohort-eda",
-                        sprintf("dp-postage-%s-page-01.png", c("continuous", "percent", "count")))
+                        sprintf("dp-eda-%s-page-01.png", c("continuous", "percent", "count")))
   expect_true(all(expected %in% out$outputs))
   expect_true(all(file.info(expected)$size > 1000))
   html <- sub("[.]qmd$", ".html", out$job)
@@ -163,7 +175,7 @@ test_that("postage routes actual pages through numbered study folders and embeds
     theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
     .cfg = hvtiRutilities::study_config(root), LABEL_MAX = 40, ABBREVIATIONS = NULL
   ))
-  job <- template_path("dp", "postage")
+  job <- postage_template()
   for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
   capture.output(paths <- eval(postage_chunk(job, "pages"), env))
   # All three are continuous, so only that section draws pages: two at 2 x 1.
@@ -191,7 +203,7 @@ test_that("postage draws its categorical pages in the role colors", {
     theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
     .cfg = hvtiRutilities::study_config(root), LABEL_MAX = 40, ABBREVIATIONS = NULL
   ))
-  job <- template_path("dp", "postage")
+  job <- postage_template()
   for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
   suppressWarnings(capture.output(eval(postage_chunk(job, "pages"), env)))
   expect_identical(names(saved), "dp-postage-percent-page-01.png")
@@ -230,7 +242,7 @@ test_that("postage shortens labels that share a heading and prints their key", {
       theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
       .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = abbreviations
     ))
-    job <- template_path("dp", "postage")
+    job <- postage_template()
     for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
     out <- suppressWarnings(utils::capture.output(eval(postage_chunk(job, "pages"), env)))
     list(labels = unname(env$labels[c("female", "hx_chf")]), text = paste(out, collapse = "\n"))
@@ -262,7 +274,7 @@ test_that("postage prints a key only under sections whose labels were shortened,
       theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
       .cfg = cfg, LABEL_MAX = 40, ABBREVIATIONS = abbreviations
     ))
-    job <- template_path("dp", "postage")
+    job <- postage_template()
     for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
     out <- suppressWarnings(utils::capture.output(eval(postage_chunk(job, "pages"), env)))
     list(labels = unname(env$labels[c("female", "hx_chf")]), text = paste(out, collapse = "\n"))
@@ -291,7 +303,7 @@ test_that("the group abbreviation list shortens further, when it is installed", 
     theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
     .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL
   ))
-  job <- template_path("dp", "postage")
+  job <- postage_template()
   for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
   out <- paste(suppressWarnings(utils::capture.output(eval(postage_chunk(job, "pages"), env))), collapse = "\n")
   # The group list names both procedures; the key lists every entry it used.
@@ -301,7 +313,7 @@ test_that("the group abbreviation list shortens further, when it is installed", 
 
 test_that("postage does not require databuild for registered data but validates analysis-set mode", {
   root <- migration_study_fixture("dp-postage")
-  job <- migrate_job(file.path(root, "descriptive", "dp.postage.qmd"), "cohort", "eda", "dp", "postage", dir = root)
+  job <- migrate_job(file.path(root, "descriptive", "dp.postage.qmd"), "cohort", "eda", "dp", "eda", dir = root)
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config))
   # The full setup and registered-data branch run with the actual dependencies.
   withr::local_dir(dirname(job))
@@ -326,7 +338,7 @@ test_that("postage SAS quoted declarations cannot override active controls", {
   root <- migration_study_fixture()
   lines <- c("set built;", "%let pref_time_var=iv_dead;", "%let variables=age bmi;",
              'title "Example: %let variables=wrong; set absent;";')
-  result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines, "sas"), character())
+  result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines, "sas"), character())
   expect_identical(postage_config(result)$DATASET, "study")
   expect_identical(postage_config(result)$VARIABLES, c("age", "bmi"))
   expect_true(4L %in% result$unresolved$line)
@@ -335,7 +347,7 @@ test_that("postage SAS quoted declarations cannot override active controls", {
 test_that("postage treats SAS field names case-insensitively", {
   root <- migration_study_fixture()
   lines <- c("SET BUILT;", "%LET PREF_TIME_VAR=IV_DEAD;", "%LET VARIABLES=AGE BMI;", "%LET EXCLUDE=BMI;")
-  result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines, "sas"), character())
+  result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines, "sas"), character())
   env <- postage_config(result)
   expect_identical(env$X_VAR, "iv_dead")
   expect_identical(env$VARIABLES, c("age", "bmi"))
@@ -346,11 +358,11 @@ test_that("postage leaves disabled QMD chunks inactive and conditional chunks un
   root <- migration_study_fixture()
   lines <- c("```{r}", 'dta_filename <- "built.csv"', 'pref_time_var <- "iv_dead"',
              'variables <- "age"', "```", "```{r}", "#| eval: false", 'variables <- "bmi"', "```")
-  result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+  result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines), character())
   expect_identical(postage_config(result)$VARIABLES, "age")
   expect_true(8L %in% result$ignored$line)
   lines <- c("```{r}", "#| eval: !expr run_eda", 'variables <- "age"', "```")
-  result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+  result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines), character())
   expect_null(postage_config(result)$VARIABLES)
   expect_true(3L %in% result$unresolved$line)
 })
@@ -359,7 +371,7 @@ test_that("postage retains cleaning with omitted subscript arguments as unresolv
   root <- migration_study_fixture()
   lines <- c("```{r}", 'dta_filename <- "built.csv"', 'pref_time_var <- "iv_dead"',
              'variables <- "age"', 'd[, "age"] <- d[, "age"] + 1', "```")
-  result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+  result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines), character())
   expect_identical(postage_config(result)$VARIABLES, "age")
   expect_true(5L %in% result$unresolved$line)
   expect_false(any(grepl("d[", result$regions, fixed = TRUE)))
@@ -372,7 +384,7 @@ test_that("postage preserves boolean-prefixed eval expressions as unresolved", {
                         c("```{r}", paste0("#| eval: ", value)))) {
       lines <- c(header, 'dta_filename <- "built.csv"', 'pref_time_var <- "iv_dead"',
                  'variables <- "age"', "d$age <- d$age + 1", "```")
-      result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+      result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines), character())
       env <- postage_config(result)
       expect_identical(env$DATASET, NA_character_, info = paste(header, collapse = " "))
       expect_identical(env$X_VAR, NA_character_)
@@ -381,7 +393,7 @@ test_that("postage preserves boolean-prefixed eval expressions as unresolved", {
       expect_true(all(source_rows %in% result$unresolved$line))
       expect_false(any(source_rows %in% result$ignored$line))
       expect_false(any(source_rows %in% result$translated$line))
-      expect_match(result$regions[[1L]], "EDIT:", fixed = TRUE)
+      expect_match(paste(result$regions, collapse = "\n"), "EDIT:", fixed = TRUE)
     }
   }
 })
@@ -391,7 +403,7 @@ test_that("postage recognizes complete inline boolean eval options", {
   for (value in c("TRUE", "FALSE")) {
     lines <- c(paste0("```{r setup, eval=", value, ", echo=FALSE}"),
                'dta_filename <- "built.csv"', 'pref_time_var <- "iv_dead"', 'variables <- "age"', "```")
-    result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+    result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines), character())
     if (value == "TRUE") {
       expect_identical(postage_config(result)$VARIABLES, "age")
       expect_true(all(2:4 %in% result$translated$line))
@@ -403,7 +415,7 @@ test_that("postage recognizes complete inline boolean eval options", {
 })
 
 test_that("postage VARIABLES = NULL draws every column but ids, dates and exclusions, and says so", {
-  spec <- postage_chunk(template_path("dp", "postage"), "spec")
+  spec <- postage_chunk(postage_template(), "spec")
   env <- list2env(list(d = data.frame(year = 1:10, age = 41:50, patient_id = 11:20, op_date = Sys.Date() + 0:9,
                                       female = rep(0:1, 5), bmi = 21:30),
                        X_VAR = "year", VARIABLES = NULL, EXCLUDE = "bmi",
@@ -424,14 +436,14 @@ test_that("postage VARIABLES = NULL draws every column but ids, dates and exclus
 })
 
 test_that("postage VARIABLES = NULL leaves out identifiers written without a separator", {
-  spec <- postage_chunk(template_path("dp", "postage"), "spec")
+  spec <- postage_chunk(postage_template(), "spec")
   # ccfid, the CCF patient identifier, has no "_" before "id", so the token rule
   # alone drew it as one bar per patient. carotid, steroid and case end the same
   # way and are study variables, so a bare id$ would be the opposite defect.
   n <- 12L
   env <- list2env(list(d = data.frame(year = seq_len(n), age = 40 + seq_len(n), ccfid = 1000L + seq_len(n),
                                       patientid = sprintf("P%03d", seq_len(n)), mrn = 5000L + seq_len(n),
-                                      pt_mrn_num = 6000L + seq_len(n),
+                                      eMRN = 7000L + seq_len(n), pt_mrn_num = rep(0:1, 6), bnp_mrna = 0.5 * seq_len(n),
                                       surgeon_note = sprintf("note %d", seq_len(n)),
                                       carotid = rep(0:1, 6), steroid = rep(0:1, 6), case = rep(0:1, 6)),
                        X_VAR = "year", VARIABLES = NULL, EXCLUDE = character(),
@@ -439,8 +451,10 @@ test_that("postage VARIABLES = NULL leaves out identifiers written without a sep
                        SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
                        LABEL_MAX = 40, ABBREVIATIONS = NULL))
   out <- capture.output(eval(spec, env))
-  expect_identical(env$VARIABLES, c("age", "carotid", "steroid", "case"))
-  expect_match(paste(out, collapse = " "), "ccfid, patientid, mrn, pt_mrn_num, surgeon_note")
+  # Only the exact names MRN and eMRN are record numbers: pt_mrn_num and the
+  # mRNA variable bnp_mrna are study variables like any other.
+  expect_identical(env$VARIABLES, c("age", "pt_mrn_num", "bnp_mrna", "carotid", "steroid", "case"))
+  expect_match(paste(out, collapse = " "), "ccfid, patientid, mrn, eMRN, surgeon_note")
   # Below ten values a distinct character column is kept: a small check frame
   # is not a register.
   env$d <- env$d[1:9, ]
@@ -453,7 +467,7 @@ test_that("postage VARIABLES = NULL leaves out identifiers written without a sep
 test_that("postage migration records a legacy show_percent as ignored, not translated", {
   root <- migration_study_fixture()
   lines <- c("```{r}", 'dta_filename <- "built.csv"', 'pref_time_var <- "iv_dead"', "show_percent <- TRUE", "```")
-  result <- hvtiRtemplates:::.migrate_dp_postage(postage_evidence(root, lines), character())
+  result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines), character())
   env <- postage_config(result)
   expect_true(4L %in% result$ignored$line)
   expect_match(result$ignored$reason[result$ignored$line == 4L], "replaced by SECTIONS")
@@ -466,7 +480,7 @@ test_that("postage embeds its pages when the job sits in a subfolder", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   root <- migration_study_fixture(NULL)
-  job <- add_job("dp", "cohort", "eda", dir = root, qualifier = "postage")
+  expect_warning(job <- add_job("dp", "cohort", "eda", dir = root, qualifier = "postage"), "deprecated")
   nested <- file.path(dirname(job), "eda", basename(job))
   dir.create(dirname(nested))
   lines <- sub('^ANALYSIS_SET <- "eda"', "ANALYSIS_SET <- NULL", readLines(job, warn = FALSE))
@@ -478,4 +492,21 @@ test_that("postage embeds its pages when the job sits in a subfolder", {
   expect_gte(length(pngs), 1L)
   # regmatches(), not length(gregexpr()): no match returns -1, whose length is 1.
   expect_identical(length(regmatches(html, gregexpr("src=\"data:image/png", html))[[1L]]), length(pngs))
+})
+
+test_that("naming the deprecated dp-postage in migrate_job() warns and writes a dp-eda job", {
+  root <- migration_study_fixture("dp-postage")
+  source <- file.path(root, "descriptive", "dp.postage.qmd")
+  expect_warning(job <- migrate_job(source, "cohort", "eda", "dp", "postage", dir = root),
+                 "dp-postage is deprecated in favor of dp-eda", class = "hvtiRtemplates_deprecated")
+  expect_identical(basename(job), "cohort-eda-dp-eda.qmd")
+  expect_false(file.exists(file.path(root, "descriptive", "cohort-eda-dp-postage.qmd")))
+  lines <- readLines(job, warn = FALSE)
+  expect_true('SECTIONS <- c("continuous", "percent", "count")' %in% lines)
+  expect_true('X_VAR <- "iv_dead"' %in% lines)
+  # Read from the filename's second field, the same redirect applies.
+  other <- migration_study_fixture("dp-postage")
+  expect_warning(job <- migrate_job(file.path(other, "descriptive", "dp.postage.qmd"), "cohort", "eda",
+                                    prefix = "dp", dir = other), class = "hvtiRtemplates_deprecated")
+  expect_identical(basename(job), "cohort-eda-dp-eda.qmd")
 })

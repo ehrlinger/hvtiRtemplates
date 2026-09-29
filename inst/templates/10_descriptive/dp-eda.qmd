@@ -41,8 +41,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
-  stop("This job needs hvtiPlotR >= 2.7.18 for hv_eda_pages(), hv_followup_panels() and the role colors; ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
+  stop("This job needs hvtiPlotR >= 2.8.0 for hv_eda_pages(), hv_followup_panels() and scale_color_hv(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiRutilities") < "1.4.2") {
@@ -126,8 +126,10 @@ all-deaths follow-up panel and every column of the `eda` analysis set.
 # under analysis_sets: in _study.yml, then write it with
 # hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
 # cohort is the intended population.
+# MIGRATE-BEGIN: dp-eda-data
 DATASET <- "study"
 ANALYSIS_SET <- "eda"
+# MIGRATE-END: dp-eda-data
 
 # Follow-up. These are dp-gfup's choices, and mean what they mean there.
 # EDIT: the years-since-origin interval to the operation, and that origin. The
@@ -174,6 +176,7 @@ EVENTS <- list()
 # reads the same across studies.
 # ALPHA is point transparency, for the follow-up figures and the continuous
 # panels: 0.5 lets a dense cohort read as a distribution rather than a blob.
+# MIGRATE-BEGIN: dp-eda-variables
 X_VAR <- "year"                    # EDIT: reference time or year
 VARIABLES <- NULL                  # EDIT: NULL draws every column, or name them
 EXCLUDE <- character(0)
@@ -182,8 +185,9 @@ GRID_NROW <- 4L
 UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
+# MIGRATE-END: dp-eda-variables
 
-# EDIT: NULL draws the house colors through hvtiPlotR::scale_colour_hv(): dead
+# EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
 # vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
 # all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
 # event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
@@ -300,13 +304,13 @@ if (!is.null(ABBREVIATIONS) && (!(is.character(ABBREVIATIONS) || is.list(ABBREVI
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
 # A name rule and a data rule. The names catch ccfid and patientid, which have no
-# "_" before "id"; a bare "id$" would also take carotid and steroid. Any name
-# holding "mrn" is taken (mrn_num, pt_mrn): no study variable spells it. The data rule
+# "_" before "id"; a bare "id$" would also take carotid and steroid. The medical
+# record number counts only as the exact names MRN and eMRN. The data rule
 # catches an identifier under a name nobody listed: text in which every value
 # differs, once there are ten or more of them.
 looks_like_id <- function(v) {
   grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
-    grepl("^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|mrn", v, ignore.case = TRUE) |
+    grepl("^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|^e?mrn$", v, ignore.case = TRUE) |
     vapply(d[v], function(x) {
       seen <- x[!is.na(x)]
       inherits(x, c("Date", "POSIXt")) ||
@@ -436,7 +440,7 @@ if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLOR
 # Dead or Death is the event and Alive or No event the censored level, so a
 # non-fatal event takes the house rule's next color, green.
 status_colors <- function(levels) {
-  if (is.null(COLORS)) return(scale_colour_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
+  if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
   keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
   scale_color_manual(values = stats::setNames(COLORS[keys], levels))
 }

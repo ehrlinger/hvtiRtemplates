@@ -17,7 +17,9 @@ test_that("every migration log path reports diagnostics without patient-like mes
       "NOTE: The data set REVIEW_TOKEN_DATASET has 24 observations and 13 variables."
     ), log)
     before <- tools::md5sum(c(source, log))
-    job <- migrate_job(source, "cohort", "eda", substr(fixture, 1L, 2L), sub("^[^-]+-", "", fixture), log = log, dir = root)
+    # A legacy EDA source migrates to dp-eda.
+    qualifier <- if (fixture == "dp-postage") "eda" else sub("^[^-]+-", "", fixture)
+    job <- migrate_job(source, "cohort", "eda", substr(fixture, 1L, 2L), qualifier, log = log, dir = root)
     report <- readLines(sub("[.]qmd$", "-migration.md", job))
     text <- paste(report, collapse = "\n")
     expect_false(grepl("REVIEW_TOKEN|98765432", text), info = kind)

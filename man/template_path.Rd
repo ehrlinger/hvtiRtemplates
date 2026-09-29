@@ -16,7 +16,9 @@ e.g. \code{"dp-trends"}, which carries its qualifier and leaves
 omitting it there is an error naming the choices, never a silent pick.}
 }
 \value{
-The full path, as \code{character(1)}.
+The full path, as \code{character(1)}. A template the catalog
+  marks deprecated, such as \code{dp-postage}, still resolves, with a
+  warning naming its replacement.
 }
 \description{
 Path to a supported template

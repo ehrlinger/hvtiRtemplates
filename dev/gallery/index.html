@@ -151,7 +151,7 @@ const T = [
   ["dc-general", "10_descriptive", "General descriptive checks with base procedures", "3 + 1 per categorical, 3 per continuous variable", "0", 6.8, [], ""],
   ["dc-gfup", "10_descriptive", "Follow-up interval checks: missing, negative, zero", "6", "0", 6.7, [], ""],
   ["dc-tables", "10_descriptive", "CORR Word tables, optional correlations", "2 + 1 Word table", "0", 9.7, [], "The session asked whether this should become a named Table 1 job."],
-  ["dp-postage", "10_descriptive", "EDA panels, one per variable, on numbered pages", "up to 3", "1 page per 16 variables, 3 sections", 14.0, [], "No grouping variable, which the legacy EDA report had."],
+  ["dp-postage", "10_descriptive", "Deprecated, use dp-eda: EDA panels, one per variable, on numbered pages", "up to 3", "1 page per 16 variables, 3 sections", 14.0, [], "Deprecated in favor of dp-eda, whose SECTIONS <- c(\"continuous\", \"percent\", \"count\") draws the same pages; removed in the release after 1.2.3. No grouping variable, which the legacy EDA report had."],
   ["dp-eda", "10_descriptive", "Whole EDA report: overview, follow-up, postage sections", "5 + 2 per death panel", "1 per panel + postage pages", 12.8, [], "No grouping variable, which the legacy EDA report had."],
   ["ac", "20_distributions", "Actuarial life tables, overall and stratified", "5 + 1 per stratifying variable", "0", 6.3, [177, 172], ""],
   ["hz", "20_distributions", "Multiphase parametric hazard fit", "8", "0", 9.4, ["b168", 169, 175, 172], "Renders only with the convergence-table line swapped."],

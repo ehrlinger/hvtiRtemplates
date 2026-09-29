@@ -14,6 +14,13 @@ format:
 
 Replaces the per-variable grid of the legacy EDA report, `tp.dp.DescriptiveSummary.qmd`.
 
+**Deprecated.** `dp-postage` is deprecated in favor of `dp-eda`, and will be
+removed in the release after hvtiRtemplates 1.2.3. For the same pages, start a
+`dp-eda` job with `add_job("dp", subject, type, qualifier = "eda")` and set
+`SECTIONS <- c("continuous", "percent", "count")`: its sections call
+`hv_eda_pages()` with the same arguments and draw the same pages, saved as
+`dp-eda-*.png` rather than `dp-postage-*.png`.
+
 A `dp-postage` job is the data-checking sweep over a new build: one small panel
 per variable against operation year, pages of them, with a table beside each
 section. It is for finding coding errors, drift and missingness before any
@@ -256,13 +263,13 @@ if (!is.null(ABBREVIATIONS) && (!(is.character(ABBREVIATIONS) || is.list(ABBREVI
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
 # A name rule and a data rule. The names catch ccfid and patientid, which have no
-# "_" before "id"; a bare "id$" would also take carotid and steroid. Any name
-# holding "mrn" is taken (mrn_num, pt_mrn): no study variable spells it. The data rule
+# "_" before "id"; a bare "id$" would also take carotid and steroid. The medical
+# record number counts only as the exact names MRN and eMRN. The data rule
 # catches an identifier under a name nobody listed: text in which every value
 # differs, once there are ten or more of them.
 looks_like_id <- function(v) {
   grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
-    grepl("^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|mrn", v, ignore.case = TRUE) |
+    grepl("^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|^e?mrn$", v, ignore.case = TRUE) |
     vapply(d[v], function(x) {
       seen <- x[!is.na(x)]
       inherits(x, c("Date", "POSIXt")) ||

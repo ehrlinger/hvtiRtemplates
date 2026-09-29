@@ -67,7 +67,8 @@ render_migrated_fixture <- function(kind, root = NULL) {
     "dc-tables" = c(prefix = "dc", qualifier = "tables", source = "descriptive/dc.tables.sas"),
     "dc-gfup" = c(prefix = "dc", qualifier = "gfup", source = "descriptive/dc.gfup.sas"),
     "dp-trends" = c(prefix = "dp", qualifier = "trends", source = "graphs/dp.trends.sas"),
-    "dp-postage" = c(prefix = "dp", qualifier = "postage", source = "descriptive/dp.postage.qmd")
+    # The fixture keeps its legacy name; a legacy EDA report now migrates to dp-eda.
+    "dp-postage" = c(prefix = "dp", qualifier = "eda", source = "descriptive/dp.postage.qmd")
   )
   if (length(kind) != 1L || is.na(kind) || !kind %in% names(mapping)) stop("Unknown migration fixture.")
   spec <- mapping[[kind]]
