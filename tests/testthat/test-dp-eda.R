@@ -45,11 +45,13 @@ test_that("dp-eda renders every section into one self-contained report", {
   # so the report can say which list shaped its labels.
   payload <- unlist(hvtiRtemplates:::.extract_provenance(text, managed = TRUE))
   expect_true(any(grepl("label_max$", names(payload)) & payload == "40"))
-  # The job's own entry is recorded with its level, not merely a key.
+  # The job's own entry is recorded with its level, not merely a key. The list
+  # is a data frame, one row per entry, so every row unlists to the same names
+  # once the group list adds its entries: find the row by position.
   i <- which(payload == "Goodness of follow-up")
   expect_length(i, 1L)
-  prefix <- sub("phrase$", "", names(payload)[i])
-  expect_identical(unname(payload[paste0(prefix, c("abbreviation", "source"))]), c("GFU", "job"))
+  expect_true(all(mapply(grepl, c("abbreviation$", "source$"), names(payload)[i + 1:2])))
+  expect_identical(unname(payload[i + 1:2]), c("GFU", "job"))
 })
 
 test_that("dp-eda draws the same pages as dp-postage over the same data", {
