@@ -8,6 +8,28 @@
   A test holds the rule in both directions. Existing jobs keep their old
   labels and still render.
 
+* `add_job()`, `open_job()`, `template_path()` and `migrate_job()` accept a
+  template's full name, the `name` column of `template_list()`, in place of
+  the prefix and qualifier pair: `add_job("dp-trends", "cohort", "eda")`. An
+  error asking which template now lists the choices by full name. Giving a full name
+  and a `qualifier` together is an error rather than a silent preference for
+  either. A bare qualifier is not accepted, because `fit`, `explain` and
+  `gfup` each name more than one template.
+
+* The EDA abbreviation tests hold once hvtiRutilities carries its group
+  abbreviation list (1.4.3). Four tests assumed the group list was empty and
+  failed on every platform after it merged: they now turn the group list off
+  when testing the job, study and initials levels, `dp-eda`'s provenance check
+  finds its entry by position rather than by a name every row shares, and a
+  new test checks that the group list does shorten labels when it is present.
+  No change to the templates.
+
+* `dp-postage` names its source correctly. Its header said it replaced the
+  older `tp.dp.EDA_barplots_scatterplots*.R` sweep; it was built from the
+  per-variable grid of the legacy EDA report, `tp.dp.DescriptiveSummary.qmd`,
+  as the catalog records. The `EDIT:` note now names both, since a study's job
+  may be a copy of either, and the descriptive migration vignette maps both.
+
 * New template `dp-eda` (`10_descriptive/`), the whole EDA report in one
   render: an overview of every column (`proc_contents()`), goodness of
   follow-up with `dc-gfup`'s tables, then continuous variables, categorical
@@ -16,9 +38,9 @@
   section calls the function its standalone job calls (`hv_followup_panels()`,
   `followup_check()`, `hv_eda_pages()`) with the same arguments, so a section
   is that job's figure; `test-dp-eda.R` checks the pages byte for byte against
-  `dp-postage`. Needs hvtiPlotR 2.7.18 and hvtiRutilities 1.4.1, the current
-  floors. It draws in the house colors (below); smart label truncation
-  follows once hvtiRutilities releases it.
+  `dp-postage`. Needs hvtiPlotR 2.7.18 and hvtiRutilities 1.4.2, the current
+  floors. It draws in the house colors and shortens labels in the house
+  style (both below).
 
 * `dp-postage` and `dp-eda` leave out identifiers written without a
   separator. Under `VARIABLES <- NULL` a column named `ccfid` or `patientid`
@@ -63,6 +85,23 @@
   `hvtiPlotR::scale_colour_hv()` keeps its spelling until hvtiPlotR ships
   `scale_color_hv()`. `tools/check-us-spelling.sh` now fails the lint workflow
   on a British spelling.
+
+* **`dp-postage` and `dp-eda` keep shortened labels distinct**, through
+  `hvtiRutilities::label_map()`. Two new edit points: `LABEL_MAX` (default
+  40), the longest label a figure or table shows, and `ABBREVIATIONS`
+  (default `NULL`), the job's own abbreviations as `c("Phrase" = "Abbrev")`.
+  The job merges them over the study's `abbreviations:` in `_study.yml` and the
+  group default list with `hvtiRutilities::study_abbreviations()`, so every
+  job in a study shortens labels the same way. Labels that share a heading
+  over the cap show it abbreviated (`Surgical procedure: ...` becomes
+  `SP: ...`), and each section prints a key of the abbreviations its shortened
+  labels show. A wrong `LABEL_MAX` or `ABBREVIATIONS` stops the render with
+  a message naming it, as the other edit points do. The cap and the merged list, with each entry's level, are recorded in
+  the report's provenance. The settings apply to the figure pages and their
+  captions; tables, including `dp-eda`'s Overview, keep full labels, so a
+  reader can look up what a shortened label stands for. Needs hvtiRutilities
+  1.4.2, now the floor; a migrated `dp-postage` job keeps both edit points at
+  their defaults.
 
 # hvtiRtemplates 1.2.2
 

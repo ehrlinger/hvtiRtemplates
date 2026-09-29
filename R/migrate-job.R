@@ -53,7 +53,9 @@
 #'   statistical endpoint only when the job analyses one; an endpoint-free
 #'   job may use a topic such as \code{"cohort"}.
 #' @param type Analysis-type field for the new job's filename.
-#' @param prefix Template prefix, such as \code{"dc"}. Read from the SAS
+#' @param prefix Template prefix, such as \code{"dc"}, or a template's full
+#'   name, such as \code{"dc-tables"}, which carries its qualifier and leaves
+#'   \code{qualifier} \code{NULL}. Read from the SAS
 #'   filename when \code{NULL}. When given without \code{qualifier}, the
 #'   qualifier is still read from the filename's second field if that field
 #'   names one of this prefix's templates.
@@ -88,8 +90,17 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
     })
   }
   check_string("source", source)
-  if (!is.null(prefix)) .check_field("prefix", prefix, fn = "migrate_job")
   if (!is.null(qualifier)) .check_field("qualifier", qualifier, fn = "migrate_job")
+  # A full name, "dp-trends", is split before the field check, as in add_job().
+  if (!is.null(prefix)) {
+    check_string("prefix", prefix)
+    parts <- tryCatch(.split_template_name(prefix, qualifier), error = function(e) {
+      stop("migrate_job(): ", sub("^template selection: ", "", conditionMessage(e)), call. = FALSE)
+    })
+    prefix <- parts$prefix
+    qualifier <- parts$qualifier
+    .check_field("prefix", prefix, fn = "migrate_job")
+  }
   if (!is.null(dir)) check_string("dir", dir)
   # Relative paths resolve against the working directory, as in any R
   # function; `dir` only locates the study root. Each path is resolved once,

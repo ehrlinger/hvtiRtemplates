@@ -19,7 +19,8 @@ test_that("dp-eda renders every section into one self-contained report", {
     "^EVENTS <- list\\(\\)$" = paste0(
       "EVENTS <- list(repair = list(event = \"repair\", time = \"iv_fup\", ",
       "death = \"dead\", death_time = \"iv_dead\", label = \"Repair\"))"
-    )
+    ),
+    "^ABBREVIATIONS <- NULL$" = "ABBREVIATIONS <- c(\"Goodness of follow-up\" = \"GFU\")"
   ))
   s <- scaffold_job("dp", "eda", edits, kind = "dp-postage")
   quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
@@ -40,6 +41,17 @@ test_that("dp-eda renders every section into one self-contained report", {
   # regmatches(), not length(gregexpr()): no match returns -1, whose length is 1.
   n_png <- length(list.files(graphs, "^dp-eda-.*[.]png$"))
   expect_identical(length(regmatches(text, gregexpr("src=\"data:image/png", text))[[1L]]), n_png)
+  # The label cap and the merged abbreviation list are recorded in provenance,
+  # so the report can say which list shaped its labels.
+  payload <- unlist(hvtiRtemplates:::.extract_provenance(text, managed = TRUE))
+  expect_true(any(grepl("label_max$", names(payload)) & payload == "40"))
+  # The job's own entry is recorded with its level, not merely a key. The list
+  # is a data frame, one row per entry, so every row unlists to the same names
+  # once the group list adds its entries: find the row by position.
+  i <- which(payload == "Goodness of follow-up")
+  expect_length(i, 1L)
+  expect_true(all(mapply(grepl, c("abbreviation$", "source$"), names(payload)[i + 1:2])))
+  expect_identical(unname(payload[i + 1:2]), c("GFU", "job"))
 })
 
 test_that("dp-eda draws the same pages as dp-postage over the same data", {
@@ -98,6 +110,7 @@ test_that("dp-eda colors every point of an event panel, by the house rule or fro
     env$.root <- root
     env$.provenance_data <- list()
     env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+    env$.cfg <- hvtiRutilities::study_config(root)
     for (label in c("set", "edit-study-choices")) eval(chunk(label), env)
     env$ORIGIN_YEAR <- 1980
     if (old) {
@@ -148,7 +161,8 @@ test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a sepa
                        X_VAR = "year", VARIABLES = NULL, EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
-                       label_map = function(d) data.frame(key = names(d), label = names(d))))
+                       .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL,
+                       label_map = function(d, ...) data.frame(key = names(d), label = names(d))))
   out <- capture.output(eval(spec, env))
   expect_identical(env$VARIABLES, c("age", "carotid"))
   expect_match(paste(out, collapse = " "), "ccfid, patientid")
@@ -170,7 +184,8 @@ test_that("dp-eda's overview leaves out identifiers but keeps dates", {
                        X_VAR = "year", VARIABLES = c("age", "ccfid"), EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
-                       label_map = function(d) data.frame(key = names(d), label = names(d))))
+                       .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL,
+                       label_map = function(d, ...) data.frame(key = names(d), label = names(d))))
   suppressWarnings(capture.output(eval(chunk("spec"), env)))
   out <- paste(capture.output(eval(chunk("overview-contents"), env)), collapse = "\n")
   expect_identical(env$shown$variable, c("year", "age", "carotid", "dt_surg"))
@@ -188,4 +203,24 @@ test_that("dp-gfup and dp-eda choose follow-up colors with the same code", {
   }
   expect_length(block("dp", "gfup"), 12L)
   expect_identical(block("dp", "gfup"), block("dp", "eda"))
+})
+
+test_that("dp-postage and dp-eda shorten labels with the same code and edit points", {
+  # dp-postage's copy is exercised in test-migrate-dp-postage.R; this keeps
+  # dp-eda's from drifting from it.
+  block <- function(qualifier, from, to) {
+    lines <- readLines(template_path("dp", qualifier), warn = FALSE)
+    start <- grep(from, lines)
+    end <- start + grep(to, lines[-seq_len(start)])[1L]
+    lines[start:end]
+  }
+  for (b in list(c("^# EDIT: the longest label", "^ABBREVIATIONS <- NULL$"),
+                 c("^# Shortened labels stay distinct", "^}$"))) {
+    expect_identical(block("postage", b[1], b[2]), block("eda", b[1], b[2]), info = b[1])
+  }
+  expect_length(block("eda", "^# Shortened labels stay distinct", "^}$"), 20L)
+  # And each draws the key under its sections.
+  for (q in c("postage", "eda")) {
+    expect_true(any(grepl("^  abbreviation_key\\(vars\\)$", readLines(template_path("dp", q), warn = FALSE))), info = q)
+  }
 })

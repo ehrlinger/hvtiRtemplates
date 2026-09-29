@@ -116,6 +116,10 @@ A job scaffolded from a qualified template carries the qualifier as a fourth
 field, so `add_job("dp", "cohort", "eda", qualifier = "trends")` writes
 `40_graphs/cohort-eda-dp-trends.qmd` in a new study. A filename that drops the qualifier says
 only "some `dp` job", which is what splitting the templates exists to fix.
+The template's own name says the same thing in one argument:
+`add_job("dp-trends", "cohort", "eda")` is the same call. A bare qualifier is
+not accepted, because `fit` and `explain` each name three templates and
+`gfup` names two.
 An EDA job's set key is `(subject, eda)`: the subject names what is described,
 and the type is always `eda`.
 

@@ -61,7 +61,7 @@ the subject being described and `eda` names the stage of work.
 | `descriptive/dc.tables.ods.sas` (`%desc_tab`) | `dc-tables` | `10_descriptive/dc-tables.qmd` | `hv_tbl_summary()`; `hv_correlation_table()` and `hv_correlation_matrix()` |
 | `descriptive/dc.gfup.sas` | `dc-gfup` | `10_descriptive/dc-gfup.qmd` | `proc_means()` |
 | `graphs/dp.trends.R` | `dp-trends` | `40_graphs/dp-trends.qmd` | `hv_trends()` |
-| `tp.dp.EDA_barplots_scatterplots*.R` | `dp-postage` | `10_descriptive/dp-postage.qmd` | `hv_eda()` |
+| `tp.dp.DescriptiveSummary.qmd`, `tp.dp.EDA_barplots_scatterplots*.R` | `dp-postage` | `10_descriptive/dp-postage.qmd` | `hv_eda()` |
 
 ## Five steps for every job
 

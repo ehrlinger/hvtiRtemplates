@@ -256,6 +256,7 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "study_dir", "proc_contents", "built_path", "study_root",  # >= 1.1.12
     "proc_freq",  # >= 1.2.0
     "followup_check",  # >= 1.4.1
+    "study_abbreviations",  # >= 1.4.2
     "label_map", "get_label",
     "cache_fit", "capture_provenance", "provenance_data", "publish_provenance"  # >= 1.3.1
   )
@@ -791,5 +792,49 @@ test_that("a chunk is labeled edit- exactly when it holds an EDIT marker", {
         expect_false(isTRUE(startsWith(label, "edit-")), info = paste(where, "holds none"))
       }
     }
+  }
+})
+
+# ---- template stem ---------------------------------------------------------
+# A template can be named by its filename stem, "dp-trends", as template_list()
+# reports it in `name`. A prefix never contains "-", so the split is exact.
+
+test_that(".select_template() resolves a template stem", {
+  tl <- data.frame(
+    prefix = c("dp", "dp", "ac"), qualifier = c("trends", "gfup", NA_character_),
+    folder = c("graphs", "graphs", "distributions"),
+    file = c("a.qmd", "b.qmd", "c.qmd"), stringsAsFactors = FALSE
+  )
+  expect_equal(hvtiRtemplates:::.select_template(tl, "dp-trends")$file, "a.qmd")
+  expect_equal(hvtiRtemplates:::.select_template(tl, "ac")$file, "c.qmd")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp-nope"), "no template qualified")
+  for (bad in c("dp-", "-trends", "dp-trends-x")) {
+    expect_error(hvtiRtemplates:::.select_template(tl, bad), "not a template name", info = bad)
+  }
+})
+
+test_that("a stem and a qualifier together are refused, not reconciled", {
+  # Two answers to one question. Preferring either would silently discard the
+  # other, even when they agree today.
+  expect_error(template_path("dp-trends", "trends"), "not both")
+  expect_error(template_path("dp-trends", "gfup"), "not both")
+  expect_error(add_job("dp-trends", "cohort", "eda", dir = tempdir(), qualifier = "trends"),
+               "add_job\\(\\).*not both")
+  # A malformed qualifier is reported as itself, not as a clash.
+  for (bad in list(NA_character_, character(0), "")) {
+    expect_error(template_path("dp-trends", bad), "single non-empty, non-NA")
+  }
+})
+
+test_that("the choices on offer are shown by full name, the form a caller can type", {
+  expect_error(template_path("dp"), "name one with `qualifier`, or by its full name")
+  expect_error(template_path("dp"), "dp-trends")
+  expect_error(template_path("ac-foo"), "Available for this prefix: ac")
+})
+
+test_that("every shipped template resolves from its own stem", {
+  tl <- template_list()
+  for (i in seq_len(nrow(tl))) {
+    expect_equal(template_path(tl$name[[i]]), tl$file[[i]], info = tl$name[[i]])
   }
 })

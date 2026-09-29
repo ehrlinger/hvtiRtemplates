@@ -10,9 +10,9 @@ format:
     embed-resources: true
 ---
 
-<!-- EDIT: name the job this replaces (tp.dp.EDA_barplots_scatterplots*.R). -->
+<!-- EDIT: name the job this replaces (a copy of tp.dp.DescriptiveSummary.qmd or tp.dp.EDA_barplots_scatterplots*.R). -->
 
-Replaces an older EDA bar-plot and scatter-plot sweep.
+Replaces the per-variable grid of the legacy EDA report, `tp.dp.DescriptiveSummary.qmd`.
 
 A `dp-postage` job is the data-checking sweep over a new build: one small panel
 per variable against operation year, pages of them, with a table beside each
@@ -43,6 +43,10 @@ suppressPackageStartupMessages({
 if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
   stop("This job needs hvtiPlotR >= 2.7.18 for hv_eda_pages() and scale_fill_hv(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
+}
+if (utils::packageVersion("hvtiRutilities") < "1.4.2") {
+  stop("This job needs hvtiRutilities >= 1.4.2 for study_abbreviations(); ",
+       utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
 if (!requireNamespace("patchwork", quietly = TRUE)) {
   stop("This job needs the patchwork package. Install it, then re-render.", call. = FALSE)
@@ -141,6 +145,19 @@ SECTIONS <- c("continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dp-postage-config
 
+# EDIT: the longest label the figure pages and their captions show, in
+# characters. Longer labels are shortened so that two labels that differ never
+# read the same: a shared heading is abbreviated, then the label is cut and
+# marked. Inf shows every label whole. Tables keep full labels, so a reader can
+# look up what a shortened one stands for.
+LABEL_MAX <- 40
+
+# EDIT: this job's own abbreviations, beyond the study's list, as
+# c("Phrase" = "Abbrev"); NA drops one the study or group list supplies. NULL
+# uses the study's list alone. The study's list is the abbreviations: block in
+# _study.yml, over the group default shipped in hvtiRutilities.
+ABBREVIATIONS <- NULL
+
 ```
 
 ## Data
@@ -229,6 +246,13 @@ if (!column_names(SECTIONS) || !length(SECTIONS) || !all(SECTIONS %in% c("contin
 if (!is.numeric(ALPHA) || length(ALPHA) != 1L || is.na(ALPHA) || ALPHA < 0 || ALPHA > 1) {
   stop("ALPHA must be one number from 0 to 1.", call. = FALSE)
 }
+if (!is.numeric(LABEL_MAX) || length(LABEL_MAX) != 1L || is.na(LABEL_MAX) || LABEL_MAX < 4) {
+  stop("LABEL_MAX must be one number, at least 4, or Inf to show every label whole.", call. = FALSE)
+}
+if (!is.null(ABBREVIATIONS) && (!(is.character(ABBREVIATIONS) || is.list(ABBREVIATIONS)) ||
+                                  (length(ABBREVIATIONS) && is.null(names(ABBREVIATIONS))))) {
+  stop('ABBREVIATIONS must be NULL or name each abbreviation by its phrase, c("Phrase" = "Abbrev").', call. = FALSE)
+}
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
 # A name rule and a data rule. The names catch ccfid and patientid, which have no
@@ -274,8 +298,26 @@ level, so a percentage is out of every patient, not only those with a value.
 #| label: pages
 #| results: asis
 # Labels come from the dataset; a variable without one is shown by its name.
-.labels <- label_map(d)
+# Shortened labels stay distinct, using the job's, the study's and the group's
+# abbreviations, merged and checked by study_abbreviations().
+.abbreviations <- hvtiRutilities::study_abbreviations(.cfg, extra = ABBREVIATIONS)
+.labels <- label_map(d, label_max = LABEL_MAX, abbreviations = .abbreviations)
 labels <- stats::setNames(.labels$label, .labels$key)
+# The abbreviations these variables' labels show, as a key under the section.
+# Only shortened labels count: a label that says "SP" in its own words is not
+# using the key's SP.
+abbreviation_key <- function(vars) {
+  used <- attr(.labels, "abbreviations")
+  row <- match(vars, .labels$key)
+  shown <- .labels$label[row][.labels$label[row] != .labels$label_full[row]]
+  hit <- vapply(used$abbreviation, function(a) {
+    any(grepl(paste0("(?<![[:alnum:]])", gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", a), "(?![[:alnum:]])"), shown, perl = TRUE))
+  }, logical(1L))
+  if (any(hit)) {
+    cat("\nAbbreviations: ", paste(used$abbreviation[hit], used$expansion[hit], sep = " = ", collapse = "; "), ".\n\n",
+        sep = "")
+  }
+}
 titles <- c(continuous = "Continuous variables", percent = "Categorical variables, percent",
             count = "Categorical variables, counts")
 page_files <- character(0)
@@ -319,6 +361,7 @@ for (section in SECTIONS) {
     cat("\n### Page ", i, "\n\n![", paste(labels[on_page], collapse = ", "), "](", link, ")\n\n", sep = "")
     page_files <- c(page_files, file)
   }
+  abbreviation_key(vars)
 }
 invisible(page_files)
 ```
@@ -332,7 +375,10 @@ cat(hvtiRtemplates:::.embed_provenance(
   data = .provenance_data,
   extra = list(
     subject = SUBJECT,
-    type = TYPE
+    type = TYPE,
+    label_max = LABEL_MAX,
+    abbreviations = data.frame(phrase = names(.abbreviations), abbreviation = unname(.abbreviations),
+                               source = attr(.abbreviations, "source"))
   )
 ))
 ```
