@@ -13,7 +13,7 @@ template_chunk <- function(src, label) {
 
 # Downstream templates take the selection their upstream job recorded: WHERE,
 # ID and KEY default to NULL ("take the upstream value") and their data chunk
-# checks it. hm, hp and hs also read data; the explain jobs and the bootstrap
+# checks it with .read_upstream_job_data(). hm, hp and hs also read data; the explain jobs and the bootstrap
 # reports read a saved forest or bag, so they have no DATASET or ANALYSIS_SET.
 downstream_templates <- c("hm", "hp", "hs", "rfs-explain", "rfc-explain", "rfr-explain",
                           "bl", "br", "bc", "bh")
@@ -26,6 +26,8 @@ expected_defaults <- function(name) {
     out <- c(WHERE = "WHERE <- NULL", ID = 'ID <- "ccfid"', KEY = "KEY <- ID")
   }
   if (reads_data(name)) out <- c(DATASET = 'DATASET <- "study"', ANALYSIS_SET = "ANALYSIS_SET <- NULL", out)
+  # hm, hp and hs also take their time-to-event settings from upstream.
+  if (name %in% c("hm", "hp", "hs")) out <- c(out, TIME = "TIME <- NULL", EVENT = "EVENT <- NULL")
   out
 }
 
@@ -45,13 +47,15 @@ test_that("every converted template has the shared settings and a conforming dat
     for (setting in names(defaults)) {
       expect_true(any(trimws(sub("#.*$", "", choices)) == defaults[[setting]]), info = paste(name, setting))
     }
+    setup <- template_chunk(src, "setup")
+    expect_true(any(grepl("hvtiRtemplates:::.find_study_root(", setup, fixed = TRUE)), info = paste(name, "setup"))
     data <- template_chunk(src, "data")
     expect_false(is.null(data), info = name)
     if (reads_data(name)) {
       expect_true(any(grepl("hvtiRtemplates::read_job_data(", data, fixed = TRUE)), info = name)
     }
     if (name %in% downstream_templates) {
-      expect_true(any(grepl(".check_upstream_selection(", data, fixed = TRUE)), info = name)
+      expect_true(any(grepl(".read_upstream_job_data(", data, fixed = TRUE)), info = name)
     }
   }
 })
