@@ -1,9 +1,15 @@
 # hvtiRtemplates (unreleased)
 
-* `dp-eda` takes `mrn` as an identifier only as a word of a column name
-  (`mrn`, `mrn_num`, `pt_mrn`), not inside one. It matched `mrn` anywhere, so
-  an mRNA variable such as `bnp_mrna` was left out as an identifier. The rule
-  matches hvtiPlotR's `hv_eda_pages()` (hvtiPlotR#172).
+* `dp-eda` and `dp-postage` take the medical record number as an identifier
+  only under the exact names `MRN` and `eMRN` (ignoring case). They matched
+  `mrn` anywhere in a name, so an mRNA variable such as `bnp_mrna` was left out
+  as an identifier. The rule matches hvtiPlotR's `hv_eda_pages()`
+  (hvtiPlotR#172).
+
+* The data-route tests pass when run on their own. They evaluated template
+  chunks that call `study_config()` without supplying it, so they depended on
+  an earlier test file having attached hvtiRutilities, and a filtered run
+  errored twice. No change to the templates.
 
 * Every template chunk holding an `EDIT:` marker is now labeled `edit-`, so
   the editor's chunk outline lists the work a job still needs:
@@ -53,7 +59,7 @@
   token, and was drawn as one bar per patient and listed in the frequency
   table. The rule now also takes `ccfid`, `patid`, `patientid`, `studyid`,
   `subjectid`, `recordid`, `caseid` (each also with `_`, `num` or `no`),
-  any name holding `mrn` (`mrn_num`, `pt_mrn`), and any text or factor
+  the exact names `MRN` and `eMRN`, and any text or factor
   column of ten or more values in which every value differs. A bare trailing `id` was declined: it would take `carotid`
   and `steroid`. The report lists what it left out, and naming a column in
   `VARIABLES` still draws it. `dp-eda`'s overview table leaves identifiers
@@ -70,7 +76,7 @@
   `dp-postage` and `dp-eda` color their categorical pages with
   `hvtiPlotR::scale_fill_hv()`: each panel runs blue, vermillion, green and on
   from its own levels, and missing is light gray. `dp-gfup` and `dp-eda`'s
-  follow-up section use `scale_colour_hv()`. **The follow-up figures change
+  follow-up section use `scale_color_hv()`. **The follow-up figures change
   color:** dead moves from Set1 red `#E41A1C` to vermillion `#D55E00`, alive
   from `#377EB8` to `#0072B2`, and a non-fatal event from `#4DAF4A` to
   `#009E73`. The pattern of red, blue and green is kept. `COLORS` is now
@@ -86,10 +92,10 @@
 
 * The templates, their comments, the reference pages and these notes use US
   spelling. The templates call `scale_color_manual()` and `labs(color = )`,
-  which ggplot2 treats as identical to their British spellings.
-  `hvtiPlotR::scale_colour_hv()` keeps its spelling until hvtiPlotR ships
-  `scale_color_hv()`. `tools/check-us-spelling.sh` now fails the lint workflow
-  on a British spelling.
+  which ggplot2 treats as identical to their British spellings, and
+  `hvtiPlotR::scale_color_hv()`, which needs hvtiPlotR 2.8.0, now the floor.
+  `tools/check-us-spelling.sh` now fails the lint workflow on a British
+  spelling.
 
 * **`dp-postage` and `dp-eda` keep shortened labels distinct**, through
   `hvtiRutilities::label_map()`. Two new edit points: `LABEL_MAX` (default

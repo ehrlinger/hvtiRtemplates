@@ -30,18 +30,18 @@ PATHS=(
 
 # Allowlist: tokens stripped from a line before it is checked. Keep it short;
 # each entry is a name this package does not own.
-#   scale_colour_hv   hvtiPlotR's function. Swap to scale_color_hv() once the
-#                     hvtiPlotR floor ships it (2.7.18 does not), then delete this.
 #   COLOURS           the pre-rename setting, named by the guard that stops an old
 #                     study-choices chunk, its test, and NEWS. Upper case only, so
 #                     prose "colours" is still caught.
 #   `[[`, "colour"    ggplot_build() names its data column colour; a test reads it.
 #   aria-labelledby   the HTML attribute, in the new-study vignette's SVG.
 #   haven_labelled, labelled::   the labelled package's class and namespace.
-ALLOW='scale_colour_hv|COLOURS|`\[\[`, "colour"|aria-labelledby|haven_labelled|\blabelled::'
+ALLOW='COLOURS|`\[\[`, "colour"|aria-labelledby|haven_labelled|\blabelled::'
 
 hits=$(grep -rniIE "$WORDS" "${PATHS[@]}" 2>/dev/null |
-  perl -ne 'my ($loc, $text) = /^([^:]+:\d+:)(.*)$/s or next; $text =~ s/'"$ALLOW"'//g; print "$loc$text" if $text =~ /'"$WORDS"'/i')
+  perl -ne 'my ($loc, $text) = /^([^:]+:\d+:)(.*)$/s or next; $text =~ s/'"$ALLOW"'//g;
+    # The release plan records 2.7.18, which named the scale scale_colour_hv().
+    $text =~ s/scale_colour_hv//g if $loc =~ m{^dev/specs/2026-09-25-release-eda-complete-plan[.]md:}; print "$loc$text" if $text =~ /'"$WORDS"'/i')
 
 if [ -n "$hits" ]; then
   echo "British spellings found (use US spelling, or allowlist a name this package does not own):"

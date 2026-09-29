@@ -59,6 +59,9 @@ test_that("descriptive templates can read the whole cohort", {
     env <- new.env(parent = globalenv())
     env$.root <- "."
     env$read_built <- hvtiRutilities::read_built
+    # hvtiRutilities is imported, not attached: run alone, this file finds
+    # study_config() only if it is supplied here.
+    env$study_config <- hvtiRutilities::study_config
     chunks <- data_route_chunks(template)
     if (length(chunks$choices)) eval(use_whole_cohort(chunks$choices), envir = env)
     result <- withVisible(eval(
@@ -123,6 +126,7 @@ test_that("descriptive templates read a named additional dataset", {
     env <- new.env(parent = globalenv())
     env$.root <- "."
     env$read_built <- hvtiRutilities::read_built
+    env$study_config <- hvtiRutilities::study_config
     eval(set_assignment(code, "ANALYSIS_SET", NULL), envir = env)
     if (length(chunks$choices)) eval(chunks$data, envir = env)
     expect_equal(env$d, subset, info = basename(template))
