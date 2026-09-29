@@ -169,10 +169,10 @@ Unresolved markers remain. The numbers below are not a result.
 <p>For a final render, such as the one that goes to an investigator, make an unfinished job stop rather than render as a draft:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/render_job.html">render_job</a></span><span class="op">(</span><span class="va">job</span>, final <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><code><a href="../reference/render_job.html">render_job()</a></code> runs Quarto from the job’s own directory, so the same call works for adopted and numbered study layouts. A final render fails at the <code>edit-guard</code> chunk with the unresolved list.</p>
+<p><code><a href="../reference/render_job.html">render_job()</a></code> runs Quarto from the job’s own directory, so the same call works for adopted and numbered study layouts. A final render fails at the <code>guard-edits</code> chunk with the unresolved list.</p>
 </section><section class="level2"><h2 id="which-data-a-job-reads">Which data a job reads<a class="anchor" aria-label="anchor" href="#which-data-a-job-reads"></a>
 </h2>
-<p>A SAS job names its dataset in a <code>set</code> statement, so the answer is in the code. An R job takes it from <code>_study.yml</code>, which can offer the same study more than one way. The descriptive jobs choose with two settings at the top of their <code>data</code> chunk, and every rendered report prints what they chose:</p>
+<p>A SAS job names its dataset in a <code>set</code> statement, so the answer is in the code. An R job takes it from <code>_study.yml</code>, which can offer the same study more than one way. The descriptive jobs choose with two settings in their <code>edit-study-choices</code> chunk, and every rendered report prints what they chose:</p>
 <pre><code>Data read: dataset `builtr` (builtr.sas7bdat), 2514 rows, 135 columns.</code></pre>
 <p><code>_study.yml</code> can declare three kinds of data:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">built</span><span class="kw">:</span><span class="at"> built.sas7bdat</span><span class="co">            # the study dataset</span></span>
