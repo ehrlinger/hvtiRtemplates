@@ -165,7 +165,7 @@ test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps",
   n <- 12L
   built <- data.frame(year = 2000L + seq_len(n), ccfid = 1000L + seq_len(n), randid = 3000L + seq_len(n),
                       MRN = 5000L + seq_len(n), study_id = 7000L + seq_len(n), hosp_id = 9000L + seq_len(n),
-                      pt_mrn_num = rep(0:1, 6),
+                      pt_mrn_num = rep(0:1, 6), visit_mo = 3L * seq_len(n),
                       age = 40 + seq_len(n))
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
@@ -175,14 +175,14 @@ test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps",
     end <- start + match("```", lines[-seq_len(start)])
     parse(text = lines[seq.int(start + 1L, end - 1L)])
   }
-  run <- function(id = "ccfid", variables = NULL) {
+  run <- function(id = "ccfid", variables = NULL, key = id) {
     env <- new.env(parent = globalenv())
     env$.root <- root
     env$study_config <- hvtiRutilities::study_config
     env$label_map <- function(d, ...) data.frame(key = names(d), label = names(d))
     eval(chunk("edit-study-choices"), env)
     env$ID <- id
-    env$KEY <- id
+    env$KEY <- key
     env$VARIABLES <- variables
     utils::capture.output(eval(chunk("data"), env))
     env$out <- utils::capture.output(eval(chunk("spec"), env))
@@ -206,8 +206,16 @@ test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps",
   expect_false("ccfid" %in% env$VARIABLES)
 
   # Named in VARIABLES, the ID is still not drawn, and the report says so.
-  expect_warning(env <- run(id = "randid", variables = c("age", "randid")), "Not drawn, as the job's ID or KEY: randid")
+  expect_warning(env <- run(id = "randid", variables = c("age", "randid")), "Not drawn, as the job's ID: randid")
   expect_identical(env$VARIABLES, "age")
+
+  # A KEY column beside the ID, such as a visit time, is left out by default and
+  # drawn when named.
+  expect_true("visit_mo" %in% run()$VARIABLES)
+  env <- run(key = c("ccfid", "visit_mo"))
+  expect_false("visit_mo" %in% env$VARIABLES)
+  env <- run(key = c("ccfid", "visit_mo"), variables = c("age", "visit_mo"))
+  expect_identical(env$VARIABLES, c("age", "visit_mo"))
 })
 
 test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a separator", {

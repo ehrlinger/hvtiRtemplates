@@ -175,8 +175,11 @@ EVENTS <- list()
 # VARIABLES is NULL to draw every column, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
-# column here to draw it anyway. The job's ID and KEY columns are never drawn,
-# even when named here. The follow-up columns are drawn too, as
+# column here to draw it anyway. The job's ID is never drawn, even when named
+# here. A KEY column beside it, such as a visit time, is left out of NULL but
+# drawn when named here, as that column's own distribution; a measure's course
+# over visits is a spaghetti plot (hvtiPlotR::hv_spaghetti()), not a page here.
+# The follow-up columns are drawn too, as
 # dp-postage draws them, so a section here stays the standalone job's figure.
 # A named column that is not in the data stops the render, and the error
 # lists every missing name at once.
@@ -285,8 +288,9 @@ if (!is.null(ABBREVIATIONS) && (!(is.character(ABBREVIATIONS) || is.list(ABBREVI
 }
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
-# The job's ID and KEY columns are never drawn: they are the columns the data
-# step used, so a ccfid, or the MRN it fell back to, is caught whatever its case.
+# The job's ID and KEY columns are left out by default, and the ID is never
+# drawn: they are the columns the data step used, so a ccfid, or the MRN it fell
+# back to, is caught whatever its case. A KEY column named in VARIABLES is drawn.
 # MRN and eMRN are already dropped at read, unless one is the ID. The name rules
 # catch other identifier columns and dates: an id or identifier token, such as
 # hosp_id, a date token or a _dt suffix, and the names ccfid and patientid,
@@ -295,6 +299,7 @@ if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = "
 # nobody listed: dates, and text in which every value differs, once there are
 # ten or more of them.
 .job_selection <- attr(job_data$record, "selection")
+is_job_id <- function(v) tolower(v) %in% tolower(.job_selection$id)
 is_job_key <- function(v) tolower(v) %in% tolower(c(.job_selection$id, .job_selection$key))
 looks_like_id <- function(v) {
   is_job_key(v) |
@@ -311,15 +316,15 @@ if (is.null(VARIABLES)) {
   left_out <- candidates[looks_like_id(candidates)]
   VARIABLES <- setdiff(candidates, left_out)
   if (length(left_out)) {
-    cat("Left out as identifier or date columns (name them in VARIABLES to draw them; the job's ID and KEY are never drawn):",
+    cat("Left out as identifier or date columns (name them in VARIABLES to draw them; the job's ID is never drawn):",
         paste(left_out, collapse = ", "), "\n")
   }
 } else {
   VARIABLES <- setdiff(VARIABLES, EXCLUDE)
-  if (any(is_job_key(VARIABLES))) {
-    warning("Not drawn, as the job's ID or KEY: ", paste(VARIABLES[is_job_key(VARIABLES)], collapse = ", "),
+  if (any(is_job_id(VARIABLES))) {
+    warning("Not drawn, as the job's ID: ", paste(VARIABLES[is_job_id(VARIABLES)], collapse = ", "),
             call. = FALSE)
-    VARIABLES <- VARIABLES[!is_job_key(VARIABLES)]
+    VARIABLES <- VARIABLES[!is_job_id(VARIABLES)]
   }
   suspect <- looks_like_id(VARIABLES)
   if (any(suspect)) {

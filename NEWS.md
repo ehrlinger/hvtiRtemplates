@@ -16,8 +16,9 @@
 * The descriptive templates and `dp-trends` read their data through
   `read_job_data()`: `ANALYSIS_SET` defaults to `NULL`, so they run on a newly
   registered study; `WHERE`, `ID` and `KEY` are new settings; `dc-general`'s
-  `KEY_COLS` is `ID`; and `dp-eda` never draws the job's `ID` or `KEY` columns.
-  The deprecated `dp-postage` keeps its own data step. Every template's setup
+  `KEY_COLS` is `ID`; and `dp-eda` leaves the job's `ID` and `KEY` columns
+  out, never draws the `ID`, and draws a `KEY` column such as a visit time only
+  when `VARIABLES` names it. The deprecated `dp-postage` keeps its own data step. Every template's setup
   chunk says to run `study_setup()` when it is not inside a study.
 
 * `dp-postage` is deprecated in favor of `dp-eda`, and will be removed in the
