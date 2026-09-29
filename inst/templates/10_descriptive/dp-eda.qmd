@@ -311,7 +311,7 @@ if (is.null(VARIABLES)) {
   left_out <- candidates[looks_like_id(candidates)]
   VARIABLES <- setdiff(candidates, left_out)
   if (length(left_out)) {
-    cat("Left out as identifier or date columns (name them in VARIABLES to draw them):",
+    cat("Left out as identifier or date columns (name them in VARIABLES to draw them; the job's ID and KEY are never drawn):",
         paste(left_out, collapse = ", "), "\n")
   }
 } else {

@@ -194,6 +194,8 @@ ANALYSIS_SET <- NULL
 # EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
 #   WHERE <- quote(age >= 18)
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+# WHERE runs as the data are read, before `year` is derived below, so filter on
+# the date column rather than on `year`.
 WHERE <- NULL
 
 # EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
