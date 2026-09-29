@@ -20,7 +20,7 @@
   # SHOW_PERCENT is recognized but not carried over: SECTIONS replaced it, and
   # its default draws both the percent and the count pages, so a migrated job
   # keeps the categorical view its legacy job drew.
-  config <- list(DATASET = NA_character_, ANALYSIS_SET = NULL, X_VAR = NA_character_, VARIABLES = NULL,
+  config <- list(DATASET = NA_character_, X_VAR = NA_character_, VARIABLES = NULL,
                  EXCLUDE = character(), GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                  SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5)
   decisions <- list(translated = list(), unresolved = list(), ignored = list())
@@ -77,9 +77,11 @@
     vapply(names, function(name) paste0(name, " <- ", paste(deparse(config[[name]]), collapse = " ")), character(1L))
   }
   # dp-eda keeps the data choices apart from the variable choices, with the
-  # follow-up choices between them, so each group is its own region.
-  data <- declare(c("DATASET", "ANALYSIS_SET"))
-  variables <- declare(setdiff(names(config), c("DATASET", "ANALYSIS_SET")))
+  # follow-up choices between them, so each group is its own region. The data
+  # region holds DATASET alone: ANALYSIS_SET, WHERE, ID and KEY keep the
+  # template's defaults, which read the whole dataset as the legacy job did.
+  data <- declare("DATASET")
+  variables <- declare(setdiff(names(config), "DATASET"))
   # VARIABLES may stay NULL: the template then draws every column.
   incomplete <- is.na(config$DATASET) || is.na(config$X_VAR)
   if (nrow(decisions$unresolved) || incomplete) {

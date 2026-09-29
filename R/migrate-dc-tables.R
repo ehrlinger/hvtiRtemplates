@@ -148,10 +148,9 @@
     paste0("  ", key, " = ", vector_r(groups[[name]]))
   }, character(1L))
   group_lines <- paste0(group_lines, c(rep(",", length(group_lines) - 1L), ""))
-  data_lines <- c(
-    paste0("DATASET <- ", if (is.na(selection$dataset)) "NA_character_" else quote_r(selection$dataset)),
-    "ANALYSIS_SET <- NULL"
-  )
+  # The data region holds DATASET alone: ANALYSIS_SET, WHERE, ID and KEY keep
+  # the template's defaults, which read the whole dataset as the SAS job did.
+  data_lines <- paste0("DATASET <- ", if (is.na(selection$dataset)) "NA_character_" else quote_r(selection$dataset))
   if (is.na(selection$dataset)) data_lines <- c(data_lines, "# EDIT: resolve the registered dataset for the SAS input.")
   config <- c(
     paste0("BY <- ", if (nzchar(by)) quote_r(by) else "NULL"),

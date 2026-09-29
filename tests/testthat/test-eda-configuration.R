@@ -8,7 +8,7 @@ test_that("jobs present their study choices before reading data", {
              "40_graphs/dp-trends.qmd",
              "40_graphs/hp.qmd", "40_graphs/hs.qmd")
   required <- list(
-    `dc-general.qmd` = c("DATASET", "ANALYSIS_SET", "CATEGORICAL", "CONTINUOUS", "KEY_COLS"),
+    `dc-general.qmd` = c("DATASET", "ANALYSIS_SET", "CATEGORICAL", "CONTINUOUS", "ID"),
     `dc-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "EVENT", "FOLLOWUP", "CHECKS"),
     `dc-tables.qmd` = c("DATASET", "ANALYSIS_SET", "GROUPS", "WORD_FILE", "CORR"),
     `dp-eda.qmd` = c("DATASET", "ANALYSIS_SET", "OPYRS", "ORIGIN_YEAR", "CLOSE_DATE", "PANELS", "EVENTS",
@@ -23,7 +23,7 @@ test_that("jobs present their study choices before reading data", {
     `hm.qmd` = c("TIME", "EVENT", "SAS_JOB", "SAS_MACRO", "SHAPE_PARAMS", "DECILE_TIME"),
     `dp-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "OPYRS", "ORIGIN_YEAR", "CLOSE_DATE",
                       "PANELS", "EVENTS", "ALPHA"),
-    `dp-trends.qmd` = c("DATASET", "TRENDS", "XBREAKS", "SUBGROUPS"),
+    `dp-trends.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TRENDS", "XBREAKS", "SUBGROUPS"),
     `hp.qmd` = c("years", "t_max", "TIME", "EVENT"),
     `hs.qmd` = c("TIME", "HORIZONS", "AGE_COL", "MALE_COL", "SCALE")
   )

@@ -7,7 +7,7 @@ gallery_family(
   jobs = c(
     lapply(demo_choices, function(choices) list(subject = "cohort", type = "eda", choices = choices)),
     list(
-      "dc-general" = list(subject = "cohort", type = "eda", choices = c(whole_cohort, list(
+      "dc-general" = list(subject = "cohort", type = "eda", choices = c(whole_cohort, demo_id, list(
         "^  Demography = c\\(\"female\"\\)$" = paste(
           "  Demography = c(\"female\", \"race_grp\"),",
           "  History    = c(\"hx_chf\", \"hx_dm\", \"nyha_pr\")", sep = "\n"
@@ -16,8 +16,7 @@ gallery_family(
           "  Demography = c(\"age\", \"bmi\"),",
           "  Echo       = c(\"lvef\", \"plvmassi\"),",
           "  Laboratory = \"creat_pr\"", sep = "\n"
-        ),
-        "^KEY_COLS <- \"ccfid\"$" = "KEY_COLS <- \"patient_id\""
+        )
       )))
     )
   )

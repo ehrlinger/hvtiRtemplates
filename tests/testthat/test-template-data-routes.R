@@ -44,7 +44,7 @@ test_that("descriptive templates can read the whole cohort", {
   suppressMessages(hvtiRutilities::study_setup(
     root, study = "Template route test", study_tracker_id = 1L
   ))
-  built <- data.frame(id = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4))
+  built <- data.frame(ccfid = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4))
   data_dir <- hvtiRutilities::study_dir("datasets", root)
   utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
   suppressWarnings(
@@ -101,8 +101,8 @@ test_that("descriptive templates read a named additional dataset", {
   suppressMessages(hvtiRutilities::study_setup(
     root, study = "Template named dataset test", study_tracker_id = 1L
   ))
-  built <- data.frame(id = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4), x = 5:8)
-  subset <- built[c("id", "dead", "iv_dead")]
+  built <- data.frame(ccfid = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4), x = 5:8)
+  subset <- built[c("ccfid", "dead", "iv_dead")]
   data_dir <- hvtiRutilities::study_dir("datasets", root)
   utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
   utils::write.csv(subset, file.path(data_dir, "builtr.csv"), row.names = FALSE)
@@ -135,8 +135,9 @@ test_that("descriptive templates read a named additional dataset", {
     # named dataset must stop rather than silently read the wrong parent.
     env <- new.env(parent = globalenv())
     env$.root <- "."
+    env$study_config <- hvtiRutilities::study_config
     expect_error({
-      eval(code, envir = env)
+      eval(set_assignment(code, "ANALYSIS_SET", "eda"), envir = env)
       if (length(chunks$choices)) eval(chunks$data, envir = env)
     }, "written from the study dataset",
     info = basename(template))
@@ -153,6 +154,13 @@ test_that("converter templates name DATASET before reading unresolved data", {
   for (template in templates) {
     chunks <- data_route_chunks(template)
     code <- chunks$data
+    # A job that reads through read_job_data() names DATASET the same way; only
+    # the unconverted dp-postage still points a migrated job at its report.
+    message <- if (basename(template) == "dp-postage.qmd") {
+      "DATASET.*_study[.]yml.*\"study\".*migration report"
+    } else {
+      "DATASET.*_study[.]yml.*\"study\""
+    }
     # The manifest check needs a real study; this test is about DATASET alone.
     code <- code[!vapply(code, function(expr) any(grepl("verify_manifest", deparse(expr))), logical(1))]
     choices <- if (length(chunks$choices)) chunks$choices else code
@@ -169,9 +177,45 @@ test_that("converter templates name DATASET before reading unresolved data", {
         eval(set_assignment(choices, "DATASET", value), envir = env)
         if (length(chunks$choices)) eval(code, envir = env)
       },
-      "DATASET.*_study[.]yml.*\"study\".*migration report",
+      message,
       info = paste(basename(template), deparse(value))
       )
     }
+  }
+})
+
+test_that("converted templates read a whole dataset without hvtiRdatabuild installed", {
+  # read_job_data() asks for hvtiRdatabuild only when ANALYSIS_SET names a set,
+  # so a newly registered study renders without it. A setup-chunk version check
+  # would stop every job before the data were read.
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  templates <- file.path(normalizePath(template_root), c(
+    "10_descriptive/dc-general.qmd", "10_descriptive/dc-gfup.qmd", "10_descriptive/dc-tables.qmd",
+    "10_descriptive/dp-eda.qmd", "40_graphs/dp-gfup.qmd", "40_graphs/dp-trends.qmd"
+  ))
+  root <- file.path(withr::local_tempdir(), "no-databuild-study")
+  suppressMessages(hvtiRutilities::study_setup(root, study = "No databuild", study_tracker_id = 1L))
+  built <- data.frame(ccfid = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4))
+  utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
+
+  real_version <- utils::packageVersion
+  local_mocked_bindings(packageVersion = function(pkg, ...) {
+    if (identical(pkg, "hvtiRdatabuild")) stop("there is no package called 'hvtiRdatabuild'", call. = FALSE)
+    real_version(pkg, ...)
+  }, .package = "utils")
+  withr::local_dir(root)
+  for (template in templates) {
+    env <- new.env(parent = globalenv())
+    chunks <- data_route_chunks(template)
+    err <- tryCatch({
+      suppressPackageStartupMessages(eval(extract_chunk(template, "setup"), envir = env))
+      eval(use_whole_cohort(chunks$choices), envir = env)
+      utils::capture.output(eval(chunks$data, envir = env))
+      NULL
+    }, error = conditionMessage)
+    expect_null(err, info = basename(template))
+    expect_equal(env$d, built, info = basename(template))
   }
 })

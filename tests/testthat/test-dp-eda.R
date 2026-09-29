@@ -10,6 +10,12 @@ eda_edits <- list(
   "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980"
 )
 
+# The spec chunk reads the ID and KEY the data step resolved from
+# read_job_data()'s record; a spec-only test supplies that record.
+eda_job_data <- function(id, key = id) {
+  list(record = structure(data.frame(step = character(), value = character()), selection = list(id = id, key = key)))
+}
+
 test_that("dp-eda renders every section into one self-contained report", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
@@ -112,6 +118,7 @@ test_that("dp-eda colors every point of an event panel, by the house rule or fro
     env$.provenance_data <- list()
     env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
     env$.cfg <- hvtiRutilities::study_config(root)
+    env$job_data <- eda_job_data("ccfid")
     for (label in c("set", "edit-study-choices")) eval(chunk(label), env)
     env$ORIGIN_YEAR <- 1980
     if (old) {
@@ -149,6 +156,68 @@ test_that("dp-eda colors every point of an event panel, by the house rule or fro
   expect_error(event_panel_colors(own, old = TRUE), "COLOURS is now COLORS", fixed = TRUE)
 })
 
+test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps", {
+  # read_job_data() drops MRN and eMRN but keeps the ID, so the ID reaches d and
+  # the spec chunk must leave it out. Run through a real study: the data chunk
+  # and then the spec chunk, as a render would.
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, study = "EDA identifiers", study_tracker_id = 1L))
+  n <- 12L
+  built <- data.frame(year = 2000L + seq_len(n), ccfid = 1000L + seq_len(n), randid = 3000L + seq_len(n),
+                      MRN = 5000L + seq_len(n), study_id = 7000L + seq_len(n), hosp_id = 9000L + seq_len(n),
+                      pt_mrn_num = rep(0:1, 6), visit_mo = 3L * seq_len(n),
+                      age = 40 + seq_len(n))
+  utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
+  lines <- readLines(template_path("dp", "eda"), warn = FALSE)
+  chunk <- function(label) {
+    start <- match(paste0("#| label: ", label), lines)
+    end <- start + match("```", lines[-seq_len(start)])
+    parse(text = lines[seq.int(start + 1L, end - 1L)])
+  }
+  run <- function(id = "ccfid", variables = NULL, key = id) {
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    env$study_config <- hvtiRutilities::study_config
+    env$label_map <- function(d, ...) data.frame(key = names(d), label = names(d))
+    eval(chunk("edit-study-choices"), env)
+    env$ID <- id
+    env$KEY <- key
+    env$VARIABLES <- variables
+    utils::capture.output(eval(chunk("data"), env))
+    env$out <- utils::capture.output(eval(chunk("spec"), env))
+    env
+  }
+  env <- run()
+  expect_true("ccfid" %in% names(env$d))
+  expect_false("mrn" %in% tolower(names(env$d)))
+  expect_false("ccfid" %in% env$VARIABLES)
+  expect_false("study_id" %in% env$VARIABLES)
+  # An id token after a separator is an identifier too, by the generic name rule.
+  expect_false("hosp_id" %in% env$VARIABLES)
+  expect_true("pt_mrn_num" %in% env$VARIABLES)
+  expect_match(paste(env$out, collapse = " "), "ccfid", fixed = TRUE)
+
+  # An ID the name rule cannot recognize is left out because it is the ID.
+  env <- run(id = "randid")
+  expect_true("randid" %in% names(env$d))
+  expect_false("randid" %in% env$VARIABLES)
+  expect_true("ccfid" %in% names(env$d))
+  expect_false("ccfid" %in% env$VARIABLES)
+
+  # Named in VARIABLES, the ID is still not drawn, and the report says so.
+  expect_warning(env <- run(id = "randid", variables = c("age", "randid")), "Not drawn, as the job's ID: randid")
+  expect_identical(env$VARIABLES, "age")
+
+  # A KEY column beside the ID, such as a visit time, is left out by default and
+  # drawn when named.
+  expect_true("visit_mo" %in% run()$VARIABLES)
+  env <- run(key = c("ccfid", "visit_mo"))
+  expect_false("visit_mo" %in% env$VARIABLES)
+  env <- run(key = c("ccfid", "visit_mo"), variables = c("age", "visit_mo"))
+  expect_identical(env$VARIABLES, c("age", "visit_mo"))
+})
+
 test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a separator", {
   # The spec chunk, not a render: dp-postage's test covers the rule's edges, and
   # this one proves dp-eda carries the same rule rather than an older copy.
@@ -162,7 +231,7 @@ test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a sepa
                        X_VAR = "year", VARIABLES = NULL, EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
-                       .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL,
+                       .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL, job_data = eda_job_data("ccfid"),
                        label_map = function(d, ...) data.frame(key = names(d), label = names(d))))
   out <- capture.output(eval(spec, env))
   expect_identical(env$VARIABLES, c("age", "carotid"))
@@ -186,7 +255,7 @@ test_that("dp-eda's overview leaves out identifiers but keeps dates", {
                        X_VAR = "year", VARIABLES = c("age", "ccfid"), EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
-                       .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL,
+                       .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL, job_data = eda_job_data("ccfid"),
                        label_map = function(d, ...) data.frame(key = names(d), label = names(d))))
   suppressWarnings(capture.output(eval(chunk("spec"), env)))
   out <- paste(capture.output(eval(chunk("overview-contents"), env)), collapse = "\n")

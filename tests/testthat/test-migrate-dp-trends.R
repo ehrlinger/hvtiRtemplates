@@ -38,6 +38,7 @@ test_that("dp-trends migrates explicit year and ordered trend intent into execut
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config))
   eval(trends_chunk(out, "edit-study-choices"), env)
   capture.output(eval(trends_chunk(out, "data"), env))
+  capture.output(eval(trends_chunk(out, "year"), env))
   eval(trends_chunk(out, "helpers"), env)
   expect_identical(env$DATASET, "study")
   expect_equal(env$d$year, 1986:2025)
@@ -109,6 +110,7 @@ test_that("dp-trends executes its plotting engine and retains long-data and subg
   ))
   eval(trends_chunk(out, "edit-study-choices"), env)
   capture.output(eval(trends_chunk(out, "data"), env))
+  capture.output(eval(trends_chunk(out, "year"), env))
   eval(trends_chunk(out, "helpers"), env)
   # Run the template's own set_path closure; only current_input is naturally
   # absent when chunks execute outside knitr, as its documented guard allows.

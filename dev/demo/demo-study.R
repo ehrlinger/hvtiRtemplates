@@ -100,13 +100,17 @@ demo_study <- function(root) {
 # reads the whole built cohort (ANALYSIS_SET <- NULL), so it needs no
 # hvtiRdatabuild analysis set. The slides show these same lines.
 whole_cohort <- list("^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL")
+# The demo cohort's identifier is patient_id, not ccfid. A job reading through
+# read_job_data() names it in ID; without one it would stop, finding no ccfid,
+# MRN or eMRN.
+demo_id <- list("^ID <- \"ccfid\"$" = "ID <- \"patient_id\"")
 close_2025 <- list("^CLOSE_DATE <- NULL$" = "CLOSE_DATE <- as.Date(\"2025-12-31\")")
 reop_event <- list("^EVENTS <- list\\(\\)$" = paste0(
   "EVENTS <- list(reop = list(event = \"reop\", time = \"iv_reop\", death = \"dead\", ",
   "death_time = \"iv_dead\", label = \"Reoperation\"))"
 ))
 demo_choices <- list(
-  "dc-tables" = c(whole_cohort, list(
+  "dc-tables" = c(whole_cohort, demo_id, list(
     # GROUPS spans several lines; replace its two group lines, keep its brackets.
     "^  Demography = c\\(\"age\", \"female\"\\),$" = paste(
       "  Demography = c(\"age\", \"female\", \"race_grp\", \"bmi\"),",
@@ -115,15 +119,15 @@ demo_choices <- list(
     ),
     "^  Symptoms   = c\\(\"nyha_pr\"\\)$" = "  Laboratory = \"creat_pr\""
   )),
-  "dp-trends" = list(
+  "dp-trends" = c(demo_id, list(
     "^d\\$year <- floor\\(d\\$iv_opyrs\\) \\+ 1985$" = "d$year <- floor(d$iv_opyrs) + 1990",
     "^SUBGROUPS <- " = paste0("SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)), ",
                               "diabetic = function(d) d$hx_dm == 1)")
-  ),
-  "dc-gfup" = c(whole_cohort, list("^CHECKS <- list\\(\\)$" = "CHECKS <- list(c(\"dead\", \"reop\"))")),
-  "dp-gfup" = c(whole_cohort, close_2025, reop_event),
+  )),
+  "dc-gfup" = c(whole_cohort, demo_id, list("^CHECKS <- list\\(\\)$" = "CHECKS <- list(c(\"dead\", \"reop\"))")),
+  "dp-gfup" = c(whole_cohort, demo_id, close_2025, reop_event),
   "dp-postage" = whole_cohort,
-  "dp-eda" = c(whole_cohort, close_2025, reop_event)
+  "dp-eda" = c(whole_cohort, demo_id, close_2025, reop_event)
 )
 
 # Apply a job's choices, then resolve its markers. Each pattern must match one

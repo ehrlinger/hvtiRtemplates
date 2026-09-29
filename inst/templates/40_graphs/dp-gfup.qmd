@@ -26,7 +26,7 @@ them is a follow-up problem to settle before any time-related analysis.
 
 The engine is `hvtiPlotR::hv_followup_panels()`, which the EDA report also
 calls, so its follow-up panels are these. The tables that go with this figure
-are the `dc-gfup` job, which reads the same analysis set.
+are the `dc-gfup` job, which reads the same data and rows.
 
 ```{r}
 #| label: setup
@@ -34,7 +34,7 @@ are the `dc-gfup` job, which reads the same analysis set.
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
 .provenance_data <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
@@ -45,10 +45,6 @@ suppressPackageStartupMessages({
 if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
   stop("This job needs hvtiPlotR >= 2.8.0 for hv_followup_panels() and scale_color_hv(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
-}
-if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
-  stop("This job needs hvtiRdatabuild >= 0.2.1 for read_analysis_set(); ",
-       utils::packageVersion("hvtiRdatabuild"), " is installed.", call. = FALSE)
 }
 ```
 
@@ -111,17 +107,31 @@ set_path <- function(kind, file) {
 ## Study choices
 
 Set the values in this chunk before rendering. Left as they are, they draw the
-all-deaths panel for the `eda` analysis set, so the job runs before it is tuned.
+all-deaths panel for the whole study dataset, so the job runs before it is tuned.
 
 ```{r}
 #| label: edit-study-choices
-# EDIT: the built dataset this job reads. "study" is the file named by built:
-# in _study.yml; any other name must be declared under additional_datasets:.
-# Analysis sets are derived from "study" only, so another dataset needs
-# ANALYSIS_SET <- NULL. Read the same set as this study's dc-gfup job, so the
-# figure and the tables describe the same patients.
+# EDIT: the registered dataset this job reads ("study" is the built dataset).
 DATASET <- "study"
-ANALYSIS_SET <- "eda"
+
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
+# Read the same data and rows as this study's dc-gfup job, so the figure and
+# the tables describe the same patients.
 
 # EDIT: the years-since-origin interval to the operation, and that origin. The
 # origin differs between studies, and a wrong one slides every point along the
@@ -173,8 +183,8 @@ COLORS <- NULL
         with `ANALYSIS_SET <- NULL`.
      2. An additional dataset: any file declared under `additional_datasets:`,
         for example a column subset written for R. Set `DATASET` to its
-        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: no
-        rows are excluded.
+        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: only
+        `WHERE` removes rows.
      3. An analysis set: declared under `analysis_sets:` with the columns kept
         and the rows excluded, then written once with
         `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
@@ -183,46 +193,22 @@ COLORS <- NULL
 
      A name under `additional_datasets:` is not an analysis set, so putting it
      in `ANALYSIS_SET` stops with "No analysis set". Whichever route is taken,
-     the report prints the dataset, file and dimensions it read, so a reader
+     the report prints what it read, the identifier it used, the rows each
+     `WHERE` condition removed and the rows and patients kept, so a reader
      never has to ask which data a table describes. -->
 
 ```{r}
 #| label: data
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
-if (is.null(ANALYSIS_SET)) {
-  if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
-    stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
-         "In a migrated job, see the migration report beside this job.", call. = FALSE)
-  }
-  .cfg <- study_config(start = .root)
-  .data_read <- hvtiRtemplates:::.provenance_read(
-    DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET)
-  )
-  d <- .data_read$value
-  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-} else if (!identical(DATASET, "study")) {
-  stop("An analysis set is written from the study dataset, not `", DATASET,
-       "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
-} else {
-  .cfg <- study_config(start = .root)
-  .analysis_set_path <- file.path(study_dir("datasets", .root), paste0(ANALYSIS_SET, ".parquet"))
-  .data_read <- hvtiRtemplates:::.provenance_file_read(
-    paste0("analysis_set:", ANALYSIS_SET), .analysis_set_path, .cfg,
-    function() hvtiRdatabuild::read_analysis_set(ANALYSIS_SET, cfg = .cfg),
-    role = paste0("analysis_set:", ANALYSIS_SET)
-  )
-  d <- .data_read$value
-  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-  knitr::kable(attr(d, "attrition"), caption = paste0(
-    "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
-  ))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+if (!is.null(job_data$attrition)) {
+  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
 }
-cat("Data read: ", if (is.null(ANALYSIS_SET)) {
-  paste0("dataset `", DATASET, "` (",
-         basename(hvtiRutilities::built_path(dataset = DATASET)), ")")
-} else {
-  paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
-}, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
 ```
 
 

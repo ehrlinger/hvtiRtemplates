@@ -33,7 +33,7 @@ standalone job cannot disagree about the data.
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRutilities::study_root(if (is.null(.in)) getwd() else dirname(.in))
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
 .provenance_data <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
@@ -114,22 +114,30 @@ set_path <- function(kind, file) {
 ## Study choices
 
 Set the values in this chunk before rendering. Left as they are, they draw the
-all-deaths follow-up panel and every column of the `eda` analysis set.
+all-deaths follow-up panel and every column of the study dataset.
 
 ```{r}
 #| label: edit-study-choices
-# EDIT: the built dataset this job reads. "study" is the file named by built:
-# in _study.yml; any other name must be declared under additional_datasets:,
-# such as a column subset written for R. Analysis sets are derived from
-# "study" only, so another dataset needs ANALYSIS_SET <- NULL.
-# EDIT: the analysis set this job reads: declare its columns and excluded rows
-# under analysis_sets: in _study.yml, then write it with
-# hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
-# cohort is the intended population.
+# EDIT: the registered dataset this job reads ("study" is the built dataset).
 # MIGRATE-BEGIN: dp-eda-data
 DATASET <- "study"
-ANALYSIS_SET <- "eda"
 # MIGRATE-END: dp-eda-data
+
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
 
 # Follow-up. These are dp-gfup's choices, and mean what they mean there.
 # EDIT: the years-since-origin interval to the operation, and that origin. The
@@ -167,7 +175,11 @@ EVENTS <- list()
 # VARIABLES is NULL to draw every column, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
-# column here to draw it anyway. The follow-up columns are drawn too, as
+# column here to draw it anyway. The job's ID is never drawn, even when named
+# here. A KEY column beside it, such as a visit time, is left out of NULL but
+# drawn when named here, as that column's own distribution; a measure's course
+# over visits is a spaghetti plot (hvtiPlotR::hv_spaghetti()), not a page here.
+# The follow-up columns are drawn too, as
 # dp-postage draws them, so a section here stays the standalone job's figure.
 # A named column that is not in the data stops the render, and the error
 # lists every missing name at once.
@@ -217,8 +229,8 @@ ABBREVIATIONS <- NULL
         with `ANALYSIS_SET <- NULL`.
      2. An additional dataset: any file declared under `additional_datasets:`,
         for example a column subset written for R. Set `DATASET` to its
-        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: no
-        rows are excluded.
+        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: only
+        `WHERE` removes rows.
      3. An analysis set: declared under `analysis_sets:` with the columns kept
         and the rows excluded, then written once with
         `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
@@ -227,49 +239,22 @@ ABBREVIATIONS <- NULL
 
      A name under `additional_datasets:` is not an analysis set, so putting it
      in `ANALYSIS_SET` stops with "No analysis set". Whichever route is taken,
-     the report prints the dataset, file and dimensions it read, so a reader
+     the report prints what it read, the identifier it used, the rows each
+     `WHERE` condition removed and the rows and patients kept, so a reader
      never has to ask which data a table describes. -->
 
 ```{r}
 #| label: data
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
-if (is.null(ANALYSIS_SET)) {
-  if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
-    stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
-         "In a migrated job, see the migration report beside this job.", call. = FALSE)
-  }
-  .cfg <- study_config(start = .root)
-  .data_read <- hvtiRtemplates:::.provenance_read(
-    DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET)
-  )
-  d <- .data_read$value
-  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-} else if (!identical(DATASET, "study")) {
-  stop("An analysis set is written from the study dataset, not `", DATASET,
-       "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
-} else {
-  if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
-    stop("This job needs hvtiRdatabuild >= 0.2.1 for read_analysis_set().", call. = FALSE)
-  }
-  .cfg <- study_config(start = .root)
-  .analysis_set_path <- file.path(study_dir("datasets", .root), paste0(ANALYSIS_SET, ".parquet"))
-  .data_read <- hvtiRtemplates:::.provenance_file_read(
-    paste0("analysis_set:", ANALYSIS_SET), .analysis_set_path, .cfg,
-    function() hvtiRdatabuild::read_analysis_set(ANALYSIS_SET, cfg = .cfg),
-    role = paste0("analysis_set:", ANALYSIS_SET)
-  )
-  d <- .data_read$value
-  .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-  knitr::kable(attr(d, "attrition"), caption = paste0(
-    "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
-  ))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+if (!is.null(job_data$attrition)) {
+  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
 }
-cat("Data read: ", if (is.null(ANALYSIS_SET)) {
-  paste0("dataset `", DATASET, "` (",
-         basename(hvtiRutilities::built_path(dataset = DATASET)), ")")
-} else {
-  paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
-}, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
 ```
 
 
@@ -303,13 +288,22 @@ if (!is.null(ABBREVIATIONS) && (!(is.character(ABBREVIATIONS) || is.list(ABBREVI
 }
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
-# A name rule and a data rule. The names catch ccfid and patientid, which have no
-# "_" before "id"; a bare "id$" would also take carotid and steroid. The medical
-# record number counts only as the exact names MRN and eMRN. The data rule
-# catches an identifier under a name nobody listed: text in which every value
-# differs, once there are ten or more of them.
+# The job's ID and KEY columns are left out by default, and the ID is never
+# drawn: they are the columns the data step used, so a ccfid, or the MRN it fell
+# back to, is caught whatever its case. A KEY column named in VARIABLES is drawn.
+# MRN and eMRN are already dropped at read, unless one is the ID. The name rules
+# catch other identifier columns and dates: an id or identifier token, such as
+# hosp_id, a date token or a _dt suffix, and the names ccfid and patientid,
+# which have no "_" before "id"; a bare "id$" would also take carotid and
+# steroid. The data rule catches columns that should not be drawn under a name
+# nobody listed: dates, and text in which every value differs, once there are
+# ten or more of them.
+.job_selection <- attr(job_data$record, "selection")
+is_job_id <- function(v) tolower(v) %in% tolower(.job_selection$id)
+is_job_key <- function(v) tolower(v) %in% tolower(c(.job_selection$id, .job_selection$key))
 looks_like_id <- function(v) {
-  grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
+  is_job_key(v) |
+    grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
     grepl("^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|^e?mrn$", v, ignore.case = TRUE) |
     vapply(d[v], function(x) {
       seen <- x[!is.na(x)]
@@ -322,11 +316,16 @@ if (is.null(VARIABLES)) {
   left_out <- candidates[looks_like_id(candidates)]
   VARIABLES <- setdiff(candidates, left_out)
   if (length(left_out)) {
-    cat("Left out as identifier or date columns (name them in VARIABLES to draw them):",
+    cat("Left out as identifier or date columns (name them in VARIABLES to draw them; the job's ID is never drawn):",
         paste(left_out, collapse = ", "), "\n")
   }
 } else {
   VARIABLES <- setdiff(VARIABLES, EXCLUDE)
+  if (any(is_job_id(VARIABLES))) {
+    warning("Not drawn, as the job's ID: ", paste(VARIABLES[is_job_id(VARIABLES)], collapse = ", "),
+            call. = FALSE)
+    VARIABLES <- VARIABLES[!is_job_id(VARIABLES)]
+  }
   suspect <- looks_like_id(VARIABLES)
   if (any(suspect)) {
     warning("Selected likely identifier or date field(s): ", paste(VARIABLES[suspect], collapse = ", "), call. = FALSE)
