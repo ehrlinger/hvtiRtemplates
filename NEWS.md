@@ -8,6 +8,12 @@
   either. A bare qualifier is not accepted, because `fit`, `explain` and
   `gfup` each name more than one template.
 
+* `dp-postage` names its source correctly. Its header said it replaced the
+  older `tp.dp.EDA_barplots_scatterplots*.R` sweep; it was built from the
+  per-variable grid of the legacy EDA report, `tp.dp.DescriptiveSummary.qmd`,
+  as the catalog records. The `EDIT:` note now names both, since a study's job
+  may be a copy of either, and the descriptive migration vignette maps both.
+
 * New template `dp-eda` (`10_descriptive/`), the whole EDA report in one
   render: an overview of every column (`proc_contents()`), goodness of
   follow-up with `dc-gfup`'s tables, then continuous variables, categorical
