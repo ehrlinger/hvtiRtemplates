@@ -70,7 +70,7 @@
   `dp-postage` and `dp-eda` color their categorical pages with
   `hvtiPlotR::scale_fill_hv()`: each panel runs blue, vermillion, green and on
   from its own levels, and missing is light gray. `dp-gfup` and `dp-eda`'s
-  follow-up section use `scale_colour_hv()`. **The follow-up figures change
+  follow-up section use `scale_color_hv()`. **The follow-up figures change
   color:** dead moves from Set1 red `#E41A1C` to vermillion `#D55E00`, alive
   from `#377EB8` to `#0072B2`, and a non-fatal event from `#4DAF4A` to
   `#009E73`. The pattern of red, blue and green is kept. `COLORS` is now
@@ -86,10 +86,10 @@
 
 * The templates, their comments, the reference pages and these notes use US
   spelling. The templates call `scale_color_manual()` and `labs(color = )`,
-  which ggplot2 treats as identical to their British spellings.
-  `hvtiPlotR::scale_colour_hv()` keeps its spelling until hvtiPlotR ships
-  `scale_color_hv()`. `tools/check-us-spelling.sh` now fails the lint workflow
-  on a British spelling.
+  which ggplot2 treats as identical to their British spellings, and
+  `hvtiPlotR::scale_color_hv()`, which needs hvtiPlotR 2.8.0, now the floor.
+  `tools/check-us-spelling.sh` now fails the lint workflow on a British
+  spelling.
 
 * **`dp-postage` and `dp-eda` keep shortened labels distinct**, through
   `hvtiRutilities::label_map()`. Two new edit points: `LABEL_MAX` (default

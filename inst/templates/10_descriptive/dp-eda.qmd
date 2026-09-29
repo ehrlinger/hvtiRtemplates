@@ -41,8 +41,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
-  stop("This job needs hvtiPlotR >= 2.7.18 for hv_eda_pages(), hv_followup_panels() and the role colors; ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
+  stop("This job needs hvtiPlotR >= 2.8.0 for hv_eda_pages(), hv_followup_panels() and scale_color_hv(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiRutilities") < "1.4.2") {
@@ -183,7 +183,7 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 
-# EDIT: NULL draws the house colors through hvtiPlotR::scale_colour_hv(): dead
+# EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
 # vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
 # all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
 # event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
@@ -436,7 +436,7 @@ if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLOR
 # Dead or Death is the event and Alive or No event the censored level, so a
 # non-fatal event takes the house rule's next color, green.
 status_colors <- function(levels) {
-  if (is.null(COLORS)) return(scale_colour_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
+  if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
   keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
   scale_color_manual(values = stats::setNames(COLORS[keys], levels))
 }
