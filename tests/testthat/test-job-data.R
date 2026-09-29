@@ -241,10 +241,12 @@ test_that("a WHERE on the ID never prints its value, but the selection keeps it 
   sel <- attr(out$record, "selection")
   expect_identical(sel$where, c("ccfid != 9001", "age >= 18"))
   expect_identical(sel$where_shown, c("ccfid != <value>", "age >= 18"))
-  msg <- function(expr) tryCatch({
-    force(expr)
-    ""
-  }, error = conditionMessage)
+  msg <- function(expr) {
+    tryCatch({
+      force(expr)
+      ""
+    }, error = conditionMessage)
+  }
   bad <- msg(read_job_data(cfg, where = quote(ccfid + 9001)))
   expect_match(bad, "TRUE or FALSE")
   expect_false(grepl("9001", bad))
