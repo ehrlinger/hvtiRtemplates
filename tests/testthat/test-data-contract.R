@@ -22,10 +22,13 @@ reads_data <- function(name) !name %in% c("rfs-explain", "rfc-explain", "rfr-exp
 expected_defaults <- function(name) {
   if (name %in% downstream_templates) {
     out <- c(WHERE = "WHERE <- NULL", ID = "ID <- NULL", KEY = "KEY <- NULL")
+    # hm, hp and hs read data themselves, but take DATASET and ANALYSIS_SET
+    # from upstream too, same as WHERE, ID and KEY.
+    if (reads_data(name)) out <- c(DATASET = "DATASET <- NULL", ANALYSIS_SET = "ANALYSIS_SET <- NULL", out)
   } else {
     out <- c(WHERE = "WHERE <- NULL", ID = 'ID <- "ccfid"', KEY = "KEY <- ID")
+    if (reads_data(name)) out <- c(DATASET = 'DATASET <- "study"', ANALYSIS_SET = "ANALYSIS_SET <- NULL", out)
   }
-  if (reads_data(name)) out <- c(DATASET = 'DATASET <- "study"', ANALYSIS_SET = "ANALYSIS_SET <- NULL", out)
   # hm, hp and hs also take their time-to-event settings from upstream.
   if (name %in% c("hm", "hp", "hs")) out <- c(out, TIME = "TIME <- NULL", EVENT = "EVENT <- NULL")
   out
@@ -51,7 +54,10 @@ test_that("every converted template has the shared settings and a conforming dat
     expect_true(any(grepl("hvtiRtemplates:::.find_study_root(", setup, fixed = TRUE)), info = paste(name, "setup"))
     data <- template_chunk(src, "data")
     expect_false(is.null(data), info = name)
-    if (reads_data(name)) {
+    # Downstream templates that read data call .read_upstream_job_data() only:
+    # DATASET and ANALYSIS_SET come from upstream, so read_job_data() itself
+    # is never called directly in their data chunk.
+    if (reads_data(name) && !name %in% downstream_templates) {
       expect_true(any(grepl("hvtiRtemplates::read_job_data(", data, fixed = TRUE)), info = name)
     }
     if (name %in% downstream_templates) {

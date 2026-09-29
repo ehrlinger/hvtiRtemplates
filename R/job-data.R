@@ -50,6 +50,11 @@
 # A WHERE condition that mentions the ID or KEY columns is shown with its
 # values replaced by <value>, so no identifier, key or date value reaches a
 # report or a message. The exact text stays in the selection, to rebuild rows.
+# TRUE/FALSE and NULL stay visible: they are part of the condition's shape,
+# not a value read from the data. Any other atomic constant, including a
+# Date or POSIXct inlined with `!!`, is a value and is masked.
+.is_maskable_value <- function(e) is.atomic(e) && !is.null(e) && !is.logical(e)
+
 .mask_condition <- function(x, cols) {
   text <- if (is.character(x)) x else paste(deparse(x, width.cutoff = 500L), collapse = " ")
   expr <- if (is.character(x)) tryCatch(str2lang(x), error = function(e) NULL) else x
@@ -59,11 +64,11 @@
       # Testing e[[i]] in place, never binding it: an empty argument, as in
       # x[, 1], cannot be assigned to a variable.
       for (i in seq_along(e)[-1L]) {
-        if (is.call(e[[i]]) || is.numeric(e[[i]]) || is.character(e[[i]]) || is.complex(e[[i]])) e[[i]] <- mask(e[[i]])
+        if (is.call(e[[i]]) || .is_maskable_value(e[[i]])) e[[i]] <- mask(e[[i]])
       }
       return(e)
     }
-    if (is.numeric(e) || is.character(e) || is.complex(e)) return(as.name("<value>"))
+    if (.is_maskable_value(e)) return(as.name("<value>"))
     e
   }
   paste(deparse(mask(expr), width.cutoff = 500L, backtick = FALSE), collapse = " ")
@@ -320,8 +325,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   upstream <- lineage$selection
   if (is.null(upstream)) {
     stop("The upstream job's saved output", if (!is.null(source)) paste0(" (", source, ")"),
-         " predates the data contract: it does not record the rows it used. Rerun the upstream job ",
-         "with the current template, then rerun this one.", call. = FALSE)
+         " carries no single recorded data selection: it predates the data contract, or its inputs ",
+         "disagreed and were combined. Rerun the upstream job with the current template, then rerun ",
+         "this one.", call. = FALSE)
   }
   sel <- .check_upstream_selection(upstream, settings)
   if (!read) return(list(selection = sel))

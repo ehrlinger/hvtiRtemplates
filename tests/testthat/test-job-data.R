@@ -192,11 +192,11 @@ test_that(".check_upstream_selection() compares a real quote() or exprs() WHERE 
   )
 })
 
-test_that(".read_upstream_job_data() stops on a hand-off that predates the data contract", {
+test_that(".read_upstream_job_data() stops on a hand-off with no single recorded selection", {
   expect_error(hvtiRtemplates:::.read_upstream_job_data(list(), list(data = list()), list(), source = "hz.rds"),
-               "hz.rds.*predates")
+               "hz.rds.*predates.*disagreed")
   expect_error(hvtiRtemplates:::.read_upstream_job_data(list(), list(data = list()), list(), read = FALSE),
-               "predates")
+               "predates.*disagreed")
 })
 
 test_that(".read_upstream_job_data() rebuilds the upstream rows and returns the selection", {
@@ -229,6 +229,10 @@ test_that(".mask_condition() hides the values of a condition on ID or KEY, and o
   expect_identical(mask("CCFID == \"A9001\"", "ccfid"), "CCFID == <value>")
   expect_identical(mask(quote(age >= 18), "ccfid"), "age >= 18")
   expect_identical(mask(quote(iv_echo > 2.5), c("ccfid", "iv_echo")), "iv_echo > <value>")
+  date_shown <- mask(rlang::expr(echo_date != !!as.Date("2020-01-03")), "echo_date")
+  expect_identical(date_shown, "echo_date != <value>")
+  expect_false(grepl("18264", date_shown, fixed = TRUE))
+  expect_false(grepl("2020", date_shown, fixed = TRUE))
 })
 
 d_ids <- data.frame(ccfid = 9001:9006, age = c(15, 40, 55, NA, 70, 80))
