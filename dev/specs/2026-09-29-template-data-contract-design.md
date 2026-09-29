@@ -153,8 +153,10 @@ It stops at the first failure with a message naming the setting to change.
 
 ### 4.2 What it returns and the report prints
 
-`read_job_data()` returns `list(data, record)`. The template prints the record as
-a **Data** table:
+`read_job_data()` returns `list(data, record, provenance, attrition)`: the rows, a
+record of the steps, the read's provenance record, and an analysis set's
+exclusion table (`NULL` for a plain dataset). The template prints the record as a
+**Data** table:
 
 | Step | Value |
 |---|---|
@@ -165,10 +167,21 @@ a **Data** table:
 | `age >= 18` | removed 12 (3 had missing age) |
 | Rows kept | 788 rows on 788 patients |
 
-The record is saved with the job's output: in the report's embedded provenance,
-and in the `cohort` slot of the hand-off lineage a job attaches to its saved
-artifact (`.attach_handoff_lineage()`), so the next job in a set can reuse it
-(section 5) and a reader can see what the job ran on.
+The record's settings (`attr(record, "selection")`: dataset, analysis set,
+`WHERE` as text, ID, KEY, row and patient counts) travel in a `selection` slot of
+the hand-off lineage a job attaches to its saved artifact
+(`.attach_handoff_lineage()`), so the next job in a set can reuse them (section 5).
+Existing hand-offs without the slot still validate.
+
+**`WHERE` text and identifiers.** A condition that mentions the ID or KEY columns
+(for example `ccfid != 12345`, a common way to exclude named patients) is shown
+everywhere a report displays or prints it with its values replaced:
+`ccfid != <value>`. The exact text is kept only in the saved hand-off inside the
+study, where a downstream job needs it to rebuild the rows. Decided by John on
+2026-09-29 after the branch review.
+
+ID and KEY names are matched ignoring case, since `read_built()` lowercases
+column names.
 `EXPECTED` counts stay available as an optional check against the record.
 
 ### 4.3 No study set up
@@ -197,10 +210,17 @@ dependency. Corrected by John on 2026-09-29, before any code.
 ## 5. Downstream jobs read the record
 
 Jobs that read an upstream job's output (`hm`, `hp`, `hs` from `hz`; each
-forest `explain` from its `fit`) take `TIME`, `EVENT`, `WHERE`, `ID` and `KEY`
-from the upstream record instead of asking again. If the job's own settings are
-set and disagree with the record, it stops and names both. This replaces the
-hazard chain's hand-typed filter in every job and closes #176 and #177.
+forest `explain` from its `fit`; the bootstrap reports from their bag) take
+`DATASET`, `ANALYSIS_SET`, `WHERE`, `ID`, `KEY`, `TIME` and `EVENT` from the
+upstream selection instead of asking again, through one helper,
+`.read_upstream_job_data()`. It checks the job's own settings against the
+selection (a set value that disagrees stops, naming both), rebuilds `WHERE`,
+reads the data where the job reads data, and stops if the rows or patients
+differ from upstream's, so a downstream job cannot silently run on a different
+cohort. An upstream artifact saved before this contract has no selection; the
+helper stops and says to rerun the upstream job (decided by John on 2026-09-29).
+This replaces the hazard chain's hand-typed filter in every job and closes #176
+and #177.
 
 ## 6. The identifier rule, across three packages
 

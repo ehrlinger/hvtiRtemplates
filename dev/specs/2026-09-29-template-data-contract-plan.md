@@ -686,7 +686,7 @@ d <- job_data$data
 knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
 ```
 
-Keep the chunk's `#| results: asis` option where the old chunk had it. Where the old chunk printed an analysis set's attrition table, keep that table after the record, guarded by `if (!is.null(ANALYSIS_SET))`.
+Keep the chunk's `#| results: asis` option where the old chunk had it. Where the old chunk printed an analysis set's attrition table, print `job_data$attrition` after the record when it is not `NULL` (`read_job_data()` returns it; the subsetting inside it would otherwise drop the attribute).
 
 - [ ] **Step 4: Find the study root with the helper**
 
@@ -828,22 +828,37 @@ knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data thi
 
 Where `hz` saves `hz.rds` (and `ac` saves `ac.rds`) with `.attach_handoff_lineage()`, pass `selection = c(attr(job_data$record, "selection"), list(time = TIME, event = EVENT))`.
 
-- [ ] **Step 3: Downstream jobs (`hm`, `hp`, `hs`).** Their settings become `WHERE <- NULL`, `ID <- NULL`, `KEY <- NULL`, `TIME <- NULL`, `EVENT <- NULL`, each commented "NULL takes the value hz used; set it only to confirm it", plus `DATASET <- "study"` and `ANALYSIS_SET <- NULL`. After reading `hz.rds` with `.read_handoff()`, resolve them:
+- [ ] **Step 3: Downstream jobs (`hm`, `hp`, `hs`).** Their settings become, each commented "NULL takes the value hz used; set it only to confirm it":
 
 ```r
-.sel <- hvtiRtemplates:::.check_upstream_selection(
-  .hz_read$lineage$selection,
-  list(where = WHERE, id = ID, key = KEY, time = TIME, event = EVENT)
-)
-job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = if (length(.sel$where)) lapply(.sel$where, str2lang) else NULL,
-                                          id = .sel$id, key = .sel$key)
-d <- job_data$data
-TIME <- .sel$time
-EVENT <- .sel$event
+DATASET <- NULL
+ANALYSIS_SET <- NULL
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
+TIME <- NULL
+EVENT <- NULL
 ```
 
-Put this in the chunk labelled `data` (the contract test looks for both `.check_upstream_selection(` and `hvtiRtemplates::read_job_data(` there). Their settings omit `DATASET`/`ANALYSIS_SET` defaults other than `DATASET <- "study"` and `ANALYSIS_SET <- NULL`. Replace `hs`'s hand-typed filter (which had to repeat `hm`'s) with this. `hp` gains the same read, closing its missing filter (#177). Add a test: render `hs` (or run its chunks) with `WHERE <- quote(age >= 65)` against an `hz.rds` whose selection has `where = "age >= 18"`; expect the stop naming both.
+After reading `hz.rds` with `.read_handoff()`, the chunk labelled `data` is:
+
+```r
+#| label: data
+.up <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, .hz_read$lineage,
+  list(dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY,
+       time = TIME, event = EVENT),
+  source = "hz.rds"
+)
+job_data <- .up$job_data
+d <- job_data$data
+TIME <- .up$selection$time
+EVENT <- .up$selection$event
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read, as hz read it")
+```
+
+(`.hz_read` is whatever the template names its `.read_handoff()` result; use that name.) The helper stops when `hz.rds` predates the contract, when a setting disagrees, or when the rebuilt rows differ from `hz`'s. Replace `hs`'s hand-typed filter (which had to repeat `hm`'s) with this; `hp` gains it too, closing its missing filter (#177). Add a test: run `hs` (or its chunks) with `WHERE <- quote(age >= 65)` against an `hz.rds` whose selection has `where = "age >= 18"`; expect the stop naming both. Because these jobs no longer set `DATASET`/`ANALYSIS_SET` defaults of their own, the contract test's `reads_data()` expectations for `hm`/`hp`/`hs` are `DATASET <- NULL` and `ANALYSIS_SET <- NULL`: update `expected_defaults()` in `test-data-contract.R` accordingly in this task.
 
 - [ ] **Step 4: Run tests, lint, spelling. NEWS: "The hazard chain reads its data through `read_job_data()`: `STATUS` is `EVENT`, the `iu_dead`/`idead` defaults are `iv_dead`/`dead`, the filter typed into every job is one `WHERE` in `ac` and `hz`, and `hm`, `hp` and `hs` take `WHERE`, `ID`, `KEY`, `TIME` and `EVENT` from `hz`'s saved fit, stopping if their own differ." Commit, PR.**
 
@@ -894,12 +909,12 @@ After the chunk that reads the forest, add a chunk labelled `data`:
 
 ```r
 #| label: data
-.sel <- hvtiRtemplates:::.check_upstream_selection(
-  <fit lineage>$selection, list(where = WHERE, id = ID, key = KEY)
-)
+.sel <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, <fit lineage>, list(where = WHERE, id = ID, key = KEY), read = FALSE, source = "<prefix>.rds"
+)$selection
 knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
                         value = c(.sel$id, paste(.sel$key, collapse = ", "),
-                                  if (length(.sel$where)) paste(.sel$where, collapse = "; ") else "none",
+                                  if (length(.sel$where_shown)) paste(.sel$where_shown, collapse = "; ") else "none",
                                   .sel$rows)),
              col.names = c("Data", ""), caption = "The data the fit job read")
 ```
@@ -932,16 +947,15 @@ Add a chunk labelled `data` after the bag is read:
 
 ```r
 #| label: data
-.bag_selection <- attr(.bag, "hvti_provenance")$selection
-if (!is.null(.bag_selection)) {
-  .sel <- hvtiRtemplates:::.check_upstream_selection(.bag_selection, list(where = WHERE, id = ID, key = KEY))
+.sel <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, attr(.bag, "hvti_provenance"), list(where = WHERE, id = ID, key = KEY), read = FALSE, source = "the bootstrap bag"
+)$selection
+{
   knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
                           value = c(.sel$id, paste(.sel$key, collapse = ", "),
-                                    if (length(.sel$where)) paste(.sel$where, collapse = "; ") else "none",
+                                    if (length(.sel$where_shown)) paste(.sel$where_shown, collapse = "; ") else "none",
                                     .sel$rows)),
                col.names = c("Data", ""), caption = "The data the bootstrap runner read")
-} else {
-  cat("This bag records no data selection; it predates read_job_data().\n")
 }
 # The contract: runners read their data with hvtiRtemplates::read_job_data(), whose
 # selection travels in the bag's lineage.
