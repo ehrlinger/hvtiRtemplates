@@ -301,8 +301,8 @@ if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = "
 .job_selection <- attr(job_data$record, "selection")
 is_job_id <- function(v) tolower(v) %in% tolower(.job_selection$id)
 is_job_key <- function(v) tolower(v) %in% tolower(c(.job_selection$id, .job_selection$key))
-looks_like_id <- function(v) {
-  is_job_key(v) |
+looks_like_id <- function(v, job_key = TRUE) {
+  (job_key & is_job_key(v)) |
     grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
     grepl("^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|^e?mrn$", v, ignore.case = TRUE) |
     vapply(d[v], function(x) {
@@ -326,7 +326,9 @@ if (is.null(VARIABLES)) {
             call. = FALSE)
     VARIABLES <- VARIABLES[!is_job_id(VARIABLES)]
   }
-  suspect <- looks_like_id(VARIABLES)
+  # A KEY column named here was chosen on purpose, so it is not flagged for being
+  # a KEY; the name, date and free-text rules still apply to it.
+  suspect <- looks_like_id(VARIABLES, job_key = FALSE)
   if (any(suspect)) {
     warning("Selected likely identifier or date field(s): ", paste(VARIABLES[suspect], collapse = ", "), call. = FALSE)
   }
