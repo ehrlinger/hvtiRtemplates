@@ -10,9 +10,9 @@ format:
     embed-resources: true
 ---
 
-<!-- EDIT: name the job this replaces (tp.dp.EDA_barplots_scatterplots*.R). -->
+<!-- EDIT: name the job this replaces (a copy of tp.dp.DescriptiveSummary.qmd or tp.dp.EDA_barplots_scatterplots*.R). -->
 
-Replaces an older EDA bar-plot and scatter-plot sweep.
+Replaces the per-variable grid of the legacy EDA report, `tp.dp.DescriptiveSummary.qmd`.
 
 A `dp-postage` job is the data-checking sweep over a new build: one small panel
 per variable against operation year, pages of them, with a table beside each
