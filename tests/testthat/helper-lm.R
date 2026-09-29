@@ -9,7 +9,15 @@ lm_run <- function(qualifier, labels, env, choices = list()) {
   src <- readLines(template_path("lm", qualifier), warn = FALSE)
   for (label in labels) {
     suppressMessages(eval(parse(text = lm_chunk(src, label)), envir = env))
-    if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
+    if (identical(label, "edit-study-choices")) {
+      list2env(choices, envir = env)
+      # A test that supplies `d` itself skips the data chunk, which would set
+      # the identifier read_job_data() resolved and the selection it recorded.
+      if (!"data" %in% labels) {
+        if (!exists(".id", envir = env, inherits = FALSE)) env$.id <- env$ID
+        if (!exists("job_data", envir = env, inherits = FALSE)) env$job_data <- list()
+      }
+    }
   }
   invisible(env)
 }
@@ -76,7 +84,8 @@ lm_render_fixture <- function(qualifier, .local_envir = parent.frame()) {
     nominal = 'OUTCOME <- "nominal"',
     propensity_ordinal = 'TREATMENT <- "treatment_ordinal"',
     propensity_nominal = 'TREATMENT <- "treatment_nominal"',
-    checkpred = 'DATASET <- "study"',
+    # Validated on patients the saved model was not trained on (below).
+    checkpred = "WHERE <- quote(ccfid > 60)",
     balancing_count = c('OUTCOME <- "count"', 'DISTRIBUTION <- "poisson"'),
     character()
   )
@@ -89,8 +98,8 @@ lm_render_fixture <- function(qualifier, .local_envir = parent.frame()) {
   if (identical(qualifier, "checkpred")) {
     model_formula <- stats::as.formula("outcome ~ age + female", env = baseenv())
     model <- hvtiRpropensity::fit_logistic(
-      model_formula, d, family = "binary", outcome_col = "outcome",
-      id_col = "id", outcome_levels = c("none", "event"), event_level = "event"
+      model_formula, d[d$ccfid <= 60, ], family = "binary", outcome_col = "outcome",
+      id_col = "ccfid", outcome_levels = c("none", "event"), event_level = "event"
     )
     model_provenance <- hvtiRtemplates:::.lm_fit_provenance(model)
     model <- hvtiRtemplates:::.attach_handoff_lineage(

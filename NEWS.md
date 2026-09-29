@@ -21,6 +21,11 @@
   when `VARIABLES` names it. The deprecated `dp-postage` keeps its own data step. Every template's setup
   chunk says to run `study_setup()` when it is not inside a study.
 
+* The logistic templates read their data through `read_job_data()`; `ID`
+  defaults to `"ccfid"` (it was `"id"`, which no built dataset carries), and
+  `lm-checkpred` stops when its validation patients were in the training data:
+  its validation cohort is `DATASET` or `WHERE` like any job's.
+
 * `dp-postage` is deprecated in favor of `dp-eda`, and will be removed in the
   release after 1.2.3. For the same pages, scaffold
   `add_job("dp", subject, type, qualifier = "eda")` and set

@@ -2,7 +2,11 @@
 # dev/specs/2026-09-29-template-data-contract-design.md. Families not yet
 # converted are listed here; each family's conversion removes its names, and
 # the list is empty when the work is done.
-pending_contract_families <- setdiff(template_list()$name, c("dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-trends"))
+pending_contract_families <- setdiff(template_list()$name, c(
+  "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-trends",
+  "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
+  "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal"
+))
 
 template_chunk <- function(src, label) {
   at <- match(paste0("#| label: ", label), src)
