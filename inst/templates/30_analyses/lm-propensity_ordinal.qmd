@@ -93,7 +93,7 @@ PREDICTORS <- c("age", "female")           # EDIT: pre-treatment covariates.
 TREATMENT_LEVELS <- c("low", "middle", "high") # EDIT: complete treatment order.
 IMPUTATION <- NULL                          # EDIT: imputation column, or NULL.
 # Stacked imputations repeat each patient once per imputation.
-if (!is.null(IMPUTATION)) KEY <- c(ID, IMPUTATION)
+if (!is.null(IMPUTATION)) KEY <- unique(c(KEY, IMPUTATION))
 ```
 
 ```{r}

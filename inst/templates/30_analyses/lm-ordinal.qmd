@@ -95,7 +95,7 @@ PREDICTORS <- c("age", "female")           # EDIT: model terms.
 OUTCOME_LEVELS <- c("low", "middle", "high") # EDIT: complete order, lowest to highest.
 IMPUTATION <- NULL                          # EDIT: imputation column, or NULL.
 # Stacked imputations repeat each patient once per imputation.
-if (!is.null(IMPUTATION)) KEY <- c(ID, IMPUTATION)
+if (!is.null(IMPUTATION)) KEY <- unique(c(KEY, IMPUTATION))
 ```
 
 ```{r}

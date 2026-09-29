@@ -98,7 +98,7 @@ TREATMENT_LEVELS <- c("control", "treated") # EDIT: both accepted treatment valu
 TREATED_LEVEL <- "treated"                 # EDIT: treated value.
 IMPUTATION <- NULL                          # EDIT: imputation column, or NULL.
 # Stacked imputations repeat each patient once per imputation.
-if (!is.null(IMPUTATION)) KEY <- c(ID, IMPUTATION)
+if (!is.null(IMPUTATION)) KEY <- unique(c(KEY, IMPUTATION))
 ```
 
 ```{r}

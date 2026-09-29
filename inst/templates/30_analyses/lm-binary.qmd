@@ -101,7 +101,7 @@ OUTCOME_LEVELS <- c("no", "yes")           # EDIT: both accepted values, non-eve
 EVENT_LEVEL <- "yes"                       # EDIT: clinically meaningful event value.
 IMPUTATION <- NULL                          # EDIT: imputation column, or NULL for one dataset.
 # Stacked imputations repeat each patient once per imputation.
-if (!is.null(IMPUTATION)) KEY <- c(ID, IMPUTATION)
+if (!is.null(IMPUTATION)) KEY <- unique(c(KEY, IMPUTATION))
 ```
 
 ```{r}

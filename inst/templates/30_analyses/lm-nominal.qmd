@@ -95,7 +95,7 @@ OUTCOME_LEVELS <- c("reference", "level_b", "level_c") # EDIT: complete accepted
 REFERENCE_LEVEL <- "reference"             # EDIT: scientific comparison reference.
 IMPUTATION <- NULL                          # EDIT: imputation column, or NULL.
 # Stacked imputations repeat each patient once per imputation.
-if (!is.null(IMPUTATION)) KEY <- c(ID, IMPUTATION)
+if (!is.null(IMPUTATION)) KEY <- unique(c(KEY, IMPUTATION))
 ```
 
 ```{r}

@@ -240,6 +240,10 @@ test_that("lm-checkpred stops when its validation patients were in the training 
   # A disjoint cohort goes on to validation.
   env <- check(list(WHERE = quote(ccfid > 70)))
   expect_identical(nrow(env$d), 50L)
+  # A missing validation ID cannot be compared, so it stops.
+  env <- check(list(WHERE = quote(ccfid > 70)))
+  env$d$ccfid[1L] <- NA
+  expect_error(lm_run("checkpred", "training-overlap", env), "Some patients have no `ccfid`")
   # A saved model without its training identifiers stops rather than skipping the check.
   model <- readRDS(file.path(bundle_dir, "lm-binary.rds"))
   model$data$ccfid <- NULL
@@ -255,5 +259,17 @@ test_that("every lm template scaffolds and renders", {
     out <- lm_render_fixture(qualifier)
     expect_true(file.exists(out$job), info = qualifier)
     expect_true(file.exists(out$output), info = qualifier)
+  }
+})
+
+test_that("an imputation column adds to KEY rather than replacing it", {
+  # A study keyed on visits keeps its visit column when it also stacks imputations.
+  for (qualifier in setdiff(names(lm_qualifiers), "checkpred")) {
+    src <- readLines(template_path("lm", qualifier), warn = FALSE)
+    src <- sub("^KEY <- ID$", 'KEY <- c(ID, "visit")', src)
+    src <- sub("^IMPUTATION <- NULL", 'IMPUTATION <- "imp"', src)
+    env <- new.env(parent = globalenv())
+    eval(parse(text = lm_chunk(src, "edit-study-choices")), envir = env)
+    expect_identical(env$KEY, c("ccfid", "visit", "imp"), info = qualifier)
   }
 })

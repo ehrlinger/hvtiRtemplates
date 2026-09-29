@@ -150,6 +150,11 @@ if (!identical(tolower(.id), tolower(.train_id))) {
   stop("The validation data identify patients by `", .id, "`, the training data by `", .train_id,
        "`: set ID so both use the same identifier.", call. = FALSE)
 }
+# A missing identifier cannot be compared, so it would pass as a new patient.
+if (anyNA(d[[.id]]) || anyNA(model$data[[.train_id]])) {
+  stop("Some patients have no `", .id, "` in the validation or training data, so the check cannot tell ",
+       "whether they are new: drop or fix those rows in the data build.", call. = FALSE)
+}
 .validation_ids <- unique(as.character(d[[.id]]))
 .shared <- sum(.validation_ids %in% as.character(model$data[[.train_id]]))
 if (.shared && .shared == length(.validation_ids)) {
