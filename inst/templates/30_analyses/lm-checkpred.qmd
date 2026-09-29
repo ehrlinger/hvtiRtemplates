@@ -155,7 +155,15 @@ if (anyNA(d[[.id]]) || anyNA(model$data[[.train_id]])) {
   stop("Some patients have no `", .id, "` in the validation or training data, so the check cannot tell ",
        "whether they are new: drop or fix those rows in the data build.", call. = FALSE)
 }
-.validation_ids <- unique(as.character(d[[.id]]))
+# A model saved by a current lm template keeps a study-keyed digest of each training ID, so the validation
+# IDs are digested with the same key to compare. One saved before that holds raw identifiers, and is
+# compared raw so it still validates; re-save it with its lm template to clear them from the file.
+.digested <- isTRUE(model$meta$id_digest)
+.validation_ids <- if (.digested) {
+  unique(hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root)))
+} else {
+  unique(as.character(d[[.id]]))
+}
 .shared <- sum(.validation_ids %in% as.character(model$data[[.train_id]]))
 if (.shared && .shared == length(.validation_ids)) {
   stop("The validation data are the training data: set DATASET or WHERE to the validation cohort.", call. = FALSE)
@@ -203,7 +211,11 @@ validation <- hvtiRtemplates:::.attach_handoff_lineage(
   cohort = .validation_cohort,
   selection = attr(job_data$record, "selection")
 )
-saveRDS(validation, VALIDATION_PATH)
+# The saved copy digests the validation IDs as the source model does its own. Models saved digested are
+# left alone, since digesting them again would no longer match their patients.
+saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
+                                            skip = if (isTRUE(model$meta$id_digest)) "models"),
+        VALIDATION_PATH)
 ```
 
 ```{r}

@@ -26,6 +26,12 @@
   `lm-checkpred` stops when its validation patients were in the training data:
   its validation cohort is `DATASET` or `WHERE` like any job's.
 
+* The `lm` templates save a study-keyed digest of each patient ID in their
+  model files, not the ID, so a model keyed on `MRN` no longer stores MRNs.
+  The key is made on first use in the study's `.hvti/` folder. `lm-checkpred`
+  digests its validation IDs with the same key and compares digests; a model
+  saved before this change still validates.
+
 * `dp-postage` is deprecated in favor of `dp-eda`, and will be removed in the
   release after 1.2.3. For the same pages, scaffold
   `add_job("dp", subject, type, qualifier = "eda")` and set

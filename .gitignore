@@ -9,6 +9,8 @@ inst/doc
 .superpowers/
 __pycache__/
 .hvtiR/
+# A study's patient-ID key; tests make it only under temporary study roots
+.hvti/
 /doc/
 /Meta/
 

@@ -27,6 +27,7 @@ Imports:
     digest,
     hvtiRutilities (>= 1.4.2),
     jsonlite,
+    openssl,
     ps,
     rlang,
     stats,

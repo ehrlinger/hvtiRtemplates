@@ -328,6 +328,7 @@ test_that("logistic fit provenance is derived from runtime metadata and status t
     env$.in <- file.path(tempdir(), paste0("lm-", qualifier, ".rmarkdown"))
     env$.provenance_data <- list()
     env$set_path <- function(kind, file) tempfile(fileext = ".rds")
+    env$.root <- withr::local_tempdir("lm-root-")
     lm_run(qualifier, c("edit-study-choices", "fit", "save"), env, case$choices)
     record <- capture_provenance(template_by_name(paste0("lm-", qualifier)), env)
     meta <- env$fit$meta

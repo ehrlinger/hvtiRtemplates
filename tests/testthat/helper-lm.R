@@ -61,10 +61,10 @@ lm_study <- function(.local_envir = parent.frame()) {
   root
 }
 
-lm_render_fixture <- function(qualifier, .local_envir = parent.frame()) {
+lm_render_fixture <- function(qualifier, data = NULL, .local_envir = parent.frame()) {
   root <- tempfile("lm-study-")
   withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
-  d <- lm_data()
+  d <- if (is.null(data)) lm_data() else data
   d$time <- seq_len(nrow(d))
   suppressMessages(hvtiRutilities::study_setup(
     root, study = "Synthetic lm study", study_tracker_id = 42L
