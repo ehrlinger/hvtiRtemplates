@@ -214,7 +214,7 @@ test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps",
   expect_true("visit_mo" %in% run()$VARIABLES)
   env <- run(key = c("ccfid", "visit_mo"))
   expect_false("visit_mo" %in% env$VARIABLES)
-  env <- run(key = c("ccfid", "visit_mo"), variables = c("age", "visit_mo"))
+  expect_no_warning(env <- run(key = c("ccfid", "visit_mo"), variables = c("age", "visit_mo")))
   expect_identical(env$VARIABLES, c("age", "visit_mo"))
 })
 

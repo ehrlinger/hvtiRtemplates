@@ -326,7 +326,8 @@ if (is.null(VARIABLES)) {
             call. = FALSE)
     VARIABLES <- VARIABLES[!is_job_id(VARIABLES)]
   }
-  suspect <- looks_like_id(VARIABLES)
+  # A KEY column named here was chosen on purpose, so it is not flagged for being a KEY.
+  suspect <- looks_like_id(VARIABLES) & !is_job_key(VARIABLES)
   if (any(suspect)) {
     warning("Selected likely identifier or date field(s): ", paste(VARIABLES[suspect], collapse = ", "), call. = FALSE)
   }
