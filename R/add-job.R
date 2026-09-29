@@ -25,6 +25,10 @@
 #' preserved, while the provenance publisher is kept last. Repeated calls are
 #' idempotent.
 #'
+#' A template the catalog marks deprecated, such as \code{dp-postage}, still
+#' scaffolds, with a warning naming its replacement; see
+#' \code{\link{template_catalog}}.
+#'
 #' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
 #'   \code{dp}. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
@@ -77,6 +81,7 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
     .select_template(template_list(), prefix, qualifier),
     error = function(e) stop("add_job(): ", conditionMessage(e), call. = FALSE)
   )
+  .warn_if_deprecated(row, "add_job")
 
   out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = dir)
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)

@@ -59,6 +59,10 @@ Scaffolding also installs the study's Quarto provenance hooks. Existing
 pre-render and post-render commands and unrelated project settings are
 preserved, while the provenance publisher is kept last. Repeated calls are
 idempotent.
+
+A template the catalog marks deprecated, such as \code{dp-postage}, still
+scaffolds, with a warning naming its replacement; see
+\code{\link{template_catalog}}.
 }
 \examples{
 d <- file.path(tempdir(), "add-job-example")

@@ -22,7 +22,7 @@ test_that("study setup vignette declares the complete workflow", {
   expect_true(any(grepl('role = "study"', txt, fixed = TRUE)))
   expect_true(any(grepl('qualifier = "general"', txt, fixed = TRUE)))
   expect_true(any(grepl('qualifier = "tables"', txt, fixed = TRUE)))
-  expect_true(any(grepl('qualifier = "postage"', txt, fixed = TRUE)))
+  expect_true(any(grepl('qualifier = "eda"', txt, fixed = TRUE)))
   expect_true(any(grepl("renv::init()", txt, fixed = TRUE)))
   expect_true(any(grepl("renv::snapshot()", txt, fixed = TRUE)))
   expect_false(any(grepl("inventory-adoption-cleanup", txt, fixed = TRUE)))
@@ -107,7 +107,7 @@ test_that("the tutorial adopts an existing study before analysis", {
     expect_equal(nrow(env$study_data), 40L)
     expect_named(
       env$study_jobs,
-      c("general", "tables", "gfup", "trends", "postage")
+      c("general", "tables", "gfup", "trends", "eda")
     )
     expect_true(all(file.exists(env$study_jobs)))
     expect_true(all(c("datasets", "descriptive", "distributions", "analyses", "graphs", "documents", "estimates") %in%
@@ -134,6 +134,6 @@ test_that("the final migration verifier returns four lasting rendered fixtures",
     expect_true(all(file.exists(result$outputs)))
   }
   expect_true(any(grepl("[.]docx$", results[["dc-tables"]]$outputs)))
-  expect_true(all(sprintf("dp-postage-%s-page-01.png", c("continuous", "percent", "count")) %in%
+  expect_true(all(sprintf("dp-eda-%s-page-01.png", c("continuous", "percent", "count")) %in%
                     basename(results[["dp-postage"]]$outputs)))
 })

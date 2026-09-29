@@ -14,6 +14,13 @@ format:
 
 Replaces the per-variable grid of the legacy EDA report, `tp.dp.DescriptiveSummary.qmd`.
 
+**Deprecated.** `dp-postage` is deprecated in favor of `dp-eda`, and will be
+removed in the release after hvtiRtemplates 1.2.3. For the same pages, start a
+`dp-eda` job with `add_job("dp", subject, type, qualifier = "eda")` and set
+`SECTIONS <- c("continuous", "percent", "count")`: its sections call
+`hv_eda_pages()` with the same arguments and draw the same pages, saved as
+`dp-eda-*.png` rather than `dp-postage-*.png`.
+
 A `dp-postage` job is the data-checking sweep over a new build: one small panel
 per variable against operation year, pages of them, with a table beside each
 section. It is for finding coding errors, drift and missingness before any

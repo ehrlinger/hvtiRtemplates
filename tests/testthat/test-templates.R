@@ -835,6 +835,9 @@ test_that("the choices on offer are shown by full name, the form a caller can ty
 test_that("every shipped template resolves from its own stem", {
   tl <- template_list()
   for (i in seq_len(nrow(tl))) {
-    expect_equal(template_path(tl$name[[i]]), tl$file[[i]], info = tl$name[[i]])
+    # A deprecated template still resolves; test-deprecation.R covers its warning.
+    path <- withCallingHandlers(template_path(tl$name[[i]]),
+                                hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
+    expect_equal(path, tl$file[[i]], info = tl$name[[i]])
   }
 })

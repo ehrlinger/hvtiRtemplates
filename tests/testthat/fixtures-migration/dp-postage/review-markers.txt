@@ -1,4 +1,4 @@
-<!-- EDIT: name the job this replaces (a copy of tp.dp.DescriptiveSummary.qmd or tp.dp.EDA_barplots_scatterplots*.R). -->
+<!-- EDIT: name the EDA report this replaces, or delete this line for a new study. -->
 # EDIT: the built dataset this job reads. "study" is the file named by built:
 # EDIT: the analysis set this job reads: declare its columns and excluded rows
-# EDIT: review unresolved postage source choices in the migration report.
+# EDIT: review unresolved EDA source choices in the migration report.

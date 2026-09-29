@@ -135,7 +135,7 @@ are optional; supplied files must exist beneath `dir`. The call writes
 `descriptive/cohort-eda-dc-tables-migration.md` in a study with bare folders.
 It preserves the evidence files and refuses to overwrite either output.
 
-Migration supports `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-postage`.
+Migration supports `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-eda`.
 Each adapter reads a defined source shape. Only deterministic extraction can
 remove an `EDIT:` marker; uncertain choices remain in the job and report for
 you to resolve before rendering. Logs, listings, and RTF/DOCX references help

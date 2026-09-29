@@ -59,7 +59,8 @@ test_that("dp-eda draws the same pages as dp-postage over the same data", {
   skip_if_not(quarto::quarto_available())
   root <- migration_study_fixture("dp-postage")
   eda <- scaffold_job("dp", "eda", eda_edits, root = root)
-  postage <- scaffold_job("dp", "postage", eda_edits["^ANALYSIS_SET <- "], root = root)
+  expect_warning(postage <- scaffold_job("dp", "postage", eda_edits["^ANALYSIS_SET <- "], root = root),
+                 class = "hvtiRtemplates_deprecated")
   for (job in c(eda$job, postage$job)) quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
   graphs <- file.path(root, "graphs", "cohort-eda")
   pages <- function(stem) list.files(graphs, paste0("^", stem, "-(continuous|percent|count)-"), full.names = TRUE)
@@ -211,8 +212,9 @@ test_that("dp-gfup and dp-eda choose follow-up colors with the same code", {
 test_that("dp-postage and dp-eda shorten labels with the same code and edit points", {
   # dp-postage's copy is exercised in test-migrate-dp-postage.R; this keeps
   # dp-eda's from drifting from it.
+  tl <- template_list()
   block <- function(qualifier, from, to) {
-    lines <- readLines(template_path("dp", qualifier), warn = FALSE)
+    lines <- readLines(tl$file[tl$name == paste0("dp-", qualifier)], warn = FALSE)
     start <- grep(from, lines)
     end <- start + grep(to, lines[-seq_len(start)])[1L]
     lines[start:end]
@@ -224,6 +226,7 @@ test_that("dp-postage and dp-eda shorten labels with the same code and edit poin
   expect_length(block("eda", "^# Shortened labels stay distinct", "^}$"), 20L)
   # And each draws the key under its sections.
   for (q in c("postage", "eda")) {
-    expect_true(any(grepl("^  abbreviation_key\\(vars\\)$", readLines(template_path("dp", q), warn = FALSE))), info = q)
+    expect_true(any(grepl("^  abbreviation_key\\(vars\\)$", readLines(tl$file[tl$name == paste0("dp-", q)], warn = FALSE))),
+                info = q)
   }
 })
