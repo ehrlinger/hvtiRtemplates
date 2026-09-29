@@ -1,8 +1,9 @@
 #' The study's secret key for patient-ID digests
 #'
 #' Reads the key from \code{<root>/.hvti/id_key}, creating it on first use from
-#' 32 cryptographically random bytes, hex encoded. The file is made readable by
-#' its owner only where the operating system supports that. The key is never
+#' 32 cryptographically random bytes, hex encoded. The file is readable by its
+#' owner and the study's group, so colleagues can render the study's jobs, and by
+#' no one else where the operating system supports that. The key is never
 #' printed: an error names the file, not its contents.
 #'
 #' @param root The study root.
@@ -11,13 +12,13 @@
 .study_id_key <- function(root) {
   path <- file.path(root, ".hvti", "id_key")
   if (!file.exists(path)) {
-    dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE, mode = "0700")
+    dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE, mode = "0750")
     # A restrictive umask closes the window between writing the file and chmod.
-    old <- Sys.umask("077")
+    old <- Sys.umask("027")
     on.exit(Sys.umask(old), add = TRUE)
     tmp <- tempfile("id_key", tmpdir = dirname(path))
     writeLines(paste(as.character(openssl::rand_bytes(32L)), collapse = ""), tmp)
-    Sys.chmod(tmp, "0600")
+    Sys.chmod(tmp, "0640")
     # Written aside and renamed, so a reader never sees a half-written key.
     if (!file.exists(path)) file.rename(tmp, path) else unlink(tmp)
   }

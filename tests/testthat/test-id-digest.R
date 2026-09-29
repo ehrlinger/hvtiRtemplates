@@ -25,7 +25,7 @@ test_that("the study key is made once, kept private, and reused", {
   key <- hvtiRtemplates:::.study_id_key(root)
   expect_true(file.exists(path))
   expect_match(key, "^[0-9a-f]{64}$")
-  if (.Platform$OS.type == "unix") expect_identical(format(file.mode(path)), "600")
+  if (.Platform$OS.type == "unix") expect_identical(format(file.mode(path)), "640")
   before <- file.info(path)$mtime
   expect_identical(hvtiRtemplates:::.study_id_key(root), key)
   expect_identical(file.info(path)$mtime, before)
