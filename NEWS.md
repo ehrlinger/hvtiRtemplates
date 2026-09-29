@@ -1,5 +1,18 @@
 # hvtiRtemplates (unreleased)
 
+* `read_job_data()` is the shared data step for templates: it reads a
+  registered dataset or analysis set, resolves the patient ID (`ccfid`, then
+  `MRN`, then `eMRN`), drops `MRN` and `eMRN`, keeps the rows `WHERE`
+  selects with `dplyr::filter()` rules, checks rows are unique on `KEY`, and
+  records what it did. `ID` and `KEY` match their columns ignoring case, the
+  values of a `WHERE` condition on `ID` or `KEY` are never printed, and an
+  analysis set's attrition is returned with the data. A value `WHERE` takes
+  from outside the data, such as `.env$min_age`, is fixed into the recorded
+  condition when the data are read. A downstream job
+  rebuilds its upstream job's rows from the selection the upstream hand-off
+  carries, and stops when that hand-off predates it. Templates adopt it
+  family by family.
+
 * `dp-postage` is deprecated in favor of `dp-eda`, and will be removed in the
   release after 1.2.3. For the same pages, scaffold
   `add_job("dp", subject, type, qualifier = "eda")` and set
@@ -30,11 +43,6 @@
   chunks that call `study_config()` without supplying it, so they depended on
   an earlier test file having attached hvtiRutilities, and a filtered run
   errored twice. No change to the templates.
-
-* `dp-eda` takes `mrn` as an identifier only as a word of a column name
-  (`mrn`, `mrn_num`, `pt_mrn`), not inside one. It matched `mrn` anywhere, so
-  an mRNA variable such as `bnp_mrna` was left out as an identifier. The rule
-  matches hvtiPlotR's `hv_eda_pages()` (hvtiPlotR#172).
 
 * Every template chunk holding an `EDIT:` marker is now labeled `edit-`, so
   the editor's chunk outline lists the work a job still needs:

@@ -28,6 +28,7 @@ Imports:
     hvtiRutilities (>= 1.4.2),
     jsonlite,
     ps,
+    rlang,
     stats,
     yaml
 Remotes:

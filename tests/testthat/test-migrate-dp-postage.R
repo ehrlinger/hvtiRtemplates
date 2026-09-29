@@ -52,9 +52,9 @@ test_that("postage migration selects registered data and explicit ordered EDA co
   expect_match(report, "color choice remains unresolved", fixed = TRUE)
   expect_match(report, "d$age <- d$age + 1", fixed = TRUE)
   expect_true(any(grepl("EDIT:", readLines(job), fixed = TRUE)))
-  expect_equal(ncol(hvtiRutilities::read_built(hvtiRutilities::study_config(root))), 18L)
+  expect_equal(ncol(hvtiRutilities::read_built(hvtiRutilities::study_config(root))), 19L)
   other <- migration_study_fixture()
-  expect_equal(ncol(hvtiRutilities::read_built(hvtiRutilities::study_config(other))), 13L)
+  expect_equal(ncol(hvtiRutilities::read_built(hvtiRutilities::study_config(other))), 14L)
 })
 
 test_that("postage handles SAS controls without executing source cleaning or unsupported choices", {

@@ -37,7 +37,7 @@ rf_study <- function(.local_envir = parent.frame()) {
     hvtiRutilities::study_setup(root, study = "RF smoke", study_tracker_id = 1L, adopt = TRUE)
   ))
   root <- normalizePath(root)
-  saveRDS(data.frame(time = c(1, 2), event = c(1, 0)),
+  saveRDS(data.frame(ccfid = 1:2, time = c(1, 2), event = c(1, 0)),
           file.path(hvtiRutilities::study_dir("datasets", root), "cohort.rds"))
   utils::capture.output(suppressMessages(
     hvtiRutilities::register_data(

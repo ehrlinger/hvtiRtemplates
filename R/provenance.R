@@ -587,24 +587,32 @@
 }
 
 .handoff_lineage <- function(data, artifacts = list(), analysis = NULL,
-                             cohort = NULL) {
+                             cohort = NULL, selection = NULL) {
   if (!is.list(data)) stop("Handoff lineage data must be a list of provenance records.", call. = FALSE)
   if (!is.list(artifacts)) stop("Handoff lineage artifacts must be a list of provenance records.", call. = FALSE)
-  list(data = data, artifacts = artifacts, analysis = analysis, cohort = cohort)
+  out <- list(data = data, artifacts = artifacts, analysis = analysis, cohort = cohort)
+  if (!is.null(selection)) out$selection <- selection
+  out
 }
 
 .attach_handoff_lineage <- function(object, data, artifacts = list(),
-                                    analysis = NULL, cohort = NULL) {
-  attr(object, "hvti_provenance") <- .handoff_lineage(data, artifacts, analysis, cohort)
+                                    analysis = NULL, cohort = NULL, selection = NULL) {
+  attr(object, "hvti_provenance") <- .handoff_lineage(data, artifacts, analysis, cohort, selection)
   object
+}
+
+# The two shapes .handoff_lineage() writes, compared exactly, so a repeated
+# or reordered field is not taken for a complete lineage.
+.complete_lineage_shape <- function(lineage) {
+  required <- c("data", "artifacts", "analysis", "cohort")
+  is.list(lineage) &&
+    (identical(names(lineage), required) || identical(names(lineage), c(required, "selection"))) &&
+    is.list(lineage$data) && is.list(lineage$artifacts)
 }
 
 .validate_handoff_lineage <- function(object, path, rebuild) {
   lineage <- attr(object, "hvti_provenance", exact = TRUE)
-  required <- c("data", "artifacts", "analysis", "cohort")
-  valid <- is.list(lineage) && identical(names(lineage), required) &&
-    is.list(lineage$data) && is.list(lineage$artifacts)
-  if (!valid) {
+  if (!.complete_lineage_shape(lineage)) {
     stop(
       "The package handoff '", path, "' has no complete hvti_provenance lineage. ",
       "Rebuild it by rendering ", rebuild, " with the current template.",
@@ -653,14 +661,12 @@
         call. = FALSE
       )
     }
-    complete_shape <- is.list(lineage) &&
-      identical(names(lineage), c("data", "artifacts", "analysis", "cohort")) &&
-      is.list(lineage$data) && is.list(lineage$artifacts)
+    complete_shape <- .complete_lineage_shape(lineage)
     if (is.null(lineage)) {
       lineage <- .handoff_lineage(explicit_data)
     } else if (complete_shape) {
       lineage <- .handoff_lineage(
-        explicit_data, lineage$artifacts, lineage$analysis, lineage$cohort
+        explicit_data, lineage$artifacts, lineage$analysis, lineage$cohort, lineage$selection
       )
     } else {
       .validate_handoff_lineage(value, path, "the bootstrap producer")
@@ -689,11 +695,21 @@
   }
   if (is.null(analysis)) analysis <- common("analysis")
   if (is.null(cohort)) cohort <- common("cohort")
+  # Kept only when every input carries the same selection: an input without
+  # one predates the contract, and its rows are unknown.
+  selection_values <- lapply(lineages, `[[`, "selection")
+  selection <- if (length(selection_values) && !any(vapply(selection_values, is.null, logical(1L))) &&
+                     all(vapply(selection_values[-1L], identical, logical(1L), selection_values[[1L]]))) {
+    selection_values[[1L]]
+  } else {
+    NULL
+  }
   .handoff_lineage(
     data = c(carried_data, data),
     artifacts = c(carried_artifacts, artifacts),
     analysis = analysis,
-    cohort = cohort
+    cohort = cohort,
+    selection = selection
   )
 }
 

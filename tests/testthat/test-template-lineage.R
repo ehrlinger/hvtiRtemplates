@@ -217,6 +217,37 @@ test_that("bootstrap explicit data preserves the remaining carried lineage", {
   expect_identical(result$lineage$cohort, bootstrap_cohort)
 })
 
+test_that("bootstrap explicit data preserves a carried selection", {
+  root <- rf_study()
+  cfg <- hvtiRutilities::study_config(root)
+  path <- file.path(hvtiRutilities::study_dir("estimates", root), "selection-lineage.rds")
+  data_record <- hvtiRutilities::provenance_data(cfg = cfg, role = "bootstrap-training")
+  sel <- list(dataset = "study", analysis_set = NULL, where = "age >= 18", id = "ccfid", key = "ccfid",
+              rows = 3L, patients = 3L)
+  partial <- hvtiRtemplates:::.attach_handoff_lineage(
+    list(chunk = 1L), data = list(), selection = sel
+  )
+  saveRDS(partial, path)
+
+  result <- hvtiRtemplates:::.read_bootstrap_artifact(
+    path, "bootstrap-bag", cfg, list(data_record)
+  )
+
+  expect_identical(result$lineage$selection, sel)
+})
+
+test_that(".combine_handoff_lineage() keeps a selection shared across inputs, drops a disagreement", {
+  sel <- list(dataset = "study", where = "age >= 18", id = "ccfid")
+  agreeing <- hvtiRtemplates:::.handoff_lineage(data = list(), selection = sel)
+  also_agreeing <- hvtiRtemplates:::.handoff_lineage(data = list(), selection = sel)
+  combined <- hvtiRtemplates:::.combine_handoff_lineage(list(agreeing, also_agreeing))
+  expect_identical(combined$selection, sel)
+
+  disagreeing <- hvtiRtemplates:::.handoff_lineage(data = list(), selection = list(dataset = "other"))
+  combined_disagreeing <- hvtiRtemplates:::.combine_handoff_lineage(list(agreeing, disagreeing))
+  expect_null(combined_disagreeing$selection)
+})
+
 test_that("bootstrap explicit data does not adapt malformed carried lineage", {
   root <- rf_study()
   cfg <- hvtiRutilities::study_config(root)
@@ -376,4 +407,25 @@ test_that("hazard chain templates attach, require, and publish lineage", {
     ".provenance_artifacts <- c(.provenance_artifacts, .selection_read$lineage$artifacts,",
     sources$hm, fixed = TRUE
   )))
+})
+
+test_that(".combine_handoff_lineage() keeps no selection when any input lacks one", {
+  sel <- list(dataset = "study", where = "age >= 18", id = "ccfid")
+  with_sel <- hvtiRtemplates:::.handoff_lineage(data = list(), selection = sel)
+  without <- hvtiRtemplates:::.handoff_lineage(data = list())
+  expect_null(hvtiRtemplates:::.combine_handoff_lineage(list(with_sel, without))$selection)
+  expect_null(hvtiRtemplates:::.combine_handoff_lineage(list(without, with_sel))$selection)
+})
+
+test_that("a lineage with a repeated field is not a complete lineage", {
+  obj <- list()
+  attr(obj, "hvti_provenance") <- list(
+    data = list(list(dataset = "study")), data = list(), artifacts = list(), analysis = NULL, cohort = NULL
+  )
+  expect_error(hvtiRtemplates:::.validate_handoff_lineage(obj, "x.rds", "hz"), "no complete hvti_provenance")
+  reordered <- list()
+  attr(reordered, "hvti_provenance") <- list(
+    selection = list(), data = list(list(dataset = "study")), artifacts = list(), analysis = NULL, cohort = NULL
+  )
+  expect_error(hvtiRtemplates:::.validate_handoff_lineage(reordered, "x.rds", "hz"), "no complete hvti_provenance")
 })

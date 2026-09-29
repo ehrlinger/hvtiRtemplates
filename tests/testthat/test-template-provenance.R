@@ -592,7 +592,7 @@ make_provenance_study <- function(root) {
   suppressMessages(hvtiRutilities::study_setup(
     root, "Provenance render", 42L, adopt = TRUE
   ))
-  data <- data.frame(id = 1:3, dead = c(1L, 0L, 0L), iv_dead = 1:3)
+  data <- data.frame(ccfid = 1:3, id = 1:3, dead = c(1L, 0L, 0L), iv_dead = 1:3)
   utils::write.csv(
     data,
     file.path(hvtiRutilities::study_dir("datasets", root), "cohort.csv"),
