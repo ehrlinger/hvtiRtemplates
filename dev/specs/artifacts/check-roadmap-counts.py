@@ -155,10 +155,12 @@ def check_deprecation(rows):
             bad.append(f"`{where}` is deprecated but not on disk; a template "
                        f"that never shipped is dropped, not deprecated")
         target = names.get(r["deprecated_by"])
-        if target is None or target.get("status") not in ON_DISK or "deprecated_by" in target:
+        # The replacement must be finished: `revisit` and `in-flight` are on
+        # disk too, but pointing users at one sends them to unfinished work.
+        if target is None or target.get("status") != "shipped" or "deprecated_by" in target:
             bad.append(f"`{where}` is deprecated in favor of "
-                       f"`{r['deprecated_by']}`, which is not a supported "
-                       f"template on disk")
+                       f"`{r['deprecated_by']}`, which is not a shipped, "
+                       f"supported template")
     return bad
 
 
