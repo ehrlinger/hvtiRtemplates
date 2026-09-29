@@ -140,13 +140,50 @@
 #'   per patient. Add a visit time or date for repeated measures.
 #'
 #' @details Columns named \code{MRN} or \code{eMRN} (ignoring case) are
-#'   dropped unless one is the identifier. No identifier, key or date value is
-#'   ever printed; the record holds counts.
+#'   dropped unless one is the identifier. An explicit \code{id} or \code{key}
+#'   matches its column ignoring case, because
+#'   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
+#'   key and date values are not printed: the record holds counts, and a
+#'   \code{where} condition that mentions the \code{id} or \code{key} columns
+#'   is shown, in the record and in error messages, with its values replaced by
+#'   \code{<value>}. Every setting is checked before the data are read.
 #'
-#' @return A list: \code{data}, the selected rows; \code{record}, a data frame
-#'   of steps and values to print, carrying the settings used in its
-#'   \code{"selection"} attribute; \code{provenance}, the read's provenance
-#'   record.
+#' @return A list:
+#'   \itemize{
+#'     \item \code{data}, the selected rows;
+#'     \item \code{record}, a data frame of \code{step} and \code{value} to
+#'       print, whose \code{"selection"} attribute holds the settings used;
+#'     \item \code{provenance}, the read's provenance record;
+#'     \item \code{attrition}, an analysis set's per-rule attrition table, or
+#'       \code{NULL} for a dataset read whole.
+#'   }
+#'   The \code{"selection"} attribute is a list that a job saves in its
+#'   hand-off, so a downstream job can rebuild the same rows:
+#'   \itemize{
+#'     \item \code{dataset} and \code{analysis_set}, as given;
+#'     \item \code{where}, the exact text of each condition, values included,
+#'       used to rebuild the rows; it stays inside the study and is never
+#'       printed;
+#'     \item \code{where_shown}, the same conditions as a report may show them,
+#'       with the values of any condition on \code{id} or \code{key} replaced;
+#'     \item \code{id} and \code{key}, the resolved column names;
+#'     \item \code{rows} and \code{patients}, the counts kept.
+#'   }
+#'
+#' @examples
+#' \donttest{
+#' root <- file.path(tempdir(), "job-data-example")
+#' dir.create(root)
+#' hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
+#' d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
+#' utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
+#'                  row.names = FALSE)
+#' hvtiRutilities::register_data(root, "built.csv")
+#' cfg <- hvtiRutilities::study_config(start = root)
+#' job <- read_job_data(cfg, where = quote(age >= 18))
+#' job$record
+#' unlink(root, recursive = TRUE)
+#' }
 #' @export
 read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = NULL,
                           id = "ccfid", key = id) {

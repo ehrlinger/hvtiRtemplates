@@ -4,7 +4,12 @@
   registered dataset or analysis set, resolves the patient ID (`ccfid`, then
   `MRN`, then `eMRN`), drops `MRN` and `eMRN`, keeps the rows `WHERE`
   selects with `dplyr::filter()` rules, checks rows are unique on `KEY`, and
-  records what it did. Templates adopt it family by family.
+  records what it did. `ID` and `KEY` match their columns ignoring case, the
+  values of a `WHERE` condition on `ID` or `KEY` are never printed, and an
+  analysis set's attrition is returned with the data. A downstream job
+  rebuilds its upstream job's rows from the selection the upstream hand-off
+  carries, and stops when that hand-off predates it. Templates adopt it
+  family by family.
 
 * Every template chunk holding an `EDIT:` marker is now labeled `edit-`, so
   the editor's chunk outline lists the work a job still needs:
