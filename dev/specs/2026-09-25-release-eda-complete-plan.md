@@ -21,7 +21,7 @@
 | `dp-postage` in `SECTIONS`, `dc-gfup`/`dp-gfup` on the shared functions | shipped, hvtiRtemplates 1.2.2 |
 | `dp-eda` | merged, #155 (2026-09-26) |
 | palette | released, hvtiPlotR 2.7.18 (2026-09-28); the templates adopt it in 3b |
-| smart truncation | spec §4.2 merged (hvtiRutilities #149), not built |
+| smart truncation | released, hvtiRutilities 1.4.2 (2026-09-28); the group abbreviation list follows in 1.4.3 |
 | `dc-general` edit block | done, 3a (2026-09-27) |
 
 ## Decisions (John Ehrlinger, 2026-09-25)
@@ -47,25 +47,27 @@ The rule from the review: an event is red, censored is blue, missing is light gr
 
 ## Phase 2: hvtiRutilities smart truncation (release 1.4.2)
 
+**Done 2026-09-28:** smart truncation in `label_map()` (hvtiRutilities #163), `study_abbreviations()` and `add_abbreviation()` (#164), released as 1.4.2 (#165). The label census for the starter list ran on the production server; the 40-entry list (valves take `R` for replacement and `r` for repair) is hvtiRutilities #166, for 1.4.3.
+
 Implements hvtiRutilities spec §4.2 in `label_map()`: labels that differ in `label_full` differ in `label`.
 
-- [ ] Step 1, abbreviate a shared heading: text before `: `, ` - ` or `; `, shared by two or more labels with one over the cap; initials skipping `of and the in for to at on with by or`; a one-word heading left alone; two headings with the same initials are not abbreviated.
-- [ ] Step 2, the existing word-boundary cut. Step 3, keep both ends (`head ... tail`) where cut labels still collide. Step 4, show the label whole and set a new `over_cap` column.
-- [ ] `abbreviations` argument: a named vector, phrase to abbreviation, used before the initials rule and applied whole-word to any over-cap label.
-- [ ] The abbreviations used come back as an `abbreviations` attribute on the map (`abbreviation`, `expansion`).
-- [ ] §4.1 still holds: a variable name standing in for a missing label is never abbreviated or cut.
-- [ ] Property test of the invariant; tests for each step, the initials collision, the supplied list, and the name fallback. Prove the invariant test by mutation (disable step 3, watch it fail).
-- [ ] NEWS, `lintr` 0 (install first; see that repo's AGENTS.md), full suite, local `/code-review`, PR.
-- [ ] After merge: bump to **1.4.2**, release gate (with TeX on `PATH`), reverse dependencies hvtiRtemplates and hvtiRdatabuild, tag and release.
+- [x] Step 1, abbreviate a shared heading: text before `: `, ` - ` or `; `, shared by two or more labels with one over the cap; initials skipping `of and the in for to at on with by or`; a one-word heading left alone; two headings with the same initials are not abbreviated.
+- [x] Step 2, the existing word-boundary cut. Step 3, keep both ends (`head ... tail`) where cut labels still collide. Step 4, show the label whole and set a new `over_cap` column.
+- [x] `abbreviations` argument: a named vector, phrase to abbreviation, used before the initials rule and applied whole-word to any over-cap label.
+- [x] The abbreviations used come back as an `abbreviations` attribute on the map (`abbreviation`, `expansion`).
+- [x] §4.1 still holds: a variable name standing in for a missing label is never abbreviated or cut.
+- [x] Property test of the invariant; tests for each step, the initials collision, the supplied list, and the name fallback. Prove the invariant test by mutation (disable step 3, watch it fail).
+- [x] NEWS, `lintr` 0 (install first; see that repo's AGENTS.md), full suite, local `/code-review`, PR.
+- [x] After merge: bump to **1.4.2**, release gate (with TeX on `PATH`), reverse dependencies hvtiRtemplates and hvtiRdatabuild, tag and release.
 
 ## Phase 2b: design the study abbreviation list
 
 A study keeps one list of its own abbreviations (`CABG`, `LV`, `AV`, …) so every job shortens labels the same way, instead of each job repeating them in an `EDIT:` point. hvtiRutilities spec §4.2.1 sketched it; this phase turns the sketch into a design.
 
 - [x] Design note: hvtiRutilities [#162](https://github.com/ehrlinger/hvtiRutilities/pull/162). Group default in `inst/extdata/abbreviations.yml`, study overrides in `_study.yml` `abbreviations:`, `study_abbreviations(cfg)` merges them live; precedence job, then study, then default, then the initials rule. Needs only hvtiRutilities, so it ships in 1.4.2 and 1.2.3.
-- [ ] John settles the note's §8: the starter list (proposed: a census of labels across studies), curation after, and whether an `add_abbreviation()` helper is wanted.
-- [ ] Build in Phase 2 alongside smart truncation: the default file, `study_abbreviations()`, `study_config()` validation of the block, tests per the note's §6.
-- [ ] In Phase 3c: the templates call `study_abbreviations(.cfg, extra = ABBREVIATIONS)`, which merges and validates all three levels, and record its result, with each entry's level, in provenance.
+- [x] John settles the note's §8: the starter list (proposed: a census of labels across studies), curation after, and whether an `add_abbreviation()` helper is wanted.
+- [x] Build in Phase 2 alongside smart truncation: the default file, `study_abbreviations()`, `study_config()` validation of the block, tests per the note's §6.
+- [x] In Phase 3c: the templates call `study_abbreviations(.cfg, extra = ABBREVIATIONS)`, which merges and validates all three levels, and record its result, with each entry's level, in provenance.
 
 ## Phase 3: hvtiRtemplates (release 1.2.3)
 
@@ -80,8 +82,8 @@ Phases 1 and 2 must be released before 3b and 3c can raise their floors; 3a and 
 - [x] Floors: `hvtiPlotR (>= 2.7.18)` in `DESCRIPTION`, the templates' setup guards, and the Suggests-bounds test.
 
 ### 3c. Labels in the EDA templates (needs hvtiRutilities 1.4.2)
-- [ ] `dp-postage` and `dp-eda`: `LABEL_MAX` (default 40) and `ABBREVIATIONS` (default `NULL`) edit points, passed to `label_map()`; print the abbreviation key under each section when one was used.
-- [ ] Floors: `hvtiRutilities (>= 1.4.2)`; the helper allow-list test gains nothing new unless a new function is called.
+- [x] `dp-postage` and `dp-eda`: `LABEL_MAX` (default 40) and `ABBREVIATIONS` (default `NULL`) edit points, passed to `label_map()` through `study_abbreviations(.cfg, extra = ABBREVIATIONS)`; print the abbreviation key under each section when one was used; the cap and merged list recorded in provenance.
+- [x] Floors: `hvtiRutilities (>= 1.4.2)`; the helper allow-list test gains `study_abbreviations()`.
 
 ### 3d. `dp-eda`, the composite template
 

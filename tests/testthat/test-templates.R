@@ -256,6 +256,7 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "study_dir", "proc_contents", "built_path", "study_root",  # >= 1.1.12
     "proc_freq",  # >= 1.2.0
     "followup_check",  # >= 1.4.1
+    "study_abbreviations",  # >= 1.4.2
     "label_map", "get_label",
     "cache_fit", "capture_provenance", "provenance_data", "publish_provenance"  # >= 1.3.1
   )
