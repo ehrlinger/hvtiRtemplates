@@ -150,15 +150,11 @@
 #' @export
 read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = NULL,
                           id = "ccfid", key = id) {
-  if (!is.character(dataset) || length(dataset) != 1L || is.na(dataset) || !nzchar(dataset)) {
-    stop("DATASET must name one dataset registered in _study.yml, such as \"study\".", call. = FALSE)
-  }
-  if (!is.null(analysis_set) && !identical(dataset, "study")) {
-    stop("An analysis set is written from the study dataset, not `", dataset,
-         "`. Set ANALYSIS_SET <- NULL to read `", dataset, "` whole.", call. = FALSE)
-  }
+  .check_job_settings(dataset, analysis_set, where, id, key)
   read <- .read_job_source(cfg, dataset, analysis_set)
   d <- read$value
+  # Taken now: subsetting the columns below drops attributes.
+  attrition <- attr(d, "attrition", exact = TRUE)
   rows_read <- nrow(d)
   who <- .resolve_job_id(d, id)
   key <- .match_columns(replace(key, key == id, who$id), names(d))
@@ -171,7 +167,41 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     where_shown = kept$steps$shown,
     id = who$id, key = key, rows = counts$rows, patients = counts$patients
   )
-  list(data = kept$data, record = record, provenance = read$record)
+  list(data = kept$data, record = record, provenance = read$record, attrition = attrition)
+}
+
+# Every setting is checked before the read, so a typo fails fast and is named.
+.check_job_settings <- function(dataset, analysis_set, where, id, key) {
+  if (!is.character(dataset) || length(dataset) != 1L || is.na(dataset) || !nzchar(dataset)) {
+    stop("DATASET must name one dataset registered in _study.yml, such as \"study\".", call. = FALSE)
+  }
+  if (!is.null(analysis_set) &&
+        (!is.character(analysis_set) || length(analysis_set) != 1L || is.na(analysis_set) || !nzchar(analysis_set))) {
+    stop("ANALYSIS_SET must be NULL or name one analysis set, such as \"eda\".", call. = FALSE)
+  }
+  if (!is.null(analysis_set) && !identical(dataset, "study")) {
+    stop("An analysis set is written from the study dataset, not `", dataset,
+         "`. Set ANALYSIS_SET <- NULL to read `", dataset, "` whole.", call. = FALSE)
+  }
+  .where_conditions(where)
+  if (!is.character(id) || length(id) != 1L || is.na(id) || !nzchar(id)) {
+    stop("ID must name one column, such as \"ccfid\".", call. = FALSE)
+  }
+  if (!is.character(key) || !length(key) || anyNA(key) || !all(nzchar(key))) {
+    stop("KEY must name one or more columns, such as ID or c(ID, \"iv_echo\").", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+.require_databuild <- function(version = if (requireNamespace("hvtiRdatabuild", quietly = TRUE)) {
+  utils::packageVersion("hvtiRdatabuild")
+}) {
+  if (is.null(version) || version < "0.2.1") {
+    stop("ANALYSIS_SET needs hvtiRdatabuild 0.2.1 or later",
+         if (!is.null(version)) paste0(" (", version, " is installed)"),
+         "; install it or set ANALYSIS_SET <- NULL.", call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 .read_job_source <- function(cfg, dataset, analysis_set) {
@@ -180,9 +210,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     read$source <- paste0("dataset `", dataset, "` (", basename(hvtiRutilities::built_path(cfg = cfg, dataset = dataset)), ")")
     return(read)
   }
-  if (!requireNamespace("hvtiRdatabuild", quietly = TRUE)) {
-    stop("ANALYSIS_SET needs the hvtiRdatabuild package; install it or set ANALYSIS_SET <- NULL.", call. = FALSE)
-  }
+  .require_databuild()
   path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), paste0(analysis_set, ".parquet"))
   read <- .provenance_file_read(
     paste0("analysis_set:", analysis_set), path, cfg,

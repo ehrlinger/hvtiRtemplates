@@ -56,7 +56,7 @@ test_that("WHERE follows filter(): NA rows are dropped and counted, conditions a
 test_that("rows must be unique on KEY; patients are counted on ID", {
   expect_identical(hvtiRtemplates:::.check_job_key(d0, "ccfid", "ccfid"),
                    list(rows = 6L, patients = 6L))
-  long <- data.frame(ccfid = c(1L, 1L, 2L), iv_echo = c(0.1, 1.2, 0.3))
+  long <- data.frame(ccfid = c(9001L, 9001L, 9002L), iv_echo = c(0.1, 1.2, 0.3))
   expect_identical(hvtiRtemplates:::.check_job_key(long, c("ccfid", "iv_echo"),
                                                    "ccfid"),
                    list(rows = 3L, patients = 2L))
@@ -64,7 +64,9 @@ test_that("rows must be unique on KEY; patients are counted on ID", {
                "1 value of KEY repeats")
   err <- tryCatch(hvtiRtemplates:::.check_job_key(long, "ccfid", "ccfid"),
                   error = conditionMessage)
-  expect_false(grepl("\\b1\\b.*\\b1\\b.*\\b2\\b", err))
+  # Neither the repeated ID nor any other ID value reaches the message.
+  expect_false(grepl("9001", err, fixed = TRUE))
+  expect_false(grepl("9002", err, fixed = TRUE))
   expect_error(hvtiRtemplates:::.check_job_key(long, "visit", "ccfid"),
                "KEY names a column")
 })
@@ -111,6 +113,18 @@ test_that("an analysis set with another dataset is refused", {
 
 test_that("a job outside a study is told to run study_setup()", {
   expect_error(hvtiRtemplates:::.find_study_root(withr::local_tempdir()), "study_setup")
+})
+
+test_that("a malformed _study.yml is not reported as a missing study", {
+  root <- withr::local_tempdir()
+  writeLines("a: [", file.path(root, "_study.yml"))
+  sub <- file.path(root, "20_distributions")
+  dir.create(sub)
+  for (start in c(root, sub)) {
+    err <- tryCatch(hvtiRtemplates:::.find_study_root(start), error = conditionMessage)
+    expect_false(grepl("study_setup", err), info = start)
+    expect_identical(err, tryCatch(hvtiRutilities::study_root(start), error = conditionMessage), info = start)
+  }
 })
 
 test_that("a hand-off carries the selection, and older four-slot lineage still validates", {
@@ -259,4 +273,40 @@ test_that("an explicit ID or KEY matches its column ignoring case, as read_built
 test_that("a WHERE that fails to evaluate names the condition", {
   cfg <- job_study(d0)
   expect_error(read_job_data(cfg, where = quote(AGE > 1)), "WHERE condition `AGE > 1`: .*AGE")
+})
+
+test_that("settings are checked before any data is read", {
+  cfg <- job_study(d0)
+  # DATASET "absent" is not registered, so every error below must come from the
+  # settings check, not the read.
+  expect_error(read_job_data(cfg, dataset = "absent", where = "age >= 18"), "WHERE must be NULL")
+  expect_error(read_job_data(cfg, dataset = "absent", analysis_set = c("a", "b")), "ANALYSIS_SET")
+  expect_error(read_job_data(cfg, dataset = "absent", id = 1), "ID must name one column")
+  expect_error(read_job_data(cfg, dataset = "absent", key = 1), "KEY must name")
+  expect_error(read_job_data(cfg, dataset = ""), "DATASET")
+})
+
+test_that("an analysis set needs hvtiRdatabuild 0.2.1 or later", {
+  expect_error(hvtiRtemplates:::.require_databuild(NULL), "hvtiRdatabuild 0.2.1")
+  expect_error(hvtiRtemplates:::.require_databuild(package_version("0.2.0")), "0.2.1 or later.*0.2.0")
+  expect_silent(hvtiRtemplates:::.require_databuild(package_version("0.2.1")))
+})
+
+test_that("read_job_data() reads an analysis set and keeps its attrition", {
+  skip_if_not_installed("hvtiRdatabuild", "0.2.1")
+  skip_if_not_installed("arrow")
+  skip_if_not_installed("hvtiPlotR")
+  cfg <- job_study(d0)
+  cat("analysis_sets:\n  eda:\n    id: ccfid\n    vars: [ccfid, age, hx_chf]\n",
+      "    exclude:\n      - reason: under 18\n        when: age < 18\n",
+      sep = "", file = cfg$file, append = TRUE)
+  suppressMessages(hvtiRdatabuild::write_analysis_set("eda", cfg))
+  out <- read_job_data(cfg, analysis_set = "eda", where = quote(hx_chf == 1))
+  expect_identical(as.integer(out$data$ccfid), c(2L, 3L, 5L))
+  expect_identical(out$record$value[[1L]], "analysis set `eda` of the study dataset")
+  expect_s3_class(out$attrition, "data.frame")
+  expect_identical(out$attrition$reason, "under 18")
+  expect_identical(as.integer(out$attrition$n_excluded), 1L)
+  expect_identical(attr(out$record, "selection")$analysis_set, "eda")
+  expect_null(read_job_data(cfg)$attrition)
 })
