@@ -16,7 +16,9 @@ lm_run <- function(qualifier, labels, env, choices = list()) {
 
 lm_data <- function(n = 120L) {
   set.seed(42)
-  d <- data.frame(id = seq_len(n), age = stats::rnorm(n), female = rep(0:1, length.out = n))
+  d <- data.frame(
+    ccfid = seq_len(n), id = seq_len(n), age = stats::rnorm(n), female = rep(0:1, length.out = n)
+  )
   p <- stats::plogis(-0.2 + 0.8 * d$age - 0.3 * d$female)
   d$outcome <- ifelse(stats::runif(n) < p, "event", "none")
   d$treatment <- ifelse(stats::runif(n) < p, "treated", "control")

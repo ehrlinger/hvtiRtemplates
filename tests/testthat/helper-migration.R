@@ -4,6 +4,7 @@ migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame()) 
   for (folder in folders) dir.create(file.path(root, folder))
   i <- seq_len(40L)
   built <- data.frame(
+    ccfid = 1000L + i,
     dead = i %% 2L, iv_dead = i / 10, iv_fup = i / 10 + 1,
     year = 2000L + i %% 10L, female = i %% 2L, race_grp = 1L + i %% 3L,
     repair = as.integer(i %% 3L == 0L), age = 40 + i, bmi = 20 + i / 10,
