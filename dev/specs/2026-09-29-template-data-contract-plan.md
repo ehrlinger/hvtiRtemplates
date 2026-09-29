@@ -558,25 +558,44 @@ template_chunk <- function(src, label) {
   src[(at + 1L):(end - 1L)]
 }
 
-shared_defaults <- c(
-  DATASET = 'DATASET <- "study"', ANALYSIS_SET = "ANALYSIS_SET <- NULL",
-  WHERE = "WHERE <- NULL", ID = 'ID <- "ccfid"', KEY = "KEY <- ID"
-)
+# Downstream templates take the selection their upstream job recorded: WHERE,
+# ID and KEY default to NULL ("take the upstream value") and their data chunk
+# checks it. hm, hp and hs also read data; the explain jobs and the bootstrap
+# reports read a saved forest or bag, so they have no DATASET or ANALYSIS_SET.
+downstream_templates <- c("hm", "hp", "hs", "rfs-explain", "rfc-explain", "rfr-explain",
+                          "bl", "br", "bc", "bh")
+reads_data <- function(name) !name %in% c("rfs-explain", "rfc-explain", "rfr-explain", "bl", "br", "bc", "bh")
 
-test_that("every converted template has the shared settings and a data chunk calling read_job_data()", {
+expected_defaults <- function(name) {
+  if (name %in% downstream_templates) {
+    out <- c(WHERE = "WHERE <- NULL", ID = "ID <- NULL", KEY = "KEY <- NULL")
+  } else {
+    out <- c(WHERE = "WHERE <- NULL", ID = 'ID <- "ccfid"', KEY = "KEY <- ID")
+  }
+  if (reads_data(name)) out <- c(DATASET = 'DATASET <- "study"', ANALYSIS_SET = "ANALYSIS_SET <- NULL", out)
+  out
+}
+
+test_that("every converted template has the shared settings and a conforming data chunk", {
   tl <- template_list()
   todo <- setdiff(tl$name, pending_contract_families)
   for (i in match(todo, tl$name)) {
+    name <- tl$name[[i]]
     src <- readLines(tl$file[[i]], warn = FALSE)
     choices <- template_chunk(src, "edit-study-choices")
-    expect_false(is.null(choices), info = tl$name[[i]])
-    for (setting in names(shared_defaults)) {
-      expect_true(any(trimws(sub("#.*$", "", choices)) == shared_defaults[[setting]]),
-                  info = paste(tl$name[[i]], setting))
+    expect_false(is.null(choices), info = name)
+    defaults <- expected_defaults(name)
+    for (setting in names(defaults)) {
+      expect_true(any(trimws(sub("#.*$", "", choices)) == defaults[[setting]]), info = paste(name, setting))
     }
     data <- template_chunk(src, "data")
-    expect_false(is.null(data), info = tl$name[[i]])
-    expect_true(any(grepl("hvtiRtemplates::read_job_data(", data, fixed = TRUE)), info = tl$name[[i]])
+    expect_false(is.null(data), info = name)
+    if (reads_data(name)) {
+      expect_true(any(grepl("hvtiRtemplates::read_job_data(", data, fixed = TRUE)), info = name)
+    }
+    if (name %in% downstream_templates) {
+      expect_true(any(grepl(".check_upstream_selection(", data, fixed = TRUE)), info = name)
+    }
   }
 })
 
@@ -589,8 +608,9 @@ test_that("no converted template uses a retired name for the shared vocabulary",
   }
 })
 
-test_that("the pending list names only real templates", {
+test_that("the pending and downstream lists name only real templates", {
   expect_true(all(pending_contract_families %in% template_list()$name))
+  expect_true(all(downstream_templates %in% template_list()$name))
 })
 ```
 
@@ -823,7 +843,7 @@ TIME <- .sel$time
 EVENT <- .sel$event
 ```
 
-Replace `hs`'s hand-typed filter (which had to repeat `hm`'s) with this. `hp` gains the same read, closing its missing filter (#177). Add a test: render `hs` (or run its chunks) with `WHERE <- quote(age >= 65)` against an `hz.rds` whose selection has `where = "age >= 18"`; expect the stop naming both.
+Put this in the chunk labelled `data` (the contract test looks for both `.check_upstream_selection(` and `hvtiRtemplates::read_job_data(` there). Their settings omit `DATASET`/`ANALYSIS_SET` defaults other than `DATASET <- "study"` and `ANALYSIS_SET <- NULL`. Replace `hs`'s hand-typed filter (which had to repeat `hm`'s) with this. `hp` gains the same read, closing its missing filter (#177). Add a test: render `hs` (or run its chunks) with `WHERE <- quote(age >= 65)` against an `hz.rds` whose selection has `where = "age >= 18"`; expect the stop naming both.
 
 - [ ] **Step 4: Run tests, lint, spelling. NEWS: "The hazard chain reads its data through `read_job_data()`: `STATUS` is `EVENT`, the `iu_dead`/`idead` defaults are `iv_dead`/`dead`, the filter typed into every job is one `WHERE` in `ac` and `hz`, and `hm`, `hp` and `hs` take `WHERE`, `ID`, `KEY`, `TIME` and `EVENT` from `hz`'s saved fit, stopping if their own differ." Commit, PR.**
 
@@ -860,7 +880,31 @@ if (length(.chr)) {
 
 Pass `selection = attr(job_data$record, "selection")` to the fit's `.attach_handoff_lineage()`.
 
-- [ ] **Step 3: Explain jobs.** Add `WHERE <- NULL`, `ID <- NULL`, `KEY <- NULL` (commented "NULL takes the fit's value"), plus `DATASET <- "study"` and `ANALYSIS_SET <- NULL`, and resolve them after reading the forest with `hvtiRtemplates:::.check_upstream_selection(<fit lineage>$selection, list(where = WHERE, id = ID, key = KEY))`, stopping on disagreement. The explain jobs read no data themselves, so the contract test's data-chunk expectation applies to them through a chunk named `data` that performs this check and prints the fit's record.
+- [ ] **Step 3: Explain jobs.** Add to `edit-study-choices`, and no `DATASET` or `ANALYSIS_SET` (they read the saved forest, not data):
+
+```r
+# EDIT: the fit's selection is used; set any of these only to confirm it.
+# NULL takes the value the fit job used.
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
+```
+
+After the chunk that reads the forest, add a chunk labelled `data`:
+
+```r
+#| label: data
+.sel <- hvtiRtemplates:::.check_upstream_selection(
+  <fit lineage>$selection, list(where = WHERE, id = ID, key = KEY)
+)
+knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
+                        value = c(.sel$id, paste(.sel$key, collapse = ", "),
+                                  if (length(.sel$where)) paste(.sel$where, collapse = "; ") else "none",
+                                  .sel$rows)),
+             col.names = c("Data", ""), caption = "The data the fit job read")
+```
+
+(`<fit lineage>` is the lineage of the forest the template already reads, for example `.forest_read$lineage`; use that object's name.)
 
 - [ ] **Step 4: Run tests (the test file muffles only varPro's missing-rows notice), lint, spelling. NEWS: "The random-forest templates read their data through `read_job_data()`, gaining `WHERE`, `ID` and `KEY`; text predictors are converted to factors with a note; `explain` jobs take the fit's selection." Commit, PR.**
 
@@ -874,13 +918,23 @@ Pass `selection = attr(job_data$record, "selection")` to the fit's `.attach_hand
 
 - [ ] **Step 1: Remove the four names from `pending_contract_families`; run; expect FAIL.**
 
-- [ ] **Step 2: Settings and a `data` chunk that reports the bag's selection.** These reports read a bag, not data. Add the shared block to `edit-study-choices` (verbatim as in Task 7 Step 2) with the comment "These settings describe the data the bootstrap runner read; they are checked against the bag, not used to read data." Add a chunk labelled `data` after the bag is read:
+- [ ] **Step 2: Settings and a `data` chunk that reports the bag's selection.** These reports read a bag, not data. Add to `edit-study-choices`, and no `DATASET` or `ANALYSIS_SET` (these reports read a bag, not data):
+
+```r
+# EDIT: the bag's recorded selection is used; set any of these only to confirm
+# it. NULL takes the value the bootstrap runner used.
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
+```
+
+Add a chunk labelled `data` after the bag is read:
 
 ```r
 #| label: data
 .bag_selection <- attr(.bag, "hvti_provenance")$selection
 if (!is.null(.bag_selection)) {
-  .sel <- hvtiRtemplates:::.check_upstream_selection(.bag_selection, list(where = NULL, id = NULL, key = NULL))
+  .sel <- hvtiRtemplates:::.check_upstream_selection(.bag_selection, list(where = WHERE, id = ID, key = KEY))
   knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
                           value = c(.sel$id, paste(.sel$key, collapse = ", "),
                                     if (length(.sel$where)) paste(.sel$where, collapse = "; ") else "none",
