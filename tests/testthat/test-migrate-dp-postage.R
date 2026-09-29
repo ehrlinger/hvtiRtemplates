@@ -207,7 +207,7 @@ test_that("postage draws its categorical pages in the role colors", {
 # the level it is about. The group list has its own test below.
 without_group_list <- function(env = parent.frame()) {
   real <- hvtiRutilities::study_abbreviations
-  local_mocked_bindings(
+  testthat::local_mocked_bindings(
     study_abbreviations = function(cfg, extra = NULL, defaults = TRUE) real(cfg, extra = extra, defaults = FALSE),
     .package = "hvtiRutilities", .env = env
   )
