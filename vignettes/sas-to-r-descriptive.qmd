@@ -137,14 +137,14 @@ render_job(job, final = TRUE)
 
 `render_job()` runs Quarto from the job's own directory, so the same call works
 for adopted and numbered study layouts. A final render fails at the
-`edit-guard` chunk with the unresolved list.
+`guard-edits` chunk with the unresolved list.
 
 ## Which data a job reads
 
 A SAS job names its dataset in a `set` statement, so the answer is in the code.
 An R job takes it from `_study.yml`, which can offer the same study more than
-one way. The descriptive jobs choose with two settings at the top of their
-`data` chunk, and every rendered report prints what they chose:
+one way. The descriptive jobs choose with two settings in their
+`edit-study-choices` chunk, and every rendered report prints what they chose:
 
 ```
 Data read: dataset `builtr` (builtr.sas7bdat), 2514 rows, 135 columns.

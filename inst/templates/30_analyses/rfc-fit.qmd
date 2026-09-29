@@ -63,7 +63,7 @@ if (utils::packageVersion("ggRandomForests") < "4.0.0") {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and
 # README.md says a job that still contains one has not been finished. This
@@ -197,7 +197,7 @@ set_path <- function(kind, file) {
 Edit these values for this study before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: the outcome to classify. Any coding works: 0/1, "yes"/"no" or a label.
 # The read step makes it a factor, which is what makes this a classification
 # forest rather than a regression on the codes.

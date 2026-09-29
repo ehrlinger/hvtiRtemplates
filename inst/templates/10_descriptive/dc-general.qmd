@@ -36,7 +36,7 @@ if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and a job
 # that still contains one has not been finished. This chunk is what makes that
@@ -101,7 +101,7 @@ set_path <- function(kind, file) {
 Edit these values for this study before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: the built dataset this job reads.
 DATASET <- "study"
 

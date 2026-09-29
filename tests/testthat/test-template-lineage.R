@@ -25,7 +25,7 @@ test_that("RF explain retains fitted data lineage after the registry changes", {
   fit$.root <- root
   fit$.provenance_data <- list(hvtiRutilities::provenance_data(cfg = hvtiRutilities::study_config(root), role = "training"))
   fit$d <- data_a
-  rf_run("rfs", "fit", c("set", "study-choices", "fit", "save"), fit, lineage_rfs_choices)
+  rf_run("rfs", "fit", c("set", "edit-study-choices", "fit", "save"), fit, lineage_rfs_choices)
   fitted_hash <- fit$.provenance_data[[1L]]$sha256
   handoff <- file.path(fit$CACHE_DIR, "rfs.rds")
   handoff_hash <- lineage_sha256(handoff)
@@ -35,7 +35,7 @@ test_that("RF explain retains fitted data lineage after the registry changes", {
 
   explain <- new.env(parent = globalenv())
   explain$.root <- root
-  rf_run("rfs", "explain", c("set", "study-choices", "forest"), explain)
+  rf_run("rfs", "explain", c("set", "edit-study-choices", "forest"), explain)
 
   expect_identical(explain$.provenance_data[[1L]]$sha256, fitted_hash)
   expect_identical(explain$.provenance_artifacts[[1L]]$sha256, handoff_hash)
@@ -53,7 +53,7 @@ test_that("RF explain rejects a lineage-free package handoff", {
   explain <- new.env(parent = globalenv())
   explain$.root <- fit$.root
   expect_error(
-    rf_run("rfs", "explain", c("set", "study-choices", "forest"), explain),
+    rf_run("rfs", "explain", c("set", "edit-study-choices", "forest"), explain),
     "rebuild.*rfs-fit",
     ignore.case = TRUE
   )
@@ -85,7 +85,7 @@ test_that("lm-checkpred distinguishes training, validation, and model lineage", 
   env$d <- d
   env$.provenance_data <- list(hvtiRutilities::provenance_data(cfg = cfg, role = "validation"))
   env$set_path <- function(kind, file) file.path(model_dir, file)
-  lm_run("checkpred", c("study-choices", "model", "validate", "save"), env,
+  lm_run("checkpred", c("edit-study-choices", "model", "validate", "save"), env,
          list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 10L))
 
   expect_identical(vapply(env$.provenance_data, `[[`, character(1L), "role"), c("training", "validation"))
@@ -111,7 +111,7 @@ test_that("lm-checkpred rejects a lineage-free source model", {
   env$set_path <- function(kind, file) file.path(model_dir, file)
 
   expect_error(
-    lm_run("checkpred", c("study-choices", "model"), env,
+    lm_run("checkpred", c("edit-study-choices", "model"), env,
            list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 10L)),
     "rebuild.*lm",
     ignore.case = TRUE
@@ -146,7 +146,7 @@ test_that("lm-checkpred rejects source lineage without runtime model metadata", 
     env$set_path <- function(kind, file) file.path(model_dir, file)
 
     expect_error(
-      lm_run("checkpred", c("study-choices", "model"), env,
+      lm_run("checkpred", c("edit-study-choices", "model"), env,
              list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 10L)),
       "runtime analysis and cohort metadata.*rebuild",
       ignore.case = TRUE,

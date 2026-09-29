@@ -47,7 +47,7 @@ suppressPackageStartupMessages({
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and
 # README.md says a job that still contains one has not been finished. This
@@ -182,7 +182,7 @@ set_path <- function(kind, file) {
 Edit these values for this study before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # Model phases and fixed parameters.
 # EDIT: phases and the fixed set on each.
 phases <- list(
@@ -212,7 +212,7 @@ EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_intege
      silently accept an unreconciled cohort. -->
 
 ```{r}
-#| label: cohort
+#| label: edit-cohort
 .cfg <- study_config(start = .root)
 .data_read <- hvtiRtemplates:::.provenance_read(
   "study", .cfg, function() read_built(cfg = .cfg)
@@ -321,7 +321,7 @@ produces a fit, not an error.
      is checked by the multi-start probes below, not assumed. -->
 
 ```{r}
-#| label: start
+#| label: edit-start
 # ---- Shape A: seed from the SAS job's converged estimates -------------------
 # your SAS estimates, on their NATURAL scale, wrapped per `theta_names`
 # above -- log() for the log-scale positions, bare for the rest.
@@ -350,7 +350,7 @@ if (length(theta0) != length(theta_names)) {
      job's `time` / `event` / `icensor` statements actually say. -->
 
 ```{r}
-#| label: response
+#| label: edit-response
 # ---- Shape A: no interval censoring -----------------------------------------
 # SAS `time <t>; event <e>;` maps straight onto Surv(time, status). Nothing
 # below needs the interval machinery and `objective = "sas"` does not apply.
@@ -466,7 +466,7 @@ knitr::kable(data.frame(
 ### Fit 2 — did the starting point matter?
 
 ```{r}
-#| label: multistart
+#| label: edit-multistart
 # The probes run at n_starts = 1 ON PURPOSE. Multi-start is what makes the
 # reported fit robust -- it perturbs around its start until it escapes small
 # basins -- which is exactly what would HIDE a second basin from this check. A
@@ -538,7 +538,7 @@ knitr::kable(conservation, digits = 6)
 ## Estimates
 
 ```{r}
-#| label: estimates
+#| label: edit-estimates
 cf <- coef(fit_det)
 
 # vcov() returns a scalar NA rather than a matrix when the Hessian could not be

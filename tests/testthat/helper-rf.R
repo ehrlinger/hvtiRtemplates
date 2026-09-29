@@ -48,7 +48,7 @@ rf_study <- function(.local_envir = parent.frame()) {
 }
 
 # Evaluate the chunks `labels` of template (prefix, qualifier) in `env`. After
-# `study-choices` runs, `choices` overwrites the template's placeholders, as a
+# `edit-study-choices` runs, `choices` overwrites the template's placeholders, as a
 # study author's edits would. `setup` is never run: it resolves the study root
 # from the file being rendered, so the caller sets env$.root and attaches the
 # packages instead.
@@ -56,7 +56,7 @@ rf_run <- function(prefix, qualifier, labels, env, choices = list()) {
   src <- readLines(template_path(prefix, qualifier), warn = FALSE)
   for (label in labels) {
     suppressMessages(eval(parse(text = rf_chunk(src, label)), envir = env))
-    if (identical(label, "study-choices")) list2env(choices, envir = env)
+    if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   }
   invisible(env)
 }
@@ -122,6 +122,6 @@ rf_env <- function(data, .local_envir = parent.frame()) {
 # from the file's own top-level bindings, not across test files.
 rf_fit_first <- function(prefix, data, choices, .local_envir = parent.frame()) {
   env <- rf_env(data, .local_envir)
-  rf_run(prefix, "fit", c("set", "study-choices", "read", "fit", "save"), env, choices)
+  rf_run(prefix, "fit", c("set", "edit-study-choices", "read", "fit", "save"), env, choices)
   env
 }

@@ -77,7 +77,7 @@ if (utils::packageVersion("hvtiRbootstrap") < "0.9.0") {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and
 # README.md says a job that still contains one has not been finished. This
@@ -211,7 +211,7 @@ set_path <- function(kind, file) {
 Edit these values for this study before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: what this run was LAUNCHED as, not what happens to be on disk.
 #
 # Nothing in a chunk knows how many siblings it was launched alongside, so these
@@ -442,7 +442,7 @@ halts having selected nothing — with no warning and `n_failed = 0`. The summar
 then reads as a table of perfectly reliable variables.
 
 ```{r}
-#| label: health
+#| label: edit-health
 # EDIT: the candidate pool, written LITERALLY in your runner's formula.
 #
 # Not in a variable, not via as.formula() or reformulate(). hzr_bootstrap() and
@@ -549,7 +549,7 @@ The naming convention tells you two variables are RELATED. Only the data tells
 you whether they are REDUNDANT.
 
 ```{r}
-#| label: concept-map
+#| label: edit-concept-map
 # EDIT: the affix vocabulary, if your study's variable names do not follow
 # vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing
 # 2, the order in which they strip, and the deliberate refusal to reduce agee
@@ -659,7 +659,7 @@ coefs[cbind(reps$replicate, match(reps$parameter, terms))] <- reps$estimate
 ```
 
 ```{r}
-#| label: clusters
+#| label: edit-clusters
 # EDIT: your clusters, one per concept you want reported, and the phase each
 # runs against. The SAS job named eight -- Age, Size, BMI, race, GFR, iv_opyrs,
 # Renal, blrbn_pr -- and ran each against both the early and constant phases.
@@ -682,7 +682,7 @@ apart. A declaration says a clinician thinks these are one thing; a correlation
 says the pool cannot tell them apart.
 
 ```{r}
-#| label: collinear
+#| label: edit-collinear
 # EDIT: the correlation above which two candidates count as indistinguishable.
 # 0.99 finds near-duplicates -- a variable and its rescaling, a dummy and its
 # complement. Lower it to see the pool's structure rather than only its

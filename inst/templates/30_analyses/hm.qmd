@@ -50,7 +50,7 @@ suppressPackageStartupMessages({
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and
 # README.md says a job that still contains one has not been finished. This
@@ -186,7 +186,7 @@ set_path <- function(kind, file) {
 Edit these values for this study before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # Follow-up time, event, and SAS source for covariates.
 # EDIT: time and event variables.
 TIME   <- "iu_dead"
@@ -228,7 +228,7 @@ DECILE_TIME <- 10
      silently accept an unreconciled cohort. -->
 
 ```{r}
-#| label: cohort
+#| label: edit-cohort
 .cfg <- study_config(start = .root)
 .data_read <- hvtiRtemplates:::.provenance_read(
   "study", .cfg, function() read_built(cfg = .cfg)
@@ -292,7 +292,7 @@ it. Only the names are taken: the `name=value` coefficients in a block are the
 ```
 
 ```{r}
-#| label: covariates
+#| label: edit-covariates
 sas_lines <- readLines(do.call(sas_path, as.list(SAS_JOB)), warn = FALSE)
 
 # EDIT: your phase-block markers. A SAS hazard model offers candidates per
@@ -423,7 +423,7 @@ without a seed. The RNG state is saved and restored, so seeding this document
 does not change random behavior downstream of it.
 
 ```{r}
-#| label: fit
+#| label: edit-fit
 old_seed <- if (exists(".Random.seed", .GlobalEnv)) .GlobalEnv$.Random.seed else NULL
 set.seed(20260827)   # any fixed value; it must not change between renders
 
@@ -521,7 +521,7 @@ evidence for it. If `free_without_se` is 0 for stage 2 and `pd` is `TRUE`,
 prefer stage 2.
 
 ```{r}
-#| label: reported
+#| label: edit-reported
 reported <- stage1   # EDIT: stage2 if the table above favors it
 ```
 

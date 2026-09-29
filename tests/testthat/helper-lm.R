@@ -9,7 +9,7 @@ lm_run <- function(qualifier, labels, env, choices = list()) {
   src <- readLines(template_path("lm", qualifier), warn = FALSE)
   for (label in labels) {
     suppressMessages(eval(parse(text = lm_chunk(src, label)), envir = env))
-    if (identical(label, "study-choices")) list2env(choices, envir = env)
+    if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   }
   invisible(env)
 }

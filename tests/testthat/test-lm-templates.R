@@ -52,7 +52,7 @@ test_that("lm-binary fits and saves a model bundle", {
   choices <- list(OUTCOME = "outcome", PREDICTORS = c("age", "female"),
                   OUTCOME_LEVELS = c("none", "event"), EVENT_LEVEL = "event",
                   ID = "id", IMPUTATION = NULL)
-  lm_run("binary", c("study-choices", "fit", "save"), env, choices)
+  lm_run("binary", c("edit-study-choices", "fit", "save"), env, choices)
   expect_s3_class(env$fit, "lm_fit")
   expect_identical(env$fit$meta$model_family, "binary")
   expect_true(file.exists(env$MODEL_PATH))
@@ -67,7 +67,7 @@ test_that("lm-binary validates variables inside model terms", {
   choices <- list(OUTCOME = "outcome", PREDICTORS = c("age", "I(age^2)"),
                   OUTCOME_LEVELS = c("none", "event"), EVENT_LEVEL = "event",
                   ID = "id", IMPUTATION = NULL)
-  lm_run("binary", c("study-choices", "read", "fit"), env, choices)
+  lm_run("binary", c("edit-study-choices", "read", "fit"), env, choices)
   expect_s3_class(env$fit, "lm_fit")
   expect_true("I(age^2)" %in% names(stats::coef(env$fit$models[[1L]])))
 })
@@ -86,7 +86,7 @@ test_that("lm outcome templates fit every declared family", {
     env <- new.env(parent = globalenv())
     env$d <- d
     env$set_path <- function(kind, file) tempfile(fileext = file)
-    lm_run(qualifier, c("study-choices", "fit", "results", "save"), env, cases[[qualifier]])
+    lm_run(qualifier, c("edit-study-choices", "fit", "results", "save"), env, cases[[qualifier]])
     expect_true(inherits(env$fit, "lm_fit"), info = qualifier)
     expect_identical(env$fit$meta$model_family, qualifier, info = qualifier)
     expect_identical(env$fit$meta$n_imputations, 2L, info = qualifier)
@@ -118,7 +118,7 @@ test_that("lm propensity and count templates expose pooled inference", {
     env <- new.env(parent = globalenv())
     env$d <- d
     env$set_path <- function(kind, file) tempfile(fileext = file)
-    labels <- c("study-choices", "fit", "results", "save")
+    labels <- c("edit-study-choices", "fit", "results", "save")
     lm_run(qualifier, labels, env, cases[[qualifier]])
     expect_true(all(c("estimates", "covariance", "fit_status") %in% names(env$fit$tables)), info = qualifier)
     expect_identical(env$fit$meta$n_imputations, 2L, info = qualifier)
@@ -162,7 +162,7 @@ test_that("lm-checkpred applies the saved bundle without fitting", {
     fit_logistic = function(...) stop("checkpred refitted a model", call. = FALSE),
     .package = "hvtiRpropensity"
   )
-  lm_run("checkpred", c("study-choices", "model", "validate", "results", "save"), env,
+  lm_run("checkpred", c("edit-study-choices", "model", "validate", "results", "save"), env,
          list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 10L))
   expect_s3_class(env$validation, "lm_validation")
   expect_equal(lapply(env$model$models, stats::coef), lapply(model$models, stats::coef))
@@ -194,7 +194,7 @@ test_that("lm-checkpred refuses to overwrite its source bundle", {
   env$d <- d
   env$.provenance_data <- list(hvtiRutilities::provenance_data(cfg = cfg, role = "validation"))
   env$set_path <- function(kind, file) file.path(bundle_dir, file)
-  lm_run("checkpred", c("study-choices", "model", "validate"), env,
+  lm_run("checkpred", c("edit-study-choices", "model", "validate"), env,
          list(MODEL_FILE = "lm-checkpred.rds", OUTCOME = "outcome", GROUPS = 10L))
   expect_error(lm_run("checkpred", "save", env), "overwrite the source model")
   expect_identical(readBin(path, "raw", n = file.info(path)$size), before)

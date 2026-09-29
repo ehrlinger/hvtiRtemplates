@@ -321,7 +321,7 @@ test_that("logistic fit provenance is derived from runtime metadata and status t
     env$.in <- file.path(tempdir(), paste0("lm-", qualifier, ".rmarkdown"))
     env$.provenance_data <- list()
     env$set_path <- function(kind, file) tempfile(fileext = ".rds")
-    lm_run(qualifier, c("study-choices", "fit", "save"), env, case$choices)
+    lm_run(qualifier, c("edit-study-choices", "fit", "save"), env, case$choices)
     record <- capture_provenance(template_by_name(paste0("lm-", qualifier)), env)
     meta <- env$fit$meta
     status <- env$fit$tables$fit_status
@@ -368,7 +368,7 @@ test_that("single-dataset logistic provenance reports rows without claiming uniq
   env$SUBJECT <- "runtime"
   env$TYPE <- "metadata"
   env$.in <- file.path(tempdir(), "lm-binary.rmarkdown")
-  lm_run("binary", c("study-choices", "fit"), env, list(
+  lm_run("binary", c("edit-study-choices", "fit"), env, list(
     OUTCOME = "outcome", PREDICTORS = c("age", "female"),
     OUTCOME_LEVELS = c("none", "event"), EVENT_LEVEL = "event",
     ID = "id", IMPUTATION = NULL
@@ -416,7 +416,7 @@ test_that("lm-checkpred separates carried training metadata from runtime validat
   env$SUBJECT <- "runtime"
   env$TYPE <- "validation"
   env$.in <- file.path(root, "lm-checkpred.rmarkdown")
-  lm_run("checkpred", c("study-choices", "model", "validate"), env,
+  lm_run("checkpred", c("edit-study-choices", "model", "validate"), env,
          list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 10L))
   record <- capture_provenance(template_by_name("lm-checkpred"), env)
   meta <- env$validation$meta
@@ -505,7 +505,7 @@ test_that("RF provenance chunks record the fitted objects they consume", {
     rf_skip_unless_stack(rf_template_packages(prefix, "fit"))
     case <- rf_cases[[prefix]]
     fit <- rf_env(case$data())
-    suppressWarnings(rf_run(prefix, "fit", c("set", "study-choices", "read", "fit", "save"), fit, case$choices))
+    suppressWarnings(rf_run(prefix, "fit", c("set", "edit-study-choices", "read", "fit", "save"), fit, case$choices))
     fit$SUBJECT <- "provenance"
     fit$TYPE <- "fit"
     fit$.in <- file.path(fit$.root, paste0(prefix, "-fit.rmarkdown"))
@@ -515,7 +515,7 @@ test_that("RF provenance chunks record the fitted objects they consume", {
 
     explain <- new.env(parent = globalenv())
     explain$.root <- fit$.root
-    rf_run(prefix, "explain", c("set", "study-choices", "forest"), explain)
+    rf_run(prefix, "explain", c("set", "edit-study-choices", "forest"), explain)
     explain$SUBJECT <- "provenance"
     explain$TYPE <- "explain"
     explain$.in <- file.path(explain$.root, paste0(prefix, "-explain.rmarkdown"))

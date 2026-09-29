@@ -25,7 +25,7 @@ if (utils::packageVersion("hvtiRpropensity") < "0.1.7") stop("This template need
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 .tok <- paste0("ED", "IT", ":")
 .cur <- knitr::current_input()
@@ -68,7 +68,7 @@ set_path <- function(kind, file) {
 ```
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 DATASET <- "study"                         # EDIT: registered dataset name.
 TREATMENT <- "treatment"                   # EDIT: ordered treatment column.
 PREDICTORS <- c("age", "female")           # EDIT: pre-treatment covariates.

@@ -1,14 +1,15 @@
 extract_chunk <- function(path, label) {
   lines <- readLines(path, warn = FALSE)
-  chunk_label <- grep(paste0("^#\\| label: ", label, "$"), lines)
+  # A chunk holding an EDIT: marker is labeled edit-<label>; either names it.
+  chunk_label <- grep(paste0("^#\\| label: (edit-)?", label, "$"), lines)
   chunk_end <- chunk_label + which(lines[-seq_len(chunk_label)] == "```")[[1L]]
   parse(text = lines[(chunk_label + 1L):(chunk_end - 1L)])
 }
 
 data_route_chunks <- function(path) {
   lines <- readLines(path, warn = FALSE)
-  choices <- if (any(grepl("#| label: study-choices", lines, fixed = TRUE))) {
-    extract_chunk(path, "study-choices")
+  choices <- if (any(grepl("#| label: edit-study-choices", lines, fixed = TRUE))) {
+    extract_chunk(path, "edit-study-choices")
   } else {
     expression()
   }

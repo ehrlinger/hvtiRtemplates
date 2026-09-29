@@ -55,7 +55,7 @@ if (!requireNamespace("patchwork", quietly = TRUE)) {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 .tok <- paste0("ED", "IT", ":")
 .cur <- knitr::current_input()
@@ -117,7 +117,7 @@ Set the values in this chunk before rendering. Left as they are, they draw the
 all-deaths follow-up panel and every column of the `eda` analysis set.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: the built dataset this job reads. "study" is the file named by built:
 # in _study.yml; any other name must be declared under additional_datasets:,
 # such as a column subset written for R. Analysis sets are derived from
@@ -427,7 +427,8 @@ show_table(data.frame(
 # hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
 # selected, so the report carries no patient-level column; run dc-gfup to review
 # the suspicious rows themselves.
-if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in study-choices.", call. = FALSE)
+if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
+                                              "(study-choices in a job made before that rename).", call. = FALSE)
 if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLORS) == 3L &&
                             setequal(names(COLORS), c("alive", "dead", "event")))) {
   stop("COLORS must be NULL or name exactly alive, dead and event.", call. = FALSE)

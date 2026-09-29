@@ -26,7 +26,7 @@ if (utils::packageVersion("hvtiRpropensity") < "0.1.7") stop("This template need
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 .tok <- paste0("ED", "IT", ":")
 .cur <- knitr::current_input()
@@ -70,7 +70,7 @@ set_path <- function(kind, file) {
 ```
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 DATASET <- "validation"                    # EDIT: registered validation dataset.
 MODEL_FILE <- "lm-binary.rds"              # EDIT: reviewed source bundle in this set's estimates.
 OUTCOME <- "outcome"                       # EDIT: validation outcome column.

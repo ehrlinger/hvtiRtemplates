@@ -94,7 +94,7 @@ if (utils::packageVersion("hvtiRbootstrap") < "0.9.3") {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 # The markers in this file name work a study author still has to do, and
 # README.md says a job that still contains one has not been finished. This
@@ -228,7 +228,7 @@ set_path <- function(kind, file) {
 Edit these values for this study before rendering.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: what this run was LAUNCHED as, not what happens to be on disk.
 #
 # Nothing in this file knows how many replicates the runner was asked for, so
@@ -598,7 +598,7 @@ The naming convention tells you two variables are RELATED. Only the data tells
 you whether they are REDUNDANT.
 
 ```{r}
-#| label: concept-map
+#| label: edit-concept-map
 # EDIT: the affix vocabulary, if your study's variable names do not follow
 # vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing
 # 2, the order in which they strip, and the deliberate refusal to reduce agee
@@ -707,7 +707,7 @@ coefs[cbind(reps$replicate, match(reps$parameter, terms))] <- reps$estimate
 ```
 
 ```{r}
-#| label: clusters
+#| label: edit-clusters
 # EDIT: your clusters, one per concept you want reported. The SAS jobs this
 # replaces named around eight -- Age, Size, BMI, race, GFR, Renal and the like.
 # There is no sensible default: which concepts are worth clustering is a
@@ -729,7 +729,7 @@ apart. A declaration says a clinician thinks these are one thing; a correlation
 says the pool cannot tell them apart.
 
 ```{r}
-#| label: collinear
+#| label: edit-collinear
 # EDIT: the correlation above which two candidates count as indistinguishable.
 # 0.99 finds near-duplicates -- a variable and its rescaling, a dummy and its
 # complement. Lower it to see the pool's structure rather than only its

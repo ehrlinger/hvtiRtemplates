@@ -53,7 +53,7 @@ if (utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
 ```
 
 ```{r}
-#| label: edit-guard
+#| label: guard-edits
 #| results: asis
 .tok <- paste0("ED", "IT", ":")
 .cur <- knitr::current_input()
@@ -114,7 +114,7 @@ Set the values in this chunk before rendering. Left as they are, they draw the
 all-deaths panel for the `eda` analysis set, so the job runs before it is tuned.
 
 ```{r}
-#| label: study-choices
+#| label: edit-study-choices
 # EDIT: the built dataset this job reads. "study" is the file named by built:
 # in _study.yml; any other name must be declared under additional_datasets:.
 # Analysis sets are derived from "study" only, so another dataset needs
@@ -270,7 +270,8 @@ show_figure <- function(p, fname, title) {
   invisible(dev.off())
   cat("![", title, "](", file.path(paste0(SUBJECT, "-", TYPE), fname), ")\n\n", sep = "")
 }
-if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in study-choices.", call. = FALSE)
+if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
+                                              "(study-choices in a job made before that rename).", call. = FALSE)
 if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLORS) == 3L &&
                             setequal(names(COLORS), c("alive", "dead", "event")))) {
   stop("COLORS must be NULL or name exactly alive, dead and event.", call. = FALSE)

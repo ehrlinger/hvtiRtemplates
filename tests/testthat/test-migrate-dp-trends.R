@@ -5,7 +5,8 @@ trends_evidence <- function(root, lines = NULL) {
 
 trends_chunk <- function(job, label) {
   lines <- readLines(job, warn = FALSE)
-  start <- match(paste0("#| label: ", label), lines)
+  # A chunk holding an EDIT: marker is labeled edit-<label>; either names it.
+  start <- grep(paste0("^#\\| label: (edit-)?", label, "$"), lines)[[1L]]
   end <- start + match("```", lines[-seq_len(start)])
   parse(text = lines[seq.int(start + 1L, end - 1L)])
 }
@@ -35,7 +36,7 @@ test_that("dp-trends migrates explicit year and ordered trend intent into execut
   expect_true("d$year <- floor(d$iv_opyrs) + 1985" %in% txt)
   expect_true("XBREAKS <- seq(1985, 2025, 5)" %in% txt)
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config))
-  eval(trends_chunk(out, "study-choices"), env)
+  eval(trends_chunk(out, "edit-study-choices"), env)
   capture.output(eval(trends_chunk(out, "data"), env))
   eval(trends_chunk(out, "helpers"), env)
   expect_identical(env$DATASET, "study")
@@ -106,7 +107,7 @@ test_that("dp-trends executes its plotting engine and retains long-data and subg
     labs = ggplot2::labs, scale_y_continuous = ggplot2::scale_y_continuous, scale_x_continuous = ggplot2::scale_x_continuous,
     coord_cartesian = ggplot2::coord_cartesian
   ))
-  eval(trends_chunk(out, "study-choices"), env)
+  eval(trends_chunk(out, "edit-study-choices"), env)
   capture.output(eval(trends_chunk(out, "data"), env))
   eval(trends_chunk(out, "helpers"), env)
   # Run the template's own set_path closure; only current_input is naturally
