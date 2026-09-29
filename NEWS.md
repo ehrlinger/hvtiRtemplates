@@ -1,9 +1,20 @@
 # hvtiRtemplates (unreleased)
 
+* `dp-eda` and `dp-postage` take the medical record number as an identifier
+  only under the exact names `MRN` and `eMRN` (ignoring case). They matched
+  `mrn` anywhere in a name, so an mRNA variable such as `bnp_mrna` was left out
+  as an identifier. The rule matches hvtiPlotR's `hv_eda_pages()`
+  (hvtiPlotR#172).
+
 * The data-route tests pass when run on their own. They evaluated template
   chunks that call `study_config()` without supplying it, so they depended on
   an earlier test file having attached hvtiRutilities, and a filtered run
   errored twice. No change to the templates.
+
+* `dp-eda` takes `mrn` as an identifier only as a word of a column name
+  (`mrn`, `mrn_num`, `pt_mrn`), not inside one. It matched `mrn` anywhere, so
+  an mRNA variable such as `bnp_mrna` was left out as an identifier. The rule
+  matches hvtiPlotR's `hv_eda_pages()` (hvtiPlotR#172).
 
 * Every template chunk holding an `EDIT:` marker is now labeled `edit-`, so
   the editor's chunk outline lists the work a job still needs:
@@ -53,7 +64,7 @@
   token, and was drawn as one bar per patient and listed in the frequency
   table. The rule now also takes `ccfid`, `patid`, `patientid`, `studyid`,
   `subjectid`, `recordid`, `caseid` (each also with `_`, `num` or `no`),
-  any name holding `mrn` (`mrn_num`, `pt_mrn`), and any text or factor
+  the exact names `MRN` and `eMRN`, and any text or factor
   column of ten or more values in which every value differs. A bare trailing `id` was declined: it would take `carotid`
   and `steroid`. The report lists what it left out, and naming a column in
   `VARIABLES` still draws it. `dp-eda`'s overview table leaves identifiers
