@@ -140,12 +140,12 @@ call writes `descriptive/cohort-eda-dc-tables.qmd` and
 folders. It preserves the evidence files and refuses to overwrite either
 output.
 
-Migration supports `dc-tables`, `dc-gfup`, `dp-trends`, and
-`dp-postage`. Each adapter reads a defined source shape. Only
-deterministic extraction can remove an `EDIT:` marker; uncertain choices
-remain in the job and report for you to resolve before rendering. Logs,
-listings, and RTF/DOCX references help you check the translation but do
-not supply missing analysis choices.
+Migration supports `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-eda`.
+Each adapter reads a defined source shape. Only deterministic extraction
+can remove an `EDIT:` marker; uncertain choices remain in the job and
+report for you to resolve before rendering. Logs, listings, and RTF/DOCX
+references help you check the translation but do not supply missing
+analysis choices.
 
 The table job replaces the SAS RTF output with an editable CORR DOCX
 through `hv_tbl_summary()`, `hv_man_table()`, `hv_man_table_save()`, and

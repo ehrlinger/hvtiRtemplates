@@ -48,7 +48,7 @@ stage of work.
 | `descriptive/dc.tables.ods.sas` (`%desc_tab`) | `dc-tables` | `10_descriptive/dc-tables.qmd` | `hv_tbl_summary()`; `hv_correlation_table()` and `hv_correlation_matrix()` |
 | `descriptive/dc.gfup.sas` | `dc-gfup` | `10_descriptive/dc-gfup.qmd` | [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |
 | `graphs/dp.trends.R` | `dp-trends` | `40_graphs/dp-trends.qmd` | `hv_trends()` |
-| `tp.dp.DescriptiveSummary.qmd`, `tp.dp.EDA_barplots_scatterplots*.R` | `dp-postage` | `10_descriptive/dp-postage.qmd` | `hv_eda()` |
+| `tp.dp.DescriptiveSummary.qmd`, `tp.dp.EDA_barplots_scatterplots*.R` | `dp-eda` | `10_descriptive/dp-eda.qmd` | `hv_eda()`, through `hv_eda_pages()` |
 
 ## Five steps for every job
 
@@ -66,7 +66,7 @@ stage of work.
     stops instead of drafting if a marker remains.
 4.  Compare the result with the SAS `.lst`, section by section.
 5.  Keep the authored QMD and its HTML report flat in the job’s working
-    directory: `descriptive/` for the computation and postage jobs, or
+    directory: `descriptive/` for the computation and EDA jobs, or
     `graphs/` for trends. The tables job writes its Word file under
     `documents/cohort-eda/`; the plot jobs write PNG files under
     `graphs/cohort-eda/`.
@@ -301,7 +301,7 @@ if (requireNamespace("hvtiPlotR", quietly = TRUE)) {
 
 ![](sas-to-r-descriptive_files/figure-html/dp-trends-1.png)
 
-## EDA postage stamps: `dp-postage`
+## EDA report: `dp-eda`
 
 The older `Function_DataPlotting()` loops become one `hv_eda()` call per
 entry in `VARS`. Character and factor columns produce bars. A numeric
@@ -309,6 +309,17 @@ column produces bars only when it has at most six distinct non-missing
 values and every value is a non-negative whole number no greater than
 six; otherwise it produces a scatter panel. The template lays those
 panels out in printable pages.
+
+A legacy EDA report drew no follow-up panels, so
+[`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+writes its `dp-eda` job with
+`SECTIONS <- c("continuous", "percent", "count")`: the continuous,
+percent and count pages, each with its table. Add `"followup"` to draw
+the follow-up panels as well. The `dp-postage` template drew those three
+sections on their own. It is deprecated in favor of `dp-eda` and will be
+removed in the release after 1.2.3, and
+[`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+given `qualifier = "postage"` writes a `dp-eda` job with a warning.
 
 ``` r
 
@@ -325,14 +336,14 @@ panels <- lapply(names(variables), function(v) {
 panels[[1]]
 ```
 
-![](sas-to-r-descriptive_files/figure-html/dp-postage-1.png)
+![](sas-to-r-descriptive_files/figure-html/dp-eda-1.png)
 
 ``` r
 
 panels[[2]]
 ```
 
-![](sas-to-r-descriptive_files/figure-html/dp-postage-2.png)
+![](sas-to-r-descriptive_files/figure-html/dp-eda-2.png)
 
 ## Where the numbers differ
 

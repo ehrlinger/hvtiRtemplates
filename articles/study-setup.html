@@ -122,7 +122,7 @@
 <span>  study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  adopt <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -164,7 +164,7 @@
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -205,7 +205,7 @@
 <ul>
 <li>
 <code>dc</code> means descriptive computation and <code>dp</code> means descriptive plot.</li>
-<li>Qualifiers such as <code>general</code>, <code>tables</code> and <code>postage</code> select one template in that family.</li>
+<li>Qualifiers such as <code>general</code>, <code>tables</code> and <code>eda</code> select one template in that family.</li>
 <li>During EDA there may be no modeled endpoint or analysis method. <code>cohort</code> names the subject being described and <code>eda</code> names the stage. These are organizational labels, not invented analysis choices.</li>
 </ul>
 <p>For example, <code>open_job("dc", "cohort", "eda", qualifier = "tables")</code> creates <code>descriptive/cohort-eda-dc-tables.qmd</code> in an adopted legacy study. Its HTML report stays beside the QMD, while its Word table goes under <code>documents/cohort-eda/</code>. Plot jobs follow the same naming pattern, but trend QMDs and HTML reports belong in <code>graphs/</code>, and plot PNGs go under <code>graphs/cohort-eda/</code>.</p>
@@ -215,9 +215,10 @@
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">general</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"general"</span><span class="op">)</span></span>
 <span><span class="va">tables</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"tables"</span><span class="op">)</span></span></code></pre></div>
-<p>The EDA postage template is also part of this stage, but it requires a meaningful <code>X_VAR</code> for the horizontal axis. Create it when the dataset has an appropriate reference date, calendar year or follow-up measure:</p>
+<p>The EDA report template is also part of this stage, but it requires a meaningful <code>X_VAR</code> for the horizontal axis. Create it when the dataset has an appropriate reference date, calendar year or follow-up measure:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">postage</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"postage"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">eda</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"eda"</span><span class="op">)</span></span></code></pre></div>
+<p>Its follow-up section needs the death and follow-up fields; take <code>"followup"</code> out of <code>SECTIONS</code> when the data do not have them. The older <code>dp-postage</code> template drew the variable sections alone. It is deprecated and will be removed in the release after 1.2.3; <code>SECTIONS &lt;- c("continuous", "percent", "count")</code> in a <code>dp-eda</code> job draws the same pages.</p>
 <p>Two additional jobs are conditional. Add <code>dc-gfup</code> only when the registered event and follow-up fields answer a real completeness question. Add <code>dp-trends</code> only when the data have a meaningful calendar or operation-time field:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gfup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"gfup"</span><span class="op">)</span></span>
@@ -230,25 +231,25 @@
 <span>  tables <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"tables"</span><span class="op">)</span>,</span>
 <span>  gfup <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"gfup"</span><span class="op">)</span>,</span>
 <span>  trends <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"trends"</span><span class="op">)</span>,</span>
-<span>  postage <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"postage"</span><span class="op">)</span></span>
+<span>  eda <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"eda"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">study_jobs</span></span>
 <span><span class="co">#&gt;                                                                               general </span></span>
-<span><span class="co">#&gt; "/tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study/descriptive/cohort-eda-dc-general.qmd" </span></span>
+<span><span class="co">#&gt; "/tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study/descriptive/cohort-eda-dc-general.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                tables </span></span>
-<span><span class="co">#&gt;  "/tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study/descriptive/cohort-eda-dc-tables.qmd" </span></span>
+<span><span class="co">#&gt;  "/tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study/descriptive/cohort-eda-dc-tables.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                  gfup </span></span>
-<span><span class="co">#&gt;    "/tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" </span></span>
+<span><span class="co">#&gt;    "/tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                trends </span></span>
-<span><span class="co">#&gt;       "/tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study/graphs/cohort-eda-dp-trends.qmd" </span></span>
-<span><span class="co">#&gt;                                                                               postage </span></span>
-<span><span class="co">#&gt; "/tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study/descriptive/cohort-eda-dp-postage.qmd"</span></span></code></pre></div>
+<span><span class="co">#&gt;       "/tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study/graphs/cohort-eda-dp-trends.qmd" </span></span>
+<span><span class="co">#&gt;                                                                                   eda </span></span>
+<span><span class="co">#&gt;     "/tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study/descriptive/cohort-eda-dp-eda.qmd"</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="work-the-jobs-and-generate-output">Work the jobs and generate output<a class="anchor" aria-label="anchor" href="#work-the-jobs-and-generate-output"></a>
 </h2>
 <p>Each new job contains <code>EDIT:</code> markers for decisions that cannot come from the template: variables, labels, groups, units and output choices. <code><a href="../reference/open_job.html">open_job()</a></code> opens the QMD in RStudio’s file editor. Edit the file there, working from the top marker downward. Use the chunk Run button as you work, then choose <strong>Run &gt; Run All</strong> to generate the output in one interactive pass.</p>
 <p>When every marker is resolved, click <strong>Render</strong>. Rendering starts at the top in a clean session, much like running a SAS job from beginning to end. It catches a job that only worked because an object was left in the interactive session. Render every edited job before leaving the study so the saved QMD is still in an executable state. If you want the same final check from the Console, run <code>render_job(tables, final = TRUE)</code>, substituting the job you edited.</p>
-<p>The HTML report stays beside its QMD in <code>descriptive/</code> or <code>graphs/</code>. The descriptive Word table is filed under <code>documents/cohort-eda/</code>; trend and postage PNGs are filed under <code>graphs/cohort-eda/</code>. Open those artifacts and check the population, variables, labels, counts, summaries and axes—not merely that the files exist.</p>
+<p>The HTML report stays beside its QMD in <code>descriptive/</code> or <code>graphs/</code>. The descriptive Word table is filed under <code>documents/cohort-eda/</code>; trend and EDA PNGs are filed under <code>graphs/cohort-eda/</code>. Open those artifacts and check the population, variables, labels, counts, summaries and axes—not merely that the files exist.</p>
 <p>If the study has older SAS jobs, continue with <a href="sas-to-r-descriptive.html">From SAS descriptive jobs to R</a>. That article owns the detailed source mapping and migration workflow so adoption itself remains short and non-destructive.</p>
 <section class="level3"><h3 id="when-registered-data-change">When registered data change<a class="anchor" aria-label="anchor" href="#when-registered-data-change"></a>
 </h3>

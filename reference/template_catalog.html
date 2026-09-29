@@ -60,7 +60,11 @@ files already shipped; this catalog records the full work plan.</p>
     <p>A data frame. `uses`, `upstream`, `downstream`, and `workflows` are
   list columns of character vectors. Unmeasured counts are `NA_integer_`.
   <code>description</code> is a one-sentence summary, given for every template on
-  disk and <code>NA</code> for most queued ones.</p>
+  disk and <code>NA</code> for most queued ones. <code>deprecated_by</code> names the
+  template replacing a deprecated one, such as <code>"dp-eda"</code>, and
+  <code>deprecation_note</code> says how to move to it; both are <code>NA</code> for a
+  supported template. A deprecated template still ships, and
+  <code><a href="add_job.html">add_job</a></code> warns when it is used.</p>
     </div>
 
     <div class="section level2">

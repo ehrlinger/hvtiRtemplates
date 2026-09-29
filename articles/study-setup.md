@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study
+#> Study: /tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,7 +183,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study
+#> Study: /tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -242,8 +242,8 @@ Each call supplies four fields. `prefix` and `qualifier` select a
 template; the other two fields keep related outputs together:
 
 - `dc` means descriptive computation and `dp` means descriptive plot.
-- Qualifiers such as `general`, `tables` and `postage` select one
-  template in that family.
+- Qualifiers such as `general`, `tables` and `eda` select one template
+  in that family.
 - During EDA there may be no modeled endpoint or analysis method.
   `cohort` names the subject being described and `eda` names the stage.
   These are organizational labels, not invented analysis choices.
@@ -265,14 +265,21 @@ general <- open_job("dc", "cohort", "eda", qualifier = "general")
 tables <- open_job("dc", "cohort", "eda", qualifier = "tables")
 ```
 
-The EDA postage template is also part of this stage, but it requires a
+The EDA report template is also part of this stage, but it requires a
 meaningful `X_VAR` for the horizontal axis. Create it when the dataset
 has an appropriate reference date, calendar year or follow-up measure:
 
 ``` r
 
-postage <- open_job("dp", "cohort", "eda", qualifier = "postage")
+eda <- open_job("dp", "cohort", "eda", qualifier = "eda")
 ```
+
+Its follow-up section needs the death and follow-up fields; take
+`"followup"` out of `SECTIONS` when the data do not have them. The older
+`dp-postage` template drew the variable sections alone. It is deprecated
+and will be removed in the release after 1.2.3;
+`SECTIONS <- c("continuous", "percent", "count")` in a `dp-eda` job
+draws the same pages.
 
 Two additional jobs are conditional. Add `dc-gfup` only when the
 registered event and follow-up fields answer a real completeness
@@ -295,19 +302,19 @@ study_jobs <- c(
   tables = add_job("dc", "cohort", "eda", adopted_root, "tables"),
   gfup = add_job("dc", "cohort", "eda", adopted_root, "gfup"),
   trends = add_job("dp", "cohort", "eda", adopted_root, "trends"),
-  postage = add_job("dp", "cohort", "eda", adopted_root, "postage")
+  eda = add_job("dp", "cohort", "eda", adopted_root, "eda")
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
+#> "/tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
 #>                                                                                tables 
-#>  "/tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
+#>  "/tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
+#>    "/tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
 #>                                                                                trends 
-#>       "/tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
-#>                                                                               postage 
-#> "/tmp/RtmpC1ysKB/file1da96158fdb4/legacy-study/descriptive/cohort-eda-dp-postage.qmd"
+#>       "/tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
+#>                                                                                   eda 
+#>     "/tmp/RtmpLSG9m6/file1d74400e6b05/legacy-study/descriptive/cohort-eda-dp-eda.qmd"
 ```
 
 ## Work the jobs and generate output
@@ -330,9 +337,9 @@ substituting the job you edited.
 
 The HTML report stays beside its QMD in `descriptive/` or `graphs/`. The
 descriptive Word table is filed under `documents/cohort-eda/`; trend and
-postage PNGs are filed under `graphs/cohort-eda/`. Open those artifacts
-and check the population, variables, labels, counts, summaries and
-axes—not merely that the files exist.
+EDA PNGs are filed under `graphs/cohort-eda/`. Open those artifacts and
+check the population, variables, labels, counts, summaries and axes—not
+merely that the files exist.
 
 If the study has older SAS jobs, continue with [From SAS descriptive
 jobs to

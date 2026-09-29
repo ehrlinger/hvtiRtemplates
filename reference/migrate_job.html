@@ -130,8 +130,12 @@ Defaults to the directory of <code>source</code>.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>A converter is available for <code>dc-tables</code>, <code>dc-gfup</code>,
-<code>dp-trends</code>, and <code>dp-postage</code>, each interpreting its own source
-choices; choices the interpreter does not recognize remain for review. A
+<code>dp-trends</code>, and <code>dp-eda</code>, each interpreting its own source
+choices; choices the interpreter does not recognize remain for review.
+Legacy EDA reports migrate into <code>dp-eda</code> with
+<code>SECTIONS &lt;- c("continuous", "percent", "count")</code>, the pages the
+deprecated <code>dp-postage</code> drew. Naming a deprecated template, such as
+<code>dp-postage</code>, warns and writes the job from its replacement. A
 template with no converter yet still migrates: it is scaffolded with every
 <code>EDIT:</code> marker kept, the evidence travels with it, and the report
 says the migration adapter is not yet available.</p>

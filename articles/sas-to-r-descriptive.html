@@ -134,9 +134,11 @@
 <td style="text-align: left;">
 <code>tp.dp.DescriptiveSummary.qmd</code>, <code>tp.dp.EDA_barplots_scatterplots*.R</code>
 </td>
-<td style="text-align: left;"><code>dp-postage</code></td>
-<td style="text-align: left;"><code>10_descriptive/dp-postage.qmd</code></td>
-<td style="text-align: left;"><code>hv_eda()</code></td>
+<td style="text-align: left;"><code>dp-eda</code></td>
+<td style="text-align: left;"><code>10_descriptive/dp-eda.qmd</code></td>
+<td style="text-align: left;">
+<code>hv_eda()</code>, through <code>hv_eda_pages()</code>
+</td>
 </tr>
 </tbody>
 </table></section><section class="level2"><h2 id="five-steps-for-every-job">Five steps for every job<a class="anchor" aria-label="anchor" href="#five-steps-for-every-job"></a>
@@ -146,7 +148,7 @@
 <li>Work the <code>EDIT:</code> markers, rendering <code>render_job(job)</code> as you go. Unfinished work renders as a draft, as far as the markers you have worked.</li>
 <li>Stop when every marker is gone and the draft banner with it. Render the accepted result with <code>render_job(job, final = TRUE)</code>, which stops instead of drafting if a marker remains.</li>
 <li>Compare the result with the SAS <code>.lst</code>, section by section.</li>
-<li>Keep the authored QMD and its HTML report flat in the job’s working directory: <code>descriptive/</code> for the computation and postage jobs, or <code>graphs/</code> for trends. The tables job writes its Word file under <code>documents/cohort-eda/</code>; the plot jobs write PNG files under <code>graphs/cohort-eda/</code>. <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir()</a></code> resolves each directory in either study layout.</li>
+<li>Keep the authored QMD and its HTML report flat in the job’s working directory: <code>descriptive/</code> for the computation and EDA jobs, or <code>graphs/</code> for trends. The tables job writes its Word file under <code>documents/cohort-eda/</code>; the plot jobs write PNG files under <code>graphs/cohort-eda/</code>. <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir()</a></code> resolves each directory in either study layout.</li>
 </ol>
 <p>The filename records the choices in the call. <code>cohort-eda</code> is the shared job set, <code>dc</code> is the descriptive-computation prefix, and <code>tables</code> selects the table template within that prefix. These are organizational labels. When no outcome or model has been chosen, do not invent one merely to name an EDA job.</p>
 </section><section class="level2"><h2 id="the-draft-banner-and-edit-markers">The draft banner and <code>EDIT:</code> markers<a class="anchor" aria-label="anchor" href="#the-draft-banner-and-edit-markers"></a>
@@ -841,10 +843,11 @@ run;</code></pre>
 </div>
 </div>
 </div>
-</section><section class="level2"><h2 id="eda-postage-stamps-dp-postage">EDA postage stamps: <code>dp-postage</code>
-<a class="anchor" aria-label="anchor" href="#eda-postage-stamps-dp-postage"></a>
+</section><section class="level2"><h2 id="eda-report-dp-eda">EDA report: <code>dp-eda</code>
+<a class="anchor" aria-label="anchor" href="#eda-report-dp-eda"></a>
 </h2>
 <p>The older <code>Function_DataPlotting()</code> loops become one <code>hv_eda()</code> call per entry in <code>VARS</code>. Character and factor columns produce bars. A numeric column produces bars only when it has at most six distinct non-missing values and every value is a non-negative whole number no greater than six; otherwise it produces a scatter panel. The template lays those panels out in printable pages.</p>
+<p>A legacy EDA report drew no follow-up panels, so <code><a href="../reference/migrate_job.html">migrate_job()</a></code> writes its <code>dp-eda</code> job with <code>SECTIONS &lt;- c("continuous", "percent", "count")</code>: the continuous, percent and count pages, each with its table. Add <code>"followup"</code> to draw the follow-up panels as well. The <code>dp-postage</code> template drew those three sections on their own. It is deprecated in favor of <code>dp-eda</code> and will be removed in the release after 1.2.3, and <code><a href="../reference/migrate_job.html">migrate_job()</a></code> given <code>qualifier = "postage"</code> writes a <code>dp-eda</code> job with a warning.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">v</span> <span class="kw">in</span> <span class="va">variables</span><span class="op">)</span> <span class="fu">Function_DataPlotting</span><span class="op">(</span><span class="va">data</span>, <span class="va">v</span>, <span class="st">"year"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell">
@@ -857,7 +860,7 @@ run;</code></pre>
 <span><span class="va">panels</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="sas-to-r-descriptive_files/figure-html/dp-postage-1.png" width="672"></p>
+<figure><p><img src="sas-to-r-descriptive_files/figure-html/dp-eda-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -865,7 +868,7 @@ run;</code></pre>
 <code class="sourceCode R"><span><span class="va">panels</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="sas-to-r-descriptive_files/figure-html/dp-postage-2.png" width="672"></p>
+<figure><p><img src="sas-to-r-descriptive_files/figure-html/dp-eda-2.png" width="672"></p>
 </figure>
 </div>
 </div>

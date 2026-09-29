@@ -25,7 +25,9 @@ template_path(prefix, qualifier = NULL)
 
 ## Value
 
-The full path, as `character(1)`.
+The full path, as `character(1)`. A template the catalog marks
+deprecated, such as `dp-postage`, still resolves, with a warning naming
+its replacement.
 
 ## Examples
 

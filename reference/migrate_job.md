@@ -83,11 +83,15 @@ The migrated job path, invisibly. The report is written beside it.
 ## Details
 
 A converter is available for `dc-tables`, `dc-gfup`, `dp-trends`, and
-`dp-postage`, each interpreting its own source choices; choices the
-interpreter does not recognize remain for review. A template with no
-converter yet still migrates: it is scaffolded with every `EDIT:` marker
-kept, the evidence travels with it, and the report says the migration
-adapter is not yet available.
+`dp-eda`, each interpreting its own source choices; choices the
+interpreter does not recognize remain for review. Legacy EDA reports
+migrate into `dp-eda` with
+`SECTIONS <- c("continuous", "percent", "count")`, the pages the
+deprecated `dp-postage` drew. Naming a deprecated template, such as
+`dp-postage`, warns and writes the job from its replacement. A template
+with no converter yet still migrates: it is scaffolded with every
+`EDIT:` marker kept, the evidence travels with it, and the report says
+the migration adapter is not yet available.
 
 Relative `source`, `lst`, `log` and `reference` paths resolve against
 the working directory, as in any R function; `dir` only locates the

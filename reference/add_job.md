@@ -70,6 +70,10 @@ pre-render and post-render commands and unrelated project settings are
 preserved, while the provenance publisher is kept last. Repeated calls
 are idempotent.
 
+A template the catalog marks deprecated, such as `dp-postage`, still
+scaffolds, with a warning naming its replacement; see
+[`template_catalog`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md).
+
 ## See also
 
 [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
