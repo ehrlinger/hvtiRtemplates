@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* `read_job_data()` is the shared data step for templates: it reads a
+  registered dataset or analysis set, resolves the patient ID (`ccfid`, then
+  `MRN`, then `eMRN`), drops `MRN` and `eMRN`, keeps the rows `WHERE`
+  selects with `dplyr::filter()` rules, checks rows are unique on `KEY`, and
+  records what it did. Templates adopt it family by family.
+
 * Every template chunk holding an `EDIT:` marker is now labeled `edit-`, so
   the editor's chunk outline lists the work a job still needs:
   `study-choices` is `edit-study-choices`, and nine templates carry further
