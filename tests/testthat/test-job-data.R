@@ -136,7 +136,18 @@ test_that("a downstream job's settings must agree with its upstream selection", 
 test_that(".check_upstream_selection() ignores fields outside its known five", {
   out <- hvtiRtemplates:::.check_upstream_selection(list(rows = 10L, id = "ccfid"), list(rows = 5L))
   expect_identical(out$id, "ccfid")
-  expect_identical(out$rows, 5L)
+  # A field the check does not compare is never overwritten: upstream wins.
+  expect_identical(out$rows, 10L)
+})
+
+test_that(".check_upstream_selection() compares DATASET and ANALYSIS_SET too", {
+  up <- list(dataset = "study", analysis_set = "eda", id = "ccfid", rows = 3L, patients = 3L)
+  expect_error(hvtiRtemplates:::.check_upstream_selection(up, list(dataset = "other")), "DATASET")
+  expect_error(hvtiRtemplates:::.check_upstream_selection(up, list(analysis_set = "late")), "ANALYSIS_SET")
+  out <- hvtiRtemplates:::.check_upstream_selection(up, list(dataset = "study", analysis_set = NULL,
+                                                             rows = 1L, patients = 1L))
+  expect_identical(out$analysis_set, "eda")
+  expect_identical(c(out$rows, out$patients), c(3L, 3L))
 })
 
 test_that(".check_upstream_selection() treats NULL settings as an empty list", {
@@ -165,4 +176,34 @@ test_that(".check_upstream_selection() compares a real quote() or exprs() WHERE 
     hvtiRtemplates:::.check_upstream_selection(up_two, list(where = rlang::exprs(age >= 65, hx_chf == 1))),
     "WHERE"
   )
+})
+
+test_that(".read_upstream_job_data() stops on a hand-off that predates the data contract", {
+  expect_error(hvtiRtemplates:::.read_upstream_job_data(list(), list(data = list()), list(), source = "hz.rds"),
+               "hz.rds.*predates")
+  expect_error(hvtiRtemplates:::.read_upstream_job_data(list(), list(data = list()), list(), read = FALSE),
+               "predates")
+})
+
+test_that(".read_upstream_job_data() rebuilds the upstream rows and returns the selection", {
+  cfg <- job_study(d0)
+  up <- read_job_data(cfg, where = rlang::exprs(age >= 18, hx_chf == 1))
+  lineage <- list(selection = attr(up$record, "selection"))
+  out <- hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list(where = NULL, id = NULL, key = NULL))
+  expect_identical(names(out), c("job_data", "selection"))
+  expect_identical(out$job_data$data$ccfid, c(2L, 3L, 5L))
+  expect_identical(out$selection$where, c("age >= 18", "hx_chf == 1"))
+  bare <- hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list(), read = FALSE)
+  expect_identical(names(bare), "selection")
+  expect_identical(bare$selection$rows, 3L)
+  expect_error(hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list(dataset = "other")), "DATASET")
+})
+
+test_that(".read_upstream_job_data() stops when the rows it rebuilds are not the upstream cohort", {
+  cfg <- job_study(d0)
+  up <- read_job_data(cfg, where = quote(age >= 18))
+  sel <- attr(up$record, "selection")
+  sel$rows <- 99L
+  expect_error(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list()),
+               "99 rows.*4 rows.*did not rebuild")
 })

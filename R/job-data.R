@@ -175,23 +175,60 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 }
 
 # A downstream job reuses its upstream job's selection. A setting the job sets
-# itself must agree; one left NULL is taken from upstream.
+# itself must agree; one left NULL is taken from upstream. Every field the
+# upstream selection carries keeps its upstream value, including the ones not
+# compared here (rows, patients): a setting only fills a field upstream lacks.
+.upstream_fields <- c(dataset = "DATASET", analysis_set = "ANALYSIS_SET", where = "WHERE", id = "ID",
+                      key = "KEY", time = "TIME", event = "EVENT")
+
 .check_upstream_selection <- function(upstream, settings) {
   if (is.null(settings)) settings <- list()
   if (is.null(upstream)) return(settings)
-  names_shown <- c(where = "WHERE", id = "ID", key = "KEY", time = "TIME", event = "EVENT")
-  for (field in intersect(names(names_shown), intersect(names(settings), names(upstream)))) {
+  out <- upstream
+  for (field in intersect(names(.upstream_fields), names(settings))) {
     mine <- settings[[field]]
     if (is.null(mine)) next
-    if (is.call(mine) || is.list(mine)) {
+    if (is.call(mine) || is.name(mine) || is.list(mine)) {
       mine <- vapply(.where_conditions(mine), function(x) paste(deparse(x, width.cutoff = 500L), collapse = " "), "")
-      settings[[field]] <- mine
     }
-    if (!identical(as.character(mine), as.character(upstream[[field]]))) {
-      stop(names_shown[[field]], " here (", paste(mine, collapse = ", "), ") differs from the upstream job's (",
-           paste(upstream[[field]], collapse = ", "), "). Leave it NULL to use the upstream value, or rerun ",
+    if (!field %in% names(upstream)) {
+      out[[field]] <- mine
+      next
+    }
+    theirs <- as.character(upstream[[field]])
+    same <- if (field %in% c("id", "key")) identical(tolower(mine), tolower(theirs)) else identical(as.character(mine), theirs)
+    if (!same) {
+      stop(.upstream_fields[[field]], " here (", paste(mine, collapse = ", "), ") differs from the upstream job's (",
+           paste(theirs, collapse = ", "), "). Leave it NULL to use the upstream value, or rerun ",
            "the upstream job with the new value.", call. = FALSE)
     }
   }
-  utils::modifyList(upstream, Filter(Negate(is.null), settings))
+  out
+}
+
+# The data step of a downstream job: take the upstream job's selection from
+# its hand-off lineage, check this job's settings against it, and (unless the
+# job reads no data) rebuild exactly the upstream rows.
+.read_upstream_job_data <- function(cfg, lineage, settings, read = TRUE, source = NULL) {
+  upstream <- lineage$selection
+  if (is.null(upstream)) {
+    stop("The upstream job's saved output", if (!is.null(source)) paste0(" (", source, ")"),
+         " predates the data contract: it does not record the rows it used. Rerun the upstream job ",
+         "with the current template, then rerun this one.", call. = FALSE)
+  }
+  sel <- .check_upstream_selection(upstream, settings)
+  if (!read) return(list(selection = sel))
+  where <- if (length(sel$where)) lapply(sel$where, str2lang)
+  job_data <- do.call(read_job_data, list(cfg, dataset = sel$dataset, analysis_set = sel$analysis_set,
+                                          where = where, id = sel$id, key = sel$key),
+                      quote = TRUE, envir = parent.frame())
+  now <- attr(job_data$record, "selection")
+  if (!identical(as.integer(now$rows), as.integer(upstream$rows)) ||
+        !identical(as.integer(now$patients), as.integer(upstream$patients))) {
+    stop("The upstream job used ", upstream$rows, " rows on ", upstream$patients, " patients; this job read ",
+         now$rows, " rows on ", now$patients, " patients. This job did not rebuild the upstream cohort: ",
+         "WHERE may refer to a variable rather than a value, or the data changed since the upstream job ran. ",
+         "Rerun the upstream job.", call. = FALSE)
+  }
+  list(job_data = job_data, selection = sel)
 }
