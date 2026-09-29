@@ -9,7 +9,8 @@ listed in <study root>/gallery-build.csv to <output>/reports/<template>.html
 and moves each large embedded file (a data: URI over 20 kB in a src or href
 attribute, base64 or URL-encoded) to <output>/reports/assets/, named by its
 MD5, so a file shared by every report is stored once. Figures move out too.
-Nothing is re-rendered. Python, not R: URL-decoding the stylesheet in R
+It also copies the gallery page, dev/gallery/index.html, to <output>/index.html,
+so the output folder is the whole site. Nothing is re-rendered. Python, not R: URL-decoding the stylesheet in R
 took minutes per report.
 """
 import base64, csv, hashlib, os, re, shutil, sys, urllib.parse
@@ -50,6 +51,8 @@ def package(root, out, min_bytes=20000):
             html = PATTERN.sub(extract, fh.read())
         with open(os.path.join(reports, row["template"] + ".html"), "w", encoding="utf-8") as fh:
             fh.write(html)
+    page = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
+    shutil.copyfile(page, os.path.join(out, "index.html"))
     sizes = [os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(reports) for f in fs]
     print(f"{len(built)} reports, {len(os.listdir(assets))} shared assets, "
           f"{sum(sizes) / 1e6:.1f} MB in all, largest file {max(sizes) / 1e6:.1f} MB")
