@@ -1,7 +1,8 @@
 # The `hs-concordance` template: every patient through every group's model
 
 **Date:** 2026-09-30
-**Status:** design, not implemented. No plan yet.
+**Status:** design approved by the maintainer on 2026-09-30. Not implemented.
+No plan yet.
 **Decided by the maintainer on 2026-09-30:** the name is `hs-concordance`; the
 existing `hs` template becomes `hs-setup`; a model from another study is
 allowed but not expected.
