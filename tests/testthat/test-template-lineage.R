@@ -9,7 +9,7 @@ lineage_rfs_data <- function() {
 }
 
 lineage_rfs_choices <- list(
-  TIME = "time", STATUS = "status",
+  TIME = "time", EVENT = "status",
   PREDICTORS = c("trt", "celltype", "karno", "diagtime", "age", "prior"),
   NTREE = 50, SEED = 1
 )
@@ -25,6 +25,8 @@ test_that("RF explain retains fitted data lineage after the registry changes", {
   fit$.root <- root
   fit$.provenance_data <- list(hvtiRutilities::provenance_data(cfg = hvtiRutilities::study_config(root), role = "training"))
   fit$d <- data_a
+  # The data chunk is skipped, so the selection it would record is absent.
+  fit$job_data <- list()
   rf_run("rfs", "fit", c("set", "edit-study-choices", "fit", "save"), fit, lineage_rfs_choices)
   fitted_hash <- fit$.provenance_data[[1L]]$sha256
   handoff <- file.path(fit$CACHE_DIR, "rfs.rds")

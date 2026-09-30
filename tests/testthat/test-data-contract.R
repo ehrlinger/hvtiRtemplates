@@ -6,7 +6,8 @@ pending_contract_families <- setdiff(template_list()$name, c(
   "ac", "hz", "hm", "hp", "hs",
   "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-trends",
   "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
-  "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal"
+  "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
+  "rfs-fit", "rfs-explain", "rfc-fit", "rfc-explain", "rfr-fit", "rfr-explain"
 ))
 
 template_chunk <- function(src, label) {

@@ -219,7 +219,8 @@ test_that("only templates with a local dataset choice override the dataset", {
     "ac", "hz", "hm", "hp", "hs",
     "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-postage", "dp-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
-    "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal"
+    "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
+    "rfs-fit", "rfc-fit", "rfr-fit"
   )
   templates <- template_list()
   observed <- templates$name[vapply(templates$file, function(path) {
@@ -485,7 +486,7 @@ test_that("RF provenance chunks record the fitted objects they consume", {
         data_env$veteran
       },
       choices = list(
-        TIME = "time", STATUS = "status",
+        TIME = "time", EVENT = "status",
         PREDICTORS = c("trt", "celltype", "karno", "diagtime", "age", "prior"), NTREE = 50, SEED = 1
       )
     ),
@@ -496,15 +497,15 @@ test_that("RF provenance chunks record the fitted objects they consume", {
         data
       },
       choices = list(
-        RESPONSE = "Species",
-        PREDICTORS = c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width"),
+        RESPONSE = "species",
+        PREDICTORS = c("sepal.length", "sepal.width", "petal.length", "petal.width"),
         ROC_CLASS = "virginica", NTREE = 50, SEED = 1
       )
     ),
     rfr = list(
       data = function() datasets::airquality[!is.na(datasets::airquality$Ozone), ],
       choices = list(
-        RESPONSE = "Ozone", PREDICTORS = c("Solar.R", "Wind", "Temp", "Month", "Day"),
+        RESPONSE = "ozone", PREDICTORS = c("solar.r", "wind", "temp", "month", "day"),
         NTREE = 50, SEED = 1, NA_ACTION = "na.impute"
       )
     )
@@ -514,7 +515,7 @@ test_that("RF provenance chunks record the fitted objects they consume", {
     rf_skip_unless_stack(rf_template_packages(prefix, "fit"))
     case <- rf_cases[[prefix]]
     fit <- rf_env(case$data())
-    suppressWarnings(rf_run(prefix, "fit", c("set", "edit-study-choices", "read", "fit", "save"), fit, case$choices))
+    suppressWarnings(rf_run(prefix, "fit", c("set", "edit-study-choices", "data", "fit", "save"), fit, case$choices))
     fit$SUBJECT <- "provenance"
     fit$TYPE <- "fit"
     fit$.in <- file.path(fit$.root, paste0(prefix, "-fit.rmarkdown"))
@@ -542,7 +543,7 @@ test_that("RF provenance chunks record the fitted objects they consume", {
 
       if (identical(prefix, "rfs")) {
         time <- if (identical(qualifier, "fit")) env$TIME else env$forest$yvar.names[[1L]]
-        status <- if (identical(qualifier, "fit")) env$STATUS else env$forest$yvar.names[[2L]]
+        status <- if (identical(qualifier, "fit")) env$EVENT else env$forest$yvar.names[[2L]]
         event <- env$forest$yvar[[status]]
         expect_identical(record$extra$analysis$time$variable, time, info = qualifier)
         expect_identical(record$extra$analysis$event$variable, status, info = qualifier)
