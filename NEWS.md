@@ -1,5 +1,13 @@
 # hvtiRtemplates (unreleased)
 
+* `hs` now says what its `se.fit` column is. On the survival path it is
+  se(S), the standard error of the survival estimate itself. Until
+  TemporalHazard #281 (2026-09-13) the same column held se(H), with no change
+  to the version number, so an `hs.rds` written before then holds a different
+  quantity under the same name. The template's comment beside the `predict()`
+  call now records both, next to the existing coverage warning. No output
+  changes.
+
 * `hz` renders again with TemporalHazard 1.2.11. Its convergence table read
   an iteration count that a multiphase fit does not carry, so every render
   stopped there. The table now reports the optimizer's function and gradient

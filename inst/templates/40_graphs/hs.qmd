@@ -450,6 +450,13 @@ CLEVEL <- 0.68268948   # SAS convention, not a study choice. +/-1 SD, NOT 95%.
 p <- predict(fit, newdata = nd[, c(COVARIATES, "time")], type = "survival",
              se.fit = TRUE, level = CLEVEL, conf.type = "logit")
 
+# `se.fit` is the standard error of `fit` on fit's own scale, so on this
+# survival path it is se(S), the delta method applied to S = exp(-H). Until
+# TemporalHazard #281 (merged 2026-09-13) the same column held se(H), and the
+# version number did not change (1.2.11 on both sides), so an hs.rds written
+# before then carries a different quantity under the same name. The limits are
+# not fit +/- z * se.fit either: they are built from se(H) on the conf.type
+# scale.
 pred <- data.frame(id = nd$.id, horizon = nd$.horizon,
                    fit = p$fit, se.fit = p$se.fit,
                    lower = p$lower, upper = p$upper)
