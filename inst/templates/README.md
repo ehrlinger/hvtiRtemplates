@@ -63,7 +63,9 @@ The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`,
 `dp-gfup`, `dp-postage`, `dp-eda`, `hs-setup`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was queued in the
-catalog; jobs scaffolded under the old name keep it. The other prefixes here remain unqualified. A
+catalog; jobs scaffolded under the old name keep it. `open_job("hs", ...)` looks for the new name, so in a study
+that already has `<subject>-<type>-hs.qmd` it scaffolds a fresh `hs-setup` job beside it: open the existing job by
+its file. The other prefixes here remain unqualified. A
 prefix is wholly qualified or wholly unqualified, never half-decomposed.
 
 ### Logistic-model jobs
