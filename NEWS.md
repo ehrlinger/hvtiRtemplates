@@ -1,5 +1,17 @@
 # hvtiRtemplates (unreleased)
 
+* The `hs` template is now `hs-setup`. A second `hs` job type,
+  `hs-concordance`, is queued in the catalog, and a prefix is either wholly
+  qualified or wholly unqualified, so the existing template takes a
+  qualifier first. `add_job("hs", ...)` still works while `hs-setup` is the
+  only `hs` template, and now writes `<subject>-<type>-hs-setup.qmd`. Jobs
+  already scaffolded keep their names, and the job still saves `hs.rds`.
+  `open_job("hs", ...)` and `add_job("hs", ...)` look for the new name, so
+  in a study that already has `<subject>-<type>-hs.qmd` they scaffold a
+  fresh `<subject>-<type>-hs-setup.qmd` beside it. Open the existing job by
+  its file.
+  Design: `dev/specs/2026-09-30-hs-concordance-design.md`.
+
 * `hz` renders again with TemporalHazard 1.2.11. Its convergence table read
   an iteration count that a multiphase fit does not carry, so every render
   stopped there. The table now reports the optimizer's function and gradient

@@ -3,7 +3,7 @@
 # and stop when their own settings differ. dev/specs/2026-09-29-template-data-contract-design.md.
 
 # What each downstream job reads, and where its data chunk takes the selection from.
-downstream_reads <- list(hm = "hz.rds", hp = c("ac.rds", "hz.rds"), hs = "hm.rds")
+downstream_reads <- list(hm = "hz.rds", hp = c("ac.rds", "hz.rds"), `hs-setup` = "hm.rds")
 
 test_that("the hazard test data is fixed and leaves the session's random numbers alone", {
   withr::local_seed(1)

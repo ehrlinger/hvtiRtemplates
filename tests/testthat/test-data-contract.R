@@ -3,7 +3,7 @@
 # converted are listed here; each family's conversion removes its names, and
 # the list is empty when the work is done.
 pending_contract_families <- setdiff(template_list()$name, c(
-  "ac", "hz", "hm", "hp", "hs",
+  "ac", "hz", "hm", "hp", "hs-setup",
   "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-trends",
   "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
   "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
@@ -21,7 +21,7 @@ template_chunk <- function(src, label) {
 # ID and KEY default to NULL ("take the upstream value") and their data chunk
 # checks it with .read_upstream_job_data(). hm, hp and hs also read data; the explain jobs and the bootstrap
 # reports read a saved forest or bag, so they have no DATASET or ANALYSIS_SET.
-downstream_templates <- c("hm", "hp", "hs", "rfs-explain", "rfc-explain", "rfr-explain",
+downstream_templates <- c("hm", "hp", "hs-setup", "rfs-explain", "rfc-explain", "rfr-explain",
                           "bl", "br", "bc", "bh")
 reads_data <- function(name) !name %in% c("rfs-explain", "rfc-explain", "rfr-explain", "bl", "br", "bc", "bh")
 
@@ -36,7 +36,7 @@ expected_defaults <- function(name) {
     if (reads_data(name)) out <- c(DATASET = 'DATASET <- "study"', ANALYSIS_SET = "ANALYSIS_SET <- NULL", out)
   }
   # hm, hp and hs also take their time-to-event settings from upstream.
-  if (name %in% c("hm", "hp", "hs")) out <- c(out, TIME = "TIME <- NULL", EVENT = "EVENT <- NULL")
+  if (name %in% c("hm", "hp", "hs-setup")) out <- c(out, TIME = "TIME <- NULL", EVENT = "EVENT <- NULL")
   out
 }
 
