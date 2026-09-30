@@ -50,6 +50,7 @@ test_that("hs-concordance refuses what would make the comparison meaningless", {
   bad(MODELS = c(a = "dead-a"), msg = "have no model in MODELS")
   bad(HORIZON = 1e6, msg = "beyond the last observed time of the model for a")
   bad(CARRY = "ccfid", msg = "may not name a patient identifier")
+  bad(CARRY = c("age", "group"), msg = "already has")
   other <- file.path(hvtiRutilities::study_dir("estimates", e$root), "dead-b", "hm.rds")
   bad(MODELS = c(a = "dead-a", b = other), msg = "Set CROSS_STUDY")
   bad(TIME = "age", msg = "fitted on time column")

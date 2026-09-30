@@ -481,6 +481,14 @@ stopifnot(all(pred$fit >= 0 & pred$fit <= 1))
 if (length(.carry_bad)) {
   stop("CARRY may not name a patient identifier: ", paste(.carry_bad, collapse = ", "), ".", call. = FALSE)
 }
+# `row` and `group` are the frame's own columns; a CARRY column of either name
+# would sit beside them under the same name, and a reader takes the first.
+.carry_clash <- intersect(CARRY, c("row", "group"))
+if (length(.carry_clash)) {
+  stop("CARRY may not name ", paste(.carry_clash, collapse = ", "), ": the saved frame already has ",
+       "`row` and `group` columns. The treatment received is saved as `group` whatever GROUP is called.",
+       call. = FALSE)
+}
 .carry_miss <- setdiff(CARRY, names(d))
 if (length(.carry_miss)) {
   stop("CARRY names column(s) not in the cohort: ", paste(.carry_miss, collapse = ", "), ".", call. = FALSE)
