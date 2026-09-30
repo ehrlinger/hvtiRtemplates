@@ -2,11 +2,21 @@
 # and lm templates are: each chunk is parsed out of the template by its label
 # and evaluated in one environment.
 
+# The file of the template called `name`, as template_list() names it: "hm", or
+# "hs-setup" for a qualified one. template_path() takes a prefix and stops on
+# one that carries several templates.
+hazard_template <- function(name) {
+  templates <- template_list()
+  hit <- which(templates$name == name)
+  if (length(hit) != 1L) stop("template '", name, "' found ", length(hit), " times", call. = FALSE)
+  templates$file[[hit]]
+}
+
 # Evaluate the chunks `labels` of template `prefix` in `env`. After
 # `edit-study-choices` runs, `choices` overwrites its values, as a study
 # author's edits would.
 hazard_run <- function(prefix, labels, env, choices = list()) {
-  src <- readLines(template_path(prefix), warn = FALSE)
+  src <- readLines(hazard_template(prefix), warn = FALSE)
   for (label in labels) {
     at <- which(trimws(src) == paste0("#| label: ", label))
     if (length(at) != 1L) stop("chunk '", label, "' found ", length(at), " times", call. = FALSE)
@@ -142,10 +152,10 @@ hazard_chain_run <- function(root, data, hm_env = globalenv(), .local_envir = pa
     hm_env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
     hazard_run("hm", c("read-upstream", "data", "cohort", "audit", "phases", "edit-fit", "edit-reported",
                        "calibration", "save"), hm_env)
-    hazard_run("hs", c("set", "edit-study-choices"), env,
+    hazard_run("hs-setup", c("set", "edit-study-choices"), env,
                list(EXPECTED = expected, HORIZONS = c(1, 2), VINTAGE = "table2023"))
-    hazard_run("hs", c("read-upstream", "data", "cohort", "model", "horizons", "predict", "expected",
-                       "edit-obs-vs-exp", "save"), env)
+    hazard_run("hs-setup", c("read-upstream", "data", "cohort", "model", "horizons", "predict", "expected",
+                             "edit-obs-vs-exp", "save"), env)
   }))
   hm_env
 }

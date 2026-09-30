@@ -363,8 +363,8 @@ test_that("hp rejects incompatible ac and hz producer lineage", {
 })
 
 test_that("hazard chain templates attach, require, and publish lineage", {
-  sources <- lapply(c("ac", "hz", "hm", "hp", "hs"), function(prefix) {
-    readLines(template_path(prefix), warn = FALSE)
+  sources <- lapply(c("ac", "hz", "hm", "hp", "hs-setup"), function(name) {
+    readLines(hazard_template(name), warn = FALSE)
   })
   names(sources) <- c("ac", "hz", "hm", "hp", "hs")
 
