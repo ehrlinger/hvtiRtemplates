@@ -505,7 +505,7 @@
       "folder": "graphs",
       "family": "hazard-chain",
       "kind": "job",
-      "status": "queued",
+      "status": "shipped",
       "batch": null,
       "sas_breadth": null,
       "r_exemplars": 0,

@@ -152,7 +152,7 @@ test_that("embedded provenance calls are unique across all R chunks", {
 
 test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- template_list()
-  expect_equal(nrow(templates), 30L)
+  expect_equal(nrow(templates), 31L)
 
   for (path in templates$file) {
     source <- readLines(path, warn = FALSE)
@@ -216,7 +216,7 @@ test_that("analysis-set branches capture the parquet file they read", {
 
 test_that("only templates with a local dataset choice override the dataset", {
   expected <- c(
-    "ac", "hz", "hm", "hp", "hs-setup",
+    "ac", "hz", "hm", "hp", "hs-concordance", "hs-setup",
     "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-postage", "dp-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",

@@ -1,5 +1,19 @@
 # hvtiRtemplates (unreleased)
 
+* New template `hs-concordance`: every patient predicted through every
+  treatment group's `hm` model at one horizon, the job the corpus calls
+  concordance and discordance. It reads each group's model from that
+  group's own set, saves one long artifact, `hs-concordance.rds`, and has
+  an optional section that picks a best treatment per patient only where
+  the confidence limits separate it. Design:
+  `dev/specs/2026-09-30-hs-concordance-design.md`.
+
+* `hs` now carries two templates, so `add_job("hs", ...)`,
+  `template_path("hs")` and `open_job("hs", ...)` without a qualifier stop
+  and list `setup` and `concordance`. Migrating a SAS `hs` job needs
+  `qualifier =` too: its filename's second field is the endpoint, not the
+  job type.
+
 * The `hs` template is now `hs-setup`. A second `hs` job type,
   `hs-concordance`, is queued in the catalog, and a prefix is either wholly
   qualified or wholly unqualified, so the existing template takes a
