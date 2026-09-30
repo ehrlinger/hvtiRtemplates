@@ -381,7 +381,7 @@ test_that("every fit converts a text predictor to a factor and names it (#181)",
     printed <- utils::capture.output(
       rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env, rf_mrn_choices(prefix))
     )
-    expect_identical(printed, "Text predictors converted to factors: grp ", info = prefix)
+    expect_identical(printed, "Text predictors converted to factors: grp", info = prefix)
     expect_s3_class(env$d$grp, "factor")
     expect_identical(levels(env$d$grp), c("a", "b", "c"), info = prefix)
     # Nothing is said when there is nothing to convert.

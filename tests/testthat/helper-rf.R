@@ -215,11 +215,18 @@ rf_bytes_hold <- function(bytes, value) {
   any(vapply(patterns, function(p) length(grepRaw(p, bytes, fixed = TRUE)) > 0L, logical(1L)))
 }
 
-# The bytes of a saved file, decompressed when it is an .rds.
+# The bytes of a saved file, decompressed when it is an .rds. Read to the end
+# in pieces: a fixed cap would let an identifier past it go unseen.
 rf_rds_bytes <- function(path) {
   con <- gzfile(path, "rb")
   on.exit(close(con))
-  readBin(con, "raw", n = 1e8)
+  pieces <- list()
+  repeat {
+    piece <- readBin(con, "raw", n = 1e7)
+    if (!length(piece)) break
+    pieces[[length(pieces) + 1L]] <- piece
+  }
+  do.call(c, pieces)
 }
 
 # The files in `dir` that hold any of `ids`: the forest, its cache, and the

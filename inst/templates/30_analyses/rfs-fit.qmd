@@ -310,7 +310,7 @@ if (!all(d[[EVENT]] %in% c(0, 1))) {
 .chr <- PREDICTORS[vapply(d[PREDICTORS], is.character, logical(1L))]
 if (length(.chr)) {
   d[.chr] <- lapply(d[.chr], factor)
-  cat("Text predictors converted to factors:", paste(.chr, collapse = ", "), "\n")
+  cat("Text predictors converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
 }
 ```
 

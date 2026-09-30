@@ -316,7 +316,7 @@ ROC_OUTCOME <- match(ROC_CLASS, levels(d[[RESPONSE]]))
 .chr <- PREDICTORS[vapply(d[PREDICTORS], is.character, logical(1L))]
 if (length(.chr)) {
   d[.chr] <- lapply(d[.chr], factor)
-  cat("Text predictors converted to factors:", paste(.chr, collapse = ", "), "\n")
+  cat("Text predictors converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
 }
 ```
 
