@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* `hz` renders again with TemporalHazard 1.2.11. Its convergence table read
+  an iteration count that a multiphase fit does not carry, so every render
+  stopped there. The table now reports the optimizer's function and gradient
+  evaluations, and shows "not reported" for a field a fit leaves out, so a
+  missing field cannot stop the render (#168).
+
 * `read_job_data()` is the shared data step for templates: it reads a
   registered dataset or analysis set, resolves the patient ID (`ccfid`, then
   `MRN`, then `eMRN`), drops `MRN` and `eMRN`, keeps the rows `WHERE`

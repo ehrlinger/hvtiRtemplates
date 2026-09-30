@@ -136,7 +136,8 @@ hazard_chain_run <- function(root, data, hm_env = globalenv(), .local_envir = pa
     hazard_run("ac", c("data", "cohort", "km-helpers", "km-overall"), env)
     hazard_run("hz", c("set", "edit-study-choices"), env, list(EXPECTED = expected))
     hazard_run("hz", c("data", "cohort", "phases", "edit-start", "edit-response", "response-check", "guard",
-                       "fit-deterministic", "noconserve", "save"), env)
+                       "fit-deterministic", "convergence", "edit-multistart", "noconserve", "conservation-binding",
+                       "edit-estimates", "save"), env)
     hazard_run("hm", c("set", "edit-study-choices"), hm_env, list(EXPECTED = expected, DECILE_TIME = 3))
     hm_env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
     hazard_run("hm", c("read-upstream", "data", "cohort", "audit", "phases", "edit-fit", "edit-reported",

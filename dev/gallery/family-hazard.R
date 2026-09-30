@@ -107,17 +107,7 @@ gallery_family(
       "^probes <- rbind\\(theta0, theta0 \\+ 0.5, theta0 - 0.5\\)$" = paste(
         ".free  <- !theta_names %in% c(\"late.log_tau\", \"late.gamma\", \"late.alpha\")",
         "probes <- rbind(theta0, theta0 + 0.5 * .free, theta0 - 0.5 * .free)", sep = "\n"
-      ),
-      # GALLERY WORKAROUND for a template defect, not a study choice. The
-      # convergence table reads fit_det$fit$iterations, which a multiphase
-      # fit does not carry (TemporalHazard 1.2.11): it is NULL, the table's
-      # value column comes up one short, and the render stops with
-      # "arguments imply differing number of rows: 5, 4". The fit reports
-      # its optimizer counts in fit$counts instead.
-      "^  quantity = c\\(\"log-likelihood\", \"converged\", \"iterations\"" =
-        "  quantity = c(\"log-likelihood\", \"converged\", \"function evaluations\", \"rcond\", \"pd\"),",
-      "^               fit_det\\$fit\\$converged, fit_det\\$fit\\$iterations,$" =
-        "               fit_det$fit$converged, fit_det$fit$counts[[\"function\"]],"
+      )
     ))),
     hm = list(
       subject = "dead", type = "hz",

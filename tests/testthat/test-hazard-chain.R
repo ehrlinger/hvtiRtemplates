@@ -113,3 +113,19 @@ test_that("hm saves no MRN when its chunks run outside the global environment", 
   expect_true("mrn" %in% names(env$d))
   expect_false(hazard_file_holds_any(root, "hm.rds", data$MRN))
 })
+
+test_that("hz's convergence table keeps its rows when a fit leaves a field out", {
+  # A multiphase fit carries no iteration count (#168); a missing field must
+  # show as "not reported", not change the row count and stop the render.
+  src <- readLines(template_path("hz"), warn = FALSE)
+  at <- which(trimws(src) == "#| label: convergence")
+  chunk <- parse(text = src[(at + 1L):(at + which(src[(at + 1L):length(src)] == "```")[1L] - 1L)])
+  env <- new.env(parent = globalenv())
+  env$fit_det <- list(fit = list(objective = -10, converged = TRUE, rcond = 0.1, pd = TRUE))
+  out <- as.character(eval(chunk, env))
+  expect_identical(sum(grepl("not reported", out, fixed = TRUE)), 2L)
+  expect_identical(sum(grepl("evaluations", out, fixed = TRUE)), 2L)
+  env$fit_det$fit$counts <- c("function" = 6L, gradient = 1L)
+  out <- as.character(eval(chunk, env))
+  expect_false(any(grepl("not reported", out, fixed = TRUE)))
+})
