@@ -121,3 +121,31 @@ test_that("a rendered lm-binary keyed on MRN saves no MRN anywhere in the file",
   # The key stays in the study, never beside the package.
   expect_true(file.exists(file.path(out$root, ".hvti", "id_key")))
 })
+
+test_that("a reader of saved digests never makes a key, and notices a replaced one", {
+  root <- withr::local_tempdir()
+  bundle <- list(meta = list(id_col = "ccfid"), data = data.frame(ccfid = 1:3))
+  saved <- .digest_bundle_ids(bundle, root)
+  expect_type(saved$meta$id_key_fingerprint, "character")
+  expect_identical(.bundle_id_key(saved, root), .study_id_key(root))
+  # A lost key is an error, and no new one is made.
+  unlink(file.path(root, ".hvti", "id_key"))
+  expect_error(.bundle_id_key(saved, root), "has no patient-ID key")
+  expect_false(file.exists(file.path(root, ".hvti", "id_key")))
+  # A replaced key does not match the saved fingerprint.
+  invisible(.study_id_key(root))
+  expect_error(.bundle_id_key(saved, root), "different study key")
+})
+
+test_that("a render that finds the key being made waits and reuses it", {
+  root <- withr::local_tempdir()
+  dir.create(file.path(root, ".hvti", "id_key.lock"), recursive = TRUE)
+  # Another render holds the lock and has written its key; this one must read it, not replace it.
+  writeLines(strrep("ab", 32L), file.path(root, ".hvti", "id_key"))
+  expect_identical(.study_id_key(root), strrep("ab", 32L))
+  # With the lock held and no key after the wait, it stops rather than writing a second key.
+  unlink(file.path(root, ".hvti", "id_key"))
+  testthat::local_mocked_bindings(Sys.sleep = function(time) invisible(NULL), .package = "base")
+  expect_error(.study_id_key(root), "Another render is creating")
+  expect_false(file.exists(file.path(root, ".hvti", "id_key")))
+})

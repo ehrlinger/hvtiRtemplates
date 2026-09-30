@@ -160,7 +160,7 @@ if (anyNA(d[[.id]]) || anyNA(model$data[[.train_id]])) {
 # compared raw so it still validates; re-save it with its lm template to clear them from the file.
 .digested <- isTRUE(model$meta$id_digest)
 .validation_ids <- if (.digested) {
-  unique(hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root)))
+  unique(hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.bundle_id_key(model, .root)))
 } else {
   unique(as.character(d[[.id]]))
 }

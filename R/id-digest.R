@@ -7,20 +7,44 @@
 #' printed: an error names the file, not its contents.
 #'
 #' @param root The study root.
+#' @param create Whether a missing key may be made. Only a step that saves new
+#'   digests passes \code{TRUE}; a reader of saved digests needs the key they
+#'   were made with, so a missing one is an error.
 #' @return The key, one string of 64 hex characters.
 #' @noRd
-.study_id_key <- function(root) {
+.study_id_key <- function(root, create = TRUE) {
   path <- file.path(root, ".hvti", "id_key")
+  if (!file.exists(path) && !create) {
+    stop("The study has no patient-ID key at ", path, ", but a saved model was digested with one. Restore ",
+         ".hvti/ from backup: a new key cannot match the saved digests.", call. = FALSE)
+  }
   if (!file.exists(path)) {
     dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE, mode = "0750")
-    # A restrictive umask closes the window between writing the file and chmod.
-    old <- Sys.umask("027")
-    on.exit(Sys.umask(old), add = TRUE)
-    tmp <- tempfile("id_key", tmpdir = dirname(path))
-    writeLines(paste(as.character(openssl::rand_bytes(32L)), collapse = ""), tmp)
-    Sys.chmod(tmp, "0640")
-    # Written aside and renamed, so a reader never sees a half-written key.
-    if (!file.exists(path)) file.rename(tmp, path) else unlink(tmp)
+    # Creating a directory is atomic on every platform, so it is the lock. Only the render holding it
+    # writes the key, and only while none exists, so a key already read by another render is never
+    # replaced; a render that loses the race waits for the winner's key and reads it.
+    lock <- file.path(dirname(path), "id_key.lock")
+    waited <- 0
+    while (!file.exists(path)) {
+      if (dir.create(lock, showWarnings = FALSE)) {
+        on.exit(unlink(lock, recursive = TRUE), add = TRUE)
+        if (!file.exists(path)) {
+          old <- Sys.umask("027")
+          on.exit(Sys.umask(old), add = TRUE)
+          tmp <- tempfile("id_key", tmpdir = dirname(path))
+          writeLines(paste(as.character(openssl::rand_bytes(32L)), collapse = ""), tmp)
+          Sys.chmod(tmp, "0640")
+          file.rename(tmp, path)
+        }
+        break
+      }
+      if (waited >= 10) {
+        stop("Another render is creating the study's patient-ID key; rerun once it finishes, or remove ", lock,
+             " if no render is running.", call. = FALSE)
+      }
+      Sys.sleep(0.2)
+      waited <- waited + 0.2
+    }
   }
   key <- tryCatch(readLines(path, warn = FALSE), error = function(e) NULL, warning = function(w) NULL)
   if (length(key) != 1L || !grepl("^[0-9a-f]{64}$", key)) {
@@ -50,6 +74,36 @@
   seen <- unique(text[!is.na(text)])
   hashed <- vapply(seen, function(v) digest::hmac(key, v, "sha256"), character(1L), USE.NAMES = FALSE)
   hashed[match(text, seen)]
+}
+
+#' A non-secret fingerprint of the study key
+#'
+#' Saved with a digested bundle, so a reader can tell that the study's key was
+#' lost or replaced since, which would otherwise make every digest miss.
+#'
+#' @param key The key from \code{.study_id_key()}.
+#' @return Sixteen hex characters.
+#' @noRd
+.id_key_fingerprint <- function(key) substr(digest::hmac(key, "hvtiRtemplates id key fingerprint", "sha256"), 1L, 16L)
+
+#' The study key a digested bundle was saved with
+#'
+#' Reads the key without creating one, and stops when it is missing or is not
+#' the key the bundle's digests were made with.
+#'
+#' @param bundle A bundle saved by \code{.digest_bundle_ids()}.
+#' @param root The study root.
+#' @return The key.
+#' @noRd
+.bundle_id_key <- function(bundle, root) {
+  key <- .study_id_key(root, create = FALSE)
+  saved <- bundle$meta$id_key_fingerprint
+  if (!is.null(saved) && !identical(saved, .id_key_fingerprint(key))) {
+    stop("The saved model's patient IDs were digested with a different study key than the one at ",
+         file.path(root, ".hvti", "id_key"), ". Restore the original key from backup, or refit the model.",
+         call. = FALSE)
+  }
+  key
 }
 
 #' Replace the patient IDs in a bundle with their study-keyed digest
@@ -83,5 +137,6 @@
   todo <- setdiff(names(bundle), skip)
   bundle[todo] <- lapply(bundle[todo], walk)
   bundle$meta$id_digest <- TRUE
+  bundle$meta$id_key_fingerprint <- .id_key_fingerprint(key)
   bundle
 }
