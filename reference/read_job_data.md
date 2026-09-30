@@ -111,7 +111,7 @@ is checked before the data are read.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
-#> Study: /tmp/RtmpFIv2Kt/job-data-example
+#> Study: /tmp/Rtmp6oE77o/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -124,7 +124,7 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/RtmpFIv2Kt/job-data-example
+#> Study: /tmp/Rtmp6oE77o/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
