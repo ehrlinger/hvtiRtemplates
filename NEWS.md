@@ -46,6 +46,17 @@
   different rows. `hm` fits on the model's columns only, so `hm.rds` no longer
   keeps the patient ID or MRN in its saved fits.
 
+* The random-forest templates read their data through `read_job_data()`,
+  gaining `WHERE`, `ID` and `KEY`; text predictors are converted to factors
+  with a note; `explain` jobs take the fit's selection. `rfs-fit`'s `STATUS`
+  is `EVENT`. A fit stops when `PREDICTORS` names the patient ID or a `KEY`
+  column, or when an outcome (`TIME`, `EVENT` or `RESPONSE`) is the patient
+  ID. A `KEY` column that is not the ID, such as a visit time, may still be an
+  outcome, and is then saved with the forest. The forest's formula no longer
+  carries the job's environment, so the saved forest and the `explain` caches
+  hold no patient ID or MRN wherever the job is run. An `explain` job stops
+  on a forest saved before this change; rerun its fit job first.
+
 * `dp-postage` is deprecated in favor of `dp-eda`, and will be removed in the
   release after 1.2.3. For the same pages, scaffold
   `add_job("dp", subject, type, qualifier = "eda")` and set

@@ -200,6 +200,12 @@ are not here: they come from the forest.
 
 ```{r}
 #| label: edit-study-choices
+# EDIT: the fit's selection is used; set any of these only to confirm it.
+# NULL takes the value the fit job used.
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
+
 # EDIT: how many variables get dependence plots, ranked by VIMP. The partials
 # are the expensive step, so keep this small.
 TOP_K <- 8
@@ -248,6 +254,21 @@ CACHE_DIR <- dirname(.handoff)
 frame <- cbind(forest$yvar, forest$xvar)
 model <- stats::as.formula(paste0("Surv(", forest$yvar.names[1], ", ",
                                   forest$yvar.names[2], ") ~ ."))
+```
+
+```{r}
+#| label: data
+# This job reads no data: the forest carries its training rows. The fit job
+# recorded how it chose them, and a setting above that differs from the fit's
+# stops here rather than describe rows the forest was not grown on.
+.sel <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, .forest_read$lineage, list(where = WHERE, id = ID, key = KEY), read = FALSE, source = "rfs.rds"
+)$selection
+knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
+                        value = c(.sel$id, paste(.sel$key, collapse = ", "),
+                                  if (length(.sel$where_shown)) paste(.sel$where_shown, collapse = "; ") else "none",
+                                  .sel$rows)),
+             col.names = c("Data", ""), caption = "The data the fit job read")
 ```
 
 ## Importance

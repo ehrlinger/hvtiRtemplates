@@ -198,6 +198,25 @@ Edit these values for this study before rendering.
 
 ```{r}
 #| label: edit-study-choices
+# EDIT: the registered dataset this job reads ("study" is the built dataset).
+DATASET <- "study"
+
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
 # EDIT: the outcome to classify. Any coding works: 0/1, "yes"/"no" or a label.
 # The read step makes it a factor, which is what makes this a classification
 # forest rather than a regression on the codes.
@@ -233,13 +252,19 @@ REFIT <- FALSE
 ## Cohort
 
 ```{r}
-#| label: read
+#| label: data
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
-.data_read <- hvtiRtemplates:::.provenance_read(
-  "study", .cfg, function() read_built(cfg = .cfg)
-)
-d <- .data_read$value
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+if (!is.null(job_data$attrition)) {
+  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+}
 .outcomes <- intersect(RESPONSE, PREDICTORS)
 if (length(.outcomes)) {
   stop("Do not include the outcome variable in PREDICTORS: ", .outcomes, ".", call. = FALSE)
@@ -248,9 +273,23 @@ if (length(.outcomes)) {
 if (length(.duplicated)) {
   stop("PREDICTORS names a variable more than once: ", paste(.duplicated, collapse = ", "), ".", call. = FALSE)
 }
+# A forest must not be trained on an identifier. It would split on who a
+# patient is, not on what is true of them, and the saved forest keeps its
+# training columns, so the identifier would be written into rfc.rds.
+.selection <- attr(job_data$record, "selection")
+.identifiers <- PREDICTORS[tolower(PREDICTORS) %in% tolower(c(.selection$id, .selection$key))]
+if (length(.identifiers)) {
+  stop("Do not include the patient identifier or a KEY column in PREDICTORS: ",
+       paste(.identifiers, collapse = ", "), ".", call. = FALSE)
+}
+# Nor may the identifier be the outcome: the forest keeps its outcome column
+# too. A KEY column that is not the ID, a visit time say, may be one.
+if (any(tolower(RESPONSE) == tolower(.selection$id))) {
+  stop("The patient identifier (", .selection$id, ") cannot be an outcome of this job.", call. = FALSE)
+}
 .missing <- setdiff(c(RESPONSE, PREDICTORS), names(d))
 if (length(.missing)) {
-  stop("Not in the built dataset: ", paste(.missing, collapse = ", "), call. = FALSE)
+  stop("Not in the data this job read: ", paste(.missing, collapse = ", "), call. = FALSE)
 }
 d <- d[, c(RESPONSE, PREDICTORS), drop = FALSE]
 
@@ -271,6 +310,14 @@ if (!is.character(ROC_CLASS) || length(ROC_CLASS) != 1L || is.na(ROC_CLASS) || !
        " is not an observed level. Choose one of: ", paste(levels(d[[RESPONSE]]), collapse = ", "), ".", call. = FALSE)
 }
 ROC_OUTCOME <- match(ROC_CLASS, levels(d[[RESPONSE]]))
+
+# A forest splits a text column only as a factor, so text predictors are
+# converted here, and named, rather than left for the fit to refuse or coerce.
+.chr <- PREDICTORS[vapply(d[PREDICTORS], is.character, logical(1L))]
+if (length(.chr)) {
+  d[.chr] <- lapply(d[.chr], factor)
+  cat("Text predictors converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
+}
 ```
 
 ## Forest
@@ -282,6 +329,12 @@ ROC_OUTCOME <- match(ROC_CLASS, levels(d[[RESPONSE]]))
 # estimates folder, not this set's, so every call here names the set's.
 CACHE_DIR <- dirname(set_path("estimates", "rfc.rds"))
 model <- stats::reformulate(".", response = RESPONSE)
+# The saved forest keeps this formula, and a formula keeps the environment it
+# was made in. That is the global environment in a render, which a saved file
+# only refers to; set it, so a job run anywhere else does not write every
+# object beside the formula, `job_data` and its patient IDs included, into
+# the forest.
+environment(model) <- globalenv()
 forest <- cache_fit(
   "rfc-forest",
   rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none"),
@@ -330,7 +383,9 @@ forest <- hvtiRtemplates:::.attach_handoff_lineage(
       target_level = ROC_CLASS
     )
   ),
-  cohort = list(n = as.integer(length(forest$yvar)))
+  cohort = list(n = as.integer(length(forest$yvar))),
+  # rfc-explain takes the rows, ID and KEY of this fit from this record.
+  selection = attr(job_data$record, "selection")
 )
 saveRDS(forest, set_path("estimates", "rfc.rds"))
 ```

@@ -29,16 +29,16 @@ rf_chunk <- function(src, label) {
 # real study always has one by the time any job runs, so
 # this is not a template gap; it is this smoke fixture skipping a setup step a
 # real study never skips. register_data() needs an actual file to read, so one
-# is written here -- content is irrelevant, since rf_env() overrides
-# read_built() directly and never reads it back.
-rf_study <- function(.local_envir = parent.frame()) {
+# is written here. It is `data`, which the fit jobs read back through
+# read_job_data(); saved as .rds so a factor or a missing value arrives as the
+# test wrote it. read_built() lowercases the column names.
+rf_study <- function(data = data.frame(ccfid = 1:2, time = c(1, 2), event = c(1, 0)), .local_envir = parent.frame()) {
   root <- withr::local_tempdir("rf-study-", .local_envir = .local_envir)
   utils::capture.output(suppressMessages(
     hvtiRutilities::study_setup(root, study = "RF smoke", study_tracker_id = 1L, adopt = TRUE)
   ))
   root <- normalizePath(root)
-  saveRDS(data.frame(ccfid = 1:2, time = c(1, 2), event = c(1, 0)),
-          file.path(hvtiRutilities::study_dir("datasets", root), "cohort.rds"))
+  saveRDS(data, file.path(hvtiRutilities::study_dir("datasets", root), "cohort.rds"))
   utils::capture.output(suppressMessages(
     hvtiRutilities::register_data(
       root, built = "cohort.rds", population = "RF smoke"
@@ -105,12 +105,14 @@ rf_skip_unless_stack <- function(pkgs) {
   )
 }
 
-# A fresh environment whose read_built() returns `data` instead of reading a
-# registered dataset, rooted in a throwaway study.
+# A fresh chunk environment rooted in a throwaway study whose built dataset is
+# `data`, so the fit's data chunk reads it through read_job_data() as a render
+# would. A patient identifier is added when `data` has none, as a built
+# dataset always carries one.
 rf_env <- function(data, .local_envir = parent.frame()) {
+  if (!any(tolower(names(data)) %in% c("ccfid", "mrn", "emrn"))) data$ccfid <- seq_len(nrow(data))
   env <- new.env(parent = globalenv())
-  env$.root <- rf_study(.local_envir)
-  env$read_built <- function(...) data
+  env$.root <- rf_study(data, .local_envir)
   env$.provenance_data <- list()
   env
 }
@@ -122,6 +124,118 @@ rf_env <- function(data, .local_envir = parent.frame()) {
 # from the file's own top-level bindings, not across test files.
 rf_fit_first <- function(prefix, data, choices, .local_envir = parent.frame()) {
   env <- rf_env(data, .local_envir)
-  rf_run(prefix, "fit", c("set", "edit-study-choices", "read", "fit", "save"), env, choices)
+  rf_run(prefix, "fit", c("set", "edit-study-choices", "data", "fit", "save"), env, choices)
   env
+}
+
+# ---- #203: searching a saved forest for patient identifiers --------------------
+
+# One cohort all three forests can be grown on, keyed on MRN and with no ccfid,
+# so the job's ID falls back to MRN. `grp` is text, for the factor conversion.
+# The MRN has ten digits: it is read as a double, so it can sit in a file as
+# text or as eight bytes, either long enough that a forest's own numbers do
+# not match it by chance, which a four-byte integer could.
+rf_mrn_data <- function(n = 120L, id = "MRN") {
+  withr::local_seed(20260930)
+  age <- round(stats::runif(n, 20, 85))
+  x1 <- stats::rnorm(n)
+  death <- stats::rweibull(n, shape = 2, scale = 6 * exp(-0.3 * x1))
+  censor <- stats::runif(n, 1, 8)
+  d <- data.frame(
+    id = 7350000000 + seq_len(n), age = age, x1 = x1,
+    grp = sample(c("a", "b", "c"), n, replace = TRUE),
+    iv_dead = pmax(pmin(death, censor), 0.01), dead = as.integer(death <= censor),
+    los = 3 + 0.05 * age + stats::rnorm(n)
+  )
+  names(d)[[1L]] <- id
+  d
+}
+
+# The study choices that grow each forest on rf_mrn_data().
+rf_mrn_choices <- function(prefix, ...) {
+  outcome <- list(
+    rfs = list(TIME = "iv_dead", EVENT = "dead"),
+    rfc = list(RESPONSE = "dead", ROC_CLASS = "1"),
+    rfr = list(RESPONSE = "los")
+  )[[prefix]]
+  utils::modifyList(c(outcome, list(PREDICTORS = c("age", "x1", "grp"), NTREE = 25, SEED = 1)), list(...))
+}
+
+# Run `code` with `env` put back as it was when `.local_envir` ends: the names
+# the chunks create are removed, and a name they replace, such as a `d` or a
+# `forest` already in the global environment, gets its value back. The random
+# seed is left as the run leaves it when the session already had one.
+rf_restore_later <- function(env, .local_envir) {
+  before <- as.list(env, all.names = TRUE)
+  before$.Random.seed <- NULL
+  withr::defer({
+    rm(list = setdiff(ls(env, all.names = TRUE), c(names(before), ".Random.seed")), envir = env)
+    list2env(before, envir = env)
+  }, envir = .local_envir)
+}
+
+# Grow and save the `prefix` forest on `data` with every chunk evaluated in
+# `env`. A render evaluates its chunks in the global environment, so a test
+# passes that. Returns the set's estimates directory and what the data chunk
+# printed.
+rf_fit_in <- function(prefix, data, env, choices = rf_mrn_choices(prefix), .local_envir = parent.frame()) {
+  rf_restore_later(env, .local_envir)
+  env$.root <- rf_study(data, .local_envir)
+  env$.provenance_data <- list()
+  printed <- utils::capture.output(
+    rf_run(prefix, "fit", c("set", "edit-study-choices", "data", "fit", "save"), env, choices)
+  )
+  list(dir = env$CACHE_DIR, printed = printed, job_data = env$job_data, forest = env$forest, root = env$.root)
+}
+
+# Run every chunk of the `prefix` explain job in `env`, on the forest the fit
+# saved in the study at `root`. Returns the names of the files it wrote.
+rf_explain_in <- function(prefix, root, env, .local_envir = parent.frame()) {
+  rf_restore_later(env, .local_envir)
+  env$.root <- root
+  choices <- c(list(TOP_K = 2, SEED = 1), if (identical(prefix, "rfs")) list(TIMES = c(1, 3)))
+  labels <- c("set", "edit-study-choices", "forest", "data", "importance", "select", "varpro", "dependence")
+  # VarPro keeps only the variables it selects, so a top variable by VIMP can be
+  # absent from its partial, and it says so. That one notice is about the
+  # explanation, not the files; any other warning still reaches the summary.
+  withCallingHandlers(
+    utils::capture.output(rf_run(prefix, "explain", labels, env, choices)),
+    warning = function(w) {
+      if (grepl("^partialpro\\(\\): skipping xvar.names not found in object\\$xvar.names", conditionMessage(w))) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+  setdiff(list.files(env$CACHE_DIR), paste0(prefix, c(".rds", "-forest.rds", "-forest.provenance.json")))
+}
+
+# TRUE when `bytes` hold `value` as text or as R's big-endian double encoding.
+rf_bytes_hold <- function(bytes, value) {
+  patterns <- list(charToRaw(format(value, scientific = FALSE)), writeBin(as.double(value), raw(), endian = "big"))
+  any(vapply(patterns, function(p) length(grepRaw(p, bytes, fixed = TRUE)) > 0L, logical(1L)))
+}
+
+# The bytes of a saved file, decompressed when it is an .rds. Read to the end
+# in pieces: a fixed cap would let an identifier past it go unseen.
+rf_rds_bytes <- function(path) {
+  con <- gzfile(path, "rb")
+  on.exit(close(con))
+  pieces <- list()
+  repeat {
+    piece <- readBin(con, "raw", n = 1e7)
+    if (!length(piece)) break
+    pieces[[length(pieces) + 1L]] <- piece
+  }
+  do.call(c, pieces)
+}
+
+# The files in `dir` that hold any of `ids`: the forest, its cache, and the
+# cache's provenance sidecar, which gzfile() reads as the plain text it is.
+rf_files_holding <- function(dir, ids) {
+  files <- list.files(dir, full.names = TRUE)
+  held <- vapply(files, function(f) {
+    bytes <- rf_rds_bytes(f)
+    any(vapply(ids, function(v) rf_bytes_hold(bytes, v), logical(1L)))
+  }, logical(1L))
+  basename(files[held])
 }
