@@ -481,11 +481,17 @@ summary(fit_det)
 # includes every FIXED parameter as an all-NA row and column, and rcond()
 # cannot take an NA matrix. The fit's own values are computed on the free
 # parameters, which is also what SAS's condition number refers to.
+#
+# A multiphase fit reports how many times the optimizer evaluated the function
+# and its gradient, not an iteration count. Each value is read through .one(),
+# so a field a fit does not carry shows as "not reported" rather than changing
+# the number of rows and stopping the render.
+.one <- function(x, ...) if (length(x) == 1L && !is.na(x)) format(x, ...) else "not reported"
 knitr::kable(data.frame(
-  quantity = c("log-likelihood", "converged", "iterations", "rcond", "pd"),
-  value    = c(format(fit_det$fit$objective, digits = 10),
-               fit_det$fit$converged, fit_det$fit$iterations,
-               format(fit_det$fit$rcond, digits = 6), fit_det$fit$pd)
+  quantity = c("log-likelihood", "converged", "function evaluations", "gradient evaluations", "rcond", "pd"),
+  value    = c(.one(fit_det$fit$objective, digits = 10), .one(fit_det$fit$converged),
+               .one(fit_det$fit$counts["function"]), .one(fit_det$fit$counts["gradient"]),
+               .one(fit_det$fit$rcond, digits = 6), .one(fit_det$fit$pd))
 ))
 ```
 
