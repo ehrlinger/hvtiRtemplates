@@ -216,7 +216,7 @@ test_that("analysis-set branches capture the parquet file they read", {
 
 test_that("only templates with a local dataset choice override the dataset", {
   expected <- c(
-    "ac", "hz", "hm", "hp", "hs",
+    "ac", "hz", "hm", "hp", "hs-setup",
     "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-postage", "dp-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
@@ -456,7 +456,7 @@ test_that("lm-checkpred separates carried training metadata from runtime validat
 })
 
 test_that("event-time templates record local coding and observed counts", {
-  event_names <- c(ac = "EVENT", hz = "EVENT", hm = "EVENT", hp = "EVENT", hs = "EVENT")
+  event_names <- c(ac = "EVENT", hz = "EVENT", hm = "EVENT", hp = "EVENT", `hs-setup` = "EVENT")
   for (prefix in names(event_names)) {
     chunk <- provenance_chunk(template_by_name(prefix))
     event <- event_names[[prefix]]

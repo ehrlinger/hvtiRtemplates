@@ -1,12 +1,25 @@
 # hvtiRtemplates (unreleased)
 
-* `hs` now says what its `se.fit` column is. On the survival path it is
-  se(S), the standard error of the survival estimate itself. Until
-  TemporalHazard #281 (2026-09-13) the same column held se(H), with no change
-  to the version number, so an `hs.rds` written before then holds a different
-  quantity under the same name. The template's comment beside the `predict()`
-  call now records both, next to the existing coverage warning. No output
-  changes.
+* The `hs` template is now `hs-setup`. A second `hs` job type,
+  `hs-concordance`, is queued in the catalog, and a prefix is either wholly
+  qualified or wholly unqualified, so the existing template takes a
+  qualifier first. `add_job("hs", ...)` still works while `hs-setup` is the
+  only `hs` template, and now writes `<subject>-<type>-hs-setup.qmd`. Jobs
+  already scaffolded keep their names, and the job still saves `hs.rds`.
+  `open_job("hs", ...)` and `add_job("hs", ...)` look for the new name, so
+  in a study that already has `<subject>-<type>-hs.qmd` they scaffold a
+  fresh `<subject>-<type>-hs-setup.qmd` beside it. Open the existing job by
+  its file.
+  Design: `dev/specs/2026-09-30-hs-concordance-design.md`.
+
+* `hs-setup` now requires TemporalHazard >= 1.2.12 and says what its
+  `se.fit` column is. On the survival path it is se(S), the standard error of
+  the survival estimate itself. A TemporalHazard build without #281 wrote
+  se(H) into the same column, and #281 shipped inside version 1.2.11, so which
+  one an `hs.rds` holds depends on the build that produced it, not on when it
+  was written. The render stops on an older build instead of writing an
+  ambiguous file, and the `Suggests` floor for TemporalHazard rises from 1.2.8
+  to 1.2.12 to match.
 
 * `hz` renders again with TemporalHazard 1.2.11. Its convergence table read
   an iteration count that a multiphase fit does not carry, so every render

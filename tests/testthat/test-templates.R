@@ -320,9 +320,9 @@ test_that("endpoint-driven templates own explicit cohort definitions", {
     src[seq.int(start, if (length(end)) end[[1L]] - 1L else length(src))]
   }
 
-  templates <- c(ac = "EVENT", hz = "EVENT", hm = "EVENT", hs = "EVENT")
+  templates <- c(ac = "EVENT", hz = "EVENT", hm = "EVENT", `hs-setup` = "EVENT")
   for (prefix in names(templates)) {
-    src <- readLines(template_path(prefix), warn = FALSE)
+    src <- readLines(hazard_template(prefix), warn = FALSE)
     event <- templates[[prefix]]
     info <- paste0(prefix, ".qmd")
 
@@ -515,7 +515,7 @@ test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
   # under R CMD check, which tests an INSTALLED copy -- so the first version of
   # this test passed locally and errored in check.
   #
-  # hvtiRlifetables repeated the first half of that: hs.qmd called
+  # hvtiRlifetables repeated the first half of that: hs-setup.qmd called
   # us_cohort_curve(), new in 0.1.2, while DESCRIPTION did not name the package
   # at all. This test then skipped a missing bound, so it could not have said
   # so. A package listed here must now have both a template floor and a bound,
@@ -840,4 +840,16 @@ test_that("every shipped template resolves from its own stem", {
                                 hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
     expect_equal(path, tl$file[[i]], info = tl$name[[i]])
   }
+})
+
+test_that("the hs prefix resolves to hs-setup while it holds one template", {
+  # hs was qualified when hs-concordance was admitted to the catalog
+  # (dev/specs/2026-09-30-hs-concordance-design.md). Until that template ships,
+  # hs-setup is the only hs file on disk, so an unqualified call still has one
+  # answer. When the second file lands this becomes an ambiguity error, and
+  # this test is the one to rewrite.
+  tl <- template_list()
+  expect_identical(tl$name[tl$prefix == "hs"], "hs-setup")
+  expect_identical(basename(template_path("hs")), "hs-setup.qmd")
+  expect_identical(template_path("hs"), template_path("hs", qualifier = "setup"))
 })
