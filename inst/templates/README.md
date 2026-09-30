@@ -178,6 +178,12 @@ supply is the four facts the screen cannot know: which terms are the base
 model, how many candidates were offered before any were dropped, the dataset
 manifest, and what was dropped.
 
+Each of the four reports carries its runner's starting point as a `runner`
+chunk, which the report never runs. It reads the rows with
+`hvtiRtemplates::read_job_data()` and saves the selection that call records in
+the bag's lineage; the report prints that selection and stops on a bag without
+one.
+
 ⚠️ **None of the three has been rendered against a screen a study ran.** No R
 job in the corpus calls `boot_select()` yet, so all three were gated on a
 screen run against a real built dataset for the purpose. That covers real

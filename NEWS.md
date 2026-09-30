@@ -1,5 +1,16 @@
 # hvtiRtemplates (unreleased)
 
+* The bootstrap reports print the data selection their bag carries, and their
+  runner snippets read data through `read_job_data()`. Each of `bl`, `br`, `bc`
+  and `bh` carries its runner as a `runner` chunk the report never runs: the
+  runner saves the selection in the bag's lineage and resamples only the
+  model's columns, so no patient ID reaches the bag, and the report stops on a
+  bag that holds one. `WHERE`, `ID` and `KEY` confirm the runner's values, and
+  the collinearity table reads the rows the runner screened rather than the
+  whole dataset. **A bag saved before this change carries no selection, and
+  its report stops: rerun its runner with the current `runner` chunk.** So does
+  a `bh` pool whose chunks were run on different rows.
+
 * `hz` renders again with TemporalHazard 1.2.11. Its convergence table read
   an iteration count that a multiphase fit does not carry, so every render
   stopped there. The table now reports the optimizer's function and gradient

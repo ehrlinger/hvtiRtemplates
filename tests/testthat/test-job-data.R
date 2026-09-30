@@ -197,6 +197,16 @@ test_that(".read_upstream_job_data() stops on a hand-off with no single recorded
                "hz.rds.*predates.*disagreed")
   expect_error(hvtiRtemplates:::.read_upstream_job_data(list(), list(data = list()), list(), read = FALSE),
                "predates.*disagreed")
+  # The default names the upstream job's template; a caller whose upstream is
+  # not a template, such as a bootstrap report, says what to run instead.
+  expect_error(hvtiRtemplates:::.read_upstream_job_data(list(), list(data = list()), list(), read = FALSE),
+               "Rerun the upstream job with the current template, then rerun this one[.]$")
+  expect_error(
+    hvtiRtemplates:::.read_upstream_job_data(list(), list(data = list()), list(), read = FALSE,
+                                             source = "the bootstrap bag bagging.rds",
+                                             rerun = "Rerun the bootstrap runner."),
+    "\\(the bootstrap bag bagging[.]rds\\) carries no single recorded data selection.*combined[.] Rerun the bootstrap runner[.]$"
+  )
 })
 
 test_that(".read_upstream_job_data() rebuilds the upstream rows and returns the selection", {

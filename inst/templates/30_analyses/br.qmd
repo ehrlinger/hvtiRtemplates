@@ -243,8 +243,17 @@ EXPECT_BOOT <- 1000L   # EDIT: %bootreg(resampl=) -- valid models wanted
 BOOT_FILE <- "bagging.rds"
 
 # External producers that cannot attach hvti_provenance must put their original
-# provenance_data() records here. Leave empty for package-produced bags.
+# provenance_data() records here. Leave empty for package-produced bags. The
+# records do not stand in for a selection: a bag without one stops at the data
+# chunk, so an external producer must still attach the selection that
+# read_job_data() records.
 BOOTSTRAP_DATA <- list()
+
+# EDIT: the bag's recorded selection is used; set any of these only to confirm
+# it. NULL takes the value the bootstrap runner used.
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
 
 # EDIT: from YOUR .sas %bootreg call. Its documented defaults are
 # resampl=1000, sle=0.10, sls=0.05, but real jobs override them -- and the
@@ -285,6 +294,55 @@ COLLINEAR_R <- 0.99
 ```{r}
 #| label: expect
 # Settings for this section are in Study choices.
+```
+
+### The runner
+
+The screen is run by a script the study keeps beside this report. The chunk
+below is that script's starting point. This report never runs it.
+
+Two lines in it are the data contract, and must survive your edits. The runner
+reads its rows with `hvtiRtemplates::read_job_data()`, and it saves the
+selection that call records in the bag's lineage. This report prints that
+selection, and stops on a bag that carries none. **A bag written before this
+contract carries none: rerun its runner.**
+
+The runner also keeps the patient identifier out of what it saves. It resamples
+only the model's columns, and the bag holds coefficients, counts and settings: no
+row of data.
+
+```{r}
+#| label: runner
+#| eval: false
+# Not run by this report. Copy it to a script beside this file, set the values
+# in the first block, and run it from the study before rendering.
+library(hvtiRbootstrap)
+set_name <- "subject-type" # this file's first two name fields, as the set chunk reads them
+outcome <- "outcome"
+pool <- c("age", "female")
+where <- NULL # the rows to keep, as WHERE in any job, for example quote(age >= 18)
+n_rep <- 1000
+seed <- 20260101
+
+# The data contract. read_job_data() reads the rows, leaves MRN and eMRN out,
+# and records the selection; the bag carries that selection to this report.
+cfg <- hvtiRutilities::study_config()
+job <- hvtiRtemplates::read_job_data(cfg, dataset = "study", analysis_set = NULL, where = where, id = "ccfid")
+selection <- attr(job$record, "selection")
+
+# Only the model's columns are resampled, so the patient identifier never
+# reaches the screen. boot_bag() keeps coefficients, counts and settings, and
+# no row of data.
+model <- stats::reformulate(pool, response = outcome)
+d <- job$data[all.vars(model)]
+screen <- boot_select(d, model, fit_linear, n_rep = n_rep, sle = 0.10, sls = 0.05, seed = seed)
+bag <- boot_bag(screen, base_params = "(Intercept)", requested = length(pool),
+                manifest = list(sha256 = job$provenance$sha256))
+attr(bag, "hvti_provenance") <- list(data = list(job$provenance), artifacts = list(), analysis = NULL, cohort = NULL,
+                                     selection = selection)
+out_dir <- file.path(hvtiRutilities::study_dir("estimates", cfg$root), set_name)
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+saveRDS(bag, file.path(out_dir, "bagging.rds"))
 ```
 
 ```{r}
@@ -356,6 +414,32 @@ if (is.null(.engine_v) || .engine_v < "0.9.3") {
 # entry and stay levels, the base parameters or the engine version -- every one
 # of which is silent on its own, showing up as a slightly different frequency
 # rather than as an error.
+```
+
+```{r}
+#| label: data
+# This report reads a bag, not data. The runner recorded which rows it
+# screened, and that selection travels in the bag's lineage. A setting in Study
+# choices that differs from the runner's stops here. So does a bag with no
+# single selection: one written before the data contract, or one pooled from
+# chunks that were run on different rows.
+.bag_name <- paste("the bootstrap bag", basename(.single_file))
+.sel <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, .bootstrap_lineage, list(where = WHERE, id = ID, key = KEY), read = FALSE, source = .bag_name,
+  rerun = paste("Rerun the bootstrap runner with the `runner` chunk of the current template, which records the",
+                "selection, then render this report again.")
+)$selection
+knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
+                        value = c(.sel$id, paste(.sel$key, collapse = ", "),
+                                  if (length(.sel$where_shown)) paste(.sel$where_shown, collapse = "; ") else "none",
+                                  .sel$rows)),
+             col.names = c("Data", ""), caption = "The data the bootstrap runner read")
+# The contract: runners read their data with hvtiRtemplates::read_job_data(), whose
+# selection travels in the bag's lineage.
+
+# A bag holds replicates and settings, never the rows the screen resampled.
+# boot_bag() builds one that way; this stops on a bag that was given more.
+hvtiRtemplates:::.check_bag_identifiers(bag, .sel$id, paste("The bootstrap bag", basename(.single_file)))
 ```
 
 ```{r}
@@ -736,22 +820,27 @@ says the pool cannot tell them apart.
 # accidents.
 
 # Read to CORRELATE the pool, not to re-run anything. The screen already
-# happened; this describes the data it ran against.
-.cfg <- study_config(start = .root)
-.data_read <- hvtiRtemplates:::.provenance_read(
-  "study", .cfg, function() read_built(cfg = .cfg)
+# happened; this reads the rows its runner recorded, through the same data
+# step, so the correlations describe the rows the frequencies came from and
+# not the whole dataset.
+.job_data <- hvtiRtemplates::read_job_data(
+  .cfg, dataset = .sel$dataset, analysis_set = .sel$analysis_set,
+  where = if (length(.sel$where)) lapply(.sel$where, str2lang), id = .sel$id, key = .sel$key
 )
-d <- .data_read$value
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
+d <- .job_data$data
+.provenance_data <- c(.provenance_data, list(.job_data$provenance))
 
 # A build that moved since the screen ran would leave these correlations
 # describing one dataset and every frequency above describing another, with
 # nothing in the report to say so. A warning rather than a stop: the
 # frequencies above remain valid, and it is only this table that goes stale.
-if (!is.null(bag$n_rows) && !identical(as.integer(nrow(d)), as.integer(bag$n_rows))) {
-  warning("The built dataset now has ", nrow(d), " rows; this screen ran against ",
-          bag$n_rows, ". The correlations below describe TODAY'S data, not the data ",
-          "the frequencies above were computed on.", call. = FALSE)
+# The key hash tells changed patients from an unchanged count.
+.now <- attr(.job_data$record, "selection")
+if ((!is.null(bag$n_rows) && !identical(as.integer(nrow(d)), as.integer(bag$n_rows))) ||
+      (!is.null(.sel$key_hash) && !identical(.now$key_hash, .sel$key_hash))) {
+  warning("The rows read now are not the rows this screen ran against: ", nrow(d), " rows now, ",
+          if (is.null(bag$n_rows)) .sel$rows else bag$n_rows, " then. The correlations below describe TODAY'S ",
+          "data, not the data the frequencies above were computed on.", call. = FALSE)
 }
 
 collinear <- pool_collinear_pairs(d, pool = unique(freq$variable), threshold = COLLINEAR_R)
@@ -824,7 +913,7 @@ report <- list(freq = freq, retained = retained, concept = concept,
                expect_boot = EXPECT_BOOT)
 report <- hvtiRtemplates:::.attach_handoff_lineage(
   report, data = .provenance_data, artifacts = .provenance_artifacts,
-  analysis = .bootstrap_lineage$analysis, cohort = .bootstrap_lineage$cohort
+  analysis = .bootstrap_lineage$analysis, cohort = .bootstrap_lineage$cohort, selection = .sel
 )
 saveRDS(report, report_file)
 ```

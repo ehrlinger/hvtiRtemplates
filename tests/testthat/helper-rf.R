@@ -239,3 +239,140 @@ rf_files_holding <- function(dir, ids) {
   }, logical(1L))
   basename(files[held])
 }
+
+# ---- the bootstrap reports -------------------------------------------------------
+
+# The bootstrap reports (bl, br, bc, bh) are run chunk by chunk, as the rf
+# templates are, on the same study fixtures, and so is the `runner` chunk each
+# one carries. A render never evaluates that chunk, so these tests are the only
+# thing that runs the code a study author copies. They live in this file
+# because they call its helpers: object_usage_linter resolves a helper only
+# from the file that defines it.
+
+boot_thin <- c("bl", "br", "bc")
+boot_all <- c(boot_thin, "bh")
+
+# The set the templates' `set` chunk resolves: SUBJECT dead_pa, TYPE hz.
+boot_set <- "dead_pa-hz"
+
+# The settings a study author would give each runner for rf_mrn_data(): an
+# outcome with a known driver, so every screen selects something.
+boot_settings <- function(prefix, ...) {
+  outcome <- list(
+    bl = list(outcome = "dead"),
+    br = list(outcome = "los"),
+    bc = list(time = "iv_dead", event = "dead", base = "x1")
+  )[[prefix]]
+  utils::modifyList(c(outcome, list(set_name = boot_set, pool = c("age", "x1"), n_rep = 30, seed = 1)), list(...))
+}
+
+# Evaluate a template's `runner` chunk in `env`, from the study at `root`, as a
+# script run there would be. `settings` replace the chunk's own top-level
+# assignments of the same names, as a study author's edits would; a setting
+# the chunk does not assign is an error, so a renamed one cannot be skipped.
+boot_run_runner <- function(prefix, root, env, settings = boot_settings(prefix)) {
+  code <- parse(text = rf_chunk(readLines(template_path(prefix), warn = FALSE), "runner"), keep.source = FALSE)
+  assigned <- vapply(code, function(expr) {
+    if (is.call(expr) && identical(expr[[1L]], quote(`<-`)) && is.name(expr[[2L]])) as.character(expr[[2L]]) else ""
+  }, character(1L))
+  if (!all(names(settings) %in% assigned)) {
+    stop("the ", prefix, " runner does not assign: ", paste(setdiff(names(settings), assigned), collapse = ", "), call. = FALSE)
+  }
+  withr::local_dir(root)
+  for (i in seq_along(code)) {
+    if (assigned[[i]] %in% names(settings)) {
+      assign(assigned[[i]], settings[[assigned[[i]]]], envir = env)
+    } else {
+      suppressPackageStartupMessages(eval(code[[i]], envir = env))
+    }
+  }
+  file.path(hvtiRutilities::study_dir("estimates", root), boot_set)
+}
+
+# Every chunk of a boot_select() report, in order, that a render evaluates
+# after `setup` and `guard-edits`.
+boot_report_labels <- c(
+  "set", "edit-study-choices", "load", "data", "completeness", "contract", "bootstrap-provenance", "seeds",
+  "dropped-summary", "dropped-detail", "health", "frequencies", "retained", "edit-concept-map",
+  "concept-frequencies", "concept-union", "concept-counts", "cluster-matrix", "edit-clusters", "edit-collinear",
+  "save"
+)
+
+# A fresh chunk environment for the study at `root`. `setup` is not run, so
+# what it defines is supplied.
+boot_env <- function(root, parent = globalenv()) {
+  env <- new.env(parent = parent)
+  env$.root <- root
+  env$.provenance_data <- list()
+  env$.provenance_artifacts <- list()
+  env
+}
+
+# Run the chunks `labels` of the `prefix` report in `env`. The study choices
+# are the run's size and a cluster naming a term every screen here carries.
+boot_report <- function(prefix, env, labels = boot_report_labels, choices = list()) {
+  defaults <- list(EXPECT_BOOT = 30L, CLUSTERS = list(Age = "age"))
+  choices <- c(choices, defaults[setdiff(names(defaults), names(choices))])
+  src <- readLines(template_path(prefix), warn = FALSE)
+  utils::capture.output(for (label in labels) {
+    eval(parse(text = rf_chunk(src, label)), envir = env)
+    if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
+  })
+  invisible(env)
+}
+
+# A hazard chunk as the bh runner writes it, with two replicates made up here:
+# a hazard screen runs for minutes, and what these tests exercise is the
+# report's reading of the chunk, not the screen. `extra` adds fields.
+boot_hazard_chunk <- function(k, job, selection = attr(job$record, "selection"), extra = list()) {
+  reps <- data.frame(
+    replicate = rep(1:2, each = 3L),
+    parameter = rep(c("early.log_mu", "constant.log_mu", "early.age"), 2L),
+    estimate = c(-1, -2, 0.03, -1.1, -2.2, 0.04) + k / 100
+  )
+  offered <- c(early = 2L, constant = 2L)
+  chunk <- c(list(
+    n_boot = 2L, seed = 20260100L + k, slentry = 0.10, slstay = 0.05, max_steps = 50L,
+    base_params = c("early.log_mu", "constant.log_mu"), requested = offered, usable = offered,
+    n_rows = nrow(job$data), elapsed_mins = 0.1, manifest = list(sha256 = job$provenance$sha256),
+    th_version = "1.2.12",
+    boot = list(replicates = reps, summary = data.frame(parameter = unique(reps$parameter), n = 2L, pct = 100),
+                n_success = 2L, n_failed = 0L)
+  ), extra)
+  attr(chunk, "hvti_provenance") <- c(
+    list(data = list(job$provenance), artifacts = list(), analysis = NULL, cohort = NULL),
+    if (!is.null(selection)) list(selection = selection)
+  )
+  chunk
+}
+
+# Save hazard chunks into the set of the study at `root`, where bh reads them.
+boot_save_chunks <- function(root, chunks) {
+  dir <- file.path(hvtiRutilities::study_dir("estimates", root), boot_set)
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  for (k in seq_along(chunks)) saveRDS(chunks[[k]], file.path(dir, sprintf("bh.chunk%02d.rds", k)))
+  dir
+}
+
+# Skip unless the report's own packages are installed, and survival for the
+# Cox runner, then attach the report's packages.
+boot_skip_unless_stack <- function(prefix) {
+  rf_skip_unless_stack(rf_template_packages(prefix, NULL))
+  if (identical(prefix, "bc")) testthat::skip_if_not_installed("survival")
+}
+
+# Run the `prefix` runner in `runner_env` and its whole report in `report_env`,
+# on a study keyed on MRN. Returns the data, the set directory and the report's
+# environment.
+boot_mrn_run <- function(prefix, runner_env, report_env, .local_envir = parent.frame()) {
+  data <- rf_mrn_data()
+  root <- rf_study(data, .local_envir)
+  rf_restore_later(runner_env, .local_envir)
+  rf_restore_later(report_env, .local_envir)
+  dir <- boot_run_runner(prefix, root, runner_env)
+  report_env$.root <- root
+  report_env$.provenance_data <- list()
+  report_env$.provenance_artifacts <- list()
+  boot_report(prefix, report_env)
+  list(data = data, dir = dir, env = report_env)
+}

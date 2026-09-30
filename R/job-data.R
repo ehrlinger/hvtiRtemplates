@@ -396,14 +396,16 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 
 # The data step of a downstream job: take the upstream job's selection from
 # its hand-off lineage, check this job's settings against it, and (unless the
-# job reads no data) rebuild exactly the upstream rows.
-.read_upstream_job_data <- function(cfg, lineage, settings, read = TRUE, source = NULL) {
+# job reads no data) rebuild exactly the upstream rows. `rerun` says what to
+# run again when the hand-off carries no selection; a bootstrap report names
+# its runner, which is a study script and not a template.
+.read_upstream_job_data <- function(cfg, lineage, settings, read = TRUE, source = NULL,
+                                    rerun = "Rerun the upstream job with the current template, then rerun this one.") {
   upstream <- lineage$selection
   if (is.null(upstream)) {
     stop("The upstream job's saved output", if (!is.null(source)) paste0(" (", source, ")"),
          " carries no single recorded data selection: it predates the data contract, or its inputs ",
-         "disagreed and were combined. Rerun the upstream job with the current template, then rerun ",
-         "this one.", call. = FALSE)
+         "disagreed and were combined. ", rerun, call. = FALSE)
   }
   sel <- .check_upstream_selection(upstream, settings)
   if (!read) return(list(selection = sel))
@@ -425,4 +427,51 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
          "The data changed since the upstream job ran; rerun the upstream job.", call. = FALSE)
   }
   list(job_data = job_data, selection = sel)
+}
+
+# A bag holds a screen's replicates and its settings, never the rows it
+# resampled. boot_bag() builds one that way, but a hazard bag is a list its
+# runner writes by hand, and a field, or the environment of a formula or a
+# function saved in it, can hold the runner's data. This stops on a bag that
+# carries anything named for a patient identifier: the job's ID, MRN or eMRN.
+# The carried lineage is not searched: its selection names the ID and holds
+# no values.
+.check_bag_identifiers <- function(bag, id, source = "The bootstrap bag") {
+  wanted <- unique(tolower(c(id, .job_identifier_names)))
+  seen <- list()
+  found <- character()
+  walk <- function(x, at) {
+    if (is.environment(x)) {
+      # Saved by reference, never by content: the global environment, the
+      # packages and their namespaces.
+      if (nzchar(environmentName(x)) || any(vapply(seen, identical, logical(1L), x))) return(invisible())
+      seen[[length(seen) + 1L]] <<- x
+      for (name in ls(x, all.names = TRUE)) {
+        value <- tryCatch(get(name, envir = x), error = function(e) NULL)
+        if (tolower(name) %in% wanted && length(value)) found <<- c(found, paste0(at, ": ", name))
+        walk(value, paste0(at, ": ", name))
+      }
+      return(walk(parent.env(x), at))
+    }
+    if (is.function(x) && !is.primitive(x)) walk(environment(x), paste0(at, ", a function's environment"))
+    hit <- unique(c(names(x), colnames(x)))
+    hit <- hit[tolower(hit) %in% wanted]
+    if (length(hit) && length(x)) found <<- c(found, paste0(at, "$", hit))
+    extra <- attributes(x)
+    extra <- extra[setdiff(names(extra), c("names", "row.names", "class", "dim", "dimnames", "hvti_provenance"))]
+    for (name in names(extra)) walk(extra[[name]], paste0(at, ", attribute ", name))
+    if (is.list(x)) {
+      labels <- if (is.null(names(x))) rep("", length(x)) else names(x)
+      for (i in seq_along(x)) walk(x[[i]], paste0(at, if (nzchar(labels[[i]])) paste0("$", labels[[i]]) else paste0("[[", i, "]]")))
+    }
+    invisible()
+  }
+  walk(bag, "bag")
+  if (length(found)) {
+    stop(source, " holds patient-level data: ", paste(unique(found), collapse = "; "), ". A bag holds the screen's ",
+         "replicates and its settings, never the rows it resampled or their patient identifier. Save only the ",
+         "fields the runner snippet in this template saves, delete this file, and rerun the bootstrap runner.",
+         call. = FALSE)
+  }
+  invisible(TRUE)
 }
