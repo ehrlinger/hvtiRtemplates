@@ -161,20 +161,52 @@ rf_mrn_choices <- function(prefix, ...) {
   utils::modifyList(c(outcome, list(PREDICTORS = c("age", "x1", "grp"), NTREE = 25, SEED = 1)), list(...))
 }
 
+# Run `code` with `env` put back as it was when `.local_envir` ends: the names
+# the chunks create are removed, and a name they replace, such as a `d` or a
+# `forest` already in the global environment, gets its value back. The random
+# seed is left as the run leaves it when the session already had one.
+rf_restore_later <- function(env, .local_envir) {
+  before <- as.list(env, all.names = TRUE)
+  before$.Random.seed <- NULL
+  withr::defer({
+    rm(list = setdiff(ls(env, all.names = TRUE), c(names(before), ".Random.seed")), envir = env)
+    list2env(before, envir = env)
+  }, envir = .local_envir)
+}
+
 # Grow and save the `prefix` forest on `data` with every chunk evaluated in
 # `env`. A render evaluates its chunks in the global environment, so a test
-# passes that, and the names the chunks create there are removed when
-# `.local_envir` ends. Returns the set's estimates directory and what the
-# data chunk printed.
+# passes that. Returns the set's estimates directory and what the data chunk
+# printed.
 rf_fit_in <- function(prefix, data, env, choices = rf_mrn_choices(prefix), .local_envir = parent.frame()) {
-  before <- ls(env, all.names = TRUE)
-  withr::defer(rm(list = setdiff(ls(env, all.names = TRUE), before), envir = env), envir = .local_envir)
+  rf_restore_later(env, .local_envir)
   env$.root <- rf_study(data, .local_envir)
   env$.provenance_data <- list()
   printed <- utils::capture.output(
     rf_run(prefix, "fit", c("set", "edit-study-choices", "data", "fit", "save"), env, choices)
   )
   list(dir = env$CACHE_DIR, printed = printed, job_data = env$job_data, forest = env$forest, root = env$.root)
+}
+
+# Run every chunk of the `prefix` explain job in `env`, on the forest the fit
+# saved in the study at `root`. Returns the names of the files it wrote.
+rf_explain_in <- function(prefix, root, env, .local_envir = parent.frame()) {
+  rf_restore_later(env, .local_envir)
+  env$.root <- root
+  choices <- c(list(TOP_K = 2, SEED = 1), if (identical(prefix, "rfs")) list(TIMES = c(1, 3)))
+  labels <- c("set", "edit-study-choices", "forest", "data", "importance", "select", "varpro", "dependence")
+  # VarPro keeps only the variables it selects, so a top variable by VIMP can be
+  # absent from its partial, and it says so. That one notice is about the
+  # explanation, not the files; any other warning still reaches the summary.
+  withCallingHandlers(
+    utils::capture.output(rf_run(prefix, "explain", labels, env, choices)),
+    warning = function(w) {
+      if (grepl("^partialpro\\(\\): skipping xvar.names not found in object\\$xvar.names", conditionMessage(w))) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+  setdiff(list.files(env$CACHE_DIR), paste0(prefix, c(".rds", "-forest.rds", "-forest.provenance.json")))
 }
 
 # TRUE when `bytes` hold `value` as text or as R's big-endian double encoding.

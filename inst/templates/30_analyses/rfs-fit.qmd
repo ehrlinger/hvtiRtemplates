@@ -277,6 +277,11 @@ if (length(.identifiers)) {
   stop("Do not include the patient identifier or a KEY column in PREDICTORS: ",
        paste(.identifiers, collapse = ", "), ".", call. = FALSE)
 }
+# Nor may the identifier be the outcome: the forest keeps its outcome column
+# too. A KEY column that is not the ID, a visit time say, may be one.
+if (any(tolower(c(TIME, EVENT)) == tolower(.selection$id))) {
+  stop("The patient identifier (", .selection$id, ") cannot be an outcome of this job.", call. = FALSE)
+}
 .missing <- setdiff(c(TIME, EVENT, PREDICTORS), names(d))
 if (length(.missing)) {
   stop("Not in the data this job read: ", paste(.missing, collapse = ", "), call. = FALSE)

@@ -442,15 +442,20 @@ test_that("every explain stops on a forest saved before the data contract, namin
 
 # ---- #203: no saved forest carries a patient identifier ------------------------
 
-test_that("the fits keyed on MRN save no MRN in the forest or its cache", {
+test_that("the fit and explain jobs keyed on MRN save no MRN in any file", {
   data <- rf_mrn_data()
   for (prefix in rf_prefixes) {
-    rf_skip_unless_stack(rf_template_packages(prefix, "fit"))
+    rf_skip_unless_stack(rf_template_packages(prefix, "explain"))
     fit <- rf_fit_in(prefix, data, globalenv())
     # The ID fell back to MRN, and the job read it.
     expect_identical(attr(fit$job_data$record, "selection")$id, "mrn", info = prefix)
     expect_true("mrn" %in% names(fit$job_data$data), info = prefix)
     expect_setequal(list.files(fit$dir), paste0(prefix, c(".rds", "-forest.rds", "-forest.provenance.json")))
+    expect_identical(rf_files_holding(fit$dir, data$MRN), character(), info = prefix)
+    # The explain job's caches sit beside the forest and are searched with it.
+    caches <- rf_explain_in(prefix, fit$root, globalenv())
+    expect_true(all(paste0(prefix, c("-vimp.rds", "-varpro.rds", "-partial.rds", "-partial-varpro.rds")) %in% caches),
+                info = prefix)
     expect_identical(rf_files_holding(fit$dir, data$MRN), character(), info = prefix)
     # The search finds what is there: every MRN in the data as the job read it.
     read <- serialize(fit$job_data$data, NULL)
@@ -458,15 +463,58 @@ test_that("the fits keyed on MRN save no MRN in the forest or its cache", {
   }
 })
 
-test_that("the fits save no MRN when their chunks run outside the global environment", {
+test_that("the fit and explain jobs save no MRN when their chunks run outside the global environment", {
   data <- rf_mrn_data()
   for (prefix in rf_prefixes) {
-    rf_skip_unless_stack(rf_template_packages(prefix, "fit"))
+    rf_skip_unless_stack(rf_template_packages(prefix, "explain"))
     # A chunk environment that is not the global one is serialized in full,
     # `job_data` and its MRN column included, by anything saved that refers to
     # it: a formula, a function, a captured call.
     fit <- rf_fit_in(prefix, data, new.env(parent = globalenv()))
     expect_true("mrn" %in% names(fit$job_data$data), info = prefix)
     expect_identical(rf_files_holding(fit$dir, data$MRN), character(), info = prefix)
+    caches <- rf_explain_in(prefix, fit$root, new.env(parent = globalenv()))
+    expect_length(grep("[.]rds$", caches), 4L)
+    expect_identical(rf_files_holding(fit$dir, data$MRN), character(), info = prefix)
+  }
+})
+
+test_that("a run in the global environment puts back what it replaced there", {
+  rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
+  env <- globalenv()
+  withr::defer(rm(list = intersect(c("d", "forest"), ls(env)), envir = env))
+  assign("d", "mine", envir = env)
+  names_before <- ls(env, all.names = TRUE)
+  local(rf_fit_in("rfr", rf_mrn_data(), env))
+  expect_identical(get("d", envir = env), "mine")
+  expect_setequal(setdiff(ls(env, all.names = TRUE), ".Random.seed"), setdiff(names_before, ".Random.seed"))
+})
+
+test_that("every fit refuses the patient identifier as its outcome", {
+  data <- rf_mrn_data()
+  outcomes <- list(rfs = c("TIME", "EVENT"), rfc = "RESPONSE", rfr = "RESPONSE")
+  for (prefix in rf_prefixes) {
+    rf_skip_unless_stack(rf_template_packages(prefix, "fit"))
+    for (setting in outcomes[[prefix]]) {
+      for (spelling in c("mrn", "MRN")) {
+        env <- rf_env(data)
+        choices <- rf_mrn_choices(prefix)
+        choices[[setting]] <- spelling
+        expect_error(rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env, choices),
+                     paste0("patient identifier \\(mrn\\) cannot be an outcome"),
+                     info = paste(prefix, setting, spelling))
+      }
+    }
+    # A KEY column that is not the ID, a visit time say, may be the outcome.
+    env <- rf_env(data)
+    outcome <- if (identical(prefix, "rfs")) "iv_dead" else "los"
+    choices <- rf_mrn_choices(prefix, KEY = c("mrn", outcome))
+    if (identical(prefix, "rfc")) choices <- utils::modifyList(choices, list(RESPONSE = "los", ROC_CLASS = NA_character_))
+    if (identical(prefix, "rfc")) {
+      # los is not a class, so rfc stops later, at ROC_CLASS, not at the KEY column.
+      expect_error(rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env, choices), "ROC_CLASS", info = prefix)
+    } else {
+      expect_no_error(utils::capture.output(rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env, choices)))
+    }
   }
 })
