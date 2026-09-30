@@ -1,16 +1,24 @@
 # hvtiRtemplates (unreleased)
 
-* The `hs` template is now `hs-setup`. A second `hs` job type,
-  `hs-concordance`, is queued in the catalog, and a prefix is either wholly
-  qualified or wholly unqualified, so the existing template takes a
-  qualifier first. `add_job("hs", ...)` still works while `hs-setup` is the
-  only `hs` template, and now writes `<subject>-<type>-hs-setup.qmd`. Jobs
-  already scaffolded keep their names, and the job still saves `hs.rds`.
-  `open_job("hs", ...)` and `add_job("hs", ...)` look for the new name, so
-  in a study that already has `<subject>-<type>-hs.qmd` they scaffold a
-  fresh `<subject>-<type>-hs-setup.qmd` beside it. Open the existing job by
-  its file.
-  Design: `dev/specs/2026-09-30-hs-concordance-design.md`.
+* New template `hs-concordance`: every patient predicted through every
+  treatment group's `hm` model at one horizon, the job the corpus calls
+  concordance and discordance. It reads each group's model from that
+  group's own set, saves one long artifact, `hs-concordance.rds`, and has
+  an optional section that picks a best treatment per patient only where
+  the confidence limits separate it. Design:
+  `dev/specs/2026-09-30-hs-concordance-design.md`.
+
+* The `hs` template is now `hs-setup`, because `hs` carries two job types
+  and a prefix is either wholly qualified or wholly unqualified. The file's
+  contents are unchanged and it still saves `hs.rds`.
+  `add_job("hs", ...)`, `template_path("hs")` and `open_job("hs", ...)`
+  without a qualifier stop and list `setup` and `concordance`. Migrating a
+  SAS `hs` job needs `qualifier =` too: its filename's second field is the
+  endpoint, not the job type.
+  Jobs already scaffolded keep their names. `open_job("hs", ...,
+  qualifier = "setup")` looks for `<subject>-<type>-hs-setup.qmd`, so in a
+  study that already has `<subject>-<type>-hs.qmd` it scaffolds a fresh job
+  beside it. Open the existing job by its file.
 
 * `hs-setup` now requires TemporalHazard >= 1.2.12 and says what its
   `se.fit` column is. On the survival path it is se(S), the standard error of

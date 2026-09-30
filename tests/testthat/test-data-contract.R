@@ -3,7 +3,7 @@
 # converted are listed here; each family's conversion removes its names, and
 # the list is empty when the work is done.
 pending_contract_families <- setdiff(template_list()$name, c(
-  "ac", "hz", "hm", "hp", "hs-setup",
+  "ac", "hz", "hm", "hp", "hs-concordance", "hs-setup",
   "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-trends",
   "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
   "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",

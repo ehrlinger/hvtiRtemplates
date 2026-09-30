@@ -165,3 +165,79 @@ hazard_file_holds_any <- function(root, file, ids) {
   bytes <- hazard_rds_bytes(hazard_set_path(root, file))
   any(vapply(ids, function(v) hazard_bytes_hold(bytes, v), logical(1L)))
 }
+
+# ---- hs-concordance -----------------------------------------------------------
+# hs-concordance reads one fitted hm model per treatment group, each from its
+# own set. This builds that estate: a study whose built data carries a `group`
+# column, and an hz and hm fit for each group, in sets `dead-<group>`.
+
+# hazard_data() with a treatment group whose late risk differs, so the two
+# groups' models predict differently.
+concordance_data <- function(n = 240L) {
+  d <- hazard_data(n)
+  withr::local_seed(20260930)
+  d$group <- ifelse(stats::runif(n) < 0.5, "a", "b")
+  d
+}
+
+# Fit hz and hm on each group's rows, in set `dead-<group>`, in the global
+# environment as a render would. Returns the environment the last hm ran in.
+concordance_fit <- function(root, data, groups = c("a", "b"), .local_envir = parent.frame()) {
+  env <- globalenv()
+  before <- ls(env, all.names = TRUE)
+  withr::defer(rm(list = setdiff(ls(env, all.names = TRUE), before), envir = env), envir = .local_envir)
+  for (g in groups) {
+    rows <- data[data$group == g, , drop = FALSE]
+    cc <- hvtiRutilities::cohort_counts(rows, event = "dead", time = "iv_dead")
+    expected <- list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)
+    list2env(as.list(hazard_env(root), all.names = TRUE), envir = env)
+    where <- bquote(group == .(g))
+    suppressWarnings(utils::capture.output({
+      hazard_run("hz", c("set", "edit-study-choices"), env,
+                 list(EXPECTED = expected, WHERE = where, SUBJECT = "dead", TYPE = g))
+      hazard_run("hz", c("data", "cohort", "phases", "edit-start", "edit-response", "response-check", "guard",
+                         "fit-deterministic", "convergence", "edit-multistart", "noconserve", "conservation-binding",
+                         "edit-estimates", "save"), env)
+      hazard_run("hm", c("set", "edit-study-choices"), env, list(EXPECTED = expected, DECILE_TIME = 3, SUBJECT = "dead", TYPE = g))
+      env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
+      hazard_run("hm", c("read-upstream", "data", "cohort", "audit", "phases", "edit-fit", "edit-reported",
+                         "calibration", "save"), env)
+    }))
+  }
+  invisible(env)
+}
+
+# The core chunks of hs-concordance, in order, without the decision.
+concordance_core <- c("data", "cohort", "models", "groups", "covariates", "horizon", "support", "predict")
+
+# Choices that make the job runnable against concordance_fit()'s estate.
+concordance_choices <- function(data, ...) {
+  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  utils::modifyList(list(
+    EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored),
+    MODELS = c(a = "dead-a", b = "dead-b"), GROUP = "group", HORIZON = 2,
+    CARRY = "age", OVERLAP = "none", SUBJECT = "dead", TYPE = "ab"
+  ), list(...))
+}
+
+# Run hs-concordance's `labels` in a fresh environment with `choices`.
+concordance_run <- function(root, choices, labels = c(concordance_core, "edit-decision", "save")) {
+  env <- hazard_env(root)
+  suppressWarnings(utils::capture.output({
+    hazard_run("hs-concordance", c("set", "edit-study-choices"), env, choices)
+    hazard_run("hs-concordance", labels, env)
+  }))
+  env
+}
+
+concordance_estate <- function(.local_envir = parent.frame()) {
+  data <- concordance_data()
+  root <- hazard_study(data, .local_envir = .local_envir)
+  concordance_fit(root, data, .local_envir = .local_envir)
+  list(root = root, data = data)
+}
+
+skip_concordance <- function() {
+  testthat::skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  testthat::skip_if_not_installed("numDeriv")
+}
