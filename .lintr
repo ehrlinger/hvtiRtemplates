@@ -197,5 +197,13 @@ exclusions: list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
-    )
+    ),
+    # The bootstrap runners add_job() writes beside bl, br, bc and bh are R
+    # scripts, not templates, but their study choices are SCREAMING_CASE for the
+    # same reason a template's are. Only object_name_linter is excluded: they
+    # hold no commented code and call no function lintr cannot see.
+    "inst/runners/bl-runner.R" = list(object_name_linter = Inf),
+    "inst/runners/br-runner.R" = list(object_name_linter = Inf),
+    "inst/runners/bc-runner.R" = list(object_name_linter = Inf),
+    "inst/runners/bh-runner.R" = list(object_name_linter = Inf)
   )

@@ -243,9 +243,8 @@ rf_files_holding <- function(dir, ids) {
 # ---- the bootstrap reports -------------------------------------------------------
 
 # The bootstrap reports (bl, br, bc, bh) are run chunk by chunk, as the rf
-# templates are, on the same study fixtures, and so is the `runner` chunk each
-# one carries. A render never evaluates that chunk, so these tests are the only
-# thing that runs the code a study author copies. They live in this file
+# templates are, on the same study fixtures, and so are the runners add_job()
+# writes beside them from inst/runners/. Nothing else runs a runner. They live in this file
 # because they call its helpers: object_usage_linter resolves a helper only
 # from the file that defines it.
 
@@ -259,19 +258,29 @@ boot_set <- "dead_pa-hz"
 # outcome with a known driver, so every screen selects something.
 boot_settings <- function(prefix, ...) {
   outcome <- list(
-    bl = list(outcome = "dead"),
-    br = list(outcome = "los"),
-    bc = list(time = "iv_dead", event = "dead", base = "x1")
+    bl = list(OUTCOME = "dead"),
+    br = list(OUTCOME = "los"),
+    bc = list(TIME = "iv_dead", EVENT = "dead", BASE = "x1")
   )[[prefix]]
-  utils::modifyList(c(outcome, list(set_name = boot_set, pool = c("age", "x1"), n_rep = 30, seed = 1)), list(...))
+  utils::modifyList(c(outcome, list(POOL = c("age", "x1"), N_REP = 30, SEED = 1)), list(...))
 }
 
-# Evaluate a template's `runner` chunk in `env`, from the study at `root`, as a
-# script run there would be. `settings` replace the chunk's own top-level
-# assignments of the same names, as a study author's edits would; a setting
-# the chunk does not assign is an error, so a renamed one cannot be skipped.
+# The runner add_job() writes beside the `prefix` report in the study at
+# `root`, for the set the report's `set` chunk names.
+boot_scaffold <- function(prefix, root) {
+  suppressMessages(add_job(prefix, "dead_pa", "hz", dir = root))
+  sub("[.]qmd$", "-runner.R", hvtiRtemplates:::.job_path(
+    hvtiRtemplates:::.select_template(template_list(), prefix, NULL), "dead_pa", "hz", root
+  ))
+}
+
+# Scaffold the `prefix` job in the study at `root` and evaluate the runner
+# add_job() wrote, in `env`, from the study, as a script run there would be.
+# `settings` replace the runner's own top-level assignments of the same names,
+# as a study author's edits would; a setting the runner does not assign is an
+# error, so a renamed one cannot be skipped.
 boot_run_runner <- function(prefix, root, env, settings = boot_settings(prefix)) {
-  code <- parse(text = rf_chunk(readLines(template_path(prefix), warn = FALSE), "runner"), keep.source = FALSE)
+  code <- parse(file = boot_scaffold(prefix, root), keep.source = FALSE)
   assigned <- vapply(code, function(expr) {
     if (is.call(expr) && identical(expr[[1L]], quote(`<-`)) && is.name(expr[[2L]])) as.character(expr[[2L]]) else ""
   }, character(1L))

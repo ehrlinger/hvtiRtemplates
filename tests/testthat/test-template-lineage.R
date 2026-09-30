@@ -157,85 +157,44 @@ test_that("lm-checkpred rejects source lineage without runtime model metadata", 
   }
 })
 
-test_that("bootstrap artifact reads hash every chunk and preserve explicit lineage", {
+test_that("bootstrap artifact reads hash every chunk and keep its carried lineage", {
   root <- rf_study()
   cfg <- hvtiRutilities::study_config(root)
   data_record <- hvtiRutilities::provenance_data(cfg = cfg, role = "bootstrap-training")
   paths <- file.path(hvtiRutilities::study_dir("estimates", root), paste0("bag-", 1:2, ".rds"))
-  saveRDS(list(chunk = 1L), paths[[1L]])
   bootstrap_analysis <- list(outcome = list(variable = "event", event = 1L))
   bootstrap_cohort <- list(n = 2L, n_events = 1L, n_censored = 1L)
-  bag <- hvtiRtemplates:::.attach_handoff_lineage(
-    list(chunk = 2L), data = list(data_record),
-    analysis = bootstrap_analysis, cohort = bootstrap_cohort
-  )
-  saveRDS(bag, paths[[2L]])
+  sel <- list(dataset = "study", analysis_set = NULL, where = "age >= 18", id = "ccfid", key = "ccfid",
+              rows = 3L, patients = 3L)
+  for (k in 1:2) {
+    saveRDS(hvtiRtemplates:::.attach_handoff_lineage(
+      list(chunk = k), data = list(data_record),
+      analysis = bootstrap_analysis, cohort = bootstrap_cohort, selection = sel
+    ), paths[[k]])
+  }
 
-  first <- hvtiRtemplates:::.read_bootstrap_artifact(paths[[1L]], "bootstrap-chunk", cfg, list(data_record))
-  second <- hvtiRtemplates:::.read_bootstrap_artifact(paths[[2L]], "bootstrap-chunk", cfg, list())
+  first <- hvtiRtemplates:::.read_bootstrap_artifact(paths[[1L]], "bootstrap-chunk", cfg)
+  second <- hvtiRtemplates:::.read_bootstrap_artifact(paths[[2L]], "bootstrap-chunk", cfg)
 
   expect_identical(first$record$sha256, lineage_sha256(paths[[1L]]))
   expect_identical(second$record$sha256, lineage_sha256(paths[[2L]]))
   expect_identical(first$lineage$data, list(data_record))
-  expect_identical(second$lineage$data, list(data_record))
+  expect_identical(first$lineage$selection, sel)
   combined <- hvtiRtemplates:::.combine_handoff_lineage(list(first$lineage, second$lineage))
   expect_identical(combined$analysis, bootstrap_analysis)
   expect_identical(combined$cohort, bootstrap_cohort)
+  expect_identical(combined$selection, sel)
 })
 
-test_that("bootstrap artifact without carried or explicit lineage is rejected", {
+test_that("a bootstrap artifact without carried lineage is rejected, naming the runner", {
   root <- rf_study()
   cfg <- hvtiRutilities::study_config(root)
   path <- file.path(hvtiRutilities::study_dir("estimates", root), "bag.rds")
   saveRDS(list(), path)
   expect_error(
-    hvtiRtemplates:::.read_bootstrap_artifact(path, "bootstrap-bag", cfg, list()),
-    "explicit.*BOOTSTRAP_DATA|re-run.*lineage",
-    ignore.case = TRUE
+    hvtiRtemplates:::.read_bootstrap_artifact(path, "bootstrap-bag", cfg),
+    "bag[.]rds' has no carried lineage[.] Rerun its bootstrap runner"
   )
-})
-
-test_that("bootstrap explicit data preserves the remaining carried lineage", {
-  root <- rf_study()
-  cfg <- hvtiRutilities::study_config(root)
-  path <- file.path(hvtiRutilities::study_dir("estimates", root), "partial-lineage.rds")
-  data_record <- hvtiRutilities::provenance_data(cfg = cfg, role = "bootstrap-training")
-  artifact_record <- list(path = "upstream.rds", role = "upstream", bytes = 1, sha256 = "abc")
-  bootstrap_analysis <- list(outcome = list(variable = "event", event = 1L))
-  bootstrap_cohort <- list(n = 2L, n_events = 1L, n_censored = 1L)
-  partial <- hvtiRtemplates:::.attach_handoff_lineage(
-    list(chunk = 1L), data = list(), artifacts = list(artifact_record),
-    analysis = bootstrap_analysis, cohort = bootstrap_cohort
-  )
-  saveRDS(partial, path)
-
-  result <- hvtiRtemplates:::.read_bootstrap_artifact(
-    path, "bootstrap-bag", cfg, list(data_record)
-  )
-
-  expect_identical(result$lineage$data, list(data_record))
-  expect_identical(result$lineage$artifacts, list(artifact_record))
-  expect_identical(result$lineage$analysis, bootstrap_analysis)
-  expect_identical(result$lineage$cohort, bootstrap_cohort)
-})
-
-test_that("bootstrap explicit data preserves a carried selection", {
-  root <- rf_study()
-  cfg <- hvtiRutilities::study_config(root)
-  path <- file.path(hvtiRutilities::study_dir("estimates", root), "selection-lineage.rds")
-  data_record <- hvtiRutilities::provenance_data(cfg = cfg, role = "bootstrap-training")
-  sel <- list(dataset = "study", analysis_set = NULL, where = "age >= 18", id = "ccfid", key = "ccfid",
-              rows = 3L, patients = 3L)
-  partial <- hvtiRtemplates:::.attach_handoff_lineage(
-    list(chunk = 1L), data = list(), selection = sel
-  )
-  saveRDS(partial, path)
-
-  result <- hvtiRtemplates:::.read_bootstrap_artifact(
-    path, "bootstrap-bag", cfg, list(data_record)
-  )
-
-  expect_identical(result$lineage$selection, sel)
 })
 
 test_that(".combine_handoff_lineage() keeps a selection shared across inputs, drops a disagreement", {
@@ -250,11 +209,10 @@ test_that(".combine_handoff_lineage() keeps a selection shared across inputs, dr
   expect_null(combined_disagreeing$selection)
 })
 
-test_that("bootstrap explicit data does not adapt malformed carried lineage", {
+test_that("a bootstrap artifact with malformed carried lineage is rejected", {
   root <- rf_study()
   cfg <- hvtiRutilities::study_config(root)
   path <- file.path(hvtiRutilities::study_dir("estimates", root), "malformed-lineage.rds")
-  data_record <- hvtiRutilities::provenance_data(cfg = cfg, role = "bootstrap-training")
   malformed <- list(chunk = 1L)
   attr(malformed, "hvti_provenance") <- list(
     data = list(), artifacts = list(), analysis = list(outcome = "event")
@@ -262,11 +220,8 @@ test_that("bootstrap explicit data does not adapt malformed carried lineage", {
   saveRDS(malformed, path)
 
   expect_error(
-    hvtiRtemplates:::.read_bootstrap_artifact(
-      path, "bootstrap-bag", cfg, list(data_record)
-    ),
-    "complete hvti_provenance|Rebuild",
-    ignore.case = TRUE
+    hvtiRtemplates:::.read_bootstrap_artifact(path, "bootstrap-bag", cfg),
+    "complete hvti_provenance"
   )
 })
 
@@ -282,8 +237,8 @@ test_that("mandatory handoff lineage cannot hide missing source data", {
     ignore.case = TRUE
   )
   expect_error(
-    hvtiRtemplates:::.read_bootstrap_artifact(path, "bootstrap-bag", cfg, list()),
-    "BOOTSTRAP_DATA|source data",
+    hvtiRtemplates:::.read_bootstrap_artifact(path, "bootstrap-bag", cfg),
+    "source data",
     ignore.case = TRUE
   )
 })

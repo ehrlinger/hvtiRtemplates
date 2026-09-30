@@ -25,6 +25,15 @@
 #' preserved, while the provenance publisher is kept last. Repeated calls are
 #' idempotent.
 #'
+#' A template whose job runs from a companion script also writes that script
+#' beside the job, from \code{inst/runners/<name>-runner.R}: today the
+#' bootstrap reports \code{bl}, \code{br}, \code{bc} and \code{bh}, whose
+#' runner screens and saves the bag the report reads. The runner is named
+#' \code{<subject>-<type>-<prefix>-runner.R}, gets the same \code{SUBJECT} and
+#' \code{TYPE} substitution, and is refused, like the job, if it already
+#' exists. Its study choices carry \code{EDIT:} markers for the author to
+#' work.
+#'
 #' A template the catalog marks deprecated, such as \code{dp-postage}, still
 #' scaffolds, with a warning naming its replacement; see
 #' \code{\link{template_catalog}}.
@@ -48,9 +57,10 @@
 #' @param dir The study root to write into. The taxonomy folder beneath it is
 #'   created if it does not exist.
 #'
-#' @return The path written, invisibly. On any failure -- including one after
+#' @return The job's path, invisibly. On any failure -- including one after
 #'   the copy, while substituting the set markers -- no file is left behind,
-#'   so a returned path always names a complete, correctly-declared job.
+#'   the runner included, so a returned path always names a complete,
+#'   correctly-declared job.
 #'
 #' @seealso \code{\link{template_list}}, \code{\link{template_path}}
 #'
@@ -86,10 +96,17 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
   out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = dir)
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
   out <- .job_path(row, subject, type, dir)
+  # A job that runs from a companion script gets that script too, named to
+  # pair with the job. Both are checked before either is written, so a
+  # refusal leaves the study as it was.
+  runner_src <- .runner_template(row$name[[1L]])
+  runner <- if (nzchar(runner_src)) sub("[.]qmd$", "-runner.R", out) else character()
 
-  if (file.exists(out)) {
-    stop("add_job(): '", out, "' already exists; refusing to overwrite.",
-         call. = FALSE)
+  for (path in c(out, runner)) {
+    if (file.exists(path)) {
+      stop("add_job(): '", path, "' already exists; refusing to overwrite.",
+           call. = FALSE)
+    }
   }
   if (!file.copy(row$file[[1L]], out, overwrite = FALSE)) {
     stop("add_job(): failed to write '", out, "'.", call. = FALSE)
@@ -101,8 +118,14 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
   # refuse-to-overwrite guard above and reports "already exists", pointing at
   # the wrong cause.
   ok <- FALSE
-  on.exit(if (!ok) unlink(out), add = TRUE)
+  on.exit(if (!ok) unlink(c(out, runner)), add = TRUE)
   .set_markers(out, subject, type)
+  if (length(runner)) {
+    if (!file.copy(runner_src, runner, overwrite = FALSE)) {
+      stop("add_job(): failed to write '", runner, "'.", call. = FALSE)
+    }
+    .set_markers(runner, subject, type)
+  }
   .install_provenance_hooks(dir)
   ok <- TRUE
   invisible(out)
@@ -185,4 +208,11 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
   txt[[i_subject]] <- paste0("SUBJECT <- \"", subject, "\"")
   txt[[i_type]]    <- paste0("TYPE    <- \"", type, "\"")
   writeLines(txt, path)
+}
+
+# The companion runner a template's job runs from, or "" when it has none.
+# Runners live in inst/runners/, outside inst/templates/, because they are not
+# templates: template_list() and the roadmap ledger count only the reports.
+.runner_template <- function(name) {
+  system.file("runners", paste0(name, "-runner.R"), package = "hvtiRtemplates")
 }

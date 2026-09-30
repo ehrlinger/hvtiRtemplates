@@ -242,13 +242,6 @@ EXPECT_BOOT <- 1000L   # EDIT: %bootreg(resampl=) -- valid models wanted
 # directory. It must match the runner exactly.
 BOOT_FILE <- "bagging.rds"
 
-# External producers that cannot attach hvti_provenance must put their original
-# provenance_data() records here. Leave empty for package-produced bags. The
-# records do not stand in for a selection: a bag without one stops at the data
-# chunk, so an external producer must still attach the selection that
-# read_job_data() records.
-BOOTSTRAP_DATA <- list()
-
 # EDIT: the bag's recorded selection is used; set any of these only to confirm
 # it. NULL takes the value the bootstrap runner used.
 WHERE <- NULL
@@ -298,52 +291,12 @@ COLLINEAR_R <- 0.99
 
 ### The runner
 
-The screen is run by a script the study keeps beside this report. The chunk
-below is that script's starting point. This report never runs it.
-
-Two lines in it are the data contract, and must survive your edits. The runner
-reads its rows with `hvtiRtemplates::read_job_data()`, and it saves the
-selection that call records in the bag's lineage. This report prints that
-selection, and stops on a bag that carries none. **A bag written before this
-contract carries none: rerun its runner.**
-
-The runner also keeps the patient identifier out of what it saves. It resamples
-only the model's columns, and the bag holds coefficients, counts and settings: no
-row of data.
-
-```{r}
-#| label: runner
-#| eval: false
-# Not run by this report. Copy it to a script beside this file, set the values
-# in the first block, and run it from the study before rendering.
-library(hvtiRbootstrap)
-set_name <- "subject-type" # this file's first two name fields, as the set chunk reads them
-outcome <- "outcome"
-pool <- c("age", "female")
-where <- NULL # the rows to keep, as WHERE in any job, for example quote(age >= 18)
-n_rep <- 1000
-seed <- 20260101
-
-# The data contract. read_job_data() reads the rows, leaves MRN and eMRN out,
-# and records the selection; the bag carries that selection to this report.
-cfg <- hvtiRutilities::study_config()
-job <- hvtiRtemplates::read_job_data(cfg, dataset = "study", analysis_set = NULL, where = where, id = "ccfid")
-selection <- attr(job$record, "selection")
-
-# Only the model's columns are resampled, so the patient identifier never
-# reaches the screen. boot_bag() keeps coefficients, counts and settings, and
-# no row of data.
-model <- stats::reformulate(pool, response = outcome)
-d <- job$data[all.vars(model)]
-screen <- boot_select(d, model, fit_logistic, n_rep = n_rep, sle = 0.10, sls = 0.05, seed = seed)
-bag <- boot_bag(screen, base_params = "(Intercept)", requested = length(pool),
-                manifest = list(sha256 = job$provenance$sha256))
-attr(bag, "hvti_provenance") <- list(data = list(job$provenance), artifacts = list(), analysis = NULL, cohort = NULL,
-                                     selection = selection)
-out_dir <- file.path(hvtiRutilities::study_dir("estimates", cfg$root), set_name)
-dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-saveRDS(bag, file.path(out_dir, "bagging.rds"))
-```
+The screen is run by its own job, `<subject>-<type>-bl-runner.R`, which
+`add_job()` writes beside this file. Run it first: it reads its rows with
+`hvtiRtemplates::read_job_data()`, screens, and saves the bag with the
+selection that call records. This report only reads the bag. It prints that
+selection, and stops on a bag that carries none. **A bag written before the
+data contract carries none: rerun its runner.**
 
 ```{r}
 #| label: load
@@ -361,7 +314,7 @@ if (!file.exists(.single_file)) {
 }
 .cfg <- study_config(start = .root)
 .bag_read <- hvtiRtemplates:::.read_bootstrap_artifact(
-  .single_file, "bootstrap-bag", .cfg, BOOTSTRAP_DATA
+  .single_file, "bootstrap-bag", .cfg
 )
 bag <- .bag_read$value
 .provenance_data <- .bag_read$lineage$data
@@ -426,8 +379,8 @@ if (is.null(.engine_v) || .engine_v < "0.9.3") {
 .bag_name <- paste("the bootstrap bag", basename(.single_file))
 .sel <- hvtiRtemplates:::.read_upstream_job_data(
   .cfg, .bootstrap_lineage, list(where = WHERE, id = ID, key = KEY), read = FALSE, source = .bag_name,
-  rerun = paste("Rerun the bootstrap runner with the `runner` chunk of the current template, which records the",
-                "selection, then render this report again.")
+  rerun = paste("Rerun the bootstrap runner, <subject>-<type>-bl-runner.R, as add_job() now writes it: it records",
+                "the selection. Then render this report again.")
 )$selection
 knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
                         value = c(.sel$id, paste(.sel$key, collapse = ", "),
@@ -462,7 +415,7 @@ if (!is.null(.shortfall)) {
 
 ```{r}
 #| label: contract
-# The runner is NOT templated -- it is a study file -- so the fields this report
+# The runner is a job of its own, edited by the study, so the fields this report
 # reads are a contract between two files that no shared function enforces.
 # Stated here, and checked, because the alternative is a report that indexes a
 # field the runner stopped writing and renders `NULL` into a provenance table as

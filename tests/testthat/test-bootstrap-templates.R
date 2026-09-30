@@ -2,31 +2,53 @@
 # contract reaches them through the bag's lineage: the runner reads its rows
 # with read_job_data() and saves the selection, and the report prints it.
 
-# ---- the runner snippet ---------------------------------------------------------
+# ---- the runners ---------------------------------------------------------------
 
 test_that("every runner reads through read_job_data(), keeps the ID out, and saves the selection", {
   for (prefix in boot_all) {
-    src <- readLines(template_path(prefix), warn = FALSE)
-    chunk <- rf_chunk(src, "runner")
-    # A render never runs it: the runner is a study script, days of compute for bh.
-    expect_true("#| eval: false" %in% chunk, info = prefix)
-    code <- parse(text = chunk, keep.source = FALSE)
+    path <- hvtiRtemplates:::.runner_template(prefix)
+    expect_true(nzchar(path), info = prefix)
+    code <- parse(file = path, keep.source = FALSE)
     text <- paste(vapply(code, function(e) paste(deparse(e, width.cutoff = 500L), collapse = " "), ""), collapse = "\n")
-    expect_match(text, "hvtiRtemplates::read_job_data(cfg", fixed = TRUE, info = prefix)
+    expect_match(text, "hvtiRtemplates::read_job_data(cfg, dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE,",
+                 fixed = TRUE, info = prefix)
     expect_match(text, "selection <- attr(job$record, \"selection\")", fixed = TRUE, info = prefix)
     lineage <- paste("attr(bag, \"hvti_provenance\") <- list(data = list(job$provenance), artifacts = list(),",
                      "analysis = NULL, cohort = NULL, selection = selection)")
     expect_match(text, lineage, fixed = TRUE, info = prefix)
     # Only the model's columns reach the screen, never job$data whole.
-    expect_match(text, if (prefix == "bh") "d <- job$data[c(\"iv_dead\", \"dead\", pool)]" else "d <- job$data[all.vars(model)]",
+    expect_match(text, if (prefix == "bh") "d <- job$data[c(\"iv_dead\", \"dead\", POOL)]" else "d <- job$data[all.vars(model)]",
                  fixed = TRUE, info = prefix)
     expect_false(grepl("(boot_select|hazard)\\(job\\$data", text), info = prefix)
+    # add_job() substitutes these, so each appears exactly once.
+    src <- readLines(path, warn = FALSE)
+    expect_length(grep("^SUBJECT\\s+<- ", src), 1L)
+    expect_length(grep("^TYPE\\s+<- ", src), 1L)
   }
   # A hazard bag is written by hand: its boot field takes four fields of the
   # result, and not `scope`, whose formulas carry the environment they were
   # written in.
-  bh <- paste(rf_chunk(readLines(template_path("bh"), warn = FALSE), "runner"), collapse = "\n")
+  bh <- paste(readLines(hvtiRtemplates:::.runner_template("bh"), warn = FALSE), collapse = "\n")
   expect_match(bh, 'boot = bs[c("replicates", "summary", "n_success", "n_failed")]', fixed = TRUE)
+})
+
+test_that("every study choice in a runner is marked EDIT", {
+  # A runner is a job the author edits, so its study choices carry the same
+  # markers a template's do. Every setting assigned in capitals, other than the
+  # set markers add_job() writes, sits under a comment block holding one.
+  tok <- paste0("ED", "IT", ":")
+  for (prefix in boot_all) {
+    src <- readLines(hvtiRtemplates:::.runner_template(prefix), warn = FALSE)
+    settings <- setdiff(grep("^[A-Z_]+ +<- ", src), grep("^(SUBJECT|TYPE) +<- ", src))
+    expect_gt(length(settings), 0L)
+    for (at in settings) {
+      block <- rev(src[seq_len(at - 1L)])
+      block <- block[seq_len(match(TRUE, !grepl("^(#|[A-Z_]+ +<- )", block), nomatch = length(block) + 1L) - 1L)]
+      expect_true(any(grepl(tok, block, fixed = TRUE)), info = paste(prefix, src[[at]]))
+    }
+    # The corpus rule every template follows: no study, path or dataset name.
+    expect_false(any(grepl("/studies/|preserve_root|lv_function|built[.]sas7bdat", src)), info = prefix)
+  }
 })
 
 test_that("each boot_select() runner saves a bag the report reads, with the selection it prints", {
@@ -34,7 +56,7 @@ test_that("each boot_select() runner saves a bag the report reads, with the sele
   for (prefix in boot_thin) {
     boot_skip_unless_stack(prefix)
     root <- rf_study(data)
-    dir <- boot_run_runner(prefix, root, new.env(parent = globalenv()), boot_settings(prefix, where = quote(age >= 40)))
+    dir <- boot_run_runner(prefix, root, new.env(parent = globalenv()), boot_settings(prefix, WHERE = quote(age >= 40)))
     bag <- readRDS(file.path(dir, "bagging.rds"))
     expect_identical(bag$n_rows, sum(data$age >= 40), info = prefix)
     expect_identical(attr(bag, "hvti_provenance")$selection$where, "age >= 40", info = prefix)
@@ -57,7 +79,7 @@ test_that("each boot_select() report reads the runner's rows, not the whole data
   for (prefix in boot_thin) {
     boot_skip_unless_stack(prefix)
     root <- rf_study(data)
-    dir <- boot_run_runner(prefix, root, new.env(parent = globalenv()), boot_settings(prefix, where = quote(age >= 40)))
+    dir <- boot_run_runner(prefix, root, new.env(parent = globalenv()), boot_settings(prefix, WHERE = quote(age >= 40)))
     env <- boot_report(prefix, boot_env(root))
     # The correlations describe the rows the screen ran on.
     expect_identical(nrow(env$d), sum(data$age >= 40), info = prefix)
@@ -94,7 +116,8 @@ test_that("a bag saved before the data contract stops each report, naming the ba
     # The bag itself is still read: it is the data chunk that stops.
     expect_error(boot_report(prefix, env, "data"),
                  paste0("\\(the bootstrap bag bagging[.]rds\\) carries no single recorded data selection: it predates ",
-                        "the data contract.*Rerun the bootstrap runner with the `runner` chunk of the current template"),
+                        "the data contract.*Rerun the bootstrap runner, <subject>-<type>-", prefix,
+                        "-runner[.]R, as add_job\\(\\) now writes it"),
                  info = prefix)
   }
 })
@@ -130,6 +153,27 @@ test_that(".check_bag_identifiers() passes a bag of replicates and settings", {
   # A formula written in the global environment is saved by reference only.
   bag$scope <- list(early = stats::as.formula("~ age", env = globalenv()))
   expect_true(hvtiRtemplates:::.check_bag_identifiers(bag, "ccfid"))
+})
+
+test_that(".check_bag_identifiers() searches carried lineage below the top, and skips unforced promises", {
+  job <- list(provenance = list(sha256 = "abc"), data = data.frame(age = 1:3))
+  bag <- boot_hazard_chunk(1L, job)
+  rows <- data.frame(MRN = 7350000001 + 0:2)
+  # Only the bag's own lineage is skipped; one attached deeper is searched.
+  nested <- structure(list(1), hvti_provenance = list(rows = rows))
+  expect_error(hvtiRtemplates:::.check_bag_identifiers(c(bag, list(inner = nested)), "ccfid"),
+               "bag\\$inner, attribute hvti_provenance\\$rows\\$MRN")
+  # Reading a promise would evaluate it, so an unforced one is left alone: this
+  # one would stop, and the stop would be reported as an unreadable binding.
+  env <- new.env(parent = globalenv())
+  delayedAssign("d", stop("forced"), assign.env = env)
+  lazy <- stats::as.formula("~ age", env = env)
+  expect_true(hvtiRtemplates:::.check_bag_identifiers(c(bag, list(scope = lazy)), "ccfid"))
+  # A binding that cannot be read is reported, never taken for a pass.
+  broken <- new.env(parent = globalenv())
+  broken$x <- quote(expr = )
+  expect_error(hvtiRtemplates:::.check_bag_identifiers(c(bag, list(scope = stats::as.formula("~ age", env = broken))), "ccfid"),
+               "bag\\$scope, attribute [.]Environment: x \\(unreadable: ")
 })
 
 test_that(".check_bag_identifiers() stops on rows saved in a bag, wherever they sit", {

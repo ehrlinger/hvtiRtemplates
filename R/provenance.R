@@ -643,40 +643,20 @@
   )
 }
 
-.read_bootstrap_artifact <- function(path, role, cfg, explicit_data) {
+# A bag or chunk comes from a bootstrap runner, which attaches its lineage and
+# the selection it read. A bag without that lineage has no other way in.
+.read_bootstrap_artifact <- function(path, role, cfg) {
   before <- hvtiRutilities::provenance_artifact(path, role = role, cfg = cfg)
   value <- readRDS(path)
   after <- hvtiRutilities::provenance_artifact(path, role = role, cfg = cfg)
   if (!identical(before[c("bytes", "sha256")], after[c("bytes", "sha256")])) {
     stop("The bootstrap artifact changed while it was read; discard this render and read it again.", call. = FALSE)
   }
-  lineage <- attr(value, "hvti_provenance", exact = TRUE)
-  missing_data <- is.null(lineage) ||
-    (is.list(lineage) && is.list(lineage$data) && !length(lineage$data))
-  if (missing_data) {
-    if (!is.list(explicit_data) || !length(explicit_data)) {
-      stop(
-        "This bootstrap artifact has no carried lineage. Re-run its producer with hvti_provenance lineage, ",
-        "or supply the original provenance_data() records explicitly in BOOTSTRAP_DATA.",
-        call. = FALSE
-      )
-    }
-    complete_shape <- .complete_lineage_shape(lineage)
-    if (is.null(lineage)) {
-      lineage <- .handoff_lineage(explicit_data)
-    } else if (complete_shape) {
-      lineage <- .handoff_lineage(
-        explicit_data, lineage$artifacts, lineage$analysis, lineage$cohort, lineage$selection
-      )
-    } else {
-      .validate_handoff_lineage(value, path, "the bootstrap producer")
-    }
-    attr(value, "hvti_provenance") <- lineage
-    lineage <- .validate_handoff_lineage(value, path, "the bootstrap producer")
-  } else {
-    lineage <- .validate_handoff_lineage(value, path, "the bootstrap producer")
+  if (is.null(attr(value, "hvti_provenance", exact = TRUE))) {
+    stop("The bootstrap artifact '", path, "' has no carried lineage. Rerun its bootstrap runner, which attaches it.",
+         call. = FALSE)
   }
-  list(value = value, record = before, lineage = lineage)
+  list(value = value, record = before, lineage = .validate_handoff_lineage(value, path, "the bootstrap runner"))
 }
 
 .combine_handoff_lineage <- function(lineages = list(), data = list(),

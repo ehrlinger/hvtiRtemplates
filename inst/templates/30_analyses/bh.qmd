@@ -231,13 +231,6 @@ EXPECT_BOOT   <- 500L   # EDIT: %hazboot(resampl=) -- total replicates wanted
 # chunks from another run -- and no downstream check can see that.
 BOOT_PREFIX <- "bh"
 
-# External producers that cannot attach hvti_provenance must put their original
-# provenance_data() records here. Leave empty for package-produced bags. The
-# records do not stand in for a selection: a bag without one stops at the data
-# chunk, so an external producer must still attach the selection that
-# read_job_data() records.
-BOOTSTRAP_DATA <- list()
-
 # EDIT: the bag's recorded selection is used; set any of these only to confirm
 # it. NULL takes the value the bootstrap runner used.
 WHERE <- NULL
@@ -284,74 +277,12 @@ COLLINEAR_R <- 0.99
 
 ### The runner
 
-The screen is run by a script the study keeps beside this report. The chunk
-below is that script's starting point. This report never runs it.
-
-Two lines in it are the data contract, and must survive your edits. The runner
-reads its rows with `hvtiRtemplates::read_job_data()`, and it saves the
-selection that call records in the bag's lineage. This report prints that
-selection, and stops on a bag that carries none. **A bag written before this
-contract carries none: rerun its runner.**
-
-The runner also keeps the patient identifier out of what it saves. It resamples
-only the model's columns, and the bag's `boot` field takes four fields of the
-`hzr_bootstrap()` result and no more. The result's `scope` is left out on
-purpose: a formula saved whole carries the environment it was written in, and
-that can hold the data.
-
-```{r}
-#| label: runner
-#| eval: false
-# Not run by this report. Copy it to a script beside this file, set the values
-# in the first block, and run it from the study once per chunk, each chunk with
-# its own number, before rendering.
-library(TemporalHazard)
-set_name <- "subject-type" # this file's first two name fields, as the set chunk reads them
-pool <- c("age", "female")
-where <- NULL # the rows to keep, as WHERE in any job, for example quote(age >= 18)
-chunk <- 1L
-n_boot <- 20L
-seed <- 20260100L + chunk
-
-# The data contract. read_job_data() reads the rows, leaves MRN and eMRN out,
-# and records the selection; every chunk carries that selection to this report,
-# which stops when two chunks disagree on it.
-cfg <- hvtiRutilities::study_config()
-job <- hvtiRtemplates::read_job_data(cfg, dataset = "study", analysis_set = NULL, where = where, id = "ccfid")
-selection <- attr(job$record, "selection")
-
-# Only the model's columns are resampled, so the patient identifier never
-# reaches the screen.
-d <- job$data[c("iv_dead", "dead", pool)]
-
-# The shapes come from your hz job and are held fixed, as %hazboot does. The
-# model formula and the candidate pool are written literally, in the calls:
-# see the health check for what a formula held in a variable does.
-phases <- list(early = hzr_phase("cdf", t_half = 0.05, nu = 1, m = 1, fixed = "shapes"),
-               constant = hzr_phase("constant"))
-base <- hazard(survival::Surv(iv_dead, dead) ~ 1, data = d, dist = "multiphase", phases = phases, fit = TRUE)
-t0 <- Sys.time()
-bs <- hzr_bootstrap(base, n_boot = n_boot, seed = seed, scope = list(early = ~ age + female, constant = ~ age + female),
-                    slentry = 0.10, slstay = 0.05, max_steps = 50L)
-
-# The bag is a plain list. `boot` takes four fields of the result and no more:
-# its `scope` holds formulas, and a formula saved whole carries the environment
-# it was written in, the data included. The first base parameter must be free:
-# the health check watches its spread.
-offered <- c(early = length(pool), constant = length(pool))
-bag <- list(
-  n_boot = bs$n_success, seed = seed, slentry = 0.10, slstay = 0.05, max_steps = 50L,
-  base_params = c("early.log_mu", "constant.log_mu"), requested = offered, usable = offered, n_rows = nrow(d),
-  elapsed_mins = as.numeric(difftime(Sys.time(), t0, units = "mins")),
-  manifest = list(sha256 = job$provenance$sha256), th_version = format(utils::packageVersion("TemporalHazard")),
-  boot = bs[c("replicates", "summary", "n_success", "n_failed")]
-)
-attr(bag, "hvti_provenance") <- list(data = list(job$provenance), artifacts = list(), analysis = NULL, cohort = NULL,
-                                     selection = selection)
-out_dir <- file.path(hvtiRutilities::study_dir("estimates", cfg$root), set_name)
-dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-saveRDS(bag, file.path(out_dir, sprintf("bh.chunk%02d.rds", chunk)))
-```
+The screen is run by its own job, `<subject>-<type>-bh-runner.R`, which
+`add_job()` writes beside this file. Run it first: it reads its rows with
+`hvtiRtemplates::read_job_data()`, screens, and saves the bag with the
+selection that call records. This report only reads the bag. It prints that
+selection, and stops on a bag that carries none. **A bag written before the
+data contract carries none: rerun its runner.**
 
 ```{r}
 #| label: load
@@ -376,7 +307,7 @@ if (length(.chunk_files)) {
   # as an error -- which is why the refusal belongs here rather than in a note.
   .cfg <- study_config(start = .root)
   .chunk_reads <- lapply(.chunk_files, hvtiRtemplates:::.read_bootstrap_artifact,
-                         role = "bootstrap-chunk", cfg = .cfg, explicit_data = BOOTSTRAP_DATA)
+                         role = "bootstrap-chunk", cfg = .cfg)
   bag <- boot_pool_chunks(lapply(.chunk_reads, `[[`, "value"))
   .chunk_lineage <- lapply(.chunk_reads, `[[`, "lineage")
   .combined <- hvtiRtemplates:::.combine_handoff_lineage(.chunk_lineage)
@@ -386,7 +317,7 @@ if (length(.chunk_files)) {
 } else if (file.exists(.single_file)) {
   .cfg <- study_config(start = .root)
   .bag_read <- hvtiRtemplates:::.read_bootstrap_artifact(
-    .single_file, "bootstrap-bag", .cfg, BOOTSTRAP_DATA
+    .single_file, "bootstrap-bag", .cfg
   )
   bag <- .bag_read$value
   .provenance_data <- .bag_read$lineage$data
@@ -416,8 +347,8 @@ if (length(.chunk_files)) {
 }
 .sel <- hvtiRtemplates:::.read_upstream_job_data(
   .cfg, .bootstrap_lineage, list(where = WHERE, id = ID, key = KEY), read = FALSE, source = .bag_name,
-  rerun = paste("Rerun the bootstrap runner with the `runner` chunk of the current template, which records the",
-                "selection, then render this report again.")
+  rerun = paste("Rerun the bootstrap runner, <subject>-<type>-bh-runner.R, as add_job() now writes it: it records",
+                "the selection. Then render this report again.")
 )$selection
 knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
                         value = c(.sel$id, paste(.sel$key, collapse = ", "),
@@ -455,7 +386,7 @@ if (!is.null(.shortfall)) {
 
 ```{r}
 #| label: contract
-# The runner is NOT templated -- it is a study file -- so the fields this report
+# The runner is a job of its own, edited by the study, so the fields this report
 # reads are a contract between two files that no shared function enforces.
 # Stated here, and checked, because the alternative is a report that indexes a
 # field the runner stopped writing and renders `NULL` into a provenance table as

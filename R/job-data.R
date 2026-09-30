@@ -429,27 +429,47 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   list(job_data = job_data, selection = sel)
 }
 
-# A bag holds a screen's replicates and its settings, never the rows it
-# resampled. boot_bag() builds one that way, but a hazard bag is a list its
-# runner writes by hand, and a field, or the environment of a formula or a
-# function saved in it, can hold the runner's data. This stops on a bag that
-# carries anything named for a patient identifier: the job's ID, MRN or eMRN.
-# The carried lineage is not searched: its selection names the ID and holds
-# no values.
+#' Stop on a bootstrap bag that carries patient-level data
+#'
+#' A bag holds a screen's replicates and its settings, never the rows it
+#' resampled. \code{boot_bag()} builds one that way, but a hazard bag is a list
+#' its runner writes by hand, and a field, or the environment of a formula or
+#' a function saved in it, can hold the runner's data.
+#'
+#' The guard is by NAME. It stops on a list element, data frame column or
+#' matrix column named for the job's ID, MRN or eMRN (ignoring case), wherever
+#' it sits, and on such a binding in an environment a formula or function in
+#' the bag carries. It does not see an ID stored under another name, an ID
+#' used as row names, or data in an environment it does not walk: a named
+#' environment (global, package, namespace), which is saved by reference, and
+#' an unforced promise, which is skipped because reading it would evaluate it.
+#' A binding that cannot be read is reported rather than passed. The carried
+#' lineage on the bag itself is not searched: its selection names the ID and
+#' holds no values.
+#'
+#' @param bag The bag or chunk, as read.
+#' @param id The job's resolved ID column.
+#' @param source What to call the bag in the message.
+#' @return \code{TRUE}, invisibly, or an error naming each place found.
+#' @noRd
 .check_bag_identifiers <- function(bag, id, source = "The bootstrap bag") {
   wanted <- unique(tolower(c(id, .job_identifier_names)))
   seen <- list()
   found <- character()
-  walk <- function(x, at) {
+  walk <- function(x, at, top = FALSE) {
     if (is.environment(x)) {
-      # Saved by reference, never by content: the global environment, the
-      # packages and their namespaces.
       if (nzchar(environmentName(x)) || any(vapply(seen, identical, logical(1L), x))) return(invisible())
       seen[[length(seen) + 1L]] <<- x
-      for (name in ls(x, all.names = TRUE)) {
-        value <- tryCatch(get(name, envir = x), error = function(e) NULL)
-        if (tolower(name) %in% wanted && length(value)) found <<- c(found, paste0(at, ": ", name))
-        walk(value, paste0(at, ": ", name))
+      names <- ls(x, all.names = TRUE)
+      lazy <- names[rlang::env_binding_are_lazy(x, names) | rlang::env_binding_are_active(x, names)]
+      for (name in setdiff(names, lazy)) {
+        here <- paste0(at, ": ", name)
+        value <- tryCatch(get(name, envir = x), error = function(e) {
+          found <<- c(found, paste0(here, " (unreadable: ", conditionMessage(e), ")"))
+          NULL
+        })
+        if (tolower(name) %in% wanted && length(value)) found <<- c(found, here)
+        walk(value, here)
       }
       return(walk(parent.env(x), at))
     }
@@ -458,7 +478,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     hit <- hit[tolower(hit) %in% wanted]
     if (length(hit) && length(x)) found <<- c(found, paste0(at, "$", hit))
     extra <- attributes(x)
-    extra <- extra[setdiff(names(extra), c("names", "row.names", "class", "dim", "dimnames", "hvti_provenance"))]
+    extra <- extra[setdiff(names(extra), c("names", "row.names", "class", "dim", "dimnames",
+                                           if (top) "hvti_provenance"))]
     for (name in names(extra)) walk(extra[[name]], paste0(at, ", attribute ", name))
     if (is.list(x)) {
       labels <- if (is.null(names(x))) rep("", length(x)) else names(x)
@@ -466,11 +487,11 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     }
     invisible()
   }
-  walk(bag, "bag")
+  walk(bag, "bag", top = TRUE)
   if (length(found)) {
     stop(source, " holds patient-level data: ", paste(unique(found), collapse = "; "), ". A bag holds the screen's ",
          "replicates and its settings, never the rows it resampled or their patient identifier. Save only the ",
-         "fields the runner snippet in this template saves, delete this file, and rerun the bootstrap runner.",
+         "fields the runner add_job() writes saves, delete this file, and rerun the bootstrap runner.",
          call. = FALSE)
   }
   invisible(TRUE)

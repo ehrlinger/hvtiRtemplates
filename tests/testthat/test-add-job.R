@@ -284,3 +284,48 @@ test_that("template artifact paths follow a numbered study layout", {
     )
   }
 })
+
+test_that("add_job writes the companion runner beside a bootstrap job, and only there", {
+  # The runner is a job of its own that runs first; the report reads its bag.
+  expect_setequal(list.files(system.file("runners", package = "hvtiRtemplates")),
+                  paste0(c("bl", "br", "bc", "bh"), "-runner.R"))
+  dir <- tempfile("newjob-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  for (prefix in c("bl", "br", "bc", "bh")) {
+    job <- add_job(prefix = prefix, subject = "dead_pa", type = "boot", dir = dir)
+    runner <- sub("[.]qmd$", "-runner.R", job)
+    expect_identical(basename(runner), paste0("dead_pa-boot-", prefix, "-runner.R"))
+    expect_true(file.exists(runner), info = prefix)
+    txt <- readLines(runner, warn = FALSE)
+    expect_identical(grep("^SUBJECT <- ", txt, value = TRUE), "SUBJECT <- \"dead_pa\"", info = prefix)
+    expect_identical(grep("^TYPE\\s+<- ", txt, value = TRUE), "TYPE    <- \"boot\"", info = prefix)
+  }
+  job <- add_job(prefix = "ac", subject = "dead_pa", type = "boot", dir = dir)
+  expect_false(any(grepl("-runner[.]R$", list.files(dirname(job)))))
+  expect_length(list.files(dir, pattern = "-runner[.]R$", recursive = TRUE), 4L)
+})
+
+test_that("add_job refuses to overwrite an existing runner, and writes nothing", {
+  # A runner accumulates a study's edits, as a job does.
+  dir <- tempfile("newjob-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  job <- add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir)
+  runner <- sub("[.]qmd$", "-runner.R", job)
+  writeLines("edited", runner)
+  unlink(job)
+  expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir),
+               paste0("'", runner, "' already exists; refusing to overwrite"), fixed = FALSE)
+  expect_false(file.exists(job))
+  expect_identical(readLines(runner), "edited")
+})
+
+test_that("add_job leaves neither file when the runner lacks its set markers", {
+  bad_runner <- tempfile("runner-", fileext = ".R")
+  writeLines("# no markers here", bad_runner)
+  on.exit(unlink(bad_runner), add = TRUE)
+  testthat::local_mocked_bindings(.runner_template = function(name) bad_runner, .package = "hvtiRtemplates")
+  dir <- tempfile("newjob-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir), "SUBJECT")
+  expect_length(list.files(dir, pattern = "^dead_pa-boot-bl", recursive = TRUE), 0L)
+})
