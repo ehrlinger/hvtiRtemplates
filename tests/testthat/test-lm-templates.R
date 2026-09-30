@@ -49,6 +49,7 @@ test_that("lm-binary fits and saves a model bundle", {
   env <- new.env(parent = globalenv())
   env$d <- lm_data()
   env$set_path <- function(kind, file) tempfile(fileext = file)
+  env$.root <- withr::local_tempdir("lm-root-")
   choices <- list(OUTCOME = "outcome", PREDICTORS = c("age", "female"),
                   OUTCOME_LEVELS = c("none", "event"), EVENT_LEVEL = "event",
                   ID = "id", IMPUTATION = NULL)
@@ -86,6 +87,7 @@ test_that("lm outcome templates fit every declared family", {
     env <- new.env(parent = globalenv())
     env$d <- d
     env$set_path <- function(kind, file) tempfile(fileext = file)
+    env$.root <- withr::local_tempdir("lm-root-")
     lm_run(qualifier, c("edit-study-choices", "fit", "results", "save"), env, cases[[qualifier]])
     expect_true(inherits(env$fit, "lm_fit"), info = qualifier)
     expect_identical(env$fit$meta$model_family, qualifier, info = qualifier)
@@ -118,6 +120,7 @@ test_that("lm propensity and count templates expose pooled inference", {
     env <- new.env(parent = globalenv())
     env$d <- d
     env$set_path <- function(kind, file) tempfile(fileext = file)
+    env$.root <- withr::local_tempdir("lm-root-")
     labels <- c("edit-study-choices", "fit", "results", "save")
     lm_run(qualifier, labels, env, cases[[qualifier]])
     expect_true(all(c("estimates", "covariance", "fit_status") %in% names(env$fit$tables)), info = qualifier)
@@ -206,7 +209,8 @@ test_that("lm-checkpred stops when its validation patients were in the training 
   cfg <- hvtiRutilities::study_config(root)
   bundle_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
   dir.create(bundle_dir, recursive = TRUE)
-  save_model <- function(train) {
+  # A current lm template saves digested IDs; a model saved before that holds raw ones. Both are checked.
+  save_model <- function(train, digest) {
     model <- hvtiRpropensity::fit_logistic(
       outcome ~ age + female, train, family = "binary", outcome_col = "outcome",
       id_col = "ccfid", outcome_levels = c("none", "event"), event_level = "event"
@@ -216,39 +220,56 @@ test_that("lm-checkpred stops when its validation patients were in the training 
       model, data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training")),
       analysis = model_provenance$analysis, cohort = model_provenance$cohort
     )
+    if (digest) model <- hvtiRtemplates:::.digest_bundle_ids(model, root)
     saveRDS(model, file.path(bundle_dir, "lm-binary.rds"))
   }
-  check <- function(choices = list()) {
+  check <- function(choices = list(), labels = character()) {
     env <- new.env(parent = globalenv())
     env$.root <- root
     env$study_config <- hvtiRutilities::study_config
     env$set_path <- function(kind, file) file.path(bundle_dir, file)
     choices <- utils::modifyList(list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 5L), choices)
-    utils::capture.output(lm_run("checkpred", c("edit-study-choices", "data", "model", "training-overlap"), env, choices))
+    utils::capture.output(lm_run("checkpred", c("edit-study-choices", "data", "model", "training-overlap", labels),
+                                 env, choices))
     env
   }
   d <- lm_data()
-  # The whole training cohort read again.
-  save_model(d)
-  expect_error(check(), "^The validation data are the training data: set DATASET or WHERE to the validation cohort[.]$")
-  # A validation cohort that shares some patients names how many, never which.
-  save_model(d[d$ccfid <= 70, ])
-  err <- tryCatch(check(list(WHERE = quote(ccfid > 60))), error = conditionMessage)
-  expect_identical(err, "10 validation patients were in the training data: set DATASET or WHERE to the validation cohort.")
-  # Identifiers from different columns cannot be compared.
-  expect_error(check(list(ID = "id", WHERE = quote(ccfid > 70))), "identify patients by `id`.*`ccfid`")
-  # A disjoint cohort goes on to validation.
-  env <- check(list(WHERE = quote(ccfid > 70)))
-  expect_identical(nrow(env$d), 50L)
-  # A missing validation ID cannot be compared, so it stops.
-  env <- check(list(WHERE = quote(ccfid > 70)))
-  env$d$ccfid[1L] <- NA
-  expect_error(lm_run("checkpred", "training-overlap", env), "Some patients have no `ccfid`")
-  # A saved model without its training identifiers stops rather than skipping the check.
-  model <- readRDS(file.path(bundle_dir, "lm-binary.rds"))
-  model$data$ccfid <- NULL
-  saveRDS(model, file.path(bundle_dir, "lm-binary.rds"))
-  expect_error(check(list(WHERE = quote(ccfid > 70))), "does not keep its training identifiers")
+  for (digest in c(FALSE, TRUE)) {
+    # The whole training cohort read again.
+    save_model(d, digest)
+    expect_identical(isTRUE(readRDS(file.path(bundle_dir, "lm-binary.rds"))$meta$id_digest), digest)
+    expect_error(check(), "^The validation data are the training data: set DATASET or WHERE to the validation cohort[.]$",
+                 info = paste("digest", digest))
+    # A validation cohort that shares some patients names how many, never which.
+    save_model(d[d$ccfid <= 70, ], digest)
+    err <- tryCatch(check(list(WHERE = quote(ccfid > 60))), error = conditionMessage)
+    expect_identical(err, "10 validation patients were in the training data: set DATASET or WHERE to the validation cohort.",
+                     info = paste("digest", digest))
+    # Identifiers from different columns cannot be compared.
+    expect_error(check(list(ID = "id", WHERE = quote(ccfid > 70))), "identify patients by `id`.*`ccfid`",
+                 info = paste("digest", digest))
+    # A disjoint cohort goes on to validation, and its saved copy keeps no raw validation ID.
+    env <- check(list(WHERE = quote(ccfid > 70)), c("validate", "save"))
+    expect_identical(nrow(env$d), 50L, info = paste("digest", digest))
+    saved <- readRDS(env$VALIDATION_PATH)
+    key <- hvtiRtemplates:::.study_id_key(root)
+    expect_true(isTRUE(saved$meta$id_digest), info = paste("digest", digest))
+    expect_identical(saved$data$ccfid, hvtiRtemplates:::.id_digest(env$d$ccfid, key), info = paste("digest", digest))
+    # The source model's training IDs are digested once, whichever way it was saved.
+    expect_identical(saved$models[[1L]]$data$ccfid, hvtiRtemplates:::.id_digest(d$ccfid[d$ccfid <= 70], key),
+                     info = paste("digest", digest))
+    # A missing validation ID cannot be compared, so it stops.
+    env <- check(list(WHERE = quote(ccfid > 70)))
+    env$d$ccfid[1L] <- NA
+    expect_error(lm_run("checkpred", "training-overlap", env), "Some patients have no `ccfid`",
+                 info = paste("digest", digest))
+    # A saved model without its training identifiers stops rather than skipping the check.
+    model <- readRDS(file.path(bundle_dir, "lm-binary.rds"))
+    model$data$ccfid <- NULL
+    saveRDS(model, file.path(bundle_dir, "lm-binary.rds"))
+    expect_error(check(list(WHERE = quote(ccfid > 70))), "does not keep its training identifiers",
+                 info = paste("digest", digest))
+  }
 })
 
 test_that("every lm template scaffolds and renders", {
