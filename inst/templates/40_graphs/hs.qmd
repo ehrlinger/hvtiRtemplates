@@ -208,12 +208,20 @@ Edit these values for this study before rendering.
 
 ```{r}
 #| label: edit-study-choices
-# Follow-up and event columns, expected counts, and prediction horizons.
-# EDIT: time, event, expected counts, and prediction horizons.
-TIME     <- "iu_dead"
+# The data, rows, identifier, time and event of the hz fit the hm model builds
+# on, as hm.rds records them. NULL takes the value hz used; set it only to
+# confirm it. A value set here that differs stops the job rather than predict
+# for another cohort.
+DATASET <- NULL
+ANALYSIS_SET <- NULL
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
+TIME <- NULL
+EVENT <- NULL
 
-EVENT    <- "idead"
-
+# Expected counts and prediction horizons.
+# EDIT: expected counts and prediction horizons.
 EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_)
 
 HORIZONS <- c(1, 5, 10)
@@ -234,40 +242,56 @@ SCALE     <- "years"
 ```
 ## Cohort and model
 
-<!-- EDIT: apply the same filter, event, time, and expected counts as the `hm`
-     job. The rows this job predicts for MUST be the rows the model was fitted
-     on, or the predictions describe a cohort the model never saw. That failure
-     is silent: `predict()` returns a number for any row you hand it, whatever
-     cohort it came from. The invalid expected counts make an unedited job stop
-     before it can predict for an unreconciled cohort. -->
+<!-- The rows this job predicts for MUST be the rows the model was fitted on,
+     or the predictions describe a cohort the model never saw. That failure is
+     silent: `predict()` returns a number for any row you hand it, whatever
+     cohort it came from. So the rows are not chosen here: hm.rds records how
+     hz chose them, and the data chunk rebuilds exactly those rows, stopping
+     when a setting above differs or the rows no longer match. The invalid
+     expected counts make an unedited job stop before it can predict for an
+     unreconciled cohort. -->
 
 ```{r}
-#| label: edit-cohort
+#| label: read-upstream
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
-.data_read <- hvtiRtemplates:::.provenance_read(
-  "study", .cfg, function() read_built(cfg = .cfg)
+# The model, not a refit. `hm.rds` is written by the hm job in this same set,
+# so a prediction can never be filed against a different set than the model it
+# came from.
+.hm_read <- hvtiRtemplates:::.read_handoff(
+  set_path("estimates", "hm.rds"), "hazard-regression-model", .cfg, "the hm job"
 )
-d <- .data_read$value
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-# EDIT: apply the same job filter as hm, before both the observed counts and gate.
-#
-# d <- d[!is.na(d$<flag>) & d$<flag> == 1, , drop = FALSE]
+hm_art <- .hm_read$value
+.provenance_data <- c(.hm_read$lineage$data, .provenance_data)
+.provenance_artifacts <- c(.hm_read$lineage$artifacts, list(.hm_read$record))
+```
+
+```{r}
+#| label: data
+.up <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, .hm_read$lineage,
+  list(dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY,
+       time = TIME, event = EVENT),
+  source = "hm.rds"
+)
+job_data <- .up$job_data
+d <- job_data$data
+TIME <- .up$selection$time
+EVENT <- .up$selection$event
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read, as hz read it")
+```
+
+```{r}
+#| label: cohort
 cc <- cohort_counts(d, event = EVENT, time = TIME)
 assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 ```
 
 ```{r}
 #| label: model
-# The model, not a refit. `hm.rds` is written by the hm job in this same set,
-# so a prediction can never be filed against a different set than the model it
-# came from.
-.hm_read <- hvtiRtemplates:::.read_handoff(
-  set_path("estimates", "hm.rds"), "hazard-regression-model",
-  hvtiRutilities::study_config(start = .root), "the hm job"
-)
-hm_art <- .hm_read$value
-.provenance_data <- c(.hm_read$lineage$data, .provenance_data)
-.provenance_artifacts <- c(.hm_read$lineage$artifacts, list(.hm_read$record))
 fit    <- hm_art$reported
 
 # The covariates the model was actually fitted on. Taken from the artifact
@@ -292,12 +316,10 @@ if (length(missing_cols)) {
 
 ## Predictions
 
-<!-- EDIT: the follow-up time column, and the horizons this job reports.
+<!-- EDIT: the horizons this job reports.
 
-     TIME must be the SAME column the hm job fitted on. It is re-declared here
-     rather than read from `hm.rds`, because that artifact does not carry it --
-     so the two CAN drift, and the guard below is what catches it. If you change
-     one, change both.
+     TIME is the column hz and hm fitted on, read from `hm.rds` in the data
+     chunk. The guard below still checks it against the fitted data.
 
      The horizons are in TIME's own units.
 
@@ -316,7 +338,8 @@ if (length(missing_cols)) {
 # only dist/control/time_windows/phases. The formula is recoverable from
 # `fit$call` only when the model was built through the formula interface;
 # `hazard()` also accepts time=/status=, in which case it is not there at all.
-# So the time column is declared above rather than introspected.
+# So the time column comes from the data selection hm.rds records rather than
+# from the fit.
 # A `hazard` object's `data` slot is a CONTAINER -- time, time_lower,
 # time_upper, status, x, weights, frame -- not the model frame. The study's own
 # columns are one level down, in `fit$data$frame`. Reading `fit$data[[TIME]]`

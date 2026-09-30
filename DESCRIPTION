@@ -56,6 +56,7 @@ Suggests:
     knitr,
     MASS,
     nnet,
+    numDeriv,
     officer,
     patchwork (>= 1.1.0),
     quarto,

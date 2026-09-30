@@ -187,14 +187,19 @@ Edit these values for this study before rendering.
 
 ```{r}
 #| label: edit-study-choices
-# Follow-up time, event, and SAS source for covariates.
-# EDIT: time and event variables.
-TIME   <- "iu_dead"
-
-EVENT  <- "idead"
+# The data, rows, identifier, time and event of the hz fit this model builds
+# on. NULL takes the value hz used; set it only to confirm it. A value set here
+# that differs from hz's stops the job rather than fit another cohort.
+DATASET <- NULL
+ANALYSIS_SET <- NULL
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
+TIME <- NULL
+EVENT <- NULL
 
 # EDIT: counts from the SAS reference for the rows this job analyses. Leave
-# these invalid defaults in place until the job's filter and endpoint agree.
+# these invalid defaults in place until they agree with the hz job's rows.
 EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_)
 
 # EDIT: SAS job and macro holding covariate blocks.
@@ -222,22 +227,48 @@ DECILE_TIME <- 10
 ```
 ## Cohort
 
-<!-- EDIT: apply this job's filter after reading the data, if it has one. The
-     expected counts, event, and time are this job's contract with its SAS
-     reference; the invalid defaults make an unedited job stop rather than
-     silently accept an unreconciled cohort. -->
+<!-- This job fits the rows the hz job fitted. hz.rds records how it chose
+     them, and the data chunk rebuilds exactly those rows, stopping when a
+     setting above differs from hz's or when the rows no longer match. The
+     expected counts are this job's contract with its SAS reference; the
+     invalid defaults make an unedited job stop rather than silently accept an
+     unreconciled cohort. -->
 
 ```{r}
-#| label: edit-cohort
+#| label: read-upstream
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
-.data_read <- hvtiRtemplates:::.provenance_read(
-  "study", .cfg, function() read_built(cfg = .cfg)
+# The shape values come from the companion hz job, NOT from a literal. This is
+# what "builds on the HZ fit" means concretely: SAS holds the shapes with
+# `fixthalf fixnu fixm fixeta` while it screens covariates.
+.hz_read <- hvtiRtemplates:::.read_handoff(
+  set_path("estimates", "hz.rds"), "hazard-shape-model", .cfg, "the hz job"
 )
-d <- .data_read$value
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-# EDIT: apply this job's filter here, before both the observed counts and gate.
-#
-# d <- d[!is.na(d$<flag>) & d$<flag> == 1, , drop = FALSE]
+hz_art <- .hz_read$value
+.provenance_data <- c(.hz_read$lineage$data, .provenance_data)
+.provenance_artifacts <- c(.hz_read$lineage$artifacts, list(.hz_read$record))
+```
+
+```{r}
+#| label: data
+.up <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, .hz_read$lineage,
+  list(dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY,
+       time = TIME, event = EVENT),
+  source = "hz.rds"
+)
+job_data <- .up$job_data
+d <- job_data$data
+TIME <- .up$selection$time
+EVENT <- .up$selection$event
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read, as hz read it")
+```
+
+```{r}
+#| label: cohort
 cc <- cohort_counts(d, event = EVENT, time = TIME)
 assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 
@@ -340,7 +371,9 @@ if (any(grepl("^ERROR", audit$action))) {
        ". Resolve these before fitting.", call. = FALSE)
 }
 
-dd <- covariates_to_numeric(d, unlist(COVARIATES))
+# Only the columns the model uses. A hazard() fit keeps a copy of its data,
+# which is saved in hm.rds, and `d` also holds the patient identifier.
+dd <- covariates_to_numeric(d[unique(c(TIME, EVENT, unlist(COVARIATES)))], unlist(COVARIATES))
 ```
 
 **A factor left as a factor is dummy-coded on purpose** — the right outcome for
@@ -375,16 +408,7 @@ reading a coefficient.
 
 ```{r}
 #| label: phases
-# The shape values come from the companion hz job, NOT from a literal. This is
-# what "builds on the HZ fit" means concretely: SAS holds the shapes with
-# `fixthalf fixnu fixm fixeta` while it screens covariates.
-.hz_path <- set_path("estimates", "hz.rds")
-.hz_read <- hvtiRtemplates:::.read_handoff(
-  .hz_path, "hazard-shape-model", hvtiRutilities::study_config(start = .root), "the hz job"
-)
-hz_art <- .hz_read$value
-.provenance_data <- c(.hz_read$lineage$data, .provenance_data)
-.provenance_artifacts <- c(.hz_read$lineage$artifacts, list(.hz_read$record))
+# hz_art is the hz job's saved fit, read above with the data it was fitted on.
 hz_fit <- hz_art$deterministic
 
 # the shape/scale parameter names your phase specification produces.
@@ -434,25 +458,38 @@ form <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ ", rhs))
 
 ctl1 <- list(n_starts = 5, maxit = 2000, conserve = FALSE)
 ctl2 <- list(n_starts = 1, maxit = 5000, conserve = FALSE)
+ph1 <- make_phases(TRUE)
+ph2 <- make_phases(FALSE)
 
-stage1 <- suppressWarnings(
-  hazard(form,
-         data = dd,
-         dist = "multiphase",
-         phases = make_phases(TRUE),
-         fit = TRUE,
-         control = ctl1)
-)
+# The fits run in an environment holding only what they use. A saved fit keeps
+# the environment of its formula and of its call, and hm.rds would then carry
+# every object there, `d` and its patient IDs included, whenever these chunks
+# run anywhere but the global environment.
+fit_env <- list2env(list(dd = dd, form = form, ph1 = ph1, ph2 = ph2, ctl1 = ctl1, ctl2 = ctl2),
+                    parent = globalenv())
+environment(fit_env$form) <- fit_env
+local({
+  stage1 <- suppressWarnings(
+    hazard(form,
+           data = dd,
+           dist = "multiphase",
+           phases = ph1,
+           fit = TRUE,
+           control = ctl1)
+  )
 
-stage2 <- suppressWarnings(
-  hazard(form,
-         data = dd,
-         dist = "multiphase",
-         phases = make_phases(FALSE),
-         theta = stage1$fit$theta,
-         fit = TRUE,
-         control = ctl2)
-)
+  stage2 <- suppressWarnings(
+    hazard(form,
+           data = dd,
+           dist = "multiphase",
+           phases = ph2,
+           theta = stage1$fit$theta,
+           fit = TRUE,
+           control = ctl2)
+  )
+}, envir = fit_env)
+stage1 <- fit_env$stage1
+stage2 <- fit_env$stage2
 
 if (!is.null(old_seed)) .GlobalEnv$.Random.seed <- old_seed
 ```
@@ -753,7 +790,9 @@ hm_art <- hvtiRtemplates:::.attach_handoff_lineage(
     time = list(variable = TIME),
     event = list(variable = EVENT, event = 1L, censored = 0L)
   ),
-  cohort = cc
+  cohort = cc,
+  # hz's record, which hs rebuilds its rows from.
+  selection = .up$selection
 )
 saveRDS(hm_art, set_path("estimates", "hm.rds"))
 ```
