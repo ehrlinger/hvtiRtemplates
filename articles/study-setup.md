@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/Rtmpc3155F/file1f6a254af7d0/legacy-study
+#> Study: /tmp/RtmpPfnWua/file1e60164f8009/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,7 +183,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmpc3155F/file1f6a254af7d0/legacy-study
+#> Study: /tmp/RtmpPfnWua/file1e60164f8009/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -306,15 +306,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/Rtmpc3155F/file1f6a254af7d0/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
+#> "/tmp/RtmpPfnWua/file1e60164f8009/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
 #>                                                                                tables 
-#>  "/tmp/Rtmpc3155F/file1f6a254af7d0/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
+#>  "/tmp/RtmpPfnWua/file1e60164f8009/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/Rtmpc3155F/file1f6a254af7d0/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
+#>    "/tmp/RtmpPfnWua/file1e60164f8009/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
 #>                                                                                trends 
-#>       "/tmp/Rtmpc3155F/file1f6a254af7d0/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
+#>       "/tmp/RtmpPfnWua/file1e60164f8009/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/Rtmpc3155F/file1f6a254af7d0/legacy-study/descriptive/cohort-eda-dp-eda.qmd"
+#>     "/tmp/RtmpPfnWua/file1e60164f8009/legacy-study/descriptive/cohort-eda-dp-eda.qmd"
 ```
 
 ## Work the jobs and generate output
