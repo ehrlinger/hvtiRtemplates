@@ -168,7 +168,36 @@ GROUP <- "group"
 
 # EDIT: the single horizon, in TIME's own units.
 HORIZON <- 10
+
+# EDIT: columns the plotting job will need beside each prediction, such as
+#       age. Saved once per patient; see "Patients are rows" below.
+CARRY <- character()
 ```
+
+**`MODELS` and `GROUP` are checked against each other.** The names of `MODELS`
+become the model identifiers and the decision table's columns, so they must be
+non-empty and unique. Every value of `GROUP` observed in the cohort must have
+a model; a group with none stops the render and names the group. An author
+who means to leave a group out filters it in `edit-cohort`, where the choice
+is visible. A model whose name no patient carries is allowed and reported: it
+is a treatment nobody in this cohort received.
+
+**One time scale.** `HORIZON` is one number applied to every model, so every
+model must have been fitted on the job's own `TIME` variable. Each `hm.rds`
+records the name of its time variable, and the render stops when any differs
+from `TIME`. Within one study that settles the unit, because the models were
+fitted on one built dataset's column. A recorded NAME does not carry a unit,
+so for a model from another study it settles nothing; section 12 says what
+the author must do instead.
+
+**Patients are rows, not identifiers.** The saved predictions identify a
+patient by row number in the cohort, as `hs-setup` does. That is deliberate:
+no saved hazard artifact carries a patient identifier (#203), and when a
+study's `ID` falls back to the medical record number, saving it would put it
+in a file that travels. A row number is not a key a later job can join on, so
+the artifact does not ask for a join. It carries what the plotting job needs:
+the columns named in `CARRY`, saved one row per patient beside the actual
+group. `CARRY` columns are checked to exist and may not name `ID`.
 
 Each model is read through `.read_handoff()` from
 `<estimates>/<set>/hm.rds`, as `hs-setup` reads its one. The lineage of every
@@ -201,13 +230,14 @@ In chunk order:
    acceptable is a clinical judgment.
 7. **`predict`**: one `predict()` call per model on the same patient frame,
    `type = "survival"`, with limits. The result is LONG: one row per patient
-   per model, with columns for patient id, actual group, model name,
+   per model, with columns for patient row number, actual group, model name,
    survival, lower and upper.
 8. **`summary`**: for each model, the distribution of predicted survival
    within each actual group, as a table.
 9. **`save`**: `hs-concordance.rds` in the comparison set, holding the long
-   predictions, `HORIZON`, `CLEVEL`, the per-model covariate lists, the
-   support counts and the overlap choice.
+   predictions, the per-patient frame of actual group and `CARRY` columns,
+   `HORIZON`, `TIME`, `CLEVEL`, the per-model covariate lists, the support
+   counts and the overlap choice.
 
 Long form is chosen over the exemplars' one column per model because it
 holds any number of models without new column names, and because the display
@@ -266,14 +296,24 @@ section 2:
   per model. An ineligible prediction is `NA` in the decision step and is
   left untouched in the saved predictions.
 - **One definition of optimal**, computed after eligibility.
-- **Ties are reported.** The count of patients whose best two predictions
-  are equal is printed, and those patients get no optimal group.
-- **Differences are reported with their limits.** Alongside the point
-  choice, the count of patients whose optimal model's lower limit is above
-  the runner-up's upper limit, which is exemplar C's check. The coverage is
-  named wherever it is printed, because 0.68268948 is not the coverage a
-  reader assumes.
-- **The concordance table**: actual group by optimal group.
+- **A choice is either separated or not, and the limits decide.** Exact
+  equality would not catch the section 2 failure: two predictions that differ
+  in the fourth decimal are almost never bit-identical. So each patient's
+  best prediction is classed against the runner-up by exemplar C's check:
+  **separated** when the best model's lower limit is above the runner-up's
+  upper limit, **not separated** otherwise. An exact tie is a case of not
+  separated, and is also counted on its own.
+- **Only a separated choice is called optimal.** A patient whose choice is
+  not separated has a best-predicted group recorded, and no optimal group.
+  The template sets no clinical tolerance of its own: what difference in
+  survival matters is a study's judgment, and the limits are the one
+  threshold the fitted models supply.
+- **The coverage is named wherever it is printed**, because 0.68268948 is
+  not the coverage a reader assumes, and "separated" means separated at that
+  coverage.
+- **The concordance table is printed twice**: actual group by best-predicted
+  group for every patient, and actual group by optimal group for the
+  separated ones, with the count left out of the second stated beside it.
 
 Its results are saved in the same artifact under `decision`, absent when the
 section is deleted.
@@ -310,8 +350,11 @@ second.
 
 ## 12. A model from another study: allowed, not expected
 
-No exemplar does this. It is allowed because the request in section 2 is
-exactly this case.
+No exemplar does this, and the request in section 2 does not establish it
+either: that request compares two cohorts, and whether their models sit in
+one study directory or two is not known. It is allowed on the maintainer's
+decision of 2026-09-30, as an option a study may need, not as a case the
+evidence shows.
 
 An entry of `MODELS` may be a path to another study's `hm.rds` instead of a
 set name. When any entry is a path:
@@ -319,6 +362,11 @@ set name. When any entry is a path:
 - the render stops unless `CROSS_STUDY <- TRUE` is set, so a cross-study
   read is never an accident of a mistyped set name;
 - the other study's lineage is attached like any other handoff;
+- the author must state the other study's time unit in the narration, and
+  the render stops unless `CROSS_STUDY_TIME_CHECKED <- TRUE` is set beside
+  it. The artifact records a time variable's name and no unit, so this is
+  the one check in the template that rests on the author's word, and the
+  narration says so;
 - the `support` counts in section 6 matter most here, and the narration
   says so.
 
@@ -343,10 +391,13 @@ The template still carries no study identifier: the path is the author's
 - The template renders against two fitted models in a test fixture, and the
   saved artifact has one row per patient per model.
 - Tests, each proved by mutation: two `MODELS` entries resolving to one file
-  stop the render; a horizon beyond ONE model's follow-up stops it; a path
-  entry without `CROSS_STUDY` stops it; `OVERLAP <- NULL` stops it; a tie
-  yields no optimal group; an ineligible prediction is unchanged in the
-  saved predictions.
+  stop the render; an empty or duplicated `MODELS` name stops it; a `GROUP`
+  value with no model stops it; a model fitted on a time variable other than
+  `TIME` stops it; a horizon beyond ONE model's follow-up stops it; a path
+  entry without `CROSS_STUDY` stops it; `OVERLAP <- NULL` stops it; an exact
+  tie and a near-tie inside the limits each yield no optimal group; an
+  ineligible prediction is unchanged in the saved predictions; `CARRY`
+  naming `ID` stops it, and no patient identifier is in the saved file.
 - `hs-setup` renders as `hs` did, and `add_job("hs", ...)` without a
   qualifier errors with both choices listed.
 - Each of the two files has its own `.lintr` key.

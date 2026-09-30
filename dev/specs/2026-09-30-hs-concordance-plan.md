@@ -210,14 +210,19 @@ Write `inst/templates/40_graphs/hs-concordance.qmd`. Write each test in
 - [ ] Front matter and `format:` block from `hs-setup.qmd`. Opening
   narration: what the job is, that it crosses sets on purpose, and that it
   is the corpus's concordance and discordance job.
-- [ ] `edit-study-choices`: `MODELS`, `GROUP`, `HORIZON`, `OVERLAP`,
-  `CROSS_STUDY <- FALSE`, each with an `EDIT:` marker and a comment saying
+- [ ] `edit-study-choices`: `MODELS`, `GROUP`, `HORIZON`, `CARRY`, `OVERLAP`,
+  `CROSS_STUDY <- FALSE`, `CROSS_STUDY_TIME_CHECKED <- FALSE`, each with an `EDIT:` marker and a comment saying
   why the choice matters. Spec sections 5, 7 and 12.
 - [ ] `models`: read each entry. Guards, each with a test:
-  - names of `MODELS` are unique and each is a value of `GROUP`;
+  - names of `MODELS` are non-empty and unique;
+  - every `GROUP` value observed in the cohort has a model; a model no
+    patient carries is reported, not refused;
+  - every model's recorded time variable equals `TIME`;
   - two entries resolving to the same file stop the render;
-  - an entry that is a path stops the render unless `CROSS_STUDY` is
-    `TRUE`.
+  - an entry that is a path stops the render unless `CROSS_STUDY` and
+    `CROSS_STUDY_TIME_CHECKED` are both `TRUE`.
+- [ ] `carry`: `CARRY` columns exist and do not name `ID`. Saved one row per
+  patient with the actual group, keyed by row number.
 - [ ] `overlap`: `OVERLAP` must be one of `"none"`, `"matched"`,
   `"common_support"`. `NULL` stops the render.
 - [ ] `covariates`: per-model covariates from each artifact; stop on a
@@ -249,11 +254,13 @@ before writing the decision section.
 - [ ] Eligibility as optional logical columns, applied as `NA` in the
   decision only. Test: an ineligible prediction is unchanged in the saved
   predictions.
-- [ ] Optimal group after eligibility. Test: a tie yields no optimal group
-  and is counted.
-- [ ] Count of patients whose optimal model's lower limit is above the
-  runner-up's upper limit, with the coverage named in the printed label.
-- [ ] Concordance table: actual group by optimal group.
+- [ ] Best-predicted group after eligibility, classed separated or not by
+  the limits. Only a separated choice is optimal. Tests: an exact tie and a
+  near-tie inside the limits each yield no optimal group; a separated
+  choice yields one.
+- [ ] The coverage named in every printed label.
+- [ ] Concordance table twice: best-predicted for all patients, optimal for
+  the separated ones, with the excluded count stated.
 - [ ] Saved under `decision`. Test: deleting the chunk leaves a render that
   passes and an artifact without `decision`.
 
