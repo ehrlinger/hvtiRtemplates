@@ -211,7 +211,7 @@ Write `inst/templates/40_graphs/hs-concordance.qmd`. Write each test in
   narration: what the job is, that it crosses sets on purpose, and that it
   is the corpus's concordance and discordance job.
 - [ ] `edit-study-choices`: `MODELS`, `GROUP`, `HORIZON`, `CARRY`, `OVERLAP`,
-  `CROSS_STUDY <- FALSE`, `CROSS_STUDY_TIME_CHECKED <- FALSE`, each with an `EDIT:` marker and a comment saying
+  `CROSS_STUDY <- FALSE`, each with an `EDIT:` marker and a comment saying
   why the choice matters. Spec sections 5, 7 and 12.
 - [ ] `models`: read each entry. Guards, each with a test:
   - names of `MODELS` are non-empty and unique;
@@ -219,8 +219,8 @@ Write `inst/templates/40_graphs/hs-concordance.qmd`. Write each test in
     patient carries is reported, not refused;
   - every model's recorded time variable equals `TIME`;
   - two entries resolving to the same file stop the render;
-  - an entry that is a path stops the render unless `CROSS_STUDY` and
-    `CROSS_STUDY_TIME_CHECKED` are both `TRUE`.
+  - an entry that is a path stops the render unless `CROSS_STUDY` is
+    `TRUE`. The flag's `EDIT:` comment says it also asserts the time unit.
 - [ ] `carry`: `CARRY` columns exist and do not name `ID`. Saved one row per
   patient with the actual group, keyed by row number.
 - [ ] `overlap`: `OVERLAP` must be one of `"none"`, `"matched"`,

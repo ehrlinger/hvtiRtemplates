@@ -362,11 +362,12 @@ set name. When any entry is a path:
 - the render stops unless `CROSS_STUDY <- TRUE` is set, so a cross-study
   read is never an accident of a mistyped set name;
 - the other study's lineage is attached like any other handoff;
-- the author must state the other study's time unit in the narration, and
-  the render stops unless `CROSS_STUDY_TIME_CHECKED <- TRUE` is set beside
-  it. The artifact records a time variable's name and no unit, so this is
-  the one check in the template that rests on the author's word, and the
-  narration says so;
+- setting `CROSS_STUDY` is also the author's statement that the other
+  study's time is in `TIME`'s unit. The artifact records a time variable's
+  name and no unit, so this is the one check in the template that rests on
+  the author's word. The `EDIT:` comment on the flag says so, and asks for
+  the unit to be written in the narration. One flag, not two: decided by
+  the maintainer on 2026-09-30;
 - the `support` counts in section 6 matter most here, and the narration
   says so.
 
