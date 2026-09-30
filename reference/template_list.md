@@ -65,7 +65,8 @@ template_list()
 #> 27               dp-gfup     dp               gfup        graphs
 #> 28             dp-trends     dp             trends        graphs
 #> 29                    hp     hp               <NA>        graphs
-#> 30              hs-setup     hs              setup        graphs
+#> 30        hs-concordance     hs        concordance        graphs
+#> 31              hs-setup     hs              setup        graphs
 #>                                                                                              file
 #> 1          /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-general.qmd
 #> 2             /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd
@@ -96,5 +97,6 @@ template_list()
 #> 27                 /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-gfup.qmd
 #> 28               /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
 #> 29                      /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
-#> 30                /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs-setup.qmd
+#> 30          /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs-concordance.qmd
+#> 31                /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs-setup.qmd
 ```
