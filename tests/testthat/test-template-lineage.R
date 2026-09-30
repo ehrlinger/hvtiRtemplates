@@ -298,47 +298,21 @@ test_that("bootstrap templates publish and save every input artifact lineage", {
 })
 
 test_that("hp reads the exact ac and hz chain artifacts and carried data", {
-  root <- rf_study()
-  cfg <- hvtiRutilities::study_config(root)
-  record <- hvtiRutilities::provenance_data(cfg = cfg, role = "training")
-  analysis <- list(
-    time = list(variable = "time"),
-    event = list(variable = "event", event = 1L, censored = 0L)
-  )
-  cohort <- list(n = 2L, n_events = 1L, n_censored = 1L)
-  artifact_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "death-hz")
-  dir.create(artifact_dir, recursive = TRUE)
-  ac_path <- file.path(artifact_dir, "ac.rds")
-  hz_path <- file.path(artifact_dir, "hz.rds")
-  ac <- hvtiRtemplates:::.attach_handoff_lineage(
-    list(overall = data.frame(time = 1)), data = list(record), analysis = analysis, cohort = cohort
-  )
-  hz <- hvtiRtemplates:::.attach_handoff_lineage(
-    list(deterministic = list(ok = TRUE)), data = list(record), analysis = analysis, cohort = cohort
-  )
-  saveRDS(ac, ac_path)
-  saveRDS(hz, hz_path)
+  root <- hazard_study()
+  lineage <- hazard_lineage(root)
+  ac_path <- hazard_save(list(overall = data.frame(time = 1)), lineage, hazard_set_path(root, "ac.rds"))
+  hz_path <- hazard_save(list(deterministic = list(ok = TRUE)), lineage, hazard_set_path(root, "hz.rds"))
 
-  data_path <- file.path(hvtiRutilities::study_dir("datasets", root), "cohort.rds")
-  saveRDS(data.frame(time = c(2, 3), event = c(1, 0)), data_path)
-  current_hash <- lineage_sha256(data_path)
-
-  env <- new.env(parent = globalenv())
-  env$.root <- root
-  env$FIT_NAME <- "deterministic"
-  env$KM_NAME <- "overall"
-  env$TIME <- "time"
-  env$EVENT <- "event"
-  env$years <- 1
-  env$t_max <- 1
-  env$set_path <- function(kind, file) file.path(artifact_dir, file)
-  eval(parse(text = rf_chunk(readLines(template_path("hp"), warn = FALSE), "read-upstream")), envir = env)
-  eval(parse(text = rf_chunk(readLines(template_path("hp"), warn = FALSE), "followup-gate")), envir = env)
+  env <- hazard_env(root)
+  hazard_run("hp", c("set", "edit-study-choices"), env, list(years = 1, t_max = 1))
+  hazard_run("hp", c("read-upstream", "data", "followup-gate"), env)
 
   expect_identical(vapply(env$.provenance_artifacts, `[[`, character(1L), "sha256"),
                    c(lineage_sha256(ac_path), lineage_sha256(hz_path)))
-  expect_identical(vapply(env$.provenance_data, `[[`, character(1L), "sha256"),
-                   c(record$sha256, record$sha256, current_hash))
+  # The data each upstream job read, then this job's own read of the same rows.
+  record <- lineage$data[[1L]]$sha256
+  expect_identical(vapply(env$.provenance_data, `[[`, character(1L), "sha256"), rep(record, 3L))
+  expect_identical(env$cc$n, nrow(env$d))
 })
 
 test_that("hp rejects incompatible ac and hz producer lineage", {

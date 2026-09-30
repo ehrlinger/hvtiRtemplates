@@ -183,6 +183,25 @@ Edit these values for this study before rendering.
 
 ```{r}
 #| label: edit-study-choices
+# EDIT: the registered dataset this job reads ("study" is the built dataset).
+DATASET <- "study"
+
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
 # Model phases and fixed parameters.
 # EDIT: phases and the fixed set on each.
 phases <- list(
@@ -196,34 +215,41 @@ phases <- list(
 theta0 <- c(log(1), log(1), 1, 1,
             log(1), log(1), 1, 1, 1)
 
-# EDIT: time, status, and counts from the SAS reference for the rows this job
+# EDIT: time, event, and counts from the SAS reference for the rows this job
 # analyses. Leave these invalid defaults in place until the job is reconciled.
 TIME   <- "iv_dead"
 
-STATUS <- "dead"
+EVENT  <- "dead"
 
 EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_)
 ```
 ## Cohort
 
-<!-- EDIT: apply this job's filter after reading the data, if it has one. The
-     expected counts, event, and time are this job's contract with its SAS
-     reference; the invalid defaults make an unedited job stop rather than
-     silently accept an unreconciled cohort. -->
+```{r}
+#| label: data
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+if (!is.null(job_data$attrition)) {
+  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+}
+```
+
+<!-- The rows are chosen by WHERE in the study choices, and the report above
+     shows what each condition removed. The expected counts, event and time are
+     this job's contract with its SAS reference; the invalid defaults make an
+     unedited job stop rather than silently accept an unreconciled cohort. -->
 
 ```{r}
-#| label: edit-cohort
-.cfg <- study_config(start = .root)
-.data_read <- hvtiRtemplates:::.provenance_read(
-  "study", .cfg, function() read_built(cfg = .cfg)
-)
-d <- .data_read$value
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-# EDIT: apply this job's filter here, before both the observed counts and gate.
-#
-# d <- d[!is.na(d$<flag>) & d$<flag> == 1, , drop = FALSE]
-cc <- cohort_counts(d, event = STATUS, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = STATUS, time = TIME)
+#| label: cohort
+cc <- cohort_counts(d, event = EVENT, time = TIME)
+assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 
 knitr::kable(data.frame(
   quantity = c("n_analysable", "n_events", "n_censored"),
@@ -329,7 +355,7 @@ produces a fit, not an error.
 # ---- Shape B: neutral shapes, data-derived time scale -----------------------
 # EDIT: delete Shape A above and uncomment this.
 #
-# ev_times <- sort(as.numeric(d[[TIME]][as.numeric(d[[STATUS]]) == 1]))
+# ev_times <- sort(as.numeric(d[[TIME]][as.numeric(d[[EVENT]]) == 1]))
 # t_half_0 <- as.numeric(stats::quantile(ev_times, 0.25))
 # theta0   <- c(log(1), log(t_half_0), 1, 1,
 #               log(1), log(1), 1, 1, 1)
@@ -356,7 +382,7 @@ if (length(theta0) != length(theta_names)) {
 # below needs the interval machinery and `objective = "sas"` does not apply.
 # EDIT: your time and status variables.
 resp <- data.frame(time   = as.numeric(d[[TIME]]),
-                   status = as.numeric(d[[STATUS]]))
+                   status = as.numeric(d[[EVENT]]))
 stopifnot(all(resp$status %in% c(0, 1)), !anyNA(resp$time))
 
 # ---- Shape B: interval-censored ---------------------------------------------
@@ -604,9 +630,12 @@ hz_art <- hvtiRtemplates:::.attach_handoff_lineage(
   data = .provenance_data,
   analysis = list(
     time = list(variable = TIME),
-    event = list(variable = STATUS, event = 1L, censored = 0L)
+    event = list(variable = EVENT, event = 1L, censored = 0L)
   ),
-  cohort = cc
+  cohort = cc,
+  # hm, hp and hs rebuild exactly these rows from this record, and take TIME
+  # and EVENT from it, so the chain cannot drift from the fit it builds on.
+  selection = c(attr(job_data$record, "selection"), list(time = TIME, event = EVENT))
 )
 saveRDS(hz_art, set_path("estimates", "hz.rds"))
 ```
@@ -623,7 +652,7 @@ cat(hvtiRtemplates:::.embed_provenance(
     type = TYPE,
     analysis = list(
       time = list(variable = TIME),
-      event = list(variable = STATUS, event = 1L, censored = 0L)
+      event = list(variable = EVENT, event = 1L, censored = 0L)
     ),
     cohort = cc
   )

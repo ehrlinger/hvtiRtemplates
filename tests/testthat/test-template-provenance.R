@@ -216,6 +216,7 @@ test_that("analysis-set branches capture the parquet file they read", {
 
 test_that("only templates with a local dataset choice override the dataset", {
   expected <- c(
+    "ac", "hz", "hm", "hp", "hs",
     "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-postage", "dp-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal"
@@ -454,7 +455,7 @@ test_that("lm-checkpred separates carried training metadata from runtime validat
 })
 
 test_that("event-time templates record local coding and observed counts", {
-  event_names <- c(ac = "STATUS", hz = "STATUS", hm = "EVENT", hp = "EVENT", hs = "EVENT")
+  event_names <- c(ac = "EVENT", hz = "EVENT", hm = "EVENT", hp = "EVENT", hs = "EVENT")
   for (prefix in names(event_names)) {
     chunk <- provenance_chunk(template_by_name(prefix))
     event <- event_names[[prefix]]
@@ -571,9 +572,9 @@ test_that("RF provenance chunks record the fitted objects they consume", {
   }
 })
 
-test_that("event-time provenance chunks retain observed STATUS and EVENT cohorts", {
+test_that("event-time provenance chunks retain observed TIME and EVENT cohorts", {
   cases <- list(
-    ac = list(event = "STATUS", time = "TIME", data = data.frame(time = c(1, 2, NA), status = c(1, 0, 1))),
+    ac = list(event = "EVENT", time = "TIME", data = data.frame(time = c(1, 2, NA), event = c(1, 0, 1))),
     hm = list(event = "EVENT", time = "TIME", data = data.frame(time = c(1, 2, 3), event = c(1, 0, 1)))
   )
 
@@ -666,7 +667,7 @@ test_that("an endpoint-driven render writes its local coding and observed cohort
     root, "death-hz-hz", "hz",
     c(
       'SUBJECT <- "death"', 'TYPE <- "hz"',
-      'TIME <- "iv_dead"', 'STATUS <- "dead"',
+      'TIME <- "iv_dead"', 'EVENT <- "dead"',
       "cc <- list(n = 3L, n_events = 1L, n_censored = 2L)"
     )
   )

@@ -320,7 +320,7 @@ test_that("endpoint-driven templates own explicit cohort definitions", {
     src[seq.int(start, if (length(end)) end[[1L]] - 1L else length(src))]
   }
 
-  templates <- c(ac = "STATUS", hz = "STATUS", hm = "EVENT", hs = "EVENT")
+  templates <- c(ac = "EVENT", hz = "EVENT", hm = "EVENT", hs = "EVENT")
   for (prefix in names(templates)) {
     src <- readLines(template_path(prefix), warn = FALSE)
     event <- templates[[prefix]]

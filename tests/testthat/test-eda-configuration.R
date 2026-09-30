@@ -14,7 +14,7 @@ test_that("jobs present their study choices before reading data", {
     `dp-eda.qmd` = c("DATASET", "ANALYSIS_SET", "OPYRS", "ORIGIN_YEAR", "CLOSE_DATE", "PANELS", "EVENTS",
                      "X_VAR", "VARIABLES", "GRID_NCOL", "SECTIONS", "ALPHA"),
     `dp-postage.qmd` = c("DATASET", "ANALYSIS_SET", "X_VAR", "VARIABLES", "GRID_NCOL", "SECTIONS", "ALPHA"),
-    `ac.qmd` = c("DERIVED", "TIME", "STATUS", "grid", "labs"),
+    `ac.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "DERIVED", "TIME", "EVENT", "grid", "labs"),
     `hz.qmd` = c("phases", "theta0"),
     `bc.qmd` = c("EXPECT_BOOT", "BOOT_FILE", "RETAIN_PCT", "CLUSTERS", "COLLINEAR_R"),
     `bh.qmd` = c("EXPECT_CHUNKS", "EXPECT_BOOT", "BOOT_PREFIX", "RETAIN_PCT", "CLUSTERS", "COLLINEAR_R"),
@@ -41,11 +41,19 @@ test_that("jobs present their study choices before reading data", {
     end <- config + which(lines[(config + 1L):length(lines)] == "```")[[1L]]
     choices <- lines[(config + 1L):(end - 1L)]
     expect_true(any(grepl("^# EDIT:", choices)), info = paste(file, "edit markers"))
+    # hm, hp and hs set TIME and EVENT again in their data chunk, from the
+    # selection hz recorded. That is not a second place to edit them.
+    data_at <- grep("^#\\| label: data$", lines)
+    outside <- lines
+    if (length(data_at) == 1L) {
+      data_end <- data_at + which(lines[(data_at + 1L):length(lines)] == "```")[[1L]]
+      outside <- lines[-seq.int(data_at, data_end)]
+    }
     for (name in required[[basename(file)]]) {
       expect_true(any(grepl(paste0("^", name, "[[:space:]]*<-"), choices)),
                   info = paste(file, name))
       if (name != "VARIABLES") {
-        expect_equal(sum(grepl(paste0("^", name, "[[:space:]]*<-"), lines)), 1L,
+        expect_equal(sum(grepl(paste0("^", name, "[[:space:]]*<-"), outside)), 1L,
                      info = paste(file, name, "must have one edit point"))
       }
     }

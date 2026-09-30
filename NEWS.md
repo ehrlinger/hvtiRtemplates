@@ -32,6 +32,14 @@
   digests its validation IDs with the same key and compares digests; a model
   saved before this change still validates.
 
+* The hazard chain reads its data through `read_job_data()`: `STATUS` is
+  `EVENT`, the `iu_dead`/`idead` defaults are `iv_dead`/`dead`, the filter
+  typed into every job is one `WHERE` in `ac` and `hz`, and `hm`, `hp` and
+  `hs` take `WHERE`, `ID`, `KEY`, `TIME` and `EVENT` from `hz`'s saved fit,
+  stopping if their own differ. `hp` also stops when `ac` and `hz` read
+  different rows. `hm` fits on the model's columns only, so `hm.rds` no longer
+  keeps the patient ID or MRN in its saved fits.
+
 * `dp-postage` is deprecated in favor of `dp-eda`, and will be removed in the
   release after 1.2.3. For the same pages, scaffold
   `add_job("dp", subject, type, qualifier = "eda")` and set
