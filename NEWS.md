@@ -12,6 +12,15 @@
   its file.
   Design: `dev/specs/2026-09-30-hs-concordance-design.md`.
 
+* `hs-setup` now requires TemporalHazard >= 1.2.12 and says what its
+  `se.fit` column is. On the survival path it is se(S), the standard error of
+  the survival estimate itself. A TemporalHazard build without #281 wrote
+  se(H) into the same column, and #281 shipped inside version 1.2.11, so which
+  one an `hs.rds` holds depends on the build that produced it, not on when it
+  was written. The render stops on an older build instead of writing an
+  ambiguous file, and the `Suggests` floor for TemporalHazard rises from 1.2.8
+  to 1.2.12 to match.
+
 * `hz` renders again with TemporalHazard 1.2.11. Its convergence table read
   an iteration count that a multiphase fit does not carry, so every render
   stopped there. The table now reports the optimizer's function and gradient

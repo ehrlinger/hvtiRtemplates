@@ -68,6 +68,17 @@ if (utils::packageVersion("hvtiRlifetables") < "0.1.2") {
        "us_cohort_curve(), which the edit-obs-vs-exp chunk calls, arrived in ",
        "0.1.2.\nUpdate it, then re-render.", call. = FALSE)
 }
+
+# 1.2.12, not 1.2.11. This job stores se.fit, and TemporalHazard #281 changed
+# it on the survival path from se(H) to se(S) without a version bump, so a
+# build reporting 1.2.11 may write either. 1.2.12 is the first release that
+# certainly writes se(S), which is what the pred frame below says it holds.
+if (utils::packageVersion("TemporalHazard") < "1.2.12") {
+  stop("This job needs TemporalHazard >= 1.2.12; ",
+       utils::packageVersion("TemporalHazard"), " is installed. ",
+       "Earlier builds may store se(H) in se.fit.\n",
+       "Update it, then re-render.", call. = FALSE)
+}
 ```
 
 ```{r}
@@ -450,6 +461,13 @@ CLEVEL <- 0.68268948   # SAS convention, not a study choice. +/-1 SD, NOT 95%.
 p <- predict(fit, newdata = nd[, c(COVARIATES, "time")], type = "survival",
              se.fit = TRUE, level = CLEVEL, conf.type = "logit")
 
+# `se.fit` is the standard error of `fit` on fit's own scale, so on this
+# survival path it is se(S), the delta method applied to S = exp(-H). A
+# TemporalHazard build without #281 wrote se(H) into the same column, and #281
+# shipped inside version 1.2.11, so what an hs.rds holds depends on the build
+# that produced it, not on when it was written. The guard above requires
+# 1.2.12. The limits are not fit +/- z * se.fit either: they are built from
+# se(H) on the conf.type scale.
 pred <- data.frame(id = nd$.id, horizon = nd$.horizon,
                    fit = p$fit, se.fit = p$se.fit,
                    lower = p$lower, upper = p$upper)
