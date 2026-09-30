@@ -53,6 +53,7 @@ test_that("hs-concordance refuses what would make the comparison meaningless", {
   bad(CARRY = c("age", "group"), msg = "already has")
   other <- file.path(hvtiRutilities::study_dir("estimates", e$root), "dead-b", "hm.rds")
   bad(MODELS = c(a = "dead-a", b = other), msg = "Set CROSS_STUDY")
+  bad(MODELS = c(a = "dead-a", b = gsub("/", "\\", other, fixed = TRUE)), msg = "Set CROSS_STUDY")
   bad(TIME = "age", msg = "fitted on time column")
 })
 
@@ -109,6 +110,11 @@ test_that("the decision calls a choice optimal only when the limits separate it"
   expect_identical(dec$optimal, rep(NA_character_, 4L) |> replace(3L, "a"))
   expect_identical(dec$best[2:4], c("b", "a", "a"))
   expect_identical(env$pred, before)
+  # Every patient is in the best-treatment table, ties and non-choices included.
+  expect_identical(sum(env$best_tbl), n)
+  expect_equal(unname(colSums(env$best_tbl)[c("(tie)", "(no choice)")]), c(1, 0))
+  expect_error(eval(parse(text = sub("^ELIGIBLE <- list\\(\\)$", 'ELIGIBLE <- list("elig_b")', chunk)), envir = env),
+               "unique name")
 })
 
 test_that("deleting the decision leaves a job that saves", {

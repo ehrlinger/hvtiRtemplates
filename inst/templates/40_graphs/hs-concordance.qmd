@@ -82,7 +82,7 @@ suppressPackageStartupMessages({
 # knits through an intermediate and current_input() returns THAT file, so the
 # scan reads a copy of this chunk along with everything else: a literal
 # grep("<token>", .src) here matches its own source line, and the guard then
-# fires on every render, finished or not. Measured, not theorised -- a probe
+# fires on every render, finished or not. Measured, not theorized -- a probe
 # found three markers in a file containing two. A guard that cries wolf on a
 # finished job is a guard that gets deleted, which returns us to issue #27.
 .tok <- paste0("ED", "IT", ":")
@@ -301,10 +301,11 @@ if (anyDuplicated(.mn)) {
        call. = FALSE)
 }
 
-# An entry with a "/" is a path to an hm.rds; anything else is a set in this
-# study. A path is refused unless CROSS_STUDY says it was meant, so that a
-# mistyped set name cannot quietly become a read from somewhere else.
-.is_path <- stats::setNames(grepl("/", MODELS, fixed = TRUE), .mn)
+# An entry with a path separator, "/" or "\\", is a path to an hm.rds; anything
+# else is a set in this study. A path is refused unless CROSS_STUDY says it
+# was meant, so a mistyped set name cannot quietly become a read from somewhere
+# else.
+.is_path <- stats::setNames(grepl("[/\\]", MODELS), .mn)
 if (any(.is_path) && !isTRUE(CROSS_STUDY)) {
   stop("MODELS entr", if (sum(.is_path) == 1L) "y " else "ies ", paste(.mn[.is_path], collapse = ", "),
        " name a path, not a set. Set CROSS_STUDY <- TRUE if a model from another study is meant.",
@@ -365,7 +366,7 @@ if (length(.no_model)) {
 # The reverse is allowed: a model no patient carries is a treatment nobody in
 # this cohort received, which is a comparison worth making. It is reported.
 knitr::kable(data.frame(model = names(models), patients = as.vector(table(factor(.actual, names(models))))),
-             caption = "Patients who received each modelled treatment")
+             caption = "Patients who received each modeled treatment")
 ```
 
 ```{r}
@@ -530,6 +531,12 @@ ELIGIBLE <- list()
 .fit <- .wide("fit")
 .lo <- .wide("lower")
 .hi <- .wide("upper")
+# An unnamed entry would be skipped by the loop below, leaving every model
+# eligible: a malformed eligibility rule must stop, not become an unmasked choice.
+if (length(ELIGIBLE) && (is.null(names(ELIGIBLE)) || any(!nzchar(names(ELIGIBLE))) ||
+                           anyDuplicated(names(ELIGIBLE)))) {
+  stop("Every ELIGIBLE entry needs a unique name: the model it applies to.", call. = FALSE)
+}
 for (m in names(ELIGIBLE)) {
   if (!m %in% names(models)) stop("ELIGIBLE names ", m, ", which is not in MODELS.", call. = FALSE)
   .ok <- d[[ELIGIBLE[[m]]]]
@@ -557,7 +564,12 @@ decision <- data.frame(row = seq_len(nrow(d)), group = .actual,
                        best = .ch["best", ], optimal = .ch["optimal", ], tie = .ch["tie", ] == "TRUE")
 
 .levels <- names(models)
-knitr::kable(table(received = factor(decision$group, .levels), best = factor(decision$best, .levels)),
+# A tie, or a patient with fewer than two eligible models, has no best model.
+# They are counted in their own columns so every patient is in the table.
+.best_lbl <- ifelse(decision$tie, "(tie)", ifelse(is.na(decision$best), "(no choice)", decision$best))
+best_tbl <- table(received = factor(decision$group, .levels),
+                  best = factor(.best_lbl, c(.levels, "(tie)", "(no choice)")))
+knitr::kable(best_tbl,
              caption = "Treatment received against best-predicted treatment, every patient")
 .sep <- !is.na(decision$optimal)
 knitr::kable(table(received = factor(decision$group[.sep], .levels), optimal = factor(decision$optimal[.sep], .levels)),
