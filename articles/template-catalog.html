@@ -86,7 +86,7 @@
 <ul>
 <li>🟢 <strong>Shipped</strong> (29): on disk and supported. Scaffold it and use it.</li>
 <li>🟡 <strong>In progress</strong> (21): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
-<li>🔴 <strong>Not yet on the way</strong> (16): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
+<li>🔴 <strong>Not yet on the way</strong> (17): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
 </h2>
 <p>Every template on disk, grouped by the study folder a job lands in, named without its digits (<code>graphs</code> is <code>40_graphs</code> in a new study). <code><a href="../reference/add_job.html">add_job()</a></code> places each one; you do not choose the folder.</p>
@@ -333,9 +333,9 @@
 </tr>
 <tr class="even">
 <td style="text-align: left;">🟢 Shipped</td>
-<td style="text-align: left;"><code>hs</code></td>
+<td style="text-align: left;"><code>hs-setup</code></td>
 <td style="text-align: left;">Patient-level predictions from the hm model, set against the survival of a matched general population.</td>
-<td style="text-align: left;"><code>add_job("hs", subject, type)</code></td>
+<td style="text-align: left;"><code>add_job("hs", subject, type, qualifier = "setup")</code></td>
 </tr>
 </tbody>
 </table></section></section><section class="level2"><h2 id="coming">Coming<a class="anchor" aria-label="anchor" href="#coming"></a>
@@ -345,11 +345,11 @@
 <div class="cell-output-display">
 <table class="table caption-top">
 <colgroup>
-<col style="width: 20%">
-<col style="width: 13%">
-<col style="width: 37%">
 <col style="width: 10%">
-<col style="width: 17%">
+<col style="width: 7%">
+<col style="width: 68%">
+<col style="width: 5%">
+<col style="width: 8%">
 </colgroup>
 <thead><tr class="header">
 <th style="text-align: left;">Delivery</th>
@@ -592,19 +592,26 @@
 </tr>
 <tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
+<td style="text-align: left;"><code>hs-concordance</code></td>
+<td style="text-align: left;">Every patient predicted through every treatment group’s hm model at one horizon, with an optional table of actual against best-predicted treatment.</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>bq</code></td>
 <td style="text-align: left;">Bootstrap quantile</td>
 <td style="text-align: left;">2</td>
 <td style="text-align: left;">hvtiRbootstrap#16</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>sid</code></td>
 <td style="text-align: left;">Random forest clustering (sidClustering)</td>
 <td style="text-align: left;">unmeasured</td>
 <td style="text-align: left;">hvtiRforests#1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>vt</code></td>
 <td style="text-align: left;">Virtual twins</td>

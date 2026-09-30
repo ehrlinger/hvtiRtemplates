@@ -31,7 +31,7 @@ Each template carries a light.
 - 🟢 **Shipped** (29): on disk and supported. Scaffold it and use it.
 - 🟡 **In progress** (21): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
-- 🔴 **Not yet on the way** (16): waiting on a function in another
+- 🔴 **Not yet on the way** (17): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
   now, write it by hand.
 
@@ -90,7 +90,7 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `dp-gfup` | The goodness-of-follow-up figure: each patient’s follow-up against operation year, alive in blue and dead in red, under the diagonal the close date allows. | `add_job("dp", subject, type, qualifier = "gfup")` |
 | 🟢 Shipped | `dp-trends` | How the cohort changed over the years of operation: the share with a characteristic, or the level of a measurement, year by year with a smooth. | `add_job("dp", subject, type, qualifier = "trends")` |
 | 🟡 In progress | `hp` | Nomogram and hazard figures, read from the ac life table and the hz fit rather than recomputed. | `add_job("hp", subject, type)` |
-| 🟢 Shipped | `hs` | Patient-level predictions from the hm model, set against the survival of a matched general population. | `add_job("hs", subject, type)` |
+| 🟢 Shipped | `hs-setup` | Patient-level predictions from the hm model, set against the survival of a matched general population. | `add_job("hs", subject, type, qualifier = "setup")` |
 
 ## Coming
 
@@ -135,6 +135,7 @@ as zero.
 | 🔴 Not yet on the way | `fp` | Forest plot | 11 | hvtiPlotR#133 |
 | 🔴 Not yet on the way | `dp-boxplot` | Descriptive plot: boxplot | 9 |  |
 | 🔴 Not yet on the way | `cp` | Cumulative probability plot | 4 | hvtiPlotR#135 |
+| 🔴 Not yet on the way | `hs-concordance` | Every patient predicted through every treatment group’s hm model at one horizon, with an optional table of actual against best-predicted treatment. | 3 |  |
 | 🔴 Not yet on the way | `bq` | Bootstrap quantile | 2 | hvtiRbootstrap#16 |
 | 🔴 Not yet on the way | `sid` | Random forest clustering (sidClustering) | unmeasured | hvtiRforests#1 |
 | 🔴 Not yet on the way | `vt` | Virtual twins | unmeasured | hvtiRforests#1 |
