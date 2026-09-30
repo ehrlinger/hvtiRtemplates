@@ -21,7 +21,7 @@ hazard_run <- function(prefix, labels, env, choices = list()) {
 # find. `id` names the identifier column: "ccfid", or "MRN" to exercise the
 # fallback that keeps MRN as the job's ID.
 hazard_data <- function(n = 160L, id = "ccfid") {
-  set.seed(20260929)
+  withr::local_seed(20260929)
   age <- round(stats::runif(n, 20, 85))
   x1 <- stats::rnorm(n)
   early <- stats::rexp(n, 2)
@@ -99,4 +99,58 @@ hazard_downstream <- function(prefix, root, choices = list()) {
   hazard_run(prefix, c("set", "edit-study-choices"), env, choices)
   hazard_run(prefix, c("read-upstream", "data"), env)
   env
+}
+
+# ---- #203: searching a saved file for patient identifiers ----------------------
+
+# TRUE when `bytes` hold `value` as text or as R's big-endian integer or double encoding.
+hazard_bytes_hold <- function(bytes, value) {
+  patterns <- list(charToRaw(as.character(value)), writeBin(as.double(value), raw(), endian = "big"),
+                   writeBin(as.integer(value), raw(), endian = "big"))
+  any(vapply(patterns, function(p) length(grepRaw(p, bytes, fixed = TRUE)) > 0L, logical(1L)))
+}
+
+hazard_rds_bytes <- function(path) {
+  con <- gzfile(path, "rb")
+  on.exit(close(con))
+  readBin(con, "raw", n = 1e8)
+}
+
+# Run ac, hz, hm and hs on `data`, keyed on MRN. A render evaluates every chunk
+# in the global environment, which a saved fit refers to by reference only, so
+# they run there, and the names they create are removed when `.local_envir`
+# ends. hm runs in `hm_env`, so a test can also run it somewhere a render does
+# not. Returns the environment hm ran in.
+hazard_chain_run <- function(root, data, hm_env = globalenv(), .local_envir = parent.frame()) {
+  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  expected <- list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)
+  env <- globalenv()
+  before <- ls(env, all.names = TRUE)
+  withr::defer(rm(list = setdiff(ls(env, all.names = TRUE), before), envir = env), envir = .local_envir)
+  list2env(as.list(hazard_env(root), all.names = TRUE), envir = env)
+  if (!identical(hm_env, env)) list2env(as.list(hazard_env(root), all.names = TRUE), envir = hm_env)
+  # TemporalHazard's own notes on a synthetic fit (an ignored control, a
+  # Hessian that is not positive-definite) are about the fit, not the file.
+  suppressWarnings(utils::capture.output({
+    hazard_run("ac", c("set", "edit-study-choices"), env, list(EXPECTED = expected))
+    hazard_run("ac", c("data", "cohort", "km-helpers", "km-overall"), env)
+    hazard_run("hz", c("set", "edit-study-choices"), env, list(EXPECTED = expected))
+    hazard_run("hz", c("data", "cohort", "phases", "edit-start", "edit-response", "response-check", "guard",
+                       "fit-deterministic", "noconserve", "save"), env)
+    hazard_run("hm", c("set", "edit-study-choices"), hm_env, list(EXPECTED = expected, DECILE_TIME = 3))
+    hm_env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
+    hazard_run("hm", c("read-upstream", "data", "cohort", "audit", "phases", "edit-fit", "edit-reported",
+                       "calibration", "save"), hm_env)
+    hazard_run("hs", c("set", "edit-study-choices"), env,
+               list(EXPECTED = expected, HORIZONS = c(1, 2), VINTAGE = "table2023"))
+    hazard_run("hs", c("read-upstream", "data", "cohort", "model", "horizons", "predict", "expected",
+                       "edit-obs-vs-exp", "save"), env)
+  }))
+  hm_env
+}
+
+# TRUE when any of `ids` is in the decompressed bytes of the saved `file`.
+hazard_file_holds_any <- function(root, file, ids) {
+  bytes <- hazard_rds_bytes(hazard_set_path(root, file))
+  any(vapply(ids, function(v) hazard_bytes_hold(bytes, v), logical(1L)))
 }

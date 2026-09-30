@@ -15,17 +15,19 @@ test_that("jobs present their study choices before reading data", {
                      "X_VAR", "VARIABLES", "GRID_NCOL", "SECTIONS", "ALPHA"),
     `dp-postage.qmd` = c("DATASET", "ANALYSIS_SET", "X_VAR", "VARIABLES", "GRID_NCOL", "SECTIONS", "ALPHA"),
     `ac.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "DERIVED", "TIME", "EVENT", "grid", "labs"),
-    `hz.qmd` = c("phases", "theta0"),
+    `hz.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "phases", "theta0"),
     `bc.qmd` = c("EXPECT_BOOT", "BOOT_FILE", "RETAIN_PCT", "CLUSTERS", "COLLINEAR_R"),
     `bh.qmd` = c("EXPECT_CHUNKS", "EXPECT_BOOT", "BOOT_PREFIX", "RETAIN_PCT", "CLUSTERS", "COLLINEAR_R"),
     `bl.qmd` = c("EXPECT_BOOT", "BOOT_FILE", "RETAIN_PCT", "CLUSTERS", "COLLINEAR_R"),
     `br.qmd` = c("EXPECT_BOOT", "BOOT_FILE", "RETAIN_PCT", "CLUSTERS", "COLLINEAR_R"),
-    `hm.qmd` = c("TIME", "EVENT", "SAS_JOB", "SAS_MACRO", "SHAPE_PARAMS", "DECILE_TIME"),
+    `hm.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "SAS_JOB", "SAS_MACRO",
+                 "SHAPE_PARAMS", "DECILE_TIME"),
     `dp-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "OPYRS", "ORIGIN_YEAR", "CLOSE_DATE",
                       "PANELS", "EVENTS", "ALPHA"),
     `dp-trends.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TRENDS", "XBREAKS", "SUBGROUPS"),
-    `hp.qmd` = c("years", "t_max", "TIME", "EVENT"),
-    `hs.qmd` = c("TIME", "HORIZONS", "AGE_COL", "MALE_COL", "SCALE")
+    `hp.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "years", "t_max", "TIME", "EVENT"),
+    `hs.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "HORIZONS", "AGE_COL",
+                 "MALE_COL", "SCALE")
   )
   root <- system.file("templates", package = "hvtiRtemplates")
   if (!nzchar(root)) {

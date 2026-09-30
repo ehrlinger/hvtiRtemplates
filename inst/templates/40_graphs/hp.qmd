@@ -251,6 +251,10 @@ for (.field in c("analysis", "cohort")) {
 }
 # The life table and the fit must describe the same rows. The data chunk below
 # rebuilds hz's rows, so an ac that chose other rows is stopped here.
+if (!is.null(.hz_read$lineage$selection) && is.null(.ac_read$lineage$selection)) {
+  stop("The ac job's saved output (ac.rds) carries no recorded data selection: it predates the data contract. ",
+       "Rerun the ac job with the current template, then rerun this one.", call. = FALSE)
+}
 if (!is.null(.hz_read$lineage$selection) &&
       !identical(.ac_read$lineage$selection, .hz_read$lineage$selection)) {
   stop("The ac and hz handoffs read different data, rows, time or event. Rebuild both with the same ",

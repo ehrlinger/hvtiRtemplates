@@ -458,25 +458,38 @@ form <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ ", rhs))
 
 ctl1 <- list(n_starts = 5, maxit = 2000, conserve = FALSE)
 ctl2 <- list(n_starts = 1, maxit = 5000, conserve = FALSE)
+ph1 <- make_phases(TRUE)
+ph2 <- make_phases(FALSE)
 
-stage1 <- suppressWarnings(
-  hazard(form,
-         data = dd,
-         dist = "multiphase",
-         phases = make_phases(TRUE),
-         fit = TRUE,
-         control = ctl1)
-)
+# The fits run in an environment holding only what they use. A saved fit keeps
+# the environment of its formula and of its call, and hm.rds would then carry
+# every object there, `d` and its patient IDs included, whenever these chunks
+# run anywhere but the global environment.
+fit_env <- list2env(list(dd = dd, form = form, ph1 = ph1, ph2 = ph2, ctl1 = ctl1, ctl2 = ctl2),
+                    parent = globalenv())
+environment(fit_env$form) <- fit_env
+local({
+  stage1 <- suppressWarnings(
+    hazard(form,
+           data = dd,
+           dist = "multiphase",
+           phases = ph1,
+           fit = TRUE,
+           control = ctl1)
+  )
 
-stage2 <- suppressWarnings(
-  hazard(form,
-         data = dd,
-         dist = "multiphase",
-         phases = make_phases(FALSE),
-         theta = stage1$fit$theta,
-         fit = TRUE,
-         control = ctl2)
-)
+  stage2 <- suppressWarnings(
+    hazard(form,
+           data = dd,
+           dist = "multiphase",
+           phases = ph2,
+           theta = stage1$fit$theta,
+           fit = TRUE,
+           control = ctl2)
+  )
+}, envir = fit_env)
+stage1 <- fit_env$stage1
+stage2 <- fit_env$stage2
 
 if (!is.null(old_seed)) .GlobalEnv$.Random.seed <- old_seed
 ```

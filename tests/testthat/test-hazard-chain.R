@@ -5,6 +5,13 @@
 # What each downstream job reads, and where its data chunk takes the selection from.
 downstream_reads <- list(hm = "hz.rds", hp = c("ac.rds", "hz.rds"), hs = "hm.rds")
 
+test_that("the hazard test data is fixed and leaves the session's random numbers alone", {
+  withr::local_seed(1)
+  before <- .Random.seed
+  expect_identical(hazard_data(), hazard_data())
+  expect_identical(.Random.seed, before)
+})
+
 test_that("hm, hp and hs rebuild hz's rows and take its TIME and EVENT", {
   data <- hazard_data()
   root <- hazard_study(data)
@@ -54,22 +61,21 @@ test_that("hp stops when ac and hz chose different rows", {
   expect_error(hazard_downstream("hp", root), "ac and hz handoffs read different data")
 })
 
+test_that("hp names an ac.rds saved before the data contract, rather than calling the rows different", {
+  root <- hazard_study()
+  lineage <- hazard_lineage(root)
+  hazard_upstream(root, lineage)
+  ac <- lineage
+  ac$selection <- NULL
+  hazard_save(list(overall = data.frame(time = 1)), ac, hazard_set_path(root, "ac.rds"))
+  err <- expect_error(hazard_downstream("hp", root), "ac\\.rds.*predates the data contract")
+  expect_match(conditionMessage(err), "Rerun the ac job with the current template")
+  expect_no_match(conditionMessage(err), "read different data")
+})
+
 # ---- #203: no saved hazard object carries a patient identifier --------------
 
-# TRUE when `bytes` hold `value` as text or as R's big-endian integer or double encoding.
-hazard_bytes_hold <- function(bytes, value) {
-  patterns <- list(charToRaw(as.character(value)), writeBin(as.double(value), raw(), endian = "big"),
-                   writeBin(as.integer(value), raw(), endian = "big"))
-  any(vapply(patterns, function(p) length(grepRaw(p, bytes, fixed = TRUE)) > 0L, logical(1L)))
-}
-
-hazard_rds_bytes <- function(path) {
-  con <- gzfile(path, "rb")
-  on.exit(close(con))
-  readBin(con, "raw", n = 1e8)
-}
-
-test_that("hz, hm and hs keyed on MRN save no MRN anywhere in their files", {
+test_that("ac, hz, hm and hs keyed on MRN save no MRN anywhere in their files", {
   skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
   skip_if_not_installed("hvtiRlifetables", minimum_version = "0.1.2")
   skip_if_not_installed("numDeriv")
@@ -78,38 +84,32 @@ test_that("hz, hm and hs keyed on MRN save no MRN anywhere in their files", {
   withr::local_package("hvtiRlifetables")
   data <- hazard_data(id = "MRN")
   root <- hazard_study(data)
-  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
-  expected <- list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)
-  # A render evaluates every chunk in the global environment, which a saved fit
-  # refers to by reference only. So these run there too, and are removed after.
-  env <- globalenv()
-  before <- ls(env, all.names = TRUE)
-  withr::defer(rm(list = setdiff(ls(env, all.names = TRUE), before), envir = env))
-  list2env(as.list(hazard_env(root), all.names = TRUE), envir = env)
-  # TemporalHazard's own notes on a synthetic fit (an ignored control, a
-  # Hessian that is not positive-definite) are about the fit, not the file.
-  suppressWarnings(utils::capture.output({
-    hazard_run("hz", c("set", "edit-study-choices"), env, list(EXPECTED = expected))
-    hazard_run("hz", c("data", "cohort", "phases", "edit-start", "edit-response", "response-check", "guard",
-                       "fit-deterministic", "noconserve", "save"), env)
-    hazard_run("hm", c("set", "edit-study-choices"), env, list(EXPECTED = expected, DECILE_TIME = 3))
-    env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
-    hazard_run("hm", c("read-upstream", "data", "cohort", "audit", "phases", "edit-fit", "edit-reported",
-                       "calibration", "save"), env)
-    hazard_run("hs", c("set", "edit-study-choices"), env,
-               list(EXPECTED = expected, HORIZONS = c(1, 2), VINTAGE = "table2023"))
-    hazard_run("hs", c("read-upstream", "data", "cohort", "model", "horizons", "predict", "expected",
-                       "edit-obs-vs-exp", "save"), env)
-  }))
+  env <- hazard_chain_run(root, data)
   # The ID fell back to MRN, which the data read names in lower case, and the jobs read it.
   expect_identical(attr(env$job_data$record, "selection")$id, "mrn")
   expect_true("mrn" %in% names(env$d))
-  for (file in c("hz.rds", "hm.rds", "hs.rds")) {
-    bytes <- hazard_rds_bytes(hazard_set_path(root, file))
-    expect_false(any(vapply(data$MRN, function(v) hazard_bytes_hold(bytes, v), logical(1L))), info = file)
+  for (file in c("ac.rds", "hz.rds", "hm.rds", "hs.rds")) {
+    expect_false(hazard_file_holds_any(root, file, data$MRN), info = file)
   }
   # The search finds what is there: every MRN in the data as the jobs read it.
   expect_true(all(vapply(data$MRN, function(v) hazard_bytes_hold(serialize(env$d, NULL), v), logical(1L))))
   # hm's model still carries what hs predicts from.
   expect_true(all(c("iv_dead", "dead", "x1", "age") %in% names(readRDS(hazard_set_path(root, "hm.rds"))$reported$data$frame)))
+})
+
+test_that("hm saves no MRN when its chunks run outside the global environment", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  skip_if_not_installed("hvtiRlifetables", minimum_version = "0.1.2")
+  skip_if_not_installed("numDeriv")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  withr::local_package("hvtiRlifetables")
+  data <- hazard_data(id = "MRN")
+  root <- hazard_study(data)
+  # A chunk environment that is not the global one is serialized in full, with
+  # every object in it, `d` and its MRN column included, unless hm's fit does
+  # not refer to it.
+  env <- hazard_chain_run(root, data, hm_env = new.env(parent = globalenv()))
+  expect_true("mrn" %in% names(env$d))
+  expect_false(hazard_file_holds_any(root, "hm.rds", data$MRN))
 })
