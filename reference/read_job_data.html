@@ -90,7 +90,28 @@ a list from <code><a href="https://rlang.r-lib.org/reference/defusing-advanced.h
 <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code>: a row where a condition is <code>NA</code> is dropped. A
 value from outside the data, written <code>.env$min_age</code> or as a name that
 is not a column, is fixed into the condition when the data are read, so the
-recorded condition rebuilds the same rows wherever it runs.</p></dd>
+recorded condition rebuilds the same rows wherever it runs. Only a plain
+name and <code>.env$x</code> are fixed in; <code>x$y</code> and <code>x@y</code> are kept as
+written, and a name for a function stays a name. Such a value must be a
+vector, <code>NULL</code>, a symbol or a call; a data frame, list, environment or
+S4 object stops, since it would be saved whole. A condition
+that mentions the <code>id</code> column or a column named <code>MRN</code> or
+<code>eMRN</code> (ignoring case), directly or as <code>.data$x</code> or
+<code>.data[["x"]]</code>, stops before any row is filtered, because each
+condition is saved, values included, in the job's output. Exclude those
+patients in the dataset build, or with an hvtiRdatabuild analysis set,
+instead. A value from outside the data is fixed in before this check, so
+<code>.data[[nm]]</code> is judged by the column <code>nm</code> names. A column
+reached any other way, as by <code>.data[[paste0(...)]]</code> or a string
+lookup such as <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code>, stops too, since it cannot be known.
+A function bound to such a lookup under another name is read as that
+lookup. Values are checked as well as names: a condition holding any value
+of the identifier, <code>MRN</code> or <code>eMRN</code> columns in the data stops,
+however it is reached (a wrapper function, a copy of the identifier under
+another name, an outside vector). A threshold that happens to equal a
+patient's identifier is refused too, and the message says so; numbers are
+compared as whole numbers where they are whole, and <code>NA</code> never
+matches.</p></dd>
 
 
 <dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
@@ -117,7 +138,8 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
       used to rebuild the rows; it stays inside the study and is never
       printed;</p></li>
 <li><p><code>where_shown</code>, the same conditions as a report may show them,
-      with the values of any condition on <code>id</code> or <code>key</code> replaced;</p></li>
+      with the values of any condition on a <code>key</code> column, or using
+      <code>.data</code> or a string lookup, replaced;</p></li>
 <li><p><code>id</code> and <code>key</code>, the resolved column names;</p></li>
 <li><p><code>rows</code> and <code>patients</code>, the counts kept;</p></li>
 <li><p><code>key_hash</code>, a SHA-256 hash of the kept <code>key</code> values, so
@@ -131,9 +153,12 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
   matches its column ignoring case, because
   <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html" class="external-link">hvtiRutilities::read_built()</a></code> lowercases column names. Identifier,
   key and date values are not printed: the record holds counts, and a
-  <code>where</code> condition that mentions the <code>id</code> or <code>key</code> columns,
-  or uses <code>.data</code>, is shown, in the record and in error messages, with its values replaced by
-  <code>&lt;value&gt;</code>. Every setting is checked before the data are read.</p>
+  <code>where</code> condition that mentions a <code>key</code> column, uses
+  <code>.data</code> or calls a string lookup such as <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code> is shown, in
+  the record and in error messages, with its values replaced by
+  <code>&lt;value&gt;</code>. So is a condition on <code>id</code> in a selection saved before
+  such conditions were refused. Every setting is checked before the data are
+  read.</p>
     </div>
 
     <div class="section level2">
@@ -142,7 +167,7 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
 <span class="r-in"><span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"job-data-example"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"Example"</span>, <span class="fl">1L</span>, adopt <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpLe5ryL/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/Rtmp1EqZ8S/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
@@ -155,7 +180,7 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
 <span class="r-in"><span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"built.csv"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpLe5ryL/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/Rtmp1EqZ8S/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>

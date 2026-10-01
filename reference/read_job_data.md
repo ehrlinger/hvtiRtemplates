@@ -47,7 +47,28 @@ read_job_data(
   a row where a condition is `NA` is dropped. A value from outside the
   data, written `.env$min_age` or as a name that is not a column, is
   fixed into the condition when the data are read, so the recorded
-  condition rebuilds the same rows wherever it runs.
+  condition rebuilds the same rows wherever it runs. Only a plain name
+  and `.env$x` are fixed in; `x$y` and `x@y` are kept as written, and a
+  name for a function stays a name. Such a value must be a vector,
+  `NULL`, a symbol or a call; a data frame, list, environment or S4
+  object stops, since it would be saved whole. A condition that mentions
+  the `id` column or a column named `MRN` or `eMRN` (ignoring case),
+  directly or as `.data$x` or `.data[["x"]]`, stops before any row is
+  filtered, because each condition is saved, values included, in the
+  job's output. Exclude those patients in the dataset build, or with an
+  hvtiRdatabuild analysis set, instead. A value from outside the data is
+  fixed in before this check, so `.data[[nm]]` is judged by the column
+  `nm` names. A column reached any other way, as by
+  `.data[[paste0(...)]]` or a string lookup such as
+  [`get()`](https://rdrr.io/r/base/get.html), stops too, since it cannot
+  be known. A function bound to such a lookup under another name is read
+  as that lookup. Values are checked as well as names: a condition
+  holding any value of the identifier, `MRN` or `eMRN` columns in the
+  data stops, however it is reached (a wrapper function, a copy of the
+  identifier under another name, an outside vector). A threshold that
+  happens to equal a patient's identifier is refused too, and the
+  message says so; numbers are compared as whole numbers where they are
+  whole, and `NA` never matches.
 
 - id:
 
@@ -82,7 +103,8 @@ so a downstream job can rebuild the same rows:
   rebuild the rows; it stays inside the study and is never printed;
 
 - `where_shown`, the same conditions as a report may show them, with the
-  values of any condition on `id` or `key` replaced;
+  values of any condition on a `key` column, or using `.data` or a
+  string lookup, replaced;
 
 - `id` and `key`, the resolved column names;
 
@@ -100,9 +122,11 @@ case, because
 [`hvtiRutilities::read_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html)
 lowercases column names. Identifier, key and date values are not
 printed: the record holds counts, and a `where` condition that mentions
-the `id` or `key` columns, or uses `.data`, is shown, in the record and
-in error messages, with its values replaced by `<value>`. Every setting
-is checked before the data are read.
+a `key` column, uses `.data` or calls a string lookup such as
+[`get()`](https://rdrr.io/r/base/get.html) is shown, in the record and
+in error messages, with its values replaced by `<value>`. So is a
+condition on `id` in a selection saved before such conditions were
+refused. Every setting is checked before the data are read.
 
 ## Examples
 
@@ -111,7 +135,7 @@ is checked before the data are read.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
-#> Study: /tmp/RtmpLe5ryL/job-data-example
+#> Study: /tmp/Rtmp1EqZ8S/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -124,7 +148,7 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/RtmpLe5ryL/job-data-example
+#> Study: /tmp/Rtmp1EqZ8S/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
