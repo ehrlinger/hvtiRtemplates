@@ -153,3 +153,90 @@ test_that("the cache is reused unchanged, and a changed setting stops until REFI
   env3 <- nb_fit_in(root, choices = nb_choices(NU = 0.01, REFIT = TRUE))
   expect_s3_class(env3$fit, "boostmtree")
 })
+
+test_that("every report chunk draws for every family, from a fresh fit and from the cache", {
+  nb_skip_unless_stack()
+  # The effects chunk prints its figures; a null device keeps Rplots.pdf out of the tree.
+  withr::local_pdf(NULL)
+  labels <- c("set", "edit-study-choices", "data", "fit", "fit-summary", "error-path", "calibration",
+              "importance", "effects", "traces", "save")
+  for (family in names(nb_families)) {
+    # A study per family: one set holds one cached fit, and another family's would be stale there.
+    root <- nb_study(nb_family_data())
+    choices <- nb_choices(RESPONSE = nb_families[[family]], FAMILY = family,
+                          PREDICTORS = c("age", "female", "grp"), N_TRACES = 10)
+    for (pass in 1:2) {
+      env <- nb_env(root)
+      utils::capture.output(nb_run(labels, env, choices))
+      for (p in c("p_error", "p_path", "p_calibration", "p_vimp", "p_traces")) {
+        expect_s3_class(env[[p]], "ggplot")
+        expect_no_error(ggplot2::ggplot_build(env[[p]]))
+      }
+      effects <- if (inherits(env$p_effects, "ggplot")) list(env$p_effects) else env$p_effects
+      expect_gte(length(effects), 1L)
+      for (e in effects) expect_no_error(ggplot2::ggplot_build(e))
+      # Each component's figures draw every effect variable once, continuous and factor alike.
+      drawn <- unlist(lapply(effects, function(e) as.character(unique(e$data$variable))))
+      expect_identical(sort(drawn), sort(rep(env$.effect_vars, length(env$fit$m.opt))), info = family)
+      # One summary row per response component, each with its own best M and error there.
+      expect_identical(nrow(env$fit_summary), length(env$fit$m.opt), info = family)
+      expect_true(all(is.finite(env$fit_summary$cv_error)), info = family)
+      expect_false(anyDuplicated(env$.effect_vars) > 0L, info = family)
+    }
+  }
+})
+
+test_that("the mean line averages within time bins, not at single visit times", {
+  nb_skip_unless_stack()
+  root <- nb_study()
+  env <- nb_env(root)
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "traces"), env, nb_choices(N_TRACES = 10)))
+  # Every bin stands on more than one patient, and there are fewer bins than distinct times.
+  expect_true(all(env$trace_means$n_patients > 1L))
+  expect_lt(nrow(env$trace_means), length(unique(env$traces$time)))
+})
+
+test_that("the trace sample is reproducible under SEED", {
+  nb_skip_unless_stack()
+  root <- nb_study()
+  labels <- c("set", "edit-study-choices", "data", "fit", "traces")
+  a <- nb_env(root)
+  utils::capture.output(nb_run(labels, a, nb_choices(N_TRACES = 10)))
+  b <- nb_env(root)
+  utils::capture.output(nb_run(labels, b, nb_choices(N_TRACES = 10)))
+  expect_identical(sort(unique(as.character(a$p_traces$data$id))), sort(unique(as.character(b$p_traces$data$id))))
+})
+
+test_that("no report output prints an identifier", {
+  nb_skip_unless_stack()
+  # The effects chunk prints its figures; a null device keeps Rplots.pdf out of the tree.
+  withr::local_pdf(NULL)
+  data <- nb_data(id = "MRN")
+  root <- nb_study(data)
+  env <- nb_env(root)
+  out <- utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "fit-summary", "error-path",
+                                        "calibration", "importance", "effects", "traces"), env, nb_choices(N_TRACES = 10)))
+  expect_false(any(vapply(unique(data$MRN), function(v) any(grepl(v, out, fixed = TRUE)), logical(1L))))
+})
+
+test_that(".nb_single_response() returns one component of an ordinal partial.plot as gg_boost_effect() takes it", {
+  nb_skip_unless_stack()
+  withr::local_seed(7)
+  d <- nb_family_data()
+  fit <- boostmtree::boostmtree(x = d[c("age", "female")], tm = d$iv_echo, id = as.character(d$ccfid),
+                                y = d$lvef_ord, family = "ordinal", M = 20, nu = 0.05, mod.grad = TRUE,
+                                cv.flag = TRUE, verbose = FALSE)
+  pp <- boostmtree::partial.plot(fit, x.var.names = c("age", "female"), output = "data", verbose = FALSE)
+  # The fixture is the nested shape gg_boost_effect() refuses, or this test proves nothing.
+  expect_error(ggBoostedTrees::gg_boost_effect(pp), "nested by response")
+  for (k in seq_along(pp$curves)) {
+    one <- hvtiRtemplates:::.nb_single_response(pp, k)
+    expect_s3_class(one, "partial.plot.boostmtree")
+    expect_identical(one$curves, pp$curves[[k]])
+    expect_identical(one$response.labels, pp$response.labels[[k]])
+    expect_s3_class(ggBoostedTrees::gg_boost_effect(one), "gg_boost_effect")
+  }
+  expect_error(hvtiRtemplates:::.nb_single_response(pp, 3L), "component 3")
+  single <- hvtiRtemplates:::.nb_single_response(pp, 1L)
+  expect_error(hvtiRtemplates:::.nb_single_response(single, 1L), "already holds one response")
+})

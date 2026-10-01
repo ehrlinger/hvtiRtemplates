@@ -39,6 +39,16 @@ nb_data <- function(n = 40L, id = "ccfid") {
   d
 }
 
+# One response per family the template offers, beside the continuous lvef.
+nb_family_data <- function() {
+  d <- nb_data()
+  d$lvef_bin <- as.integer(d$lvef > stats::median(d$lvef))
+  d$lvef_ord <- cut(d$lvef, stats::quantile(d$lvef, c(0, 1 / 3, 2 / 3, 1)), include.lowest = TRUE, labels = FALSE)
+  d$lvef_nom <- c("low", "mid", "high")[d$lvef_ord]
+  d
+}
+nb_families <- list(continuous = "lvef", binary = "lvef_bin", ordinal = "lvef_ord", nominal = "lvef_nom")
+
 nb_study <- function(data = nb_data(), .local_envir = parent.frame()) {
   root <- withr::local_tempdir("nb-study-", .local_envir = .local_envir)
   suppressMessages(hvtiRutilities::study_setup(root, study = "nb test", study_tracker_id = 9L, adopt = TRUE))
@@ -55,7 +65,17 @@ nb_env <- function(root, parent = globalenv()) {
   env$study_config <- hvtiRutilities::study_config
   # The setup chunk attaches these; bound here instead, so a test does not attach a package for the rest of the run.
   env$cache_fit <- hvtiRutilities::cache_fit
-  if (requireNamespace("boostmtree", quietly = TRUE)) env$boostmtree <- boostmtree::boostmtree
+  if (requireNamespace("boostmtree", quietly = TRUE)) {
+    env$boostmtree <- boostmtree::boostmtree
+    env$vimp.boostmtree <- boostmtree::vimp.boostmtree
+    env$partial.plot <- boostmtree::partial.plot
+  }
+  if (requireNamespace("ggBoostedTrees", quietly = TRUE)) {
+    for (f in c("gg_boost_error", "gg_boost_path", "gg_boost_calibration", "gg_boost_vimp", "gg_boost_effect",
+                "gg_boost_trajectory")) {
+      assign(f, getExportedValue("ggBoostedTrees", f), envir = env)
+    }
+  }
   env
 }
 
