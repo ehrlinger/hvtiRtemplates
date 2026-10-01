@@ -49,7 +49,9 @@ however it is reached (a wrapper function, a copy of the identifier under
 another name, an outside vector). A threshold that happens to equal a
 patient's identifier is refused too, and the message says so; numbers are
 compared as whole numbers where they are whole, and \code{NA} never
-matches.}
+matches. The value check covers identifiers of five or more characters, so
+thresholds such as 1, 18 or 2015 never collide; a study keyed on shorter
+identifiers relies on the name checks.}
 
 \item{id}{The patient identifier column. When it is the default
 \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.}
