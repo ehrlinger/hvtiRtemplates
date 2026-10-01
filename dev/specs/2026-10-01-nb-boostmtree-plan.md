@@ -445,6 +445,16 @@ test_that("no saved file holds an MRN, run in globalenv or outside it", {
   }
 })
 
+test_that("a WHERE on the patient identifier stops before anything is fitted or saved", {
+  nb_skip_unless_stack()
+  # The data contract refuses it (fix/where-refuses-id, merged before this PR):
+  # a WHERE is saved verbatim in the lineage, so an identifier filter would be too.
+  data <- nb_data(id = "MRN")
+  root <- nb_study(data)
+  expect_error(nb_fit_in(root, choices = nb_choices(WHERE = quote(MRN != 4730000001))), "identifier")
+  expect_length(list.files(hvtiRutilities::study_dir("estimates", root), recursive = TRUE), 0L)
+})
+
 test_that("the saved fit carries the selection in its lineage", {
   nb_skip_unless_stack()
   root <- nb_study()
@@ -557,29 +567,68 @@ git commit -m "feat(templates): nb-boostmtree fits on the study-keyed digest, ca
 
 **Files:**
 - Modify: `inst/templates/30_analyses/nb-boostmtree.qmd`. Insert the report between `fit` and `save`.
+- Create: `R/nb-boostmtree.R` (`.nb_single_response()`).
 - Test: `tests/testthat/test-nb-boostmtree.R`.
 
 **Interfaces:**
 - Consumes: `fit` (Task 2), `.predictors`, `EFFECT_VARIABLES`, `N_TRACES`, `SEED`, `RESPONSE`, `TIME`.
-- Produces: the chunks `fit-summary`, `error-path`, `calibration`, `importance`, `effects` and `traces`. Each leaves a ggplot object in `env` (`p_error`, `p_path`, `p_calibration`, `p_vimp`, `p_effects`, `p_traces`).
+- Produces: the chunks `fit-summary`, `error-path`, `calibration`, `importance`, `effects` and `traces`. `fit-summary` leaves `fit_summary`, a data frame with one row per response component. The others leave a ggplot object in `env` (`p_error`, `p_path`, `p_calibration`, `p_vimp`, `p_traces`), except `effects`: it leaves `p_effects`, a ggplot for a single-component fit, or a list of ggplots, one per component, for an ordinal or nominal fit.
+
+**Amended 2026-10-01 after review of #217.** Four changes, each verified against a real fit:
+1. Ordinal and nominal fits carry one `m.opt` and one error matrix per response component (`fit$err.rate` is then a list). The summary therefore has one row per component.
+2. `gg_boost_vimp()` returns one row per variable per component, so "the top six" ranks variables by their largest importance across components, without duplicates.
+3. `gg_boost_effect()` refuses a multi-component `partial.plot` ("nested by response") in ggBoostedTrees 0.0.7. For those fits the effects chunk splits the `partial.plot` data by component and draws each one. This is checked against the installed object and recorded as a ggBoostedTrees issue.
+4. The mean line over the traces averages fitted values within equal-count time bins, not at exact visit times, which are mostly one patient each.
+
+Every family the template offers is tested.
 
 - [ ] **Step 1: Write the failing test.**
 
 ```r
-test_that("every report chunk draws, from a fresh fit and from the cache", {
+# One response per family the template offers, beside the continuous lvef.
+nb_family_data <- function() {
+  d <- nb_data()
+  d$lvef_bin <- as.integer(d$lvef > stats::median(d$lvef))
+  d$lvef_ord <- cut(d$lvef, stats::quantile(d$lvef, c(0, 1 / 3, 2 / 3, 1)), include.lowest = TRUE, labels = FALSE)
+  d$lvef_nom <- c("low", "mid", "high")[d$lvef_ord]
+  d
+}
+nb_families <- list(continuous = "lvef", binary = "lvef_bin", ordinal = "lvef_ord", nominal = "lvef_nom")
+
+test_that("every report chunk draws for every family, from a fresh fit and from the cache", {
   nb_skip_unless_stack()
-  root <- nb_study()
+  root <- nb_study(nb_family_data())
   labels <- c("set", "edit-study-choices", "data", "fit", "fit-summary", "error-path", "calibration",
               "importance", "effects", "traces", "save")
-  for (pass in 1:2) {
-    env <- nb_env(root)
-    utils::capture.output(nb_run(labels, env, nb_choices(N_TRACES = 10)))
-    for (p in c("p_error", "p_path", "p_calibration", "p_vimp", "p_effects", "p_traces")) {
-      expect_s3_class(env[[p]], "ggplot")
-      expect_no_error(ggplot2::ggplot_build(env[[p]]))
+  for (family in names(nb_families)) {
+    choices <- nb_choices(RESPONSE = nb_families[[family]], FAMILY = family,
+                          PREDICTORS = c("age", "female", "grp"), N_TRACES = 10)
+    for (pass in 1:2) {
+      env <- nb_env(root)
+      utils::capture.output(nb_run(labels, env, choices))
+      for (p in c("p_error", "p_path", "p_calibration", "p_vimp", "p_traces")) {
+        expect_s3_class(env[[p]], "ggplot")
+        expect_no_error(ggplot2::ggplot_build(env[[p]]))
+      }
+      effects <- if (inherits(env$p_effects, "ggplot")) list(env$p_effects) else env$p_effects
+      expect_gte(length(effects), 1L)
+      for (e in effects) expect_no_error(ggplot2::ggplot_build(e))
+      # One summary row per response component, each with its own best M and error there.
+      expect_identical(nrow(env$fit_summary), length(env$fit$m.opt), info = family)
+      expect_true(all(is.finite(env$fit_summary$cv_error)), info = family)
+      expect_false(anyDuplicated(env$.effect_vars) > 0L, info = family)
     }
-    expect_identical(nlevels(droplevels(env$traces$id[env$traces$id %in% env$p_traces$data$id])), 10L)
   }
+})
+
+test_that("the mean line averages within time bins, not at single visit times", {
+  nb_skip_unless_stack()
+  root <- nb_study()
+  env <- nb_env(root)
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "traces"), env, nb_choices(N_TRACES = 10)))
+  # Every bin stands on more than one patient, and there are fewer bins than distinct times.
+  expect_true(all(env$trace_means$n_patients > 1L))
+  expect_lt(nrow(env$trace_means), length(unique(env$traces$time)))
 })
 
 test_that("the trace sample is reproducible under SEED", {
@@ -612,9 +661,22 @@ test_that("no report output prints an identifier", {
 ```{r}
 #| label: fit-summary
 knitr::kable(data.frame(
-  quantity = c("Family", "Iterations (M)", "Learning rate (nu)", "Best M (cross-validated)", "Patients", "Visits"),
-  value = c(FAMILY, M, NU, fit$m.opt, length(unique(.patient)), nrow(d))
+  quantity = c("Family", "Iterations (M)", "Learning rate (nu)", "Patients", "Visits"),
+  value = c(FAMILY, M, NU, length(unique(.patient)), nrow(d))
 ), col.names = c("", ""), caption = "The fit")
+# A continuous or binary fit has one response component; an ordinal or nominal
+# fit has one per level after the first, each with its own cross-validated best
+# M and error path (fit$err.rate is then a list). Read the error at the best M
+# from the standardized l2 column, the scale gg_boost_error() plots.
+.err <- if (is.matrix(fit$err.rate)) list(fit$err.rate) else fit$err.rate
+fit_summary <- data.frame(
+  component = seq_along(fit$m.opt),
+  best_m = as.integer(fit$m.opt),
+  cv_error = mapply(function(e, m) e[m, "l2"], .err, fit$m.opt)
+)
+knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-validated)",
+                                        "Cross-validated error there (standardized)"),
+             caption = "Cross-validated fit, by response component")
 ```
 
 ```{r}
@@ -646,16 +708,23 @@ p_vimp
 ```{r}
 #| label: effects
 # Partial effects over time, for EFFECT_VARIABLES or the six most important.
+# An ordinal or nominal fit reports importance once per response component, so
+# a variable is ranked by its largest importance across them.
 .vimp_main <- gg_boost_vimp(vimp, components = "main")
-.effect_vars <- if (is.null(EFFECT_VARIABLES)) {
-  head(as.character(.vimp_main$variable[order(-.vimp_main$importance)]), 6L)
-} else {
-  EFFECT_VARIABLES
-}
+.top <- sort(tapply(.vimp_main$importance, as.character(.vimp_main$variable), max), decreasing = TRUE)
+.effect_vars <- if (is.null(EFFECT_VARIABLES)) head(names(.top), 6L) else EFFECT_VARIABLES
 .unknown <- setdiff(.effect_vars, .predictors)
 if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unknown, collapse = ", "), call. = FALSE)
 pp <- partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE)
-p_effects <- plot(gg_boost_effect(pp))
+# gg_boost_effect() takes a single-response partial.plot (ggBoostedTrees 0.0.7).
+# An ordinal or nominal fit nests its curves by response component, so each
+# component is drawn on its own.
+p_effects <- if (length(fit$m.opt) == 1L) {
+  plot(gg_boost_effect(pp))
+} else {
+  lapply(seq_along(fit$m.opt), function(k) plot(gg_boost_effect(.nb_single_response(pp, k))) +
+           ggplot2::labs(subtitle = paste("Response component", k)))
+}
 p_effects
 ```
 
@@ -665,15 +734,33 @@ p_effects
 # points, and the cohort's mean fitted value over time drawn across them. The
 # patients are labelled by digest, so none is identified.
 traces <- gg_boost_trajectory(fit)
+# Visit times are irregular, so most exact times belong to one patient, and a
+# mean taken at each time would join single values. The mean is taken instead
+# within ten equal-count time bins, over every patient's fitted values, and
+# drawn at each bin's mean time. A bin is per response component when there
+# are several.
+.edges <- unique(stats::quantile(traces$time, seq(0, 1, length.out = 11L), names = FALSE))
+traces$.bin <- cut(traces$time, .edges, include.lowest = TRUE)
+.by <- intersect(c("response", ".bin"), names(traces))
+trace_means <- do.call(rbind, lapply(split(traces, traces[.by], drop = TRUE), function(b) {
+  data.frame(b[1L, setdiff(.by, ".bin"), drop = FALSE], time = mean(b$time), fitted = mean(b$fitted),
+             n_patients = length(unique(b$id)))
+}))
 p_traces <- withr::with_seed(SEED, plot(traces, n_max = N_TRACES)) +
-  ggplot2::stat_summary(data = traces, ggplot2::aes(x = .data[["time"]], y = .data[["fitted"]]),
-                        fun = mean, geom = "line", linewidth = 1.2, inherit.aes = FALSE) +
+  ggplot2::geom_line(data = trace_means, ggplot2::aes(x = .data[["time"]], y = .data[["fitted"]]),
+                     linewidth = 1.2, inherit.aes = FALSE) +
   ggplot2::labs(x = TIME, y = RESPONSE)
 p_traces
 ```
 ````
 
 The hvtiPlotR theme: the other fit templates do not add it inside these chunks. Check `rfs-fit.qmd` and the hazard templates, and follow what they do. If they apply none, apply none here. This overrides spec section 6's mention of the theme, because consistency with the shipped templates is the governing rule.
+
+`.nb_single_response(pp, k)` is a small internal helper in `R/` (for example `R/nb-boostmtree.R`, documented `@noRd`). It returns component `k` of a multi-response `partial.plot.boostmtree` object, reshaped as the single-response object `gg_boost_effect()` accepts. Build it by reading:
+- `boostmtree:::partial.plot.boostmtree` and its `$curves` / `$smooth` nesting (`[[response]][[variable]]`);
+- `ggBoostedTrees:::gg_boost_effect` and its check for a single-response object.
+
+Test it directly in `test-nb-boostmtree.R` on an ordinal fit. If no such reshaping is possible without reaching into ggBoostedTrees internals, stop and report. Do not drop the ordinal effects. The controller files a ggBoostedTrees issue for multi-response effects either way.
 
 - [ ] **Step 4: Run the tests and confirm they pass.** If `gg_boost_effect` or `plot()` signatures differ from the code above, follow the installed docs and say so in the report.
 
