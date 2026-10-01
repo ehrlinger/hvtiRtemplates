@@ -1,5 +1,27 @@
 # hvtiRtemplates (unreleased)
 
+* `read_job_data()` stops on a `WHERE` condition that mentions the patient
+  identifier or a column named MRN or eMRN, directly or through `.data$x` or
+  `.data[["x"]]`, before any row is filtered. A column reached any other way,
+  as by `.data[[paste0(...)]]`, `get()` or another name bound to `get()`,
+  stops too, since it could be the identifier. Values are checked as well as
+  names: a condition holding any value of the identifier, MRN or eMRN in the
+  data stops however it is reached (a wrapper function, a copy of the ID under
+  another name, an outside vector of IDs). A threshold that happens to equal a
+  patient's identifier is refused too, and the message says so. Each condition
+  is saved, values included, in the job's output, so a filter on identifier
+  values would be saved with it. Exclude those patients in the dataset build,
+  or with an hvtiRdatabuild analysis set. A downstream job
+  rebuilding an upstream file saved with such a condition names the file and
+  says to rerun the upstream job.
+
+* `read_job_data()` stops on a `WHERE` that takes a data frame, list,
+  environment or S4 object from outside the data, as
+  `with(lookup, age) > 20` does. The condition is saved as text, so the whole
+  object, ID column included, was saved with it; the message names the variable
+  and says to filter on a column of the data instead. An outside `NULL` is now
+  fixed in rather than dropped from the call. Closes #218.
+
 * The bootstrap reports print the data selection their bag carries, and their
   runners read data through `read_job_data()`. Each runner is its own job:
   `add_job()` for `bl`, `br`, `bc` and `bh` also writes

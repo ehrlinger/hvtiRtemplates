@@ -47,13 +47,13 @@ lm_mi_data <- function(n = 120L) {
   rbind(first, second)
 }
 
-lm_study <- function(.local_envir = parent.frame()) {
+lm_study <- function(.local_envir = parent.frame(), data = lm_data()) {
   root <- withr::local_tempdir("lm-study-", .local_envir = .local_envir)
   suppressMessages(hvtiRutilities::study_setup(
     root, study = "LM chunk test", study_tracker_id = 42L, adopt = TRUE
   ))
   utils::write.csv(
-    lm_data(),
+    data,
     file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
     row.names = FALSE
   )
@@ -84,8 +84,10 @@ lm_render_fixture <- function(qualifier, data = NULL, .local_envir = parent.fram
     nominal = 'OUTCOME <- "nominal"',
     propensity_ordinal = 'TREATMENT <- "treatment_ordinal"',
     propensity_nominal = 'TREATMENT <- "treatment_nominal"',
-    # Validated on patients the saved model was not trained on (below).
-    checkpred = "WHERE <- quote(ccfid > 60)",
+    # Validated on patients the saved model was not trained on (below). WHERE
+    # may not name the ID, so it selects on `time`, which follows ccfid here; the
+    # cut is 60.5 because 60 is also a patient's identifier, which is refused.
+    checkpred = "WHERE <- quote(time > 60.5)",
     balancing_count = c('OUTCOME <- "count"', 'DISTRIBUTION <- "poisson"'),
     character()
   )
