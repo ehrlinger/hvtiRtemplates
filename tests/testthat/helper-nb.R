@@ -56,6 +56,27 @@ nb_env <- function(root, parent = globalenv()) {
   env
 }
 
+# The setup chunk without the lines that need a study or attach packages.
+nb_setup_code <- function() {
+  src <- readLines(nb_template(), warn = FALSE)
+  at <- which(trimws(src) == "#| label: setup")
+  end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
+  setup <- src[(at + 1L):(end - 1L)]
+  setup[!grepl("find_study_root|list.files|library\\(", setup)]
+}
+
+# The real packages are installed, so the mocked version is the only thing that
+# can trip each floor.
+nb_mocked_setup <- function(pkg, version) {
+  setup <- nb_setup_code()
+  env <- new.env(parent = globalenv())
+  testthat::local_mocked_bindings(
+    packageVersion = function(p, ...) if (identical(p, pkg)) package_version(version) else package_version("99.0.0"),
+    .package = "utils"
+  )
+  eval(parse(text = setup), envir = env)
+}
+
 nb_skip_unless_stack <- function() {
   testthat::skip_if_not_installed("boostmtree", minimum_version = "2.0.2")
   testthat::skip_if_not_installed("ggBoostedTrees")

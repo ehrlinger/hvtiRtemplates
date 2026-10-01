@@ -42,16 +42,32 @@ test_that("the ID and TIME cannot be predictors, nor the ID the response", {
   expect_error(run(RESPONSE = "ccfid"), "cannot be the response")
 })
 
+test_that("TIME and RESPONSE resolve against the data ignoring case", {
+  nb_skip_unless_stack()
+  root <- nb_study()
+  env <- nb_env(root)
+  utils::capture.output(nb_run(c("edit-study-choices", "data"), env, nb_choices(TIME = "IV_ECHO", RESPONSE = "LVEF")))
+  expect_identical(env$.time, "iv_echo")
+  expect_identical(env$.response, "lvef")
+  expect_identical(sort(names(env$d)), sort(c("ccfid", "iv_echo", "lvef", "age", "female", "grp")))
+  expect_identical(sort(env$.predictors), sort(c("age", "female", "grp")))
+  env <- nb_env(root)
+  expect_error(utils::capture.output(nb_run(c("edit-study-choices", "data"), env,
+                                            nb_choices(TIME = "IV_ECHO", PREDICTORS = c("age", "IV_ECHO")))),
+               "identifier or the visit time")
+})
+
+test_that("the setup chunk passes when both packages meet their floors", {
+  nb_skip_unless_stack()
+  expect_no_error(nb_mocked_setup("neither", "0.0.0"))
+})
+
 test_that("boostmtree older than 2.0.2 is refused with the fork's install line", {
-  src <- readLines(nb_template())
-  at <- which(trimws(src) == "#| label: setup")
-  end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
-  setup <- src[(at + 1L):(end - 1L)]
-  setup <- setup[!grepl("find_study_root|list.files|library\\(", setup)]
-  env <- new.env(parent = globalenv())
-  testthat::local_mocked_bindings(
-    packageVersion = function(pkg, ...) if (identical(pkg, "boostmtree")) package_version("2.0.0") else package_version("99.0.0"),
-    .package = "utils"
-  )
-  expect_error(eval(parse(text = setup), envir = env), "ehrlinger/boostmtree_src", fixed = TRUE)
+  nb_skip_unless_stack()
+  expect_error(nb_mocked_setup("boostmtree", "2.0.0"), "ehrlinger/boostmtree_src", fixed = TRUE)
+})
+
+test_that("ggBoostedTrees older than 0.0.7 is refused with its install line", {
+  nb_skip_unless_stack()
+  expect_error(nb_mocked_setup("ggBoostedTrees", "0.0.6"), "remotes::install_github(\"ehrlinger/ggBoostedTrees\")", fixed = TRUE)
 })

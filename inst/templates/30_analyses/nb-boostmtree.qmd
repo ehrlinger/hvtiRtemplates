@@ -264,28 +264,36 @@ if (!is.null(job_data$attrition)) {
 }
 .selection <- attr(job_data$record, "selection")
 .id <- .selection$id
-.predictors <- if (is.null(PREDICTORS)) setdiff(names(d), c(.id, TIME, RESPONSE)) else PREDICTORS
+# The data's own spelling of TIME and RESPONSE, matched ignoring case as the
+# ID and KEY are, so "IV_ECHO" finds iv_echo. Later chunks use these names.
+.resolve <- function(x) {
+  hit <- match(tolower(x), tolower(names(d)))
+  ifelse(is.na(hit), x, names(d)[hit])
+}
+.time <- .resolve(TIME)
+.response <- .resolve(RESPONSE)
+.predictors <- if (is.null(PREDICTORS)) setdiff(names(d), c(.id, .time, .response)) else PREDICTORS
 # The fit groups visits by patient, so the ID and the visit time are its
 # structure, not its predictors; a predictor named for either would let the
 # model learn who a patient is or when they were seen.
-.structural <- .predictors[tolower(.predictors) %in% tolower(c(.id, TIME))]
+.structural <- .predictors[tolower(.predictors) %in% tolower(c(.id, .time))]
 if (length(.structural)) {
   stop("PREDICTORS names the patient identifier or the visit time: ", paste(.structural, collapse = ", "),
        ".", call. = FALSE)
 }
-if (tolower(RESPONSE) == tolower(.id)) {
+if (tolower(.response) == tolower(.id)) {
   stop("The patient identifier (", .id, ") cannot be the response.", call. = FALSE)
 }
-.missing <- setdiff(c(TIME, RESPONSE, .predictors), names(d))
+.missing <- setdiff(c(.time, .response, .predictors), names(d))
 if (length(.missing)) {
   stop("Not in the data this job read: ", paste(.missing, collapse = ", "), call. = FALSE)
 }
-d <- d[, c(.id, TIME, RESPONSE, .predictors), drop = FALSE]
+d <- d[, c(.id, .time, .response, .predictors), drop = FALSE]
 # boostmtree imputes a missing predictor but cannot learn from a visit with no
 # response, so those visits are dropped here, and counted.
-.no_response <- is.na(d[[RESPONSE]])
+.no_response <- is.na(d[[.response]])
 if (any(.no_response)) {
-  cat(sum(.no_response), " visit(s) have no ", RESPONSE, " and are left out.\n", sep = "")
+  cat(sum(.no_response), " visit(s) have no ", .response, " and are left out.\n", sep = "")
   d <- d[!.no_response, , drop = FALSE]
 }
 .chr <- .predictors[vapply(d[.predictors], is.character, logical(1L))]

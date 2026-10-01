@@ -155,6 +155,15 @@ test_that("embedded provenance calls are unique across all R chunks", {
 # this vector.
 provenance_pending <- "nb-boostmtree"
 
+test_that("a pending template has no provenance chunk yet", {
+  # The exemption expires with its reason: once a pending template gains its
+  # provenance chunk, this fails until the name leaves provenance_pending.
+  for (name in provenance_pending) {
+    source <- readLines(template_by_name(name), warn = FALSE)
+    expect_false(any(grepl("^#\\| label: provenance$", source)), info = name)
+  }
+})
+
 test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- template_list()
   expect_equal(nrow(templates), 32L)

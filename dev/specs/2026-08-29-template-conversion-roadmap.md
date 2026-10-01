@@ -111,7 +111,7 @@ row has no template on disk.
 
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `nb-boostmlr` | queued | 21 | 18 | 19 | ggBoostedTrees#9 |
+| `nb-boostmlr` | queued | — | — | — | ggBoostedTrees#9 |
 | `nb-boostmtree` | shipped | 21 | 18 | 19 | — |
 | `rfc-explain` | shipped | — | — | — | — |
 | `rfc-fit` | shipped | 19 | 11 | 12 | — |

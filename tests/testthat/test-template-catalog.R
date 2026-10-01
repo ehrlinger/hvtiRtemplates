@@ -16,6 +16,13 @@ test_that("the template catalog ships every owed job type", {
   # repeating them on both halves would double its breadth in the ledger.
   expect_true(all(is.na(rf$r_exemplars[rf$qualifier == "explain"])))
 
+  # nb's census describes boostmtree: the exemplar survey found no BoostMLR job.
+  nb <- catalog[catalog$prefix == "nb", ]
+  expect_setequal(nb$qualifier, c("boostmtree", "boostmlr"))
+  census <- c("sas_breadth", "sas_breadth_jobs", "r_exemplars", "r_jobs")
+  expect_true(all(is.na(unlist(nb[nb$qualifier == "boostmlr", census]))))
+  expect_false(anyNA(unlist(nb[nb$qualifier == "boostmtree", census])))
+
   lm <- catalog[catalog$prefix == "lm", ]
   expected <- c("binary", "ordinal", "nominal", "propensity_binary",
                 "propensity_ordinal", "propensity_nominal", "checkpred",
