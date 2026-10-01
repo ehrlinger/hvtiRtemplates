@@ -313,8 +313,9 @@ test_that("add_job refuses to overwrite an existing runner, and writes nothing",
   runner <- sub("[.]qmd$", "-runner.R", job)
   writeLines("edited", runner)
   unlink(job)
+  # Match the file name literally: a Windows path's backslashes would be read as regex escapes.
   expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir),
-               paste0("'", runner, "' already exists; refusing to overwrite"), fixed = FALSE)
+               paste0(basename(runner), "' already exists; refusing to overwrite"), fixed = TRUE)
   expect_false(file.exists(job))
   expect_identical(readLines(runner), "edited")
 })
