@@ -5,12 +5,15 @@
   `.data[["x"]]`, before any row is filtered. A column reached any other way,
   as by `.data[[paste0(...)]]`, `get()` or another name bound to `get()`,
   stops too, since it could be the identifier. Values are checked as well as
-  names: the check covers literal values and constant expressions (such as
-  `4730000000 + 1`, or an outside vector of IDs) of five or more characters
-  that equal a value of the identifier, MRN or eMRN in the data, so a wrapper
-  function or a copy of the ID under another name is caught when compared
-  with such a value. A value computed from a data column, as in
-  `id2 / 2 != 2365000000.5`, is not caught. A threshold that happens to equal
+  names, after every name check: the check covers literal values (including
+  an outside vector of IDs) of five or more characters that equal a value of
+  the identifier, MRN or eMRN in the data, and folds only arithmetic, `c()`,
+  `paste`/`paste0` and numeric or character coercion of constants (such as
+  `4730000000 + 1`) to check their result. So a wrapper function or a copy of
+  the ID under another name is caught when compared with such a value. The
+  check never calls any other function: a value produced by any other call,
+  or computed from a data column, as in `id2 / 2 != 2365000000.5`, is not
+  checked, and a refused condition runs no code. A threshold that happens to equal
   a patient's identifier is refused too, and the message says so. Thresholds
   shorter than five characters, such as 1, 18 or 2015, are not checked, so a
   study keyed on shorter identifiers relies on the name checks. Each condition

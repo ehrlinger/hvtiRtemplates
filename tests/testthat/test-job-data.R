@@ -565,6 +565,57 @@ test_that("a WHERE constant expression that evaluates to an identifier is refuse
   expect_identical(nrow(read_job_data(cfg, where = quote(age < 2000 + 26))$data), 3L)
 })
 
+test_that("a refused WHERE executes nothing: the name checks run before any value is computed", {
+  cfg <- job_study(d_ids)
+  calls <- new.env()
+  calls$n <- 0L
+  f <- function() {
+    calls$n <- calls$n + 1L
+    1
+  }
+  expect_match(refusal(read_job_data(cfg, where = quote(ccfid != f()))), "patient identifier")
+  expect_identical(calls$n, 0L)
+  path <- withr::local_tempfile()
+  file.create(path)
+  expect_match(refusal(read_job_data(cfg, where = quote(ccfid != unlink(path)))), "patient identifier")
+  expect_true(file.exists(path))
+  # Across conditions too: a later refused condition stops before an earlier one is computed.
+  expect_match(refusal(read_job_data(cfg, where = rlang::exprs(age > f(), ccfid != 9001))), "patient identifier")
+  expect_identical(calls$n, 0L)
+})
+
+test_that("an allowed stateful WHERE call runs exactly once", {
+  cfg <- job_study(d_ids)
+  calls <- new.env()
+  calls$n <- 0L
+  cutoff <- function() {
+    calls$n <- calls$n + 1L
+    if (calls$n == 1L) 75 else 55
+  }
+  out <- read_job_data(cfg, where = quote(age > cutoff()))
+  expect_identical(calls$n, 1L)
+  expect_equal(out$data$age, 80)
+})
+
+test_that("the value check folds only base arithmetic, c(), paste and coercion, never a shadowed function", {
+  flag <- new.env()
+  flag$hit <- FALSE
+  paste0 <- function(...) {
+    flag$hit <- TRUE
+    base::paste0(...)
+  }
+  found <- .where_constants(quote(id2 != paste0("47300", "00001")), data_cols = "id2", env = environment())
+  expect_false(flag$hit)
+  expect_false("4730000001" %in% found)
+  # Unshadowed, the allowlisted functions fold.
+  expect_true("4730000001" %in% .where_constants(quote(id2 != paste0("47300", "00001")), "id2", baseenv()))
+  expect_true("4730000001" %in% .where_constants(quote(id2 != as.numeric("4730000001")), "id2", baseenv()))
+  expect_true("4730000002" %in% .where_constants(quote(id2 %in% c(4730000000 + 1, (4730000000 + 2))), "id2",
+                                                 baseenv()))
+  # A call outside the allowlist is not folded, so its value is not seen.
+  expect_false("4730000001" %in% .where_constants(quote(id2 != sum(4730000000, 1)), "id2", baseenv()))
+})
+
 test_that("a value transformed through a data column is allowed: the documented limit of the value check", {
   d <- data.frame(ccfid = 4730000001 + 0:2, id2 = 4730000001 + 0:2)
   out <- read_job_data(job_study(d), where = quote(id2 / 2 != 2365000000.5))

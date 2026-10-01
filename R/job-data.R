@@ -254,23 +254,29 @@
 #
 # Names cannot see an alias or a wrapper (f <- function(x) get(x)), nor a copy
 # of the ID under another name, so the values are checked too: every constant
-# in the resolved condition, literal or computed from constants alone, as text,
+# in the resolved condition, literal or folded from constants (.where_foldable), as text,
 # against the values of the ID, MRN and eMRN columns (`id_values`, a named list
 # of their unique values as text). A value computed from a data column is not
 # seen. `data_cols` and `env` are the data's columns and the condition's
-# environment, for evaluating the constant subexpressions.
+# environment; the environment is only consulted to refuse folding a shadowed
+# function, never to call one.
 .refuse_identifier_where <- function(conditions, identifiers, cols, id_values = list(), data_cols = NULL,
                                      env = emptyenv()) {
-  for (cond in conditions) {
+  # Every name check runs before any value is computed, across all conditions.
+  for (pass in c("names", "values")) for (cond in conditions) {
     named <- .where_columns(cond)
-    reached <- identifiers[tolower(identifiers) %in% tolower(named$columns)]
-    constants <- if (length(id_values)) .where_constants(cond, data_cols, env) else character()
-    constants <- constants[nchar(constants) >= .min_id_value_chars]
-    matched <- names(id_values)[vapply(id_values, function(v) any(constants %in% v), logical(1L))]
-    if (!length(reached) && !named$opaque && !length(matched)) next
+    reached <- if (pass == "names") identifiers[tolower(identifiers) %in% tolower(named$columns)] else character()
+    opaque <- pass == "names" && named$opaque
+    matched <- character()
+    if (pass == "values" && length(id_values)) {
+      constants <- .where_constants(cond, data_cols, env)
+      constants <- constants[nchar(constants) >= .min_id_value_chars]
+      matched <- names(id_values)[vapply(id_values, function(v) any(constants %in% v), logical(1L))]
+    }
+    if (!length(reached) && !opaque && !length(matched)) next
     what <- if (length(reached)) {
       paste0("uses the patient identifier (", paste0("`", reached, "`", collapse = ", "), ")")
-    } else if (named$opaque) {
+    } else if (opaque) {
       paste0("reaches a column through .data or a string lookup such as get(), so it may reach the patient ",
              "identifier; name the column literally, as age or .data$age")
     } else {
@@ -291,29 +297,39 @@
 # Real ccfid and MRN values are 6 to 10 digits, so a shorter constant (1, 18, 2015) is a threshold, not an ID.
 .min_id_value_chars <- 5L
 
+# The only functions the value check calls. Validation must never run a user's
+# code (a stateful call would run twice, a refused one would run at all), so it
+# folds just pure arithmetic, c(), paste and coercion of constants, from baseenv().
+.where_foldable <- c("+", "-", "*", "/", "^", "%%", "%/%", "(", "c", "paste", "paste0", "as.numeric", "as.double",
+                     "as.integer", "as.character")
+
 # Every atomic constant in a condition, as .id_text() writes it: each literal,
-# and the value of each maximal subexpression that reads no column of
-# `data_cols` and no .data, so arithmetic such as 4730000000 + 1 cannot hide an
-# identifier. Such a subexpression is evaluated in `env`, as filter() would; one
-# that errors is left to the condition's own evaluation, which errors the same
-# way. Logical constants and NA are left out: neither can be an identifier.
+# and the value of each maximal subexpression built only from .where_foldable
+# calls over literals, so arithmetic such as 4730000000 + 1 cannot hide an
+# identifier. The fold is evaluated in baseenv(); a function name shadowed in
+# `env` by anything else is not folded, nor is any other call, which is left to
+# the filter. Logical constants and NA are left out: neither can be an identifier.
 .where_constants <- function(expr, data_cols = NULL, env = emptyenv()) {
   found <- character()
   add <- function(value) {
     if (is.atomic(value) && !is.null(value) && !is.logical(value)) found <<- c(found, .id_text(value[!is.na(value)]))
   }
-  constant <- function(e) {
-    vars <- all.vars(e)
-    !is.null(data_cols) && !".data" %in% vars && !any(vars %in% data_cols)
+  foldable <- function(e) {
+    if (is.atomic(e)) return(TRUE)
+    if (!is.call(e) || !is.name(e[[1L]])) return(FALSE)
+    name <- as.character(e[[1L]])
+    if (!name %in% .where_foldable) return(FALSE)
+    bound <- get0(name, envir = env, mode = "function")
+    if (!is.null(bound) && !identical(bound, get(name, envir = baseenv()))) return(FALSE)
+    all(vapply(as.list(e)[-1L], foldable, logical(1L)))
   }
-  walk <- function(e, evaluated = FALSE) {
+  walk <- function(e) {
     if (is.atomic(e)) return(add(e))
     if (!is.call(e)) return(invisible())
-    if (!evaluated && constant(e)) {
-      add(tryCatch(eval(e, env), error = function(err) NULL))
-      evaluated <- TRUE
+    if (!is.null(data_cols) && foldable(e)) {
+      add(tryCatch(eval(e, baseenv()), error = function(err) NULL))
     }
-    for (i in seq_along(e)) if (!(is.name(e[[i]]) && !nzchar(as.character(e[[i]])))) walk(e[[i]], evaluated)
+    for (i in seq_along(e)) if (!(is.name(e[[i]]) && !nzchar(as.character(e[[i]])))) walk(e[[i]])
     invisible()
   }
   walk(expr)
@@ -412,13 +428,16 @@
 #'   reached any other way, as by \code{.data[[paste0(...)]]} or a string
 #'   lookup such as \code{get()}, stops too, since it cannot be known.
 #'   A function bound to such a lookup under another name is read as that
-#'   lookup. Values are checked as well as names: the check covers literal
-#'   values and constant expressions (such as \code{4730000000 + 1}, or a
-#'   vector fixed in from outside) of five or more characters that equal a
-#'   value of the identifier, \code{MRN} or \code{eMRN} columns in the data, so
-#'   a wrapper function or a copy of the identifier under another name is
-#'   caught when it is compared with such a value. A value computed from a data
-#'   column, as in \code{id2 / 2 != 2365000000.5}, is not caught. A threshold
+#'   lookup. Values are checked as well as names, after every name check: the
+#'   check covers literal values (including a vector fixed in from outside) of
+#'   five or more characters that equal a value of the identifier, \code{MRN}
+#'   or \code{eMRN} columns in the data, and folds only arithmetic,
+#'   \code{c()}, \code{paste}/\code{paste0} and numeric or character coercion
+#'   of constants (such as \code{4730000000 + 1}) to check their result. So a
+#'   wrapper function or a copy of the identifier under another name is caught
+#'   when it is compared with such a value. The check never calls any other
+#'   function: a value produced by any other call, or computed from a data
+#'   column, as in \code{id2 / 2 != 2365000000.5}, is not checked. A threshold
 #'   that happens to equal a patient's identifier is refused too, and the
 #'   message says so; numbers are compared as whole numbers where they are
 #'   whole, and \code{NA} never matches. Thresholds shorter than five
