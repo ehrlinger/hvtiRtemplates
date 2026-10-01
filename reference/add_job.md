@@ -47,9 +47,10 @@ add_job(prefix, subject, type, dir = ".", qualifier = NULL)
 
 ## Value
 
-The path written, invisibly. On any failure – including one after the
-copy, while substituting the set markers – no file is left behind, so a
-returned path always names a complete, correctly-declared job.
+The job's path, invisibly. On any failure – including one after the
+copy, while substituting the set markers – no file is left behind, the
+runner included, so a returned path always names a complete,
+correctly-declared job.
 
 ## Details
 
@@ -69,6 +70,14 @@ Scaffolding also installs the study's Quarto provenance hooks. Existing
 pre-render and post-render commands and unrelated project settings are
 preserved, while the provenance publisher is kept last. Repeated calls
 are idempotent.
+
+A template whose job runs from a companion script also writes that
+script beside the job, from `inst/runners/<name>-runner.R`: today the
+bootstrap reports `bl`, `br`, `bc` and `bh`, whose runner screens and
+saves the bag the report reads. The runner is named
+`<subject>-<type>-<prefix>-runner.R`, gets the same `SUBJECT` and `TYPE`
+substitution, and is refused, like the job, if it already exists. Its
+study choices carry `EDIT:` markers for the author to work.
 
 A template the catalog marks deprecated, such as `dp-postage`, still
 scaffolds, with a warning naming its replacement; see

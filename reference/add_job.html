@@ -97,9 +97,10 @@ filename's fields.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The path written, invisibly. On any failure – including one after
+    <p>The job's path, invisibly. On any failure – including one after
   the copy, while substituting the set markers – no file is left behind,
-  so a returned path always names a complete, correctly-declared job.</p>
+  the runner included, so a returned path always names a complete,
+  correctly-declared job.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -119,6 +120,14 @@ filename.</p>
 pre-render and post-render commands and unrelated project settings are
 preserved, while the provenance publisher is kept last. Repeated calls are
 idempotent.</p>
+<p>A template whose job runs from a companion script also writes that script
+beside the job, from <code>inst/runners/&lt;name&gt;-runner.R</code>: today the
+bootstrap reports <code>bl</code>, <code>br</code>, <code>bc</code> and <code>bh</code>, whose
+runner screens and saves the bag the report reads. The runner is named
+<code>&lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;-runner.R</code>, gets the same <code>SUBJECT</code> and
+<code>TYPE</code> substitution, and is refused, like the job, if it already
+exists. Its study choices carry <code>EDIT:</code> markers for the author to
+work.</p>
 <p>A template the catalog marks deprecated, such as <code>dp-postage</code>, still
 scaffolds, with a warning naming its replacement; see
 <code><a href="template_catalog.html">template_catalog</a></code>.</p>
