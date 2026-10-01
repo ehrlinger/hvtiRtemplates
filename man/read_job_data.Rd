@@ -29,11 +29,13 @@ a list from \code{rlang::exprs()}, all of which must hold. Conditions follow
 value from outside the data, written \code{.env$min_age} or as a name that
 is not a column, is fixed into the condition when the data are read, so the
 recorded condition rebuilds the same rows wherever it runs. A condition
-that mentions the \code{id} column, a column named \code{MRN} or
-\code{eMRN} (ignoring case), or \code{.data} stops before any row is
-filtered, because each condition is saved, values included, in the job's
-output. Exclude those patients in the dataset build, or with an
-hvtiRdatabuild analysis set, instead.}
+that mentions the \code{id} column or a column named \code{MRN} or
+\code{eMRN} (ignoring case), directly or as \code{.data$x} or
+\code{.data[["x"]]}, stops before any row is filtered, because each
+condition is saved, values included, in the job's output. Exclude those
+patients in the dataset build, or with an hvtiRdatabuild analysis set,
+instead. So does a \code{.data} use whose column is not written literally,
+such as \code{.data[[nm]]}, since the column it reaches cannot be known.}
 
 \item{id}{The patient identifier column. When it is the default
 \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.}
@@ -59,7 +61,7 @@ A list:
       used to rebuild the rows; it stays inside the study and is never
       printed;
     \item \code{where_shown}, the same conditions as a report may show them,
-      with the values of any condition on a \code{key} column replaced;
+      with the values of any condition on a \code{key} column, or using \code{.data}, replaced;
     \item \code{id} and \code{key}, the resolved column names;
     \item \code{rows} and \code{patients}, the counts kept;
     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
@@ -79,10 +81,10 @@ Columns named \code{MRN} or \code{eMRN} (ignoring case) are
   matches its column ignoring case, because
   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
   key and date values are not printed: the record holds counts, and a
-  \code{where} condition that mentions a \code{key} column is shown, in the
-  record and in error messages, with its values replaced by \code{<value>}.
-  So is a condition on \code{id} or \code{.data} in a selection saved before
-  such conditions were refused. Every setting is checked before the data are read.
+  \code{where} condition that mentions a \code{key} column or uses
+  \code{.data} is shown, in the record and in error messages, with its values
+  replaced by \code{<value>}. So is a condition on \code{id} in a selection
+  saved before such conditions were refused. Every setting is checked before the data are read.
 }
 \examples{
 \donttest{

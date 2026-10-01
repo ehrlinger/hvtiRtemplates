@@ -1,8 +1,10 @@
 # hvtiRtemplates (unreleased)
 
 * `read_job_data()` stops on a `WHERE` condition that mentions the patient
-  identifier, a column named MRN or eMRN, or `.data`, before any row is
-  filtered. Each condition is saved, values included, in the job's output, so a
+  identifier or a column named MRN or eMRN, directly or through `.data$x` or
+  `.data[["x"]]`, before any row is filtered. A `.data` column that is not
+  written literally, such as `.data[[nm]]`, stops too, since it could be the
+  identifier. Each condition is saved, values included, in the job's output, so a
   filter on identifier values would be saved with it. Exclude those patients in
   the dataset build, or with an hvtiRdatabuild analysis set. A downstream job
   rebuilding an upstream file saved with such a condition names the file and

@@ -55,14 +55,6 @@
 # Date or POSIXct inlined with `!!`, is a value and is masked.
 .is_maskable_value <- function(e) is.atomic(e) && !is.null(e) && !is.logical(e)
 
-# Which of `cols` a condition reaches, ignoring case, with ".data" added when it
-# uses .data at all. Shared by the masking and by the refusal of a WHERE on the
-# patient identifier, so the two cannot disagree about what a condition touches.
-.condition_reaches <- function(expr, cols) {
-  vars <- tolower(all.vars(expr))
-  c(cols[tolower(cols) %in% vars], if (".data" %in% vars) ".data")
-}
-
 # A condition that uses .data can reach any column, the ID included, through
 # a string such as .data[["ccfid"]], which all.vars() does not see as a column,
 # so it is masked as though it named the ID. The column named inside .data[[ ]]
@@ -70,7 +62,8 @@
 .mask_condition <- function(x, cols) {
   text <- if (is.character(x)) x else paste(deparse(x, width.cutoff = 500L), collapse = " ")
   expr <- if (is.character(x)) tryCatch(str2lang(x), error = function(e) NULL) else x
-  if (is.null(expr) || !length(.condition_reaches(expr, cols))) return(text)
+  vars <- tolower(all.vars(expr))
+  if (is.null(expr) || !(".data" %in% vars || length(intersect(vars, tolower(cols))))) return(text)
   mask <- function(e) {
     if (.is_pronoun_lookup(e, ".data")) return(e)
     if (is.call(e)) {
@@ -143,18 +136,56 @@
 
 .mask_conditions <- function(x, cols) vapply(as.character(x), .mask_condition, "", cols = cols, USE.NAMES = FALSE)
 
+# The columns a condition names, for the refusal below. Unlike the masking,
+# which hides the values of any condition that uses .data, this resolves
+# .data$x and .data[["x"]] to x, so a filter on an ordinary column through .data
+# is allowed. Any other use of .data, such as .data[[nm]], names a column that
+# cannot be known here, and is reported as `opaque`.
+.where_columns <- function(expr) {
+  found <- character()
+  opaque <- FALSE
+  walk <- function(e) {
+    if (.is_pronoun_lookup(e, ".data")) {
+      index <- e[[3L]]
+      if (identical(e[[1L]], as.name("$")) && (is.name(index) || is.character(index))) {
+        found <<- c(found, as.character(index))
+      } else if (is.character(index) && length(index) == 1L) {
+        found <<- c(found, index)
+      } else {
+        opaque <<- TRUE
+        walk(index)
+      }
+      return(invisible())
+    }
+    if (is.name(e)) {
+      name <- as.character(e)
+      if (identical(name, ".data")) opaque <<- TRUE else found <<- c(found, name)
+      return(invisible())
+    }
+    if (is.call(e)) {
+      # Tested in place, never bound: an empty argument cannot be assigned.
+      for (i in seq_along(e)) if (!(is.name(e[[i]]) && !nzchar(as.character(e[[i]])))) walk(e[[i]])
+    }
+    invisible()
+  }
+  walk(expr)
+  list(columns = unique(found), opaque = opaque)
+}
+
 # Every condition's exact text is saved in the job's hand-off, so a condition on
 # the patient identifier would put identifier values in the job's output. Each
 # condition is checked before any is evaluated, and the message shows only the
 # masked text. `identifiers` are the ID and any MRN or eMRN column.
 .refuse_identifier_where <- function(conditions, identifiers, cols) {
   for (cond in conditions) {
-    reached <- .condition_reaches(cond, identifiers)
-    if (!length(reached)) next
-    what <- if (identical(reached, ".data")) {
-      "uses .data, which can reach the patient identifier"
+    named <- .where_columns(cond)
+    reached <- identifiers[tolower(identifiers) %in% tolower(named$columns)]
+    if (!length(reached) && !named$opaque) next
+    what <- if (length(reached)) {
+      paste0("uses the patient identifier (", paste0("`", reached, "`", collapse = ", "), ")")
     } else {
-      paste0("uses the patient identifier (", paste0("`", setdiff(reached, ".data"), "`", collapse = ", "), ")")
+      paste0("uses .data without a literal column name, so it may reach the patient identifier; name the ",
+             "column literally, as .data$age or .data[[\"age\"]]")
     }
     stop(errorCondition(paste0(
       "WHERE condition `", .mask_condition(cond, unique(c(identifiers, cols))), "` ", what, ". Each WHERE ",
@@ -242,11 +273,13 @@
 #'   value from outside the data, written \code{.env$min_age} or as a name that
 #'   is not a column, is fixed into the condition when the data are read, so the
 #'   recorded condition rebuilds the same rows wherever it runs. A condition
-#'   that mentions the \code{id} column, a column named \code{MRN} or
-#'   \code{eMRN} (ignoring case), or \code{.data} stops before any row is
-#'   filtered, because each condition is saved, values included, in the job's
-#'   output. Exclude those patients in the dataset build, or with an
-#'   hvtiRdatabuild analysis set, instead.
+#'   that mentions the \code{id} column or a column named \code{MRN} or
+#'   \code{eMRN} (ignoring case), directly or as \code{.data$x} or
+#'   \code{.data[["x"]]}, stops before any row is filtered, because each
+#'   condition is saved, values included, in the job's output. Exclude those
+#'   patients in the dataset build, or with an hvtiRdatabuild analysis set,
+#'   instead. So does a \code{.data} use whose column is not written literally,
+#'   such as \code{.data[[nm]]}, since the column it reaches cannot be known.
 #' @param id The patient identifier column. When it is the default
 #'   \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.
 #' @param key Columns that make a row unique; defaults to \code{id}, one row
@@ -257,10 +290,10 @@
 #'   matches its column ignoring case, because
 #'   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
 #'   key and date values are not printed: the record holds counts, and a
-#'   \code{where} condition that mentions a \code{key} column is shown, in the
-#'   record and in error messages, with its values replaced by \code{<value>}.
-#'   So is a condition on \code{id} or \code{.data} in a selection saved before
-#'   such conditions were refused. Every setting is checked before the data are read.
+#'   \code{where} condition that mentions a \code{key} column or uses
+#'   \code{.data} is shown, in the record and in error messages, with its values
+#'   replaced by \code{<value>}. So is a condition on \code{id} in a selection
+#'   saved before such conditions were refused. Every setting is checked before the data are read.
 #'
 #' @return A list:
 #'   \itemize{
@@ -279,7 +312,7 @@
 #'       used to rebuild the rows; it stays inside the study and is never
 #'       printed;
 #'     \item \code{where_shown}, the same conditions as a report may show them,
-#'       with the values of any condition on a \code{key} column replaced;
+#'       with the values of any condition on a \code{key} column, or using \code{.data}, replaced;
 #'     \item \code{id} and \code{key}, the resolved column names;
 #'     \item \code{rows} and \code{patients}, the counts kept;
 #'     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so

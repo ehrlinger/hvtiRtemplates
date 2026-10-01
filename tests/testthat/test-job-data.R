@@ -371,12 +371,36 @@ test_that("a WHERE that reaches a column through .data is masked, and stops", {
     expect_false(grepl("9001", shown, fixed = TRUE), info = shown)
     expect_match(shown, "<value>", fixed = TRUE)
   }
-  # Any use of .data can reach the ID through a string, so a WHERE that uses it stops.
+  # .data naming the ID, MRN or eMRN as a literal stops, ignoring case.
   cfg <- job_study(d_ids)
   for (where in list(quote(.data[["ccfid"]] != 9001), quote(.data$ccfid != 9001), quote(.data[["CCFID"]] + 9001))) {
     err <- refusal(read_job_data(cfg, where = where))
     expect_match(err, "patient identifier", info = deparse(where))
-    expect_match(err, ".data", fixed = TRUE, info = deparse(where))
+    expect_match(err, "`ccfid`", fixed = TRUE, info = deparse(where))
+    expect_false(grepl("9001", err, fixed = TRUE), info = deparse(where))
+  }
+  err <- refusal(read_job_data(job_study(d0), where = quote(.data[["mrn"]] > 103)))
+  expect_match(err, "patient identifier")
+  expect_false(grepl("103", err, fixed = TRUE))
+})
+
+test_that("a WHERE that names an ordinary column through .data is allowed, and shown masked", {
+  cfg <- job_study(d_ids)
+  for (where in list(quote(.data$age >= 18), quote(.data[["age"]] >= 18))) {
+    out <- read_job_data(cfg, where = where)
+    expect_identical(out$data$ccfid, c(9002L, 9003L, 9005L, 9006L), info = deparse(where))
+    # The masking still hides the values of any condition that uses .data.
+    expect_match(attr(out$record, "selection")$where_shown, ">= <value>", fixed = TRUE, info = deparse(where))
+  }
+})
+
+test_that("a WHERE whose .data column is not written literally stops, and asks for the name", {
+  cfg <- job_study(d_ids)
+  nm <- "age"
+  for (where in list(quote(.data[[nm]] == 9001), quote(.data[[paste0("cc", "fid")]] == 9001), quote(nrow(.data) > 9001))) {
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "name the column", info = deparse(where))
+    expect_match(err, "patient identifier", info = deparse(where))
     expect_false(grepl("9001", err, fixed = TRUE), info = deparse(where))
   }
 })
