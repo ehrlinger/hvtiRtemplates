@@ -302,3 +302,55 @@ if (length(.chr)) {
   cat("Text predictors converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
 }
 ```
+
+## Fit
+
+```{r}
+#| label: fit
+#| message: true
+# The fit groups visits by patient through `id`. It is given the study-keyed
+# digest of each patient's ID, not the ID: a boostmtree fit stores the ID in
+# several places, its base learners included, and every one of them is saved
+# with it. A digest still groups the visits; it cannot be read back.
+CACHE_DIR <- dirname(set_path("estimates", "nb-boostmtree.rds"))
+.patient <- hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root))
+fit <- cache_fit(
+  "nb-boostmtree-fit",
+  boostmtree(x = d[.predictors], tm = d[[.time]], id = .patient, y = d[[.response]],
+             family = FAMILY, M = M, nu = NU, mod.grad = TRUE, cv.flag = TRUE, verbose = FALSE),
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+)
+```
+
+`cv.flag = TRUE` and `mod.grad = TRUE` are not settings. Every study fitted with
+both, and cross-validation is how the job chooses its best number of iterations.
+
+```{r}
+#| label: save
+# The product of this job. It is separate from the cache on purpose: the cache
+# is this job's internals and this file its interface, which carries the
+# selection a later job would rebuild the rows from.
+fit <- hvtiRtemplates:::.attach_handoff_lineage(
+  fit,
+  data = .provenance_data,
+  analysis = list(response = .response, time = .time, family = FAMILY, M = M, nu = NU),
+  cohort = list(n_patients = length(unique(.patient)), n_visits = nrow(d)),
+  selection = attr(job_data$record, "selection")
+)
+saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  extra = list(
+    subject = SUBJECT, type = TYPE,
+    analysis = list(response = .response, time = .time, family = FAMILY, M = M, nu = NU),
+    cohort = list(n_patients = length(unique(.patient)), n_visits = nrow(d))
+  )
+))
+```

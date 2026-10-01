@@ -53,6 +53,9 @@ nb_env <- function(root, parent = globalenv()) {
   env$.root <- root
   env$.provenance_data <- list()
   env$study_config <- hvtiRutilities::study_config
+  # The setup chunk attaches these; bound here instead, so a test does not attach a package for the rest of the run.
+  env$cache_fit <- hvtiRutilities::cache_fit
+  if (requireNamespace("boostmtree", quietly = TRUE)) env$boostmtree <- boostmtree::boostmtree
   env
 }
 
@@ -84,4 +87,29 @@ nb_skip_unless_stack <- function() {
 
 nb_choices <- function(...) {
   utils::modifyList(list(RESPONSE = "lvef", M = 20, SEED = 7), list(...))
+}
+
+# The fit helpers below live here, not in the test file, so object_usage_linter
+# resolves nb_env and nb_run from the same file.
+
+# TRUE when `bytes` hold `value` as text or as R's big-endian double.
+nb_bytes_hold <- function(bytes, value) {
+  patterns <- list(charToRaw(format(value, scientific = FALSE)), writeBin(as.double(value), raw(), endian = "big"))
+  any(vapply(patterns, function(p) length(grepRaw(p, bytes, fixed = TRUE)) > 0L, logical(1L)))
+}
+nb_file_bytes <- function(path) {
+  con <- gzfile(path, "rb")
+  on.exit(close(con))
+  pieces <- list()
+  repeat {
+    piece <- readBin(con, "raw", n = 1e7)
+    if (!length(piece)) break
+    pieces[[length(pieces) + 1L]] <- piece
+  }
+  do.call(c, pieces)
+}
+nb_fit_in <- function(root, parent = globalenv(), choices = nb_choices()) {
+  env <- nb_env(root, parent)
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "save"), env, choices))
+  env
 }
