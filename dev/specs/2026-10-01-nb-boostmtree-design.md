@@ -119,29 +119,35 @@ predictors but not a missing response.
 
 ## 5. The fit, the cache and what is saved
 
-**Fit.** `boostmtree(x = d[PREDICTORS], tm = d[[TIME]], id = d[[.id]],
+**Fit.** `boostmtree(x = d[PREDICTORS], tm = d[[TIME]], id = <digest>,
 y = d[[RESPONSE]], family = FAMILY, M = M, nu = NU, mod.grad = TRUE,
-cv.flag = TRUE)` inside `withr::with_seed(SEED, ...)`, where `.id` is the ID
-column `read_job_data()` resolved, possibly the MRN fallback. `boostmtree` takes
-vectors, not a formula, so the formula-environment leak found in the hazard and
-random-forest families does not arise; the byte test checks it regardless.
+cv.flag = TRUE)` with `SEED`, where `<digest>` is the study-keyed digest of
+`d[[.id]]` (`.id_digest()`), and `.id` the ID column `read_job_data()` resolved,
+possibly the MRN fallback.
 
-**Cache.** The fit is saved to `estimates/` as
-`<subject>-<type>-nb-boostmtree.rds` and reused on a later render when both the
-selection's `key_hash` (the rows) and the fit settings (`FAMILY`, `M`, `NU`,
-`PREDICTORS`, `SEED`) match; anything else refits, and `REFIT <- TRUE` forces it.
-This replaces the exemplars' save, comment out, `load()` pattern, which is how a
-stale fit gets reported against new data.
+**Digest before the fit (refined while planning, 2026-10-01).** A fitted
+`boostmtree` holds the ID in `$id`, `$id.unique` and inside `$base.learner`:
+each randomForestSRC learner's `$call`, and the environment of its
+`$forest$sampsize` function. Rewriting those after the fit would mean editing
+randomForestSRC internals. The fit is therefore given the digest instead of the
+ID. It groups visits by `id` only, accepts character IDs, and
+`gg_boost_trajectory()` labels subjects from `$id.unique`, which is then the
+digest, one per patient. No raw ID reaches the fit, its cache or the saved file.
+A figure that must join back to the data digests the data's own IDs and joins on
+that. A serialized-bytes test with an MRN-keyed study is the backstop.
 
-**What is saved (#203).** The saved fit's identifiers are replaced by the
-study-keyed digest through `.digest_bundle_ids()` and read back through
-`.bundle_id_key()`, so a lost or replaced key stops the job. That covers `$id`
-and **`$id.unique`**, which `gg_boost_trajectory()` reads its subject labels
-from, and any other copy the implementation finds: whether `boostmtree` keeps the
-ID inside `$x`, row names or its cross-validation structures must be checked, not
-assumed. The lineage carries the selection. Figures that group by patient work
-on digests unchanged; a figure that must join back to the data digests the data's
-own IDs and joins on that, so the raw ID is never saved.
+**Cache (refined while planning, 2026-10-01).** The fit goes through
+`hvtiRutilities::cache_fit()`, as in every fit template. Its key covers the
+code's inputs (`d`, `PREDICTORS`, `FAMILY`, `M`, `NU`), the package versions and
+the seed. A stale cache **stops** and lists what changed; `REFIT <- TRUE`
+recomputes it. This replaces the exemplars' save, comment out, `load()` pattern,
+which is how a stale fit gets reported against new data.
+
+**What is saved (#203).** The fit is saved to `estimates/` as
+`nb-boostmtree.rds` in its set, with lineage carrying the selection.
+`boostmtree` takes vectors, not a formula, so the formula-environment leak found
+in the hazard and random-forest families does not arise; the byte test checks
+it regardless.
 
 ## 6. The report
 
