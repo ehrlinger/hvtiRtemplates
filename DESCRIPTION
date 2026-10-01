@@ -62,7 +62,7 @@ Suggests:
     quarto,
     randomForestSRC (>= 3.7.0),
     survival,
-    TemporalHazard (>= 1.2.8),
+    TemporalHazard (>= 1.2.12),
     testthat (>= 3.0.0),
     varPro (>= 3.2.0),
     withr

@@ -662,3 +662,19 @@ test_that("migrate_job() accepts a template's full name, as add_job() does", {
     "migrate_job\\(\\).*not a template name"
   )
 })
+
+test_that("migrating a SAS hs job needs its qualifier, which the filename does not carry", {
+  # A corpus hs job is hs.dead.setup.sas or hs.dead.concor_discor10.sas: the
+  # second field is the endpoint, so nothing in the name says which hs job it
+  # is, and migrate_job() refuses rather than guess.
+  root <- tempfile("migrate-hs-")
+  suppressMessages(hvtiRutilities::study_setup(root, study = "hs qualifier", study_tracker_id = 1L))
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  src <- file.path(root, "40_graphs", "hs.dead.setup.sas")
+  dir.create(dirname(src), showWarnings = FALSE, recursive = TRUE)
+  writeLines(c("%hazpred(proc hazpred data=built inhaz=est.hmdead out=built; time years;);"), src)
+
+  expect_error(migrate_job(source = src, subject = "dead", type = "hz"), "concordance")
+  out <- migrate_job(source = src, subject = "dead", type = "hz", qualifier = "setup")
+  expect_identical(basename(out), "dead-hz-hs-setup.qmd")
+})

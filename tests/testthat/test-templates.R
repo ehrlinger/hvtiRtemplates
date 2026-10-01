@@ -320,9 +320,9 @@ test_that("endpoint-driven templates own explicit cohort definitions", {
     src[seq.int(start, if (length(end)) end[[1L]] - 1L else length(src))]
   }
 
-  templates <- c(ac = "EVENT", hz = "EVENT", hm = "EVENT", hs = "EVENT")
+  templates <- c(ac = "EVENT", hz = "EVENT", hm = "EVENT", `hs-setup` = "EVENT")
   for (prefix in names(templates)) {
-    src <- readLines(template_path(prefix), warn = FALSE)
+    src <- readLines(hazard_template(prefix), warn = FALSE)
     event <- templates[[prefix]]
     info <- paste0(prefix, ".qmd")
 
@@ -515,7 +515,7 @@ test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
   # under R CMD check, which tests an INSTALLED copy -- so the first version of
   # this test passed locally and errored in check.
   #
-  # hvtiRlifetables repeated the first half of that: hs.qmd called
+  # hvtiRlifetables repeated the first half of that: hs-setup.qmd called
   # us_cohort_curve(), new in 0.1.2, while DESCRIPTION did not name the package
   # at all. This test then skipped a missing bound, so it could not have said
   # so. A package listed here must now have both a template floor and a bound,
@@ -840,4 +840,18 @@ test_that("every shipped template resolves from its own stem", {
                                 hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
     expect_equal(path, tl$file[[i]], info = tl$name[[i]])
   }
+})
+
+test_that("an unqualified hs is refused, naming both job types", {
+  # hs carries two templates since hs-concordance shipped
+  # (dev/specs/2026-09-30-hs-concordance-design.md), so a caller naming no
+  # qualifier has not said which job they mean.
+  tl <- template_list()
+  expect_setequal(tl$name[tl$prefix == "hs"], c("hs-concordance", "hs-setup"))
+  expect_error(template_path("hs"), "concordance")
+  expect_error(template_path("hs"), "setup")
+  expect_identical(basename(template_path("hs", qualifier = "setup")), "hs-setup.qmd")
+  expect_identical(basename(template_path("hs", qualifier = "concordance")), "hs-concordance.qmd")
+  dir <- withr::local_tempdir()
+  expect_error(add_job("hs", subject = "dead", type = "x", dir = dir), "concordance")
 })

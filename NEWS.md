@@ -27,6 +27,35 @@
 * `BOOTSTRAP_DATA` is removed from the bootstrap reports. A bag must come from
   its runner, which attaches the lineage and selection the report reads.
 
+* New template `hs-concordance`: every patient predicted through every
+  treatment group's `hm` model at one horizon, the job the corpus calls
+  concordance and discordance. It reads each group's model from that
+  group's own set, saves one long artifact, `hs-concordance.rds`, and has
+  an optional section that picks a best treatment per patient only where
+  the confidence limits separate it. Design:
+  `dev/specs/2026-09-30-hs-concordance-design.md`.
+
+* The `hs` template is now `hs-setup`, because `hs` carries two job types
+  and a prefix is either wholly qualified or wholly unqualified. The file's
+  contents are unchanged and it still saves `hs.rds`.
+  `add_job("hs", ...)`, `template_path("hs")` and `open_job("hs", ...)`
+  without a qualifier stop and list `setup` and `concordance`. Migrating a
+  SAS `hs` job needs `qualifier =` too: its filename's second field is the
+  endpoint, not the job type.
+  Jobs already scaffolded keep their names. `open_job("hs", ...,
+  qualifier = "setup")` looks for `<subject>-<type>-hs-setup.qmd`, so in a
+  study that already has `<subject>-<type>-hs.qmd` it scaffolds a fresh job
+  beside it. Open the existing job by its file.
+
+* `hs-setup` now requires TemporalHazard >= 1.2.12 and says what its
+  `se.fit` column is. On the survival path it is se(S), the standard error of
+  the survival estimate itself. A TemporalHazard build without #281 wrote
+  se(H) into the same column, and #281 shipped inside version 1.2.11, so which
+  one an `hs.rds` holds depends on the build that produced it, not on when it
+  was written. The render stops on an older build instead of writing an
+  ambiguous file, and the `Suggests` floor for TemporalHazard rises from 1.2.8
+  to 1.2.12 to match.
+
 * `hz` renders again with TemporalHazard 1.2.11. Its convergence table read
   an iteration count that a multiphase fit does not carry, so every render
   stopped there. The table now reports the optimizer's function and gradient

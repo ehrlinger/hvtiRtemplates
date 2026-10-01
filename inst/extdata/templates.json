@@ -466,7 +466,7 @@
     },
     {
       "prefix": "hs",
-      "qualifier": null,
+      "qualifier": "setup",
       "name": "Hazard setup",
       "description": "Patient-level predictions from the hm model, set against the survival of a matched general population.",
       "folder": "graphs",
@@ -489,12 +489,41 @@
       ],
       "blocked_on": null,
       "spec": "dev/specs/2026-08-29-hs-template-design.md",
-      "note": "Triage 2026-09-10: the setup / uses-setup split (hs.dead.setup with hs.dead_uses_setup, and the conditional and compare-benefit setups; 63 studies) folds into this row rather than becoming qualifiers.",
+      "note": "Triage 2026-09-10: the setup / uses-setup split (hs.dead.setup with hs.dead_uses_setup, and the conditional and compare-benefit setups; 63 studies) folds into this row rather than becoming qualifiers. Qualified as `setup` on 2026-09-30, when hs-concordance was admitted: a prefix must be wholly qualified or wholly unqualified. The triage still holds for what it folded in, all of which stays under hs-setup; concordance is a different shape, one fitted model per treatment group, and was not among them.",
       "sas_breadth_jobs": 140,
       "disposition": "scaffold",
       "uses": [
         "TemporalHazard::hazard",
         "TemporalHazard::hzr_stepwise"
+      ]
+    },
+    {
+      "prefix": "hs",
+      "qualifier": "concordance",
+      "name": "Hazard concordance",
+      "description": "Every patient predicted through every treatment group's hm model at one horizon, with an optional table of actual against best-predicted treatment.",
+      "folder": "graphs",
+      "family": "hazard-chain",
+      "kind": "job",
+      "status": "shipped",
+      "batch": null,
+      "sas_breadth": null,
+      "r_exemplars": 0,
+      "r_jobs": 0,
+      "upstream": [
+        "hm"
+      ],
+      "downstream": [],
+      "workflows": [
+        "hazard-chain"
+      ],
+      "blocked_on": null,
+      "spec": "dev/specs/2026-09-30-hs-concordance-design.md",
+      "note": "Measured 2026-09-30 by reading the jobs, not by a name count: three studies have a concor_discor job that reads one fitted model per treatment group (2, 3 and 4 models). A two-model read alone is not this shape; five further studies with one were opened and none is a concordance job. The corpus does not call it twins.",
+      "sas_breadth_jobs": 3,
+      "disposition": "scaffold",
+      "uses": [
+        "TemporalHazard::hazard"
       ]
     },
     {

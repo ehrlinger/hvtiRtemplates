@@ -6,7 +6,8 @@ test_that("jobs present their study choices before reading data", {
              "30_analyses/bc.qmd", "30_analyses/bh.qmd", "30_analyses/bl.qmd",
              "30_analyses/br.qmd", "30_analyses/hm.qmd", "40_graphs/dp-gfup.qmd",
              "40_graphs/dp-trends.qmd",
-             "40_graphs/hp.qmd", "40_graphs/hs.qmd")
+             "40_graphs/hp.qmd", "40_graphs/hs-concordance.qmd",
+             "40_graphs/hs-setup.qmd")
   required <- list(
     `dc-general.qmd` = c("DATASET", "ANALYSIS_SET", "CATEGORICAL", "CONTINUOUS", "ID"),
     `dc-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "EVENT", "FOLLOWUP", "CHECKS"),
@@ -26,8 +27,10 @@ test_that("jobs present their study choices before reading data", {
                       "PANELS", "EVENTS", "ALPHA"),
     `dp-trends.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TRENDS", "XBREAKS", "SUBGROUPS"),
     `hp.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "years", "t_max", "TIME", "EVENT"),
-    `hs.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "HORIZONS", "AGE_COL",
-                 "MALE_COL", "SCALE")
+    `hs-concordance.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "MODELS", "GROUP",
+                             "HORIZON", "CARRY", "OVERLAP", "CROSS_STUDY"),
+    `hs-setup.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "HORIZONS", "AGE_COL",
+                       "MALE_COL", "SCALE")
   )
   root <- system.file("templates", package = "hvtiRtemplates")
   if (!nzchar(root)) {
