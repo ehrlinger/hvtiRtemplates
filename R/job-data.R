@@ -501,7 +501,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   if (length(found)) {
     stop(source, " holds patient-level data: ", paste(unique(found), collapse = "; "), ". A bag holds the screen's ",
          "replicates and its settings, never the rows it resampled or their patient identifier. Delete this ",
-         "file and rerun the bootstrap runner, saving only the fields it saves as add_job() wrote it.",
+         "file and rerun the bootstrap runner without changing what it saves.",
          call. = FALSE)
   }
   invisible(TRUE)
