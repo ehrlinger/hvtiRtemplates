@@ -27,6 +27,16 @@
 * `BOOTSTRAP_DATA` is removed from the bootstrap reports. A bag must come from
   its runner, which attaches the lineage and selection the report reads.
 
+* `nb-boostmtree` is a new template: boosted multivariate trees for a
+  response measured repeatedly over follow-up, fitted with `boostmtree` 2.0.2
+  or later from the CCF fork (`ehrlinger/boostmtree_src`), whose fix the CRAN
+  release lacks, and reported with ggBoostedTrees 0.0.7 or later. `KEY`
+  defaults to the ID and the visit time. Patients are grouped by the
+  study-keyed digest, so the fit, its cache and the saved file hold no patient
+  ID. The partial effects come one figure per covariate kind, continuous or
+  factor, and per response component for ordinal and nominal fits, until
+  ggBoostedTrees#19. BoostMLR (`nb-boostmlr`) is still to come.
+
 * New template `hs-concordance`: every patient predicted through every
   treatment group's `hm` model at one horizon, the job the corpus calls
   concordance and discordance. It reads each group's model from that

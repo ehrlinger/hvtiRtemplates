@@ -255,3 +255,40 @@ test_that("visits all at one time draw no mean line, and say so", {
   expect_true(any(grepl("no mean line is drawn", out, fixed = TRUE)))
   expect_no_error(ggplot2::ggplot_build(env$p_traces))
 })
+
+test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no MRN", {
+  nb_skip_unless_stack()
+  testthat::skip_if_not_installed("quarto")
+  testthat::skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  # Keyed on MRN, so the rendered page is searched for the identifier most likely to leak.
+  data <- nb_data(id = "MRN")
+  root <- nb_study(data)
+  job <- add_job("nb", subject = "lvef", type = "boost", dir = root, qualifier = "boostmtree")
+  set_choice <- function(from, to) {
+    txt <- readLines(job)
+    hit <- grep(from, txt)
+    stopifnot(length(hit) == 1L)
+    txt[hit] <- to
+    writeLines(txt, job)
+  }
+  set_choice("^RESPONSE <- ", "RESPONSE <- \"lvef\"")
+  set_choice("^M  <- ", "M  <- 20")
+  set_choice("^N_TRACES <- ", "N_TRACES <- 10")
+  # EDIT: markers remain, so this renders as a draft, with its warning and banner.
+  render_job(job, quiet = TRUE)
+  html <- sub("[.]qmd$", ".html", job)
+  expect_true(file.exists(html))
+  expect_true(file.exists(file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree.rds")))
+  bytes <- nb_file_bytes(html)
+  expect_false(any(vapply(unique(data$MRN), function(v) nb_bytes_hold(bytes, v), logical(1L))))
+  page <- rawToChar(bytes)
+  expect_match(page, "DRAFT -- this job is unfinished", fixed = TRUE)
+  # The provenance chunk runs only in a render: its payload is in the page and its sidecar beside the job.
+  payload <- hvtiRtemplates:::.extract_provenance(page)
+  expect_identical(payload$subject, "lvef")
+  expect_identical(payload$type, "boost")
+  expect_identical(payload$analysis$response, "lvef")
+  expect_identical(payload$analysis$family, "continuous")
+  expect_identical(payload$cohort$n_patients, length(unique(data$MRN)))
+  expect_true(file.exists(sub("[.]qmd$", ".provenance.json", job)))
+})
