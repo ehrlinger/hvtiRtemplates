@@ -119,8 +119,7 @@
 # How to name an outside value that cannot be fixed into a condition.
 .outside_kind <- function(value) {
   if (is.data.frame(value)) "a data frame" else if (is.environment(value)) "an environment" else
-    if (is.function(value)) "a function" else if (isS4(value)) "an S4 object" else if (is.list(value)) "a list" else
-      paste("of class", class(value)[[1L]])
+    if (isS4(value)) "an S4 object" else if (is.list(value)) "a list" else paste("of class", class(value)[[1L]])
 }
 
 # A condition is saved as text and re-evaluated by downstream jobs in another
@@ -128,15 +127,18 @@
 # .env$x, .env[["x"]] and a bare symbol that is not a column of `cols` become
 # the value of x in `env`, as rlang::eval_tidy() would find it. Every symbol in
 # call position is left alone, as is a symbol found nowhere, so eval_tidy()
-# still names it in its error. Only an atomic value, NULL, a symbol or a call is
-# fixed in; anything else, a function included, stops (see value_of below).
+# still names it in its error, and so is a name whose value is a function. Only
+# an atomic value, NULL, a symbol or a call is fixed in; a data frame, list,
+# environment or S4 object stops (see value_of below).
 .resolve_outside <- function(cond, cols, env) {
   value_of <- function(name) {
     if (!is.character(name) || length(name) != 1L || !exists(name, envir = env)) return(NULL)
     value <- get(name, envir = env)
+    # A function name carries no data, so it is left as the name.
+    if (is.function(value)) return(NULL)
     # Only a value or a piece of a condition can be fixed in. A data frame,
-    # list, environment, function or S4 object would be saved whole, whatever
-    # columns it holds (the ID included), so it stops, named but never printed.
+    # list, environment or S4 object would be saved whole, whatever columns it
+    # holds (the ID included), so it stops, named but never printed.
     if (!(is.null(value) || (is.atomic(value) && !isS4(value)) || is.name(value) || is.call(value))) {
       stop("WHERE takes `", name, "` from outside the data, and it is ", .outside_kind(value), ", not a value. ",
            "A condition is saved as text, so `", name, "` would be saved whole; filter on a column of the data ",
@@ -329,9 +331,11 @@
 #'   \code{dplyr::filter()}: a row where a condition is \code{NA} is dropped. A
 #'   value from outside the data, written \code{.env$min_age} or as a name that
 #'   is not a column, is fixed into the condition when the data are read, so the
-#'   recorded condition rebuilds the same rows wherever it runs. Such a value
-#'   must be a vector, \code{NULL}, a symbol or a call; a data frame, list,
-#'   environment, function or S4 object stops, since it would be saved whole. A condition
+#'   recorded condition rebuilds the same rows wherever it runs. Only a plain
+#'   name and \code{.env$x} are fixed in; \code{x$y} and \code{x@y} are kept as
+#'   written, and a name for a function stays a name. Such a value must be a
+#'   vector, \code{NULL}, a symbol or a call; a data frame, list, environment or
+#'   S4 object stops, since it would be saved whole. A condition
 #'   that mentions the \code{id} column or a column named \code{MRN} or
 #'   \code{eMRN} (ignoring case), directly or as \code{.data$x} or
 #'   \code{.data[["x"]]}, stops before any row is filtered, because each

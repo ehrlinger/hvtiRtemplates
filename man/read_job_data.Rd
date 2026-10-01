@@ -28,9 +28,11 @@ a list from \code{rlang::exprs()}, all of which must hold. Conditions follow
 \code{dplyr::filter()}: a row where a condition is \code{NA} is dropped. A
 value from outside the data, written \code{.env$min_age} or as a name that
 is not a column, is fixed into the condition when the data are read, so the
-recorded condition rebuilds the same rows wherever it runs. Such a value
-must be a vector, \code{NULL}, a symbol or a call; a data frame, list,
-environment, function or S4 object stops, since it would be saved whole. A condition
+recorded condition rebuilds the same rows wherever it runs. Only a plain
+name and \code{.env$x} are fixed in; \code{x$y} and \code{x@y} are kept as
+written, and a name for a function stays a name. Such a value must be a
+vector, \code{NULL}, a symbol or a call; a data frame, list, environment or
+S4 object stops, since it would be saved whole. A condition
 that mentions the \code{id} column or a column named \code{MRN} or
 \code{eMRN} (ignoring case), directly or as \code{.data$x} or
 \code{.data[["x"]]}, stops before any row is filtered, because each

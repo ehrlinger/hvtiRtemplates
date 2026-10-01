@@ -448,7 +448,7 @@ test_that("a WHERE that looks a column up by a string stops, and is masked", {
   expect_identical(hvtiRtemplates:::.mask_condition(quote(age >= 18), "ccfid"), "age >= 18")
 })
 
-test_that("a WHERE that takes a data frame, list, environment or function from outside stops, naming it", {
+test_that("a WHERE that takes a data frame, list, environment or S4 object from outside stops, naming it", {
   cfg <- job_study(d_ids)
   lookup <- data.frame(ccfid = 9001:9003, age = c(10, 30, 50))
   for (where in list(quote(with(lookup, ccfid) != 9001), quote(with(lookup, age) > 20))) {
@@ -464,10 +464,19 @@ test_that("a WHERE that takes a data frame, list, environment or function from o
   fn <- function(x) x
   setClass("WhereBox", representation(x = "numeric"), where = environment())
   s4 <- methods::new("WhereBox", x = 18)
-  for (where in list(quote(age > holder[["cut"]]), quote(age > get("cut", box)), quote(sapply(age, fn) > 18),
-                     quote(age > s4))) {
+  for (where in list(quote(age > holder[["cut"]]), quote(age > get("cut", box)), quote(age > s4))) {
     err <- refusal(read_job_data(cfg, where = where))
     expect_match(err, "filter on a column of the data", info = paste(deparse(where), collapse = " "))
+  }
+  # A function name carries no data, so it is left as the name, not refused.
+  allowed <- list(list(quote(sapply(age, fn) > 18), 4L, "sapply(age, fn) > 18"),
+                  list(quote(sapply(age, round) > 1), 5L, "sapply(age, round) > 1"),
+                  list(quote(mapply(max, age, age) > 50), 3L, "mapply(max, age, age) > 50"),
+                  list(quote(Reduce(`|`, list(age > 50, age < 20))), 4L, "Reduce(`|`, list(age > 50, age < 20))"))
+  for (case in allowed) {
+    out <- read_job_data(cfg, where = case[[1L]])
+    expect_identical(nrow(out$data), case[[2L]], info = case[[3L]])
+    expect_identical(attr(out$record, "selection")$where, case[[3L]])
   }
 })
 

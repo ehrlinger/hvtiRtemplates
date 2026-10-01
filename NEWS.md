@@ -12,7 +12,7 @@
   says to rerun the upstream job.
 
 * `read_job_data()` stops on a `WHERE` that takes a data frame, list,
-  environment, function or S4 object from outside the data, as
+  environment or S4 object from outside the data, as
   `with(lookup, age) > 20` does. The condition is saved as text, so the whole
   object, ID column included, was saved with it; the message names the variable
   and says to filter on a column of the data instead. An outside `NULL` is now
