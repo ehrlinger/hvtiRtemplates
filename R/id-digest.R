@@ -54,6 +54,23 @@
   key
 }
 
+#' Identifiers as text, for comparing and digesting
+#'
+#' A whole number is written without an exponent, so \code{100000} and
+#' \code{100000L} give the same text.
+#'
+#' @param x A vector of identifiers.
+#' @return A character vector as long as \code{x}, \code{NA} where \code{x} is.
+#' @noRd
+.id_text <- function(x) {
+  text <- if (is.factor(x)) as.character(x) else x
+  if (is.numeric(text)) {
+    whole <- !is.na(text) & is.finite(text) & text == trunc(text)
+    text <- ifelse(whole, sprintf("%.0f", text), as.character(text))
+  }
+  as.character(text)
+}
+
 #' A study-keyed digest of patient identifiers
 #'
 #' HMAC-SHA256 of each identifier under the study key, so an ID can be
@@ -65,12 +82,7 @@
 #' @return A character vector as long as \code{x}, \code{NA} where \code{x} is.
 #' @noRd
 .id_digest <- function(x, key) {
-  text <- if (is.factor(x)) as.character(x) else x
-  if (is.numeric(text)) {
-    whole <- !is.na(text) & is.finite(text) & text == trunc(text)
-    text <- ifelse(whole, sprintf("%.0f", text), as.character(text))
-  }
-  text <- as.character(text)
+  text <- .id_text(x)
   seen <- unique(text[!is.na(text)])
   hashed <- vapply(seen, function(v) digest::hmac(key, v, "sha256"), character(1L), USE.NAMES = FALSE)
   hashed[match(text, seen)]
