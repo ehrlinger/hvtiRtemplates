@@ -37,9 +37,46 @@ test_that("the ID and TIME cannot be predictors, nor the ID the response", {
     env <- nb_env(root)
     utils::capture.output(nb_run(c("edit-study-choices", "data"), env, nb_choices(...)))
   }
-  expect_error(run(PREDICTORS = c("age", "ccfid")), "identifier or the visit time")
-  expect_error(run(PREDICTORS = c("age", "iv_echo")), "identifier or the visit time")
+  expect_error(run(PREDICTORS = c("age", "ccfid")), "identifier, a KEY column or the visit time")
+  expect_error(run(PREDICTORS = c("age", "iv_echo")), "identifier, a KEY column or the visit time")
   expect_error(run(RESPONSE = "ccfid"), "cannot be the response")
+})
+
+test_that("the default predictors leave out a ccfid the job is not keyed on, and no saved file holds one", {
+  nb_skip_unless_stack()
+  data <- nb_randid_data()
+  root <- nb_study(data)
+  env <- nb_env(root)
+  out <- utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "save"), env, nb_randid_choices()))
+  expect_identical(env$.id, "randid")
+  expect_identical(sort(env$.predictors), sort(c("age", "female", "grp")))
+  expect_true(any(grepl("Identifier columns left out of the predictors: ccfid", out, fixed = TRUE)))
+  # By name only: no ccfid value is printed.
+  expect_false(any(vapply(unique(data$ccfid), function(v) any(grepl(v, out, fixed = TRUE)), logical(1L))))
+  expect_true(file.exists(file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree.rds")))
+  expect_length(nb_files_holding(root, unique(data$ccfid)), 0L)
+})
+
+test_that("the default predictors leave out every KEY column", {
+  nb_skip_unless_stack()
+  data <- nb_data()
+  data$visit <- stats::ave(data$iv_echo, data$ccfid, FUN = seq_along)
+  root <- nb_study(data)
+  env <- nb_env(root)
+  utils::capture.output(nb_run(c("edit-study-choices", "data"), env, nb_choices(KEY = c("ccfid", "iv_echo", "visit"))))
+  expect_identical(sort(env$.predictors), sort(c("age", "female", "grp")))
+})
+
+test_that("named PREDICTORS may hold no identifier or KEY column, and no name twice", {
+  nb_skip_unless_stack()
+  root <- nb_study(nb_randid_data())
+  run <- function(...) {
+    env <- nb_env(root)
+    utils::capture.output(nb_run(c("edit-study-choices", "data"), env, nb_randid_choices(...)))
+  }
+  expect_error(run(PREDICTORS = c("age", "ccfid")), "identifier, a KEY column or the visit time: ccfid")
+  expect_error(run(PREDICTORS = c("age", "randid")), "identifier, a KEY column or the visit time: randid")
+  expect_error(run(PREDICTORS = c("age", "female", "age")), "PREDICTORS names a variable more than once: age")
 })
 
 test_that("TIME and RESPONSE resolve against the data ignoring case", {
@@ -54,7 +91,7 @@ test_that("TIME and RESPONSE resolve against the data ignoring case", {
   env <- nb_env(root)
   expect_error(utils::capture.output(nb_run(c("edit-study-choices", "data"), env,
                                             nb_choices(TIME = "IV_ECHO", PREDICTORS = c("age", "IV_ECHO")))),
-               "identifier or the visit time")
+               "identifier, a KEY column or the visit time")
 })
 
 test_that("the setup chunk passes when both packages meet their floors", {
@@ -67,9 +104,9 @@ test_that("boostmtree older than 2.0.2 is refused with the fork's install line",
   expect_error(nb_mocked_setup("boostmtree", "2.0.0"), "ehrlinger/boostmtree_src", fixed = TRUE)
 })
 
-test_that("ggBoostedTrees older than 0.0.7 is refused with its install line", {
+test_that("ggBoostedTrees older than 0.0.8 is refused with its install line", {
   nb_skip_unless_stack()
-  expect_error(nb_mocked_setup("ggBoostedTrees", "0.0.6"), "remotes::install_github(\"ehrlinger/ggBoostedTrees\")", fixed = TRUE)
+  expect_error(nb_mocked_setup("ggBoostedTrees", "0.0.7"), "remotes::install_github(\"ehrlinger/ggBoostedTrees\")", fixed = TRUE)
 })
 
 test_that("the fit groups visits by the study-keyed digest, never the ID", {
@@ -177,19 +214,19 @@ test_that("every report chunk draws for every family, from a fresh fit and from 
       effects <- env$p_effects
       expect_gte(length(effects), 1L)
       for (e in effects) expect_no_error(ggplot2::ggplot_build(e))
-      # Each component's figures draw every effect variable once, continuous and factor alike.
+      # One figure per covariate kind draws every effect variable once, continuous and factor alike,
+      # each for every response component, named as the summary names it.
       drawn <- unlist(lapply(effects, function(e) as.character(unique(e$data$variable))))
-      expect_identical(sort(drawn), sort(rep(env$.effect_vars, length(env$fit$m.opt))), info = family)
+      expect_identical(sort(drawn), sort(env$.effect_vars), info = family)
+      for (e in effects) expect_identical(levels(e$data$response), components[[family]], info = family)
       # One summary row per response component, each with its own best M and error there.
       expect_identical(nrow(env$fit_summary), length(env$fit$m.opt), info = family)
       expect_true(all(is.finite(env$fit_summary$cv_error)), info = family)
       expect_false(anyDuplicated(env$.effect_vars) > 0L, info = family)
       # Each component is named by its level, in the summary and on its effect figures.
       expect_identical(env$fit_summary$component, components[[family]], info = family)
-      if (length(components[[family]]) > 1L) {
-        subtitles <- unique(vapply(effects, function(e) e$labels$subtitle, character(1L)))
-        expect_identical(subtitles, components[[family]], info = family)
-      }
+      # The save made on each pass, the cache-hit pass included, holds no ccfid.
+      expect_length(nb_files_holding(root, unique(nb_family_data()$ccfid)), 0L)
     }
   }
 })

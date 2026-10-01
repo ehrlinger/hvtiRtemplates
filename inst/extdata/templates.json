@@ -926,11 +926,11 @@
       "upstream": [],
       "downstream": [],
       "workflows": [],
-      "blocked_on": "ggBoostedTrees#9",
+      "blocked_on": null,
       "spec": null,
-      "note": null,
+      "note": "Unblocked 2026-10-01: ggBoostedTrees#9 shipped BoostMLR support in 0.0.9. Not yet built.",
       "sas_breadth_jobs": null,
-      "disposition": "build",
+      "disposition": "scaffold",
       "uses": []
     },
     {

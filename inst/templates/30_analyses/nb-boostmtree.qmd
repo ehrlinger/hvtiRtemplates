@@ -49,8 +49,8 @@ if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("bo
        "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.2-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
-if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.0.7") {
-  stop("This job needs ggBoostedTrees >= 0.0.7. Install it with\n",
+if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.0.8") {
+  stop("This job needs ggBoostedTrees >= 0.0.8. Install it with\n",
        "  remotes::install_github(\"ehrlinger/ggBoostedTrees\")\nthen re-render.", call. = FALSE)
 }
 suppressPackageStartupMessages({
@@ -68,8 +68,8 @@ suppressPackageStartupMessages({
 # chunk is what makes that TRUE rather than merely stated.
 #
 # Without it an unedited job renders green over a meaningless analysis. Here
-# that is a forest grown on the template's placeholder outcome, predictors and
-# tree count, whose error curve and survival plots look exactly like a result.
+# that is a boosted fit on the template's placeholder response, predictors and
+# iteration count, whose error path and effect plots look exactly like a result.
 #
 # knitr::current_input() is NULL outside a render -- a study author stepping
 # through chunks in RStudio -- and there is no file to scan then, so this is a
@@ -221,10 +221,11 @@ KEY <- c(ID, TIME)
 RESPONSE <- "<response>"
 FAMILY   <- "continuous"
 
-# EDIT: the predictors, or NULL for every column but the ID, the time and the
-# response, which is what the studies this template came from all did. Name
-# them when the built dataset carries dates or derived outcomes that should not
-# drive the fit.
+# EDIT: the predictors, or NULL for every other column, which is what the
+# studies this template came from all did. NULL leaves out the ID, every KEY
+# column, the time, the response, and any ccfid, MRN or eMRN column; it takes
+# everything else, dates included. Name the predictors when the built dataset
+# carries dates or derived outcomes that should not drive the fit.
 PREDICTORS <- NULL
 
 # EDIT: boosting iterations and the learning rate. Studies used 0.01 to 0.05; a
@@ -272,13 +273,28 @@ if (!is.null(job_data$attrition)) {
 }
 .time <- .resolve(TIME)
 .response <- .resolve(RESPONSE)
-.predictors <- if (is.null(PREDICTORS)) setdiff(names(d), c(.id, .time, .response)) else PREDICTORS
-# The fit groups visits by patient, so the ID and the visit time are its
-# structure, not its predictors; a predictor named for either would let the
-# model learn who a patient is or when they were seen.
-.structural <- .predictors[tolower(.predictors) %in% tolower(c(.id, .time))]
+# The fit groups visits by patient, so the ID, the rest of KEY and the visit
+# time are its structure, not its predictors; a predictor named for any of them
+# would let the model learn who a patient is or when they were seen. A known
+# identifier column is never a predictor either, whatever ID names: boostmtree
+# keeps its predictors, so one would reach the cache and the saved fit.
+.not_predictors <- unique(c(.id, .selection$key, .time, "ccfid", hvtiRtemplates:::.job_identifier_names))
+if (is.null(PREDICTORS)) {
+  .identifiers <- names(d)[tolower(names(d)) %in% c("ccfid", hvtiRtemplates:::.job_identifier_names) & names(d) != .id]
+  .predictors <- names(d)[!tolower(names(d)) %in% tolower(c(.not_predictors, .response))]
+  if (length(.identifiers)) {
+    cat("Identifier columns left out of the predictors: ", paste(.identifiers, collapse = ", "), "\n", sep = "")
+  }
+} else {
+  .predictors <- PREDICTORS
+}
+.duplicated <- unique(.predictors[duplicated(.predictors)])
+if (length(.duplicated)) {
+  stop("PREDICTORS names a variable more than once: ", paste(.duplicated, collapse = ", "), ".", call. = FALSE)
+}
+.structural <- .predictors[tolower(.predictors) %in% tolower(.not_predictors)]
 if (length(.structural)) {
-  stop("PREDICTORS names the patient identifier or the visit time: ", paste(.structural, collapse = ", "),
+  stop("PREDICTORS names an identifier, a KEY column or the visit time: ", paste(.structural, collapse = ", "),
        ".", call. = FALSE)
 }
 if (tolower(.response) == tolower(.id)) {
@@ -344,6 +360,10 @@ knitr::kable(data.frame(
 # component by the same label ("response" for a continuous fit).
 .labels <- if (identical(fit$family, "continuous")) "response" else as.character(fit$q.set)
 .reference <- setdiff(as.character(fit$y.levels), .labels)
+# An ordinal component is a cumulative logit at its threshold, but boostmtree's
+# documentation does not say which side of the threshold it models, so the
+# label names the threshold only. (Its 2.0.2 source codes P(y <= k); read the
+# installed package before relying on that.)
 .components <- switch(fit$family,
   continuous = .response,
   binary = ,
@@ -396,28 +416,22 @@ p_vimp
 .effect_vars <- if (is.null(EFFECT_VARIABLES)) head(names(.top), 6L) else EFFECT_VARIABLES
 .unknown <- setdiff(.effect_vars, .predictors)
 if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unknown, collapse = ", "), call. = FALSE)
-# gg_boost_effect() takes a single-response partial.plot (ggBoostedTrees 0.0.7).
-# An ordinal or nominal fit has several components, so partial.plot() is asked
-# for one at a time, by its label, and each is drawn on its own.
-.effects <- lapply(.labels, function(lbl) {
-  gg_boost_effect(partial.plot(fit, x.var.names = .effect_vars, response.labels = lbl, output = "data",
-                               verbose = FALSE))
+# One partial.plot() covers every response component: ggBoostedTrees 0.0.8 and
+# later take an ordinal or nominal one whole and facet its figure by component.
+# Each component is renamed as the fit summary names it, not by its bare level.
+.effect <- gg_boost_effect(partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE))
+levels(.effect$response) <- .components[match(levels(.effect$response), .labels)]
+# What ggBoostedTrees 0.0.9 still cannot do: a continuous covariate is drawn as
+# a curve and a factor as a point per level, on axes ggplot2 cannot share, so
+# plot() refuses an effect holding both. Each kind is drawn in its own figure,
+# which is why p_effects is a list.
+.discrete <- tapply(!is.na(.effect$x_label), .effect$variable, any)
+.discrete <- .discrete[!is.na(.discrete)]
+p_effects <- lapply(unname(split(names(.discrete), .discrete)), function(v) {
+  part <- .effect[.effect$variable %in% v, , drop = FALSE]
+  part$variable <- droplevels(part$variable)
+  plot(part)
 })
-# A continuous covariate is drawn as a curve and a factor as a point per level,
-# on axes ggplot2 cannot share, so plot() refuses an effect holding both. Each
-# kind is drawn in its own figure, which is also why p_effects is a list.
-.draw_effects <- function(e, subtitle) {
-  discrete <- tapply(!is.na(e$x_label), e$variable, any)
-  discrete <- discrete[!is.na(discrete)]
-  lapply(unname(split(names(discrete), discrete)), function(v) {
-    part <- e[e$variable %in% v, , drop = FALSE]
-    part$variable <- droplevels(part$variable)
-    plot(part) + ggplot2::labs(subtitle = subtitle)
-  })
-}
-p_effects <- do.call(c, lapply(seq_along(.effects), function(k) {
-  .draw_effects(.effects[[k]], if (length(.effects) > 1L) .components[[k]])
-}))
 for (.p in p_effects) print(.p)
 ```
 

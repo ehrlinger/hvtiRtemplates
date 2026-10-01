@@ -102,7 +102,7 @@ nb_mocked_setup <- function(pkg, version) {
 
 nb_skip_unless_stack <- function() {
   testthat::skip_if_not_installed("boostmtree", minimum_version = "2.0.2")
-  testthat::skip_if_not_installed("ggBoostedTrees")
+  testthat::skip_if_not_installed("ggBoostedTrees", minimum_version = "0.0.8")
 }
 
 nb_choices <- function(...) {
@@ -132,4 +132,25 @@ nb_fit_in <- function(root, parent = globalenv(), choices = nb_choices()) {
   env <- nb_env(root, parent)
   utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "save"), env, choices))
   env
+}
+
+# A cohort keyed on a study's own randid that also carries a ccfid column, ten
+# digits like the rest, so a byte search cannot match one by chance.
+nb_randid_data <- function() {
+  d <- nb_data(id = "randid")
+  d$ccfid <- 5810000000 + match(d$randid, unique(d$randid))
+  d
+}
+nb_randid_choices <- function(...) nb_choices(ID = "randid", KEY = c("randid", "iv_echo"), ...)
+
+# The files under `root` that hold any of `values`, leaving out the input
+# dataset, its registered copy and the study key, as the MRN test does.
+nb_files_holding <- function(root, values) {
+  datasets <- basename(hvtiRutilities::study_dir("datasets", root))
+  inputs <- c(file.path(datasets, c("built.csv", "built.parquet")), file.path(".hvti", "id_key"))
+  files <- setdiff(list.files(root, recursive = TRUE, all.files = TRUE), inputs)
+  Filter(function(f) {
+    bytes <- nb_file_bytes(file.path(root, f))
+    any(vapply(values, function(v) nb_bytes_hold(bytes, v), logical(1L)))
+  }, files)
 }
