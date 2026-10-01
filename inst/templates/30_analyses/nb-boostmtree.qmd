@@ -301,8 +301,16 @@ if (length(.structural)) {
 if (tolower(.response) %in% tolower(.predictors)) {
   stop("PREDICTORS names the response (", .response, ").", call. = FALSE)
 }
-if (tolower(.response) == tolower(.id)) {
-  stop("The patient identifier (", .id, ") cannot be the response.", call. = FALSE)
+# Nor may an identifier be the response or the visit time: boostmtree keeps
+# both, so one would reach the cache and the saved fit. That covers the ID this
+# job uses and any other identifier column the data carry, such as a ccfid
+# beside an ID of randid.
+.identifier_cols <- c(.id, "ccfid", hvtiRtemplates:::.job_identifier_names)
+if (tolower(.response) %in% tolower(.identifier_cols)) {
+  stop("A patient identifier (", .response, ") cannot be the response.", call. = FALSE)
+}
+if (tolower(.time) %in% tolower(.identifier_cols)) {
+  stop("A patient identifier (", .time, ") cannot be the visit time.", call. = FALSE)
 }
 .missing <- setdiff(c(.time, .response, .predictors), names(d))
 if (length(.missing)) {

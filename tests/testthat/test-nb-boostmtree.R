@@ -57,6 +57,24 @@ test_that("the default predictors leave out a ccfid the job is not keyed on, and
   expect_length(nb_files_holding(root, unique(data$ccfid)), 0L)
 })
 
+test_that("no identifier column can be the response or the visit time, whatever ID names", {
+  nb_skip_unless_stack()
+  # A ccfid beside an ID of randid: as the response it would be fitted as y and
+  # saved with the fit, so it is refused before anything is fitted or written.
+  data <- nb_randid_data()
+  root <- nb_study(data)
+  run <- function(...) {
+    env <- nb_env(root)
+    utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "save"), env, nb_randid_choices(...)))
+  }
+  expect_error(run(RESPONSE = "ccfid"), "A patient identifier (ccfid) cannot be the response.", fixed = TRUE)
+  expect_error(run(RESPONSE = "CCFID"), "cannot be the response")
+  expect_error(run(TIME = "ccfid", KEY = c("randid", "ccfid")), "A patient identifier (ccfid) cannot be the visit time.",
+               fixed = TRUE)
+  expect_length(list.files(hvtiRutilities::study_dir("estimates", root), recursive = TRUE), 0L)
+  expect_length(nb_files_holding(root, unique(data$ccfid)), 0L)
+})
+
 test_that("the default predictors leave out every KEY column", {
   nb_skip_unless_stack()
   data <- nb_data()
