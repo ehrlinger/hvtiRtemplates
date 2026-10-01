@@ -145,6 +145,13 @@ which is how a stale fit gets reported against new data.
 
 **What is saved (#203).** The fit is saved to `estimates/` as
 `nb-boostmtree.rds` in its set, with lineage carrying the selection.
+A `WHERE` condition is saved verbatim in the selection, so that a later job can
+rebuild the rows. A filter on identifier values would therefore save the
+identifier. The data contract now refuses one (maintainer's decision,
+2026-10-01, after review of this spec): `read_job_data()` stops on a `WHERE` that
+mentions the resolved ID or MRN/eMRN, for every template, in its own PR before
+this one. Patients are excluded in the dataset build or an analysis set instead.
+
 `boostmtree` takes vectors, not a formula, so the formula-environment leak found
 in the hazard and random-forest families does not arise; the byte test checks
 it regardless.
@@ -153,16 +160,23 @@ it regardless.
 
 In this order, each in its own chunk:
 
-1. **Fit summary.** Family, `M`, `nu`, the cross-validated best `M` and the error
-   there.
+1. **Fit summary.** Family, `M`, `nu`, patients and visits, then one row per
+   response component: its cross-validated best `M` and the error there. An
+   ordinal or nominal fit has one component per level after the first, each with
+   its own best `M` and error path.
 2. **Error path.** `gg_boost_error()` and `gg_boost_path()`.
 3. **Observed against predicted.** `gg_boost_calibration()`.
 4. **Variable importance.** `gg_boost_vimp()`.
-5. **Partial effects.** `gg_boost_effect()` for `EFFECT_VARIABLES`, or the top six.
+5. **Partial effects.** `gg_boost_effect()` for `EFFECT_VARIABLES`, or the six
+   variables with the largest importance across response components. ggBoostedTrees
+   0.0.7 takes a single-response `partial.plot` only, so an ordinal or nominal fit
+   is drawn one component at a time.
 6. **Patient traces.** `gg_boost_trajectory()` and its `plot()` method: one fitted
    line per patient with that patient's observed values as points, `N_TRACES`
    patients sampled inside `withr::with_seed(SEED, ...)`. The population mean is
-   overlaid by the template as one ggplot2 layer. It is not added to
+   overlaid by the template as one ggplot2 layer: fitted values averaged within
+   ten equal-count time bins and drawn at each bin's mean time, because visit
+   times are irregular and a mean at each exact time would join single values. It is not added to
    ggBoostedTrees, which is a CRAN target and cannot depend on the internal
    hvtiPlotR; the template applies the hvtiPlotR theme, as the other families
    do. The plot method's `subset` argument picks patients by ID and is not
