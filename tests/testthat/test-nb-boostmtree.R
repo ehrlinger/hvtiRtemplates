@@ -160,6 +160,9 @@ test_that("every report chunk draws for every family, from a fresh fit and from 
   withr::local_pdf(NULL)
   labels <- c("set", "edit-study-choices", "data", "fit", "fit-summary", "error-path", "calibration",
               "importance", "effects", "traces", "save")
+  components <- list(continuous = "lvef", binary = "lvef_bin = 1 against 0",
+                     ordinal = c("lvef_ord threshold 1", "lvef_ord threshold 2"),
+                     nominal = c("lvef_nom = low against high", "lvef_nom = mid against high"))
   for (family in names(nb_families)) {
     # A study per family: one set holds one cached fit, and another family's would be stale there.
     root <- nb_study(nb_family_data())
@@ -172,7 +175,8 @@ test_that("every report chunk draws for every family, from a fresh fit and from 
         expect_s3_class(env[[p]], "ggplot")
         expect_no_error(ggplot2::ggplot_build(env[[p]]))
       }
-      effects <- if (inherits(env$p_effects, "ggplot")) list(env$p_effects) else env$p_effects
+      expect_true(is.list(env$p_effects))
+      effects <- env$p_effects
       expect_gte(length(effects), 1L)
       for (e in effects) expect_no_error(ggplot2::ggplot_build(e))
       # Each component's figures draw every effect variable once, continuous and factor alike.
@@ -182,6 +186,12 @@ test_that("every report chunk draws for every family, from a fresh fit and from 
       expect_identical(nrow(env$fit_summary), length(env$fit$m.opt), info = family)
       expect_true(all(is.finite(env$fit_summary$cv_error)), info = family)
       expect_false(anyDuplicated(env$.effect_vars) > 0L, info = family)
+      # Each component is named by its level, in the summary and on its effect figures.
+      expect_identical(env$fit_summary$component, components[[family]], info = family)
+      if (length(components[[family]]) > 1L) {
+        subtitles <- unique(vapply(effects, function(e) e$labels$subtitle, character(1L)))
+        expect_identical(subtitles, components[[family]], info = family)
+      }
     }
   }
 })
@@ -219,24 +229,29 @@ test_that("no report output prints an identifier", {
   expect_false(any(vapply(unique(data$MRN), function(v) any(grepl(v, out, fixed = TRUE)), logical(1L))))
 })
 
-test_that(".nb_single_response() returns one component of an ordinal partial.plot as gg_boost_effect() takes it", {
+
+test_that("EFFECT_VARIABLES may name a factor covariate alone", {
   nb_skip_unless_stack()
-  withr::local_seed(7)
-  d <- nb_family_data()
-  fit <- boostmtree::boostmtree(x = d[c("age", "female")], tm = d$iv_echo, id = as.character(d$ccfid),
-                                y = d$lvef_ord, family = "ordinal", M = 20, nu = 0.05, mod.grad = TRUE,
-                                cv.flag = TRUE, verbose = FALSE)
-  pp <- boostmtree::partial.plot(fit, x.var.names = c("age", "female"), output = "data", verbose = FALSE)
-  # The fixture is the nested shape gg_boost_effect() refuses, or this test proves nothing.
-  expect_error(ggBoostedTrees::gg_boost_effect(pp), "nested by response")
-  for (k in seq_along(pp$curves)) {
-    one <- hvtiRtemplates:::.nb_single_response(pp, k)
-    expect_s3_class(one, "partial.plot.boostmtree")
-    expect_identical(one$curves, pp$curves[[k]])
-    expect_identical(one$response.labels, pp$response.labels[[k]])
-    expect_s3_class(ggBoostedTrees::gg_boost_effect(one), "gg_boost_effect")
-  }
-  expect_error(hvtiRtemplates:::.nb_single_response(pp, 3L), "component 3")
-  single <- hvtiRtemplates:::.nb_single_response(pp, 1L)
-  expect_error(hvtiRtemplates:::.nb_single_response(single, 1L), "already holds one response")
+  withr::local_pdf(NULL)
+  root <- nb_study()
+  env <- nb_env(root)
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "fit-summary", "importance", "effects"),
+                               env, nb_choices(EFFECT_VARIABLES = "grp")))
+  expect_length(env$p_effects, 1L)
+  expect_identical(as.character(unique(env$p_effects[[1L]]$data$variable)), "grp")
+  expect_no_error(ggplot2::ggplot_build(env$p_effects[[1L]]))
+})
+
+test_that("visits all at one time draw no mean line, and say so", {
+  nb_skip_unless_stack()
+  traces <- data.frame(id = factor(rep(c("a", "b"), each = 2L)), time = 1, fitted = c(1, 2, 3, 4),
+                       observed = c(1, 2, 3, 4), response = factor("y"))
+  class(traces) <- c("gg_boost_trajectory", class(traces))
+  env <- nb_env(tempdir())
+  env$gg_boost_trajectory <- function(fit) traces
+  list2env(list(fit = NULL, SEED = 1, N_TRACES = Inf, .time = "iv_echo", .response = "lvef"), envir = env)
+  out <- utils::capture.output(nb_run("traces", env))
+  expect_null(env$trace_means)
+  expect_true(any(grepl("no mean line is drawn", out, fixed = TRUE)))
+  expect_no_error(ggplot2::ggplot_build(env$p_traces))
 })

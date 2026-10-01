@@ -338,8 +338,20 @@ knitr::kable(data.frame(
 # M and error path (fit$err.rate is then a list). Read the error at the best M
 # from the standardized l2 column, the scale gg_boost_error() plots.
 .err <- if (is.matrix(fit$err.rate)) list(fit$err.rate) else fit$err.rate
+# Each component is named by the level that defines it, which boostmtree keeps
+# in fit$q.set: a threshold for an ordinal fit, a class compared against the
+# reference class for a binary or nominal one. partial.plot() selects a
+# component by the same label ("response" for a continuous fit).
+.labels <- if (identical(fit$family, "continuous")) "response" else as.character(fit$q.set)
+.reference <- setdiff(as.character(fit$y.levels), .labels)
+.components <- switch(fit$family,
+  continuous = .response,
+  binary = ,
+  nominal = paste(.response, "=", .labels, "against", paste(.reference, collapse = ", ")),
+  ordinal = paste(.response, "threshold", .labels)
+)
 fit_summary <- data.frame(
-  component = seq_along(fit$m.opt),
+  component = .components,
   best_m = as.integer(fit$m.opt),
   cv_error = mapply(function(e, m) e[m, "l2"], .err, fit$m.opt)
 )
@@ -384,15 +396,13 @@ p_vimp
 .effect_vars <- if (is.null(EFFECT_VARIABLES)) head(names(.top), 6L) else EFFECT_VARIABLES
 .unknown <- setdiff(.effect_vars, .predictors)
 if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unknown, collapse = ", "), call. = FALSE)
-pp <- partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE)
 # gg_boost_effect() takes a single-response partial.plot (ggBoostedTrees 0.0.7).
-# An ordinal or nominal fit nests its curves by response component, so each
-# component is drawn on its own.
-.effects <- if (length(fit$m.opt) == 1L) {
-  list(gg_boost_effect(pp))
-} else {
-  lapply(seq_along(fit$m.opt), function(k) gg_boost_effect(hvtiRtemplates:::.nb_single_response(pp, k)))
-}
+# An ordinal or nominal fit has several components, so partial.plot() is asked
+# for one at a time, by its label, and each is drawn on its own.
+.effects <- lapply(.labels, function(lbl) {
+  gg_boost_effect(partial.plot(fit, x.var.names = .effect_vars, response.labels = lbl, output = "data",
+                               verbose = FALSE))
+})
 # A continuous covariate is drawn as a curve and a factor as a point per level,
 # on axes ggplot2 cannot share, so plot() refuses an effect holding both. Each
 # kind is drawn in its own figure, which is also why p_effects is a list.
@@ -406,7 +416,7 @@ pp <- partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = F
   })
 }
 p_effects <- do.call(c, lapply(seq_along(.effects), function(k) {
-  .draw_effects(.effects[[k]], if (length(.effects) > 1L) paste("Response component", k))
+  .draw_effects(.effects[[k]], if (length(.effects) > 1L) .components[[k]])
 }))
 for (.p in p_effects) print(.p)
 ```
@@ -423,18 +433,24 @@ traces <- gg_boost_trajectory(fit)
 # drawn at each bin's mean time. A bin is per response component when there
 # are several.
 .edges <- unique(stats::quantile(traces$time, seq(0, 1, length.out = 11L), names = FALSE))
-traces$.bin <- cut(traces$time, .edges, include.lowest = TRUE)
-.by <- intersect(c("response", ".bin"), names(traces))
-trace_means <- do.call(rbind, lapply(split(traces, traces[.by], drop = TRUE), function(b) {
-  data.frame(b[1L, setdiff(.by, ".bin"), drop = FALSE], time = mean(b$time), fitted = mean(b$fitted),
-             n_patients = length(unique(b$id)))
-}))
 # plot() reports that it chose the patients at random; SEED makes the choice
 # the same on every render.
-p_traces <- withr::with_seed(SEED, plot(traces, n_max = N_TRACES)) +
-  ggplot2::geom_line(data = trace_means, ggplot2::aes(x = .data[["time"]], y = .data[["fitted"]]),
-                     linewidth = 1.2, inherit.aes = FALSE) +
-  ggplot2::labs(x = .time, y = .response)
+p_traces <- withr::with_seed(SEED, plot(traces, n_max = N_TRACES)) + ggplot2::labs(x = .time, y = .response)
+if (length(.edges) < 2L) {
+  # Every visit at one time leaves no span to bin, and no line to draw.
+  trace_means <- NULL
+  cat("Every visit is at one time, so no mean line is drawn.\n")
+} else {
+  traces$.bin <- cut(traces$time, .edges, include.lowest = TRUE)
+  .by <- intersect(c("response", ".bin"), names(traces))
+  trace_means <- do.call(rbind, lapply(split(traces, traces[.by], drop = TRUE), function(b) {
+    data.frame(b[1L, setdiff(.by, ".bin"), drop = FALSE], time = mean(b$time), fitted = mean(b$fitted),
+               n_patients = length(unique(b$id)))
+  }))
+  p_traces <- p_traces +
+    ggplot2::geom_line(data = trace_means, ggplot2::aes(x = .data[["time"]], y = .data[["fitted"]]),
+                       linewidth = 1.2, inherit.aes = FALSE)
+}
 p_traces
 ```
 
