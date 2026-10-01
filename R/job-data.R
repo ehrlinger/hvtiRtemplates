@@ -396,14 +396,16 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 
 # The data step of a downstream job: take the upstream job's selection from
 # its hand-off lineage, check this job's settings against it, and (unless the
-# job reads no data) rebuild exactly the upstream rows.
-.read_upstream_job_data <- function(cfg, lineage, settings, read = TRUE, source = NULL) {
+# job reads no data) rebuild exactly the upstream rows. `rerun` says what to
+# run again when the hand-off carries no selection; a bootstrap report names
+# its runner, which is a study script and not a template.
+.read_upstream_job_data <- function(cfg, lineage, settings, read = TRUE, source = NULL,
+                                    rerun = "Rerun the upstream job with the current template, then rerun this one.") {
   upstream <- lineage$selection
   if (is.null(upstream)) {
     stop("The upstream job's saved output", if (!is.null(source)) paste0(" (", source, ")"),
          " carries no single recorded data selection: it predates the data contract, or its inputs ",
-         "disagreed and were combined. Rerun the upstream job with the current template, then rerun ",
-         "this one.", call. = FALSE)
+         "disagreed and were combined. ", rerun, call. = FALSE)
   }
   sel <- .check_upstream_selection(upstream, settings)
   if (!read) return(list(selection = sel))
@@ -425,4 +427,82 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
          "The data changed since the upstream job ran; rerun the upstream job.", call. = FALSE)
   }
   list(job_data = job_data, selection = sel)
+}
+
+#' Stop on a bootstrap bag that carries patient-level data
+#'
+#' A bag holds a screen's replicates and its settings, never the rows it
+#' resampled. \code{boot_bag()} builds one that way, but a hazard bag is a list
+#' its runner writes by hand, and a field, or the environment of a formula or
+#' a function saved in it, can hold the runner's data.
+#'
+#' The guard is by NAME. It stops on a list element, data frame column or
+#' matrix column named for the job's ID, MRN or eMRN (ignoring case), wherever
+#' it sits, and on such a binding in an environment a formula or function in
+#' the bag carries. It does not see an ID stored under another name, an ID
+#' used as row names, or data in an environment it does not walk: a named
+#' environment (global, package, namespace), which is saved by reference, and
+#' an unforced promise, which is skipped because reading it would evaluate it.
+#' A binding that cannot be read, and an active binding, which is never
+#' evaluated, are reported rather than passed. The carried lineage is searched
+#' like any other attribute, except that the names of the selection's own
+#' fields are not matched: \code{read_job_data()} writes them, and its
+#' \code{id} field holds a column name, not patient values.
+#'
+#' @param bag The bag or chunk, as read.
+#' @param id The job's resolved ID column.
+#' @param source What to call the bag in the message.
+#' @return \code{TRUE}, invisibly, or an error naming each place found.
+#' @noRd
+.check_bag_identifiers <- function(bag, id, source = "The bootstrap bag") {
+  wanted <- unique(tolower(c(id, .job_identifier_names)))
+  seen <- list()
+  found <- character()
+  walk <- function(x, at, match_names = TRUE) {
+    if (is.environment(x)) {
+      if (nzchar(environmentName(x)) || any(vapply(seen, identical, logical(1L), x))) return(invisible())
+      seen[[length(seen) + 1L]] <<- x
+      names <- ls(x, all.names = TRUE)
+      # Reading either would run code: an unforced promise is skipped, and an
+      # active binding, which could return anything, is reported unread.
+      active <- names[rlang::env_binding_are_active(x, names)]
+      for (name in active) found <<- c(found, paste0(at, ": ", name, " (an active binding, not read)"))
+      lazy <- names[rlang::env_binding_are_lazy(x, names)]
+      for (name in setdiff(names, c(active, lazy))) {
+        here <- paste0(at, ": ", name)
+        value <- tryCatch(get(name, envir = x), error = function(e) {
+          found <<- c(found, paste0(here, " (unreadable: ", conditionMessage(e), ")"))
+          NULL
+        })
+        if (tolower(name) %in% wanted && length(value)) found <<- c(found, here)
+        walk(value, here)
+      }
+      return(walk(parent.env(x), at))
+    }
+    if (is.function(x) && !is.primitive(x)) walk(environment(x), paste0(at, ", a function's environment"))
+    hit <- if (match_names) unique(c(names(x), colnames(x))) else colnames(x)
+    hit <- hit[tolower(hit) %in% wanted]
+    if (length(hit) && length(x)) found <<- c(found, paste0(at, "$", hit))
+    extra <- attributes(x)
+    extra <- extra[setdiff(names(extra), c("names", "row.names", "class", "dim", "dimnames"))]
+    for (name in names(extra)) walk(extra[[name]], paste0(at, ", attribute ", name))
+    if (is.list(x)) {
+      labels <- if (is.null(names(x))) rep("", length(x)) else names(x)
+      for (i in seq_along(x)) {
+        here <- paste0(at, if (nzchar(labels[[i]])) paste0("$", labels[[i]]) else paste0("[[", i, "]]"))
+        # The selection's fields are named by read_job_data(), and `id` holds a
+        # column name; what they hold is still searched.
+        walk(x[[i]], here, match_names = here != "bag, attribute hvti_provenance$selection")
+      }
+    }
+    invisible()
+  }
+  walk(bag, "bag")
+  if (length(found)) {
+    stop(source, " holds patient-level data: ", paste(unique(found), collapse = "; "), ". A bag holds the screen's ",
+         "replicates and its settings, never the rows it resampled or their patient identifier. Delete this ",
+         "file and rerun the bootstrap runner without changing what it saves.",
+         call. = FALSE)
+  }
+  invisible(TRUE)
 }

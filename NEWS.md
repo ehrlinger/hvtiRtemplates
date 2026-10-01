@@ -1,5 +1,32 @@
 # hvtiRtemplates (unreleased)
 
+* The bootstrap reports print the data selection their bag carries, and their
+  runners read data through `read_job_data()`. Each runner is its own job:
+  `add_job()` for `bl`, `br`, `bc` and `bh` also writes
+  `<subject>-<type>-<prefix>-runner.R` beside the report, with its study
+  choices marked `EDIT:`, and refuses to overwrite one. A runner stops until
+  its `FINISHED` is set to `TRUE`, and checks its package floor
+  (hvtiRbootstrap 0.9.3, TemporalHazard 1.2.8) before it screens, so a long
+  run cannot finish only to be refused. The runner saves the
+  selection in the bag's lineage and resamples only the model's columns.
+  `WHERE`, `ID` and `KEY` in the report confirm the runner's values, and the
+  collinearity table reads the rows the runner screened rather than the whole
+  dataset. **A bag saved before this change carries no selection, and its
+  report stops: rerun its runner.** So does a `bh` pool whose chunks were run
+  on different rows.
+
+* A bootstrap report stops on a bag that carries a patient identifier. The
+  check is by name: it finds a field, column or matrix column named for the
+  job's `ID`, `MRN` or `eMRN`, anywhere in the bag or its carried lineage,
+  including inside the environment a saved formula or function carries. An
+  active binding there is reported, never evaluated. It does not find an ID
+  stored under another name or used as row names, nor data in an environment
+  it does not read (a package or the global environment, or an unforced
+  promise).
+
+* `BOOTSTRAP_DATA` is removed from the bootstrap reports. A bag must come from
+  its runner, which attaches the lineage and selection the report reads.
+
 * New template `hs-concordance`: every patient predicted through every
   treatment group's `hm` model at one horizon, the job the corpus calls
   concordance and discordance. It reads each group's model from that

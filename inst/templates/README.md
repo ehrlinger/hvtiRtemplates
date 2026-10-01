@@ -171,20 +171,26 @@ content all ship now, `bh` last: `hz` in 1.0.6, `hp` in 1.0.7, `hm` in 1.0.8,
 prefix is scheduled when:
 [`dev/specs/2026-08-29-template-conversion-roadmap.md`](../../dev/specs/2026-08-29-template-conversion-roadmap.md).
 
-**`bh`'s companion runner is not templated.** The screen is days of compute and
-`hzr_bootstrap()` writes nothing until its final replicate, so the run is
-chunked from a separate script and this template reports over what that script
-wrote. Templating the runner needs multi-file templates in `add_job()`, which
-is a package change. `hm` has the same gap.
+**The four bootstrap reports' runners ship with the package.** A bootstrap
+report reads a bag; its runner, a job of its own that runs first, screens and
+saves that bag. `add_job()` writes the runner beside the report, from
+`inst/runners/<prefix>-runner.R`, as `<subject>-<type>-<prefix>-runner.R`,
+with the same `SUBJECT` and `TYPE` substitution, and refuses to overwrite one.
+Its study choices carry `EDIT:` markers. It reads its rows with
+`hvtiRtemplates::read_job_data()` and saves the selection that call records in
+the bag's lineage; the report prints that selection and stops on a bag without
+one.
 
-**Nor are `bl`, `br` and `bc`'s.** Their runner calls
+`bh`'s runner is chunked: the screen is days of compute and `hzr_bootstrap()`
+writes nothing until its final replicate, so the runner is run once per chunk
+and the report pools what the chunks wrote. `bl`, `br` and `bc`'s runner calls
 `hvtiRbootstrap::boot_select()` with the fitter for its model and converts the
-result with `boot_bag()`, which is one call and needs no template. What it must
-supply is the four facts the screen cannot know: which terms are the base
-model, how many candidates were offered before any were dropped, the dataset
-manifest, and what was dropped.
+result with `boot_bag()`. It supplies the four facts the screen cannot know:
+which terms are the base model, how many candidates were offered before any
+were dropped, the dataset manifest, and what was dropped. `hm`'s companion
+selection script is still not templated.
 
-⚠️ **None of the three has been rendered against a screen a study ran.** No R
+⚠️ **None of `bl`, `br` and `bc` has been rendered against a screen a study ran.** No R
 job in the corpus calls `boot_select()` yet, so all three were gated on a
 screen run against a real built dataset for the purpose. That covers real
 variable names and a real correlation structure; it does not cover the

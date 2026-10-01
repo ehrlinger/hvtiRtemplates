@@ -61,6 +61,7 @@ Suggests:
     patchwork (>= 1.1.0),
     quarto,
     randomForestSRC (>= 3.7.0),
+    survival,
     TemporalHazard (>= 1.2.12),
     testthat (>= 3.0.0),
     varPro (>= 3.2.0),
