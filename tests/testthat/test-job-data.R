@@ -310,7 +310,10 @@ test_that("a selection saved before the refusal is still shown masked, and rebui
   rebuilt <- refusal(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list(), source = "hz.rds"))
   expect_match(rebuilt, "hz.rds", fixed = TRUE)
   expect_match(rebuilt, "patient identifier")
-  expect_match(rebuilt, "[Rr]erun the upstream job")
+  expect_match(rebuilt, "remove it from the upstream job's WHERE, then rerun the upstream job", fixed = TRUE)
+  # The advice is given once, and not as though the condition were this job's.
+  expect_false(grepl("remove the condition from WHERE", rebuilt, fixed = TRUE))
+  expect_identical(lengths(regmatches(rebuilt, gregexpr("rerun the upstream job", rebuilt, ignore.case = TRUE))), 1L)
   expect_false(grepl("9001", rebuilt, fixed = TRUE))
 })
 
@@ -396,13 +399,74 @@ test_that("a WHERE that names an ordinary column through .data is allowed, and s
 
 test_that("a WHERE whose .data column is not written literally stops, and asks for the name", {
   cfg <- job_study(d_ids)
-  nm <- "age"
-  for (where in list(quote(.data[[nm]] == 9001), quote(.data[[paste0("cc", "fid")]] == 9001), quote(nrow(.data) > 9001))) {
+  for (where in list(quote(.data[[paste0("cc", "fid")]] == 9001), quote(nrow(.data) > 9001))) {
     err <- refusal(read_job_data(cfg, where = where))
     expect_match(err, "name the column", info = deparse(where))
     expect_match(err, "patient identifier", info = deparse(where))
     expect_false(grepl("9001", err, fixed = TRUE), info = deparse(where))
   }
+  # An index from outside the data is fixed in first, so it is judged by the column it names.
+  nm <- "age"
+  expect_identical(nrow(read_job_data(cfg, where = quote(.data[[nm]] >= 18))$data), 4L)
+  nm <- "ccfid"
+  err <- refusal(read_job_data(cfg, where = quote(.data[[nm]] == 9001)))
+  expect_match(err, "patient identifier (`ccfid`)", fixed = TRUE)
+  expect_false(grepl("9001", err, fixed = TRUE))
+})
+
+test_that("a WHERE that reaches the ID through an outside symbol or condition stops", {
+  cfg <- job_study(d_ids)
+  col <- quote(ccfid)
+  filt <- quote(ccfid != 9001)
+  for (where in list(quote(col != 9001), quote(filt), rlang::exprs(age >= 18, filt))) {
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "patient identifier (`ccfid`)", fixed = TRUE, info = deparse(where))
+    expect_false(grepl("9001", err, fixed = TRUE), info = deparse(where))
+  }
+})
+
+test_that("a WHERE that looks a column up by a string stops, and is masked", {
+  cfg <- job_study(d_ids)
+  lookups <- list(quote(get("ccfid") != 9001), quote(get0("ccfid") != 9001), quote(base::get("ccfid") != 9001),
+                  quote(mget("ccfid")[[1]] != 9001), quote(eval(as.name("ccfid")) != 9001),
+                  quote(eval(as.symbol("ccfid")) != 9001), quote(evalq(get("ccfid")) != 9001),
+                  quote(eval(str2lang("ccfid")) != 9001), quote(eval(parse(text = "ccfid")[[1]]) != 9001),
+                  quote(eval(str2expression("ccfid")[[1]]) != 9001), quote(eval(rlang::sym("ccfid")) != 9001),
+                  quote(eval(sym("ccfid")) != 9001))
+  for (where in lookups) {
+    info <- paste(deparse(where), collapse = " ")
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "name the column", info = info)
+    expect_false(grepl("9001", err, fixed = TRUE), info = info)
+    shown <- hvtiRtemplates:::.mask_condition(where, "ccfid")
+    expect_false(grepl("9001", shown, fixed = TRUE), info = info)
+  }
+  # A lookup that names the ID literally is refused for the ID itself.
+  expect_match(refusal(read_job_data(cfg, where = quote(evalq(ccfid) != 9001))), "patient identifier (`ccfid`)",
+               fixed = TRUE)
+  # The masking change is for string lookups only: an ordinary condition stays readable.
+  expect_identical(hvtiRtemplates:::.mask_condition(quote(age >= 18), "ccfid"), "age >= 18")
+})
+
+test_that("a name that is not a column is not taken for the ID", {
+  cfg <- job_study(d_ids)
+  ccfid <- 9001
+  mrn <- c(1, 18)
+  lst <- list(mrn = 18)
+  # .env$ccfid and an outside mrn are fixed in as constants, so nothing names the ID.
+  out <- read_job_data(cfg, where = quote(age > .env$ccfid - 9001))
+  expect_identical(attr(out$record, "selection")$where, "age > 9001 - 9001")
+  expect_identical(nrow(read_job_data(cfg, where = quote(age > .env[["ccfid"]] - 8983))$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, where = quote(age > max(mrn)))$data), 4L)
+  # An .env lookup that resolves to nothing is still not the ID column: it fails as an
+  # unknown name, not as a refusal.
+  for (where in list(quote(age > .env$emrn), quote(age > .env[["emrn"]]))) {
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "emrn", info = deparse(where))
+    expect_false(grepl("patient identifier", err, fixed = TRUE), info = deparse(where))
+  }
+  # The right side of $ names a field, not a column.
+  expect_identical(nrow(read_job_data(cfg, where = quote(age >= lst$mrn))$data), 4L)
 })
 
 test_that("a WHERE value from outside the data is fixed into the recorded condition", {

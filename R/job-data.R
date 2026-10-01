@@ -55,6 +55,29 @@
 # Date or POSIXct inlined with `!!`, is a value and is masked.
 .is_maskable_value <- function(e) is.atomic(e) && !is.null(e) && !is.logical(e)
 
+# Functions that turn a string into a column reference, as get("ccfid") or
+# eval(as.name("ccfid")) do. A condition calling one can reach any column under
+# a name all.vars() does not see, so it is masked like one that uses .data, and
+# the refusal below cannot tell which column it reaches.
+.string_lookups <- c("get", "get0", "mget", "eval", "evalq", "as.name", "as.symbol", "sym", "parse", "str2lang",
+                     "str2expression")
+
+.is_string_lookup <- function(e) {
+  if (!is.call(e)) return(FALSE)
+  head <- e[[1L]]
+  if (is.call(head) && length(head) == 3L && (identical(head[[1L]], as.name("::")) || identical(head[[1L]], as.name(":::")))) {
+    head <- head[[3L]]
+  }
+  is.name(head) && as.character(head) %in% .string_lookups
+}
+
+.uses_string_lookup <- function(e) {
+  if (!is.call(e)) return(FALSE)
+  if (.is_string_lookup(e)) return(TRUE)
+  for (i in seq_along(e)) if (!(is.name(e[[i]]) && !nzchar(as.character(e[[i]]))) && .uses_string_lookup(e[[i]])) return(TRUE)
+  FALSE
+}
+
 # A condition that uses .data can reach any column, the ID included, through
 # a string such as .data[["ccfid"]], which all.vars() does not see as a column,
 # so it is masked as though it named the ID. The column named inside .data[[ ]]
@@ -63,7 +86,9 @@
   text <- if (is.character(x)) x else paste(deparse(x, width.cutoff = 500L), collapse = " ")
   expr <- if (is.character(x)) tryCatch(str2lang(x), error = function(e) NULL) else x
   vars <- tolower(all.vars(expr))
-  if (is.null(expr) || !(".data" %in% vars || length(intersect(vars, tolower(cols))))) return(text)
+  if (is.null(expr) || !(".data" %in% vars || length(intersect(vars, tolower(cols))) || .uses_string_lookup(expr))) {
+    return(text)
+  }
   mask <- function(e) {
     if (.is_pronoun_lookup(e, ".data")) return(e)
     if (is.call(e)) {
@@ -136,10 +161,13 @@
 
 .mask_conditions <- function(x, cols) vapply(as.character(x), .mask_condition, "", cols = cols, USE.NAMES = FALSE)
 
-# The columns a condition names, for the refusal below. Unlike the masking,
+# The columns a condition names, for the refusal below, read from the condition
+# after .resolve_outside() has fixed outside values into it. Unlike the masking,
 # which hides the values of any condition that uses .data, this resolves
 # .data$x and .data[["x"]] to x, so a filter on an ordinary column through .data
-# is allowed. Any other use of .data, such as .data[[nm]], names a column that
+# is allowed. A remaining bare name is a column; the field after $ or @ (as in
+# .env$x) is not, nor is a string outside .data[[ ]] (as in .env[["x"]]). Any
+# other use of .data, and a string lookup such as get(), reaches a column that
 # cannot be known here, and is reported as `opaque`.
 .where_columns <- function(expr) {
   found <- character()
@@ -162,10 +190,13 @@
       if (identical(name, ".data")) opaque <<- TRUE else found <<- c(found, name)
       return(invisible())
     }
-    if (is.call(e)) {
-      # Tested in place, never bound: an empty argument cannot be assigned.
-      for (i in seq_along(e)) if (!(is.name(e[[i]]) && !nzchar(as.character(e[[i]])))) walk(e[[i]])
-    }
+    if (!is.call(e)) return(invisible())
+    if (.is_string_lookup(e)) opaque <<- TRUE
+    head <- e[[1L]]
+    if (is.name(head) && as.character(head) %in% c("$", "@")) return(walk(e[[2L]]))
+    if (is.call(head)) walk(head)
+    # Tested in place, never bound: an empty argument cannot be assigned.
+    for (i in seq_along(e)[-1L]) if (!(is.name(e[[i]]) && !nzchar(as.character(e[[i]])))) walk(e[[i]])
     invisible()
   }
   walk(expr)
@@ -174,8 +205,10 @@
 
 # Every condition's exact text is saved in the job's hand-off, so a condition on
 # the patient identifier would put identifier values in the job's output. Each
-# condition is checked before any is evaluated, and the message shows only the
-# masked text. `identifiers` are the ID and any MRN or eMRN column.
+# condition is checked, after outside values are fixed in and before any is
+# evaluated, and the message shows only the masked text. `identifiers` are the
+# ID and any MRN or eMRN column. The condition carries `shown` and `what`, so an
+# upstream rebuild can say where the condition lives.
 .refuse_identifier_where <- function(conditions, identifiers, cols) {
   for (cond in conditions) {
     named <- .where_columns(cond)
@@ -184,26 +217,27 @@
     what <- if (length(reached)) {
       paste0("uses the patient identifier (", paste0("`", reached, "`", collapse = ", "), ")")
     } else {
-      paste0("uses .data without a literal column name, so it may reach the patient identifier; name the ",
-             "column literally, as .data$age or .data[[\"age\"]]")
+      paste0("reaches a column through .data or a string lookup such as get(), so it may reach the patient ",
+             "identifier; name the column literally, as age or .data$age")
     }
+    shown <- .mask_condition(cond, unique(c(identifiers, cols)))
     stop(errorCondition(paste0(
-      "WHERE condition `", .mask_condition(cond, unique(c(identifiers, cols))), "` ", what, ". Each WHERE ",
-      "condition is saved, values included, in this job's output, so a filter on identifier values would ",
-      "be saved with it. Exclude those patients in the dataset build, or with an hvtiRdatabuild analysis ",
-      "set, and remove the condition from WHERE."
-    ), class = "hvti_where_identifier", call = NULL))
+      "WHERE condition `", shown, "` ", what, ". Each WHERE condition is saved, values included, in this ",
+      "job's output, so a filter on identifier values would be saved with it. Exclude those patients in the ",
+      "dataset build, or with an hvtiRdatabuild analysis set, and remove the condition from WHERE."
+    ), class = "hvti_where_identifier", call = NULL, shown = shown, what = what))
   }
   invisible(TRUE)
 }
 
 .apply_where <- function(d, where, env = parent.frame(), cols = character(), identifiers = character()) {
-  conditions <- .where_conditions(where)
+  # Outside values are fixed in first: one can be a symbol or a whole condition
+  # that names the ID, which the refusal must see.
+  conditions <- lapply(.where_conditions(where), .resolve_outside, cols = names(d), env = env)
   .refuse_identifier_where(conditions, identifiers, cols)
   steps <- data.frame(condition = character(), shown = character(), removed = integer(),
                       missing = integer())
   for (cond in conditions) {
-    cond <- .resolve_outside(cond, names(d), env)
     label <- .condition_text(cond)
     shown <- .mask_condition(cond, cols)
     keep <- tryCatch(rlang::eval_tidy(cond, data = d, env = env), error = function(e) {
@@ -278,8 +312,12 @@
 #'   \code{.data[["x"]]}, stops before any row is filtered, because each
 #'   condition is saved, values included, in the job's output. Exclude those
 #'   patients in the dataset build, or with an hvtiRdatabuild analysis set,
-#'   instead. So does a \code{.data} use whose column is not written literally,
-#'   such as \code{.data[[nm]]}, since the column it reaches cannot be known.
+#'   instead. A value from outside the data is fixed in before this check, so
+#'   \code{.data[[nm]]} is judged by the column \code{nm} names. A column
+#'   reached any other way, as by \code{.data[[paste0(...)]]} or a string
+#'   lookup such as \code{get()}, stops too, since it cannot be known.
+#'   Detection is by column name: a copy of the identifier under another name
+#'   is not caught.
 #' @param id The patient identifier column. When it is the default
 #'   \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.
 #' @param key Columns that make a row unique; defaults to \code{id}, one row
@@ -290,10 +328,12 @@
 #'   matches its column ignoring case, because
 #'   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
 #'   key and date values are not printed: the record holds counts, and a
-#'   \code{where} condition that mentions a \code{key} column or uses
-#'   \code{.data} is shown, in the record and in error messages, with its values
-#'   replaced by \code{<value>}. So is a condition on \code{id} in a selection
-#'   saved before such conditions were refused. Every setting is checked before the data are read.
+#'   \code{where} condition that mentions a \code{key} column, uses
+#'   \code{.data} or calls a string lookup such as \code{get()} is shown, in
+#'   the record and in error messages, with its values replaced by
+#'   \code{<value>}. So is a condition on \code{id} in a selection saved before
+#'   such conditions were refused. Every setting is checked before the data are
+#'   read.
 #'
 #' @return A list:
 #'   \itemize{
@@ -312,7 +352,8 @@
 #'       used to rebuild the rows; it stays inside the study and is never
 #'       printed;
 #'     \item \code{where_shown}, the same conditions as a report may show them,
-#'       with the values of any condition on a \code{key} column, or using \code{.data}, replaced;
+#'       with the values of any condition on a \code{key} column, or using
+#'       \code{.data} or a string lookup, replaced;
 #'     \item \code{id} and \code{key}, the resolved column names;
 #'     \item \code{rows} and \code{patients}, the counts kept;
 #'     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
@@ -489,8 +530,10 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     # A file saved before WHERE on the identifier was refused can carry one.
     hvti_where_identifier = function(e) {
       stop("The upstream job's saved output", if (!is.null(source)) paste0(" (", source, ")"),
-           " filters on the patient identifier, which this version refuses. ", conditionMessage(e),
-           " Then rerun the upstream job, and this one.", call. = FALSE)
+           " has a WHERE condition, `", e$shown, "`, that ", e$what, ", which this version refuses: each WHERE ",
+           "condition is saved, values included, in a job's output. Exclude those patients in the dataset build, ",
+           "or with an hvtiRdatabuild analysis set; remove it from the upstream job's WHERE, then rerun the ",
+           "upstream job, and this one.", call. = FALSE)
     }
   )
   now <- attr(job_data$record, "selection")
