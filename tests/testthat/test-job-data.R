@@ -540,6 +540,37 @@ test_that("a WHERE value that is also a patient identifier in the data is refuse
   expect_identical(nrow(read_job_data(cfg, where = quote(!id2 %in% c(NA, 1)))$data), 6L)
 })
 
+test_that("a WHERE constant expression that evaluates to an identifier is refused before any row is filtered", {
+  d <- data.frame(ccfid = 4730000001 + 0:2, id2 = 4730000001 + 0:2, age = c(50, 70, 80))
+  cfg <- job_study(d)
+  for (where in list(quote(id2 != 4730000000 + 1), quote(id2 != as.numeric("4730000001")),
+                     quote(id2 %in% c(4730000000 + 1, 4730000000 + 2)))) {
+    info <- paste(deparse(where), collapse = " ")
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "also a patient identifier in the data", info = info)
+    expect_match(err, "`ccfid`", fixed = TRUE, info = info)
+    expect_false(grepl("4730000001|4.73e", err), info = info)
+  }
+  # Nothing is filtered: the refusal comes from the check, before evaluation.
+  expect_error(.apply_where(d, quote(id2 != 4730000000 + 1), environment(), cols = "ccfid",
+                            identifiers = "ccfid", id_values = list(ccfid = .id_text(d$ccfid))),
+               class = "hvti_where_identifier")
+  chr <- data.frame(ccfid = paste0("A", 4730000001 + 0:2), id2 = paste0("A", 4730000001 + 0:2), age = c(50, 70, 80))
+  err <- refusal(read_job_data(job_study(chr), where = quote(id2 != paste0("A47300", "00001"))))
+  expect_match(err, "also a patient identifier in the data")
+  expect_false(grepl("A4730000001", err, fixed = TRUE))
+  # Thresholds computed from constants are allowed when they equal no identifier, or are short.
+  expect_identical(nrow(read_job_data(cfg, where = quote(age > 60 + 5))$data), 2L)
+  expect_identical(nrow(read_job_data(cfg, where = quote(age > 2000 + 26 - 1960))$data), 2L)
+  expect_identical(nrow(read_job_data(cfg, where = quote(age < 2000 + 26))$data), 3L)
+})
+
+test_that("a value transformed through a data column is allowed: the documented limit of the value check", {
+  d <- data.frame(ccfid = 4730000001 + 0:2, id2 = 4730000001 + 0:2)
+  out <- read_job_data(job_study(d), where = quote(id2 / 2 != 2365000000.5))
+  expect_identical(nrow(out$data), 2L)
+})
+
 test_that("short identifiers do not collide with thresholds: hx_chf == 1 and age >= 18 are allowed with IDs 1..n", {
   cfg <- job_study(d0)
   expect_identical(read_job_data(cfg, where = rlang::exprs(age >= 18, hx_chf == 1))$data$ccfid, c(2L, 3L, 5L))

@@ -254,13 +254,17 @@
 #
 # Names cannot see an alias or a wrapper (f <- function(x) get(x)), nor a copy
 # of the ID under another name, so the values are checked too: every constant
-# in the resolved condition, as text, against the values of the ID, MRN and
-# eMRN columns (`id_values`, a named list of their unique values as text).
-.refuse_identifier_where <- function(conditions, identifiers, cols, id_values = list()) {
+# in the resolved condition, literal or computed from constants alone, as text,
+# against the values of the ID, MRN and eMRN columns (`id_values`, a named list
+# of their unique values as text). A value computed from a data column is not
+# seen. `data_cols` and `env` are the data's columns and the condition's
+# environment, for evaluating the constant subexpressions.
+.refuse_identifier_where <- function(conditions, identifiers, cols, id_values = list(), data_cols = NULL,
+                                     env = emptyenv()) {
   for (cond in conditions) {
     named <- .where_columns(cond)
     reached <- identifiers[tolower(identifiers) %in% tolower(named$columns)]
-    constants <- .where_constants(cond)
+    constants <- if (length(id_values)) .where_constants(cond, data_cols, env) else character()
     constants <- constants[nchar(constants) >= .min_id_value_chars]
     matched <- names(id_values)[vapply(id_values, function(v) any(constants %in% v), logical(1L))]
     if (!length(reached) && !named$opaque && !length(matched)) next
@@ -287,16 +291,29 @@
 # Real ccfid and MRN values are 6 to 10 digits, so a shorter constant (1, 18, 2015) is a threshold, not an ID.
 .min_id_value_chars <- 5L
 
-# Every atomic constant in a condition, as .id_text() writes it. Logical
-# constants and NA are left out: neither can be an identifier.
-.where_constants <- function(expr) {
+# Every atomic constant in a condition, as .id_text() writes it: each literal,
+# and the value of each maximal subexpression that reads no column of
+# `data_cols` and no .data, so arithmetic such as 4730000000 + 1 cannot hide an
+# identifier. Such a subexpression is evaluated in `env`, as filter() would; one
+# that errors is left to the condition's own evaluation, which errors the same
+# way. Logical constants and NA are left out: neither can be an identifier.
+.where_constants <- function(expr, data_cols = NULL, env = emptyenv()) {
   found <- character()
-  walk <- function(e) {
-    if (is.atomic(e) && !is.null(e) && !is.logical(e)) {
-      found <<- c(found, .id_text(e[!is.na(e)]))
-    } else if (is.call(e)) {
-      for (i in seq_along(e)) if (!(is.name(e[[i]]) && !nzchar(as.character(e[[i]])))) walk(e[[i]])
+  add <- function(value) {
+    if (is.atomic(value) && !is.null(value) && !is.logical(value)) found <<- c(found, .id_text(value[!is.na(value)]))
+  }
+  constant <- function(e) {
+    vars <- all.vars(e)
+    !is.null(data_cols) && !".data" %in% vars && !any(vars %in% data_cols)
+  }
+  walk <- function(e, evaluated = FALSE) {
+    if (is.atomic(e)) return(add(e))
+    if (!is.call(e)) return(invisible())
+    if (!evaluated && constant(e)) {
+      add(tryCatch(eval(e, env), error = function(err) NULL))
+      evaluated <- TRUE
     }
+    for (i in seq_along(e)) if (!(is.name(e[[i]]) && !nzchar(as.character(e[[i]])))) walk(e[[i]], evaluated)
     invisible()
   }
   walk(expr)
@@ -308,7 +325,7 @@
   # Outside values are fixed in first: one can be a symbol or a whole condition
   # that names the ID, which the refusal must see.
   conditions <- lapply(.where_conditions(where), .resolve_outside, cols = names(d), env = env)
-  .refuse_identifier_where(conditions, identifiers, cols, id_values)
+  .refuse_identifier_where(conditions, identifiers, cols, id_values, data_cols = names(d), env = env)
   steps <- data.frame(condition = character(), shown = character(), removed = integer(),
                       missing = integer())
   for (cond in conditions) {
@@ -395,15 +412,18 @@
 #'   reached any other way, as by \code{.data[[paste0(...)]]} or a string
 #'   lookup such as \code{get()}, stops too, since it cannot be known.
 #'   A function bound to such a lookup under another name is read as that
-#'   lookup. Values are checked as well as names: a condition holding any value
-#'   of the identifier, \code{MRN} or \code{eMRN} columns in the data stops,
-#'   however it is reached (a wrapper function, a copy of the identifier under
-#'   another name, an outside vector). A threshold that happens to equal a
-#'   patient's identifier is refused too, and the message says so; numbers are
-#'   compared as whole numbers where they are whole, and \code{NA} never
-#'   matches. The value check covers identifiers of five or more characters, so
-#'   thresholds such as 1, 18 or 2015 never collide; a study keyed on shorter
-#'   identifiers relies on the name checks.
+#'   lookup. Values are checked as well as names: the check covers literal
+#'   values and constant expressions (such as \code{4730000000 + 1}, or a
+#'   vector fixed in from outside) of five or more characters that equal a
+#'   value of the identifier, \code{MRN} or \code{eMRN} columns in the data, so
+#'   a wrapper function or a copy of the identifier under another name is
+#'   caught when it is compared with such a value. A value computed from a data
+#'   column, as in \code{id2 / 2 != 2365000000.5}, is not caught. A threshold
+#'   that happens to equal a patient's identifier is refused too, and the
+#'   message says so; numbers are compared as whole numbers where they are
+#'   whole, and \code{NA} never matches. Thresholds shorter than five
+#'   characters, such as 1, 18 or 2015, are not checked, so a study keyed on
+#'   shorter identifiers relies on the name checks.
 #' @param id The patient identifier column. When it is the default
 #'   \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.
 #' @param key Columns that make a row unique; defaults to \code{id}, one row

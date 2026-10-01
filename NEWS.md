@@ -5,13 +5,15 @@
   `.data[["x"]]`, before any row is filtered. A column reached any other way,
   as by `.data[[paste0(...)]]`, `get()` or another name bound to `get()`,
   stops too, since it could be the identifier. Values are checked as well as
-  names: a condition holding any value of the identifier, MRN or eMRN in the
-  data stops however it is reached (a wrapper function, a copy of the ID under
-  another name, an outside vector of IDs). A threshold that happens to equal a
-  patient's identifier is refused too, and the message says so. The value
-  check covers identifiers of five or more characters, so thresholds such as
-  1, 18 or 2015 never collide; a study keyed on shorter identifiers relies on
-  the name checks. Each condition
+  names: the check covers literal values and constant expressions (such as
+  `4730000000 + 1`, or an outside vector of IDs) of five or more characters
+  that equal a value of the identifier, MRN or eMRN in the data, so a wrapper
+  function or a copy of the ID under another name is caught when compared
+  with such a value. A value computed from a data column, as in
+  `id2 / 2 != 2365000000.5`, is not caught. A threshold that happens to equal
+  a patient's identifier is refused too, and the message says so. Thresholds
+  shorter than five characters, such as 1, 18 or 2015, are not checked, so a
+  study keyed on shorter identifiers relies on the name checks. Each condition
   is saved, values included, in the job's output, so a filter on identifier
   values would be saved with it. Exclude those patients in the dataset build,
   or with an hvtiRdatabuild analysis set. A downstream job
