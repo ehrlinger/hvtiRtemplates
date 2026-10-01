@@ -116,9 +116,7 @@ test_that("no saved file holds an MRN, run in globalenv or outside it", {
 
 test_that("a WHERE on the patient identifier stops before anything is fitted or saved", {
   nb_skip_unless_stack()
-  testthat::skip_if_not(exists(".refuse_identifier_where", envir = asNamespace("hvtiRtemplates"), inherits = FALSE),
-                        "needs the WHERE refusal from fix/where-refuses-id")
-  # The data contract refuses it (fix/where-refuses-id, merged before this PR):
+  # The data contract refuses it (#219):
   # a WHERE is saved verbatim in the lineage, so an identifier filter would be too.
   data <- nb_data(id = "MRN")
   root <- nb_study(data)
