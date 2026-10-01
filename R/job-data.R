@@ -63,6 +63,19 @@
 .string_lookups <- c("get", "get0", "mget", "eval", "evalq", "as.name", "as.symbol", "sym", "parse", "str2lang",
                      "str2expression", "do.call", "match.fun", "Recall")
 
+# The lookup functions themselves, so a call through another name bound to one
+# (alias <- get) is read as that lookup.
+.lookup_alias <- function(name, env) {
+  fn <- get0(name, envir = env, mode = "function")
+  if (is.null(fn)) return(NULL)
+  lookups <- list(get = base::get, get0 = base::get0, mget = base::mget, eval = base::eval, evalq = base::evalq,
+                  as.name = base::as.name, as.symbol = base::as.symbol, sym = rlang::sym, parse = base::parse,
+                  str2lang = base::str2lang, str2expression = base::str2expression, do.call = base::do.call,
+                  match.fun = base::match.fun, Recall = base::Recall)
+  for (lookup in names(lookups)) if (identical(fn, lookups[[lookup]])) return(lookup)
+  NULL
+}
+
 .is_string_lookup <- function(e) {
   if (!is.call(e)) return(FALSE)
   head <- e[[1L]]
@@ -88,11 +101,12 @@
 # a string such as .data[["ccfid"]], which all.vars() does not see as a column,
 # so it is masked as though it named the ID. The column named inside .data[[ ]]
 # stays visible: it is the condition's shape, not a value.
-.mask_condition <- function(x, cols) {
+.mask_condition <- function(x, cols, force = FALSE) {
   text <- if (is.character(x)) x else paste(deparse(x, width.cutoff = 500L), collapse = " ")
   expr <- if (is.character(x)) tryCatch(str2lang(x), error = function(e) NULL) else x
   vars <- tolower(all.vars(expr))
-  if (is.null(expr) || !(".data" %in% vars || length(intersect(vars, tolower(cols))) || .uses_string_lookup(expr))) {
+  if (is.null(expr) || !(force || ".data" %in% vars || length(intersect(vars, tolower(cols))) ||
+                           .uses_string_lookup(expr))) {
     return(text)
   }
   mask <- function(e) {
@@ -162,6 +176,9 @@
     # function has its own scope.
     head <- e[[1L]]
     if (is.name(head) && as.character(head) %in% c("$", "@", "::", ":::", "~", "function")) return(e)
+    # A function bound to a lookup under another name is written as that lookup.
+    lookup <- if (is.name(head)) .lookup_alias(as.character(head), env)
+    if (!is.null(lookup)) e[[1L]] <- as.name(lookup)
     for (i in seq_along(e)[-1L]) {
       # Tested in place, never bound: an empty argument, as in x[, 1], cannot
       # be assigned to a variable.
@@ -234,18 +251,29 @@
 # evaluated, and the message shows only the masked text. `identifiers` are the
 # ID and any MRN or eMRN column. The condition carries `shown` and `what`, so an
 # upstream rebuild can say where the condition lives.
-.refuse_identifier_where <- function(conditions, identifiers, cols) {
+#
+# Names cannot see an alias or a wrapper (f <- function(x) get(x)), nor a copy
+# of the ID under another name, so the values are checked too: every constant
+# in the resolved condition, as text, against the values of the ID, MRN and
+# eMRN columns (`id_values`, a named list of their unique values as text).
+.refuse_identifier_where <- function(conditions, identifiers, cols, id_values = list()) {
   for (cond in conditions) {
     named <- .where_columns(cond)
     reached <- identifiers[tolower(identifiers) %in% tolower(named$columns)]
-    if (!length(reached) && !named$opaque) next
+    constants <- .where_constants(cond)
+    matched <- names(id_values)[vapply(id_values, function(v) any(constants %in% v), logical(1L))]
+    if (!length(reached) && !named$opaque && !length(matched)) next
     what <- if (length(reached)) {
       paste0("uses the patient identifier (", paste0("`", reached, "`", collapse = ", "), ")")
-    } else {
+    } else if (named$opaque) {
       paste0("reaches a column through .data or a string lookup such as get(), so it may reach the patient ",
              "identifier; name the column literally, as age or .data$age")
+    } else {
+      paste0("holds a value that is also a patient identifier in the data (in ",
+             paste0("`", matched, "`", collapse = ", "), "), so the filter would save it. A threshold that ",
+             "happens to equal a patient's identifier is refused too")
     }
-    shown <- .mask_condition(cond, unique(c(identifiers, cols)))
+    shown <- .mask_condition(cond, unique(c(identifiers, cols)), force = length(matched) > 0L)
     stop(errorCondition(paste0(
       "WHERE condition `", shown, "` ", what, ". Each WHERE condition is saved, values included, in this ",
       "job's output, so a filter on identifier values would be saved with it. Exclude those patients in the ",
@@ -255,11 +283,28 @@
   invisible(TRUE)
 }
 
-.apply_where <- function(d, where, env = parent.frame(), cols = character(), identifiers = character()) {
+# Every atomic constant in a condition, as .id_text() writes it. Logical
+# constants and NA are left out: neither can be an identifier.
+.where_constants <- function(expr) {
+  found <- character()
+  walk <- function(e) {
+    if (is.atomic(e) && !is.null(e) && !is.logical(e)) {
+      found <<- c(found, .id_text(e[!is.na(e)]))
+    } else if (is.call(e)) {
+      for (i in seq_along(e)) if (!(is.name(e[[i]]) && !nzchar(as.character(e[[i]])))) walk(e[[i]])
+    }
+    invisible()
+  }
+  walk(expr)
+  unique(found)
+}
+
+.apply_where <- function(d, where, env = parent.frame(), cols = character(), identifiers = character(),
+                         id_values = list()) {
   # Outside values are fixed in first: one can be a symbol or a whole condition
   # that names the ID, which the refusal must see.
   conditions <- lapply(.where_conditions(where), .resolve_outside, cols = names(d), env = env)
-  .refuse_identifier_where(conditions, identifiers, cols)
+  .refuse_identifier_where(conditions, identifiers, cols, id_values)
   steps <- data.frame(condition = character(), shown = character(), removed = integer(),
                       missing = integer())
   for (cond in conditions) {
@@ -345,8 +390,14 @@
 #'   \code{.data[[nm]]} is judged by the column \code{nm} names. A column
 #'   reached any other way, as by \code{.data[[paste0(...)]]} or a string
 #'   lookup such as \code{get()}, stops too, since it cannot be known.
-#'   Detection is by column name: a copy of the identifier under another name
-#'   is not caught.
+#'   A function bound to such a lookup under another name is read as that
+#'   lookup. Values are checked as well as names: a condition holding any value
+#'   of the identifier, \code{MRN} or \code{eMRN} columns in the data stops,
+#'   however it is reached (a wrapper function, a copy of the identifier under
+#'   another name, an outside vector). A threshold that happens to equal a
+#'   patient's identifier is refused too, and the message says so; numbers are
+#'   compared as whole numbers where they are whole, and \code{NA} never
+#'   matches.
 #' @param id The patient identifier column. When it is the default
 #'   \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.
 #' @param key Columns that make a row unique; defaults to \code{id}, one row
@@ -418,7 +469,12 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   ids <- .drop_identifiers(d, who$id)
   # MRN and eMRN are refused even when dropped: the condition would be saved.
   identifiers <- unique(c(who$id, names(d)[tolower(names(d)) %in% .job_identifier_names], .job_identifier_names))
-  kept <- .apply_where(ids$data, where, env = parent.frame(), cols = c(who$id, key), identifiers = identifiers)
+  # Their values too, read from `d` before MRN and eMRN are dropped.
+  id_values <- if (!is.null(where)) {
+    lapply(d[intersect(identifiers, names(d))], function(x) unique(.id_text(x[!is.na(x)])))
+  }
+  kept <- .apply_where(ids$data, where, env = parent.frame(), cols = c(who$id, key), identifiers = identifiers,
+                       id_values = if (is.null(id_values)) list() else id_values)
   counts <- .check_job_key(kept$data, key, who$id)
   record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts)
   attr(record, "selection") <- list(

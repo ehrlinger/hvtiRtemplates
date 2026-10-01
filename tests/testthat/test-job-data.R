@@ -1,8 +1,10 @@
 # read_job_data() steps on plain data frames. No identifier value appears in
 # any message: the tests assert counts only.
 
+# ccfid starts at 11 so no WHERE constant below (1, 18, 50, 60) equals a patient's
+# identifier, which read_job_data() refuses.
 d0 <- data.frame(
-  ccfid = 1:6, MRN = 101:106, eMRN = 201:206, pt_mrn = 1:6,
+  ccfid = 11:16, MRN = 101:106, eMRN = 201:206, pt_mrn = 1:6,
   age = c(15, 40, 55, NA, 70, 80), hx_chf = c(0L, 1L, 1L, 0L, 1L, NA)
 )
 
@@ -37,18 +39,18 @@ test_that("WHERE follows filter(): NA rows are dropped and counted, conditions a
   expect_identical(nrow(none$data), 6L)
   expect_identical(nrow(none$steps), 0L)
   one <- hvtiRtemplates:::.apply_where(d0, quote(age >= 18))
-  expect_identical(one$data$ccfid, c(2L, 3L, 5L, 6L))
+  expect_identical(one$data$ccfid, c(12L, 13L, 15L, 16L))
   expect_identical(one$steps$removed, 2L)
   expect_identical(one$steps$missing, 1L)
   two <- hvtiRtemplates:::.apply_where(d0, rlang::exprs(age >= 18, hx_chf == 1))
-  expect_identical(two$data$ccfid, c(2L, 3L, 5L))
+  expect_identical(two$data$ccfid, c(12L, 13L, 15L))
   expect_identical(two$steps$condition, c("age >= 18", "hx_chf == 1"))
   expect_identical(two$steps$removed, c(2L, 1L))
   expect_identical(two$steps$missing, c(1L, 1L))
   min_age <- 50
   expect_identical(hvtiRtemplates:::.apply_where(d0,
                                                  quote(age >= .env$min_age))$data$ccfid,
-                   c(3L, 5L, 6L))
+                   c(13L, 15L, 16L))
   expect_error(hvtiRtemplates:::.apply_where(d0, "age >= 18"), "WHERE must be NULL")
   expect_error(hvtiRtemplates:::.apply_where(d0, quote(age + 1)), "TRUE or FALSE")
 })
@@ -82,7 +84,7 @@ job_study <- function(data, .local_envir = parent.frame()) {
 test_that("read_job_data() reads, selects and records what it did", {
   cfg <- job_study(d0)
   out <- read_job_data(cfg, where = rlang::exprs(age >= 18, hx_chf == 1))
-  expect_identical(out$data$ccfid, c(2L, 3L, 5L))
+  expect_identical(out$data$ccfid, c(12L, 13L, 15L))
   expect_false(any(c("MRN", "eMRN") %in% names(out$data)))
   expect_s3_class(out$record, "data.frame")
   expect_identical(names(out$record), c("step", "value"))
@@ -215,7 +217,7 @@ test_that(".read_upstream_job_data() rebuilds the upstream rows and returns the 
   lineage <- list(selection = attr(up$record, "selection"))
   out <- hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list(where = NULL, id = NULL, key = NULL))
   expect_identical(names(out), c("job_data", "selection"))
-  expect_identical(out$job_data$data$ccfid, c(2L, 3L, 5L))
+  expect_identical(out$job_data$data$ccfid, c(12L, 13L, 15L))
   expect_identical(out$selection$where, c("age >= 18", "hx_chf == 1"))
   bare <- hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list(), read = FALSE)
   expect_identical(names(bare), "selection")
@@ -358,7 +360,7 @@ test_that("read_job_data() reads an analysis set and keeps its attrition", {
       sep = "", file = cfg$file, append = TRUE)
   suppressMessages(hvtiRdatabuild::write_analysis_set("eda", cfg))
   out <- read_job_data(cfg, analysis_set = "eda", where = quote(hx_chf == 1))
-  expect_identical(as.integer(out$data$ccfid), c(2L, 3L, 5L))
+  expect_identical(as.integer(out$data$ccfid), c(12L, 13L, 15L))
   expect_identical(out$record$value[[1L]], "analysis set `eda` of the study dataset")
   expect_s3_class(out$attrition, "data.frame")
   expect_identical(out$attrition$reason, "under 18")
@@ -511,15 +513,57 @@ test_that("a function named by a string, or called from a call, is a lookup", {
   expect_identical(nrow(read_job_data(cfg, where = quote(base::round(age) >= 18))$data), 4L)
 })
 
+test_that("an alias of a lookup function is refused as that lookup, before anything is filtered", {
+  alias <- get
+  err <- refusal(.apply_where(data.frame(ccfid = 9001:9003), quote(alias("ccfid") != 9001), env = environment(),
+                              cols = "ccfid", identifiers = c("ccfid", "mrn", "emrn")))
+  expect_match(err, "name the column")
+  expect_false(grepl("9001", err, fixed = TRUE))
+})
+
+test_that("a WHERE value that is also a patient identifier in the data is refused, however it is reached", {
+  d <- d_ids
+  d$id2 <- d$ccfid
+  cfg <- job_study(d)
+  f <- function(x) get(x)
+  ids <- c(9001, 9002)
+  for (where in list(quote(f("ccfid") != 9001), quote(id2 != 9001), quote(id2 %in% ids), quote(id2 != 9001L),
+                     quote(age > 18 & id2 %in% c(5, 9002)))) {
+    info <- paste(deparse(where), collapse = " ")
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "also a patient identifier in the data", info = info)
+    expect_match(err, "`ccfid`", fixed = TRUE, info = info)
+    expect_false(grepl("900[0-9]", err), info = info)
+  }
+  # A threshold that equals no identifier is allowed; NA never matches.
+  expect_identical(nrow(read_job_data(cfg, where = quote(age > 60))$data), 2L)
+  expect_identical(nrow(read_job_data(cfg, where = quote(!id2 %in% c(NA, 1)))$data), 6L)
+})
+
+test_that("an MRN or eMRN value is refused against any column, though those columns are dropped", {
+  d <- data.frame(ccfid = 9001:9004, MRN = 7001:7004, eMRN = 8001:8004, score = c(7001, 2, 3, 8002))
+  cfg <- job_study(d)
+  # read_built() lowercases column names, so the columns are named mrn and emrn.
+  for (case in list(list(quote(score != 7001), "`mrn`"), list(quote(score != 8002), "`emrn`"))) {
+    err <- refusal(read_job_data(cfg, where = case[[1L]]))
+    expect_match(err, "also a patient identifier in the data", info = case[[2L]])
+    expect_match(err, case[[2L]], fixed = TRUE)
+    expect_false(grepl("700[0-9]|800[0-9]", err), info = case[[2L]])
+  }
+})
+
 test_that("a name that is not a column is not taken for the ID", {
   cfg <- job_study(d_ids)
-  ccfid <- 9001
+  ccfid <- 18
   mrn <- c(1, 18)
   lst <- list(mrn = 18)
   # .env$ccfid and an outside mrn are fixed in as constants, so nothing names the ID.
-  out <- read_job_data(cfg, where = quote(age > .env$ccfid - 9001))
-  expect_identical(attr(out$record, "selection")$where, "age > 9001 - 9001")
-  expect_identical(nrow(read_job_data(cfg, where = quote(age > .env[["ccfid"]] - 8983))$data), 4L)
+  out <- read_job_data(cfg, where = quote(age > .env$ccfid))
+  expect_identical(attr(out$record, "selection")$where, "age > 18")
+  expect_identical(nrow(read_job_data(cfg, where = quote(age > .env[["ccfid"]]))$data), 4L)
+  # Its value is still checked: an outside ccfid that is a patient's identifier is refused.
+  ccfid <- 9001
+  expect_match(refusal(read_job_data(cfg, where = quote(age > .env$ccfid - 9000))), "also a patient identifier")
   expect_identical(nrow(read_job_data(cfg, where = quote(age > max(mrn)))$data), 4L)
   # An .env lookup that resolves to nothing is still not the ID column: it fails as an
   # unknown name, not as a refusal.
@@ -541,7 +585,7 @@ test_that("a WHERE value from outside the data is fixed into the recorded condit
   }
   bare <- upstream(quote(age >= min_age))
   expect_identical(attr(bare$record, "selection")$where, "age >= 60")
-  expect_identical(bare$data$ccfid, c(5L, 6L))
+  expect_identical(bare$data$ccfid, c(15L, 16L))
   dollar <- upstream(quote(age >= .env$min_age))
   expect_identical(attr(dollar$record, "selection")$where, "age >= 60")
   brackets <- upstream(quote(age >= .env[["min_age"]]))
@@ -555,9 +599,9 @@ test_that("a WHERE value from outside the data is fixed into the recorded condit
     local({
       min_age <- 80
       out <- hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list())
-      expect_identical(out$job_data$data$ccfid, c(5L, 6L))
+      expect_identical(out$job_data$data$ccfid, c(15L, 16L))
     })
-    expect_identical(hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list())$job_data$data$ccfid, c(5L, 6L))
+    expect_identical(hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list())$job_data$data$ccfid, c(15L, 16L))
   }
 })
 

@@ -206,7 +206,9 @@ test_that("lm-checkpred refuses to overwrite its source bundle", {
 test_that("lm-checkpred stops when its validation patients were in the training data", {
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   # WHERE may not name the patient identifier, so the cohorts are chosen on an
-  # ordinary column, an enrollment sequence that follows ccfid.
+  # ordinary column, an enrollment sequence that follows ccfid. The cut points
+  # end in .5 because a whole one would equal a patient's identifier, which
+  # read_job_data() refuses.
   built <- lm_data()
   built$enrolled <- built$ccfid
   root <- lm_study(data = built)
@@ -246,14 +248,14 @@ test_that("lm-checkpred stops when its validation patients were in the training 
                  info = paste("digest", digest))
     # A validation cohort that shares some patients names how many, never which.
     save_model(d[d$ccfid <= 70, ], digest)
-    err <- tryCatch(check(list(WHERE = quote(enrolled > 60))), error = conditionMessage)
+    err <- tryCatch(check(list(WHERE = quote(enrolled > 60.5))), error = conditionMessage)
     expect_identical(err, "10 validation patients were in the training data: set DATASET or WHERE to the validation cohort.",
                      info = paste("digest", digest))
     # Identifiers from different columns cannot be compared.
-    expect_error(check(list(ID = "id", WHERE = quote(enrolled > 70))), "identify patients by `id`.*`ccfid`",
+    expect_error(check(list(ID = "id", WHERE = quote(enrolled > 70.5))), "identify patients by `id`.*`ccfid`",
                  info = paste("digest", digest))
     # A disjoint cohort goes on to validation, and its saved copy keeps no raw validation ID.
-    env <- check(list(WHERE = quote(enrolled > 70)), c("validate", "save"))
+    env <- check(list(WHERE = quote(enrolled > 70.5)), c("validate", "save"))
     expect_identical(nrow(env$d), 50L, info = paste("digest", digest))
     saved <- readRDS(env$VALIDATION_PATH)
     key <- hvtiRtemplates:::.study_id_key(root)
@@ -263,7 +265,7 @@ test_that("lm-checkpred stops when its validation patients were in the training 
     expect_identical(saved$models[[1L]]$data$ccfid, hvtiRtemplates:::.id_digest(d$ccfid[d$ccfid <= 70], key),
                      info = paste("digest", digest))
     # A missing validation ID cannot be compared, so it stops.
-    env <- check(list(WHERE = quote(enrolled > 70)))
+    env <- check(list(WHERE = quote(enrolled > 70.5)))
     env$d$ccfid[1L] <- NA
     expect_error(lm_run("checkpred", "training-overlap", env), "Some patients have no `ccfid`",
                  info = paste("digest", digest))
@@ -271,7 +273,7 @@ test_that("lm-checkpred stops when its validation patients were in the training 
     model <- readRDS(file.path(bundle_dir, "lm-binary.rds"))
     model$data$ccfid <- NULL
     saveRDS(model, file.path(bundle_dir, "lm-binary.rds"))
-    expect_error(check(list(WHERE = quote(enrolled > 70))), "does not keep its training identifiers",
+    expect_error(check(list(WHERE = quote(enrolled > 70.5))), "does not keep its training identifiers",
                  info = paste("digest", digest))
   }
 })

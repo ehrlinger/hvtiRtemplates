@@ -85,8 +85,9 @@ lm_render_fixture <- function(qualifier, data = NULL, .local_envir = parent.fram
     propensity_ordinal = 'TREATMENT <- "treatment_ordinal"',
     propensity_nominal = 'TREATMENT <- "treatment_nominal"',
     # Validated on patients the saved model was not trained on (below). WHERE
-    # may not name the ID, so it selects on `time`, which follows ccfid here.
-    checkpred = "WHERE <- quote(time > 60)",
+    # may not name the ID, so it selects on `time`, which follows ccfid here; the
+    # cut is 60.5 because 60 is also a patient's identifier, which is refused.
+    checkpred = "WHERE <- quote(time > 60.5)",
     balancing_count = c('OUTCOME <- "count"', 'DISTRIBUTION <- "poisson"'),
     character()
   )

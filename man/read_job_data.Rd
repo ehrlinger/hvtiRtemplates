@@ -42,8 +42,14 @@ instead. A value from outside the data is fixed in before this check, so
 \code{.data[[nm]]} is judged by the column \code{nm} names. A column
 reached any other way, as by \code{.data[[paste0(...)]]} or a string
 lookup such as \code{get()}, stops too, since it cannot be known.
-Detection is by column name: a copy of the identifier under another name
-is not caught.}
+A function bound to such a lookup under another name is read as that
+lookup. Values are checked as well as names: a condition holding any value
+of the identifier, \code{MRN} or \code{eMRN} columns in the data stops,
+however it is reached (a wrapper function, a copy of the identifier under
+another name, an outside vector). A threshold that happens to equal a
+patient's identifier is refused too, and the message says so; numbers are
+compared as whole numbers where they are whole, and \code{NA} never
+matches.}
 
 \item{id}{The patient identifier column. When it is the default
 \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.}

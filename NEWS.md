@@ -3,11 +3,15 @@
 * `read_job_data()` stops on a `WHERE` condition that mentions the patient
   identifier or a column named MRN or eMRN, directly or through `.data$x` or
   `.data[["x"]]`, before any row is filtered. A column reached any other way,
-  as by `.data[[paste0(...)]]` or `get()`, stops too, since it could be the
-  identifier. Detection is by column name: a copy of the identifier under
-  another name is not caught. Each condition is saved, values included, in the
-  job's output, so a filter on identifier values would be saved with it. Exclude those patients in
-  the dataset build, or with an hvtiRdatabuild analysis set. A downstream job
+  as by `.data[[paste0(...)]]`, `get()` or another name bound to `get()`,
+  stops too, since it could be the identifier. Values are checked as well as
+  names: a condition holding any value of the identifier, MRN or eMRN in the
+  data stops however it is reached (a wrapper function, a copy of the ID under
+  another name, an outside vector of IDs). A threshold that happens to equal a
+  patient's identifier is refused too, and the message says so. Each condition
+  is saved, values included, in the job's output, so a filter on identifier
+  values would be saved with it. Exclude those patients in the dataset build,
+  or with an hvtiRdatabuild analysis set. A downstream job
   rebuilding an upstream file saved with such a condition names the file and
   says to rerun the upstream job.
 
