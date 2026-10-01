@@ -261,6 +261,7 @@
     named <- .where_columns(cond)
     reached <- identifiers[tolower(identifiers) %in% tolower(named$columns)]
     constants <- .where_constants(cond)
+    constants <- constants[nchar(constants) >= .min_id_value_chars]
     matched <- names(id_values)[vapply(id_values, function(v) any(constants %in% v), logical(1L))]
     if (!length(reached) && !named$opaque && !length(matched)) next
     what <- if (length(reached)) {
@@ -282,6 +283,9 @@
   }
   invisible(TRUE)
 }
+
+# Real ccfid and MRN values are 6 to 10 digits, so a shorter constant (1, 18, 2015) is a threshold, not an ID.
+.min_id_value_chars <- 5L
 
 # Every atomic constant in a condition, as .id_text() writes it. Logical
 # constants and NA are left out: neither can be an identifier.
@@ -397,7 +401,9 @@
 #'   another name, an outside vector). A threshold that happens to equal a
 #'   patient's identifier is refused too, and the message says so; numbers are
 #'   compared as whole numbers where they are whole, and \code{NA} never
-#'   matches.
+#'   matches. The value check covers identifiers of five or more characters, so
+#'   thresholds such as 1, 18 or 2015 never collide; a study keyed on shorter
+#'   identifiers relies on the name checks.
 #' @param id The patient identifier column. When it is the default
 #'   \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.
 #' @param key Columns that make a row unique; defaults to \code{id}, one row

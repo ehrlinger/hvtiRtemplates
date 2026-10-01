@@ -8,7 +8,10 @@
   names: a condition holding any value of the identifier, MRN or eMRN in the
   data stops however it is reached (a wrapper function, a copy of the ID under
   another name, an outside vector of IDs). A threshold that happens to equal a
-  patient's identifier is refused too, and the message says so. Each condition
+  patient's identifier is refused too, and the message says so. The value
+  check covers identifiers of five or more characters, so thresholds such as
+  1, 18 or 2015 never collide; a study keyed on shorter identifiers relies on
+  the name checks. Each condition
   is saved, values included, in the job's output, so a filter on identifier
   values would be saved with it. Exclude those patients in the dataset build,
   or with an hvtiRdatabuild analysis set. A downstream job
