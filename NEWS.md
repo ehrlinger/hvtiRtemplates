@@ -11,6 +11,13 @@
   rebuilding an upstream file saved with such a condition names the file and
   says to rerun the upstream job.
 
+* `read_job_data()` stops on a `WHERE` that takes a data frame, list,
+  environment, function or S4 object from outside the data, as
+  `with(lookup, age) > 20` does. The condition is saved as text, so the whole
+  object, ID column included, was saved with it; the message names the variable
+  and says to filter on a column of the data instead. An outside `NULL` is now
+  fixed in rather than dropped from the call. Closes #218.
+
 * The bootstrap reports print the data selection their bag carries, and their
   runners read data through `read_job_data()`. Each runner is its own job:
   `add_job()` for `bl`, `br`, `bc` and `bh` also writes

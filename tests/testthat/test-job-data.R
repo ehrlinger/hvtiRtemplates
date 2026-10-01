@@ -448,6 +448,60 @@ test_that("a WHERE that looks a column up by a string stops, and is masked", {
   expect_identical(hvtiRtemplates:::.mask_condition(quote(age >= 18), "ccfid"), "age >= 18")
 })
 
+test_that("a WHERE that takes a data frame, list, environment or function from outside stops, naming it", {
+  cfg <- job_study(d_ids)
+  lookup <- data.frame(ccfid = 9001:9003, age = c(10, 30, 50))
+  for (where in list(quote(with(lookup, ccfid) != 9001), quote(with(lookup, age) > 20))) {
+    info <- paste(deparse(where), collapse = " ")
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "`lookup`", fixed = TRUE, info = info)
+    expect_match(err, "filter on a column of the data", info = info)
+    # Nothing from the frame reaches the message, and nothing is saved.
+    expect_false(grepl("9001|9002|9003|10, 30, 50|structure", err), info = info)
+  }
+  holder <- list(cut = 18)
+  box <- new.env()
+  fn <- function(x) x
+  setClass("WhereBox", representation(x = "numeric"), where = environment())
+  s4 <- methods::new("WhereBox", x = 18)
+  for (where in list(quote(age > holder[["cut"]]), quote(age > get("cut", box)), quote(sapply(age, fn) > 18),
+                     quote(age > s4))) {
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "filter on a column of the data", info = paste(deparse(where), collapse = " "))
+  }
+})
+
+test_that("an outside atomic value or language object still resolves as before", {
+  d <- data.frame(dt = as.Date(c("2020-01-01", "2020-01-03")), g = factor(c("a", "b")), x = c(1, 2))
+  cut <- as.Date("2020-01-02")
+  level <- factor("b", levels = c("a", "b"))
+  at <- as.POSIXct("2020-01-02", tz = "UTC")
+  vals <- c(2, 3)
+  cond <- quote(x > 1)
+  expect_identical(nrow(.apply_where(d, quote(dt >= cut), environment())$data), 1L)
+  expect_identical(nrow(.apply_where(d, quote(g == level), environment())$data), 1L)
+  expect_identical(nrow(.apply_where(d, quote(as.POSIXct(dt) >= at), environment())$data), 1L)
+  expect_identical(nrow(.apply_where(d, quote(x %in% vals), environment())$data), 1L)
+  expect_identical(.apply_where(d, quote(cond), environment())$steps$condition, "x > 1")
+  nothing <- NULL
+  expect_identical(nrow(.apply_where(d, quote(is.null(nothing) & x > 1), environment())$data), 1L)
+})
+
+test_that("a function named by a string, or called from a call, is a lookup", {
+  cfg <- job_study(d_ids)
+  for (where in list(quote(do.call("get", list("ccfid")) != 9001), quote(match.fun("get")("ccfid") != 9001),
+                     quote((function(x) x)(ccfid2) != 9001))) {
+    info <- paste(deparse(where), collapse = " ")
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "name the column", info = info)
+    expect_false(grepl("9001", err, fixed = TRUE), info = info)
+    expect_false(grepl("9001", hvtiRtemplates:::.mask_condition(where, "ccfid"), fixed = TRUE), info = info)
+  }
+  # pkg::fn is a name, not a call computed at run time.
+  expect_identical(hvtiRtemplates:::.mask_condition(quote(base::round(age) >= 18), "ccfid"), "base::round(age) >= 18")
+  expect_identical(nrow(read_job_data(cfg, where = quote(base::round(age) >= 18))$data), 4L)
+})
+
 test_that("a name that is not a column is not taken for the ID", {
   cfg <- job_study(d_ids)
   ccfid <- 9001

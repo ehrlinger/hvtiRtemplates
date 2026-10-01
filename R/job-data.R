@@ -56,16 +56,22 @@
 .is_maskable_value <- function(e) is.atomic(e) && !is.null(e) && !is.logical(e)
 
 # Functions that turn a string into a column reference, as get("ccfid") or
-# eval(as.name("ccfid")) do. A condition calling one can reach any column under
+# eval(as.name("ccfid")) do, or that call a function named by a string, as
+# do.call("get", ...) does. A condition calling one can reach any column under
 # a name all.vars() does not see, so it is masked like one that uses .data, and
 # the refusal below cannot tell which column it reaches.
 .string_lookups <- c("get", "get0", "mget", "eval", "evalq", "as.name", "as.symbol", "sym", "parse", "str2lang",
-                     "str2expression")
+                     "str2expression", "do.call", "match.fun", "Recall")
 
 .is_string_lookup <- function(e) {
   if (!is.call(e)) return(FALSE)
   head <- e[[1L]]
-  if (is.call(head) && length(head) == 3L && (identical(head[[1L]], as.name("::")) || identical(head[[1L]], as.name(":::")))) {
+  if (is.call(head)) {
+    # pkg::fn names a function; any other call in call position computes one at
+    # run time, as match.fun("get")("ccfid") does, so it is treated as a lookup.
+    if (!(length(head) == 3L && (identical(head[[1L]], as.name("::")) || identical(head[[1L]], as.name(":::"))))) {
+      return(TRUE)
+    }
     head <- head[[3L]]
   }
   is.name(head) && as.character(head) %in% .string_lookups
@@ -110,17 +116,33 @@
     identical(e[[2L]], as.name(pronoun))
 }
 
+# How to name an outside value that cannot be fixed into a condition.
+.outside_kind <- function(value) {
+  if (is.data.frame(value)) "a data frame" else if (is.environment(value)) "an environment" else
+    if (is.function(value)) "a function" else if (isS4(value)) "an S4 object" else if (is.list(value)) "a list" else
+      paste("of class", class(value)[[1L]])
+}
+
 # A condition is saved as text and re-evaluated by downstream jobs in another
 # environment, so a value it takes from outside the data is fixed into it here:
 # .env$x, .env[["x"]] and a bare symbol that is not a column of `cols` become
-# the value of x in `env`, as rlang::eval_tidy() would find it. Functions, and
-# every symbol in call position, are left alone, as is a symbol found nowhere,
-# so eval_tidy() still names it in its error.
+# the value of x in `env`, as rlang::eval_tidy() would find it. Every symbol in
+# call position is left alone, as is a symbol found nowhere, so eval_tidy()
+# still names it in its error. Only an atomic value, NULL, a symbol or a call is
+# fixed in; anything else, a function included, stops (see value_of below).
 .resolve_outside <- function(cond, cols, env) {
   value_of <- function(name) {
     if (!is.character(name) || length(name) != 1L || !exists(name, envir = env)) return(NULL)
     value <- get(name, envir = env)
-    if (is.function(value)) NULL else list(value)
+    # Only a value or a piece of a condition can be fixed in. A data frame,
+    # list, environment, function or S4 object would be saved whole, whatever
+    # columns it holds (the ID included), so it stops, named but never printed.
+    if (!(is.null(value) || (is.atomic(value) && !isS4(value)) || is.name(value) || is.call(value))) {
+      stop("WHERE takes `", name, "` from outside the data, and it is ", .outside_kind(value), ", not a value. ",
+           "A condition is saved as text, so `", name, "` would be saved whole; filter on a column of the data ",
+           "instead.", call. = FALSE)
+    }
+    list(value)
   }
   walk <- function(e) {
     if (is.name(e)) {
@@ -142,7 +164,8 @@
       # Tested in place, never bound: an empty argument, as in x[, 1], cannot
       # be assigned to a variable.
       if (is.name(e[[i]]) && !nzchar(as.character(e[[i]]))) next
-      e[[i]] <- walk(e[[i]])
+      # Assigned through [ ], so a NULL value is kept rather than deleting the argument.
+      e[i] <- list(walk(e[[i]]))
     }
     e
   }
@@ -306,7 +329,9 @@
 #'   \code{dplyr::filter()}: a row where a condition is \code{NA} is dropped. A
 #'   value from outside the data, written \code{.env$min_age} or as a name that
 #'   is not a column, is fixed into the condition when the data are read, so the
-#'   recorded condition rebuilds the same rows wherever it runs. A condition
+#'   recorded condition rebuilds the same rows wherever it runs. Such a value
+#'   must be a vector, \code{NULL}, a symbol or a call; a data frame, list,
+#'   environment, function or S4 object stops, since it would be saved whole. A condition
 #'   that mentions the \code{id} column or a column named \code{MRN} or
 #'   \code{eMRN} (ignoring case), directly or as \code{.data$x} or
 #'   \code{.data[["x"]]}, stops before any row is filtered, because each
