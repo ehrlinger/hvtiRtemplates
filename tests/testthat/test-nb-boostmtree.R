@@ -91,14 +91,26 @@ test_that("no saved file holds an MRN, run in globalenv or outside it", {
     root <- nb_study(data)
     env <- nb_fit_in(root, parent)
     expect_identical(tolower(attr(env$job_data$record, "selection")$id), "mrn")
-    files <- list.files(hvtiRutilities::study_dir("estimates", root), recursive = TRUE, full.names = TRUE)
-    expect_true(length(files) >= 2L)
+    set_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost")
+    expect_setequal(list.files(set_dir),
+                    c("nb-boostmtree.rds", "nb-boostmtree-fit.rds", "nb-boostmtree-fit.provenance.json"))
+    # Every file in the study, so a write anywhere else, .hvti/ included, is
+    # searched too. Only the input dataset, its registered copy and the key are
+    # left out: the first two hold the IDs by design, and the key is random bytes.
+    datasets <- basename(hvtiRutilities::study_dir("datasets", root))
+    inputs <- c(file.path(datasets, c("built.csv", "built.parquet")), file.path(".hvti", "id_key"))
+    files <- setdiff(list.files(root, recursive = TRUE, all.files = TRUE), inputs)
+    estimates <- basename(hvtiRutilities::study_dir("estimates", root))
+    expect_true(all(file.path(estimates, "lvef-boost", list.files(set_dir)) %in% files))
     for (f in files) {
-      bytes <- nb_file_bytes(f)
-      expect_false(any(vapply(mrns, function(v) nb_bytes_hold(bytes, v), logical(1L))), info = basename(f))
+      bytes <- nb_file_bytes(file.path(root, f))
+      expect_false(any(vapply(mrns, function(v) nb_bytes_hold(bytes, v), logical(1L))), info = f)
     }
-    # Positive control: the same search finds them in the data the job read.
-    expect_true(nb_bytes_hold(serialize(env$job_data$data, NULL), mrns[[1L]]))
+    # Positive control, through the same gz read: the search finds them in the
+    # data the job read, saved as the fit is.
+    control <- withr::local_tempfile(fileext = ".rds")
+    saveRDS(env$job_data$data, control)
+    expect_true(nb_bytes_hold(nb_file_bytes(control), mrns[[1L]]))
   }
 })
 
@@ -110,7 +122,8 @@ test_that("a WHERE on the patient identifier stops before anything is fitted or 
   # a WHERE is saved verbatim in the lineage, so an identifier filter would be too.
   data <- nb_data(id = "MRN")
   root <- nb_study(data)
-  expect_error(nb_fit_in(root, choices = nb_choices(WHERE = quote(MRN != 4730000001))), "identifier")
+  expect_error(nb_fit_in(root, choices = nb_choices(WHERE = quote(MRN != 4730000001))),
+               class = "hvti_where_identifier")
   expect_length(list.files(hvtiRutilities::study_dir("estimates", root), recursive = TRUE), 0L)
 })
 
@@ -128,9 +141,12 @@ test_that("the cache is reused unchanged, and a changed setting stops until REFI
   nb_skip_unless_stack()
   root <- nb_study()
   env <- nb_fit_in(root)
-  first <- env$fit
+  cache <- file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree-fit.rds")
+  before <- list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache))
   env2 <- nb_fit_in(root)
-  expect_identical(env2$fit$id.unique, first$id.unique)
+  # Reused, not refitted to an equal result: the cache file is untouched.
+  expect_identical(list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache)), before)
+  expect_identical(env2$fit$id.unique, env$fit$id.unique)
   # The stale cache stops and names what changed.
   expect_error(nb_fit_in(root, choices = nb_choices(NU = 0.01)), "inputs$NU", fixed = TRUE,
                class = "hvtiRutilities_stale_cache")
