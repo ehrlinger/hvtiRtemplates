@@ -297,6 +297,10 @@ if (length(.structural)) {
   stop("PREDICTORS names an identifier, a KEY column or the visit time: ", paste(.structural, collapse = ", "),
        ".", call. = FALSE)
 }
+# The response predicting itself would fit perfectly and mean nothing.
+if (tolower(.response) %in% tolower(.predictors)) {
+  stop("PREDICTORS names the response (", .response, ").", call. = FALSE)
+}
 if (tolower(.response) == tolower(.id)) {
   stop("The patient identifier (", .id, ") cannot be the response.", call. = FALSE)
 }
@@ -420,7 +424,14 @@ if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unkno
 # later take an ordinal or nominal one whole and facet its figure by component.
 # Each component is renamed as the fit summary names it, not by its bare level.
 .effect <- gg_boost_effect(partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE))
-levels(.effect$response) <- .components[match(levels(.effect$response), .labels)]
+.relabel <- .components[match(levels(.effect$response), .labels)]
+# A component ggBoostedTrees names differently from the fit would otherwise be
+# drawn under a blank label; stop and say so instead.
+if (anyNA(.relabel)) {
+  stop("ggBoostedTrees labels a response component this job does not recognize: ",
+       paste(levels(.effect$response)[is.na(.relabel)], collapse = ", "), ".", call. = FALSE)
+}
+levels(.effect$response) <- .relabel
 # What ggBoostedTrees 0.0.9 still cannot do: a continuous covariate is drawn as
 # a curve and a factor as a point per level, on axes ggplot2 cannot share, so
 # plot() refuses an effect holding both. Each kind is drawn in its own figure,

@@ -77,6 +77,7 @@ test_that("named PREDICTORS may hold no identifier or KEY column, and no name tw
   expect_error(run(PREDICTORS = c("age", "ccfid")), "identifier, a KEY column or the visit time: ccfid")
   expect_error(run(PREDICTORS = c("age", "randid")), "identifier, a KEY column or the visit time: randid")
   expect_error(run(PREDICTORS = c("age", "female", "age")), "PREDICTORS names a variable more than once: age")
+  expect_error(run(PREDICTORS = c("age", "lvef")), "PREDICTORS names the response (lvef)", fixed = TRUE)
 })
 
 test_that("TIME and RESPONSE resolve against the data ignoring case", {
