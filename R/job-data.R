@@ -443,9 +443,11 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 #' used as row names, or data in an environment it does not walk: a named
 #' environment (global, package, namespace), which is saved by reference, and
 #' an unforced promise, which is skipped because reading it would evaluate it.
-#' A binding that cannot be read is reported rather than passed. The carried
-#' lineage on the bag itself is not searched: its selection names the ID and
-#' holds no values.
+#' A binding that cannot be read, and an active binding, which is never
+#' evaluated, are reported rather than passed. The carried lineage is searched
+#' like any other attribute, except that the names of the selection's own
+#' fields are not matched: \code{read_job_data()} writes them, and its
+#' \code{id} field holds a column name, not patient values.
 #'
 #' @param bag The bag or chunk, as read.
 #' @param id The job's resolved ID column.
@@ -456,13 +458,17 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   wanted <- unique(tolower(c(id, .job_identifier_names)))
   seen <- list()
   found <- character()
-  walk <- function(x, at, top = FALSE) {
+  walk <- function(x, at, match_names = TRUE) {
     if (is.environment(x)) {
       if (nzchar(environmentName(x)) || any(vapply(seen, identical, logical(1L), x))) return(invisible())
       seen[[length(seen) + 1L]] <<- x
       names <- ls(x, all.names = TRUE)
-      lazy <- names[rlang::env_binding_are_lazy(x, names) | rlang::env_binding_are_active(x, names)]
-      for (name in setdiff(names, lazy)) {
+      # Reading either would run code: an unforced promise is skipped, and an
+      # active binding, which could return anything, is reported unread.
+      active <- names[rlang::env_binding_are_active(x, names)]
+      for (name in active) found <<- c(found, paste0(at, ": ", name, " (an active binding, not read)"))
+      lazy <- names[rlang::env_binding_are_lazy(x, names)]
+      for (name in setdiff(names, c(active, lazy))) {
         here <- paste0(at, ": ", name)
         value <- tryCatch(get(name, envir = x), error = function(e) {
           found <<- c(found, paste0(here, " (unreadable: ", conditionMessage(e), ")"))
@@ -474,24 +480,28 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
       return(walk(parent.env(x), at))
     }
     if (is.function(x) && !is.primitive(x)) walk(environment(x), paste0(at, ", a function's environment"))
-    hit <- unique(c(names(x), colnames(x)))
+    hit <- if (match_names) unique(c(names(x), colnames(x))) else colnames(x)
     hit <- hit[tolower(hit) %in% wanted]
     if (length(hit) && length(x)) found <<- c(found, paste0(at, "$", hit))
     extra <- attributes(x)
-    extra <- extra[setdiff(names(extra), c("names", "row.names", "class", "dim", "dimnames",
-                                           if (top) "hvti_provenance"))]
+    extra <- extra[setdiff(names(extra), c("names", "row.names", "class", "dim", "dimnames"))]
     for (name in names(extra)) walk(extra[[name]], paste0(at, ", attribute ", name))
     if (is.list(x)) {
       labels <- if (is.null(names(x))) rep("", length(x)) else names(x)
-      for (i in seq_along(x)) walk(x[[i]], paste0(at, if (nzchar(labels[[i]])) paste0("$", labels[[i]]) else paste0("[[", i, "]]")))
+      for (i in seq_along(x)) {
+        here <- paste0(at, if (nzchar(labels[[i]])) paste0("$", labels[[i]]) else paste0("[[", i, "]]"))
+        # The selection's fields are named by read_job_data(), and `id` holds a
+        # column name; what they hold is still searched.
+        walk(x[[i]], here, match_names = here != "bag, attribute hvti_provenance$selection")
+      }
     }
     invisible()
   }
-  walk(bag, "bag", top = TRUE)
+  walk(bag, "bag")
   if (length(found)) {
     stop(source, " holds patient-level data: ", paste(unique(found), collapse = "; "), ". A bag holds the screen's ",
-         "replicates and its settings, never the rows it resampled or their patient identifier. Save only the ",
-         "fields the runner add_job() writes saves, delete this file, and rerun the bootstrap runner.",
+         "replicates and its settings, never the rows it resampled or their patient identifier. Delete this ",
+         "file and rerun the bootstrap runner, saving only the fields it saves as add_job() wrote it.",
          call. = FALSE)
   }
   invisible(TRUE)

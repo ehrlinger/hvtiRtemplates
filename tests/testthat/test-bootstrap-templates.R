@@ -51,6 +51,45 @@ test_that("every study choice in a runner is marked EDIT", {
   }
 })
 
+test_that("every runner stops until FINISHED is set, before it reads or writes anything", {
+  for (prefix in boot_all) {
+    root <- rf_study(rf_mrn_data(id = "ccfid"))
+    env <- new.env(parent = globalenv())
+    expect_error(boot_run_runner(prefix, root, env, list()),
+                 paste0("^This [a-zA-Z]+ bootstrap runner is unfinished: FINISHED is FALSE[.] It screens the candidates for ",
+                        "the `", prefix, "` report"), info = prefix)
+    # It stopped before reading the data or loading the screen's package.
+    expect_false(exists("job", envir = env, inherits = FALSE), info = prefix)
+    expect_length(list.files(hvtiRutilities::study_dir("estimates", root), recursive = TRUE), 0L)
+  }
+})
+
+test_that("each boot_select() runner refuses an hvtiRbootstrap below 0.9.3 before it screens", {
+  for (prefix in boot_thin) {
+    boot_skip_unless_stack(prefix)
+    root <- rf_study(rf_mrn_data(id = "ccfid"))
+    env <- new.env(parent = globalenv())
+    testthat::with_mocked_bindings(
+      expect_error(boot_run_runner(prefix, root, env),
+                   "^This runner needs hvtiRbootstrap >= 0[.]9[.]3; 0[.]9[.]2 is installed", info = prefix),
+      packageVersion = function(pkg, ...) package_version("0.9.2"), .package = "utils"
+    )
+    expect_false(exists("job", envir = env, inherits = FALSE), info = prefix)
+  }
+})
+
+test_that("the bh runner refuses a TemporalHazard below 1.2.8 before it fits", {
+  boot_skip_unless_stack("bh")
+  root <- rf_study(rf_mrn_data(id = "ccfid"))
+  env <- new.env(parent = globalenv())
+  testthat::with_mocked_bindings(
+    expect_error(boot_run_runner("bh", root, env, list(FINISHED = TRUE)),
+                 "^This runner needs TemporalHazard >= 1[.]2[.]8; 1[.]2[.]7 is installed"),
+    packageVersion = function(pkg, ...) package_version("1.2.7"), .package = "utils"
+  )
+  expect_false(exists("job", envir = env, inherits = FALSE))
+})
+
 test_that("each boot_select() runner saves a bag the report reads, with the selection it prints", {
   data <- rf_mrn_data(id = "ccfid")
   for (prefix in boot_thin) {
@@ -155,10 +194,20 @@ test_that(".check_bag_identifiers() passes a bag of replicates and settings", {
   expect_true(hvtiRtemplates:::.check_bag_identifiers(bag, "ccfid"))
 })
 
-test_that(".check_bag_identifiers() searches carried lineage below the top, and skips unforced promises", {
+test_that(".check_bag_identifiers() searches the carried lineage, and skips unforced promises", {
   job <- list(provenance = list(sha256 = "abc"), data = data.frame(age = 1:3))
   bag <- boot_hazard_chunk(1L, job)
   rows <- data.frame(MRN = 7350000001 + 0:2)
+  # The bag's own lineage is searched: rows put under any field are found,
+  # while the selection's field names, `id` among them, are not matched.
+  lined <- bag
+  attr(lined, "hvti_provenance")$analysis <- list(rows = rows)
+  expect_error(hvtiRtemplates:::.check_bag_identifiers(lined, "ccfid"),
+               "bag, attribute hvti_provenance\\$analysis\\$rows\\$MRN")
+  attr(lined, "hvti_provenance")$analysis <- NULL
+  attr(lined, "hvti_provenance")$selection$extra <- rows
+  expect_error(hvtiRtemplates:::.check_bag_identifiers(lined, "ccfid"),
+               "bag, attribute hvti_provenance\\$selection\\$extra\\$MRN")
   # Only the bag's own lineage is skipped; one attached deeper is searched.
   nested <- structure(list(1), hvti_provenance = list(rows = rows))
   expect_error(hvtiRtemplates:::.check_bag_identifiers(c(bag, list(inner = nested)), "ccfid"),
@@ -169,6 +218,11 @@ test_that(".check_bag_identifiers() searches carried lineage below the top, and 
   delayedAssign("d", stop("forced"), assign.env = env)
   lazy <- stats::as.formula("~ age", env = env)
   expect_true(hvtiRtemplates:::.check_bag_identifiers(c(bag, list(scope = lazy)), "ccfid"))
+  # An active binding is reported and never evaluated.
+  active <- new.env(parent = globalenv())
+  makeActiveBinding("d", function() stop("evaluated"), active)
+  expect_error(hvtiRtemplates:::.check_bag_identifiers(c(bag, list(scope = stats::as.formula("~ age", env = active))), "ccfid"),
+               "bag\\$scope, attribute [.]Environment: d \\(an active binding, not read\\)")
   # A binding that cannot be read is reported, never taken for a pass.
   broken <- new.env(parent = globalenv())
   broken$x <- quote(expr = )

@@ -16,13 +16,36 @@
 # resamples only the model's columns, and boot_bag() keeps
 # coefficients, counts and settings: no row of data.
 
-
 # Written by add_job() from the file name, as in the report; the bag lands in
 # this set's estimates directory, where the report reads it.
 SUBJECT <- "dead_pa"
 TYPE    <- "hz"
 
+# EDIT: set FINISHED to TRUE once every EDIT: marker below is worked and
+# deleted. Until then this runner stops here, before it reads anything: a
+# screen run on placeholder settings takes hours and produces a bag that looks
+# like a result.
+FINISHED <- FALSE
+if (!FINISHED) {
+  stop("This linear bootstrap runner is unfinished: FINISHED is FALSE. It screens the candidates for the `br` ",
+       "report and saves the bag that report reads. Work every EDIT: marker in this file, set FINISHED <- TRUE, ",
+       "then run it again.", call. = FALSE)
+}
+
 suppressPackageStartupMessages(library(hvtiRbootstrap))
+
+# The report's own floor, checked here before the screen runs: below 0.9.3
+# boot_select() records `sle` and `sls` and then selects on AIC, so a screen of
+# hours would finish and then be refused by the report.
+if (utils::packageVersion("hvtiRbootstrap") < "0.9.3") {
+  stop("This runner needs hvtiRbootstrap >= 0.9.3; ",
+       utils::packageVersion("hvtiRbootstrap"), " is installed. boot_bag() ",
+       "converts a boot_select() screen into the bag the report reads, and ",
+       "nothing below 0.9.2 has such a function; below 0.9.3 the screen ",
+       "recorded `sle` and `sls` but selected on AIC, so the report's provenance ",
+       "table would name criteria it never used.\nUpdate it, then ",
+       "rerun.", call. = FALSE)
+}
 
 # EDIT: the outcome column.
 OUTCOME <- "outcome"

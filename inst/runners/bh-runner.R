@@ -16,13 +16,34 @@
 # resamples only the model's columns, and the bag's `boot`
 # field takes four fields of the hzr_bootstrap() result and no more.
 
-
 # Written by add_job() from the file name, as in the report; the bag lands in
 # this set's estimates directory, where the report reads it.
 SUBJECT <- "dead_pa"
 TYPE    <- "hz"
 
+# EDIT: set FINISHED to TRUE once every EDIT: marker below is worked and
+# deleted. Until then this runner stops here, before it reads anything: a
+# screen run on placeholder settings takes hours and produces a bag that looks
+# like a result.
+FINISHED <- FALSE
+if (!FINISHED) {
+  stop("This hazard bootstrap runner is unfinished: FINISHED is FALSE. It screens the candidates for the `bh` ",
+       "report and saves the bag that report reads. Work every EDIT: marker in this file, set FINISHED <- TRUE, ",
+       "then run it again.", call. = FALSE)
+}
+
 suppressPackageStartupMessages(library(TemporalHazard))
+
+# Checked before the screen runs. hzr_bootstrap() gained `scope`, the screen
+# this runner runs, in 1.2.1. Below 1.2.8 a screen's candidate refits dropped
+# the base fit's objective, so a run on objective = "sas" selected against a
+# different likelihood from the one it was fitted to, without a warning.
+if (utils::packageVersion("TemporalHazard") < "1.2.8") {
+  stop("This runner needs TemporalHazard >= 1.2.8; ", utils::packageVersion("TemporalHazard"),
+       " is installed. Below 1.2.8 hzr_bootstrap()'s selection refits dropped the base fit's objective, ",
+       "so a screen could select against a different likelihood without a warning.\nUpdate it, then rerun.",
+       call. = FALSE)
+}
 
 # EDIT: the candidate pool, every form offered, before any is dropped. It sets
 # which columns are read and how many candidates each phase was offered; the

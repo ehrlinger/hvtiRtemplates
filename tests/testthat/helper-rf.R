@@ -255,14 +255,15 @@ boot_all <- c(boot_thin, "bh")
 boot_set <- "dead_pa-hz"
 
 # The settings a study author would give each runner for rf_mrn_data(): an
-# outcome with a known driver, so every screen selects something.
+# outcome with a known driver, so every screen selects something, and
+# FINISHED, which an author sets once every marker is worked.
 boot_settings <- function(prefix, ...) {
   outcome <- list(
     bl = list(OUTCOME = "dead"),
     br = list(OUTCOME = "los"),
     bc = list(TIME = "iv_dead", EVENT = "dead", BASE = "x1")
   )[[prefix]]
-  utils::modifyList(c(outcome, list(POOL = c("age", "x1"), N_REP = 30, SEED = 1)), list(...))
+  utils::modifyList(c(outcome, list(FINISHED = TRUE, POOL = c("age", "x1"), N_REP = 30, SEED = 1)), list(...))
 }
 
 # The runner add_job() writes beside the `prefix` report in the study at
