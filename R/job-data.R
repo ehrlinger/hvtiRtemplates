@@ -55,6 +55,14 @@
 # Date or POSIXct inlined with `!!`, is a value and is masked.
 .is_maskable_value <- function(e) is.atomic(e) && !is.null(e) && !is.logical(e)
 
+# Which of `cols` a condition reaches, ignoring case, with ".data" added when it
+# uses .data at all. Shared by the masking and by the refusal of a WHERE on the
+# patient identifier, so the two cannot disagree about what a condition touches.
+.condition_reaches <- function(expr, cols) {
+  vars <- tolower(all.vars(expr))
+  c(cols[tolower(cols) %in% vars], if (".data" %in% vars) ".data")
+}
+
 # A condition that uses .data can reach any column, the ID included, through
 # a string such as .data[["ccfid"]], which all.vars() does not see as a column,
 # so it is masked as though it named the ID. The column named inside .data[[ ]]
@@ -62,8 +70,7 @@
 .mask_condition <- function(x, cols) {
   text <- if (is.character(x)) x else paste(deparse(x, width.cutoff = 500L), collapse = " ")
   expr <- if (is.character(x)) tryCatch(str2lang(x), error = function(e) NULL) else x
-  vars <- tolower(all.vars(expr))
-  if (is.null(expr) || !(".data" %in% vars || length(intersect(vars, tolower(cols))))) return(text)
+  if (is.null(expr) || !length(.condition_reaches(expr, cols))) return(text)
   mask <- function(e) {
     if (.is_pronoun_lookup(e, ".data")) return(e)
     if (is.call(e)) {
@@ -136,8 +143,32 @@
 
 .mask_conditions <- function(x, cols) vapply(as.character(x), .mask_condition, "", cols = cols, USE.NAMES = FALSE)
 
-.apply_where <- function(d, where, env = parent.frame(), cols = character()) {
+# Every condition's exact text is saved in the job's hand-off, so a condition on
+# the patient identifier would put identifier values in the job's output. Each
+# condition is checked before any is evaluated, and the message shows only the
+# masked text. `identifiers` are the ID and any MRN or eMRN column.
+.refuse_identifier_where <- function(conditions, identifiers, cols) {
+  for (cond in conditions) {
+    reached <- .condition_reaches(cond, identifiers)
+    if (!length(reached)) next
+    what <- if (identical(reached, ".data")) {
+      "uses .data, which can reach the patient identifier"
+    } else {
+      paste0("uses the patient identifier (", paste0("`", setdiff(reached, ".data"), "`", collapse = ", "), ")")
+    }
+    stop(errorCondition(paste0(
+      "WHERE condition `", .mask_condition(cond, unique(c(identifiers, cols))), "` ", what, ". Each WHERE ",
+      "condition is saved, values included, in this job's output, so a filter on identifier values would ",
+      "be saved with it. Exclude those patients in the dataset build, or with an hvtiRdatabuild analysis ",
+      "set, and remove the condition from WHERE."
+    ), class = "hvti_where_identifier", call = NULL))
+  }
+  invisible(TRUE)
+}
+
+.apply_where <- function(d, where, env = parent.frame(), cols = character(), identifiers = character()) {
   conditions <- .where_conditions(where)
+  .refuse_identifier_where(conditions, identifiers, cols)
   steps <- data.frame(condition = character(), shown = character(), removed = integer(),
                       missing = integer())
   for (cond in conditions) {
@@ -210,7 +241,12 @@
 #'   \code{dplyr::filter()}: a row where a condition is \code{NA} is dropped. A
 #'   value from outside the data, written \code{.env$min_age} or as a name that
 #'   is not a column, is fixed into the condition when the data are read, so the
-#'   recorded condition rebuilds the same rows wherever it runs.
+#'   recorded condition rebuilds the same rows wherever it runs. A condition
+#'   that mentions the \code{id} column, a column named \code{MRN} or
+#'   \code{eMRN} (ignoring case), or \code{.data} stops before any row is
+#'   filtered, because each condition is saved, values included, in the job's
+#'   output. Exclude those patients in the dataset build, or with an
+#'   hvtiRdatabuild analysis set, instead.
 #' @param id The patient identifier column. When it is the default
 #'   \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.
 #' @param key Columns that make a row unique; defaults to \code{id}, one row
@@ -221,9 +257,10 @@
 #'   matches its column ignoring case, because
 #'   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
 #'   key and date values are not printed: the record holds counts, and a
-#'   \code{where} condition that mentions the \code{id} or \code{key} columns,
-#'   or uses \code{.data}, is shown, in the record and in error messages, with its values replaced by
-#'   \code{<value>}. Every setting is checked before the data are read.
+#'   \code{where} condition that mentions a \code{key} column is shown, in the
+#'   record and in error messages, with its values replaced by \code{<value>}.
+#'   So is a condition on \code{id} or \code{.data} in a selection saved before
+#'   such conditions were refused. Every setting is checked before the data are read.
 #'
 #' @return A list:
 #'   \itemize{
@@ -242,7 +279,7 @@
 #'       used to rebuild the rows; it stays inside the study and is never
 #'       printed;
 #'     \item \code{where_shown}, the same conditions as a report may show them,
-#'       with the values of any condition on \code{id} or \code{key} replaced;
+#'       with the values of any condition on a \code{key} column replaced;
 #'     \item \code{id} and \code{key}, the resolved column names;
 #'     \item \code{rows} and \code{patients}, the counts kept;
 #'     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
@@ -276,7 +313,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   who <- .resolve_job_id(d, id)
   key <- .match_columns(replace(key, key == id, who$id), names(d))
   ids <- .drop_identifiers(d, who$id)
-  kept <- .apply_where(ids$data, where, env = parent.frame(), cols = c(who$id, key))
+  # MRN and eMRN are refused even when dropped: the condition would be saved.
+  identifiers <- unique(c(who$id, names(d)[tolower(names(d)) %in% .job_identifier_names], .job_identifier_names))
+  kept <- .apply_where(ids$data, where, env = parent.frame(), cols = c(who$id, key), identifiers = identifiers)
   counts <- .check_job_key(kept$data, key, who$id)
   record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts)
   attr(record, "selection") <- list(
@@ -410,9 +449,17 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   sel <- .check_upstream_selection(upstream, settings)
   if (!read) return(list(selection = sel))
   where <- if (length(sel$where)) lapply(sel$where, str2lang)
-  job_data <- do.call(read_job_data, list(cfg, dataset = sel$dataset, analysis_set = sel$analysis_set,
-                                          where = where, id = sel$id, key = sel$key),
-                      quote = TRUE, envir = parent.frame())
+  job_data <- withCallingHandlers(
+    do.call(read_job_data, list(cfg, dataset = sel$dataset, analysis_set = sel$analysis_set,
+                                where = where, id = sel$id, key = sel$key),
+            quote = TRUE, envir = parent.frame()),
+    # A file saved before WHERE on the identifier was refused can carry one.
+    hvti_where_identifier = function(e) {
+      stop("The upstream job's saved output", if (!is.null(source)) paste0(" (", source, ")"),
+           " filters on the patient identifier, which this version refuses. ", conditionMessage(e),
+           " Then rerun the upstream job, and this one.", call. = FALSE)
+    }
+  )
   now <- attr(job_data$record, "selection")
   if (!identical(as.integer(now$rows), as.integer(upstream$rows)) ||
         !identical(as.integer(now$patients), as.integer(upstream$patients))) {

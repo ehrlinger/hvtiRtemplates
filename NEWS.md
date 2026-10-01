@@ -1,5 +1,13 @@
 # hvtiRtemplates (unreleased)
 
+* `read_job_data()` stops on a `WHERE` condition that mentions the patient
+  identifier, a column named MRN or eMRN, or `.data`, before any row is
+  filtered. Each condition is saved, values included, in the job's output, so a
+  filter on identifier values would be saved with it. Exclude those patients in
+  the dataset build, or with an hvtiRdatabuild analysis set. A downstream job
+  rebuilding an upstream file saved with such a condition names the file and
+  says to rerun the upstream job.
+
 * The bootstrap reports print the data selection their bag carries, and their
   runners read data through `read_job_data()`. Each runner is its own job:
   `add_job()` for `bl`, `br`, `bc` and `bh` also writes

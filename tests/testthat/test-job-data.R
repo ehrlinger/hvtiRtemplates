@@ -247,34 +247,71 @@ test_that(".mask_condition() hides the values of a condition on ID or KEY, and o
 
 d_ids <- data.frame(ccfid = 9001:9006, age = c(15, 40, 55, NA, 70, 80))
 
-test_that("a WHERE on the ID never prints its value, but the selection keeps it to rebuild the rows", {
+# A WHERE on the patient identifier is refused: the selection saves each
+# condition's exact text in every hand-off, so a filter on identifier values
+# would put them in the job's output.
+refusal <- function(expr) {
+  tryCatch({
+    force(expr)
+    ""
+  }, error = conditionMessage)
+}
+
+test_that("a WHERE on the ID stops before any row is filtered, and never prints its value", {
   cfg <- job_study(d_ids)
-  out <- read_job_data(cfg, where = rlang::exprs(ccfid != 9001, age >= 18))
-  expect_false(any(grepl("9001", c(out$record$step, out$record$value))))
-  expect_true(any(grepl("age >= 18", out$record$step, fixed = TRUE)))
-  sel <- attr(out$record, "selection")
-  expect_identical(sel$where, c("ccfid != 9001", "age >= 18"))
-  expect_identical(sel$where_shown, c("ccfid != <value>", "age >= 18"))
-  msg <- function(expr) {
-    tryCatch({
-      force(expr)
-      ""
-    }, error = conditionMessage)
+  for (where in list(quote(ccfid != 9001), quote(CCFID != 9001), rlang::exprs(age >= 18, ccfid != 9001),
+                     quote(ccfid + 9001), quote(ccfid != nosuch + 9001), rlang::exprs(nosuch > 1, ccfid != 9001))) {
+    err <- refusal(read_job_data(cfg, where = where))
+    info <- paste(deparse(where), collapse = " ")
+    expect_match(err, "patient identifier", info = info)
+    expect_match(err, "`ccfid`", fixed = TRUE, info = info)
+    expect_match(err, "saved.*output", info = info)
+    expect_match(err, "dataset build.*analysis set", info = info)
+    expect_false(grepl("9001", err, fixed = TRUE), info = info)
+    # Checked before any condition runs, so a missing column is never looked up.
+    expect_false(grepl("not found", err, fixed = TRUE), info = info)
   }
-  bad <- msg(read_job_data(cfg, where = quote(ccfid + 9001)))
-  expect_match(bad, "TRUE or FALSE")
-  expect_false(grepl("9001", bad))
-  missing_col <- msg(read_job_data(cfg, where = quote(ccfid != nosuch + 9001)))
-  expect_match(missing_col, "nosuch")
-  expect_false(grepl("9001", missing_col))
-  differs <- msg(hvtiRtemplates:::.check_upstream_selection(sel, list(where = quote(ccfid != 9002))))
+})
+
+test_that("a WHERE on MRN or eMRN stops even when neither is the ID, and on a fallback ID", {
+  cfg <- job_study(d0)
+  for (where in list(quote(MRN > 103), quote(emrn == 201), quote(EMRN %in% c(201, 202)))) {
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "patient identifier", info = deparse(where))
+    expect_false(grepl("10[0-9]|20[0-9]", err), info = deparse(where))
+  }
+  fallback <- job_study(d0[-1])
+  err <- refusal(read_job_data(fallback, where = quote(mrn != 101)))
+  expect_match(err, "patient identifier")
+  expect_false(grepl("101", err, fixed = TRUE))
+  # pt_mrn is an ordinary column: its name only contains mrn.
+  expect_identical(nrow(read_job_data(cfg, where = quote(pt_mrn > 3))$data), 3L)
+})
+
+test_that("a WHERE on a KEY column that is not the ID is still allowed, and shown masked", {
+  long <- data.frame(ccfid = c(9001L, 9001L, 9002L), iv_echo = c(0.1, 6.2, 0.3))
+  cfg <- job_study(long)
+  out <- read_job_data(cfg, where = quote(iv_echo < 5), key = c("ccfid", "iv_echo"))
+  sel <- attr(out$record, "selection")
+  expect_identical(sel$where, "iv_echo < 5")
+  expect_identical(sel$where_shown, "iv_echo < <value>")
+  expect_identical(sel$rows, 2L)
+})
+
+test_that("a selection saved before the refusal is still shown masked, and rebuilding it names the file", {
+  cfg <- job_study(d_ids)
+  sel <- attr(read_job_data(cfg, where = quote(age >= 18))$record, "selection")
+  # As an upstream job saved it before WHERE on the ID was refused.
+  sel$where <- c("ccfid != 9001", "age >= 18")
+  differs <- refusal(hvtiRtemplates:::.check_upstream_selection(sel, list(where = quote(ccfid != 9002))))
   expect_match(differs, "WHERE")
+  expect_match(differs, "ccfid != <value>", fixed = TRUE)
   expect_false(grepl("900[12]", differs))
-  up <- sel
-  up$rows <- 99L
-  rebuilt <- msg(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = up), list()))
-  expect_match(rebuilt, "did not rebuild")
-  expect_false(grepl("9001", rebuilt))
+  rebuilt <- refusal(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list(), source = "hz.rds"))
+  expect_match(rebuilt, "hz.rds", fixed = TRUE)
+  expect_match(rebuilt, "patient identifier")
+  expect_match(rebuilt, "[Rr]erun the upstream job")
+  expect_false(grepl("9001", rebuilt, fixed = TRUE))
 })
 
 test_that("an explicit ID or KEY matches its column ignoring case, as read_built() lowercases", {
@@ -327,19 +364,21 @@ test_that("read_job_data() reads an analysis set and keeps its attrition", {
   expect_null(read_job_data(cfg)$attrition)
 })
 
-test_that("a WHERE that reaches a column through .data is masked like one on ID or KEY", {
+test_that("a WHERE that reaches a column through .data is masked, and stops", {
   mask <- hvtiRtemplates:::.mask_condition
   for (cond in list(quote(.data[["ccfid"]] != 9001), quote(.data$ccfid != 9001), quote(.data[["CCFID"]] != 9001))) {
     shown <- mask(cond, "ccfid")
     expect_false(grepl("9001", shown, fixed = TRUE), info = shown)
     expect_match(shown, "<value>", fixed = TRUE)
   }
+  # Any use of .data can reach the ID through a string, so a WHERE that uses it stops.
   cfg <- job_study(d_ids)
-  out <- read_job_data(cfg, where = quote(.data[["ccfid"]] != 9001))
-  expect_false(any(grepl("9001", c(out$record$step, out$record$value, attr(out$record, "selection")$where_shown))))
-  bad <- tryCatch(read_job_data(cfg, where = quote(.data[["ccfid"]] + 9001)), error = conditionMessage)
-  expect_match(bad, "TRUE or FALSE")
-  expect_false(grepl("9001", bad, fixed = TRUE))
+  for (where in list(quote(.data[["ccfid"]] != 9001), quote(.data$ccfid != 9001), quote(.data[["CCFID"]] + 9001))) {
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "patient identifier", info = deparse(where))
+    expect_match(err, ".data", fixed = TRUE, info = deparse(where))
+    expect_false(grepl("9001", err, fixed = TRUE), info = deparse(where))
+  }
 })
 
 test_that("a WHERE value from outside the data is fixed into the recorded condition", {
@@ -371,15 +410,12 @@ test_that("a WHERE value from outside the data is fixed into the recorded condit
   }
 })
 
-test_that("an outside value in a WHERE on the ID is recorded but shown masked", {
+test_that("an outside value in a WHERE on the ID stops, and is never printed", {
   cfg <- job_study(d_ids)
   ids <- c(9001L, 9005L)
-  out <- read_job_data(cfg, where = quote(!ccfid %in% ids))
-  sel <- attr(out$record, "selection")
-  expect_identical(sel$where, "!ccfid %in% c(9001L, 9005L)")
-  expect_identical(sel$where_shown, "!ccfid %in% <value>")
-  expect_false(any(grepl("9001|9005", c(out$record$step, out$record$value))))
-  expect_identical(out$data$ccfid, c(9002L, 9003L, 9004L, 9006L))
+  err <- refusal(read_job_data(cfg, where = quote(!ccfid %in% ids)))
+  expect_match(err, "patient identifier")
+  expect_false(grepl("9001|9005", err))
 })
 
 test_that(".read_upstream_job_data() stops when the patients differ though the counts match", {
