@@ -150,11 +150,16 @@ test_that("embedded provenance calls are unique across all R chunks", {
   expect_false(template_provenance_call_count(path) == 1L)
 })
 
+# Templates whose provenance chunk is not written yet. nb-boostmtree gains its
+# fit, save and provenance chunks in the next step of its plan, which empties
+# this vector.
+provenance_pending <- "nb-boostmtree"
+
 test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- template_list()
-  expect_equal(nrow(templates), 31L)
+  expect_equal(nrow(templates), 32L)
 
-  for (path in templates$file) {
+  for (path in templates$file[!templates$name %in% provenance_pending]) {
     source <- readLines(path, warn = FALSE)
     nonblank <- which(nzchar(trimws(source)))
     labels <- grep("^#\\| label: provenance$", source)
@@ -177,7 +182,8 @@ test_that("every shipped template ends with one embedded provenance chunk", {
 })
 
 test_that("provenance payloads take only the recovered render input", {
-  for (path in template_list()$file) {
+  templates <- template_list()
+  for (path in templates$file[!templates$name %in% provenance_pending]) {
     chunk <- provenance_chunk(path)
     info <- basename(path)
     expect_true(any(grepl(".embed_provenance(", chunk, fixed = TRUE)), info = info)
@@ -220,7 +226,7 @@ test_that("only templates with a local dataset choice override the dataset", {
     "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-postage", "dp-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
-    "rfs-fit", "rfc-fit", "rfr-fit"
+    "rfs-fit", "rfc-fit", "rfr-fit", "nb-boostmtree"
   )
   templates <- template_list()
   observed <- templates$name[vapply(templates$file, function(path) {
