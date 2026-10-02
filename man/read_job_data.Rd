@@ -43,15 +43,21 @@ instead. A value from outside the data is fixed in before this check, so
 reached any other way, as by \code{.data[[paste0(...)]]} or a string
 lookup such as \code{get()}, stops too, since it cannot be known.
 A function bound to such a lookup under another name is read as that
-lookup. Values are checked as well as names: a condition holding any value
-of the identifier, \code{MRN} or \code{eMRN} columns in the data stops,
-however it is reached (a wrapper function, a copy of the identifier under
-another name, an outside vector). A threshold that happens to equal a
-patient's identifier is refused too, and the message says so; numbers are
-compared as whole numbers where they are whole, and \code{NA} never
-matches. The value check covers identifiers of five or more characters, so
-thresholds such as 1, 18 or 2015 never collide; a study keyed on shorter
-identifiers relies on the name checks.}
+lookup. Values are checked as well as names, after every name check: the
+check covers literal values (including a vector fixed in from outside) of
+five or more characters that equal a value of the identifier, \code{MRN}
+or \code{eMRN} columns in the data, and folds only arithmetic,
+\code{c()}, \code{paste}/\code{paste0} and numeric or character coercion
+of constants (such as \code{4730000000 + 1}) to check their result. So a
+wrapper function or a copy of the identifier under another name is caught
+when it is compared with such a value. The check never calls any other
+function: a value produced by any other call, or computed from a data
+column, as in \code{id2 / 2 != 2365000000.5}, is not checked. A threshold
+that happens to equal a patient's identifier is refused too, and the
+message says so; numbers are compared as whole numbers where they are
+whole, and \code{NA} never matches. Thresholds shorter than five
+characters, such as 1, 18 or 2015, are not checked, so a study keyed on
+shorter identifiers relies on the name checks.}
 
 \item{id}{The patient identifier column. When it is the default
 \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.}

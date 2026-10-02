@@ -540,6 +540,88 @@ test_that("a WHERE value that is also a patient identifier in the data is refuse
   expect_identical(nrow(read_job_data(cfg, where = quote(!id2 %in% c(NA, 1)))$data), 6L)
 })
 
+test_that("a WHERE constant expression that evaluates to an identifier is refused before any row is filtered", {
+  d <- data.frame(ccfid = 4730000001 + 0:2, id2 = 4730000001 + 0:2, age = c(50, 70, 80))
+  cfg <- job_study(d)
+  for (where in list(quote(id2 != 4730000000 + 1), quote(id2 != as.numeric("4730000001")),
+                     quote(id2 %in% c(4730000000 + 1, 4730000000 + 2)))) {
+    info <- paste(deparse(where), collapse = " ")
+    err <- refusal(read_job_data(cfg, where = where))
+    expect_match(err, "also a patient identifier in the data", info = info)
+    expect_match(err, "`ccfid`", fixed = TRUE, info = info)
+    expect_false(grepl("4730000001|4.73e", err), info = info)
+  }
+  # Nothing is filtered: the refusal comes from the check, before evaluation.
+  expect_error(.apply_where(d, quote(id2 != 4730000000 + 1), environment(), cols = "ccfid",
+                            identifiers = "ccfid", id_values = list(ccfid = .id_text(d$ccfid))),
+               class = "hvti_where_identifier")
+  chr <- data.frame(ccfid = paste0("A", 4730000001 + 0:2), id2 = paste0("A", 4730000001 + 0:2), age = c(50, 70, 80))
+  err <- refusal(read_job_data(job_study(chr), where = quote(id2 != paste0("A47300", "00001"))))
+  expect_match(err, "also a patient identifier in the data")
+  expect_false(grepl("A4730000001", err, fixed = TRUE))
+  # Thresholds computed from constants are allowed when they equal no identifier, or are short.
+  expect_identical(nrow(read_job_data(cfg, where = quote(age > 60 + 5))$data), 2L)
+  expect_identical(nrow(read_job_data(cfg, where = quote(age > 2000 + 26 - 1960))$data), 2L)
+  expect_identical(nrow(read_job_data(cfg, where = quote(age < 2000 + 26))$data), 3L)
+})
+
+test_that("a refused WHERE executes nothing: the name checks run before any value is computed", {
+  cfg <- job_study(d_ids)
+  calls <- new.env()
+  calls$n <- 0L
+  f <- function() {
+    calls$n <- calls$n + 1L
+    1
+  }
+  expect_match(refusal(read_job_data(cfg, where = quote(ccfid != f()))), "patient identifier")
+  expect_identical(calls$n, 0L)
+  path <- withr::local_tempfile()
+  file.create(path)
+  expect_match(refusal(read_job_data(cfg, where = quote(ccfid != unlink(path)))), "patient identifier")
+  expect_true(file.exists(path))
+  # Across conditions too: a later refused condition stops before an earlier one is computed.
+  expect_match(refusal(read_job_data(cfg, where = rlang::exprs(age > f(), ccfid != 9001))), "patient identifier")
+  expect_identical(calls$n, 0L)
+})
+
+test_that("an allowed stateful WHERE call runs exactly once", {
+  cfg <- job_study(d_ids)
+  calls <- new.env()
+  calls$n <- 0L
+  cutoff <- function() {
+    calls$n <- calls$n + 1L
+    if (calls$n == 1L) 75 else 55
+  }
+  out <- read_job_data(cfg, where = quote(age > cutoff()))
+  expect_identical(calls$n, 1L)
+  expect_equal(out$data$age, 80)
+})
+
+test_that("the value check folds only base arithmetic, c(), paste and coercion, never a shadowed function", {
+  flag <- new.env()
+  flag$hit <- FALSE
+  paste0 <- function(...) {
+    flag$hit <- TRUE
+    base::paste0(...)
+  }
+  found <- .where_constants(quote(id2 != paste0("47300", "00001")), data_cols = "id2", env = environment())
+  expect_false(flag$hit)
+  expect_false("4730000001" %in% found)
+  # Unshadowed, the allowlisted functions fold.
+  expect_true("4730000001" %in% .where_constants(quote(id2 != paste0("47300", "00001")), "id2", baseenv()))
+  expect_true("4730000001" %in% .where_constants(quote(id2 != as.numeric("4730000001")), "id2", baseenv()))
+  expect_true("4730000002" %in% .where_constants(quote(id2 %in% c(4730000000 + 1, (4730000000 + 2))), "id2",
+                                                 baseenv()))
+  # A call outside the allowlist is not folded, so its value is not seen.
+  expect_false("4730000001" %in% .where_constants(quote(id2 != sum(4730000000, 1)), "id2", baseenv()))
+})
+
+test_that("a value transformed through a data column is allowed: the documented limit of the value check", {
+  d <- data.frame(ccfid = 4730000001 + 0:2, id2 = 4730000001 + 0:2)
+  out <- read_job_data(job_study(d), where = quote(id2 / 2 != 2365000000.5))
+  expect_identical(nrow(out$data), 2L)
+})
+
 test_that("short identifiers do not collide with thresholds: hx_chf == 1 and age >= 18 are allowed with IDs 1..n", {
   cfg <- job_study(d0)
   expect_identical(read_job_data(cfg, where = rlang::exprs(age >= 18, hx_chf == 1))$data$ccfid, c(2L, 3L, 5L))
