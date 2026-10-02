@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/Rtmpaigpz5/file1f96401059b/legacy-study
+#> Study: /tmp/Rtmp6TY0n0/file1e8f837dda3/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,7 +183,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmpaigpz5/file1f96401059b/legacy-study
+#> Study: /tmp/Rtmp6TY0n0/file1e8f837dda3/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -306,15 +306,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                              general 
-#> "/tmp/Rtmpaigpz5/file1f96401059b/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
+#> "/tmp/Rtmp6TY0n0/file1e8f837dda3/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
 #>                                                                               tables 
-#>  "/tmp/Rtmpaigpz5/file1f96401059b/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
+#>  "/tmp/Rtmp6TY0n0/file1e8f837dda3/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
 #>                                                                                 gfup 
-#>    "/tmp/Rtmpaigpz5/file1f96401059b/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
+#>    "/tmp/Rtmp6TY0n0/file1e8f837dda3/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
 #>                                                                               trends 
-#>       "/tmp/Rtmpaigpz5/file1f96401059b/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
+#>       "/tmp/Rtmp6TY0n0/file1e8f837dda3/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
 #>                                                                                  eda 
-#>     "/tmp/Rtmpaigpz5/file1f96401059b/legacy-study/descriptive/cohort-eda-dp-eda.qmd"
+#>     "/tmp/Rtmp6TY0n0/file1e8f837dda3/legacy-study/descriptive/cohort-eda-dp-eda.qmd"
 ```
 
 ## Work the jobs and generate output
