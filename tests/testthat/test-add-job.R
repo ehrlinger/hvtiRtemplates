@@ -266,6 +266,9 @@ test_that("template artifact paths follow a numbered study layout", {
   ))
 
   for (template in template_list()$file) {
+    # The bd build job writes through study_dir() and has no set_path(): it
+    # produces the study's dataset, not an artifact under SUBJECT-TYPE.
+    if (basename(template) == "bd.qmd") next
     lines <- readLines(template, warn = FALSE)
     label <- grep("^#\\| label: set$", lines)
     end <- label + which(lines[-seq_len(label)] == "```")[[1L]]

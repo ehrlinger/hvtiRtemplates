@@ -197,8 +197,10 @@ test_that("every guard-edits drafts by default and stops when strict", {
     for (v in list(NA, "0", "false", "no", "FALSE")) {
       expect_warning(out <- run(code, v), "Rendering as a draft", info = info)
       expect_true(any(grepl("DRAFT", out, fixed = TRUE)), info = paste(info, v))
-      expect_true(any(grepl("choose the endpoint", out, fixed = TRUE)),
-                  info = paste(info, v))
+      # bd's banner gives the marker COUNT only: its report shows no source, and a
+      # marker line can sit beside an EXCLUDE rule that names a patient.
+      shown <- if (basename(f) == "bd.qmd") "1 unresolved markers remain" else "choose the endpoint"
+      expect_true(any(grepl(shown, out, fixed = TRUE)), info = paste(info, v))
     }
     for (v in c("1", "true", "yes")) {
       expect_error(run(code, v), "unresolved", info = paste(info, v))
@@ -258,7 +260,8 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "followup_check",  # >= 1.4.1
     "study_abbreviations",  # >= 1.4.2
     "label_map", "get_label",
-    "cache_fit", "capture_provenance", "provenance_data", "publish_provenance"  # >= 1.3.1
+    "cache_fit", "capture_provenance", "provenance_data", "publish_provenance",  # >= 1.3.1
+    "register_data", "adopt_data_update"  # release-aware since 1.4.1
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")
