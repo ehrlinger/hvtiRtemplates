@@ -5,7 +5,9 @@
   a missing condition is not excluded and is counted), derives the study's own variables, writes a draft, and with
   `PUBLISH <- TRUE` publishes a dated release with `hvtiRdatabuild::publish_dataset()` and registers it, or adopts
   it when an older release is registered. Its report shows counts and no code, so a rule naming a patient stays out
-  of the HTML. New `build_cohort()` carries the cohort and attrition step (#223).
+  of the HTML. New `build_cohort()` carries the cohort and attrition step (#223). The
+  catalog lists `bd` as in flight: it is released so the stat programmers can review it in a real study, and it
+  is marked shipped once they have and a timed render against the real master is recorded.
 
 * `boostmtree` now comes from the CCF fork through `ggBoostedTrees`'s own
   `Remotes:` rather than a tag pinned here, with a floor of 2.0.3. The two had

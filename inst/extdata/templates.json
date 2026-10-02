@@ -80,7 +80,7 @@
       "folder": "datasets",
       "family": "datasets",
       "kind": "job",
-      "status": "shipped",
+      "status": "in-flight",
       "batch": 8,
       "sas_breadth": 1134,
       "r_exemplars": 15,
@@ -92,7 +92,7 @@
       ],
       "blocked_on": null,
       "spec": "dev/specs/2026-10-02-bd-build-job-design.md",
-      "note": null,
+      "note": "Released for review in a real study. Two gates before shipped: the stat programmers (Moses, Linda, Beth) review bd.qmd line by line, and one timed draft render against the real cardiac master on Workbench records runtime and peak memory. Then this row becomes shipped and #223 closes.",
       "sas_breadth_jobs": 1094,
       "disposition": "scaffold",
       "uses": [

@@ -154,7 +154,7 @@ row has no template on disk.
 
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `bd` | shipped | 1134 | 1094 | 15 | — |
+| `bd` | *in flight* | 1134 | 1094 | 15 | — |
 | `dt` | queued | 512 | 503 | 0 | hvtiRdatabuild |
 | `mi` | queued | — | 18 | — | hvtiRimputation |
 | `si` | queued | — | 1 | — | — |
