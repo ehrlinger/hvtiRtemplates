@@ -1,5 +1,42 @@
 # Changelog
 
+## hvtiRtemplates 1.2.4
+
+- `ggBoostedTrees` is required at 0.9.1 or later. `boostmtree` now
+  arrives only through `ggBoostedTrees`’s `Remotes:`, and 0.9.1 is the
+  first release that pins the `v2.0.3-ccf` tag this package’s
+  `boostmtree (>= 2.0.3)` floor needs.
+
+- New template `00_datasets/bd.qmd`, the first at the `00_datasets`
+  level: a build job that cuts a study’s dataset from a master snapshot,
+  applies a cohort list and ordered exclusion rules
+  (`condition ~ "Reason"`, where a missing condition is not excluded and
+  is counted), derives the study’s own variables, writes a draft, and
+  with `PUBLISH <- TRUE` publishes a dated release with
+  [`hvtiRdatabuild::publish_dataset()`](https://ehrlinger.github.io/hvtiRdatabuild/reference/publish_dataset.html)
+  and registers it, or adopts it when an older release is registered.
+  Its report shows counts and no code, so a rule naming a patient stays
+  out of the HTML. New
+  [`build_cohort()`](https://ehrlinger.github.io/hvtiRtemplates/reference/build_cohort.md)
+  carries the cohort and attrition step
+  ([\#223](https://github.com/ehrlinger/hvtiRtemplates/issues/223)). The
+  catalog lists `bd` as in flight: it is released so the stat
+  programmers can review it in a real study, and it is marked shipped
+  once they have and a timed render against the real master is recorded.
+
+- `boostmtree` now comes from the CCF fork through `ggBoostedTrees`’s
+  own `Remotes:` rather than a tag pinned here, with a floor of 2.0.3.
+  The two had pinned different tags of the fork, so dependency
+  resolution failed before any check ran; with one pin they cannot drift
+  apart again. The `nb-boostmtree` install hint names the `v2.0.3-ccf`
+  tag that `ggBoostedTrees` 0.9.1 installs from.
+
+- Every template’s HTML now reads full width with its contents on the
+  left (`page-layout: full`, `toc-location: left`, a 2000px body ceiling
+  and a 250px sidebar), alongside the existing `embed-resources: true`.
+  A new test checks all of it in every template’s own header, so a
+  copied template stays self-contained and laid out the same.
+
 ## hvtiRtemplates 1.2.3
 
 - [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
