@@ -45,7 +45,7 @@ Remotes:
     ehrlinger/ggBoostedTrees
 Suggests:
     arrow,
-    boostmtree (>= 2.0.2),
+    boostmtree (>= 2.0.3),
     fs,
     ggBoostedTrees (>= 0.9.0),
     ggRandomForests (>= 4.0.0),
