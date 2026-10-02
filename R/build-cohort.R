@@ -1,5 +1,4 @@
 # Synthetic column created dynamically during cohort list processing.
-globalVariables(".cohort_reason")
 
 #' Cut a study cohort from a master, recording who was dropped and why
 #'
@@ -155,9 +154,16 @@ build_cohort <- function(data, exclude = NULL, cohort = NULL, join_by = NULL, id
       stop(where, " has an exclude column and no reason column. Add one, so each exclusion is counted under its ",
            "reason.", call. = FALSE)
     }
+    exclude_values <- trimws(listed$exclude)
+    bad_exclude <- !is.na(exclude_values) & !exclude_values %in% c("0", "1")
+    if (any(bad_exclude)) {
+      stop(where, " has ", sum(bad_exclude), " exclude value(s) that are not 0 or 1. Recode the exclude column to 0 and 1.",
+           call. = FALSE)
+    }
     flagged <- listed$exclude %in% "1"
-    if (any(flagged & (is.na(listed$reason) | !nzchar(trimws(listed$reason))))) {
-      stop(where, " flags ", sum(flagged & (is.na(listed$reason) | !nzchar(trimws(listed$reason)))),
+    blank_reason <- flagged & (is.na(listed$reason) | !nzchar(trimws(listed$reason)))
+    if (any(blank_reason)) {
+      stop(where, " flags ", sum(blank_reason),
            " row(s) for exclusion with no reason. Give each one a reason.", call. = FALSE)
     }
     out$.cohort_reason <- ifelse(flagged, trimws(listed$reason), NA_character_)[match(master_key[keep], list_key)]

@@ -87,6 +87,9 @@ test_that("cohort-list problems stop with the file and the setting, never a valu
   expect_error(build_cohort(d, cohort = file.path(tempdir(), "absent.csv"), join_by = "ccfid"), "does not exist")
   no_reason <- bc_list(data.frame(ccfid = "A0002", dt_surg = "2011-02-06", exclude = 1))
   expect_error(build_cohort(d, cohort = no_reason, join_by = c("ccfid", "dt_surg")), "no reason column")
+  bad_exclude <- bc_list(data.frame(ccfid = "A0002", dt_surg = "2011-02-06", exclude = "Yes", reason = "Redo"))
+  err_exclude <- expect_error(build_cohort(d, cohort = bad_exclude, join_by = c("ccfid", "dt_surg")), "1 exclude value\\(s\\) that are not 0 or 1")
+  expect_false(grepl("Yes", conditionMessage(err_exclude)))
 })
 
 test_that("a malformed rule names its number and reason, never its text", {
