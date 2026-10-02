@@ -105,15 +105,21 @@ instead. A value from outside the data is fixed in before this check, so
 reached any other way, as by <code>.data[[paste0(...)]]</code> or a string
 lookup such as <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code>, stops too, since it cannot be known.
 A function bound to such a lookup under another name is read as that
-lookup. Values are checked as well as names: a condition holding any value
-of the identifier, <code>MRN</code> or <code>eMRN</code> columns in the data stops,
-however it is reached (a wrapper function, a copy of the identifier under
-another name, an outside vector). A threshold that happens to equal a
-patient's identifier is refused too, and the message says so; numbers are
-compared as whole numbers where they are whole, and <code>NA</code> never
-matches. The value check covers identifiers of five or more characters, so
-thresholds such as 1, 18 or 2015 never collide; a study keyed on shorter
-identifiers relies on the name checks.</p></dd>
+lookup. Values are checked as well as names, after every name check: the
+check covers literal values (including a vector fixed in from outside) of
+five or more characters that equal a value of the identifier, <code>MRN</code>
+or <code>eMRN</code> columns in the data, and folds only arithmetic,
+<code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code>, <code>paste</code>/<code>paste0</code> and numeric or character coercion
+of constants (such as <code>4730000000 + 1</code>) to check their result. So a
+wrapper function or a copy of the identifier under another name is caught
+when it is compared with such a value. The check never calls any other
+function: a value produced by any other call, or computed from a data
+column, as in <code>id2 / 2 != 2365000000.5</code>, is not checked. A threshold
+that happens to equal a patient's identifier is refused too, and the
+message says so; numbers are compared as whole numbers where they are
+whole, and <code>NA</code> never matches. Thresholds shorter than five
+characters, such as 1, 18 or 2015, are not checked, so a study keyed on
+shorter identifiers relies on the name checks.</p></dd>
 
 
 <dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
@@ -169,7 +175,7 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
 <span class="r-in"><span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"job-data-example"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"Example"</span>, <span class="fl">1L</span>, adopt <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpEuw9v5/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpvcFmgU/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
@@ -182,7 +188,7 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
 <span class="r-in"><span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"built.csv"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpEuw9v5/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpvcFmgU/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>

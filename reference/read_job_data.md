@@ -62,16 +62,22 @@ read_job_data(
   `.data[[paste0(...)]]` or a string lookup such as
   [`get()`](https://rdrr.io/r/base/get.html), stops too, since it cannot
   be known. A function bound to such a lookup under another name is read
-  as that lookup. Values are checked as well as names: a condition
-  holding any value of the identifier, `MRN` or `eMRN` columns in the
-  data stops, however it is reached (a wrapper function, a copy of the
-  identifier under another name, an outside vector). A threshold that
-  happens to equal a patient's identifier is refused too, and the
-  message says so; numbers are compared as whole numbers where they are
-  whole, and `NA` never matches. The value check covers identifiers of
-  five or more characters, so thresholds such as 1, 18 or 2015 never
-  collide; a study keyed on shorter identifiers relies on the name
-  checks.
+  as that lookup. Values are checked as well as names, after every name
+  check: the check covers literal values (including a vector fixed in
+  from outside) of five or more characters that equal a value of the
+  identifier, `MRN` or `eMRN` columns in the data, and folds only
+  arithmetic, [`c()`](https://rdrr.io/r/base/c.html), `paste`/`paste0`
+  and numeric or character coercion of constants (such as
+  `4730000000 + 1`) to check their result. So a wrapper function or a
+  copy of the identifier under another name is caught when it is
+  compared with such a value. The check never calls any other function:
+  a value produced by any other call, or computed from a data column, as
+  in `id2 / 2 != 2365000000.5`, is not checked. A threshold that happens
+  to equal a patient's identifier is refused too, and the message says
+  so; numbers are compared as whole numbers where they are whole, and
+  `NA` never matches. Thresholds shorter than five characters, such as
+  1, 18 or 2015, are not checked, so a study keyed on shorter
+  identifiers relies on the name checks.
 
 - id:
 
@@ -138,7 +144,7 @@ refused. Every setting is checked before the data are read.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
-#> Study: /tmp/RtmpEuw9v5/job-data-example
+#> Study: /tmp/RtmpvcFmgU/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -151,7 +157,7 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/RtmpEuw9v5/job-data-example
+#> Study: /tmp/RtmpvcFmgU/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
