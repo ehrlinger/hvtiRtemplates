@@ -1,5 +1,9 @@
 # hvtiRtemplates (unreleased)
 
+* `boostmtree` is installed from the `v2.0.3-ccf` tag, with a floor of 2.0.3, matching the ref
+  `ggBoostedTrees` 0.9.1 pins. The two pinned different refs of one package, so dependency
+  resolution failed before any check ran.
+
 * Every template's HTML now reads full width with its contents on the left
   (`page-layout: full`, `toc-location: left`, a 2000px body ceiling and a
   250px sidebar), alongside the existing `embed-resources: true`. A new test
