@@ -1,3 +1,11 @@
+# hvtiRtemplates (unreleased)
+
+* The `nb-boostmtree` install hint and the `Remotes:` entry for `boostmtree`
+  now name the `v2.0.3-ccf` tag of the CCF fork, the tag `ggBoostedTrees`
+  0.9.1 installs from. Installing both packages named two tags for one
+  package, which `pak` cannot resolve. The `boostmtree (>= 2.0.2)` floor is
+  unchanged: 2.0.3 drops only an unused import.
+
 # hvtiRtemplates 1.2.3
 
 * `read_job_data()` stops on a `WHERE` condition that mentions the patient
