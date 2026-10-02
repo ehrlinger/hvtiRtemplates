@@ -168,7 +168,7 @@ build_cohort <- function(data, exclude = NULL, cohort = NULL, join_by = NULL, id
     }
     out$.cohort_reason <- ifelse(flagged, trimws(listed$reason), NA_character_)[match(master_key[keep], list_key)]
     for (r in unique(trimws(listed$reason[flagged]))) {
-      rule <- rlang::new_formula(rlang::expr(.cohort_reason %in% !!r), r, env = baseenv()) # nolint: object_usage_linter
+      rule <- rlang::new_formula(rlang::expr(!!rlang::sym(".cohort_reason") %in% !!r), r, env = baseenv())
       rules[[length(rules) + 1L]] <- structure(rule, step = "cohort list")
     }
   }
