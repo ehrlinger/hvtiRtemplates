@@ -5,24 +5,10 @@
 # covariates, so every model has something to find.
 
 # lm-binary fits on operations before 2015 and lm-checkpred validates on 2015
-# onward. The lm templates read a whole registered dataset (they have no
-# ANALYSIS_SET), so the split is made here, as two more registered datasets.
-lm_register_split <- function(root, job) {
-  dir <- hvtiRutilities::study_dir("datasets", root)
-  built <- readRDS(file.path(dir, "built.rds"))
-  cohorts <- list(training = built$year < 2015, validation = built$year >= 2015)
-  for (name in names(cohorts)) {
-    file <- paste0("built-", name, ".rds")
-    saveRDS(built[cohorts[[name]], , drop = FALSE], file.path(dir, file))
-    invisible(utils::capture.output(suppressMessages(hvtiRutilities::register_data(
-      root, built = file, dataset = name, role = "named",
-      population = paste0("Synthetic cohort, ", name, " operations (",
-                          if (name == "training") "1990-2014" else "2015-2024", ")")
-    ))))
-  }
-}
-
-lm_id <- list("^ID <- " = "ID <- \"patient_id\"", "^IMPUTATION <- " = "IMPUTATION <- NULL")
+# onward: one registered dataset, split by each job's WHERE.
+lm_era <- function(where) list("^WHERE <- NULL$" = paste0("WHERE <- quote(", where, ")"))
+lm_patient <- list("^ID <- " = "ID <- \"patient_id\"")
+lm_id <- c(lm_patient, list("^IMPUTATION <- " = "IMPUTATION <- NULL"))
 lm_covariates <- "c(\"age\", \"female\", \"hx_chf\", \"hx_dm\", \"lvef\", \"bmi\")"
 
 gallery_family(
@@ -64,18 +50,18 @@ gallery_family(
     d
   },
   jobs = list(
-    "lm-binary" = list(subject = "stroke", type = "model", prepare = lm_register_split, choices = c(lm_id, list(
-      "^DATASET <- " = "DATASET <- \"training\"",
+    "lm-binary" = list(subject = "stroke", type = "model", choices = c(lm_id, lm_era("year < 2015"), list(
+      "^DATASET <- " = "DATASET <- \"study\"",
       "^OUTCOME <- " = "OUTCOME <- \"stroke\"",
       "^PREDICTORS <- " = paste("PREDICTORS <-", lm_covariates),
       "^OUTCOME_LEVELS <- " = "OUTCOME_LEVELS <- c(\"no\", \"yes\")",
       "^EVENT_LEVEL <- " = "EVENT_LEVEL <- \"yes\""
     ))),
-    "lm-checkpred" = list(subject = "stroke", type = "model", choices = list(
-      "^DATASET <- " = "DATASET <- \"validation\"",
+    "lm-checkpred" = list(subject = "stroke", type = "model", choices = c(lm_patient, lm_era("year >= 2015"), list(
+      "^DATASET <- " = "DATASET <- \"study\"",
       "^OUTCOME <- " = "OUTCOME <- \"stroke\"",
       "^GROUPS <- " = "GROUPS <- 5L"
-    )),
+    ))),
     "lm-ordinal" = list(subject = "mr", type = "model", choices = c(lm_id, list(
       "^DATASET <- " = "DATASET <- \"study\"",
       "^OUTCOME <- " = "OUTCOME <- \"mr_grade\"",

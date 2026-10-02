@@ -1,11 +1,15 @@
 # Bootstrap variable selection family: bl (logistic), br (linear), bc (Cox)
 # and bh (multiphase hazard). These templates REPORT on a screen; they do not
-# run one. Each job's prepare() is therefore the companion runner a study
-# author writes by hand: it reads the registered dataset, runs the screen
-# small, and saves the bag where the report reads it, under the job's own set
-# in estimates/. A real screen is a thousand replicates over a hundred or more
-# candidates and runs for hours; these run in minutes at most, so every frequency
-# below carries a Monte-Carlo error of several points, bh's most of all.
+# run one. add_job() writes each report's companion runner beside it,
+# <subject>-<type>-<prefix>-runner.R, and each job's prepare() works that
+# runner as a study author would: it sets the runner's study choices
+# (FINISHED <- TRUE among them), runs it with Rscript from inside the study,
+# and leaves the bag where the report reads it, under the job's own set in
+# estimates/. The runner reads its rows through read_job_data() and records
+# the selection in the bag, which the report prints. A real screen is a
+# thousand replicates over a hundred or more candidates and runs for hours;
+# these run in minutes at most, so every frequency below carries a
+# Monte-Carlo error of several points, bh's most of all.
 #
 # bc and bh screen death, as family-00-survival.R redraws it: an early phase
 # carried by age, creatinine and heart failure, and a constant phase carried
@@ -36,44 +40,45 @@ bootstrap_columns <- function(d) {
 bootstrap_pool <- c("age", "female", "bmi", "hx_chf", "hx_dm", "nyha_pr", "lvef", "plvmassi")
 bootstrap_death_pool <- c("age", "hx_chf", "lvef", "hx_dm", "creat_pr", "female", "bmi", "plvmassi")
 
-# What a runner starts from: the registered dataset, and the provenance record
-# of the exact file it screened, taken before the screen.
-bootstrap_input <- function(root) {
-  cfg <- hvtiRutilities::study_config(start = root)
-  list(data = hvtiRutilities::read_built(cfg = cfg),
-       record = hvtiRutilities::provenance_data(cfg = cfg, role = "bootstrap-training"))
+r_vector <- function(x) paste0("c(", paste0("\"", x, "\"", collapse = ", "), ")")
+
+# The runner add_job() wrote beside a report.
+bootstrap_runner <- function(job) sub("[.]qmd$", "-runner.R", job)
+
+# Run a runner as its header says to: with Rscript, from inside the study.
+# `env` adds environment variables to that one run. Stops with the runner's
+# own last lines when it fails.
+bootstrap_run <- function(runner, env = character()) {
+  out <- withr::with_dir(dirname(runner), suppressWarnings(system2(
+    file.path(R.home("bin"), "Rscript"), shQuote(basename(runner)), stdout = TRUE, stderr = TRUE, env = env
+  )))
+  status <- attr(out, "status")
+  if (!is.null(status) && status != 0L) {
+    stop(basename(runner), " failed:\n", paste(utils::tail(out, 15L), collapse = "\n"), call. = FALSE)
+  }
+  invisible(out)
 }
 
-# The set directory a report reads from, taken from the job's own file name,
-# <subject>-<type>-<prefix>.qmd, as the report's set_path() takes it.
-bootstrap_set_dir <- function(root, job) {
-  fields <- strsplit(basename(job), "-", fixed = TRUE)[[1L]]
-  d <- file.path(hvtiRutilities::study_dir("estimates", root), paste(fields[1:2], collapse = "-"))
-  dir.create(d, recursive = TRUE, showWarnings = FALSE)
-  d
+# The runner's study choices common to bl, br and bc: finished, the cohort's
+# identifier, the pool, and a small run.
+bootstrap_runner_choices <- function(pool, n_rep, seed) {
+  list(
+    "^FINISHED <- FALSE$" = "FINISHED <- TRUE",
+    "^POOL <- c\\(\"age\", \"female\"\\)$" = paste("POOL <-", r_vector(pool)),
+    "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
+    "^N_REP <- 1000$" = sprintf("N_REP <- %d", n_rep),
+    "^SEED <- 20260101$" = sprintf("SEED <- %d", seed)
+  )
 }
 
-# The reports refuse a bag that carries no data lineage, and neither boot_bag()
-# nor hzr_bootstrap() attaches one, so the runner does. The shape is the one
-# the reports read: data, artifacts, analysis and cohort, in that order.
-bootstrap_lineage <- function(bag, record) {
-  attr(bag, "hvti_provenance") <- list(data = list(record), artifacts = list(), analysis = NULL, cohort = NULL)
-  bag
-}
-
-# A boot_select() screen, as the bl, br and bc runners write it: one run, one
+# A boot_select() screen, as the bl, br and bc runners make it: one run, one
 # file, BOOT_FILE's default name.
-bootstrap_select <- function(response, pool, fitter, base_params, n_rep, seed) {
-  force(response)
-  force(pool)
+bootstrap_select <- function(choices) {
+  force(choices)
   function(root, job) {
-    input <- bootstrap_input(root)
-    formula <- stats::as.formula(paste(response, "~", paste(pool, collapse = " + ")))
-    screen <- hvtiRbootstrap::boot_select(input$data, formula, fitter, n_rep = n_rep,
-                                          sle = 0.10, sls = 0.05, seed = seed)
-    bag <- hvtiRbootstrap::boot_bag(screen, base_params = base_params, requested = length(pool),
-                                    manifest = list(sha256 = input$record$sha256))
-    saveRDS(bootstrap_lineage(bag, input$record), file.path(bootstrap_set_dir(root, job), "bagging.rds"))
+    runner <- bootstrap_runner(job)
+    set_choices(runner, choices)
+    bootstrap_run(runner)
   }
 }
 
@@ -89,68 +94,50 @@ bootstrap_choices <- function(n_rep, cluster) {
 
 # ---- The hazard runner -------------------------------------------------------
 # hzr_bootstrap() is chunked, as a real hazard screen is: each chunk is an
-# independent run with its own seed, written as bh.chunkNN.rds, and the report
-# pools them. Chunks run side by side, which is the reason to chunk at all.
-# Each replicate runs a stepwise screen over two phases and costs tens of
-# seconds, so this run is four chunks of two, over a pool one noise variable
-# smaller than bc's.
+# independent run of the runner with its own CHUNK and seed, written as
+# bh.chunkNN.rds, and the report pools them. Chunks run side by side, which is
+# the reason to chunk at all. Each replicate runs a stepwise screen over two
+# phases and costs tens of seconds, so this run is four chunks of two, over a
+# pool one noise variable smaller than bc's.
 bh_chunks <- 4L
 bh_per_chunk <- 2L
+bh_pool <- setdiff(bootstrap_death_pool, "plvmassi")
+
+# The runner screens the rows the hazard family analyses: complete cases on
+# creatinine, since a candidate holding NA cannot be scored. Same-day deaths
+# are already off t = 0 in the dataset (family-00-survival.R).
+#
+# The early shape is held fixed, as %hazboot does, at a half-life of about
+# eleven days. It is written here rather than fitted: on this cohort a
+# covariate-free fit of the early shape runs off to a degenerate phase
+# (log t_half near 700, nu near 600) from any start, after which every
+# replicate's refit fails and the screen selects nothing.
+bh_runner_choices <- list(
+  "^FINISHED <- FALSE$" = "FINISHED <- TRUE",
+  "^POOL <- c\\(\"age\", \"female\"\\)$" = paste("POOL <-", r_vector(bh_pool)),
+  "^WHERE <- NULL$" = "WHERE <- quote(!is.na(creat_pr))",
+  "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
+  # One runner, run once per chunk: the chunk number comes from the run.
+  "^CHUNK <- 1L$" = "CHUNK <- as.integer(Sys.getenv(\"GALLERY_CHUNK\"))",
+  "^N_BOOT <- 20L$" = sprintf("N_BOOT <- %dL", bh_per_chunk),
+  "^phases <- list\\(early = hzr_phase\\(\"cdf\", t_half = 0.05" =
+    "phases <- list(early = hzr_phase(\"cdf\", t_half = 0.03, nu = 1, m = 1, fixed = \"shapes\"),",
+  "^bs <- hzr_bootstrap\\(base, n_boot = N_BOOT, seed = SEED, scope = list\\(early = ~ age \\+ female" = paste0(
+    "bs <- hzr_bootstrap(base, n_boot = N_BOOT, seed = SEED, scope = list(early = ~ ",
+    paste(bh_pool, collapse = " + "), ", constant = ~ ", paste(bh_pool, collapse = " + "), "),"
+  )
+)
 
 bootstrap_hazard <- function(root, job) {
-  input <- bootstrap_input(root)
-  d <- input$data
-  # Two things hazard() will not take that a Cox fit does. A follow-up of zero
-  # has no likelihood (six deaths round to 0.000 years), and a candidate
-  # holding NA cannot be scored, so creat_pr would never be tested. Floor
-  # follow-up at one day and impute creatinine at its median, in the runner's
-  # copy only. This differs from the hazard family, which moves only the zeros
-  # to 0.00025 years: here the shape-fixing fit has no covariates, and with
-  # six deaths at 0.00025 it runs off to a degenerate early phase (log t_half
-  # near 600, nu near 500) from the default and from hz's starting values,
-  # after which every replicate's refit fails and the screen selects nothing.
-  # The one-day floor gives an early half-life near ten days. Same-day deaths
-  # need a named rule in the templates themselves (hvtiRtemplates#175).
-  d$iv_dead <- pmax(d$iv_dead, 1 / 365.25)
-  d$creat_pr[is.na(d$creat_pr)] <- stats::median(d$creat_pr, na.rm = TRUE)
-
-  # Shapes from a fit with no covariates, then held fixed, as %hazboot does.
-  phases <- function(early) list(early = early, constant = TemporalHazard::hzr_phase("constant"))
-  free <- TemporalHazard::hazard(survival::Surv(iv_dead, dead) ~ 1, data = d, dist = "multiphase",
-                                 phases = phases(TemporalHazard::hzr_phase("cdf", t_half = 0.05, nu = 1, m = 1)),
-                                 fit = TRUE)
-  cf <- stats::coef(free)
-  early <- TemporalHazard::hzr_phase("cdf", t_half = exp(cf[["early.log_t_half"]]), nu = cf[["early.nu"]],
-                                     m = cf[["early.m"]], fixed = "shapes")
-  base <- TemporalHazard::hazard(survival::Surv(iv_dead, dead) ~ 1, data = d, dist = "multiphase",
-                                 phases = phases(early), fit = TRUE)
-
-  pool <- setdiff(bootstrap_death_pool, "plvmassi")
-  scope <- stats::as.formula(paste("~", paste(pool, collapse = " + ")))
-  offered <- c(early = length(pool), constant = length(pool))
-  dir <- bootstrap_set_dir(root, job)
-  run_chunk <- function(k) {
-    seed <- 20261000L + k
-    t0 <- Sys.time()
-    bs <- suppressWarnings(TemporalHazard::hzr_bootstrap(
-      base, n_boot = bh_per_chunk, seed = seed, scope = list(early = scope, constant = scope),
-      slentry = 0.10, slstay = 0.05, max_steps = 50L
-    ))
-    chunk <- list(
-      n_boot = bs$n_success, seed = seed, slentry = 0.10, slstay = 0.05, max_steps = 50L,
-      # The first base parameter must be free: boot_health() watches its SD.
-      base_params = c("early.log_mu", "constant.log_mu", "early.log_t_half", "early.nu", "early.m"),
-      requested = offered, usable = offered, n_rows = nrow(d),
-      elapsed_mins = as.numeric(difftime(Sys.time(), t0, units = "mins")),
-      manifest = list(sha256 = input$record$sha256),
-      th_version = format(utils::packageVersion("TemporalHazard")),
-      boot = bs[c("replicates", "summary", "n_success", "n_failed")]
-    )
-    saveRDS(bootstrap_lineage(chunk, input$record), file.path(dir, sprintf("bh.chunk%02d.rds", k)))
-  }
+  runner <- bootstrap_runner(job)
+  set_choices(runner, bh_runner_choices)
   # mclapply() forks, which Windows cannot; run the chunks one after another there.
   cores <- if (.Platform$OS.type == "windows") 1L else bh_chunks
-  invisible(parallel::mclapply(seq_len(bh_chunks), run_chunk, mc.cores = cores))
+  runs <- parallel::mclapply(seq_len(bh_chunks), function(k) {
+    tryCatch(bootstrap_run(runner, env = paste0("GALLERY_CHUNK=", k)), error = function(e) e)
+  }, mc.cores = cores)
+  failed <- vapply(runs, inherits, logical(1L), "error")
+  if (any(failed)) stop(conditionMessage(runs[[which(failed)[[1L]]]]), call. = FALSE)
 }
 
 # ---- The jobs ----------------------------------------------------------------
@@ -160,22 +147,23 @@ gallery_family(
   jobs = list(
     bl = list(
       subject = "vent", type = "boot",
-      prepare = bootstrap_select("vent", bootstrap_pool, hvtiRbootstrap::fit_logistic, "(Intercept)", 100L, 101L),
+      prepare = bootstrap_select(c(bootstrap_runner_choices(bootstrap_pool, 100L, 101L),
+                                   list("^OUTCOME <- \"outcome\"$" = "OUTCOME <- \"vent\""))),
       choices = bootstrap_choices(100L, "  Heart = c(\"hx_chf\", \"lvef\")")
     ),
     br = list(
       subject = "icu", type = "boot",
-      prepare = bootstrap_select("icu_hours", bootstrap_pool, hvtiRbootstrap::fit_linear, "(Intercept)", 100L, 102L),
+      prepare = bootstrap_select(c(bootstrap_runner_choices(bootstrap_pool, 100L, 102L),
+                                   list("^OUTCOME <- \"outcome\"$" = "OUTCOME <- \"icu_hours\""))),
       choices = bootstrap_choices(100L, "  History = c(\"hx_chf\", \"hx_dm\")")
     ),
-    # A Cox model has no intercept and fit_cox() cannot force a term, but
-    # boot_bag() requires a base model that names a screened term. Age is
-    # selected in every replicate, so it stands in; its row leaves the
-    # frequency table, and the SD check watches it.
+    # A Cox model has no intercept, so the runner's BASE names a screened
+    # term. Age is selected in every replicate, so its default "age" stands
+    # in; its row leaves the frequency table, and the SD check watches it.
+    # TIME and EVENT default to iv_dead and dead already.
     bc = list(
       subject = "dead", type = "boot",
-      prepare = bootstrap_select("survival::Surv(iv_dead, dead)", bootstrap_death_pool, hvtiRbootstrap::fit_cox,
-                                 "age", 100L, 103L),
+      prepare = bootstrap_select(bootstrap_runner_choices(bootstrap_death_pool, 100L, 103L)),
       choices = bootstrap_choices(100L, "  Heart = c(\"hx_chf\", \"lvef\")")
     ),
     bh = list(

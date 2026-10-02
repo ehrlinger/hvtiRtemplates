@@ -2,7 +2,7 @@
 
     python3 dev/gallery/package.py <study root> <output folder>
 
-Each rendered report is self-contained, so all 30 carry their own copy of the
+Each rendered report is self-contained, so all 32 carry their own copy of the
 same Quarto stylesheets and scripts (about 1.9 MB a report, 1.4 MB of it one
 URL-encoded stylesheet with the icon font inside). This copies every report
 listed in <study root>/gallery-build.csv to <output>/reports/<template>.html

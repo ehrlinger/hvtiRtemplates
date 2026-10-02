@@ -94,7 +94,7 @@
 
 <div class="wrap">
   <header>
-    <span class="eyebrow">hvtiRtemplates · main · 2026-09-28</span>
+    <span class="eyebrow">hvtiRtemplates · main · 2026-10-02</span>
     <h1>HVTI Template Gallery</h1>
     <p class="lead">Every shipped job template, rendered once on the same synthetic study, so the group can read what each job produces before the by-name reviews. Open a template's name to see its report.</p>
     <div class="facts" id="facts"></div>
@@ -112,17 +112,18 @@
       <h3>The study</h3>
       <ul>
         <li>800 simulated operations, 1990 to 2024, followed to 31 December 2025. No real patient, study or identifier appears anywhere.</li>
-        <li>Built from the descriptives demo cohort, plus the outcomes each family needs: a two-phase death outcome (early and constant hazard, concordance 0.69), ventilation, ICU hours, stroke, regurgitation grade, discharge, and three treatment variables.</li>
+        <li>Built from the descriptives demo cohort, plus the outcomes each family needs: a two-phase death outcome (early and constant hazard, concordance 0.69), ventilation, ICU hours, stroke, regurgitation grade, discharge, and three treatment variables, plus a separate synthetic echocardiography series for the repeated-measures job.</li>
         <li>Each job was scaffolded with <code>add_job()</code>, its <code>EDIT:</code> points filled, and rendered with <code>render_job(final = TRUE)</code>.</li>
       </ul>
     </div>
     <div class="note">
       <h3>Where the gallery departs from the template</h3>
       <ul>
-        <li><b>hz</b> does not render as shipped (#168); one line of its convergence table was swapped to get this report.</li>
-        <li>Deaths at time zero were moved to 0.00025 years for the hazard chain (#175); <b>hm</b> and <b>hs</b> use complete cases (#174).</li>
-        <li>Bootstrap bags carry data lineage attached by hand (#185); <b>bh</b> runs 8 replicates, the others 100, so frequencies are rough.</li>
-        <li><b>lm-binary</b> trains on operations before 2015 and <b>lm-checkpred</b> validates on 2015 onward, each registered as its own dataset (#180).</li>
+        <li>Deaths on the day of operation are recorded at 0.00025 years in the dataset itself, since the hazard likelihood is undefined at zero (#175).</li>
+        <li>The hazard chain analyses complete cases on creatinine, a <code>WHERE</code> on <b>ac</b> and <b>hz</b> that <b>hm</b>, <b>hp</b> and <b>hs-setup</b> inherit from <code>hz.rds</code> (#174).</li>
+        <li>Each bootstrap bag is made by the report's own shipped runner, run small: <b>bh</b> 8 replicates in four chunks with its early shape held fixed, the others 100, so frequencies are rough.</li>
+        <li><b>lm-binary</b> trains on operations before 2015 and <b>lm-checkpred</b> validates on 2015 onward, by each job's <code>WHERE</code> (#180).</li>
+        <li><b>hs-concordance</b>'s two group models hold the early-phase <code>nu</code> fixed at the whole-cohort estimate and screen three candidates; free, the transcatheter group's early phase collapses onto its four same-day deaths.</li>
       </ul>
     </div>
   </div>
@@ -131,7 +132,7 @@
 
   <footer>
     <p>Chips link to open hvtiRtemplates issues found while building this gallery; a red chip is a template that does not render as shipped. Issues that affect every template, such as the four different ways templates choose their data (#173) and settings leaking between jobs run by hand (#184), are not repeated on each row.</p>
-    <p>Rebuild: <code>Rscript dev/gallery/gallery.R &lt;folder&gt;</code>, then <code>python3 dev/gallery/package.py &lt;folder&gt; &lt;site&gt;</code>, on branch <code>feat/template-gallery</code>. Render times are from one full build on a laptop.</p>
+    <p>Rebuild: <code>Rscript dev/gallery/gallery.R &lt;folder&gt;</code>, then <code>python3 dev/gallery/package.py &lt;folder&gt; &lt;site&gt;</code>, with the package installed from the same checkout. Render times are from one full build on a laptop.</p>
   </footer>
 </div>
 
@@ -148,36 +149,38 @@ const FOLDERS = [
 ];
 // name, folder, use, tables, figures, seconds, issues [numbers; "b"+n = blocker], gallery note
 const T = [
-  ["dc-general", "10_descriptive", "General descriptive checks with base procedures", "3 + 1 per categorical, 3 per continuous variable", "0", 6.8, [], ""],
-  ["dc-gfup", "10_descriptive", "Follow-up interval checks: missing, negative, zero", "6", "0", 6.7, [], ""],
-  ["dc-tables", "10_descriptive", "CORR Word tables, optional correlations", "2 + 1 Word table", "0", 9.7, [], "The session asked whether this should become a named Table 1 job."],
-  ["dp-postage", "10_descriptive", "Deprecated, use dp-eda: EDA panels, one per variable, on numbered pages", "up to 3", "1 page per 16 variables, 3 sections", 14.0, [], "Deprecated in favor of dp-eda, whose SECTIONS <- c(\"continuous\", \"percent\", \"count\") draws the same pages; removed in the release after 1.2.3. No grouping variable, which the legacy EDA report had."],
-  ["dp-eda", "10_descriptive", "Whole EDA report: overview, follow-up, postage sections", "5 + 2 per death panel", "1 per panel + postage pages", 12.8, [], "No grouping variable, which the legacy EDA report had."],
-  ["ac", "20_distributions", "Actuarial life tables, overall and stratified", "5 + 1 per stratifying variable", "0", 6.3, [177, 172], ""],
-  ["hz", "20_distributions", "Multiphase parametric hazard fit", "8", "0", 9.4, ["b168", 169, 175, 172], "Renders only with the convergence-table line swapped."],
-  ["hm", "30_analyses", "Multivariable hazard model with phase-wise selection", "11", "0", 9.5, [170, 171, 174, 178, 176], "Stage 1 fixes nothing, so the two-stage table compares one model with itself."],
-  ["bh", "30_analyses", "Bootstrap variable selection, hazard", "9 + up to 4", "1, faceted by phase", 129.5, [185, 187, 188, 189, 175], "8 replicates; the early phase is under-sampled."],
-  ["bl", "30_analyses", "Bootstrap variable selection, logistic", "9 + up to 4", "1", 20.2, [185, 188, 189], "BMI reaches 65% and is retained though it drives nothing."],
-  ["br", "30_analyses", "Bootstrap variable selection, linear", "9 + up to 4", "1", 12.2, [185, 188, 189], ""],
-  ["bc", "30_analyses", "Bootstrap variable selection, Cox", "9 + up to 4", "1", 21.1, [185, 186, 188, 189], "Age stands in as the forced base term, so it has no frequency row."],
-  ["lm-binary", "30_analyses", "Binary outcome model; Rubin pooling for imputations", "3", "0", 7.7, [179, 174], ""],
-  ["lm-checkpred", "30_analyses", "Validate a saved binary model; never refits", "2", "0", 6.3, [180, 179], "AUC 0.75 and observed/expected 1.16 on the 2015-onward cohort."],
-  ["lm-ordinal", "30_analyses", "Proportional-odds outcome model", "3", "0", 6.6, [179, 174], ""],
-  ["lm-nominal", "30_analyses", "Generalized-logit outcome model", "3", "0", 6.1, [179, 174], ""],
-  ["lm-propensity_binary", "30_analyses", "Binary-treatment propensity score", "5", "0", 5.9, [179, 174], "Group counts print as control and treated, not the declared levels (hvtiRpropensity#47)."],
-  ["lm-propensity_ordinal", "30_analyses", "Ordered-treatment propensity score", "6", "0", 5.8, [191, 179, 174], "No balance table, unlike the binary job."],
-  ["lm-propensity_nominal", "30_analyses", "Nominal-treatment propensity score", "4", "0", 5.9, [191, 179, 174], "No balance table, unlike the binary job."],
-  ["lm-balancing_count", "30_analyses", "Poisson or negative-binomial count balancing score", "4", "0", 5.5, [179, 174], "The rate ratio column is labelled odds_ratio (hvtiRpropensity#46)."],
-  ["rfs-fit", "30_analyses", "Grow and check a survival forest", "0", "3", 16.7, [165, 181, 182], ""],
-  ["rfs-explain", "30_analyses", "Importance, VarPro and dependence for a survival forest", "1", "5", 153.2, [166, 167], "Partial-dependence bars for 0/1 predictors are on the wrong scale (ggRandomForests#299)."],
-  ["rfc-fit", "30_analyses", "Grow and check a classification forest", "0", "2", 21.8, [165, 181, 182], ""],
-  ["rfc-explain", "30_analyses", "Importance, VarPro and dependence for a classification forest", "1", "5", 31.1, [166, 167], "Partial-dependence bars for 0/1 predictors are on the wrong scale (ggRandomForests#299)."],
-  ["rfr-fit", "30_analyses", "Grow and check a regression forest", "0", "2", 12.1, [165, 181, 182], ""],
-  ["rfr-explain", "30_analyses", "Importance, VarPro and dependence for a regression forest", "1", "5", 42.2, [166, 167], ""],
-  ["dp-trends", "40_graphs", "Trends over operation year", "1", "1 per trend per subgroup", 8.3, [], ""],
-  ["dp-gfup", "40_graphs", "Goodness-of-follow-up figure", "2", "1 per follow-up panel", 9.4, [], ""],
-  ["hp", "40_graphs", "Nomogram and hazard figures (catalog: revisit)", "3", "3", 7.2, [177, 176], ""],
-  ["hs", "40_graphs", "Patient-level predictions and expected survival", "3", "0", 7.2, [183, 177], "Needs hand-derived 0/1 sex and race columns."]
+  ["dc-general", "10_descriptive", "General descriptive checks with base procedures", "3 + 1 per categorical, 3 per continuous variable", "0", 4.4, [], ""],
+  ["dc-gfup", "10_descriptive", "Follow-up interval checks: missing, negative, zero", "6", "0", 4.2, [], ""],
+  ["dc-tables", "10_descriptive", "CORR Word tables, optional correlations", "2 + 1 Word table", "0", 7.2, [], "The session asked whether this should become a named Table 1 job."],
+  ["dp-postage", "10_descriptive", "Deprecated, use dp-eda: EDA panels, one per variable, on numbered pages", "up to 3", "1 page per 16 variables, 3 sections", 8.2, [], "Deprecated in favor of dp-eda, whose SECTIONS <- c(\"continuous\", \"percent\", \"count\") draws the same pages; removed in the release after 1.2.3. No grouping variable, which the legacy EDA report had."],
+  ["dp-eda", "10_descriptive", "Whole EDA report: overview, follow-up, postage sections", "5 + 2 per death panel", "1 per panel + postage pages", 9.2, [], "No grouping variable, which the legacy EDA report had."],
+  ["ac", "20_distributions", "Actuarial life tables, overall and stratified", "5 + 1 per stratifying variable", "0", 4.8, [177, 172], ""],
+  ["hz", "20_distributions", "Multiphase parametric hazard fit", "8", "0", 7.6, [169, 175, 172], ""],
+  ["hm", "30_analyses", "Multivariable hazard model with phase-wise selection", "11", "0", 7.2, [228, 170, 171, 174, 178, 176], "Stage 1 fixes nothing, so the two-stage table compares one model with itself."],
+  ["bh", "30_analyses", "Bootstrap variable selection, hazard", "9 + up to 4", "1, faceted by phase", 107.9, [185, 187, 188, 189, 175], "8 replicates; the early phase is under-sampled."],
+  ["bl", "30_analyses", "Bootstrap variable selection, logistic", "9 + up to 4", "1", 12.5, [185, 188, 189], "BMI reaches 65% and is retained though it drives nothing."],
+  ["br", "30_analyses", "Bootstrap variable selection, linear", "9 + up to 4", "1", 7.3, [185, 188, 189], ""],
+  ["bc", "30_analyses", "Bootstrap variable selection, Cox", "9 + up to 4", "1", 11.1, [185, 186, 188, 189], "Age stands in as the forced base term, so it has no frequency row."],
+  ["lm-binary", "30_analyses", "Binary outcome model; Rubin pooling for imputations", "3", "0", 4.5, [179, 174], ""],
+  ["lm-checkpred", "30_analyses", "Validate a saved binary model; never refits", "2", "0", 4.4, [180, 179], "AUC 0.75 and observed/expected 1.16 on the 2015-onward cohort."],
+  ["lm-ordinal", "30_analyses", "Proportional-odds outcome model", "3", "0", 4.6, [179, 174], ""],
+  ["lm-nominal", "30_analyses", "Generalized-logit outcome model", "3", "0", 4.7, [179, 174], ""],
+  ["lm-propensity_binary", "30_analyses", "Binary-treatment propensity score", "5", "0", 4.7, [179, 174], "Group counts print as control and treated, not the declared levels (hvtiRpropensity#47)."],
+  ["lm-propensity_ordinal", "30_analyses", "Ordered-treatment propensity score", "6", "0", 4.6, [191, 179, 174], "No balance table, unlike the binary job."],
+  ["lm-propensity_nominal", "30_analyses", "Nominal-treatment propensity score", "4", "0", 4.7, [191, 179, 174], "No balance table, unlike the binary job."],
+  ["lm-balancing_count", "30_analyses", "Poisson or negative-binomial count balancing score", "4", "0", 4.6, [179, 174], "The rate ratio column is labelled odds_ratio (hvtiRpropensity#46)."],
+  ["nb-boostmtree", "30_analyses", "Boosted multivariate trees for a response measured at repeated visits", "3", "6", 314.3, [], "Reads a synthetic echo series, 300 patients with 2 to 6 visits; M = 200, so it is the slowest job here."],
+  ["rfs-fit", "30_analyses", "Grow and check a survival forest", "0", "3", 10.8, [165, 181, 182], ""],
+  ["rfs-explain", "30_analyses", "Importance, VarPro and dependence for a survival forest", "1", "5", 101.7, [166, 167], "Partial-dependence bars for 0/1 predictors are on the wrong scale (ggRandomForests#299)."],
+  ["rfc-fit", "30_analyses", "Grow and check a classification forest", "0", "2", 8.7, [165, 181, 182], ""],
+  ["rfc-explain", "30_analyses", "Importance, VarPro and dependence for a classification forest", "1", "5", 19.5, [166, 167], "Partial-dependence bars for 0/1 predictors are on the wrong scale (ggRandomForests#299)."],
+  ["rfr-fit", "30_analyses", "Grow and check a regression forest", "0", "2", 8.0, [165, 181, 182], ""],
+  ["rfr-explain", "30_analyses", "Importance, VarPro and dependence for a regression forest", "1", "5", 19.5, [166, 167], ""],
+  ["dp-trends", "40_graphs", "Trends over operation year", "1", "1 per trend per subgroup", 5.5, [], ""],
+  ["dp-gfup", "40_graphs", "Goodness-of-follow-up figure", "2", "1 per follow-up panel", 5.3, [], ""],
+  ["hp", "40_graphs", "Nomogram and hazard figures (catalog: revisit)", "3", "3", 4.9, [177, 176], ""],
+  ["hs-setup", "40_graphs", "Patient-level predictions and expected survival", "4", "0", 4.9, [183, 177], "Needs hand-derived 0/1 sex and race columns."],
+  ["hs-concordance", "40_graphs", "Every patient through every treatment group's hm model, one horizon", "7", "0", 28.4, [227, 228], "Reads one model per approach group, each fitted by an hz and hm rendered for it; render time includes those four jobs. The group models screen three candidates: with the chain's five, the surgical group's fit has no variance matrix and this job stops (#227)."]
 ];
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
