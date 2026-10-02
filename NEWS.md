@@ -1,3 +1,9 @@
+# hvtiRtemplates (unreleased)
+
+* `boostmtree` is installed from the `v2.0.3-ccf` tag, with a floor of 2.0.3, matching the ref
+  `ggBoostedTrees` 0.9.1 pins. The two pinned different refs of one package, so dependency
+  resolution failed before any check ran.
+
 # hvtiRtemplates 1.2.3
 
 * `read_job_data()` stops on a `WHERE` condition that mentions the patient
