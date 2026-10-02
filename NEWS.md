@@ -1,5 +1,12 @@
 # hvtiRtemplates (unreleased)
 
+* New template `00_datasets/bd.qmd`, the first at the `00_datasets` level: a build job that cuts a study's
+  dataset from a master snapshot, applies a cohort list and ordered exclusion rules (`condition ~ "Reason"`, where
+  a missing condition is not excluded and is counted), derives the study's own variables, writes a draft, and with
+  `PUBLISH <- TRUE` publishes a dated release with `hvtiRdatabuild::publish_dataset()` and registers it, or adopts
+  it when an older release is registered. Its report shows counts and no code, so a rule naming a patient stays out
+  of the HTML. New `build_cohort()` carries the cohort and attrition step (#223).
+
 * `boostmtree` is installed from the `v2.0.3-ccf` tag, with a floor of 2.0.3, matching the ref
   `ggBoostedTrees` 0.9.1 pins. The two pinned different refs of one package, so dependency
   resolution failed before any check ran.
