@@ -1,4 +1,4 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.2.3
 
 * `read_job_data()` stops on a `WHERE` condition that mentions the patient
   identifier or a column named MRN or eMRN, directly or through `.data$x` or
