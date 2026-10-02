@@ -1,7 +1,7 @@
 # The `00_datasets` level: a `bd` build job (master, subset, publish, register)
 
 **Date:** 2026-10-02
-**Status:** design. Every decision in section 3 was made by John Ehrlinger on 2026-10-01
+**Status:** approved by John Ehrlinger on 2026-10-02. Every decision in section 3 was made by John Ehrlinger on 2026-10-01
 and 2026-10-02, in the order listed. Nothing is built yet.
 **Issue:** [hvtiRtemplates#223](https://github.com/ehrlinger/hvtiRtemplates/issues/223),
 including its 2026-10-01 comment on where the job reads from.
