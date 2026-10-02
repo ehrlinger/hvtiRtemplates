@@ -22,7 +22,9 @@
 #'   export, carrying the \code{join_by} columns. Only master rows matched by a
 #'   list row are kept. Dates are written YYYY-MM-DD. A list may carry
 #'   \code{exclude} (1 to exclude) and \code{reason} columns; each reason becomes
-#'   a step of its own.
+#'   a step of its own. A list's reasons are printed in the report, so they
+#'   must be categories (such as "Redo operation"), never free text, names or
+#'   dates.
 #' @param join_by The columns that match a cohort-list row to a master row. Used
 #'   only with \code{cohort}.
 #' @param id The patient identifier column, used to count patients.
@@ -134,7 +136,8 @@ build_cohort <- function(data, exclude = NULL, cohort = NULL, join_by = NULL, id
   names(listed) <- tolower(names(listed))
   absent <- setdiff(join_by, names(listed))
   if (length(absent)) {
-    stop(where, " has no column(s) ", toString(absent), ". Set JOIN_BY, or fix the list's header.", call. = FALSE)
+    stop(where, " has no column(s) ", toString(absent), ". Set JOIN_BY, or fix the list's header. ",
+         "Column names are matched in lower case.", call. = FALSE)
   }
   list_key <- .cohort_key(listed, join_by, data, where)
   if (anyNA(list_key)) {

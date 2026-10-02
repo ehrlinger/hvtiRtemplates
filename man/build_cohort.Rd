@@ -22,7 +22,9 @@ such rows instead.}
 export, carrying the \code{join_by} columns. Only master rows matched by a
 list row are kept. Dates are written YYYY-MM-DD. A list may carry
 \code{exclude} (1 to exclude) and \code{reason} columns; each reason becomes
-a step of its own.}
+a step of its own. A list's reasons are printed in the report, so they
+must be categories (such as "Redo operation"), never free text, names or
+dates.}
 
 \item{join_by}{The columns that match a cohort-list row to a master row. Used
 only with \code{cohort}.}

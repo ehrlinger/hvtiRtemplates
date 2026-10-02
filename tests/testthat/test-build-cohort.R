@@ -75,6 +75,25 @@ test_that("a cohort list's exclude and reason columns become steps, and the help
   expect_identical(names(out$data), names(bc_data()))
 })
 
+test_that("a list's distinct reasons are separate steps, in first-appearance order, with their own counts", {
+  path <- bc_list(data.frame(ccfid = c("A0001", "A0002", "A0003", "A0004"),
+                             dt_surg = c("2010-01-05", "2011-02-06", "2012-03-07", "2013-04-08"),
+                             exclude = c(1, 1, 1, 0), reason = c("Redo", "Redo", "Transplant", "")))
+  out <- build_cohort(bc_data(), cohort = path, join_by = c("ccfid", "dt_surg"))
+  att <- out$attrition[out$attrition$step == "cohort list", ]
+  expect_identical(att$reason, c("Redo", "Transplant"))
+  expect_identical(att$removed, c(2L, 1L))
+  expect_identical(out$data$ccfid, "A0004")
+})
+
+test_that("a list's header is matched in lower case, and the message says so", {
+  path <- bc_list(data.frame(CCFID = "A0002", DT_SURG = "2011-02-06"))
+  out <- build_cohort(bc_data(), cohort = path, join_by = c("ccfid", "dt_surg"))
+  expect_identical(out$data$ccfid, "A0002")
+  no_col <- bc_list(data.frame(ccfid = "A0002"))
+  expect_error(build_cohort(bc_data(), cohort = no_col, join_by = c("ccfid", "dt_surg")), "matched in lower case")
+})
+
 test_that("cohort-list problems stop with the file and the setting, never a value", {
   d <- bc_data()
   no_col <- bc_list(data.frame(ccfid = "A0002"))

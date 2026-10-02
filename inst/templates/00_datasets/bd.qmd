@@ -52,6 +52,8 @@ knitr::opts_chunk$set(warning = NA, message = NA)
 #| label: guard-edits
 #| results: asis
 # A job with unresolved markers renders as a draft, as every template does.
+# Outside a render (the purled script) knitr has no input file and this guard does not run,
+# so a scheduled script must be run from a finished job.
 # Unlike the others, the banner gives only the COUNT: a marker line could sit
 # beside a rule naming a patient, and this report shows no source. The marker
 # text goes to the console in the warning.
@@ -107,7 +109,9 @@ VERIFY_MASTER <- FALSE
 
 # EDIT: a cohort list (a REDCap export or data-request CSV) kept beside the data, or NULL for a cohort the rules define.
 # For example file.path(hvtiRutilities::study_dir("datasets", .root), "cohort.csv"). Only master rows the list
-# names are kept. A list may carry exclude (1 to exclude) and reason columns.
+# names are kept. A list may carry exclude (1 to exclude) and reason columns. A list's reasons are printed in the
+# report, one attrition row per distinct reason, so they must be categories (such as "Redo operation"), never free
+# text, names or dates.
 COHORT <- NULL
 
 # The columns that match a cohort-list row to a master row. Dates in the list are written YYYY-MM-DD.
@@ -150,6 +154,7 @@ if (!is.logical(PUBLISH) || length(PUBLISH) != 1L || is.na(PUBLISH)) {
   .bd_stop("check-choices", "PUBLISH must be TRUE or FALSE.")
 }
 if (!is.character(MASTER) || length(MASTER) != 1L) .bd_stop("check-choices", "MASTER must be one path.")
+if (inherits(EXCLUDE, "formula")) EXCLUDE <- list(EXCLUDE)
 KEEP <- tolower(KEEP)
 JOIN_BY <- tolower(JOIN_BY)
 ID <- tolower(ID)
@@ -266,6 +271,13 @@ if (PUBLISH) {
     .bd_stop("publish", "this study's dataset was registered without a release (", .registered$built,
              "), so a build cannot replace it. Ask for it to be moved to this job's releases.")
   }
+  # A study registered to one catalog dataset cannot take a release of another: the release would be
+  # published, then refused at adoption, leaving an orphan on disk.
+  if (!is.null(.registered_before) && !identical(.registered$release$dataset_id, DATASET_ID)) {
+    .bd_stop("publish", "this study's dataset is registered to catalog dataset \"", .registered$release$dataset_id,
+             "\", and DATASET_ID is \"", DATASET_ID, "\". Set DATASET_ID to the registered one, ",
+             "or move the study to the new dataset deliberately.")
+  }
   # Publishing the same bytes again returns the same release, so a rerender
   # that changed nothing mints nothing.
   .release <- tryCatch(
@@ -274,7 +286,9 @@ if (PUBLISH) {
                                                     .master$sha256)),
     error = function(e) .bd_stop("publish", "publish_dataset() stopped: ", conditionMessage(e))
   )
-  file.copy(.record_file, file.path(.datasets, sub("[.][^.]+$", ".build.yml", .release$file)), overwrite = TRUE)
+  # A release's record is written once: an idempotent re-publish returns the existing release and leaves its record alone.
+  .release_record <- file.path(.datasets, sub("[.][^.]+$", ".build.yml", .release$file))
+  if (!file.exists(.release_record)) file.copy(.record_file, .release_record, overwrite = FALSE)
   # Publish and register stay two steps: a study that READS another's dataset
   # adopts its releases deliberately, with adopt_data_update(). Here the study
   # adopts its own build, and this render is the deliberate act.
@@ -323,9 +337,10 @@ knitr::kable(.cut$attrition, col.names = c("Step", "Reason", "Rows before", "Rem
 
 ```{r}
 #| label: report-columns
-# Aggregates only: the type, missing count and range of each column. The ID and
-# KEY columns get no range, since a range of identifiers is two identifiers.
-.no_range <- c(ID, KEY)
+# Aggregates only: the type, missing count and range of each column. The ID, KEY
+# and JOIN_BY columns get no range: a range of identifiers is two identifiers,
+# and a JOIN_BY date range is two patients' dates.
+.no_range <- c(ID, KEY, JOIN_BY)
 knitr::kable(data.frame(
   Column = names(d),
   Type = vapply(d, function(x) class(x)[[1L]], ""),

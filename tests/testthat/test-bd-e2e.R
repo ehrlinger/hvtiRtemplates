@@ -1,6 +1,6 @@
 bd_edits <- function(m, publish, exclude = "list(age < 40 ~ \"Under 40\", ccfid == \"PT00007\" ~ \"Withdrew consent\")") {
   list(
-    "^MASTER <- " = paste0("MASTER <- \"", m$parquet, "\""),
+    "^MASTER <- " = paste0("MASTER <- ", encodeString(m$parquet, quote = "\"")),
     "^KEEP <- c[(]" = "KEEP <- c(\"age\", \"iv_dead\", \"dead\", \"dt_surg\")",
     "^EXCLUDE <- " = paste0("EXCLUDE <- ", exclude),
     "^PUBLISH <- " = paste0("PUBLISH <- ", publish)
@@ -10,11 +10,6 @@ bd_edits <- function(m, publish, exclude = "list(age < 40 ~ \"Under 40\", ccfid 
 bd_render <- function(job) {
   quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
   paste(readLines(sub("[.]qmd$", ".html", job), warn = FALSE), collapse = "\n")
-}
-
-bd_catalog_releases <- function(root) {
-  cat <- yaml::read_yaml(file.path(hvtiRutilities::study_dir("datasets", root), "dataset-catalog.yml"))
-  unlist(lapply(cat$datasets, function(ds) vapply(ds$releases, function(r) r$release_id, "")))
 }
 
 test_that("bd publishes and registers a release, and ac reads it", {

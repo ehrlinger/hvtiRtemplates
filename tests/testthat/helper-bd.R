@@ -64,3 +64,8 @@ bd_run <- function(root, choices,
   withr::with_dir(root, utils::capture.output(hazard_run("bd", labels, env, choices))) # nolint: object_usage_linter.
   env
 }
+
+bd_catalog_releases <- function(root) {
+  cat <- yaml::read_yaml(file.path(hvtiRutilities::study_dir("datasets", root), "dataset-catalog.yml"))
+  unlist(lapply(cat$datasets, function(ds) vapply(ds$releases, function(r) r$release_id, "")))
+}

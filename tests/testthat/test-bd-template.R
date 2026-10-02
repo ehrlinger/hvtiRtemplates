@@ -84,10 +84,11 @@ test_that("a derivation that changes the row count stops in derive", {
   choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL)
   withr::with_dir(root, utils::capture.output(hazard_run("bd", c("setup", "set", "edit-study-choices", "check-choices",
                                                                  "read-master", "cohort"), env, choices)))
+  # The derive chunk itself records the count the cohort step left.
+  withr::with_dir(root, utils::capture.output(hazard_run("bd", "derive", env)))
+  expect_identical(env$.rows_before_derive, nrow(env$.cut$data))
+  # Simulate a derive chunk that dropped a row.
   env$d <- env$d[-1L, , drop = FALSE]
-  # Simulate a derive chunk that dropped a row: the check compares with the
-  # count the cohort step left.
-  env$.rows_before_derive <- nrow(env$.cut$data)
   src <- readLines(hazard_template("bd"), warn = FALSE)
   at <- which(trimws(src) == "#| label: derive")
   end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
@@ -114,4 +115,36 @@ test_that("a legacy-registered dataset (without release) stops publish before wr
   )
   # No dataset-catalog.yml should exist after the failed publish.
   expect_false(file.exists(file.path(datasets, "dataset-catalog.yml")))
+})
+
+test_that("a registered release of another catalog dataset stops publish before minting a release", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, PUBLISH = TRUE)
+  bd_run(root, choices)
+  expect_length(bd_catalog_releases(root), 1L)
+  expect_error(bd_run(root, c(choices, list(DATASET_ID = "other_cohort"))), "^bd: publish \\(")
+  expect_length(bd_catalog_releases(root), 1L)
+})
+
+test_that("a cohort list in the study's datasets folder cuts the dataset to the patients it names", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  pick <- m$data[c(3L, 10L, 25L), ]
+  list_file <- file.path(hvtiRutilities::study_dir("datasets", root), "cohort.csv")
+  utils::write.csv(data.frame(ccfid = pick$ccfid, dt_surg = format(pick$dt_surg, "%Y-%m-%d")), list_file, row.names = FALSE)
+  env <- bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, COHORT = list_file,
+                           JOIN_BY = c("ccfid", "dt_surg")))
+  expect_identical(nrow(env$d), 3L)
+  expect_setequal(env$d$ccfid, pick$ccfid)
+})
+
+test_that("a master snapshot without its sidecar stops in read-master", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  unlink(sub("[.]parquet$", ".meta.json", m$parquet))
+  bd_expect_stop(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL), "read-master")
 })
