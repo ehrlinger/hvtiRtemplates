@@ -28,6 +28,6 @@ warns when it is used.
 ``` r
 table(template_catalog()$status)
 #> 
-#>  queued revisit shipped 
-#>      36       1      31 
+#> in-flight    queued   revisit   shipped 
+#>         1        35         1        31 
 ```

@@ -77,7 +77,7 @@ directly, in a temporary directory:
 ``` r
 
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L)
-#> Study: /tmp/Rtmp3S4gpl/file1e25396c9068/new-study
+#> Study: /tmp/RtmpIs6epn/file1edb15b6a72c/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -123,7 +123,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp3S4gpl/file1e25396c9068/new-study
+#> Study: /tmp/RtmpIs6epn/file1edb15b6a72c/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -296,16 +296,16 @@ lists every template with its prefix, qualifier and folder:
 
 head(template_list()[, c("name", "prefix", "qualifier", "folder")], 10)
 #>          name prefix qualifier        folder
-#> 1  dc-general     dc   general   descriptive
-#> 2     dc-gfup     dc      gfup   descriptive
-#> 3   dc-tables     dc    tables   descriptive
-#> 4      dp-eda     dp       eda   descriptive
-#> 5  dp-postage     dp   postage   descriptive
-#> 6          ac     ac      <NA> distributions
-#> 7          hz     hz      <NA> distributions
-#> 8          bc     bc      <NA>      analyses
-#> 9          bh     bh      <NA>      analyses
-#> 10         bl     bl      <NA>      analyses
+#> 1          bd     bd      <NA>      datasets
+#> 2  dc-general     dc   general   descriptive
+#> 3     dc-gfup     dc      gfup   descriptive
+#> 4   dc-tables     dc    tables   descriptive
+#> 5      dp-eda     dp       eda   descriptive
+#> 6  dp-postage     dp   postage   descriptive
+#> 7          ac     ac      <NA> distributions
+#> 8          hz     hz      <NA> distributions
+#> 9          bc     bc      <NA>      analyses
+#> 10         bh     bh      <NA>      analyses
 ```
 
 The other chains follow the same pattern: a fitting job saves a handoff

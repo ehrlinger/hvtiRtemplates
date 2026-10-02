@@ -29,9 +29,9 @@ existing file, because a job accumulates a study’s edits.
 Each template carries a light.
 
 - 🟢 **Shipped** (31): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (21): on disk but being reworked, or scheduled into
+- 🟡 **In progress** (22): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
-- 🔴 **Not yet on the way** (16): waiting on a function in another
+- 🔴 **Not yet on the way** (15): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
   now, write it by hand.
 
@@ -41,6 +41,12 @@ Every template on disk, grouped by the study folder a job lands in,
 named without its digits (`graphs` is `40_graphs` in a new study).
 [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 places each one; you do not choose the folder.
+
+### datasets
+
+| Delivery | Template | Description | Scaffold |
+|:---|:---|:---|:---|
+| 🟡 In progress | `bd` | Cuts a study’s dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then a dated release registered as the study dataset. | `add_job("bd", subject, type)` |
 
 ### descriptive
 
@@ -124,7 +130,6 @@ as zero.
 | 🟡 In progress | `dp-procs` | Descriptive plot: procedures over time | 35 |  |
 | 🟡 In progress | `ls` | Life table / STS | 32 |  |
 | 🟡 In progress | `si` | Single imputation | 1 |  |
-| 🔴 Not yet on the way | `bd` | Build | 1094 | hvtiRdatabuild |
 | 🔴 Not yet on the way | `vars` | Variables | 912 | hvtiRdatabuild |
 | 🔴 Not yet on the way | `dt` | Data check | 503 | hvtiRdatabuild |
 | 🔴 Not yet on the way | `ce` | Competing events | 128 | hvtiPlotR#134 |
