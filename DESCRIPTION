@@ -47,7 +47,7 @@ Suggests:
     arrow,
     boostmtree (>= 2.0.3),
     fs,
-    ggBoostedTrees (>= 0.9.0),
+    ggBoostedTrees (>= 0.9.1),
     ggRandomForests (>= 4.0.0),
     ggplot2,
     haven,
