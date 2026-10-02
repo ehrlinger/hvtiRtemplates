@@ -1,0 +1,518 @@
+---
+title: "Boosted multivariate trees: boostmtree"
+# Carried in the file rather than inherited from _quarto.yml. A file meant to be
+# COPIED should not depend on settings from the directory it happens to sit in:
+# rendered as a standalone document the project's format block never applies,
+# which is how server-rendered reports end up with sibling _files/ trees instead
+# of being self-contained.
+#
+# NOTE: output-dir is a PROJECT setting and cannot be set here, so the .html
+# lands next to its source. With embed-resources that is a single standalone
+# file, which is the property that actually matters when a report is sent on.
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the job this replaces (an `nb.<variable>.Boostmtree` job), and
+     say which response, visit time and predictors it used. -->
+
+Replaces `analyses/<job>`: describe its response, visit time and predictors here.
+
+An `nb-boostmtree` job fits boosted multivariate trees to a response measured
+repeatedly over follow-up, one row per visit, and reports how well it fits and
+what drives it: the cross-validated error path, observed against fitted values
+over time, variable importance, partial effects over time, and a sample of
+patients' fitted trajectories.
+
+```{r}
+#| label: setup
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+# boostmtree must be the CCF fork, 2.0.2 or later. Every study fits with
+# cv.flag = TRUE, and in boostmtree 2.0.0 (the CRAN release) that flag leaves the
+# in-sample fit frozen, so the stored coefficients diverge with M and every
+# non-cross-validated result is wrong: partial and marginal effects, importance,
+# and predict(use.cv.flag = FALSE). Reported upstream as kogalur/boostmtree#2;
+# the fix is kogalur/boostmtree#3. The version floor separates the fork from
+# CRAN today. Should upstream release a 2.0.2 without the fix, this check would
+# pass it; read the installed package's NEWS if in doubt.
+if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.2") {
+  stop("This job needs boostmtree >= 2.0.2 from the CCF fork. Install it with\n",
+       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.2-ccf\")\n",
+       "then re-render.", call. = FALSE)
+}
+if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.0.8") {
+  stop("This job needs ggBoostedTrees >= 0.0.8. Install it with\n",
+       "  remotes::install_github(\"ehrlinger/ggBoostedTrees\")\nthen re-render.", call. = FALSE)
+}
+suppressPackageStartupMessages({
+  library(boostmtree)
+  library(ggBoostedTrees)
+  library(hvtiRutilities)
+})
+```
+
+```{r}
+#| label: guard-edits
+#| results: asis
+# The markers in this file name work a study author still has to do, and
+# README.md says a job that still contains one has not been finished. This
+# chunk is what makes that TRUE rather than merely stated.
+#
+# Without it an unedited job renders green over a meaningless analysis. Here
+# that is a boosted fit on the template's placeholder response, predictors and
+# iteration count, whose error path and effect plots look exactly like a result.
+#
+# knitr::current_input() is NULL outside a render -- a study author stepping
+# through chunks in RStudio -- and there is no file to scan then, so this is a
+# no-op in that case. Same handling as the `set` guard below, for the same
+# reason.
+#
+# The token is BUILT, not written literally, and that is not stylistic. Quarto
+# knits through an intermediate and current_input() returns THAT file, so the
+# scan reads a copy of this chunk along with everything else: a literal
+# grep("<token>", .src) here matches its own source line, and the guard then
+# fires on every render, finished or not. Measured, not theorised -- a probe
+# found three markers in a file containing two. A guard that cries wolf on a
+# finished job is a guard that gets deleted, which returns us to issue #27.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    # Report the marker TEXT. Line numbers here are the intermediate's, not
+    # this .qmd's, so they need not match what the author sees in an editor.
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it."
+    )
+    # A job renders as a draft by default, so an author can iterate on a
+    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
+    # turns the draft into a stop for a final render. Only unset, 0, false
+    # and no mean "not strict": an unrecognized value stops on purpose, so a
+    # mistyped switch is seen rather than quietly ignored, which is the safe
+    # direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      # The banner is not optional. A draft render that looks like a finished
+      # one is the same defect with an extra step: the warning scrolls past in
+      # a log, while the .html is the artifact that gets sent to someone.
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Unresolved markers remain. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
+    }
+  }
+}
+```
+
+<!-- The two values below are written by add_job() from the subject/type it
+     was called with, which are also the filename's first two fields. They
+     name the SET this job belongs to, and every artifact path in the
+     document is computed from them, so no output path below needs editing.
+
+     Do NOT hand-edit these declarations: the render-time guard below checks
+     them against this file's own name and stops if they disagree. To put
+     this job in a different set, call add_job() again with the new
+     subject/type rather than editing this copy in place.
+
+     A set is keyed on (subject, analysis type), not on the subject alone.
+     One subject may be analyzed by several methods -- parametric hazard, random
+     forest survival, competing risks -- and those chains share their upstream.
+     Two sets keyed on `dead_pa` alone would write their life tables to the
+     same file. -->
+
+```{r}
+#| label: set
+SUBJECT <- "lvef"
+TYPE    <- "boost"
+
+# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
+# name, but a hand-edited declaration can drift from it afterward. set_path()
+# below resolves from the declarations, not the filename, so a drifted
+# declaration would silently write into ANOTHER set's artifact directory --
+# exactly the collision the (subject, type) key exists to prevent, re-entered
+# through the body instead of the name.
+#
+# knitr::current_input() is NULL outside a render (a study author running
+# chunks interactively in RStudio), and there is no filename to check against
+# yet, so this is a no-op in that case rather than a spurious error.
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  # Quarto knits through an intermediate, so `knitr::current_input()` returns
+  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
+  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
+  # rather than hard-coding one, so this doesn't depend on a build-tool detail
+  # staying the same.
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
+         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
+         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
+  }
+}
+
+# Resolve a path inside this set's artifact directory. `kind` is the artifact
+# folder -- "estimates" for serialized results, "graphs" for figures. The set
+# directory sits one layer under the kind and never two, which is the whole
+# layout rule.
+#
+# Created on first use rather than up front, so a job that writes nothing leaves
+# no empty directories behind.
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(SUBJECT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+
+# The fit is cached and saved through set_path(), by set, so a later render or job finds this set's fit and no other's.
+```
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+```{r}
+#| label: edit-study-choices
+# EDIT: the registered dataset this job reads ("study" is the built dataset).
+DATASET <- "study"
+
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: the visit time, in years. The data hold one row per visit, built
+# upstream, so the time is part of what makes a row unique.
+TIME <- "iv_echo"
+
+# EDIT: what makes a row unique. The ID alone does not: a patient has a row per
+# visit. A duplicated visit then stops the read rather than double-counting.
+KEY <- c(ID, TIME)
+
+# EDIT: the response measured at each visit, and its kind: "continuous",
+# "binary", "ordinal" or "nominal".
+RESPONSE <- "<response>"
+FAMILY   <- "continuous"
+
+# EDIT: the predictors, or NULL for every other column, which is what the
+# studies this template came from all did. NULL leaves out the ID, every KEY
+# column, the time, the response, and any ccfid, MRN or eMRN column; it takes
+# everything else, dates included. Name the predictors when the built dataset
+# carries dates or derived outcomes that should not drive the fit.
+PREDICTORS <- NULL
+
+# EDIT: boosting iterations and the learning rate. Studies used 0.01 to 0.05; a
+# smaller NU needs a larger M. The error path below says whether M was enough:
+# the cross-validated best M should sit well inside it, not at its right edge.
+M  <- 1000
+NU <- 0.05
+
+# EDIT: seeds the fit and the sample of patients the trajectory plot draws, so
+# the report reproduces. Part of the cache key.
+SEED <- 2026
+
+# EDIT: the variables to draw partial effects for, or NULL for the six most
+# important. N_TRACES patients are sampled for the trajectory plot; Inf draws
+# every one.
+EFFECT_VARIABLES <- NULL
+N_TRACES <- 100
+
+# Set TRUE after changing a choice above. A cache whose inputs changed stops the
+# render instead of returning the old fit; TRUE recomputes it.
+REFIT <- FALSE
+```
+
+## Cohort
+
+```{r}
+#| label: data
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+if (!is.null(job_data$attrition)) {
+  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+}
+.selection <- attr(job_data$record, "selection")
+.id <- .selection$id
+# The data's own spelling of TIME and RESPONSE, matched ignoring case as the
+# ID and KEY are, so "IV_ECHO" finds iv_echo. Later chunks use these names.
+.resolve <- function(x) {
+  hit <- match(tolower(x), tolower(names(d)))
+  ifelse(is.na(hit), x, names(d)[hit])
+}
+.time <- .resolve(TIME)
+.response <- .resolve(RESPONSE)
+# The fit groups visits by patient, so the ID, the rest of KEY and the visit
+# time are its structure, not its predictors; a predictor named for any of them
+# would let the model learn who a patient is or when they were seen. A known
+# identifier column is never a predictor either, whatever ID names: boostmtree
+# keeps its predictors, so one would reach the cache and the saved fit.
+.not_predictors <- unique(c(.id, .selection$key, .time, "ccfid", hvtiRtemplates:::.job_identifier_names))
+if (is.null(PREDICTORS)) {
+  .identifiers <- names(d)[tolower(names(d)) %in% c("ccfid", hvtiRtemplates:::.job_identifier_names) & names(d) != .id]
+  .predictors <- names(d)[!tolower(names(d)) %in% tolower(c(.not_predictors, .response))]
+  if (length(.identifiers)) {
+    cat("Identifier columns left out of the predictors: ", paste(.identifiers, collapse = ", "), "\n", sep = "")
+  }
+} else {
+  .predictors <- PREDICTORS
+}
+.duplicated <- unique(.predictors[duplicated(.predictors)])
+if (length(.duplicated)) {
+  stop("PREDICTORS names a variable more than once: ", paste(.duplicated, collapse = ", "), ".", call. = FALSE)
+}
+.structural <- .predictors[tolower(.predictors) %in% tolower(.not_predictors)]
+if (length(.structural)) {
+  stop("PREDICTORS names an identifier, a KEY column or the visit time: ", paste(.structural, collapse = ", "),
+       ".", call. = FALSE)
+}
+# The response predicting itself would fit perfectly and mean nothing.
+if (tolower(.response) %in% tolower(.predictors)) {
+  stop("PREDICTORS names the response (", .response, ").", call. = FALSE)
+}
+# Nor may an identifier be the response or the visit time: boostmtree keeps
+# both, so one would reach the cache and the saved fit. That covers the ID this
+# job uses and any other identifier column the data carry, such as a ccfid
+# beside an ID of randid.
+.identifier_cols <- c(.id, "ccfid", hvtiRtemplates:::.job_identifier_names)
+if (tolower(.response) %in% tolower(.identifier_cols)) {
+  stop("A patient identifier (", .response, ") cannot be the response.", call. = FALSE)
+}
+if (tolower(.time) %in% tolower(.identifier_cols)) {
+  stop("A patient identifier (", .time, ") cannot be the visit time.", call. = FALSE)
+}
+.missing <- setdiff(c(.time, .response, .predictors), names(d))
+if (length(.missing)) {
+  stop("Not in the data this job read: ", paste(.missing, collapse = ", "), call. = FALSE)
+}
+d <- d[, c(.id, .time, .response, .predictors), drop = FALSE]
+# boostmtree imputes a missing predictor but cannot learn from a visit with no
+# response, so those visits are dropped here, and counted.
+.no_response <- is.na(d[[.response]])
+if (any(.no_response)) {
+  cat(sum(.no_response), " visit(s) have no ", .response, " and are left out.\n", sep = "")
+  d <- d[!.no_response, , drop = FALSE]
+}
+.chr <- .predictors[vapply(d[.predictors], is.character, logical(1L))]
+if (length(.chr)) {
+  d[.chr] <- lapply(d[.chr], factor)
+  cat("Text predictors converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
+}
+```
+
+## Fit
+
+```{r}
+#| label: fit
+#| message: true
+# The fit groups visits by patient through `id`. It is given the study-keyed
+# digest of each patient's ID, not the ID: a boostmtree fit stores the ID in
+# several places, its base learners included, and every one of them is saved
+# with it. A digest still groups the visits; it cannot be read back.
+CACHE_DIR <- dirname(set_path("estimates", "nb-boostmtree.rds"))
+.patient <- hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root))
+fit <- cache_fit(
+  "nb-boostmtree-fit",
+  boostmtree(x = d[.predictors], tm = d[[.time]], id = .patient, y = d[[.response]],
+             family = FAMILY, M = M, nu = NU, mod.grad = TRUE, cv.flag = TRUE, verbose = FALSE),
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+)
+```
+
+`cv.flag = TRUE` and `mod.grad = TRUE` are not settings. Every study fitted with
+both, and cross-validation is how the job chooses its best number of iterations.
+
+## Does the fit work?
+
+```{r}
+#| label: fit-summary
+knitr::kable(data.frame(
+  quantity = c("Family", "Iterations (M)", "Learning rate (nu)", "Patients", "Visits"),
+  value = c(FAMILY, M, NU, length(unique(.patient)), nrow(d))
+), col.names = c("", ""), caption = "The fit")
+# A continuous or binary fit has one response component; an ordinal or nominal
+# fit has one per level after the first, each with its own cross-validated best
+# M and error path (fit$err.rate is then a list). Read the error at the best M
+# from the standardized l2 column, the scale gg_boost_error() plots.
+.err <- if (is.matrix(fit$err.rate)) list(fit$err.rate) else fit$err.rate
+# Each component is named by the level that defines it, which boostmtree keeps
+# in fit$q.set: a threshold for an ordinal fit, a class compared against the
+# reference class for a binary or nominal one. partial.plot() selects a
+# component by the same label ("response" for a continuous fit).
+.labels <- if (identical(fit$family, "continuous")) "response" else as.character(fit$q.set)
+.reference <- setdiff(as.character(fit$y.levels), .labels)
+# An ordinal component is a cumulative logit at its threshold, but boostmtree's
+# documentation does not say which side of the threshold it models, so the
+# label names the threshold only. (Its 2.0.2 source codes P(y <= k); read the
+# installed package before relying on that.)
+.components <- switch(fit$family,
+  continuous = .response,
+  binary = ,
+  nominal = paste(.response, "=", .labels, "against", paste(.reference, collapse = ", ")),
+  ordinal = paste(.response, "threshold", .labels)
+)
+fit_summary <- data.frame(
+  component = .components,
+  best_m = as.integer(fit$m.opt),
+  cv_error = mapply(function(e, m) e[m, "l2"], .err, fit$m.opt)
+)
+knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-validated)",
+                                        "Cross-validated error there (standardized)"),
+             caption = "Cross-validated fit, by response component")
+```
+
+```{r}
+#| label: error-path
+# The cross-validated error by iteration, and the fitted rho, phi and lambda.
+# Best M at the right edge means M was too small.
+p_error <- plot(gg_boost_error(fit))
+p_path  <- plot(gg_boost_path(fit))
+p_error
+p_path
+```
+
+```{r}
+#| label: calibration
+# Observed against fitted values over follow-up, in time bins.
+p_calibration <- plot(gg_boost_calibration(fit))
+p_calibration
+```
+
+```{r}
+#| label: importance
+# Importance of each predictor's main effect and its interaction with time; the
+# interaction is where a predictor whose effect changes over follow-up shows.
+vimp <- vimp.boostmtree(fit)
+p_vimp <- plot(gg_boost_vimp(vimp))
+p_vimp
+```
+
+```{r}
+#| label: effects
+# Partial effects over time, for EFFECT_VARIABLES or the six most important.
+# An ordinal or nominal fit reports importance once per response component, so
+# a variable is ranked by its largest importance across them.
+.vimp_main <- gg_boost_vimp(vimp, components = "main")
+.top <- sort(tapply(.vimp_main$importance, as.character(.vimp_main$variable), max), decreasing = TRUE)
+.effect_vars <- if (is.null(EFFECT_VARIABLES)) head(names(.top), 6L) else EFFECT_VARIABLES
+.unknown <- setdiff(.effect_vars, .predictors)
+if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unknown, collapse = ", "), call. = FALSE)
+# One partial.plot() covers every response component: ggBoostedTrees 0.0.8 and
+# later take an ordinal or nominal one whole and facet its figure by component.
+# Each component is renamed as the fit summary names it, not by its bare level.
+.effect <- gg_boost_effect(partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE))
+.relabel <- .components[match(levels(.effect$response), .labels)]
+# A component ggBoostedTrees names differently from the fit would otherwise be
+# drawn under a blank label; stop and say so instead.
+if (anyNA(.relabel)) {
+  stop("ggBoostedTrees labels a response component this job does not recognize: ",
+       paste(levels(.effect$response)[is.na(.relabel)], collapse = ", "), ".", call. = FALSE)
+}
+levels(.effect$response) <- .relabel
+# What ggBoostedTrees 0.0.9 still cannot do: a continuous covariate is drawn as
+# a curve and a factor as a point per level, on axes ggplot2 cannot share, so
+# plot() refuses an effect holding both. Each kind is drawn in its own figure,
+# which is why p_effects is a list.
+.discrete <- tapply(!is.na(.effect$x_label), .effect$variable, any)
+.discrete <- .discrete[!is.na(.discrete)]
+p_effects <- lapply(unname(split(names(.discrete), .discrete)), function(v) {
+  part <- .effect[.effect$variable %in% v, , drop = FALSE]
+  part$variable <- droplevels(part$variable)
+  plot(part)
+})
+for (.p in p_effects) print(.p)
+```
+
+```{r}
+#| label: traces
+# Fitted trajectories for a sample of patients, with their observed values as
+# points, and the cohort's mean fitted value over time drawn across them. The
+# patients are labeled by digest, so none is identified.
+traces <- gg_boost_trajectory(fit)
+# Visit times are irregular, so most exact times belong to one patient, and a
+# mean taken at each time would join single values. The mean is taken instead
+# within ten equal-count time bins, over every patient's fitted values, and
+# drawn at each bin's mean time. A bin is per response component when there
+# are several.
+.edges <- unique(stats::quantile(traces$time, seq(0, 1, length.out = 11L), names = FALSE))
+# plot() reports that it chose the patients at random; SEED makes the choice
+# the same on every render.
+p_traces <- withr::with_seed(SEED, plot(traces, n_max = N_TRACES)) + ggplot2::labs(x = .time, y = .response)
+if (length(.edges) < 2L) {
+  # Every visit at one time leaves no span to bin, and no line to draw.
+  trace_means <- NULL
+  cat("Every visit is at one time, so no mean line is drawn.\n")
+} else {
+  traces$.bin <- cut(traces$time, .edges, include.lowest = TRUE)
+  .by <- intersect(c("response", ".bin"), names(traces))
+  trace_means <- do.call(rbind, lapply(split(traces, traces[.by], drop = TRUE), function(b) {
+    data.frame(b[1L, setdiff(.by, ".bin"), drop = FALSE], time = mean(b$time), fitted = mean(b$fitted),
+               n_patients = length(unique(b$id)))
+  }))
+  p_traces <- p_traces +
+    ggplot2::geom_line(data = trace_means, ggplot2::aes(x = .data[["time"]], y = .data[["fitted"]]),
+                       linewidth = 1.2, inherit.aes = FALSE)
+}
+p_traces
+```
+
+```{r}
+#| label: save
+# The product of this job. It is separate from the cache on purpose: the cache
+# is this job's internals and this file its interface, which carries the
+# selection a later job would rebuild the rows from.
+fit <- hvtiRtemplates:::.attach_handoff_lineage(
+  fit,
+  data = .provenance_data,
+  analysis = list(response = .response, time = .time, family = FAMILY, M = M, nu = NU),
+  cohort = list(n_patients = length(unique(.patient)), n_visits = nrow(d)),
+  selection = attr(job_data$record, "selection")
+)
+saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  extra = list(
+    subject = SUBJECT, type = TYPE,
+    analysis = list(response = .response, time = .time, family = FAMILY, M = M, nu = NU),
+    cohort = list(n_patients = length(unique(.patient)), n_visits = nrow(d))
+  )
+))
+```

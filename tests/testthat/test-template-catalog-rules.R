@@ -5,7 +5,7 @@ catalog_rows <- function() {
 
 test_that("every catalog row has a unique template key and a live disposition", {
   rows <- catalog_rows()
-  expect_length(rows, 67L)
+  expect_length(rows, 68L)
   keys <- vapply(rows, function(r) paste(r$prefix, r$qualifier, sep = "\r"), character(1))
   expect_identical(anyDuplicated(keys), 0L)
   expect_true(all(vapply(rows, function(r) {
@@ -19,7 +19,7 @@ test_that("every catalog row has a unique template key and a live disposition", 
 
 test_that("build rows name a real function blocker", {
   rows <- Filter(function(r) identical(r$disposition, "build"), catalog_rows())
-  expect_length(rows, 8L)
+  expect_length(rows, 7L)
   for (row in rows) {
     expect_match(row$blocked_on, "^[A-Za-z][A-Za-z0-9.]*#[0-9]+$",
                  label = row$prefix)

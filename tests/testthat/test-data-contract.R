@@ -8,7 +8,7 @@ pending_contract_families <- setdiff(template_list()$name, c(
   "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
   "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
   "rfs-fit", "rfs-explain", "rfc-fit", "rfc-explain", "rfr-fit", "rfr-explain",
-  "bl", "br", "bc", "bh"
+  "bl", "br", "bc", "bh", "nb-boostmtree"
 ))
 
 template_chunk <- function(src, label) {
@@ -38,6 +38,8 @@ expected_defaults <- function(name) {
   }
   # hm, hp and hs also take their time-to-event settings from upstream.
   if (name %in% c("hm", "hp", "hs-setup")) out <- c(out, TIME = "TIME <- NULL", EVENT = "EVENT <- NULL")
+  # nb-boostmtree reads one row per visit, so the ID alone is not unique.
+  if (name == "nb-boostmtree") out[["KEY"]] <- "KEY <- c(ID, TIME)"
   out
 }
 

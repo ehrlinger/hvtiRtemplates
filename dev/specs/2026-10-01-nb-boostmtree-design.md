@@ -23,8 +23,8 @@ the catalog, blocked on ggBoostedTrees#9, and covers two methods: boostmtree and
 BoostMLR. Only boostmtree has ggBoostedTrees figures today.
 
 **Decision:** a qualified template, `nb-boostmtree`, now. The `nb` row splits into
-`nb`/`boostmtree` (shipped) and `nb`/`boostmlr` (queued, still blocked on
-ggBoostedTrees#9). A prefix must be wholly qualified or wholly unqualified
+`nb`/`boostmtree` (shipped) and `nb`/`boostmlr` (queued; it was blocked on
+ggBoostedTrees#9 until that merged in 0.0.9). A prefix must be wholly qualified or wholly unqualified
 (`check-roadmap-counts.py`), so both rows carry a qualifier.
 
 ## 2. Exemplars
@@ -97,9 +97,13 @@ In `edit-study-choices`, every study-specific line marked `EDIT:`:
 - **The model's columns.** `TIME <- "iv_echo"` (the visit time, in years),
   `RESPONSE <- "<response>"` (a placeholder the analyst must replace) and
   `FAMILY <- "continuous"` (or `"binary"`, `"ordinal"`, `"nominal"`).
-- **Predictors.** `PREDICTORS <- NULL` takes every column but `ID`, `TIME` and
-  `RESPONSE`, as every exemplar does. A vector restricts the fit to those
-  columns. The job stops when `PREDICTORS` names the resolved ID or `TIME`, or
+- **Predictors.** `PREDICTORS <- NULL` takes every column but `ID`, the `KEY`
+  columns, `TIME`, `RESPONSE` and any ccfid, MRN or eMRN column, and names the
+  identifier columns it left out. Every exemplar took every column; the
+  identifier exclusion was added after review, because `ID <- "randid"` beside a
+  ccfid column would otherwise fit on, cache and save raw ccfids. A vector
+  restricts the fit to those columns. The job stops when `PREDICTORS` names the
+  resolved ID, a `KEY` column, `TIME` or a known identifier, or a name twice, and
   when `RESPONSE` is the resolved ID.
 - **The fit.** `M <- 1000` and `NU <- 0.05`, the commonest pair; the comment says
   studies used 0.01 to 0.05, and that a smaller `nu` needs a larger `M`.
@@ -169,8 +173,9 @@ In this order, each in its own chunk:
 4. **Variable importance.** `gg_boost_vimp()`.
 5. **Partial effects.** `gg_boost_effect()` for `EFFECT_VARIABLES`, or the six
    variables with the largest importance across response components. ggBoostedTrees
-   0.0.7 takes a single-response `partial.plot` only, so an ordinal or nominal fit
-   is drawn one component at a time.
+   0.0.7 took a single-response `partial.plot` only; ggBoostedTrees#19 merged in
+   0.0.8, so one `partial.plot` now covers every component, faceted by component.
+   Continuous and factor covariates are still drawn in separate figures.
 6. **Patient traces.** `gg_boost_trajectory()` and its `plot()` method: one fitted
    line per patient with that patient's observed values as points, `N_TRACES`
    patients sampled inside `withr::with_seed(SEED, ...)`. The population mean is
@@ -189,7 +194,8 @@ No figure or table prints an identifier value.
 - **Template.** `inst/templates/30_analyses/nb-boostmtree.qmd`, with its own
   per-file `.lintr` key, and on the converted list in `test-data-contract.R`.
 - **Ledger.** The `nb` row splits into `nb`/`boostmtree` (`shipped`) and
-  `nb`/`boostmlr` (`queued`, `blocked_on` ggBoostedTrees#9). The roadmap is
+  `nb`/`boostmlr` (`queued`). It was `blocked_on` ggBoostedTrees#9, which merged
+  in 0.0.9, so the row is now unblocked and still queued. The roadmap is
   regenerated from the ledger, and `check-roadmap-counts.py` passes in both
   directions.
 - **Dependencies.** `boostmtree (>= 2.0.2)` and `ggBoostedTrees` in Suggests, so
@@ -218,5 +224,5 @@ Each must be shown failing with its code reverted, and the suite must stay at
 
 BoostMLR (`nb-boostmlr`, still queued). Train/test validation with `predict()`.
 By-group refits, which `WHERE` covers one group at a time. `gg_boost_trajectory()`
-already accepts a BoostMLR fit, so ggBoostedTrees#9 may be partly met; that
-matters to `nb-boostmlr`, not here.
+already accepted a BoostMLR fit, and ggBoostedTrees#9 merged in 0.0.9, adding
+BoostMLR importance and partial effects; that matters to `nb-boostmlr`, not here.

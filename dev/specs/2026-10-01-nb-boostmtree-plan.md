@@ -577,7 +577,7 @@ git commit -m "feat(templates): nb-boostmtree fits on the study-keyed digest, ca
 **Amended 2026-10-01 after review of #217.** Four changes, each verified against a real fit:
 1. Ordinal and nominal fits carry one `m.opt` and one error matrix per response component (`fit$err.rate` is then a list). The summary therefore has one row per component.
 2. `gg_boost_vimp()` returns one row per variable per component, so "the top six" ranks variables by their largest importance across components, without duplicates.
-3. `gg_boost_effect()` refuses a multi-component `partial.plot` ("nested by response") in ggBoostedTrees 0.0.7. For those fits the effects chunk splits the `partial.plot` data by component and draws each one. This is checked against the installed object and recorded as a ggBoostedTrees issue.
+3. `gg_boost_effect()` refuses a multi-component `partial.plot` ("nested by response") in ggBoostedTrees 0.0.7. For those fits the effects chunk splits the `partial.plot` data by component and draws each one. This is checked against the installed object and recorded as a ggBoostedTrees issue. That issue, ggBoostedTrees#19, merged in 0.0.8, and the chunk now passes one `partial.plot` whole.
 4. The mean line over the traces averages fitted values within equal-count time bins, not at exact visit times, which are mostly one patient each.
 
 Every family the template offers is tested.

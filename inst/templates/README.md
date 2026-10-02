@@ -32,6 +32,7 @@ refuses to overwrite an existing job.
 | `30_analyses/rfc-explain.qmd` | importance, VarPro and dependence for an `rfc` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/rfr-fit.qmd` | regression forest, grown and checked | `30_analyses/` or `analyses/` |
 | `30_analyses/rfr-explain.qmd` | importance, VarPro and dependence for an `rfr` forest | `30_analyses/` or `analyses/` |
+| `30_analyses/nb-boostmtree.qmd` | boosted multivariate trees for a response measured at each visit | `30_analyses/` or `analyses/` |
 
 `dp-postage` is deprecated in favor of `dp-eda` and will be removed in the
 release after 1.2.3. It still scaffolds and renders, and `add_job()` warns
@@ -68,7 +69,8 @@ jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "se
 in a study that already has `<subject>-<type>-hs.qmd` it scaffolds a fresh `hs-setup` job beside it: open the
 existing job by its file. Use `hs-setup` for one model's predictions against the matched population, and
 `hs-concordance` when each treatment group has its own `hm` model and every patient is to be predicted through
-each of them. The other prefixes here remain unqualified. A
+each of them. `nb-boostmtree` is qualified from the start, because `nb` will also hold a BoostMLR job,
+`nb-boostmlr`, which is still to come. The other prefixes here remain unqualified. A
 prefix is wholly qualified or wholly unqualified, never half-decomposed.
 
 ### Logistic-model jobs

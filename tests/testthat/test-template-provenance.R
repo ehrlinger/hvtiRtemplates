@@ -152,7 +152,7 @@ test_that("embedded provenance calls are unique across all R chunks", {
 
 test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- template_list()
-  expect_equal(nrow(templates), 31L)
+  expect_equal(nrow(templates), 32L)
 
   for (path in templates$file) {
     source <- readLines(path, warn = FALSE)
@@ -220,7 +220,7 @@ test_that("only templates with a local dataset choice override the dataset", {
     "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-postage", "dp-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
-    "rfs-fit", "rfc-fit", "rfr-fit"
+    "rfs-fit", "rfc-fit", "rfr-fit", "nb-boostmtree"
   )
   templates <- template_list()
   observed <- templates$name[vapply(templates$file, function(path) {
