@@ -1,5 +1,355 @@
 # Changelog
 
+## hvtiRtemplates 1.2.3
+
+- [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+  stops on a `WHERE` condition that mentions the patient identifier or a
+  column named MRN or eMRN, directly or through `.data$x` or
+  `.data[["x"]]`, before any row is filtered. A column reached any other
+  way, as by `.data[[paste0(...)]]`,
+  [`get()`](https://rdrr.io/r/base/get.html) or another name bound to
+  [`get()`](https://rdrr.io/r/base/get.html), stops too, since it could
+  be the identifier. Values are checked as well as names, after every
+  name check: the check covers literal values (including an outside
+  vector of IDs) of five or more characters that equal a value of the
+  identifier, MRN or eMRN in the data, and folds only arithmetic,
+  [`c()`](https://rdrr.io/r/base/c.html), `paste`/`paste0` and numeric
+  or character coercion of constants (such as `4730000000 + 1`) to check
+  their result. So a wrapper function or a copy of the ID under another
+  name is caught when compared with such a value. The check never calls
+  any other function: a value produced by any other call, or computed
+  from a data column, as in `id2 / 2 != 2365000000.5`, is not checked,
+  and a refused condition runs no code. A threshold that happens to
+  equal a patient’s identifier is refused too, and the message says so.
+  Thresholds shorter than five characters, such as 1, 18 or 2015, are
+  not checked, so a study keyed on shorter identifiers relies on the
+  name checks. Each condition is saved, values included, in the job’s
+  output, so a filter on identifier values would be saved with it.
+  Exclude those patients in the dataset build, or with an hvtiRdatabuild
+  analysis set. A downstream job rebuilding an upstream file saved with
+  such a condition names the file and says to rerun the upstream job.
+
+- [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+  stops on a `WHERE` that takes a data frame, list, environment or S4
+  object from outside the data, as `with(lookup, age) > 20` does. The
+  condition is saved as text, so the whole object, ID column included,
+  was saved with it; the message names the variable and says to filter
+  on a column of the data instead. An outside `NULL` is now fixed in
+  rather than dropped from the call. Closes
+  [\#218](https://github.com/ehrlinger/hvtiRtemplates/issues/218).
+
+- The bootstrap reports print the data selection their bag carries, and
+  their runners read data through
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md).
+  Each runner is its own job:
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  for `bl`, `br`, `bc` and `bh` also writes
+  `<subject>-<type>-<prefix>-runner.R` beside the report, with its study
+  choices marked `EDIT:`, and refuses to overwrite one. A runner stops
+  until its `FINISHED` is set to `TRUE`, and checks its package floor
+  (hvtiRbootstrap 0.9.3, TemporalHazard 1.2.8) before it screens, so a
+  long run cannot finish only to be refused. The runner saves the
+  selection in the bag’s lineage and resamples only the model’s columns.
+  `WHERE`, `ID` and `KEY` in the report confirm the runner’s values, and
+  the collinearity table reads the rows the runner screened rather than
+  the whole dataset. **A bag saved before this change carries no
+  selection, and its report stops: rerun its runner.** So does a `bh`
+  pool whose chunks were run on different rows.
+
+- A bootstrap report stops on a bag that carries a patient identifier.
+  The check is by name: it finds a field, column or matrix column named
+  for the job’s `ID`, `MRN` or `eMRN`, anywhere in the bag or its
+  carried lineage, including inside the environment a saved formula or
+  function carries. An active binding there is reported, never
+  evaluated. It does not find an ID stored under another name or used as
+  row names, nor data in an environment it does not read (a package or
+  the global environment, or an unforced promise).
+
+- `BOOTSTRAP_DATA` is removed from the bootstrap reports. A bag must
+  come from its runner, which attaches the lineage and selection the
+  report reads.
+
+- `nb-boostmtree` is a new template: boosted multivariate trees for a
+  response measured repeatedly over follow-up, fitted with `boostmtree`
+  2.0.2 or later from the CCF fork (`ehrlinger/boostmtree_src`), whose
+  fix the CRAN release lacks, and reported with ggBoostedTrees 0.9.0 or
+  later. `KEY` defaults to the ID and the visit time. Patients are
+  grouped by the study-keyed digest, so the fit, its cache and the saved
+  file hold no patient ID. `PREDICTORS <- NULL` takes every column but
+  the ID, the `KEY` columns, the time, the response and any ccfid, MRN
+  or eMRN column, and names the identifier columns it left out; named
+  `PREDICTORS` may hold none of those, nor a name twice. The partial
+  effects of every response component come in one figure, faceted by
+  component as ggBoostedTrees 0.9.0 draws them, with continuous and
+  factor covariates in separate figures because one figure cannot hold
+  both. BoostMLR (`nb-boostmlr`) is still to come; the ggBoostedTrees
+  support it waited on shipped in 0.9.0.
+
+- New template `hs-concordance`: every patient predicted through every
+  treatment group’s `hm` model at one horizon, the job the corpus calls
+  concordance and discordance. It reads each group’s model from that
+  group’s own set, saves one long artifact, `hs-concordance.rds`, and
+  has an optional section that picks a best treatment per patient only
+  where the confidence limits separate it. Design:
+  `dev/specs/2026-09-30-hs-concordance-design.md`.
+
+- The `hs` template is now `hs-setup`, because `hs` carries two job
+  types and a prefix is either wholly qualified or wholly unqualified.
+  The file’s contents are unchanged and it still saves `hs.rds`.
+  `add_job("hs", ...)`, `template_path("hs")` and `open_job("hs", ...)`
+  without a qualifier stop and list `setup` and `concordance`. Migrating
+  a SAS `hs` job needs `qualifier =` too: its filename’s second field is
+  the endpoint, not the job type. Jobs already scaffolded keep their
+  names. `open_job("hs", ..., qualifier = "setup")` looks for
+  `<subject>-<type>-hs-setup.qmd`, so in a study that already has
+  `<subject>-<type>-hs.qmd` it scaffolds a fresh job beside it. Open the
+  existing job by its file.
+
+- `hs-setup` now requires TemporalHazard \>= 1.2.12 and says what its
+  `se.fit` column is. On the survival path it is se(S), the standard
+  error of the survival estimate itself. A TemporalHazard build without
+  [\#281](https://github.com/ehrlinger/hvtiRtemplates/issues/281) wrote
+  se(H) into the same column, and
+  [\#281](https://github.com/ehrlinger/hvtiRtemplates/issues/281)
+  shipped inside version 1.2.11, so which one an `hs.rds` holds depends
+  on the build that produced it, not on when it was written. The render
+  stops on an older build instead of writing an ambiguous file, and the
+  `Suggests` floor for TemporalHazard rises from 1.2.8 to 1.2.12 to
+  match.
+
+- `hz` renders again with TemporalHazard 1.2.11. Its convergence table
+  read an iteration count that a multiphase fit does not carry, so every
+  render stopped there. The table now reports the optimizer’s function
+  and gradient evaluations, and shows “not reported” for a field a fit
+  leaves out, so a missing field cannot stop the render
+  ([\#168](https://github.com/ehrlinger/hvtiRtemplates/issues/168)).
+
+- [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+  is the shared data step for templates: it reads a registered dataset
+  or analysis set, resolves the patient ID (`ccfid`, then `MRN`, then
+  `eMRN`), drops `MRN` and `eMRN`, keeps the rows `WHERE` selects with
+  [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html)
+  rules, checks rows are unique on `KEY`, and records what it did. `ID`
+  and `KEY` match their columns ignoring case, the values of a `WHERE`
+  condition on `ID` or `KEY` are never printed, and an analysis set’s
+  attrition is returned with the data. A value `WHERE` takes from
+  outside the data, such as `.env$min_age`, is fixed into the recorded
+  condition when the data are read. A downstream job rebuilds its
+  upstream job’s rows from the selection the upstream hand-off carries,
+  and stops when that hand-off predates it. Templates adopt it family by
+  family.
+
+- The descriptive templates and `dp-trends` read their data through
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md):
+  `ANALYSIS_SET` defaults to `NULL`, so they run on a newly registered
+  study; `WHERE`, `ID` and `KEY` are new settings; `dc-general`’s
+  `KEY_COLS` is `ID`; and `dp-eda` leaves the job’s `ID` and `KEY`
+  columns out, never draws the `ID`, and draws a `KEY` column such as a
+  visit time only when `VARIABLES` names it. The deprecated `dp-postage`
+  keeps its own data step. Every template’s setup chunk says to run
+  [`study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html)
+  when it is not inside a study.
+
+- The logistic templates read their data through
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md);
+  `ID` defaults to `"ccfid"` (it was `"id"`, which no built dataset
+  carries), and `lm-checkpred` stops when its validation patients were
+  in the training data: its validation cohort is `DATASET` or `WHERE`
+  like any job’s.
+
+- The `lm` templates save a study-keyed digest of each patient ID in
+  their model files, not the ID, so a model keyed on `MRN` no longer
+  stores MRNs. The key is made on first use in the study’s `.hvti/`
+  folder. `lm-checkpred` digests its validation IDs with the same key
+  and compares digests; a model saved before this change still
+  validates.
+
+- The hazard chain reads its data through
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md):
+  `STATUS` is `EVENT`, the `iu_dead`/`idead` defaults are
+  `iv_dead`/`dead`, the filter typed into every job is one `WHERE` in
+  `ac` and `hz`, and `hm`, `hp` and `hs` take `WHERE`, `ID`, `KEY`,
+  `TIME` and `EVENT` from `hz`’s saved fit, stopping if their own
+  differ. `hp` also stops when `ac` and `hz` read different rows. `hm`
+  fits on the model’s columns only, so `hm.rds` no longer keeps the
+  patient ID or MRN in its saved fits.
+
+- The random-forest templates read their data through
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md),
+  gaining `WHERE`, `ID` and `KEY`; text predictors are converted to
+  factors with a note; `explain` jobs take the fit’s selection.
+  `rfs-fit`’s `STATUS` is `EVENT`. A fit stops when `PREDICTORS` names
+  the patient ID or a `KEY` column, or when an outcome (`TIME`, `EVENT`
+  or `RESPONSE`) is the patient ID. A `KEY` column that is not the ID,
+  such as a visit time, may still be an outcome, and is then saved with
+  the forest. The forest’s formula no longer carries the job’s
+  environment, so the saved forest and the `explain` caches hold no
+  patient ID or MRN wherever the job is run. An `explain` job stops on a
+  forest saved before this change; rerun its fit job first.
+
+- `dp-postage` is deprecated in favor of `dp-eda`, and will be removed
+  in the release after 1.2.3. For the same pages, scaffold
+  `add_job("dp", subject, type, qualifier = "eda")` and set
+  `SECTIONS <- c("continuous", "percent", "count")`: the sections call
+  `hv_eda_pages()` with the same arguments, and a test checks that the
+  pages match `dp-postage`’s byte for byte. They are saved as
+  `dp-eda-*.png`. `dp-postage` still scaffolds and renders;
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
+  [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+  and
+  [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
+  warn once when it is used. The template catalog marks it with two new
+  fields, `deprecated_by` and `deprecation_note`, which
+  [`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md)
+  returns and the warning reads.
+
+- [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  now writes a `dp-eda` job for a legacy EDA report (the
+  `tp.dp.DescriptiveSummary.qmd` and
+  `tp.dp.EDA_barplots_scatterplots*.R` lineage), carrying over the same
+  settings as before, `VARIABLES`, `X_VAR`, `EXCLUDE`, the grid size and
+  `UNIQUE_LIMIT`, and leaving the color and stratification choices for
+  review. The job draws
+  `SECTIONS <- c("continuous", "percent", "count")`, because a legacy
+  EDA report had no follow-up panels. Naming `qualifier = "postage"`
+  warns and writes the `dp-eda` job.
+
+- `dp-eda` and `dp-postage` take the medical record number as an
+  identifier only under the exact names `MRN` and `eMRN` (ignoring
+  case). They matched `mrn` anywhere in a name, so an mRNA variable such
+  as `bnp_mrna` was left out as an identifier. The rule matches
+  hvtiPlotR’s `hv_eda_pages()` (hvtiPlotR#172).
+
+- The data-route tests pass when run on their own. They evaluated
+  template chunks that call
+  [`study_config()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_config.html)
+  without supplying it, so they depended on an earlier test file having
+  attached hvtiRutilities, and a filtered run errored twice. No change
+  to the templates.
+
+- Every template chunk holding an `EDIT:` marker is now labeled `edit-`,
+  so the editor’s chunk outline lists the work a job still needs:
+  `study-choices` is `edit-study-choices`, and nine templates carry
+  further `edit-` chunks such as `edit-cohort` and `edit-derive`. The
+  marker guard, `edit-guard`, is renamed `guard-edits` so it does not
+  read as an edit site. A test holds the rule in both directions.
+  Existing jobs keep their old labels and still render.
+
+- [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
+  [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md),
+  [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
+  and
+  [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  accept a template’s full name, the `name` column of
+  [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
+  in place of the prefix and qualifier pair:
+  `add_job("dp-trends", "cohort", "eda")`. An error asking which
+  template now lists the choices by full name. Giving a full name and a
+  `qualifier` together is an error rather than a silent preference for
+  either. A bare qualifier is not accepted, because `fit`, `explain` and
+  `gfup` each name more than one template.
+
+- The EDA abbreviation tests hold once hvtiRutilities carries its group
+  abbreviation list (1.4.3). Four tests assumed the group list was empty
+  and failed on every platform after it merged: they now turn the group
+  list off when testing the job, study and initials levels, `dp-eda`’s
+  provenance check finds its entry by position rather than by a name
+  every row shares, and a new test checks that the group list does
+  shorten labels when it is present. No change to the templates.
+
+- `dp-postage` names its source correctly. Its header said it replaced
+  the older `tp.dp.EDA_barplots_scatterplots*.R` sweep; it was built
+  from the per-variable grid of the legacy EDA report,
+  `tp.dp.DescriptiveSummary.qmd`, as the catalog records. The `EDIT:`
+  note now names both, since a study’s job may be a copy of either, and
+  the descriptive migration vignette maps both.
+
+- New template `dp-eda` (`10_descriptive/`), the whole EDA report in one
+  render: an overview of every column
+  ([`proc_contents()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html)),
+  goodness of follow-up with `dc-gfup`’s tables, then continuous
+  variables, categorical variables as percentages and categorical
+  variables as counts, each with its table. `SECTIONS` picks any subset;
+  the report keeps that order. Each section calls the function its
+  standalone job calls (`hv_followup_panels()`,
+  [`followup_check()`](https://ehrlinger.github.io/hvtiRutilities/reference/followup_check.html),
+  `hv_eda_pages()`) with the same arguments, so a section is that job’s
+  figure; `test-dp-eda.R` checks the pages byte for byte against
+  `dp-postage`. Needs hvtiPlotR 2.7.18 and hvtiRutilities 1.4.2, the
+  current floors. It draws in the house colors and shortens labels in
+  the house style (both below).
+
+- `dp-postage` and `dp-eda` leave out identifiers written without a
+  separator. Under `VARIABLES <- NULL` a column named `ccfid` or
+  `patientid` passed the identifier rule, which wanted `id` as its own
+  `_`-delimited token, and was drawn as one bar per patient and listed
+  in the frequency table. The rule now also takes `ccfid`, `patid`,
+  `patientid`, `studyid`, `subjectid`, `recordid`, `caseid` (each also
+  with `_`, `num` or `no`), the exact names `MRN` and `eMRN`, and any
+  text or factor column of ten or more values in which every value
+  differs. A bare trailing `id` was declined: it would take `carotid`
+  and `steroid`. The report lists what it left out, and naming a column
+  in `VARIABLES` still draws it. `dp-eda`’s overview table leaves
+  identifiers out too, whatever `VARIABLES` says, and names them beneath
+  the table; date columns stay in it, because their share missing is
+  worth seeing.
+
+- `dc-general` explains each study choice where it is made. The notes on
+  `CATEGORICAL`, `CONTINUOUS`, `CORR_VARS`, `KEY_COLS` and `ID_COL` sat
+  in a `spec` chunk ninety lines below the settings they describe; they
+  now sit beside them in `edit-study-choices`, and the empty chunk is
+  gone. No change to what the job does. From Lauren’s 2026-09-24 review.
+
+- **The EDA templates draw in the house colors, which are colorblind
+  safe.** `dp-postage` and `dp-eda` color their categorical pages with
+  [`hvtiPlotR::scale_fill_hv()`](https://ehrlinger.github.io/hvtiPlotR/reference/scale_fill_hv.html):
+  each panel runs blue, vermillion, green and on from its own levels,
+  and missing is light gray. `dp-gfup` and `dp-eda`’s follow-up section
+  use `scale_color_hv()`. **The follow-up figures change color:** dead
+  moves from Set1 red `#E41A1C` to vermillion `#D55E00`, alive from
+  `#377EB8` to `#0072B2`, and a non-fatal event from `#4DAF4A` to
+  `#009E73`. The pattern of red, blue and green is kept. `COLORS` is now
+  `NULL` by default; name `alive`, `dead` and `event` to choose your
+  own, and `c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A")`
+  restores the earlier colors. Needs hvtiPlotR 2.7.18, now the floor.
+
+- **`dp-gfup`’s `COLOURS` setting is renamed `COLORS`**, and `dp-eda`
+  uses the same name. A `study-choices` chunk copied from an older job
+  that still sets `COLOURS` stops with “COLOURS is now COLORS” rather
+  than drawing the default colors without a word. Rename the setting in
+  `study-choices` (`edit-study-choices` in a new job); its values are
+  unchanged.
+
+- The templates, their comments, the reference pages and these notes use
+  US spelling. The templates call `scale_color_manual()` and
+  `labs(color = )`, which ggplot2 treats as identical to their British
+  spellings, and
+  [`hvtiPlotR::scale_color_hv()`](https://ehrlinger.github.io/hvtiPlotR/reference/scale_fill_hv.html),
+  which needs hvtiPlotR 2.8.0, now the floor.
+  `tools/check-us-spelling.sh` now fails the lint workflow on a British
+  spelling.
+
+- **`dp-postage` and `dp-eda` keep shortened labels distinct**, through
+  [`hvtiRutilities::label_map()`](https://ehrlinger.github.io/hvtiRutilities/reference/label_map.html).
+  Two new edit points: `LABEL_MAX` (default 40), the longest label a
+  figure or table shows, and `ABBREVIATIONS` (default `NULL`), the job’s
+  own abbreviations as `c("Phrase" = "Abbrev")`. The job merges them
+  over the study’s `abbreviations:` in `_study.yml` and the group
+  default list with
+  [`hvtiRutilities::study_abbreviations()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_abbreviations.html),
+  so every job in a study shortens labels the same way. Labels that
+  share a heading over the cap show it abbreviated
+  (`Surgical procedure: ...` becomes `SP: ...`), and each section prints
+  a key of the abbreviations its shortened labels show. A wrong
+  `LABEL_MAX` or `ABBREVIATIONS` stops the render with a message naming
+  it, as the other edit points do. The cap and the merged list, with
+  each entry’s level, are recorded in the report’s provenance. The
+  settings apply to the figure pages and their captions; tables,
+  including `dp-eda`’s Overview, keep full labels, so a reader can look
+  up what a shortened label stands for. Needs hvtiRutilities 1.4.2, now
+  the floor; a migrated `dp-postage` job keeps both edit points at their
+  defaults.
+
 ## hvtiRtemplates 1.2.2
 
 - `DESCRIPTION`: a plain `&` in the Description (`\&` is not a valid
