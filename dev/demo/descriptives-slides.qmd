@@ -1,4 +1,13 @@
 ---
+# Design reference: the hvtiGraphics chapter on slide design,
+# https://ehrlinger.github.io/hvtiGraphics/slide_design.html
+#
+# This is a hands-on workshop deck, so it applies that guidance with judgment.
+# A slide that makes a point gets a one-sentence assertion as its title; a slide
+# that is an instruction keeps an imperative title. Chapters follow the order the
+# second slide announces, under the same names. Figure slides say how to read the
+# figure before the result. The 32 pt text floor applies to body text, not to
+# code, which is sized so the longest line fits.
 title: "R descriptives, hands on"
 subtitle: "Tables, trends, goodness of follow-up and EDA plots with hvtiRtemplates"
 format:
@@ -7,42 +16,47 @@ format:
     slide-number: true
     embed-resources: true
     code-copy: true
-    smaller: true
     scrollable: true
-    # smaller: true shrinks code along with the text. People copy from these
-    # slides, so code is kept at a size they can read from the back of a room.
+    # No `smaller: true`. It shrank body text to 28px on the 1050px slide, below the
+    # group's 32 pt floor, and shrank code with it. Body text is now the theme's 40px.
+    # People copy from these slides, so code is pinned at the 20px it was before, a
+    # size they can read from the back of a room that still fits the longest lines.
+    # Headlines are sentences now, so they drop to 44px to fit on two lines; callouts
+    # and figure captions are held at 36px, above the 32 pt floor at this slide size.
     include-in-header:
       text: |
         <style>
-        .reveal div.sourceCode pre, .reveal div.sourceCode pre code { font-size: 0.72em; line-height: 1.3; }
+        .reveal div.sourceCode pre, .reveal div.sourceCode pre code { font-size: 0.5em; line-height: 1.3; }
         .reveal div.sourceCode pre code { font-size: 1em; }
+        .reveal h2 { font-size: 1.1em; }
+        .reveal div.callout, .reveal div.callout p, .reveal .slide figure > figcaption { font-size: 36px; }
+        .reveal .columns img { max-height: 290px; }
+        .reveal table td code { white-space: nowrap; }
         </style>
 execute:
   eval: false
   echo: true
 ---
 
-## What you will do
-
-Every descriptive job is the same four steps:
+## Every descriptive job is the same four steps
 
 1. **Scaffold** the job from its template: `open_job()` copies it into the study and opens it.
 2. **Set the study choices** under each `EDIT:` marker, then delete the marker.
 3. **Render**: `render_job()`. While a marker remains, the report carries a DRAFT banner.
 4. **Check** what it printed against what you expected.
 
-We do it six times over one synthetic study:
+## We set up, run six jobs in four chapters, then check the output
 
-| topic | job | writes |
+| chapter | jobs | what they write |
 |---|---|---|
 | Tables | `dc-tables` | the CORR Word table |
-| Trends | `dp-trends` | trends over operation year |
-| Follow-up | `dc-gfup`, `dp-gfup` | interval checks; the follow-up figure |
-| EDA plots | `dp-postage`, `dp-eda` | postage stamps; the whole EDA report |
+| Trends | `dp-trends` | trends by year |
+| Goodness of follow-up | `dc-gfup`, `dp-gfup` | interval checks, a figure |
+| EDA plots | `dp-postage`, `dp-eda` | the EDA report |
 
-Every number in the study is simulated. No real study, patient or identifier appears anywhere in it.
+# Set up
 
-## Before you start
+## Clone the package and check its partners
 
 You need R, the [Quarto CLI](https://quarto.org), and a clone of `hvtiRtemplates`:
 
@@ -72,7 +86,9 @@ root <- demo_study("~/eda-demo")
 
 This builds a study folder with `_study.yml`, a manifest, and an 800-patient cohort registered as its built dataset. It has operations from 1990 to 2024, follow-up closing on 2025-12-31, and labels on every variable.
 
-The cohort has problems planted in it, so the reports have something to find:
+Every number in the study is simulated; no real patient appears. `demo_study()` refuses a folder that already exists, so pick a new name to start again.
+
+## The demo cohort has five problems planted for the reports to find
 
 - **Heart failure falls** from about 45% of operations to about 14%.
 - **LV mass drifts down** over the years.
@@ -80,9 +96,7 @@ The cohort has problems planted in it, so the reports have something to find:
 - **One patient in ten is lost to follow-up early.**
 - There is a **patient identifier** and an **operation date**, which the EDA should leave out.
 
-`demo_study()` refuses a folder that already exists. Pick a new name to start again.
-
-## The job loop
+## One loop runs every job: open, edit, render
 
 ```r
 job <- open_job("dc", "cohort", "demo", dir = root, qualifier = "tables")
@@ -90,9 +104,11 @@ job <- open_job("dc", "cohort", "demo", dir = root, qualifier = "tables")
 
 - `"dc"` plus `qualifier = "tables"` picks the template `dc-tables`.
 - `"cohort"` and `"demo"` are the subject and type. They name the file, `cohort-demo-dc-tables.qmd`, and the folder its output goes to.
-- `open_job()` puts the job in the right study folder (`10_descriptive/`), never overwrites an existing job, and opens it in the editor.
+- `open_job()` puts the job in `10_descriptive/`, never overwrites an existing job, and opens it in the editor.
 
 Scroll to **Study choices**. Every line to settle is under an `EDIT:` marker, and the comment says why the choice matters.
+
+## Render a draft, then the final report
 
 ```r
 render_job(job)                # a draft while EDIT: markers remain
@@ -101,7 +117,9 @@ render_job(job, final = TRUE)  # stops instead, until every marker is resolved
 
 The report is written beside the job: `10_descriptive/cohort-demo-dc-tables.html`.
 
-## Tables: `dc-tables`
+# Tables
+
+## Scaffold `dc-tables` and group its rows
 
 ```r
 job <- open_job("dc", "cohort", "demo", dir = root, qualifier = "tables")
@@ -121,18 +139,22 @@ GROUPS <- list(
 
 Leave `CONTINUOUS`, `BINARY` and `CATEGORICAL` as `NULL`. The job classifies each variable from the data. Then delete the `EDIT:` markers and render.
 
-::: {.callout-tip title="Expect"}
+## `dc-tables` should report 725 creatinine values, not 800
+
+::: {.callout-tip title="Expect from dc-tables"}
 Age median **63**; female **299 (37%)**; race White **631 (79%)**; creatinine N non-missing **725**, not 800.
 The Word file is written to `50_documents/cohort-demo/`.
 :::
 
-## Trends: `dp-trends`
+# Trends
+
+## Set `dp-trends` to the demo's origin year, 1990
 
 ```r
 job <- open_job("dp", "cohort", "demo", dir = root, qualifier = "trends")
 ```
 
-The demo's origin year is **1990**. The template's placeholder says 1985, and a wrong origin slides every figure along the x-axis with no other symptom:
+The template's placeholder says 1985. A wrong origin slides every figure along the x-axis with no other symptom:
 
 ```r
 d$year <- floor(d$iv_opyrs) + 1990
@@ -147,20 +169,22 @@ SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)),
 
 `TRENDS` already names `hx_chf` and `plvmassi`, which the demo has.
 
-## Trends: what you should see
+## `dp-trends`: heart failure falls from 45% to 14%, and LV mass index falls too
+
+Each panel plots one variable by year of operation, with a smooth trend.
 
 :::: {.columns}
 ::: {.column width="50%"}
-![Heart failure, all patients](reference/dp-trends-chf-all.png)
+![Heart failure, % of operations](reference/dp-trends-chf-all.png)
 :::
 ::: {.column width="50%"}
-![LV mass index, all patients](reference/dp-trends-lvmass-all.png)
+![LV mass index: about 130 to 115](reference/dp-trends-lvmass-all.png)
 :::
 ::::
 
-Heart failure goes from **45%** of operations in 1990 to 1994 down to **14%** in 2020 to 2024. LV mass index falls from about 130 to about 115.
+# Goodness of follow-up
 
-## Goodness of follow-up: `dc-gfup`, then `dp-gfup`
+## Scaffold `dc-gfup` to check the event coding
 
 ```r
 job <- open_job("dc", "cohort", "demo", dir = root, qualifier = "gfup")
@@ -169,6 +193,12 @@ job <- open_job("dc", "cohort", "demo", dir = root, qualifier = "gfup")
 ANALYSIS_SET <- NULL
 CHECKS <- list(c("dead", "reop"))   # cross-tab of event coding
 ```
+
+::: {.callout-tip title="Expect from dc-gfup"}
+**364** deaths, **436** censored, no missing, negative or zero intervals.
+:::
+
+## Scaffold `dp-gfup` with the close date and a reoperation event
 
 ```r
 job <- open_job("dp", "cohort", "demo", dir = root, qualifier = "gfup")
@@ -182,11 +212,9 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 
 `ORIGIN_YEAR` stays 1990, and `PANELS` already names `dead` and `iv_dead`.
 
-::: {.callout-tip title="Expect from dc-gfup"}
-**364** deaths, **436** censored, no missing, negative or zero intervals.
-:::
+## `dp-gfup`: blue circles below the diagonal are patients lost to follow-up early
 
-## Goodness of follow-up: what you should see
+Each point is a patient. The dashed diagonal is the most follow-up the close date allows; vermillion crosses (deaths) belong below it.
 
 :::: {.columns}
 ::: {.column width="50%"}
@@ -197,9 +225,9 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 :::
 ::::
 
-The dashed diagonal is the follow-up the close date allows. Vermillion crosses (deaths) belong below it. The **blue circles scattered below the line** are the patients lost to follow-up early, and they are the ones to explain before any time-related analysis.
+# EDA plots
 
-## EDA plots: `dp-postage`
+## `dp-postage` needs one choice: the analysis set
 
 ```r
 job <- open_job("dp", "cohort", "demo", dir = root, qualifier = "postage")
@@ -208,7 +236,7 @@ job <- open_job("dp", "cohort", "demo", dir = root, qualifier = "postage")
 ANALYSIS_SET <- NULL
 ```
 
-That is the only choice to change. `VARIABLES <- NULL` draws every column except:
+`VARIABLES <- NULL` draws every column except:
 
 - `X_VAR`, here `year`;
 - anything in `EXCLUDE`;
@@ -216,11 +244,13 @@ That is the only choice to change. `VARIABLES <- NULL` draws every column except
 
 `SECTIONS` picks any of `"continuous"`, `"percent"` and `"count"`. Percent and count bin the year the same way, so their bars line up.
 
+## The identifier rule leaves out ID-like columns unless you name them
+
 ::: {.callout-note}
 The identifier rule catches `patient_id`, names with no separator such as `ccfid` and `patientid`, and any name holding `mrn`. Name a column in `VARIABLES` to draw it anyway.
 :::
 
-## The whole report: `dp-eda`
+## `dp-eda` writes the five-section EDA report in one render
 
 ```r
 job <- open_job("dp", "cohort", "demo", dir = root, qualifier = "eda")
@@ -232,50 +262,86 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
                            death_time = "iv_dead", label = "Reoperation"))
 ```
 
-One render gives:
-
-1. an **overview** of every column but the identifiers: its type, label and share missing;
-2. **goodness of follow-up**, with `dc-gfup`'s tables for each death panel;
+1. an **overview** of every column but the identifiers: type, label, share missing;
+2. **goodness of follow-up**, with `dc-gfup`'s tables per death panel;
 3. **continuous** variables;
 4. **categorical** variables as **percentages**;
 5. the same categorical variables as **counts**.
 
+## Each `dp-eda` section is its standalone job's figure
+
 Each section calls the same function as its standalone job, with the same arguments, so a section *is* that job's figure. A test checks the pages are byte-identical to `dp-postage`'s.
 
-## `dp-eda`: what you should see
+## `dp-eda` draws 8 continuous and 7 categorical variables, leaving out patient_id and op_date
+
+Each panel is one variable by year of operation. Percent panels stack each level's share in blue, vermillion, green and on; missing is light gray.
 
 :::: {.columns}
 ::: {.column width="50%"}
-![Continuous variables, page 1](reference/dp-eda-continuous-page-01.png)
+![Continuous variables (8)](reference/dp-eda-continuous-page-01.png)
 :::
 ::: {.column width="50%"}
-![Categorical variables, percent, page 1](reference/dp-eda-percent-page-01.png)
+![Categorical, percent (7)](reference/dp-eda-percent-page-01.png)
 :::
 ::::
 
-The report prints **Continuous variables (8)**, **Categorical variables, percent (7)** and **Categorical variables, counts (7)**, and it lists **patient_id, op_date** as left out.
+# Check your work
 
-The colors are the house colors, safe for colorblind readers: each categorical panel runs blue, vermillion, green and on from its own levels, and missing is light gray. The follow-up figures use the same rule, with vermillion for death and blue for alive.
-
-## Check your output
+## Your numbers must match the reference exactly
 
 The reference set is in `dev/demo/reference/`: the figures on these slides, and the numbers your reports should print.
+
+The data are simulated from a fixed seed, and R draws the same values on every platform, so **the numbers must match exactly**. Figures should look the same. Small differences in font or antialiasing between machines are not a problem.
 
 ```{r}
 #| eval: true
 #| echo: false
-knitr::kable(utils::read.csv("reference/key-numbers.csv", check.names = FALSE),
-             col.names = c("report", "quantity", "expected"))
+key <- utils::read.csv("reference/key-numbers.csv", check.names = FALSE)
+key$report <- sprintf("`%s`", key$report)
+key_table <- function(reports) {
+  knitr::kable(key[key$report %in% sprintf("`%s`", reports), ], row.names = FALSE,
+               col.names = c("report", "quantity", "expected"))
+}
 ```
 
-The data are simulated from a fixed seed, and R draws the same values on every platform, so **the numbers must match exactly**. Figures should look the same. Small differences in font or antialiasing between machines are not a problem.
+## Expected numbers: the study and Tables
 
-## Fell behind? Catch up
+```{r}
+#| eval: true
+#| echo: false
+key_table(c("all", "dc-tables"))
+```
+
+## Expected numbers: Trends
+
+```{r}
+#| eval: true
+#| echo: false
+key_table("dp-trends")
+```
+
+## Expected numbers: Goodness of follow-up
+
+```{r}
+#| eval: true
+#| echo: false
+key_table(c("dc-gfup", "dp-gfup"))
+```
+
+## Expected numbers: EDA plots
+
+```{r}
+#| eval: true
+#| echo: false
+key_table("dp-eda")
+```
+
+## Fell behind? Catch up with `demo_job()`
 
 Each job, scaffolded with the choices on these slides already applied:
 
 ```r
-demo_job(root, "dp-eda")      # any of the six names on slide 1
+demo_job(root, "dp-eda")   # or dc-tables, dp-trends, dc-gfup, dp-gfup, dp-postage
 render_job(file.path(root, "10_descriptive", "cohort-demo-dp-eda.qmd"), final = TRUE)
 ```
 
@@ -285,7 +351,7 @@ All six at once, into a fresh study:
 Rscript dev/demo/descriptives-demo.R ~/eda-demo-all
 ```
 
-## Still to come
+## Two pieces are still to come
 
 - **Shorter labels that stay distinct**, with a study abbreviation list. This needs the next hvtiRutilities release.
 - **Acceptance**: Lauren checks `dp-eda` on a real study against the SAS EDA output.
