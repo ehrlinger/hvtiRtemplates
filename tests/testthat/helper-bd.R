@@ -8,6 +8,13 @@ bd_skip <- function() {
   testthat::skip_if_not_installed("haven")
 }
 
+# The end-to-end tests also render through Quarto.
+bd_quarto_skip <- function() {
+  bd_skip()
+  testthat::skip_if_not_installed("quarto")
+  testthat::skip_if_not(quarto::quarto_available())
+}
+
 bd_master <- function(n = 200L, .local_envir = parent.frame()) {
   dir <- withr::local_tempdir("bd-master-", .local_envir = .local_envir)
   d <- hvtiRutilities::generate_survival_data(n = n, seed = 20261002)

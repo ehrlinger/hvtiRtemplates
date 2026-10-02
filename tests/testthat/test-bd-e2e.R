@@ -1,9 +1,3 @@
-bd_quarto_skip <- function() {
-  bd_skip()
-  testthat::skip_if_not_installed("quarto")
-  testthat::skip_if_not(quarto::quarto_available())
-}
-
 bd_edits <- function(m, publish, exclude = "list(age < 40 ~ \"Under 40\", ccfid == \"PT00007\" ~ \"Withdrew consent\")") {
   list(
     "^MASTER <- " = paste0("MASTER <- \"", m$parquet, "\""),
@@ -95,7 +89,6 @@ test_that("the purled job runs as a script and makes the release in a fresh stud
   job_a <- bd_job(root_a, bd_edits(m, publish = "TRUE"))
   bd_render(job_a)
   cfg_a <- hvtiRutilities::study_config(root_a)
-  release_a <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root_a), cfg_a$built))
 
   # Study B: scaffold only (never render), then source the purled script.
   root_b <- bd_study()
@@ -108,7 +101,6 @@ test_that("the purled job runs as a script and makes the release in a fresh stud
   expect_length(bd_catalog_releases(root_b), 1L)
   cfg_b <- hvtiRutilities::study_config(root_b)
   expect_false(is.null(cfg_b$release$release_id))
-  release_b <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root_b), cfg_b$built))
   sha_a <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root_a), cfg_a$built),
                           algo = "sha256", file = TRUE)
   sha_b <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root_b), cfg_b$built),
