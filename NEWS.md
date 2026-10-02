@@ -1,4 +1,4 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.2.4
 
 * `ggBoostedTrees` is required at 0.9.1 or later. `boostmtree` now arrives only through
   `ggBoostedTrees`'s `Remotes:`, and 0.9.1 is the first release that pins the `v2.0.3-ccf` tag
