@@ -56,17 +56,18 @@ template_list()
 #> 18  lm-propensity_binary     lm  propensity_binary      analyses
 #> 19 lm-propensity_nominal     lm propensity_nominal      analyses
 #> 20 lm-propensity_ordinal     lm propensity_ordinal      analyses
-#> 21           rfc-explain    rfc            explain      analyses
-#> 22               rfc-fit    rfc                fit      analyses
-#> 23           rfr-explain    rfr            explain      analyses
-#> 24               rfr-fit    rfr                fit      analyses
-#> 25           rfs-explain    rfs            explain      analyses
-#> 26               rfs-fit    rfs                fit      analyses
-#> 27               dp-gfup     dp               gfup        graphs
-#> 28             dp-trends     dp             trends        graphs
-#> 29                    hp     hp               <NA>        graphs
-#> 30        hs-concordance     hs        concordance        graphs
-#> 31              hs-setup     hs              setup        graphs
+#> 21         nb-boostmtree     nb         boostmtree      analyses
+#> 22           rfc-explain    rfc            explain      analyses
+#> 23               rfc-fit    rfc                fit      analyses
+#> 24           rfr-explain    rfr            explain      analyses
+#> 25               rfr-fit    rfr                fit      analyses
+#> 26           rfs-explain    rfs            explain      analyses
+#> 27               rfs-fit    rfs                fit      analyses
+#> 28               dp-gfup     dp               gfup        graphs
+#> 29             dp-trends     dp             trends        graphs
+#> 30                    hp     hp               <NA>        graphs
+#> 31        hs-concordance     hs        concordance        graphs
+#> 32              hs-setup     hs              setup        graphs
 #>                                                                                              file
 #> 1          /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-general.qmd
 #> 2             /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd
@@ -88,15 +89,16 @@ template_list()
 #> 18  /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/lm-propensity_binary.qmd
 #> 19 /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/lm-propensity_nominal.qmd
 #> 20 /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/lm-propensity_ordinal.qmd
-#> 21           /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfc-explain.qmd
-#> 22               /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfc-fit.qmd
-#> 23           /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfr-explain.qmd
-#> 24               /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfr-fit.qmd
-#> 25           /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfs-explain.qmd
-#> 26               /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfs-fit.qmd
-#> 27                 /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-gfup.qmd
-#> 28               /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
-#> 29                      /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
-#> 30          /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs-concordance.qmd
-#> 31                /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs-setup.qmd
+#> 21         /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/nb-boostmtree.qmd
+#> 22           /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfc-explain.qmd
+#> 23               /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfc-fit.qmd
+#> 24           /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfr-explain.qmd
+#> 25               /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfr-fit.qmd
+#> 26           /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfs-explain.qmd
+#> 27               /home/runner/work/_temp/Library/hvtiRtemplates/templates/30_analyses/rfs-fit.qmd
+#> 28                 /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-gfup.qmd
+#> 29               /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/dp-trends.qmd
+#> 30                      /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hp.qmd
+#> 31          /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs-concordance.qmd
+#> 32                /home/runner/work/_temp/Library/hvtiRtemplates/templates/40_graphs/hs-setup.qmd
 ```

@@ -29,5 +29,5 @@ warns when it is used.
 table(template_catalog()$status)
 #> 
 #>  queued revisit shipped 
-#>      36       1      30 
+#>      36       1      31 
 ```

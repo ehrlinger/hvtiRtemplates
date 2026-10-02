@@ -62,7 +62,7 @@
       <h1>The template catalog</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-10-01</p>
+      <p class="date">2026-10-02</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/vignettes/template-catalog.qmd" class="external-link"><code>vignettes/template-catalog.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -84,7 +84,7 @@
 </h2>
 <p>Each template carries a light.</p>
 <ul>
-<li>🟢 <strong>Shipped</strong> (30): on disk and supported. Scaffold it and use it.</li>
+<li>🟢 <strong>Shipped</strong> (31): on disk and supported. Scaffold it and use it.</li>
 <li>🟡 <strong>In progress</strong> (21): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
 <li>🔴 <strong>Not yet on the way</strong> (16): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
@@ -168,12 +168,12 @@
 </tbody>
 </table></section><section class="level3"><h3 id="analyses">analyses<a class="anchor" aria-label="anchor" href="#analyses"></a>
 </h3>
-<table class="table caption-top">
+<table class="table caption-top" style="width:100%;">
 <colgroup>
-<col style="width: 4%">
-<col style="width: 9%">
-<col style="width: 62%">
-<col style="width: 24%">
+<col style="width: 3%">
+<col style="width: 8%">
+<col style="width: 64%">
+<col style="width: 23%">
 </colgroup>
 <thead><tr class="header">
 <th style="text-align: left;">Delivery</th>
@@ -262,35 +262,41 @@
 </tr>
 <tr class="even">
 <td style="text-align: left;">🟢 Shipped</td>
+<td style="text-align: left;"><code>nb-boostmtree</code></td>
+<td style="text-align: left;">Fits boosted multivariate trees to a response measured repeatedly over follow-up, and reports its error path, fit over time, importance, partial effects and patient trajectories.</td>
+<td style="text-align: left;"><code>add_job("nb", subject, type, qualifier = "boostmtree")</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>rfc-explain</code></td>
 <td style="text-align: left;">Explains a saved classification forest: variable importance, VarPro and dependence plots.</td>
 <td style="text-align: left;"><code>add_job("rfc", subject, type, qualifier = "explain")</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>rfc-fit</code></td>
 <td style="text-align: left;">Grows a classification forest and checks it: out-of-bag error and the ROC curve with its AUC.</td>
 <td style="text-align: left;"><code>add_job("rfc", subject, type, qualifier = "fit")</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>rfr-explain</code></td>
 <td style="text-align: left;">Explains a saved regression forest: variable importance, VarPro and dependence plots.</td>
 <td style="text-align: left;"><code>add_job("rfr", subject, type, qualifier = "explain")</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>rfr-fit</code></td>
 <td style="text-align: left;">Grows a regression forest and checks it: out-of-bag error and predicted against observed.</td>
 <td style="text-align: left;"><code>add_job("rfr", subject, type, qualifier = "fit")</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>rfs-explain</code></td>
 <td style="text-align: left;">Explains a saved survival forest: variable importance, VarPro and dependence plots. It never grows a forest.</td>
 <td style="text-align: left;"><code>add_job("rfs", subject, type, qualifier = "explain")</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>rfs-fit</code></td>
 <td style="text-align: left;">Grows a random survival forest and checks it learned something: out-of-bag error, predicted survival and the Brier score.</td>
@@ -563,45 +569,45 @@
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
-<td style="text-align: left;"><code>nb</code></td>
-<td style="text-align: left;">Boosting</td>
-<td style="text-align: left;">18</td>
-<td style="text-align: left;">ggBoostedTrees#9</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>mi</code></td>
 <td style="text-align: left;">Multiple imputation</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: left;">hvtiRimputation</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>fp</code></td>
 <td style="text-align: left;">Forest plot</td>
 <td style="text-align: left;">11</td>
 <td style="text-align: left;">hvtiPlotR#133</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>dp-boxplot</code></td>
 <td style="text-align: left;">Descriptive plot: boxplot</td>
 <td style="text-align: left;">9</td>
 <td style="text-align: left;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>cp</code></td>
 <td style="text-align: left;">Cumulative probability plot</td>
 <td style="text-align: left;">4</td>
 <td style="text-align: left;">hvtiPlotR#135</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>bq</code></td>
 <td style="text-align: left;">Bootstrap quantile</td>
 <td style="text-align: left;">2</td>
 <td style="text-align: left;">hvtiRbootstrap#16</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🔴 Not yet on the way</td>
+<td style="text-align: left;"><code>nb-boostmlr</code></td>
+<td style="text-align: left;">Boosting: BoostMLR</td>
+<td style="text-align: left;">unmeasured</td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>

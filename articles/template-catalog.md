@@ -28,7 +28,7 @@ existing file, because a job accumulates a study’s edits.
 
 Each template carries a light.
 
-- 🟢 **Shipped** (30): on disk and supported. Scaffold it and use it.
+- 🟢 **Shipped** (31): on disk and supported. Scaffold it and use it.
 - 🟡 **In progress** (21): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
 - 🔴 **Not yet on the way** (16): waiting on a function in another
@@ -76,6 +76,7 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `lm-propensity_binary` | Propensity model for a binary treatment, scoring the columns that matching and weighting jobs use. | `add_job("lm", subject, type, qualifier = "propensity_binary")` |
 | 🟢 Shipped | `lm-propensity_nominal` | Generalized-logit propensity model for a nominal treatment with an explicit reference level. | `add_job("lm", subject, type, qualifier = "propensity_nominal")` |
 | 🟢 Shipped | `lm-propensity_ordinal` | Proportional-odds propensity model for an ordered treatment. | `add_job("lm", subject, type, qualifier = "propensity_ordinal")` |
+| 🟢 Shipped | `nb-boostmtree` | Fits boosted multivariate trees to a response measured repeatedly over follow-up, and reports its error path, fit over time, importance, partial effects and patient trajectories. | `add_job("nb", subject, type, qualifier = "boostmtree")` |
 | 🟢 Shipped | `rfc-explain` | Explains a saved classification forest: variable importance, VarPro and dependence plots. | `add_job("rfc", subject, type, qualifier = "explain")` |
 | 🟢 Shipped | `rfc-fit` | Grows a classification forest and checks it: out-of-bag error and the ROC curve with its AUC. | `add_job("rfc", subject, type, qualifier = "fit")` |
 | 🟢 Shipped | `rfr-explain` | Explains a saved regression forest: variable importance, VarPro and dependence plots. | `add_job("rfr", subject, type, qualifier = "explain")` |
@@ -131,12 +132,12 @@ as zero.
 | 🔴 Not yet on the way | `bn` | Bootstrap non-linear | 108 |  |
 | 🔴 Not yet on the way | `gp` | Generalized model plot | 50 | hvtiPlotR#136 |
 | 🔴 Not yet on the way | `dc-trends` | Descriptive: trends | 43 |  |
-| 🔴 Not yet on the way | `nb` | Boosting | 18 | ggBoostedTrees#9 |
 | 🔴 Not yet on the way | `mi` | Multiple imputation | 18 | hvtiRimputation |
 | 🔴 Not yet on the way | `fp` | Forest plot | 11 | hvtiPlotR#133 |
 | 🔴 Not yet on the way | `dp-boxplot` | Descriptive plot: boxplot | 9 |  |
 | 🔴 Not yet on the way | `cp` | Cumulative probability plot | 4 | hvtiPlotR#135 |
 | 🔴 Not yet on the way | `bq` | Bootstrap quantile | 2 | hvtiRbootstrap#16 |
+| 🔴 Not yet on the way | `nb-boostmlr` | Boosting: BoostMLR | unmeasured |  |
 | 🔴 Not yet on the way | `sid` | Random forest clustering (sidClustering) | unmeasured | hvtiRforests#1 |
 | 🔴 Not yet on the way | `vt` | Virtual twins | unmeasured | hvtiRforests#1 |
 
