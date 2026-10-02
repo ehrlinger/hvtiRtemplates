@@ -102,7 +102,7 @@ nb_mocked_setup <- function(pkg, version) {
 
 nb_skip_unless_stack <- function() {
   testthat::skip_if_not_installed("boostmtree", minimum_version = "2.0.2")
-  testthat::skip_if_not_installed("ggBoostedTrees", minimum_version = "0.0.8")
+  testthat::skip_if_not_installed("ggBoostedTrees", minimum_version = "0.9.0")
 }
 
 nb_choices <- function(...) {
