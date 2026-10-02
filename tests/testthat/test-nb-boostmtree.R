@@ -123,9 +123,9 @@ test_that("boostmtree older than 2.0.2 is refused with the fork's install line",
   expect_error(nb_mocked_setup("boostmtree", "2.0.0"), "ehrlinger/boostmtree_src", fixed = TRUE)
 })
 
-test_that("ggBoostedTrees older than 0.0.8 is refused with its install line", {
+test_that("ggBoostedTrees older than 0.9.0 is refused with its install line", {
   nb_skip_unless_stack()
-  expect_error(nb_mocked_setup("ggBoostedTrees", "0.0.7"), "remotes::install_github(\"ehrlinger/ggBoostedTrees\")", fixed = TRUE)
+  expect_error(nb_mocked_setup("ggBoostedTrees", "0.0.9"), "remotes::install_github(\"ehrlinger/ggBoostedTrees\")", fixed = TRUE)
 })
 
 test_that("the fit groups visits by the study-keyed digest, never the ID", {
