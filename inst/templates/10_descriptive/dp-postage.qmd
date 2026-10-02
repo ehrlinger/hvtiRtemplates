@@ -4,6 +4,11 @@ format:
   html:
     theme: cosmo
     toc: true
+    toc-location: left
+    page-layout: full
+    grid:
+      body-width: 2000px
+      sidebar-width: 250px
     toc-depth: 3
     code-fold: true
     df-print: default
