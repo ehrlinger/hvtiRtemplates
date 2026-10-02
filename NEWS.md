@@ -1,10 +1,12 @@
-# hvtiRtemplates 1.2.3
+# hvtiRtemplates (unreleased)
 
 * Every template's HTML now reads full width with its contents on the left
   (`page-layout: full`, `toc-location: left`, a 2000px body ceiling and a
   250px sidebar), alongside the existing `embed-resources: true`. A new test
   checks all of it in every template's own header, so a copied template stays
   self-contained and laid out the same.
+
+# hvtiRtemplates 1.2.3
 
 * `read_job_data()` stops on a `WHERE` condition that mentions the patient
   identifier or a column named MRN or eMRN, directly or through `.data$x` or
