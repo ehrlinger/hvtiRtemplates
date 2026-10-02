@@ -98,3 +98,20 @@ test_that("a derivation that changes the row count stops in derive", {
   check <- body[start:(start - 1L + which(body[start:length(body)] == "}")[1L])]
   expect_error(eval(parse(text = check), envir = env), "^bd: derive \\(")
 })
+
+test_that("a legacy-registered dataset (without release) stops publish before writing to disk", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  # Register a dataset the legacy way: a CSV file, no release.
+  utils::write.csv(data.frame(ccfid = "PT00001", age = 50), file.path(datasets, "built.csv"), row.names = FALSE)
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
+  # Attempt to publish should fail with the legacy-registration check.
+  expect_error(
+    bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, PUBLISH = TRUE)),
+    "^bd: publish \\("
+  )
+  # No dataset-catalog.yml should exist after the failed publish.
+  expect_false(file.exists(file.path(datasets, "dataset-catalog.yml")))
+})

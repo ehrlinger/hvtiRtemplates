@@ -229,9 +229,9 @@ test_that("only templates with a local dataset choice override the dataset", {
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
     "rfs-fit", "rfc-fit", "rfr-fit", "nb-boostmtree"
   )
-  templates <- analysis_templates()
+  templates <- template_list()
   observed <- templates$name[vapply(templates$file, function(path) {
-    any(grepl("DATASET, .cfg|dataset = DATASET", readLines(path, warn = FALSE)))
+    any(grepl("DATASET, .cfg|dataset = DATASET[^_]", readLines(path, warn = FALSE)))
   }, logical(1L))]
 
   expect_setequal(observed, expected)

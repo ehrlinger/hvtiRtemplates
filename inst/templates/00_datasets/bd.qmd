@@ -12,7 +12,8 @@ format:
 # A build report shows no code, where other templates fold it. This job's
 # EXCLUDE rules may name patients, and the source of a folded chunk is in the
 # HTML, which gets shared. The report is read for its counts; reviewers read
-# this file. Warnings and messages go to the console for the same reason.
+# this file. The setup chunk suppresses warnings and messages; later chunks send
+# them to the console instead.
 execute:
   echo: false
   warning: false
@@ -43,6 +44,8 @@ report).
 .job_file <- if (is.null(.in)) "this job" else sub("[.][^.]+$", ".qmd", basename(.in))
 # Every stop names its step and this file, and never a data value.
 .bd_stop <- function(step, ...) stop("bd: ", step, " (", .job_file, "): ", ..., call. = FALSE)
+# Later chunks send warnings and messages to the console rather than the report.
+knitr::opts_chunk$set(warning = NA, message = NA)
 ```
 
 ```{r}
@@ -181,7 +184,7 @@ if (length(.absent)) {
 }
 .rule_vars <- unlist(lapply(EXCLUDE, function(rule) all.vars(rlang::f_lhs(rule))))
 .cols <- .available[tolower(.available) %in% c(.need, JOIN_BY, tolower(.rule_vars))]
-d <- as.data.frame(arrow::read_parquet(MASTER, col_select = tidyselect::all_of(.cols)))
+d <- as.data.frame(arrow::read_parquet(MASTER, col_select = .cols))
 names(d) <- tolower(names(d))
 ```
 
@@ -256,6 +259,12 @@ yaml::write_yaml(.record, .record_file)
 .release <- NULL
 .register_step <- "Draft only: nothing published"
 if (PUBLISH) {
+  # A study that has registered its dataset without a release (legacy) cannot be
+  # replaced by a build. Check this before publishing so no orphan release is left on disk.
+  if (is.null(.registered_before) && !is.null(.registered$built)) {
+    .bd_stop("publish", "this study's dataset was registered without a release (", .registered$built,
+             "), so a build cannot replace it. Ask for it to be moved to this job's releases.")
+  }
   # Publishing the same bytes again returns the same release, so a rerender
   # that changed nothing mints nothing.
   .release <- tryCatch(
@@ -269,10 +278,7 @@ if (PUBLISH) {
   # adopts its releases deliberately, with adopt_data_update(). Here the study
   # adopts its own build, and this render is the deliberate act.
   .register_step <- tryCatch({
-    if (is.null(.registered_before) && !is.null(.registered$built)) {
-      .bd_stop("publish", "this study's dataset was registered without a release (", .registered$built,
-               "), so a build cannot replace it. Ask for it to be moved to this job's releases.")
-    } else if (is.null(.registered_before)) {
+    if (is.null(.registered_before)) {
       .status <- hvtiRutilities::register_data(.root, built = .release$file, catalog_dataset = DATASET_ID,
                                                release_id = .release$release_id)
       "Registered as the study dataset"
