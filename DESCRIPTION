@@ -42,7 +42,6 @@ Remotes:
     ehrlinger/TemporalHazard,
     ehrlinger/ggRandomForests,
     ehrlinger/hvtiRpropensity,
-    boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.3-ccf,
     ehrlinger/ggBoostedTrees
 Suggests:
     arrow,
