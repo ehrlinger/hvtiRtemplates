@@ -1,4 +1,8 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.2.4
+
+* `ggBoostedTrees` is required at 0.9.1 or later. `boostmtree` now arrives only through
+  `ggBoostedTrees`'s `Remotes:`, and 0.9.1 is the first release that pins the `v2.0.3-ccf` tag
+  this package's `boostmtree (>= 2.0.3)` floor needs.
 
 * New template `00_datasets/bd.qmd`, the first at the `00_datasets` level: a build job that cuts a study's
   dataset from a master snapshot, applies a cohort list and ordered exclusion rules (`condition ~ "Reason"`, where

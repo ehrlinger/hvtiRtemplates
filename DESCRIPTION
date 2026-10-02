@@ -1,7 +1,7 @@
 Package: hvtiRtemplates
 Type: Package
 Title: Analysis Job Templates for the HVTI CORR Group
-Version: 1.2.3
+Version: 1.2.4
 Date: 2026-10-02
 Authors@R: c(
     person(
@@ -47,7 +47,7 @@ Suggests:
     arrow,
     boostmtree (>= 2.0.3),
     fs,
-    ggBoostedTrees (>= 0.9.0),
+    ggBoostedTrees (>= 0.9.1),
     ggRandomForests (>= 4.0.0),
     ggplot2,
     haven,
