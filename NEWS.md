@@ -7,9 +7,12 @@
   it when an older release is registered. Its report shows counts and no code, so a rule naming a patient stays out
   of the HTML. New `build_cohort()` carries the cohort and attrition step (#223).
 
-* `boostmtree` is installed from the `v2.0.3-ccf` tag, with a floor of 2.0.3, matching the ref
-  `ggBoostedTrees` 0.9.1 pins. The two pinned different refs of one package, so dependency
-  resolution failed before any check ran.
+* `boostmtree` now comes from the CCF fork through `ggBoostedTrees`'s own
+  `Remotes:` rather than a tag pinned here, with a floor of 2.0.3. The two had
+  pinned different tags of the fork, so dependency resolution failed before
+  any check ran; with one pin they cannot drift apart again. The
+  `nb-boostmtree` install hint names the `v2.0.3-ccf` tag that
+  `ggBoostedTrees` 0.9.1 installs from.
 
 # hvtiRtemplates 1.2.3
 
