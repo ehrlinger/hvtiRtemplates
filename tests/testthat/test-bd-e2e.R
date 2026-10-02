@@ -25,6 +25,7 @@ bd_catalog_releases <- function(root) {
 
 test_that("bd publishes and registers a release, and ac reads it", {
   bd_quarto_skip()
+  testthat::skip_if_not_installed("TemporalHazard")
   m <- bd_master()
   root <- bd_study()
   job <- bd_job(root, bd_edits(m, publish = "TRUE"))
@@ -44,7 +45,6 @@ test_that("bd publishes and registers a release, and ac reads it", {
   # ac, chunk by chunk as the hazard chain tests run it, reads the release.
   release <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root), cfg$built))
   cc <- hvtiRutilities::cohort_counts(release, event = "dead", time = "iv_dead")
-  testthat::skip_if_not_installed("TemporalHazard")
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
   env <- hazard_env(root)
@@ -53,7 +53,7 @@ test_that("bd publishes and registers a release, and ac reads it", {
                list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)))
     hazard_run("ac", c("data", "cohort", "km-helpers", "km-overall"), env)
   }))
-  expect_identical(nrow(env$d), nrow(release))
+  expect_setequal(env$d$ccfid, release$ccfid)
 })
 
 test_that("a second publishing render with a changed rule adopts -r2, and a draft render publishes nothing", {
@@ -87,17 +87,31 @@ test_that("a second publishing render with a changed rule adopts -r2, and a draf
   expect_identical(hvtiRutilities::study_config(root)$release$release_id, second)
 })
 
-test_that("the purled job runs as a script and makes the release the render made", {
+test_that("the purled job runs as a script and makes the release in a fresh study", {
   bd_quarto_skip()
   m <- bd_master()
-  root <- bd_study()
-  job <- bd_job(root, bd_edits(m, publish = "TRUE"))
-  bd_render(job)
-  rendered <- hvtiRutilities::study_config(root)$release$release_id
+  # Study A: render to establish the expected release.
+  root_a <- bd_study()
+  job_a <- bd_job(root_a, bd_edits(m, publish = "TRUE"))
+  bd_render(job_a)
+  cfg_a <- hvtiRutilities::study_config(root_a)
+  release_a <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root_a), cfg_a$built))
 
+  # Study B: scaffold only (never render), then source the purled script.
+  root_b <- bd_study()
+  job_b <- bd_job(root_b, bd_edits(m, publish = "TRUE"))
   script <- withr::local_tempfile(fileext = ".R")
-  knitr::purl(job, output = script, documentation = 0L, quiet = TRUE)
-  withr::with_dir(dirname(job), utils::capture.output(source(script, local = new.env(parent = globalenv()))))
-  expect_identical(hvtiRutilities::study_config(root)$release$release_id, rendered)
-  expect_length(bd_catalog_releases(root), 1L)
+  knitr::purl(job_b, output = script, documentation = 0L, quiet = TRUE)
+  withr::with_dir(dirname(job_b), utils::capture.output(source(script, local = new.env(parent = globalenv()))))
+
+  # Study B must have exactly one release, and its release file must match A's.
+  expect_length(bd_catalog_releases(root_b), 1L)
+  cfg_b <- hvtiRutilities::study_config(root_b)
+  expect_false(is.null(cfg_b$release$release_id))
+  release_b <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root_b), cfg_b$built))
+  sha_a <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root_a), cfg_a$built),
+                          algo = "sha256", file = TRUE)
+  sha_b <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root_b), cfg_b$built),
+                          algo = "sha256", file = TRUE)
+  expect_identical(sha_a, sha_b)
 })
