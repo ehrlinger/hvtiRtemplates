@@ -9,6 +9,7 @@ refuses to overwrite an existing job.
 
 | template | job type | a job scaffolds into |
 |---|---|---|
+| `00_datasets/bd.qmd` | study dataset build: master snapshot to a registered release | `00_datasets/` or `datasets/` |
 | `20_distributions/ac.qmd` | actuarial life tables | `20_distributions/` or `distributions/` |
 | `20_distributions/hz.qmd` | multiphase parametric hazard fit | `20_distributions/` or `distributions/` |
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |

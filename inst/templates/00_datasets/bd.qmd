@@ -1,0 +1,336 @@
+---
+title: "Study dataset build"
+# Carried in the file rather than inherited from _quarto.yml, as every template
+# is: a file meant to be copied must not depend on the directory it sits in.
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    df-print: default
+    embed-resources: true
+# A build report shows no code, where other templates fold it. This job's
+# EXCLUDE rules may name patients, and the source of a folded chunk is in the
+# HTML, which gets shared. The report is read for its counts; reviewers read
+# this file. Warnings and messages go to the console for the same reason.
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+<!-- EDIT: name the SAS job this replaces (usually datasets/bd.data.sas) and the master it read. -->
+
+Replaces `datasets/<job>.sas`. This job cuts the study's dataset from a master
+snapshot, records who was excluded and why, writes a draft, and, when
+`PUBLISH` is `TRUE`, publishes a dated release and registers it as this study's
+`"study"` dataset, the one every analysis job reads.
+
+What does not belong here: corrections to a patient's values (they belong to
+the master's corrections, in hvtiRdatabuild, so every study sees them);
+imputation, propensity scores and variables for one model (a `vars` job);
+printing patient rows to check them (do that in the console, never in a
+report).
+
+```{r}
+#| label: setup
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job runs the same from the Render button, quarto render, or as a
+# script run from inside the study.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
+# Quarto knits through an intermediate, so the name is put back to .qmd.
+.job_file <- if (is.null(.in)) "this job" else sub("[.][^.]+$", ".qmd", basename(.in))
+# Every stop names its step and this file, and never a data value.
+.bd_stop <- function(step, ...) stop("bd: ", step, " (", .job_file, "): ", ..., call. = FALSE)
+```
+
+```{r}
+#| label: guard-edits
+#| results: asis
+# A job with unresolved markers renders as a draft, as every template does.
+# Unlike the others, the banner gives only the COUNT: a marker line could sit
+# beside a rule naming a patient, and this report shows no source. The marker
+# text goes to the console in the warning.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+                   paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"))
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat(length(.hits), "unresolved markers remain. **This dataset is not finished.**\n")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '", Sys.getenv("HVTI_TEMPLATE_STRICT"),
+           "'. Unset it, or set it to 0, false or no, to render a draft instead.", call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: set
+SUBJECT <- "study"
+TYPE    <- "build"
+
+# add_job() writes SUBJECT and TYPE from the file's name; a hand-edited
+# declaration that drifts from it stops here.
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  if (!identical(.fields[1L], SUBJECT) || !identical(.fields[2L], TYPE)) {
+    .bd_stop("set", "the file's name and its SUBJECT and TYPE disagree. Fix the declaration or the name.")
+  }
+}
+```
+
+## Study choices
+
+```{r}
+#| label: edit-study-choices
+# EDIT: the master snapshot this study is cut from: the parquet file that hvtiRdatabuild::snapshot_master() wrote.
+# Its .meta.json sidecar must sit beside it. Name one dated snapshot, so a rebuild reads the same master.
+MASTER <- "/path/to/snapshots/built_YYYYMMDD.parquet"
+
+# TRUE rehashes the whole snapshot against its sidecar, which takes minutes on a
+# large master. Worth it on the render that publishes.
+VERIFY_MASTER <- FALSE
+
+# EDIT: a cohort list (a REDCap export or data-request CSV) kept beside the data, or NULL for a cohort the rules define.
+# For example file.path(hvtiRutilities::study_dir("datasets", .root), "cohort.csv"). Only master rows the list
+# names are kept. A list may carry exclude (1 to exclude) and reason columns.
+COHORT <- NULL
+
+# The columns that match a cohort-list row to a master row. Dates in the list are written YYYY-MM-DD.
+JOIN_BY <- c("ccfid", "dt_surg")
+
+# EDIT: the master columns this study's dataset carries, in lower case. ID and KEY are added for you.
+KEEP <- c("age", "sex", "dt_surg")
+
+# EDIT: who is excluded, and why, in order, as condition ~ "Reason".
+# A row whose condition is MISSING is NOT excluded, as SAS `if ... then delete` treats it, and the report counts
+# such rows. That is the opposite of a downstream job's WHERE, which drops them, so write is.na() into a rule
+# when a missing value should exclude. Rules may name patients, for example
+#   ccfid %in% c("<id>", "<id>") ~ "Withdrew consent"
+# and one row per patient is a rule after ordering the rows in the derive chunk's place, for example
+#   duplicated(ccfid) ~ "Later operation"
+# The report shows each rule's reason and counts, never its text.
+EXCLUDE <- list(is.na(dt_surg) ~ "No surgery date")
+
+# The patient, and what makes a row unique: one row per patient unless repeated measures.
+ID  <- "ccfid"
+KEY <- ID
+
+# EDIT: the catalog name of this study's dataset: lower-case letters, digits and underscores.
+DATASET_ID <- "study_cohort"
+
+# FALSE writes a draft and publishes nothing. TRUE publishes a dated release and
+# makes it this study's "study" dataset, which every analysis job then reads.
+PUBLISH <- FALSE
+```
+
+```{r}
+#| label: check-choices
+# Checked before the master is read, so a bad setting fails in seconds rather
+# than after a long read.
+if (!is.character(DATASET_ID) || length(DATASET_ID) != 1L || !grepl("^[a-z0-9_]+$", DATASET_ID)) {
+  .bd_stop("check-choices", "DATASET_ID must be lower-case letters, digits and underscores.")
+}
+if (!is.character(KEEP) || !length(KEEP)) .bd_stop("check-choices", "KEEP is empty. Name the master columns to carry.")
+if (!is.logical(PUBLISH) || length(PUBLISH) != 1L || is.na(PUBLISH)) {
+  .bd_stop("check-choices", "PUBLISH must be TRUE or FALSE.")
+}
+if (!is.character(MASTER) || length(MASTER) != 1L) .bd_stop("check-choices", "MASTER must be one path.")
+KEEP <- tolower(KEEP)
+JOIN_BY <- tolower(JOIN_BY)
+ID <- tolower(ID)
+KEY <- tolower(KEY)
+```
+
+```{r}
+#| label: read-master
+# The one chunk that changes when the master is read from a warehouse table
+# instead of a snapshot file: everything after it sees only `d`.
+.sidecar <- sub("[.]parquet$", ".meta.json", MASTER)
+if (!file.exists(MASTER)) .bd_stop("read-master", "the master snapshot ", MASTER, " does not exist. Set MASTER.")
+if (!file.exists(.sidecar)) {
+  .bd_stop("read-master", "the master snapshot has no sidecar ", .sidecar,
+           ". Snapshot the master with hvtiRdatabuild::snapshot_master(), which writes both.")
+}
+.meta <- jsonlite::read_json(.sidecar)
+if (isTRUE(VERIFY_MASTER) && !identical(digest::digest(MASTER, algo = "sha256", file = TRUE), .meta$parquet_sha256)) {
+  .bd_stop("read-master", MASTER, " does not match the SHA-256 in its sidecar. It changed after it was written; ",
+           "snapshot the master again.")
+}
+.master <- list(file = MASTER, sha256 = .meta$parquet_sha256, rows = .meta$n_rows,
+                parent_release = if (is.null(.meta$lineage$parent_release)) NA else .meta$lineage$parent_release,
+                verified = isTRUE(VERIFY_MASTER))
+
+# Read only the columns the job uses: a master can hold thousands.
+.available <- names(arrow::open_dataset(MASTER))
+.need <- unique(c(KEEP, ID, KEY, if (!is.null(COHORT)) JOIN_BY))
+.absent <- .need[!.need %in% tolower(.available)]
+if (length(.absent)) {
+  .bd_stop("read-master", "column(s) ", toString(.absent), " are not in the master. Check KEEP, ID, KEY and JOIN_BY.")
+}
+.rule_vars <- unlist(lapply(EXCLUDE, function(rule) all.vars(rlang::f_lhs(rule))))
+.cols <- .available[tolower(.available) %in% c(.need, JOIN_BY, tolower(.rule_vars))]
+d <- as.data.frame(arrow::read_parquet(MASTER, col_select = tidyselect::all_of(.cols)))
+names(d) <- tolower(names(d))
+```
+
+## Cohort
+
+```{r}
+#| label: cohort
+.cut <- tryCatch(
+  hvtiRtemplates::build_cohort(d, exclude = EXCLUDE, cohort = COHORT, join_by = JOIN_BY, id = ID),
+  error = function(e) .bd_stop("cohort", conditionMessage(e))
+)
+d <- .cut$data
+```
+
+<!-- EDIT: add the study's own derived variables to the derive chunk below, the ones every analysis of this dataset needs.
+     The marker sits here, not in the chunk, because a chunk holding one must be labeled edit-, and this chunk's
+     label is the step name its failures report. -->
+
+```{r}
+#| label: derive
+.rows_before_derive <- nrow(d)
+.columns_before_derive <- names(d)
+
+# Derived variables go here. Follow-up intervals and event indicators belong here; imputation, propensity
+# scores and variables for one model belong in a vars job. For example, with
+# columns your master may name differently:
+#   d$iv_dead <- as.numeric(d$dt_last - d$dt_surg) / 365.25
+#   d$dead    <- as.integer(!is.na(d$dt_death))
+
+if (nrow(d) != .rows_before_derive) {
+  .bd_stop("derive", "the derivations changed the number of rows from ", .rows_before_derive, " to ", nrow(d),
+           ". Derive columns here and exclude rows in EXCLUDE.")
+}
+```
+
+```{r}
+#| label: write-draft
+.datasets <- hvtiRutilities::study_dir("datasets", .root)
+.derived <- setdiff(names(d), .columns_before_derive)
+.carry <- unique(c(ID, KEY, JOIN_BY, KEEP, .derived))
+d <- d[, intersect(.carry, names(d)), drop = FALSE]
+# MRN and eMRN are dropped unless one is the ID, as read_job_data() drops them.
+d <- d[, !(names(d) %in% setdiff(c("mrn", "emrn"), ID)), drop = FALSE]
+.repeats <- sum(duplicated(d[KEY]))
+if (.repeats) {
+  .bd_stop("write-draft", .repeats, " row(s) repeat a value of KEY (", toString(KEY), "). Exclude the extra rows in ",
+           "EXCLUDE, or add a column to KEY.")
+}
+.draft <- file.path(.datasets, paste0("draft-", DATASET_ID, ".rds"))
+saveRDS(d, .draft)
+
+# The build record sits beside the data and is never rendered, so it holds the
+# rules in full: it is how a release can be cut again.
+.record <- list(
+  master = .master,
+  settings = list(cohort = COHORT, join_by = JOIN_BY, keep = KEEP, id = ID, key = KEY, dataset_id = DATASET_ID,
+                  exclude = vapply(EXCLUDE, function(rule) paste(deparse(rule), collapse = " "), "")),
+  attrition = .cut$attrition,
+  hvtiRtemplates = as.character(utils::packageVersion("hvtiRtemplates"))
+)
+.record_file <- file.path(.datasets, paste0("draft-", DATASET_ID, ".build.yml"))
+yaml::write_yaml(.record, .record_file)
+```
+
+## Publish
+
+```{r}
+#| label: publish
+# require_data = FALSE: a study that has registered no dataset yet is the normal first build.
+.registered <- hvtiRutilities::study_config(.root, require_data = FALSE)
+.registered_before <- .registered$release$release_id
+.release <- NULL
+.register_step <- "Draft only: nothing published"
+if (PUBLISH) {
+  # Publishing the same bytes again returns the same release, so a rerender
+  # that changed nothing mints nothing.
+  .release <- tryCatch(
+    hvtiRdatabuild::publish_dataset(.draft, dataset_id = DATASET_ID, datasets_dir = .datasets,
+                                    source = paste0("hvtiRtemplates bd job ", .job_file, "; master sha256 ",
+                                                    .master$sha256)),
+    error = function(e) .bd_stop("publish", "publish_dataset() stopped: ", conditionMessage(e))
+  )
+  file.copy(.record_file, file.path(.datasets, sub("[.][^.]+$", ".build.yml", .release$file)), overwrite = TRUE)
+  # Publish and register stay two steps: a study that READS another's dataset
+  # adopts its releases deliberately, with adopt_data_update(). Here the study
+  # adopts its own build, and this render is the deliberate act.
+  .register_step <- tryCatch({
+    if (is.null(.registered_before) && !is.null(.registered$built)) {
+      .bd_stop("publish", "this study's dataset was registered without a release (", .registered$built,
+               "), so a build cannot replace it. Ask for it to be moved to this job's releases.")
+    } else if (is.null(.registered_before)) {
+      .status <- hvtiRutilities::register_data(.root, built = .release$file, catalog_dataset = DATASET_ID,
+                                               release_id = .release$release_id)
+      "Registered as the study dataset"
+    } else if (identical(.registered_before, .release$release_id)) {
+      "Already the study dataset: nothing to do"
+    } else {
+      .status <- hvtiRutilities::adopt_data_update(hvtiRutilities::study_config(.root), release_id = .release$release_id)
+      "Adopted as the study dataset"
+    }
+  }, error = function(e) {
+    if (startsWith(conditionMessage(e), "bd: ")) stop(e)
+    .bd_stop("publish", "registering the release stopped: ", conditionMessage(e))
+  })
+}
+```
+
+## Report
+
+```{r}
+#| label: report-source
+knitr::kable(data.frame(
+  Item = c("Mode", "Master snapshot", "Master SHA-256", "Rehashed this render", "Master parent release",
+           "Rows in the dataset", "Patients", "Columns", "Study dataset before", "Study dataset after", "Registration"),
+  Value = c(if (PUBLISH) "Published" else "Draft", basename(.master$file), .master$sha256,
+            if (.master$verified) "yes" else "no", as.character(.master$parent_release), nrow(d),
+            length(unique(d[[ID]])), ncol(d),
+            if (is.null(.registered_before)) "none" else .registered_before,
+            if (is.null(.release)) "unchanged" else .release$release_id, .register_step)
+))
+```
+
+### Who was excluded, and why
+
+```{r}
+#| label: report-attrition
+knitr::kable(.cut$attrition, col.names = c("Step", "Reason", "Rows before", "Removed", "Condition missing",
+                                           "Rows after", "Patients after"))
+```
+
+### Columns
+
+```{r}
+#| label: report-columns
+# Aggregates only: the type, missing count and range of each column. The ID and
+# KEY columns get no range, since a range of identifiers is two identifiers.
+.no_range <- c(ID, KEY)
+knitr::kable(data.frame(
+  Column = names(d),
+  Type = vapply(d, function(x) class(x)[[1L]], ""),
+  Missing = vapply(d, function(x) sum(is.na(x)), 0L),
+  Range = vapply(names(d), function(col) {
+    x <- d[[col]]
+    if (col %in% .no_range || !is.numeric(x) || all(is.na(x))) {
+      ""
+    } else {
+      paste(format(range(x, na.rm = TRUE), digits = 4), collapse = " to ")
+    }
+  }, ""),
+  row.names = NULL
+))
+```

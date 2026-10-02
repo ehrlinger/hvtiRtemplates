@@ -150,8 +150,15 @@ test_that("embedded provenance calls are unique across all R chunks", {
   expect_false(template_provenance_call_count(path) == 1L)
 })
 
-test_that("every shipped template ends with one embedded provenance chunk", {
+# The bd build job is not an analysis: it writes the study's dataset and a build
+# record, not a report with embedded provenance, so it is outside these checks.
+analysis_templates <- function() {
   templates <- template_list()
+  templates[templates$prefix != "bd", ]
+}
+
+test_that("every shipped template ends with one embedded provenance chunk", {
+  templates <- analysis_templates()
   expect_equal(nrow(templates), 32L)
 
   for (path in templates$file) {
@@ -177,7 +184,7 @@ test_that("every shipped template ends with one embedded provenance chunk", {
 })
 
 test_that("provenance payloads take only the recovered render input", {
-  for (path in template_list()$file) {
+  for (path in analysis_templates()$file) {
     chunk <- provenance_chunk(path)
     info <- basename(path)
     expect_true(any(grepl(".embed_provenance(", chunk, fixed = TRUE)), info = info)
@@ -222,7 +229,7 @@ test_that("only templates with a local dataset choice override the dataset", {
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
     "rfs-fit", "rfc-fit", "rfr-fit", "nb-boostmtree"
   )
-  templates <- template_list()
+  templates <- analysis_templates()
   observed <- templates$name[vapply(templates$file, function(path) {
     any(grepl("DATASET, .cfg|dataset = DATASET", readLines(path, warn = FALSE)))
   }, logical(1L))]

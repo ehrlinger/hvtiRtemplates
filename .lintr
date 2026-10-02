@@ -48,6 +48,11 @@ linters: linters_with_defaults(
 # entry here, which is the right amount of friction: it forces a decision per
 # template rather than blanket-exempting the directory.
 exclusions: list(
+    "inst/templates/00_datasets/bd.qmd" = list(
+      object_name_linter = Inf,
+      commented_code_linter = Inf,
+      object_usage_linter = Inf
+    ),
     "inst/templates/20_distributions/ac.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,

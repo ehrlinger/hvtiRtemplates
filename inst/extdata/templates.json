@@ -76,10 +76,11 @@
       "prefix": "bd",
       "qualifier": null,
       "name": "Build",
+      "description": "Cuts a study's dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then a dated release registered as the study dataset.",
       "folder": "datasets",
       "family": "datasets",
       "kind": "job",
-      "status": "queued",
+      "status": "shipped",
       "batch": 8,
       "sas_breadth": 1134,
       "r_exemplars": 15,
@@ -89,12 +90,16 @@
       "workflows": [
         "propensity-matching"
       ],
-      "blocked_on": "hvtiRdatabuild",
-      "spec": null,
+      "blocked_on": null,
+      "spec": "dev/specs/2026-10-02-bd-build-job-design.md",
       "note": null,
       "sas_breadth_jobs": 1094,
       "disposition": "scaffold",
-      "uses": []
+      "uses": [
+        "hvtiRdatabuild::publish_dataset",
+        "hvtiRutilities::register_data",
+        "hvtiRutilities::adopt_data_update"
+      ]
     },
     {
       "prefix": "bh",
