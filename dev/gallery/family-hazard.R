@@ -108,13 +108,14 @@ concordance_hz_choices <- list(
 )
 
 # A group's hm reads a smaller companion SAS job than the chain's hm: age in
-# the early phase; age, heart failure and ejection fraction late. With the
-# chain's five candidates the surgical group's early phase, 13 deaths, runs
-# off (early.log_mu near -850, creatinine near 2000) and the fit carries no
-# variance matrix, so every confidence limit is NA. hm renders that fit
-# without complaint, and hs-concordance then stops in its decision chunk
-# with "missing value where TRUE/FALSE needed"; both are reported as
-# template findings, not worked around here.
+# the early phase; age, heart failure and ejection fraction late. With this
+# job every group model fits and hs-concordance renders. It is a study
+# choice, made because the chain's five candidates do NOT work here: the
+# surgical group's early phase, 13 deaths, runs off (early.log_mu near -850)
+# and the fit carries no variance matrix. hm renders that fit without
+# complaint (#228), and hs-concordance then stops in its decision chunk with
+# an unhelpful message (#227). Both defects are filed against the templates;
+# this configuration avoids the degenerate fit rather than hiding either.
 concordance_sas <- c(
   "/* hm.dead_group.sas -- synthetic companion job for the template gallery. */",
   "%macro model;",
