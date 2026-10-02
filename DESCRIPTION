@@ -42,13 +42,13 @@ Remotes:
     ehrlinger/TemporalHazard,
     ehrlinger/ggRandomForests,
     ehrlinger/hvtiRpropensity,
-    boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.2-ccf,
+    boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.3-ccf,
     ehrlinger/ggBoostedTrees
 Suggests:
     arrow,
     boostmtree (>= 2.0.2),
     fs,
-    ggBoostedTrees (>= 0.0.8),
+    ggBoostedTrees (>= 0.9.0),
     ggRandomForests (>= 4.0.0),
     ggplot2,
     hvtiPlotR (>= 2.8.0),

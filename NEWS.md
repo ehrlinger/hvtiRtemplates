@@ -60,17 +60,18 @@
 * `nb-boostmtree` is a new template: boosted multivariate trees for a
   response measured repeatedly over follow-up, fitted with `boostmtree` 2.0.2
   or later from the CCF fork (`ehrlinger/boostmtree_src`), whose fix the CRAN
-  release lacks, and reported with ggBoostedTrees 0.0.8 or later. `KEY`
+  release lacks, and reported with ggBoostedTrees 0.9.0 or later. `Remotes:`
+  and the template's install line point at the fork's `v2.0.3-ccf` tag. `KEY`
   defaults to the ID and the visit time. Patients are grouped by the
   study-keyed digest, so the fit, its cache and the saved file hold no patient
   ID. `PREDICTORS <- NULL` takes every column but the ID, the `KEY` columns,
   the time, the response and any ccfid, MRN or eMRN column, and names the
   identifier columns it left out; named `PREDICTORS` may hold none of those,
   nor a name twice. The partial effects of every response component come in
-  one figure, faceted by component as ggBoostedTrees 0.0.8 draws them, with
+  one figure, faceted by component as ggBoostedTrees 0.9.0 draws them, with
   continuous and factor covariates in separate figures because one figure
   cannot hold both. BoostMLR (`nb-boostmlr`) is still to come; the
-  ggBoostedTrees support it waited on shipped in 0.0.9.
+  ggBoostedTrees support it waited on shipped in 0.9.0.
 
 * New template `hs-concordance`: every patient predicted through every
   treatment group's `hm` model at one horizon, the job the corpus calls

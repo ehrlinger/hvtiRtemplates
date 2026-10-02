@@ -46,11 +46,11 @@ for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE
 # pass it; read the installed package's NEWS if in doubt.
 if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.2") {
   stop("This job needs boostmtree >= 2.0.2 from the CCF fork. Install it with\n",
-       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.2-ccf\")\n",
+       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.3-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
-if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.0.8") {
-  stop("This job needs ggBoostedTrees >= 0.0.8. Install it with\n",
+if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.9.0") {
+  stop("This job needs ggBoostedTrees >= 0.9.0. Install it with\n",
        "  remotes::install_github(\"ehrlinger/ggBoostedTrees\")\nthen re-render.", call. = FALSE)
 }
 suppressPackageStartupMessages({
@@ -428,7 +428,7 @@ p_vimp
 .effect_vars <- if (is.null(EFFECT_VARIABLES)) head(names(.top), 6L) else EFFECT_VARIABLES
 .unknown <- setdiff(.effect_vars, .predictors)
 if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unknown, collapse = ", "), call. = FALSE)
-# One partial.plot() covers every response component: ggBoostedTrees 0.0.8 and
+# One partial.plot() covers every response component: ggBoostedTrees 0.9.0 and
 # later take an ordinal or nominal one whole and facet its figure by component.
 # Each component is renamed as the fit summary names it, not by its bare level.
 .effect <- gg_boost_effect(partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE))
@@ -440,7 +440,7 @@ if (anyNA(.relabel)) {
        paste(levels(.effect$response)[is.na(.relabel)], collapse = ", "), ".", call. = FALSE)
 }
 levels(.effect$response) <- .relabel
-# What ggBoostedTrees 0.0.9 still cannot do: a continuous covariate is drawn as
+# What ggBoostedTrees 0.9.0 still cannot do: a continuous covariate is drawn as
 # a curve and a factor as a point per level, on axes ggplot2 cannot share, so
 # plot() refuses an effect holding both. Each kind is drawn in its own figure,
 # which is why p_effects is a list.

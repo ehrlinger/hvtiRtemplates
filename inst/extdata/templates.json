@@ -928,7 +928,7 @@
       "workflows": [],
       "blocked_on": null,
       "spec": null,
-      "note": "Unblocked 2026-10-01: ggBoostedTrees#9 shipped BoostMLR support in 0.0.9. Not yet built.",
+      "note": "Unblocked 2026-10-01: ggBoostedTrees#9 shipped BoostMLR support in 0.9.0. Not yet built.",
       "sas_breadth_jobs": null,
       "disposition": "scaffold",
       "uses": []
