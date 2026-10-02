@@ -60,8 +60,7 @@
 * `nb-boostmtree` is a new template: boosted multivariate trees for a
   response measured repeatedly over follow-up, fitted with `boostmtree` 2.0.2
   or later from the CCF fork (`ehrlinger/boostmtree_src`), whose fix the CRAN
-  release lacks, and reported with ggBoostedTrees 0.9.0 or later. `Remotes:`
-  and the template's install line point at the fork's `v2.0.3-ccf` tag. `KEY`
+  release lacks, and reported with ggBoostedTrees 0.9.0 or later. `KEY`
   defaults to the ID and the visit time. Patients are grouped by the
   study-keyed digest, so the fit, its cache and the saved file hold no patient
   ID. `PREDICTORS <- NULL` takes every column but the ID, the `KEY` columns,
