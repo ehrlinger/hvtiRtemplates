@@ -184,7 +184,8 @@ if (length(.absent)) {
 }
 .rule_vars <- unlist(lapply(EXCLUDE, function(rule) all.vars(rlang::f_lhs(rule))))
 .cols <- .available[tolower(.available) %in% c(.need, JOIN_BY, tolower(.rule_vars))]
-d <- as.data.frame(arrow::read_parquet(MASTER, col_select = .cols))
+# !! injects the vector, which arrow selects with tidyselect; a bare external vector draws its deprecation warning.
+d <- as.data.frame(arrow::read_parquet(MASTER, col_select = !!.cols))
 names(d) <- tolower(names(d))
 ```
 
