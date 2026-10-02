@@ -51,7 +51,7 @@ for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE
 # pass it; read the installed package's NEWS if in doubt.
 if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.2") {
   stop("This job needs boostmtree >= 2.0.2 from the CCF fork. Install it with\n",
-       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.2-ccf\")\n",
+       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.3-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
 if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.9.0") {
