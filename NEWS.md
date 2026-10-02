@@ -14,6 +14,12 @@
   `nb-boostmtree` install hint names the `v2.0.3-ccf` tag that
   `ggBoostedTrees` 0.9.1 installs from.
 
+* Every template's HTML now reads full width with its contents on the left
+  (`page-layout: full`, `toc-location: left`, a 2000px body ceiling and a
+  250px sidebar), alongside the existing `embed-resources: true`. A new test
+  checks all of it in every template's own header, so a copied template stays
+  self-contained and laid out the same.
+
 # hvtiRtemplates 1.2.3
 
 * `read_job_data()` stops on a `WHERE` condition that mentions the patient
