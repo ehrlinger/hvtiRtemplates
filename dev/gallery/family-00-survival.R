@@ -10,6 +10,16 @@
 # and diabetes. Follow-up is censored at the close date, with one patient in
 # ten lost early, as in the demo.
 #
+# Six patients die on the day of operation, and iv_dead, rounded to 0.001
+# years, would record them at 0. The hazard likelihood is not defined at
+# t = 0: hz stops with "Multiphase optimization produced no usable fit ...
+# ended where the likelihood is not defined". Flooring every time at one day
+# is no better: it piles a dozen deaths on one tied time and the early phase
+# collapses onto it. So only the zeros move, to 0.00025 years, the middle of
+# the interval that rounds to 0. This is a dataset decision, made here once,
+# because a job's WHERE selects rows and cannot change a value; every job
+# that reads the cohort then sees the same follow-up.
+#
 # The file name sorts first, so every other family sees these columns.
 
 gallery_family(
@@ -30,6 +40,7 @@ gallery_family(
       t_censor <- ifelse(lost, stats::runif(n, 0, potential), potential)
       d$dead <- as.integer(t_death <= t_censor)
       d$iv_dead <- round(pmin(t_death, t_censor), 3)
+      d$iv_dead[d$iv_dead == 0] <- 0.00025
       t_reop <- stats::rexp(n, 1 / 30)
       d$reop <- as.integer(t_reop < d$iv_dead)
       d$iv_reop <- round(pmin(t_reop, d$iv_dead), 3)

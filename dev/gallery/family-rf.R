@@ -34,10 +34,12 @@ rf_predictors <- paste0(
   "\"lvef\", \"plvmassi\", \"creat_pr\")"
 )
 
-# Choices common to every fit: predictors, forest size, the prose line naming
-# the job it replaces.
+# Choices common to every fit: the cohort's identifier, predictors, forest
+# size, the prose line naming the job it replaces. Each explain job takes its
+# data, rows and identifier from the forest its fit saved, so sets none.
 rf_fit_choices <- function(what, na_action) {
   list(
+    "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
     "^Replaces `analyses/<job>`" = paste0("Gallery job on the synthetic cohort: ", what, "."),
     "^PREDICTORS <- " = rf_predictors,
     "^NTREE <- " = "NTREE <- 300",
