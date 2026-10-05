@@ -1,7 +1,7 @@
 test_that("template_list() has the expected shape", {
   tl <- template_list()
   expect_s3_class(tl, "data.frame")
-  expect_named(tl, c("name", "prefix", "qualifier", "folder", "file"))
+  expect_named(tl, c("name", "prefix", "qualifier", "folder", "call", "file"))
 })
 
 test_that("template_list() finds templates in taxonomy subfolders", {
@@ -602,6 +602,25 @@ test_that("a trailing separator with no qualifier is rejected", {
 
 test_that("template_list() reports a qualifier column", {
   expect_true("qualifier" %in% names(template_list()))
+})
+
+test_that("template_list()$call scaffolds its own template, every row", {
+  # The column is only worth printing if pasting it works. Run each call as
+  # written, with subject and type bound, and check it wrote that template.
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+  expect_identical(tl$call, sprintf('add_job("%s", subject, type)', tl$name))
+  dir <- withr::local_tempdir()
+  env <- new.env(parent = asNamespace("hvtiRtemplates"))
+  env$subject <- "cohort"
+  env$type <- "fu"
+  for (i in seq_len(nrow(tl))) {
+    call <- parse(text = tl$call[[i]])[[1L]]
+    call$dir <- dir
+    out <- withCallingHandlers(eval(call, env),
+                               hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
+    expect_identical(basename(out), paste0("cohort-fu-", tl$name[[i]], ".qmd"), info = tl$name[[i]])
+  }
 })
 
 test_that(".select_template() refuses to guess when a prefix is ambiguous", {

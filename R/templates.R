@@ -16,7 +16,11 @@
 #' folder, including when the catalog is absent.
 #'
 #' @return A data frame with columns \code{name}, \code{prefix},
-#'   \code{qualifier}, \code{folder} and \code{file}. \code{folder} is the
+#'   \code{qualifier}, \code{folder}, \code{call} and \code{file}.
+#'   \code{call} is the \code{\link{add_job}} call that scaffolds the
+#'   template, with only the arguments it requires, e.g.
+#'   \code{add_job("dc-gfup", subject, type)}; replace \code{subject} and
+#'   \code{type} with the job's names. \code{folder} is the
 #'   taxonomy name with the directory's ordering digits stripped, so
 #'   \code{20_distributions} reports as \code{distributions}.
 #'   \code{qualifier} is \code{NA} for a prefix carrying a single template.
@@ -41,6 +45,9 @@ template_list <- function() {
     prefix    = fields$prefix,
     qualifier = fields$qualifier,
     folder    = .folder_name(basename(dirname(files))),
+    # The full name selects the template on its own, qualified or not, so
+    # subject and type are the only other arguments add_job() requires.
+    call      = sprintf('add_job("%s", subject, type)', sub("[.]qmd$", "", basename(files))),
     file      = files,
     stringsAsFactors = FALSE
   )

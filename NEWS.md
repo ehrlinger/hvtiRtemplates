@@ -1,3 +1,9 @@
+# hvtiRtemplates (unreleased)
+
+* `template_list()` gains a `call` column: the `add_job()` call that scaffolds each
+  template, with only the arguments it requires, e.g. `add_job("dc-gfup", subject, type)`.
+  The full name selects the template on its own, so no `qualifier =` is needed.
+
 # hvtiRtemplates 1.2.5
 
 * Every figure and table a template shows is numbered. Quarto numbers a figure only
