@@ -1,6 +1,6 @@
 # Every figure and table a template shows is numbered, and no template teaches
 # a retired palette. The house rules are in inst/templates/README.md
-# ("Figures, tables and colour"). Quarto numbers a figure only when its chunk
+# ("Figures, tables and color"). Quarto numbers a figure only when its chunk
 # label starts with `fig-` and the chunk has `fig-cap`, and a table only with a
 # `tbl-` label and `tbl-cap`; a `knitr::kable(caption = )` caption prints
 # without a number. A chunk that calls a table or figure function without
@@ -86,5 +86,5 @@ test_that("the numbering rule catches what it should", {
   expect_true(calls_any(chunks[[2]]$code, figure_calls))
   expect_true(any(grepl("^\\s*# unnumbered: \\S", chunks[[3]]$code)))
   expect_false(calls_any("hv_plot_helper(x)", figure_calls))
-  expect_true(grepl(retired_palettes, "scale_colour_brewer(palette = \"Set1\")"))
+  expect_true(grepl(retired_palettes, "scale_color_brewer(palette = \"Set1\")"))
 })

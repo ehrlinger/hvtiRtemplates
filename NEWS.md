@@ -13,7 +13,7 @@
   others); categorical groups take `hvtiPlotR::hv_palette()`. A chunk that calls a
   table or figure function without showing one says so with
   `# unnumbered: <reason>`.
-* `inst/templates/README.md` gains "Figures, tables and colour", pointing to the
+* `inst/templates/README.md` gains "Figures, tables and color", pointing to the
   recipes book chapter
   [Numbering figures and tables](https://ehrlinger.github.io/hvtiGraphics/numbering.html).
 * The label `data` is now `tbl-data` in every template (dp-postage keeps `data`),

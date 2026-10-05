@@ -264,7 +264,7 @@ answer** — run `job-census.R /studies` server-side, which is what the gate
 question is for. `hs` was missing from this list before it was corrected, and
 its absence read as "templated".
 
-## Figures, tables and colour
+## Figures, tables and color
 
 Every figure and table a job shows carries a number, so a reader can cite
 "Figure 2.1" or "Table 3.2" and find it. Quarto numbers a figure only when its
@@ -286,12 +286,12 @@ figure's legend below, as the journals print them.
 - **A chunk that only defines helpers** says so with a comment
   `# unnumbered: <reason>`.
 
-Colour follows the house rule of the hvtiGraphics recipes book: categorical
-groups take `hvtiPlotR::hv_palette()` (the Okabe-Ito colours) through
+Color follows the house rule of the hvtiGraphics recipes book: categorical
+groups take `hvtiPlotR::hv_palette()` (the Okabe-Ito colors) through
 `scale_*_manual()`, and ordered or diverging scales take `"RdBu"`. ColorBrewer
-`"Set1"`, `"Set2"`, `"Dark2"` and `"RdYlGn"` are retired. Colour is never the
+`"Set1"`, `"Set2"`, `"Dark2"` and `"RdYlGn"` are retired. Color is never the
 only channel: groups also differ by line type or point shape, so a figure
-survives a greyscale printer and a colour-blind reader. Box plots in these
+survives a grayscale printer and a color-blind reader. Box plots in these
 jobs are percentile boxes (hinges at the 15th and 85th percentiles, whiskers at
 the 5th and 95th), as in the recipes book's box-plot chapter, and their
 captions say so.
