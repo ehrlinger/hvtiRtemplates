@@ -35,6 +35,7 @@ are the `dc-gfup` job, which reads the same data and rows.
 
 ```{r}
 #| label: setup
+# unnumbered: loads packages and checks versions only
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -203,16 +204,28 @@ COLORS <- NULL
      never has to ask which data a table describes. -->
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
@@ -222,6 +235,7 @@ if (!is.null(job_data$attrition)) {
 
 ```{r}
 #| label: window
+# unnumbered: computes the follow-up window; the table chunk below shows it
 # hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
 # names every missing column at once, refuses a name used twice and the
 # wrong-origin mistake, and works out the window the panels share: from
@@ -233,6 +247,11 @@ close_date <- fp$meta$close_date
 # Name the edit point a reader can find in this file, not the function's argument.
 close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
 
+```
+
+```{r}
+#| label: tbl-window
+#| tbl-cap: "Operation years and the close date"
 knitr::kable(data.frame(
   quantity = c("patients", "operation year missing", "first operation", "last operation",
                "close date", "close date is"),
@@ -250,16 +269,30 @@ the line; it is the **blue** points drifting below it that need an explanation.
 ```{r}
 #| label: figures
 #| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 # The image link is relative to THIS document, which always sits in graphs/, so
 # it is <set>/<file> whichever directory the render executes from. The file
 # itself is written through set_path(), which resolves from the project root.
-show_figure <- function(p, fname, title) {
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
+show_figure <- function(p, fname, title, nm) {
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript()
   png(set_path("graphs", fname), width = 7, height = 6, units = "in", res = 150)
   print(p)
   invisible(dev.off())
-  cat("![", title, "](", file.path(paste0(SUBJECT, "-", TYPE), fname), ")\n\n", sep = "")
+  .link <- file.path(paste0(SUBJECT, "-", TYPE), fname)
+  .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", title),
+         "knitr::include_graphics(.link, error = FALSE)")
 }
 if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
                                               "(study-choices in a job made before that rename).", call. = FALSE)
@@ -292,7 +325,7 @@ for (i in seq_len(nrow(fp$data))) {
       status_colors(levels) +
       scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
   }
-  show_figure(p, paste0("dp-gfup-", nm, ".png"), row$title)
+  show_figure(p, paste0("dp-gfup-", nm, ".png"), row$title, nm)
 }
 ```
 

@@ -1,3 +1,24 @@
+# hvtiRtemplates 1.2.5
+
+* Every figure and table a template shows is numbered. Quarto numbers a figure only
+  with a `fig-` label and `fig-cap`, and a table only with a `tbl-` label and `tbl-cap`;
+  a `knitr::kable(caption = )` caption prints without a number. All 33 templates now
+  carry numbered labels and captions, table captions moved into `tbl-cap`, chunks that
+  showed several outputs are split, and loops that show one table or figure per item
+  emit each as its own `knitr::knit_child()` chunk, so every item is numbered and
+  citable. Chunks that hold `EDIT:` choices no longer also show output. A job built
+  from a template starts numbered.
+* New `test-template-numbering.R` enforces the rule for every template, and rejects
+  the retired ColorBrewer palettes (`"Set1"`, `"Set2"`, `"Dark2"`, `"RdYlGn"` and
+  others); categorical groups take `hvtiPlotR::hv_palette()`. A chunk that calls a
+  table or figure function without showing one says so with
+  `# unnumbered: <reason>`.
+* `inst/templates/README.md` gains "Figures, tables and color", pointing to the
+  recipes book chapter
+  [Numbering figures and tables](https://ehrlinger.github.io/hvtiGraphics/numbering.html).
+* The label `data` is now `tbl-data` in every template (dp-postage keeps `data`),
+  with the other renames listed in the tests that extract chunks by label.
+
 # hvtiRtemplates 1.2.4
 
 * `ggBoostedTrees` is required at 0.9.1 or later. `boostmtree` now arrives only through

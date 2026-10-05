@@ -32,14 +32,23 @@ test_that("numbered migrated jobs save and embed figures in their logical folder
     eval(numbered_output_chunk(job, "set"), env)
     if (trends) {
       eval(numbered_output_chunk(job, "edit-study-choices"), env)
-      capture.output(eval(numbered_output_chunk(job, "data"), env))
+      capture.output(eval(numbered_output_chunk(job, "tbl-data"), env))
       capture.output(eval(numbered_output_chunk(job, "year"), env))
+      capture.output(eval(numbered_output_chunk(job, "tbl-year-check"), env))
       eval(numbered_output_chunk(job, "helpers"), env)
     } else {
       env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
       env$CORR <- list(vars = "age", with = "bmi", by = NULL)
     }
-    printed <- capture.output(eval(numbered_output_chunk(job, if (trends) "figures" else "correlation"), env))
+    # The figures are child chunks. A render sets knitr up for markdown and runs the
+    # chunk in the job's folder; here the output is markdown and the working directory a scratch one.
+    scratch <- withr::local_tempdir()
+    withr::local_options(knitr.duplicate.label = "allow")
+    knitr::render_markdown()
+    withr::defer(knitr::knit_hooks$restore())
+    printed <- withr::with_dir(scratch, capture.output(
+      eval(numbered_output_chunk(job, if (trends) "figures" else "correlation"), env)
+    ))
     filenames <- if (trends) c("dp-trends-hx_chf-all.png", "dp-trends-lvmassi-all.png") else "dc-tables-correlation-matrix.png"
     for (filename in filenames) {
       relative <- file.path("cohort-eda", filename)

@@ -257,17 +257,15 @@ REFIT <- FALSE
 ## Cohort
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
-if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
-}
+knitr::kable(job_data$record, col.names = c("Data", ""))
 .selection <- attr(job_data$record, "selection")
 .id <- .selection$id
 # The data's own spelling of TIME and RESPONSE, matched ignoring case as the
@@ -336,6 +334,20 @@ if (length(.chr)) {
 }
 ```
 
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(job_data$attrition)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
 ## Fit
 
 ```{r}
@@ -361,11 +373,17 @@ both, and cross-validation is how the job chooses its best number of iterations.
 ## Does the fit work?
 
 ```{r}
-#| label: fit-summary
+#| label: tbl-fit
+#| tbl-cap: "The fit"
 knitr::kable(data.frame(
   quantity = c("Family", "Iterations (M)", "Learning rate (nu)", "Patients", "Visits"),
   value = c(FAMILY, M, NU, length(unique(.patient)), nrow(d))
-), col.names = c("", ""), caption = "The fit")
+), col.names = c("", ""))
+```
+
+```{r}
+#| label: tbl-fit-summary
+#| tbl-cap: "Cross-validated fit, by response component"
 # A continuous or binary fit has one response component; an ordinal or nominal
 # fit has one per level after the first, each with its own cross-validated best
 # M and error path (fit$err.rate is then a list). Read the error at the best M
@@ -393,29 +411,36 @@ fit_summary <- data.frame(
   cv_error = mapply(function(e, m) e[m, "l2"], .err, fit$m.opt)
 )
 knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-validated)",
-                                        "Cross-validated error there (standardized)"),
-             caption = "Cross-validated fit, by response component")
+                                        "Cross-validated error there (standardized)"))
 ```
 
 ```{r}
-#| label: error-path
+#| label: fig-error
+#| fig-cap: "Cross-validated error by boosting iteration"
 # The cross-validated error by iteration, and the fitted rho, phi and lambda.
 # Best M at the right edge means M was too small.
 p_error <- plot(gg_boost_error(fit))
-p_path  <- plot(gg_boost_path(fit))
 p_error
+```
+
+```{r}
+#| label: fig-path
+#| fig-cap: "Fitted rho, phi and lambda by boosting iteration"
+p_path <- plot(gg_boost_path(fit))
 p_path
 ```
 
 ```{r}
-#| label: calibration
+#| label: fig-calibration
+#| fig-cap: "Observed against fitted values over follow-up, in time bins"
 # Observed against fitted values over follow-up, in time bins.
 p_calibration <- plot(gg_boost_calibration(fit))
 p_calibration
 ```
 
 ```{r}
-#| label: importance
+#| label: fig-importance
+#| fig-cap: "Importance of each predictor's main effect and of its interaction with time"
 # Importance of each predictor's main effect and its interaction with time; the
 # interaction is where a predictor whose effect changes over follow-up shows.
 vimp <- vimp.boostmtree(fit)
@@ -425,6 +450,8 @@ p_vimp
 
 ```{r}
 #| label: effects
+#| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 # Partial effects over time, for EFFECT_VARIABLES or the six most important.
 # An ordinal or nominal fit reports importance once per response component, so
 # a variable is ranked by its largest importance across them.
@@ -436,6 +463,17 @@ if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unkno
 # One partial.plot() covers every response component: ggBoostedTrees 0.9.0 and
 # later take an ordinal or nominal one whole and facet its figure by component.
 # Each component is renamed as the fit summary names it, not by its bare level.
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 .effect <- gg_boost_effect(partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE))
 .relabel <- .components[match(levels(.effect$response), .labels)]
 # A component ggBoostedTrees names differently from the fit would otherwise be
@@ -451,16 +489,22 @@ levels(.effect$response) <- .relabel
 # which is why p_effects is a list.
 .discrete <- tapply(!is.na(.effect$x_label), .effect$variable, any)
 .discrete <- .discrete[!is.na(.discrete)]
-p_effects <- lapply(unname(split(names(.discrete), .discrete)), function(v) {
+.parts <- split(names(.discrete), .discrete)
+.kinds <- ifelse(names(.parts) == "TRUE", "categorical", "continuous")
+p_effects <- lapply(unname(.parts), function(v) {
   part <- .effect[.effect$variable %in% v, , drop = FALSE]
   part$variable <- droplevels(part$variable)
   plot(part)
 })
-for (.p in p_effects) print(.p)
+for (.i in seq_along(p_effects)) {
+  .p <- p_effects[[.i]]
+  .child(paste("fig effects", .kinds[[.i]]), paste0("Partial effects over follow-up, ", .kinds[[.i]], " predictors"), ".p")
+}
 ```
 
 ```{r}
-#| label: traces
+#| label: fig-traces
+#| fig-cap: "Fitted trajectories for a sample of patients, with the cohort's mean fitted value over time"
 # Fitted trajectories for a sample of patients, with their observed values as
 # points, and the cohort's mean fitted value over time drawn across them. The
 # patients are labeled by digest, so none is identified.

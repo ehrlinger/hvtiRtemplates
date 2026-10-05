@@ -257,7 +257,8 @@ CROSS_STUDY <- FALSE
 ## Cohort
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 # The checksum of every dataset in manifest.yaml is checked before anything is
 # read, so a result can name the data that produced it. It stops on a mismatch.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
@@ -266,9 +267,20 @@ job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set 
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
@@ -351,7 +363,8 @@ for (m in .mn) {
 ```
 
 ```{r}
-#| label: groups
+#| label: tbl-groups
+#| tbl-cap: "Patients who received each modeled treatment"
 # Every group in the cohort must have a model: a patient whose own treatment
 # has none cannot be compared with what they received. An author who means to
 # leave a group out filters it with WHERE, where the choice is visible.
@@ -370,12 +383,12 @@ if (length(.no_model)) {
 }
 # The reverse is allowed: a model no patient carries is a treatment nobody in
 # this cohort received, which is a comparison worth making. It is reported.
-knitr::kable(data.frame(model = names(models), patients = as.vector(table(factor(.actual, names(models))))),
-             caption = "Patients who received each modeled treatment")
+knitr::kable(data.frame(model = names(models), patients = as.vector(table(factor(.actual, names(models))))))
 ```
 
 ```{r}
-#| label: covariates
+#| label: tbl-covariates
+#| tbl-cap: "Covariates in each group's model"
 # Each model's covariates are taken from its artifact, not re-declared, so the
 # list cannot drift from the screen its hm job ran. The models need not share
 # them: each group's model is its own, and the table shows where they differ.
@@ -391,7 +404,7 @@ for (m in names(covariates)) {
 .cov_tbl <- data.frame(covariate = .all_cov,
                        vapply(covariates, function(v) ifelse(.all_cov %in% v, "yes", ""), character(length(.all_cov))),
                        check.names = FALSE)
-knitr::kable(.cov_tbl, caption = "Covariates in each group's model")
+knitr::kable(.cov_tbl)
 
 # `hm` fitted on covariates_to_numeric(d, ...), so the conversion is redone
 # here before any model sees the data, exactly as hs-setup does.
@@ -432,7 +445,8 @@ comparison reaches beyond the data behind it. What counts as too far is a
 clinical judgment.
 
 ```{r}
-#| label: support
+#| label: tbl-support
+#| tbl-cap: "Patients outside each model's fitted range, by covariate"
 support <- do.call(rbind, lapply(names(models), function(m) {
   frame <- models[[m]]$reported$data$frame
   do.call(rbind, lapply(covariates[[m]], function(v) {
@@ -443,8 +457,7 @@ support <- do.call(rbind, lapply(names(models), function(m) {
                below = sum(dd[[v]] < lo, na.rm = TRUE), above = sum(dd[[v]] > hi, na.rm = TRUE))
   }))
 }))
-knitr::kable(support, row.names = FALSE, digits = 3,
-             caption = "Patients outside each model's fitted range, by covariate")
+knitr::kable(support, row.names = FALSE, digits = 3)
 ```
 
 ## Predictions
@@ -455,7 +468,8 @@ that `hs-setup` also uses. A 95% band is nearly twice as wide. The limits travel
 in the saved artifact, so **state the coverage wherever they are shown.**
 
 ```{r}
-#| label: predict
+#| label: tbl-predict
+#| tbl-cap: !expr 'paste0("Median predicted survival at ", HORIZON, ", by model and treatment received")'
 # SAS convention, not a study choice: +/-1 SD, NOT 95%, with survival limits on
 # the logit scale. hs-setup and hp use both; changing them here alone would put
 # two coverages side by side with nothing saying so.
@@ -504,8 +518,7 @@ patients <- cbind(patients, d[, CARRY, drop = FALSE])
 
 summary_tbl <- stats::aggregate(fit ~ model + group, data = pred, FUN = stats::median)
 names(summary_tbl)[names(summary_tbl) == "fit"] <- "median_survival"
-knitr::kable(summary_tbl, row.names = FALSE, digits = 4,
-             caption = paste0("Median predicted survival at ", HORIZON, ", by model and treatment received"))
+knitr::kable(summary_tbl, row.names = FALSE, digits = 4)
 ```
 
 ## Decision
@@ -528,7 +541,10 @@ difference in survival matters is the study's to say.
 #       patients were eligible for that treatment. An ineligible prediction
 #       takes no part in the choice and is left unchanged in `pred`.
 ELIGIBLE <- list()
+```
 
+```{r}
+#| label: decision
 .wide <- function(col) {
   w <- vapply(names(models), function(m) pred[[col]][pred$model == m], numeric(nrow(d)))
   matrix(w, nrow = nrow(d), dimnames = list(NULL, names(models)))
@@ -574,13 +590,22 @@ decision <- data.frame(row = seq_len(nrow(d)), group = .actual,
 .best_lbl <- ifelse(decision$tie, "(tie)", ifelse(is.na(decision$best), "(no choice)", decision$best))
 best_tbl <- table(received = factor(decision$group, .levels),
                   best = factor(.best_lbl, c(.levels, "(tie)", "(no choice)")))
-knitr::kable(best_tbl,
-             caption = "Treatment received against best-predicted treatment, every patient")
 .sep <- !is.na(decision$optimal)
-knitr::kable(table(received = factor(decision$group[.sep], .levels), optimal = factor(decision$optimal[.sep], .levels)),
-             caption = paste0("Treatment received against optimal treatment, the ", sum(.sep),
-                              " patients whose choice is separated at ~68%; ", sum(!.sep), " are not"))
+.optimal_caption <- paste0("Treatment received against optimal treatment, the ", sum(.sep),
+                           " patients whose choice is separated at ~68%; ", sum(!.sep), " are not")
 cat(sum(decision$tie), "patient(s) have an exact tie between their two best models.\n")
+```
+
+```{r}
+#| label: tbl-decision-best
+#| tbl-cap: "Treatment received against best-predicted treatment, every patient"
+knitr::kable(best_tbl)
+```
+
+```{r}
+#| label: tbl-decision-optimal
+#| tbl-cap: !expr .optimal_caption
+knitr::kable(table(received = factor(decision$group[.sep], .levels), optimal = factor(decision$optimal[.sep], .levels)))
 ```
 
 ## Save

@@ -170,16 +170,28 @@ ID_COL <- NULL
      never has to ask which data a table describes. -->
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
@@ -287,10 +299,23 @@ there are none. -->
 ## Overall statistics
 
 ```{r}
-#| label: overall
+#| label: tbl-overall-contents
+#| tbl-cap: "Contents of the data: each column, its type and its label"
 proc_contents(d)
+```
+
+```{r}
+#| label: overall-means
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (length(overall_vars)) {
-  proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min", "max", "sum"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-overall-means",
+    "#| tbl-cap: \"Summary statistics of the overall variables\"",
+    "proc_means(d, vars = overall_vars, stats = c(\"n\", \"nmiss\", \"mean\", \"std\", \"min\", \"max\", \"sum\"))",
+    .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
@@ -299,11 +324,23 @@ if (length(overall_vars)) {
 ```{r}
 #| label: freqs
 #| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 .kable_na <- options(knitr.kable.NA = "")
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(kind, key, caption, code) {
+  label <- paste(kind, "freqs", gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(key))), sep = "-")
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label),
+                                 paste0("#| ", kind, "-cap: ", encodeString(caption, quote = "\"")), code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+}
 for (group in names(freqs)) {
   cat("\n### ", group, "\n\n", sep = "")
   for (v in names(freqs[[group]])) {
-    cat(knitr::kable(freqs[[group]][[v]], caption = v), sep = "\n")
+    .freq <- freqs[[group]][[v]]
+    .child("tbl", paste(group, v), paste0("Frequencies, ", v), "knitr::kable(.freq)")
     cat("\n")
   }
 }
@@ -315,16 +352,28 @@ options(.kable_na)
 ```{r}
 #| label: cdfs
 #| results: asis
+# unnumbered: each child chunk below carries its own label and caption
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(kind, key, caption, code) {
+  label <- paste(kind, "cdfs", gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(key))), sep = "-")
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label),
+                                 paste0("#| ", kind, "-cap: ", encodeString(caption, quote = "\"")), code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+}
 for (group in names(cdfs)) {
   cat("\n### ", group, "\n\n", sep = "")
   for (v in names(cdfs[[group]])) {
-    cdf <- cdfs[[group]][[v]]
+    .cdf <- cdfs[[group]][[v]]
     cat("\n#### ", v, "\n\n", sep = "")
-    cat(knitr::kable(cdf$summary), sep = "\n")
+    .child("tbl", paste(group, v, "summary"), paste0("Summary statistics, ", v), "knitr::kable(.cdf$summary)")
     cat("\n")
-    cat(knitr::kable(cdf$quantiles, caption = "Quantiles (SAS QNTLDEF=5)"), sep = "\n")
+    .child("tbl", paste(group, v, "quantiles"), paste0("Quantiles, ", v, " (SAS QNTLDEF=5)"), "knitr::kable(.cdf$quantiles)")
     cat("\n")
-    cat(knitr::kable(cdf$extremes, caption = "Five lowest and five highest values"), sep = "\n")
+    .child("tbl", paste(group, v, "extremes"), paste0("Five lowest and five highest values, ", v),
+           "knitr::kable(.cdf$extremes)")
     cat("\n")
   }
 }
@@ -335,9 +384,14 @@ for (group in names(cdfs)) {
 ```{r}
 #| label: corrs
 #| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (nrow(corrs)) {
-  cat(knitr::kable(corrs, digits = 3, row.names = FALSE,
-                   caption = "Pearson, pairwise complete, strongest first"), sep = "\n")
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-corrs",
+    "#| tbl-cap: \"Pearson correlations, pairwise complete, strongest first\"",
+    "knitr::kable(corrs, digits = 3, row.names = FALSE)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 } else {
   cat("No correlation sweep: `CORR_VARS` names fewer than two variables.\n")
 }

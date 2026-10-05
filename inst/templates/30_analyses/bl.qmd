@@ -375,7 +375,8 @@ if (is.null(.engine_v) || .engine_v < "0.9.3") {
 ```
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data the bootstrap runner read"
 # This report reads a bag, not data. The runner recorded which rows it
 # screened, and that selection travels in the bag's lineage. A setting in Study
 # choices that differs from the runner's stops here. So does a bag with no
@@ -391,7 +392,7 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
                         value = c(.sel$id, paste(.sel$key, collapse = ", "),
                                   if (length(.sel$where_shown)) paste(.sel$where_shown, collapse = "; ") else "none",
                                   .sel$rows)),
-             col.names = c("Data", ""), caption = "The data the bootstrap runner read")
+             col.names = c("Data", ""))
 # The contract: runners read their data with hvtiRtemplates::read_job_data(), whose
 # selection travels in the bag's lineage.
 
@@ -464,7 +465,8 @@ provenance
 ```
 
 ```{r}
-#| label: seeds
+#| label: tbl-seeds
+#| tbl-cap: "The seed of each bootstrap chunk, for a reproducible rerun"
 # Every seed, so that a rerun is reproducible and a duplicate is visible. Two
 # chunks sharing a seed contain literally the SAME replicates: pooling them
 # counts each twice and reports a Monte-Carlo error smaller than the run
@@ -817,7 +819,7 @@ result as an absence of collinearity.
 ```{r}
 #| label: fig-frequencies
 #| fig-height: 7
-#| fig-cap: "Selection frequency, with Monte-Carlo error and the retention threshold."
+#| fig-cap: "Selection frequency, with Monte-Carlo error and the retention threshold"
 # The error bar is the point of the figure, not decoration. A bare dot plot
 # invites the reader to rank variables by a difference of two points, which is
 # inside the noise at every frequency near the middle of the range.

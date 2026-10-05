@@ -33,7 +33,7 @@ test_that("postage migration selects registered data and explicit ordered EDA co
                        study_config = hvtiRutilities::study_config))
   withr::local_dir(root)
   eval(postage_chunk(job, "edit-study-choices"), env)
-  capture.output(eval(postage_chunk(job, "data"), env))
+  capture.output(eval(postage_chunk(job, "tbl-data"), env))
   expect_identical(env$DATASET, "study")
   expect_null(env$ANALYSIS_SET)
   expect_equal(nrow(env$d), 40L)
@@ -163,6 +163,7 @@ test_that("a migrated legacy EDA report renders real eighteen-panel pages under 
 
 test_that("postage routes actual pages through numbered study folders and embeds the saved files", {
   root <- migration_study_fixture("dp-postage")
+  local_child_chunks()
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   for (name in names(d)) attr(d[[name]], "label") <- paste("Synthetic", name)
   folders <- c("datasets", "descriptive", "distributions", "analyses", "graphs", "documents", "estimates")
@@ -190,6 +191,7 @@ test_that("postage draws its categorical pages in the role colors", {
   # The page is handed to ggsave() whole, so capture it there and build each
   # panel: every bar must be a house color, blue first, missing gray.
   root <- migration_study_fixture("dp-postage")
+  local_child_chunks()
   saved <- list()
   local_mocked_bindings(ggsave = function(filename, plot, ...) {
     saved[[basename(filename)]] <<- plot
@@ -229,6 +231,7 @@ test_that("postage shortens labels that share a heading and prints their key", {
   # Two labels over LABEL_MAX share a heading: both show its abbreviation, and
   # the section says what it stands for. A job's own entry beats the initials.
   root <- migration_study_fixture("dp-postage")
+  local_child_chunks()
   local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
   without_group_list()
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
@@ -260,6 +263,7 @@ test_that("postage prints a key only under sections whose labels were shortened,
   # a shortened label: its section gets no key claiming SP = Surgical procedure.
   # The study's list applies unless the job overrides it.
   root <- migration_study_fixture("dp-postage")
+  local_child_chunks()
   local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
   without_group_list()
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
@@ -292,6 +296,7 @@ test_that("postage prints a key only under sections whose labels were shortened,
 test_that("the group abbreviation list shortens further, when it is installed", {
   skip_if(!length(hvtiRutilities::study_abbreviations(list())), "hvtiRutilities has no group abbreviation list")
   root <- migration_study_fixture("dp-postage")
+  local_child_chunks()
   local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"
@@ -319,11 +324,11 @@ test_that("postage does not require databuild for registered data but validates 
   withr::local_dir(dirname(job))
   eval(postage_chunk(job, "setup"), env)
   eval(postage_chunk(job, "edit-study-choices"), env)
-  capture.output(eval(postage_chunk(job, "data"), env))
+  capture.output(eval(postage_chunk(job, "tbl-data"), env))
   expect_equal(nrow(env$d), 40L)
   # The migrated job reads through read_job_data(), which checks every setting
   # before reading and asks for hvtiRdatabuild only for an analysis set.
-  data <- postage_chunk(job, "data")
+  data <- postage_chunk(job, "tbl-data")
   env$ANALYSIS_SET <- NULL
   env$DATASET <- ""
   expect_error(eval(data, env), "DATASET must name one dataset")

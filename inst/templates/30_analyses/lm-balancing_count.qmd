@@ -105,7 +105,8 @@ if (!is.null(IMPUTATION)) KEY <- unique(c(KEY, IMPUTATION))
 ```
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 # The checksum of every dataset in manifest.yaml is checked before anything is
 # read, so a result can name the data that produced it. It stops on a mismatch.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
@@ -118,9 +119,20 @@ d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
 # The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
 .id <- attr(job_data$record, "selection")$id
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
@@ -135,10 +147,26 @@ fit <- hvtiRpropensity::bs_count(
 ```
 
 ```{r}
-#| label: results
+#| label: tbl-fit-status
+#| tbl-cap: "Fit status of the model"
 knitr::kable(fit$tables$fit_status)
+```
+
+```{r}
+#| label: tbl-estimates
+#| tbl-cap: "Coefficient estimates of the fitted model"
 knitr::kable(fit$tables$estimates)
+```
+
+```{r}
+#| label: tbl-covariance
+#| tbl-cap: "Covariance matrix of the coefficient estimates"
 knitr::kable(fit$tables$covariance)
+```
+
+```{r}
+#| label: tbl-strata-counts
+#| tbl-cap: "Patients in each stratum"
 knitr::kable(fit$tables$strata_counts)
 ```
 

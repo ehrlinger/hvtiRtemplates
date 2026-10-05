@@ -68,7 +68,7 @@ test_that("lm-binary validates variables inside model terms", {
   choices <- list(OUTCOME = "outcome", PREDICTORS = c("age", "I(age^2)"),
                   OUTCOME_LEVELS = c("none", "event"), EVENT_LEVEL = "event",
                   IMPUTATION = NULL)
-  utils::capture.output(lm_run("binary", c("edit-study-choices", "data", "fit"), env, choices))
+  utils::capture.output(lm_run("binary", c("edit-study-choices", "tbl-data", "fit"), env, choices))
   expect_s3_class(env$fit, "lm_fit")
   expect_true("I(age^2)" %in% names(stats::coef(env$fit$models[[1L]])))
 })
@@ -88,7 +88,7 @@ test_that("lm outcome templates fit every declared family", {
     env$d <- d
     env$set_path <- function(kind, file) tempfile(fileext = file)
     env$.root <- withr::local_tempdir("lm-root-")
-    lm_run(qualifier, c("edit-study-choices", "fit", "results", "save"), env, cases[[qualifier]])
+    lm_run(qualifier, c("edit-study-choices", "fit", lm_results(qualifier), "save"), env, cases[[qualifier]])
     expect_true(inherits(env$fit, "lm_fit"), info = qualifier)
     expect_identical(env$fit$meta$model_family, qualifier, info = qualifier)
     expect_identical(env$fit$meta$n_imputations, 2L, info = qualifier)
@@ -121,7 +121,7 @@ test_that("lm propensity and count templates expose pooled inference", {
     env$d <- d
     env$set_path <- function(kind, file) tempfile(fileext = file)
     env$.root <- withr::local_tempdir("lm-root-")
-    labels <- c("edit-study-choices", "fit", "results", "save")
+    labels <- c("edit-study-choices", "fit", lm_results(qualifier), "save")
     lm_run(qualifier, labels, env, cases[[qualifier]])
     expect_true(all(c("estimates", "covariance", "fit_status") %in% names(env$fit$tables)), info = qualifier)
     expect_identical(env$fit$meta$n_imputations, 2L, info = qualifier)
@@ -165,7 +165,7 @@ test_that("lm-checkpred applies the saved bundle without fitting", {
     fit_logistic = function(...) stop("checkpred refitted a model", call. = FALSE),
     .package = "hvtiRpropensity"
   )
-  lm_run("checkpred", c("edit-study-choices", "model", "validate", "results", "save"), env,
+  lm_run("checkpred", c("edit-study-choices", "model", "validate", lm_results("checkpred"), "save"), env,
          list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 10L))
   expect_s3_class(env$validation, "lm_validation")
   expect_equal(lapply(env$model$models, stats::coef), lapply(model$models, stats::coef))
@@ -233,7 +233,7 @@ test_that("lm-checkpred stops when its validation patients were in the training 
     env$study_config <- hvtiRutilities::study_config
     env$set_path <- function(kind, file) file.path(bundle_dir, file)
     choices <- utils::modifyList(list(MODEL_FILE = "lm-binary.rds", OUTCOME = "outcome", GROUPS = 5L), choices)
-    utils::capture.output(lm_run("checkpred", c("edit-study-choices", "data", "model", "training-overlap", labels),
+    utils::capture.output(lm_run("checkpred", c("edit-study-choices", "tbl-data", "model", "training-overlap", labels),
                                  env, choices))
     env
   }

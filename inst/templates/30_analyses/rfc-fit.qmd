@@ -257,7 +257,8 @@ REFIT <- FALSE
 ## Cohort
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 # The checksum of every dataset in manifest.yaml is checked before anything is
 # read, so a result can name the data that produced it. It stops on a mismatch.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
@@ -266,10 +267,7 @@ job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set 
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
-if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
-}
+knitr::kable(job_data$record, col.names = c("Data", ""))
 .outcomes <- intersect(RESPONSE, PREDICTORS)
 if (length(.outcomes)) {
   stop("Do not include the outcome variable in PREDICTORS: ", .outcomes, ".", call. = FALSE)
@@ -325,6 +323,20 @@ if (length(.chr)) {
 }
 ```
 
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(job_data$attrition)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
 ## Forest
 
 ```{r}
@@ -354,17 +366,26 @@ cached there on its own, so it can be recomputed without regrowing the forest.
 ## Does the forest work?
 
 ```{r}
-#| label: diagnostics
+#| label: fig-diagnostics-error
+#| fig-cap: "Out-of-bag error by number of trees, overall and per class"
 # Out-of-bag error by number of trees, overall and per class.
 err <- gg_error(forest)
 plot(err)
+```
 
+```{r}
+#| label: fig-diagnostics-roc
+#| fig-cap: "Out-of-bag ROC curve for the chosen class against the rest"
 # Out-of-bag one-versus-rest ROC curve, and the area under it, for the class
 # named explicitly above. ggRandomForests selects by factor-level position,
 # so ROC_OUTCOME maps the study's label to its position instead of letting
 # factor ordering decide what this report means.
 roc <- gg_roc(forest, which_outcome = ROC_OUTCOME)
 plot(roc)
+```
+
+```{r}
+#| label: diagnostics-auc
 auc <- calc_auc(roc)
 auc
 ```

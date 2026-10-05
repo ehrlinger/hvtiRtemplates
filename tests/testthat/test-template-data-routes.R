@@ -1,7 +1,8 @@
 extract_chunk <- function(path, label) {
   lines <- readLines(path, warn = FALSE)
-  # A chunk holding an EDIT: marker is labeled edit-<label>; either names it.
-  chunk_label <- grep(paste0("^#\\| label: (edit-)?", label, "$"), lines)
+  # A chunk holding an EDIT: marker is labeled edit-<label>, and one that shows a
+  # table is labeled tbl-<label>; any of them names it.
+  chunk_label <- grep(paste0("^#\\| label: (edit-)?(tbl-)?", label, "$"), lines)
   chunk_end <- chunk_label + which(lines[-seq_len(chunk_label)] == "```")[[1L]]
   parse(text = lines[(chunk_label + 1L):(chunk_end - 1L)])
 }
@@ -69,7 +70,9 @@ test_that("descriptive templates can read the whole cohort", {
     ))
 
     expect_equal(env$d, built, info = basename(template))
-    expect_false(result$visible, info = basename(template))
+    # A chunk that shows the data record ends in that table, so its value is visible;
+    # nothing else may leak out of it.
+    expect_identical(result$visible, inherits(result$value, "knitr_kable"), info = basename(template))
   }
 })
 

@@ -100,14 +100,14 @@ test_that("each boot_select() runner saves a bag the report reads, with the sele
     expect_identical(bag$n_rows, sum(data$age >= 40), info = prefix)
     expect_identical(attr(bag, "hvti_provenance")$selection$where, "age >= 40", info = prefix)
 
-    env <- boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load", "data"))
+    env <- boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load", "tbl-data"))
     expect_identical(env$.sel$id, "ccfid", info = prefix)
     expect_identical(env$.sel$where, "age >= 40", info = prefix)
     expect_identical(env$.sel$rows, sum(data$age >= 40), info = prefix)
     # Set to the runner's value, a setting only confirms it; a different one stops.
     confirm <- list(WHERE = quote(age >= 40), ID = "ccfid", KEY = "ccfid")
-    expect_no_error(boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load", "data"), confirm))
-    expect_error(boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load", "data"),
+    expect_no_error(boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load", "tbl-data"), confirm))
+    expect_error(boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load", "tbl-data"),
                              list(WHERE = quote(age >= 65))),
                  "WHERE here \\(age >= 65\\) differs from the upstream job's \\(age >= 40\\)", info = prefix)
   }
@@ -153,7 +153,7 @@ test_that("a bag saved before the data contract stops each report, naming the ba
     saveRDS(bag, file.path(dir, "bagging.rds"))
     env <- boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load"))
     # The bag itself is still read: it is the data chunk that stops.
-    expect_error(boot_report(prefix, env, "data"),
+    expect_error(boot_report(prefix, env, "tbl-data"),
                  paste0("\\(the bootstrap bag bagging[.]rds\\) carries no single recorded data selection: it predates ",
                         "the data contract.*Rerun the bootstrap runner, <subject>-<type>-", prefix,
                         "-runner[.]R, as add_job\\(\\) now writes it"),
@@ -166,7 +166,7 @@ test_that("bh reads its chunks' shared selection, and stops when a chunk has non
   root <- rf_study(rf_mrn_data(id = "ccfid"))
   job <- hvtiRtemplates::read_job_data(hvtiRutilities::study_config(root))
   run <- function() {
-    boot_report("bh", boot_env(root), c("set", "edit-study-choices", "load", "data"), list(EXPECT_BOOT = 4L, EXPECT_CHUNKS = 2L))
+    boot_report("bh", boot_env(root), c("set", "edit-study-choices", "load", "tbl-data"), list(EXPECT_BOOT = 4L, EXPECT_CHUNKS = 2L))
   }
 
   boot_save_chunks(root, list(boot_hazard_chunk(1L, job), boot_hazard_chunk(2L, job)))
@@ -266,7 +266,7 @@ test_that("each report stops on a bag that holds the runner's rows", {
     bag <- readRDS(file.path(dir, "bagging.rds"))
     bag$rows <- data
     saveRDS(bag, file.path(dir, "bagging.rds"))
-    expect_error(boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load", "data")),
+    expect_error(boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load", "tbl-data")),
                  "^The bootstrap bag bagging[.]rds holds patient-level data: bag\\$rows\\$MRN", info = prefix)
   }
   # bh searches every chunk, not only the first, whose fields the pooled bag keeps.
@@ -278,7 +278,7 @@ test_that("each report stops on a bag that holds the runner's rows", {
     ~ age
   })
   boot_save_chunks(root, list(boot_hazard_chunk(1L, job), boot_hazard_chunk(2L, job, extra = list(scope = scope))))
-  expect_error(boot_report("bh", boot_env(root), c("set", "edit-study-choices", "load", "data"),
+  expect_error(boot_report("bh", boot_env(root), c("set", "edit-study-choices", "load", "tbl-data"),
                            list(EXPECT_BOOT = 4L, EXPECT_CHUNKS = 2L)),
                "^The bootstrap bag bh[.]chunk02[.]rds holds patient-level data: bag\\$scope, attribute [.]Environment: d\\$mrn")
 })

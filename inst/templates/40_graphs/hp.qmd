@@ -285,7 +285,8 @@ stopifnot(!is.null(fit), !is.null(km))
 ```
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read, as hz read it"
 .up <- hvtiRtemplates:::.read_upstream_job_data(
   .cfg, .hz_read$lineage,
   list(dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY,
@@ -297,7 +298,7 @@ d <- job_data$data
 TIME <- .up$selection$time
 EVENT <- .up$selection$event
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read, as hz read it")
+knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
 ## Prediction grids
@@ -326,7 +327,8 @@ t_plot <- exp(seq(-8, log(t_max), length.out = 1000))
 ```
 
 ```{r}
-#| label: followup-gate
+#| label: tbl-followup-gate
+#| tbl-cap: "End of follow-up against the longest horizon on each grid"
 # A PARAMETRIC model returns a number at ANY horizon you ask for, including
 # horizons no patient was observed to. That is extrapolation from the fitted
 # shape, not an estimate supported by data, and nothing in the output marks it.
@@ -409,7 +411,8 @@ The deliverable of this job: survival and hazard with confidence limits over the
 reporting grid.
 
 ```{r}
-#| label: nomogram
+#| label: tbl-nomogram
+#| tbl-cap: "Survival, hazard and their confidence limits at each horizon"
 nomogram <- data.frame(
   years    = years,
   survival = pred_surv$fit,
@@ -420,17 +423,18 @@ nomogram <- data.frame(
   haz_hi   = pred_haz$upper
 )
 knitr::kable(nomogram, digits = 6)
+```
 
+```{r}
+#| label: tbl-nomogram-pct
+#| tbl-cap: "Survival (%) with 68% confidence limits (plus or minus 1 SD), not 95%"
 nomogram_pct <- data.frame(
   years        = years,
   survival_pct = round(100 * pred_surv$fit, 1),
   cl_lower_pct = round(100 * pred_surv$lower, 1),
   cl_upper_pct = round(100 * pred_surv$upper, 1)
 )
-knitr::kable(
-  nomogram_pct,
-  caption = "Survival (%) with 68% confidence limits (±1 SD) — NOT 95%"
-)
+knitr::kable(nomogram_pct)
 ```
 
 ### What these confidence limits are worth
@@ -468,6 +472,7 @@ these numbers are used.
 
 ```{r}
 #| label: fig-survival
+#| fig-cap: "Actuarial and parametric survival after the operation"
 s_pct  <- 100 * unname(predict(fit, newdata = data.frame(time = t_plot),
                                type = "survival"))
 x_plot <- t_plot * 12
@@ -489,6 +494,7 @@ knitr::include_graphics(set_path("graphs", "hp-survival.png"))
 
 ```{r}
 #| label: fig-hazard
+#| fig-cap: "Hazard of the parametric model after the operation"
 h_pcpm <- 100 / 12 * unname(predict(fit, newdata = data.frame(time = t_plot),
                                     type = "hazard"))
 
@@ -511,6 +517,7 @@ than papering over.
 
 ```{r}
 #| label: fig-phases
+#| fig-cap: "Phase decomposition of the cumulative hazard"
 # predict() returns the decomposition WIDE -- one column per phase plus
 # `total` -- so it is reshaped here rather than assumed to arrive long.
 dec <- predict(fit, newdata = data.frame(time = t_plot),

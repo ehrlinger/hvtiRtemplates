@@ -114,7 +114,7 @@ test_that("dc-tables refuses a set cut from another dataset and reads a named re
   env$.root <- root
   env$read_built <- hvtiRutilities::read_built
   env$study_config <- hvtiRutilities::study_config
-  code <- tables_chunk(template, "data")
+  code <- tables_chunk(template, "tbl-data")
   assign <- vapply(code, function(x) {
     is.call(x) && identical(x[[1L]], quote(`<-`)) && as.character(x[[2L]]) %in% c("DATASET", "ANALYSIS_SET")
   }, logical(1))
@@ -142,7 +142,7 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   eval(parse(text = tables_region(out, "dc-tables-config")), env)
   eval(tables_chunk(out, "helpers"), env)
-  invisible(eval(tables_chunk(out, "table"), env))
+  invisible(eval(tables_chunk(out, "tbl-table"), env))
   word <- file.path(root, "documents", "cohort-eda", "dc-tables.docx")
   expect_true(file.exists(word))
   expect_equal(nrow(hvtiRtables::hv_check_docx(word)), 0L)
@@ -150,12 +150,12 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   expect_true(any(doc$content_type == "table cell"))
   expect_true(any(grepl("Demography", doc$text, fixed = TRUE)))
   env$BINARY <- c("female", "repair", "age")
-  expect_error(eval(tables_chunk(out, "table"), env), "exactly one explicit bucket")
+  expect_error(eval(tables_chunk(out, "tbl-table"), env), "exactly one explicit bucket")
   env$BINARY <- NULL
-  expect_error(eval(tables_chunk(out, "table"), env), "all three buckets")
+  expect_error(eval(tables_chunk(out, "tbl-table"), env), "all three buckets")
   env$BINARY <- c("female", "repair")
   env$WORD_FILE <- "../escape.docx"
-  expect_error(invisible(eval(tables_chunk(out, "table"), env)), "plain .docx filename", fixed = TRUE)
+  expect_error(invisible(eval(tables_chunk(out, "tbl-table"), env)), "plain .docx filename", fixed = TRUE)
   expect_false(file.exists(file.path(root, "documents", "escape.docx")))
 })
 
@@ -168,7 +168,7 @@ test_that("dc-tables stops on actual CORR structural findings", {
   ))
   print(doc, target = path)
   expect_gt(nrow(hvtiRtables::hv_check_docx(path)), 0L)
-  code <- tables_chunk(template_path("dc", "tables"), "table")
+  code <- tables_chunk(template_path("dc", "tables"), "tbl-table")
   start <- which(vapply(code, function(x) {
     is.call(x) && identical(x[[1L]], quote(`<-`)) && identical(x[[2L]], quote(check))
   }, logical(1)))

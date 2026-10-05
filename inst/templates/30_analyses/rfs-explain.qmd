@@ -262,7 +262,8 @@ model <- stats::as.formula(paste0("Surv(", forest$yvar.names[1], ", ",
 ```
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data the fit job read"
 # This job reads no data: the forest carries its training rows. The fit job
 # recorded how it chose them, and a setting above that differs from the fit's
 # stops here rather than describe rows the forest was not grown on.
@@ -273,17 +274,22 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
                         value = c(.sel$id, paste(.sel$key, collapse = ", "),
                                   if (length(.sel$where_shown)) paste(.sel$where_shown, collapse = "; ") else "none",
                                   .sel$rows)),
-             col.names = c("Data", ""), caption = "The data the fit job read")
+             col.names = c("Data", ""))
 ```
 
 ## Importance
 
 ```{r}
-#| label: importance
+#| label: fig-importance
+#| fig-cap: "Permutation importance of each predictor"
 #| message: true
 vi <- cache_fit("rfs-vimp", vimp(forest), seed = SEED, dir = CACHE_DIR, refit = REFIT)
 plot(gg_vimp(vi))
+```
 
+```{r}
+#| label: tbl-importance
+#| tbl-cap: "Permutation importance and minimal depth of each predictor, in order of importance"
 # Minimal depth ranks by how near the root a variable first splits, a second
 # opinion that needs no permutation. Cheap, so not cached.
 ranked <- names(sort(vi$importance, decreasing = TRUE))
@@ -313,7 +319,8 @@ if (is.null(PARTIAL_VARS)) {
 ## VarPro
 
 ```{r}
-#| label: varpro
+#| label: fig-varpro
+#| fig-cap: "VarPro importance of each predictor"
 #| message: true
 vp <- cache_fit("rfs-varpro", varpro(model, frame, verbose = FALSE),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
@@ -323,17 +330,28 @@ plot(gg_varpro(vp))
 ## Dependence
 
 ```{r}
-#| label: dependence
+#| label: fig-dependence-marginal
+#| fig-cap: "Predicted survival against each selected predictor, as observed"
 #| message: true
 # Marginal: predicted survival against each variable, as observed. Cheap.
 plot(gg_variable(forest, time = TIMES), xvar = sel)
+```
 
+```{r}
+#| label: fig-dependence-partial
+#| message: true
+#| fig-cap: "Partial dependence of the forest's prediction on each selected predictor"
 # Partial: the forest's prediction with every other variable held at its
 # observed values.
 pd <- cache_fit("rfs-partial", gg_partial_rfsrc(forest, xvar.names = sel, partial.time = TIMES),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
 plot(pd)
+```
 
+```{r}
+#| label: fig-dependence-varpro
+#| message: true
+#| fig-cap: "VarPro partial dependence on each selected predictor"
 # The VarPro partial, computed from the varpro fit at the last horizon. Not
 # partialpro() then gg_partialpro(): the latter is deprecated, and for a
 # survival forest a precomputed partialpro() result carries a survival label

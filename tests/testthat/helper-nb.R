@@ -130,7 +130,7 @@ nb_file_bytes <- function(path) {
 }
 nb_fit_in <- function(root, parent = globalenv(), choices = nb_choices()) {
   env <- nb_env(root, parent)
-  utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "save"), env, choices))
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit", "save"), env, choices))
   env
 }
 

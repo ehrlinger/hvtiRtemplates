@@ -257,7 +257,8 @@ hz_art <- .hz_read$value
 ```
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read, as hz read it"
 .up <- hvtiRtemplates:::.read_upstream_job_data(
   .cfg, .hz_read$lineage,
   list(dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY,
@@ -269,11 +270,12 @@ d <- job_data$data
 TIME <- .up$selection$time
 EVENT <- .up$selection$event
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read, as hz read it")
+knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
 ```{r}
-#| label: cohort
+#| label: tbl-cohort
+#| tbl-cap: "Analysable patients, events and censored patients"
 cc <- cohort_counts(d, event = EVENT, time = TIME)
 assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 
@@ -339,7 +341,11 @@ COVARIATES <- list(
   late  = sas_variable_block(sas_lines, "^\\s*late\\s*$",  after = SAS_MACRO,
                              what = "late covariate block")
 )
+```
 
+```{r}
+#| label: tbl-covariates
+#| tbl-cap: "Number and names of the covariates in each phase"
 knitr::kable(data.frame(
   phase     = names(COVARIATES),
   n         = vapply(COVARIATES, length, integer(1)),
@@ -364,10 +370,10 @@ different model, with a different parameter count, and nothing in the output
 would say so.**
 
 ```{r}
-#| label: audit
+#| label: tbl-audit
+#| tbl-cap: "Covariate storage and the conversion applied"
 audit <- covariate_audit(d, unlist(COVARIATES))
-knitr::kable(audit, row.names = FALSE,
-             caption = "Covariate storage and the conversion applied")
+knitr::kable(audit, row.names = FALSE)
 
 # Fail rather than fit a model whose covariates are not what the job specifies.
 if (any(grepl("^ERROR", audit$action))) {
@@ -387,7 +393,8 @@ The `action` column is where that decision is visible; check it before reading
 any coefficient.
 
 ```{r}
-#| label: collinear
+#| label: tbl-collinear
+#| tbl-cap: "Candidate pairs at |r| >= 0.99"
 # What concept grouping structurally CANNOT catch. Grouping works on
 # transformations; two candidates that are the same information under unrelated
 # names share no affix relationship and are invisible to it.
@@ -397,8 +404,7 @@ any coefficient.
 # holding both is singular, and nothing in the output said so.
 collinear <- pool_collinear_pairs(dd, unlist(COVARIATES))
 if (nrow(collinear)) {
-  knitr::kable(collinear, row.names = FALSE, digits = 4,
-               caption = "Candidate pairs at |r| >= 0.99")
+  knitr::kable(collinear, row.names = FALSE, digits = 4)
 } else {
   knitr::kable(data.frame(result = "no candidate pair reaches |r| = 0.99"))
 }
@@ -412,7 +418,8 @@ reading a coefficient.
 ## Phases
 
 ```{r}
-#| label: phases
+#| label: tbl-phases
+#| tbl-cap: "Shape parameters inherited from the hz job"
 # hz_art is the hz job's saved fit, read above with the data it was fitted on.
 hz_fit <- hz_art$deterministic
 
@@ -432,7 +439,7 @@ make_phases <- function(hold_shapes) {
 knitr::kable(data.frame(
   parameter = names(coef(hz_fit)),
   from_hz   = unname(coef(hz_fit))
-), digits = 6, caption = "Shape parameters inherited from the hz job")
+), digits = 6)
 ```
 
 ## Fitting
@@ -500,7 +507,8 @@ if (!is.null(old_seed)) .GlobalEnv$.Random.seed <- old_seed
 ```
 
 ```{r}
-#| label: stages
+#| label: tbl-stages
+#| tbl-cap: "Convergence and fit of each stage"
 se_of <- function(f) {
   v  <- vcov(f)
   dg <- if (is.matrix(v)) diag(v) else rep(NA_real_, length(coef(f)))
@@ -533,6 +541,11 @@ knitr::kable(stages, digits = 6)
 # expression. In a rendered report the reader is not looking at this source,
 # and "isTRUE(stage1$fit$converged) is not TRUE" tells them nothing they can
 # act on.
+```
+
+```{r}
+#| label: tbl-stages-shift
+#| tbl-cap: "Change in the covariate estimates when the shape parameters are freed"
 failed <- stages$stage[!vapply(list(stage1, stage2),
                                function(f) isTRUE(f$fit$converged), logical(1))]
 if (length(failed)) {
@@ -570,7 +583,8 @@ reported <- stage1   # EDIT: stage2 if the table above favors it
 ## Estimates
 
 ```{r}
-#| label: estimates
+#| label: tbl-estimates
+#| tbl-cap: "Covariate estimates with standard errors and hazard ratios per interquartile range, largest first"
 cf <- coef(reported)
 se <- se_of(reported)
 cov_names <- setdiff(names(cf), SHAPE_PARAMS)
@@ -597,13 +611,23 @@ est <- data.frame(
   row.names = NULL
 )
 knitr::kable(est[order(-abs(est$estimate)), ], digits = 6, row.names = FALSE)
+```
 
+```{r}
+#| label: estimates-warning
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 missing_se <- sum(is.na(est$se))
 if (missing_se > 0) {
-  knitr::kable(data.frame(
+  no_se <- data.frame(
     warning = paste(missing_se, "covariate(s) have NO standard error.",
                     "The Hessian is not positive-definite in those directions.")
-  ))
+  )
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-estimates-no-se",
+    "#| tbl-cap: \"Covariates without a standard error\"", "knitr::kable(no_se)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
@@ -625,8 +649,21 @@ indefinite at `beta = 0`. Consider `"wald"`, and say which you used.
 
 ```{r}
 #| label: selection
+#| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 # the levels from YOUR .sas `selection` statement, and the path your
 # companion runner writes to.
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 sel_rds   <- set_path("estimates", "hm-selection.rds")
 
 if (!file.exists(sel_rds)) {
@@ -638,7 +675,7 @@ if (!file.exists(sel_rds)) {
     slstay    = SLSTAY,
     max_steps = MAX_STEPS
   )
-  knitr::kable(not_run)
+  .child("tbl selection not run", "Forward selection has not been run", "knitr::kable(not_run)")
 } else {
   .selection_read <- hvtiRtemplates:::.read_handoff(
     sel_rds, "selection", hvtiRutilities::study_config(start = .root), "the companion hm selection runner"
@@ -656,18 +693,18 @@ if (!file.exists(sel_rds)) {
   )
   keep <- intersect(c("step_num", "action", "variable", "phase",
                       "p_value", "logLik", "n_coef"), names(sel$steps))
-  # print() BOTH. Only the last expression of a block is auto-printed, so a
-  # kable() that is not the final line computes a table and discards it -- the
-  # chunk runs, reports no error, and the table is simply absent.
-  print(knitr::kable(summary_tbl,
-                     caption = "Forward selection, from the companion runner"))
-  print(knitr::kable(sel$steps[, keep], row.names = FALSE, digits = 6,
-                     caption = "Selection path"))
+  # Each table is its own child chunk: only the last expression of a block is
+  # auto-printed, and a child chunk is how each table gets its own number.
+  .path <- sel$steps[, keep]
+  .child("tbl selection summary", "Forward selection, from the companion runner", "knitr::kable(summary_tbl)")
+  .child("tbl selection path", "Selection path", "knitr::kable(.path, row.names = FALSE, digits = 6)")
 }
 ```
 
 ```{r}
 #| label: selection-monotone
+#| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 # A forward selection cannot legitimately LOWER the log-likelihood: adding a
 # term to a nested model can only improve the maximized likelihood. If it
 # drops, the post-entry REFIT landed in a worse optimum than the model it
@@ -676,6 +713,17 @@ if (!file.exists(sel_rds)) {
 #
 # The screen reports p = 0.000 for those entries either way, so this is the
 # only place a reader would find out.
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 if (file.exists(sel_rds)) {
   sel <- .selection_read$value
   # A screen that admitted nothing is a real outcome, not a broken run: it says
@@ -684,11 +732,12 @@ if (file.exists(sel_rds)) {
   # with "arguments imply differing number of rows" -- an error about the
   # REPORT, in a job whose actual finding is that nothing entered.
   if (nrow(sel$steps) == 0L) {
-    knitr::kable(data.frame(
+    .mono <- data.frame(
       steps = 0L,
       note  = paste("No variable entered the model, so there is no path to",
                     "check. Monotonicity skipped.")
-    ))
+    )
+    .child("tbl selection monotone", "Is the selection path monotone?", "knitr::kable(.mono)")
   } else if ("logLik" %in% names(sel$steps)) {
     dropped <- c(FALSE, diff(sel$steps$logLik) < -1e-6)
     mono <- data.frame(
@@ -698,8 +747,7 @@ if (file.exists(sel_rds)) {
       loglik_at_last_step   = sel$steps$logLik[nrow(sel$steps)],
       best_loglik           = max(sel$steps$logLik)
     )
-    print(knitr::kable(mono, digits = 3,
-                       caption = "Is the selection path monotone?"))
+    .child("tbl selection monotone", "Is the selection path monotone?", "knitr::kable(mono, digits = 3)")
     if (any(dropped)) {
       warning("The selection path lowers the log-likelihood at step(s) ",
               paste(which(dropped), collapse = ", "),
@@ -713,6 +761,8 @@ if (file.exists(sel_rds)) {
 
 ```{r}
 #| label: selection-crowding
+#| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 # How much of the step budget went to a concept the model already had.
 #
 # The monotonicity check above catches the SYMPTOM of collinear forms entering
@@ -725,6 +775,17 @@ if (file.exists(sel_rds)) {
 # Grouping is conservative by construction, so this is a FLOOR: a concept
 # nobody listed is still counted as separate variables. It understates and
 # never overstates.
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 if (file.exists(sel_rds)) {
   sel <- .selection_read$value
   al  <- if (is.null(sel$concept_aliases)) character(0) else sel$concept_aliases
@@ -735,9 +796,11 @@ if (file.exists(sel_rds)) {
     crowded_concepts = nrow(cr),
     redundant_slots  = redundant
   )
-  print(knitr::kable(crowding,
-                     caption = "Concept crowding among the selected covariates"))
-  if (nrow(cr)) print(knitr::kable(cr, row.names = FALSE))
+  .child("tbl selection crowding", "Concept crowding among the selected covariates", "knitr::kable(crowding)")
+  if (nrow(cr)) {
+    .child("tbl selection crowding forms", "Concepts that more than one selected covariate expresses",
+           "knitr::kable(cr, row.names = FALSE)")
+  }
 }
 ```
 
@@ -748,7 +811,8 @@ model is right.** The SAS job answers that with `%deciles`: group patients by
 predicted risk and compare observed against expected within each group.
 
 ```{r}
-#| label: calibration
+#| label: tbl-calibration
+#| tbl-cap: "Observed against expected events in ten groups of predicted risk"
 # the horizon, in the time unit of TIME. SAS: %deciles(..., time=10).
 
 dec <- hzr_deciles(reported, time = DECILE_TIME, groups = 10)
@@ -764,7 +828,8 @@ A group where observed and expected diverge is a region of risk the model gets
 wrong, and it is invisible in a coefficient table.
 
 ```{r}
-#| label: gof
+#| label: tbl-gof
+#| tbl-cap: "Observed vs parametric, last ten event times"
 # The parametric fit against the actuarial estimate over the whole follow-up,
 # rather than at one horizon. This is the nearest available equivalent to the
 # SAS `%check` step, which refits with `maxsteps=0` to compute Q-statistics for
@@ -775,8 +840,7 @@ gof <- hzr_gof(reported)
 knitr::kable(utils::tail(gof[, intersect(c("time", "km_surv", "par_surv",
                                            "cum_observed", "cum_expected",
                                            "residual"), names(gof))], 10),
-             row.names = FALSE, digits = 5,
-             caption = "Observed vs parametric, last ten event times")
+             row.names = FALSE, digits = 5)
 ```
 
 ## Save

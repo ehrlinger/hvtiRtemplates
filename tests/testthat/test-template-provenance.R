@@ -522,7 +522,7 @@ test_that("RF provenance chunks record the fitted objects they consume", {
     rf_skip_unless_stack(rf_template_packages(prefix, "fit"))
     case <- rf_cases[[prefix]]
     fit <- rf_env(case$data())
-    rf_run(prefix, "fit", c("set", "edit-study-choices", "data", "fit", "save"), fit, case$choices)
+    rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data", "fit", "save"), fit, case$choices)
     fit$SUBJECT <- "provenance"
     fit$TYPE <- "fit"
     fit$.in <- file.path(fit$.root, paste0(prefix, "-fit.rmarkdown"))

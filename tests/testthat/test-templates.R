@@ -746,7 +746,7 @@ test_that("the hz template reads theta names through TemporalHazard's exported A
   code <- sub("#.*$", "", src)
   expect_false(any(grepl("hzr_phase_theta_names|getFromNamespace|TemporalHazard:::", code)))
 
-  at <- grep("#| label: phases", src, fixed = TRUE)
+  at <- grep("#| label: tbl-phases", src, fixed = TRUE)
   end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
   chunk <- src[(at + 1L):(end - 1L)]
   expect_true(any(grepl("hzr_theta_names(phases)", chunk, fixed = TRUE)))

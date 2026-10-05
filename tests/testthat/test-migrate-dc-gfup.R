@@ -45,7 +45,7 @@ test_that("dc-gfup extracts agreed fields with source evidence and keeps identif
   env$study_config <- hvtiRutilities::study_config
   withr::local_dir(root)
   eval(gfup_chunk(out, "edit-study-choices"), env)
-  capture.output(eval(gfup_chunk(out, "data"), env))
+  capture.output(eval(gfup_chunk(out, "tbl-data"), env))
   capture.output(eval(gfup_chunk(out, "qc"), env))
   expect_identical(nrow(env$d), 40L)
   expect_identical(env$cohort_counts, data.frame(full = 40L, event = 20L, censored = 20L, missing_event = 0L))
@@ -66,7 +66,11 @@ test_that("dc-gfup QC reports literal summaries and caps private review rows", {
                   iv_fup = c(1, 2, 3, 4, 5, 6), local_id = letters[1:6])
   env <- gfup_env(d)
   code <- gfup_chunk(template_path("dc", "gfup"), "qc")
-  output <- capture.output(eval(code, env))
+  review <- gfup_chunk(template_path("dc", "gfup"), "tbl-qc-review")
+  output <- capture.output({
+    eval(code, env)
+    eval(review, env)
+  })
   expect_identical(env$cohort_counts, data.frame(full = 6L, event = 2L, censored = 3L, missing_event = 1L))
   expect_equal(env$followup_qc[1L, ], data.frame(
     interval = "iv_dead", missing = 1L, negative = 1L, zero = 1L,
@@ -76,7 +80,10 @@ test_that("dc-gfup QC reports literal summaries and caps private review rows", {
   expect_identical(names(env$review_rows), c("dead", "iv_dead", "iv_fup"))
   expect_false(any(grepl("local_id", output, fixed = TRUE)))
   env$IDENTIFIER <- "local_id"
-  capture.output(eval(code, env))
+  capture.output({
+    eval(code, env)
+    eval(review, env)
+  })
   expect_identical(env$review_rows$local_id, c("a", "b"))
 })
 
@@ -211,7 +218,7 @@ test_that("dc-gfup ignores assignment-like strings and comments", {
 
 test_that("dc-gfup dataset selection refuses a set cut from another dataset and reads named data", {
   root <- migration_study_fixture("dc-gfup")
-  code <- gfup_chunk(template_path("dc", "gfup"), "data")
+  code <- gfup_chunk(template_path("dc", "gfup"), "tbl-data")
   assignments <- vapply(code, function(x) {
     is.call(x) && identical(x[[1L]], quote(`<-`)) && as.character(x[[2L]]) %in% c("DATASET", "ANALYSIS_SET")
   }, logical(1))
@@ -244,6 +251,7 @@ test_that("dc-gfup reports empty and missing-only cohorts without fictitious sub
 })
 
 test_that("dc-gfup retains optional event-coding cross-tabs with field checks", {
+  local_child_chunks()
   code <- gfup_chunk(template_path("dc", "gfup"), "checks")
   env <- list2env(list(d = data.frame(dead = c(0, 1, NA), event_source = c(0, 1, NA)),
                        CHECKS = list(c("dead", "event_source"))))

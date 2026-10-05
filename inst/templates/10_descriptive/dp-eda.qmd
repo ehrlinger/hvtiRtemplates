@@ -34,6 +34,7 @@ standalone job cannot disagree about the data.
 
 ```{r}
 #| label: setup
+# unnumbered: loads packages and checks versions only
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -183,7 +184,7 @@ EVENTS <- list()
 # column here to draw it anyway. The job's ID is never drawn, even when named
 # here. A KEY column beside it, such as a visit time, is left out of NULL but
 # drawn when named here, as that column's own distribution; a measure's course
-# over visits is a spaghetti plot (hvtiPlotR::hv_spaghetti()), not a page here.
+# over visits is a spaghetti plot, drawn by hvtiPlotR::hv_spaghetti, not a page here.
 # The follow-up columns are drawn too, as
 # dp-postage draws them, so a section here stays the standalone job's figure.
 # A named column that is not in the data stops the render, and the error
@@ -249,22 +250,35 @@ ABBREVIATIONS <- NULL
      never has to ask which data a table describes. -->
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
 
 ```{r}
 #| label: spec
+# unnumbered: checks the choices and defines helpers only; its tables and figures are child chunks elsewhere
 # The follow-up choices are checked by hv_followup_panels() below; these are
 # dp-postage's checks of the variable choices, unchanged.
 column_names <- function(x) is.character(x) && !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
@@ -362,8 +376,19 @@ abbreviation_key <- function(vars) {
   }
 }
 
-show_table <- function(x, caption, digits = getOption("digits")) {
-  cat("\n", knitr::kable(x, caption = caption, digits = digits, row.names = FALSE), "\n", sep = "\n")
+# Every table and figure below is a chunk of its own, emitted with knit_child(),
+# so Quarto numbers it: a loop over panels or pages cannot give one chunk several
+# labels. A label is a kind and a key, such as "tbl gfup all cohort".
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
 }
 # Link each saved figure relative to wherever this document sits. Quarto
 # rewrites an absolute path into a broken relative one and then cannot embed
@@ -386,6 +411,7 @@ table and not described.
 ```{r}
 #| label: overview-contents
 #| results: asis
+# unnumbered: its child chunk carries its own label and caption
 # The same rule the sections use, applied whatever VARIABLES says, less its date
 # half: a date's share missing is worth seeing, an identifier's is not.
 is_date <- vapply(d, inherits, logical(1L), c("Date", "POSIXt")) |
@@ -393,8 +419,9 @@ is_date <- vapply(d, inherits, logical(1L), c("Date", "POSIXt")) |
 id_cols <- names(d)[looks_like_id(names(d)) & !is_date]
 contents <- hvtiRutilities::proc_contents(d, order = "varnum")
 shown <- contents$variables[!contents$variables$variable %in% id_cols, ]
-show_table(shown[, c("variable", "type", "label", "n_unique", "pct_missing")],
-           paste0("Contents: ", nrow(d), " rows, ", ncol(d), " columns"))
+.shown <- shown[, c("variable", "type", "label", "n_unique", "pct_missing")]
+.child("tbl overview contents", paste0("Contents: ", nrow(d), " rows, ", ncol(d), " columns"),
+       "knitr::kable(.shown, row.names = FALSE)")
 if (length(id_cols)) cat("Identifier columns, not described:", paste(id_cols, collapse = ", "), "\n")
 ```
 
@@ -412,6 +439,7 @@ cat("A point below the diagonal is follow-up short of what the close date allows
 #| label: gfup-window
 #| results: asis
 #| eval: !expr '"followup" %in% SECTIONS'
+# unnumbered: its child chunk carries its own label and caption
 # hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
 # names every missing column at once, refuses a name used twice and the
 # wrong-origin mistake, and works out the window the panels share. dp-gfup
@@ -421,18 +449,20 @@ fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_Y
 close_date <- fp$meta$close_date
 # Name the edit point a reader can find in this file, not the function's argument.
 close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
-show_table(data.frame(
+.window <- data.frame(
   quantity = c("patients", "operation year missing", "first operation", "last operation",
                "close date", "close date is"),
   value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, format(fp$meta$first_operation),
             format(fp$meta$study_end), format(close_date), close_source)
-), "Operation years and the close date")
+)
+.child("tbl gfup window", "Operation years and the close date", "knitr::kable(.window, row.names = FALSE)")
 ```
 
 ```{r}
 #| label: gfup-panels
 #| results: asis
 #| eval: !expr '"followup" %in% SECTIONS'
+# unnumbered: each child chunk below carries its own label and caption
 # Each death panel gets dc-gfup's tables over its own two columns, through
 # hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
 # selected, so the report carries no patient-level column; run dc-gfup to review
@@ -460,8 +490,11 @@ for (i in seq_len(nrow(fp$data))) {
       " missing a column this panel needs.\n\n", sep = "")
   if (row$type == "followup") {
     fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time)
-    show_table(fc$cohort, "Cohort: event, censored and missing event status")
-    show_table(fc$intervals, "Follow-up interval: missing, negative and zero values")
+    .child(paste("tbl gfup", nm, "cohort"), paste0("Cohort, ", row$title, ": event, censored and missing event status"),
+           "knitr::kable(fc$cohort, row.names = FALSE)")
+    .child(paste("tbl gfup", nm, "intervals"),
+           paste0("Follow-up interval, ", row$title, ": missing, negative and zero values"),
+           "knitr::kable(fc$intervals, row.names = FALSE)")
     p <- plots[[nm]] +
       status_colors(c("Alive", "Dead")) +
       scale_shape_manual(values = c(Alive = 1, Dead = 4))
@@ -475,13 +508,16 @@ for (i in seq_len(nrow(fp$data))) {
     theme_hv_manuscript()
   file <- set_path("graphs", paste0("dp-eda-gfup-", nm, ".png"))
   ggplot2::ggsave(file, p, width = 7, height = 6, units = "in", dpi = 150)
-  cat("![", row$title, "](", figure_link(file), ")\n\n", sep = "")
+  .link <- figure_link(file)
+  .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", row$title),
+         "knitr::include_graphics(.link, error = FALSE)")
   figure_files <- c(figure_files, file)
 }
 ```
 
 ```{r}
 #| label: sections
+# unnumbered: defines the section helper only; its tables and figures are child chunks
 # One section of hv_eda_pages() pages with its table, drawn exactly as
 # dp-postage draws it. One categorical table serves the percent and the count
 # sections, shown under whichever comes first, because a table can carry both
@@ -502,7 +538,8 @@ draw_section <- function(section) {
   if (section == "continuous") {
     stats <- hvtiRutilities::proc_means(d, vars = vars, stats = c("n", "nmiss", "mean", "std", "min",
                                                                   "p25", "median", "p75", "max"))
-    show_table(stats, "Continuous variables", digits = 2)
+    .child(paste("tbl eda", section, "summary"), "Continuous variables",
+           "knitr::kable(stats, digits = 2, row.names = FALSE)")
   } else if (identical(section, freq_section)) {
     freq <- do.call(rbind, lapply(vars, function(v) {
       f <- hvtiRutilities::proc_freq(d, v, missing = TRUE)
@@ -510,7 +547,8 @@ draw_section <- function(section) {
       data.frame(variable = v, level = ifelse(is.na(level), "(missing)", level),
                  n = f$Frequency, percent = round(f$Percent, 1))
     }))
-    show_table(freq, "Categorical variables, missing counted")
+    .child(paste("tbl eda", section, "frequencies"), "Categorical variables, missing counted",
+           "knitr::kable(freq, row.names = FALSE)")
   }
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
   files <- character(0)
@@ -519,8 +557,11 @@ draw_section <- function(section) {
     ggplot2::ggsave(file, pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
                     width = 11, height = 8.5, units = "in", dpi = 150)
     on_page <- attr(pages[[i]], "variables")
-    cat("\n### ", titles[[section]], ", page ", i, "\n\n![", paste(labels[on_page], collapse = ", "),
-        "](", figure_link(file), ")\n\n", sep = "")
+    cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")
+    .link <- figure_link(file)
+    .child(paste("fig eda", section, "page", i),
+           paste0(titles[[section]], ", page ", i, ": ", paste(labels[on_page], collapse = ", ")),
+           "knitr::include_graphics(.link, error = FALSE)")
     files <- c(files, file)
   }
   abbreviation_key(vars)

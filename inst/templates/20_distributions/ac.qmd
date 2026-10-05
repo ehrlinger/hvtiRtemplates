@@ -225,7 +225,8 @@ labs <- c("30 days", "6 months", "1 year", "5 years", "10 years")
 ## Cohort
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 # The checksum of every dataset in manifest.yaml is checked before anything is
 # read, so a result can name the data that produced it. It stops on a mismatch.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
@@ -234,9 +235,20 @@ job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set 
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
@@ -246,7 +258,8 @@ if (!is.null(job_data$attrition)) {
      unedited job stop rather than silently accept an unreconciled cohort. -->
 
 ```{r}
-#| label: cohort
+#| label: tbl-cohort
+#| tbl-cap: "Analysable patients, events and censored patients"
 cc <- cohort_counts(d, event = EVENT, time = TIME)
 assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 
@@ -298,12 +311,17 @@ derive_cats <- function(d) {
   d
 }
 d <- derive_cats(d)
+```
 
+```{r}
+#| label: tbl-derive
+#| tbl-cap: "Patients in each derived category"
 knitr::kable(as.data.frame(table(cat_a = d$cat_a), stringsAsFactors = FALSE))
 ```
 
 ```{r}
-#| label: derive-check
+#| label: tbl-derive-check
+#| tbl-cap: "Each derived category against the variable it came from"
 # A cumulative-overwrite derivation fails QUIETLY: reorder the conditions and
 # every patient still lands in some category, the counts still sum to the
 # cohort, and every stratified estimate below is wrong while looking entirely
@@ -357,8 +375,7 @@ derived_rows <- function(cat) {
 
 knitr::kable(
   do.call(rbind, lapply(names(DERIVED), derived_rows)),
-  row.names = FALSE, digits = 4,
-  caption = "Each derived category against the variable it came from"
+  row.names = FALSE, digits = 4
 )
 ```
 
@@ -383,7 +400,20 @@ choice, so it is not marked as an edit; change it only if your job overrides
 
 ```{r}
 #| label: km-helpers
+# unnumbered: defines helpers only
 CLEVEL <- 0.68268948
+
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 
 # your time and status variables.
 
@@ -487,19 +517,20 @@ report_unknown <- function(fit, var) {
   src <- attr(fit, "unknown_sources")
   if (is.null(src)) return(invisible(NULL))
   cap <- paste0(
-    "What the ", var, " \"", UNKNOWN, "\" stratum is made of -- a missingness ",
+    "What the ", var, " \"", UNKNOWN, "\" stratum is made of: a missingness ",
     "group, NOT a clinical subgroup. SAS %KAPLAN drops these rows."
   )
-  print(knitr::kable(src, row.names = FALSE, caption = cap))
+  .child(paste("tbl km strata", var, "unknown"), cap, "knitr::kable(src, row.names = FALSE)")
 }
 ```
 
 ## Overall
 
 ```{r}
-#| label: km-overall
+#| label: tbl-km-overall
+#| tbl-cap: "Overall life table (first 20 rows)"
 km <- km_fit(d)
-knitr::kable(head(readable(km), 20), caption = "Overall life table (first 20 rows)")
+knitr::kable(head(readable(km), 20))
 ac_art <- hvtiRtemplates:::.attach_handoff_lineage(
   list(overall = km),
   data = .provenance_data,
@@ -518,7 +549,8 @@ Survival at reporting horizons, read off the step function as the last estimate
 at or before each horizon.
 
 ```{r}
-#| label: horizons
+#| label: tbl-horizons
+#| tbl-cap: "Overall survival (%) at reporting horizons"
 # your reporting horizons, in the time unit of TIME (years here).
 # A wrong grid does not error — it produces a plausible-looking table.
 
@@ -543,7 +575,7 @@ at_horizon <- function(fit, g) {
 knitr::kable(data.frame(
   horizon  = labs,
   survival = round(100 * vapply(grid, at_horizon, numeric(1), fit = km), 1)
-), caption = "Overall survival (%) at reporting horizons")
+))
 ```
 
 ## Stratified
@@ -553,6 +585,8 @@ knitr::kable(data.frame(
 
 ```{r}
 #| label: km-strata
+#| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 stratum_row <- function(s) {
   data.frame(
     stratum  = s$stratum[1],
@@ -566,11 +600,8 @@ stratum_row <- function(s) {
 # your stratification variables.
 for (v in STRATA) {
   fit <- km_by(d, v)
-  print(knitr::kable(
-    do.call(rbind, lapply(split(fit, fit$stratum), stratum_row)),
-    row.names = FALSE,
-    caption = paste0("Survival (%) by ", v)
-  ))
+  .strata <- do.call(rbind, lapply(split(fit, fit$stratum), stratum_row))
+  .child(paste("tbl km strata", v), paste0("Survival (%) by ", v), "knitr::kable(.strata, row.names = FALSE)")
   report_unknown(fit, v)
 }
 ```

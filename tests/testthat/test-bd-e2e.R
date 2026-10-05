@@ -40,7 +40,7 @@ test_that("bd publishes and registers a release, and ac reads it", {
   suppressWarnings(utils::capture.output({
     hazard_run("ac", c("set", "edit-study-choices"), env,
                list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)))
-    hazard_run("ac", c("data", "cohort", "km-helpers", "km-overall"), env)
+    hazard_run("ac", c("tbl-data", "tbl-cohort", "km-helpers", "tbl-km-overall"), env)
   }))
   expect_setequal(env$d$ccfid, release$ccfid)
 })
