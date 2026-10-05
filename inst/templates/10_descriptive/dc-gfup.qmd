@@ -171,8 +171,8 @@ ORIGIN_YEAR <- 1990
 CLOSE_DATE <- NULL
 
 # EDIT: one entry per death panel. `status` is the 1/0 death indicator and
-# `time` its follow-up in years; the default draws the EVENT and FOLLOWUP
-# columns checked above. A study that ascertains deaths two ways draws both,
+# `time` its follow-up in years; the default draws the same columns as the
+# EVENT and FOLLOWUP defaults above. A study that ascertains deaths two ways draws both,
 # for example
 #   systematic = list(status = "deads", time = "iv_deads", title = "Systematic deaths")
 PANELS <- list(
@@ -325,16 +325,32 @@ an equivalent follow-up definition by itself.
 # wrong-origin mistake, and works out the window the panels share: from
 # 1 January of ORIGIN_YEAR, where hv_followup() draws its diagonal, to the last
 # operation. The EDA report calls the same function, so its panels are these.
-fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
-                                    panels = PANELS, events = EVENTS, close_date = CLOSE_DATE)
-close_date <- fp$meta$close_date
-# Name the edit point a reader can find in this file, not the function's argument.
-close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
+# A refusal does not stop the job: the tables above are the follow-up check and
+# do not depend on the figure, so the refusal is reported where the figure would
+# be, and the render carries on. It is also raised as a warning, so a console
+# render says so too.
+panel_counts <- list()
+fp <- tryCatch(
+  hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
+                                panels = PANELS, events = EVENTS, close_date = CLOSE_DATE),
+  error = function(e) e
+)
+figure_drawn <- !inherits(fp, "error")
+if (figure_drawn) {
+  close_date <- fp$meta$close_date
+  # Name the edit point a reader can find in this file, not the function's argument.
+  close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
+} else {
+  warning("The goodness-of-follow-up figure was not drawn: ", conditionMessage(fp), call. = FALSE)
+  close_date <- NA
+  close_source <- paste("not drawn:", conditionMessage(fp))
+}
 ```
 
 ```{r}
 #| label: tbl-window
 #| tbl-cap: "Operation years and the close date"
+#| eval: !expr figure_drawn
 knitr::kable(data.frame(
   quantity = c("patients", "operation year missing", "first operation", "last operation",
                "close date", "close date is"),
@@ -367,6 +383,11 @@ the line; it is the **blue** points drifting below it that need an explanation.
                         envir = parent.frame(), quiet = TRUE), sep = "\n")
   cat("\n")
 }
+if (!figure_drawn) {
+  cat("\n::: {.callout-warning title=\"The figure was not drawn\"}\n",
+      conditionMessage(fp), "\n\nThe tables above do not depend on it. Fix the choice the ",
+      "message names, usually `OPYRS` or `ORIGIN_YEAR`, and render again.\n:::\n\n", sep = "")
+}
 figure_link <- function(file) {
   xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd(), error = FALSE)
 }
@@ -383,9 +404,8 @@ status_colors <- function(levels) {
   keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
   scale_color_manual(values = stats::setNames(COLORS[keys], levels))
 }
-plots <- plot(fp, alpha = ALPHA)
-panel_counts <- list()
-for (i in seq_len(nrow(fp$data))) {
+plots <- if (figure_drawn) plot(fp, alpha = ALPHA) else list()
+for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   row <- fp$data[i, ]
   nm <- row$panel
   panel_counts[[nm]] <- list(drawn = row$n_drawn, excluded = row$n_excluded)
@@ -453,7 +473,8 @@ cat(hvtiRtemplates:::.embed_provenance(
       followup = list(variable = FOLLOWUP)
     ),
     cohort = as.list(cohort_counts[1L, , drop = FALSE]),
-    followup = list(origin_year = ORIGIN_YEAR, close_date = format(close_date),
+    followup = list(origin_year = ORIGIN_YEAR,
+                    close_date = if (figure_drawn) format(close_date) else NA_character_,
                     close_date_source = close_source, panels = panel_counts)
   )
 ))

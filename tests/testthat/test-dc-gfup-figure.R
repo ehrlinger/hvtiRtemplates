@@ -27,53 +27,45 @@ test_that("dc-gfup renders a death panel and an event panel", {
   expect_true(all(file.info(pngs)$size > 1000))
 })
 
-test_that("dc-gfup names every missing column in one error", {
+# A refusal from hv_followup_panels() must not cost the study its follow-up
+# tables: the job renders, says why the figure is missing, and draws no panel.
+render_refused <- function(s) {
+  quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
+  html <- sub("[.]qmd$", ".html", s$job)
+  testthat::expect_true(file.exists(html))
+  out <- paste(readLines(html, warn = FALSE), collapse = "\n")
+  testthat::expect_match(out, "The figure was not drawn", fixed = TRUE)
+  testthat::expect_match(out, "Follow-up intervals: missing, negative and zero values", fixed = TRUE)
+  testthat::expect_length(list.files(file.path(s$root, "graphs"), pattern = "^dc-gfup-.*[.]png$", recursive = TRUE), 0L)
+  out
+}
+
+test_that("dc-gfup names every missing column in one message, and keeps its tables", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
-  edits <- c(base_edits, list(
+  out <- render_refused(scaffold_gfup(c(base_edits, list(
     "^  all = list\\(status = " = "  all = list(status = \"nope1\", time = \"nope2\", title = \"All deaths\")"
-  ))
-  s <- scaffold_gfup(edits)
-  # quiet = TRUE hides the R error, and the error text is what is under test.
-  err <- tryCatch({
-    utils::capture.output(quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = FALSE),
-                          type = "message")
-    NULL
-  }, error = function(e) conditionMessage(e))
-  expect_false(is.null(err))
-  expect_match(paste(err, collapse = "\n"), "not in the data: nope1, nope2")
+  ))))
+  expect_match(out, "not in the data: nope1, nope2", fixed = TRUE)
 })
 
-test_that("dc-gfup refuses a two-digit origin year", {
+test_that("dc-gfup reports a two-digit origin year, and keeps its tables", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
-  s <- scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85")))
-  err <- tryCatch({
-    utils::capture.output(quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = FALSE),
-                          type = "message")
-    NULL
-  }, error = function(e) conditionMessage(e))
-  expect_false(is.null(err))
-  expect_match(paste(err, collapse = "\n"), "Check `origin_year`")
+  out <- render_refused(scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85"))))
+  expect_match(out, "Operations fall outside 1900", fixed = TRUE)
 })
 
-test_that("dc-gfup refuses a name shared by PANELS and EVENTS", {
+test_that("dc-gfup reports a name shared by PANELS and EVENTS, and keeps its tables", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
-  edits <- c(base_edits, list(
+  out <- render_refused(scaffold_gfup(c(base_edits, list(
     "^EVENTS <- list\\(\\)$" = paste0(
       "EVENTS <- list(all = list(event = \"repair\", time = \"iv_fup\", ",
       "death = \"dead\", death_time = \"iv_dead\"))"
     )
-  ))
-  s <- scaffold_gfup(edits)
-  err <- tryCatch({
-    utils::capture.output(quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = FALSE),
-                          type = "message")
-    NULL
-  }, error = function(e) conditionMessage(e))
-  expect_false(is.null(err))
-  expect_match(paste(err, collapse = "\n"), "all is used twice")
+  ))))
+  expect_match(out, "all is used twice", fixed = TRUE)
 })
 
 test_dc_gfup_window <- function(close_date) {
