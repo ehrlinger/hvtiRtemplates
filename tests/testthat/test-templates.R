@@ -632,6 +632,23 @@ test_that("template_list()$call is NA for a template add_job() cannot scaffold",
   expect_identical(.template_call(f), NA_character_)
 })
 
+test_that("template_list()$call reads any string literal and refuses what add_job() would", {
+  # add_job() rewrites a single-quoted SUBJECT line as readily as a double-quoted
+  # one, so the call must read it too. Raised by Codex on #239.
+  f <- withr::local_tempfile(fileext = ".qmd")
+  name <- sub("[.]qmd$", "", basename(f))
+  writeLines(c("SUBJECT <- 'cohort'  # a comment", 'TYPE    <- "eda"'), f)
+  expect_identical(.template_call(f), sprintf('add_job("%s", subject = "cohort", type = "eda")', name))
+  call <- parse(text = .template_call(f))[[1L]]
+  expect_identical(c(call$subject, call$type), c("cohort", "eda"))
+  # Not one string add_job() accepts: no call, rather than one it refuses.
+  for (bad in c('SUBJECT <- "co-hort"', 'SUBJECT <- paste0("co", "hort")', 'SUBJECT <- c("a", "b")',
+                "SUBJECT <- NA_character_", 'SUBJECT <- "unterminated')) {
+    writeLines(c(bad, 'TYPE    <- "eda"'), f)
+    expect_identical(.template_call(f), NA_character_, info = bad)
+  }
+})
+
 test_that(".select_template() refuses to guess when a prefix is ambiguous", {
   # The whole point. Taking the first row is how one `dp` bucket hid four job
   # types; an unanswered question must not get a confident answer.

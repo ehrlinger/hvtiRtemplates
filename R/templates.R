@@ -58,13 +58,21 @@ template_list <- function() {
 # own SUBJECT and TYPE lines, the ones add_job() rewrites, so the example is
 # one that fits the template, and naming the arguments shows they are the
 # caller's to change. NA where a template lacks exactly one of either line,
-# which add_job() refuses to scaffold anyway.
+# which add_job() refuses to scaffold anyway, and where the line's value is not
+# one string add_job() would accept as a field, so the call is never one that
+# fails to parse or that add_job() refuses. The line is parsed, not matched, so
+# 'single' and "double" quotes and a trailing comment all read the same.
+# Raised by Codex on #239.
 .template_call <- function(file) {
   txt <- readLines(file, warn = FALSE)
   value <- function(marker) {
     line <- grep(paste0("^", marker, "\\s+<- "), txt, value = TRUE)
     if (length(line) != 1L) return(NA_character_)
-    sub('^[^"]*"([^"]*)".*$', "\\1", line)
+    expr <- tryCatch(parse(text = line, keep.source = FALSE), error = function(e) NULL)
+    if (length(expr) != 1L) return(NA_character_)
+    rhs <- expr[[1L]][[3L]]
+    ok <- is.character(rhs) && length(rhs) == 1L && !is.na(rhs) && grepl("^[A-Za-z0-9_]+$", rhs)
+    if (ok) rhs else NA_character_
   }
   subject <- value("SUBJECT")
   type <- value("TYPE")
