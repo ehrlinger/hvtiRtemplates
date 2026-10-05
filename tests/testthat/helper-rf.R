@@ -303,7 +303,7 @@ boot_run_runner <- function(prefix, root, env, settings = boot_settings(prefix))
 # Every chunk of a boot_select() report, in order, that a render evaluates
 # after `setup` and `guard-edits`.
 boot_report_labels <- c(
-  "set", "edit-study-choices", "load", "tbl-data", "completeness", "contract", "bootstrap-provenance", "seeds",
+  "set", "edit-study-choices", "load", "tbl-data", "completeness", "contract", "bootstrap-provenance", "tbl-seeds",
   "dropped-summary", "dropped-detail", "health", "frequencies", "retained", "edit-concept-map",
   "concept-frequencies", "concept-union", "concept-counts", "cluster-matrix", "edit-clusters", "edit-collinear",
   "save"

@@ -444,7 +444,8 @@ provenance
 ```
 
 ```{r}
-#| label: seeds
+#| label: tbl-seeds
+#| tbl-cap: "The seed of each bootstrap chunk, for a reproducible rerun"
 # Every seed, so that a rerun is reproducible and a duplicate is visible. Two
 # chunks sharing a seed contain literally the SAME replicates: pooling them
 # counts each twice and reports a Monte-Carlo error smaller than the run

@@ -9,9 +9,16 @@
 
 table_calls <- c("kable", "kbl", "gt", "flextable", "hv_tbl_summary",
                  "hv_correlation_table", "hv_man_table")
+# Helpers whose value is a table that prints when the call stands alone on a
+# line (or inside print()); an assignment such as `bag <- boot_bag(...)` shows
+# nothing, so only a bare call counts. boot_validate() is absent on purpose: it
+# returns invisible(TRUE) and exists for the error it raises.
+printed_table_calls <- c("proc_contents", "proc_means", "proc_freq", "boot_provenance", "boot_health",
+                         "boot_seeds", "boot_frequencies", "boot_concepts", "boot_dropped",
+                         "boot_shortfall", "boot_clusters", "boot_select", "boot_chunk_files")
 figure_calls <- c("ggplot", "plot", "hv_trends", "hv_followup", "hv_followup_panels",
                   "hv_spaghetti", "hv_eda_pages", "hv_correlation_matrix")
-retired_palettes <- paste0("\"(Set1|Set2|Set3|Dark2|Paired|Accent|Pastel1|Pastel2|RdYlGn)\"",
+retired_palettes <- paste0("[\"'](Set1|Set2|Set3|Dark2|Paired|Accent|Pastel1|Pastel2|RdYlGn)[\"']",
                            "|scale_(colou?r|fill)_(lancet|npg|jama|nejm)\\(")
 
 # R chunks of one template: label, options, and code without option lines.
@@ -34,6 +41,11 @@ calls_any <- function(code, fns) {
   any(grepl(paste0("(^|[^A-Za-z0-9_.])(", paste(fns, collapse = "|"), ")\\s*\\("), code))
 }
 
+prints_any <- function(code, fns) {
+  fn <- paste(fns, collapse = "|")
+  any(grepl(paste0("^\\s*((", fn, ")|print\\(\\s*(", fn, "))\\s*\\("), code))
+}
+
 shows_output <- function(ch) {
   !identical(unname(ch$opts["eval"]), "false") && !identical(unname(ch$opts["include"]), "false")
 }
@@ -45,7 +57,7 @@ test_that("every figure and table a template shows is numbered", {
       if (!shows_output(ch) || any(grepl("^\\s*# unnumbered: \\S", ch$code))) next
       where <- sprintf("%s, chunk at line %d", tl$name[[i]], ch$line)
       label <- if ("label" %in% names(ch$opts)) ch$opts[["label"]] else ""
-      is_tbl <- calls_any(ch$code, table_calls)
+      is_tbl <- calls_any(ch$code, table_calls) || prints_any(ch$code, printed_table_calls)
       is_fig <- calls_any(ch$code, figure_calls) ||
         any(c("fig-cap", "fig-width", "fig-height") %in% names(ch$opts))
       expect_false(is_tbl && is_fig, label = paste(where, "mixes a table and a figure; split it"))
@@ -87,4 +99,9 @@ test_that("the numbering rule catches what it should", {
   expect_true(any(grepl("^\\s*# unnumbered: \\S", chunks[[3]]$code)))
   expect_false(calls_any("hv_plot_helper(x)", figure_calls))
   expect_true(grepl(retired_palettes, "scale_color_brewer(palette = \"Set1\")"))
+  expect_true(grepl(retired_palettes, "scale_color_brewer(palette = 'Dark2')"))
+  expect_true(prints_any("proc_means(d, vars = v)", printed_table_calls))
+  expect_true(prints_any("  print(boot_health(bag))", printed_table_calls))
+  expect_false(prints_any("bag <- boot_bag(files)", printed_table_calls))
+  expect_false(prints_any("h <- boot_health(bag)", printed_table_calls))
 })

@@ -299,10 +299,23 @@ there are none. -->
 ## Overall statistics
 
 ```{r}
-#| label: overall
+#| label: tbl-overall-contents
+#| tbl-cap: "Contents of the data: each column, its type and its label"
 proc_contents(d)
+```
+
+```{r}
+#| label: overall-means
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (length(overall_vars)) {
-  proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min", "max", "sum"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-overall-means",
+    "#| tbl-cap: \"Summary statistics of the overall variables\"",
+    "proc_means(d, vars = overall_vars, stats = c(\"n\", \"nmiss\", \"mean\", \"std\", \"min\", \"max\", \"sum\"))",
+    .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
