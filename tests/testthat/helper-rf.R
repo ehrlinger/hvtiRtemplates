@@ -124,7 +124,7 @@ rf_env <- function(data, .local_envir = parent.frame()) {
 # from the file's own top-level bindings, not across test files.
 rf_fit_first <- function(prefix, data, choices, .local_envir = parent.frame()) {
   env <- rf_env(data, .local_envir)
-  rf_run(prefix, "fit", c("set", "edit-study-choices", "data", "fit", "save"), env, choices)
+  rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data", "fit", "save"), env, choices)
   env
 }
 
@@ -183,7 +183,7 @@ rf_fit_in <- function(prefix, data, env, choices = rf_mrn_choices(prefix), .loca
   env$.root <- rf_study(data, .local_envir)
   env$.provenance_data <- list()
   printed <- utils::capture.output(
-    rf_run(prefix, "fit", c("set", "edit-study-choices", "data", "fit", "save"), env, choices)
+    rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data", "fit", "save"), env, choices)
   )
   list(dir = env$CACHE_DIR, printed = printed, job_data = env$job_data, forest = env$forest, root = env$.root)
 }
@@ -194,7 +194,8 @@ rf_explain_in <- function(prefix, root, env, .local_envir = parent.frame()) {
   rf_restore_later(env, .local_envir)
   env$.root <- root
   choices <- c(list(TOP_K = 2, SEED = 1), if (identical(prefix, "rfs")) list(TIMES = c(1, 3)))
-  labels <- c("set", "edit-study-choices", "forest", "data", "importance", "select", "varpro", "dependence")
+  labels <- c("set", "edit-study-choices", "forest", "tbl-data", "fig-importance", "tbl-importance", "select", "fig-varpro",
+              "fig-dependence-marginal", "fig-dependence-partial", "fig-dependence-varpro")
   # VarPro keeps only the variables it selects, so a top variable by VIMP can be
   # absent from its partial, and it says so. That one notice is about the
   # explanation, not the files; any other warning still reaches the summary.
@@ -302,7 +303,7 @@ boot_run_runner <- function(prefix, root, env, settings = boot_settings(prefix))
 # Every chunk of a boot_select() report, in order, that a render evaluates
 # after `setup` and `guard-edits`.
 boot_report_labels <- c(
-  "set", "edit-study-choices", "load", "data", "completeness", "contract", "bootstrap-provenance", "seeds",
+  "set", "edit-study-choices", "load", "tbl-data", "completeness", "contract", "bootstrap-provenance", "seeds",
   "dropped-summary", "dropped-detail", "health", "frequencies", "retained", "edit-concept-map",
   "concept-frequencies", "concept-union", "concept-counts", "cluster-matrix", "edit-clusters", "edit-collinear",
   "save"

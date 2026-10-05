@@ -231,7 +231,8 @@ EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_intege
 ## Cohort
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 # The checksum of every dataset in manifest.yaml is checked before anything is
 # read, so a result can name the data that produced it. It stops on a mismatch.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
@@ -240,9 +241,20 @@ job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set 
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
@@ -252,7 +264,8 @@ if (!is.null(job_data$attrition)) {
      unedited job stop rather than silently accept an unreconciled cohort. -->
 
 ```{r}
-#| label: cohort
+#| label: tbl-cohort
+#| tbl-cap: "Analysable patients, events and censored patients"
 cc <- cohort_counts(d, event = EVENT, time = TIME)
 assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 
@@ -299,7 +312,8 @@ at zero rather than being removed, so classify from the sums table, never from
 the parameter block — a phase that contributed nothing still prints nothing.
 
 ```{r}
-#| label: phases
+#| label: tbl-phases
+#| tbl-cap: "Position and name of each parameter in theta"
 # your phases, and the `fixed` set on each.
 
 # The names, IN ORDER, that theta must supply. Read from the package rather
@@ -353,6 +367,7 @@ produces a fit, not an error.
 
 ```{r}
 #| label: edit-start
+# unnumbered: ships no output; the table in the commented Shape B is a diagnostic only
 # ---- Shape A: seed from the SAS job's converged estimates -------------------
 # your SAS estimates, on their NATURAL scale, wrapped per `theta_names`
 # above -- log() for the log-scale positions, bare for the rest.
@@ -382,6 +397,7 @@ if (length(theta0) != length(theta_names)) {
 
 ```{r}
 #| label: edit-response
+# unnumbered: ships no output; the table in the commented Shape B is a diagnostic only
 # ---- Shape A: no interval censoring -----------------------------------------
 # SAS `time <t>; event <e>;` maps straight onto Surv(time, status). Nothing
 # below needs the interval machinery and `objective = "sas"` does not apply.
@@ -420,7 +436,8 @@ surv_formula <- if (all(c("lo", "hi") %in% names(resp))) {
 ```
 
 ```{r}
-#| label: response-check
+#| label: tbl-response-check
+#| tbl-cap: "Events in the cohort gate against events in the response as built"
 # The response build is the step that fails SILENTLY. Get it wrong -- mark an
 # interval-censored death as right-censored at its upper bound, the opposite
 # claim -- and the fit still converges, on a number that is simply wrong.
@@ -478,7 +495,8 @@ summary(fit_det)
 ```
 
 ```{r}
-#| label: convergence
+#| label: tbl-convergence
+#| tbl-cap: "Convergence quantities of the reported fit"
 # There is no logLik() method for class "hazard": the log-likelihood is
 # fit$fit$objective.
 #
@@ -518,6 +536,11 @@ if (anyDuplicated(probes)) {
   stop("Two probe rows are identical: that fit costs time and tests nothing.",
        call. = FALSE)
 }
+```
+
+```{r}
+#| label: tbl-multistart
+#| tbl-cap: "Log-likelihood of each single-start probe fit against the reported fit"
 probe_ll <- vapply(seq_len(nrow(probes)), function(i) {
   f <- try(hazard(surv_formula, data = resp, dist = "multiphase",
                   phases = phases, theta = probes[i, ], fit = TRUE,
@@ -554,7 +577,8 @@ check_fit(fit_nc, "noconserve")
 ```
 
 ```{r}
-#| label: conservation-binding
+#| label: tbl-conservation-binding
+#| tbl-cap: "Sum of the cumulative hazard against the event count, with and without conservation"
 # Sum_i Lambda(t_i) is what `conserve` pins to the event count. Reporting it
 # under BOTH settings is the only way a reader can tell "the control did
 # nothing" from "the control had almost nothing to do" -- the two are identical
@@ -607,13 +631,27 @@ est <- data.frame(
   r_scale       = c("log", "log", "natural", "natural", "log", "natural"),
   row.names     = NULL
 )
-knitr::kable(est, digits = 6)
+```
 
+```{r}
+#| label: tbl-estimates
+#| tbl-cap: "Parameter estimates on the natural scale, with standard errors on the fitting scale"
+knitr::kable(est, digits = 6)
+```
+
+```{r}
+#| label: estimates-warning
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!se_available) {
   no_se <- data.frame(
     warning = "The Hessian could not be inverted: NO standard errors are available."
   )
-  knitr::kable(no_se)
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-estimates-no-se",
+    "#| tbl-cap: \"Standard errors could not be computed\"", "knitr::kable(no_se)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 

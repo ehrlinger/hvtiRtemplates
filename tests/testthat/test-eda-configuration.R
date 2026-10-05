@@ -39,7 +39,7 @@ test_that("jobs present their study choices before reading data", {
   for (file in files) {
     lines <- readLines(file.path(root, file), warn = FALSE)
     config <- grep("^#\\| label: edit-study-choices$", lines)
-    first_work <- grep("^#\\| label: (edit-)?(data|cohort|expect|read-upstream)$", lines)[1L]
+    first_work <- grep("^#\\| label: (edit-)?(tbl-)?(data|cohort|expect|read-upstream)$", lines)[1L]
     expect_true(length(config) == 1L, info = file)
     if (length(config) != 1L) next
     expect_true(config < first_work, info = file)
@@ -48,7 +48,7 @@ test_that("jobs present their study choices before reading data", {
     expect_true(any(grepl("^# EDIT:", choices)), info = paste(file, "edit markers"))
     # hm, hp and hs set TIME and EVENT again in their data chunk, from the
     # selection hz recorded. That is not a second place to edit them.
-    data_at <- grep("^#\\| label: data$", lines)
+    data_at <- grep("^#\\| label: tbl-data$", lines)
     outside <- lines
     if (length(data_at) == 1L) {
       data_end <- data_at + which(lines[(data_at + 1L):length(lines)] == "```")[[1L]]

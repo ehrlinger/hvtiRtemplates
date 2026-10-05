@@ -285,7 +285,8 @@ hm_art <- .hm_read$value
 ```
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read, as hz read it"
 .up <- hvtiRtemplates:::.read_upstream_job_data(
   .cfg, .hm_read$lineage,
   list(dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY,
@@ -297,7 +298,7 @@ d <- job_data$data
 TIME <- .up$selection$time
 EVENT <- .up$selection$event
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read, as hz read it")
+knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
 ```{r}
@@ -417,7 +418,8 @@ nothing beside it records which coverage it is. **State the coverage wherever
 these numbers appear**, in this report and in anything built from it.
 
 ```{r}
-#| label: predict
+#| label: tbl-predict
+#| tbl-cap: "Predicted survival by horizon, across the cohort"
 # One row per patient per horizon. Built explicitly rather than by looping
 # `predict()` per horizon, so every prediction comes from ONE call and cannot
 # drift between horizons.
@@ -504,8 +506,7 @@ summary_tbl <- do.call(rbind, lapply(by_horizon, function(g) {
              min = min(g$fit, na.rm = TRUE),
              max = max(g$fit, na.rm = TRUE))
 }))
-knitr::kable(summary_tbl, row.names = FALSE, digits = 4,
-             caption = "Predicted survival by horizon, across the cohort")
+knitr::kable(summary_tbl, row.names = FALSE, digits = 4)
 ```
 
 ## Expected population survival
@@ -541,7 +542,8 @@ knitr::kable(summary_tbl, row.names = FALSE, digits = 4,
      12 and 24 months, with a plausible-looking ratio and no error anywhere. -->
 
 ```{r}
-#| label: expected
+#| label: tbl-expected
+#| tbl-cap: "Life table vintages, and what each one's non-white stratum means"
 
 # Two failure modes, both caught here rather than inside us_matched(): unset,
 # and set to something that is not a vintage. The second matters because the
@@ -574,8 +576,7 @@ if (length(.absent)) {
 }
 
 # Read this before choosing, and print it in the report:
-knitr::kable(us_lifetable_vintages(), row.names = FALSE,
-             caption = "Life table vintages, and what each one's non-white stratum means")
+knitr::kable(us_lifetable_vintages(), row.names = FALSE)
 
 expected <- us_matched(
   age = d[[AGE_COL]], male = d[[MALE_COL]], other = d[[OTHER_COL]],
@@ -626,9 +627,12 @@ obs_vs_exp <- data.frame(
   expected = unname(exp_avg)
 )
 obs_vs_exp$ratio <- obs_vs_exp$observed / obs_vs_exp$expected
+```
 
-knitr::kable(obs_vs_exp, row.names = FALSE, digits = 4,
-             caption = "Model-predicted vs age/sex/race-matched population survival")
+```{r}
+#| label: tbl-obs-vs-exp
+#| tbl-cap: "Model-predicted against age, sex and race matched population survival"
+knitr::kable(obs_vs_exp, row.names = FALSE, digits = 4)
 ```
 
 A ratio below 1 says the cohort does worse than the matched general population

@@ -62,7 +62,7 @@ test_that("a horizon beyond one model's follow-up names that model alone", {
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
   e <- concordance_estate()
-  env <- concordance_run(e$root, concordance_choices(e$data), c("data", "cohort", "models"))
+  env <- concordance_run(e$root, concordance_choices(e$data), c("tbl-data", "cohort", "models"))
   last <- vapply(env$models, function(a) max(a$reported$data$frame$iv_dead), numeric(1L))
   h <- mean(last)
   short <- names(which.min(last))
@@ -100,11 +100,17 @@ test_that("the decision calls a choice optimal only when the limits separate it"
   # ELIGIBLE is set inside the decision chunk, so the edit is made to its text,
   # as a study author would make it.
   src <- readLines(hazard_template("hs-concordance"), warn = FALSE)
-  chunk <- src[(match("#| label: edit-decision", src) + 1L):length(src)]
-  chunk <- chunk[seq_len(match("```", chunk) - 1L)]
+  chunk_of <- function(label) {
+    chunk <- src[(match(paste0("#| label: ", label), src) + 1L):length(src)]
+    chunk[seq_len(match("```", chunk) - 1L)]
+  }
+  chunk <- chunk_of("edit-decision")
   edited <- sub("^ELIGIBLE <- list\\(\\)$", 'ELIGIBLE <- list(b = "elig_b")', chunk)
   expect_false(identical(edited, chunk))
-  utils::capture.output(eval(parse(text = edited), envir = env))
+  utils::capture.output({
+    eval(parse(text = edited), envir = env)
+    eval(parse(text = chunk_of("decision")), envir = env)
+  })
   dec <- env$decision[1:4, ]
   expect_identical(dec$tie, c(TRUE, FALSE, FALSE, FALSE))
   expect_identical(dec$optimal, rep(NA_character_, 4L) |> replace(3L, "a"))
@@ -113,8 +119,10 @@ test_that("the decision calls a choice optimal only when the limits separate it"
   # Every patient is in the best-treatment table, ties and non-choices included.
   expect_identical(sum(env$best_tbl), n)
   expect_equal(unname(colSums(env$best_tbl)[c("(tie)", "(no choice)")]), c(1, 0))
-  expect_error(eval(parse(text = sub("^ELIGIBLE <- list\\(\\)$", 'ELIGIBLE <- list("elig_b")', chunk)), envir = env),
-               "unique name")
+  expect_error({
+    eval(parse(text = sub("^ELIGIBLE <- list\\(\\)$", 'ELIGIBLE <- list("elig_b")', chunk)), envir = env)
+    eval(parse(text = chunk_of("decision")), envir = env)
+  }, "unique name")
 })
 
 test_that("deleting the decision leaves a job that saves", {

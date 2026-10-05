@@ -164,16 +164,28 @@ CHECKS <- list()
      never has to ask which data a table describes. -->
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
@@ -189,11 +201,6 @@ before sharing a report that contains an identifier.
 
 ```{r}
 #| label: qc
-#| results: asis
-# Tables, not console output: a report reader should not have to parse print().
-show_table <- function(x, caption) {
-  cat("\n", knitr::kable(x, caption = caption, row.names = FALSE), "\n", sep = "\n")
-}
 # The checks and tables are hvtiRutilities::followup_check(), the function the
 # EDA report calls too, so the two reports cannot disagree. It checks every
 # choice above before computing anything, and names every missing column at once.
@@ -203,12 +210,45 @@ cohort_counts <- fc$cohort
 followup_qc <- fc$intervals
 followup_means <- fc$means
 review_rows <- fc$review
-show_table(cohort_counts, "Cohort: event, censored and missing event status")
-show_table(followup_qc, "Follow-up intervals: missing, negative and zero values")
-for (nm in names(followup_means)) {
-  show_table(followup_means[[nm]], paste0("Follow-up, ", nm, " (proc_means)"))
+```
+
+```{r}
+#| label: tbl-qc-cohort
+#| tbl-cap: "Cohort: event, censored and missing event status"
+knitr::kable(cohort_counts, row.names = FALSE)
+```
+
+```{r}
+#| label: tbl-qc-intervals
+#| tbl-cap: "Follow-up intervals: missing, negative and zero values"
+knitr::kable(followup_qc, row.names = FALSE)
+```
+
+```{r}
+#| label: qc-means
+#| results: asis
+# unnumbered: each child chunk below carries its own label and caption
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(kind, key, caption, code) {
+  label <- paste(kind, "qc", gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(key))), sep = "-")
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label),
+                                 paste0("#| ", kind, "-cap: ", encodeString(caption, quote = "\"")), code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
 }
-show_table(review_rows, paste0("Suspicious rows, first ", MAX_REVIEW_ROWS, " at most"))
+for (nm in names(followup_means)) {
+  .means <- followup_means[[nm]]
+  .child("tbl", paste("means", nm), paste0("Follow-up, ", nm, " (proc_means)"), "knitr::kable(.means, row.names = FALSE)")
+  cat("\n")
+}
+```
+
+```{r}
+#| label: tbl-qc-review
+#| tbl-cap: !expr 'paste0("Suspicious rows, first ", MAX_REVIEW_ROWS, " at most")'
+knitr::kable(review_rows, row.names = FALSE)
 ```
 
 The QC quartiles use R's default interpolated quantiles. `proc_means()` uses
@@ -221,13 +261,25 @@ an equivalent follow-up definition by itself.
 ```{r}
 #| label: checks
 #| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 unknown_checks <- setdiff(unlist(CHECKS, use.names = FALSE), names(d))
 if (length(unknown_checks)) {
   stop("Unknown event-check column(s): ", paste(unknown_checks, collapse = ", "), call. = FALSE)
 }
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(kind, key, caption, code) {
+  label <- paste(kind, "checks", gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(key))), sep = "-")
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label),
+                                 paste0("#| ", kind, "-cap: ", encodeString(caption, quote = "\"")), code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+}
 for (cc in CHECKS) {
-  cat("\n", knitr::kable(as.data.frame(table(d[cc], useNA = "ifany")),
-                         caption = paste(cc, collapse = " by ")), "\n", sep = "\n")
+  .check <- as.data.frame(table(d[cc], useNA = "ifany"))
+  .child("tbl", paste(cc, collapse = " by "), paste(cc, collapse = " by "), "knitr::kable(.check)")
+  cat("\n")
 }
 ```
 

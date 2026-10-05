@@ -11,7 +11,8 @@ rfs_choices <- list(TIME = "time", EVENT = "status",
 test_that("rfs-fit grows a survival forest and saves the handoff", {
   rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
   env <- rf_env(rfs_data())
-  rf_run("rfs", "fit", c("set", "edit-study-choices", "data", "fit", "diagnostics", "save"), env, rfs_choices)
+  rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "fig-diagnostics-error", "fig-diagnostics-survival",
+                         "fig-diagnostics-brier", "save"), env, rfs_choices)
 
   expect_s3_class(env$forest, "rfsrc")
   expect_identical(env$forest$family, "surv")
@@ -30,7 +31,7 @@ test_that("rfs-fit refuses a status that is not 0/1", {
   d <- rfs_data()
   d$status <- d$status + 1L   # 1/2 coding: randomForestSRC would read 2 as a competing event
   env <- rf_env(d)
-  expect_error(rf_run("rfs", "fit", c("set", "edit-study-choices", "data"), env, rfs_choices),
+  expect_error(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data"), env, rfs_choices),
                "0 and 1")
 })
 
@@ -39,7 +40,7 @@ test_that("rfs-fit refuses a patient with no outcome", {
   d <- rfs_data()
   d$time[3] <- NA
   env <- rf_env(d)
-  expect_error(rf_run("rfs", "fit", c("set", "edit-study-choices", "data"), env, rfs_choices),
+  expect_error(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data"), env, rfs_choices),
                "no time or status")
 })
 
@@ -48,7 +49,7 @@ test_that("rfs-fit refuses outcomes and duplicate names among predictors", {
   for (outcome in c("time", "status")) {
     env <- rf_env(rfs_data())
     expect_error(
-      rf_run("rfs", "fit", c("set", "edit-study-choices", "data"), env,
+      rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data"), env,
              utils::modifyList(rfs_choices, list(PREDICTORS = c(outcome, "age")))),
       "outcome.*PREDICTORS",
       info = outcome
@@ -57,7 +58,7 @@ test_that("rfs-fit refuses outcomes and duplicate names among predictors", {
 
   env <- rf_env(rfs_data())
   expect_error(
-    rf_run("rfs", "fit", c("set", "edit-study-choices", "data"), env,
+    rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data"), env,
            utils::modifyList(rfs_choices, list(PREDICTORS = c("age", "age")))),
     "PREDICTORS.*more than once"
   )
@@ -72,7 +73,10 @@ test_that("rf_skip_unless_stack does not error on a package with no floor", {
   expect_no_condition(rf_skip_unless_stack("utils"), class = "skip")
 })
 
-explain_labels <- c("set", "edit-study-choices", "forest", "importance", "select", "varpro", "dependence")
+# Each figure and table is a chunk of its own, so the report's outputs are listed one by one.
+dependence_labels <- c("fig-dependence-marginal", "fig-dependence-partial", "fig-dependence-varpro")
+explain_labels <- c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select", "fig-varpro",
+                    dependence_labels)
 
 test_that("rfs-explain explains the saved forest without refitting", {
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
@@ -111,15 +115,16 @@ test_that("a changed TOP_K makes only the partial caches stale", {
   choices$TOP_K <- 3
   again <- new.env(parent = globalenv())
   again$.root <- fit_env$.root
-  rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "importance", "select", "varpro"), again, choices)
+  rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select", "fig-varpro"),
+         again, choices)
   # "only" is the claim under test: the error must name rfs-partial, the
   # cache the dependence chunk hits first, not merely be A stale-cache error,
   # which any cache going stale for any reason would also satisfy.
-  expect_error(rf_run("rfs", "explain", "dependence", again),
+  expect_error(rf_run("rfs", "explain", dependence_labels, again),
                regexp = "rfs-partial", class = "hvtiRutilities_stale_cache")
 
   again$REFIT <- TRUE
-  rf_run("rfs", "explain", "dependence", again)
+  rf_run("rfs", "explain", dependence_labels, again)
   # again$sel is unchanged since the earlier `select` chunk (the `dependence`
   # chunk never touches it), so asserting on it would be tautological. The
   # recomputed partial (a gg_partial_rfsrc list of $continuous/$categorical
@@ -148,7 +153,7 @@ test_that("PARTIAL_VARS refuses a variable the forest was not grown on", {
   env <- new.env(parent = globalenv())
   env$.root <- fit_env$.root
   expect_error(
-    rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "importance", "select"), env,
+    rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select"), env,
            list(PARTIAL_VARS = "not_a_variable", SEED = 1)),
     "not grown on"
   )
@@ -168,7 +173,8 @@ rfc_choices <- list(RESPONSE = "species",
 test_that("rfc-fit grows a classification forest from a character outcome", {
   rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
   env <- rf_env(rfc_data())
-  rf_run("rfc", "fit", c("set", "edit-study-choices", "data", "fit", "diagnostics", "save"), env, rfc_choices)
+  rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "fig-diagnostics-error", "fig-diagnostics-roc",
+                         "diagnostics-auc", "save"), env, rfc_choices)
   expect_identical(env$forest$family, "class")
   expect_true(file.exists(file.path(env$CACHE_DIR, "rfc.rds")))
   expect_true(is.numeric(env$auc) && env$auc > 0.5)
@@ -181,7 +187,8 @@ test_that("rfc-fit selects the named ROC class regardless of factor order", {
   d$Species <- factor(d$Species, levels = c("virginica", "versicolor"))
   choices <- utils::modifyList(rfc_choices, list(ROC_CLASS = "virginica"))
   env <- rf_env(d)
-  rf_run("rfc", "fit", c("set", "edit-study-choices", "data", "fit", "diagnostics"), env, choices)
+  rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "fig-diagnostics-error", "fig-diagnostics-roc",
+                         "diagnostics-auc"), env, choices)
 
   expected <- ggRandomForests::gg_roc(env$forest, which_outcome = 1L)
   expect_equal(as.data.frame(env$roc), as.data.frame(expected))
@@ -192,7 +199,7 @@ test_that("rfc-fit refuses an unknown ROC class", {
   env <- rf_env(rfc_data())
   choices <- utils::modifyList(rfc_choices, list(ROC_CLASS = "not-a-species"))
   expect_error(
-    rf_run("rfc", "fit", c("set", "edit-study-choices", "data"), env, choices),
+    rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data"), env, choices),
     "ROC_CLASS.*not an observed level"
   )
 })
@@ -205,7 +212,7 @@ test_that("rfc-fit refuses its untouched ROC class choice for a 0/1 outcome", {
   choices$RESPONSE <- "event"
   env <- rf_env(d)
   expect_error(
-    rf_run("rfc", "fit", c("set", "edit-study-choices", "data"), env, choices),
+    rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data"), env, choices),
     "ROC_CLASS"
   )
 })
@@ -214,14 +221,14 @@ test_that("rfc-fit refuses its outcome and duplicate names among predictors", {
   rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
   env <- rf_env(rfc_data())
   expect_error(
-    rf_run("rfc", "fit", c("set", "edit-study-choices", "data"), env,
+    rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data"), env,
            utils::modifyList(rfc_choices, list(PREDICTORS = c("species", "sepal.length")))),
     "outcome.*PREDICTORS"
   )
 
   env <- rf_env(rfc_data())
   expect_error(
-    rf_run("rfc", "fit", c("set", "edit-study-choices", "data"), env,
+    rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data"), env,
            utils::modifyList(rfc_choices, list(PREDICTORS = c("sepal.length", "sepal.length")))),
     "PREDICTORS.*more than once"
   )
@@ -275,7 +282,8 @@ rfr_choices <- list(RESPONSE = "ozone", PREDICTORS = c("solar.r", "wind", "temp"
 test_that("rfr-fit grows a regression forest, imputing missing predictors", {
   rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
   env <- rf_env(rfr_data())
-  rf_run("rfr", "fit", c("set", "edit-study-choices", "data", "fit", "diagnostics", "save"), env, rfr_choices)
+  rf_run("rfr", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "fig-diagnostics-error", "fig-diagnostics-predicted",
+                         "save"), env, rfr_choices)
   expect_identical(env$forest$family, "regr")
   expect_identical(env$forest$n, nrow(rfr_data()))   # na.impute kept every patient
   expect_true(file.exists(file.path(env$CACHE_DIR, "rfr.rds")))
@@ -287,21 +295,21 @@ test_that("rfr-fit refuses a non-numeric outcome", {
   d <- rfr_data()
   d$Ozone <- factor(d$Ozone)
   env <- rf_env(d)
-  expect_error(rf_run("rfr", "fit", c("set", "edit-study-choices", "data"), env, rfr_choices), "must be numeric")
+  expect_error(rf_run("rfr", "fit", c("set", "edit-study-choices", "tbl-data"), env, rfr_choices), "must be numeric")
 })
 
 test_that("rfr-fit refuses its outcome and duplicate names among predictors", {
   rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
   env <- rf_env(rfr_data())
   expect_error(
-    rf_run("rfr", "fit", c("set", "edit-study-choices", "data"), env,
+    rf_run("rfr", "fit", c("set", "edit-study-choices", "tbl-data"), env,
            utils::modifyList(rfr_choices, list(PREDICTORS = c("ozone", "wind")))),
     "outcome.*PREDICTORS"
   )
 
   env <- rf_env(rfr_data())
   expect_error(
-    rf_run("rfr", "fit", c("set", "edit-study-choices", "data"), env,
+    rf_run("rfr", "fit", c("set", "edit-study-choices", "tbl-data"), env,
            utils::modifyList(rfr_choices, list(PREDICTORS = c("wind", "wind")))),
     "PREDICTORS.*more than once"
   )
@@ -356,7 +364,7 @@ test_that("every fit refuses the patient identifier or a KEY column among its pr
     for (spelling in c("mrn", "MRN")) {
       env <- rf_env(data)
       expect_error(
-        rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env,
+        rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data"), env,
                rf_mrn_choices(prefix, PREDICTORS = c("age", spelling))),
         paste0("patient identifier or a KEY column in PREDICTORS: ", spelling),
         info = paste(prefix, spelling)
@@ -364,7 +372,7 @@ test_that("every fit refuses the patient identifier or a KEY column among its pr
     }
     env <- rf_env(data)
     expect_error(
-      rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env,
+      rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data"), env,
              rf_mrn_choices(prefix, KEY = c("mrn", "x1"))),
       "patient identifier or a KEY column in PREDICTORS: x1",
       info = prefix
@@ -379,7 +387,7 @@ test_that("every fit converts a text predictor to a factor and names it (#181)",
     rf_skip_unless_stack(rf_template_packages(prefix, "fit"))
     env <- rf_env(data)
     printed <- utils::capture.output(
-      rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env, rf_mrn_choices(prefix))
+      rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data"), env, rf_mrn_choices(prefix))
     )
     expect_identical(printed, "Text predictors converted to factors: grp", info = prefix)
     expect_s3_class(env$d$grp, "factor")
@@ -387,7 +395,7 @@ test_that("every fit converts a text predictor to a factor and names it (#181)",
     # Nothing is said when there is nothing to convert.
     env <- rf_env(data)
     printed <- utils::capture.output(
-      rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env,
+      rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data"), env,
              rf_mrn_choices(prefix, PREDICTORS = c("age", "x1")))
     )
     expect_identical(printed, character(), info = prefix)
@@ -396,7 +404,7 @@ test_that("every fit converts a text predictor to a factor and names it (#181)",
 
 test_that("every explain takes the fit's selection and stops on a setting that differs", {
   data <- rf_mrn_data(id = "ccfid")
-  labels <- c("set", "edit-study-choices", "forest", "data")
+  labels <- c("set", "edit-study-choices", "forest", "tbl-data")
   for (prefix in rf_prefixes) {
     rf_skip_unless_stack(rf_template_packages(prefix, "explain"))
     fit <- rf_fit_in(prefix, data, new.env(parent = globalenv()),
@@ -434,7 +442,7 @@ test_that("every explain stops on a forest saved before the data contract, namin
     env$.root <- fit$root
     # The forest itself is still read: it is the data chunk that stops.
     rf_run(prefix, "explain", c("set", "edit-study-choices", "forest"), env)
-    expect_error(rf_run(prefix, "explain", "data", env),
+    expect_error(rf_run(prefix, "explain", "tbl-data", env),
                  paste0("\\(", prefix, "[.]rds\\) carries no single recorded data selection: it predates the data contract"),
                  info = prefix)
   }
@@ -500,7 +508,7 @@ test_that("every fit refuses the patient identifier as its outcome", {
         env <- rf_env(data)
         choices <- rf_mrn_choices(prefix)
         choices[[setting]] <- spelling
-        expect_error(rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env, choices),
+        expect_error(rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data"), env, choices),
                      paste0("patient identifier \\(mrn\\) cannot be an outcome"),
                      info = paste(prefix, setting, spelling))
       }
@@ -512,9 +520,9 @@ test_that("every fit refuses the patient identifier as its outcome", {
     if (identical(prefix, "rfc")) choices <- utils::modifyList(choices, list(RESPONSE = "los", ROC_CLASS = NA_character_))
     if (identical(prefix, "rfc")) {
       # los is not a class, so rfc stops later, at ROC_CLASS, not at the KEY column.
-      expect_error(rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env, choices), "ROC_CLASS", info = prefix)
+      expect_error(rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data"), env, choices), "ROC_CLASS", info = prefix)
     } else {
-      expect_no_error(utils::capture.output(rf_run(prefix, "fit", c("set", "edit-study-choices", "data"), env, choices)))
+      expect_no_error(utils::capture.output(rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data"), env, choices)))
     }
   }
 })

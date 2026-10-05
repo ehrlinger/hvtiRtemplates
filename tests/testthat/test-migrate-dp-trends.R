@@ -37,8 +37,9 @@ test_that("dp-trends migrates explicit year and ordered trend intent into execut
   expect_true("XBREAKS <- seq(1985, 2025, 5)" %in% txt)
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config))
   eval(trends_chunk(out, "edit-study-choices"), env)
-  capture.output(eval(trends_chunk(out, "data"), env))
+  capture.output(eval(trends_chunk(out, "tbl-data"), env))
   capture.output(eval(trends_chunk(out, "year"), env))
+  capture.output(eval(trends_chunk(out, "tbl-year-check"), env))
   eval(trends_chunk(out, "helpers"), env)
   expect_identical(env$DATASET, "study")
   expect_equal(env$d$year, 1986:2025)
@@ -101,6 +102,7 @@ test_that("dp-trends does not treat source transformations as registered measure
 
 test_that("dp-trends executes its plotting engine and retains long-data and subgroup validation", {
   root <- migration_study_fixture("dp-trends")
+  local_child_chunks()
   out <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda", "dp", "trends", dir = root)
   env <- list2env(list(
     .root = root, read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config,
@@ -109,8 +111,9 @@ test_that("dp-trends executes its plotting engine and retains long-data and subg
     coord_cartesian = ggplot2::coord_cartesian
   ))
   eval(trends_chunk(out, "edit-study-choices"), env)
-  capture.output(eval(trends_chunk(out, "data"), env))
+  capture.output(eval(trends_chunk(out, "tbl-data"), env))
   capture.output(eval(trends_chunk(out, "year"), env))
+  capture.output(eval(trends_chunk(out, "tbl-year-check"), env))
   eval(trends_chunk(out, "helpers"), env)
   # Run the template's own set_path closure; only current_input is naturally
   # absent when chunks execute outside knitr, as its documented guard allows.

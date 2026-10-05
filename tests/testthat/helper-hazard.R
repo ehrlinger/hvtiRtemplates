@@ -107,7 +107,7 @@ hazard_upstream <- function(root, lineage) {
 hazard_downstream <- function(prefix, root, choices = list()) {
   env <- hazard_env(root)
   hazard_run(prefix, c("set", "edit-study-choices"), env, choices)
-  hazard_run(prefix, c("read-upstream", "data"), env)
+  hazard_run(prefix, c("read-upstream", "tbl-data"), env)
   env
 }
 
@@ -143,19 +143,19 @@ hazard_chain_run <- function(root, data, hm_env = globalenv(), .local_envir = pa
   # Hessian that is not positive-definite) are about the fit, not the file.
   suppressWarnings(utils::capture.output({
     hazard_run("ac", c("set", "edit-study-choices"), env, list(EXPECTED = expected))
-    hazard_run("ac", c("data", "cohort", "km-helpers", "km-overall"), env)
+    hazard_run("ac", c("tbl-data", "tbl-cohort", "km-helpers", "tbl-km-overall"), env)
     hazard_run("hz", c("set", "edit-study-choices"), env, list(EXPECTED = expected))
-    hazard_run("hz", c("data", "cohort", "phases", "edit-start", "edit-response", "response-check", "guard",
-                       "fit-deterministic", "convergence", "edit-multistart", "noconserve", "conservation-binding",
-                       "edit-estimates", "save"), env)
+    hazard_run("hz", c("tbl-data", "tbl-cohort", "tbl-phases", "edit-start", "edit-response", "tbl-response-check", "guard",
+                       "fit-deterministic", "tbl-convergence", "edit-multistart", "tbl-multistart", "noconserve",
+                       "tbl-conservation-binding", "edit-estimates", "tbl-estimates", "save"), env)
     hazard_run("hm", c("set", "edit-study-choices"), hm_env, list(EXPECTED = expected, DECILE_TIME = 3))
     hm_env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
-    hazard_run("hm", c("read-upstream", "data", "cohort", "audit", "phases", "edit-fit", "edit-reported",
-                       "calibration", "save"), hm_env)
+    hazard_run("hm", c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit", "edit-reported",
+                       "tbl-calibration", "save"), hm_env)
     hazard_run("hs-setup", c("set", "edit-study-choices"), env,
                list(EXPECTED = expected, HORIZONS = c(1, 2), VINTAGE = "table2023"))
-    hazard_run("hs-setup", c("read-upstream", "data", "cohort", "model", "horizons", "predict", "expected",
-                             "edit-obs-vs-exp", "save"), env)
+    hazard_run("hs-setup", c("read-upstream", "tbl-data", "cohort", "model", "horizons", "tbl-predict", "tbl-expected",
+                             "edit-obs-vs-exp", "tbl-obs-vs-exp", "save"), env)
   }))
   hm_env
 }
@@ -195,20 +195,20 @@ concordance_fit <- function(root, data, groups = c("a", "b"), .local_envir = par
     suppressWarnings(utils::capture.output({
       hazard_run("hz", c("set", "edit-study-choices"), env,
                  list(EXPECTED = expected, WHERE = where, SUBJECT = "dead", TYPE = g))
-      hazard_run("hz", c("data", "cohort", "phases", "edit-start", "edit-response", "response-check", "guard",
-                         "fit-deterministic", "convergence", "edit-multistart", "noconserve", "conservation-binding",
-                         "edit-estimates", "save"), env)
+      hazard_run("hz", c("tbl-data", "tbl-cohort", "tbl-phases", "edit-start", "edit-response", "tbl-response-check", "guard",
+                         "fit-deterministic", "tbl-convergence", "edit-multistart", "tbl-multistart", "noconserve",
+                         "tbl-conservation-binding", "edit-estimates", "tbl-estimates", "save"), env)
       hazard_run("hm", c("set", "edit-study-choices"), env, list(EXPECTED = expected, DECILE_TIME = 3, SUBJECT = "dead", TYPE = g))
       env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
-      hazard_run("hm", c("read-upstream", "data", "cohort", "audit", "phases", "edit-fit", "edit-reported",
-                         "calibration", "save"), env)
+      hazard_run("hm", c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit", "edit-reported",
+                         "tbl-calibration", "save"), env)
     }))
   }
   invisible(env)
 }
 
 # The core chunks of hs-concordance, in order, without the decision.
-concordance_core <- c("data", "cohort", "models", "groups", "covariates", "horizon", "support", "predict")
+concordance_core <- c("tbl-data", "cohort", "models", "tbl-groups", "tbl-covariates", "horizon", "tbl-support", "tbl-predict")
 
 # Choices that make the job runnable against concordance_fit()'s estate.
 concordance_choices <- function(data, ...) {
@@ -221,7 +221,7 @@ concordance_choices <- function(data, ...) {
 }
 
 # Run hs-concordance's `labels` in a fresh environment with `choices`.
-concordance_run <- function(root, choices, labels = c(concordance_core, "edit-decision", "save")) {
+concordance_run <- function(root, choices, labels = c(concordance_core, "edit-decision", "decision", "save")) {
   env <- hazard_env(root)
   suppressWarnings(utils::capture.output({
     hazard_run("hs-concordance", c("set", "edit-study-choices"), env, choices)

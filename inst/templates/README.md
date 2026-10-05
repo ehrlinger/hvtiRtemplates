@@ -264,6 +264,43 @@ answer** — run `job-census.R /studies` server-side, which is what the gate
 question is for. `hs` was missing from this list before it was corrected, and
 its absence read as "templated".
 
+## Figures, tables and colour
+
+Every figure and table a job shows carries a number, so a reader can cite
+"Figure 2.1" or "Table 3.2" and find it. Quarto numbers a figure only when its
+chunk label starts with `fig-` and the chunk has `fig-cap`, and a table only
+with a `tbl-` label and `tbl-cap`. A caption passed as
+`knitr::kable(caption = )` prints, but without a number, so table captions go
+in `tbl-cap`. Captions keep Quarto's positions: a table's title above it, a
+figure's legend below, as the journals print them.
+
+- **One output, one chunk.** A chunk that shows a table and a figure is split
+  in two. A chunk whose `kable()` calls are alternatives (an `if`/`else`)
+  still shows one table and keeps one label.
+- **A figure per item is a chunk per item.** A loop that draws one figure or
+  table per variable emits each as its own child chunk with
+  `knitr::knit_child()`, each with its own `fig-`/`tbl-` label and caption, so
+  every item is numbered and citable.
+- **Choices and output stay apart.** `EDIT:` markers live in `edit-` chunks
+  (see below); a chunk that shows a figure or table holds none.
+- **A chunk that only defines helpers** says so with a comment
+  `# unnumbered: <reason>`.
+
+Colour follows the house rule of the hvtiGraphics recipes book: categorical
+groups take `hvtiPlotR::hv_palette()` (the Okabe-Ito colours) through
+`scale_*_manual()`, and ordered or diverging scales take `"RdBu"`. ColorBrewer
+`"Set1"`, `"Set2"`, `"Dark2"` and `"RdYlGn"` are retired. Colour is never the
+only channel: groups also differ by line type or point shape, so a figure
+survives a greyscale printer and a colour-blind reader. Box plots in these
+jobs are percentile boxes (hinges at the 15th and 85th percentiles, whiskers at
+the 5th and 95th), as in the recipes book's box-plot chapter, and their
+captions say so.
+
+`test-template-numbering.R` enforces the numbering and the palette rule for
+every template. The recipes book chapter
+[Numbering figures and tables](https://ehrlinger.github.io/hvtiGraphics/numbering.html)
+sets out the rule with examples, including the `knitr::knit_child()` pattern.
+
 ## Editing a scaffolded job
 
 `migrate_job()` can prefill `dc-tables`, `dc-gfup`, `dp-trends`, and

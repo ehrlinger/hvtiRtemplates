@@ -40,6 +40,7 @@ figure as that section of the report.
 
 ```{r}
 #| label: setup
+# unnumbered: loads packages and checks versions only
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -225,9 +226,6 @@ if (is.null(ANALYSIS_SET)) {
   )
   d <- .data_read$value
   .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-  knitr::kable(attr(d, "attrition"), caption = paste0(
-    "Analysis set `", ANALYSIS_SET, "`: exclusions, in order"
-  ))
 }
 cat("Data read: ", if (is.null(ANALYSIS_SET)) {
   paste0("dataset `", DATASET, "` (",
@@ -235,6 +233,20 @@ cat("Data read: ", if (is.null(ANALYSIS_SET)) {
 } else {
   paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
 }, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(ANALYSIS_SET)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(attr(d, \"attrition\"))", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
 ```
 
 ```{r}
@@ -309,6 +321,7 @@ level, so a percentage is out of every patient, not only those with a value.
 ```{r}
 #| label: pages
 #| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 # Labels come from the dataset; a variable without one is shown by its name.
 # Shortened labels stay distinct, using the job's, the study's and the group's
 # abbreviations, merged and checked by study_abbreviations().
@@ -330,6 +343,17 @@ abbreviation_key <- function(vars) {
         sep = "")
   }
 }
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 titles <- c(continuous = "Continuous variables", percent = "Categorical variables, percent",
             count = "Categorical variables, counts")
 page_files <- character(0)
@@ -346,7 +370,8 @@ for (section in SECTIONS) {
   if (section == "continuous") {
     stats <- hvtiRutilities::proc_means(d, vars = vars, stats = c("n", "nmiss", "mean", "std", "min",
                                                                   "p25", "median", "p75", "max"))
-    cat(knitr::kable(stats, digits = 2, row.names = FALSE, caption = "Continuous variables"), sep = "\n")
+    .child(paste("tbl postage", section, "summary"), "Continuous variables",
+           "knitr::kable(stats, digits = 2, row.names = FALSE)")
   } else if (!freq_shown) {
     freq <- do.call(rbind, lapply(vars, function(v) {
       f <- hvtiRutilities::proc_freq(d, v, missing = TRUE)
@@ -354,7 +379,8 @@ for (section in SECTIONS) {
       data.frame(variable = v, level = ifelse(is.na(level), "(missing)", level),
                  n = f$Frequency, percent = round(f$Percent, 1))
     }))
-    cat(knitr::kable(freq, row.names = FALSE, caption = "Categorical variables, missing counted"), sep = "\n")
+    .child(paste("tbl postage", section, "frequencies"), "Categorical variables, missing counted",
+           "knitr::kable(freq, row.names = FALSE)")
     freq_shown <- TRUE
   }
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
@@ -370,7 +396,10 @@ for (section in SECTIONS) {
     # drives), so the page is still saved rather than the render stopping.
     link <- xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd(),
                                 error = FALSE)
-    cat("\n### Page ", i, "\n\n![", paste(labels[on_page], collapse = ", "), "](", link, ")\n\n", sep = "")
+    cat("\n### Page ", i, "\n\n", sep = "")
+    .child(paste("fig postage", section, "page", i),
+           paste0(titles[[section]], ", page ", i, ": ", paste(labels[on_page], collapse = ", ")),
+           "knitr::include_graphics(link, error = FALSE)")
     page_files <- c(page_files, file)
   }
   abbreviation_key(vars)

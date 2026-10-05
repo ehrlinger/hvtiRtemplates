@@ -41,6 +41,7 @@ the distribution of a single variable is `dp-variable`.
 
 ```{r}
 #| label: setup
+# unnumbered: loads packages and checks versions only
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -249,22 +250,34 @@ SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)))
 ## Data
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
 ```{r}
 #| label: edit-year
-# EDIT: the calendar year of operation, as a WHOLE year. hv_trends() puts one
+# EDIT: the calendar year of operation, as a WHOLE year. hv_trends puts one
 # summary point at every distinct value of x, so x must be the year itself.
 # Years since an origin are an interval, fractional like every iv_ column, and
 # origin plus a fractional interval would give one "annual" point per patient.
@@ -277,7 +290,11 @@ if (!is.null(job_data$attrition)) {
 # MIGRATE-BEGIN: dp-trends-year
 d$year <- floor(d$iv_opyrs) + 1985
 # MIGRATE-END: dp-trends-year
+```
 
+```{r}
+#| label: tbl-year-check
+#| tbl-cap: "Operation years: patients, missing years, and the first and last year"
 if (!is.numeric(d$year)) {
   stop("`year` is not numeric (", class(d$year)[1L], "). Build it from a ",
        "numeric column, such as years since an origin plus that origin.",
@@ -288,7 +305,7 @@ if (all(is.na(d$year))) {
        "Check the column it is built from.", call. = FALSE)
 }
 if (any(d$year != round(d$year), na.rm = TRUE)) {
-  stop("`year` must be a whole calendar year. hv_trends() draws one summary ",
+  stop("`year` must be a whole calendar year. hv_trends draws one summary ",
        "point per distinct value, so a fractional year draws one point per ",
        "patient. Use floor() on a years-since-origin interval, or a ",
        "calendar-year column.", call. = FALSE)
@@ -312,6 +329,7 @@ knitr::kable(data.frame(
 
 ```{r}
 #| label: helpers
+# unnumbered: defines helpers only
 # One row per patient per series: the shape hv_trends() takes. Several columns
 # become several series through `series`, which hv_trends() groups on.
 trend_long <- function(d, spec) {
@@ -367,9 +385,21 @@ trend_long <- function(d, spec) {
 ```{r}
 #| label: figures
 #| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 # The image link is relative to THIS document, which always sits in graphs/,
 # so it is <set>/<file> whichever directory the render executes from. The file
 # itself is written through set_path(), which resolves from the project root.
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 for (sg in names(SUBGROUPS)) {
   keep <- SUBGROUPS[[sg]](d)
   # One logical per patient, or the filter is wrong. R would silently recycle
@@ -411,8 +441,9 @@ for (sg in names(SUBGROUPS)) {
     png(set_path("graphs", fname), width = 8, height = 6, units = "in", res = 150)
     print(p)
     invisible(dev.off())
-    cat("![", nm, ", ", sg, "](", file.path(paste0(SUBJECT, "-", TYPE), fname),
-        ")\n\n", sep = "")
+    .link <- file.path(paste0(SUBJECT, "-", TYPE), fname)
+    .child(paste("fig trends", nm, sg), paste0("Trend in ", nm, " by year of operation, ", sg),
+           "knitr::include_graphics(.link, error = FALSE)")
   }
 }
 ```

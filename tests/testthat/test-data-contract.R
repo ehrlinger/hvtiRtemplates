@@ -61,7 +61,7 @@ test_that("every converted template has the shared settings and a conforming dat
     }
     setup <- template_chunk(src, "setup")
     expect_true(any(grepl("hvtiRtemplates:::.find_study_root(", setup, fixed = TRUE)), info = paste(name, "setup"))
-    data <- template_chunk(src, "data")
+    data <- template_chunk(src, "tbl-data")
     expect_false(is.null(data), info = name)
     # Downstream templates that read data call .read_upstream_job_data() only:
     # DATASET and ANALYSIS_SET come from upstream, so read_job_data() itself

@@ -5,6 +5,15 @@ lm_chunk <- function(src, label) {
   src[(at + 1L):(end - 1L)]
 }
 
+# The chunks that show one qualifier's result tables, in order. Each table is a
+# chunk of its own, so that Quarto numbers it; a table-showing chunk is labeled
+# tbl-, and the one that states the cumulative direction is `direction`.
+lm_results <- function(qualifier) {
+  src <- readLines(template_path("lm", qualifier), warn = FALSE)
+  labels <- sub("^#\\| label: ", "", grep("^#\\| label: ", src, value = TRUE))
+  labels[grepl("^tbl-", labels) & labels != "tbl-data" | labels == "direction"]
+}
+
 lm_run <- function(qualifier, labels, env, choices = list()) {
   src <- readLines(template_path("lm", qualifier), warn = FALSE)
   for (label in labels) {
@@ -13,7 +22,7 @@ lm_run <- function(qualifier, labels, env, choices = list()) {
       list2env(choices, envir = env)
       # A test that supplies `d` itself skips the data chunk, which would set
       # the identifier read_job_data() resolved and the selection it recorded.
-      if (!"data" %in% labels) {
+      if (!"tbl-data" %in% labels) {
         if (!exists(".id", envir = env, inherits = FALSE)) env$.id <- env$ID
         if (!exists("job_data", envir = env, inherits = FALSE)) env$job_data <- list()
       }

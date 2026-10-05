@@ -103,6 +103,8 @@ test_that("dp-eda colors every point of an event panel, by the house rule or fro
   withr::local_package("ggplot2")
   withr::local_package("hvtiPlotR")
   withr::local_package("hvtiRutilities")
+  # The panels' tables and figures are child chunks.
+  local_child_chunks()
   root <- migration_study_fixture(NULL)
   job <- add_job("dp", "cohort", "eda", dir = root, qualifier = "eda")
   chunk <- function(label) {
@@ -184,7 +186,7 @@ test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps",
     env$ID <- id
     env$KEY <- key
     env$VARIABLES <- variables
-    utils::capture.output(eval(chunk("data"), env))
+    utils::capture.output(eval(chunk("tbl-data"), env))
     env$out <- utils::capture.output(eval(chunk("spec"), env))
     env
   }
@@ -243,6 +245,7 @@ test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a sepa
 })
 
 test_that("dp-eda's overview leaves out identifiers but keeps dates", {
+  local_child_chunks()
   # Named in VARIABLES, so the spec chunk's NULL branch does not decide this:
   # the overview applies the rule itself.
   lines <- readLines(template_path("dp", "eda"), warn = FALSE)

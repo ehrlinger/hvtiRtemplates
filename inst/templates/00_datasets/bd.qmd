@@ -318,7 +318,8 @@ if (PUBLISH) {
 ## Report
 
 ```{r}
-#| label: report-source
+#| label: tbl-report-source
+#| tbl-cap: "Run mode, master snapshot, row counts and dataset registration for this render"
 knitr::kable(data.frame(
   Item = c("Mode", "Master snapshot", "Master SHA-256", "Rehashed this render", "Master parent release",
            "Rows in the dataset", "Patients", "Columns", "Study dataset before", "Study dataset after", "Registration"),
@@ -333,7 +334,8 @@ knitr::kable(data.frame(
 ### Who was excluded, and why
 
 ```{r}
-#| label: report-attrition
+#| label: tbl-report-attrition
+#| tbl-cap: "Exclusions applied to the master, in order"
 knitr::kable(.cut$attrition, col.names = c("Step", "Reason", "Rows before", "Removed", "Condition missing",
                                            "Rows after", "Patients after"))
 ```
@@ -341,7 +343,8 @@ knitr::kable(.cut$attrition, col.names = c("Step", "Reason", "Rows before", "Rem
 ### Columns
 
 ```{r}
-#| label: report-columns
+#| label: tbl-report-columns
+#| tbl-cap: "Type, missing count and range of each column"
 # Aggregates only: the type, missing count and range of each column. The ID, KEY
 # and JOIN_BY columns get no range: a range of identifiers is two identifiers,
 # and a JOIN_BY date range is two patients' dates.

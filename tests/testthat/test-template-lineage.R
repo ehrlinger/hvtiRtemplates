@@ -262,7 +262,7 @@ test_that("hp reads the exact ac and hz chain artifacts and carried data", {
 
   env <- hazard_env(root)
   hazard_run("hp", c("set", "edit-study-choices"), env, list(years = 1, t_max = 1))
-  hazard_run("hp", c("read-upstream", "data", "followup-gate"), env)
+  hazard_run("hp", c("read-upstream", "tbl-data", "tbl-followup-gate"), env)
 
   expect_identical(vapply(env$.provenance_artifacts, `[[`, character(1L), "sha256"),
                    c(lineage_sha256(ac_path), lineage_sha256(hz_path)))

@@ -13,7 +13,7 @@ test_that("the data chunk keeps the model's columns and drops rows with no respo
   data$lvef[c(1, 5)] <- NA
   root <- nb_study(data)
   env <- nb_env(root)
-  out <- utils::capture.output(nb_run(c("edit-study-choices", "data"), env, nb_choices()))
+  out <- utils::capture.output(nb_run(c("edit-study-choices", "tbl-data"), env, nb_choices()))
   expect_identical(sort(names(env$d)), sort(c("ccfid", "iv_echo", "lvef", "age", "female", "grp")))
   expect_identical(nrow(env$d), nrow(data) - 2L)
   expect_true(is.factor(env$d$grp))
@@ -27,7 +27,7 @@ test_that("KEY defaults to ID and TIME, so a duplicated visit stops the read", {
   data <- rbind(data, data[1, ])
   root <- nb_study(data)
   env <- nb_env(root)
-  expect_error(utils::capture.output(nb_run(c("edit-study-choices", "data"), env, nb_choices())), "unique")
+  expect_error(utils::capture.output(nb_run(c("edit-study-choices", "tbl-data"), env, nb_choices())), "unique")
 })
 
 test_that("the ID and TIME cannot be predictors, nor the ID the response", {
@@ -35,7 +35,7 @@ test_that("the ID and TIME cannot be predictors, nor the ID the response", {
   root <- nb_study()
   run <- function(...) {
     env <- nb_env(root)
-    utils::capture.output(nb_run(c("edit-study-choices", "data"), env, nb_choices(...)))
+    utils::capture.output(nb_run(c("edit-study-choices", "tbl-data"), env, nb_choices(...)))
   }
   expect_error(run(PREDICTORS = c("age", "ccfid")), "identifier, a KEY column or the visit time")
   expect_error(run(PREDICTORS = c("age", "iv_echo")), "identifier, a KEY column or the visit time")
@@ -47,7 +47,7 @@ test_that("the default predictors leave out a ccfid the job is not keyed on, and
   data <- nb_randid_data()
   root <- nb_study(data)
   env <- nb_env(root)
-  out <- utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "save"), env, nb_randid_choices()))
+  out <- utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit", "save"), env, nb_randid_choices()))
   expect_identical(env$.id, "randid")
   expect_identical(sort(env$.predictors), sort(c("age", "female", "grp")))
   expect_true(any(grepl("Identifier columns left out of the predictors: ccfid", out, fixed = TRUE)))
@@ -65,7 +65,7 @@ test_that("no identifier column can be the response or the visit time, whatever 
   root <- nb_study(data)
   run <- function(...) {
     env <- nb_env(root)
-    utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "save"), env, nb_randid_choices(...)))
+    utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit", "save"), env, nb_randid_choices(...)))
   }
   expect_error(run(RESPONSE = "ccfid"), "A patient identifier (ccfid) cannot be the response.", fixed = TRUE)
   expect_error(run(RESPONSE = "CCFID"), "cannot be the response")
@@ -81,7 +81,7 @@ test_that("the default predictors leave out every KEY column", {
   data$visit <- stats::ave(data$iv_echo, data$ccfid, FUN = seq_along)
   root <- nb_study(data)
   env <- nb_env(root)
-  utils::capture.output(nb_run(c("edit-study-choices", "data"), env, nb_choices(KEY = c("ccfid", "iv_echo", "visit"))))
+  utils::capture.output(nb_run(c("edit-study-choices", "tbl-data"), env, nb_choices(KEY = c("ccfid", "iv_echo", "visit"))))
   expect_identical(sort(env$.predictors), sort(c("age", "female", "grp")))
 })
 
@@ -90,7 +90,7 @@ test_that("named PREDICTORS may hold no identifier or KEY column, and no name tw
   root <- nb_study(nb_randid_data())
   run <- function(...) {
     env <- nb_env(root)
-    utils::capture.output(nb_run(c("edit-study-choices", "data"), env, nb_randid_choices(...)))
+    utils::capture.output(nb_run(c("edit-study-choices", "tbl-data"), env, nb_randid_choices(...)))
   }
   expect_error(run(PREDICTORS = c("age", "ccfid")), "identifier, a KEY column or the visit time: ccfid")
   expect_error(run(PREDICTORS = c("age", "randid")), "identifier, a KEY column or the visit time: randid")
@@ -102,13 +102,13 @@ test_that("TIME and RESPONSE resolve against the data ignoring case", {
   nb_skip_unless_stack()
   root <- nb_study()
   env <- nb_env(root)
-  utils::capture.output(nb_run(c("edit-study-choices", "data"), env, nb_choices(TIME = "IV_ECHO", RESPONSE = "LVEF")))
+  utils::capture.output(nb_run(c("edit-study-choices", "tbl-data"), env, nb_choices(TIME = "IV_ECHO", RESPONSE = "LVEF")))
   expect_identical(env$.time, "iv_echo")
   expect_identical(env$.response, "lvef")
   expect_identical(sort(names(env$d)), sort(c("ccfid", "iv_echo", "lvef", "age", "female", "grp")))
   expect_identical(sort(env$.predictors), sort(c("age", "female", "grp")))
   env <- nb_env(root)
-  expect_error(utils::capture.output(nb_run(c("edit-study-choices", "data"), env,
+  expect_error(utils::capture.output(nb_run(c("edit-study-choices", "tbl-data"), env,
                                             nb_choices(TIME = "IV_ECHO", PREDICTORS = c("age", "IV_ECHO")))),
                "identifier, a KEY column or the visit time")
 })
@@ -210,10 +210,10 @@ test_that("the cache is reused unchanged, and a changed setting stops until REFI
 
 test_that("every report chunk draws for every family, from a fresh fit and from the cache", {
   nb_skip_unless_stack()
-  # The effects chunk prints its figures; a null device keeps Rplots.pdf out of the tree.
-  withr::local_pdf(NULL)
-  labels <- c("set", "edit-study-choices", "data", "fit", "fit-summary", "error-path", "calibration",
-              "importance", "effects", "traces", "save")
+  # The effects chunk emits each figure as a child chunk.
+  local_child_chunks()
+  labels <- c("set", "edit-study-choices", "tbl-data", "fit", "tbl-fit", "tbl-fit-summary", "fig-error", "fig-path",
+              "fig-calibration", "fig-importance", "effects", "fig-traces", "save")
   components <- list(continuous = "lvef", binary = "lvef_bin = 1 against 0",
                      ordinal = c("lvef_ord threshold 1", "lvef_ord threshold 2"),
                      nominal = c("lvef_nom = low against high", "lvef_nom = mid against high"))
@@ -254,7 +254,7 @@ test_that("the mean line averages within time bins, not at single visit times", 
   nb_skip_unless_stack()
   root <- nb_study()
   env <- nb_env(root)
-  utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "traces"), env, nb_choices(N_TRACES = 10)))
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit", "fig-traces"), env, nb_choices(N_TRACES = 10)))
   # Every bin stands on more than one patient, and there are fewer bins than distinct times.
   expect_true(all(env$trace_means$n_patients > 1L))
   expect_lt(nrow(env$trace_means), length(unique(env$traces$time)))
@@ -263,7 +263,7 @@ test_that("the mean line averages within time bins, not at single visit times", 
 test_that("the trace sample is reproducible under SEED", {
   nb_skip_unless_stack()
   root <- nb_study()
-  labels <- c("set", "edit-study-choices", "data", "fit", "traces")
+  labels <- c("set", "edit-study-choices", "tbl-data", "fit", "fig-traces")
   a <- nb_env(root)
   utils::capture.output(nb_run(labels, a, nb_choices(N_TRACES = 10)))
   b <- nb_env(root)
@@ -273,24 +273,25 @@ test_that("the trace sample is reproducible under SEED", {
 
 test_that("no report output prints an identifier", {
   nb_skip_unless_stack()
-  # The effects chunk prints its figures; a null device keeps Rplots.pdf out of the tree.
-  withr::local_pdf(NULL)
+  # The effects chunk emits each figure as a child chunk.
+  local_child_chunks()
   data <- nb_data(id = "MRN")
   root <- nb_study(data)
   env <- nb_env(root)
-  out <- utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "fit-summary", "error-path",
-                                        "calibration", "importance", "effects", "traces"), env, nb_choices(N_TRACES = 10)))
+  out <- utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit", "tbl-fit", "tbl-fit-summary",
+                                        "fig-error", "fig-path", "fig-calibration", "fig-importance", "effects", "fig-traces"),
+                                      env, nb_choices(N_TRACES = 10)))
   expect_false(any(vapply(unique(data$MRN), function(v) any(grepl(v, out, fixed = TRUE)), logical(1L))))
 })
 
 
 test_that("EFFECT_VARIABLES may name a factor covariate alone", {
   nb_skip_unless_stack()
-  withr::local_pdf(NULL)
+  local_child_chunks()
   root <- nb_study()
   env <- nb_env(root)
-  utils::capture.output(nb_run(c("set", "edit-study-choices", "data", "fit", "fit-summary", "importance", "effects"),
-                               env, nb_choices(EFFECT_VARIABLES = "grp")))
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit", "tbl-fit", "tbl-fit-summary", "fig-importance",
+                                 "effects"), env, nb_choices(EFFECT_VARIABLES = "grp")))
   expect_length(env$p_effects, 1L)
   expect_identical(as.character(unique(env$p_effects[[1L]]$data$variable)), "grp")
   expect_no_error(ggplot2::ggplot_build(env$p_effects[[1L]]))
@@ -304,7 +305,7 @@ test_that("visits all at one time draw no mean line, and say so", {
   env <- nb_env(tempdir())
   env$gg_boost_trajectory <- function(fit) traces
   list2env(list(fit = NULL, SEED = 1, N_TRACES = Inf, .time = "iv_echo", .response = "lvef"), envir = env)
-  out <- utils::capture.output(nb_run("traces", env))
+  out <- utils::capture.output(nb_run("fig-traces", env))
   expect_null(env$trace_means)
   expect_true(any(grepl("no mean line is drawn", out, fixed = TRUE)))
   expect_no_error(ggplot2::ggplot_build(env$p_traces))

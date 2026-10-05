@@ -31,6 +31,7 @@ test them; a p-value here is a prompt for an analysis, not a result.
 
 ```{r}
 #| label: setup
+# unnumbered: loads packages and checks versions only
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -204,7 +205,8 @@ CORR <- NULL
      never has to ask which data a table describes. -->
 
 ```{r}
-#| label: data
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
 # The checksum of every dataset in manifest.yaml is checked before anything is
 # read, so a result can name the data that produced it. It stops on a mismatch.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
@@ -213,9 +215,20 @@ job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set 
                                           where = WHERE, id = ID, key = KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
-knitr::kable(job_data$record, col.names = c("Data", ""), caption = "The data this job read")
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
 if (!is.null(job_data$attrition)) {
-  knitr::kable(job_data$attrition, caption = paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
@@ -279,7 +292,8 @@ classify_buckets <- function(d, vars, overrides = list()) {
 ## Table
 
 ```{r}
-#| label: table
+#| label: tbl-table
+#| tbl-cap: "Summary statistics for the study cohort, as written to the Word file"
 explicit <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
 if (all(vapply(explicit, is.null, logical(1)))) {
   b <- classify_buckets(d, unlist(GROUPS, use.names = FALSE), OVERRIDES)
@@ -320,6 +334,7 @@ if (nrow(check)) stop("Word output failed the CORR structural check", call. = FA
 ```{r}
 #| label: correlation
 #| results: asis
+# unnumbered: each child chunk below carries its own label and caption
 if (is.null(CORR)) {
   cat("Correlation variant not requested (`CORR <- NULL`).\n")
 } else {
@@ -331,15 +346,20 @@ if (is.null(CORR)) {
     ct <- rbind(ct[names(st)], st)
     attr(ct, "conf_level") <- conf_level
   }
-  print(knitr::kable(ct, caption = sprintf(
-    "Spearman and Pearson, %d%% Fisher interval", round(100 * attr(ct, "conf_level"))
-  )))
   cm <- hv_correlation_matrix(d, vars = unique(c(CORR$with, CORR$vars)))
   fname <- "dc-tables-correlation-matrix.png"
   png(set_path("descriptive", fname), width = 10, height = 10, units = "in", res = 150)
   print(plot(cm) + theme_hv_manuscript())
   invisible(dev.off())
-  cat("\n![Scatter-plot matrix](", file.path(paste0(SUBJECT, "-", TYPE), fname), ")\n", sep = "")
+  .fence <- strrep("`", 3)
+  .caption <- sprintf("Spearman and Pearson, %d%% Fisher interval", round(100 * conf_level))
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-correlation", paste0("#| tbl-cap: ", encodeString(.caption, quote = "\"")),
+    "knitr::kable(ct)", .fence, "",
+    paste0(.fence, "{r}"), "#| label: fig-correlation-matrix",
+    "#| fig-cap: \"Scatter-plot matrix of the correlated variables.\"",
+    "knitr::include_graphics(file.path(paste0(SUBJECT, \"-\", TYPE), fname), error = FALSE)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
 
