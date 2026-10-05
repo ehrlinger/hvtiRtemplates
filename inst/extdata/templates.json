@@ -1437,7 +1437,7 @@
       "prefix": "dc",
       "qualifier": "gfup",
       "name": "Descriptive: follow-up",
-      "description": "Checks recorded follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals.",
+      "description": "Checks follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals, then the goodness-of-follow-up figure, each patient's follow-up against operation year under the diagonal the close date allows.",
       "folder": "descriptive",
       "family": "descriptive",
       "kind": "job",
@@ -1455,7 +1455,8 @@
       "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
       "disposition": "thin",
       "uses": [
-        "hvtiRutilities::proc_means"
+        "hvtiRutilities::proc_means",
+        "hvtiPlotR::hv_followup"
       ]
     },
     {
@@ -1535,7 +1536,7 @@
       "prefix": "dp",
       "qualifier": "gfup",
       "name": "Descriptive plot: follow-up",
-      "description": "The goodness-of-follow-up figure: each patient's follow-up against operation year, alive in blue and dead in red, under the diagonal the close date allows.",
+      "description": "Deprecated in favor of dc-gfup, which draws the same figure beside its follow-up tables. The goodness-of-follow-up figure: each patient's follow-up against operation year, alive in blue and dead in red, under the diagonal the close date allows.",
       "folder": "graphs",
       "family": "plots",
       "kind": "job",
@@ -1554,7 +1555,9 @@
       "disposition": "thin",
       "uses": [
         "hvtiPlotR::hv_followup"
-      ]
+      ],
+      "deprecated_by": "dc-gfup",
+      "deprecation_note": "It will be removed in a later release. add_job(\"dc-gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."
     },
     {
       "prefix": "dp",

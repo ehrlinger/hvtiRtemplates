@@ -16,9 +16,9 @@ refuses to overwrite an existing job.
 | `40_graphs/hs-setup.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-concordance.qmd` | every patient through every treatment group's model, with an optional best-treatment table | `40_graphs/` or `graphs/` |
 | `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `40_graphs/` or `graphs/` |
-| `40_graphs/dp-gfup.qmd` | goodness-of-follow-up figure (EDA) | `40_graphs/` or `graphs/` |
+| `40_graphs/dp-gfup.qmd` | **deprecated**, use `dc-gfup`: goodness-of-follow-up figure | `40_graphs/` or `graphs/` |
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dc-gfup.qmd` | recorded follow-up interval checks | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-gfup.qmd` | follow-up interval checks and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dp-postage.qmd` | **deprecated**, use `dp-eda`: EDA panels on numbered PNG pages | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dp-eda.qmd` | the whole EDA report: overview, follow-up, then the postage sections, each with its table | `10_descriptive/` or `descriptive/` |

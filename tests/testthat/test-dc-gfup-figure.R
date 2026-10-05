@@ -1,5 +1,6 @@
-# dp-gfup is rendered, not only read: its checks and hv_followup() calls run at
-# render time, and a static test would pass a template whose figure chunk fails.
+# dc-gfup's figure is rendered, not only read: its checks and hv_followup() calls
+# run at render time, and a static test would pass a template whose figure chunk
+# fails. The figure was the dp-gfup job until it moved here.
 # scaffold_gfup() is in helper-migration.R.
 
 # The fixture's iv_opyrs runs to 40, so the template's 1990 origin would place
@@ -9,7 +10,7 @@ base_edits <- list(
   "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980"
 )
 
-test_that("dp-gfup renders a death panel and an event panel", {
+test_that("dc-gfup renders a death panel and an event panel", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   edits <- c(base_edits, list(
@@ -21,12 +22,12 @@ test_that("dp-gfup renders a death panel and an event panel", {
   s <- scaffold_gfup(edits)
   quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
   expect_true(file.exists(sub("[.]qmd$", ".html", s$job)))
-  pngs <- file.path(s$root, "graphs", "cohort-eda", c("dp-gfup-all.png", "dp-gfup-repair.png"))
+  pngs <- file.path(s$root, "graphs", "cohort-eda", c("dc-gfup-all.png", "dc-gfup-repair.png"))
   expect_true(all(file.exists(pngs)))
   expect_true(all(file.info(pngs)$size > 1000))
 })
 
-test_that("dp-gfup names every missing column in one error", {
+test_that("dc-gfup names every missing column in one error", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   edits <- c(base_edits, list(
@@ -43,7 +44,7 @@ test_that("dp-gfup names every missing column in one error", {
   expect_match(paste(err, collapse = "\n"), "not in the data: nope1, nope2")
 })
 
-test_that("dp-gfup refuses a two-digit origin year", {
+test_that("dc-gfup refuses a two-digit origin year", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   s <- scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85")))
@@ -56,7 +57,7 @@ test_that("dp-gfup refuses a two-digit origin year", {
   expect_match(paste(err, collapse = "\n"), "Check `origin_year`")
 })
 
-test_that("dp-gfup refuses a name shared by PANELS and EVENTS", {
+test_that("dc-gfup refuses a name shared by PANELS and EVENTS", {
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   edits <- c(base_edits, list(
@@ -75,8 +76,8 @@ test_that("dp-gfup refuses a name shared by PANELS and EVENTS", {
   expect_match(paste(err, collapse = "\n"), "all is used twice")
 })
 
-test_dp_gfup_window <- function(close_date) {
-  job <- template_path("dp", "gfup")
+test_dc_gfup_window <- function(close_date) {
+  job <- template_path("dc", "gfup")
   lines <- readLines(job, warn = FALSE)
   start <- match("#| label: window", lines)
   end <- start + match("```", lines[-seq_len(start)])
@@ -87,8 +88,8 @@ test_dp_gfup_window <- function(close_date) {
   env$close_source
 }
 
-test_that("dp-gfup reports the close date's source by the job's own edit point", {
+test_that("dc-gfup reports the close date's source by the job's own edit point", {
   skip_if_not_installed("hvtiPlotR", "2.7.17")
-  expect_identical(test_dp_gfup_window(as.Date("2023-01-01")), "set in CLOSE_DATE")
-  expect_match(test_dp_gfup_window(NULL), "estimated")
+  expect_identical(test_dc_gfup_window(as.Date("2023-01-01")), "set in CLOSE_DATE")
+  expect_match(test_dc_gfup_window(NULL), "estimated")
 })

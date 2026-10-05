@@ -1,14 +1,24 @@
-# dp-postage is deprecated in favor of dp-eda for one release. The warning is
-# driven by the catalog's deprecated_by field, not by a name in the code.
+# dp-postage is deprecated in favor of dp-eda, and dp-gfup in favor of dc-gfup.
+# The warning is driven by the catalog's deprecated_by field, not by a name in
+# the code.
 
-test_that("the catalog marks dp-postage deprecated in favor of dp-eda, and nothing else", {
+test_that("the catalog marks dp-postage and dp-gfup deprecated, and nothing else", {
   catalog <- template_catalog()
   marked <- catalog[!is.na(catalog$deprecated_by), , drop = FALSE]
-  expect_identical(paste(marked$prefix, marked$qualifier, sep = "-"), "dp-postage")
-  expect_identical(marked$deprecated_by, "dp-eda")
-  expect_identical(marked$status, "shipped")
-  expect_match(marked$deprecation_note, 'SECTIONS <- c("continuous", "percent", "count")', fixed = TRUE)
-  expect_match(marked$deprecation_note, "release after hvtiRtemplates 1.2.3", fixed = TRUE)
+  marked <- marked[order(marked$qualifier), , drop = FALSE]
+  expect_identical(paste(marked$prefix, marked$qualifier, sep = "-"), c("dp-gfup", "dp-postage"))
+  expect_identical(marked$deprecated_by, c("dc-gfup", "dp-eda"))
+  expect_identical(marked$status, c("shipped", "shipped"))
+  expect_match(marked$deprecation_note[[2L]], 'SECTIONS <- c("continuous", "percent", "count")', fixed = TRUE)
+  expect_match(marked$deprecation_note[[2L]], "release after hvtiRtemplates 1.2.3", fixed = TRUE)
+  expect_match(marked$deprecation_note[[1L]], 'add_job("dc-gfup", subject = "cohort", type = "eda")', fixed = TRUE)
+})
+
+test_that("add_job() warns once for dp-gfup, names dc-gfup, and still scaffolds", {
+  root <- migration_study_fixture(NULL)
+  expect_warning(job <- add_job("dp-gfup", "cohort", "eda", dir = root),
+                 "dp-gfup is deprecated in favor of dc-gfup", class = "hvtiRtemplates_deprecated")
+  expect_true(file.exists(job))
 })
 
 test_that("template_path(), add_job() and open_job() warn once for dp-postage and still work", {

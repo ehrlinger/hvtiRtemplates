@@ -1,3 +1,14 @@
+# hvtiRtemplates (unreleased)
+
+* `dc-gfup` draws the goodness-of-follow-up figure beside its tables, so one job
+  covers follow-up. It takes the figure's choices from `dp-gfup` (`OPYRS`,
+  `ORIGIN_YEAR`, `CLOSE_DATE`, `PANELS`, `EVENTS`, `ALPHA` and `COLORS`), adds the
+  operation-year and close-date table, and saves `dc-gfup-*.png` to `graphs/`. It
+  now needs hvtiPlotR >= 2.8.0.
+* `dp-gfup` is deprecated in favor of `dc-gfup` and will be removed in a later
+  release. It still scaffolds; `template_path()`, `add_job()` and `open_job()` warn,
+  and `migrate_job()` writes a `dc-gfup` job.
+
 # hvtiRtemplates 1.2.5
 
 * Every figure and table a template shows is numbered. Quarto numbers a figure only

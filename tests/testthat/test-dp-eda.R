@@ -272,16 +272,19 @@ test_that("dp-eda's overview leaves out identifiers but keeps dates", {
   expect_match(out, "Identifier columns, not described: ccfid, patientid, eMRN", fixed = TRUE)
 })
 
-test_that("dp-gfup and dp-eda choose follow-up colors with the same code", {
-  # dp-eda's copy is drawn and checked above; this keeps dp-gfup's from drifting.
+test_that("dc-gfup, dp-gfup and dp-eda choose follow-up colors with the same code", {
+  # dp-eda's copy is drawn and checked above; this keeps the others from drifting.
+  # dp-gfup is deprecated, so its warning is muffled.
   block <- function(prefix, qualifier) {
-    lines <- readLines(template_path(prefix, qualifier), warn = FALSE)
+    lines <- readLines(suppressWarnings(template_path(prefix, qualifier), classes = "hvtiRtemplates_deprecated"),
+                       warn = FALSE)
     start <- grep("^if \\(exists\\(\"COLOURS\"", lines)
     end <- start + match("}", lines[-seq_len(start)])
     end <- end + match("}", lines[-seq_len(end)])
     lines[start:end]
   }
-  expect_length(block("dp", "gfup"), 13L)
+  expect_length(block("dc", "gfup"), 13L)
+  expect_identical(block("dc", "gfup"), block("dp", "eda"))
   expect_identical(block("dp", "gfup"), block("dp", "eda"))
 })
 

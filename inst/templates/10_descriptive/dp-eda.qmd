@@ -26,8 +26,8 @@ counts, each with its table. It is written for the biostatistician choosing
 variables for an analysis set, not for a manuscript.
 
 Each section is also a job of its own, and draws through the same function:
-the follow-up section is `dp-gfup` (`hvtiPlotR::hv_followup_panels()`) with
-the tables of `dc-gfup` (`hvtiRutilities::followup_check()`), and the other
+the follow-up section is `dc-gfup`, its figure (`hvtiPlotR::hv_followup_panels()`)
+and its tables (`hvtiRutilities::followup_check()`), and the other
 three are `dp-postage` (`hvtiPlotR::hv_eda_pages()`). Given the same choices, a
 section here is the same figure as the standalone job, so this report and a
 standalone job cannot disagree about the data.
@@ -145,7 +145,7 @@ ID <- "ccfid"
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
 
-# Follow-up. These are dp-gfup's choices, and mean what they mean there.
+# Follow-up. These are dc-gfup's choices, and mean what they mean there.
 # EDIT: the years-since-origin interval to the operation, and that origin. The
 # origin differs between studies, and a wrong one slides every point along the
 # x-axis without any other symptom, which is why the operation years are
@@ -442,7 +442,7 @@ cat("A point below the diagonal is follow-up short of what the close date allows
 # unnumbered: its child chunk carries its own label and caption
 # hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
 # names every missing column at once, refuses a name used twice and the
-# wrong-origin mistake, and works out the window the panels share. dp-gfup
+# wrong-origin mistake, and works out the window the panels share. dc-gfup
 # calls it with the same arguments, so these are that job's panels.
 fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
                                     panels = PANELS, events = EVENTS, close_date = CLOSE_DATE)

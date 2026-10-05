@@ -31,11 +31,11 @@ the template's prefix, then the subject and type that name the job's set, and
 the qualifier when the prefix has one:
 
 ```r
-add_job("dp", "cohort", "eda", qualifier = "gfup")
+add_job("dp", "cohort", "eda", qualifier = "trends")
 ```
 
-In a new study that writes `40_graphs/cohort-eda-dp-gfup.qmd`; a legacy study
-that already uses bare folder names gets `graphs/cohort-eda-dp-gfup.qmd`. The
+In a new study that writes `40_graphs/cohort-eda-dp-trends.qmd`; a legacy study
+that already uses bare folder names gets `graphs/cohort-eda-dp-trends.qmd`. The
 job refuses to overwrite an existing file, because a job accumulates a study's
 edits.
 

@@ -22,6 +22,12 @@ format:
 
 Replaces `graphs/dp.gfup`: list the follow-up panels it draws.
 
+**Deprecated.** `dp-gfup` is deprecated in favor of `dc-gfup`, and will be
+removed in a later release. For the same figure, start a `dc-gfup` job with
+`add_job("dc-gfup", subject = "cohort", type = "eda")`: it draws these panels
+with the same choices and the same call to `hv_followup_panels()`, beside the
+follow-up tables, saved as `dc-gfup-*.png` rather than `dp-gfup-*.png`.
+
 A `dp-gfup` job draws the goodness-of-follow-up figure. Every patient is one
 point: the year of operation across, the follow-up recorded for them up, blue
 while alive and red once dead. The dashed diagonal is the follow-up a patient

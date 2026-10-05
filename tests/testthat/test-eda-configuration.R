@@ -10,7 +10,8 @@ test_that("jobs present their study choices before reading data", {
              "40_graphs/hs-setup.qmd")
   required <- list(
     `dc-general.qmd` = c("DATASET", "ANALYSIS_SET", "CATEGORICAL", "CONTINUOUS", "ID"),
-    `dc-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "EVENT", "FOLLOWUP", "CHECKS"),
+    `dc-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "EVENT", "FOLLOWUP", "CHECKS", "OPYRS", "ORIGIN_YEAR",
+                      "CLOSE_DATE", "PANELS", "EVENTS", "ALPHA", "COLORS"),
     `dc-tables.qmd` = c("DATASET", "ANALYSIS_SET", "GROUPS", "WORD_FILE", "CORR"),
     `dp-eda.qmd` = c("DATASET", "ANALYSIS_SET", "OPYRS", "ORIGIN_YEAR", "CLOSE_DATE", "PANELS", "EVENTS",
                      "X_VAR", "VARIABLES", "GRID_NCOL", "SECTIONS", "ALPHA"),
