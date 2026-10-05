@@ -55,7 +55,12 @@ the intended starting point for a new analysis job.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with columns <code>name</code>, <code>prefix</code>,
-  <code>qualifier</code>, <code>folder</code> and <code>file</code>. <code>folder</code> is the
+  <code>qualifier</code>, <code>folder</code>, <code>call</code> and <code>file</code>.
+  <code>call</code> is the <code><a href="add_job.html">add_job</a></code> call that scaffolds the
+  template, with only the arguments it requires and runnable as printed,
+  e.g. <code>add_job("dc-gfup", subject = "cohort", type = "eda")</code>. The
+  <code>subject</code> and <code>type</code> shown are the template's own defaults;
+  change them to name the job. <code>folder</code> is the
   taxonomy name with the directory's ordering digits stripped, so
   <code>20_distributions</code> reports as <code>distributions</code>.
   <code>qualifier</code> is <code>NA</code> for a prefix carrying a single template.</p>
@@ -112,6 +117,40 @@ folder, including when the catalog is absent.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 31                    hp     hp               &lt;NA&gt;        graphs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 32        hs-concordance     hs        concordance        graphs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 33              hs-setup     hs              setup        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                            call</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                              add_job("bd", subject = "study", type = "build")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2                       add_job("dc-general", subject = "cohort", type = "eda")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                          add_job("dc-gfup", subject = "cohort", type = "eda")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4                        add_job("dc-tables", subject = "cohort", type = "eda")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5                           add_job("dp-eda", subject = "cohort", type = "eda")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6                       add_job("dp-postage", subject = "cohort", type = "eda")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7                               add_job("ac", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8                               add_job("hz", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9                               add_job("bc", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10                              add_job("bh", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11                              add_job("bl", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12                              add_job("br", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13                              add_job("hm", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14      add_job("lm-balancing_count", subject = "exposure", type = "balancing")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15                 add_job("lm-binary", subject = "outcome", type = "analysis")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16              add_job("lm-checkpred", subject = "outcome", type = "analysis")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17                add_job("lm-nominal", subject = "outcome", type = "analysis")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18                add_job("lm-ordinal", subject = "outcome", type = "analysis")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19  add_job("lm-propensity_binary", subject = "treatment", type = "propensity")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 add_job("lm-propensity_nominal", subject = "treatment", type = "propensity")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 add_job("lm-propensity_ordinal", subject = "treatment", type = "propensity")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22                   add_job("nb-boostmtree", subject = "lvef", type = "boost")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23                       add_job("rfc-explain", subject = "dead", type = "rfc")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24                           add_job("rfc-fit", subject = "dead", type = "rfc")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25                        add_job("rfr-explain", subject = "los", type = "rfr")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26                            add_job("rfr-fit", subject = "los", type = "rfr")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27                       add_job("rfs-explain", subject = "dead", type = "rfs")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28                           add_job("rfs-fit", subject = "dead", type = "rfs")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29                         add_job("dp-gfup", subject = "cohort", type = "eda")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30                       add_job("dp-trends", subject = "cohort", type = "eda")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31                              add_job("hp", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32                  add_job("hs-concordance", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33                        add_job("hs-setup", subject = "dead_pa", type = "hz")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                              file</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1                     /home/runner/work/_temp/Library/hvtiRtemplates/templates/00_datasets/bd.qmd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2          /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-general.qmd</span>

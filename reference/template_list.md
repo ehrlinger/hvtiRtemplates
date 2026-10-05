@@ -11,8 +11,14 @@ template_list()
 
 ## Value
 
-A data frame with columns `name`, `prefix`, `qualifier`, `folder` and
-`file`. `folder` is the taxonomy name with the directory's ordering
+A data frame with columns `name`, `prefix`, `qualifier`, `folder`,
+`call` and `file`. `call` is the
+[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+call that scaffolds the template, with only the arguments it requires
+and runnable as printed, e.g.
+`add_job("dc-gfup", subject = "cohort", type = "eda")`. The `subject`
+and `type` shown are the template's own defaults; change them to name
+the job. `folder` is the taxonomy name with the directory's ordering
 digits stripped, so `20_distributions` reports as `distributions`.
 `qualifier` is `NA` for a prefix carrying a single template.
 
@@ -69,6 +75,40 @@ template_list()
 #> 31                    hp     hp               <NA>        graphs
 #> 32        hs-concordance     hs        concordance        graphs
 #> 33              hs-setup     hs              setup        graphs
+#>                                                                            call
+#> 1                              add_job("bd", subject = "study", type = "build")
+#> 2                       add_job("dc-general", subject = "cohort", type = "eda")
+#> 3                          add_job("dc-gfup", subject = "cohort", type = "eda")
+#> 4                        add_job("dc-tables", subject = "cohort", type = "eda")
+#> 5                           add_job("dp-eda", subject = "cohort", type = "eda")
+#> 6                       add_job("dp-postage", subject = "cohort", type = "eda")
+#> 7                               add_job("ac", subject = "dead_pa", type = "hz")
+#> 8                               add_job("hz", subject = "dead_pa", type = "hz")
+#> 9                               add_job("bc", subject = "dead_pa", type = "hz")
+#> 10                              add_job("bh", subject = "dead_pa", type = "hz")
+#> 11                              add_job("bl", subject = "dead_pa", type = "hz")
+#> 12                              add_job("br", subject = "dead_pa", type = "hz")
+#> 13                              add_job("hm", subject = "dead_pa", type = "hz")
+#> 14      add_job("lm-balancing_count", subject = "exposure", type = "balancing")
+#> 15                 add_job("lm-binary", subject = "outcome", type = "analysis")
+#> 16              add_job("lm-checkpred", subject = "outcome", type = "analysis")
+#> 17                add_job("lm-nominal", subject = "outcome", type = "analysis")
+#> 18                add_job("lm-ordinal", subject = "outcome", type = "analysis")
+#> 19  add_job("lm-propensity_binary", subject = "treatment", type = "propensity")
+#> 20 add_job("lm-propensity_nominal", subject = "treatment", type = "propensity")
+#> 21 add_job("lm-propensity_ordinal", subject = "treatment", type = "propensity")
+#> 22                   add_job("nb-boostmtree", subject = "lvef", type = "boost")
+#> 23                       add_job("rfc-explain", subject = "dead", type = "rfc")
+#> 24                           add_job("rfc-fit", subject = "dead", type = "rfc")
+#> 25                        add_job("rfr-explain", subject = "los", type = "rfr")
+#> 26                            add_job("rfr-fit", subject = "los", type = "rfr")
+#> 27                       add_job("rfs-explain", subject = "dead", type = "rfs")
+#> 28                           add_job("rfs-fit", subject = "dead", type = "rfs")
+#> 29                         add_job("dp-gfup", subject = "cohort", type = "eda")
+#> 30                       add_job("dp-trends", subject = "cohort", type = "eda")
+#> 31                              add_job("hp", subject = "dead_pa", type = "hz")
+#> 32                  add_job("hs-concordance", subject = "dead_pa", type = "hz")
+#> 33                        add_job("hs-setup", subject = "dead_pa", type = "hz")
 #>                                                                                              file
 #> 1                     /home/runner/work/_temp/Library/hvtiRtemplates/templates/00_datasets/bd.qmd
 #> 2          /home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-general.qmd
