@@ -605,22 +605,31 @@ test_that("template_list() reports a qualifier column", {
 })
 
 test_that("template_list()$call scaffolds its own template, every row", {
-  # The column is only worth printing if pasting it works. Run each call as
-  # written, with subject and type bound, and check it wrote that template.
+  # The column is only worth printing if pasting it works. Run each call
+  # exactly as printed and check it wrote that template, under the subject and
+  # type the call names.
   tl <- template_list()
   skip_if(nrow(tl) == 0L, "no templates installed")
-  expect_identical(tl$call, sprintf('add_job("%s", subject, type)', tl$name))
+  expect_false(anyNA(tl$call))
+  expect_true(all(startsWith(tl$call, paste0('add_job("', tl$name, '", subject = "'))))
   dir <- withr::local_tempdir()
-  env <- new.env(parent = asNamespace("hvtiRtemplates"))
-  env$subject <- "cohort"
-  env$type <- "fu"
   for (i in seq_len(nrow(tl))) {
     call <- parse(text = tl$call[[i]])[[1L]]
     call$dir <- dir
-    out <- withCallingHandlers(eval(call, env),
+    out <- withCallingHandlers(eval(call, asNamespace("hvtiRtemplates")),
                                hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
-    expect_identical(basename(out), paste0("cohort-fu-", tl$name[[i]], ".qmd"), info = tl$name[[i]])
+    expect_identical(basename(out), paste0(call$subject, "-", call$type, "-", tl$name[[i]], ".qmd"),
+                     info = tl$name[[i]])
   }
+})
+
+test_that("template_list()$call is NA for a template add_job() cannot scaffold", {
+  f <- withr::local_tempfile(fileext = ".qmd")
+  writeLines(c('SUBJECT <- "cohort"', 'TYPE    <- "eda"'), f)
+  expect_identical(.template_call(f), sprintf('add_job("%s", subject = "cohort", type = "eda")',
+                                              sub("[.]qmd$", "", basename(f))))
+  writeLines('SUBJECT <- "cohort"', f)
+  expect_identical(.template_call(f), NA_character_)
 })
 
 test_that(".select_template() refuses to guess when a prefix is ambiguous", {

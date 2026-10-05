@@ -10,9 +10,10 @@ template_list()
 A data frame with columns \code{name}, \code{prefix},
   \code{qualifier}, \code{folder}, \code{call} and \code{file}.
   \code{call} is the \code{\link{add_job}} call that scaffolds the
-  template, with only the arguments it requires, e.g.
-  \code{add_job("dc-gfup", subject, type)}; replace \code{subject} and
-  \code{type} with the job's names. \code{folder} is the
+  template, with only the arguments it requires and runnable as printed,
+  e.g. \code{add_job("dc-gfup", subject = "cohort", type = "eda")}. The
+  \code{subject} and \code{type} shown are the template's own defaults;
+  change them to name the job. \code{folder} is the
   taxonomy name with the directory's ordering digits stripped, so
   \code{20_distributions} reports as \code{distributions}.
   \code{qualifier} is \code{NA} for a prefix carrying a single template.
