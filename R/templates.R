@@ -16,7 +16,12 @@
 #' folder, including when the catalog is absent.
 #'
 #' @return A data frame with columns \code{name}, \code{prefix},
-#'   \code{qualifier}, \code{folder} and \code{file}. \code{folder} is the
+#'   \code{qualifier}, \code{folder}, \code{call} and \code{file}.
+#'   \code{call} is the \code{\link{add_job}} call that scaffolds the
+#'   template, with only the arguments it requires and runnable as printed,
+#'   e.g. \code{add_job("dc-gfup", subject = "cohort", type = "eda")}. The
+#'   \code{subject} and \code{type} shown are the template's own defaults;
+#'   change them to name the job. \code{folder} is the
 #'   taxonomy name with the directory's ordering digits stripped, so
 #'   \code{20_distributions} reports as \code{distributions}.
 #'   \code{qualifier} is \code{NA} for a prefix carrying a single template.
@@ -41,9 +46,38 @@ template_list <- function() {
     prefix    = fields$prefix,
     qualifier = fields$qualifier,
     folder    = .folder_name(basename(dirname(files))),
+    call      = vapply(files, .template_call, character(1), USE.NAMES = FALSE),
     file      = files,
     stringsAsFactors = FALSE
   )
+}
+
+# The add_job() call that scaffolds `file`, runnable as printed. The full name
+# selects the template on its own, qualified or not, so subject and type are
+# the only other arguments add_job() requires. Their values are the template's
+# own SUBJECT and TYPE lines, the ones add_job() rewrites, so the example is
+# one that fits the template, and naming the arguments shows they are the
+# caller's to change. NA where a template lacks exactly one of either line,
+# which add_job() refuses to scaffold anyway, and where the line's value is not
+# one string add_job() would accept as a field, so the call is never one that
+# fails to parse or that add_job() refuses. The line is parsed, not matched, so
+# 'single' and "double" quotes and a trailing comment all read the same.
+# Raised by Codex on #239.
+.template_call <- function(file) {
+  txt <- readLines(file, warn = FALSE)
+  value <- function(marker) {
+    line <- grep(paste0("^", marker, "\\s+<- "), txt, value = TRUE)
+    if (length(line) != 1L) return(NA_character_)
+    expr <- tryCatch(parse(text = line, keep.source = FALSE), error = function(e) NULL)
+    if (length(expr) != 1L) return(NA_character_)
+    rhs <- expr[[1L]][[3L]]
+    ok <- is.character(rhs) && length(rhs) == 1L && !is.na(rhs) && grepl("^[A-Za-z0-9_]+$", rhs)
+    if (ok) rhs else NA_character_
+  }
+  subject <- value("SUBJECT")
+  type <- value("TYPE")
+  if (is.na(subject) || is.na(type)) return(NA_character_)
+  sprintf('add_job("%s", subject = "%s", type = "%s")', sub("[.]qmd$", "", basename(file)), subject, type)
 }
 
 #' Path to a supported template
