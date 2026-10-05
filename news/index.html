@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,14 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.5" id="hvtirtemplates-125">hvtiRtemplates 1.2.5<a class="anchor" aria-label="anchor" href="#hvtirtemplates-125"></a></h2>
+<ul><li>Every figure and table a template shows is numbered. Quarto numbers a figure only with a <code>fig-</code> label and <code>fig-cap</code>, and a table only with a <code>tbl-</code> label and <code>tbl-cap</code>; a <code>knitr::kable(caption = )</code> caption prints without a number. All 33 templates now carry numbered labels and captions, table captions moved into <code>tbl-cap</code>, chunks that showed several outputs are split, and loops that show one table or figure per item emit each as its own <code><a href="https://rdrr.io/pkg/knitr/man/knit_child.html" class="external-link">knitr::knit_child()</a></code> chunk, so every item is numbered and citable. Chunks that hold <code>EDIT:</code> choices no longer also show output. A job built from a template starts numbered.</li>
+<li>New <code>test-template-numbering.R</code> enforces the rule for every template, and rejects the retired ColorBrewer palettes (<code>"Set1"</code>, <code>"Set2"</code>, <code>"Dark2"</code>, <code>"RdYlGn"</code> and others); categorical groups take <code><a href="https://ehrlinger.github.io/hvtiPlotR/reference/hv_palette.html" class="external-link">hvtiPlotR::hv_palette()</a></code>. A chunk that calls a table or figure function without showing one says so with <code># unnumbered: &lt;reason&gt;</code>.</li>
+<li>
+<code>inst/templates/README.md</code> gains “Figures, tables and color”, pointing to the recipes book chapter <a href="https://ehrlinger.github.io/hvtiGraphics/numbering.html" class="external-link">Numbering figures and tables</a>.</li>
+<li>The label <code>data</code> is now <code>tbl-data</code> in every template (dp-postage keeps <code>data</code>), with the other renames listed in the tests that extract chunks by label.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.4" id="hvtirtemplates-124">hvtiRtemplates 1.2.4<a class="anchor" aria-label="anchor" href="#hvtirtemplates-124"></a></h2>
 <ul><li><p><code>ggBoostedTrees</code> is required at 0.9.1 or later. <code>boostmtree</code> now arrives only through <code>ggBoostedTrees</code>’s <code>Remotes:</code>, and 0.9.1 is the first release that pins the <code>v2.0.3-ccf</code> tag this package’s <code>boostmtree (&gt;= 2.0.3)</code> floor needs.</p></li>
