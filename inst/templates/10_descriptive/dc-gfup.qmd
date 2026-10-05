@@ -325,7 +325,7 @@ an equivalent follow-up definition by itself.
 # wrong-origin mistake, and works out the window the panels share: from
 # 1 January of ORIGIN_YEAR, where hv_followup() draws its diagonal, to the last
 # operation. The EDA report calls the same function, so its panels are these.
-# A refusal does not stop the job: the tables above are the follow-up check and
+# A refusal does not stop a draft: the tables above are the follow-up check and
 # do not depend on the figure, so the refusal is reported where the figure would
 # be, and the render carries on. It is also raised as a warning, so a console
 # render says so too.
@@ -341,6 +341,13 @@ if (figure_drawn) {
   # Name the edit point a reader can find in this file, not the function's argument.
   close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
 } else {
+  # A final render (render_job(final = TRUE), which sets HVTI_TEMPLATE_STRICT)
+  # is the accepted result, and an accepted follow-up report has its figure.
+  if (!tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+    stop("The goodness-of-follow-up figure was not drawn: ", conditionMessage(fp),
+         "\nThis render stops because HVTI_TEMPLATE_STRICT is set; a draft render reports it and carries on.",
+         call. = FALSE)
+  }
   warning("The goodness-of-follow-up figure was not drawn: ", conditionMessage(fp), call. = FALSE)
   close_date <- NA
   close_source <- paste("not drawn:", conditionMessage(fp))

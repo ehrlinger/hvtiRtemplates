@@ -68,6 +68,23 @@ test_that("dc-gfup reports a name shared by PANELS and EVENTS, and keeps its tab
   expect_match(out, "all is used twice", fixed = TRUE)
 })
 
+test_that("a final dc-gfup render stops on a figure refusal", {
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  s <- scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85")))
+  # Strict mode also stops on an unresolved marker, so clear them: the stop
+  # under test must be the figure's.
+  writeLines(gsub(paste0("ED", "IT:"), "Set:", readLines(s$job, warn = FALSE), fixed = TRUE), s$job)
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "1")
+  err <- tryCatch({
+    utils::capture.output(quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = FALSE),
+                          type = "message")
+    NULL
+  }, error = function(e) conditionMessage(e))
+  expect_false(is.null(err))
+  expect_match(paste(err, collapse = "\n"), "figure was not drawn", fixed = TRUE)
+})
+
 test_dc_gfup_window <- function(close_date) {
   job <- template_path("dc", "gfup")
   lines <- readLines(job, warn = FALSE)
