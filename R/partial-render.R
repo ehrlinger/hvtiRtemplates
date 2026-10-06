@@ -54,15 +54,53 @@ stop_here <- function(envir = parent.frame()) {
   knitr::asis_output(provenance)
 }
 
-# The partial-render points in a job's source: every `#| skip:` chunk option and
+# The partial-render points in a job's source: every `skip` chunk option and
 # every stop_here() call. Read from the source, as the EDIT: guard reads its
 # markers, so a draft can list them at the top before any of them is reached.
-# The patterns are built in pieces so this file's own text never matches them.
+#
+# Only live syntax counts. A skip is read only from the option header of an
+# executable R chunk (the `#|` lines straight after a ```{r} fence), and a stop
+# only from the body of one that runs, so a fenced documentation example, a
+# plain code block, a `#|` line further down a chunk, or a stop_here() in an
+# `eval: false` chunk is left alone. Fences follow Markdown: a block opened
+# with N backticks closes at a line of N or more, and nothing inside a block
+# opens another, which is how a ````-fenced example can show a ```{r} chunk.
+# Raised in review on #243. The patterns are built in pieces so this file's
+# own text never matches them.
 .partial_points <- function(src) {
   skip_re <- paste0("^#\\|\\s*sk", "ip:\\s*")
   stop_re <- paste0("^\\s*(hvtiRtemplates::)?st", "op_here\\(\\s*\\)")
-  skips <- grep(skip_re, src)
-  stops <- grep(stop_re, src)
+  skips <- integer()
+  stops <- integer()
+  fence <- NULL
+  executable <- FALSE
+  header <- FALSE
+  runs <- TRUE
+  for (i in seq_along(src)) {
+    line <- src[[i]]
+    if (is.null(fence)) {
+      open <- regmatches(line, regexpr("^`{3,}", line))
+      if (length(open)) {
+        fence <- open
+        executable <- grepl("^`{3,}\\s*\\{r([ ,}]|$)", line)
+        header <- executable
+        runs <- TRUE
+      }
+      next
+    }
+    if (grepl(paste0("^", fence, "`*\\s*$"), line)) {
+      fence <- NULL
+      next
+    }
+    if (!executable) next
+    if (header && grepl("^#\\|", line)) {
+      if (grepl("^#\\|\\s*eval:\\s*(false|FALSE)\\s*$", line)) runs <- FALSE
+      if (grepl(skip_re, line)) skips <- c(skips, i)
+      next
+    }
+    header <- FALSE
+    if (runs && grepl(stop_re, line)) stops <- c(stops, i)
+  }
   reason <- trimws(sub(skip_re, "", src[skips]))
   quoted <- grepl("^(\"[^\"]*\"|'[^']*')$", reason)
   reason <- ifelse(quoted, substr(reason, 2L, nchar(reason) - 1L), "")

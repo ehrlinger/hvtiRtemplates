@@ -22,11 +22,44 @@ test_that("the partial-render points are read from the source, with their lines"
   expect_identical(nrow(.partial_points(c("x <- 1", "# nothing here"))), 0L)
 })
 
+test_that("only live syntax counts: examples, plain blocks, body lines and eval: false do not", {
+  # Each of these looks like a skip or a stop and is not one. Raised in review
+  # on #243: a false point marks a draft PARTIAL and refuses a final render.
+  dead <- c(
+    "````",                                   # a documentation example, as the tutorial shows one
+    "```{r}",
+    "#| skip: \"example only\"",
+    "hvtiRtemplates::stop_here()",
+    "```",
+    "````",
+    "```r",                                   # a plain, non-executed code block
+    "stop_here()",
+    "```",
+    "```{r}",
+    "#| label: body",
+    "x <- 1",
+    "#| skip: \"a comment in the body, not an option\"",
+    "```",
+    "```{r}",
+    "#| eval: false",
+    "stop_here()",                            # never runs
+    "```"
+  )
+  expect_identical(nrow(.partial_points(dead)), 0L)
+  # The same file with one live point of each kind finds exactly those two.
+  live <- c(dead, "```{r}", "#| label: real", "#| skip: \"real\"", "y <- 2", "```",
+            "```{r, echo = FALSE}", "stop_here()", "```")
+  points <- .partial_points(live)
+  expect_identical(points$kind, c("skip", "stop"))
+  expect_identical(points$line, c(length(dead) + 3L, length(dead) + 7L))
+})
+
 test_that("a skip must give its reason as a quoted string", {
   for (line in c("#| skip: true", "#| skip:", "#| skip: \"\"", "#| skip: waiting")) {
     expect_error(.partial_points(c("```{r}", line, "```")), "needs its reason", info = line)
   }
-  expect_identical(.partial_points("#| skip: 'single quotes are fine'")$reason, "single quotes are fine")
+  expect_identical(.partial_points(c("```{r}", "#| skip: 'single quotes are fine'", "```"))$reason,
+                   "single quotes are fine")
 })
 
 test_that("a draft lists every point in a callout; a strict render stops", {
