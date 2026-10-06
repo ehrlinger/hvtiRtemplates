@@ -308,14 +308,15 @@ study_jobs
 Each new job contains `EDIT:` markers for decisions that cannot come from the
 template: variables, labels, groups, units and output choices. `open_job()`
 opens the QMD in RStudio's file editor. Edit the file there, working from the
-top marker downward. Use the chunk Run button as you work, then choose **Run >
-Run All** to generate the output in one interactive pass.
+top marker downward, and **Render** to see what your choices do. A draft render
+carries a DRAFT banner while any marker remains.
 
-When every marker is resolved, click **Render**. Rendering starts at the top in
-a clean session, much like running a SAS job from beginning to end. It catches
-a job that only worked because an object was left in the interactive session.
-Render every edited job before leaving the study so the saved QMD is still in
-an executable state. If you want the same final check from the Console, run
+Always render; do not run the chunks by hand with **Run All**. Rendering starts
+at the top in a clean session, much like running a SAS job from beginning to
+end, so the report comes from this job alone. Run All works in your current
+session, where an object or a setting left by another job can stand in for one
+this job does not make. Render every edited job before leaving the study so the
+saved QMD is still in an executable state. If you want the same final check from the Console, run
 `render_job(tables, final = TRUE)`, substituting the job you edited.
 
 The HTML report stays beside its QMD in `descriptive/` or `graphs/`. The

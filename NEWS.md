@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* The *Work a job* and *Adopt an existing study* articles say to always render a job, never
+  to run its chunks by hand: Run All works in the current R session, where a setting
+  left by another job can stand in for this job's and read the wrong patients. To
+  look at the data, render a draft; to see only the top of a long job, use
+  `stop_here()`.
+
 * An `ANALYSIS_SET` the study has not built is named, with the fix: set
   `ANALYSIS_SET <- NULL` to read the registered study dataset. This covers every template
   reading through `read_job_data()` and the deprecated `dp-postage`, which reads its
