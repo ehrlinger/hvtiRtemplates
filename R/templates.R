@@ -27,7 +27,12 @@
 #'   \code{qualifier} is \code{NA} for a prefix carrying a single template.
 #' @export
 #' @examples
-#' template_list()
+#' tl <- template_list()
+#' # Every template, where its job is written, and the call that scaffolds it.
+#' tl[, c("name", "folder", "call")]
+#'
+#' # Find a template by its qualifier, then copy its call: the follow-up jobs.
+#' subset(tl, qualifier == "gfup", c(name, folder, call))
 template_list <- function() {
   dir <- system.file("templates", package = "hvtiRtemplates")
   files <- if (nzchar(dir)) {
@@ -93,7 +98,15 @@ template_list <- function() {
 #'   warning naming its replacement.
 #' @export
 #' @examples
-#' try(template_path("ac"))
+#' template_path("ac")
+#'
+#' # A qualified template, by its full name or as prefix plus qualifier.
+#' template_path("dc-gfup")
+#' template_path("dc", qualifier = "gfup")
+#'
+#' # A prefix carrying several templates is never resolved by guessing: this
+#' # is an error that lists the choices.
+#' try(template_path("dc"))
 template_path <- function(prefix, qualifier = NULL) {
   row <- .select_template(template_list(), prefix, qualifier)
   .warn_if_deprecated(row, "template_path")

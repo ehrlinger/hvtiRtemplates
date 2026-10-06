@@ -72,7 +72,18 @@
 #'   d, study = "Example", study_tracker_id = 1L
 #' ))
 #' add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
-#' list.files(d, recursive = TRUE)
+#'
+#' # A qualified template by its full name, the form template_list()$call prints.
+#' add_job("dc-gfup", subject = "cohort", type = "eda", dir = d)
+#'
+#' # A deprecated template still scaffolds, and the warning names its replacement.
+#' tryCatch(add_job("dp-gfup", subject = "cohort", type = "eda", dir = d),
+#'          warning = conditionMessage)
+#'
+#' # A job accumulates a study's edits, so an existing one is never overwritten.
+#' try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
+#'
+#' list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #' unlink(d, recursive = TRUE)
 add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
   .check_field("subject", subject)

@@ -24,5 +24,13 @@ The full path, as \code{character(1)}. A template the catalog
 Path to a supported template
 }
 \examples{
-try(template_path("ac"))
+template_path("ac")
+
+# A qualified template, by its full name or as prefix plus qualifier.
+template_path("dc-gfup")
+template_path("dc", qualifier = "gfup")
+
+# A prefix carrying several templates is never resolved by guessing: this
+# is an error that lists the choices.
+try(template_path("dc"))
 }
