@@ -1,5 +1,10 @@
 # hvtiRtemplates (unreleased)
 
+* `hz` no longer passes `condition = 14` to `hazard()`. It mirrored SAS's
+  `CONDITION=` option, which `hazard()` does not have, so TemporalHazard ignored it
+  and printed a warning into the report for every fit. The fit still reports the
+  conditioning of its Hessian, as `rcond` in the convergence table (#172).
+
 * `hm` stops when the reported fit has no variance matrix, or when any of its free
   parameters has no finite standard error, instead of saving `hm.rds` with only a
   TemporalHazard warning in the log. The message names the phases and covariates

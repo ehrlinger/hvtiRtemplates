@@ -129,3 +129,15 @@ test_that("hz's convergence table keeps its rows when a fit leaves a field out",
   out <- as.character(eval(chunk, env))
   expect_false(any(grepl("not reported", out, fixed = TRUE)))
 })
+
+# ---- hz's fits, run as a render runs them --------------------------------------
+
+test_that("hz passes hazard() no control element it ignores (#172)", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  skip_if_not_installed("numDeriv")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  env <- hz_fit_run()
+  expect_true(all(c("fit_det", "probe_ll", "fit_nc") %in% ls(env)))
+  expect_false(any(grepl("with no effect", env$.warnings, fixed = TRUE)))
+})

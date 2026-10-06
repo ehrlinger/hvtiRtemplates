@@ -497,9 +497,12 @@ the file alone.
 
 ```{r}
 #| label: fit-deterministic
+# No `condition` in control: SAS's CONDITION= option has no equivalent in
+# hazard(), which ignores the element with a warning in the report. The fit
+# reports the conditioning of its Hessian afterwards instead, as rcond below.
 fit_det <- hazard(surv_formula, data = resp, dist = "multiphase",
                   phases = phases, theta = theta0, fit = TRUE,
-                  control = list(conserve = TRUE, condition = 14,
+                  control = list(conserve = TRUE,
                                  n_starts = 1, maxit = 2000))
 check_fit(fit_det, "deterministic")
 summary(fit_det)
@@ -555,7 +558,7 @@ if (anyDuplicated(probes)) {
 probe_ll <- vapply(seq_len(nrow(probes)), function(i) {
   f <- try(hazard(surv_formula, data = resp, dist = "multiphase",
                   phases = phases, theta = probes[i, ], fit = TRUE,
-                  control = list(conserve = TRUE, condition = 14,
+                  control = list(conserve = TRUE,
                                  n_starts = 1, maxit = 2000)), silent = TRUE)
   if (inherits(f, "try-error")) NA_real_ else f$fit$objective
 }, numeric(1))
@@ -582,7 +585,7 @@ confounds the two changes.
 #| label: noconserve
 fit_nc <- hazard(surv_formula, data = resp, dist = "multiphase",
                  phases = phases, theta = theta0, fit = TRUE,
-                 control = list(conserve = FALSE, condition = 14,
+                 control = list(conserve = FALSE,
                                 n_starts = 1, maxit = 2000))
 check_fit(fit_nc, "noconserve")
 ```

@@ -111,6 +111,31 @@ hazard_downstream <- function(prefix, root, choices = list()) {
   env
 }
 
+# Run hz on `data` through chunk `last`, in a fresh environment, recording every
+# warning rather than letting it reach the console. Returns the environment, with
+# the warnings' messages in `.warnings`.
+hz_fit_run <- function(last = "noconserve", data = hazard_data(), .local_envir = parent.frame()) {
+  root <- hazard_study(data, .local_envir = .local_envir)
+  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  env <- hazard_env(root)
+  labels <- c("tbl-data", "tbl-cohort", "tbl-phases", "edit-start", "edit-response", "tbl-response-check", "guard",
+              "fit-deterministic", "tbl-convergence", "edit-multistart", "tbl-multistart", "noconserve")
+  warned <- character(0)
+  withCallingHandlers(
+    utils::capture.output({
+      hazard_run("hz", c("set", "edit-study-choices"), env,
+                 list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)))
+      hazard_run("hz", labels[seq_len(match(last, labels))], env)
+    }),
+    warning = function(w) {
+      warned <<- c(warned, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  env$.warnings <- warned
+  env
+}
+
 # ---- #203: searching a saved file for patient identifiers ----------------------
 
 # TRUE when `bytes` hold `value` as text or as R's big-endian integer or double encoding.
