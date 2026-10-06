@@ -1,5 +1,12 @@
 # hvtiRtemplates (unreleased)
 
+* The `add_job()` help page and the template gallery now say plainly what `subject` and
+  `type` are: names you choose, with no list to pick from, that name the job file, its
+  `SUBJECT` and `TYPE` lines and the folder its results are saved in. Every job of one
+  analysis should share them, because the next job in a chain finds the last one's
+  results by that pair: `hm` reads `hz.rds` only when it carries the same subject and
+  type as `hz`.
+
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its
   `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part
