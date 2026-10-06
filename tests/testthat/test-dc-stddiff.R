@@ -70,6 +70,10 @@ test_that("GROUP_1 recodes a two-valued group, and three values are refused", {
   expect_identical(env$d$.stddiff_group, as.integer(pair$arm == "transcatheter"))
   expect_error(run_stddiff(GROUP = "arm", GROUP_1 = "transcatheter"),
                "exactly two values.*the data hold 3.*keep one pair with WHERE")
+  # A malformed choice is named, not left to R's generic length error.
+  expect_error(run_stddiff(GROUP = "arm", GROUP_1 = c("surgical", "transcatheter"), d = pair),
+               "GROUP_1 must be NULL or one value of arm")
+  expect_error(run_stddiff(GROUP = "arm", GROUP_1 = NA, d = pair), "GROUP_1 must be NULL or one value of arm")
 })
 
 test_that("a bad choice stops by name before ps_stddiff() runs", {

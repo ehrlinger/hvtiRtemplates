@@ -293,6 +293,11 @@ if (length(design)) {
 group_col <- GROUP
 group_names <- c("0" = paste(GROUP, "= 0"), "1" = paste(GROUP, "= 1"))
 if (!is.null(GROUP_1)) {
+  # Shape first: a vector would reach `||` below as several logicals and stop
+  # with R's own length error, which names neither GROUP_1 nor the fix.
+  if (length(GROUP_1) != 1L || is.na(GROUP_1)) {
+    stop("GROUP_1 must be NULL or one value of ", GROUP, ", such as \"transcatheter\".", call. = FALSE)
+  }
   seen <- sort(unique(as.character(d[[GROUP]][!is.na(d[[GROUP]])])))
   if (length(seen) != 2L || !(as.character(GROUP_1) %in% seen)) {
     stop("GROUP_1 must be one of exactly two values of ", GROUP, "; the data hold ",
