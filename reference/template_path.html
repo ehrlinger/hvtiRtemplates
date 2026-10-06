@@ -74,8 +74,19 @@ omitting it there is an error naming the choices, never a silent pick.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">template_path</span><span class="op">(</span><span class="st">"ac"</span><span class="op">)</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">template_path</span><span class="op">(</span><span class="st">"ac"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A qualified template, by its full name or as prefix plus qualifier.</span></span></span>
+<span class="r-in"><span><span class="fu">template_path</span><span class="op">(</span><span class="st">"dc-gfup"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd"</span>
+<span class="r-in"><span><span class="fu">template_path</span><span class="op">(</span><span class="st">"dc"</span>, qualifier <span class="op">=</span> <span class="st">"gfup"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A prefix carrying several templates is never resolved by guessing: this</span></span></span>
+<span class="r-in"><span><span class="co"># is an error that lists the choices.</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">template_path</span><span class="op">(</span><span class="st">"dc"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : prefix 'dc' carries 3 templates; name one with `qualifier`, or by its full name. Available: dc-general, dc-gfup, dc-tables</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

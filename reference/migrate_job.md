@@ -132,3 +132,41 @@ call placed are removed, along with its temporary files.
 
 [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
 [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+
+## Examples
+
+``` r
+# \donttest{
+root <- file.path(tempdir(), "migrate-job-example")
+invisible(hvtiRutilities::study_setup(root, "Example", 1L))
+# A legacy follow-up job; the template is read from its name, dc.gfup.
+sas <- file.path(hvtiRutilities::study_dir("descriptive", root), "dc.gfup.sas")
+writeLines(c("data followup;", "  set built;", "run;",
+             "proc means data=followup; var iv_dead; by dead; run;"), sas)
+job <- migrate_job(sas, subject = "cohort", type = "eda")
+basename(job)
+#> [1] "cohort-eda-dc-gfup.qmd"
+
+# The choices it translated into the new job ...
+grep("^(EVENT|FOLLOWUP) <- ", readLines(job), value = TRUE)
+#> [1] "EVENT <- \"dead\""          "FOLLOWUP <- c(\"iv_dead\")"
+
+# ... and the report beside it, saying what was translated and what is left
+# to review.
+report <- readLines(sub("[.]qmd$", "-migration.md", job))
+headings <- grep("^## ", report)
+first <- which(report[headings] == "## Translated")
+# The Translated section and the one after it, Unresolved.
+report[headings[first]:(headings[first + 2L] - 1L)]
+#> [1] "## Translated"                                                                                                  
+#> [2] ""                                                                                                               
+#> [3] "- line=4; text=var iv_dead;; reason=Declared follow-up fields; no interval derivation reproduced."              
+#> [4] "- line=4; text=by dead;; reason=Leading BY field supplies event evidence; other sort fields do not filter data."
+#> [5] ""                                                                                                               
+#> [6] "## Unresolved"                                                                                                  
+#> [7] ""                                                                                                               
+#> [8] "- line=2; text=set built;; reason=study_config(): [absolute path]) after the default study dataset exists."     
+#> [9] ""                                                                                                               
+unlink(root, recursive = TRUE)
+# }
+```

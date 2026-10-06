@@ -96,8 +96,21 @@ invisible(hvtiRutilities::study_setup(
   d, study = "Example", study_tracker_id = 1L
 ))
 add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
-list.files(d, recursive = TRUE)
-#> [1] "20_distributions/death-hz-ac.qmd" "_quarto.yml"                     
-#> [3] "_study.yml"                       "add-job-example.Rproj"           
+
+# A qualified template by its full name, the form template_list()$call prints.
+add_job("dc-gfup", subject = "cohort", type = "eda", dir = d)
+
+# A deprecated template still scaffolds, and the warning names its replacement.
+tryCatch(add_job("dp-gfup", subject = "cohort", type = "eda", dir = d),
+         warning = conditionMessage)
+#> [1] "add_job(): dp-gfup is deprecated in favor of dc-gfup. It will be removed in a later release. add_job(\"dc-gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."
+
+# A job accumulates a study's edits, so an existing one is never overwritten.
+try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
+#> Error : add_job(): '/tmp/RtmpeBs0hG/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.
+
+list.files(d, pattern = "[.]qmd$", recursive = TRUE)
+#> [1] "10_descriptive/cohort-eda-dc-gfup.qmd"
+#> [2] "20_distributions/death-hz-ac.qmd"     
 unlink(d, recursive = TRUE)
 ```

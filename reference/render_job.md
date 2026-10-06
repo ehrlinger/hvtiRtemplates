@@ -57,3 +57,40 @@ that crashed is taken over automatically.
 ## See also
 
 [`open_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+
+## Examples
+
+``` r
+# \donttest{
+if (requireNamespace("quarto", quietly = TRUE) && quarto::quarto_available()) {
+  root <- file.path(tempdir(), "render-job-example")
+  invisible(hvtiRutilities::study_setup(root, "Example", 1L))
+  d <- data.frame(ccfid = 1:6, dead = c(0, 1, 0, 1, 0, 0),
+                  iv_dead = c(1.2, 0.4, 3.1, 2.2, 0.8, 4.5))
+  utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
+                   row.names = FALSE)
+  invisible(hvtiRutilities::register_data(root, "built.csv"))
+  job <- add_job("dc-gfup", subject = "cohort", type = "eda", dir = root)
+
+  # A draft: the new job still holds EDIT: markers, so the report carries a
+  # DRAFT banner listing them, and renders all the same.
+  render_job(job, quiet = TRUE)
+  print(file.exists(sub("[.]qmd$", ".html", job)))
+
+  # A final render is the accepted result, so it stops while any of the
+  # job's open markers remains. This many:
+  print(sum(grepl("EDIT:", readLines(job), fixed = TRUE)))
+  try(render_job(job, final = TRUE, quiet = TRUE))
+  unlink(root, recursive = TRUE)
+}
+#> [1] TRUE
+#> [1] 16
+#> Error in quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet) : 
+#>   ! Error running quarto CLI from R.
+#> Caused by error in `quarto::quarto_render()`:
+#> ✖ Error returned by quarto CLI.
+#> ℹ Rerun with `quiet = FALSE` to see the full error message.
+#> Caused by error in `processx::run()`:
+#> ! System command 'quarto' failed
+# }
+```

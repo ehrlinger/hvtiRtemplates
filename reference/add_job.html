@@ -144,9 +144,22 @@ scaffolds, with a warning naming its replacement; see
 <span class="r-in"><span>  <span class="va">d</span>, study <span class="op">=</span> <span class="st">"Example"</span>, study_tracker_id <span class="op">=</span> <span class="fl">1L</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">add_job</span><span class="op">(</span>prefix <span class="op">=</span> <span class="st">"ac"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "20_distributions/death-hz-ac.qmd" "_quarto.yml"                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "_study.yml"                       "add-job-example.Rproj"           </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A qualified template by its full name, the form template_list()$call prints.</span></span></span>
+<span class="r-in"><span><span class="fu">add_job</span><span class="op">(</span><span class="st">"dc-gfup"</span>, subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A deprecated template still scaffolds, and the warning names its replacement.</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span><span class="fu">add_job</span><span class="op">(</span><span class="st">"dp-gfup"</span>, subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>         warning <span class="op">=</span> <span class="va">conditionMessage</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "add_job(): dp-gfup is deprecated in favor of dc-gfup. It will be removed in a later release. add_job(\"dc-gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A job accumulates a study's edits, so an existing one is never overwritten.</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">add_job</span><span class="op">(</span>prefix <span class="op">=</span> <span class="st">"ac"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/RtmpeBs0hG/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span>, pattern <span class="op">=</span> <span class="st">"[.]qmd$"</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "10_descriptive/cohort-eda-dc-gfup.qmd"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "20_distributions/death-hz-ac.qmd"     </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">d</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

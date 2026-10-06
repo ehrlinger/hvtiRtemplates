@@ -67,12 +67,23 @@ is named by its number and reason.
 ## Examples
 
 ``` r
-d <- data.frame(ccfid = c("S1", "S2", "S3"), age = c(17, 45, NA))
-build_cohort(d, exclude = list(age < 18 ~ "Under 18"))$attrition
-#>      step    reason rows_before removed missing_condition rows_after
-#> 1  master Rows read           3       0                 0          3
-#> 2 exclude  Under 18           3       1                 1          2
+d <- data.frame(ccfid = c("S1", "S2", "S3", "S4"), age = c(17, 45, NA, 80),
+                redo = c(0, 0, 0, 1))
+cut <- build_cohort(d, exclude = list(age < 18 ~ "Under 18",
+                                      redo == 1 ~ "Redo operation"))
+# One row per step: rows removed, rows whose condition was missing and so
+# kept (S3, with no age), and the patients left.
+cut$attrition
+#>      step         reason rows_before removed missing_condition rows_after
+#> 1  master      Rows read           4       0                 0          4
+#> 2 exclude       Under 18           4       1                 1          3
+#> 3 exclude Redo operation           3       1                 0          2
 #>   patients_after
-#> 1              3
-#> 2              2
+#> 1              4
+#> 2              3
+#> 3              2
+cut$data
+#>   ccfid age redo
+#> 1    S2  45    0
+#> 2    S3  NA    0
 ```

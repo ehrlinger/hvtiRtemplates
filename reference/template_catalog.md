@@ -26,8 +26,31 @@ warns when it is used.
 ## Examples
 
 ``` r
-table(template_catalog()$status)
+catalog <- template_catalog()
+table(catalog$status)
 #> 
 #> in-flight    queued   revisit   shipped 
 #>         1        35         1        31 
+
+# Templates that still scaffold but name a replacement.
+catalog[!is.na(catalog$deprecated_by), c("prefix", "qualifier", "deprecated_by")]
+#>    prefix qualifier deprecated_by
+#> 61     dp      gfup       dc-gfup
+#> 65     dp   postage        dp-eda
+
+# Queued templates waiting on work in another package.
+queued <- catalog[catalog$status == "queued" & !is.na(catalog$blocked_on), ]
+queued[, c("prefix", "qualifier", "blocked_on")]
+#>    prefix qualifier         blocked_on
+#> 8      bq      <NA>  hvtiRbootstrap#16
+#> 11     ce      <NA>      hvtiPlotR#134
+#> 13     cp      <NA>      hvtiPlotR#135
+#> 14     dt      <NA>     hvtiRdatabuild
+#> 15     fp      <NA>      hvtiPlotR#133
+#> 17     gp      <NA>      hvtiPlotR#136
+#> 48   vars      <NA>     hvtiRdatabuild
+#> 50     mi      <NA>    hvtiRimputation
+#> 53    sid      <NA>     hvtiRforests#1
+#> 54     vt      <NA>     hvtiRforests#1
+#> 59     dc   stddiff hvtiRpropensity#34
 ```

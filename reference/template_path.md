@@ -32,6 +32,17 @@ its replacement.
 ## Examples
 
 ``` r
-try(template_path("ac"))
+template_path("ac")
 #> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd"
+
+# A qualified template, by its full name or as prefix plus qualifier.
+template_path("dc-gfup")
+#> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd"
+template_path("dc", qualifier = "gfup")
+#> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd"
+
+# A prefix carrying several templates is never resolved by guessing: this
+# is an error that lists the choices.
+try(template_path("dc"))
+#> Error : prefix 'dc' carries 3 templates; name one with `qualifier`, or by its full name. Available: dc-general, dc-gfup, dc-tables
 ```
