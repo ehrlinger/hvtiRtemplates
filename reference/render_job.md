@@ -83,10 +83,7 @@ if (requireNamespace("quarto", quietly = TRUE) && quarto::quarto_available()) {
   try(render_job(job, final = TRUE, quiet = TRUE))
   unlink(root, recursive = TRUE)
 }
-#> [1] TRUE
-#> [1] 16
-#> Error in quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet) : 
-#>   ! Error running quarto CLI from R.
+#> Error in quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet): ! Error running quarto CLI from R.
 #> Caused by error in `quarto::quarto_render()`:
 #> ✖ Error returned by quarto CLI.
 #> ℹ Rerun with `quiet = FALSE` to see the full error message.
