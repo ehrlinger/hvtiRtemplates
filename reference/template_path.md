@@ -44,5 +44,5 @@ template_path("dc", qualifier = "gfup")
 # A prefix carrying several templates is never resolved by guessing: this
 # is an error that lists the choices.
 try(template_path("dc"))
-#> Error : prefix 'dc' carries 3 templates; name one with `qualifier`, or by its full name. Available: dc-general, dc-gfup, dc-tables
+#> Error : prefix 'dc' carries 4 templates; name one with `qualifier`, or by its full name. Available: dc-general, dc-gfup, dc-stddiff, dc-tables
 ```

@@ -77,7 +77,7 @@ directly, in a temporary directory:
 ``` r
 
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L)
-#> Study: /tmp/RtmpKeQDA0/file1f97c0bae40/new-study
+#> Study: /tmp/Rtmp6L2Q9b/file1ede638f20c6/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -123,7 +123,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpKeQDA0/file1f97c0bae40/new-study
+#> Study: /tmp/Rtmp6L2Q9b/file1ede638f20c6/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -299,13 +299,13 @@ head(template_list()[, c("name", "prefix", "qualifier", "folder")], 10)
 #> 1          bd     bd      <NA>      datasets
 #> 2  dc-general     dc   general   descriptive
 #> 3     dc-gfup     dc      gfup   descriptive
-#> 4   dc-tables     dc    tables   descriptive
-#> 5      dp-eda     dp       eda   descriptive
-#> 6  dp-postage     dp   postage   descriptive
-#> 7          ac     ac      <NA> distributions
-#> 8          hz     hz      <NA> distributions
-#> 9          bc     bc      <NA>      analyses
-#> 10         bh     bh      <NA>      analyses
+#> 4  dc-stddiff     dc   stddiff   descriptive
+#> 5   dc-tables     dc    tables   descriptive
+#> 6      dp-eda     dp       eda   descriptive
+#> 7  dp-postage     dp   postage   descriptive
+#> 8          ac     ac      <NA> distributions
+#> 9          hz     hz      <NA> distributions
+#> 10         bc     bc      <NA>      analyses
 ```
 
 The other chains follow the same pattern: a fitting job saves a handoff
