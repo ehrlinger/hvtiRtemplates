@@ -1,9 +1,15 @@
 # hvtiRtemplates (unreleased)
 
-* `add_job()` called without `subject` or `type` now says which is missing, explains that
-  both are names you choose (any name matching `^[A-Za-z0-9_]+$`, not a list in the
-  catalog), and shows the template's own call from `template_list()$call` as an example,
-  in place of R's bare "argument is missing, with no default" (#224).
+* `add_job()` and `open_job()` called without `subject` or `type` now say which is
+  missing, explain that both are names you choose (any name matching `^[A-Za-z0-9_]+$`,
+  not a list in the catalog), and show the template's own call from `template_list()$call`
+  as an example, in place of R's bare "argument is missing, with no default" (#224).
+
+* Now requires R 4.4.0 or newer, up from 4.1.0, to match the rest of the
+  HVTI family. `hvtiR::install()` installs the members together, and several
+  already required 4.4.0, so on an older R the install failed whatever this
+  package declared.
+
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its
   `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part
