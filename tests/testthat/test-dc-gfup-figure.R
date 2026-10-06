@@ -85,6 +85,42 @@ test_that("a final dc-gfup render stops on a figure refusal", {
   expect_match(paste(err, collapse = "\n"), "figure was not drawn", fixed = TRUE)
 })
 
+# The window table's "operation before origin" row follows hvtiPlotR: shown
+# when hv_followup_panels() counts negative operation years, absent when an
+# older version does not. The function is mocked, so both are tested whichever
+# hvtiPlotR is installed. Raised in review on #240.
+window_table <- function(n_negative) {
+  lines <- readLines(template_path("dc", "gfup"), warn = FALSE)
+  chunk <- function(label) {
+    start <- match(paste0("#| label: ", label), lines)
+    end <- start + match("```", lines[-seq_len(start)])
+    lines[seq.int(start + 1L, end - 1L)]
+  }
+  meta <- list(n_obs = 10L, n_opyrs_missing = 0L, first_operation = as.Date("1989-06-01"),
+               study_end = as.Date("2000-01-01"), close_date = as.Date("2001-01-01"),
+               close_source = "estimated")
+  meta$n_opyrs_negative <- n_negative
+  testthat::local_mocked_bindings(hv_followup_panels = function(...) list(meta = meta), .package = "hvtiPlotR")
+  env <- list2env(list(d = data.frame(), OPYRS = "iv_opyrs", ORIGIN_YEAR = 1990, CLOSE_DATE = NULL,
+                       PANELS = list(), EVENTS = list()))
+  eval(parse(text = chunk("window")), env)
+  paste(utils::capture.output(eval(parse(text = chunk("tbl-window")), env)), collapse = "\n")
+}
+
+test_that("dc-gfup's window table counts operations before the origin when hvtiPlotR does", {
+  skip_if_not_installed("hvtiPlotR")
+  out <- window_table(3L)
+  expect_match(out, "operation before origin\\s*\\|\\s*3\\s*\\|")
+  expect_no_match(window_table(NULL), "operation before origin", fixed = TRUE)
+  expect_match(window_table(NULL), "first operation", fixed = TRUE)
+})
+
+test_that("dp-eda's window table carries the same row", {
+  lines <- readLines(template_path("dp", "eda"), warn = FALSE)
+  expect_true(any(grepl("operation before origin", lines, fixed = TRUE)))
+  expect_true(any(grepl(".before <- fp$meta$n_opyrs_negative", lines, fixed = TRUE)))
+})
+
 test_dc_gfup_window <- function(close_date) {
   job <- template_path("dc", "gfup")
   lines <- readLines(job, warn = FALSE)

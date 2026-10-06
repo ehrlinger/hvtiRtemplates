@@ -358,10 +358,15 @@ if (figure_drawn) {
 #| label: tbl-window
 #| tbl-cap: "Operation years and the close date"
 #| eval: !expr figure_drawn
+# Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an
+# hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,
+# because a build counting from a later origin is a problem to fix there. An
+# older hvtiPlotR refuses them instead, so the field is absent and so is the row.
+.before <- fp$meta$n_opyrs_negative
 knitr::kable(data.frame(
-  quantity = c("patients", "operation year missing", "first operation", "last operation",
-               "close date", "close date is"),
-  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, format(fp$meta$first_operation),
+  quantity = c("patients", "operation year missing", if (!is.null(.before)) "operation before origin",
+               "first operation", "last operation", "close date", "close date is"),
+  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, .before, format(fp$meta$first_operation),
             format(fp$meta$study_end), format(close_date), close_source)
 ))
 ```
