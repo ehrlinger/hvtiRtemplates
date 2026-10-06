@@ -7,6 +7,32 @@
 #' one would discard them.
 #'
 #' @details
+#' \strong{What each argument decides.} \code{prefix} chooses the template,
+#' together with \code{qualifier} where a prefix carries several job types.
+#' \code{subject} and \code{type} are yours to choose. The catalog holds no
+#' list of valid values for either, only the rule that each matches
+#' \code{^[A-Za-z0-9_]+$}. They are more than a filename, though. Together
+#' they name the job's set, and the set is used in four places:
+#' \itemize{
+#'   \item the job's filename, \code{<subject>-<type>-<prefix>[-<qualifier>].qmd};
+#'   \item the job's own \code{SUBJECT} and \code{TYPE} lines, which
+#'     \code{add_job()} rewrites to your values;
+#'   \item the render, which stops when the filename and those two lines
+#'     disagree, so a job renamed by hand cannot quietly write its results
+#'     into another set;
+#'   \item the folder the job saves its results in, a \code{<subject>-<type>}
+#'     folder under the study's \code{estimates} (and, for some templates,
+#'     \code{graphs}), which is where the next job in the chain looks for
+#'     them.
+#' }
+#' The last of these is the one that bites. \code{hm} reads the
+#' \code{hz.rds} that \code{hz} saved, and finds it only when both jobs
+#' carry the same subject and type. Give every job of one analysis the same
+#' pair, e.g. \code{subject = "death", type = "hz"} for \code{ac}, \code{hz},
+#' \code{hm} and \code{hp}, and give a different analysis a different pair.
+#' The \code{call} column of \code{\link{template_list}} shows each template's
+#' own example values, which are a starting point, not a requirement.
+#'
 #' A job is identified by three or four fields. One or two come from the
 #' template, its \code{prefix} and, where the prefix carries several job types,
 #' its \code{qualifier}; two come from the caller. The pair
@@ -49,11 +75,13 @@
 #'   qualifier, so \code{qualifier} must then be left \code{NULL}.
 #' @param subject Grouping topic for the job set, e.g. \code{"death"} or
 #'   \code{"cohort"}. A subject names a statistical endpoint only when the
-#'   job analyses one. Must
+#'   job analyses one. Your choice: there is no list of valid values, and
+#'   every job of one analysis should share it (see Details). Must
 #'   match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
 #'   \code{.} separates the extension, so neither may appear here.
 #' @param type The analysis type the job's set belongs to, e.g. \code{"hz"}.
-#'   Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.
+#'   Your choice, like \code{subject}, and shared the same way. Must match
+#'   \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.
 #' @param dir The study root to write into. The taxonomy folder beneath it is
 #'   created if it does not exist.
 #'
@@ -86,6 +114,10 @@
 #' list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #' unlink(d, recursive = TRUE)
 add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
+  absent <- c("subject", "type")[c(missing(subject), missing(type))]
+  if (length(absent)) {
+    stop(.missing_field_message(absent, if (!missing(prefix)) prefix, qualifier), call. = FALSE)
+  }
   .check_field("subject", subject)
   .check_field("type", type)
   if (!is.null(qualifier)) .check_field("qualifier", qualifier)
@@ -161,6 +193,35 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
          "is reserved as the separator and '.' to the extension); got ",
          paste(deparse(value), collapse = ", "), ".", call. = FALSE)
   }
+}
+
+# The error for a call that leaves out `subject`, `type` or both (#224). R's
+# own "argument is missing, with no default" tells a new user nothing about
+# what to pass. Neither field has a list of valid values to show: both name
+# the job's set and are the caller's choice, so the message says so, gives
+# the pattern .check_field() enforces, and shows the template's own call from
+# template_list() as a worked example. A prefix that cannot be resolved here
+# is reported by the selection error once the fields are supplied, so this
+# message only points at the catalog rather than repeating that error.
+.missing_field_message <- function(absent, prefix = NULL, qualifier = NULL, fn = "add_job") {
+  example <- NA_character_
+  if (!is.null(prefix)) {
+    tl <- template_list()
+    row <- tryCatch(.select_template(tl, prefix, qualifier), error = function(e) NULL)
+    if (!is.null(row)) example <- row$call[[1L]]
+  }
+  paste0(
+    fn, "(): ", paste0("`", absent, "`", collapse = " and "),
+    if (length(absent) > 1L) " are" else " is", " missing. ",
+    "`subject` (the grouping topic, e.g. \"death\" or \"cohort\") and `type` (the analysis type, ",
+    "e.g. \"hz\") name the job's set. They are your choice, not a list in the catalog: any name ",
+    "matching '^[A-Za-z0-9_]+$'. ",
+    if (length(example) == 1L && !is.na(example)) {
+      paste0("This template's own call is: ", example)
+    } else {
+      "See template_list()$call for each template's own call."
+    }
+  )
 }
 
 # Full path for the job the selected template row scaffolds into: the study's

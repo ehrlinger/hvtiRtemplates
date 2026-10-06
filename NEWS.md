@@ -6,11 +6,42 @@
   involved. A degenerate fit, a phase whose `log_mu` has run off, used to fail only
   later in a downstream job (#228). The table that warned of covariates without a
   standard error is gone, since the stop now covers it.
+
 * `hs-concordance` stops in its predictions when a group model gives no confidence
   limits, naming the model and saying its `hm` fit has no usable variance matrix. It
   used to stop later in the decision with "missing value where TRUE/FALSE needed".
   A job that has deleted the decision now stops too, where it used to save
-  predictions without limits (#227).
+  predictions without limits (#227). Limits that are undefined only because predicted
+  survival at `HORIZON` is exactly 0 or 1 stop with their own message, not as a
+  missing variance matrix.
+
+* The `add_job()` help page and the template gallery now say plainly what `subject` and
+  `type` are: names you choose, with no list to pick from, that name the job file, its
+  `SUBJECT` and `TYPE` lines and the folder its results are saved in. Every job of one
+  analysis should share them, because the next job in a chain finds the last one's
+  results by that pair: `hm` reads `hz.rds` only when it carries the same subject and
+  type as `hz`.
+
+* `template_list()` prints only `name`, `prefix`, `qualifier` and `folder`, so the
+  listing fits the console. `call` and `file` are still in the data frame: read them
+  with `$call` and `$file`, or print a selection such as `tl[, c("name", "call")]`,
+  which prints as selected.
+
+* The descriptive templates report the 15th and 85th percentiles where they reported the
+  quartiles: `dc-general`'s quantile table, the follow-up tables in `dc-gfup` and
+  `dp-eda`, and the variable summaries in `dp-eda` and `dp-postage`. The follow-up tables
+  take them from `hvtiRutilities::followup_check()`, whose default changed in
+  hvtiRutilities 1.4.5, now the minimum.
+
+* `add_job()` and `open_job()` called without `subject` or `type` now say which is
+  missing, explain that both are names you choose (any name matching `^[A-Za-z0-9_]+$`,
+  not a list in the catalog), and show the template's own call from `template_list()$call`
+  as an example, in place of R's bare "argument is missing, with no default" (#224).
+
+* Now requires R 4.4.0 or newer, up from 4.1.0, to match the rest of the
+  HVTI family. `hvtiR::install()` installs the members together, and several
+  already required 4.4.0, so on an older R the install failed whatever this
+  package declared.
 
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its

@@ -22,10 +22,10 @@ Description: Versioned analysis job templates for the clinical investigations
   and resolves a template name to an installed file, so that a study binds to
   a versioned template rather than to a copy.
 Depends:
-    R (>= 4.1.0)
+    R (>= 4.4.0)
 Imports:
     digest,
-    hvtiRutilities (>= 1.4.2),
+    hvtiRutilities (>= 1.4.5),
     jsonlite,
     openssl,
     ps,

@@ -196,6 +196,44 @@ test_that("add_job rejects subject/type shapes that would break the filename", {
   expect_error(add_job(prefix = "ac", subject = "../esc", type = "hz", dir = dir), "subject")
 })
 
+test_that("add_job names a missing subject or type and shows the template's call", {
+  # #224: a new user who leaves out `subject` or `type` got R's bare "argument
+  # is missing, with no default". Neither field has a closed list in the
+  # catalog -- both are the caller's choice -- so the message says that, gives
+  # the pattern, and shows the template's own call from template_list() as a
+  # worked example. Nothing is written.
+  dir <- tempfile("newjob-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  ac_call <- template_list()$call[template_list()$name == "ac"]
+
+  e <- expect_error(add_job(prefix = "ac", type = "hz", dir = dir), "`subject` is missing")
+  expect_match(conditionMessage(e), "^add_job\\(\\): ")
+  expect_match(conditionMessage(e), "[A-Za-z0-9_]+", fixed = TRUE)
+  expect_match(conditionMessage(e), ac_call, fixed = TRUE)
+
+  e <- expect_error(add_job(prefix = "ac", subject = "death", dir = dir), "`type` is missing")
+  expect_match(conditionMessage(e), ac_call, fixed = TRUE)
+
+  e <- expect_error(add_job(prefix = "ac", dir = dir), "`subject` and `type` are missing")
+  expect_match(conditionMessage(e), ac_call, fixed = TRUE)
+
+  # A qualified template's example is its own row's call, not its prefix's first.
+  gfup_call <- template_list()$call[template_list()$name == "dc-gfup"]
+  e <- expect_error(add_job("dc-gfup", type = "eda", dir = dir), "`subject` is missing")
+  expect_match(conditionMessage(e), gfup_call, fixed = TRUE)
+
+  # An unresolvable prefix still names the missing field, and points at the catalog.
+  e <- expect_error(add_job(prefix = "zz", type = "hz", dir = dir), "`subject` is missing")
+  expect_match(conditionMessage(e), "template_list()$call", fixed = TRUE)
+
+  # open_job() scaffolds through add_job() but checks its fields first, so it
+  # needs the same message in its own name, before it looks for a study.
+  e <- expect_error(open_job(prefix = "ac", type = "hz", dir = dir), "^open_job\\(\\): `subject` is missing")
+  expect_match(conditionMessage(e), ac_call, fixed = TRUE)
+
+  expect_false(dir.exists(dir))
+})
+
 test_that("add_job refuses an unknown prefix, naming the valid ones", {
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)

@@ -147,7 +147,7 @@ test_that("correlations list each distinct pair once, strongest first", {
 test_that("quantiles follow SAS QNTLDEF=5", {
   creat <- run_derive()$cdfs$Labs$creat
   x <- synthetic()$creat
-  expect_equal(creat$quantiles$percent, c(0, 1, 5, 10, 25, 50, 75, 90, 95, 99, 100))
+  expect_equal(creat$quantiles$percent, c(0, 1, 5, 10, 15, 50, 85, 90, 95, 99, 100))
   expect_equal(
     creat$quantiles$value,
     unname(stats::quantile(x, creat$quantiles$percent / 100, type = 2, na.rm = TRUE))
@@ -158,9 +158,11 @@ test_that("quantiles follow SAS QNTLDEF=5", {
   # Hand-computed under SAS QNTLDEF=5, sorted non-missing values:
   # 0.8, 0.9, 0.95, 1.0, 1.0, 1.1, 1.2, 1.4, 1.7, 2.2, 3.1
   median <- creat$quantiles$value[creat$quantiles$percent == 50]
-  p25 <- creat$quantiles$value[creat$quantiles$percent == 25]
+  p15 <- creat$quantiles$value[creat$quantiles$percent == 15]
+  p85 <- creat$quantiles$value[creat$quantiles$percent == 85]
   expect_equal(median, 1.1)
-  expect_equal(p25, 0.95)
+  expect_equal(p15, 0.9)
+  expect_equal(p85, 2.2)
 })
 
 test_that("an empty CORR_VARS skips the sweep without error", {
