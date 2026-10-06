@@ -1,0 +1,233 @@
+---
+title: "Work a job, from template to final report"
+author: "John Ehrlinger"
+vignette: >
+  %\VignetteIndexEntry{Work a job}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+format:
+  html:
+    toc: true
+    embed-resources: true
+---
+
+Every analysis in a study is a *job*: one Quarto file that reads the study's
+data, runs one piece of the analysis, and renders a report. You start a job
+from a template, change the lines the template cannot know about your study,
+and render it. This guide walks that loop once,
+in the order you meet it, and says what to do when the job stops you.
+
+It assumes the study already exists and has its dataset registered. If it does
+not, start with [Start a new study](new-study.html), or with
+[Adopt an existing study](study-setup.html) for a study that already has a
+folder of SAS jobs. Everything below is typed in the R console of the study's
+RStudio Project.
+
+```{r}
+#| include: false
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+## Which template do I want?
+
+Start at the [template gallery](https://ehrlinger.github.io/hvtiRtemplates/gallery/).
+It lists every template the package ships, says in a sentence what each one is
+for, and opens the report each one produces on a synthetic study, so you can see
+the tables and figures before you commit to a job. If you knew the SAS job by its
+name, `dc.gfup.sas` say, look for the same letters: the R template keeps the
+prefix (`dc`) and the job type (`gfup`).
+
+The same list is in R. `template_list()` returns one row per template:
+
+```{r}
+library(hvtiRtemplates)
+tl <- template_list()
+tl[, c("name", "folder", "call")]
+```
+
+The `call` column is the line that adds the template to your study. To find the
+follow-up jobs, ask for their job type:
+
+```{r}
+subset(tl, qualifier == "gfup", c(name, folder, call))
+```
+
+Two templates come back. `dc-gfup` is the one to use; `dp-gfup` still works but
+is deprecated, and says so with a warning when you add it.
+
+## Add it to the study
+
+Copy the call, and change two words before you run it:
+
+```{r}
+add_job("dc-gfup", subject = "cohort", type = "eda")
+```
+
+`subject` and `type` name *your* job, not the template. Together they say which
+set of work the job belongs to: here, exploratory checks (`eda`) on the whole
+cohort (`cohort`). A job modelling death might be `subject = "dead"`,
+`type = "hz"`. Use letters, digits and underscores only, because the two words
+become part of the filename.
+
+The job lands in the folder the template belongs in, named
+`<subject>-<type>-<template>.qmd`, so the line above writes
+`10_descriptive/cohort-eda-dc-gfup.qmd` (or `descriptive/...` in a study that
+kept the older, unnumbered folder names). `add_job()` never overwrites a job
+that already exists, because a job collects your edits. To open a job, creating
+it first if it is not there yet, use `open_job()` with the same arguments; it
+opens the file in RStudio.
+
+```{r}
+job <- open_job("dc-gfup", subject = "cohort", type = "eda")
+```
+
+## Find what you have to change
+
+A new job is not finished. Every line the template cannot fill in for your study
+carries an `EDIT:` marker: a comment saying what to set and why it matters. The
+dataset to read, the event and follow-up columns, the origin year of the
+operation-year interval, and so on. The job is finished when no marker is left.
+
+There are three ways to find them.
+
+**The report tells you.** Render the job (next section) and the top of the
+report carries a DRAFT banner listing every marker still in the file, with the
+first words of each line. A new `dc-gfup` job starts with sixteen:
+
+```
+16 unresolved EDIT: marker(s) remain in this job:
+  - <!-- EDIT: name the job this replaces (descriptive/dc.gfup). -->
+  - # EDIT: the registered dataset this job reads ("study" is the built dataset).
+  - # EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+  ...
+```
+
+**RStudio finds them.** With the job open, press Ctrl+F (Cmd+F on a Mac), type
+`EDIT:` and step through the matches with Enter. In most templates the bulk of
+them sit together under the heading *Study choices*, near the top, so most of
+the work is in one place.
+
+**The console lists them, with line numbers.** This prints the line number and
+text of each marker left in the job, which is handy for a long job:
+
+```{r}
+lines <- readLines(job)
+hits <- grep("EDIT:", lines, fixed = TRUE)
+data.frame(line = hits, text = trimws(lines[hits]))
+```
+
+Work each marker: set the value, then delete the word `EDIT:` (or the whole
+comment, if it no longer says anything you need). Read the comment before you
+delete it. Several say why a choice matters, and a few name a mistake that
+otherwise fails quietly, such as an origin year that slides every point along
+the axis without any other symptom.
+
+## Render as you go
+
+You do not have to finish the markers before you render. Render early and often:
+
+```{r}
+render_job(job)
+```
+
+That is a *draft* render. It runs the whole job from top to bottom in a clean R
+session, writes the HTML report beside the job, and shows the DRAFT banner while
+any marker remains. The numbers in a draft are not a result, and the banner says
+so.
+
+Run All and Render do different things. **Run All** in RStudio
+runs the chunks in your current R session, so an object you made by hand an hour
+ago can quietly stand in for one the job no longer makes. **Render** starts from
+nothing. Use Run All while you are setting the choices and want to look at the
+data. Use `render_job()` to find out whether the job works on its own.
+
+When the markers are gone and the report says what it should, render the final:
+
+```{r}
+render_job(job, final = TRUE)
+```
+
+A final render is the accepted result. It refuses to finish while any `EDIT:`
+marker remains, rather than producing a report that looks done and is not. It
+also records the job's *provenance*, which data it read and a fingerprint of the
+job file that read it, and writes it beside the report as
+`cohort-eda-dc-gfup.provenance.json`, so the numbers can be traced back later.
+
+## Render part of a job
+
+Sometimes a job is half built. The cohort tables are right, but the model below
+them waits on a corrected variable, and you want a report of what works. The SAS
+jobs did this by commenting the unfinished part out. Here there are two ways to
+leave part of a job out, and both keep it visible.
+
+**Leave one chunk out** with the chunk option `skip`, giving the reason in quotes:
+
+````
+```{r}
+#| label: tbl-model
+#| skip: "waiting on the corrected NYHA coding"
+...
+```
+````
+
+The chunk is neither run nor shown. Use it for a chunk nothing below depends on.
+If a later chunk needs what the skipped one makes, that later chunk fails; use
+the next form instead.
+
+**Stop the render at a point** by calling `stop_here()` in a chunk on its own:
+
+````
+```{r}
+hvtiRtemplates::stop_here()
+```
+````
+
+Everything above it renders; everything below is left out. This suits building
+a job from the top down, a section at a time.
+
+Both follow the rules the `EDIT:` markers follow:
+
+- A draft lists every skip and every stop, by line, in a PARTIAL box at the top
+  of the report, so a partial report cannot pass for a whole one.
+- A final render refuses both. Remove them before `render_job(job, final = TRUE)`.
+- A skip must say why. `skip: true` with no reason is an error.
+- When you run chunks by hand, `stop_here()` does nothing, so the chunks below it
+  still run in your session.
+
+## When the job stops you
+
+Most stops are the package refusing to guess. The message says what it needs;
+these are the ones you meet first.
+
+**"prefix 'dc' carries 3 templates; name one with `qualifier`, or by its full
+name."** Several templates share the `dc` prefix. Use the template's full name,
+`add_job("dc-gfup", ...)`, as the `call` column prints it.
+
+**"... already exists; refusing to overwrite."** The job is there already. Open
+it with `open_job()` instead of adding it again.
+
+**"... is deprecated in favor of ..."** A warning, not an error: the job is
+still written. The message names the template that replaces it; use that one
+for new work.
+
+**"N unresolved EDIT: marker(s) remain in this job"**, from
+`render_job(final = TRUE)`. The job is not finished. Find the markers as above,
+or render a draft to see them listed.
+
+**"This job is rendered in part"**, from a final render. A `skip` or
+`stop_here()` is still in the job. Remove it, or render a draft instead.
+
+**"The figure was not drawn"**, in a `dc-gfup` report. The follow-up figure
+needs a sensible operation-year column and origin. The box names the problem,
+usually `OPYRS` or `ORIGIN_YEAR` under *Study choices*. The follow-up tables
+above it do not depend on the figure, so they are still right.
+
+## Where to go next
+
+- The [template gallery](https://ehrlinger.github.io/hvtiRtemplates/gallery/),
+  for what each template produces.
+- [From SAS descriptive jobs to R](sas-to-r-descriptive.html), for the
+  descriptive templates job by job, beside the SAS each one replaces.
+- [The template catalog](template-catalog.html), for every template, shipped and
+  coming.
+- `?add_job`, `?render_job` and `?stop_here` in R, for every argument.

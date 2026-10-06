@@ -1,5 +1,9 @@
 # hvtiRtemplates (unreleased)
 
+* New tutorial, *Work a job, from template to final report*, for a study author new to
+  the package: find a template in the gallery or `template_list()`, add it with its
+  `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part
+  of a job with `skip` and `stop_here()`, and what the common refusals mean.
 * Help-page examples for the job workflow. `migrate_job()` and `render_job()`, which
   had none, migrate a small legacy SAS job and render a draft and a final. The
   examples for `template_list()`, `template_path()`, `template_catalog()`, `add_job()`
