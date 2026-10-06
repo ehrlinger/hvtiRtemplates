@@ -14,7 +14,15 @@
 #'   \code{\link{add_job}} warns when it is used.
 #' @export
 #' @examples
-#' table(template_catalog()$status)
+#' catalog <- template_catalog()
+#' table(catalog$status)
+#'
+#' # Templates that still scaffold but name a replacement.
+#' catalog[!is.na(catalog$deprecated_by), c("prefix", "qualifier", "deprecated_by")]
+#'
+#' # Queued templates waiting on work in another package.
+#' queued <- catalog[catalog$status == "queued" & !is.na(catalog$blocked_on), ]
+#' queued[, c("prefix", "qualifier", "blocked_on")]
 template_catalog <- function() {
   path <- system.file("extdata", "templates.json", package = "hvtiRtemplates")
   .template_catalog_from(path)

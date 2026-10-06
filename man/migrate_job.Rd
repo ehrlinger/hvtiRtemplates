@@ -107,6 +107,30 @@ a concurrent writer landing between that check and the rename can still be
 replaced. If placement fails, only the outputs this call placed are removed,
 along with its temporary files.
 }
+\examples{
+\donttest{
+root <- file.path(tempdir(), "migrate-job-example")
+invisible(hvtiRutilities::study_setup(root, "Example", 1L))
+# A legacy follow-up job; the template is read from its name, dc.gfup.
+sas <- file.path(hvtiRutilities::study_dir("descriptive", root), "dc.gfup.sas")
+writeLines(c("data followup;", "  set built;", "run;",
+             "proc means data=followup; var iv_dead; by dead; run;"), sas)
+job <- migrate_job(sas, subject = "cohort", type = "eda")
+basename(job)
+
+# The choices it translated into the new job ...
+grep("^(EVENT|FOLLOWUP) <- ", readLines(job), value = TRUE)
+
+# ... and the report beside it, saying what was translated and what is left
+# to review.
+report <- readLines(sub("[.]qmd$", "-migration.md", job))
+headings <- grep("^## ", report)
+first <- which(report[headings] == "## Translated")
+# The Translated section and the one after it, Unresolved.
+report[headings[first]:(headings[first + 2L] - 1L)]
+unlink(root, recursive = TRUE)
+}
+}
 \seealso{
 \code{\link{add_job}}, \code{\link{template_list}}
 }

@@ -36,5 +36,10 @@ A separate test checks that every template directory names a taxonomy
 folder, including when the catalog is absent.
 }
 \examples{
-template_list()
+tl <- template_list()
+# Every template, where its job is written, and the call that scaffolds it.
+tl[, c("name", "folder", "call")]
+
+# Find a template by its qualifier, then copy its call: the follow-up jobs.
+subset(tl, qualifier == "gfup", c(name, folder, call))
 }
