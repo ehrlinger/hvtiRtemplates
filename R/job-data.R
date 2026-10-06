@@ -572,14 +572,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     return(read)
   }
   path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), paste0(analysis_set, ".parquet"))
-  # Checked before anything else, hvtiRdatabuild included: a new study has no
-  # analysis sets, and the reader's own error is a missing-file path that names
-  # neither the setting nor the way out (#173).
-  if (!file.exists(path)) {
-    stop("ANALYSIS_SET names `", analysis_set, "`, an analysis set this study has not built. ",
-         "Set ANALYSIS_SET <- NULL to read the registered study dataset, or build the set with ",
-         "hvtiRdatabuild::write_analysis_set() first.", call. = FALSE)
-  }
+  .check_analysis_set_built(path, analysis_set)
   .require_databuild()
   read <- .provenance_file_read(
     paste0("analysis_set:", analysis_set), path, cfg,
@@ -588,6 +581,19 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   )
   read$source <- paste0("analysis set `", analysis_set, "` of the study dataset")
   read
+}
+
+# Checked before anything else, hvtiRdatabuild included: a new study has no
+# analysis sets, and the reader's own error is a missing-file path that names
+# neither the setting nor the way out (#173). dp-postage reads its analysis set
+# outside read_job_data() and calls this too.
+.check_analysis_set_built <- function(path, analysis_set) {
+  if (!file.exists(path)) {
+    stop("ANALYSIS_SET names `", analysis_set, "`, an analysis set this study has not built. ",
+         "Set ANALYSIS_SET <- NULL to read the registered study dataset, or build the set with ",
+         "hvtiRdatabuild::write_analysis_set() first.", call. = FALSE)
+  }
+  invisible(path)
 }
 
 .job_record <- function(source, rows_read, who, dropped, steps, counts) {
