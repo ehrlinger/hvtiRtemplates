@@ -1,5 +1,9 @@
 # hvtiRtemplates (unreleased)
 
+* New tutorial, *Work a job, from template to final report*, for a study author new to
+  the package: find a template in the gallery or `template_list()`, add it with its
+  `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part
+  of a job with `skip` and `stop_here()`, and what the common refusals mean.
 * The template gallery is on the package site, at
   <https://ehrlinger.github.io/hvtiRtemplates/gallery/>, linked from the site's
   navbar and the README. Each template shows what it is for, the `add_job()` call
