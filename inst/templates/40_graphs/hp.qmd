@@ -308,6 +308,8 @@ job_data <- .up$job_data
 d <- job_data$data
 TIME <- .up$selection$time
 EVENT <- .up$selection$event
+# The counts hz.rds records, from hz's EXPECTED; a mismatch names both.
+hvtiRtemplates:::.check_upstream_cohort(d, .hz_read$lineage, event = EVENT, time = TIME, source = "hz.rds")
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```

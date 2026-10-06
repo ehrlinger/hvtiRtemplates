@@ -149,9 +149,10 @@ concordance_upstream <- function(root, job) {
       "^EXPECTED <- list\\(n = NA_integer_" = concordance_counts(root, g)
     )
     hz <- set_choices(add_job("hz", "dead", g, dir = root), c(rows, concordance_hz_choices))
-    hm <- set_choices(add_job("hm", "dead", g, dir = root), c(rows[3L], list(
+    # hm takes its counts from this group's hz.rds, so only the SAS job is set.
+    hm <- set_choices(add_job("hm", "dead", g, dir = root), list(
       "^SAS_JOB   <- c\\(\"analyses\", \"hm.dead.sas\"\\)$" = "SAS_JOB   <- c(\"analyses\", \"hm.dead_group.sas\")"
-    )))
+    ))
     for (upstream in c(hz, hm)) {
       tryCatch(render_job(upstream, final = TRUE, quiet = TRUE), error = function(e) {
         stop("hs-concordance's upstream ", basename(upstream), " did not render: ", conditionMessage(e), call. = FALSE)
@@ -179,19 +180,20 @@ gallery_family(
     ))),
     hz = list(subject = "dead", type = "hz", choices = c(hazard_rows, hazard_counts, hazard_hz_choices)),
     # hm, hp and hs-setup take the data, rows, ID, time and event from hz.rds.
+    # Their counts too: hz.rds carries hz's EXPECTED, so they set none (#177).
     hm = list(
       subject = "dead", type = "hz",
       prepare = function(root, job) hazard_write_sas(root),
       # SAS_JOB already names analyses/hm.dead.sas, which prepare() writes.
-      choices = hazard_counts
+      choices = list()
     ),
     hp = list(subject = "dead", type = "hz", choices = list(
       "^t_max <- 3 " = "t_max <- 10"
     )),
-    "hs-setup" = list(subject = "dead", type = "hz", choices = c(hazard_counts, list(
+    "hs-setup" = list(subject = "dead", type = "hz", choices = list(
       "^OTHER_COL +<- \"other\"$" = "OTHER_COL <- \"nonwhite\"",
       "^VINTAGE +<- NULL$" = "VINTAGE   <- \"table2023\""
-    ))),
+    )),
     "hs-concordance" = list(
       subject = "dead", type = "approach",
       prepare = concordance_upstream,

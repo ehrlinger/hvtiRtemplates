@@ -50,6 +50,53 @@ test_that("a downstream job stops on an upstream fit saved before the data contr
   }
 })
 
+# ---- #177: the counts are typed once, in hz, and checked downstream ----------
+
+test_that("hm, hp and hs take their counts from upstream and declare none of their own", {
+  for (prefix in names(hazard_cohort_gates)) {
+    src <- readLines(hazard_template(prefix), warn = FALSE)
+    expect_false(any(grepl("^EXPECTED\\s*<-", src)), info = prefix)
+    expect_false(any(grepl("assert_cohort(", src, fixed = TRUE)), info = prefix)
+    expect_true(any(grepl("hvtiRtemplates:::.check_upstream_cohort(d, ", src, fixed = TRUE)), info = prefix)
+  }
+})
+
+test_that("a downstream job passes on the upstream counts and stops on others, naming both", {
+  data <- hazard_data()
+  root <- hazard_study(data)
+  lineage <- hazard_lineage(root, where = quote(age >= 18))
+  cc <- hvtiRutilities::cohort_counts(data[data$age >= 18, ], event = "dead", time = "iv_dead")
+  expect_identical(lineage$cohort, cc)
+  hazard_upstream(root, lineage)
+  for (prefix in names(hazard_cohort_gates)) {
+    env <- expect_no_error(hazard_cohort_gate(prefix, root))
+    if (prefix != "hp") expect_identical(env$cc, cc, info = prefix)
+  }
+  # Same rows, but upstream counted one more event: the data changed under it.
+  lineage$cohort$n_events <- cc$n_events + 1L
+  lineage$cohort$n_censored <- cc$n_censored - 1L
+  hazard_upstream(root, lineage)
+  for (prefix in names(hazard_cohort_gates)) {
+    err <- expect_error(hazard_cohort_gate(prefix, root), info = prefix)
+    msg <- conditionMessage(err)
+    expect_match(msg, paste0("The upstream job \\(", if (prefix == "hs-setup") "hm" else "hz", "\\.rds\\)"), info = prefix)
+    expect_match(msg, sprintf("counted N=%d / events=%d / censored=%d", cc$n, cc$n_events + 1L, cc$n_censored - 1L),
+                 fixed = TRUE, info = prefix)
+    expect_match(msg, sprintf("this job counts N=%d / events=%d / censored=%d", cc$n, cc$n_events, cc$n_censored),
+                 fixed = TRUE, info = prefix)
+  }
+})
+
+test_that("a downstream job stops on an upstream fit that records no counts", {
+  root <- hazard_study()
+  lineage <- hazard_lineage(root)
+  lineage$cohort <- list(n = lineage$cohort$n)
+  hazard_upstream(root, lineage)
+  for (prefix in names(hazard_cohort_gates)) {
+    expect_error(hazard_cohort_gate(prefix, root), "records no cohort counts", info = prefix)
+  }
+})
+
 test_that("hp stops when ac and hz chose different rows", {
   root <- hazard_study()
   lineage <- hazard_lineage(root)

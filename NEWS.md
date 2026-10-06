@@ -1,5 +1,13 @@
 # hvtiRtemplates (unreleased)
 
+* `hm` and `hs-setup` no longer carry `EXPECTED` counts. The counts reconciled with
+  the SAS reference are typed once, in `ac` and `hz`, whose hand-off already records
+  them; `hm`, `hs-setup` and now `hp` count their rebuilt rows and stop when they
+  differ from the upstream job's, naming the upstream file and both sets of counts. An
+  upstream file that records no counts stops too, asking for it to be rerun (#177).
+  `hs-concordance` keeps its own `EXPECTED`: it predicts for a cohort it chooses,
+  spanning several `hm` models, so no single upstream job has its counts.
+
 * `hm` stops when the reported fit has no variance matrix, or when any of its free
   parameters has no finite standard error, instead of saving `hm.rds` with only a
   TemporalHazard warning in the log. The message names the phases and covariates
