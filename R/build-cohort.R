@@ -44,8 +44,14 @@
 #'   }
 #'
 #' @examples
-#' d <- data.frame(ccfid = c("S1", "S2", "S3"), age = c(17, 45, NA))
-#' build_cohort(d, exclude = list(age < 18 ~ "Under 18"))$attrition
+#' d <- data.frame(ccfid = c("S1", "S2", "S3", "S4"), age = c(17, 45, NA, 80),
+#'                 redo = c(0, 0, 0, 1))
+#' cut <- build_cohort(d, exclude = list(age < 18 ~ "Under 18",
+#'                                       redo == 1 ~ "Redo operation"))
+#' # One row per step: rows removed, rows whose condition was missing and so
+#' # kept (S3, with no age), and the patients left.
+#' cut$attrition
+#' cut$data
 #' @export
 build_cohort <- function(data, exclude = NULL, cohort = NULL, join_by = NULL, id = "ccfid") {
   if (!is.data.frame(data)) stop("build_cohort(): data must be a data frame.", call. = FALSE)
