@@ -1,7 +1,7 @@
 test_that("template_list() has the expected shape", {
   tl <- template_list()
   expect_s3_class(tl, "data.frame")
-  expect_named(tl, c("name", "prefix", "qualifier", "folder", "file"))
+  expect_named(tl, c("name", "prefix", "qualifier", "folder", "call", "file"))
 })
 
 test_that("template_list() finds templates in taxonomy subfolders", {
@@ -602,6 +602,51 @@ test_that("a trailing separator with no qualifier is rejected", {
 
 test_that("template_list() reports a qualifier column", {
   expect_true("qualifier" %in% names(template_list()))
+})
+
+test_that("template_list()$call scaffolds its own template, every row", {
+  # The column is only worth printing if pasting it works. Run each call
+  # exactly as printed and check it wrote that template, under the subject and
+  # type the call names.
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+  expect_false(anyNA(tl$call))
+  expect_true(all(startsWith(tl$call, paste0('add_job("', tl$name, '", subject = "'))))
+  dir <- withr::local_tempdir()
+  for (i in seq_len(nrow(tl))) {
+    call <- parse(text = tl$call[[i]])[[1L]]
+    call$dir <- dir
+    out <- withCallingHandlers(eval(call, asNamespace("hvtiRtemplates")),
+                               hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
+    expect_identical(basename(out), paste0(call$subject, "-", call$type, "-", tl$name[[i]], ".qmd"),
+                     info = tl$name[[i]])
+  }
+})
+
+test_that("template_list()$call is NA for a template add_job() cannot scaffold", {
+  f <- withr::local_tempfile(fileext = ".qmd")
+  writeLines(c('SUBJECT <- "cohort"', 'TYPE    <- "eda"'), f)
+  expect_identical(.template_call(f), sprintf('add_job("%s", subject = "cohort", type = "eda")',
+                                              sub("[.]qmd$", "", basename(f))))
+  writeLines('SUBJECT <- "cohort"', f)
+  expect_identical(.template_call(f), NA_character_)
+})
+
+test_that("template_list()$call reads any string literal and refuses what add_job() would", {
+  # add_job() rewrites a single-quoted SUBJECT line as readily as a double-quoted
+  # one, so the call must read it too. Raised by Codex on #239.
+  f <- withr::local_tempfile(fileext = ".qmd")
+  name <- sub("[.]qmd$", "", basename(f))
+  writeLines(c("SUBJECT <- 'cohort'  # a comment", 'TYPE    <- "eda"'), f)
+  expect_identical(.template_call(f), sprintf('add_job("%s", subject = "cohort", type = "eda")', name))
+  call <- parse(text = .template_call(f))[[1L]]
+  expect_identical(c(call$subject, call$type), c("cohort", "eda"))
+  # Not one string add_job() accepts: no call, rather than one it refuses.
+  for (bad in c('SUBJECT <- "co-hort"', 'SUBJECT <- paste0("co", "hort")', 'SUBJECT <- c("a", "b")',
+                "SUBJECT <- NA_character_", 'SUBJECT <- "unterminated')) {
+    writeLines(c(bad, 'TYPE    <- "eda"'), f)
+    expect_identical(.template_call(f), NA_character_, info = bad)
+  }
 })
 
 test_that(".select_template() refuses to guess when a prefix is ambiguous", {
