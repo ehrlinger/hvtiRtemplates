@@ -124,7 +124,10 @@ grep("^(EVENT|FOLLOWUP) <- ", readLines(job), value = TRUE)
 # ... and the report beside it, saying what was translated and what is left
 # to review.
 report <- readLines(sub("[.]qmd$", "-migration.md", job))
-report[seq(grep("^## Translated", report), grep("^## Ignored", report) - 1L)]
+headings <- grep("^## ", report)
+first <- which(report[headings] == "## Translated")
+# The Translated section and the one after it, Unresolved.
+report[headings[first]:(headings[first + 2L] - 1L)]
 unlink(root, recursive = TRUE)
 }
 }
