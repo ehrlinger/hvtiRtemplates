@@ -1,5 +1,15 @@
 # hvtiRtemplates (unreleased)
 
+* `hm` stops when the reported fit has no variance matrix, or when any of its free
+  parameters has no finite standard error, instead of saving `hm.rds` with only a
+  TemporalHazard warning in the log. The message names the phases and covariates
+  involved. A degenerate fit, a phase whose `log_mu` has run off, used to fail only
+  later in a downstream job (#228). The table that warned of covariates without a
+  standard error is gone, since the stop now covers it.
+* `hs-concordance` stops in its predictions when a group model gives no confidence
+  limits, naming the model and saying its `hm` fit has no variance matrix. It used to
+  stop later in the decision with "missing value where TRUE/FALSE needed" (#227).
+
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its
   `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part

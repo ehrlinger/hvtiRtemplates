@@ -150,6 +150,9 @@ hazard_chain_run <- function(root, data, hm_env = globalenv(), .local_envir = pa
                        "tbl-conservation-binding", "edit-estimates", "tbl-estimates", "save"), env)
     hazard_run("hm", c("set", "edit-study-choices"), hm_env, list(EXPECTED = expected, DECILE_TIME = 3))
     hm_env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
+    # guard-variance is left out on purpose: on this small synthetic cohort the
+    # hm fit has no variance matrix, which that chunk stops on. What these runs
+    # test is what the saved files hold, not the fit; concordance_fit() runs it.
     hazard_run("hm", c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit", "edit-reported",
                        "tbl-calibration", "save"), hm_env)
     hazard_run("hs-setup", c("set", "edit-study-choices"), env,
@@ -201,7 +204,7 @@ concordance_fit <- function(root, data, groups = c("a", "b"), .local_envir = par
       hazard_run("hm", c("set", "edit-study-choices"), env, list(EXPECTED = expected, DECILE_TIME = 3, SUBJECT = "dead", TYPE = g))
       env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
       hazard_run("hm", c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit", "edit-reported",
-                         "tbl-calibration", "save"), env)
+                         "guard-variance", "tbl-calibration", "save"), env)
     }))
   }
   invisible(env)
@@ -240,4 +243,12 @@ concordance_estate <- function(.local_envir = parent.frame()) {
 skip_concordance <- function() {
   testthat::skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
   testthat::skip_if_not_installed("numDeriv")
+}
+
+# Run hm's guard-variance on `reported`, with the template's own SHAPE_PARAMS.
+hm_guard <- function(root, reported) {
+  env <- hazard_env(root)
+  hazard_run("hm", c("set", "edit-study-choices"), env, list(SUBJECT = "dead", TYPE = "a"))
+  env$reported <- reported
+  hazard_run("hm", "guard-variance", env)
 }

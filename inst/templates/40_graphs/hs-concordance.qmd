@@ -502,6 +502,17 @@ if (any(.bad)) {
   stop(sum(.bad), " of ", nrow(pred), " predictions are NA or non-finite, from model(s) ",
        paste(unique(pred$model[.bad]), collapse = ", "), ".", call. = FALSE)
 }
+# A finite fit with NA limits is a model whose fit carries no variance matrix:
+# predict() warns once and returns every limit as NA. Left alone, those NAs
+# reach the decision below, which stops on "missing value where TRUE/FALSE
+# needed" and names neither the model nor the cause.
+.no_cl <- !is.finite(pred$lower) | !is.finite(pred$upper)
+if (any(.no_cl)) {
+  stop("No confidence limits from the model(s) for ", paste(unique(pred$model[.no_cl]), collapse = ", "),
+       ": the hm fit has no variance matrix, so no difference between groups can ",
+       "be judged. Refit that group's hm model with fewer candidate covariates ",
+       "or with its shapes fixed.", call. = FALSE)
+}
 stopifnot(all(pred$fit >= 0 & pred$fit <= 1))
 
 # One row per patient: the treatment received and the CARRY columns a plotting

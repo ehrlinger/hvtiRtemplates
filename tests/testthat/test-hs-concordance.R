@@ -135,3 +135,20 @@ test_that("deleting the decision leaves a job that saves", {
   expect_null(art$decision)
   expect_identical(nrow(art$pred), 2L * nrow(e$data))
 })
+
+test_that("a group model without a variance matrix stops the predictions, naming the model (#227)", {
+  skip_concordance()
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  e <- concordance_estate()
+  # Model b as a fit that lost its variance matrix: predict() then returns a
+  # finite fit with every limit NA.
+  path <- file.path(hvtiRutilities::study_dir("estimates", e$root), "dead-b", "hm.rds")
+  art <- readRDS(path)
+  art$reported$fit$vcov <- NULL
+  saveRDS(art, path)
+  err <- tryCatch(concordance_run(e$root, concordance_choices(e$data)), error = conditionMessage)
+  expect_match(err, "No confidence limits from the model(s) for b:", fixed = TRUE)
+  expect_match(err, "no variance matrix", fixed = TRUE)
+  expect_no_match(err, "missing value where TRUE/FALSE needed", fixed = TRUE)
+})
