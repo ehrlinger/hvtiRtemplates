@@ -19,6 +19,7 @@
 - [`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md)
   : Catalog of analysis templates owed by this package
 - [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+  [`print(`*`<hvti_template_list>`*`)`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
   : List the supported R job templates
 - [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
   : Path to a supported template

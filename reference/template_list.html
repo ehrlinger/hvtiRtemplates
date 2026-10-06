@@ -50,12 +50,28 @@ the intended starting point for a new analysis job.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">template_list</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">template_list</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'hvti_template_list'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
+    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
+
+
+<dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
+<dd><p>A data frame returned by <code>template_list()</code>.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Passed to the data frame print method.</p></dd>
+
+</dl></div>
+    <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with columns <code>name</code>, <code>prefix</code>,
+    <p>A data frame, of class <code>hvti_template_list</code>, with columns
+  <code>name</code>, <code>prefix</code>,
   <code>qualifier</code>, <code>folder</code>, <code>call</code> and <code>file</code>.
   <code>call</code> is the <code><a href="add_job.html">add_job</a></code> call that scaffolds the
   template, with only the arguments it requires and runnable as printed,
@@ -64,7 +80,11 @@ the intended starting point for a new analysis job.</p>
   change them to name the job. <code>folder</code> is the
   taxonomy name with the directory's ordering digits stripped, so
   <code>20_distributions</code> reports as <code>distributions</code>.
-  <code>qualifier</code> is <code>NA</code> for a prefix carrying a single template.</p>
+  <code>qualifier</code> is <code>NA</code> for a prefix carrying a single template.
+  Printed whole, it shows only <code>name</code>, <code>prefix</code>,
+  <code>qualifier</code> and <code>folder</code>, since <code>call</code> and <code>file</code>
+  would wrap every row; both are still in the data, and a selection of
+  columns prints as selected.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -84,6 +104,44 @@ folder, including when the catalog is absent.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">tl</span> <span class="op">&lt;-</span> <span class="fu">template_list</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Printed whole: name, prefix, qualifier and folder.</span></span></span>
+<span class="r-in"><span><span class="va">tl</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     name prefix          qualifier        folder</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                     bd     bd               &lt;NA&gt;      datasets</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2             dc-general     dc            general   descriptive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                dc-gfup     dc               gfup   descriptive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4              dc-tables     dc             tables   descriptive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5                 dp-eda     dp                eda   descriptive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6             dp-postage     dp            postage   descriptive</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7                     ac     ac               &lt;NA&gt; distributions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8                     hz     hz               &lt;NA&gt; distributions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9                     bc     bc               &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10                    bh     bh               &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11                    bl     bl               &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12                    br     br               &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13                    hm     hm               &lt;NA&gt;      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14    lm-balancing_count     lm    balancing_count      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15             lm-binary     lm             binary      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16          lm-checkpred     lm          checkpred      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17            lm-nominal     lm            nominal      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18            lm-ordinal     lm            ordinal      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19  lm-propensity_binary     lm  propensity_binary      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 lm-propensity_nominal     lm propensity_nominal      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 lm-propensity_ordinal     lm propensity_ordinal      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22         nb-boostmtree     nb         boostmtree      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23           rfc-explain    rfc            explain      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24               rfc-fit    rfc                fit      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25           rfr-explain    rfr            explain      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26               rfr-fit    rfr                fit      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27           rfs-explain    rfs            explain      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28               rfs-fit    rfs                fit      analyses</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29               dp-gfup     dp               gfup        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30             dp-trends     dp             trends        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31                    hp     hp               &lt;NA&gt;        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32        hs-concordance     hs        concordance        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33              hs-setup     hs              setup        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # 33 templates; `call` and `file` not shown. Read them with $call and $file.</span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Every template, where its job is written, and the call that scaffolds it.</span></span></span>
 <span class="r-in"><span><span class="va">tl</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"folder"</span>, <span class="st">"call"</span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                     name        folder</span>
