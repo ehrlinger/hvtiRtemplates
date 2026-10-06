@@ -38,7 +38,7 @@ test_that("descriptive templates can read the whole cohort", {
   }
   template_dir <- normalizePath(template_dir)
   templates <- file.path(template_dir, c(
-    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dp-postage.qmd", "dp-eda.qmd"
+    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dp-postage.qmd", "dp-eda.qmd"
   ))
   root <- file.path(tempdir(), "whole-cohort-study")
   unlink(root, recursive = TRUE)
@@ -97,7 +97,7 @@ test_that("descriptive templates read a named additional dataset", {
   }
   template_dir <- normalizePath(template_dir)
   templates <- file.path(template_dir, c(
-    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dp-postage.qmd", "dp-eda.qmd"
+    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dp-postage.qmd", "dp-eda.qmd"
   ))
   root <- file.path(tempdir(), "named-dataset-study")
   unlink(root, recursive = TRUE)

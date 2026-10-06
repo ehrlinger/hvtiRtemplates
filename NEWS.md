@@ -1,5 +1,15 @@
 # hvtiRtemplates (unreleased)
 
+* New template, `dc-stddiff`: the balance table. It reports the standardized
+  difference of each baseline variable between two groups, from
+  `hvtiRpropensity::ps_stddiff()`, the port of the 2019 `%stddiff` macro. The
+  comparison is unadjusted, plus the matched set when `MATCH` names its column and
+  matching weights when `WEIGHT` does. It counts the variables above a threshold
+  (0.10 by default) and draws the differences with `hvtiPlotR::hv_balance()`. `N_PERM`
+  adds the `%stddiffci` permutation reference through `ps_stddiff_perm()`. A study
+  with three or more arms runs a job per pair, keeping the pair with `WHERE` and
+  naming its group 1 with `GROUP_1`. Needs `hvtiRpropensity` 0.1.5 or later, which
+  the existing `Suggests` bound of 0.1.7 already covers (#216).
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its
   `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part
