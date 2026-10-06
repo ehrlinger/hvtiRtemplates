@@ -58,9 +58,11 @@ if (requireNamespace("quarto", quietly = TRUE) && quarto::quarto_available()) {
   # A draft: the new job still holds EDIT: markers, so the report carries a
   # DRAFT banner listing them, and renders all the same.
   render_job(job, quiet = TRUE)
-  file.exists(sub("[.]qmd$", ".html", job))
+  print(file.exists(sub("[.]qmd$", ".html", job)))
 
-  # A final render is the accepted result, so it stops while a marker remains.
+  # A final render is the accepted result, so it stops while any of the
+  # job's open markers remains. This many:
+  print(sum(grepl("EDIT:", readLines(job), fixed = TRUE)))
   try(render_job(job, final = TRUE, quiet = TRUE))
   unlink(root, recursive = TRUE)
 }
