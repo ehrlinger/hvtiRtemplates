@@ -20,3 +20,7 @@ reports/
 # Rendered demo deck; render dev/demo/descriptives-slides.qmd locally
 dev/demo/*.html
 dev/demo/*_files/
+
+# The built template gallery: published as an asset on the `gallery` release
+# by dev/gallery/publish.sh, fetched by the pkgdown workflow, never committed.
+/pkgdown/assets/gallery/

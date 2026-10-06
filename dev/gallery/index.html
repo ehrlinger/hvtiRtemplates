@@ -144,7 +144,7 @@
 
   <footer>
     <p>Chips link to open hvtiRtemplates issues found while building this gallery; a red chip is a template that does not render as shipped. Issues that affect every template, such as the four different ways templates choose their data (#173) and settings leaking between jobs run by hand (#184), are not repeated on each row.</p>
-    <p>Rebuild: <code>Rscript dev/gallery/gallery.R &lt;folder&gt;</code>, then <code>python3 dev/gallery/package.py &lt;folder&gt; pkgdown/assets/gallery</code>, with the package installed from the same checkout. The table is generated from the template catalog, each template's own <code>SUBJECT</code> and <code>TYPE</code>, and the rendered reports; only the issues and notes are kept by hand, in <code>dev/gallery/notes.json</code>. Render times are from one full build on a laptop.</p>
+    <p>Rebuild: <code>Rscript dev/gallery/gallery.R &lt;folder&gt;</code>, then <code>python3 dev/gallery/package.py &lt;folder&gt; pkgdown/assets/gallery</code> and <code>bash dev/gallery/publish.sh</code>, with the package installed from the same checkout. The table is generated from the template catalog, each template's own <code>SUBJECT</code> and <code>TYPE</code>, and the rendered reports; only the issues and notes are kept by hand, in <code>dev/gallery/notes.json</code>. Render times are from one full build on a laptop.</p>
   </footer>
 </div>
 
@@ -183,8 +183,8 @@ document.getElementById("sections").innerHTML = FOLDERS.map(([dir, label, blurb,
       <td>${t.report ? `<a class="tpl" href="reports/${t.name}.html" target="_blank" rel="noopener">${esc(t.name)}</a>` : `<span class="tpl">${esc(t.name)}</span>`}</td>
       <td>${t.deprecated_by ? `<span class="dep">deprecated: use ${esc(t.deprecated_by)}</span><br>` : ""}${esc(t.use)}${t.note ? `<span class="gallery-note">${esc(t.note)}</span>` : ""}</td>
       <td class="addit">${t.call ? `<div class="call"><code>${esc(t.call)}</code><button type="button" class="copy" data-call="${esc(t.call)}" aria-label="Copy the add_job() call for ${esc(t.name)}">Copy</button></div>` : ""}</td>
-      <td class="out">${count(t.tables)}</td>
-      <td class="out">${count(t.figures)}</td>
+      <td class="out">${t.report ? count(t.tables) : ""}</td>
+      <td class="out">${t.report ? count(t.figures) : ""}</td>
       <td class="num">${t.seconds == null ? "" : t.seconds.toFixed(1) + " s"}</td>
       <td><div class="chips">${t.issues.length ? t.issues.map(chip).join("") : '<span class="chip none">none</span>'}</div></td>
     </tr>`).join("");

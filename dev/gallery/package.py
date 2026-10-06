@@ -87,8 +87,11 @@ def _first_sentence(text):
     return m.group(1) if m else (text or "")
 
 
+# Quarto writes "Table" and its number with a non-breaking space between them,
+# as the character or as &nbsp;, so match any space. Each number is counted
+# once, however often a cross-reference repeats it.
 def _caption_count(html, kind):
-    return len(set(re.findall(kind + r"&nbsp;(\d+)|" + kind + r" (\d+):", html)))
+    return len(set(re.findall(kind + r"(?:\s|&nbsp;)(\d+):", html)))
 
 
 def _build_stamp():
