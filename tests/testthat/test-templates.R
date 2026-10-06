@@ -324,7 +324,9 @@ test_that("endpoint-driven templates own explicit cohort definitions", {
     src[seq.int(start, if (length(end)) end[[1L]] - 1L else length(src))]
   }
 
-  templates <- c(ac = "EVENT", hz = "EVENT", hm = "EVENT", `hs-setup` = "EVENT")
+  # The first jobs of a hazard set. hm, hp and hs take these counts from the
+  # upstream hand-off instead (#177), which test-hazard-chain.R asserts.
+  templates <- c(ac = "EVENT", hz = "EVENT")
   for (prefix in names(templates)) {
     src <- readLines(hazard_template(prefix), warn = FALSE)
     event <- templates[[prefix]]

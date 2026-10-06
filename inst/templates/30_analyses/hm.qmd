@@ -214,9 +214,8 @@ KEY <- NULL
 TIME <- NULL
 EVENT <- NULL
 
-# EDIT: counts from the SAS reference for the rows this job analyses. Leave
-# these invalid defaults in place until they agree with the hz job's rows.
-EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_)
+# No expected counts here: they are typed once, in the hz job, and hz.rds
+# carries them. The cohort chunk checks this job's rows against them.
 
 # EDIT: SAS job and macro holding covariate blocks.
 SAS_JOB   <- c("analyses", "hm.dead.sas")
@@ -246,9 +245,9 @@ DECILE_TIME <- 10
 <!-- This job fits the rows the hz job fitted. hz.rds records how it chose
      them, and the data chunk rebuilds exactly those rows, stopping when a
      setting above differs from hz's or when the rows no longer match. The
-     expected counts are this job's contract with its SAS reference; the
-     invalid defaults make an unedited job stop rather than silently accept an
-     unreconciled cohort. -->
+     counts reconciled with the SAS reference are typed once, in the hz job;
+     hz.rds carries them, and this job stops when its rows count differently,
+     so the same numbers are never retyped here. -->
 
 ```{r}
 #| label: read-upstream
@@ -287,8 +286,8 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 ```{r}
 #| label: tbl-cohort
 #| tbl-cap: "Analysable patients, events and censored patients"
-cc <- cohort_counts(d, event = EVENT, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+# The counts hz.rds records, from hz's EXPECTED; a mismatch names both.
+cc <- hvtiRtemplates:::.check_upstream_cohort(d, .hz_read$lineage, event = EVENT, time = TIME, source = "hz.rds")
 
 knitr::kable(data.frame(
   quantity = c("n_analysable", "n_events", "n_censored"),

@@ -225,11 +225,14 @@ if (is.null(ANALYSIS_SET)) {
   stop("An analysis set is written from the study dataset, not `", DATASET,
        "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
 } else {
+  # A set the study has not built is named before hvtiRdatabuild is asked for,
+  # as read_job_data() does (#173).
+  .analysis_set_path <- file.path(study_dir("datasets", .root), paste0(ANALYSIS_SET, ".parquet"))
+  hvtiRtemplates:::.check_analysis_set_built(.analysis_set_path, ANALYSIS_SET)
   if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
     stop("This job needs hvtiRdatabuild >= 0.2.1 for read_analysis_set().", call. = FALSE)
   }
   .cfg <- study_config(start = .root)
-  .analysis_set_path <- file.path(study_dir("datasets", .root), paste0(ANALYSIS_SET, ".parquet"))
   .data_read <- hvtiRtemplates:::.provenance_file_read(
     paste0("analysis_set:", ANALYSIS_SET), .analysis_set_path, .cfg,
     function() hvtiRdatabuild::read_analysis_set(ANALYSIS_SET, cfg = .cfg),

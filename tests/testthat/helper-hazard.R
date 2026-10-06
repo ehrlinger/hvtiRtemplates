@@ -70,14 +70,14 @@ hazard_env <- function(root) {
 }
 
 # The hand-off lineage an upstream hazard job records: the data it read, its
-# rows as a selection, and the time and event it fitted.
+# counts, its rows as a selection, and the time and event it fitted.
 hazard_lineage <- function(root, where = NULL, time = "iv_dead", event = "dead") {
   cfg <- hvtiRutilities::study_config(root)
   job <- read_job_data(cfg, where = where)
   list(
     data = list(job$provenance),
     analysis = list(time = list(variable = time), event = list(variable = event, event = 1L, censored = 0L)),
-    cohort = list(n = nrow(job$data)),
+    cohort = hvtiRutilities::cohort_counts(job$data, event = event, time = time),
     selection = c(attr(job$record, "selection"), list(time = time, event = event))
   )
 }
@@ -136,6 +136,16 @@ hz_fit_run <- function(last = "noconserve", data = hazard_data(), .local_envir =
   env
 }
 
+# The chunk holding each downstream job's cohort gate (#177). hp's is its data
+# chunk, which hazard_downstream() already runs.
+hazard_cohort_gates <- list(hm = "tbl-cohort", hp = character(), `hs-setup` = "cohort")
+
+# Run a downstream job through its cohort gate.
+hazard_cohort_gate <- function(prefix, root) {
+  env <- hazard_downstream(prefix, root)
+  hazard_run(prefix, hazard_cohort_gates[[prefix]], env)
+}
+
 # ---- #203: searching a saved file for patient identifiers ----------------------
 
 # TRUE when `bytes` hold `value` as text or as R's big-endian integer or double encoding.
@@ -173,7 +183,7 @@ hazard_chain_run <- function(root, data, hm_env = globalenv(), .local_envir = pa
     hazard_run("hz", c("tbl-data", "tbl-cohort", "tbl-phases", "edit-start", "edit-response", "tbl-response-check", "guard",
                        "fit-deterministic", "tbl-convergence", "edit-multistart", "tbl-multistart", "noconserve",
                        "tbl-conservation-binding", "edit-estimates", "tbl-estimates", "save"), env)
-    hazard_run("hm", c("set", "edit-study-choices"), hm_env, list(EXPECTED = expected, DECILE_TIME = 3))
+    hazard_run("hm", c("set", "edit-study-choices"), hm_env, list(DECILE_TIME = 3))
     hm_env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
     # guard-variance is left out on purpose: on this small synthetic cohort the
     # hm fit has no variance matrix, which that chunk stops on. What these runs
@@ -181,7 +191,7 @@ hazard_chain_run <- function(root, data, hm_env = globalenv(), .local_envir = pa
     hazard_run("hm", c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit", "edit-reported",
                        "tbl-calibration", "save"), hm_env)
     hazard_run("hs-setup", c("set", "edit-study-choices"), env,
-               list(EXPECTED = expected, HORIZONS = c(1, 2), VINTAGE = "table2023"))
+               list(HORIZONS = c(1, 2), VINTAGE = "table2023"))
     hazard_run("hs-setup", c("read-upstream", "tbl-data", "cohort", "model", "horizons", "tbl-predict", "tbl-expected",
                              "edit-obs-vs-exp", "tbl-obs-vs-exp", "save"), env)
   }))
@@ -234,7 +244,7 @@ concordance_fit <- function(root, data, groups = c("a", "b"), .local_envir = par
       hazard_run("hz", c("tbl-data", "tbl-cohort", "tbl-phases", "edit-start", "edit-response", "tbl-response-check", "guard",
                          "fit-deterministic", "tbl-convergence", "edit-multistart", "tbl-multistart", "noconserve",
                          "tbl-conservation-binding", "edit-estimates", "tbl-estimates", "save"), env)
-      hazard_run("hm", c("set", "edit-study-choices"), env, list(EXPECTED = expected, DECILE_TIME = 3, SUBJECT = "dead", TYPE = g))
+      hazard_run("hm", c("set", "edit-study-choices"), env, list(DECILE_TIME = 3, SUBJECT = "dead", TYPE = g))
       env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
       hazard_run("hm", c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit", "edit-reported",
                          "guard-variance", "tbl-calibration", "save"), env)

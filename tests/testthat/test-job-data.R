@@ -106,6 +106,18 @@ test_that("KEY follows the ID when the ID falls back", {
   expect_match(paste(out$record$value, collapse = " "), "fell back to mrn")
 })
 
+test_that("an analysis set the study has not built is named, with the fix", {
+  # #173: on a freshly registered study, an ANALYSIS_SET of "eda" stopped with
+  # provenance_artifact()'s "missing file: .../eda.parquet", which names neither
+  # the setting nor the way out. Checked before hvtiRdatabuild is asked for, so a
+  # study without it installed gets this message, not an install prompt.
+  cfg <- job_study(d0)
+  e <- expect_error(read_job_data(cfg, analysis_set = "eda"),
+                    "ANALYSIS_SET names `eda`, an analysis set this study has not built")
+  expect_match(conditionMessage(e), "ANALYSIS_SET <- NULL", fixed = TRUE)
+  expect_no_match(conditionMessage(e), "provenance_artifact|missing file")
+})
+
 test_that("an analysis set with another dataset is refused", {
   cfg <- job_study(d0)
   expect_error(read_job_data(cfg, dataset = "other", analysis_set = "eda"), "written from the study dataset")

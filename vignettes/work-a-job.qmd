@@ -135,11 +135,16 @@ session, writes the HTML report beside the job, and shows the DRAFT banner while
 any marker remains. The numbers in a draft are not a result, and the banner says
 so.
 
-Run All and Render do different things. **Run All** in RStudio
-runs the chunks in your current R session, so an object you made by hand an hour
-ago can quietly stand in for one the job no longer makes. **Render** starts from
-nothing. Use Run All while you are setting the choices and want to look at the
-data. Use `render_job()` to find out whether the job works on its own.
+**Render the job; do not run its chunks by hand.** Run All in RStudio runs the
+chunks in your current R session, where an object you made an hour ago, or a
+setting left by another job you had open, can quietly stand in for one this job
+no longer makes. Every job uses the same setting names (`DATASET`, `WHERE`,
+`VARIABLES` and the rest), so a stale one reads the wrong patients and nothing
+says so. A render starts from nothing, so every number in it comes from this
+job. To look at the data while you set the choices, render a draft and read the
+report: it shows the selection, its counts and the tables. To see only the top
+of a long job, put `stop_here()` below the part you are working on, and the
+render stops there.
 
 When the markers are gone and the report says what it should, render the final:
 
