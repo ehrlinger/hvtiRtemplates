@@ -542,13 +542,32 @@ knitr::kable(data.frame(
 # single start goes where its starting point leads, so it is the thing that
 # actually finds another optimum if one is there.
 #
+# Only the FREE positions move. hazard() holds a fixed parameter at the value
+# theta gives it, so a probe that moved one would fit a different model, and
+# could beat the reported fit without the reported fit being in the wrong
+# basin. The held positions are each phase's `fixed` set, plus the shape a g3
+# `constraint` derives from the others, which hazard() would replace anyway.
+held <- unlist(lapply(names(phases), function(nm) {
+  ph <- phases[[nm]]
+  derived <- switch(if (is.null(ph$constraint)) "none" else ph$constraint,
+                    alpha_gamma_eta = "alpha", eta_gamma = "eta", character(0))
+  p <- c(ph$fixed, derived)
+  paste0(nm, ".", c(p, paste0("log_", p)))
+}))
+free <- !(theta_names %in% held)
+
 # EDIT: widen or add probes if your model has more phases or free parameters.
 # Every row must differ from every other row: a duplicated start is a fit that
-# costs time and tests nothing.
-probes <- rbind(theta0, theta0 + 0.5, theta0 - 0.5)
+# costs time and tests nothing. Move only positions where `free` is TRUE.
+probes <- rbind(theta0, theta0 + 0.5 * free, theta0 - 0.5 * free)
 if (anyDuplicated(probes)) {
   stop("Two probe rows are identical: that fit costs time and tests nothing.",
        call. = FALSE)
+}
+.moved <- theta_names[!free][colSums(probes[, !free, drop = FALSE] != rep(theta0[!free], each = nrow(probes))) > 0]
+if (length(.moved)) {
+  stop("A probe moves a fixed parameter (", paste(.moved, collapse = ", "), "), so it fits a different ",
+       "model and its log-likelihood cannot be compared with the reported fit's.", call. = FALSE)
 }
 ```
 

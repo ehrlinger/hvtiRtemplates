@@ -5,6 +5,13 @@
   and printed a warning into the report for every fit. The fit still reports the
   conditioning of its Hessian, as `rcond` in the convergence table (#172).
 
+* `hz`'s start probes move only the free parameters. They used to shift every
+  position of `theta0`, the fixed late-phase shapes included, so each probe fitted a
+  different model and could beat the reported fit, falsely suggesting it was in the
+  wrong basin. The held positions are read from `phases`: each phase's `fixed` set and
+  any shape a g3 `constraint` derives. A probe edited to move one stops the job,
+  naming the parameter (#169).
+
 * `hm` stops when the reported fit has no variance matrix, or when any of its free
   parameters has no finite standard error, instead of saving `hm.rds` with only a
   TemporalHazard warning in the log. The message names the phases and covariates

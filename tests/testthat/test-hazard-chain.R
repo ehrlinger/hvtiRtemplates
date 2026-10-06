@@ -141,3 +141,30 @@ test_that("hz passes hazard() no control element it ignores (#172)", {
   expect_true(all(c("fit_det", "probe_ll", "fit_nc") %in% ls(env)))
   expect_false(any(grepl("with no effect", env$.warnings, fixed = TRUE)))
 })
+
+test_that("hz's start probes move only the free parameters (#169)", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  withr::local_package("TemporalHazard")
+  env <- hz_probe_env()
+  held <- c("late.log_tau", "late.gamma", "late.alpha")
+  expect_identical(env$theta_names[!env$free], held)
+  at <- match(held, env$theta_names)
+  expect_identical(unname(env$probes[, at]), matrix(env$theta0[at], 3L, length(at), byrow = TRUE))
+  # Every free position does move, so the probes still test the starting point.
+  free_cols <- env$probes[, env$free, drop = FALSE]
+  expect_true(all(apply(free_cols, 2L, function(x) length(unique(x)) == 3L)))
+})
+
+test_that("hz stops on a start probe that moves a fixed parameter (#169)", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  withr::local_package("TemporalHazard")
+  env <- hz_probe_env()
+  # The probes as they stood before #169, moving every position.
+  src <- readLines(hazard_template("hz"), warn = FALSE)
+  at <- which(trimws(src) == "#| label: edit-multistart")
+  chunk <- src[(at + 1L):(at + which(src[(at + 1L):length(src)] == "```")[1L] - 1L)]
+  edited <- sub("^probes <- .*$", "probes <- rbind(theta0, theta0 + 0.5, theta0 - 0.5)", chunk)
+  expect_false(identical(edited, chunk))
+  expect_error(eval(parse(text = edited), env),
+               "A probe moves a fixed parameter \\(late\\.log_tau, late\\.gamma, late\\.alpha\\)")
+})

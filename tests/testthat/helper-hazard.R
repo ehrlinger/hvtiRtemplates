@@ -194,6 +194,14 @@ hazard_file_holds_any <- function(root, file, ids) {
   any(vapply(ids, function(v) hazard_bytes_hold(bytes, v), logical(1L)))
 }
 
+# hz's phases, starting values and multistart probes, without data or a fit.
+hz_probe_env <- function() {
+  env <- new.env(parent = globalenv())
+  hazard_run("hz", c("set", "edit-study-choices"), env)
+  utils::capture.output(hazard_run("hz", c("tbl-phases", "edit-start", "edit-multistart"), env))
+  env
+}
+
 # ---- hs-concordance -----------------------------------------------------------
 # hs-concordance reads one fitted hm model per treatment group, each from its
 # own set. This builds that estate: a study whose built data carries a `group`
