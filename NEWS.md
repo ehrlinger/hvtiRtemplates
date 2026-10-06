@@ -1,5 +1,10 @@
 # hvtiRtemplates (unreleased)
 
+* `template_list()` prints only `name`, `prefix`, `qualifier` and `folder`, so the
+  listing fits the console. `call` and `file` are still in the data frame: read them
+  with `$call` and `$file`, or print a selection such as `tl[, c("name", "call")]`,
+  which prints as selected.
+
 * The descriptive templates report the 15th and 85th percentiles where they reported the
   quartiles: `dc-general`'s quantile table, the follow-up tables in `dc-gfup` and
   `dp-eda`, and the variable summaries in `dp-eda` and `dp-postage`. The follow-up tables
