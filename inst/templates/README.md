@@ -20,6 +20,7 @@ refuses to overwrite an existing job.
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-gfup.qmd` | follow-up interval checks and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-stddiff.qmd` | balance table: standardized differences between two groups, unadjusted, matched and weighted | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dp-postage.qmd` | **deprecated**, use `dp-eda`: EDA panels on numbered PNG pages | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dp-eda.qmd` | the whole EDA report: overview, follow-up, then the postage sections, each with its table | `10_descriptive/` or `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
@@ -63,7 +64,7 @@ fifth in the taxonomy, because it holds saved output rather than jobs. The
 decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
-qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dp-trends`,
+qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dp-trends`,
 `dp-gfup`, `dp-postage`, `dp-eda`, `hs-setup`, `hs-concordance`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so

@@ -450,8 +450,11 @@ because those live in a catalog it never opened.
 
 - `dp-procs`, `dp-spaghetti`, `dp-variable`, `dc-dead`, `lg`, `rg`. Not asked
   for.
-- The `dc-stddiff` member, which the catalog assigns to `hvtiRutilities` with
-  `disposition: build`, not here.
+- The `dc-stddiff` member, whose function `hvtiRpropensity` owns
+  (`ps_stddiff()`), not here. This line named `hvtiRutilities` until
+  2026-10-06; `2026-09-16-standardized-difference-design.md` moved the owner
+  on 2026-09-16, and the template shipped against `hvtiRpropensity` 0.1.5
+  (#216).
 - The three-folder `dp` ledger defect in general. This document records it
   where it blocks a decision and does not attempt to fix it.
 - Multi-file templates. Every row here is a single-file job, so the runner
