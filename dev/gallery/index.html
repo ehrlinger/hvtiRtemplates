@@ -121,6 +121,15 @@
 
   <div class="notes">
     <div class="note">
+      <h3>Naming a job: <code>subject</code> and <code>type</code></h3>
+      <ul>
+        <li><code>add_job()</code> needs three things. The first argument picks the template. <code>subject</code> and <code>type</code> are names you choose: there is no list to pick from, only the rule that they use letters, digits and underscores.</li>
+        <li>They name the job file, <code>&lt;subject&gt;-&lt;type&gt;-&lt;template&gt;.qmd</code>, and the folder its results are saved in.</li>
+        <li>Jobs in one analysis must share them. <b>hm</b> finds the <code>hz.rds</code> that <b>hz</b> saved only when both carry the same subject and type, so a hazard analysis of death might use <code>subject = "death", type = "hz"</code> for <b>ac</b>, <b>hz</b>, <b>hm</b> and <b>hp</b>.</li>
+        <li>The calls below carry each template's own example values, which this gallery's study also used. Change them to name your analysis. The <a href="https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.html" target="_blank" rel="noopener">add_job() help page</a> has the details.</li>
+      </ul>
+    </div>
+    <div class="note">
       <h3>The study</h3>
       <ul>
         <li>800 simulated operations, 1990 to 2024, followed to 31 December 2025. No real patient, study or identifier appears anywhere.</li>

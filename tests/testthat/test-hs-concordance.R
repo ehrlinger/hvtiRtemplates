@@ -135,3 +135,34 @@ test_that("deleting the decision leaves a job that saves", {
   expect_null(art$decision)
   expect_identical(nrow(art$pred), 2L * nrow(e$data))
 })
+
+test_that("a group model without a variance matrix stops the predictions, naming the model (#227)", {
+  skip_concordance()
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  e <- concordance_estate()
+  # Model b as a fit that lost its variance matrix: predict() then returns a
+  # finite fit with every limit NA.
+  path <- file.path(hvtiRutilities::study_dir("estimates", e$root), "dead-b", "hm.rds")
+  art <- readRDS(path)
+  art$reported$fit$vcov <- NULL
+  saveRDS(art, path)
+  err <- tryCatch(concordance_run(e$root, concordance_choices(e$data)), error = conditionMessage)
+  expect_match(err, "No confidence limits from the model(s) for b:", fixed = TRUE)
+  expect_match(err, "no usable variance matrix", fixed = TRUE)
+  expect_no_match(err, "missing value where TRUE/FALSE needed", fixed = TRUE)
+})
+
+test_that("limits undefined at a survival of 1 are not reported as a missing variance matrix", {
+  skip_concordance()
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  e <- concordance_estate()
+  # At a horizon of 1e-300 every prediction rounds to survival 1, where the logit limits are
+  # undefined, though both fits keep their variance matrices. Raised by Codex
+  # on #251: the first guard blamed the variance matrix for this too.
+  err <- tryCatch(concordance_run(e$root, concordance_choices(e$data, HORIZON = 1e-300)), error = conditionMessage)
+  expect_match(err, "have a standard error but no confidence limits", fixed = TRUE)
+  expect_match(err, "exactly 0 or 1", fixed = TRUE)
+  expect_no_match(err, "variance matrix", fixed = TRUE)
+})

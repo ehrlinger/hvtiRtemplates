@@ -2,12 +2,21 @@
 % Please edit documentation in R/templates.R
 \name{template_list}
 \alias{template_list}
+\alias{print.hvti_template_list}
 \title{List the supported R job templates}
 \usage{
 template_list()
+
+\method{print}{hvti_template_list}(x, ...)
+}
+\arguments{
+\item{x}{A data frame returned by \code{template_list()}.}
+
+\item{...}{Passed to the data frame print method.}
 }
 \value{
-A data frame with columns \code{name}, \code{prefix},
+A data frame, of class \code{hvti_template_list}, with columns
+  \code{name}, \code{prefix},
   \code{qualifier}, \code{folder}, \code{call} and \code{file}.
   \code{call} is the \code{\link{add_job}} call that scaffolds the
   template, with only the arguments it requires and runnable as printed,
@@ -17,6 +26,10 @@ A data frame with columns \code{name}, \code{prefix},
   taxonomy name with the directory's ordering digits stripped, so
   \code{20_distributions} reports as \code{distributions}.
   \code{qualifier} is \code{NA} for a prefix carrying a single template.
+  Printed whole, it shows only \code{name}, \code{prefix},
+  \code{qualifier} and \code{folder}, since \code{call} and \code{file}
+  would wrap every row; both are still in the data, and a selection of
+  columns prints as selected.
 }
 \description{
 These templates are supported: they render, they are tested, and they are
@@ -37,6 +50,9 @@ folder, including when the catalog is absent.
 }
 \examples{
 tl <- template_list()
+# Printed whole: name, prefix, qualifier and folder.
+tl
+
 # Every template, where its job is written, and the call that scaffolds it.
 tl[, c("name", "folder", "call")]
 

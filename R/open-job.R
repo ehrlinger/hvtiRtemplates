@@ -27,6 +27,11 @@
 #' unlink(root, recursive = TRUE)
 #' @export
 open_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
+  # The same message as add_job(), since a new user scaffolds through either.
+  absent <- c("subject", "type")[c(missing(subject), missing(type))]
+  if (length(absent)) {
+    stop(.missing_field_message(absent, if (!missing(prefix)) prefix, qualifier, fn = "open_job"), call. = FALSE)
+  }
   root <- hvtiRutilities::study_root(dir)
   row <- tryCatch(
     .select_template(template_list(), prefix, qualifier),
