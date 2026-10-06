@@ -247,10 +247,11 @@ KEY <- NULL
 TIME <- NULL
 EVENT <- NULL
 
-# Expected counts and prediction horizons.
-# EDIT: expected counts and prediction horizons.
-EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_)
+# No expected counts here: they are typed once, in the hz job, and hm.rds
+# carries them. The cohort chunk checks this job's rows against them.
 
+# Prediction horizons.
+# EDIT: prediction horizons.
 HORIZONS <- c(1, 5, 10)
 
 # Population survival matching columns and life table.
@@ -274,9 +275,9 @@ SCALE     <- "years"
      silent: `predict()` returns a number for any row you hand it, whatever
      cohort it came from. So the rows are not chosen here: hm.rds records how
      hz chose them, and the data chunk rebuilds exactly those rows, stopping
-     when a setting above differs or the rows no longer match. The invalid
-     expected counts make an unedited job stop before it can predict for an
-     unreconciled cohort. -->
+     when a setting above differs or the rows no longer match. The counts
+     reconciled with the SAS reference are typed once, in the hz job; hm.rds
+     carries them, and this job stops when its rows count differently. -->
 
 ```{r}
 #| label: read-upstream
@@ -314,8 +315,8 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 ```{r}
 #| label: cohort
-cc <- cohort_counts(d, event = EVENT, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+# The counts hm.rds records, which hm checked against hz's EXPECTED.
+cc <- hvtiRtemplates:::.check_upstream_cohort(d, .hm_read$lineage, event = EVENT, time = TIME, source = "hm.rds")
 ```
 
 ```{r}

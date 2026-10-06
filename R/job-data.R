@@ -696,6 +696,38 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   list(job_data = job_data, selection = sel)
 }
 
+# A downstream hazard job's cohort gate. The counts are typed once, as EXPECTED
+# in the first job of the set (ac, hz), which saves them as its hand-off's
+# `cohort`. A later job checks its rebuilt rows against those, so the same
+# numbers are never retyped. Returns this job's counts, invisibly.
+.check_upstream_cohort <- function(d, lineage, event, time, source) {
+  keys <- c("n", "n_events", "n_censored")
+  want <- lineage$cohort
+  if (!is.list(want) || !all(keys %in% names(want))) {
+    stop("The upstream job's saved output (", source, ") records no cohort counts: it predates them. ",
+         "Rerun the upstream job with the current template, then rerun this one.", call. = FALSE)
+  }
+  # Checked before coercing: as.integer() truncates, so a saved n of 3.7 would
+  # otherwise pass against a count of 3. Raised by Codex on #255.
+  whole <- vapply(want[keys], function(x) {
+    is.numeric(x) && length(x) == 1L && is.finite(x) && x >= 0 && x == round(x)
+  }, logical(1L))
+  if (!all(whole)) {
+    stop("The upstream job's saved output (", source, ") records cohort counts that are not whole, ",
+         "non-negative numbers (", paste(keys[!whole], collapse = ", "), "), so it is not a valid hand-off. ",
+         "Rerun the upstream job with the current template, then rerun this one.", call. = FALSE)
+  }
+  want <- lapply(want[keys], as.integer)
+  cc <- hvtiRutilities::cohort_counts(d, event = event, time = time)
+  if (!identical(cc[keys], want)) {
+    stop("The upstream job (", source, ") counted N=", want$n, " / events=", want$n_events, " / censored=",
+         want$n_censored, "; this job counts N=", cc$n, " / events=", cc$n_events, " / censored=", cc$n_censored,
+         " on the same rows. The data changed since the upstream job ran; rerun the upstream job, then this one.",
+         call. = FALSE)
+  }
+  invisible(cc)
+}
+
 #' Stop on a bootstrap bag that carries patient-level data
 #'
 #' A bag holds a screen's replicates and its settings, never the rows it
