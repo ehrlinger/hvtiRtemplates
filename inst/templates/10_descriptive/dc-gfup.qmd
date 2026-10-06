@@ -94,6 +94,17 @@ if (!is.null(.cur)) {
 ```
 
 ```{r}
+#| label: guard-partial
+#| results: asis
+# unnumbered: a callout, printed only when part of the job is left out
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one here; a
+# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
+hvtiRtemplates:::.guard_partial(knitr::current_input())
+```
+
+```{r}
 #| label: set
 SUBJECT <- "cohort"
 TYPE    <- "eda"
@@ -251,69 +262,81 @@ if (!is.null(job_data$attrition)) {
 
 ## Follow-up checks
 
-Missing event status is counted separately and excluded from both event and
-censored subsets. Suspicious rows have missing event status or at least one
-missing, negative or zero interval. The local review prints at most
-`MAX_REVIEW_ROWS` rows, in source order, and includes only selected fields.
-Identifiers remain disabled until you explicitly select one. Check the output
+One row per follow-up interval and patient group: every patient, those with the
+event and those censored. A patient with no event status counts among all
+patients only, and the report says how many there are. Quartiles are SAS
+`QNTLDEF=5`, as `proc_means()` computes them. Suspicious rows have missing
+event status or at least one missing, negative or zero interval. The local
+review prints at most `MAX_REVIEW_ROWS` of them, in source order, with only the
+selected fields. Identifiers stay out until you select one; check the output
 before sharing a report that contains an identifier.
 
 ```{r}
 #| label: qc
-# The checks and tables are hvtiRutilities::followup_check(), the function the
-# EDA report calls too, so the two reports cannot disagree. It checks every
-# choice above before computing anything, and names every missing column at once.
+# The checks are hvtiRutilities::followup_check(), the function the EDA report
+# calls too, so the two reports cannot disagree. It checks every choice above
+# before computing anything, and names every missing column at once.
 fc <- hvtiRutilities::followup_check(d, event = EVENT, followup = FOLLOWUP,
                                      identifier = IDENTIFIER, max_rows = MAX_REVIEW_ROWS)
 cohort_counts <- fc$cohort
-followup_qc <- fc$intervals
-followup_means <- fc$means
 review_rows <- fc$review
-```
-
-```{r}
-#| label: tbl-qc-cohort
-#| tbl-cap: "Cohort: event, censored and missing event status"
-knitr::kable(cohort_counts, row.names = FALSE)
-```
-
-```{r}
-#| label: tbl-qc-intervals
-#| tbl-cap: "Follow-up intervals: missing, negative and zero values"
-knitr::kable(followup_qc, row.names = FALSE)
-```
-
-```{r}
-#| label: qc-means
-#| results: asis
-# unnumbered: each child chunk below carries its own label and caption
-.fence <- strrep("`", 3)
-.seen <- new.env()
-.child <- function(kind, key, caption, code) {
-  label <- paste(kind, "qc", gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(key))), sep = "-")
-  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
-  .seen[[label]] <- TRUE
-  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label),
-                                 paste0("#| ", kind, "-cap: ", encodeString(caption, quote = "\"")), code, .fence),
-                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+# followup_check() returns five one-row tables: the group counts, the interval
+# checks for all patients, and one proc_means() row per group. This is them as
+# one table, a row per interval and group. The counts are each group's n, the
+# negative and zero checks are counted within each group, and the summaries are
+# proc_means()'s alone, so there is one quantile definition, not two. dp-eda
+# carries the same function; test-dp-eda.R keeps the two from drifting.
+.followup_table <- function(fc, d, event) {
+  ev <- d[[event]]
+  groups <- c(full = "All patients", event = "Event", censored = "Censored")
+  rows <- lapply(names(groups), function(g) {
+    m <- fc$means[[g]]
+    keep <- switch(g, full = rep(TRUE, nrow(d)), event = !is.na(ev) & ev == 1, censored = !is.na(ev) & ev == 0)
+    count <- function(test) vapply(m$variable, function(v) sum(test(d[[v]][keep]), na.rm = TRUE), integer(1L))
+    data.frame(interval = m$variable, patients = groups[[g]], n = m$n, missing = m$nmiss,
+               negative = count(function(x) x < 0), zero = count(function(x) x == 0),
+               mean = m$mean, sd = m$std, min = m$min, p25 = m$p25, median = m$median,
+               p75 = m$p75, max = m$max, row.names = NULL)
+  })
+  out <- do.call(rbind, rows)
+  out[order(match(out$interval, unique(out$interval))), , drop = FALSE]
 }
-for (nm in names(followup_means)) {
-  .means <- followup_means[[nm]]
-  .child("tbl", paste("means", nm), paste0("Follow-up, ", nm, " (proc_means)"), "knitr::kable(.means, row.names = FALSE)")
-  cat("\n")
+followup_table <- .followup_table(fc, d, EVENT)
+```
+
+```{r}
+#| label: tbl-qc-followup
+#| tbl-cap: "Follow-up by interval and patient group: missing, negative and zero values, and the distribution (years)"
+knitr::kable(followup_table, row.names = FALSE, digits = 3)
+```
+
+```{r}
+#| label: qc-notes
+#| results: asis
+# unnumbered: two sentences, printed only when they have something to say
+if (cohort_counts$missing_event > 0L) {
+  cat(cohort_counts$missing_event, " patient(s) have no event status, so they count among all patients ",
+      "but neither the event nor the censored group.\n\n", sep = "")
+}
+.n_suspicious <- attr(fc, "n_suspicious")
+if (.n_suspicious == 0L) {
+  cat("No suspicious rows: every patient has an event status, and every interval is present and positive.\n\n")
+} else if (.n_suspicious > nrow(review_rows)) {
+  cat(.n_suspicious, " suspicious rows; the table shows the first ", nrow(review_rows), ".\n\n", sep = "")
 }
 ```
 
 ```{r}
 #| label: tbl-qc-review
-#| tbl-cap: !expr 'paste0("Suspicious rows, first ", MAX_REVIEW_ROWS, " at most")'
+#| tbl-cap: "Suspicious rows: missing event status, or a missing, negative or zero interval"
+#| eval: !expr 'nrow(review_rows) > 0L'
+#| include: !expr 'nrow(review_rows) > 0L'
 knitr::kable(review_rows, row.names = FALSE)
 ```
 
-The QC quartiles use R's default interpolated quantiles. `proc_means()` uses
-SAS `QNTLDEF=5`, so its quartiles can differ. The migration report preserves
-legacy sort orders, date arithmetic and includes for review; none establishes
-an equivalent follow-up definition by itself.
+The migration report preserves legacy sort orders, date arithmetic and
+includes for review; none establishes an equivalent follow-up definition by
+itself.
 
 ## Operation years and the close date
 
@@ -358,6 +381,7 @@ if (figure_drawn) {
 #| label: tbl-window
 #| tbl-cap: "Operation years and the close date"
 #| eval: !expr figure_drawn
+#| include: !expr figure_drawn
 # Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an
 # hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,
 # because a build counting from a later origin is a problem to fix there. An

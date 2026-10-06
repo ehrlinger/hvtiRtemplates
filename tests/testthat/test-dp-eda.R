@@ -288,6 +288,17 @@ test_that("dc-gfup, dp-gfup and dp-eda choose follow-up colors with the same cod
   expect_identical(block("dp", "gfup"), block("dp", "eda"))
 })
 
+test_that("dc-gfup and dp-eda build their follow-up table with the same function", {
+  block <- function(prefix, qualifier) {
+    lines <- readLines(template_path(prefix, qualifier), warn = FALSE)
+    start <- grep("^\\.followup_table <- function", lines)
+    end <- start + match("}", lines[-seq_len(start)])
+    lines[start:end]
+  }
+  expect_gt(length(block("dc", "gfup")), 10L)
+  expect_identical(block("dc", "gfup"), block("dp", "eda"))
+})
+
 test_that("dp-postage and dp-eda shorten labels with the same code and edit points", {
   # dp-postage's copy is exercised in test-migrate-dp-postage.R; this keeps
   # dp-eda's from drifting from it.

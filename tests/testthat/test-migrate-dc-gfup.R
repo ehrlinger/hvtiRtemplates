@@ -49,9 +49,10 @@ test_that("dc-gfup extracts agreed fields with source evidence and keeps identif
   capture.output(eval(gfup_chunk(out, "qc"), env))
   expect_identical(nrow(env$d), 40L)
   expect_identical(env$cohort_counts, data.frame(full = 40L, event = 20L, censored = 20L, missing_event = 0L))
-  expect_equal(env$followup_means$full$n, c(40L, 40L))
-  expect_equal(env$followup_means$event$n, c(20L, 20L))
-  expect_equal(env$followup_means$censored$n, c(20L, 20L))
+  tab <- env$followup_table
+  expect_identical(tab$interval, rep(c("iv_dead", "iv_fup"), each = 3L))
+  expect_identical(tab$patients, rep(c("All patients", "Event", "Censored"), 2L))
+  expect_equal(tab$n, rep(c(40L, 20L, 20L), 2L))
 })
 
 test_that("dc-gfup rejects contradictory event evidence", {
@@ -72,10 +73,18 @@ test_that("dc-gfup QC reports literal summaries and caps private review rows", {
     eval(review, env)
   })
   expect_identical(env$cohort_counts, data.frame(full = 6L, event = 2L, censored = 3L, missing_event = 1L))
-  expect_equal(env$followup_qc[1L, ], data.frame(
-    interval = "iv_dead", missing = 1L, negative = 1L, zero = 1L,
-    min = -1, q1 = 0, median = 1, q3 = 2, mean = 1, sd = sqrt(2.5), max = 3
-  ))
+  # One table, a row per interval and group. The negative and zero intervals
+  # sit in different groups, and the zero one has no event status, so it
+  # counts among all patients only.
+  dead <- env$followup_table[env$followup_table$interval == "iv_dead", ]
+  expect_identical(dead$patients, c("All patients", "Event", "Censored"))
+  expect_equal(dead$n, c(5L, 2L, 2L))
+  expect_equal(dead$missing, c(1L, 0L, 1L))
+  expect_equal(dead$negative, c(1L, 1L, 0L))
+  expect_equal(dead$zero, c(1L, 0L, 0L))
+  expect_equal(dead[1L, c("min", "median", "mean", "max")],
+               data.frame(min = -1, median = 1, mean = 1, max = 3), ignore_attr = TRUE)
+  expect_equal(dead$sd[[1L]], sqrt(2.5))
   expect_identical(nrow(env$review_rows), 2L)
   expect_identical(names(env$review_rows), c("dead", "iv_dead", "iv_fup"))
   expect_false(any(grepl("local_id", output, fixed = TRUE)))
@@ -243,9 +252,9 @@ test_that("dc-gfup reports empty and missing-only cohorts without fictitious sub
   for (n in c(0L, 2L)) {
     env <- gfup_env(data.frame(dead = rep(NA_real_, n), iv_dead = rep(NA_real_, n), iv_fup = rep(NA_real_, n)))
     expect_no_warning(capture.output(eval(code, env)))
-    expect_equal(env$followup_means$event$n, c(0, 0))
-    expect_equal(env$followup_means$censored$n, c(0, 0))
-    expect_true(all(is.na(env$followup_qc$min)))
+    tab <- env$followup_table
+    expect_equal(tab$n[tab$patients != "All patients"], c(0, 0, 0, 0))
+    expect_true(all(is.na(tab$min[tab$patients == "All patients"])))
     expect_identical(nrow(env$review_rows), n)
   }
 })

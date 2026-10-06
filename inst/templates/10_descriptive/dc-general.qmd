@@ -72,6 +72,17 @@ if (!is.null(.cur)) {
 ```
 
 ```{r}
+#| label: guard-partial
+#| results: asis
+# unnumbered: a callout, printed only when part of the job is left out
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one here; a
+# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
+hvtiRtemplates:::.guard_partial(knitr::current_input())
+```
+
+```{r}
 #| label: set
 SUBJECT <- "cohort"
 TYPE    <- "eda"
@@ -336,13 +347,16 @@ if (length(overall_vars)) {
                                  paste0("#| ", kind, "-cap: ", encodeString(caption, quote = "\"")), code, .fence),
                         envir = parent.frame(), quiet = TRUE), sep = "\n")
 }
+# One table per group, a block of rows per variable, rather than a table per
+# variable: a 0/1 variable is two rows, and a table of two rows each is most of
+# a report spent on captions.
 for (group in names(freqs)) {
-  cat("\n### ", group, "\n\n", sep = "")
-  for (v in names(freqs[[group]])) {
-    .freq <- freqs[[group]][[v]]
-    .child("tbl", paste(group, v), paste0("Frequencies, ", v), "knitr::kable(.freq)")
-    cat("\n")
-  }
+  .freq <- do.call(rbind, lapply(names(freqs[[group]]), function(v) {
+    f <- freqs[[group]][[v]]
+    cbind(variable = ifelse(seq_len(nrow(f)) == 1L, v, ""), f)
+  }))
+  .child("tbl", group, paste0("Frequencies, ", group), "knitr::kable(.freq, row.names = FALSE)")
+  cat("\n")
 }
 options(.kable_na)
 ```
@@ -363,15 +377,23 @@ options(.kable_na)
                                  paste0("#| ", kind, "-cap: ", encodeString(caption, quote = "\"")), code, .fence),
                         envir = parent.frame(), quiet = TRUE), sep = "\n")
 }
+# One quantile table per group, a row per variable with its n and nmiss beside
+# its quantiles, rather than a one-row count table and a quantile table for
+# every variable. The extremes stay one table per variable, since ID_COL can
+# add a column to them.
 for (group in names(cdfs)) {
   cat("\n### ", group, "\n\n", sep = "")
+  .quant <- do.call(rbind, lapply(names(cdfs[[group]]), function(v) {
+    .cdf <- cdfs[[group]][[v]]
+    row <- as.data.frame(as.list(stats::setNames(.cdf$quantiles$value, paste0(.cdf$quantiles$percent, "%"))),
+                         check.names = FALSE)
+    cbind(variable = v, .cdf$summary, row)
+  }))
+  .child("tbl", paste(group, "quantiles"), paste0("Quantiles, ", group, " (SAS QNTLDEF=5)"),
+         "knitr::kable(.quant, row.names = FALSE)")
+  cat("\n")
   for (v in names(cdfs[[group]])) {
     .cdf <- cdfs[[group]][[v]]
-    cat("\n#### ", v, "\n\n", sep = "")
-    .child("tbl", paste(group, v, "summary"), paste0("Summary statistics, ", v), "knitr::kable(.cdf$summary)")
-    cat("\n")
-    .child("tbl", paste(group, v, "quantiles"), paste0("Quantiles, ", v, " (SAS QNTLDEF=5)"), "knitr::kable(.cdf$quantiles)")
-    cat("\n")
     .child("tbl", paste(group, v, "extremes"), paste0("Five lowest and five highest values, ", v),
            "knitr::kable(.cdf$extremes)")
     cat("\n")

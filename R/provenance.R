@@ -890,6 +890,10 @@
   if (any(c("source", ".hvti_render_id", ".hvti_source_sha256") %in% names(extra))) {
     stop("Template provenance extras may not replace the source or render identity.", call. = FALSE)
   }
+  # A job rendered in part says so in its provenance: the skipped chunks and
+  # the stop, as .guard_partial() recorded them for this render.
+  partial <- getOption("hvtiRtemplates.partial")
+  if (length(partial)) extra$partial <- partial
   payload <- hvtiRutilities::capture_provenance(
     job = tools::file_path_sans_ext(basename(source)),
     data = data,
