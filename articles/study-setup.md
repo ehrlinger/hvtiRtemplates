@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/Rtmph1Z5AX/file1f076b0f8a08/legacy-study
+#> Study: /tmp/RtmpD2RjNU/file1fa365e4d537/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,7 +183,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmph1Z5AX/file1f076b0f8a08/legacy-study
+#> Study: /tmp/RtmpD2RjNU/file1fa365e4d537/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -306,15 +306,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/Rtmph1Z5AX/file1f076b0f8a08/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
+#> "/tmp/RtmpD2RjNU/file1fa365e4d537/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
 #>                                                                                tables 
-#>  "/tmp/Rtmph1Z5AX/file1f076b0f8a08/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
+#>  "/tmp/RtmpD2RjNU/file1fa365e4d537/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/Rtmph1Z5AX/file1f076b0f8a08/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
+#>    "/tmp/RtmpD2RjNU/file1fa365e4d537/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
 #>                                                                                trends 
-#>       "/tmp/Rtmph1Z5AX/file1f076b0f8a08/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
+#>       "/tmp/RtmpD2RjNU/file1fa365e4d537/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/Rtmph1Z5AX/file1f076b0f8a08/legacy-study/descriptive/cohort-eda-dp-eda.qmd"
+#>     "/tmp/RtmpD2RjNU/file1fa365e4d537/legacy-study/descriptive/cohort-eda-dp-eda.qmd"
 ```
 
 ## Work the jobs and generate output
@@ -323,17 +323,17 @@ Each new job contains `EDIT:` markers for decisions that cannot come
 from the template: variables, labels, groups, units and output choices.
 [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
 opens the QMD in RStudio’s file editor. Edit the file there, working
-from the top marker downward. Use the chunk Run button as you work, then
-choose **Run \> Run All** to generate the output in one interactive
-pass.
+from the top marker downward, and **Render** to see what your choices
+do. A draft render carries a DRAFT banner while any marker remains.
 
-When every marker is resolved, click **Render**. Rendering starts at the
-top in a clean session, much like running a SAS job from beginning to
-end. It catches a job that only worked because an object was left in the
-interactive session. Render every edited job before leaving the study so
-the saved QMD is still in an executable state. If you want the same
-final check from the Console, run `render_job(tables, final = TRUE)`,
-substituting the job you edited.
+Always render; do not run the chunks by hand with **Run All**. Rendering
+starts at the top in a clean session, much like running a SAS job from
+beginning to end, so the report comes from this job alone. Run All works
+in your current session, where an object or a setting left by another
+job can stand in for one this job does not make. Render every edited job
+before leaving the study so the saved QMD is still in an executable
+state. If you want the same final check from the Console, run
+`render_job(tables, final = TRUE)`, substituting the job you edited.
 
 The HTML report stays beside its QMD in `descriptive/` or `graphs/`. The
 descriptive Word table is filed under `documents/cohort-eda/`; trend and
