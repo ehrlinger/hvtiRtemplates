@@ -25,13 +25,16 @@ open_job(prefix, subject, type, dir = ".", qualifier = NULL)
 
   Grouping topic for the job set, e.g. `"death"` or `"cohort"`. A
   subject names a statistical endpoint only when the job analyses one.
-  Must match `^[A-Za-z0-9_]+$`: `-` separates the filename's fields and
-  `.` separates the extension, so neither may appear here.
+  Your choice: there is no list of valid values, and every job of one
+  analysis should share it (see Details). Must match `^[A-Za-z0-9_]+$`:
+  `-` separates the filename's fields and `.` separates the extension,
+  so neither may appear here.
 
 - type:
 
-  The analysis type the job's set belongs to, e.g. `"hz"`. Must match
-  `^[A-Za-z0-9_]+$`, for the same reason as `subject`.
+  The analysis type the job's set belongs to, e.g. `"hz"`. Your choice,
+  like `subject`, and shared the same way. Must match `^[A-Za-z0-9_]+$`,
+  for the same reason as `subject`.
 
 - dir:
 
@@ -69,7 +72,7 @@ root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L
 ))
-#> Study: /tmp/RtmpcqgyFR/open-job-example
+#> Study: /tmp/RtmpbkFXyy/open-job-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project

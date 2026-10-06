@@ -70,14 +70,16 @@ qualifier, so <code>qualifier</code> must then be left <code>NULL</code>.</p></d
 <dt id="arg-subject">subject<a class="anchor" aria-label="anchor" href="#arg-subject"></a></dt>
 <dd><p>Grouping topic for the job set, e.g. <code>"death"</code> or
 <code>"cohort"</code>. A subject names a statistical endpoint only when the
-job analyses one. Must
+job analyses one. Your choice: there is no list of valid values, and
+every job of one analysis should share it (see Details). Must
 match <code>^[A-Za-z0-9_]+$</code>: <code>-</code> separates the filename's fields and
 <code>.</code> separates the extension, so neither may appear here.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>The analysis type the job's set belongs to, e.g. <code>"hz"</code>.
-Must match <code>^[A-Za-z0-9_]+$</code>, for the same reason as <code>subject</code>.</p></dd>
+Your choice, like <code>subject</code>, and shared the same way. Must match
+<code>^[A-Za-z0-9_]+$</code>, for the same reason as <code>subject</code>.</p></dd>
 
 
 <dt id="arg-dir">dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
@@ -115,7 +117,7 @@ The editor is opened only in an interactive session.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">root</span>, study <span class="op">=</span> <span class="st">"Example"</span>, study_tracker_id <span class="op">=</span> <span class="fl">1L</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpcqgyFR/open-job-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpbkFXyy/open-job-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>

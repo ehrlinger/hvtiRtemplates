@@ -25,13 +25,16 @@ add_job(prefix, subject, type, dir = ".", qualifier = NULL)
 
   Grouping topic for the job set, e.g. `"death"` or `"cohort"`. A
   subject names a statistical endpoint only when the job analyses one.
-  Must match `^[A-Za-z0-9_]+$`: `-` separates the filename's fields and
-  `.` separates the extension, so neither may appear here.
+  Your choice: there is no list of valid values, and every job of one
+  analysis should share it (see Details). Must match `^[A-Za-z0-9_]+$`:
+  `-` separates the filename's fields and `.` separates the extension,
+  so neither may appear here.
 
 - type:
 
-  The analysis type the job's set belongs to, e.g. `"hz"`. Must match
-  `^[A-Za-z0-9_]+$`, for the same reason as `subject`.
+  The analysis type the job's set belongs to, e.g. `"hz"`. Your choice,
+  like `subject`, and shared the same way. Must match `^[A-Za-z0-9_]+$`,
+  for the same reason as `subject`.
 
 - dir:
 
@@ -53,6 +56,35 @@ runner included, so a returned path always names a complete,
 correctly-declared job.
 
 ## Details
+
+**What each argument decides.** `prefix` chooses the template, together
+with `qualifier` where a prefix carries several job types. `subject` and
+`type` are yours to choose. The catalog holds no list of valid values
+for either, only the rule that each matches `^[A-Za-z0-9_]+$`. They are
+more than a filename, though. Together they name the job's set, and the
+set is used in four places:
+
+- the job's filename, `<subject>-<type>-<prefix>[-<qualifier>].qmd`;
+
+- the job's own `SUBJECT` and `TYPE` lines, which `add_job()` rewrites
+  to your values;
+
+- the render, which stops when the filename and those two lines
+  disagree, so a job renamed by hand cannot quietly write its results
+  into another set;
+
+- the folder the job saves its results in, a `<subject>-<type>` folder
+  under the study's `estimates` (and, for some templates, `graphs`),
+  which is where the next job in the chain looks for them.
+
+The last of these is the one that bites. `hm` reads the `hz.rds` that
+`hz` saved, and finds it only when both jobs carry the same subject and
+type. Give every job of one analysis the same pair, e.g.
+`subject = "death", type = "hz"` for `ac`, `hz`, `hm` and `hp`, and give
+a different analysis a different pair. The `call` column of
+[`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+shows each template's own example values, which are a starting point,
+not a requirement.
 
 A job is identified by three or four fields. One or two come from the
 template, its `prefix` and, where the prefix carries several job types,
@@ -107,7 +139,7 @@ tryCatch(add_job("dp-gfup", subject = "cohort", type = "eda", dir = d),
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
 try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
-#> Error : add_job(): '/tmp/RtmpcqgyFR/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.
+#> Error : add_job(): '/tmp/RtmpbkFXyy/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #> [1] "10_descriptive/cohort-eda-dc-gfup.qmd"

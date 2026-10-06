@@ -73,14 +73,16 @@ qualifier, so <code>qualifier</code> must then be left <code>NULL</code>.</p></d
 <dt id="arg-subject">subject<a class="anchor" aria-label="anchor" href="#arg-subject"></a></dt>
 <dd><p>Grouping topic for the job set, e.g. <code>"death"</code> or
 <code>"cohort"</code>. A subject names a statistical endpoint only when the
-job analyses one. Must
+job analyses one. Your choice: there is no list of valid values, and
+every job of one analysis should share it (see Details). Must
 match <code>^[A-Za-z0-9_]+$</code>: <code>-</code> separates the filename's fields and
 <code>.</code> separates the extension, so neither may appear here.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>The analysis type the job's set belongs to, e.g. <code>"hz"</code>.
-Must match <code>^[A-Za-z0-9_]+$</code>, for the same reason as <code>subject</code>.</p></dd>
+Your choice, like <code>subject</code>, and shared the same way. Must match
+<code>^[A-Za-z0-9_]+$</code>, for the same reason as <code>subject</code>.</p></dd>
 
 
 <dt id="arg-dir">dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
@@ -105,7 +107,29 @@ filename's fields.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A job is identified by three or four fields. One or two come from the
+    <p><strong>What each argument decides.</strong> <code>prefix</code> chooses the template,
+together with <code>qualifier</code> where a prefix carries several job types.
+<code>subject</code> and <code>type</code> are yours to choose. The catalog holds no
+list of valid values for either, only the rule that each matches
+<code>^[A-Za-z0-9_]+$</code>. They are more than a filename, though. Together
+they name the job's set, and the set is used in four places:</p><ul><li><p>the job's filename, <code>&lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code>;</p></li>
+<li><p>the job's own <code>SUBJECT</code> and <code>TYPE</code> lines, which
+    <code>add_job()</code> rewrites to your values;</p></li>
+<li><p>the render, which stops when the filename and those two lines
+    disagree, so a job renamed by hand cannot quietly write its results
+    into another set;</p></li>
+<li><p>the folder the job saves its results in, a <code>&lt;subject&gt;-&lt;type&gt;</code>
+    folder under the study's <code>estimates</code> (and, for some templates,
+    <code>graphs</code>), which is where the next job in the chain looks for
+    them.</p></li>
+</ul><p>The last of these is the one that bites. <code>hm</code> reads the
+<code>hz.rds</code> that <code>hz</code> saved, and finds it only when both jobs
+carry the same subject and type. Give every job of one analysis the same
+pair, e.g. <code>subject = "death", type = "hz"</code> for <code>ac</code>, <code>hz</code>,
+<code>hm</code> and <code>hp</code>, and give a different analysis a different pair.
+The <code>call</code> column of <code><a href="template_list.html">template_list</a></code> shows each template's
+own example values, which are a starting point, not a requirement.</p>
+<p>A job is identified by three or four fields. One or two come from the
 template, its <code>prefix</code> and, where the prefix carries several job types,
 its <code>qualifier</code>; two come from the caller. The pair
 <code>(subject, type)</code> names the <strong>set</strong> the job belongs to, and both
@@ -156,7 +180,7 @@ scaffolds, with a warning naming its replacement; see
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A job accumulates a study's edits, so an existing one is never overwritten.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">add_job</span><span class="op">(</span>prefix <span class="op">=</span> <span class="st">"ac"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/RtmpcqgyFR/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/RtmpbkFXyy/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span>, pattern <span class="op">=</span> <span class="st">"[.]qmd$"</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "10_descriptive/cohort-eda-dc-gfup.qmd"</span>
