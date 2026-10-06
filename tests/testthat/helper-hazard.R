@@ -285,3 +285,40 @@ hm_guard <- function(root, reported) {
   env$reported <- reported
   hazard_run("hm", "guard-variance", env)
 }
+
+# ---- #175: times of zero or below ----------------------------------------------
+
+# Run `prefix`'s data and cohort chunks on `data`, with counts that match it.
+cohort_run <- function(prefix, data, .local_envir = parent.frame()) {
+  root <- hazard_study(data, .local_envir = .local_envir)
+  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  env <- hazard_env(root)
+  hazard_run(prefix, c("set", "edit-study-choices"), env,
+             list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)))
+  utils::capture.output(hazard_run(prefix, c("tbl-data", "tbl-cohort"), env))
+  env
+}
+
+# A clean cohort passes `prefix`'s cohort chunk; zero and negative times stop it.
+expect_time_guard <- function(prefix) {
+  clean <- hazard_data()
+  zero <- clean
+  zero$iv_dead[1:3] <- 0
+  negative <- clean
+  negative$iv_dead[4] <- -0.1
+  both <- zero
+  both$iv_dead[4] <- -0.1
+  env <- cohort_run(prefix, clean)
+  testthat::expect_identical(env$cc$n, nrow(clean))
+  # A zero time on a row the cohort does not count, having no event, is left alone.
+  unused <- clean
+  unused$dead[5] <- NA
+  unused$iv_dead[5] <- 0
+  env <- cohort_run(prefix, unused)
+  testthat::expect_identical(env$cc$n, nrow(clean) - 1L)
+  err <- testthat::expect_error(cohort_run(prefix, zero), "iv_dead has 3 time\\(s\\) of exactly zero and 0 negative")
+  testthat::expect_match(conditionMessage(err), "Correct them in the dataset build")
+  testthat::expect_match(conditionMessage(err), "Move only the zeros")
+  testthat::expect_error(cohort_run(prefix, negative), "iv_dead has 0 time\\(s\\) of exactly zero and 1 negative")
+  testthat::expect_error(cohort_run(prefix, both), "iv_dead has 3 time\\(s\\) of exactly zero and 1 negative")
+}

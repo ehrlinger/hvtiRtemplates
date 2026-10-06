@@ -274,6 +274,23 @@ if (!is.null(job_data$attrition)) {
 cc <- cohort_counts(d, event = EVENT, time = TIME)
 assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 
+# A time of zero, a death on the day of operation, leaves the hazard likelihood
+# undefined, and hz would stop on an optimizer error that names neither the
+# time nor the patient. ac checks too, so the first job in the chain says so.
+# The fix belongs in the dataset build, not here: a job reshapes data and never
+# corrects it, and every job reading the cohort must see the same follow-up.
+# Only rows the cohort counts are checked: a row with no EVENT is not analysed.
+.t <- as.numeric(d[[TIME]])[!is.na(d[[EVENT]])]
+.n_zero <- sum(.t == 0, na.rm = TRUE)
+.n_neg  <- sum(.t < 0, na.rm = TRUE)
+if (.n_zero + .n_neg > 0) {
+  stop(TIME, " has ", .n_zero, " time(s) of exactly zero and ", .n_neg, " negative time(s). ",
+       "Correct them in the dataset build, not in this job. Move only the zeros to a small positive ",
+       "value, such as 0.00025 years as the template gallery does; moving every time up to one day ",
+       "ties the early deaths together. A negative time is an error in the data: trace it to its source.",
+       call. = FALSE)
+}
+
 knitr::kable(data.frame(
   quantity = c("n_analysable", "n_events", "n_censored"),
   n        = c(cc$n, cc$n_events, cc$n_censored)

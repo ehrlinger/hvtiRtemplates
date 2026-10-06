@@ -168,3 +168,17 @@ test_that("hz stops on a start probe that moves a fixed parameter (#169)", {
   expect_error(eval(parse(text = edited), env),
                "A probe moves a fixed parameter \\(late\\.log_tau, late\\.gamma, late\\.alpha\\)")
 })
+
+# ---- #175: a time of zero or below stops ac and hz at the cohort ---------------
+
+test_that("ac stops on times of zero or below, counting each and naming the fix (#175)", {
+  withr::local_package("hvtiRutilities")
+  expect_time_guard("ac")
+})
+
+test_that("hz stops on times of zero or below, counting each and naming the fix (#175)", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  expect_time_guard("hz")
+})

@@ -12,6 +12,13 @@
   any shape a g3 `constraint` derives. A probe edited to move one stops the job,
   naming the parameter (#169).
 
+* `ac` and `hz` stop at the cohort when `TIME` holds a time of exactly zero or a
+  negative time, giving the count of each. A same-day death used to stop `hz` later
+  with an optimizer error that named neither. The message says to correct the times
+  in the dataset build, since a job reshapes data and never corrects it: move only
+  the zeros to a small positive value, such as 0.00025 years, and trace a negative
+  time to its source (#175).
+
 * `hm` stops when the reported fit has no variance matrix, or when any of its free
   parameters has no finite standard error, instead of saving `hm.rds` with only a
   TemporalHazard warning in the log. The message names the phases and covariates
