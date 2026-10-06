@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HVTI Template Gallery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -74,7 +79,7 @@
   .section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
   .section-head .path { font: 13px var(--mono); color: var(--muted); }
   .table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 980px; }
   th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--rule); }
   tr:last-child td { border-bottom: 0; }
   th { font: 500 12px/1.3 var(--sans); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); background: var(--ground); }
@@ -88,15 +93,22 @@
   .chip { font: 12px/1.6 var(--mono); padding: 0 7px; border-radius: 3px; text-decoration: none; white-space: nowrap; background: var(--warn-soft); color: var(--warn); }
   .chip.block { background: var(--block-soft); color: var(--block); font-weight: 500; }
   .chip.none { background: transparent; color: var(--muted); padding: 0; }
+  .call { display: flex; align-items: flex-start; gap: 6px; }
+  .call code { font: 12.5px/1.45 var(--mono); color: var(--ink); white-space: normal; overflow-wrap: normal; }
+  td.addit { min-width: 300px; }
+  .copy { font: 500 11px/1 var(--sans); letter-spacing: .04em; text-transform: uppercase; padding: 4px 6px; border: 1px solid var(--rule); border-radius: 4px; background: var(--ground); color: var(--muted); cursor: pointer; flex: none; }
+  .copy:hover { color: var(--accent); border-color: var(--accent); }
+  .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .dep { display: inline-block; margin-bottom: 4px; font: 500 11px/1.6 var(--mono); padding: 0 6px; border-radius: 3px; background: var(--warn-soft); color: var(--warn); }
   footer { font-size: 13px; color: var(--muted); max-width: 80ch; display: grid; gap: 6px; }
   @media (max-width: 520px) { body { padding-inline: 16px; } .lead { font-size: 16px; } }
 </style>
 
 <div class="wrap">
   <header>
-    <span class="eyebrow">hvtiRtemplates · main · 2026-10-02</span>
+    <span class="eyebrow" id="stamp">hvtiRtemplates</span>
     <h1>HVTI Template Gallery</h1>
-    <p class="lead">Every shipped job template, rendered once on the same synthetic study, so the group can read what each job produces before the by-name reviews. Open a template's name to see its report.</p>
+    <p class="lead">Every job template the package ships, rendered once on the same synthetic study. Each row says what the template is for and gives the <code>add_job()</code> call that adds it to your study; copy it, change <code>subject</code> and <code>type</code> to name your job, and run it from inside the study. Open a template's name to see the report it produces.</p>
     <div class="facts" id="facts"></div>
     <nav class="doclinks" aria-label="Package documentation">
       <span>Package docs:</span>
@@ -132,57 +144,23 @@
 
   <footer>
     <p>Chips link to open hvtiRtemplates issues found while building this gallery; a red chip is a template that does not render as shipped. Issues that affect every template, such as the four different ways templates choose their data (#173) and settings leaking between jobs run by hand (#184), are not repeated on each row.</p>
-    <p>Rebuild: <code>Rscript dev/gallery/gallery.R &lt;folder&gt;</code>, then <code>python3 dev/gallery/package.py &lt;folder&gt; &lt;site&gt;</code>, with the package installed from the same checkout. Render times are from one full build on a laptop.</p>
+    <p>Rebuild: <code>Rscript dev/gallery/gallery.R &lt;folder&gt;</code>, then <code>python3 dev/gallery/package.py &lt;folder&gt; pkgdown/assets/gallery</code> and <code>bash dev/gallery/publish.sh</code>, with the package installed from the same checkout. The table is generated from the template catalog, each template's own <code>SUBJECT</code> and <code>TYPE</code>, and the rendered reports; only the issues and notes are kept by hand, in <code>dev/gallery/notes.json</code>. Render times are from one full build on a laptop.</p>
   </footer>
 </div>
 
+<script src="gallery-data.js"></script>
 <script>
 const REPO = "https://github.com/ehrlinger/hvtiRtemplates/issues/";
 const SITE = "https://ehrlinger.github.io/hvtiRtemplates/articles/";
 // folder, heading, blurb, catalog anchor, extra docs [label, page]
 const FOLDERS = [
+  ["00_datasets", "Datasets", "Building the study dataset", "datasets", []],
   ["10_descriptive", "Descriptive", "Checks and summaries of a new build", "descriptive",
    [["SAS-to-R descriptive tutorial", "sas-to-r-descriptive.html"]]],
   ["20_distributions", "Distributions", "Life tables and the hazard fit", "distributions", []],
   ["30_analyses", "Analyses", "Models, bootstrap selection and forests", "analyses", []],
   ["40_graphs", "Graphs", "Figures that read an earlier job's output", "graphs", []]
 ];
-// name, folder, use, tables, figures, seconds, issues [numbers; "b"+n = blocker], gallery note
-const T = [
-  ["dc-general", "10_descriptive", "General descriptive checks with base procedures", "3 + 1 per categorical, 3 per continuous variable", "0", 4.4, [], ""],
-  ["dc-gfup", "10_descriptive", "Follow-up interval checks: missing, negative, zero", "6", "0", 4.2, [], ""],
-  ["dc-tables", "10_descriptive", "CORR Word tables, optional correlations", "2 + 1 Word table", "0", 7.2, [], "The session asked whether this should become a named Table 1 job."],
-  ["dp-postage", "10_descriptive", "Deprecated, use dp-eda: EDA panels, one per variable, on numbered pages", "up to 3", "1 page per 16 variables, 3 sections", 8.2, [], "Deprecated in favor of dp-eda, whose SECTIONS <- c(\"continuous\", \"percent\", \"count\") draws the same pages; removed in the release after 1.2.3. No grouping variable, which the legacy EDA report had."],
-  ["dp-eda", "10_descriptive", "Whole EDA report: overview, follow-up, postage sections", "5 + 2 per death panel", "1 per panel + postage pages", 9.2, [], "No grouping variable, which the legacy EDA report had."],
-  ["ac", "20_distributions", "Actuarial life tables, overall and stratified", "5 + 1 per stratifying variable", "0", 4.8, [177, 172], ""],
-  ["hz", "20_distributions", "Multiphase parametric hazard fit", "8", "0", 7.6, [169, 175, 172], ""],
-  ["hm", "30_analyses", "Multivariable hazard model with phase-wise selection", "11", "0", 7.2, [228, 170, 171, 174, 178, 176], "Stage 1 fixes nothing, so the two-stage table compares one model with itself."],
-  ["bh", "30_analyses", "Bootstrap variable selection, hazard", "9 + up to 4", "1, faceted by phase", 107.9, [185, 187, 188, 189, 175], "8 replicates; the early phase is under-sampled."],
-  ["bl", "30_analyses", "Bootstrap variable selection, logistic", "9 + up to 4", "1", 12.5, [185, 188, 189], "BMI reaches 65% and is retained though it drives nothing."],
-  ["br", "30_analyses", "Bootstrap variable selection, linear", "9 + up to 4", "1", 7.3, [185, 188, 189], ""],
-  ["bc", "30_analyses", "Bootstrap variable selection, Cox", "9 + up to 4", "1", 11.1, [185, 186, 188, 189], "Age stands in as the forced base term, so it has no frequency row."],
-  ["lm-binary", "30_analyses", "Binary outcome model; Rubin pooling for imputations", "3", "0", 4.5, [179, 174], ""],
-  ["lm-checkpred", "30_analyses", "Validate a saved binary model; never refits", "2", "0", 4.4, [180, 179], "AUC 0.75 and observed/expected 1.16 on the 2015-onward cohort."],
-  ["lm-ordinal", "30_analyses", "Proportional-odds outcome model", "3", "0", 4.6, [179, 174], ""],
-  ["lm-nominal", "30_analyses", "Generalized-logit outcome model", "3", "0", 4.7, [179, 174], ""],
-  ["lm-propensity_binary", "30_analyses", "Binary-treatment propensity score", "5", "0", 4.7, [179, 174], "Group counts print as control and treated, not the declared levels (hvtiRpropensity#47)."],
-  ["lm-propensity_ordinal", "30_analyses", "Ordered-treatment propensity score", "6", "0", 4.6, [191, 179, 174], "No balance table, unlike the binary job."],
-  ["lm-propensity_nominal", "30_analyses", "Nominal-treatment propensity score", "4", "0", 4.7, [191, 179, 174], "No balance table, unlike the binary job."],
-  ["lm-balancing_count", "30_analyses", "Poisson or negative-binomial count balancing score", "4", "0", 4.6, [179, 174], "The rate ratio column is labelled odds_ratio (hvtiRpropensity#46)."],
-  ["nb-boostmtree", "30_analyses", "Boosted multivariate trees for a response measured at repeated visits", "3", "6", 314.3, [], "Reads a synthetic echo series, 300 patients with 2 to 6 visits; M = 200, so it is the slowest job here."],
-  ["rfs-fit", "30_analyses", "Grow and check a survival forest", "0", "3", 10.8, [165, 181, 182], ""],
-  ["rfs-explain", "30_analyses", "Importance, VarPro and dependence for a survival forest", "1", "5", 101.7, [166, 167], "Partial-dependence bars for 0/1 predictors are on the wrong scale (ggRandomForests#299)."],
-  ["rfc-fit", "30_analyses", "Grow and check a classification forest", "0", "2", 8.7, [165, 181, 182], ""],
-  ["rfc-explain", "30_analyses", "Importance, VarPro and dependence for a classification forest", "1", "5", 19.5, [166, 167], "Partial-dependence bars for 0/1 predictors are on the wrong scale (ggRandomForests#299)."],
-  ["rfr-fit", "30_analyses", "Grow and check a regression forest", "0", "2", 8.0, [165, 181, 182], ""],
-  ["rfr-explain", "30_analyses", "Importance, VarPro and dependence for a regression forest", "1", "5", 19.5, [166, 167], ""],
-  ["dp-trends", "40_graphs", "Trends over operation year", "1", "1 per trend per subgroup", 5.5, [], ""],
-  ["dp-gfup", "40_graphs", "Goodness-of-follow-up figure", "2", "1 per follow-up panel", 5.3, [], ""],
-  ["hp", "40_graphs", "Nomogram and hazard figures (catalog: revisit)", "3", "3", 4.9, [177, 176], ""],
-  ["hs-setup", "40_graphs", "Patient-level predictions and expected survival", "4", "0", 4.9, [183, 177], "Needs hand-derived 0/1 sex and race columns."],
-  ["hs-concordance", "40_graphs", "Every patient through every treatment group's hm model, one horizon", "7", "0", 28.4, [227, 228], "Reads one model per approach group, each fitted by an hz and hm rendered for it; render time includes those four jobs. The group models screen three candidates: with the chain's five, the surgical group's fit has no variance matrix and this job stops (#227)."]
-];
-
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 const chip = i => {
   const blocker = String(i).startsWith("b");
@@ -190,30 +168,51 @@ const chip = i => {
   return `<a class="chip${blocker ? " block" : ""}" href="${REPO}${n}" target="_blank" rel="noopener">#${n}</a>`;
 };
 
-const total = T.reduce((a, t) => a + t[5], 0);
-const flagged = T.filter(t => t[6].length).length;
+const T = window.GALLERY || [];
+const total = T.reduce((a, t) => a + (t.seconds || 0), 0);
+const flagged = T.filter(t => t.issues.length).length;
 document.getElementById("facts").innerHTML =
   `<span><b>${T.length}</b> templates</span><span><b>${FOLDERS.length}</b> folders</span>` +
   `<span><b>${flagged}</b> with open issues</span><span><b>${(total / 60).toFixed(1)}</b> min to render all</span>`;
+if (window.GALLERY_BUILT) document.getElementById("stamp").textContent = `hvtiRtemplates ${window.GALLERY_BUILT}`;
 
+const count = n => n ? String(n) : "0";
 document.getElementById("sections").innerHTML = FOLDERS.map(([dir, label, blurb, anchor, extra]) => {
-  const rows = T.filter(t => t[1] === dir).map(([name, , use, tabs, figs, sec, issues, note]) => `
+  const rows = T.filter(t => t.folder === dir).map(t => `
     <tr>
-      <td><a class="tpl" href="reports/${name}.html" target="_blank" rel="noopener">${esc(name)}</a></td>
-      <td>${esc(use)}${note ? `<span class="gallery-note">${esc(note)}</span>` : ""}</td>
-      <td class="out">${esc(tabs)}</td>
-      <td class="out">${esc(figs)}</td>
-      <td class="num">${sec.toFixed(1)} s</td>
-      <td><div class="chips">${issues.length ? issues.map(chip).join("") : '<span class="chip none">none</span>'}</div></td>
+      <td>${t.report ? `<a class="tpl" href="reports/${t.name}.html" target="_blank" rel="noopener">${esc(t.name)}</a>` : `<span class="tpl">${esc(t.name)}</span>`}</td>
+      <td>${t.deprecated_by ? `<span class="dep">deprecated: use ${esc(t.deprecated_by)}</span><br>` : ""}${esc(t.use)}${t.note ? `<span class="gallery-note">${esc(t.note)}</span>` : ""}</td>
+      <td class="addit">${t.call ? `<div class="call"><code>${esc(t.call)}</code><button type="button" class="copy" data-call="${esc(t.call)}" aria-label="Copy the add_job() call for ${esc(t.name)}">Copy</button></div>` : ""}</td>
+      <td class="out">${t.report ? count(t.tables) : ""}</td>
+      <td class="out">${t.report ? count(t.figures) : ""}</td>
+      <td class="num">${t.seconds == null ? "" : t.seconds.toFixed(1) + " s"}</td>
+      <td><div class="chips">${t.issues.length ? t.issues.map(chip).join("") : '<span class="chip none">none</span>'}</div></td>
     </tr>`).join("");
+  if (!rows) return "";
   return `<section aria-labelledby="h-${dir}">
     <div class="section-head"><h2 id="h-${dir}">${label}</h2><span class="path">inst/templates/${dir}/</span><span class="path">${esc(blurb)}</span>
       <a class="doc" href="${SITE}template-catalog.html#${anchor}" target="_blank" rel="noopener">In the catalog</a>
       ${extra.map(([t, p]) => `<a class="doc" href="${SITE}${p}" target="_blank" rel="noopener">${esc(t)}</a>`).join("")}</div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Template</th><th>Intended use</th><th>Tables</th><th>Figures</th><th>Render</th><th>Open issues</th></tr></thead>
+      <thead><tr><th>Template</th><th>What it is for</th><th>Add it to your study</th><th>Tables</th><th>Figures</th><th>Render</th><th>Open issues</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
   </section>`;
 }).join("");
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("button.copy");
+  if (!btn) return;
+  const done = () => { btn.textContent = "Copied"; setTimeout(() => { btn.textContent = "Copy"; }, 1500); };
+  const fallback = () => {
+    const code = btn.previousElementSibling, range = document.createRange();
+    range.selectNodeContents(code);
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    btn.textContent = "Selected";
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(btn.dataset.call).then(done, fallback);
+  else fallback();
+});
 </script>
+</body>
+</html>

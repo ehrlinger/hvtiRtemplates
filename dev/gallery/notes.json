@@ -1,0 +1,203 @@
+{
+  "dc-tables": {
+    "issues": [],
+    "note": "The session asked whether this should become a named Table 1 job."
+  },
+  "dp-postage": {
+    "issues": [],
+    "note": "No grouping variable, which the legacy EDA report had."
+  },
+  "dp-eda": {
+    "issues": [],
+    "note": "No grouping variable, which the legacy EDA report had."
+  },
+  "ac": {
+    "issues": [
+      177,
+      172
+    ],
+    "note": ""
+  },
+  "hz": {
+    "issues": [
+      169,
+      175,
+      172
+    ],
+    "note": ""
+  },
+  "hm": {
+    "issues": [
+      228,
+      170,
+      171,
+      174,
+      178,
+      176
+    ],
+    "note": "Stage 1 fixes nothing, so the two-stage table compares one model with itself."
+  },
+  "bh": {
+    "issues": [
+      185,
+      187,
+      188,
+      189,
+      175
+    ],
+    "note": "8 replicates; the early phase is under-sampled."
+  },
+  "bl": {
+    "issues": [
+      185,
+      188,
+      189
+    ],
+    "note": "BMI reaches 65% and is retained though it drives nothing."
+  },
+  "br": {
+    "issues": [
+      185,
+      188,
+      189
+    ],
+    "note": ""
+  },
+  "bc": {
+    "issues": [
+      185,
+      186,
+      188,
+      189
+    ],
+    "note": "Age stands in as the forced base term, so it has no frequency row."
+  },
+  "lm-binary": {
+    "issues": [
+      179,
+      174
+    ],
+    "note": ""
+  },
+  "lm-checkpred": {
+    "issues": [
+      180,
+      179
+    ],
+    "note": "AUC 0.75 and observed/expected 1.16 on the 2015-onward cohort."
+  },
+  "lm-ordinal": {
+    "issues": [
+      179,
+      174
+    ],
+    "note": ""
+  },
+  "lm-nominal": {
+    "issues": [
+      179,
+      174
+    ],
+    "note": ""
+  },
+  "lm-propensity_binary": {
+    "issues": [
+      179,
+      174
+    ],
+    "note": "Group counts print as control and treated, not the declared levels (hvtiRpropensity#47)."
+  },
+  "lm-propensity_ordinal": {
+    "issues": [
+      191,
+      179,
+      174
+    ],
+    "note": "No balance table, unlike the binary job."
+  },
+  "lm-propensity_nominal": {
+    "issues": [
+      191,
+      179,
+      174
+    ],
+    "note": "No balance table, unlike the binary job."
+  },
+  "lm-balancing_count": {
+    "issues": [
+      179,
+      174
+    ],
+    "note": "The rate ratio column is labelled odds_ratio (hvtiRpropensity#46)."
+  },
+  "nb-boostmtree": {
+    "issues": [],
+    "note": "Reads a synthetic echo series, 300 patients with 2 to 6 visits; M = 200, so it is the slowest job here."
+  },
+  "rfs-fit": {
+    "issues": [
+      165,
+      181,
+      182
+    ],
+    "note": ""
+  },
+  "rfs-explain": {
+    "issues": [
+      166,
+      167
+    ],
+    "note": "Partial-dependence bars for 0/1 predictors are on the wrong scale (ggRandomForests#299)."
+  },
+  "rfc-fit": {
+    "issues": [
+      165,
+      181,
+      182
+    ],
+    "note": ""
+  },
+  "rfc-explain": {
+    "issues": [
+      166,
+      167
+    ],
+    "note": "Partial-dependence bars for 0/1 predictors are on the wrong scale (ggRandomForests#299)."
+  },
+  "rfr-fit": {
+    "issues": [
+      165,
+      181,
+      182
+    ],
+    "note": ""
+  },
+  "rfr-explain": {
+    "issues": [
+      166,
+      167
+    ],
+    "note": ""
+  },
+  "hp": {
+    "issues": [
+      177,
+      176
+    ],
+    "note": ""
+  },
+  "hs-setup": {
+    "issues": [
+      183,
+      177
+    ],
+    "note": "Needs hand-derived 0/1 sex and race columns."
+  },
+  "hs-concordance": {
+    "issues": [
+      227,
+      228
+    ],
+    "note": "Reads one model per approach group, each fitted by an hz and hm rendered for it; render time includes those four jobs. The group models screen three candidates: with the chain's five, the surgical group's fit has no variance matrix and this job stops (#227)."
+  }
+}

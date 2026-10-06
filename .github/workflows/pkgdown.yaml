@@ -29,6 +29,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The template gallery's rendered reports (about 25 MB) live on the
+      # `gallery` release, not in git: dev/gallery/publish.sh uploads them, and
+      # pkgdown copies pkgdown/assets/ to the site root. A missing archive
+      # leaves the site without its gallery and says so, rather than failing
+      # the whole site.
+      - name: Fetch the template gallery
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release download gallery --pattern gallery.tar.gz --dir "$RUNNER_TEMP"; then
+            mkdir -p pkgdown/assets
+            tar -xzf "$RUNNER_TEMP/gallery.tar.gz" -C pkgdown/assets
+            echo "Template gallery: $(ls pkgdown/assets/gallery/reports/*.html | wc -l) reports."
+          else
+            echo "::warning::No gallery.tar.gz on the 'gallery' release; the site builds without its template gallery."
+          fi
+
       - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: r-lib/actions/setup-r@v2

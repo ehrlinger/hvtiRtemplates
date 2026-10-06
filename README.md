@@ -14,6 +14,11 @@
 Versioned analysis job templates for the HVTI CORR group at the Cleveland
 Clinic.
 
+**Start at the [template gallery](https://ehrlinger.github.io/hvtiRtemplates/gallery/):**
+every template, what it is for, the `add_job()` call that adds it to your study,
+and the report it produces on a synthetic study. The full reference is at
+<https://ehrlinger.github.io/hvtiRtemplates/>.
+
 ## Install
 
 ```r
