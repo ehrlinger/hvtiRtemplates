@@ -1,5 +1,16 @@
 # hvtiRtemplates (unreleased)
 
+* `dc-gfup` prints one follow-up table, a row per interval and patient group (all
+  patients, event, censored), in place of five one-row tables. It shows missing,
+  negative and zero counts within each group, and one set of quartiles, SAS
+  `QNTLDEF=5`, where it printed two that could disagree. The suspicious-row table is
+  shown only when there are suspicious rows; otherwise a sentence says there are none.
+  `dp-eda`'s follow-up section shows the same table for each death panel.
+* `dc-general` prints one frequency table and one quantile table per variable group,
+  in place of a frequency table, a one-row count table and a quantile table for every
+  variable. Each variable's extremes stay in their own table.
+* A conditional table no longer leaves a gap in the table numbering when it is not
+  shown.
 * `template_list()` gains a `call` column: the `add_job()` call that scaffolds each
   template, with only the arguments it requires and runnable as printed, e.g.
   `add_job("dc-gfup", subject = "cohort", type = "eda")`. The full name selects the
