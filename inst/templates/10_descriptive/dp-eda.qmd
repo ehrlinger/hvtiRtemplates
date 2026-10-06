@@ -51,8 +51,9 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
   stop("This job needs hvtiPlotR >= 2.8.0 for hv_eda_pages(), hv_followup_panels() and scale_color_hv(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiRutilities") < "1.4.2") {
-  stop("This job needs hvtiRutilities >= 1.4.2 for followup_check() and study_abbreviations(); ",
+if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
+  stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles ",
+       "and study_abbreviations(); ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
 if (!requireNamespace("patchwork", quietly = TRUE)) {
@@ -507,8 +508,8 @@ status_colors <- function(levels) {
     count <- function(test) vapply(m$variable, function(v) sum(test(d[[v]][keep]), na.rm = TRUE), integer(1L))
     data.frame(interval = m$variable, patients = groups[[g]], n = m$n, missing = m$nmiss,
                negative = count(function(x) x < 0), zero = count(function(x) x == 0),
-               mean = m$mean, sd = m$std, min = m$min, p25 = m$p25, median = m$median,
-               p75 = m$p75, max = m$max, row.names = NULL)
+               mean = m$mean, sd = m$std, min = m$min, p15 = m$p15, median = m$median,
+               p85 = m$p85, max = m$max, row.names = NULL)
   })
   out <- do.call(rbind, rows)
   out[order(match(out$interval, unique(out$interval))), , drop = FALSE]
@@ -570,7 +571,7 @@ draw_section <- function(section) {
   vars <- sec$data$variable
   if (section == "continuous") {
     stats <- hvtiRutilities::proc_means(d, vars = vars, stats = c("n", "nmiss", "mean", "std", "min",
-                                                                  "p25", "median", "p75", "max"))
+                                                                  "p15", "median", "p85", "max"))
     .child(paste("tbl eda", section, "summary"), "Continuous variables",
            "knitr::kable(stats, digits = 2, row.names = FALSE)")
   } else if (identical(section, freq_section)) {
