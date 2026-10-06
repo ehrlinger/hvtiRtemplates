@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* An `ANALYSIS_SET` the study has not built is named, with the fix: set
+  `ANALYSIS_SET <- NULL` to read the registered study dataset. This covers every template
+  reading through `read_job_data()` and the deprecated `dp-postage`, which reads its
+  analysis set itself. They used to stop with a missing-file path that named neither,
+  or, without hvtiRdatabuild installed, ask for it (#173).
+
 * New template, `dc-stddiff`: the balance table. It reports the standardized
   difference of each baseline variable between two groups, from
   `hvtiRpropensity::ps_stddiff()`, the port of the 2019 `%stddiff` macro. The
