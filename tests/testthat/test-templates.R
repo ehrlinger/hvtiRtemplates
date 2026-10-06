@@ -927,4 +927,8 @@ test_that("template_list() prints its summary columns, and a selection as select
   # A selection of rows keeps the compact view.
   rows <- capture.output(print(tl[1:2, ]))
   expect_no_match(rows[[1L]], "call")
+  # ...and its own row names, so a printed row number can be typed back.
+  dc <- tl[tl$prefix == "dc", ]
+  shown <- capture.output(print(dc))
+  expect_identical(sub(" .*$", "", trimws(shown[2:(nrow(dc) + 1L)])), rownames(dc))
 })

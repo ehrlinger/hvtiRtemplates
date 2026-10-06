@@ -77,7 +77,11 @@ print.hvti_template_list <- function(x, ...) {
   # data and out of the default view. Any other selection of columns, such as
   # tl[, c("name", "call")], is one the caller asked for, and prints as is.
   if (!identical(names(x), .template_list_columns)) return(NextMethod())
-  print(as.data.frame(unclass(x)[.template_list_shown], stringsAsFactors = FALSE), ...)
+  # Drop the class rather than rebuilding from a list, which would lose the
+  # row names a row subset carries and renumber it 1..k.
+  shown <- x
+  class(shown) <- "data.frame"
+  print(shown[.template_list_shown], ...)
   cat("# ", nrow(x), " templates; `call` and `file` not shown. Read them with $call and $file.\n", sep = "")
   invisible(x)
 }
