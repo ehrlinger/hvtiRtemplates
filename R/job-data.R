@@ -571,8 +571,16 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     read$source <- paste0("dataset `", dataset, "` (", basename(hvtiRutilities::built_path(cfg = cfg, dataset = dataset)), ")")
     return(read)
   }
-  .require_databuild()
   path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), paste0(analysis_set, ".parquet"))
+  # Checked before anything else, hvtiRdatabuild included: a new study has no
+  # analysis sets, and the reader's own error is a missing-file path that names
+  # neither the setting nor the way out (#173).
+  if (!file.exists(path)) {
+    stop("ANALYSIS_SET names `", analysis_set, "`, an analysis set this study has not built. ",
+         "Set ANALYSIS_SET <- NULL to read the registered study dataset, or build the set with ",
+         "hvtiRdatabuild::write_analysis_set() first.", call. = FALSE)
+  }
+  .require_databuild()
   read <- .provenance_file_read(
     paste0("analysis_set:", analysis_set), path, cfg,
     function() hvtiRdatabuild::read_analysis_set(analysis_set, cfg = cfg),

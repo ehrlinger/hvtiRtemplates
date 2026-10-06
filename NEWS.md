@@ -1,5 +1,9 @@
 # hvtiRtemplates (unreleased)
 
+* `read_job_data()`, and so every template, names an `ANALYSIS_SET` the study has not
+  built and says to set `ANALYSIS_SET <- NULL` to read the registered study dataset.
+  It used to stop with a missing-file path that named neither (#173).
+
 * `hm` stops when the reported fit has no variance matrix, or when any of its free
   parameters has no finite standard error, instead of saving `hm.rds` with only a
   TemporalHazard warning in the log. The message names the phases and covariates
