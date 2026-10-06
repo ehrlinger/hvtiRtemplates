@@ -35,7 +35,7 @@ render_refused <- function(s) {
   testthat::expect_true(file.exists(html))
   out <- paste(readLines(html, warn = FALSE), collapse = "\n")
   testthat::expect_match(out, "The figure was not drawn", fixed = TRUE)
-  testthat::expect_match(out, "Follow-up intervals: missing, negative and zero values", fixed = TRUE)
+  testthat::expect_match(out, "Follow-up by interval and patient group", fixed = TRUE)
   testthat::expect_length(list.files(file.path(s$root, "graphs"), pattern = "^dc-gfup-.*[.]png$", recursive = TRUE), 0L)
   out
 }
