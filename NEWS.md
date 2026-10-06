@@ -7,6 +7,27 @@
   results by that pair: `hm` reads `hz.rds` only when it carries the same subject and
   type as `hz`.
 
+* `template_list()` prints only `name`, `prefix`, `qualifier` and `folder`, so the
+  listing fits the console. `call` and `file` are still in the data frame: read them
+  with `$call` and `$file`, or print a selection such as `tl[, c("name", "call")]`,
+  which prints as selected.
+
+* The descriptive templates report the 15th and 85th percentiles where they reported the
+  quartiles: `dc-general`'s quantile table, the follow-up tables in `dc-gfup` and
+  `dp-eda`, and the variable summaries in `dp-eda` and `dp-postage`. The follow-up tables
+  take them from `hvtiRutilities::followup_check()`, whose default changed in
+  hvtiRutilities 1.4.5, now the minimum.
+
+* `add_job()` and `open_job()` called without `subject` or `type` now say which is
+  missing, explain that both are names you choose (any name matching `^[A-Za-z0-9_]+$`,
+  not a list in the catalog), and show the template's own call from `template_list()$call`
+  as an example, in place of R's bare "argument is missing, with no default" (#224).
+
+* Now requires R 4.4.0 or newer, up from 4.1.0, to match the rest of the
+  HVTI family. `hvtiR::install()` installs the members together, and several
+  already required 4.4.0, so on an older R the install failed whatever this
+  package declared.
+
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its
   `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part

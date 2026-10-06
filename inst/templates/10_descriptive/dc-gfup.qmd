@@ -52,8 +52,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRutilities") < "1.4.1") {
-  stop("This job needs hvtiRutilities >= 1.4.1 for followup_check(); ",
+if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
+  stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles; ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
@@ -295,8 +295,8 @@ review_rows <- fc$review
     count <- function(test) vapply(m$variable, function(v) sum(test(d[[v]][keep]), na.rm = TRUE), integer(1L))
     data.frame(interval = m$variable, patients = groups[[g]], n = m$n, missing = m$nmiss,
                negative = count(function(x) x < 0), zero = count(function(x) x == 0),
-               mean = m$mean, sd = m$std, min = m$min, p25 = m$p25, median = m$median,
-               p75 = m$p75, max = m$max, row.names = NULL)
+               mean = m$mean, sd = m$std, min = m$min, p15 = m$p15, median = m$median,
+               p85 = m$p85, max = m$max, row.names = NULL)
   })
   out <- do.call(rbind, rows)
   out[order(match(out$interval, unique(out$interval))), , drop = FALSE]
