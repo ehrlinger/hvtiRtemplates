@@ -65,7 +65,7 @@ add_job("dc-gfup", subject = "cohort", type = "eda")
 
 `subject` and `type` name *your* job, not the template. Together they say which
 set of work the job belongs to: here, exploratory checks (`eda`) on the whole
-cohort (`cohort`). A job modelling death might be `subject = "dead"`,
+cohort (`cohort`). A job modeling death might be `subject = "dead"`,
 `type = "hz"`. Use letters, digits and underscores only, because the two words
 become part of the filename.
 
