@@ -703,10 +703,18 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 .check_upstream_cohort <- function(d, lineage, event, time, source) {
   keys <- c("n", "n_events", "n_censored")
   want <- lineage$cohort
-  counted <- is.list(want) && all(keys %in% names(want)) &&
-    all(vapply(want[keys], function(x) is.numeric(x) && length(x) == 1L && !is.na(x), logical(1L)))
-  if (!counted) {
+  if (!is.list(want) || !all(keys %in% names(want))) {
     stop("The upstream job's saved output (", source, ") records no cohort counts: it predates them. ",
+         "Rerun the upstream job with the current template, then rerun this one.", call. = FALSE)
+  }
+  # Checked before coercing: as.integer() truncates, so a saved n of 3.7 would
+  # otherwise pass against a count of 3. Raised by Codex on #255.
+  whole <- vapply(want[keys], function(x) {
+    is.numeric(x) && length(x) == 1L && is.finite(x) && x >= 0 && x == round(x)
+  }, logical(1L))
+  if (!all(whole)) {
+    stop("The upstream job's saved output (", source, ") records cohort counts that are not whole, ",
+         "non-negative numbers (", paste(keys[!whole], collapse = ", "), "), so it is not a valid hand-off. ",
          "Rerun the upstream job with the current template, then rerun this one.", call. = FALSE)
   }
   want <- lapply(want[keys], as.integer)

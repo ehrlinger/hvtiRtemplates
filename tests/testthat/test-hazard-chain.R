@@ -97,6 +97,22 @@ test_that("a downstream job stops on an upstream fit that records no counts", {
   }
 })
 
+test_that("a downstream job stops on saved counts that are not whole and non-negative", {
+  # as.integer() truncates, so a saved n of 3.7 used to pass against a count of 3.
+  root <- hazard_study()
+  lineage <- hazard_lineage(root)
+  bad <- list(fraction = lineage$cohort$n + 0.7, infinite = Inf, negative = -1)
+  for (kind in names(bad)) {
+    broken <- lineage
+    broken$cohort$n <- bad[[kind]]
+    hazard_upstream(root, broken)
+    for (prefix in names(hazard_cohort_gates)) {
+      expect_error(hazard_cohort_gate(prefix, root), "not whole, non-negative numbers \\(n\\)",
+                   info = paste(prefix, kind))
+    }
+  }
+})
+
 test_that("hp stops when ac and hz chose different rows", {
   root <- hazard_study()
   lineage <- hazard_lineage(root)
