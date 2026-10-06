@@ -1,0 +1,509 @@
+# Trends over operation year
+
+# Trends over operation year
+
+Replaces `graphs/dp.trends`: list the trend figures it draws.
+
+A `dp-trends` job shows how the cohort changed over the years of
+operation: the share of patients with a characteristic, or the level of
+a measurement, year by year, with a smooth through it. It **describes**
+the cohort. It fits no model and tests nothing, so a trend here is a
+prompt for an analysis, not a result.
+
+The engine is `hvtiPlotR::hv_trends()`. It takes one row per patient and
+computes the per-year summary itself, so this job never aggregates by
+hand. The `group_by()`/`summarize()` blocks and the per-series
+`smooth.spline()` calls that older trends jobs carry are exactly what it
+replaces.
+
+Two neighbors are **not** this job. Procedure volume per year is
+`dp-procs`, and the distribution of a single variable is `dp-variable`.
+
+Code
+
+``` r
+# unnumbered: loads packages and checks versions only
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(hvtiRutilities)
+  library(hvtiPlotR)
+  library(ggplot2)
+})
+
+# 2.7.7, not 2.7.6. This job reports how many rows each figure could not draw,
+# and hv_trends() only counts them (meta$n_missing) from part-way through 2.7.6:
+# the field arrived without a version bump, so a package reporting 2.7.6 may or
+# may not have it. 2.7.7 is the first version that certainly does.
+if (utils::packageVersion("hvtiPlotR") < "2.7.7") {
+  stop("This job needs hvtiPlotR >= 2.7.7; ", utils::packageVersion("hvtiPlotR"),
+       " is installed. Update it, then re-render.", call. = FALSE)
+}
+```
+
+Code
+
+``` r
+# The markers in this file name work a study author still has to do, and a job
+# that still contains one has not been finished. This chunk is what makes that
+# TRUE rather than merely stated: an unedited trends job would otherwise render
+# green over the placeholder columns and the placeholder year origin below.
+#
+# knitr::current_input() is NULL outside a render, when a study author steps
+# through chunks in RStudio, and there is no file to scan then, so this is a
+# no-op in that case.
+#
+# The token is BUILT, not written literally, and that is not stylistic. Quarto
+# knits through an intermediate and current_input() returns THAT file, so the
+# scan reads a copy of this chunk along with everything else: a literal
+# grep("<token>", .src) here matches its own source line, and the guard then
+# fires on every render, finished or not. Measured, not theorised -- a probe
+# found three markers in a file containing two. A guard that cries wolf on a
+# finished job is a guard that gets deleted, which returns us to issue #27.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    # Report the marker TEXT. Line numbers here are the intermediate's, not
+    # this .qmd's, so they need not match what the author sees in an editor.
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it."
+    )
+    # A job renders as a draft by default, so an author can iterate on a
+    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
+    # turns the draft into a stop for a final render. Only unset, 0, false
+    # and no mean "not strict": an unrecognized value stops on purpose, so a
+    # mistyped switch is seen rather than quietly ignored, which is the safe
+    # direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      # The banner is not optional. A draft render that looks like a finished
+      # one is the same defect with an extra step: the warning scrolls past in
+      # a log, while the .html is the artifact that gets sent to someone.
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Unresolved markers remain. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
+    }
+  }
+}
+```
+
+Code
+
+``` r
+# unnumbered: a callout, printed only when part of the job is left out
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one here; a
+# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
+hvtiRtemplates:::.guard_partial(knitr::current_input())
+```
+
+Code
+
+``` r
+SUBJECT <- "cohort"
+TYPE    <- "eda"
+
+# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
+# name, but a hand-edited declaration can drift from it afterward. set_path()
+# below resolves from the declarations, not the filename, so a drifted
+# declaration would silently write into ANOTHER set's artifact directory --
+# exactly the collision the (subject, type) key exists to prevent, re-entered
+# through the body instead of the name.
+#
+# knitr::current_input() is NULL outside a render (a study author running
+# chunks interactively in RStudio), and there is no filename to check against
+# yet, so this is a no-op in that case rather than a spurious error.
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  # Quarto knits through an intermediate, so `knitr::current_input()` returns
+  # `...-03.01-ac.rmarkdown` here, not `...-03.01-ac.qmd`. Strip whatever
+  # extension is actually present rather than hard-coding one, so this
+  # doesn't depend on a build-tool detail staying the same.
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
+         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
+         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
+  }
+}
+
+# Resolve a path inside this set's artifact directory. `kind` is the artifact
+# folder -- "estimates" for serialized results, "graphs" for figures. The set
+# directory sits one layer under the kind and never two, which is the whole
+# layout rule.
+#
+# Created on first use rather than up front, so a job that writes nothing leaves
+# no empty directories behind.
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(SUBJECT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+```
+
+## Study choices
+
+Set the values in this chunk before rendering.
+
+Code
+
+``` r
+# Demo: the registered dataset this job reads ("study" is the built dataset).
+# MIGRATE-BEGIN: dp-trends-data
+DATASET <- "study"
+# MIGRATE-END: dp-trends-data
+
+# Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+# WHERE runs as the data are read, before `year` is derived below, so filter on
+# the date column rather than on `year`.
+WHERE <- NULL
+
+# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "patient_id"
+
+# Demo: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
+# Demo: one entry per figure. `cols` are the columns drawn together: several
+# columns become several series in one figure, which is how a set of 0/1
+# indicators such as NYHA class I to IV is shown. `kind` says how to read them:
+#   "percent"     0/1 or logical, drawn as the percent of patients with it
+#   "continuous"  a measurement, drawn on its own scale
+# `labels` names the series in the legend (default: the column names). Fixing
+# `ylim` and `ybreaks` keeps figures for different subgroups comparable; either
+# may be set alone, and `ylim` zooms without dropping any patient.
+# `summary` is the per-year point drawn under the smooth. Percent trends must
+# use "mean" (the default); continuous trends may use "mean" or "median".
+# MIGRATE-BEGIN: dp-trends-trends
+TRENDS <- list(
+  chf = list(cols = "hx_chf", kind = "percent", labels = "Heart failure",
+             ylab = "Patients (%)", ylim = c(0, 100), ybreaks = seq(0, 100, 20)),
+  lvmass = list(cols = "plvmassi", kind = "continuous", labels = "LV mass index",
+                ylab = "LV mass index", ylim = NULL, ybreaks = NULL)
+)
+# MIGRATE-END: dp-trends-trends
+
+# Demo: optional. x-axis breaks shared by every figure, e.g. seq(1985, 2025, 5).
+# NULL lets ggplot choose.
+# MIGRATE-BEGIN: dp-trends-xbreaks
+XBREAKS <- NULL
+# MIGRATE-END: dp-trends-xbreaks
+
+# Demo: optional. Each entry is a filter, given as a function of the data that
+# returns TRUE for the rows to keep. Every trend is drawn once per entry with
+# the same axes, so the figures can be read side by side. The default draws the
+# whole cohort only. A second entry might be
+#   complex = function(d) d$complex == 1
+# MIGRATE-BEGIN: dp-trends-subgroups
+SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)), diabetic = function(d) d$hx_dm == 1)
+# MIGRATE-END: dp-trends-subgroups
+```
+
+## Data
+
+Code
+
+``` r
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+| Data                |                             |
+|:--------------------|:----------------------------|
+| Source              | dataset `study` (built.rds) |
+| Rows read           | 800                         |
+| ID                  | `patient_id`                |
+| Identifiers dropped | none                        |
+| Rows kept           | 800 rows on 800 patients    |
+
+Table 1: The data this job read
+
+Code
+
+``` r
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(job_data$attrition)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
+Code
+
+``` r
+# Demo: the calendar year of operation, as a WHOLE year. hv_trends puts one
+# summary point at every distinct value of x, so x must be the year itself.
+# Years since an origin are an interval, fractional like every iv_ column, and
+# origin plus a fractional interval would give one "annual" point per patient.
+# Older jobs kept the two apart for this reason: they smoothed on the interval
+# and averaged on an integer year column. If the dataset carries the calendar
+# year, use that column; otherwise take the whole years of the interval and add
+# the origin. The origin differs between studies, 1985 in one and 2000 in
+# another, and a wrong one moves every figure along the x-axis, which is why
+# the range is checked and printed below.
+# MIGRATE-BEGIN: dp-trends-year
+d$year <- floor(d$iv_opyrs) + 1990
+# MIGRATE-END: dp-trends-year
+```
+
+Code
+
+``` r
+if (!is.numeric(d$year)) {
+  stop("`year` is not numeric (", class(d$year)[1L], "). Build it from a ",
+       "numeric column, such as years since an origin plus that origin.",
+       call. = FALSE)
+}
+if (all(is.na(d$year))) {
+  stop("`year` is missing for every patient, so there is nothing to plot. ",
+       "Check the column it is built from.", call. = FALSE)
+}
+if (any(d$year != round(d$year), na.rm = TRUE)) {
+  stop("`year` must be a whole calendar year. hv_trends draws one summary ",
+       "point per distinct value, so a fractional year draws one point per ",
+       "patient. Use floor() on a years-since-origin interval, or a ",
+       "calendar-year column.", call. = FALSE)
+}
+# A plausible window, not a precise one. Its job is to catch the wrong-origin
+# mistake, which lands decades or centuries out, not to police real data.
+.this_year <- as.integer(format(Sys.Date(), "%Y"))
+.out <- which(d$year < 1900 | d$year > .this_year + 1)
+if (length(.out)) {
+  stop(length(.out), " patient(s) have an operation year outside 1900 to ",
+       .this_year + 1, " (for example ", d$year[.out[1L]], "). Check the ",
+       "origin added to the years-since-origin column.", call. = FALSE)
+}
+
+knitr::kable(data.frame(
+  quantity = c("patients", "year missing", "first year", "last year"),
+  value    = c(nrow(d), sum(is.na(d$year)),
+               min(d$year, na.rm = TRUE), max(d$year, na.rm = TRUE))
+))
+```
+
+| quantity     | value |
+|:-------------|------:|
+| patients     |   800 |
+| year missing |     0 |
+| first year   |  1990 |
+| last year    |  2024 |
+
+Table 2: Operation years: patients, missing years, and the first and
+last year
+
+Code
+
+``` r
+# unnumbered: defines helpers only
+# One row per patient per series: the shape hv_trends() takes. Several columns
+# become several series through `series`, which hv_trends() groups on.
+trend_long <- function(d, spec) {
+  absent <- setdiff(spec$cols, names(d))
+  if (length(absent)) {
+    stop("TRENDS names column(s) not in the data: ",
+         paste(absent, collapse = ", "), call. = FALSE)
+  }
+  labels <- if (is.null(spec$labels)) spec$cols else spec$labels
+  if (length(labels) != length(spec$cols)) {
+    stop("TRENDS entry has ", length(spec$cols), " column(s) but ",
+         length(labels), " label(s).", call. = FALSE)
+  }
+  if (!spec$kind %in% c("percent", "continuous")) {
+    stop("TRENDS `kind` must be \"percent\" or \"continuous\", not \"",
+         spec$kind, "\".", call. = FALSE)
+  }
+  summary_fn <- if (is.null(spec$summary)) "mean" else spec$summary
+  if (identical(spec$kind, "percent") && !identical(summary_fn, "mean")) {
+    stop("A percent trend must use summary = \"mean\"; a median of a 0/1 ",
+         "indicator is not a prevalence.", call. = FALSE)
+  }
+  parts <- lapply(seq_along(spec$cols), function(i) {
+    v <- d[[spec$cols[i]]]
+    if (identical(spec$kind, "percent")) {
+      if (is.logical(v)) v <- as.numeric(v)
+      if (!is.numeric(v)) {
+        stop("`", spec$cols[i], "` is kind \"percent\" but is ",
+             class(v)[1L], ". A percent column must be numeric or logical ",
+             "and hold only 0/1 values.", call. = FALSE)
+      }
+      # A 1/2 or 0/1/9 code times 100 draws a plausible and wrong figure, so
+      # anything other than 0/1 stops here instead of being scaled.
+      bad <- setdiff(unique(v[!is.na(v)]), c(0, 1))
+      if (length(bad)) {
+        stop("`", spec$cols[i], "` is kind \"percent\" but holds ",
+             paste(utils::head(bad, 5L), collapse = ", "),
+             ". A percent column must be 0/1 or logical.", call. = FALSE)
+      }
+      v <- 100 * v
+    }
+    data.frame(year = d$year, value = v, series = labels[i],
+               stringsAsFactors = FALSE)
+  })
+  out <- do.call(rbind, parts)
+  out$series <- factor(out$series, levels = labels)
+  out
+}
+```
+
+## Figures
+
+Code
+
+``` r
+# unnumbered: each child chunk below carries its own label and caption
+# The image link is relative to THIS document, which always sits in graphs/,
+# so it is <set>/<file> whichever directory the render executes from. The file
+# itself is written through set_path(), which resolves from the project root.
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
+for (sg in names(SUBGROUPS)) {
+  keep <- SUBGROUPS[[sg]](d)
+  # One logical per patient, or the filter is wrong. R would silently recycle
+  # a length-1 or short vector through d[keep, ] and select the wrong patients,
+  # and a filter on a missing column returns logical(0).
+  if (!is.logical(keep) || length(keep) != nrow(d)) {
+    stop("SUBGROUPS entry `", sg, "` must return one TRUE/FALSE per patient (",
+         nrow(d), "); it returned ", length(keep), " value(s) of type ",
+         typeof(keep), ".", call. = FALSE)
+  }
+  keep[is.na(keep)] <- FALSE
+  dd <- d[keep, , drop = FALSE]
+  if (nrow(dd) == 0L) {
+    stop("SUBGROUPS entry `", sg, "` selects no patients.", call. = FALSE)
+  }
+  cat("\n### ", sg, " (n = ", nrow(dd), ")\n\n", sep = "")
+  for (nm in names(TRENDS)) {
+    spec <- TRENDS[[nm]]
+    tr <- hv_trends(trend_long(dd, spec), x_col = "year", y_col = "value",
+                    group_col = if (length(spec$cols) == 1L) NULL else "series",
+                    summary_fn = if (is.null(spec$summary)) "mean" else spec$summary)
+    # Older jobs dropped incomplete rows with na.omit() and said nothing.
+    # hv_trends() counts them, and the count is reported with every figure.
+    cat("**", nm, "**: ", tr$meta$n_obs - tr$meta$n_missing, " of ",
+        tr$meta$n_obs, " rows drawn; ", tr$meta$n_missing,
+        " missing the year or the value.\n\n", sep = "")
+    p <- plot(tr) +
+      labs(x = "Year of operation", y = spec$ylab, color = NULL, shape = NULL) +
+      theme_hv_manuscript()
+    # Limits through coord_cartesian(), not scale limits. A scale limit DROPS
+    # the patients outside it before the smooth is fitted, so the curve would
+    # stop passing through the yearly points hv_trends() computed from all of
+    # them, and any stretch of the fitted line past the limit would vanish.
+    # Breaks and limits are applied independently: either may be set alone.
+    if (!is.null(spec$ybreaks)) p <- p + scale_y_continuous(breaks = spec$ybreaks)
+    if (!is.null(spec$ylim)) p <- p + coord_cartesian(ylim = spec$ylim)
+    if (!is.null(XBREAKS)) p <- p + scale_x_continuous(breaks = XBREAKS)
+    fname <- paste0("dp-trends-", nm, "-", sg, ".png")
+    png(set_path("graphs", fname), width = 8, height = 6, units = "in", res = 150)
+    print(p)
+    invisible(dev.off())
+    .link <- file.path(paste0(SUBJECT, "-", TYPE), fname)
+    .child(paste("fig trends", nm, sg), paste0("Trend in ", nm, " by year of operation, ", sg),
+           "knitr::include_graphics(.link, error = FALSE)")
+  }
+}
+```
+
+### all (n = 800)
+
+**chf**: 800 of 800 rows drawn; 0 missing the year or the value.
+
+Code
+
+``` r
+knitr::include_graphics(.link, error = FALSE)
+```
+
+![](assets/0dfc78e355f188df8917620c99f4a86b.png)
+
+Figure 1: Trend in chf by year of operation, all
+
+**lvmass**: 800 of 800 rows drawn; 0 missing the year or the value.
+
+Code
+
+``` r
+knitr::include_graphics(.link, error = FALSE)
+```
+
+![](assets/7b8e4859581eb90963f109cbd677b13d.png)
+
+Figure 2: Trend in lvmass by year of operation, all
+
+### diabetic (n = 175)
+
+**chf**: 175 of 175 rows drawn; 0 missing the year or the value.
+
+Code
+
+``` r
+knitr::include_graphics(.link, error = FALSE)
+```
+
+![](assets/956f0a3107674bd63040d70543ab8361.png)
+
+Figure 3: Trend in chf by year of operation, diabetic
+
+**lvmass**: 175 of 175 rows drawn; 0 missing the year or the value.
+
+Code
+
+``` r
+knitr::include_graphics(.link, error = FALSE)
+```
+
+![](assets/2627c81565b18d47ae20ae1212fb50d7.png)
+
+Figure 4: Trend in lvmass by year of operation, diabetic
+
+The smooth is LOESS, `hv_trends()`’s default, with `span = 0.75`. Older
+jobs used `smooth.spline(df = 6)`, which is not reproduced: the two
+differ at the ends of the year range, where data is thinnest, so compare
+against an older figure by its shape and not point by point.
+`plot(tr, span = ...)` changes the smoothing.

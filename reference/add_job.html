@@ -24,7 +24,8 @@ one would discard them."></head><body>
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="nav-link" href="../gallery/index.html" aria-label="Every template, what it is for, how to add it, and the report it produces">Template gallery</a></li>
+<li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/ehrlinger/hvtiRtemplates/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
@@ -155,7 +156,7 @@ scaffolds, with a warning naming its replacement; see
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A job accumulates a study's edits, so an existing one is never overwritten.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">add_job</span><span class="op">(</span>prefix <span class="op">=</span> <span class="st">"ac"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/RtmpYGaxEu/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/RtmpDBYPZ4/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span>, pattern <span class="op">=</span> <span class="st">"[.]qmd$"</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "10_descriptive/cohort-eda-dc-gfup.qmd"</span>

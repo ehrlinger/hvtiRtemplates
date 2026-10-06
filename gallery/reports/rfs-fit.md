@@ -1,0 +1,426 @@
+# Random forest survival: fit
+
+# Random forest survival: fit
+
+Gallery job on the synthetic cohort: survival after operation (iv_dead,
+dead) on nine preoperative predictors.
+
+An `rfs-fit` job grows a random survival forest and checks that it
+learned something: out-of-bag error by number of trees, predicted
+survival, and the Brier score over follow-up. **Importance, VarPro and
+dependence plots are not here.** They are the `rfs-explain` job in this
+same set, which reads the forest this job saves instead of growing its
+own, so the explanations always describe this forest.
+
+Old `rfsrc.*` and `rf.*` jobs map onto three prefixes by outcome, read
+from the job’s fit call and not from its name: a survival outcome is
+`rfs`, a classification or binary outcome `rfc`, a continuous outcome
+`rfr`.
+
+Code
+
+``` r
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(randomForestSRC)
+  library(ggRandomForests)
+  library(hvtiRutilities)
+})
+# The versions this template was verified against, end to end, on 2026-09-19.
+# Below them a call here can fail or change meaning, and the message would
+# arrive mid-render rather than here.
+if (utils::packageVersion("randomForestSRC") < "3.7.0") {
+  stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+if (utils::packageVersion("ggRandomForests") < "4.0.0") {
+  stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+```
+
+Code
+
+``` r
+# The markers in this file name work a study author still has to do, and
+# README.md says a job that still contains one has not been finished. This
+# chunk is what makes that TRUE rather than merely stated.
+#
+# Without it an unedited job renders green over a meaningless analysis. Here
+# that is a forest grown on the template's placeholder outcome, predictors and
+# tree count, whose error curve and survival plots look exactly like a result.
+#
+# knitr::current_input() is NULL outside a render -- a study author stepping
+# through chunks in RStudio -- and there is no file to scan then, so this is a
+# no-op in that case. Same handling as the `set` guard below, for the same
+# reason.
+#
+# The token is BUILT, not written literally, and that is not stylistic. Quarto
+# knits through an intermediate and current_input() returns THAT file, so the
+# scan reads a copy of this chunk along with everything else: a literal
+# grep("<token>", .src) here matches its own source line, and the guard then
+# fires on every render, finished or not. Measured, not theorised -- a probe
+# found three markers in a file containing two. A guard that cries wolf on a
+# finished job is a guard that gets deleted, which returns us to issue #27.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    # Report the marker TEXT. Line numbers here are the intermediate's, not
+    # this .qmd's, so they need not match what the author sees in an editor.
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it."
+    )
+    # A job renders as a draft by default, so an author can iterate on a
+    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
+    # turns the draft into a stop for a final render. Only unset, 0, false
+    # and no mean "not strict": an unrecognized value stops on purpose, so a
+    # mistyped switch is seen rather than quietly ignored, which is the safe
+    # direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      # The banner is not optional. A draft render that looks like a finished
+      # one is the same defect with an extra step: the warning scrolls past in
+      # a log, while the .html is the artifact that gets sent to someone.
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Unresolved markers remain. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
+    }
+  }
+}
+```
+
+Code
+
+``` r
+# unnumbered: a callout, printed only when part of the job is left out
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one here; a
+# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
+hvtiRtemplates:::.guard_partial(knitr::current_input())
+```
+
+Code
+
+``` r
+SUBJECT <- "dead"
+TYPE    <- "rf"
+
+# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
+# name, but a hand-edited declaration can drift from it afterward. set_path()
+# below resolves from the declarations, not the filename, so a drifted
+# declaration would silently write into ANOTHER set's artifact directory --
+# exactly the collision the (subject, type) key exists to prevent, re-entered
+# through the body instead of the name.
+#
+# knitr::current_input() is NULL outside a render (a study author running
+# chunks interactively in RStudio), and there is no filename to check against
+# yet, so this is a no-op in that case rather than a spurious error.
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  # Quarto knits through an intermediate, so `knitr::current_input()` returns
+  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
+  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
+  # rather than hard-coding one, so this doesn't depend on a build-tool detail
+  # staying the same.
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
+         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
+         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
+  }
+}
+
+# Resolve a path inside this set's artifact directory. `kind` is the artifact
+# folder -- "estimates" for serialized results, "graphs" for figures. The set
+# directory sits one layer under the kind and never two, which is the whole
+# layout rule.
+#
+# Created on first use rather than up front, so a job that writes nothing leaves
+# no empty directories behind.
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(SUBJECT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+
+# `rfs-fit` writes the forest through this and `rfs-explain` reads it back,
+# both by set, so an explanation can never be filed against a different set
+# than the forest it explains. The write is the `save` chunk at the foot of
+# this file.
+```
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+Code
+
+``` r
+# Demo: the registered dataset this job reads ("study" is the built dataset).
+DATASET <- "study"
+
+# Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "patient_id"
+
+# Demo: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
+# Demo: follow-up time and the event indicator, coded 1 = event, 0 = censored.
+TIME   <- "iv_dead"
+EVENT  <- "dead"
+
+# Demo: the candidate predictors. Name them rather than taking every column: a
+# built dataset carries identifiers, dates and derived outcomes, and a forest
+# will split on a date that quietly encodes follow-up.
+PREDICTORS <- c("age", "female", "bmi", "hx_chf", "hx_dm", "nyha_pr", "lvef", "plvmassi", "creat_pr")
+
+# Demo: forest size and seed. The error-by-trees plot below says whether NTREE
+# was enough: a curve still falling at its right edge was not. SEED makes the
+# forest reproducible and is part of its cache key.
+NTREE <- 300
+SEED  <- 2026
+
+# Demo: "na.omit" drops a patient missing any predictor; "na.impute" keeps them
+# and imputes inside the forest. The classification and regression exemplars
+# imputed. Dropping is simpler to report and can shrink the cohort a great deal.
+NA_ACTION <- "na.omit"
+
+# Set TRUE after changing a choice above. A cache whose inputs changed stops the
+# render instead of returning the old forest; TRUE recomputes only the caches
+# that are out of date, so it is safe to leave on while iterating.
+REFIT <- FALSE
+```
+
+## Cohort
+
+Code
+
+``` r
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""))
+.outcomes <- intersect(c(TIME, EVENT), PREDICTORS)
+if (length(.outcomes)) {
+  stop("Do not include outcome variable(s) in PREDICTORS: ", paste(.outcomes, collapse = ", "), ".", call. = FALSE)
+}
+.duplicated <- unique(PREDICTORS[duplicated(PREDICTORS)])
+if (length(.duplicated)) {
+  stop("PREDICTORS names a variable more than once: ", paste(.duplicated, collapse = ", "), ".", call. = FALSE)
+}
+# A forest must not be trained on an identifier. It would split on who a
+# patient is, not on what is true of them, and the saved forest keeps its
+# training columns, so the identifier would be written into rfs.rds.
+.selection <- attr(job_data$record, "selection")
+.identifiers <- PREDICTORS[tolower(PREDICTORS) %in% tolower(c(.selection$id, .selection$key))]
+if (length(.identifiers)) {
+  stop("Do not include the patient identifier or a KEY column in PREDICTORS: ",
+       paste(.identifiers, collapse = ", "), ".", call. = FALSE)
+}
+# Nor may the identifier be the outcome: the forest keeps its outcome column
+# too. A KEY column that is not the ID, a visit time say, may be one.
+if (any(tolower(c(TIME, EVENT)) == tolower(.selection$id))) {
+  stop("The patient identifier (", .selection$id, ") cannot be an outcome of this job.", call. = FALSE)
+}
+.missing <- setdiff(c(TIME, EVENT, PREDICTORS), names(d))
+if (length(.missing)) {
+  stop("Not in the data this job read: ", paste(.missing, collapse = ", "), call. = FALSE)
+}
+d <- d[, c(TIME, EVENT, PREDICTORS), drop = FALSE]
+
+# A forest cannot learn from a patient with no outcome, and na.impute would
+# impute one, inventing follow-up. So the outcome is required whatever
+# NA_ACTION says.
+.no_outcome <- is.na(d[[TIME]]) | is.na(d[[EVENT]])
+if (any(.no_outcome)) {
+  stop(sum(.no_outcome), " patient(s) have no time or status. Resolve them in the ",
+       "dataset build; the forest will not.", call. = FALSE)
+}
+
+# randomForestSRC reads a status above 1 as a competing event, so a 1/2 coding,
+# which survival::Surv() accepts, would grow a competing-risks forest without
+# a word. Refuse it here instead.
+if (!all(d[[EVENT]] %in% c(0, 1))) {
+  stop(EVENT, " must be coded 0 and 1 (1 = event); found ",
+       paste(sort(unique(d[[EVENT]])), collapse = ", "), ".", call. = FALSE)
+}
+
+# A forest splits a text column only as a factor, so text predictors are
+# converted here, and named, rather than left for the fit to refuse or coerce.
+.chr <- PREDICTORS[vapply(d[PREDICTORS], is.character, logical(1L))]
+if (length(.chr)) {
+  d[.chr] <- lapply(d[.chr], factor)
+  cat("Text predictors converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
+}
+```
+
+| Data                |                             |
+|:--------------------|:----------------------------|
+| Source              | dataset `study` (built.rds) |
+| Rows read           | 800                         |
+| ID                  | `patient_id`                |
+| Identifiers dropped | none                        |
+| Rows kept           | 800 rows on 800 patients    |
+
+Table 1: The data this job read
+
+Code
+
+``` r
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(job_data$attrition)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
+## Forest
+
+Code
+
+``` r
+# cache_fit() writes <dir>/<name>.rds and its default dir is the study's
+# estimates folder, not this set's, so every call here names the set's.
+CACHE_DIR <- dirname(set_path("estimates", "rfs.rds"))
+model <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ ."))
+# The saved forest keeps this formula, and a formula keeps the environment it
+# was made in. That is the global environment in a render, which a saved file
+# only refers to; set it, so a job run anywhere else does not write every
+# object beside the formula, `job_data` and its patient IDs included, into
+# the forest.
+environment(model) <- globalenv()
+forest <- cache_fit(
+  "rfs-forest",
+  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none"),
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+)
+forest
+```
+
+                             Sample size: 725
+                        Number of deaths: 402
+                         Number of trees: 300
+               Forest terminal node size: 15
+           Average no. of terminal nodes: 35.7133
+    No. of variables tried at each split: 3
+                  Total no. of variables: 9
+           Resampling used to grow trees: swor
+        Resample size used to grow trees: 458
+                                Analysis: RSF
+                                  Family: surv
+                          Splitting rule: logrank *random*
+           Number of random split points: 10
+                              (OOB) CRPS: 4.66629805
+                 (OOB) standardized CRPS: 0.17600038
+       (OOB) Requested performance error: 0.320234
+
+`importance = "none"` is deliberate. Importance is the explain job’s
+work, and cached there on its own, so it can be recomputed without
+regrowing the forest.
+
+## Does the forest work?
+
+Code
+
+``` r
+# Out-of-bag error by number of trees.
+err <- gg_error(forest)
+plot(err)
+```
+
+![](assets/3166b87a9af5612079609034f37e17f8.png)
+
+Figure 1: Out-of-bag error by number of trees
+
+Code
+
+``` r
+# Out-of-bag predicted survival, one curve per patient.
+surv <- gg_rfsrc(forest)
+plot(surv)
+```
+
+![](assets/62ded56601fd169f2cc3ce0fc3b752ad.png)
+
+Figure 2: Out-of-bag predicted survival, one curve per patient
+
+Code
+
+``` r
+# Brier score over follow-up. Lower is better, and 0.25 is what a coin flip
+# scores.
+brier <- gg_brier(forest)
+plot(brier)
+```
+
+![](assets/949b5ed5477434c0401633ed3f4e445f.png)
+
+Figure 3: Brier score over follow-up
+
+Code
+
+``` r
+# The product of this job, and what rfs-explain reads. It is separate from the
+# cache on purpose: cache_fit() stores a keyed record rather than the bare
+# forest, so the cache is this job's internals and this file is its interface.
+# The price is the forest on disk twice.
+.forest_event <- forest$yvar[[EVENT]]
+.forest_cohort <- list(
+  n = as.integer(nrow(forest$yvar)),
+  n_events = as.integer(sum(.forest_event == 1)),
+  n_censored = as.integer(sum(.forest_event == 0))
+)
+forest <- hvtiRtemplates:::.attach_handoff_lineage(
+  forest,
+  data = .provenance_data,
+  analysis = list(
+    time = list(variable = TIME),
+    event = list(variable = EVENT, event = 1L, censored = 0L)
+  ),
+  cohort = .forest_cohort,
+  # rfs-explain takes the rows, ID and KEY of this fit from this record.
+  selection = attr(job_data$record, "selection")
+)
+saveRDS(forest, set_path("estimates", "rfs.rds"))
+```

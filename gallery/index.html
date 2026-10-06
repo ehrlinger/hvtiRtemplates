@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HVTI Template Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #F5F7F4;
+    --panel: #FFFFFF;
+    --ink: #1B2420;
+    --muted: #5A6962;
+    --rule: #D8DED9;
+    --accent: #1D6C75;
+    --accent-soft: #E3EFEF;
+    --warn: #9A5B06;
+    --warn-soft: #FBF0DE;
+    --block: #A4261D;
+    --block-soft: #F8E3E0;
+    --sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #121816;
+      --panel: #19201D;
+      --ink: #E4EBE7;
+      --muted: #9AA9A2;
+      --rule: #2C3632;
+      --accent: #6FB9C1;
+      --accent-soft: #1C3033;
+      --warn: #E2A65A;
+      --warn-soft: #33281A;
+      --block: #EE8A7F;
+      --block-soft: #3A2220;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #121816;
+    --panel: #19201D;
+    --ink: #E4EBE7;
+    --muted: #9AA9A2;
+    --rule: #2C3632;
+    --accent: #6FB9C1;
+    --accent-soft: #1C3033;
+    --warn: #E2A65A;
+    --warn-soft: #33281A;
+    --block: #EE8A7F;
+    --block-soft: #3A2220;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font: 15px/1.55 var(--sans);
+    padding-inline: 20px;
+    padding-block: 32px 56px;
+  }
+  .wrap { max-width: 1120px; margin-inline: auto; display: grid; gap: 36px; }
+  header { display: grid; gap: 12px; max-width: 72ch; }
+  .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: clamp(28px, 4vw, 38px); line-height: 1.15; font-weight: 600; margin: 0; text-wrap: balance; }
+  h2 { font-size: 20px; font-weight: 600; margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+  .lead { font-size: 17px; color: var(--ink); }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 13px/1.4 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .facts b { color: var(--ink); font-weight: 500; }
+  .doclinks { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--muted); }
+  .section-head a.doc { font-size: 13px; }
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .note { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; }
+  .note h3 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .note ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
+  section { display: grid; gap: 12px; }
+  .section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+  .section-head .path { font: 13px var(--mono); color: var(--muted); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 980px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--rule); }
+  tr:last-child td { border-bottom: 0; }
+  th { font: 500 12px/1.3 var(--sans); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); background: var(--ground); }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+  td.out { font-size: 13px; color: var(--muted); }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  .tpl { font: 500 14px var(--mono); white-space: nowrap; }
+  .gallery-note { display: block; margin-top: 4px; font-size: 13px; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { font: 12px/1.6 var(--mono); padding: 0 7px; border-radius: 3px; text-decoration: none; white-space: nowrap; background: var(--warn-soft); color: var(--warn); }
+  .chip.block { background: var(--block-soft); color: var(--block); font-weight: 500; }
+  .chip.none { background: transparent; color: var(--muted); padding: 0; }
+  .call { display: flex; align-items: flex-start; gap: 6px; }
+  .call code { font: 12.5px/1.45 var(--mono); color: var(--ink); white-space: normal; overflow-wrap: normal; }
+  td.addit { min-width: 300px; }
+  .copy { font: 500 11px/1 var(--sans); letter-spacing: .04em; text-transform: uppercase; padding: 4px 6px; border: 1px solid var(--rule); border-radius: 4px; background: var(--ground); color: var(--muted); cursor: pointer; flex: none; }
+  .copy:hover { color: var(--accent); border-color: var(--accent); }
+  .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .dep { display: inline-block; margin-bottom: 4px; font: 500 11px/1.6 var(--mono); padding: 0 6px; border-radius: 3px; background: var(--warn-soft); color: var(--warn); }
+  footer { font-size: 13px; color: var(--muted); max-width: 80ch; display: grid; gap: 6px; }
+  @media (max-width: 520px) { body { padding-inline: 16px; } .lead { font-size: 16px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow" id="stamp">hvtiRtemplates</span>
+    <h1>HVTI Template Gallery</h1>
+    <p class="lead">Every job template the package ships, rendered once on the same synthetic study. Each row says what the template is for and gives the <code>add_job()</code> call that adds it to your study; copy it, change <code>subject</code> and <code>type</code> to name your job, and run it from inside the study. Open a template's name to see the report it produces.</p>
+    <div class="facts" id="facts"></div>
+    <nav class="doclinks" aria-label="Package documentation">
+      <span>Package docs:</span>
+      <a href="https://ehrlinger.github.io/hvtiRtemplates/" target="_blank" rel="noopener">hvtiRtemplates site</a>
+      <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/template-catalog.html" target="_blank" rel="noopener">Template catalog</a>
+      <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html" target="_blank" rel="noopener">Start a new study</a>
+      <a href="https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.html" target="_blank" rel="noopener">add_job()</a>
+    </nav>
+  </header>
+
+  <div class="notes">
+    <div class="note">
+      <h3>The study</h3>
+      <ul>
+        <li>800 simulated operations, 1990 to 2024, followed to 31 December 2025. No real patient, study or identifier appears anywhere.</li>
+        <li>Built from the descriptives demo cohort, plus the outcomes each family needs: a two-phase death outcome (early and constant hazard, concordance 0.69), ventilation, ICU hours, stroke, regurgitation grade, discharge, and three treatment variables, plus a separate synthetic echocardiography series for the repeated-measures job.</li>
+        <li>Each job was scaffolded with <code>add_job()</code>, its <code>EDIT:</code> points filled, and rendered with <code>render_job(final = TRUE)</code>.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3>Where the gallery departs from the template</h3>
+      <ul>
+        <li>Deaths on the day of operation are recorded at 0.00025 years in the dataset itself, since the hazard likelihood is undefined at zero (#175).</li>
+        <li>The hazard chain analyses complete cases on creatinine, a <code>WHERE</code> on <b>ac</b> and <b>hz</b> that <b>hm</b>, <b>hp</b> and <b>hs-setup</b> inherit from <code>hz.rds</code> (#174).</li>
+        <li>Each bootstrap bag is made by the report's own shipped runner, run small: <b>bh</b> 8 replicates in four chunks with its early shape held fixed, the others 100, so frequencies are rough.</li>
+        <li><b>lm-binary</b> trains on operations before 2015 and <b>lm-checkpred</b> validates on 2015 onward, by each job's <code>WHERE</code> (#180).</li>
+        <li><b>hs-concordance</b>'s two group models hold the early-phase <code>nu</code> fixed at the whole-cohort estimate and screen three candidates; free, the transcatheter group's early phase collapses onto its four same-day deaths.</li>
+      </ul>
+    </div>
+  </div>
+
+  <main id="sections" style="display:grid;gap:36px"></main>
+
+  <footer>
+    <p>Chips link to open hvtiRtemplates issues found while building this gallery; a red chip is a template that does not render as shipped. Issues that affect every template, such as the four different ways templates choose their data (#173) and settings leaking between jobs run by hand (#184), are not repeated on each row.</p>
+    <p>Rebuild: <code>Rscript dev/gallery/gallery.R &lt;folder&gt;</code>, then <code>python3 dev/gallery/package.py &lt;folder&gt; pkgdown/assets/gallery</code> and <code>bash dev/gallery/publish.sh</code>, with the package installed from the same checkout. The table is generated from the template catalog, each template's own <code>SUBJECT</code> and <code>TYPE</code>, and the rendered reports; only the issues and notes are kept by hand, in <code>dev/gallery/notes.json</code>. Render times are from one full build on a laptop.</p>
+  </footer>
+</div>
+
+<script src="gallery-data.js"></script>
+<script>
+const REPO = "https://github.com/ehrlinger/hvtiRtemplates/issues/";
+const SITE = "https://ehrlinger.github.io/hvtiRtemplates/articles/";
+// folder, heading, blurb, catalog anchor, extra docs [label, page]
+const FOLDERS = [
+  ["00_datasets", "Datasets", "Building the study dataset", "datasets", []],
+  ["10_descriptive", "Descriptive", "Checks and summaries of a new build", "descriptive",
+   [["SAS-to-R descriptive tutorial", "sas-to-r-descriptive.html"]]],
+  ["20_distributions", "Distributions", "Life tables and the hazard fit", "distributions", []],
+  ["30_analyses", "Analyses", "Models, bootstrap selection and forests", "analyses", []],
+  ["40_graphs", "Graphs", "Figures that read an earlier job's output", "graphs", []]
+];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const chip = i => {
+  const blocker = String(i).startsWith("b");
+  const n = String(i).replace("b", "");
+  return `<a class="chip${blocker ? " block" : ""}" href="${REPO}${n}" target="_blank" rel="noopener">#${n}</a>`;
+};
+
+const T = window.GALLERY || [];
+const total = T.reduce((a, t) => a + (t.seconds || 0), 0);
+const flagged = T.filter(t => t.issues.length).length;
+document.getElementById("facts").innerHTML =
+  `<span><b>${T.length}</b> templates</span><span><b>${FOLDERS.length}</b> folders</span>` +
+  `<span><b>${flagged}</b> with open issues</span><span><b>${(total / 60).toFixed(1)}</b> min to render all</span>`;
+if (window.GALLERY_BUILT) document.getElementById("stamp").textContent = `hvtiRtemplates ${window.GALLERY_BUILT}`;
+
+const count = n => n ? String(n) : "0";
+document.getElementById("sections").innerHTML = FOLDERS.map(([dir, label, blurb, anchor, extra]) => {
+  const rows = T.filter(t => t.folder === dir).map(t => `
+    <tr>
+      <td>${t.report ? `<a class="tpl" href="reports/${t.name}.html" target="_blank" rel="noopener">${esc(t.name)}</a>` : `<span class="tpl">${esc(t.name)}</span>`}</td>
+      <td>${t.deprecated_by ? `<span class="dep">deprecated: use ${esc(t.deprecated_by)}</span><br>` : ""}${esc(t.use)}${t.note ? `<span class="gallery-note">${esc(t.note)}</span>` : ""}</td>
+      <td class="addit">${t.call ? `<div class="call"><code>${esc(t.call)}</code><button type="button" class="copy" data-call="${esc(t.call)}" aria-label="Copy the add_job() call for ${esc(t.name)}">Copy</button></div>` : ""}</td>
+      <td class="out">${t.report ? count(t.tables) : ""}</td>
+      <td class="out">${t.report ? count(t.figures) : ""}</td>
+      <td class="num">${t.seconds == null ? "" : t.seconds.toFixed(1) + " s"}</td>
+      <td><div class="chips">${t.issues.length ? t.issues.map(chip).join("") : '<span class="chip none">none</span>'}</div></td>
+    </tr>`).join("");
+  if (!rows) return "";
+  return `<section aria-labelledby="h-${dir}">
+    <div class="section-head"><h2 id="h-${dir}">${label}</h2><span class="path">inst/templates/${dir}/</span><span class="path">${esc(blurb)}</span>
+      <a class="doc" href="${SITE}template-catalog.html#${anchor}" target="_blank" rel="noopener">In the catalog</a>
+      ${extra.map(([t, p]) => `<a class="doc" href="${SITE}${p}" target="_blank" rel="noopener">${esc(t)}</a>`).join("")}</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Template</th><th>What it is for</th><th>Add it to your study</th><th>Tables</th><th>Figures</th><th>Render</th><th>Open issues</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </section>`;
+}).join("");
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("button.copy");
+  if (!btn) return;
+  const done = () => { btn.textContent = "Copied"; setTimeout(() => { btn.textContent = "Copy"; }, 1500); };
+  const fallback = () => {
+    const code = btn.previousElementSibling, range = document.createRange();
+    range.selectNodeContents(code);
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    btn.textContent = "Selected";
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(btn.dataset.call).then(done, fallback);
+  else fallback();
+});
+</script>
+</body>
+</html>

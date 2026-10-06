@@ -1,0 +1,606 @@
+# Nomogram and hazard figures
+
+# Nomogram and hazard figures
+
+Replaces `graphs/<job>.sas`: describe its `HAZPRED` call and the figures
+it draws.
+
+An `hp` job **reads** its inputs and does not recompute them: the
+actuarial life table from the `ac` job and the parametric fit from the
+`hz` job, both by set. A job that recomputes its upstream can silently
+disagree with it.
+
+Neither the life table nor the fit belongs here, and **nor does SAS
+parity** — a parity job borrows the ordinal of the job it checks and
+lives in `parity/`.
+
+Code
+
+``` r
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+.provenance_artifacts <- list()
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(TemporalHazard)
+  library(hvtiRutilities)
+})
+```
+
+Code
+
+``` r
+# The markers in this file name work a study author still has to do, and
+# README.md says a job that still contains one has not been finished. This
+# chunk is what makes that TRUE rather than merely stated.
+#
+# Without it an unedited job renders green over a meaningless analysis. In THIS
+# file the unedited reporting grid is a plausible one and the unedited figure
+# titles are generic: every number and every curve renders, at the wrong
+# horizons and under someone else's labels. A nomogram is a table of plausible
+# numbers whether or not its grid is yours -- which is exactly why a wrong grid
+# is dangerous rather than merely untidy.
+#
+# knitr::current_input() is NULL outside a render -- a study author stepping
+# through chunks in RStudio -- and there is no file to scan then, so this is a
+# no-op in that case. Same handling as the `set` guard below, for the same
+# reason.
+#
+# The token is BUILT, not written literally, and that is not stylistic. Quarto
+# knits through an intermediate and current_input() returns THAT file, so the
+# scan reads a copy of this chunk along with everything else: a literal
+# grep("<token>", .src) here matches its own source line, and the guard then
+# fires on every render, finished or not. Measured, not theorised -- a probe
+# found three markers in a file containing two. A guard that cries wolf on a
+# finished job is a guard that gets deleted, which returns us to issue #27.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    # Report the marker TEXT. Line numbers here are the intermediate's, not
+    # this .qmd's, so they need not match what the author sees in an editor.
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it."
+    )
+    # A job renders as a draft by default, so an author can iterate on a
+    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
+    # turns the draft into a stop for a final render. Only unset, 0, false
+    # and no mean "not strict": an unrecognized value stops on purpose, so a
+    # mistyped switch is seen rather than quietly ignored, which is the safe
+    # direction to be wrong in.
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      # The banner is not optional. A draft render that looks like a finished
+      # one is the same defect with an extra step: the warning scrolls past in
+      # a log, while the .html is the artifact that gets sent to someone.
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Unresolved markers remain. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
+    }
+  }
+}
+```
+
+Code
+
+``` r
+# unnumbered: a callout, printed only when part of the job is left out
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one here; a
+# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
+hvtiRtemplates:::.guard_partial(knitr::current_input())
+```
+
+Code
+
+``` r
+SUBJECT <- "dead"
+TYPE    <- "hz"
+
+# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
+# name, but a hand-edited declaration can drift from it afterward. set_path()
+# below resolves from the declarations, not the filename, so a drifted
+# declaration would silently write into ANOTHER set's artifact directory --
+# exactly the collision the (subject, type) key exists to prevent, re-entered
+# through the body instead of the name.
+#
+# knitr::current_input() is NULL outside a render (a study author running
+# chunks interactively in RStudio), and there is no filename to check against
+# yet, so this is a no-op in that case rather than a spurious error.
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  # Quarto knits through an intermediate, so `knitr::current_input()` returns
+  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
+  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
+  # rather than hard-coding one, so this doesn't depend on a build-tool detail
+  # staying the same.
+  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
+         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
+         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
+  }
+}
+
+# Resolve a path inside this set's artifact directory. `kind` is the artifact
+# folder -- "estimates" for serialized results, "graphs" for figures. The set
+# directory sits one layer under the kind and never two, which is the whole
+# layout rule.
+#
+# Created on first use rather than up front, so a job that writes nothing leaves
+# no empty directories behind.
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(SUBJECT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+
+# `hp` both READS and WRITES through this: the upstream `ac.rds` and `hz.rds`
+# come from set_path("estimates", ...), and the figures go to
+# set_path("graphs", ...). Same key, so a figure can never be filed against a
+# different set than the fit it was drawn from.
+```
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+Code
+
+``` r
+# Upstream fit and actuarial estimate to plot.
+# Demo: upstream fit and actuarial estimate to plot.
+FIT_NAME <- "deterministic"
+KM_NAME <- "overall"
+
+# Table horizons and curve limit.
+# Demo: reporting and plotting horizons.
+years <- c(30 / 365.2425, 3 / 12, 6 / 12, 1:10)   # reporting: the table
+
+t_max <- 10
+
+# The data, rows, identifier, time and event of the hz fit this job plots.
+# NULL takes the value hz used; set it only to confirm it. A value set here
+# that differs from hz's stops the job rather than plot another cohort.
+DATASET <- NULL
+ANALYSIS_SET <- NULL
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
+TIME <- NULL
+EVENT <- NULL
+```
+
+## Upstream
+
+Code
+
+``` r
+# hp overlays the actuarial estimate with the parametric fit, so it READS both
+# upstream artifacts by set rather than recomputing either. A job that
+# recomputes its upstream can silently disagree with it.
+#
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+.ac_read <- hvtiRtemplates:::.read_handoff(
+  set_path("estimates", "ac.rds"), "actuarial-estimate", .cfg, "the ac job"
+)
+.hz_read <- hvtiRtemplates:::.read_handoff(
+  set_path("estimates", "hz.rds"), "hazard-model", .cfg, "the hz job"
+)
+.source_identity <- function(records) {
+  required <- c("dataset", "path", "bytes", "sha256")
+  lapply(records, function(record) {
+    if (!is.list(record) || !all(required %in% names(record))) {
+      stop("The ac and hz handoffs have incomplete source data lineage. Rebuild both upstream jobs.", call. = FALSE)
+    }
+    record[required]
+  })
+}
+if (!identical(.source_identity(.ac_read$lineage$data), .source_identity(.hz_read$lineage$data))) {
+  stop("The ac and hz handoffs have incompatible source data lineage. Rebuild both from the same source data.",
+       call. = FALSE)
+}
+for (.field in c("analysis", "cohort")) {
+  .ac_field <- .ac_read$lineage[[.field]]
+  .hz_field <- .hz_read$lineage[[.field]]
+  if (is.null(.ac_field) || is.null(.hz_field) || !identical(.ac_field, .hz_field)) {
+    stop("The ac and hz handoffs have incompatible ", .field,
+         " lineage. Rebuild both with matching analysis choices and cohort.", call. = FALSE)
+  }
+}
+# The life table and the fit must describe the same rows. The data chunk below
+# rebuilds hz's rows, so an ac that chose other rows is stopped here.
+if (!is.null(.hz_read$lineage$selection) && is.null(.ac_read$lineage$selection)) {
+  stop("The ac job's saved output (ac.rds) carries no recorded data selection: it predates the data contract. ",
+       "Rerun the ac job with the current template, then rerun this one.", call. = FALSE)
+}
+if (!is.null(.hz_read$lineage$selection) &&
+      !identical(.ac_read$lineage$selection, .hz_read$lineage$selection)) {
+  stop("The ac and hz handoffs read different data, rows, time or event. Rebuild both with the same ",
+       "DATASET, ANALYSIS_SET, WHERE, ID, KEY, TIME and EVENT.", call. = FALSE)
+}
+ac_art <- .ac_read$value
+hz_art <- .hz_read$value
+.provenance_data <- c(.ac_read$lineage$data, .hz_read$lineage$data)
+.provenance_artifacts <- c(
+  .ac_read$lineage$artifacts, list(.ac_read$record),
+  .hz_read$lineage$artifacts, list(.hz_read$record)
+)
+
+# which fit and which life table this job plots.
+#
+# ⚠️ A STRATIFIED hp job reads the PER-STRATUM fits and never the overall one.
+# Getting that backwards does not error -- it draws a plausible figure of the
+# wrong thing. Read the SAS job to see which `est.` datasets it opens.
+fit <- hz_art[[FIT_NAME]]
+km  <- ac_art[[KM_NAME]]
+
+stopifnot(!is.null(fit), !is.null(km))
+```
+
+Code
+
+``` r
+.up <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, .hz_read$lineage,
+  list(dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY,
+       time = TIME, event = EVENT),
+  source = "hz.rds"
+)
+job_data <- .up$job_data
+d <- job_data$data
+TIME <- .up$selection$time
+EVENT <- .up$selection$event
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+| Data                |                             |
+|:--------------------|:----------------------------|
+| Source              | dataset `study` (built.rds) |
+| Rows read           | 800                         |
+| ID                  | `patient_id`                |
+| Identifiers dropped | none                        |
+| `!is.na(creat_pr)`  | removed 75                  |
+| Rows kept           | 725 rows on 725 patients    |
+
+Table 1: The data this job read, as hz read it
+
+## Prediction grids
+
+Code
+
+``` r
+t_plot <- exp(seq(-8, log(t_max), length.out = 1000))
+```
+
+Code
+
+``` r
+# A PARAMETRIC model returns a number at ANY horizon you ask for, including
+# horizons no patient was observed to. That is extrapolation from the fitted
+# shape, not an estimate supported by data, and nothing in the output marks it.
+# So the grid is checked against the actual end of follow-up.
+#
+# `d` holds the rows hz read, and TIME and EVENT are the columns it fitted.
+# BOTH are needed: the bound must be computed over the SAME rows the fit used.
+# `hz` drops rows missing either one, so max() over all non-missing times would
+# include patients the fit never saw and could OVERSTATE follow-up -- which
+# weakens this guard in the one direction that matters, by making it under-warn.
+fitted_rows <- !is.na(d[[TIME]]) & !is.na(d[[EVENT]])
+cc <- cohort_counts(d, event = EVENT, time = TIME)
+maxfup <- max(as.numeric(d[[TIME]][fitted_rows]))
+
+# BOTH horizons are checked. A curve drawn past the end of follow-up is the
+# worse of the two: a table row can be read and discounted one row at a time,
+# while a line looks continuous and supported for its whole length.
+horizons <- data.frame(
+  grid             = c("reporting (table)", "plotting (curves)"),
+  max_horizon      = c(max(years), t_max),
+  end_of_follow_up = maxfup
+)
+horizons$extrapolating <- horizons$max_horizon > maxfup
+knitr::kable(horizons)
+# A warning, not a stop: reporting past follow-up is sometimes the deliberate
+# point of a figure. The reader needs to be told, not blocked.
+for (i in which(horizons$extrapolating)) {
+  warning("The ", horizons$grid[i], " grid extends to ",
+          format(horizons$max_horizon[i], digits = 4),
+          " but follow-up ends at ", format(maxfup, digits = 4),
+          ". Points beyond that are extrapolation from the fitted shape, ",
+          "not estimates supported by data.", call. = FALSE)
+}
+```
+
+| grid              | max_horizon | end_of_follow_up | extrapolating |
+|:------------------|------------:|-----------------:|:--------------|
+| reporting (table) |          10 |           35.696 | FALSE         |
+| plotting (curves) |          10 |           35.696 | FALSE         |
+
+Table 2: End of follow-up against the longest horizon on each grid
+
+## Predictions
+
+Two settings must be right or every number below is wrong. Both were
+decoded from the SAS `HAZPRED` source during parity work rather than
+guessed, and **neither errors when wrong**.
+
+- **`CLEVEL` defaults to `0.68268948`**, which is one standard
+  deviation, *not* 95%. It is exactly `pnorm(1) - pnorm(-1)`. The
+  published papers say so: *“Uncertainty is expressed by 68% confidence
+  limits equivalent to ±1 standard error.”*
+- **Survival confidence limits are formed on the `logit` scale.**
+  `predict.hazard()` defaults to `"log-log"`, the `survfit` standard, so
+  `conf.type = "logit"` must be passed explicitly. Omitting it does not
+  error; it silently shifts every confidence limit.
+
+⚠️ **`%kaplan` uses the same ±1 SE convention** — its `T_ALPHA` is `1`,
+so the `CL_LOWER`/`CL_UPPER` in the `ac` life table are also a ~68%
+band. That matters most in *this* job, because this is where both bands
+are drawn on one figure.
+
+The figure is internally consistent — both bands are ~68%. But a reader
+who takes either for a 95% interval is reading one **roughly half as
+wide as they think**, and that is measured rather than rhetorical: on
+the same fit and the same grid, the 95% band is **1.97× the width** of
+the SAS-default band.
+
+**Label the coverage wherever these numbers are published.** A default
+that is right and unlabeled is one citation away from being wrong.
+
+Code
+
+``` r
+CLEVEL <- 0.68268948   # SAS convention, not a study choice. ±1 SD, NOT 95%.
+newd   <- data.frame(time = years)
+
+pred_surv <- predict(fit, newdata = newd, type = "survival",
+                     se.fit = TRUE, level = CLEVEL, conf.type = "logit")
+pred_haz  <- predict(fit, newdata = newd, type = "hazard",
+                     se.fit = TRUE, level = CLEVEL)
+
+stopifnot(nrow(pred_surv) == length(years), nrow(pred_haz) == length(years))
+```
+
+## Nomogram
+
+The deliverable of this job: survival and hazard with confidence limits
+over the reporting grid.
+
+Code
+
+``` r
+nomogram <- data.frame(
+  years    = years,
+  survival = pred_surv$fit,
+  surv_lo  = pred_surv$lower,
+  surv_hi  = pred_surv$upper,
+  hazard   = pred_haz$fit,
+  haz_lo   = pred_haz$lower,
+  haz_hi   = pred_haz$upper
+)
+knitr::kable(nomogram, digits = 6)
+```
+
+|     years | survival |  surv_lo |  surv_hi |   hazard |   haz_lo |   haz_hi |
+|----------:|---------:|---------:|---------:|---------:|---------:|---------:|
+|  0.082137 | 0.970148 | 0.962017 | 0.976581 | 0.117972 | 0.101054 | 0.137722 |
+|  0.250000 | 0.953932 | 0.945810 | 0.960887 | 0.090612 | 0.078961 | 0.103981 |
+|  0.500000 | 0.934077 | 0.925730 | 0.941545 | 0.079362 | 0.070017 | 0.089954 |
+|  1.000000 | 0.900121 | 0.890312 | 0.909141 | 0.070072 | 0.063321 | 0.077543 |
+|  2.000000 | 0.843034 | 0.830398 | 0.854893 | 0.062069 | 0.057641 | 0.066838 |
+|  3.000000 | 0.794102 | 0.779665 | 0.807826 | 0.057857 | 0.054456 | 0.061470 |
+|  4.000000 | 0.750574 | 0.735058 | 0.765470 | 0.055051 | 0.052138 | 0.058126 |
+|  5.000000 | 0.711142 | 0.694991 | 0.726775 | 0.052971 | 0.050264 | 0.055824 |
+|  6.000000 | 0.675025 | 0.658501 | 0.691125 | 0.051332 | 0.048676 | 0.054133 |
+|  7.000000 | 0.641694 | 0.624947 | 0.658102 | 0.049986 | 0.047300 | 0.052825 |
+|  8.000000 | 0.610762 | 0.593869 | 0.627394 | 0.048850 | 0.046092 | 0.051772 |
+|  9.000000 | 0.581936 | 0.564926 | 0.598753 | 0.047869 | 0.045021 | 0.050897 |
+| 10.000000 | 0.554979 | 0.537854 | 0.571974 | 0.047008 | 0.044064 | 0.050150 |
+
+Table 3: Survival, hazard and their confidence limits at each horizon
+
+Code
+
+``` r
+nomogram_pct <- data.frame(
+  years        = years,
+  survival_pct = round(100 * pred_surv$fit, 1),
+  cl_lower_pct = round(100 * pred_surv$lower, 1),
+  cl_upper_pct = round(100 * pred_surv$upper, 1)
+)
+knitr::kable(nomogram_pct)
+```
+
+|      years | survival_pct | cl_lower_pct | cl_upper_pct |
+|-----------:|-------------:|-------------:|-------------:|
+|  0.0821372 |         97.0 |         96.2 |         97.7 |
+|  0.2500000 |         95.4 |         94.6 |         96.1 |
+|  0.5000000 |         93.4 |         92.6 |         94.2 |
+|  1.0000000 |         90.0 |         89.0 |         90.9 |
+|  2.0000000 |         84.3 |         83.0 |         85.5 |
+|  3.0000000 |         79.4 |         78.0 |         80.8 |
+|  4.0000000 |         75.1 |         73.5 |         76.5 |
+|  5.0000000 |         71.1 |         69.5 |         72.7 |
+|  6.0000000 |         67.5 |         65.9 |         69.1 |
+|  7.0000000 |         64.2 |         62.5 |         65.8 |
+|  8.0000000 |         61.1 |         59.4 |         62.7 |
+|  9.0000000 |         58.2 |         56.5 |         59.9 |
+| 10.0000000 |         55.5 |         53.8 |         57.2 |
+
+Table 4: Survival (%) with 68% confidence limits (plus or minus 1 SD),
+not 95%
+
+### What these confidence limits are worth
+
+The `hz` fit runs against a **near-singular Hessian** — check its
+`rcond` in the `hz` report. That makes the *marginal* standard errors on
+weakly identified shape parameters unstable; in parity work they
+differed from SAS by 1.25× to 5.1×.
+
+The confidence limits here nevertheless agreed with SAS to within
+0.2%–5% across every grid point, computed from that same covariance
+matrix.
+
+Both hold at once because `se(S(t))² = gᵀVg` for the gradient `g` of
+survival with respect to the parameters. The marginal variances on the
+diagonal of `V` can differ substantially while that quadratic form
+agrees, if the two matrices carry compensating correlations — which is
+exactly what a near-singular problem produces.
+
+**So the survival band is the trustworthy output of this pipeline, and
+the per-parameter standard errors in the `hz` report are not.** State
+that wherever these numbers are used.
+
+## Figures
+
+Code
+
+``` r
+s_pct  <- 100 * unname(predict(fit, newdata = data.frame(time = t_plot),
+                               type = "survival"))
+x_plot <- t_plot * 12
+
+png(set_path("graphs", "hp-survival.png"),
+    width = 1400, height = 1000, res = 150)
+plot(NA, xlim = range(x_plot), ylim = c(0, 100),
+     xlab = "Months after operation", ylab = "Survival (%)",
+     main = "Actuarial and parametric survival")
+lines(x_plot, s_pct, lty = 1)
+# The actuarial estimate is a STEP function; type = "s" rather than a line
+# through the knots, which would draw an estimate nobody computed.
+lines(km$time * 12, 100 * km$survival, lty = 2, type = "s")
+legend("bottomleft", c("parametric (hz)", "actuarial (ac)"),
+       lty = c(1, 2), bty = "n")
+dev.off()
+```
+
+    quartz_off_screen 
+                    2 
+
+Code
+
+``` r
+knitr::include_graphics(set_path("graphs", "hp-survival.png"))
+```
+
+![](assets/5a83a509e2126b39113334033ba11596.png)
+
+Figure 1: Actuarial and parametric survival after the operation
+
+Code
+
+``` r
+h_pcpm <- 100 / 12 * unname(predict(fit, newdata = data.frame(time = t_plot),
+                                    type = "hazard"))
+
+png(set_path("graphs", "hp-hazard.png"),
+    width = 1400, height = 1000, res = 150)
+plot(x_plot, h_pcpm, type = "l", log = "y",
+     xlab = "Months after operation", ylab = "Hazard (% per month)",
+     main = "Hazard function")
+dev.off()
+```
+
+    quartz_off_screen 
+                    2 
+
+Code
+
+``` r
+knitr::include_graphics(set_path("graphs", "hp-hazard.png"))
+```
+
+![](assets/5995d973b8d3f3db40966d57d9041489.png)
+
+Figure 2: Hazard of the parametric model after the operation
+
+### Phase decomposition
+
+`decompose = TRUE` works on the **cumulative** hazard only. Per-phase
+survival is not additive, and decomposition is not supported for
+`type = "hazard"`. The SAS figure overlays `_earlyh` and `_lateh`, which
+are *instantaneous*; this is the nearest supported equivalent, and the
+difference is worth stating rather than papering over.
+
+Code
+
+``` r
+# predict() returns the decomposition WIDE -- one column per phase plus
+# `total` -- so it is reshaped here rather than assumed to arrive long.
+dec <- predict(fit, newdata = data.frame(time = t_plot),
+               type = "cumulative_hazard", decompose = TRUE)
+
+# Every column except `time` is a component. Derived from what came back rather
+# than naming early/late, so a three-phase model needs no edit here.
+comp <- setdiff(names(dec), "time")
+
+# The components must sum to `total`, or it is not a decomposition.
+if ("total" %in% comp) {
+  parts <- setdiff(comp, "total")
+  max_gap <- max(abs(rowSums(dec[, parts, drop = FALSE]) - dec$total))
+  if (max_gap > 1e-8) {
+    stop("The phase components do not sum to the total (largest gap ",
+         format(max_gap, digits = 4), "). That is not a decomposition.",
+         call. = FALSE)
+  }
+}
+
+png(set_path("graphs", "hp-phases.png"),
+    width = 1400, height = 1000, res = 150)
+plot(NA, xlim = range(t_plot), ylim = range(unlist(dec[comp])),
+     xlab = "Years after operation", ylab = "Cumulative hazard",
+     main = "Phase decomposition of the cumulative hazard")
+for (i in seq_along(comp)) {
+  lines(dec$time, dec[[comp[i]]], col = i,
+        lty = if (comp[i] == "total") 1 else 2)
+}
+legend("topleft", comp, col = seq_along(comp),
+       lty = ifelse(comp == "total", 1, 2), bty = "n")
+dev.off()
+```
+
+    quartz_off_screen 
+                    2 
+
+Code
+
+``` r
+knitr::include_graphics(set_path("graphs", "hp-phases.png"))
+```
+
+![](assets/6ccb03a4f9c4a41ed57368aed3846c06.png)
+
+Figure 3: Phase decomposition of the cumulative hazard
+
+## Save
+
+Code
+
+``` r
+# The nomogram is the deliverable, so it is written as CSV as well as printed:
+# a table in an HTML report cannot be joined against anything.
+write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
+```
