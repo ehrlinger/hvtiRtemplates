@@ -11,9 +11,11 @@ template:
   theme: atom-one-light
   theme-dark: atom-one-dark
 
-# The template gallery is a static site under pkgdown/assets/gallery/, copied
-# to the site root by pkgdown and rebuilt by hand (dev/gallery/). The navbar
-# links it beside the articles, as hvtiPlotR links its recipes book.
+# The template gallery is a static site. Its built reports live on the
+# `gallery` release, which the pkgdown workflow downloads into
+# pkgdown/assets/gallery/ before the build; pkgdown copies them to the site
+# root. Rebuild with dev/gallery/. The navbar links it beside the articles, as
+# hvtiPlotR links its recipes book.
 navbar:
   structure:
     right: [gallery, search, github, lightswitch]
