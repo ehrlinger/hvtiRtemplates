@@ -175,7 +175,7 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
 # template_list() as a worked example. A prefix that cannot be resolved here
 # is reported by the selection error once the fields are supplied, so this
 # message only points at the catalog rather than repeating that error.
-.missing_field_message <- function(absent, prefix = NULL, qualifier = NULL) {
+.missing_field_message <- function(absent, prefix = NULL, qualifier = NULL, fn = "add_job") {
   example <- NA_character_
   if (!is.null(prefix)) {
     tl <- template_list()
@@ -183,7 +183,7 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
     if (!is.null(row)) example <- row$call[[1L]]
   }
   paste0(
-    "add_job(): ", paste0("`", absent, "`", collapse = " and "),
+    fn, "(): ", paste0("`", absent, "`", collapse = " and "),
     if (length(absent) > 1L) " are" else " is", " missing. ",
     "`subject` (the grouping topic, e.g. \"death\" or \"cohort\") and `type` (the analysis type, ",
     "e.g. \"hz\") name the job's set. They are your choice, not a list in the catalog: any name ",

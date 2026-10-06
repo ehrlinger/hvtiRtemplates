@@ -226,6 +226,11 @@ test_that("add_job names a missing subject or type and shows the template's call
   e <- expect_error(add_job(prefix = "zz", type = "hz", dir = dir), "`subject` is missing")
   expect_match(conditionMessage(e), "template_list()$call", fixed = TRUE)
 
+  # open_job() scaffolds through add_job() but checks its fields first, so it
+  # needs the same message in its own name, before it looks for a study.
+  e <- expect_error(open_job(prefix = "ac", type = "hz", dir = dir), "^open_job\\(\\): `subject` is missing")
+  expect_match(conditionMessage(e), ac_call, fixed = TRUE)
+
   expect_false(dir.exists(dir))
 })
 
