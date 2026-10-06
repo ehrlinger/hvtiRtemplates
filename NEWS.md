@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* The *Work a job* and *Adopt an existing study* articles say to always render a job, never
+  to run its chunks by hand: Run All works in the current R session, where a setting
+  left by another job can stand in for this job's and read the wrong patients. To
+  look at the data, render a draft; to see only the top of a long job, use
+  `stop_here()`.
+
 * `hm` stops when the reported fit has no variance matrix, or when any of its free
   parameters has no finite standard error, instead of saving `hm.rds` with only a
   TemporalHazard warning in the log. The message names the phases and covariates
