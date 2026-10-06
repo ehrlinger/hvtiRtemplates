@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* Help-page examples for the job workflow. `migrate_job()` and `render_job()`, which
+  had none, migrate a small legacy SAS job and render a draft and a final. The
+  examples for `template_list()`, `template_path()`, `template_catalog()`, `add_job()`
+  and `build_cohort()` now find a template by qualifier and copy its `call`, select a
+  qualified template, show the refusal to guess an ambiguous prefix and to overwrite a
+  job, show a deprecation warning, and read a cohort's attrition table.
 * `template_list()` gains a `call` column: the `add_job()` call that scaffolds each
   template, with only the arguments it requires and runnable as printed, e.g.
   `add_job("dc-gfup", subject = "cohort", type = "eda")`. The full name selects the
