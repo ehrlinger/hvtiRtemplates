@@ -26,8 +26,8 @@ counts, each with its table. It is written for the biostatistician choosing
 variables for an analysis set, not for a manuscript.
 
 Each section is also a job of its own, and draws through the same function:
-the follow-up section is `dp-gfup` (`hvtiPlotR::hv_followup_panels()`) with
-the tables of `dc-gfup` (`hvtiRutilities::followup_check()`), and the other
+the follow-up section is `dc-gfup`, its figure (`hvtiPlotR::hv_followup_panels()`)
+and its tables (`hvtiRutilities::followup_check()`), and the other
 three are `dp-postage` (`hvtiPlotR::hv_eda_pages()`). Given the same choices, a
 section here is the same figure as the standalone job, so this report and a
 standalone job cannot disagree about the data.
@@ -145,7 +145,7 @@ ID <- "ccfid"
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
 
-# Follow-up. These are dp-gfup's choices, and mean what they mean there.
+# Follow-up. These are dc-gfup's choices, and mean what they mean there.
 # EDIT: the years-since-origin interval to the operation, and that origin. The
 # origin differs between studies, and a wrong one slides every point along the
 # x-axis without any other symptom, which is why the operation years are
@@ -442,17 +442,22 @@ cat("A point below the diagonal is follow-up short of what the close date allows
 # unnumbered: its child chunk carries its own label and caption
 # hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
 # names every missing column at once, refuses a name used twice and the
-# wrong-origin mistake, and works out the window the panels share. dp-gfup
+# wrong-origin mistake, and works out the window the panels share. dc-gfup
 # calls it with the same arguments, so these are that job's panels.
 fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
                                     panels = PANELS, events = EVENTS, close_date = CLOSE_DATE)
 close_date <- fp$meta$close_date
 # Name the edit point a reader can find in this file, not the function's argument.
 close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
+# Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an
+# hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,
+# because a build counting from a later origin is a problem to fix there. An
+# older hvtiPlotR refuses them instead, so the field is absent and so is the row.
+.before <- fp$meta$n_opyrs_negative
 .window <- data.frame(
-  quantity = c("patients", "operation year missing", "first operation", "last operation",
-               "close date", "close date is"),
-  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, format(fp$meta$first_operation),
+  quantity = c("patients", "operation year missing", if (!is.null(.before)) "operation before origin",
+               "first operation", "last operation", "close date", "close date is"),
+  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, .before, format(fp$meta$first_operation),
             format(fp$meta$study_end), format(close_date), close_source)
 )
 .child("tbl gfup window", "Operation years and the close date", "knitr::kable(.window, row.names = FALSE)")

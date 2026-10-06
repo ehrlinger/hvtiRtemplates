@@ -19,17 +19,27 @@ format:
 
 Replaces `descriptive/dc.gfup`.
 
-A `dc-gfup` job checks the recorded follow-up intervals before time-related
-analyses. We summarize the full cohort and the event and censored subsets,
-then review missing, negative and zero intervals. Follow-up units must be
-years. Derive any close-date or potential-follow-up measures in the data build
-and register them before selecting them here. These tables describe recorded
-follow-up; they do not establish completeness against a close date.
-The figure, each patient's follow-up against the diagonal a close date allows,
-is the `dp-gfup` job; read the same data and rows there.
+A `dc-gfup` job checks follow-up before time-related analyses. We summarize
+the full cohort and the event and censored subsets, review missing, negative
+and zero intervals, then draw the goodness-of-follow-up figure. Follow-up
+units must be years. Derive any potential-follow-up measures in the data build
+and register them before selecting them here.
+
+The tables describe recorded follow-up. The figure measures it against a close
+date: every patient is one point, the year of operation across and the
+follow-up recorded for them up, blue while alive and red once dead. The dashed
+diagonal is the follow-up a patient **could** have had, from their operation
+to the close date. A censored patient far below the diagonal is someone whose
+follow-up stopped early, and a band of them is a follow-up problem to settle
+before any time-related analysis.
+
+The figure is `hvtiPlotR::hv_followup_panels()`, which the EDA report also
+calls, so its follow-up panels are these. It was the separate `dp-gfup` job,
+now deprecated in favor of this one.
 
 ```{r}
 #| label: setup
+# unnumbered: loads packages and checks versions only
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -37,10 +47,18 @@ is the `dp-gfup` job; read the same data and rows there.
 .root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
 .provenance_data <- list()
 for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
-suppressPackageStartupMessages(library(hvtiRutilities))
+suppressPackageStartupMessages({
+  library(hvtiRutilities)
+  library(hvtiPlotR)
+  library(ggplot2)
+})
 if (utils::packageVersion("hvtiRutilities") < "1.4.1") {
   stop("This job needs hvtiRutilities >= 1.4.1 for followup_check(); ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
+}
+if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
+  stop("This job needs hvtiPlotR >= 2.8.0 for hv_followup_panels() and scale_color_hv(); ",
+       utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 ```
 
@@ -137,6 +155,47 @@ MAX_REVIEW_ROWS <- 25L
 # EDIT: optional event-coding cross-tabs, each a vector of column names.
 # Missing values are shown. Use list() when no additional checks are needed.
 CHECKS <- list()
+
+# The figure. These are dp-eda's follow-up choices, and mean what they mean there.
+# EDIT: the years-since-origin interval to the operation, and that origin, a
+# calendar year such as 1990. The origin differs between studies, and a wrong
+# one slides every point along the x-axis without any other symptom, which is
+# why the operation years are checked and printed below.
+OPYRS <- "iv_opyrs"
+ORIGIN_YEAR <- 1990
+
+# EDIT: the close date of follow-up, as.Date("YYYY-MM-DD"). NULL estimates it
+# as the latest operation date plus follow-up in the data, which is the date
+# follow-up is known to reach, not the date it was closed; the report says
+# which one it drew.
+CLOSE_DATE <- NULL
+
+# EDIT: one entry per death panel. `status` is the 1/0 death indicator and
+# `time` its follow-up in years; the default draws the same columns as the
+# EVENT and FOLLOWUP defaults above. A study that ascertains deaths two ways draws both,
+# for example
+#   systematic = list(status = "deads", time = "iv_deads", title = "Systematic deaths")
+PANELS <- list(
+  all = list(status = "dead", time = "iv_dead", title = "All deaths")
+)
+
+# EDIT: optional event panels, one entry per non-fatal event. `event` and
+# `time` are the event's indicator and interval; `death` and `death_time` the
+# death it competes with. A flagged event counts only when it comes strictly
+# before death, so ties go to death. list() draws none. For example
+#   reop = list(event = "ev_reop", time = "iv_reop", death = "dead",
+#               death_time = "iv_dead", label = "Reoperation")
+EVENTS <- list()
+
+# EDIT: point transparency. 0.5 lets a dense cohort read as a distribution
+# rather than a blob; raise it for a small one.
+ALPHA <- 0.5
+
+# EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
+# vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
+# all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
+# event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
+COLORS <- NULL
 ```
 
 ## Data
@@ -256,6 +315,134 @@ SAS `QNTLDEF=5`, so its quartiles can differ. The migration report preserves
 legacy sort orders, date arithmetic and includes for review; none establishes
 an equivalent follow-up definition by itself.
 
+## Operation years and the close date
+
+```{r}
+#| label: window
+# unnumbered: computes the follow-up window; the table chunk below shows it
+# hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
+# names every missing column at once, refuses a name used twice and the
+# wrong-origin mistake, and works out the window the panels share: from
+# 1 January of ORIGIN_YEAR, where hv_followup() draws its diagonal, to the last
+# operation. The EDA report calls the same function, so its panels are these.
+# A refusal does not stop a draft: the tables above are the follow-up check and
+# do not depend on the figure, so the refusal is reported where the figure would
+# be, and the render carries on. It is also raised as a warning, so a console
+# render says so too.
+panel_counts <- list()
+fp <- tryCatch(
+  hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
+                                panels = PANELS, events = EVENTS, close_date = CLOSE_DATE),
+  error = function(e) e
+)
+figure_drawn <- !inherits(fp, "error")
+if (figure_drawn) {
+  close_date <- fp$meta$close_date
+  # Name the edit point a reader can find in this file, not the function's argument.
+  close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
+} else {
+  # A final render (render_job(final = TRUE), which sets HVTI_TEMPLATE_STRICT)
+  # is the accepted result, and an accepted follow-up report has its figure.
+  if (!tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+    stop("The goodness-of-follow-up figure was not drawn: ", conditionMessage(fp),
+         "\nThis render stops because HVTI_TEMPLATE_STRICT is set; a draft render reports it and carries on.",
+         call. = FALSE)
+  }
+  warning("The goodness-of-follow-up figure was not drawn: ", conditionMessage(fp), call. = FALSE)
+  close_date <- NA
+  close_source <- paste("not drawn:", conditionMessage(fp))
+}
+```
+
+```{r}
+#| label: tbl-window
+#| tbl-cap: "Operation years and the close date"
+#| eval: !expr figure_drawn
+# Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an
+# hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,
+# because a build counting from a later origin is a problem to fix there. An
+# older hvtiPlotR refuses them instead, so the field is absent and so is the row.
+.before <- fp$meta$n_opyrs_negative
+knitr::kable(data.frame(
+  quantity = c("patients", "operation year missing", if (!is.null(.before)) "operation before origin",
+               "first operation", "last operation", "close date", "close date is"),
+  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, .before, format(fp$meta$first_operation),
+            format(fp$meta$study_end), format(close_date), close_source)
+))
+```
+
+## Goodness of follow-up
+
+A point below the diagonal is follow-up short of what the close date allows. A
+dead patient's point is where the death was recorded, so it is expected below
+the line; it is the **blue** points drifting below it that need an explanation.
+
+```{r}
+#| label: figures
+#| results: asis
+# unnumbered: each child chunk below carries its own label and caption
+# This document sits in descriptive/ and its figures are written to graphs/
+# through set_path(), so the image link is the figure's path relative to this
+# document, worked out at render time, as dp-eda's is.
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
+if (!figure_drawn) {
+  cat("\n::: {.callout-warning title=\"The figure was not drawn\"}\n",
+      conditionMessage(fp), "\n\nThe tables above do not depend on it. Fix the choice the ",
+      "message names, usually `OPYRS` or `ORIGIN_YEAR`, and render again.\n:::\n\n", sep = "")
+}
+figure_link <- function(file) {
+  xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd(), error = FALSE)
+}
+if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
+                                              "(study-choices in a job made before that rename).", call. = FALSE)
+if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLORS) == 3L &&
+                            setequal(names(COLORS), c("alive", "dead", "event")))) {
+  stop("COLORS must be NULL or name exactly alive, dead and event.", call. = FALSE)
+}
+# Dead or Death is the event and Alive or No event the censored level, so a
+# non-fatal event takes the house rule's next color, green.
+status_colors <- function(levels) {
+  if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
+  keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
+  scale_color_manual(values = stats::setNames(COLORS[keys], levels))
+}
+plots <- if (figure_drawn) plot(fp, alpha = ALPHA) else list()
+for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
+  row <- fp$data[i, ]
+  nm <- row$panel
+  panel_counts[[nm]] <- list(drawn = row$n_drawn, excluded = row$n_excluded)
+  cat("\n### ", row$title, "\n\n", row$n_drawn, " patients drawn; ", row$n_excluded,
+      " missing a column this panel needs.\n\n", sep = "")
+  if (row$type == "followup") {
+    p <- plots[[nm]] +
+      status_colors(c("Alive", "Dead")) +
+      scale_shape_manual(values = c(Alive = 1, Dead = 4))
+  } else {
+    levels <- c("No event", row$title, "Death")
+    p <- plots[[nm]] +
+      status_colors(levels) +
+      scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
+  }
+  p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
+    theme_hv_manuscript()
+  file <- set_path("graphs", paste0("dc-gfup-", nm, ".png"))
+  ggplot2::ggsave(file, p, width = 7, height = 6, units = "in", dpi = 150)
+  .link <- figure_link(file)
+  .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", row$title),
+         "knitr::include_graphics(.link, error = FALSE)")
+}
+```
+
 ## Event-coding consistency
 
 ```{r}
@@ -297,7 +484,10 @@ cat(hvtiRtemplates:::.embed_provenance(
       event = list(variable = EVENT, event = 1L, censored = 0L),
       followup = list(variable = FOLLOWUP)
     ),
-    cohort = as.list(cohort_counts[1L, , drop = FALSE])
+    cohort = as.list(cohort_counts[1L, , drop = FALSE]),
+    followup = list(origin_year = ORIGIN_YEAR,
+                    close_date = if (figure_drawn) format(close_date) else NA_character_,
+                    close_date_source = close_source, panels = panel_counts)
   )
 ))
 ```

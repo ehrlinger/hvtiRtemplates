@@ -77,7 +77,7 @@ row has no template on disk.
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
 | `dp-eda` | shipped | — | — | — | — |
-| `dp-gfup` | shipped | — | 48 | 4 | — |
+| `dp-gfup` | shipped, deprecated for `dc-gfup` | — | 48 | 4 | — |
 | `dp-postage` | shipped, deprecated for `dp-eda` | — | — | — | — |
 | `dp-procs` | queued | — | 35 | 0 | — |
 | `dp-spaghetti` | queued | — | 40 | 40 | — |

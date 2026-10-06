@@ -87,6 +87,14 @@ render_migrated_fixture <- function(kind, root = NULL) {
   )
   declarations <- testthat::test_path("fixtures-migration", kind, "review-markers.txt")
   if (file.exists(declarations)) .resolve_fixture_markers(job, readLines(declarations, warn = FALSE))
+  if (identical(kind, "dc-gfup")) {
+    # The fixture's iv_opyrs runs to 40, so the template's 1990 origin would place
+    # operations in 2030, which hv_followup_panels() refuses; the figure tests use
+    # 1980 for the same reason.
+    lines <- readLines(job, warn = FALSE)
+    lines[grep("^ORIGIN_YEAR <- ", lines)] <- "ORIGIN_YEAR <- 1980"
+    writeLines(lines, job)
+  }
   quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
   list(
     root = root, job = job, report = sub("[.]qmd$", "-migration.md", job),
@@ -102,10 +110,10 @@ render_all_migration_fixtures <- function() {
   stats::setNames(Map(render_migrated_fixture, kinds, roots), kinds)
 }
 
-# Scaffold a dp-gfup job in a synthetic study and replace whole lines by pattern.
+# Scaffold a dc-gfup job in a synthetic study and replace whole lines by pattern.
 scaffold_gfup <- function(edits, .local_envir = parent.frame()) {
   root <- migration_study_fixture(NULL, .local_envir = .local_envir)
-  job <- add_job("dp", "cohort", "eda", dir = root, qualifier = "gfup")
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "gfup")
   lines <- readLines(job, warn = FALSE)
   for (pattern in names(edits)) {
     hit <- grep(pattern, lines)
