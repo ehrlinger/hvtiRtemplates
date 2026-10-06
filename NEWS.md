@@ -1,5 +1,9 @@
 # hvtiRtemplates (unreleased)
 
+* `add_job()` called without `subject` or `type` now says which is missing, explains that
+  both are names you choose (any name matching `^[A-Za-z0-9_]+$`, not a list in the
+  catalog), and shows the template's own call from `template_list()$call` as an example,
+  in place of R's bare "argument is missing, with no default" (#224).
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its
   `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part

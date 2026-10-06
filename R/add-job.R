@@ -86,6 +86,10 @@
 #' list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #' unlink(d, recursive = TRUE)
 add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
+  absent <- c("subject", "type")[c(missing(subject), missing(type))]
+  if (length(absent)) {
+    stop(.missing_field_message(absent, if (!missing(prefix)) prefix, qualifier), call. = FALSE)
+  }
   .check_field("subject", subject)
   .check_field("type", type)
   if (!is.null(qualifier)) .check_field("qualifier", qualifier)
@@ -161,6 +165,35 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
          "is reserved as the separator and '.' to the extension); got ",
          paste(deparse(value), collapse = ", "), ".", call. = FALSE)
   }
+}
+
+# The error for a call that leaves out `subject`, `type` or both (#224). R's
+# own "argument is missing, with no default" tells a new user nothing about
+# what to pass. Neither field has a list of valid values to show: both name
+# the job's set and are the caller's choice, so the message says so, gives
+# the pattern .check_field() enforces, and shows the template's own call from
+# template_list() as a worked example. A prefix that cannot be resolved here
+# is reported by the selection error once the fields are supplied, so this
+# message only points at the catalog rather than repeating that error.
+.missing_field_message <- function(absent, prefix = NULL, qualifier = NULL) {
+  example <- NA_character_
+  if (!is.null(prefix)) {
+    tl <- template_list()
+    row <- tryCatch(.select_template(tl, prefix, qualifier), error = function(e) NULL)
+    if (!is.null(row)) example <- row$call[[1L]]
+  }
+  paste0(
+    "add_job(): ", paste0("`", absent, "`", collapse = " and "),
+    if (length(absent) > 1L) " are" else " is", " missing. ",
+    "`subject` (the grouping topic, e.g. \"death\" or \"cohort\") and `type` (the analysis type, ",
+    "e.g. \"hz\") name the job's set. They are your choice, not a list in the catalog: any name ",
+    "matching '^[A-Za-z0-9_]+$'. ",
+    if (length(example) == 1L && !is.na(example)) {
+      paste0("This template's own call is: ", example)
+    } else {
+      "See template_list()$call for each template's own call."
+    }
+  )
 }
 
 # Full path for the job the selected template row scaffolds into: the study's
