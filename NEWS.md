@@ -6,6 +6,17 @@
   and `build_cohort()` now find a template by qualifier and copy its `call`, select a
   qualified template, show the refusal to guess an ambiguous prefix and to overwrite a
   job, show a deprecation warning, and read a cohort's attrition table.
+* `dc-gfup` prints one follow-up table, a row per interval and patient group (all
+  patients, event, censored), in place of five one-row tables. It shows missing,
+  negative and zero counts within each group, and one set of quartiles, SAS
+  `QNTLDEF=5`, where it printed two that could disagree. The suspicious-row table is
+  shown only when there are suspicious rows; otherwise a sentence says there are none.
+  `dp-eda`'s follow-up section shows the same table for each death panel.
+* `dc-general` prints one frequency table and one quantile table per variable group,
+  in place of a frequency table, a one-row count table and a quantile table for every
+  variable. Each variable's extremes stay in their own table.
+* A conditional table no longer leaves a gap in the table numbering when it is not
+  shown.
 * A part-built job renders. Give a chunk the option `skip` with the reason in quotes,
   `#| skip: "waiting on the corrected coding"`, to leave it out, or call the new
   `stop_here()` in a chunk to leave out everything below it. This replaces commenting

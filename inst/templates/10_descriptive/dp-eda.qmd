@@ -479,8 +479,8 @@ close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE
 #| results: asis
 #| eval: !expr '"followup" %in% SECTIONS'
 # unnumbered: each child chunk below carries its own label and caption
-# Each death panel gets dc-gfup's tables over its own two columns, through
-# hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
+# Each death panel gets dc-gfup's follow-up table over its own two columns,
+# through hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
 # selected, so the report carries no patient-level column; run dc-gfup to review
 # the suspicious rows themselves.
 if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
@@ -496,6 +496,23 @@ status_colors <- function(levels) {
   keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
   scale_color_manual(values = stats::setNames(COLORS[keys], levels))
 }
+# dc-gfup's follow-up table, one row per interval and patient group, so a panel
+# here shows the table that job shows. test-dp-eda.R keeps the two copies equal.
+.followup_table <- function(fc, d, event) {
+  ev <- d[[event]]
+  groups <- c(full = "All patients", event = "Event", censored = "Censored")
+  rows <- lapply(names(groups), function(g) {
+    m <- fc$means[[g]]
+    keep <- switch(g, full = rep(TRUE, nrow(d)), event = !is.na(ev) & ev == 1, censored = !is.na(ev) & ev == 0)
+    count <- function(test) vapply(m$variable, function(v) sum(test(d[[v]][keep]), na.rm = TRUE), integer(1L))
+    data.frame(interval = m$variable, patients = groups[[g]], n = m$n, missing = m$nmiss,
+               negative = count(function(x) x < 0), zero = count(function(x) x == 0),
+               mean = m$mean, sd = m$std, min = m$min, p25 = m$p25, median = m$median,
+               p75 = m$p75, max = m$max, row.names = NULL)
+  })
+  out <- do.call(rbind, rows)
+  out[order(match(out$interval, unique(out$interval))), , drop = FALSE]
+}
 plots <- plot(fp, alpha = ALPHA)
 panel_counts <- list()
 for (i in seq_len(nrow(fp$data))) {
@@ -506,11 +523,11 @@ for (i in seq_len(nrow(fp$data))) {
       " missing a column this panel needs.\n\n", sep = "")
   if (row$type == "followup") {
     fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time)
-    .child(paste("tbl gfup", nm, "cohort"), paste0("Cohort, ", row$title, ": event, censored and missing event status"),
-           "knitr::kable(fc$cohort, row.names = FALSE)")
-    .child(paste("tbl gfup", nm, "intervals"),
-           paste0("Follow-up interval, ", row$title, ": missing, negative and zero values"),
-           "knitr::kable(fc$intervals, row.names = FALSE)")
+    .followup <- .followup_table(fc, d, PANELS[[nm]]$status)
+    .child(paste("tbl gfup", nm, "followup"),
+           paste0("Follow-up, ", row$title, ", by patient group: missing, negative and zero values, ",
+                  "and the distribution (years)"),
+           "knitr::kable(.followup, row.names = FALSE, digits = 3)")
     p <- plots[[nm]] +
       status_colors(c("Alive", "Dead")) +
       scale_shape_manual(values = c(Alive = 1, Dead = 4))
