@@ -380,7 +380,7 @@ for (section in SECTIONS) {
   vars <- sec$data$variable
   if (section == "continuous") {
     stats <- hvtiRutilities::proc_means(d, vars = vars, stats = c("n", "nmiss", "mean", "std", "min",
-                                                                  "p25", "median", "p75", "max"))
+                                                                  "p15", "median", "p85", "max"))
     .child(paste("tbl postage", section, "summary"), "Continuous variables",
            "knitr::kable(stats, digits = 2, row.names = FALSE)")
   } else if (!freq_shown) {

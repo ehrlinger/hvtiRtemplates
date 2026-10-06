@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* The descriptive templates report the 15th and 85th percentiles where they reported the
+  quartiles: `dc-general`'s quantile table, the follow-up tables in `dc-gfup` and
+  `dp-eda`, and the variable summaries in `dp-eda` and `dp-postage`. The follow-up tables
+  take them from `hvtiRutilities::followup_check()`, whose default changed in
+  hvtiRutilities 1.4.5, now the minimum.
+
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its
   `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part
