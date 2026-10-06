@@ -1,5 +1,10 @@
 # hvtiRtemplates (unreleased)
 
+* The template gallery is on the package site, at
+  <https://ehrlinger.github.io/hvtiRtemplates/gallery/>, linked from the site's
+  navbar and the README. Each template shows what it is for, the `add_job()` call
+  that adds it, and the report it produces on a synthetic study. The table is
+  generated from the catalog and the rendered reports, so it does not drift.
 * Help-page examples for the job workflow. `migrate_job()` and `render_job()`, which
   had none, migrate a small legacy SAS job and render a draft and a final. The
   examples for `template_list()`, `template_path()`, `template_catalog()`, `add_job()`
