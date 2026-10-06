@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* The descriptive templates report the 15th and 85th percentiles where they reported the
+  quartiles: `dc-general`'s quantile table, the follow-up tables in `dc-gfup` and
+  `dp-eda`, and the variable summaries in `dp-eda` and `dp-postage`. The follow-up tables
+  take them from `hvtiRutilities::followup_check()`, whose default changed in
+  hvtiRutilities 1.4.5, now the minimum.
+
 * `add_job()` and `open_job()` called without `subject` or `type` now say which is
   missing, explain that both are names you choose (any name matching `^[A-Za-z0-9_]+$`,
   not a list in the catalog), and show the template's own call from `template_list()$call`
