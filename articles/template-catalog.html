@@ -62,7 +62,7 @@
       <h1>The template catalog</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-10-05</p>
+      <p class="date">2026-10-06</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/vignettes/template-catalog.qmd" class="external-link"><code>vignettes/template-catalog.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -78,8 +78,8 @@
 <p>Every analysis job an HVTI study runs starts from a template: a Quarto file with the study-specific lines marked <code>EDIT:</code>. This page lists them all, what each one does, and how close each is to being delivered. It is built from the package’s own catalog when the page is rendered, so a template added, renamed or shipped shows up here without anyone remembering to update the page.</p>
 <p>A template becomes a job in your study with <code><a href="../reference/add_job.html">add_job()</a></code>. The first argument is the template’s prefix, then the subject and type that name the job’s set, and the qualifier when the prefix has one:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"gfup"</span><span class="op">)</span></span></code></pre></div>
-<p>In a new study that writes <code>40_graphs/cohort-eda-dp-gfup.qmd</code>; a legacy study that already uses bare folder names gets <code>graphs/cohort-eda-dp-gfup.qmd</code>. The job refuses to overwrite an existing file, because a job accumulates a study’s edits.</p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"trends"</span><span class="op">)</span></span></code></pre></div>
+<p>In a new study that writes <code>40_graphs/cohort-eda-dp-trends.qmd</code>; a legacy study that already uses bare folder names gets <code>graphs/cohort-eda-dp-trends.qmd</code>. The job refuses to overwrite an existing file, because a job accumulates a study’s edits.</p>
 </section><section class="level2"><h2 id="delivery">Delivery<a class="anchor" aria-label="anchor" href="#delivery"></a>
 </h2>
 <p>Each template carries a light.</p>
@@ -116,9 +116,9 @@
 <table class="table caption-top">
 <colgroup>
 <col style="width: 3%">
-<col style="width: 4%">
-<col style="width: 74%">
-<col style="width: 17%">
+<col style="width: 3%">
+<col style="width: 78%">
+<col style="width: 15%">
 </colgroup>
 <thead><tr class="header">
 <th style="text-align: left;">Delivery</th>
@@ -136,7 +136,7 @@
 <tr class="even">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>dc-gfup</code></td>
-<td style="text-align: left;">Checks recorded follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals.</td>
+<td style="text-align: left;">Checks follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals, then the goodness-of-follow-up figure, each patient’s follow-up against operation year under the diagonal the close date allows.</td>
 <td style="text-align: left;"><code>add_job("dc", subject, type, qualifier = "gfup")</code></td>
 </tr>
 <tr class="odd">
@@ -328,10 +328,10 @@
 </h3>
 <table class="table caption-top">
 <colgroup>
-<col style="width: 6%">
-<col style="width: 6%">
-<col style="width: 63%">
-<col style="width: 23%">
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 73%">
+<col style="width: 17%">
 </colgroup>
 <thead><tr class="header">
 <th style="text-align: left;">Delivery</th>
@@ -343,7 +343,7 @@
 <tr class="odd">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>dp-gfup</code></td>
-<td style="text-align: left;">The goodness-of-follow-up figure: each patient’s follow-up against operation year, alive in blue and dead in red, under the diagonal the close date allows.</td>
+<td style="text-align: left;">Deprecated in favor of dc-gfup, which draws the same figure beside its follow-up tables. The goodness-of-follow-up figure: each patient’s follow-up against operation year, alive in blue and dead in red, under the diagonal the close date allows.</td>
 <td style="text-align: left;"><code>add_job("dp", subject, type, qualifier = "gfup")</code></td>
 </tr>
 <tr class="even">

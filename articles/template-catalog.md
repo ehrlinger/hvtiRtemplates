@@ -16,12 +16,12 @@ that name the job’s set, and the qualifier when the prefix has one:
 
 ``` r
 
-add_job("dp", "cohort", "eda", qualifier = "gfup")
+add_job("dp", "cohort", "eda", qualifier = "trends")
 ```
 
-In a new study that writes `40_graphs/cohort-eda-dp-gfup.qmd`; a legacy
-study that already uses bare folder names gets
-`graphs/cohort-eda-dp-gfup.qmd`. The job refuses to overwrite an
+In a new study that writes `40_graphs/cohort-eda-dp-trends.qmd`; a
+legacy study that already uses bare folder names gets
+`graphs/cohort-eda-dp-trends.qmd`. The job refuses to overwrite an
 existing file, because a job accumulates a study’s edits.
 
 ## Delivery
@@ -53,7 +53,7 @@ places each one; you do not choose the folder.
 | Delivery | Template | Description | Scaffold |
 |:---|:---|:---|:---|
 | 🟢 Shipped | `dc-general` | First look at a built cohort: what the data contain, how each categorical variable breaks down, how each continuous variable is distributed, and which variables move together. | `add_job("dc", subject, type, qualifier = "general")` |
-| 🟢 Shipped | `dc-gfup` | Checks recorded follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals. | `add_job("dc", subject, type, qualifier = "gfup")` |
+| 🟢 Shipped | `dc-gfup` | Checks follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals, then the goodness-of-follow-up figure, each patient’s follow-up against operation year under the diagonal the close date allows. | `add_job("dc", subject, type, qualifier = "gfup")` |
 | 🟢 Shipped | `dc-tables` | The formatted descriptive table: every reported variable under its section heading, categorical as n (%) and continuous as the summary you choose, written to Word. | `add_job("dc", subject, type, qualifier = "tables")` |
 | 🟢 Shipped | `dp-eda` | The whole data-checking report in one render: every column’s contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table. | `add_job("dp", subject, type, qualifier = "eda")` |
 | 🟢 Shipped | `dp-postage` | Deprecated in favor of dp-eda, and removed in the release after 1.2.3. Data-checking sweep over a new build: one small panel per variable against operation year, to find coding errors, drift and missingness. Not a manuscript figure. | `add_job("dp", subject, type, qualifier = "postage")` |
@@ -94,7 +94,7 @@ places each one; you do not choose the folder.
 
 | Delivery | Template | Description | Scaffold |
 |:---|:---|:---|:---|
-| 🟢 Shipped | `dp-gfup` | The goodness-of-follow-up figure: each patient’s follow-up against operation year, alive in blue and dead in red, under the diagonal the close date allows. | `add_job("dp", subject, type, qualifier = "gfup")` |
+| 🟢 Shipped | `dp-gfup` | Deprecated in favor of dc-gfup, which draws the same figure beside its follow-up tables. The goodness-of-follow-up figure: each patient’s follow-up against operation year, alive in blue and dead in red, under the diagonal the close date allows. | `add_job("dp", subject, type, qualifier = "gfup")` |
 | 🟢 Shipped | `dp-trends` | How the cohort changed over the years of operation: the share with a characteristic, or the level of a measurement, year by year with a smooth. | `add_job("dp", subject, type, qualifier = "trends")` |
 | 🟡 In progress | `hp` | Nomogram and hazard figures, read from the ac life table and the hz fit rather than recomputed. | `add_job("hp", subject, type)` |
 | 🟢 Shipped | `hs-concordance` | Every patient predicted through every treatment group’s hm model at one horizon, with an optional table of actual against best-predicted treatment. | `add_job("hs", subject, type, qualifier = "concordance")` |
