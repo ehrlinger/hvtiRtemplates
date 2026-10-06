@@ -15,7 +15,8 @@
 #' A separate test checks that every template directory names a taxonomy
 #' folder, including when the catalog is absent.
 #'
-#' @return A data frame with columns \code{name}, \code{prefix},
+#' @return A data frame, of class \code{hvti_template_list}, with columns
+#'   \code{name}, \code{prefix},
 #'   \code{qualifier}, \code{folder}, \code{call} and \code{file}.
 #'   \code{call} is the \code{\link{add_job}} call that scaffolds the
 #'   template, with only the arguments it requires and runnable as printed,
@@ -25,9 +26,16 @@
 #'   taxonomy name with the directory's ordering digits stripped, so
 #'   \code{20_distributions} reports as \code{distributions}.
 #'   \code{qualifier} is \code{NA} for a prefix carrying a single template.
+#'   Printed whole, it shows only \code{name}, \code{prefix},
+#'   \code{qualifier} and \code{folder}, since \code{call} and \code{file}
+#'   would wrap every row; both are still in the data, and a selection of
+#'   columns prints as selected.
 #' @export
 #' @examples
 #' tl <- template_list()
+#' # Printed whole: name, prefix, qualifier and folder.
+#' tl
+#'
 #' # Every template, where its job is written, and the call that scaffolds it.
 #' tl[, c("name", "folder", "call")]
 #'
@@ -46,7 +54,7 @@ template_list <- function() {
                          stringsAsFactors = FALSE)
   }
 
-  data.frame(
+  tl <- data.frame(
     name      = sub("[.]qmd$", "", basename(files)),
     prefix    = fields$prefix,
     qualifier = fields$qualifier,
@@ -55,7 +63,27 @@ template_list <- function() {
     file      = files,
     stringsAsFactors = FALSE
   )
+  class(tl) <- c("hvti_template_list", class(tl))
+  tl
 }
+
+#' @rdname template_list
+#' @param x A data frame returned by \code{template_list()}.
+#' @param ... Passed to the data frame print method.
+#' @export
+print.hvti_template_list <- function(x, ...) {
+  # The full listing prints the four columns a reader scans to find a template.
+  # `call` and `file` are long enough to wrap every row, so they stay in the
+  # data and out of the default view. Any other selection of columns, such as
+  # tl[, c("name", "call")], is one the caller asked for, and prints as is.
+  if (!identical(names(x), .template_list_columns)) return(NextMethod())
+  print(as.data.frame(unclass(x)[.template_list_shown], stringsAsFactors = FALSE), ...)
+  cat("# ", nrow(x), " templates; `call` and `file` not shown. Read them with $call and $file.\n", sep = "")
+  invisible(x)
+}
+
+.template_list_columns <- c("name", "prefix", "qualifier", "folder", "call", "file")
+.template_list_shown <- c("name", "prefix", "qualifier", "folder")
 
 # The add_job() call that scaffolds `file`, runnable as printed. The full name
 # selects the template on its own, qualified or not, so subject and type are

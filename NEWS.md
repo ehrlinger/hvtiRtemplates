@@ -1,5 +1,10 @@
 # hvtiRtemplates (unreleased)
 
+* `template_list()` prints only `name`, `prefix`, `qualifier` and `folder`, so the
+  listing fits the console. `call` and `file` are still in the data frame: read them
+  with `$call` and `$file`, or print a selection such as `tl[, c("name", "call")]`,
+  which prints as selected.
+
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its
   `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part

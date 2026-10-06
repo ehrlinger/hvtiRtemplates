@@ -1,6 +1,7 @@
 test_that("template_list() has the expected shape", {
   tl <- template_list()
   expect_s3_class(tl, "data.frame")
+  expect_s3_class(tl, "hvti_template_list")
   expect_named(tl, c("name", "prefix", "qualifier", "folder", "call", "file"))
 })
 
@@ -902,4 +903,28 @@ test_that("an unqualified hs is refused, naming both job types", {
   expect_identical(basename(template_path("hs", qualifier = "concordance")), "hs-concordance.qmd")
   dir <- withr::local_tempdir()
   expect_error(add_job("hs", subject = "dead", type = "x", dir = dir), "concordance")
+})
+
+test_that("template_list() prints its summary columns, and a selection as selected", {
+  tl <- template_list()
+  full <- capture.output(print(tl))
+  header <- full[[1L]]
+  expect_match(header, "name")
+  expect_match(header, "folder")
+  expect_no_match(header, "call|file")
+  expect_match(full[[length(full)]], paste0("# ", nrow(tl), " templates; `call` and `file` not shown"))
+  capture.output(vis <- withVisible(print(tl)))
+  expect_false(vis$visible)
+  # The columns are still there to read.
+  expect_true(all(c("call", "file") %in% names(tl)))
+  expect_identical(tl$call[[1L]], template_list()$call[[1L]])
+
+  # A selection of columns is the caller's, and prints whole.
+  # Wide enough to wrap, so the `call` header need not be on the first line.
+  picked <- capture.output(print(tl[, c("name", "call")]))
+  expect_match(paste(picked, collapse = "\n"), "add_job\\(")
+  expect_no_match(picked[[length(picked)]], "not shown")
+  # A selection of rows keeps the compact view.
+  rows <- capture.output(print(tl[1:2, ]))
+  expect_no_match(rows[[1L]], "call")
 })
