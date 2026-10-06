@@ -586,9 +586,47 @@ Reporting stage 1 in that case is a **deliberate divergence** from the SAS
 evidence for it. If `free_without_se` is 0 for stage 2 and `pd` is `TRUE`,
 prefer stage 2.
 
+**Whichever you report, the render stops below if any of its free parameters
+has no standard error**, and names the phase and covariates involved. A fit
+without a variance matrix gives `hs` no limits to work with.
+
 ```{r}
 #| label: edit-reported
 reported <- stage1   # EDIT: stage2 if the table above favors it
+```
+
+```{r}
+#| label: guard-variance
+# A fit can degenerate -- a phase runs off, its log_mu heading for -850 -- and
+# still report converged = TRUE. It then carries no variance matrix, vcov()
+# returns a scalar NA, and the only sign is a TemporalHazard warning the fits
+# above suppress. Saved anyway, hm.rds fails far from the cause: hs cannot put
+# limits on a prediction from it. So stop here, naming what is involved.
+#
+# FIXED parameters carry an all-NA row in vcov() by design; only FREE ones are
+# checked. A negative variance is as unusable as a missing one.
+.v <- vcov(reported)
+.free <- names(coef(reported))[!as.logical(reported$fit$fixed_mask)]
+.var <- if (is.matrix(.v) && nrow(.v) == length(coef(reported))) {
+  stats::setNames(diag(.v), names(coef(reported)))[.free]
+} else {
+  stats::setNames(rep(NA_real_, length(.free)), .free)
+}
+.no_se <- .free[!(is.finite(.var) & .var >= 0)]
+if (length(.no_se)) {
+  .phase <- sub("[.].*$", "", .no_se)
+  stop(if (is.matrix(.v)) "The reported fit has no finite standard error for "
+       else "The reported fit has no variance matrix, so no standard error for ",
+       length(.no_se), " of its ", length(.free), " free parameters. By phase: ",
+       paste0(unique(.phase), " (",
+              vapply(split(sub("^[^.]*[.]", "", .no_se), factor(.phase, unique(.phase))),
+                     paste, character(1), collapse = ", "), ")", collapse = "; "),
+       ". Covariates among them: ",
+       if (length(setdiff(.no_se, SHAPE_PARAMS))) paste(setdiff(.no_se, SHAPE_PARAMS), collapse = ", ") else "none",
+       ". A phase whose log_mu has run off has left the model; check its estimate. Refit with fewer ",
+       "candidate covariates in that phase, or with its shapes fixed.",
+       call. = FALSE)
+}
 ```
 
 ## Estimates
@@ -622,24 +660,6 @@ est <- data.frame(
   row.names = NULL
 )
 knitr::kable(est[order(-abs(est$estimate)), ], digits = 6, row.names = FALSE)
-```
-
-```{r}
-#| label: estimates-warning
-#| results: asis
-# unnumbered: its child chunk carries its own label and caption
-missing_se <- sum(is.na(est$se))
-if (missing_se > 0) {
-  no_se <- data.frame(
-    warning = paste(missing_se, "covariate(s) have NO standard error.",
-                    "The Hessian is not positive-definite in those directions.")
-  )
-  .fence <- strrep("`", 3)
-  cat(knitr::knit_child(text = c(
-    paste0(.fence, "{r}"), "#| label: tbl-estimates-no-se",
-    "#| tbl-cap: \"Covariates without a standard error\"", "knitr::kable(no_se)", .fence
-  ), envir = environment(), quiet = TRUE), sep = "\n")
-}
 ```
 
 ## Selection
