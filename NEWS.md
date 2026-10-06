@@ -1,5 +1,10 @@
 # hvtiRtemplates (unreleased)
 
+* Now requires R 4.4.0 or newer, up from 4.1.0, to match the rest of the
+  HVTI family. `hvtiR::install()` installs the members together, and several
+  already required 4.4.0, so on an older R the install failed whatever this
+  package declared.
+
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its
   `call`, find the `EDIT:` markers three ways, draft and final renders, rendering part
