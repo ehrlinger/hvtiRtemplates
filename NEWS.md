@@ -17,6 +17,14 @@
   variable. Each variable's extremes stay in their own table.
 * A conditional table no longer leaves a gap in the table numbering when it is not
   shown.
+* A part-built job renders. Give a chunk the option `skip` with the reason in quotes,
+  `#| skip: "waiting on the corrected coding"`, to leave it out, or call the new
+  `stop_here()` in a chunk to leave out everything below it. This replaces commenting
+  unfinished sections out, which the SAS jobs did with a skip macro. A draft lists
+  every skipped chunk and stop, by line, in a PARTIAL callout at the top of the report,
+  and records them in its provenance. A final render, `render_job(final = TRUE)`,
+  refuses them as it refuses an unresolved `EDIT:` marker. Every template carries a
+  new `guard-partial` chunk, just after its `EDIT:` guard, that does this.
 * `template_list()` gains a `call` column: the `add_job()` call that scaffolds each
   template, with only the arguments it requires and runnable as printed, e.g.
   `add_job("dc-gfup", subject = "cohort", type = "eda")`. The full name selects the
