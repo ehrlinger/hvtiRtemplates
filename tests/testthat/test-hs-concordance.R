@@ -149,6 +149,6 @@ test_that("a group model without a variance matrix stops the predictions, naming
   saveRDS(art, path)
   err <- tryCatch(concordance_run(e$root, concordance_choices(e$data)), error = conditionMessage)
   expect_match(err, "No confidence limits from the model(s) for b:", fixed = TRUE)
-  expect_match(err, "no variance matrix", fixed = TRUE)
+  expect_match(err, "no usable variance matrix", fixed = TRUE)
   expect_no_match(err, "missing value where TRUE/FALSE needed", fixed = TRUE)
 })

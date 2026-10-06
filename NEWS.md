@@ -7,8 +7,10 @@
   later in a downstream job (#228). The table that warned of covariates without a
   standard error is gone, since the stop now covers it.
 * `hs-concordance` stops in its predictions when a group model gives no confidence
-  limits, naming the model and saying its `hm` fit has no variance matrix. It used to
-  stop later in the decision with "missing value where TRUE/FALSE needed" (#227).
+  limits, naming the model and saying its `hm` fit has no usable variance matrix. It
+  used to stop later in the decision with "missing value where TRUE/FALSE needed".
+  A job that has deleted the decision now stops too, where it used to save
+  predictions without limits (#227).
 
 * New tutorial, *Work a job, from template to final report*, for a study author new to
   the package: find a template in the gallery or `template_list()`, add it with its

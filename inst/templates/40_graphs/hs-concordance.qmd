@@ -502,16 +502,18 @@ if (any(.bad)) {
   stop(sum(.bad), " of ", nrow(pred), " predictions are NA or non-finite, from model(s) ",
        paste(unique(pred$model[.bad]), collapse = ", "), ".", call. = FALSE)
 }
-# A finite fit with NA limits is a model whose fit carries no variance matrix:
-# predict() warns once and returns every limit as NA. Left alone, those NAs
-# reach the decision below, which stops on "missing value where TRUE/FALSE
-# needed" and names neither the model nor the cause.
+# A finite fit with NA limits comes from a model whose fit carries no usable
+# variance matrix: predict() warns once and returns the limits as NA. Left
+# alone, those NAs reach the decision below, which stops on "missing value
+# where TRUE/FALSE needed" and names neither the model nor the cause. This stops
+# even where the decision is deleted: predictions without limits are not a
+# result to save.
 .no_cl <- !is.finite(pred$lower) | !is.finite(pred$upper)
 if (any(.no_cl)) {
   stop("No confidence limits from the model(s) for ", paste(unique(pred$model[.no_cl]), collapse = ", "),
-       ": the hm fit has no variance matrix, so no difference between groups can ",
-       "be judged. Refit that group's hm model with fewer candidate covariates ",
-       "or with its shapes fixed.", call. = FALSE)
+       ": the hm fit has no usable variance matrix, missing or with a standard error ",
+       "that is not finite, so no difference between groups can be judged. Refit that ",
+       "group's hm model with fewer candidate covariates or with its shapes fixed.", call. = FALSE)
 }
 stopifnot(all(pred$fit >= 0 & pred$fit <= 1))
 
