@@ -8,6 +8,29 @@
   `hs-concordance` keeps its own `EXPECTED`: it predicts for a cohort it chooses,
   spanning several `hm` models, so no single upstream job has its counts.
 
+* The *Work a job* and *Adopt an existing study* articles say to always render a job, never
+  to run its chunks by hand: Run All works in the current R session, where a setting
+  left by another job can stand in for this job's and read the wrong patients. To
+  look at the data, render a draft; to see only the top of a long job, use
+  `stop_here()`.
+
+* An `ANALYSIS_SET` the study has not built is named, with the fix: set
+  `ANALYSIS_SET <- NULL` to read the registered study dataset. This covers every template
+  reading through `read_job_data()` and the deprecated `dp-postage`, which reads its
+  analysis set itself. They used to stop with a missing-file path that named neither,
+  or, without hvtiRdatabuild installed, ask for it (#173).
+
+* New template, `dc-stddiff`: the balance table. It reports the standardized
+  difference of each baseline variable between two groups, from
+  `hvtiRpropensity::ps_stddiff()`, the port of the 2019 `%stddiff` macro. The
+  comparison is unadjusted, plus the matched set when `MATCH` names its column and
+  matching weights when `WEIGHT` does. It counts the variables above a threshold
+  (0.10 by default) and draws the differences with `hvtiPlotR::hv_balance()`. `N_PERM`
+  adds the `%stddiffci` permutation reference through `ps_stddiff_perm()`. A study
+  with three or more arms runs a job per pair, keeping the pair with `WHERE` and
+  naming its group 1 with `GROUP_1`. Needs `hvtiRpropensity` 0.1.5 or later, which
+  the existing `Suggests` bound of 0.1.7 already covers (#216).
+
 * `hm` stops when the reported fit has no variance matrix, or when any of its free
   parameters has no finite standard error, instead of saving `hm.rds` with only a
   TemporalHazard warning in the log. The message names the phases and covariates

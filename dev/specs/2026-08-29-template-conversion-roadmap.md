@@ -44,7 +44,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**68 templates in scope**, of which 33 exist on disk.
+**68 templates in scope**, of which 34 exist on disk.
 
 ## By family
 
@@ -104,7 +104,7 @@ row has no template on disk.
 | `dc-dead` | queued | — | 171 | 0 | — |
 | `lg` | queued | 367 | 362 | 0 | — |
 | `rg` | queued | 45 | 45 | 0 | — |
-| `dc-stddiff` | queued | — | 120 | 0 | hvtiRpropensity#34 |
+| `dc-stddiff` | shipped | — | 120 | 0 | — |
 | `dc-trends` | queued | — | 43 | 0 | — |
 
 ### machine-learning (unscheduled)
@@ -176,11 +176,11 @@ Members: `ac`, `hm`, `hp`, `hs-concordance`, `hs-setup`, `hz`
 
 **Complete.**
 
-### propensity-matching — 7/12
+### propensity-matching — 8/12
 
 Members: `bd`, `bl`, `cm`, `dc-stddiff`, `hp`, `lm-balancing_count`, `lm-propensity_binary`, `lm-propensity_nominal`, `lm-propensity_ordinal`, `lp`, `rm`, `rp`
 
-Outstanding: `cm`, `dc-stddiff`, `lp`, `rm`, `rp`.
+Outstanding: `cm`, `lp`, `rm`, `rp`.
 
 <!-- END GENERATED -->
 

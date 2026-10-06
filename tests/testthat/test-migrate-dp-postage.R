@@ -515,3 +515,20 @@ test_that("naming the deprecated dp-postage in migrate_job() warns and writes a 
                                     prefix = "dp", dir = other), class = "hvtiRtemplates_deprecated")
   expect_identical(basename(job), "cohort-eda-dp-eda.qmd")
 })
+
+test_that("postage names an analysis set the study has not built (#173)", {
+  # dp-postage reads its analysis set outside read_job_data(), and defaults
+  # ANALYSIS_SET to "eda", which a freshly registered study does not have.
+  root <- withr::local_tempdir()
+  suppressMessages(hvtiRutilities::study_setup(root, "Postage", 1L, adopt = TRUE))
+  utils::write.csv(data.frame(ccfid = 1:3, year = 2001:2003),
+                   file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv"))
+  env <- list2env(list(.root = root, DATASET = "study", ANALYSIS_SET = "eda",
+                       study_config = hvtiRutilities::study_config, study_dir = hvtiRutilities::study_dir,
+                       read_built = hvtiRutilities::read_built))
+  err <- tryCatch(eval(postage_chunk(postage_template(), "data"), env), error = conditionMessage)
+  expect_match(err, "ANALYSIS_SET names `eda`, an analysis set this study has not built", fixed = TRUE)
+  expect_match(err, "ANALYSIS_SET <- NULL", fixed = TRUE)
+  expect_no_match(err, "hvtiRdatabuild >= 0.2.1|missing file")
+})

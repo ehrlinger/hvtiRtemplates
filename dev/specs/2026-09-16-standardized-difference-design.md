@@ -1,7 +1,10 @@
 # Standardized differences, their reference intervals, and matching-weight variance
 
 **Date:** 2026-09-16
-**Status:** design, not started. No code in any package yet.
+**Status:** functions shipped in `hvtiRpropensity` 0.1.5 (`ps_stddiff()` #35,
+`ps_stddiff_perm()` #37, `ps_mw_var()` #38, merged 2026-09-16). The
+`dc-stddiff` template shipped 2026-10-06 (#216) and calls the first two; the
+`%mw_var` template's prefix is still open (§10, question 3).
 **Supersedes:** the owner named for `dc-stddiff` in
 `2026-09-02-dp-dc-decomposition-design.md` §5,
 `2026-09-09-eda-templates-design.md` §11, and
