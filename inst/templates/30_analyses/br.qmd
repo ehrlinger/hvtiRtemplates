@@ -161,6 +161,17 @@ if (!is.null(.cur)) {
 }
 ```
 
+```{r}
+#| label: guard-partial
+#| results: asis
+# unnumbered: a callout, printed only when part of the job is left out
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one here; a
+# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
+hvtiRtemplates:::.guard_partial(knitr::current_input())
+```
+
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
