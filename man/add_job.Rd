@@ -14,12 +14,14 @@ qualifier, so \code{qualifier} must then be left \code{NULL}.}
 
 \item{subject}{Grouping topic for the job set, e.g. \code{"death"} or
 \code{"cohort"}. A subject names a statistical endpoint only when the
-job analyses one. Must
+job analyses one. Your choice: there is no list of valid values, and
+every job of one analysis should share it (see Details). Must
 match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
 \code{.} separates the extension, so neither may appear here.}
 
 \item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.
-Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
+Your choice, like \code{subject}, and shared the same way. Must match
+\code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
 
 \item{dir}{The study root to write into. The taxonomy folder beneath it is
 created if it does not exist.}
@@ -43,6 +45,32 @@ existing job: a job file accumulates a study's edits, and silently replacing
 one would discard them.
 }
 \details{
+\strong{What each argument decides.} \code{prefix} chooses the template,
+together with \code{qualifier} where a prefix carries several job types.
+\code{subject} and \code{type} are yours to choose. The catalog holds no
+list of valid values for either, only the rule that each matches
+\code{^[A-Za-z0-9_]+$}. They are more than a filename, though. Together
+they name the job's set, and the set is used in four places:
+\itemize{
+  \item the job's filename, \code{<subject>-<type>-<prefix>[-<qualifier>].qmd};
+  \item the job's own \code{SUBJECT} and \code{TYPE} lines, which
+    \code{add_job()} rewrites to your values;
+  \item the render, which stops when the filename and those two lines
+    disagree, so a job renamed by hand cannot quietly write its results
+    into another set;
+  \item the folder the job saves its results in, a \code{<subject>-<type>}
+    folder under the study's \code{estimates} (and, for some templates,
+    \code{graphs}), which is where the next job in the chain looks for
+    them.
+}
+The last of these is the one that bites. \code{hm} reads the
+\code{hz.rds} that \code{hz} saved, and finds it only when both jobs
+carry the same subject and type. Give every job of one analysis the same
+pair, e.g. \code{subject = "death", type = "hz"} for \code{ac}, \code{hz},
+\code{hm} and \code{hp}, and give a different analysis a different pair.
+The \code{call} column of \code{\link{template_list}} shows each template's
+own example values, which are a starting point, not a requirement.
+
 A job is identified by three or four fields. One or two come from the
 template, its \code{prefix} and, where the prefix carries several job types,
 its \code{qualifier}; two come from the caller. The pair

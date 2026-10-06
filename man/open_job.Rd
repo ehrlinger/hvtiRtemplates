@@ -14,12 +14,14 @@ qualifier, so \code{qualifier} must then be left \code{NULL}.}
 
 \item{subject}{Grouping topic for the job set, e.g. \code{"death"} or
 \code{"cohort"}. A subject names a statistical endpoint only when the
-job analyses one. Must
+job analyses one. Your choice: there is no list of valid values, and
+every job of one analysis should share it (see Details). Must
 match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
 \code{.} separates the extension, so neither may appear here.}
 
 \item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.
-Must match \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
+Your choice, like \code{subject}, and shared the same way. Must match
+\code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
 
 \item{dir}{Character. Any directory inside the study. Defaults to the
 working directory.}

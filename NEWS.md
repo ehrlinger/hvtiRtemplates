@@ -1,5 +1,12 @@
 # hvtiRtemplates (unreleased)
 
+* The `add_job()` help page and the template gallery now say plainly what `subject` and
+  `type` are: names you choose, with no list to pick from, that name the job file, its
+  `SUBJECT` and `TYPE` lines and the folder its results are saved in. Every job of one
+  analysis should share them, because the next job in a chain finds the last one's
+  results by that pair: `hm` reads `hz.rds` only when it carries the same subject and
+  type as `hz`.
+
 * `template_list()` prints only `name`, `prefix`, `qualifier` and `folder`, so the
   listing fits the console. `call` and `file` are still in the data frame: read them
   with `$call` and `$file`, or print a selection such as `tl[, c("name", "call")]`,
