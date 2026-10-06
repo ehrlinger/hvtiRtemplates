@@ -14,6 +14,8 @@
   : Read a job's data, keep its rows, and record what was done
 - [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
   : Render a job
+- [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md)
+  : Render a job only down to this point
 - [`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md)
   : Catalog of analysis templates owed by this package
 - [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
