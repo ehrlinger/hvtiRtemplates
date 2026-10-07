@@ -38,6 +38,13 @@ publication fails after an output changes, the hooks expose a prior sidecar
 only when its recorded output hash still matches. Otherwise they withhold the
 sidecar and retain its recovery backup with a warning.
 
+Render a job rather than running its chunks in the console: a render starts
+in a clean session, so the report comes from this job alone. A console run,
+chunk by chunk or with Run All, still gets through every chunk but the last.
+That chunk records provenance, which needs a render, so a console run stops
+there with an error of class \code{hvtiRtemplates_not_rendered} that says to
+render the job. Everything computed above it is still in the session.
+
 One job renders at a time in a study. A render started while another is
 still running in the same study stops with a message naming the running
 Quarto process; render again once it finishes. A lock left by a render that
