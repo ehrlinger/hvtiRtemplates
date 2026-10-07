@@ -146,11 +146,20 @@ test_that("a stop that cannot run is not listed", {
   # A stop_here() in a skipped chunk, or in one that does not evaluate, is never
   # reached, so listing it would misstate what the report leaves out.
   src <- c("```{r}", "#| skip: \"later\"", "hvtiRtemplates::stop_here()", "```",
-           "```{r}", "#| eval: !expr FALSE", "stop_here()", "```",
-           "```{r}", "#| eval: F", "stop_here()", "```")
+           "```{r}", "#| eval: !expr FALSE", "stop_here()", "```")
   points <- .partial_points(src)
   expect_identical(points$kind, "skip")
   expect_identical(points$line, 2L)
+  # Every false spelling knitr's YAML parser accepts, and nothing it does not.
+  # Raised by Codex on #257 for `off`.
+  for (v in c("false", "FALSE", "no", "off", "Off", "n", "!expr FALSE", "!expr F")) {
+    expect_identical(nrow(.partial_points(c("```{r}", paste("#| eval:", v), "stop_here()", "```"))), 0L, info = v)
+  }
+  # Read as knitr reads them, these run, so the stop stays listed: a bare F is the
+  # string "F" to the parser, and a dynamic !expr may well be TRUE.
+  for (v in c("true", "yes", "on", "F", "!expr figure_drawn")) {
+    expect_identical(.partial_points(c("```{r}", paste("#| eval:", v), "stop_here()", "```"))$kind, "stop", info = v)
+  }
 })
 
 test_that("the guard leaves no global option set and its hook ignores other documents", {

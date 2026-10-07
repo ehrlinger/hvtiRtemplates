@@ -94,9 +94,9 @@ stop_here <- function(envir = parent.frame()) {
     }
     if (!executable) next
     if (header && grepl("^#\\|", line)) {
-      # A chunk that will not run holds no stop: eval false, in any spelling
-      # knitr accepts, or a skip, which the skip hook turns into eval false.
-      if (grepl("^#\\|\\s*eval:\\s*(false|FALSE|F|no|!expr\\s+(FALSE|F))\\s*$", line)) runs <- FALSE
+      # A chunk that will not run holds no stop: eval false, or a skip, which
+      # the skip hook turns into eval false.
+      if (grepl("^#\\|\\s*eval:", line)) runs <- .eval_runs(sub("^#\\|\\s*eval:", "", line))
       if (grepl(skip_re, line)) {
         skips <- c(skips, i)
         runs <- FALSE
@@ -127,6 +127,20 @@ stop_here <- function(envir = parent.frame()) {
 # knitr restores options() after a knit but not opts_hooks, and a package
 # should not leave the user's options changed.
 .partial_state <- new.env(parent = emptyenv())
+
+# Whether a chunk's `eval:` value lets it run, read as knitr reads it. The value
+# is parsed as YAML, the parser knitr uses for `#|` options, so every false
+# spelling it accepts counts (false, no, off, n, in any case) and nothing else
+# does: a bare F is the string "F" to that parser, not FALSE. An `!expr` is not
+# evaluated here, since scanning must not run the job's code: only a literal
+# FALSE or F counts as false, and any other expression is taken to run, so a
+# stop that might be reached stays listed. Raised by Codex on #257.
+.eval_runs <- function(value) {
+  value <- trimws(value)
+  if (grepl("^!expr\\s", value)) return(!(trimws(sub("^!expr\\s+", "", value)) %in% c("FALSE", "F")))
+  parsed <- tryCatch(yaml::yaml.load(paste0("eval: ", value), eval.expr = FALSE)$eval, error = function(e) NULL)
+  !identical(parsed, FALSE)
+}
 
 # Called by every template's guard-partial chunk, just after the EDIT: guard.
 # Registers the `skip` chunk option, then lists the job's partial-render points

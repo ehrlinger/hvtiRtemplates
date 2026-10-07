@@ -7,8 +7,8 @@
   shape a g3 `constraint` derives is left free, since it may not be fixed.
 
 * A part-built job's report no longer lists a `stop_here()` that cannot run: one in a
-  skipped chunk, or in a chunk that does not evaluate (`eval: false`, `F`, `no` or
-  `!expr FALSE`).
+  skipped chunk, or in a chunk whose `eval` is false as knitr reads it (`false`, `no`,
+  `off` or `n` in any case, or `!expr FALSE`).
 
 * Rendering a part-built job leaves the R session's options as they were. The record of
   skipped chunks is kept inside the package, and the `skip` chunk option acts only on
