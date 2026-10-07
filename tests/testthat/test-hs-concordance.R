@@ -1,11 +1,16 @@
 # hs-concordance: every patient through every group's hm model, as the
 # design in the 2026-09-30 hs-concordance spec describes.
 
+# Every test reads one estate, fitted on first use and removed when the file
+# ends. A test that writes into the study works on a copy of it.
+estate <- concordance_estate_once(environment())
+
 test_that("the fixture fits one hm model per group, in its own set", {
+  skip_on_cran()
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
-  e <- concordance_estate()
+  e <- estate()
   for (g in c("a", "b")) {
     path <- file.path(hvtiRutilities::study_dir("estimates", e$root), paste0("dead-", g), "hm.rds")
     expect_true(file.exists(path), info = g)
@@ -17,7 +22,7 @@ test_that("hs-concordance predicts every patient through every model and saves n
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
-  e <- concordance_estate()
+  e <- concordance_copy(estate())
   env <- concordance_run(e$root, concordance_choices(e$data))
   path <- file.path(hvtiRutilities::study_dir("estimates", e$root), "dead-ab", "hs-concordance.rds")
   art <- readRDS(path)
@@ -38,7 +43,7 @@ test_that("hs-concordance refuses what would make the comparison meaningless", {
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
-  e <- concordance_estate()
+  e <- estate()
   core <- concordance_core
   bad <- function(..., msg) {
     expect_error(concordance_run(e$root, concordance_choices(e$data, ...), core), msg)
@@ -61,7 +66,7 @@ test_that("a horizon beyond one model's follow-up names that model alone", {
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
-  e <- concordance_estate()
+  e <- estate()
   env <- concordance_run(e$root, concordance_choices(e$data), c("tbl-data", "cohort", "models"))
   last <- vapply(env$models, function(a) max(a$reported$data$frame$iv_dead), numeric(1L))
   h <- mean(last)
@@ -76,7 +81,7 @@ test_that("a model no patient received is reported, not refused", {
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
-  e <- concordance_estate()
+  e <- estate()
   choices <- concordance_choices(e$data[e$data$group == "a", ], WHERE = quote(group == "a"))
   env <- concordance_run(e$root, choices, concordance_core)
   expect_setequal(unique(env$pred$model), c("a", "b"))
@@ -86,7 +91,7 @@ test_that("the decision calls a choice optimal only when the limits separate it"
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
-  e <- concordance_estate()
+  e <- estate()
   env <- concordance_run(e$root, concordance_choices(e$data), concordance_core)
   n <- nrow(e$data)
   # Patient 1: an exact tie. Patient 2: a near-tie inside the limits.
@@ -129,7 +134,7 @@ test_that("deleting the decision leaves a job that saves", {
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
-  e <- concordance_estate()
+  e <- concordance_copy(estate())
   concordance_run(e$root, concordance_choices(e$data), c(concordance_core, "save"))
   art <- readRDS(file.path(hvtiRutilities::study_dir("estimates", e$root), "dead-ab", "hs-concordance.rds"))
   expect_null(art$decision)
@@ -140,7 +145,7 @@ test_that("a group model without a variance matrix stops the predictions, naming
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
-  e <- concordance_estate()
+  e <- concordance_copy(estate())
   # Model b as a fit that lost its variance matrix: predict() then returns a
   # finite fit with every limit NA.
   path <- file.path(hvtiRutilities::study_dir("estimates", e$root), "dead-b", "hm.rds")
@@ -157,7 +162,7 @@ test_that("limits undefined at a survival of 1 are not reported as a missing var
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
-  e <- concordance_estate()
+  e <- estate()
   # At a horizon of 1e-300 every prediction rounds to survival 1, where the logit limits are
   # undefined, though both fits keep their variance matrices. Raised by Codex
   # on #251: the first guard blamed the variance matrix for this too.

@@ -52,14 +52,30 @@ rf_study <- function(data = data.frame(ccfid = 1:2, time = c(1, 2), event = c(1,
 # study author's edits would. `setup` is never run: it resolves the study root
 # from the file being rendered, so the caller sets env$.root and attaches the
 # packages instead.
+#
+# Before the `fig-dependence-varpro` chunk, a gg_partial_varpro() on a coarser
+# grid is put in `env`, where the chunk finds it ahead of ggRandomForests' own:
+# see rf_gg_partial_varpro.
 rf_run <- function(prefix, qualifier, labels, env, choices = list()) {
   src <- readLines(template_path(prefix, qualifier), warn = FALSE)
   for (label in labels) {
+    if (identical(label, "fig-dependence-varpro")) assign("gg_partial_varpro", rf_gg_partial_varpro, envir = env)
     suppressMessages(eval(parse(text = rf_chunk(src, label)), envir = env))
     if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   }
   invisible(env)
 }
+
+# gg_partial_varpro() as the explain templates call it, but evaluating each
+# continuous predictor at 25 grid points rather than partialpro()'s default
+# 100. The grid is not a study choice, so no template sets it, and each point
+# is a prediction from VarPro's 500-tree forest: at 100 points the explain
+# tests spent about 80 of their 110 seconds here. VarPro's own fit, and so the
+# variables it keeps, is left as the template runs it; only the curve is
+# coarser, as NTREE = 50 makes the study's forest smaller. Its environment is
+# the base one, so a saved object that refers to it carries no test state.
+rf_gg_partial_varpro <- function(...) ggRandomForests::gg_partial_varpro(..., nvirtual = 25L)
+environment(rf_gg_partial_varpro) <- baseenv()
 
 # Version floors verified end-to-end on 2026-09-19. Keyed by package name so
 # a package a template does not use is never looked up here.
@@ -236,9 +252,42 @@ rf_files_holding <- function(dir, ids) {
   files <- list.files(dir, full.names = TRUE)
   held <- vapply(files, function(f) {
     bytes <- rf_rds_bytes(f)
-    any(vapply(ids, function(v) rf_bytes_hold(bytes, v), logical(1L)))
+    rf_bytes_hold_any(bytes, ids)
   }, logical(1L))
   basename(files[held])
+}
+
+# TRUE when `bytes` hold any of `values` in either encoding rf_bytes_hold()
+# searches for: the same answer as asking it of each value in turn, in one scan
+# per encoding rather than one per value. A forest file runs to megabytes, and
+# searching it once per patient took seconds per file. The patterns of one
+# length share a leading run of bytes, as identifiers from one series do; each
+# place that run occurs is checked against the whole patterns. A run that could
+# overlap itself could hide a match from that search, so then, or when the
+# patterns share no run at all, every pattern is searched for on its own.
+rf_bytes_hold_any <- function(bytes, values) {
+  patterns <- c(
+    lapply(values, function(v) charToRaw(format(v, scientific = FALSE))),
+    lapply(values, function(v) writeBin(as.double(v), raw(), endian = "big"))
+  )
+  for (same in split(patterns, lengths(patterns))) {
+    width <- length(same[[1L]])
+    rows <- do.call(rbind, same)
+    varies <- which(apply(rows, 2L, function(col) any(col != col[[1L]])))
+    run <- rows[1L, seq_len(if (length(varies)) varies[[1L]] - 1L else width)]
+    overlaps <- any(vapply(seq_len(max(length(run) - 1L, 0L)), function(k) {
+      identical(run[seq_len(k)], run[(length(run) - k + 1L):length(run)])
+    }, logical(1L)))
+    if (!length(run) || overlaps) {
+      if (any(vapply(same, function(p) length(grepRaw(p, bytes, fixed = TRUE)) > 0L, logical(1L)))) return(TRUE)
+      next
+    }
+    at <- grepRaw(run, bytes, fixed = TRUE, all = TRUE)
+    at <- at[at + width - 1L <= length(bytes)]
+    found <- vapply(at, function(i) paste(bytes[i:(i + width - 1L)], collapse = ""), character(1L))
+    if (any(found %in% apply(rows, 1L, paste, collapse = ""))) return(TRUE)
+  }
+  FALSE
 }
 
 # ---- the bootstrap reports -------------------------------------------------------

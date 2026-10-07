@@ -94,6 +94,7 @@ test_that("the permutation reference skips the weighted comparison", {
 })
 
 test_that("dc-stddiff renders, figure and all", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.5")

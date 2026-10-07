@@ -32,7 +32,7 @@ lm_run <- function(qualifier, labels, env, choices = list()) {
 }
 
 lm_data <- function(n = 120L) {
-  set.seed(42)
+  withr::local_seed(42)
   d <- data.frame(
     ccfid = seq_len(n), id = seq_len(n), age = stats::rnorm(n), female = rep(0:1, length.out = n)
   )
@@ -70,7 +70,10 @@ lm_study <- function(.local_envir = parent.frame(), data = lm_data()) {
   root
 }
 
-lm_render_fixture <- function(qualifier, data = NULL, .local_envir = parent.frame()) {
+# Scaffold the `qualifier` job in a fresh study, work its EDIT: markers, and
+# render it through Quarto, or, with `render = FALSE`, evaluate its chunks in
+# this session (lm_eval_job).
+lm_render_fixture <- function(qualifier, data = NULL, render = TRUE, .local_envir = parent.frame()) {
   root <- tempfile("lm-study-")
   withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
   d <- if (is.null(data)) lm_data() else data
@@ -124,6 +127,36 @@ lm_render_fixture <- function(qualifier, data = NULL, .local_envir = parent.fram
     dir.create(model_dir, recursive = TRUE, showWarnings = FALSE)
     saveRDS(model, file.path(model_dir, "lm-binary.rds"))
   }
+  if (!render) {
+    return(list(root = root, job = job, env = lm_eval_job(job)))
+  }
   quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
   list(root = root, job = job, output = sub("[.]qmd$", ".html", job))
+}
+
+# Evaluate every chunk of the scaffolded `job` in order, from its directory and
+# in an environment of its own, as a render would, but in this R session: a
+# Quarto render starts Quarto, an R process and pandoc, three to five seconds
+# a job before any of the job's own code runs. knitr::current_input() names
+# the job, as it does in a render, so the chunks that read their own file do.
+# The `provenance` chunk is not run: it refuses to run outside the study's
+# Quarto project, on purpose, and test-template-provenance.R evaluates it for
+# every lm template. Returns the environment the chunks ran in.
+lm_eval_job <- function(job) {
+  src <- readLines(job, warn = FALSE)
+  labels <- setdiff(sub("^#\\| label: ", "", grep("^#\\| label: ", src, value = TRUE)), "provenance")
+  env <- new.env(parent = globalenv())
+  # `setup` attaches the job's packages, which a render does in a process of
+  # its own; they come off the search path again here.
+  attached <- search()
+  on.exit(for (pkg in rev(setdiff(search(), attached))) detach(pkg, character.only = TRUE), add = TRUE)
+  withr::local_dir(dirname(job))
+  testthat::local_mocked_bindings(
+    current_input = function(dir = FALSE) if (isTRUE(dir)) job else basename(job),
+    .package = "knitr"
+  )
+  utils::capture.output(for (label in labels) {
+    suppressMessages(eval(parse(text = lm_chunk(src, label)), envir = env))
+  })
+  env
 }

@@ -264,8 +264,8 @@ if (!is.null(job_data$attrition)) {
 
 One row per follow-up interval and patient group: every patient, those with the
 event and those censored. A patient with no event status counts among all
-patients only, and the report says how many there are. Quartiles are SAS
-`QNTLDEF=5`, as `proc_means()` computes them. Suspicious rows have missing
+patients only, and the report says how many there are. The 15th and 85th
+percentiles and the median are SAS `QNTLDEF=5`, as `proc_means()` computes them. Suspicious rows have missing
 event status or at least one missing, negative or zero interval. The local
 review prints at most `MAX_REVIEW_ROWS` of them, in source order, with only the
 selected fields. Identifiers stay out until you select one; check the output

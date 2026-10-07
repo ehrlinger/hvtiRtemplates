@@ -892,7 +892,7 @@
   }
   # A job rendered in part says so in its provenance: the skipped chunks and
   # the stop, as .guard_partial() recorded them for this render.
-  partial <- getOption("hvtiRtemplates.partial")
+  partial <- .partial_state$points
   if (length(partial)) extra$partial <- partial
   payload <- hvtiRutilities::capture_provenance(
     job = tools::file_path_sans_ext(basename(source)),

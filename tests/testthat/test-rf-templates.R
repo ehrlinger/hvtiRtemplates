@@ -78,12 +78,41 @@ dependence_labels <- c("fig-dependence-marginal", "fig-dependence-partial", "fig
 explain_labels <- c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select", "fig-varpro",
                     dependence_labels)
 
+rfs_explain_choices <- list(TOP_K = 2, TIMES = c(30, 90), SEED = 1)
+
+# A survival forest grown and explained once for this file, since an explain
+# is the slowest thing it runs: the first test that needs it builds it, and the
+# study is removed when the test run ends. A test that changes the study's
+# caches works on a copy of it, from rfs_explained_copy(), so the tests stay
+# independent of their order. The helpers it calls are defined in helper-rf.R,
+# which object_usage_linter cannot see from here.
+rfs_explained_cache <- new.env()
+# nolint start: object_usage_linter.
+rfs_explained <- function() {
+  if (is.null(rfs_explained_cache$env)) {
+    fit_env <- rf_fit_first("rfs", rfs_data(), rfs_choices, .local_envir = testthat::teardown_env())
+    env <- new.env(parent = globalenv())
+    env$.root <- fit_env$.root
+    rf_run("rfs", "explain", explain_labels, env, rfs_explain_choices)
+    rfs_explained_cache$env <- env
+  }
+  rfs_explained_cache$env
+}
+# nolint end
+
+# A copy of the shared study, with the caches its explain left, removed when
+# `.local_envir` ends.
+rfs_explained_copy <- function(.local_envir = parent.frame()) {
+  dest <- withr::local_tempdir("rf-study-copy-", .local_envir = .local_envir)
+  root <- rfs_explained()$.root
+  stopifnot(all(file.copy(list.files(root, all.files = TRUE, full.names = TRUE, no.. = TRUE), dest, recursive = TRUE)))
+  normalizePath(dest)
+}
+
 test_that("rfs-explain explains the saved forest without refitting", {
+  skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
-  fit_env <- rf_fit_first("rfs", rfs_data(), rfs_choices)
-  env <- new.env(parent = globalenv())
-  env$.root <- fit_env$.root
-  rf_run("rfs", "explain", explain_labels, env, list(TOP_K = 2, TIMES = c(30, 90), SEED = 1))
+  env <- rfs_explained()
 
   expect_identical(names(env$frame), c(env$forest$yvar.names, env$forest$xvar.names))
   expect_length(env$sel, 2L)
@@ -105,16 +134,15 @@ test_that("rfs-explain stops when no fit has run in its set", {
 })
 
 test_that("a changed TOP_K makes only the partial caches stale", {
+  skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
-  fit_env <- rf_fit_first("rfs", rfs_data(), rfs_choices)
-  env <- new.env(parent = globalenv())
-  env$.root <- fit_env$.root
-  choices <- list(TOP_K = 2, TIMES = c(30, 90), SEED = 1)
-  rf_run("rfs", "explain", explain_labels, env, choices)
+  # The copy carries the caches an explain at TOP_K = 2 left.
+  root <- rfs_explained_copy()
+  choices <- rfs_explain_choices
 
   choices$TOP_K <- 3
   again <- new.env(parent = globalenv())
-  again$.root <- fit_env$.root
+  again$.root <- root
   rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select", "fig-varpro"),
          again, choices)
   # "only" is the claim under test: the error must name rfs-partial, the
@@ -134,11 +162,17 @@ test_that("a changed TOP_K makes only the partial caches stale", {
 })
 
 test_that("PARTIAL_VARS names the dependence variables explicitly", {
+  skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
-  fit_env <- rf_fit_first("rfs", rfs_data(), rfs_choices)
+  # The shared study's importance and VarPro caches are reused; its partials,
+  # computed for the TOP_K choice, go, so these are computed for PARTIAL_VARS.
+  root <- rfs_explained_copy()
+  unlink(list.files(root, "^rfs-partial", recursive = TRUE, full.names = TRUE))
   env <- new.env(parent = globalenv())
-  env$.root <- fit_env$.root
-  chosen <- c("age", "karno")
+  env$.root <- root
+  # Not the two TOP_K picks (karno, celltype), so the choice is visibly the
+  # setting's; one is categorical, whose partial is cheap beside a continuous one.
+  chosen <- c("age", "celltype")
   rf_run("rfs", "explain", explain_labels, env,
          list(PARTIAL_VARS = chosen, TIMES = c(30, 90), SEED = 1))
 
@@ -149,9 +183,8 @@ test_that("PARTIAL_VARS names the dependence variables explicitly", {
 
 test_that("PARTIAL_VARS refuses a variable the forest was not grown on", {
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
-  fit_env <- rf_fit_first("rfs", rfs_data(), rfs_choices)
   env <- new.env(parent = globalenv())
-  env$.root <- fit_env$.root
+  env$.root <- rfs_explained_copy()
   expect_error(
     rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select"), env,
            list(PARTIAL_VARS = "not_a_variable", SEED = 1)),
@@ -451,7 +484,8 @@ test_that("every explain stops on a forest saved before the data contract, namin
 # ---- #203: no saved forest carries a patient identifier ------------------------
 
 test_that("the fit and explain jobs keyed on MRN save no MRN in any file", {
-  data <- rf_mrn_data()
+  skip_on_cran()
+  data <- rf_mrn_data(n = 60L)   # 60 patients search as surely as 120, in half the time
   for (prefix in rf_prefixes) {
     rf_skip_unless_stack(rf_template_packages(prefix, "explain"))
     fit <- rf_fit_in(prefix, data, globalenv())
@@ -468,11 +502,14 @@ test_that("the fit and explain jobs keyed on MRN save no MRN in any file", {
     # The search finds what is there: every MRN in the data as the job read it.
     read <- serialize(fit$job_data$data, NULL)
     expect_true(all(vapply(data$MRN, function(v) rf_bytes_hold(read, v), logical(1L))), info = prefix)
+    # And the one-scan search the file checks use finds them too.
+    expect_true(rf_bytes_hold_any(read, data$MRN), info = prefix)
   }
 })
 
 test_that("the fit and explain jobs save no MRN when their chunks run outside the global environment", {
-  data <- rf_mrn_data()
+  skip_on_cran()
+  data <- rf_mrn_data(n = 60L)
   for (prefix in rf_prefixes) {
     rf_skip_unless_stack(rf_template_packages(prefix, "explain"))
     # A chunk environment that is not the global one is serialized in full,

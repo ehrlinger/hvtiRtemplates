@@ -12,8 +12,9 @@
 #' The editor is opened only in an interactive session.
 #'
 #' @inheritParams add_job
-#' @param dir Character. Any directory inside the study. Defaults to the
-#'   working directory.
+#' @param dir Character. Any directory inside the study. \code{NULL}, the
+#'   default, starts from the working directory, and is an error outside a
+#'   study.
 #'
 #' @return The path to the job file, invisibly.
 #'
@@ -26,13 +27,13 @@
 #' open_job(prefix = "ac", subject = "death", type = "eda", dir = root)
 #' unlink(root, recursive = TRUE)
 #' @export
-open_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
+open_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   # The same message as add_job(), since a new user scaffolds through either.
   absent <- c("subject", "type")[c(missing(subject), missing(type))]
   if (length(absent)) {
     stop(.missing_field_message(absent, if (!missing(prefix)) prefix, qualifier, fn = "open_job"), call. = FALSE)
   }
-  root <- hvtiRutilities::study_root(dir)
+  root <- if (is.null(dir)) .default_study_root("open_job") else hvtiRutilities::study_root(dir)
   row <- tryCatch(
     .select_template(template_list(), prefix, qualifier),
     error = function(e) stop("open_job(): ", conditionMessage(e), call. = FALSE)

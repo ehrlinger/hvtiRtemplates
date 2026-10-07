@@ -83,7 +83,9 @@
 #'   Your choice, like \code{subject}, and shared the same way. Must match
 #'   \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.
 #' @param dir The study root to write into. The taxonomy folder beneath it is
-#'   created if it does not exist.
+#'   created if it does not exist. \code{NULL}, the default, finds the study
+#'   root by walking up from the working directory, and is an error outside a
+#'   study, so a job is never written somewhere that is not a study.
 #'
 #' @return The job's path, invisibly. On any failure -- including one after
 #'   the copy, while substituting the set markers -- no file is left behind,
@@ -113,7 +115,7 @@
 #'
 #' list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #' unlink(d, recursive = TRUE)
-add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
+add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   absent <- c("subject", "type")[c(missing(subject), missing(type))]
   if (length(absent)) {
     stop(.missing_field_message(absent, if (!missing(prefix)) prefix, qualifier), call. = FALSE)
@@ -135,6 +137,7 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
     error = function(e) stop("add_job(): ", conditionMessage(e), call. = FALSE)
   )
   .warn_if_deprecated(row, "add_job")
+  if (is.null(dir)) dir <- .default_study_root("add_job")
 
   out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = dir)
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
@@ -193,6 +196,28 @@ add_job <- function(prefix, subject, type, dir = ".", qualifier = NULL) {
          "is reserved as the separator and '.' to the extension); got ",
          paste(deparse(value), collapse = ", "), ".", call. = FALSE)
   }
+}
+
+# The study root above the working directory, for a scaffolding call that names
+# no `dir`. Outside a study this is an error naming the way out, rather than a
+# job written into whatever directory R happens to be in. Only a missing
+# manifest gets that message, decided by looking for the file rather than by
+# reading study_root()'s error text: a manifest that exists but is malformed or
+# lacks a key is a different, repairable problem, so study_root()'s own error
+# surfaces unchanged. Raised by Codex on #258.
+.default_study_root <- function(fn) {
+  start <- getwd()
+  d <- normalizePath(start, winslash = "/", mustWork = TRUE)
+  while (!file.exists(file.path(d, "_study.yml"))) {
+    up <- dirname(d)
+    if (identical(up, d)) {
+      stop(fn, "(): the working directory is not inside a study (no _study.yml in ", start,
+           " or above it). Pass `dir`, the study root, or run hvtiRutilities::study_setup() first.",
+           call. = FALSE)
+    }
+    d <- up
+  }
+  hvtiRutilities::study_root(start)
 }
 
 # The error for a call that leaves out `subject`, `type` or both (#224). R's

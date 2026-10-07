@@ -117,6 +117,7 @@ test_that("the tutorial adopts an existing study before analysis", {
 })
 
 test_that("the final migration verifier returns four lasting rendered fixtures", {
+  skip_on_cran()
   expect_true(exists("render_all_migration_fixtures", mode = "function"))
   if (!exists("render_all_migration_fixtures", mode = "function")) return(invisible(NULL))
   skip_if_not_installed("hvtiRdatabuild", "0.2.1")

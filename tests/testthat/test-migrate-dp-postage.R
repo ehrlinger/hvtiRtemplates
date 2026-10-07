@@ -144,6 +144,7 @@ test_that("postage template validates selection and plotting settings before sav
 })
 
 test_that("a migrated legacy EDA report renders real eighteen-panel pages under the logical graphs route", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   out <- render_migrated_fixture("dp-postage")
@@ -482,6 +483,7 @@ test_that("postage migration records a legacy show_percent as ignored, not trans
 })
 
 test_that("postage embeds its pages when the job sits in a subfolder", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   root <- migration_study_fixture(NULL)
