@@ -265,3 +265,29 @@ test_that("hz stops on times of zero or below, counting each and naming the fix 
   withr::local_package("hvtiRutilities")
   expect_time_guard("hz")
 })
+
+test_that("hm's stage 1 holds every shape of each phase (rollup review, 1.2.6)", {
+  # make_phases(TRUE) read names(ph$par), a field an hzr_phase does not have,
+  # so stage 1 held nothing beyond hz's own fixed set and fitted stage 2's model.
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  withr::local_package("TemporalHazard")
+  src <- readLines(hazard_template("hm"), warn = FALSE)
+  at <- grep("^make_phases <- function", src)
+  end <- at + match("}", src[-seq_len(at)])
+  env <- new.env()
+  env$hz_art <- list(phases = list(
+    early = hzr_phase("cdf", t_half = 1, nu = 1, m = 1),
+    late  = hzr_phase("g3", tau = 1, gamma = 1, alpha = 1, eta = 1, fixed = c("tau", "gamma", "alpha")),
+    derived = hzr_phase("g3", tau = 1, gamma = 1, eta = 1, constraint = "alpha_gamma_eta"),
+    flat = hzr_phase("constant")
+  ))
+  eval(parse(text = src[at:end]), env)
+  held <- env$make_phases(TRUE)
+  expect_setequal(held$early$fixed, c("t_half", "nu", "m"))
+  expect_setequal(held$late$fixed, c("tau", "gamma", "alpha", "eta"))
+  # A shape a constraint derives is computed, and may not be named in `fixed`.
+  expect_setequal(held$derived$fixed, c("tau", "gamma", "eta"))
+  expect_length(held$flat$fixed, 0L)
+  # Stage 2 is hz's phases as they are.
+  expect_identical(env$make_phases(FALSE), env$hz_art$phases)
+})
