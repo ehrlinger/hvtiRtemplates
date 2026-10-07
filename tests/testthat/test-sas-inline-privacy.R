@@ -1,3 +1,30 @@
+# These tests migrate 128 SAS files, each into a study of its own. Building the
+# study is most of the cost of a call, so one is built per file and each call
+# gets a copy of it, which is what a fresh build would produce.
+inline_privacy_cache <- new.env()
+inline_privacy_file_env <- environment()
+inline_privacy_fixture <- migration_study_fixture
+inline_privacy_study <- function(.local_envir = parent.frame()) {
+  if (is.null(inline_privacy_cache$root)) {
+    inline_privacy_cache$root <- inline_privacy_fixture(.local_envir = inline_privacy_file_env)
+  }
+  root <- withr::local_tempdir(.local_envir = .local_envir)
+  from <- list.files(inline_privacy_cache$root, all.files = TRUE, no.. = TRUE, full.names = TRUE)
+  stopifnot(all(file.copy(from, root, recursive = TRUE, copy.date = TRUE)))
+  root
+}
+
+# migrate_job() lists the templates, and reads the template catalog, several
+# times a call. Neither can change while the file runs, so each is read once, by
+# the real template_list() and template_catalog(), and served from that read for
+# the rest of the test.
+local_template_list_once <- function(.local_envir = parent.frame()) {
+  listed <- template_list()
+  catalog <- template_catalog()
+  testthat::local_mocked_bindings(template_list = function() listed, template_catalog = function() catalog,
+                                  .package = "hvtiRtemplates", .env = .local_envir)
+}
+
 inline_privacy_migrate <- function(root, kind, middle, after = TRUE) {
   prefix <- if (startsWith(kind, "dc-")) "dc" else "dp"
   qualifier <- sub("^[^-]+-", "", kind)
@@ -22,10 +49,11 @@ inline_privacy_migrate <- function(root, kind, middle, after = TRUE) {
 }
 
 test_that("every SAS adapter withholds all inline aliases after apostrophe comments", {
+  local_template_list_once()
   for (kind in c("dc-tables", "dc-gfup", "dp-trends", "dp-eda")) {
     for (alias in c("datalines", "cards", "lines", "datalines4", "cards4", "lines4")) {
       for (comment in c("* don't disclose records;", "%* don't disclose records;")) {
-        out <- inline_privacy_migrate(migration_study_fixture(), kind, c(
+        out <- inline_privacy_migrate(inline_privacy_study(), kind, c(
           comment, paste0(alias, ";"), "PATIENT_SENTINEL_472 43", "PATIENT_SENTINEL_938 ' unbalanced",
           if (endsWith(alias, "4")) ";;;;" else ";"
         ))
@@ -48,6 +76,7 @@ test_that("SAS adapters fail closed for ambiguous delimiters and uncertain token
     c("title 'unterminated", "datalines;", "PATIENT_SENTINEL_472 43", ";"),
     c("/* unfinished comment", "cards;", "PATIENT_SENTINEL_472 43", ";")
   )
+  local_template_list_once()
   for (alias in c("datalines", "cards", "lines", "datalines4", "cards4", "lines4")) {
     terminator <- if (endsWith(alias, "4")) ";;;;" else ";"
     cases <- c(cases, list(
@@ -58,7 +87,7 @@ test_that("SAS adapters fail closed for ambiguous delimiters and uncertain token
   }
   for (kind in c("dc-tables", "dc-gfup", "dp-trends", "dp-eda")) {
     for (rows in cases) {
-      out <- inline_privacy_migrate(migration_study_fixture(), kind, rows, after = FALSE)
+      out <- inline_privacy_migrate(inline_privacy_study(), kind, rows, after = FALSE)
       expect_false(any(grepl("PATIENT_SENTINEL", c(out$job, out$report), fixed = TRUE)), info = paste(kind, rows[[1L]]))
       expect_true(any(grepl("withheld", out$report, fixed = TRUE)))
       expect_true(any(grepl("EDIT:.*withheld", out$job)))
