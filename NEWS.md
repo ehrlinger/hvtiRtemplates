@@ -1,5 +1,14 @@
 # hvtiRtemplates (unreleased)
 
+* `add_job()` and `open_job()` default to `dir = NULL`, which finds the study root by
+  walking up from the working directory, and stop outside a study rather than writing
+  a job into whatever directory R is in. A call from a study's subfolder now scaffolds
+  into the study instead of under the subfolder. An explicit `dir` means what it did.
+
+* Tests use at most two cores (`rf.cores`, `mc.cores` and `OMP_THREAD_LIMIT`) and
+  leave the global random seed alone. The package description names the
+  Cardiovascular Outcomes, Registries and Research (CORR) group in full.
+
 * `hm`'s first stage now holds every shape of each phase, as its two-stage fit
   intends: covariates are screened against `hz`'s shapes before the shapes are freed.
   It read the shapes from a field a TemporalHazard phase does not have, so stage 1

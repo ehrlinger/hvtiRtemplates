@@ -4,7 +4,7 @@
 \alias{open_job}
 \title{Open a job, creating it from its template if needed}
 \usage{
-open_job(prefix, subject, type, dir = ".", qualifier = NULL)
+open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
@@ -23,8 +23,9 @@ match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
 Your choice, like \code{subject}, and shared the same way. Must match
 \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
 
-\item{dir}{Character. Any directory inside the study. Defaults to the
-working directory.}
+\item{dir}{Character. Any directory inside the study. \code{NULL}, the
+default, starts from the working directory, and is an error outside a
+study.}
 
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
 \code{dp}. Required only where a prefix carries more than one template;

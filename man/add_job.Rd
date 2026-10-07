@@ -4,7 +4,7 @@
 \alias{add_job}
 \title{Scaffold a new analysis job from a template}
 \usage{
-add_job(prefix, subject, type, dir = ".", qualifier = NULL)
+add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
@@ -24,7 +24,9 @@ Your choice, like \code{subject}, and shared the same way. Must match
 \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
 
 \item{dir}{The study root to write into. The taxonomy folder beneath it is
-created if it does not exist.}
+created if it does not exist. \code{NULL}, the default, finds the study
+root by walking up from the working directory, and is an error outside a
+study, so a job is never written somewhere that is not a study.}
 
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
 \code{dp}. Required only where a prefix carries more than one template;
