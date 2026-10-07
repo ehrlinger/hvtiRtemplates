@@ -104,6 +104,7 @@ test_that("every template carries the guard-partial chunk, just after the EDIT: 
 })
 
 test_that("a part-built job renders what is done, and a final render refuses it", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   s <- scaffold_gfup(list("^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL", "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980"))

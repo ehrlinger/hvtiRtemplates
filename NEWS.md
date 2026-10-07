@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* The test suite runs in about two-thirds of the time: expensive fits and renders are
+  shared within a test file, and fixtures are smaller. No assertion was dropped. About
+  40 tests, the end-to-end Quarto renders, model fits and saved-file identifier scans,
+  are skipped on CRAN (`skip_on_cran()`), so a CRAN-mode check fits the 10-minute
+  budget; CI sets `NOT_CRAN=true` and still runs every one.
+
 * `add_job()` and `open_job()` default to `dir = NULL`, which finds the study root by
   walking up from the working directory, and stop outside a study rather than writing
   a job into whatever directory R is in. A call from a study's subfolder now scaffolds

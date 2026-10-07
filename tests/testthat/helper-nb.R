@@ -68,7 +68,11 @@ nb_env <- function(root, parent = globalenv()) {
   if (requireNamespace("boostmtree", quietly = TRUE)) {
     env$boostmtree <- boostmtree::boostmtree
     env$vimp.boostmtree <- boostmtree::vimp.boostmtree
-    env$partial.plot <- boostmtree::partial.plot
+    # partial.plot() is most of a chunk test's time, and nearly all of that is
+    # its grid of 25 values per continuous covariate. Five still draws a curve,
+    # and a factor is evaluated at its levels whatever n.points says. The
+    # rendered job in test-nb-boostmtree.R keeps the template's own call.
+    env$partial.plot <- function(object, ...) boostmtree::partial.plot(object, ..., n.points = 5)
   }
   if (requireNamespace("ggBoostedTrees", quietly = TRUE)) {
     for (f in c("gg_boost_error", "gg_boost_path", "gg_boost_calibration", "gg_boost_vimp", "gg_boost_effect",
@@ -105,8 +109,10 @@ nb_skip_unless_stack <- function() {
   testthat::skip_if_not_installed("ggBoostedTrees", minimum_version = "0.9.0")
 }
 
+# M is five boosting steps: enough for every chunk to draw, and the fit and
+# partial.plot() both cost in proportion to it.
 nb_choices <- function(...) {
-  utils::modifyList(list(RESPONSE = "lvef", M = 20, SEED = 7), list(...))
+  utils::modifyList(list(RESPONSE = "lvef", M = 5, SEED = 7), list(...))
 }
 
 # The fit helpers below live here, not in the test file, so object_usage_linter

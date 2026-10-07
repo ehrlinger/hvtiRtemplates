@@ -276,14 +276,24 @@ test_that("lm-checkpred stops when its validation patients were in the training 
   }
 })
 
-test_that("every lm template scaffolds and renders", {
+test_that("every lm template scaffolds and runs end to end, and one renders through Quarto", {
+  skip_on_cran()
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
-  for (qualifier in names(lm_qualifiers)) {
-    out <- lm_render_fixture(qualifier)
+  # One job goes through Quarto end to end, hooks, provenance and all: checkpred,
+  # which reads the saved model and so exercises the most of the family's code.
+  # The other seven run every chunk but `provenance` in this session, which
+  # catches what a render of their own code would, in a tenth of the time;
+  # test-template-provenance.R evaluates each one's provenance chunk.
+  out <- lm_render_fixture("checkpred")
+  expect_true(file.exists(out$job))
+  expect_true(file.exists(out$output))
+  for (qualifier in setdiff(names(lm_qualifiers), "checkpred")) {
+    out <- lm_render_fixture(qualifier, render = FALSE)
     expect_true(file.exists(out$job), info = qualifier)
-    expect_true(file.exists(out$output), info = qualifier)
+    # The job's product, saved by its last chunk before provenance.
+    expect_true(file.exists(out$env$MODEL_PATH), info = qualifier)
   }
 })
 

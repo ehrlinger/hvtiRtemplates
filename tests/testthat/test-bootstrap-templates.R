@@ -258,6 +258,7 @@ test_that(".check_bag_identifiers() stops on rows saved in a bag, wherever they 
 })
 
 test_that("each report stops on a bag that holds the runner's rows", {
+  skip_on_cran()
   data <- rf_mrn_data()
   for (prefix in boot_thin) {
     boot_skip_unless_stack(prefix)

@@ -11,6 +11,7 @@ base_edits <- list(
 )
 
 test_that("dc-gfup renders a death panel and an event panel", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   edits <- c(base_edits, list(
@@ -40,7 +41,45 @@ render_refused <- function(s) {
   out
 }
 
+# The same refusal, from the job's own chunks rather than another render: every
+# refusal takes the window chunk's one path, which render_refused() above
+# renders end to end for the missing-column case. The warning stands for the
+# render carrying on, and the follow-up table, made before the window, for the
+# tables kept. Returns the warning and the output, for the message's check.
+refused_chunks <- function(s) {
+  # The setup chunk attaches these.
+  withr::local_package("ggplot2")
+  withr::local_package("hvtiPlotR")
+  withr::local_package("hvtiRutilities")
+  withr::local_dir(dirname(s$job))
+  lines <- readLines(s$job, warn = FALSE)
+  env <- new.env(parent = globalenv())
+  env$.root <- s$root
+  warned <- character()
+  out <- withCallingHandlers(
+    utils::capture.output(for (label in c("set", "edit-study-choices", "tbl-data", "qc", "tbl-qc-followup", "window",
+                                          "figures")) {
+      start <- match(paste0("#| label: ", label), lines)
+      end <- start + match("```", lines[-seq_len(start)])
+      eval(parse(text = lines[seq.int(start + 1L, end - 1L)]), env)
+    }),
+    warning = function(w) {
+      if (grepl("figure was not drawn", conditionMessage(w), fixed = TRUE)) {
+        warned <<- c(warned, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+  testthat::expect_length(warned, 1L)
+  out <- paste(c(warned, out), collapse = "\n")
+  testthat::expect_match(out, "The figure was not drawn", fixed = TRUE)
+  testthat::expect_gt(nrow(env$followup_table), 0L)
+  testthat::expect_length(list.files(file.path(s$root, "graphs"), pattern = "^dc-gfup-.*[.]png$", recursive = TRUE), 0L)
+  out
+}
+
 test_that("dc-gfup names every missing column in one message, and keeps its tables", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   out <- render_refused(scaffold_gfup(c(base_edits, list(
@@ -50,16 +89,12 @@ test_that("dc-gfup names every missing column in one message, and keeps its tabl
 })
 
 test_that("dc-gfup reports a two-digit origin year, and keeps its tables", {
-  skip_if_not_installed("quarto")
-  skip_if_not(quarto::quarto_available())
-  out <- render_refused(scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85"))))
+  out <- refused_chunks(scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85"))))
   expect_match(out, "Operations fall outside 1900", fixed = TRUE)
 })
 
 test_that("dc-gfup reports a name shared by PANELS and EVENTS, and keeps its tables", {
-  skip_if_not_installed("quarto")
-  skip_if_not(quarto::quarto_available())
-  out <- render_refused(scaffold_gfup(c(base_edits, list(
+  out <- refused_chunks(scaffold_gfup(c(base_edits, list(
     "^EVENTS <- list\\(\\)$" = paste0(
       "EVENTS <- list(all = list(event = \"repair\", time = \"iv_fup\", ",
       "death = \"dead\", death_time = \"iv_dead\"))"
@@ -69,6 +104,7 @@ test_that("dc-gfup reports a name shared by PANELS and EVENTS, and keeps its tab
 })
 
 test_that("a final dc-gfup render stops on a figure refusal", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   s <- scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85")))
