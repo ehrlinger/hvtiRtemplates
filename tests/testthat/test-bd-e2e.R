@@ -12,13 +12,30 @@ bd_render <- function(job) {
   paste(readLines(sub("[.]qmd$", ".html", job), warn = FALSE), collapse = "\n")
 }
 
+# One publishing render, made on first use and shared, because a render is most
+# of this file's time: the first test reads it, the purl test compares its
+# release against it, and the -r2 test, last in this file because it changes
+# the study, renders it again. Kept until the file's tests finish.
+bd_published <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      m <- bd_master(.local_envir = testthat::teardown_env())
+      root <- bd_study(.local_envir = testthat::teardown_env())
+      job <- bd_job(root, bd_edits(m, publish = "TRUE"))
+      cache <<- list(m = m, root = root, job = job, html = bd_render(job))
+    }
+    cache
+  }
+})
+
 test_that("bd publishes and registers a release, and ac reads it", {
   bd_quarto_skip()
   testthat::skip_if_not_installed("TemporalHazard")
-  m <- bd_master()
-  root <- bd_study()
-  job <- bd_job(root, bd_edits(m, publish = "TRUE"))
-  html <- bd_render(job)
+  pub <- bd_published()
+  m <- pub$m
+  root <- pub$root
+  html <- pub$html
 
   cfg <- hvtiRutilities::study_config(root)
   expect_match(cfg$release$release_id, "^study_cohort-[0-9]{8}-r1$")
@@ -45,12 +62,38 @@ test_that("bd publishes and registers a release, and ac reads it", {
   expect_setequal(env$d$ccfid, release$ccfid)
 })
 
+test_that("the purled job runs as a script and makes the release in a fresh study", {
+  bd_quarto_skip()
+  # Study A: the shared publishing render establishes the expected release.
+  pub <- bd_published()
+  m <- pub$m
+  root_a <- pub$root
+  cfg_a <- hvtiRutilities::study_config(root_a)
+
+  # Study B: scaffold only (never render), then source the purled script.
+  root_b <- bd_study()
+  job_b <- bd_job(root_b, bd_edits(m, publish = "TRUE"))
+  script <- withr::local_tempfile(fileext = ".R")
+  knitr::purl(job_b, output = script, documentation = 0L, quiet = TRUE)
+  withr::with_dir(dirname(job_b), utils::capture.output(source(script, local = new.env(parent = globalenv()))))
+
+  # Study B must have exactly one release, and its release file must match A's.
+  expect_length(bd_catalog_releases(root_b), 1L)
+  cfg_b <- hvtiRutilities::study_config(root_b)
+  expect_false(is.null(cfg_b$release$release_id))
+  sha_a <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root_a), cfg_a$built),
+                          algo = "sha256", file = TRUE)
+  sha_b <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root_b), cfg_b$built),
+                          algo = "sha256", file = TRUE)
+  expect_identical(sha_a, sha_b)
+})
+
 test_that("a second publishing render with a changed rule adopts -r2, and a draft render publishes nothing", {
   bd_quarto_skip()
-  m <- bd_master()
-  root <- bd_study()
-  job <- bd_job(root, bd_edits(m, publish = "TRUE"))
-  bd_render(job)
+  # Last in this file: it changes the shared study the tests above read.
+  pub <- bd_published()
+  root <- pub$root
+  job <- pub$job
   first <- hvtiRutilities::study_config(root)$release$release_id
 
   # The same job rendered again mints nothing.
@@ -74,31 +117,4 @@ test_that("a second publishing render with a changed rule adopts -r2, and a draf
   expect_match(html, "Draft only: nothing published", fixed = TRUE)
   expect_length(bd_catalog_releases(root), 2L)
   expect_identical(hvtiRutilities::study_config(root)$release$release_id, second)
-})
-
-test_that("the purled job runs as a script and makes the release in a fresh study", {
-  bd_quarto_skip()
-  m <- bd_master()
-  # Study A: render to establish the expected release.
-  root_a <- bd_study()
-  job_a <- bd_job(root_a, bd_edits(m, publish = "TRUE"))
-  bd_render(job_a)
-  cfg_a <- hvtiRutilities::study_config(root_a)
-
-  # Study B: scaffold only (never render), then source the purled script.
-  root_b <- bd_study()
-  job_b <- bd_job(root_b, bd_edits(m, publish = "TRUE"))
-  script <- withr::local_tempfile(fileext = ".R")
-  knitr::purl(job_b, output = script, documentation = 0L, quiet = TRUE)
-  withr::with_dir(dirname(job_b), utils::capture.output(source(script, local = new.env(parent = globalenv()))))
-
-  # Study B must have exactly one release, and its release file must match A's.
-  expect_length(bd_catalog_releases(root_b), 1L)
-  cfg_b <- hvtiRutilities::study_config(root_b)
-  expect_false(is.null(cfg_b$release$release_id))
-  sha_a <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root_a), cfg_a$built),
-                          algo = "sha256", file = TRUE)
-  sha_b <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root_b), cfg_b$built),
-                          algo = "sha256", file = TRUE)
-  expect_identical(sha_a, sha_b)
 })
