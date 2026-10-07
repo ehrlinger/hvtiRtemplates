@@ -94,8 +94,13 @@ stop_here <- function(envir = parent.frame()) {
     }
     if (!executable) next
     if (header && grepl("^#\\|", line)) {
-      if (grepl("^#\\|\\s*eval:\\s*(false|FALSE)\\s*$", line)) runs <- FALSE
-      if (grepl(skip_re, line)) skips <- c(skips, i)
+      # A chunk that will not run holds no stop: eval false, in any spelling
+      # knitr accepts, or a skip, which the skip hook turns into eval false.
+      if (grepl("^#\\|\\s*eval:\\s*(false|FALSE|F|no|!expr\\s+(FALSE|F))\\s*$", line)) runs <- FALSE
+      if (grepl(skip_re, line)) {
+        skips <- c(skips, i)
+        runs <- FALSE
+      }
       next
     }
     header <- FALSE
@@ -117,12 +122,24 @@ stop_here <- function(envir = parent.frame()) {
   )[order(c(skips, stops)), , drop = FALSE]
 }
 
+# This render's partial-render points, for .embed_provenance(), and the job
+# whose render registered the skip hook. Package state rather than options():
+# knitr restores options() after a knit but not opts_hooks, and a package
+# should not leave the user's options changed.
+.partial_state <- new.env(parent = emptyenv())
+
 # Called by every template's guard-partial chunk, just after the EDIT: guard.
 # Registers the `skip` chunk option, then lists the job's partial-render points
 # in a draft or stops a strict render, by the EDIT: guard's own strictness rule.
 .guard_partial <- function(input) {
+  .partial_state$points <- NULL
+  .partial_state$input <- input
   if (requireNamespace("knitr", quietly = TRUE)) {
+    # knitr cannot unregister a hook when the knit ends, so the hook stays in
+    # the session. It acts only while the job that set it is the one knitting;
+    # any other document's `skip` option passes through untouched.
     knitr::opts_hooks$set(skip = function(options) {
+      if (!identical(knitr::current_input(), .partial_state$input)) return(options)
       if (!is.character(options$skip) || length(options$skip) != 1L || !nzchar(trimws(options$skip))) {
         stop("Chunk `", options$label, "`: `skip` needs its reason as a quoted string, for example ",
              "skip: \"waiting on the corrected coding\".", call. = FALSE)
@@ -132,13 +149,12 @@ stop_here <- function(envir = parent.frame()) {
       options
     })
   }
-  options(hvtiRtemplates.partial = NULL)
   if (is.null(input) || !file.exists(input)) return(invisible(character()))
   points <- .partial_points(readLines(input, warn = FALSE))
   if (!nrow(points)) return(invisible(character()))
   # Read by .embed_provenance(), so the report's provenance says it is partial
   # whichever chunk embeds it.
-  options(hvtiRtemplates.partial = lapply(unname(split(points, seq_len(nrow(points)))), as.list))
+  .partial_state$points <- lapply(unname(split(points, seq_len(nrow(points)))), as.list)
   items <- paste0("  - line ", points$line, ": ",
                   ifelse(points$kind == "skip", paste0("chunk skipped, ", points$reason), points$reason))
   msg <- paste0("This job is rendered in part (", nrow(points), " point(s)):\n", paste(items, collapse = "\n"))
@@ -149,6 +165,9 @@ stop_here <- function(envir = parent.frame()) {
   warning(msg, call. = FALSE)
   out <- paste0("\n::: {.callout-important title=\"PARTIAL -- parts of this job are left out\"}\n",
                 "**This report is not the whole job.**\n\n```\n", msg, "\n```\n:::\n\n")
-  cat(out)
-  invisible(out)
+  # Returned, not cat(): the guard-partial chunk is `results: asis`, so knitr
+  # prints it into the report, and nothing is written to the console. knitr is
+  # only suggested; without it there is no report to print into.
+  if (!requireNamespace("knitr", quietly = TRUE)) return(invisible(out))
+  knitr::asis_output(out)
 }

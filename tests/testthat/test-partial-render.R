@@ -141,3 +141,28 @@ test_that("a part-built job renders what is done, and a final render refuses it"
   }, error = function(e) conditionMessage(e))
   expect_false(is.null(err))
 })
+
+test_that("a stop that cannot run is not listed", {
+  # A stop_here() in a skipped chunk, or in one that does not evaluate, is never
+  # reached, so listing it would misstate what the report leaves out.
+  src <- c("```{r}", "#| skip: \"later\"", "hvtiRtemplates::stop_here()", "```",
+           "```{r}", "#| eval: !expr FALSE", "stop_here()", "```",
+           "```{r}", "#| eval: F", "stop_here()", "```")
+  points <- .partial_points(src)
+  expect_identical(points$kind, "skip")
+  expect_identical(points$line, 2L)
+})
+
+test_that("the guard leaves no global option set and its hook ignores other documents", {
+  f <- withr::local_tempfile(fileext = ".qmd")
+  writeLines(partial_source, f)
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "")
+  before <- options()
+  suppressWarnings(.guard_partial(f))
+  expect_identical(options(), before)
+  expect_length(hvtiRtemplates:::.partial_state$points, 2L)
+  # Outside the job that set it, the skip hook hands the options back unchanged.
+  hook <- knitr::opts_hooks$get("skip")
+  opts <- list(label = "other", skip = TRUE, eval = TRUE, include = TRUE)
+  expect_identical(hook(opts), opts)
+})

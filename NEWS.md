@@ -1,5 +1,20 @@
 # hvtiRtemplates (unreleased)
 
+* `hm`'s first stage now holds every shape of each phase, as its two-stage fit
+  intends: covariates are screened against `hz`'s shapes before the shapes are freed.
+  It read the shapes from a field a TemporalHazard phase does not have, so stage 1
+  held nothing beyond `hz`'s own fixed set and fitted the same model as stage 2. A
+  shape a g3 `constraint` derives is left free, since it may not be fixed.
+
+* A part-built job's report no longer lists a `stop_here()` that cannot run: one in a
+  skipped chunk, or in a chunk that does not evaluate (`eval: false`, `F`, `no` or
+  `!expr FALSE`).
+
+* Rendering a part-built job leaves the R session's options as they were. The record of
+  skipped chunks is kept inside the package, and the `skip` chunk option acts only on
+  the job that registered it, so another document knit later in the same session is
+  not affected.
+
 * `hz` no longer passes `condition = 14` to `hazard()`. It mirrored SAS's
   `CONDITION=` option, which `hazard()` does not have, so TemporalHazard ignored it
   and printed a warning into the report for every fit. The fit still reports the
