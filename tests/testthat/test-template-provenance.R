@@ -625,6 +625,10 @@ write_provenance_job <- function(root, stem, prefix, definitions, output_file = 
   chunk <- provenance_chunk(template_by_name(prefix))
   frontmatter <- c("---", "format: html")
   if (!is.null(output_file)) frontmatter <- c(frontmatter, paste0("output-file: ", output_file))
+  # Plain HTML, without the Bootstrap theme and its scripts: these renders test
+  # the provenance hooks, which treat the page as bytes, and the theme is half
+  # a second of every render. Kept last, as tests insert at fixed lines above it.
+  frontmatter <- c(frontmatter, "minimal: true")
   writeLines(c(
     frontmatter, "---", "",
     "```{r}",
