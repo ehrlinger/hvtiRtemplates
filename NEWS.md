@@ -9,6 +9,12 @@
   leave the global random seed alone. The package description names the
   Cardiovascular Outcomes, Registries and Research (CORR) group in full.
 
+* Vignettes put the table of contents on the left and use the full width
+  of the window, the same layout as the HVTI Quarto books and the
+  hvtiRtemplates jobs. `vignettes/_quarto.yml` sets it once for every
+  vignette, and `pkgdown/extra.css` gives the pkgdown site's articles the
+  same arrangement.
+
 * `hm`'s first stage now holds every shape of each phase, as its two-stage fit
   intends: covariates are screened against `hz`'s shapes before the shapes are freed.
   It read the shapes from a field a TemporalHazard phase does not have, so stage 1
