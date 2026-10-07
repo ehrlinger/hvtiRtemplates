@@ -71,5 +71,7 @@ Suggests:
     varPro (>= 3.2.0),
     withr
 VignetteBuilder: quarto
+SystemRequirements: Quarto command line tool
+    (<https://github.com/quarto-dev/quarto-cli>)
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0

@@ -177,6 +177,10 @@
   release. It still scaffolds; `template_path()`, `add_job()` and `open_job()` warn,
   and `migrate_job()` writes a `dc-gfup` job.
 
+* `DESCRIPTION` now declares the Quarto command line tool in
+  `SystemRequirements`. The vignettes have always needed it to build; the
+  field makes that visible to installers and to `R CMD check`.
+
 # hvtiRtemplates 1.2.5
 
 * Every figure and table a template shows is numbered. Quarto numbers a figure only
