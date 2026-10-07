@@ -18,7 +18,8 @@ test_that("the seed check catches what it exists to catch", {
   expect_match(check("f <- rfsrc(y ~ ., d)"), "x.qmd:1: rfsrc\\(\\) is not seeded", all = FALSE)
   # set.seed() alone leaves rfsrc() drawing its own seed from R's generator.
   expect_match(check("set.seed(1)", "f <- rfsrc(y ~ ., d)"), "needs a negative")
-  # A positive seed is not the form randomForestSRC takes as its own.
+  # Negative is the form randomForestSRC documents and the rule enforced here;
+  # its get.seed() negates a positive one, so this is convention, not repair.
   expect_match(check("set.seed(1)", "f <- rfsrc(y ~ ., d, seed = SEED)"), "needs a negative")
   # cache_fit() without a seed does not seed the call it wraps.
   expect_match(check("v <- cache_fit('v', varpro(m, d, seed = -abs(S)))"), "varpro\\(\\) is not seeded")

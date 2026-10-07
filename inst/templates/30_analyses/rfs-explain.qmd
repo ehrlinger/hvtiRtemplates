@@ -242,9 +242,10 @@ TIMES <- c(1, 5, 10)
 
 # EDIT: seed for VIMP, VarPro and the partials. It is part of every cache key.
 # cache_fit() seeds R's generator with it before each call, and vimp() and
-# varpro() are also handed it negated, as randomForestSRC expects. Both halves
-# matter: varpro() draws from R's generator as well as from its own seed, so
-# the same seed after a different chunk gave different importances.
+# varpro() are also handed it as `seed =`, negated as randomForestSRC
+# documents. Both halves matter: varpro() draws from R's generator as well as
+# from its own seed, so the same seed after a different chunk gave different
+# importances.
 SEED <- 2026
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the

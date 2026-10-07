@@ -259,7 +259,7 @@ PREDICTORS <- c("age", "female", "hx_chf")
 # was enough: a curve still falling at its right edge was not. SEED makes the
 # forest reproducible and is part of its cache key. It is used twice, on
 # purpose: cache_fit() seeds R's generator with it, and rfsrc() is handed it
-# negated, the form randomForestSRC takes as its own seed. Without that
+# as `seed =`, negated as randomForestSRC documents. Without that
 # argument rfsrc() draws a seed from R's generator, so the forest would depend
 # on whatever ran before it.
 NTREE <- 1000
