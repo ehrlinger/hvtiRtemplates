@@ -327,7 +327,7 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
     writeLines(txt, job)
   }
   set_choice("^RESPONSE <- ", "RESPONSE <- \"lvef\"")
-  set_choice("^M  <- ", "M  <- 20")
+  set_choice("^M  <- ", "M  <- 5")
   set_choice("^N_TRACES <- ", "N_TRACES <- 10")
   # EDIT: markers remain, so this renders as a draft, with its warning and banner.
   render_job(job, quiet = TRUE)
