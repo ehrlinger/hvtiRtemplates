@@ -72,7 +72,7 @@ nb_env <- function(root, parent = globalenv()) {
     # its grid of 25 values per continuous covariate. Five still draws a curve,
     # and a factor is evaluated at its levels whatever n.points says. The
     # rendered job in test-nb-boostmtree.R keeps the template's own call.
-    env$partial.plot <- function(object, ..., n.points = 5) boostmtree::partial.plot(object, ..., n.points = n.points)
+    env$partial.plot <- function(object, ...) boostmtree::partial.plot(object, ..., n.points = 5)
   }
   if (requireNamespace("ggBoostedTrees", quietly = TRUE)) {
     for (f in c("gg_boost_error", "gg_boost_path", "gg_boost_calibration", "gg_boost_vimp", "gg_boost_effect",
