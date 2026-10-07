@@ -1,5 +1,9 @@
 # hvtiRtemplates (unreleased)
 
+* The test suite runs in about two-thirds of the time, toward the 10-minute check
+  budget: expensive fits and renders are shared within a test file, and fixtures are
+  smaller. No assertion was dropped and no test is skipped.
+
 * `hz` no longer passes `condition = 14` to `hazard()`. It mirrored SAS's
   `CONDITION=` option, which `hazard()` does not have, so TemporalHazard ignored it
   and printed a warning into the report for every fit. The fit still reports the
