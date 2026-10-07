@@ -3,9 +3,10 @@
 # gets a copy of it, which is what a fresh build would produce.
 inline_privacy_cache <- new.env()
 inline_privacy_file_env <- environment()
+inline_privacy_fixture <- migration_study_fixture
 inline_privacy_study <- function(.local_envir = parent.frame()) {
   if (is.null(inline_privacy_cache$root)) {
-    inline_privacy_cache$root <- migration_study_fixture(.local_envir = inline_privacy_file_env)
+    inline_privacy_cache$root <- inline_privacy_fixture(.local_envir = inline_privacy_file_env)
   }
   root <- withr::local_tempdir(.local_envir = .local_envir)
   from <- list.files(inline_privacy_cache$root, all.files = TRUE, no.. = TRUE, full.names = TRUE)

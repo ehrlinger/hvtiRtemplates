@@ -283,15 +283,19 @@ concordance_estate <- function(.local_envir = parent.frame()) {
   list(root = root, data = data)
 }
 
-# The estate, fitted once per test file. Fitting hz and hm for each group is
-# most of a concordance test's time and every test reads the same estate, so
-# `cache`, an environment the file creates, holds it. `.local_envir` is the
-# file's own environment: the study and the names the fits leave in the global
-# environment are removed when the file ends, as they were when each test ran
-# its own fit.
-concordance_estate_cached <- function(cache, .local_envir) {
-  if (is.null(cache$estate)) cache$estate <- concordance_estate(.local_envir = .local_envir)
-  cache$estate
+# A function returning the estate, fitted on its first call and cached after.
+# Fitting hz and hm for each group is most of a concordance test's time and
+# every test reads the same estate, so a test file makes one of these at top
+# level, passing its own environment as `file_env`: the study and the names the
+# fits leave in the global environment are then removed when the file ends, as
+# they were when each test ran its own fit.
+concordance_estate_once <- function(file_env) {
+  force(file_env)
+  estate <- NULL
+  function() {
+    if (is.null(estate)) estate <<- concordance_estate(.local_envir = file_env)
+    estate
+  }
 }
 
 # A copy of estate `e`'s study, for a test that writes into it, so the shared

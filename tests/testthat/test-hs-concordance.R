@@ -3,9 +3,7 @@
 
 # Every test reads one estate, fitted on first use and removed when the file
 # ends. A test that writes into the study works on a copy of it.
-concordance_cache <- new.env()
-concordance_file_env <- environment()
-estate <- function() concordance_estate_cached(concordance_cache, concordance_file_env)
+estate <- concordance_estate_once(environment())
 
 test_that("the fixture fits one hm model per group, in its own set", {
   skip_concordance()
