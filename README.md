@@ -78,8 +78,8 @@ answer, because `%inc` had nothing to pin.
 | `template_list()` | supported templates: name, prefix, qualifier, folder, file |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
 | `hvti_non_prefixes()` | leading name fields that are utilities, not analysis prefixes |
-| `add_job(prefix, subject, type, dir = ".", qualifier = NULL)` | the scaffolded job's path, invisibly |
-| `open_job(prefix, subject, type, dir = ".", qualifier = NULL)` | job path; creates a missing job or opens an existing one |
+| `add_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | the scaffolded job's path, invisibly |
+| `open_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | job path; creates a missing job or opens an existing one |
 | `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
 | `migrate_job(source, subject, type, prefix, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
 

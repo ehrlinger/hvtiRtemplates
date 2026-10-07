@@ -6,6 +6,30 @@
   are skipped on CRAN (`skip_on_cran()`), so a CRAN-mode check fits the 10-minute
   budget; CI sets `NOT_CRAN=true` and still runs every one.
 
+* `add_job()` and `open_job()` default to `dir = NULL`, which finds the study root by
+  walking up from the working directory, and stop outside a study rather than writing
+  a job into whatever directory R is in. A call from a study's subfolder now scaffolds
+  into the study instead of under the subfolder. An explicit `dir` means what it did.
+
+* Tests use at most two cores (`rf.cores`, `mc.cores` and `OMP_THREAD_LIMIT`) and
+  leave the global random seed alone. The package description names the
+  Cardiovascular Outcomes, Registries and Research (CORR) group in full.
+
+* `hm`'s first stage now holds every shape of each phase, as its two-stage fit
+  intends: covariates are screened against `hz`'s shapes before the shapes are freed.
+  It read the shapes from a field a TemporalHazard phase does not have, so stage 1
+  held nothing beyond `hz`'s own fixed set and fitted the same model as stage 2. A
+  shape a g3 `constraint` derives is left free, since it may not be fixed.
+
+* A part-built job's report no longer lists a `stop_here()` that cannot run: one in a
+  skipped chunk, or in a chunk whose `eval` is false as knitr reads it (`false`, `no`,
+  `off` or `n` in any case, or `!expr FALSE`).
+
+* Rendering a part-built job leaves the R session's options as they were. The record of
+  skipped chunks is kept inside the package, and the `skip` chunk option acts only on
+  the job that registered it, so another document knit later in the same session is
+  not affected.
+
 * `hz` no longer passes `condition = 14` to `hazard()`. It mirrored SAS's
   `CONDITION=` option, which `hazard()` does not have, so TemporalHazard ignored it
   and printed a warning into the report for every fit. The fit still reports the

@@ -32,7 +32,7 @@ lm_run <- function(qualifier, labels, env, choices = list()) {
 }
 
 lm_data <- function(n = 120L) {
-  set.seed(42)
+  withr::local_seed(42)
   d <- data.frame(
     ccfid = seq_len(n), id = seq_len(n), age = stats::rnorm(n), female = rep(0:1, length.out = n)
   )

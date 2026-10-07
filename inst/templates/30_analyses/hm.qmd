@@ -441,8 +441,19 @@ hz_fit <- hz_art$deterministic
 make_phases <- function(hold_shapes) {
   p <- hz_art$phases
   if (!hold_shapes) return(p)
+  # Every shape the phase's family has, as hzr_phase() expands fixed = "shapes":
+  # g3 holds tau, gamma, alpha and eta, less one a `constraint` derives (it is
+  # computed, and may not be named in `fixed`); cdf and hazard hold t_half, nu
+  # and m; constant has none. A phase object has no `par` field to read them
+  # from, and reading one held nothing, so stage 1 was stage 2.
   lapply(p, function(ph) {
-    ph$fixed <- unique(c(ph$fixed, setdiff(names(ph$par), ph$fixed)))
+    derived <- switch(if (is.null(ph$constraint)) "none" else ph$constraint,
+                      alpha_gamma_eta = "alpha", eta_gamma = "eta", character(0))
+    shapes <- switch(ph$type,
+                     g3 = setdiff(c("tau", "gamma", "alpha", "eta"), derived),
+                     cdf = , hazard = c("t_half", "nu", "m"),
+                     character(0))
+    ph$fixed <- union(ph$fixed, shapes)
     ph
   })
 }
