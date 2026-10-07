@@ -1,11 +1,12 @@
 #' Catalog of analysis templates owed by this package
 #'
 #' The catalog records one row per job type, including templates still queued
-#' or blocked on functions in other packages. `template_list()` reports the
+#' or blocked on functions in other packages. \code{\link{template_list}()} reports the
 #' files already shipped; this catalog records the full work plan.
 #'
-#' @return A data frame. `uses`, `upstream`, `downstream`, and `workflows` are
-#'   list columns of character vectors. Unmeasured counts are `NA_integer_`.
+#' @return A data frame. \code{uses}, \code{upstream}, \code{downstream}, and
+#'   \code{workflows} are list columns of character vectors. Unmeasured counts
+#'   are \code{NA_integer_}.
 #'   \code{description} is a one-sentence summary, given for every template on
 #'   disk and \code{NA} for most queued ones. \code{deprecated_by} names the
 #'   template replacing a deprecated one, such as \code{"dp-eda"}, and
