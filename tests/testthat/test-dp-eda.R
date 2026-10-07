@@ -61,13 +61,38 @@ test_that("dp-eda renders every section into one self-contained report", {
 })
 
 test_that("dp-eda draws the same pages as dp-postage over the same data", {
-  skip_if_not_installed("quarto")
-  skip_if_not(quarto::quarto_available())
+  # Each job's own chunks, run in order, not two more renders: the pages are
+  # written by ggsave() inside the chunks, not by knitr's device, so they are
+  # the files a render writes. Both templates render end to end elsewhere,
+  # dp-eda above and dp-postage in test-migrate-dp-postage.R.
+  withr::local_package("ggplot2")
+  withr::local_package("hvtiPlotR")
+  withr::local_package("hvtiRutilities")
   root <- migration_study_fixture("dp-postage")
   eda <- scaffold_job("dp", "eda", eda_edits, root = root)
   expect_warning(postage <- scaffold_job("dp", "postage", eda_edits["^ANALYSIS_SET <- "], root = root),
                  class = "hvtiRtemplates_deprecated")
-  for (job in c(eda$job, postage$job)) quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
+  # The sections' tables and figures are child chunks.
+  local_child_chunks()
+  run_chunks <- function(job, labels) {
+    lines <- readLines(job, warn = FALSE)
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    # A render runs in the job's folder, and dp-postage's data chunk finds the
+    # study from there.
+    withr::local_dir(dirname(job))
+    # The fixture carries no labels, and label_map() says so; that notice only.
+    withCallingHandlers(
+      utils::capture.output(for (label in labels) {
+        start <- match(paste0("#| label: ", label), lines)
+        end <- start + match("```", lines[-seq_len(start)])
+        eval(parse(text = lines[seq.int(start + 1L, end - 1L)]), env)
+      }),
+      warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning")
+    )
+  }
+  run_chunks(eda$job, c("set", "edit-study-choices", "tbl-data", "spec", "sections", "cont-pages", "pct-pages", "cnt-pages"))
+  run_chunks(postage$job, c("set", "edit-study-choices", "data", "spec", "pages"))
   graphs <- file.path(root, "graphs", "cohort-eda")
   pages <- function(stem) list.files(graphs, paste0("^", stem, "-(continuous|percent|count)-"), full.names = TRUE)
   expect_identical(sub("^dp-eda-", "", basename(pages("dp-eda"))),
