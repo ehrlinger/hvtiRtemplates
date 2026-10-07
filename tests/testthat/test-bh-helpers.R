@@ -12,7 +12,7 @@
 
 test_that("boot_clusters() counts a replicate once when it selects two forms", {
   skip_if_not_installed("hvtiRbootstrap")
-  set.seed(1)
+  withr::local_seed(1)
   n <- 200L
 
   # `a` and `a2` stand in for two forms of one concept. Replicates split

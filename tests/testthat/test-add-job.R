@@ -371,3 +371,22 @@ test_that("add_job leaves neither file when the runner lacks its set markers", {
   expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir), "SUBJECT")
   expect_length(list.files(dir, pattern = "^dead_pa-boot-bl", recursive = TRUE), 0L)
 })
+
+test_that("add_job() and open_job() find the study from the working directory, or stop", {
+  # dir = NULL walks up to _study.yml, so a call from inside a study's folders
+  # writes into the study, and one from outside a study writes nothing.
+  root <- withr::local_tempdir("dir-default-")
+  suppressMessages(hvtiRutilities::study_setup(root, "Dir default", 1L, adopt = TRUE))
+  sub <- hvtiRutilities::study_dir("descriptive", root)
+  dir.create(sub, recursive = TRUE, showWarnings = FALSE)
+  withr::with_dir(sub, job <- add_job("dc-gfup", subject = "cohort", type = "eda"))
+  expect_identical(normalizePath(dirname(job)), normalizePath(sub))
+
+  outside <- withr::local_tempdir("no-study-")
+  withr::local_dir(outside)
+  expect_error(add_job("dc-gfup", subject = "cohort", type = "eda"),
+               "add_job\\(\\): the working directory is not inside a study")
+  expect_error(open_job("dc-gfup", subject = "cohort", type = "eda"),
+               "open_job\\(\\): the working directory is not inside a study")
+  expect_length(list.files(outside, recursive = TRUE, all.files = TRUE, no.. = TRUE), 0L)
+})
