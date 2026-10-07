@@ -8,7 +8,7 @@ opened as it stands, never overwritten.
 ## Usage
 
 ``` r
-open_job(prefix, subject, type, dir = ".", qualifier = NULL)
+open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
 ```
 
 ## Arguments
@@ -38,8 +38,8 @@ open_job(prefix, subject, type, dir = ".", qualifier = NULL)
 
 - dir:
 
-  Character. Any directory inside the study. Defaults to the working
-  directory.
+  Character. Any directory inside the study. `NULL`, the default, starts
+  from the working directory, and is an error outside a study.
 
 - qualifier:
 
@@ -72,7 +72,7 @@ root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L
 ))
-#> Study: /tmp/RtmpTlWoNH/open-job-example
+#> Study: /tmp/Rtmp7IfndY/open-job-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
