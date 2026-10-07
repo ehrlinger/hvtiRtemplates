@@ -1,5 +1,15 @@
+# The template list, read once per file: the tests look templates up by name in
+# loops, and the list cannot change while the file runs.
+listed_templates <- local({
+  listed <- NULL
+  function() {
+    if (is.null(listed)) listed <<- template_list()
+    listed
+  }
+})
+
 template_by_name <- function(name) {
-  templates <- template_list()
+  templates <- listed_templates()
   hit <- which(templates$name == name)
   stopifnot(length(hit) == 1L)
   templates$file[[hit]]
@@ -153,7 +163,7 @@ test_that("embedded provenance calls are unique across all R chunks", {
 # The bd build job is not an analysis: it writes the study's dataset and a build
 # record, not a report with embedded provenance, so it is outside these checks.
 analysis_templates <- function() {
-  templates <- template_list()
+  templates <- listed_templates()
   templates[templates$prefix != "bd", ]
 }
 
