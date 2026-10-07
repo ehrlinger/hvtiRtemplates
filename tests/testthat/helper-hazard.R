@@ -283,6 +283,26 @@ concordance_estate <- function(.local_envir = parent.frame()) {
   list(root = root, data = data)
 }
 
+# The estate, fitted once per test file. Fitting hz and hm for each group is
+# most of a concordance test's time and every test reads the same estate, so
+# `cache`, an environment the file creates, holds it. `.local_envir` is the
+# file's own environment: the study and the names the fits leave in the global
+# environment are removed when the file ends, as they were when each test ran
+# its own fit.
+concordance_estate_cached <- function(cache, .local_envir) {
+  if (is.null(cache$estate)) cache$estate <- concordance_estate(.local_envir = .local_envir)
+  cache$estate
+}
+
+# A copy of estate `e`'s study, for a test that writes into it, so the shared
+# estate stays as fitted for the tests after it.
+concordance_copy <- function(e, .local_envir = parent.frame()) {
+  root <- withr::local_tempdir("hazard-study-", .local_envir = .local_envir)
+  from <- list.files(e$root, all.files = TRUE, no.. = TRUE, full.names = TRUE)
+  stopifnot(all(file.copy(from, root, recursive = TRUE, copy.date = TRUE)))
+  list(root = normalizePath(root), data = e$data)
+}
+
 skip_concordance <- function() {
   testthat::skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
   testthat::skip_if_not_installed("numDeriv")
