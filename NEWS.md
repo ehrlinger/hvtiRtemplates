@@ -1,5 +1,24 @@
 # hvtiRtemplates (unreleased)
 
+* `hz` no longer passes `condition = 14` to `hazard()`. It mirrored SAS's
+  `CONDITION=` option, which `hazard()` does not have, so TemporalHazard ignored it
+  and printed a warning into the report for every fit. The fit still reports the
+  conditioning of its Hessian, as `rcond` in the convergence table (#172).
+
+* `hz`'s start probes move only the free parameters. They used to shift every
+  position of `theta0`, the fixed late-phase shapes included, so each probe fitted a
+  different model and could beat the reported fit, falsely suggesting it was in the
+  wrong basin. The held positions are read from `phases`: each phase's `fixed` set and
+  any shape a g3 `constraint` derives. A probe edited to move one stops the job,
+  naming the parameter (#169).
+
+* `ac` and `hz` stop at the cohort when `TIME` holds a time of exactly zero or a
+  negative time, giving the count of each. A same-day death used to stop `hz` later
+  with an optimizer error that named neither. The message says to correct the times
+  in the dataset build, since a job reshapes data and never corrects it: move only
+  the zeros to a small positive value, such as 0.00025 years, and trace a negative
+  time to its source (#175).
+
 * `hm` and `hs-setup` no longer carry `EXPECTED` counts. The counts reconciled with
   the SAS reference are typed once, in `ac` and `hz`, whose hand-off already records
   them; `hm`, `hs-setup` and now `hp` count their rebuilt rows and stop when they

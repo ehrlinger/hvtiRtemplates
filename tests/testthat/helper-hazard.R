@@ -111,6 +111,31 @@ hazard_downstream <- function(prefix, root, choices = list()) {
   env
 }
 
+# Run hz on `data` through chunk `last`, in a fresh environment, recording every
+# warning rather than letting it reach the console. Returns the environment, with
+# the warnings' messages in `.warnings`.
+hz_fit_run <- function(last = "noconserve", data = hazard_data(), .local_envir = parent.frame()) {
+  root <- hazard_study(data, .local_envir = .local_envir)
+  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  env <- hazard_env(root)
+  labels <- c("tbl-data", "tbl-cohort", "tbl-phases", "edit-start", "edit-response", "tbl-response-check", "guard",
+              "fit-deterministic", "tbl-convergence", "edit-multistart", "tbl-multistart", "noconserve")
+  warned <- character(0)
+  withCallingHandlers(
+    utils::capture.output({
+      hazard_run("hz", c("set", "edit-study-choices"), env,
+                 list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)))
+      hazard_run("hz", labels[seq_len(match(last, labels))], env)
+    }),
+    warning = function(w) {
+      warned <<- c(warned, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  env$.warnings <- warned
+  env
+}
+
 # The chunk holding each downstream job's cohort gate (#177). hp's is its data
 # chunk, which hazard_downstream() already runs.
 hazard_cohort_gates <- list(hm = "tbl-cohort", hp = character(), `hs-setup` = "cohort")
@@ -177,6 +202,14 @@ hazard_chain_run <- function(root, data, hm_env = globalenv(), .local_envir = pa
 hazard_file_holds_any <- function(root, file, ids) {
   bytes <- hazard_rds_bytes(hazard_set_path(root, file))
   any(vapply(ids, function(v) hazard_bytes_hold(bytes, v), logical(1L)))
+}
+
+# hz's phases, starting values and multistart probes, without data or a fit.
+hz_probe_env <- function() {
+  env <- new.env(parent = globalenv())
+  hazard_run("hz", c("set", "edit-study-choices"), env)
+  utils::capture.output(hazard_run("hz", c("tbl-phases", "edit-start", "edit-multistart"), env))
+  env
 }
 
 # ---- hs-concordance -----------------------------------------------------------
@@ -261,4 +294,41 @@ hm_guard <- function(root, reported) {
   hazard_run("hm", c("set", "edit-study-choices"), env, list(SUBJECT = "dead", TYPE = "a"))
   env$reported <- reported
   hazard_run("hm", "guard-variance", env)
+}
+
+# ---- #175: times of zero or below ----------------------------------------------
+
+# Run `prefix`'s data and cohort chunks on `data`, with counts that match it.
+cohort_run <- function(prefix, data, .local_envir = parent.frame()) {
+  root <- hazard_study(data, .local_envir = .local_envir)
+  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  env <- hazard_env(root)
+  hazard_run(prefix, c("set", "edit-study-choices"), env,
+             list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)))
+  utils::capture.output(hazard_run(prefix, c("tbl-data", "tbl-cohort"), env))
+  env
+}
+
+# A clean cohort passes `prefix`'s cohort chunk; zero and negative times stop it.
+expect_time_guard <- function(prefix) {
+  clean <- hazard_data()
+  zero <- clean
+  zero$iv_dead[1:3] <- 0
+  negative <- clean
+  negative$iv_dead[4] <- -0.1
+  both <- zero
+  both$iv_dead[4] <- -0.1
+  env <- cohort_run(prefix, clean)
+  testthat::expect_identical(env$cc$n, nrow(clean))
+  # A zero time on a row the cohort does not count, having no event, is left alone.
+  unused <- clean
+  unused$dead[5] <- NA
+  unused$iv_dead[5] <- 0
+  env <- cohort_run(prefix, unused)
+  testthat::expect_identical(env$cc$n, nrow(clean) - 1L)
+  err <- testthat::expect_error(cohort_run(prefix, zero), "iv_dead has 3 time\\(s\\) of exactly zero and 0 negative")
+  testthat::expect_match(conditionMessage(err), "Correct them in the dataset build")
+  testthat::expect_match(conditionMessage(err), "Move only the zeros")
+  testthat::expect_error(cohort_run(prefix, negative), "iv_dead has 0 time\\(s\\) of exactly zero and 1 negative")
+  testthat::expect_error(cohort_run(prefix, both), "iv_dead has 3 time\\(s\\) of exactly zero and 1 negative")
 }

@@ -280,6 +280,23 @@ if (!is.null(job_data$attrition)) {
 cc <- cohort_counts(d, event = EVENT, time = TIME)
 assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 
+# A time of zero, a death on the day of operation, leaves the hazard likelihood
+# undefined, and the fit below would stop on an optimizer error that names
+# neither the time nor the patient. The fix belongs in the dataset build, not
+# here: a job reshapes data and never corrects it, and every job reading the
+# cohort must see the same follow-up.
+# Only rows the cohort counts are checked: a row with no EVENT is not analyzed.
+.t <- as.numeric(d[[TIME]])[!is.na(d[[EVENT]])]
+.n_zero <- sum(.t == 0, na.rm = TRUE)
+.n_neg  <- sum(.t < 0, na.rm = TRUE)
+if (.n_zero + .n_neg > 0) {
+  stop(TIME, " has ", .n_zero, " time(s) of exactly zero and ", .n_neg, " negative time(s). ",
+       "Correct them in the dataset build, not in this job. Move only the zeros to a small positive ",
+       "value, such as 0.00025 years as the template gallery does; moving every time up to one day ",
+       "ties the early deaths together. A negative time is an error in the data: trace it to its source.",
+       call. = FALSE)
+}
+
 knitr::kable(data.frame(
   quantity = c("n_analysable", "n_events", "n_censored"),
   n        = c(cc$n, cc$n_events, cc$n_censored)
@@ -497,9 +514,12 @@ the file alone.
 
 ```{r}
 #| label: fit-deterministic
+# No `condition` in control: SAS's CONDITION= option has no equivalent in
+# hazard(), which ignores the element with a warning in the report. The fit
+# reports the conditioning of its Hessian afterwards instead, as rcond below.
 fit_det <- hazard(surv_formula, data = resp, dist = "multiphase",
                   phases = phases, theta = theta0, fit = TRUE,
-                  control = list(conserve = TRUE, condition = 14,
+                  control = list(conserve = TRUE,
                                  n_starts = 1, maxit = 2000))
 check_fit(fit_det, "deterministic")
 summary(fit_det)
@@ -539,13 +559,32 @@ knitr::kable(data.frame(
 # single start goes where its starting point leads, so it is the thing that
 # actually finds another optimum if one is there.
 #
+# Only the FREE positions move. hazard() holds a fixed parameter at the value
+# theta gives it, so a probe that moved one would fit a different model, and
+# could beat the reported fit without the reported fit being in the wrong
+# basin. The held positions are each phase's `fixed` set, plus the shape a g3
+# `constraint` derives from the others, which hazard() would replace anyway.
+held <- unlist(lapply(names(phases), function(nm) {
+  ph <- phases[[nm]]
+  derived <- switch(if (is.null(ph$constraint)) "none" else ph$constraint,
+                    alpha_gamma_eta = "alpha", eta_gamma = "eta", character(0))
+  p <- c(ph$fixed, derived)
+  paste0(nm, ".", c(p, paste0("log_", p)))
+}))
+free <- !(theta_names %in% held)
+
 # EDIT: widen or add probes if your model has more phases or free parameters.
 # Every row must differ from every other row: a duplicated start is a fit that
-# costs time and tests nothing.
-probes <- rbind(theta0, theta0 + 0.5, theta0 - 0.5)
+# costs time and tests nothing. Move only positions where `free` is TRUE.
+probes <- rbind(theta0, theta0 + 0.5 * free, theta0 - 0.5 * free)
 if (anyDuplicated(probes)) {
   stop("Two probe rows are identical: that fit costs time and tests nothing.",
        call. = FALSE)
+}
+.moved <- theta_names[!free][colSums(probes[, !free, drop = FALSE] != rep(theta0[!free], each = nrow(probes))) > 0]
+if (length(.moved)) {
+  stop("A probe moves a fixed parameter (", paste(.moved, collapse = ", "), "), so it fits a different ",
+       "model and its log-likelihood cannot be compared with the reported fit's.", call. = FALSE)
 }
 ```
 
@@ -555,7 +594,7 @@ if (anyDuplicated(probes)) {
 probe_ll <- vapply(seq_len(nrow(probes)), function(i) {
   f <- try(hazard(surv_formula, data = resp, dist = "multiphase",
                   phases = phases, theta = probes[i, ], fit = TRUE,
-                  control = list(conserve = TRUE, condition = 14,
+                  control = list(conserve = TRUE,
                                  n_starts = 1, maxit = 2000)), silent = TRUE)
   if (inherits(f, "try-error")) NA_real_ else f$fit$objective
 }, numeric(1))
@@ -582,7 +621,7 @@ confounds the two changes.
 #| label: noconserve
 fit_nc <- hazard(surv_formula, data = resp, dist = "multiphase",
                  phases = phases, theta = theta0, fit = TRUE,
-                 control = list(conserve = FALSE, condition = 14,
+                 control = list(conserve = FALSE,
                                 n_starts = 1, maxit = 2000))
 check_fit(fit_nc, "noconserve")
 ```

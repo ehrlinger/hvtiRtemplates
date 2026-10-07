@@ -192,3 +192,76 @@ test_that("hz's convergence table keeps its rows when a fit leaves a field out",
   out <- as.character(eval(chunk, env))
   expect_false(any(grepl("not reported", out, fixed = TRUE)))
 })
+
+# ---- hz's fits, run as a render runs them --------------------------------------
+
+test_that("hz passes hazard() no control element it ignores (#172)", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  skip_if_not_installed("numDeriv")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  env <- hz_fit_run()
+  expect_true(all(c("fit_det", "probe_ll", "fit_nc") %in% ls(env)))
+  expect_false(any(grepl("with no effect", env$.warnings, fixed = TRUE)))
+})
+
+test_that("hz's start probes move only the free parameters (#169)", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  withr::local_package("TemporalHazard")
+  env <- hz_probe_env()
+  held <- c("late.log_tau", "late.gamma", "late.alpha")
+  expect_identical(env$theta_names[!env$free], held)
+  at <- match(held, env$theta_names)
+  expect_identical(unname(env$probes[, at]), matrix(env$theta0[at], 3L, length(at), byrow = TRUE))
+  # Every free position does move, so the probes still test the starting point.
+  free_cols <- env$probes[, env$free, drop = FALSE]
+  expect_true(all(apply(free_cols, 2L, function(x) length(unique(x)) == 3L)))
+})
+
+test_that("hz's start probes hold every shape a fixed = \"shapes\" phase fixes (#169)", {
+  # hzr_phase() expands the "shapes" shorthand into the phase's shape names when
+  # the phase is built (since at least TemporalHazard 1.2.8, the floor hz checks),
+  # so `held` sees names, never the literal. Raised by Codex on #256; this holds
+  # that expansion to account should it ever stop.
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  withr::local_package("TemporalHazard")
+  env <- hz_probe_env()
+  env$phases <- list(
+    early = hzr_phase("cdf", t_half = 1, nu = 1, m = 1, fixed = "shapes"),
+    late  = hzr_phase("g3", tau = 1, gamma = 1, alpha = 1, eta = 1, fixed = "shapes")
+  )
+  env$theta_names <- hzr_theta_names(env$phases)
+  utils::capture.output(hazard_run("hz", "edit-multistart", env))
+  expect_identical(env$theta_names[env$free], c("early.log_mu", "late.log_mu"))
+  held <- env$theta_names[!env$free]
+  at <- match(held, env$theta_names)
+  expect_identical(unname(env$probes[, at]), matrix(env$theta0[at], 3L, length(at), byrow = TRUE))
+})
+
+test_that("hz stops on a start probe that moves a fixed parameter (#169)", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  withr::local_package("TemporalHazard")
+  env <- hz_probe_env()
+  # The probes as they stood before #169, moving every position.
+  src <- readLines(hazard_template("hz"), warn = FALSE)
+  at <- which(trimws(src) == "#| label: edit-multistart")
+  chunk <- src[(at + 1L):(at + which(src[(at + 1L):length(src)] == "```")[1L] - 1L)]
+  edited <- sub("^probes <- .*$", "probes <- rbind(theta0, theta0 + 0.5, theta0 - 0.5)", chunk)
+  expect_false(identical(edited, chunk))
+  expect_error(eval(parse(text = edited), env),
+               "A probe moves a fixed parameter \\(late\\.log_tau, late\\.gamma, late\\.alpha\\)")
+})
+
+# ---- #175: a time of zero or below stops ac and hz at the cohort ---------------
+
+test_that("ac stops on times of zero or below, counting each and naming the fix (#175)", {
+  withr::local_package("hvtiRutilities")
+  expect_time_guard("ac")
+})
+
+test_that("hz stops on times of zero or below, counting each and naming the fix (#175)", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  expect_time_guard("hz")
+})
