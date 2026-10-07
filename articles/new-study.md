@@ -77,7 +77,7 @@ directly, in a temporary directory:
 ``` r
 
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L)
-#> Study: /tmp/RtmpgnalBN/file1fbd4e5ef614/new-study
+#> Study: /tmp/RtmpBdnrRf/file1fdd2dd64649/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -123,7 +123,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpgnalBN/file1fbd4e5ef614/new-study
+#> Study: /tmp/RtmpBdnrRf/file1fdd2dd64649/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
