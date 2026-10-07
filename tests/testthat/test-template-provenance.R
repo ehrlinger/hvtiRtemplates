@@ -660,6 +660,7 @@ render_provenance_job <- function(job, root, quiet = TRUE) {
 }
 
 test_that("an endpoint-free render writes a stem-matched sidecar without invented blocks", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   root <- make_provenance_study(withr::local_tempdir())
@@ -682,6 +683,7 @@ test_that("an endpoint-free render writes a stem-matched sidecar without invente
 })
 
 test_that("an endpoint-driven render writes its local coding and observed cohort", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   root <- make_provenance_study(withr::local_tempdir())
@@ -708,6 +710,7 @@ test_that("an endpoint-driven render writes its local coding and observed cohort
 })
 
 test_that("a sidecar write failure fails the render", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   root <- make_provenance_study(withr::local_tempdir())
@@ -731,6 +734,7 @@ test_that("a sidecar write failure fails the render", {
 })
 
 test_that("render_job publishes provenance through the same project hooks", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   root <- make_provenance_study(withr::local_tempdir())
@@ -745,6 +749,7 @@ test_that("render_job publishes provenance through the same project hooks", {
 })
 
 test_that("direct Quarto supports its file-backed input and output lists", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   root <- make_provenance_study(withr::local_tempdir())
@@ -767,6 +772,7 @@ test_that("direct Quarto supports its file-backed input and output lists", {
 })
 
 test_that("project renders publish renamed outputs and ignore unmanaged documents", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   root <- make_provenance_study(withr::local_tempdir())
@@ -796,6 +802,7 @@ test_that("project renders publish renamed outputs and ignore unmanaged document
 })
 
 test_that("document-level frozen renders retain their original execution payload", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   root <- make_provenance_study(withr::local_tempdir())
@@ -820,6 +827,7 @@ test_that("document-level frozen renders retain their original execution payload
 })
 
 test_that("a Pandoc failure after execution keeps the prior HTML-sidecar pair", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   root <- make_provenance_study(withr::local_tempdir())
@@ -843,6 +851,7 @@ test_that("a Pandoc failure after execution keeps the prior HTML-sidecar pair", 
 })
 
 test_that("existing later hooks run before publication so the checksum covers their changes", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   root <- make_provenance_study(withr::local_tempdir())

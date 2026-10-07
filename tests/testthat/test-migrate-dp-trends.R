@@ -20,6 +20,7 @@ trends_config <- function(result) {
 }
 
 test_that("migration render helper executes a trends job where current_input is readable", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   out <- render_migrated_fixture("dp-trends")

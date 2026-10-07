@@ -1,8 +1,10 @@
 # hvtiRtemplates (unreleased)
 
-* The test suite runs in about two-thirds of the time, toward the 10-minute check
-  budget: expensive fits and renders are shared within a test file, and fixtures are
-  smaller. No assertion was dropped and no test is skipped.
+* The test suite runs in about two-thirds of the time: expensive fits and renders are
+  shared within a test file, and fixtures are smaller. No assertion was dropped. About
+  40 tests, the end-to-end Quarto renders, model fits and saved-file identifier scans,
+  are skipped on CRAN (`skip_on_cran()`), so a CRAN-mode check fits the 10-minute
+  budget; CI sets `NOT_CRAN=true` and still runs every one.
 
 * `hz` no longer passes `condition = 14` to `hazard()`. It mirrored SAS's
   `CONDITION=` option, which `hazard()` does not have, so TemporalHazard ignored it

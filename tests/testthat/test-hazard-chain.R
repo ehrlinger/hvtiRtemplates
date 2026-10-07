@@ -139,6 +139,7 @@ test_that("hp names an ac.rds saved before the data contract, rather than callin
 # ---- #203: no saved hazard object carries a patient identifier --------------
 
 test_that("ac, hz, hm and hs keyed on MRN save no MRN anywhere in their files", {
+  skip_on_cran()
   skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
   skip_if_not_installed("hvtiRlifetables", minimum_version = "0.1.2")
   skip_if_not_installed("numDeriv")
@@ -161,6 +162,7 @@ test_that("ac, hz, hm and hs keyed on MRN save no MRN anywhere in their files", 
 })
 
 test_that("hm saves no MRN when its chunks run outside the global environment", {
+  skip_on_cran()
   skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
   skip_if_not_installed("hvtiRlifetables", minimum_version = "0.1.2")
   skip_if_not_installed("numDeriv")

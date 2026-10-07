@@ -2,6 +2,7 @@
 # stops the job before hm.rds is saved, naming the phases and covariates (#228).
 
 test_that("hm stops on a reported fit without a usable variance matrix, naming phase and covariates", {
+  skip_on_cran()
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")

@@ -11,6 +11,7 @@ base_edits <- list(
 )
 
 test_that("dc-gfup renders a death panel and an event panel", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   edits <- c(base_edits, list(
@@ -78,6 +79,7 @@ refused_chunks <- function(s) {
 }
 
 test_that("dc-gfup names every missing column in one message, and keeps its tables", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   out <- render_refused(scaffold_gfup(c(base_edits, list(
@@ -102,6 +104,7 @@ test_that("dc-gfup reports a name shared by PANELS and EVENTS, and keeps its tab
 })
 
 test_that("a final dc-gfup render stops on a figure refusal", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   s <- scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85")))

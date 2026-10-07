@@ -49,6 +49,7 @@ inline_privacy_migrate <- function(root, kind, middle, after = TRUE) {
 }
 
 test_that("every SAS adapter withholds all inline aliases after apostrophe comments", {
+  skip_on_cran()
   local_template_list_once()
   for (kind in c("dc-tables", "dc-gfup", "dp-trends", "dp-eda")) {
     for (alias in c("datalines", "cards", "lines", "datalines4", "cards4", "lines4")) {
@@ -72,6 +73,7 @@ test_that("every SAS adapter withholds all inline aliases after apostrophe comme
 })
 
 test_that("SAS adapters fail closed for ambiguous delimiters and uncertain tokens", {
+  skip_on_cran()
   cases <- list(
     c("title 'unterminated", "datalines;", "PATIENT_SENTINEL_472 43", ";"),
     c("/* unfinished comment", "cards;", "PATIENT_SENTINEL_472 43", ";")

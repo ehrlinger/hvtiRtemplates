@@ -131,6 +131,7 @@ test_that("dc-tables refuses a set cut from another dataset and reads a named re
 })
 
 test_that("migrated dc-tables writes an editable structurally clean document in the logical documents folder", {
+  skip_on_cran()
   root <- migration_study_fixture("dc-tables")
   out <- tables_migrate(root)
   env <- new.env()

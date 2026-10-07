@@ -277,6 +277,7 @@ test_that("lm-checkpred stops when its validation patients were in the training 
 })
 
 test_that("every lm template scaffolds and runs end to end, and one renders through Quarto", {
+  skip_on_cran()
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())

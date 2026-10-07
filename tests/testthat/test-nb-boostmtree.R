@@ -209,6 +209,7 @@ test_that("the cache is reused unchanged, and a changed setting stops until REFI
 })
 
 test_that("every report chunk draws for every family, from a fresh fit and from the cache", {
+  skip_on_cran()
   nb_skip_unless_stack()
   # The effects chunk emits each figure as a child chunk.
   local_child_chunks()
@@ -312,6 +313,7 @@ test_that("visits all at one time draw no mean line, and say so", {
 })
 
 test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no MRN", {
+  skip_on_cran()
   nb_skip_unless_stack()
   testthat::skip_if_not_installed("quarto")
   testthat::skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")

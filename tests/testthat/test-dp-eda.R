@@ -17,6 +17,7 @@ eda_job_data <- function(id, key = id) {
 }
 
 test_that("dp-eda renders every section into one self-contained report", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   # An event panel too: its color and shape mapping is this template's own
@@ -61,6 +62,7 @@ test_that("dp-eda renders every section into one self-contained report", {
 })
 
 test_that("dp-eda draws the same pages as dp-postage over the same data", {
+  skip_on_cran()
   # Each job's own chunks, run in order, not two more renders: the pages are
   # written by ggsave() inside the chunks, not by knitr's device, so they are
   # the files a render writes. Both templates render end to end elsewhere,
@@ -103,6 +105,7 @@ test_that("dp-eda draws the same pages as dp-postage over the same data", {
 })
 
 test_that("dp-eda leaves out a section not named in SECTIONS", {
+  skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   edits <- c(eda_edits, list("^SECTIONS <- " = "SECTIONS <- c(\"count\", \"continuous\")"))

@@ -96,6 +96,7 @@ test_that("every lm fit template saves digested IDs and a model that still score
 })
 
 test_that("a rendered lm-binary keyed on MRN saves no MRN anywhere in the file", {
+  skip_on_cran()
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())

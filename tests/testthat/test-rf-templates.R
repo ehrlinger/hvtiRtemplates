@@ -110,6 +110,7 @@ rfs_explained_copy <- function(.local_envir = parent.frame()) {
 }
 
 test_that("rfs-explain explains the saved forest without refitting", {
+  skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
   env <- rfs_explained()
 
@@ -133,6 +134,7 @@ test_that("rfs-explain stops when no fit has run in its set", {
 })
 
 test_that("a changed TOP_K makes only the partial caches stale", {
+  skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
   # The copy carries the caches an explain at TOP_K = 2 left.
   root <- rfs_explained_copy()
@@ -160,6 +162,7 @@ test_that("a changed TOP_K makes only the partial caches stale", {
 })
 
 test_that("PARTIAL_VARS names the dependence variables explicitly", {
+  skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
   # The shared study's importance and VarPro caches are reused; its partials,
   # computed for the TOP_K choice, go, so these are computed for PARTIAL_VARS.
@@ -481,6 +484,7 @@ test_that("every explain stops on a forest saved before the data contract, namin
 # ---- #203: no saved forest carries a patient identifier ------------------------
 
 test_that("the fit and explain jobs keyed on MRN save no MRN in any file", {
+  skip_on_cran()
   data <- rf_mrn_data(n = 60L)   # 60 patients search as surely as 120, in half the time
   for (prefix in rf_prefixes) {
     rf_skip_unless_stack(rf_template_packages(prefix, "explain"))
@@ -504,6 +508,7 @@ test_that("the fit and explain jobs keyed on MRN save no MRN in any file", {
 })
 
 test_that("the fit and explain jobs save no MRN when their chunks run outside the global environment", {
+  skip_on_cran()
   data <- rf_mrn_data(n = 60L)
   for (prefix in rf_prefixes) {
     rf_skip_unless_stack(rf_template_packages(prefix, "explain"))

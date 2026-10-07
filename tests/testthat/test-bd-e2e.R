@@ -30,6 +30,7 @@ bd_published <- local({
 })
 
 test_that("bd publishes and registers a release, and ac reads it", {
+  skip_on_cran()
   bd_quarto_skip()
   testthat::skip_if_not_installed("TemporalHazard")
   pub <- bd_published()
@@ -89,6 +90,7 @@ test_that("the purled job runs as a script and makes the release in a fresh stud
 })
 
 test_that("a second publishing render with a changed rule adopts -r2, and a draft render publishes nothing", {
+  skip_on_cran()
   bd_quarto_skip()
   # Last in this file: it changes the shared study the tests above read.
   pub <- bd_published()

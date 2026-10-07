@@ -6,6 +6,7 @@
 estate <- concordance_estate_once(environment())
 
 test_that("the fixture fits one hm model per group, in its own set", {
+  skip_on_cran()
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
