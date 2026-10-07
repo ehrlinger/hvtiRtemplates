@@ -1,5 +1,21 @@
 # hvtiRtemplates (unreleased)
 
+* The six forest templates (`rfc`, `rfs` and `rfr`, fit and explain) now hand
+  `rfsrc()`, `vimp()` and `varpro()` a negative `seed = -abs(SEED)` as well as
+  seeding R's generator through `cache_fit(seed = SEED)`. A study found that either
+  half alone does not reproduce: `rfsrc()` without `seed =` draws one from R's
+  generator, and `varpro()` with a fixed `seed =` still gave different importances
+  after a different chunk. Both together reproduced to the last digit across a
+  192-thread server and a Mac. The templates also set `options(rf.cores = 1L)`, since
+  a varPro cutoff changed with the thread count. Jobs already scaffolded are not
+  changed; to adopt this, make the same edits and render once with `REFIT = TRUE`.
+
+* A new test parses every R chunk of every shipped template and fails on a call
+  that draws from R's generator (`rfsrc`, `varpro`, `mice`, `sample`, `runif` and
+  others) unless it is wrapped in `cache_fit(seed = )` or `with_seed()`, or has a
+  `set.seed()` at most three lines above it in the same chunk. A randomForestSRC
+  call that takes a `seed` must also be given a negative one.
+
 * `hz` no longer passes `condition = 14` to `hazard()`. It mirrored SAS's
   `CONDITION=` option, which `hazard()` does not have, so TemporalHazard ignored it
   and printed a warning into the report for every fit. The fit still reports the

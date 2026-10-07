@@ -55,6 +55,13 @@ suppressPackageStartupMessages({
   library(ggRandomForests)
   library(hvtiRutilities)
 })
+# One thread, so a forest reproduces from machine to machine. Left unset,
+# randomForestSRC runs on every core its OpenMP build can see, and on a
+# multi-core server a varPro cross-validated cutoff changed with the thread
+# count with every seed held fixed. Raise it for speed on a large forest, at the
+# cost of that guarantee: a cached fit records its seed, data and package
+# versions, never the threads it ran on.
+options(rf.cores = 1L)
 # The versions this template was verified against, end to end, on 2026-09-19.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
@@ -245,7 +252,11 @@ PREDICTORS <- c("age", "female", "hx_chf")
 
 # EDIT: forest size and seed. The error-by-trees plot below says whether NTREE
 # was enough: a curve still falling at its right edge was not. SEED makes the
-# forest reproducible and is part of its cache key.
+# forest reproducible and is part of its cache key. It is used twice, on
+# purpose: cache_fit() seeds R's generator with it, and rfsrc() is handed it
+# negated, the form randomForestSRC takes as its own seed. Without that
+# argument rfsrc() draws a seed from R's generator, so the forest would depend
+# on whatever ran before it.
 NTREE <- 1000
 SEED  <- 2026
 
@@ -359,7 +370,7 @@ model <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ ."))
 environment(model) <- globalenv()
 forest <- cache_fit(
   "rfs-forest",
-  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none"),
+  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none", seed = -abs(SEED)),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
 )
 forest
