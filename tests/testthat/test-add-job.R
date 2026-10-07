@@ -390,3 +390,17 @@ test_that("add_job() and open_job() find the study from the working directory, o
                "open_job\\(\\): the working directory is not inside a study")
   expect_length(list.files(outside, recursive = TRUE, all.files = TRUE, no.. = TRUE), 0L)
 })
+
+test_that("a malformed manifest is reported as itself, not as no study (#258)", {
+  # The default-root helper used to rewrite every study_root() error as "not
+  # inside a study", hiding a manifest that exists and only needs repair.
+  root <- withr::local_tempdir("bad-manifest-")
+  withr::local_dir(root)
+  writeLines("{}", "_study.yml")
+  e <- expect_error(add_job("dc-gfup", subject = "cohort", type = "eda"), "missing required key: study")
+  expect_no_match(conditionMessage(e), "not inside a study")
+  writeLines("study: [unclosed", "_study.yml")
+  e <- expect_error(open_job("dc-gfup", subject = "cohort", type = "eda"), "Parser error")
+  expect_no_match(conditionMessage(e), "not inside a study")
+  expect_identical(sort(list.files(root, all.files = TRUE, no.. = TRUE)), "_study.yml")
+})

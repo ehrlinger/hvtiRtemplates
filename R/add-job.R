@@ -200,13 +200,24 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
 
 # The study root above the working directory, for a scaffolding call that names
 # no `dir`. Outside a study this is an error naming the way out, rather than a
-# job written into whatever directory R happens to be in.
+# job written into whatever directory R happens to be in. Only a missing
+# manifest gets that message, decided by looking for the file rather than by
+# reading study_root()'s error text: a manifest that exists but is malformed or
+# lacks a key is a different, repairable problem, so study_root()'s own error
+# surfaces unchanged. Raised by Codex on #258.
 .default_study_root <- function(fn) {
-  tryCatch(hvtiRutilities::study_root(getwd()), error = function(e) {
-    stop(fn, "(): the working directory is not inside a study (no _study.yml in ", getwd(),
-         " or above it). Pass `dir`, the study root, or run hvtiRutilities::study_setup() first.",
-         call. = FALSE)
-  })
+  start <- getwd()
+  d <- normalizePath(start, winslash = "/", mustWork = TRUE)
+  while (!file.exists(file.path(d, "_study.yml"))) {
+    up <- dirname(d)
+    if (identical(up, d)) {
+      stop(fn, "(): the working directory is not inside a study (no _study.yml in ", start,
+           " or above it). Pass `dir`, the study root, or run hvtiRutilities::study_setup() first.",
+           call. = FALSE)
+    }
+    d <- up
+  }
+  hvtiRutilities::study_root(start)
 }
 
 # The error for a call that leaves out `subject`, `type` or both (#224). R's
