@@ -521,7 +521,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   kept <- .apply_where(ids$data, where, env = parent.frame(), cols = c(who$id, key), identifiers = identifiers,
                        id_values = if (is.null(id_values)) list() else id_values)
   counts <- .check_job_key(kept$data, key, who$id)
-  record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts)
+  record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts, notes = read$notes)
   attr(record, "selection") <- list(
     dataset = dataset, analysis_set = analysis_set, where = kept$steps$condition,
     where_shown = kept$steps$shown,
@@ -567,8 +567,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 
 .read_job_source <- function(cfg, dataset, analysis_set) {
   if (is.null(analysis_set)) {
-    read <- .provenance_read(dataset, cfg, function() hvtiRutilities::read_built(cfg = cfg, dataset = dataset))
-    read$source <- paste0("dataset `", dataset, "` (", basename(hvtiRutilities::built_path(cfg = cfg, dataset = dataset)), ")")
+    read <- .read_registered(dataset, cfg)
+    read$source <- paste0("dataset `", dataset, "` (", basename(read$record$path), ")")
     return(read)
   }
   path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), paste0(analysis_set, ".parquet"))
@@ -580,6 +580,26 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     role = paste0("analysis_set:", analysis_set)
   )
   read$source <- paste0("analysis set `", analysis_set, "` of the study dataset")
+  read$notes <- character()
+  read
+}
+
+# Reads a registered dataset. When its source has been rebuilt but not
+# registered, hvtiRutilities reads the registered version and signals a
+# message of class hvtiRutilities_out_of_date. The message is kept as a note
+# for the job's data table, where a reader sees it beside the file the job
+# read, instead of a bare message wherever the chunk happens to print it.
+# dp-postage reads outside read_job_data() and calls this too.
+.read_registered <- function(dataset, cfg) {
+  notes <- character()
+  read <- withCallingHandlers(
+    .provenance_read(dataset, cfg, function() hvtiRutilities::read_built(cfg = cfg, dataset = dataset)),
+    hvtiRutilities_out_of_date = function(m) {
+      notes <<- c(notes, trimws(conditionMessage(m)))
+      invokeRestart("muffleMessage")
+    }
+  )
+  read$notes <- unique(notes)
   read
 }
 
@@ -596,7 +616,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   invisible(path)
 }
 
-.job_record <- function(source, rows_read, who, dropped, steps, counts) {
+.job_record <- function(source, rows_read, who, dropped, steps, counts, notes = character()) {
   rows <- list(
     c("Source", source),
     c("Rows read", format(rows_read, big.mark = ",")),
@@ -611,6 +631,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   }
   rows[[length(rows) + 1L]] <- c("Rows kept", paste0(format(counts$rows, big.mark = ","), " rows on ",
                                                      format(counts$patients, big.mark = ","), " patients"))
+  for (note in notes) rows[[length(rows) + 1L]] <- c("Note", note)
   data.frame(step = vapply(rows, `[[`, "", 1L), value = vapply(rows, `[[`, "", 2L))
 }
 
