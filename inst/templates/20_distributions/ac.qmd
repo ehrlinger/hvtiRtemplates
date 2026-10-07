@@ -279,7 +279,7 @@ assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 # time nor the patient. ac checks too, so the first job in the chain says so.
 # The fix belongs in the dataset build, not here: a job reshapes data and never
 # corrects it, and every job reading the cohort must see the same follow-up.
-# Only rows the cohort counts are checked: a row with no EVENT is not analysed.
+# Only rows the cohort counts are checked: a row with no EVENT is not analyzed.
 .t <- as.numeric(d[[TIME]])[!is.na(d[[EVENT]])]
 .n_zero <- sum(.t == 0, na.rm = TRUE)
 .n_neg  <- sum(.t < 0, na.rm = TRUE)
