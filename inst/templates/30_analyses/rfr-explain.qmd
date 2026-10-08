@@ -382,7 +382,8 @@ save_figure(.fig, "rfr-explain-dependence-marginal")
 # Partial: the forest's prediction with every other variable held at its
 # observed values.
 pd <- cache_fit("rfr-partial", gg_partial_rfsrc(forest, xvar.names = sel),
-                seed = SEED, dir = CACHE_DIR, refit = REFIT)
+                seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                packages = "randomForestSRC")
 .fig <- plot(pd)
 save_figure(.fig, "rfr-explain-dependence-partial")
 .fig
