@@ -141,7 +141,7 @@ tryCatch(add_job("dp-gfup", subject = "cohort", type = "eda", dir = d),
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
 try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
-#> Error : add_job(): '/tmp/RtmpxPI4XX/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.
+#> Error : add_job(): '/tmp/RtmpHsZikH/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #> [1] "10_descriptive/cohort-eda-dc-gfup.qmd"
