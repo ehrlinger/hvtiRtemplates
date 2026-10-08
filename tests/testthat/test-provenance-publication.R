@@ -277,10 +277,14 @@ test_that("data capture brackets the actual read and rejects changing bytes", {
   expect_equal(captured$value$id, 1L)
   expect_identical(captured$record$sha256, hvtiRutilities::provenance_data("study", cfg)$sha256)
 
+  # A job reads the registered version, not the source, so rewriting the source
+  # alone changes nothing it read. The race this guards is a new version being
+  # registered mid-read: rewrite the source and register it.
   expect_error(
     .provenance_read("study", cfg, function() {
       value <- hvtiRutilities::read_built(cfg)
-      write("changed", hvtiRutilities::built_path(cfg))
+      utils::write.csv(data.frame(id = 2L), hvtiRutilities::built_path(cfg), row.names = FALSE)
+      withr::with_dir(root, suppressMessages(hvtiRutilities::update_manifest()))
       value
     }),
     "changed while it was read"
