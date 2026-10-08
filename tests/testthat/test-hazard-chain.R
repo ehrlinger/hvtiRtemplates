@@ -293,3 +293,28 @@ test_that("hm's stage 1 holds every shape of each phase (rollup review, 1.2.6)",
   # Stage 2 is hz's phases as they are.
   expect_identical(env$make_phases(FALSE), env$hz_art$phases)
 })
+
+# ---- hp saves its three figures as PNG and PDF (design 5, 2026-10-07) ---------
+
+test_that("hp saves each figure as a PNG and a PDF, and FIGURES keeps only the PDFs it names", {
+  skip_on_cran()
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  fit <- hz_fit_run("fit-deterministic")$fit_det
+  run_figures <- function(choices) {
+    env <- hazard_env(hazard_study())
+    hazard_run("hp", c("set", "edit-study-choices"), env, choices)
+    env$fit <- fit
+    env$km <- data.frame(time = c(0, 1, 2, 5), survival = c(1, 0.9, 0.85, 0.7))
+    env$t_max <- 5
+    utils::capture.output(hazard_run("hp", c("grid", "fig-survival", "fig-hazard", "fig-phases"), env))
+    list.files(dirname(env$set_path("graphs", "x")))
+  }
+  figures <- c("hp-survival", "hp-hazard", "hp-phases")
+  expect_setequal(run_figures(list()), c(paste0(figures, ".png"), paste0(figures, ".pdf")))
+  # The report embeds every PNG, so each is written; only the named figure gets its PDF.
+  expect_setequal(run_figures(list(FIGURES = "hp-survival")), c(paste0(figures, ".png"), "hp-survival.pdf"))
+  expect_setequal(run_figures(list(SAVE_FIGURES = FALSE)), paste0(figures, ".png"))
+  expect_identical(grDevices::dev.cur(), c("null device" = 1L))
+})

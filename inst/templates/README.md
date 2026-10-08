@@ -302,6 +302,45 @@ every template. The recipes book chapter
 [Numbering figures and tables](https://ehrlinger.github.io/hvtiGraphics/numbering.html)
 sets out the rule with examples, including the `knitr::knit_child()` pattern.
 
+## Saved figures
+
+Every figure a job draws is saved to `graphs/<subject>-<type>/` as a PNG, to
+place in a Word draft, and a PDF of the same name, for the publisher's
+high-resolution submission. Word converts an inserted PDF into a large EMF,
+which is why the two files are kept apart. In a job's study choices,
+`SAVE_FIGURES <- FALSE` saves neither, and `FIGURES` keeps only the figures
+whose names start with one of its entries, such as
+`FIGURES <- c("hp-survival", "hp-hazard")`. A PNG the report itself shows is
+written either way, so the report never carries a broken image. These two
+choices carry no `EDIT:` marker: they have working defaults, and a marker
+would hold a finished job as a draft.
+
+PNGs are written at 300 dpi. A PDF embeds its fonts through `cairo_pdf()`
+where the cairo device opens, and falls back to the default `pdf()` device
+where it does not, as on a Mac without XQuartz.
+
+| template | figure names |
+|---|---|
+| dc-gfup | `dc-gfup-<panel>` |
+| dc-stddiff | `dc-stddiff-balance` |
+| dc-tables | `dc-tables-correlation-matrix` (in `descriptive/`) |
+| dp-eda | `dp-eda-gfup-<panel>`, `dp-eda-<section>-page-<NN>` |
+| dp-postage | `dp-postage-<section>-page-<NN>` |
+| dp-gfup | `dp-gfup-<panel>` |
+| dp-trends | `dp-trends-<trend>-<subgroup>` |
+| hp | `hp-survival`, `hp-hazard`, `hp-phases` |
+| bc, bh, bl, br | `<prefix>-frequencies` |
+| nb-boostmtree | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>`, `-traces` |
+| rfc-, rfr-, rfs-explain | `<template>-importance`, `-varpro`, `-dependence-marginal`, `-dependence-partial`, `-dependence-varpro` |
+| rfc-fit | `rfc-fit-diagnostics-error`, `-roc` |
+| rfr-fit | `rfr-fit-diagnostics-error`, `-predicted` |
+| rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |
+
+A plot method that returns several plots saves them as `<name>-1`, `<name>-2`
+and so on. Sizes are the template's own, or 6 x 4 in where a figure was not
+saved before. Figure sizes, axis labels and confidence-interval style are team
+standards still to be settled.
+
 ## Editing a scaffolded job
 
 `migrate_job()` can prefill `dc-tables`, `dc-gfup`, `dp-trends`, and

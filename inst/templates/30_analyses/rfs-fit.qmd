@@ -210,6 +210,13 @@ set_path <- function(kind, file) {
   file.path(d, file)
 }
 
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
 # `rfs-fit` writes the forest through this and `rfs-explain` reads it back,
 # both by set, so an explanation can never be filed against a different set
 # than the forest it explains. The write is the `save` chunk at the foot of
@@ -269,6 +276,13 @@ NA_ACTION <- "na.omit"
 # render instead of returning the old forest; TRUE recomputes only the caches
 # that are out of date, so it is safe to leave on while iterating.
 REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Cohort
@@ -386,7 +400,9 @@ cached there on its own, so it can be recomputed without regrowing the forest.
 #| fig-cap: "Out-of-bag error by number of trees"
 # Out-of-bag error by number of trees.
 err <- gg_error(forest)
-plot(err)
+.fig <- plot(err)
+save_figure(.fig, "rfs-fit-diagnostics-error")
+.fig
 ```
 
 ```{r}
@@ -394,7 +410,9 @@ plot(err)
 #| fig-cap: "Out-of-bag predicted survival, one curve per patient"
 # Out-of-bag predicted survival, one curve per patient.
 surv <- gg_rfsrc(forest)
-plot(surv)
+.fig <- plot(surv)
+save_figure(.fig, "rfs-fit-diagnostics-survival")
+.fig
 ```
 
 ```{r}
@@ -403,7 +421,9 @@ plot(surv)
 # Brier score over follow-up. Lower is better, and 0.25 is what a coin flip
 # scores.
 brier <- gg_brier(forest)
-plot(brier)
+.fig <- plot(brier)
+save_figure(.fig, "rfs-fit-diagnostics-brier")
+.fig
 ```
 
 ```{r}

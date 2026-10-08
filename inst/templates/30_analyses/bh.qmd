@@ -217,6 +217,13 @@ set_path <- function(kind, file) {
   file.path(d, file)
 }
 
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
 # The screen this job reports on was run by a companion script, which wrote its
 # chunks into this set's `estimates` directory. Reading them through set_path()
 # is what keeps a screen filed against the set whose candidates it screened.
@@ -282,6 +289,13 @@ CLUSTERS <- list(
 
 # Correlation cutoff for near-duplicate candidates.
 COLLINEAR_R <- 0.99
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## The screen
@@ -804,7 +818,7 @@ result as an absence of collinearity.
 # The error bar is the point of the figure, not decoration. A bare dot plot
 # invites the reader to rank variables by a difference of two points, which is
 # inside the noise at every frequency near the middle of the range.
-ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
+.fig <- ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
   geom_hline(yintercept = RETAIN_PCT, linetype = "dashed") +
   geom_errorbar(aes(ymin = pct - mc_error, ymax = pct + mc_error), width = 0) +
   geom_point() +
@@ -812,6 +826,8 @@ ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
   facet_wrap(~phase, scales = "free_y") +
   labs(x = NULL, y = "Replicates selecting the variable (%)") +
   theme_minimal()
+save_figure(.fig, "bh-frequencies", height = 7)
+.fig
 ```
 
 ## Save

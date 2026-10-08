@@ -128,6 +128,13 @@ set_path <- function(kind, file) {
   if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
   file.path(dir, file)
 }
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 ```
 
 ## Study choices
@@ -189,6 +196,13 @@ OVERRIDES <- list()
 # every pair), and an optional stratum:
 #   list(vars = c("glu_pr", "creat_pr"), with = "a1c_pr", by = "a1c_grp")
 CORR <- NULL
+
+# Each figure is saved to descriptive/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Data
@@ -359,9 +373,8 @@ if (is.null(CORR)) {
   }
   cm <- hv_correlation_matrix(d, vars = unique(c(CORR$with, CORR$vars)))
   fname <- "dc-tables-correlation-matrix.png"
-  png(set_path("descriptive", fname), width = 10, height = 10, units = "in", res = 150)
-  print(plot(cm) + theme_hv_manuscript())
-  invisible(dev.off())
+  save_figure(plot(cm) + theme_hv_manuscript(), sub("[.]png$", "", fname), width = 10, height = 10,
+              kind = "descriptive", linked = TRUE)
   .fence <- strrep("`", 3)
   .caption <- sprintf("Spearman and Pearson, %d%% Fisher interval", round(100 * conf_level))
   cat(knitr::knit_child(text = c(

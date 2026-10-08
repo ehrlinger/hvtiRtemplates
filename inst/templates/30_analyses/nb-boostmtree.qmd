@@ -200,6 +200,13 @@ set_path <- function(kind, file) {
   file.path(d, file)
 }
 
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
 # The fit is cached and saved through set_path(), by set, so a later render or job finds this set's fit and no other's.
 ```
 
@@ -263,6 +270,13 @@ N_TRACES <- 100
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
 # render instead of returning the old fit; TRUE recomputes it.
 REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Cohort
@@ -431,6 +445,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 # The cross-validated error by iteration, and the fitted rho, phi and lambda.
 # Best M at the right edge means M was too small.
 p_error <- plot(gg_boost_error(fit))
+save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
@@ -438,6 +453,7 @@ p_error
 #| label: fig-path
 #| fig-cap: "Fitted rho, phi and lambda by boosting iteration"
 p_path <- plot(gg_boost_path(fit))
+save_figure(p_path, "nb-boostmtree-path")
 p_path
 ```
 
@@ -446,6 +462,7 @@ p_path
 #| fig-cap: "Observed against fitted values over follow-up, in time bins"
 # Observed against fitted values over follow-up, in time bins.
 p_calibration <- plot(gg_boost_calibration(fit))
+save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
@@ -456,6 +473,7 @@ p_calibration
 # interaction is where a predictor whose effect changes over follow-up shows.
 vimp <- vimp.boostmtree(fit)
 p_vimp <- plot(gg_boost_vimp(vimp))
+save_figure(p_vimp, "nb-boostmtree-importance")
 p_vimp
 ```
 
@@ -509,6 +527,7 @@ p_effects <- lapply(unname(.parts), function(v) {
 })
 for (.i in seq_along(p_effects)) {
   .p <- p_effects[[.i]]
+  save_figure(.p, paste0("nb-boostmtree-effects-", .kinds[[.i]]))
   .child(paste("fig effects", .kinds[[.i]]), paste0("Partial effects over follow-up, ", .kinds[[.i]], " predictors"), ".p")
 }
 ```
@@ -544,6 +563,7 @@ if (length(.edges) < 2L) {
     ggplot2::geom_line(data = trace_means, ggplot2::aes(x = .data[["time"]], y = .data[["fitted"]]),
                        linewidth = 1.2, inherit.aes = FALSE)
 }
+save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
