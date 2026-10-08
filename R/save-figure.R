@@ -1,7 +1,7 @@
 # Saving a template figure for a manuscript: a PNG to place in the Word draft,
 # and a PDF of the same name for the publisher. Word converts an inserted PDF
-# into a large EMF, so the two files have different jobs. Design: hvtiR
-# dev/specs/2026-10-07-figures-pdf-png-design.md.
+# into a large EMF, so the two files have different jobs. The design is the
+# 2026-10-07 figures-pdf-png note in the hvtiR repository's specs folder.
 #
 # A figure's name is its file stem, such as hp-survival or
 # rfs-fit-diagnostics-brier. SAVE_FIGURES turns the publication copies off, and

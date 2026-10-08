@@ -1,7 +1,7 @@
 save_figure_ <- hvtiRtemplates:::.save_figure
 gg <- function() {
-  skip_if_not_installed("ggplot2")
-  ggplot2::ggplot(data.frame(x = 1:3, y = 1:3), ggplot2::aes(x, y)) + ggplot2::geom_point()
+  testthat::skip_if_not_installed("ggplot2")
+  ggplot2::ggplot() + ggplot2::geom_point(ggplot2::aes(x = 1:3, y = 1:3))
 }
 
 test_that("a selected ggplot is written as a PNG and a PDF of the same name", {
