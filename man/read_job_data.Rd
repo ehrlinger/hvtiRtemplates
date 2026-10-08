@@ -17,11 +17,12 @@ read_job_data(
 \item{cfg}{Study configuration, from \code{\link[hvtiRutilities]{study_config}}.}
 
 \item{dataset}{Name of a dataset registered in \code{_study.yml};
-\code{"study"} is the built dataset.}
+\code{"built"} and \code{"study"} both name the study dataset, and the
+selection records \code{"study"}.}
 
 \item{analysis_set}{Name of an analysis set written by
 \code{hvtiRdatabuild::write_analysis_set()}, or \code{NULL} to read
-\code{dataset} whole. Analysis sets derive from \code{"study"} only.}
+\code{dataset} whole. Analysis sets derive from the study dataset only.}
 
 \item{where}{Rows to keep: \code{NULL}, one condition from \code{quote()}, or
 a list from \code{rlang::exprs()}, all of which must hold. Conditions follow
