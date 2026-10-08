@@ -27,15 +27,15 @@ read_job_data(
 
 - dataset:
 
-  Name of a dataset registered in `_study.yml`; `"study"` is the built
-  dataset.
+  Name of a dataset registered in `_study.yml`; `"built"` and `"study"`
+  both name the study dataset, and the selection records `"study"`.
 
 - analysis_set:
 
   Name of an analysis set written by
   [`hvtiRdatabuild::write_analysis_set()`](https://ehrlinger.github.io/hvtiRdatabuild/reference/write_analysis_set.html),
-  or `NULL` to read `dataset` whole. Analysis sets derive from `"study"`
-  only.
+  or `NULL` to read `dataset` whole. Analysis sets derive from the study
+  dataset only.
 
 - where:
 
@@ -112,7 +112,8 @@ A list:
 The `"selection"` attribute is a list that a job saves in its hand-off,
 so a downstream job can rebuild the same rows:
 
-- `dataset` and `analysis_set`, as given;
+- `dataset`, with `"built"` recorded as `"study"`, and `analysis_set`,
+  as given;
 
 - `where`, the exact text of each condition, values included, used to
   rebuild the rows; it stays inside the study and is never printed;
@@ -150,7 +151,7 @@ refused. Every setting is checked before the data are read.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
-#> Study: /tmp/Rtmp9F51Ka/job-data-example
+#> Study: /tmp/RtmpLCEjHa/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -163,7 +164,7 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/Rtmp9F51Ka/job-data-example
+#> Study: /tmp/RtmpLCEjHa/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project

@@ -93,7 +93,7 @@ sixteen:
 
     16 unresolved EDIT: marker(s) remain in this job:
       - <!-- EDIT: name the job this replaces (descriptive/dc.gfup). -->
-      - # EDIT: the registered dataset this job reads ("study" is the built dataset).
+      - # EDIT: the registered dataset this job reads ("built" is the study dataset).
       - # EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
       ...
 

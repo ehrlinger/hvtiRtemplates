@@ -133,7 +133,7 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">new_root</span>, study <span class="op">=</span> <span class="st">"Synthetic new study"</span>, study_tracker_id <span class="op">=</span> <span class="fl">42L</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp5XlASs/file1f2d6b12a6b4/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmp0KQD9Z/file1ffa4d7320e8/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -168,7 +168,7 @@
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp5XlASs/file1f2d6b12a6b4/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmp0KQD9Z/file1ffa4d7320e8/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -231,7 +231,7 @@
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"eda"</span><span class="fu">,</span></span>
 <span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"output"</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">"file"</span><span class="fu">:</span> <span class="st">"cohort-eda-dc-general.html"</span><span class="fu">,</span> <span class="dt">"sha256"</span><span class="fu">:</span> <span class="st">"95455dd3..."</span> <span class="fu">}</span></span>
 <span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>Read it as a receipt. <code>data</code> names the registered file and the checksum of the bytes the job read. <code>packages</code> and <code>renv_lock</code>, omitted here, record every package version and the study’s lockfile. <code>output</code> carries the checksum of the HTML it describes, so a sidecar can be matched to its report and to nothing else.</p>
+<p>Read it as a receipt. <code>data</code> names the registered file and the checksum of the bytes the job read. Its <code>dataset</code> says <code>"study"</code> although the job says <code>DATASET &lt;- "built"</code>: the two names mean the same dataset, and records always use <code>"study"</code>, so a sidecar written by an older job compares equal. <code>packages</code> and <code>renv_lock</code>, omitted here, record every package version and the study’s lockfile. <code>output</code> carries the checksum of the HTML it describes, so a sidecar can be matched to its report and to nothing else.</p>
 <p>If a render fails, the report and sidecar already on disk are left as they were. A new sidecar is only ever published beside the HTML it describes. One job renders at a time in a study; a second render started while one is running stops and asks you to wait.</p>
 </section><section class="level2"><h2 id="a-first-analysis-chain-death">A first analysis chain: death<a class="anchor" aria-label="anchor" href="#a-first-analysis-chain-death"></a>
 </h2>

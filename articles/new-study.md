@@ -77,7 +77,7 @@ directly, in a temporary directory:
 ``` r
 
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L)
-#> Study: /tmp/Rtmp5XlASs/file1f2d6b12a6b4/new-study
+#> Study: /tmp/Rtmp0KQD9Z/file1ffa4d7320e8/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -123,7 +123,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp5XlASs/file1f2d6b12a6b4/new-study
+#> Study: /tmp/Rtmp0KQD9Z/file1ffa4d7320e8/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -224,10 +224,13 @@ example from a synthetic study:
 ```
 
 Read it as a receipt. `data` names the registered file and the checksum
-of the bytes the job read. `packages` and `renv_lock`, omitted here,
-record every package version and the study’s lockfile. `output` carries
-the checksum of the HTML it describes, so a sidecar can be matched to
-its report and to nothing else.
+of the bytes the job read. Its `dataset` says `"study"` although the job
+says `DATASET <- "built"`: the two names mean the same dataset, and
+records always use `"study"`, so a sidecar written by an older job
+compares equal. `packages` and `renv_lock`, omitted here, record every
+package version and the study’s lockfile. `output` carries the checksum
+of the HTML it describes, so a sidecar can be matched to its report and
+to nothing else.
 
 If a render fails, the report and sidecar already on disk are left as
 they were. A new sidecar is only ever published beside the HTML it

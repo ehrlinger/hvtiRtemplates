@@ -159,9 +159,9 @@ analysis_sets:
 
 | to read | `DATASET` | `ANALYSIS_SET` | exclusions shown |
 |:---|:---|:---|:---|
-| the study dataset | `"study"` | `NULL` | none applied |
+| the study dataset | `"built"` | `NULL` | none applied |
 | an additional dataset, such as a column subset written for R | its name, `"builtr"` | `NULL` | none applied |
-| an analysis set | `"study"` | its name, `"eda"` | yes, in order |
+| an analysis set | `"built"` | its name, `"eda"` | yes, in order |
 
 Three things catch people:
 
@@ -174,8 +174,8 @@ Three things catch people:
   job stops and names that same call, so it never describes a cohort
   that has since moved.
 - **An analysis set is always cut from the study dataset.** Pairing one
-  with a `DATASET` other than `"study"` stops rather than quietly using
-  the study dataset instead.
+  with a `DATASET` other than `"built"`, or its older name `"study"`,
+  stops rather than quietly using the study dataset instead.
 
 Before any of this,
 [`verify_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html)

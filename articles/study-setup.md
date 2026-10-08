@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/Rtmpm5LdD2/file1f76156799f6/legacy-study
+#> Study: /tmp/RtmpClntSa/file203e8dfc0e9/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,7 +183,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmpm5LdD2/file1f76156799f6/legacy-study
+#> Study: /tmp/RtmpClntSa/file203e8dfc0e9/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -227,7 +227,7 @@ register_data(
 
 In a job that uses this subset, set `DATASET <- "eda"` and
 `ANALYSIS_SET <- NULL`. When the whole registered study dataset is the
-intended population, use `DATASET <- "study"` and `ANALYSIS_SET <- NULL`
+intended population, use `DATASET <- "built"` and `ANALYSIS_SET <- NULL`
 instead.
 
 ## Create the descriptive and EDA jobs
@@ -305,16 +305,16 @@ study_jobs <- c(
   eda = add_job("dp", "cohort", "eda", adopted_root, "eda")
 )
 study_jobs
-#>                                                                               general 
-#> "/tmp/Rtmpm5LdD2/file1f76156799f6/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
-#>                                                                                tables 
-#>  "/tmp/Rtmpm5LdD2/file1f76156799f6/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
-#>                                                                                  gfup 
-#>    "/tmp/Rtmpm5LdD2/file1f76156799f6/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
-#>                                                                                trends 
-#>       "/tmp/Rtmpm5LdD2/file1f76156799f6/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
-#>                                                                                   eda 
-#>     "/tmp/Rtmpm5LdD2/file1f76156799f6/legacy-study/descriptive/cohort-eda-dp-eda.qmd"
+#>                                                                              general 
+#> "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
+#>                                                                               tables 
+#>  "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
+#>                                                                                 gfup 
+#>    "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
+#>                                                                               trends 
+#>       "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
+#>                                                                                  eda 
+#>     "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dp-eda.qmd"
 ```
 
 ## Work the jobs and generate output

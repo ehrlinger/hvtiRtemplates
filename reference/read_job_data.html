@@ -76,13 +76,14 @@
 
 <dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
 <dd><p>Name of a dataset registered in <code>_study.yml</code>;
-<code>"study"</code> is the built dataset.</p></dd>
+<code>"built"</code> and <code>"study"</code> both name the study dataset, and the
+selection records <code>"study"</code>.</p></dd>
 
 
 <dt id="arg-analysis-set">analysis_set<a class="anchor" aria-label="anchor" href="#arg-analysis-set"></a></dt>
 <dd><p>Name of an analysis set written by
 <code><a href="https://ehrlinger.github.io/hvtiRdatabuild/reference/write_analysis_set.html" class="external-link">hvtiRdatabuild::write_analysis_set()</a></code>, or <code>NULL</code> to read
-<code>dataset</code> whole. Analysis sets derive from <code>"study"</code> only.</p></dd>
+<code>dataset</code> whole. Analysis sets derive from the study dataset only.</p></dd>
 
 
 <dt id="arg-where">where<a class="anchor" aria-label="anchor" href="#arg-where"></a></dt>
@@ -148,7 +149,8 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
 <li><p><code>attrition</code>, an analysis set's per-rule attrition table, or
       <code>NULL</code> for a dataset read whole.</p></li>
 </ul><p>The <code>"selection"</code> attribute is a list that a job saves in its
-  hand-off, so a downstream job can rebuild the same rows:</p><ul><li><p><code>dataset</code> and <code>analysis_set</code>, as given;</p></li>
+  hand-off, so a downstream job can rebuild the same rows:</p><ul><li><p><code>dataset</code>, with <code>"built"</code> recorded as <code>"study"</code>,
+      and <code>analysis_set</code>, as given;</p></li>
 <li><p><code>where</code>, the exact text of each condition, values included,
       used to rebuild the rows; it stays inside the study and is never
       printed;</p></li>
@@ -182,7 +184,7 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
 <span class="r-in"><span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"job-data-example"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"Example"</span>, <span class="fl">1L</span>, adopt <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/Rtmp9F51Ka/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpLCEjHa/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
@@ -195,7 +197,7 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
 <span class="r-in"><span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"built.csv"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/Rtmp9F51Ka/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpLCEjHa/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
