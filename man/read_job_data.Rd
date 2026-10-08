@@ -85,7 +85,8 @@ A list:
   The \code{"selection"} attribute is a list that a job saves in its
   hand-off, so a downstream job can rebuild the same rows:
   \itemize{
-    \item \code{dataset} and \code{analysis_set}, as given;
+    \item \code{dataset}, with \code{"built"} recorded as \code{"study"},
+      and \code{analysis_set}, as given;
     \item \code{where}, the exact text of each condition, values included,
       used to rebuild the rows; it stays inside the study and is never
       printed;

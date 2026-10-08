@@ -541,4 +541,9 @@ test_that("postage names an analysis set the study has not built (#173)", {
     expect_match(err, "ANALYSIS_SET <- NULL", fixed = TRUE)
     expect_no_match(err, "hvtiRdatabuild >= 0.2.1|missing file")
   }
+  # Anything but one of the two names stops on the named rule, not a base-R error.
+  for (dataset in list(NULL, c("built", "other"), "other")) {
+    env$DATASET <- dataset
+    expect_error(eval(postage_chunk(postage_template(), "data"), env), "written from the study dataset")
+  }
 })

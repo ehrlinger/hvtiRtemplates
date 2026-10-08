@@ -111,6 +111,13 @@ test_that("the study dataset is selected as \"built\", by either name or by its 
     expect_identical(hvtiRtemplates:::.dc_tables_dataset(root, input)$dataset, "built", info = input)
   }
   expect_true(is.na(hvtiRtemplates:::.dc_tables_dataset(root, "absent")$dataset))
+  # SAS `set built;` names a file: an additional dataset in built.csv keeps it.
+  utils::write.csv(data.frame(ccfid = 1:2), file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
+                   row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv", dataset = "subset", role = "named",
+                                                 population = "Synthetic subset"))
+  expect_identical(hvtiRtemplates:::.dc_tables_dataset(root, "built")$dataset, "subset")
+  expect_identical(hvtiRtemplates:::.dc_tables_dataset(root, "study")$dataset, "built")
 })
 
 tables_chunk <- function(job, label) {

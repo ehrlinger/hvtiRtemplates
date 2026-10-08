@@ -399,7 +399,7 @@
 # selection records "study", so an upstream job's record and a downstream
 # setting agree whichever name each used.
 .canonical_job_dataset <- function(dataset) {
-  if (is.character(dataset) && length(dataset) == 1L && identical(dataset, "built")) "study" else dataset
+  if (identical(dataset, "built")) "study" else dataset
 }
 
 #' Read a job's data, keep its rows, and record what was done
@@ -486,7 +486,8 @@
 #'   The \code{"selection"} attribute is a list that a job saves in its
 #'   hand-off, so a downstream job can rebuild the same rows:
 #'   \itemize{
-#'     \item \code{dataset} and \code{analysis_set}, as given;
+#'     \item \code{dataset}, with \code{"built"} recorded as \code{"study"},
+#'       and \code{analysis_set}, as given;
 #'     \item \code{where}, the exact text of each condition, values included,
 #'       used to rebuild the rows; it stays inside the study and is never
 #'       printed;
@@ -554,7 +555,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
         (!is.character(analysis_set) || length(analysis_set) != 1L || is.na(analysis_set) || !nzchar(analysis_set))) {
     stop("ANALYSIS_SET must be NULL or name one analysis set, such as \"eda\".", call. = FALSE)
   }
-  if (!is.null(analysis_set) && !dataset %in% c("study", "built")) {
+  if (!is.null(analysis_set) && !identical(.canonical_job_dataset(dataset), "study")) {
     stop("An analysis set is written from the study dataset (\"built\"), not `", dataset,
          "`. Set ANALYSIS_SET <- NULL to read `", dataset, "` whole.", call. = FALSE)
   }

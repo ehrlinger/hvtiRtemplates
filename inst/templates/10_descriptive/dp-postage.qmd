@@ -233,7 +233,7 @@ if (is.null(ANALYSIS_SET)) {
   .data_read <- hvtiRtemplates:::.read_registered(DATASET, .cfg)
   d <- .data_read$value
   .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-} else if (!DATASET %in% c("study", "built")) {
+} else if (!isTRUE(DATASET %in% c("study", "built"))) {
   stop("An analysis set is written from the study dataset (\"built\"), not `", DATASET,
        "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
 } else {
