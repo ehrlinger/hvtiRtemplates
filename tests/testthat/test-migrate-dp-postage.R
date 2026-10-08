@@ -531,11 +531,14 @@ test_that("postage names an analysis set the study has not built (#173)", {
   utils::write.csv(data.frame(ccfid = 1:3, year = 2001:2003),
                    file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(root, "built.csv"))
-  env <- list2env(list(.root = root, DATASET = "study", ANALYSIS_SET = "eda",
-                       study_config = hvtiRutilities::study_config, study_dir = hvtiRutilities::study_dir,
-                       read_built = hvtiRutilities::read_built))
-  err <- tryCatch(eval(postage_chunk(postage_template(), "data"), env), error = conditionMessage)
-  expect_match(err, "ANALYSIS_SET names `eda`, an analysis set this study has not built", fixed = TRUE)
-  expect_match(err, "ANALYSIS_SET <- NULL", fixed = TRUE)
-  expect_no_match(err, "hvtiRdatabuild >= 0.2.1|missing file")
+  # Either name for the study dataset reaches the analysis set.
+  for (dataset in c("built", "study")) {
+    env <- list2env(list(.root = root, DATASET = dataset, ANALYSIS_SET = "eda",
+                         study_config = hvtiRutilities::study_config, study_dir = hvtiRutilities::study_dir,
+                         read_built = hvtiRutilities::read_built))
+    err <- tryCatch(eval(postage_chunk(postage_template(), "data"), env), error = conditionMessage)
+    expect_match(err, "ANALYSIS_SET names `eda`, an analysis set this study has not built", fixed = TRUE)
+    expect_match(err, "ANALYSIS_SET <- NULL", fixed = TRUE)
+    expect_no_match(err, "hvtiRdatabuild >= 0.2.1|missing file")
+  }
 })
