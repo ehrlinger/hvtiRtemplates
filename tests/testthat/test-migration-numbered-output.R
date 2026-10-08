@@ -39,6 +39,8 @@ test_that("numbered migrated jobs save and embed figures in their logical folder
     } else {
       env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
       env$CORR <- list(vars = "age", with = "bmi", by = NULL)
+      env$SAVE_FIGURES <- TRUE
+      env$FIGURES <- NULL
     }
     # The figures are child chunks. A render sets knitr up for markdown and runs the
     # chunk in the job's folder; here the output is markdown and the working directory a scratch one.
@@ -53,6 +55,8 @@ test_that("numbered migrated jobs save and embed figures in their logical folder
     for (filename in filenames) {
       relative <- file.path("cohort-eda", filename)
       expect_true(file.exists(file.path(dirname(job), relative)))
+      # Its publication copy sits beside it, under the same name.
+      expect_true(file.exists(file.path(dirname(job), sub("[.]png$", ".pdf", relative))))
       expect_true(any(grepl(paste0("](", relative, ")"), printed, fixed = TRUE)))
     }
     expect_false(dir.exists(file.path(root, "graphs")))

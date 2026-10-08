@@ -192,6 +192,13 @@ set_path <- function(kind, file) {
   file.path(d, file)
 }
 
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
 # `hp` both READS and WRITES through this: the upstream `ac.rds` and `hz.rds`
 # come from set_path("estimates", ...), and the figures go to
 # set_path("graphs", ...). Same key, so a figure can never be filed against a
@@ -225,6 +232,13 @@ ID <- NULL
 KEY <- NULL
 TIME <- NULL
 EVENT <- NULL
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 ## Upstream
 
@@ -490,19 +504,18 @@ s_pct  <- 100 * unname(predict(fit, newdata = data.frame(time = t_plot),
                                type = "survival"))
 x_plot <- t_plot * 12
 
-png(set_path("graphs", "hp-survival.png"),
-    width = 1400, height = 1000, res = 150)
-plot(NA, xlim = range(x_plot), ylim = c(0, 100),
-     xlab = "Months after operation", ylab = "Survival (%)",
-     main = "Actuarial and parametric survival")
-lines(x_plot, s_pct, lty = 1)
-# The actuarial estimate is a STEP function; type = "s" rather than a line
-# through the knots, which would draw an estimate nobody computed.
-lines(km$time * 12, 100 * km$survival, lty = 2, type = "s")
-legend("bottomleft", c("parametric (hz)", "actuarial (ac)"),
-       lty = c(1, 2), bty = "n")
-dev.off()
-knitr::include_graphics(set_path("graphs", "hp-survival.png"))
+draw <- function() {
+  plot(NA, xlim = range(x_plot), ylim = c(0, 100),
+       xlab = "Months after operation", ylab = "Survival (%)",
+       main = "Actuarial and parametric survival")
+  lines(x_plot, s_pct, lty = 1)
+  # The actuarial estimate is a STEP function; type = "s" rather than a line
+  # through the knots, which would draw an estimate nobody computed.
+  lines(km$time * 12, 100 * km$survival, lty = 2, type = "s")
+  legend("bottomleft", c("parametric (hz)", "actuarial (ac)"),
+         lty = c(1, 2), bty = "n")
+}
+knitr::include_graphics(save_figure(draw, "hp-survival", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
 ```
 
 ```{r}
@@ -511,13 +524,12 @@ knitr::include_graphics(set_path("graphs", "hp-survival.png"))
 h_pcpm <- 100 / 12 * unname(predict(fit, newdata = data.frame(time = t_plot),
                                     type = "hazard"))
 
-png(set_path("graphs", "hp-hazard.png"),
-    width = 1400, height = 1000, res = 150)
-plot(x_plot, h_pcpm, type = "l", log = "y",
-     xlab = "Months after operation", ylab = "Hazard (% per month)",
-     main = "Hazard function")
-dev.off()
-knitr::include_graphics(set_path("graphs", "hp-hazard.png"))
+draw <- function() {
+  plot(x_plot, h_pcpm, type = "l", log = "y",
+       xlab = "Months after operation", ylab = "Hazard (% per month)",
+       main = "Hazard function")
+}
+knitr::include_graphics(save_figure(draw, "hp-hazard", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
 ```
 
 ### Phase decomposition
@@ -551,19 +563,18 @@ if ("total" %in% comp) {
   }
 }
 
-png(set_path("graphs", "hp-phases.png"),
-    width = 1400, height = 1000, res = 150)
-plot(NA, xlim = range(t_plot), ylim = range(unlist(dec[comp])),
-     xlab = "Years after operation", ylab = "Cumulative hazard",
-     main = "Phase decomposition of the cumulative hazard")
-for (i in seq_along(comp)) {
-  lines(dec$time, dec[[comp[i]]], col = i,
-        lty = if (comp[i] == "total") 1 else 2)
+draw <- function() {
+  plot(NA, xlim = range(t_plot), ylim = range(unlist(dec[comp])),
+       xlab = "Years after operation", ylab = "Cumulative hazard",
+       main = "Phase decomposition of the cumulative hazard")
+  for (i in seq_along(comp)) {
+    lines(dec$time, dec[[comp[i]]], col = i,
+          lty = if (comp[i] == "total") 1 else 2)
+  }
+  legend("topleft", comp, col = seq_along(comp),
+         lty = ifelse(comp == "total", 1, 2), bty = "n")
 }
-legend("topleft", comp, col = seq_along(comp),
-       lty = ifelse(comp == "total", 1, 2), bty = "n")
-dev.off()
-knitr::include_graphics(set_path("graphs", "hp-phases.png"))
+knitr::include_graphics(save_figure(draw, "hp-phases", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
 ```
 
 ## Save

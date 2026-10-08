@@ -60,10 +60,25 @@ rf_run <- function(prefix, qualifier, labels, env, choices = list()) {
   src <- readLines(template_path(prefix, qualifier), warn = FALSE)
   for (label in labels) {
     if (identical(label, "fig-dependence-varpro")) assign("gg_partial_varpro", rf_gg_partial_varpro, envir = env)
-    suppressMessages(eval(parse(text = rf_chunk(src, label)), envir = env))
+    withCallingHandlers(
+      suppressMessages(eval(parse(text = rf_chunk(src, label)), envir = env)),
+      warning = function(w) if (rf_drawing_notice(label, w)) invokeRestart("muffleWarning")
+    )
     if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   }
   invisible(env)
+}
+
+# A figure chunk saves its plot, which draws it, and drawing the small synthetic
+# cohorts here makes loess smoothing and ggplot2 report what they always would:
+# a near-singular local fit, and points off the scale. These notices are about
+# the test data's size, not the files; they are muffled by their message, in
+# figure chunks only, and any other warning still reaches the summary.
+rf_drawing_notice <- function(label, w) {
+  startsWith(label, "fig-") && grepl(paste(c(
+    "^pseudoinverse used at", "^neighborhood radius", "^reciprocal condition number",
+    "^There are other near singularities as well", "^Removed [0-9]+ rows containing"
+  ), collapse = "|"), conditionMessage(w))
 }
 
 # gg_partial_varpro() as the explain templates call it, but evaluating each

@@ -175,7 +175,8 @@ test_that("postage routes actual pages through numbered study folders and embeds
     GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
     get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
     theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
-    .cfg = hvtiRutilities::study_config(root), LABEL_MAX = 40, ABBREVIATIONS = NULL
+    .cfg = hvtiRutilities::study_config(root), LABEL_MAX = 40, ABBREVIATIONS = NULL,
+    SAVE_FIGURES = TRUE, FIGURES = NULL
   ))
   job <- postage_template()
   for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
@@ -204,12 +205,13 @@ test_that("postage draws its categorical pages in the role colors", {
     UNIQUE_LIMIT = 6L, SECTIONS = "percent", ALPHA = 0.5,
     get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
     theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
-    .cfg = hvtiRutilities::study_config(root), LABEL_MAX = 40, ABBREVIATIONS = NULL
+    .cfg = hvtiRutilities::study_config(root), LABEL_MAX = 40, ABBREVIATIONS = NULL,
+    SAVE_FIGURES = TRUE, FIGURES = NULL
   ))
   job <- postage_template()
   for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
   suppressWarnings(capture.output(eval(postage_chunk(job, "pages"), env)))
-  expect_identical(names(saved), "dp-postage-percent-page-01.png")
+  expect_identical(names(saved), c("dp-postage-percent-page-01.png", "dp-postage-percent-page-01.pdf"))
   page <- saved[[1L]]
   fills <- unique(unlist(lapply(seq_along(page), function(k) ggplot2::ggplot_build(page[[k]])$data[[1L]]$fill)))
   expect_true(all(fills %in% c(hvtiPlotR::hv_ppt_palette("light"), "#CCCCCC")), info = paste(fills, collapse = ", "))
@@ -244,7 +246,8 @@ test_that("postage shortens labels that share a heading and prints their key", {
       GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SECTIONS = "percent", ALPHA = 0.5,
       get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
       theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
-      .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = abbreviations
+      .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = abbreviations,
+      SAVE_FIGURES = TRUE, FIGURES = NULL
     ))
     job <- postage_template()
     for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
@@ -277,7 +280,8 @@ test_that("postage prints a key only under sections whose labels were shortened,
       GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SECTIONS = c("continuous", "percent"), ALPHA = 0.5,
       get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
       theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
-      .cfg = cfg, LABEL_MAX = 40, ABBREVIATIONS = abbreviations
+      .cfg = cfg, LABEL_MAX = 40, ABBREVIATIONS = abbreviations,
+      SAVE_FIGURES = TRUE, FIGURES = NULL
     ))
     job <- postage_template()
     for (label in c("set", "spec")) eval(postage_chunk(job, label), env)
@@ -307,7 +311,8 @@ test_that("the group abbreviation list shortens further, when it is installed", 
     GRID_NCOL = 2L, GRID_NROW = 1L, UNIQUE_LIMIT = 6L, SECTIONS = "percent", ALPHA = 0.5,
     get_label = hvtiRutilities::get_label, label_map = hvtiRutilities::label_map,
     theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
-    .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL
+    .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL,
+    SAVE_FIGURES = TRUE, FIGURES = NULL
   ))
   job <- postage_template()
   for (label in c("set", "spec")) eval(postage_chunk(job, label), env)

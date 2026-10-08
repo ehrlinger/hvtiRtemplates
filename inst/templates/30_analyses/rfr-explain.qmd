@@ -212,6 +212,13 @@ set_path <- function(kind, file) {
   file.path(d, file)
 }
 
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
 # `rfr-explain` reads the forest `rfr-fit` wrote in this same set, and caches
 # its own work beside it.
 ```
@@ -248,6 +255,13 @@ SEED <- 2026
 # render instead of returning the old result; TRUE recomputes only the caches
 # that are out of date.
 REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## The forest
@@ -302,7 +316,9 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 #| fig-cap: "Permutation importance of each predictor"
 #| message: true
 vi <- cache_fit("rfr-vimp", vimp(forest, seed = -abs(SEED)), seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(gg_vimp(vi))
+.fig <- plot(gg_vimp(vi))
+save_figure(.fig, "rfr-explain-importance")
+.fig
 ```
 
 ```{r}
@@ -342,7 +358,9 @@ if (is.null(PARTIAL_VARS)) {
 #| message: true
 vp <- cache_fit("rfr-varpro", varpro(model, frame, verbose = FALSE, seed = -abs(SEED)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(gg_varpro(vp))
+.fig <- plot(gg_varpro(vp))
+save_figure(.fig, "rfr-explain-varpro")
+.fig
 ```
 
 ## Dependence
@@ -352,7 +370,9 @@ plot(gg_varpro(vp))
 #| fig-cap: "Predicted outcome against each selected predictor, as observed"
 #| message: true
 # Marginal: predicted outcome against each variable, as observed.
-plot(gg_variable(forest), xvar = sel)
+.fig <- plot(gg_variable(forest), xvar = sel)
+save_figure(.fig, "rfr-explain-dependence-marginal")
+.fig
 ```
 
 ```{r}
@@ -364,7 +384,9 @@ plot(gg_variable(forest), xvar = sel)
 pd <- cache_fit("rfr-partial", gg_partial_rfsrc(forest, xvar.names = sel),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT,
                 packages = "randomForestSRC")
-plot(pd)
+.fig <- plot(pd)
+save_figure(.fig, "rfr-explain-dependence-partial")
+.fig
 ```
 
 ```{r}
@@ -374,7 +396,9 @@ plot(pd)
 # The VarPro partial, computed from the varpro fit.
 pv <- cache_fit("rfr-partial-varpro", gg_partial_varpro(object = vp, xvar.names = sel),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(pv)
+.fig <- plot(pv)
+save_figure(.fig, "rfr-explain-dependence-varpro")
+.fig
 ```
 
 ```{r}
