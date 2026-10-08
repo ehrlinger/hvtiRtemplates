@@ -1,5 +1,12 @@
 # hvtiRtemplates (unreleased)
 
+* Running a job's chunks in the console no longer ends with advice to run
+  `add_job()`. The final provenance chunk, the one step that needs a render, now
+  stops with an error of class `hvtiRtemplates_not_rendered` saying that every
+  chunk above it ran and that the job should be rendered, with
+  `hvtiRtemplates::render_job()` or the Render button. A render outside the
+  study's Quarto project keeps the existing message about installing the hooks.
+
 * The test suite runs in about two-thirds of the time: expensive fits and renders are
   shared within a test file, and fixtures are smaller. No assertion was dropped. About
   40 tests, the end-to-end Quarto renders, model fits and saved-file identifier scans,

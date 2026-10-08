@@ -1014,3 +1014,32 @@ test_that("the render owner is the live process that launched this one", {
   expect_true(.provenance_owner_alive(owner))
   expect_false(.provenance_owner_alive(list(pid = owner$pid, created = "0.000000")))
 })
+
+test_that("a console run stops at provenance and says to render the job", {
+  # The template passes knitr::current_input(dir = TRUE), which is NULL when a
+  # study author steps through chunks in the console rather than rendering.
+  err <- expect_error(.embed_provenance(NULL, data = list()), class = "hvtiRtemplates_not_rendered")
+  expect_match(conditionMessage(err), "render the job", fixed = TRUE)
+  expect_match(conditionMessage(err), "hvtiRtemplates::render_job()", fixed = TRUE)
+  expect_no_match(conditionMessage(err), "add_job", fixed = TRUE)
+})
+
+test_that("a console run stops before the study configuration is read", {
+  # cfg is a promise. Forcing it from a working directory outside the study
+  # would stop with study_config()'s own error and hide the advice to render.
+  expect_error(
+    .embed_provenance(NULL, data = list(), cfg = stop("cfg was read")),
+    class = "hvtiRtemplates_not_rendered"
+  )
+})
+
+test_that("a render outside the study project keeps the hooks message", {
+  root <- make_hook_study(withr::local_tempdir())
+  withr::local_envvar(QUARTO_PROJECT_DIR = NA)
+  input <- file.path(root, "cohort-eda-dc-general.qmd")
+  writeLines(c("---", "format: html", "---"), input)
+
+  err <- expect_error(.embed_provenance(input, data = list(), cfg = hvtiRutilities::study_config(root)))
+  expect_false(inherits(err, "hvtiRtemplates_not_rendered"))
+  expect_match(conditionMessage(err), "must be rendered through its configured Quarto study project", fixed = TRUE)
+})
