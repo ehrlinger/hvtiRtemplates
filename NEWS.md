@@ -1,5 +1,8 @@
 # hvtiRtemplates (unreleased)
 
+* A test now covers a new dataset version registered while a job is reading: the
+  read is rejected as changed, as it already was in practice.
+
 * The six forest templates (`rfc`, `rfs` and `rfr`, fit and explain) now hand
   `rfsrc()`, `vimp()` and `varpro()` a negative `seed = -abs(SEED)` as well as
   seeding R's generator through `cache_fit(seed = SEED)`. A study found that either
