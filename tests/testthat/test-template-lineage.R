@@ -32,7 +32,11 @@ test_that("RF explain retains fitted data lineage after the registry changes", {
   handoff <- file.path(fit$CACHE_DIR, "rfs.rds")
   handoff_hash <- lineage_sha256(handoff)
 
+  # A rebuilt source changes nothing a job reads until it is registered; once
+  # update_manifest() registers it, the study's dataset is a new version.
   saveRDS(transform(data_a, age = age + 100), registered)
+  expect_identical(hvtiRutilities::provenance_data(cfg = hvtiRutilities::study_config(root))$sha256, fitted_hash)
+  withr::with_dir(root, suppressMessages(hvtiRutilities::update_manifest()))
   expect_false(identical(fitted_hash, hvtiRutilities::provenance_data(cfg = hvtiRutilities::study_config(root))$sha256))
 
   explain <- new.env(parent = globalenv())

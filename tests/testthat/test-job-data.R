@@ -753,3 +753,33 @@ test_that("a typed WHERE value keeps its short text", {
   steps <- .apply_where(data.frame(x = c(0.05, 0.2)), quote(x >= 0.1), environment())
   expect_identical(steps$steps$condition, "x >= 0.1")
 })
+
+test_that("a rebuilt but unregistered dataset is read, and the data table says so", {
+  skip_if_not_installed("arrow")
+  cfg <- job_study(data.frame(ccfid = 1:3, dead = c(1L, 0L, 0L)))
+  path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), "built.csv")
+
+  # Registered and unchanged: the Source row names the dated version, no note.
+  out <- read_job_data(cfg)
+  expect_match(out$record$value[out$record$step == "Source"], "built_[0-9]{8}[.]parquet")
+  expect_false("Note" %in% out$record$step)
+
+  # Rebuilt, not registered: the job reads the registered rows, the message
+  # does not escape into the report, and the table names the call that fixes it.
+  utils::write.csv(data.frame(ccfid = 1:4, dead = c(1L, 0L, 0L, 1L)), path, row.names = FALSE)
+  expect_no_message(out <- read_job_data(cfg))
+  expect_identical(nrow(out$data), 3L)
+  note <- out$record$value[out$record$step == "Note"]
+  expect_length(note, 1L)
+  expect_match(note, "update_manifest()", fixed = TRUE)
+  expect_match(note, "built_[0-9]{8}[.]parquet")
+  expect_match(out$record$value[out$record$step == "Source"], "built_[0-9]{8}[.]parquet")
+  expect_identical(out$record$step[nrow(out$record)], "Note")
+
+  # Registered: the next read is the new version, and the note is gone.
+  withr::with_dir(cfg$root, suppressMessages(hvtiRutilities::update_manifest()))
+  out <- read_job_data(cfg)
+  expect_identical(nrow(out$data), 4L)
+  expect_false("Note" %in% out$record$step)
+  expect_match(out$record$value[out$record$step == "Source"], "built_[0-9]{8}_r2[.]parquet")
+})

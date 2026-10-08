@@ -216,9 +216,7 @@ if (is.null(ANALYSIS_SET)) {
          "In a migrated job, see the migration report beside this job.", call. = FALSE)
   }
   .cfg <- study_config(start = .root)
-  .data_read <- hvtiRtemplates:::.provenance_read(
-    DATASET, .cfg, function() read_built(cfg = .cfg, dataset = DATASET)
-  )
+  .data_read <- hvtiRtemplates:::.read_registered(DATASET, .cfg)
   d <- .data_read$value
   .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
 } else if (!identical(DATASET, "study")) {
@@ -242,11 +240,12 @@ if (is.null(ANALYSIS_SET)) {
   .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
 }
 cat("Data read: ", if (is.null(ANALYSIS_SET)) {
-  paste0("dataset `", DATASET, "` (",
-         basename(hvtiRutilities::built_path(dataset = DATASET)), ")")
+  paste0("dataset `", DATASET, "` (", basename(.data_read$record$path), ")")
 } else {
   paste0("analysis set `", ANALYSIS_SET, "` of the study dataset")
 }, ", ", nrow(d), " rows, ", ncol(d), " columns.\n", sep = "")
+# A source rebuilt but not yet registered: this job read the registered version.
+for (.note in .data_read$notes) cat("Note: ", .note, "\n", sep = "")
 ```
 
 ```{r}

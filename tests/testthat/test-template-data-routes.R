@@ -222,3 +222,33 @@ test_that("converted templates read a whole dataset without hvtiRdatabuild insta
     expect_equal(env$d, built, info = basename(template))
   }
 })
+
+test_that("dp-postage names the registered version and a waiting rebuild without a bare message", {
+  skip_if_not_installed("arrow")
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  template <- file.path(normalizePath(template_root), "10_descriptive", "dp-postage.qmd")
+  root <- file.path(withr::local_tempdir(), "postage-rebuilt-study")
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Postage rebuilt", study_tracker_id = 1L))
+  path <- file.path(hvtiRutilities::study_dir("datasets", root), "built.csv")
+  built <- data.frame(ccfid = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4))
+  utils::write.csv(built, path, row.names = FALSE)
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
+  utils::write.csv(rbind(built, data.frame(ccfid = 5L, dead = 0, iv_dead = 5)), path, row.names = FALSE)
+
+  withr::local_dir(root)
+  env <- new.env(parent = globalenv())
+  env$.root <- "."
+  env$study_config <- hvtiRutilities::study_config
+  env$study_dir <- hvtiRutilities::study_dir
+  chunks <- data_route_chunks(template)
+  eval(use_whole_cohort(chunks$choices), envir = env)
+  expect_no_message(shown <- utils::capture.output(eval(chunks$data, envir = env)))
+
+  # The registered rows, not the rebuilt file's five.
+  expect_equal(env$d, built)
+  expect_match(shown, "^Data read: dataset `study` [(]built_[0-9]{8}[.]parquet[)], 4 rows", all = FALSE)
+  note <- grep("^Note: ", shown, value = TRUE)
+  expect_length(note, 1L)
+  expect_match(note, "update_manifest()", fixed = TRUE)
+})
