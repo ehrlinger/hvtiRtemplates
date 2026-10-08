@@ -96,7 +96,13 @@ A list:
 - `data`, the selected rows;
 
 - `record`, a data frame of `step` and `value` to print, whose
-  `"selection"` attribute holds the settings used;
+  `"selection"` attribute holds the settings used. Its `"Source"` row
+  names the file read, the dated version for a dataset registered as
+  one. When the dataset's source has been rebuilt since it was
+  registered, the registered version is read and a final `"Note"` row
+  says so, naming
+  [`hvtiRutilities::update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html),
+  the call that registers the new file;
 
 - `provenance`, the read's provenance record;
 
@@ -144,7 +150,7 @@ refused. Every setting is checked before the data are read.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
-#> Study: /tmp/RtmpaL8EBf/job-data-example
+#> Study: /tmp/Rtmpf9jmOu/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -157,11 +163,11 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/RtmpaL8EBf/job-data-example
+#> Study: /tmp/Rtmpf9jmOu/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
-#> [x] manifest.yaml — 1 dataset entry verified by checksum
+#> [x] manifest.yaml — 1 dataset entry verified by checksum (row count not re-derived for 1)
 #> [x] dataset — built.csv
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
@@ -169,13 +175,13 @@ hvtiRutilities::register_data(root, "built.csv")
 cfg <- hvtiRutilities::study_config(start = root)
 job <- read_job_data(cfg, where = quote(age >= 18))
 job$record
-#>                  step                       value
-#> 1              Source dataset `study` (built.csv)
-#> 2           Rows read                           4
-#> 3                  ID                     `ccfid`
-#> 4 Identifiers dropped                        none
-#> 5         `age >= 18`                   removed 1
-#> 6           Rows kept        3 rows on 3 patients
+#>                  step                                    value
+#> 1              Source dataset `study` (built_20261008.parquet)
+#> 2           Rows read                                        4
+#> 3                  ID                                  `ccfid`
+#> 4 Identifiers dropped                                     none
+#> 5         `age >= 18`                                removed 1
+#> 6           Rows kept                     3 rows on 3 patients
 unlink(root, recursive = TRUE)
 # }
 ```

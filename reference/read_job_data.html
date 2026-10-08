@@ -137,7 +137,13 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list:</p><ul><li><p><code>data</code>, the selected rows;</p></li>
 <li><p><code>record</code>, a data frame of <code>step</code> and <code>value</code> to
-      print, whose <code>"selection"</code> attribute holds the settings used;</p></li>
+      print, whose <code>"selection"</code> attribute holds the settings used. Its
+      <code>"Source"</code> row names the file read, the dated version for a
+      dataset registered as one. When the dataset's source has been rebuilt
+      since it was registered, the registered version is read and a final
+      <code>"Note"</code> row says so, naming
+      <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html" class="external-link">hvtiRutilities::update_manifest()</a></code>, the call that registers the
+      new file;</p></li>
 <li><p><code>provenance</code>, the read's provenance record;</p></li>
 <li><p><code>attrition</code>, an analysis set's per-rule attrition table, or
       <code>NULL</code> for a dataset read whole.</p></li>
@@ -176,7 +182,7 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
 <span class="r-in"><span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"job-data-example"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"Example"</span>, <span class="fl">1L</span>, adopt <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpaL8EBf/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/Rtmpf9jmOu/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
@@ -189,11 +195,11 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
 <span class="r-in"><span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"built.csv"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpaL8EBf/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/Rtmpf9jmOu/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [x] manifest.yaml — 1 dataset entry verified by checksum</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [x] manifest.yaml — 1 dataset entry verified by checksum (row count not re-derived for 1)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] dataset — built.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -201,13 +207,13 @@ per patient. Add a visit time or date for repeated measures.</p></dd>
 <span class="r-in"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_config.html" class="external-link">study_config</a></span><span class="op">(</span>start <span class="op">=</span> <span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">job</span> <span class="op">&lt;-</span> <span class="fu">read_job_data</span><span class="op">(</span><span class="va">cfg</span>, where <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substitute.html" class="external-link">quote</a></span><span class="op">(</span><span class="va">age</span> <span class="op">&gt;=</span> <span class="fl">18</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">job</span><span class="op">$</span><span class="va">record</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                  step                       value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1              Source dataset `study` (built.csv)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2           Rows read                           4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3                  ID                     `ccfid`</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Identifiers dropped                        none</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5         `age &gt;= 18`                   removed 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6           Rows kept        3 rows on 3 patients</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  step                                    value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1              Source dataset `study` (built_20261008.parquet)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           Rows read                                        4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                  ID                                  `ccfid`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Identifiers dropped                                     none</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5         `age &gt;= 18`                                removed 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6           Rows kept                     3 rows on 3 patients</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">root</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>

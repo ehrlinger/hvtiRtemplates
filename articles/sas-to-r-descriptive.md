@@ -140,7 +140,10 @@ study more than one way. The descriptive jobs choose with two settings
 in their `edit-study-choices` chunk, and every rendered report prints
 what they chose:
 
-    Data read: dataset `builtr` (builtr.sas7bdat), 2514 rows, 135 columns.
+    Data read: dataset `builtr` (builtr_20261007.parquet), 2514 rows, 135 columns.
+
+The file named is the dated version registering `builtr.sas7bdat` made,
+which is what R reads.
 
 `_study.yml` can declare three kinds of data:
 
@@ -177,7 +180,14 @@ Three things catch people:
 Before any of this,
 [`verify_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html)
 checks every file’s checksum against `manifest.yaml`. A stop on that
-first line means the data changed, not that a setting is wrong.
+first line means a registered file changed, not that a setting is wrong.
+A dataset rebuilt since it was registered does not stop the job: it
+reads the registered version,
+[`verify_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html)
+lists the rebuilt file as `PENDING`, and the report says a newer file is
+waiting, with the
+[`hvtiRutilities::update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
+call that registers it.
 
 ## Descriptive tables and correlations: `dc-tables`
 
