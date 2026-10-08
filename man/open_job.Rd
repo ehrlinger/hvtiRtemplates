@@ -9,15 +9,17 @@ open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
 \code{\link{template_list}}, or a template's full name as reported in
-its \code{name} column, e.g. \code{"dp-trends"}. A full name carries the
-qualifier, so \code{qualifier} must then be left \code{NULL}.}
+its \code{name} column, e.g. \code{"dp.trends"}; the dash spelling
+\code{"dp-trends"} is accepted too. A full name carries the qualifier, so
+\code{qualifier} must then be left \code{NULL}.}
 
 \item{subject}{Grouping topic for the job set, e.g. \code{"death"} or
 \code{"cohort"}. A subject names a statistical endpoint only when the
 job analyses one. Your choice: there is no list of valid values, and
 every job of one analysis should share it (see Details). Must
-match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
-\code{.} separates the extension, so neither may appear here.}
+match \code{^[A-Za-z0-9_]+$}: \code{.} separates the filename's fields,
+and \code{-} separated them in names before 2026-10, so neither may
+appear here.}
 
 \item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.
 Your choice, like \code{subject}, and shared the same way. Must match
@@ -30,7 +32,7 @@ study.}
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
 \code{dp}. Required only where a prefix carries more than one template;
 omitting it there is an error naming the choices, never a silent pick.
-Restricted to \code{[A-Za-z0-9_]+}, because \code{-} separates the
+Restricted to \code{[A-Za-z0-9_]+}, because \code{.} separates the
 filename's fields.}
 }
 \value{
@@ -45,6 +47,9 @@ An existing job is opened as it stands, never overwritten.
 The study root is the nearest directory at or above \code{dir} holding
 \code{_study.yml}, so this can be called from anywhere inside a study.
 Naming, prefix and qualifier rules are those of \code{\link{add_job}}.
+A job scaffolded before 2026-10, named
+\code{<subject>-<type>-<prefix>[-<qualifier>].qmd}, is found and opened
+under that name.
 The editor is opened only in an interactive session.
 }
 \examples{

@@ -2,9 +2,10 @@
 #'
 #' @description
 #' Copies a supported job template into the taxonomy folder it belongs to,
-#' named \code{<subject>-<type>-<prefix>[-<qualifier>].qmd}. Refuses to overwrite an
-#' existing job: a job file accumulates a study's edits, and silently replacing
-#' one would discard them.
+#' named \code{<prefix>[.<qualifier>].<subject>.<type>.qmd}, so a study's jobs
+#' sort by template, then subject, then type. Refuses to overwrite an existing
+#' job: a job file accumulates a study's edits, and silently replacing one
+#' would discard them.
 #'
 #' @details
 #' \strong{What each argument decides.} \code{prefix} chooses the template,
@@ -14,7 +15,7 @@
 #' \code{^[A-Za-z0-9_]+$}. They are more than a filename, though. Together
 #' they name the job's set, and the set is used in four places:
 #' \itemize{
-#'   \item the job's filename, \code{<subject>-<type>-<prefix>[-<qualifier>].qmd};
+#'   \item the job's filename, \code{<prefix>[.<qualifier>].<subject>.<type>.qmd};
 #'   \item the job's own \code{SUBJECT} and \code{TYPE} lines, which
 #'     \code{add_job()} rewrites to your values;
 #'   \item the render, which stops when the filename and those two lines
@@ -55,30 +56,37 @@
 #' beside the job, from \code{inst/runners/<name>-runner.R}: today the
 #' bootstrap reports \code{bl}, \code{br}, \code{bc} and \code{bh}, whose
 #' runner screens and saves the bag the report reads. The runner is named
-#' \code{<subject>-<type>-<prefix>-runner.R}, gets the same \code{SUBJECT} and
+#' \code{<prefix>[.<qualifier>].<subject>.<type>.runner.R}, gets the same \code{SUBJECT} and
 #' \code{TYPE} substitution, and is refused, like the job, if it already
 #' exists. Its study choices carry \code{EDIT:} markers for the author to
 #' work.
 #'
-#' A template the catalog marks deprecated, such as \code{dp-postage}, still
+#' \strong{Names before 2026-10.} Jobs were named
+#' \code{<subject>-<type>-<prefix>[-<qualifier>].qmd} until 2026-10. They keep
+#' that name and keep rendering; \code{add_job()} refuses to write a second
+#' copy of such a job under the new name, and \code{\link{open_job}} opens it.
+#'
+#' A template the catalog marks deprecated, such as \code{dp.postage}, still
 #' scaffolds, with a warning naming its replacement; see
 #' \code{\link{template_catalog}}.
 #'
 #' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
 #'   \code{dp}. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
-#'   Restricted to \code{[A-Za-z0-9_]+}, because \code{-} separates the
+#'   Restricted to \code{[A-Za-z0-9_]+}, because \code{.} separates the
 #'   filename's fields.
 #' @param prefix Job type: one of the prefixes reported by
 #'   \code{\link{template_list}}, or a template's full name as reported in
-#'   its \code{name} column, e.g. \code{"dp-trends"}. A full name carries the
-#'   qualifier, so \code{qualifier} must then be left \code{NULL}.
+#'   its \code{name} column, e.g. \code{"dp.trends"}; the dash spelling
+#'   \code{"dp-trends"} is accepted too. A full name carries the qualifier, so
+#'   \code{qualifier} must then be left \code{NULL}.
 #' @param subject Grouping topic for the job set, e.g. \code{"death"} or
 #'   \code{"cohort"}. A subject names a statistical endpoint only when the
 #'   job analyses one. Your choice: there is no list of valid values, and
 #'   every job of one analysis should share it (see Details). Must
-#'   match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
-#'   \code{.} separates the extension, so neither may appear here.
+#'   match \code{^[A-Za-z0-9_]+$}: \code{.} separates the filename's fields,
+#'   and \code{-} separated them in names before 2026-10, so neither may
+#'   appear here.
 #' @param type The analysis type the job's set belongs to, e.g. \code{"hz"}.
 #'   Your choice, like \code{subject}, and shared the same way. Must match
 #'   \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.
@@ -104,10 +112,10 @@
 #' add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
 #'
 #' # A qualified template by its full name, the form template_list()$call prints.
-#' add_job("dc-gfup", subject = "cohort", type = "eda", dir = d)
+#' add_job("dc.gfup", subject = "cohort", type = "eda", dir = d)
 #'
 #' # A deprecated template still scaffolds, and the warning names its replacement.
-#' tryCatch(add_job("dp-gfup", subject = "cohort", type = "eda", dir = d),
+#' tryCatch(add_job("dp.gfup", subject = "cohort", type = "eda", dir = d),
 #'          warning = conditionMessage)
 #'
 #' # A job accumulates a study's edits, so an existing one is never overwritten.
@@ -145,8 +153,15 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   # A job that runs from a companion script gets that script too, named to
   # pair with the job. Both are checked before either is written, so a
   # refusal leaves the study as it was.
-  runner_src <- .runner_template(row$name[[1L]])
-  runner <- if (nzchar(runner_src)) sub("[.]qmd$", "-runner.R", out) else character()
+  runner_src <- .runner_template(sub("[.]qmd$", "", basename(row$file[[1L]])))
+  runner <- if (nzchar(runner_src)) sub("[.]qmd$", ".runner.R", out) else character()
+  # The same job scaffolded before 2026-10 has the dash spelling. A second,
+  # empty copy under the new spelling would split one set's edits across two files.
+  legacy <- .job_path_legacy(row, subject, type, dir)
+  if (file.exists(legacy)) {
+    stop("add_job(): this job already exists as '", legacy, "', its name before 2026-10; refusing to write a ",
+         "second copy. Open it with open_job(), or rename it to '", basename(out), "' first.", call. = FALSE)
+  }
 
   for (path in c(out, runner)) {
     if (file.exists(path)) {
@@ -178,8 +193,8 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
 }
 
 # `subject` and `type` are written straight into the filename, which is
-# `-`-separated and ends in a `.`-separated extension, so neither character
-# may appear in either field. Reject anything else that would
+# `.`-separated (and was `-`-separated before 2026-10, a spelling still read),
+# so neither character may appear in either field. Reject anything else that would
 # produce a filename the naming scheme cannot parse back: not length-1,
 # `NA`, or outside `[A-Za-z0-9_]+` -- which also excludes a leading `../`
 # that would otherwise write outside the taxonomy folder.
@@ -192,8 +207,8 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
     grepl("^[A-Za-z0-9_]+$", value)
   if (!ok) {
     stop(fn, "(): `", arg, "` must be a single non-NA string matching ",
-         "'^[A-Za-z0-9_]+$' (it becomes a '-'-separated filename field, so '-' ",
-         "is reserved as the separator and '.' to the extension); got ",
+         "'^[A-Za-z0-9_]+$' (it becomes a '.'-separated filename field, so '.' ",
+         "is reserved as the separator, and '-' to the spelling before 2026-10); got ",
          paste(deparse(value), collapse = ", "), ".", call. = FALSE)
   }
 }
@@ -251,7 +266,9 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
 
 # Full path for the job the selected template row scaffolds into: the study's
 # taxonomy folder (numbered or legacy, resolved by hvtiRutilities::study_dir())
-# joined to the subject/type/prefix[/qualifier] stem. Shared by add_job(),
+# joined to the template-first stem, <prefix>[.<qualifier>].<subject>.<type>
+# (.job_stem()). .job_name_fields() reads it back, and reads the dash spelling
+# of jobs scaffolded before 2026-10 too. Shared by add_job(),
 # which writes here, and open_job(), which only needs to test the path for
 # existence and must not create the directory as a side effect of looking.
 #
@@ -264,9 +281,7 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
 # own directory scheme.
 .job_path <- function(row, subject, type, root) {
   out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = root)
-  stem <- paste0(subject, "-", type, "-", row$prefix[[1L]],
-                 if (!is.na(row$qualifier[[1L]])) paste0("-", row$qualifier[[1L]]) else "")
-  file.path(out_dir, paste0(stem, ".qmd"))
+  file.path(out_dir, paste0(.job_stem(row$prefix[[1L]], row$qualifier[[1L]], subject, type), ".qmd"))
 }
 
 # Rewrite the template's SUBJECT/TYPE declarations to the values `add_job()`
@@ -308,6 +323,7 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
 }
 
 # The companion runner a template's job runs from, or "" when it has none.
+# `name` is the template file's stem, e.g. "bl"; runner files keep the dash.
 # Runners live in inst/runners/, outside inst/templates/, because they are not
 # templates: template_list() and the roadmap ledger count only the reports.
 .runner_template <- function(name) {

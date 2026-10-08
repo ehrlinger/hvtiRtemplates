@@ -9,15 +9,17 @@ add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
 \code{\link{template_list}}, or a template's full name as reported in
-its \code{name} column, e.g. \code{"dp-trends"}. A full name carries the
-qualifier, so \code{qualifier} must then be left \code{NULL}.}
+its \code{name} column, e.g. \code{"dp.trends"}; the dash spelling
+\code{"dp-trends"} is accepted too. A full name carries the qualifier, so
+\code{qualifier} must then be left \code{NULL}.}
 
 \item{subject}{Grouping topic for the job set, e.g. \code{"death"} or
 \code{"cohort"}. A subject names a statistical endpoint only when the
 job analyses one. Your choice: there is no list of valid values, and
 every job of one analysis should share it (see Details). Must
-match \code{^[A-Za-z0-9_]+$}: \code{-} separates the filename's fields and
-\code{.} separates the extension, so neither may appear here.}
+match \code{^[A-Za-z0-9_]+$}: \code{.} separates the filename's fields,
+and \code{-} separated them in names before 2026-10, so neither may
+appear here.}
 
 \item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.
 Your choice, like \code{subject}, and shared the same way. Must match
@@ -31,7 +33,7 @@ study, so a job is never written somewhere that is not a study.}
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
 \code{dp}. Required only where a prefix carries more than one template;
 omitting it there is an error naming the choices, never a silent pick.
-Restricted to \code{[A-Za-z0-9_]+}, because \code{-} separates the
+Restricted to \code{[A-Za-z0-9_]+}, because \code{.} separates the
 filename's fields.}
 }
 \value{
@@ -42,9 +44,10 @@ The job's path, invisibly. On any failure -- including one after
 }
 \description{
 Copies a supported job template into the taxonomy folder it belongs to,
-named \code{<subject>-<type>-<prefix>[-<qualifier>].qmd}. Refuses to overwrite an
-existing job: a job file accumulates a study's edits, and silently replacing
-one would discard them.
+named \code{<prefix>[.<qualifier>].<subject>.<type>.qmd}, so a study's jobs
+sort by template, then subject, then type. Refuses to overwrite an existing
+job: a job file accumulates a study's edits, and silently replacing one
+would discard them.
 }
 \details{
 \strong{What each argument decides.} \code{prefix} chooses the template,
@@ -54,7 +57,7 @@ list of valid values for either, only the rule that each matches
 \code{^[A-Za-z0-9_]+$}. They are more than a filename, though. Together
 they name the job's set, and the set is used in four places:
 \itemize{
-  \item the job's filename, \code{<subject>-<type>-<prefix>[-<qualifier>].qmd};
+  \item the job's filename, \code{<prefix>[.<qualifier>].<subject>.<type>.qmd};
   \item the job's own \code{SUBJECT} and \code{TYPE} lines, which
     \code{add_job()} rewrites to your values;
   \item the render, which stops when the filename and those two lines
@@ -95,12 +98,17 @@ A template whose job runs from a companion script also writes that script
 beside the job, from \code{inst/runners/<name>-runner.R}: today the
 bootstrap reports \code{bl}, \code{br}, \code{bc} and \code{bh}, whose
 runner screens and saves the bag the report reads. The runner is named
-\code{<subject>-<type>-<prefix>-runner.R}, gets the same \code{SUBJECT} and
+\code{<prefix>[.<qualifier>].<subject>.<type>.runner.R}, gets the same \code{SUBJECT} and
 \code{TYPE} substitution, and is refused, like the job, if it already
 exists. Its study choices carry \code{EDIT:} markers for the author to
 work.
 
-A template the catalog marks deprecated, such as \code{dp-postage}, still
+\strong{Names before 2026-10.} Jobs were named
+\code{<subject>-<type>-<prefix>[-<qualifier>].qmd} until 2026-10. They keep
+that name and keep rendering; \code{add_job()} refuses to write a second
+copy of such a job under the new name, and \code{\link{open_job}} opens it.
+
+A template the catalog marks deprecated, such as \code{dp.postage}, still
 scaffolds, with a warning naming its replacement; see
 \code{\link{template_catalog}}.
 }
@@ -112,10 +120,10 @@ invisible(hvtiRutilities::study_setup(
 add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
 
 # A qualified template by its full name, the form template_list()$call prints.
-add_job("dc-gfup", subject = "cohort", type = "eda", dir = d)
+add_job("dc.gfup", subject = "cohort", type = "eda", dir = d)
 
 # A deprecated template still scaffolds, and the warning names its replacement.
-tryCatch(add_job("dp-gfup", subject = "cohort", type = "eda", dir = d),
+tryCatch(add_job("dp.gfup", subject = "cohort", type = "eda", dir = d),
          warning = conditionMessage)
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
