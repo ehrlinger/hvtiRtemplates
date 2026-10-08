@@ -217,7 +217,7 @@ Edit these values for this study before rendering.
 # job's own choice, not taken from a model: each hm model was fitted on ONE
 # group's rows, and this job predicts for all of them.
 # EDIT: the dataset, and a WHERE that keeps every group being compared.
-DATASET <- "study"
+DATASET <- "built"
 ANALYSIS_SET <- NULL
 WHERE <- NULL
 ID <- "ccfid"

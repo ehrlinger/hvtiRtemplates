@@ -160,9 +160,9 @@ test_that("converter templates name DATASET before reading unresolved data", {
     # A job that reads through read_job_data() names DATASET the same way; only
     # the unconverted dp-postage still points a migrated job at its report.
     message <- if (basename(template) == "dp-postage.qmd") {
-      "DATASET.*_study[.]yml.*\"study\".*migration report"
+      "DATASET.*_study[.]yml.*\"built\".*migration report"
     } else {
-      "DATASET.*_study[.]yml.*\"study\""
+      "DATASET.*_study[.]yml.*\"built\""
     }
     # The manifest check needs a real study; this test is about DATASET alone.
     code <- code[!vapply(code, function(expr) any(grepl("verify_manifest", deparse(expr))), logical(1))]
@@ -247,7 +247,7 @@ test_that("dp-postage names the registered version and a waiting rebuild without
 
   # The registered rows, not the rebuilt file's five.
   expect_equal(env$d, built)
-  expect_match(shown, "^Data read: dataset `study` [(]built_[0-9]{8}[.]parquet[)], 4 rows", all = FALSE)
+  expect_match(shown, "^Data read: dataset `built` [(]built_[0-9]{8}[.]parquet[)], 4 rows", all = FALSE)
   note <- grep("^Note: ", shown, value = TRUE)
   expect_length(note, 1L)
   expect_match(note, "update_manifest()", fixed = TRUE)

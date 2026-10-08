@@ -34,7 +34,7 @@ test_that("postage migration selects registered data and explicit ordered EDA co
   withr::local_dir(root)
   eval(postage_chunk(job, "edit-study-choices"), env)
   capture.output(eval(postage_chunk(job, "tbl-data"), env))
-  expect_identical(env$DATASET, "study")
+  expect_identical(env$DATASET, "built")
   expect_null(env$ANALYSIS_SET)
   expect_equal(nrow(env$d), 40L)
   expect_identical(env$X_VAR, "iv_dead")
@@ -350,7 +350,7 @@ test_that("postage SAS quoted declarations cannot override active controls", {
   lines <- c("set built;", "%let pref_time_var=iv_dead;", "%let variables=age bmi;",
              'title "Example: %let variables=wrong; set absent;";')
   result <- hvtiRtemplates:::.migrate_dp_eda(postage_evidence(root, lines, "sas"), character())
-  expect_identical(postage_config(result)$DATASET, "study")
+  expect_identical(postage_config(result)$DATASET, "built")
   expect_identical(postage_config(result)$VARIABLES, c("age", "bmi"))
   expect_true(4L %in% result$unresolved$line)
 })

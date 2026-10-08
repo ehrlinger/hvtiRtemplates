@@ -230,7 +230,7 @@ register_data(
 
 In a job that uses this subset, set `DATASET <- "eda"` and
 `ANALYSIS_SET <- NULL`. When the whole registered study dataset is the intended
-population, use `DATASET <- "study"` and `ANALYSIS_SET <- NULL` instead.
+population, use `DATASET <- "built"` and `ANALYSIS_SET <- NULL` instead.
 
 ## Create the descriptive and EDA jobs
 

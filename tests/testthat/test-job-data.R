@@ -790,6 +790,8 @@ test_that("DATASET \"built\" reads the study dataset and records it as \"study\"
   expect_identical(out$data, read_job_data(cfg, dataset = "study")$data)
   expect_identical(attr(out$record, "selection")$dataset, "study")
   expect_identical(out$provenance$dataset, "study")
+  # The report names the dataset as the job does; only the records are canonical.
+  expect_match(out$record$value[out$record$step == "Source"], "dataset `built`", fixed = TRUE)
 })
 
 test_that("an upstream job's \"study\" agrees with a downstream \"built\", and the reverse", {

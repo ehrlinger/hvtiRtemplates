@@ -232,10 +232,13 @@
   unresolved <- function(reason, dataset = NA_character_) list(dataset = dataset, data = NULL, reason = reason)
   cfg <- tryCatch(hvtiRutilities::study_config(root), error = function(e) e)
   if (inherits(cfg, "error")) return(unresolved(conditionMessage(cfg)))
-  keys <- c("study", names(cfg$additional_datasets))
+  # The study dataset is written as "built", as the templates say; "study", its
+  # older name, still selects it. hvtiRutilities reserves both names for it.
+  keys <- c("built", names(cfg$additional_datasets))
   files <- c(cfg$built, vapply(cfg$additional_datasets, function(x) x$built, character(1L)))
   stems <- tolower(tools::file_path_sans_ext(basename(files)))
   matches <- which(tolower(keys) == input | stems == input)
+  if (identical(input, "study")) matches <- union(1L, matches)
   if (!nzchar(input) || length(matches) != 1L) {
     return(unresolved("SAS input does not uniquely match a registered dataset key or filename stem."))
   }

@@ -518,7 +518,6 @@
 read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = NULL,
                           id = "ccfid", key = id) {
   .check_job_settings(dataset, analysis_set, where, id, key)
-  dataset <- .canonical_job_dataset(dataset)
   read <- .read_job_source(cfg, dataset, analysis_set)
   d <- read$value
   # Taken now: subsetting the columns below drops attributes.
@@ -538,7 +537,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   counts <- .check_job_key(kept$data, key, who$id)
   record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts, notes = read$notes)
   attr(record, "selection") <- list(
-    dataset = dataset, analysis_set = analysis_set, where = kept$steps$condition,
+    dataset = .canonical_job_dataset(dataset), analysis_set = analysis_set, where = kept$steps$condition,
     where_shown = kept$steps$shown,
     id = who$id, key = key, rows = counts$rows, patients = counts$patients,
     key_hash = .key_hash(kept$data, key)

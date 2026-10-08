@@ -57,7 +57,7 @@ POOL <- c("age", "female")
 # EDIT: the rows to screen, as in any job. DATASET and ANALYSIS_SET name the
 # data, WHERE keeps rows (for example quote(age >= 18)), ID names the patient
 # identifier and KEY the columns a row is unique on.
-DATASET <- "study"
+DATASET <- "built"
 ANALYSIS_SET <- NULL
 WHERE <- NULL
 ID <- "ccfid"
