@@ -1,10 +1,14 @@
 # hvtiRtemplates (unreleased)
 
-* Two provenance tests now register a rebuilt dataset with
-  `hvtiRutilities::update_manifest()` before they expect its hash to change.
-  Since hvtiRutilities 1.5.0 a job reads the registered dated parquet, not the
-  source file, so rewriting the source alone no longer changes what a job
-  reads or what its provenance records. Package code is unchanged.
+* A job reading a dataset whose source file has been rebuilt but not yet
+  registered runs on the registered version and says so in its "The data this
+  job read" table, with a Note row naming the `update_manifest()` call that
+  registers the new file. Before, hvtiRutilities' message printed bare wherever
+  the data chunk happened to show it. The table's Source row names the dated
+  version the job read, such as `built_20261007.parquet`, rather than the source
+  file. `dp-postage`, which reads outside `read_job_data()`, prints the same note
+  under its "Data read" line. Requires the hvtiRutilities release that added
+  dated versions.
 
 * Running a job's chunks in the console no longer ends with advice to run
   `add_job()`. The final provenance chunk, the one step that needs a render, now
