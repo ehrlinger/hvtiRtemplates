@@ -10,3 +10,5 @@
   `dp.trends`, and its `call` column uses that name; `"dp-trends"` is still
   accepted. Results folders (`estimates/<subject>-<type>/`,
   `graphs/<subject>-<type>/`) are unchanged.
+* `add_job()` also refuses when only a job's runner remains under its old `-runner.R`
+  name, so an edited runner is never left behind beside a new, empty one.

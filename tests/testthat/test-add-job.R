@@ -361,6 +361,23 @@ test_that("add_job refuses to overwrite an existing runner, and writes nothing",
   expect_identical(readLines(runner), "edited")
 })
 
+test_that("add_job refuses when only the job's runner remains under its pre-2026-10 name", {
+  # The .qmd was removed but its edited runner survives under the dash spelling.
+  # Writing a new runner beside it would leave the study's edits in the old one.
+  # Raised by Codex on #277.
+  dir <- tempfile("newjob-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  job <- add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir)
+  unlink(c(job, sub("[.]qmd$", ".runner.R", job)))
+  legacy_runner <- file.path(dirname(job), "dead_pa-boot-bl-runner.R")
+  writeLines("edited", legacy_runner)
+  expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir),
+               "dead_pa-boot-bl-runner.R', its name before 2026-10", fixed = TRUE)
+  expect_false(file.exists(job))
+  expect_false(file.exists(sub("[.]qmd$", ".runner.R", job)))
+  expect_identical(readLines(legacy_runner), "edited")
+})
+
 test_that("add_job leaves neither file when the runner lacks its set markers", {
   bad_runner <- tempfile("runner-", fileext = ".R")
   writeLines("# no markers here", bad_runner)
