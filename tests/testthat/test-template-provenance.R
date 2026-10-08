@@ -204,6 +204,10 @@ test_that("provenance payloads take only the recovered render input", {
 })
 
 test_that("registered data provenance is captured in the chunk that reads it", {
+  # A template reads a registered dataset itself only through .read_registered(),
+  # which brackets the read with .provenance_read() (test-provenance-publication.R).
+  # A bare read_built() must be bracketed in its own chunk.
+  wrapped <- character()
   for (path in template_list()$file) {
     chunks <- r_chunk_expressions(path)
     for (chunk in chunks) {
@@ -211,8 +215,11 @@ test_that("registered data provenance is captured in the chunk that reads it", {
       if (grepl("read_built(", text, fixed = TRUE)) {
         expect_true(grepl(".provenance_read(", text, fixed = TRUE), info = basename(path))
       }
+      if (grepl(".read_registered(", text, fixed = TRUE)) wrapped <- c(wrapped, basename(path))
     }
   }
+  expect_identical(wrapped, "dp-postage.qmd")
+  expect_match(paste(deparse(body(hvtiRtemplates:::.read_registered)), collapse = "\n"), ".provenance_read(", fixed = TRUE)
 })
 
 test_that("analysis-set branches capture the parquet file they read", {

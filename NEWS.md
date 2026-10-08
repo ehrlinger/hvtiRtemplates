@@ -1,5 +1,15 @@
 # hvtiRtemplates (unreleased)
 
+* A job reading a dataset whose source file has been rebuilt but not yet
+  registered runs on the registered version and says so in its "The data this
+  job read" table, with a Note row naming the `update_manifest()` call that
+  registers the new file. Before, hvtiRutilities' message printed bare wherever
+  the data chunk happened to show it. The table's Source row names the dated
+  version the job read, such as `built_20261007.parquet`, rather than the source
+  file. `dp-postage`, which reads outside `read_job_data()`, prints the same note
+  under its "Data read" line. Requires the hvtiRutilities release that added
+  dated versions.
+
 * Running a job's chunks in the console no longer ends with advice to run
   `add_job()`. The final provenance chunk, the one step that needs a render, now
   stops with an error of class `hvtiRtemplates_not_rendered` saying that every
