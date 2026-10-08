@@ -277,14 +277,31 @@ test_that("data capture brackets the actual read and rejects changing bytes", {
   expect_equal(captured$value$id, 1L)
   expect_identical(captured$record$sha256, hvtiRutilities::provenance_data("study", cfg)$sha256)
 
+  # The bracket watches the registered version, the file read_built() reads.
+  registered <- file.path(root, captured$record$path)
+  expect_match(basename(registered), "^cohort_[0-9]{8}[.]parquet$")
   expect_error(
     .provenance_read("study", cfg, function() {
       value <- hvtiRutilities::read_built(cfg)
-      write("changed", hvtiRutilities::built_path(cfg))
+      write("changed", registered)
       value
     }),
     "changed while it was read"
   )
+})
+
+test_that("data capture is not upset by a source rebuilt during the read", {
+  root <- make_hook_study(withr::local_tempdir())
+  cfg <- hvtiRutilities::study_config(root)
+
+  # A rebuilt source is a newer file waiting for update_manifest(), not a
+  # change to what the job read, so the read stands.
+  expect_no_error(captured <- .provenance_read("study", cfg, function() {
+    value <- hvtiRutilities::read_built(cfg)
+    utils::write.csv(data.frame(id = 2L), hvtiRutilities::built_path(cfg), row.names = FALSE)
+    value
+  }))
+  expect_equal(captured$value$id, 1L)
 })
 
 test_that("file data capture snapshots the file actually read", {
@@ -1013,4 +1030,33 @@ test_that("the render owner is the live process that launched this one", {
   owner <- .provenance_render_owner()
   expect_true(.provenance_owner_alive(owner))
   expect_false(.provenance_owner_alive(list(pid = owner$pid, created = "0.000000")))
+})
+
+test_that("a console run stops at provenance and says to render the job", {
+  # The template passes knitr::current_input(dir = TRUE), which is NULL when a
+  # study author steps through chunks in the console rather than rendering.
+  err <- expect_error(.embed_provenance(NULL, data = list()), class = "hvtiRtemplates_not_rendered")
+  expect_match(conditionMessage(err), "render the job", fixed = TRUE)
+  expect_match(conditionMessage(err), "hvtiRtemplates::render_job()", fixed = TRUE)
+  expect_no_match(conditionMessage(err), "add_job", fixed = TRUE)
+})
+
+test_that("a console run stops before the study configuration is read", {
+  # cfg is a promise. Forcing it from a working directory outside the study
+  # would stop with study_config()'s own error and hide the advice to render.
+  expect_error(
+    .embed_provenance(NULL, data = list(), cfg = stop("cfg was read")),
+    class = "hvtiRtemplates_not_rendered"
+  )
+})
+
+test_that("a render outside the study project keeps the hooks message", {
+  root <- make_hook_study(withr::local_tempdir())
+  withr::local_envvar(QUARTO_PROJECT_DIR = NA)
+  input <- file.path(root, "cohort-eda-dc-general.qmd")
+  writeLines(c("---", "format: html", "---"), input)
+
+  err <- expect_error(.embed_provenance(input, data = list(), cfg = hvtiRutilities::study_config(root)))
+  expect_false(inherits(err, "hvtiRtemplates_not_rendered"))
+  expect_match(conditionMessage(err), "must be rendered through its configured Quarto study project", fixed = TRUE)
 })

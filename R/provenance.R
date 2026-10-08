@@ -873,7 +873,36 @@
   invisible(state)
 }
 
+# A console run, a study author stepping through a job's chunks rather than
+# rendering it, reaches the provenance chunk with no render input: the template
+# passes knitr::current_input(dir = TRUE), which is NULL outside a knit. There
+# is then no output to attach provenance to. Say so, and say what to do, before
+# the hooks check below, whose advice (add_job()) is right only for a render
+# outside the study's Quarto project. The check must also come before `cfg` is
+# forced, or a console run from outside the study would see study_config()'s
+# error instead.
+#
+# Checked 2026-10-07 for the same console-run failure, and needing no change:
+# the edit-marker and set-declaration guards in every template (both skip on a
+# NULL input), .guard_partial() (returns early on a NULL input; pinned in
+# test-partial-render.R) and .attach_handoff_lineage() (attaches an attribute
+# and reads no render state).
+.not_rendered_abort <- function() {
+  stop(structure(
+    class = c("hvtiRtemplates_not_rendered", "error", "condition"),
+    list(
+      message = paste0(
+        "This job was run in the console, so its provenance cannot be recorded. ",
+        "Every chunk above this one ran normally. To produce the report and its provenance, ",
+        "render the job: click Render, or run hvtiRtemplates::render_job() on this job's .qmd file."
+      ),
+      call = NULL
+    )
+  ))
+}
+
 .embed_provenance <- function(input, data, artifacts = list(), extra = list(), cfg = hvtiRutilities::study_config()) {
+  if (is.null(input)) .not_rendered_abort()
   root <- normalizePath(cfg$root, winslash = "/", mustWork = TRUE)
   project <- Sys.getenv("QUARTO_PROJECT_DIR", unset = NA_character_)
   if (is.na(project) || !identical(normalizePath(project, winslash = "/", mustWork = TRUE), root)) {

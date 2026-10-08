@@ -11,6 +11,39 @@
   The PDF falls back to the default `pdf()` device where `cairo_pdf()` cannot
   open, as on a Mac without XQuartz, whose R reports cairo as available anyway.
 
+* The six forest templates (`rfc`, `rfs` and `rfr`, fit and explain) now hand
+  `rfsrc()`, `vimp()` and `varpro()` a negative `seed = -abs(SEED)` as well as
+  seeding R's generator through `cache_fit(seed = SEED)`. A study found that either
+  half alone does not reproduce: `rfsrc()` without `seed =` draws one from R's
+  generator, and `varpro()` with a fixed `seed =` still gave different importances
+  after a different chunk. Both together reproduced to the last digit across a
+  192-thread server and a Mac. The templates also set `options(rf.cores = 1L)`, since
+  a varPro cutoff changed with the thread count. Jobs already scaffolded are not
+  changed; to adopt this, make the same edits and render once with `REFIT = TRUE`.
+
+* A new test parses every R chunk of every shipped template and fails on a call
+  that draws from R's generator (`rfsrc`, `varpro`, `mice`, `sample`, `runif` and
+  others) unless it is wrapped in `cache_fit(seed = )` or `with_seed()`, or has a
+  `set.seed()` at most three lines above it in the same chunk. A randomForestSRC
+  call that takes a `seed` must also be given a negative one.
+
+* A job reading a dataset whose source file has been rebuilt but not yet
+  registered runs on the registered version and says so in its "The data this
+  job read" table, with a Note row naming the `update_manifest()` call that
+  registers the new file. Before, hvtiRutilities' message printed bare wherever
+  the data chunk happened to show it. The table's Source row names the dated
+  version the job read, such as `built_20261007.parquet`, rather than the source
+  file. `dp-postage`, which reads outside `read_job_data()`, prints the same note
+  under its "Data read" line. Requires the hvtiRutilities release that added
+  dated versions.
+
+* Running a job's chunks in the console no longer ends with advice to run
+  `add_job()`. The final provenance chunk, the one step that needs a render, now
+  stops with an error of class `hvtiRtemplates_not_rendered` saying that every
+  chunk above it ran and that the job should be rendered, with
+  `hvtiRtemplates::render_job()` or the Render button. A render outside the
+  study's Quarto project keeps the existing message about installing the hooks.
+
 * The test suite runs in about two-thirds of the time: expensive fits and renders are
   shared within a test file, and fixtures are smaller. No assertion was dropped. About
   40 tests, the end-to-end Quarto renders, model fits and saved-file identifier scans,
