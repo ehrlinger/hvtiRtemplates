@@ -132,7 +132,8 @@ A list:
     \item \code{id} and \code{key}, the resolved column names, the
       key being the joined result's when there is a join;
     \item \code{join}, \code{join_vars}, \code{reduce} and
-      \code{join_key}, the join as read, its key resolved, or \code{NULL};
+      \code{join_key}, the join as read, its key resolved, or \code{NULL},
+      and with a join \code{cohort_key}, the cohort's own key;
     \item \code{rows} and \code{patients}, the counts kept;
     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
       a downstream job can tell that it rebuilt the same patients and not
@@ -156,9 +157,12 @@ Columns named \code{MRN} or \code{eMRN} (ignoring case) are
   the record and in error messages, with its values replaced by
   \code{<value>}. So is a condition on \code{id} in a selection saved before
   such conditions were refused. Every setting is checked before the data are
-  read. With \code{join}, \code{where} applies to the joined rows, so a
-  condition may name a column from either dataset; the joined dataset's
-  identifier values are refused in it as the cohort's are.
+  read, and \code{join}'s registration too; only what needs the data, such
+  as whether a column exists, is checked after. With \code{join},
+  \code{where} applies to the joined rows, so a condition may name a column
+  from either dataset, though not a cohort column \code{join_vars} leaves
+  out; the joined dataset's identifier values are refused in it as the
+  cohort's are.
 }
 \examples{
 \donttest{

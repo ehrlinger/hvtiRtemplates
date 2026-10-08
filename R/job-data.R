@@ -489,9 +489,12 @@
 #'   the record and in error messages, with its values replaced by
 #'   \code{<value>}. So is a condition on \code{id} in a selection saved before
 #'   such conditions were refused. Every setting is checked before the data are
-#'   read. With \code{join}, \code{where} applies to the joined rows, so a
-#'   condition may name a column from either dataset; the joined dataset's
-#'   identifier values are refused in it as the cohort's are.
+#'   read, and \code{join}'s registration too; only what needs the data, such
+#'   as whether a column exists, is checked after. With \code{join},
+#'   \code{where} applies to the joined rows, so a condition may name a column
+#'   from either dataset, though not a cohort column \code{join_vars} leaves
+#'   out; the joined dataset's identifier values are refused in it as the
+#'   cohort's are.
 #'
 #' @return A list:
 #'   \itemize{
@@ -527,7 +530,8 @@
 #'     \item \code{id} and \code{key}, the resolved column names, the
 #'       key being the joined result's when there is a join;
 #'     \item \code{join}, \code{join_vars}, \code{reduce} and
-#'       \code{join_key}, the join as read, its key resolved, or \code{NULL};
+#'       \code{join_key}, the join as read, its key resolved, or \code{NULL},
+#'       and with a join \code{cohort_key}, the cohort's own key;
 #'     \item \code{rows} and \code{patients}, the counts kept;
 #'     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
 #'       a downstream job can tell that it rebuilt the same patients and not
@@ -553,6 +557,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                           id = "ccfid", key = NULL, join = NULL, join_vars = NULL, reduce = NULL,
                           join_key = NULL) {
   .check_job_settings(dataset, analysis_set, where, id, key, join, join_vars, reduce, join_key)
+  # The registration JOIN needs is checked before either dataset is read.
+  join_shape <- if (!is.null(join)) .join_shape(cfg, join, join_key)
   read <- .read_job_source(cfg, dataset, analysis_set)
   d <- read$value
   # Taken now: subsetting the columns below drops attributes.
@@ -574,7 +580,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   if (!is.null(join)) {
     # The cohort's own KEY is checked before the join, which needs one row per patient.
     .check_job_key(ids$data, key, who$id)
-    joined <- .read_join(cfg, join, join_key, ids$data, who$id, join_vars, reduce, values = !is.null(where))
+    cohort_key <- key
+    joined <- .read_join(cfg, join, join_shape, ids$data, who$id, join_vars, reduce, values = !is.null(where))
+    .check_where_join_vars(where, setdiff(names(ids$data), names(joined$data)))
     ids$data <- joined$data
     ids$dropped <- unique(c(ids$dropped, joined$dropped))
     key <- joined$key
@@ -591,7 +599,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     where_shown = kept$steps$shown,
     id = who$id, key = key, rows = counts$rows, patients = counts$patients,
     key_hash = .key_hash(kept$data, key),
-    join = join, join_vars = join_vars, reduce = reduce, join_key = joined$join_key
+    join = join, join_vars = join_vars, reduce = reduce, join_key = joined$join_key,
+    cohort_key = if (!is.null(join)) cohort_key
   )
   list(data = kept$data, record = record, provenance = read$record,
        provenance_join = joined$provenance, attrition = attrition)
@@ -617,7 +626,13 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # Reads the dataset JOIN names and joins it to the cohort. Its identifier is
 # the cohort's, by name: joining MRN to ccfid values would match nothing, or
 # worse, so no fallback is taken here.
-.read_join <- function(cfg, join, join_key, cohort, cohort_id, join_vars, reduce, values = FALSE) {
+.join_shape <- function(cfg, join, join_key) {
+  if (!identical(.canonical_job_dataset(join), "study") && !join %in% names(cfg$additional_datasets)) {
+    named <- names(cfg$additional_datasets)
+    stop("JOIN names `", join, "`, which is not registered in _study.yml",
+         if (length(named)) paste0(" (registered: ", toString(named), ")"), ". Register it with ",
+         "hvtiRutilities::register_data(kind = \"ancillary\", key = ...), or correct JOIN.", call. = FALSE)
+  }
   shape <- .registered_shape(cfg, join)
   if (!is.null(shape$kind) && !identical(shape$kind, "ancillary")) {
     stop("JOIN names `", join, "`, registered as a ", shape$kind, " dataset. JOIN takes an ancillary dataset.",
@@ -628,6 +643,23 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     stop("`", join, "` has no registered key and this job sets no JOIN_KEY. Register it with key = ... in ",
          "hvtiRutilities::register_data(), or set JOIN_KEY in this job's study choices.", call. = FALSE)
   }
+  resolved
+}
+
+# JOIN_VARS leaves cohort columns out before WHERE runs on the joined rows. A
+# condition naming one would otherwise take a value of that name from outside
+# the data, silently, as WHERE does for any name that is not a column.
+.check_where_join_vars <- function(where, left_out) {
+  if (is.null(where) || !length(left_out)) return(invisible(TRUE))
+  named <- unique(unlist(lapply(.where_conditions(where), function(cond) .where_columns(cond)$columns)))
+  hit <- intersect(named, left_out)
+  if (length(hit)) {
+    stop("WHERE names ", toString(hit), ", a cohort column JOIN_VARS leaves out. Add it to JOIN_VARS.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+.read_join <- function(cfg, join, resolved, cohort, cohort_id, join_vars, reduce, values = FALSE) {
   jr <- .read_job_source(cfg, join, NULL)
   a <- jr$value
   a_id <- names(a)[tolower(names(a)) == tolower(cohort_id)]
@@ -696,9 +728,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                                 !all(nzchar(join_vars)))) {
     stop("JOIN_VARS must be NULL or name cohort columns.", call. = FALSE)
   }
-  if (!is.null(reduce) && (!is.list(reduce) || is.null(reduce$rule) || is.null(reduce$by))) {
-    stop("REDUCE must be NULL or list(rule = ..., by = ...).", call. = FALSE)
-  }
+  if (!is.null(reduce)) .check_reduce_setting(reduce)
   if (!is.null(join_key) && (!is.character(join_key) || !length(join_key) || anyNA(join_key) ||
                                !all(nzchar(join_key)))) {
     stop("JOIN_KEY must be NULL or name one or more columns.", call. = FALSE)
@@ -784,14 +814,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     c("ID", if (who$fallback) paste0("`", who$id, "` (no ccfid; fell back to ", who$id, ")") else paste0("`", who$id, "`")),
     c("Identifiers dropped", if (length(dropped)) paste0("`", dropped, "`", collapse = ", ") else "none")
   )
-  for (i in seq_len(nrow(steps))) {
-    rows[[length(rows) + 1L]] <- c(
-      paste0("`", steps$shown[[i]], "`"),
-      paste0("removed ", steps$removed[[i]], if (steps$missing[[i]]) paste0(" (", steps$missing[[i]], " missing)") else "")
-    )
-  }
-  rows[[length(rows) + 1L]] <- c("Rows kept", paste0(format(counts$rows, big.mark = ","), " rows on ",
-                                                     format(counts$patients, big.mark = ","), " patients"))
+  # The join comes before WHERE, which runs on the joined rows.
   if (!is.null(join)) {
     rows[[length(rows) + 1L]] <- c("Joined", paste0(join$source, ", ", format(join$rows, big.mark = ","), " rows read"))
     rows[[length(rows) + 1L]] <- c("Joined records outside the cohort", format(join$outside, big.mark = ","))
@@ -801,6 +824,14 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
       rows[[length(rows) + 1L]] <- c("Joined records with no reduction value", format(join$ignored, big.mark = ","))
     }
   }
+  for (i in seq_len(nrow(steps))) {
+    rows[[length(rows) + 1L]] <- c(
+      paste0("`", steps$shown[[i]], "`"),
+      paste0("removed ", steps$removed[[i]], if (steps$missing[[i]]) paste0(" (", steps$missing[[i]], " missing)") else "")
+    )
+  }
+  rows[[length(rows) + 1L]] <- c("Rows kept", paste0(format(counts$rows, big.mark = ","), " rows on ",
+                                                     format(counts$patients, big.mark = ","), " patients"))
   for (note in notes) rows[[length(rows) + 1L]] <- c("Note", note)
   data.frame(step = vapply(rows, `[[`, "", 1L), value = vapply(rows, `[[`, "", 2L))
 }
@@ -873,10 +904,10 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   if (!read) return(list(selection = sel))
   where <- if (length(sel$where)) lapply(sel$where, str2lang)
   job_data <- withCallingHandlers(
-    # With a join the recorded key is the joined result's; the cohort's own
-    # key is then one row per patient, the default.
+    # With a join the recorded key is the joined result's; the cohort's own is
+    # recorded beside it.
     do.call(read_job_data, list(cfg, dataset = sel$dataset, analysis_set = sel$analysis_set,
-                                where = where, id = sel$id, key = if (is.null(sel$join)) sel$key,
+                                where = where, id = sel$id, key = if (is.null(sel$join)) sel$key else sel$cohort_key,
                                 join = sel$join, join_vars = sel$join_vars, reduce = sel$reduce,
                                 join_key = sel$join_key),
             quote = TRUE, envir = parent.frame()),

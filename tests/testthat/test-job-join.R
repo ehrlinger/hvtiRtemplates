@@ -90,8 +90,14 @@ test_that("nearest refuses a date compared with a number", {
                "the same kind")
 })
 
+test_that("a joined dataset with no record of any cohort patient stops: the identifiers differ", {
+  zeros <- transform(echo, ccfid = sprintf("%05d", ccfid))
+  expect_error(hvtiRtemplates:::.join_ancillary(cohort, zeros, "ccfid", "ccfid", c("ccfid", "echo_date")),
+               "No record of the joined dataset belongs to a cohort patient")
+})
+
 test_that("a patient with no joined record at all keeps a row", {
-  none <- echo[echo$ccfid == 4L, ]
+  none <- echo[0L, ]
   out <- hvtiRtemplates:::.join_ancillary(cohort, none, "ccfid", "ccfid", c("ccfid", "echo_date"),
                                           reduce = list(rule = "first", by = "echo_date"))
   expect_identical(nrow(out$data), 3L)

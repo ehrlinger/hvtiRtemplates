@@ -986,3 +986,42 @@ test_that("a stale analysis set read in a draft is a note in the data table", {
   expect_no_message(out <- read_job_data(cfg, analysis_set = "eda"))
   expect_identical(out$record$value[out$record$step == "Note"], "analysis set `eda`: stale. This draft used the older cut.")
 })
+
+test_that("a JOIN naming an unregistered dataset says so before anything is read", {
+  cfg <- join_study()
+  err <- tryCatch(read_job_data(cfg, dataset = "absent", join = "echos"), error = conditionMessage)
+  expect_match(err, "`echos`, which is not registered in _study.yml (registered: echo)", fixed = TRUE)
+  # Registration problems stop before the cohort is read: "absent" is never reached.
+  expect_error(read_job_data(join_study(echo_kind = "subset"), dataset = "absent", join = "echo"), "subset dataset")
+  expect_error(read_job_data(cfg, dataset = "absent", join = "echo", reduce = list(rule = "fist", by = "d")),
+               "REDUCE needs rule")
+  expect_error(read_job_data(cfg, dataset = "absent", join = "echo", reduce = list(rule = "nearest", by = "d")),
+               "needs to = one column name")
+})
+
+test_that("WHERE may not name a cohort column JOIN_VARS leaves out", {
+  cfg <- join_study()
+  age <- 0
+  expect_error(read_job_data(cfg, join = "echo", join_vars = "dt_surg", where = quote(age >= 55)),
+               "WHERE names age, a cohort column JOIN_VARS leaves out")
+  out <- read_job_data(cfg, join = "echo", join_vars = c("dt_surg", "age"), where = quote(age >= 55))
+  expect_identical(nrow(out$data), 1L)
+})
+
+test_that("the data table shows the join before the WHERE that runs on its rows", {
+  cfg <- join_study()
+  out <- read_job_data(cfg, join = "echo", where = quote(ef >= 50))
+  steps <- out$record$step
+  expect_lt(match("Joined", steps), match("`ef >= 50`", steps))
+  expect_lt(match("`ef >= 50`", steps), match("Rows kept", steps))
+})
+
+test_that("a downstream job rebuilds a joined cohort with the cohort key the upstream job used", {
+  cfg <- join_study()
+  up <- read_job_data(cfg, key = c("ccfid", "age"), join = "echo")
+  sel <- attr(up$record, "selection")
+  expect_identical(sel$cohort_key, c("ccfid", "age"))
+  out <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())
+  expect_match(out$job_data$record$value[out$job_data$record$step == "Note"], "differs from the registered key")
+  expect_null(attr(read_job_data(cfg)$record, "selection")$cohort_key)
+})

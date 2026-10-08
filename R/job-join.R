@@ -19,33 +19,51 @@
 # subtracts one from the other, which means nothing across kinds.
 .join_order_kind <- function(x) if (inherits(x, "Date")) "date" else if (inherits(x, "POSIXt")) "date-time" else "number"
 
-.check_reduce <- function(reduce, ancillary, cohort) {
+# The checks that need no data, run with the other settings before anything is read.
+.check_reduce_setting <- function(reduce) {
+  if (!is.list(reduce) || is.null(names(reduce)) || any(!nzchar(names(reduce)))) {
+    stop("REDUCE must be NULL or list(rule = ..., by = ...).", call. = FALSE)
+  }
   extra <- setdiff(names(reduce), c("rule", "by", "to"))
-  if (length(extra) || is.null(names(reduce)) || any(!nzchar(names(reduce)))) {
-    stop("REDUCE takes only rule, by and to", if (length(extra)) paste0(", not ", toString(extra)), ".", call. = FALSE)
+  if (length(extra)) {
+    stop("REDUCE takes only rule, by and to, not ", toString(extra), ".", call. = FALSE)
   }
   rule <- reduce$rule
-  by <- reduce$by
-  to <- reduce$to
   if (!is.character(rule) || length(rule) != 1L || !rule %in% .reduce_rules) {
     stop("REDUCE needs rule = \"first\", \"last\" or \"nearest\". Change REDUCE in edit-study-choices.", call. = FALSE)
   }
-  if (!is.character(by) || length(by) != 1L || !by %in% names(ancillary)) {
+  for (field in c("by", if (identical(rule, "nearest")) "to")) {
+    value <- reduce[[field]]
+    if (!is.character(value) || length(value) != 1L || is.na(value) || !nzchar(value)) {
+      stop("REDUCE", if (identical(rule, "nearest")) " with rule = \"nearest\"", " needs ", field,
+           " = one column name.", call. = FALSE)
+    }
+  }
+  if (!identical(rule, "nearest") && !is.null(reduce$to)) {
+    stop("REDUCE's to is used only with rule = \"nearest\".", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+.check_reduce <- function(reduce, ancillary, cohort) {
+  .check_reduce_setting(reduce)
+  rule <- reduce$rule
+  by <- reduce$by
+  to <- reduce$to
+  if (!by %in% names(ancillary)) {
     stop("REDUCE's by names a column the joined dataset does not have: ", toString(by), ".", call. = FALSE)
   }
   if (!.join_orderable(ancillary[[by]])) {
     stop("REDUCE's by column, ", by, ", must be a number or a date.", call. = FALSE)
   }
   if (identical(rule, "nearest")) {
-    if (!is.character(to) || length(to) != 1L || !to %in% names(cohort) || !.join_orderable(cohort[[to]])) {
+    if (!to %in% names(cohort) || !.join_orderable(cohort[[to]])) {
       stop("REDUCE with rule = \"nearest\" needs to = a cohort column holding a number or a date.", call. = FALSE)
     }
     if (!identical(.join_order_kind(ancillary[[by]]), .join_order_kind(cohort[[to]]))) {
       stop("REDUCE's by (", by, ", a ", .join_order_kind(ancillary[[by]]), ") and to (", to, ", a ",
            .join_order_kind(cohort[[to]]), ") must be the same kind of value for rule = \"nearest\".", call. = FALSE)
     }
-  } else if (!is.null(to)) {
-    stop("REDUCE's to is used only with rule = \"nearest\".", call. = FALSE)
   }
   invisible(TRUE)
 }
@@ -68,11 +86,18 @@
   repeats <- length(unique(cohort_ids[duplicated(cohort_ids)]))
   if (repeats) {
     stop(repeats, if (repeats == 1L) " patient has" else " patients have", " more than one row in the cohort. ",
-         "JOIN needs one row per patient: keep one with WHERE or ANALYSIS_SET, or set KEY to ID.", call. = FALSE)
+         "JOIN needs a cohort of one row per patient: read a dataset or analysis set that has one, and ",
+         "join the repeated records as the joined dataset.", call. = FALSE)
   }
   anc_ids <- .id_text(ancillary[[ancillary_id]])
   inside <- !is.na(anc_ids) & anc_ids %in% cohort_ids[!is.na(cohort_ids)]
   outside <- sum(!inside)
+  # Not one match is a mismatch of identifiers, such as text with leading
+  # zeros against numbers, rather than a cohort no record belongs to.
+  if (length(anc_ids) && !any(inside)) {
+    stop("No record of the joined dataset belongs to a cohort patient: check that both hold the same ",
+         "identifier, stored the same way.", call. = FALSE)
+  }
   ancillary <- ancillary[inside, , drop = FALSE]
   anc_ids <- anc_ids[inside]
   if (!identical(ancillary_id, id)) names(ancillary)[names(ancillary) == ancillary_id] <- id

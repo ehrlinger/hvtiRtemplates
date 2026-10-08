@@ -7,8 +7,9 @@
   patients and must be one row per patient; the join keeps one row per joined
   record, keyed on that dataset's key, or one row per patient with
   `REDUCE = list(rule = "first" | "last" | "nearest", by = ...)`. A tie on
-  `by` stops rather than pick one record silently. `WHERE` applies to the
-  joined rows. The job's data table names the joined dataset and its rows,
+  `by` stops rather than pick one record silently, and so does a join that
+  matches no cohort patient at all, which is a mismatch of identifiers.
+  `WHERE` applies to the joined rows. The job's data table names the joined dataset and its rows,
   counts its records outside the cohort and the cohort patients with none, and
   names the reduction; its provenance records the joined dataset's version. A
   downstream job rebuilds the same join from its upstream job's selection.
