@@ -16,6 +16,13 @@
   `set.seed()` at most three lines above it in the same chunk. A randomForestSRC
   call that takes a `seed` must also be given a negative one.
 
+* Running a job's chunks in the console no longer ends with advice to run
+  `add_job()`. The final provenance chunk, the one step that needs a render, now
+  stops with an error of class `hvtiRtemplates_not_rendered` saying that every
+  chunk above it ran and that the job should be rendered, with
+  `hvtiRtemplates::render_job()` or the Render button. A render outside the
+  study's Quarto project keeps the existing message about installing the hooks.
+
 * The test suite runs in about two-thirds of the time: expensive fits and renders are
   shared within a test file, and fixtures are smaller. No assertion was dropped. About
   40 tests, the end-to-end Quarto renders, model fits and saved-file identifier scans,
@@ -192,6 +199,10 @@
 * `dp-gfup` is deprecated in favor of `dc-gfup` and will be removed in a later
   release. It still scaffolds; `template_path()`, `add_job()` and `open_job()` warn,
   and `migrate_job()` writes a `dc-gfup` job.
+
+* `DESCRIPTION` now declares the Quarto command line tool in
+  `SystemRequirements`. The vignettes have always needed it to build; the
+  field makes that visible to installers and to `R CMD check`.
 
 # hvtiRtemplates 1.2.5
 
