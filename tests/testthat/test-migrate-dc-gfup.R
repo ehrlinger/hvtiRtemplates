@@ -234,6 +234,7 @@ test_that("dc-gfup dataset selection refuses a set cut from another dataset and 
   code <- code[!assignments]
   env <- list2env(list(.root = root, DATASET = "complete_cases", ANALYSIS_SET = "eda",
                        WHERE = NULL, ID = "ccfid", KEY = "ccfid",
+                       JOIN = NULL, JOIN_VARS = NULL, REDUCE = NULL, JOIN_KEY = NULL,
                        read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config))
   withr::local_dir(root)
   expect_error(eval(code, env), "written from the study dataset")

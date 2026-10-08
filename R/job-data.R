@@ -823,6 +823,11 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     mine <- settings[[field]]
     if (is.null(mine)) next
     if (field == "reduce") {
+      # Filled in as the list it is; compared as its one-line description.
+      if (!field %in% names(upstream)) {
+        out[[field]] <- mine
+        next
+      }
       mine <- .reduce_text(mine)
     } else if (is.call(mine) || is.name(mine) || is.list(mine)) {
       mine <- vapply(.where_conditions(mine), function(x) paste(deparse(x, width.cutoff = 500L), collapse = " "), "")
@@ -832,7 +837,11 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
       next
     }
     theirs <- if (field == "reduce") .reduce_text(upstream[[field]]) else as.character(upstream[[field]])
-    same <- if (field %in% c("id", "key", "join_vars", "join_key")) identical(tolower(mine), tolower(theirs)) else identical(as.character(mine), theirs)
+    same <- if (field %in% c("id", "key", "join_vars", "join_key")) {
+      identical(tolower(mine), tolower(theirs))
+    } else {
+      identical(as.character(mine), theirs)
+    }
     if (!same) {
       if (field == "where") {
         cols <- unique(c(upstream$id, upstream$key, settings$id, settings$key))

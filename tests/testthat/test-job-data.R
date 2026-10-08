@@ -812,7 +812,7 @@ test_that("an analysis set may be read with DATASET \"built\"", {
 # A study with a registered study dataset and an ancillary one beside it.
 # Synthetic: identifiers 1 to 4, echo dates are day numbers.
 join_study <- function(env = parent.frame(), echo_kind = "ancillary") {
-  skip_if_not_installed("arrow")
+  testthat::skip_if_not_installed("arrow")
   root <- file.path(withr::local_tempdir(.local_envir = env), "study")
   suppressMessages(hvtiRutilities::study_setup(root, "Join", 42L))
   dd <- hvtiRutilities::study_dir("datasets", root)
@@ -964,6 +964,9 @@ test_that("a downstream job rebuilds a joined cohort, and its join settings must
                "REDUCE here \\(last by echo_date\\) differs.*first by echo_date")
   same <- hvtiRtemplates:::.check_upstream_selection(sel, list(reduce = list(by = "echo_date", rule = "first")))
   expect_identical(same$reduce, sel$reduce)
+  # A selection recorded before the join fields existed is filled in with the setting as given.
+  older <- hvtiRtemplates:::.check_upstream_selection(list(id = "ccfid"), list(reduce = list(rule = "first", by = "d")))
+  expect_identical(older$reduce, list(rule = "first", by = "d"))
 })
 
 test_that("a stale analysis set read in a draft is a note in the data table", {

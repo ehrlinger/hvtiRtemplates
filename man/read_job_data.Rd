@@ -10,7 +10,11 @@ read_job_data(
   analysis_set = NULL,
   where = NULL,
   id = "ccfid",
-  key = id
+  key = NULL,
+  join = NULL,
+  join_vars = NULL,
+  reduce = NULL,
+  join_key = NULL
 )
 }
 \arguments{
@@ -63,8 +67,35 @@ shorter identifiers relies on the name checks.}
 \item{id}{The patient identifier column. When it is the default
 \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.}
 
-\item{key}{Columns that make a row unique; defaults to \code{id}, one row
-per patient. Add a visit time or date for repeated measures.}
+\item{key}{Columns that make a row unique. \code{NULL} (the default) uses
+the key registered for \code{dataset}, and \code{id}, one row per
+patient, when none is registered. Add a visit time or date for repeated
+measures. A key that differs from the registered one is noted in the
+record. With \code{join}, the cohort must be one row per patient, and
+the result is keyed as \code{reduce} says.}
+
+\item{join}{Name of one registered ancillary dataset (such as echoes or
+labs) to join to the cohort on \code{id}, or \code{NULL}. The cohort,
+\code{dataset} or \code{analysis_set}, decides the patients: joined
+records of other patients are dropped and counted. A dataset registered
+with a \code{kind} other than \code{"ancillary"} is refused.}
+
+\item{join_vars}{Cohort columns each joined row carries, the \code{id}
+always among them; \code{NULL} carries all of them. A column both
+datasets have stops, so list only the cohort columns the job needs.}
+
+\item{reduce}{\code{NULL} keeps one row per joined record, keyed on the
+joined dataset's key. \code{list(rule = "first", by = "echo_date")}
+keeps one row per cohort patient, keyed on \code{id}: the record with
+the smallest \code{by} (\code{"first"}), the largest (\code{"last"}),
+or the one nearest a cohort column (\code{rule = "nearest"} with
+\code{to = "dt_surg"}). A patient with no record keeps the row with the
+joined columns missing. Records with no \code{by} value are left out and
+counted, and a patient whose chosen record ties with another stops the
+read, since picking one would be a hidden choice.}
+
+\item{join_key}{Columns that make the joined dataset's rows unique,
+overriding its registered key. A join needs one or the other.}
 }
 \value{
 A list:
@@ -77,8 +108,13 @@ A list:
       since it was registered, the registered version is read and a final
       \code{"Note"} row says so, naming
       \code{hvtiRutilities::update_manifest()}, the call that registers the
-      new file;
+      new file. A stale analysis set read in a draft gets a \code{"Note"}
+      row the same way. With \code{join}, rows name the joined dataset
+      and the rows read from it, count its records outside the cohort and
+      the cohort patients with none, and name the reduction;
     \item \code{provenance}, the read's provenance record;
+    \item \code{provenance_join}, the joined dataset's provenance record,
+      naming the version read, or \code{NULL} without \code{join};
     \item \code{attrition}, an analysis set's per-rule attrition table, or
       \code{NULL} for a dataset read whole.
   }
@@ -93,7 +129,10 @@ A list:
     \item \code{where_shown}, the same conditions as a report may show them,
       with the values of any condition on a \code{key} column, or using
       \code{.data} or a string lookup, replaced;
-    \item \code{id} and \code{key}, the resolved column names;
+    \item \code{id} and \code{key}, the resolved column names, the
+      key being the joined result's when there is a join;
+    \item \code{join}, \code{join_vars}, \code{reduce} and
+      \code{join_key}, the join as read, its key resolved, or \code{NULL};
     \item \code{rows} and \code{patients}, the counts kept;
     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
       a downstream job can tell that it rebuilt the same patients and not
@@ -108,7 +147,7 @@ The shared data step of every analysis template. It reads a
 }
 \details{
 Columns named \code{MRN} or \code{eMRN} (ignoring case) are
-  dropped unless one is the identifier. An explicit \code{id} or \code{key}
+  dropped unless one is the identifier, from a joined dataset too. An explicit \code{id} or \code{key}
   matches its column ignoring case, because
   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
   key and date values are not printed: the record holds counts, and a
@@ -117,7 +156,9 @@ Columns named \code{MRN} or \code{eMRN} (ignoring case) are
   the record and in error messages, with its values replaced by
   \code{<value>}. So is a condition on \code{id} in a selection saved before
   such conditions were refused. Every setting is checked before the data are
-  read.
+  read. With \code{join}, \code{where} applies to the joined rows, so a
+  condition may name a column from either dataset; the joined dataset's
+  identifier values are refused in it as the cohort's are.
 }
 \examples{
 \donttest{
