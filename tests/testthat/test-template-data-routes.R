@@ -252,3 +252,81 @@ test_that("dp-postage names the registered version and a waiting rebuild without
   expect_length(note, 1L)
   expect_match(note, "update_manifest()", fixed = TRUE)
 })
+
+test_that("every template that reads its own data offers the join and records the joined data", {
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  files <- list.files(normalizePath(template_root), pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
+  readers <- 0L
+  for (f in files) {
+    src <- readLines(f, warn = FALSE)
+    text <- paste(src, collapse = "\n")
+    # A job that reads with its own DATASET; downstream and bootstrap reports
+    # rebuild the selection their upstream job recorded instead.
+    if (!grepl("read_job_data(.cfg, dataset = DATASET", text, fixed = TRUE)) next
+    readers <- readers + 1L
+    for (arg in c("join = JOIN", "join_vars = JOIN_VARS", "reduce = REDUCE", "join_key = JOIN_KEY")) {
+      expect_true(grepl(arg, text, fixed = TRUE), info = paste(basename(f), arg))
+    }
+    choices <- data_route_chunks(f)$choices
+    for (choice in c("JOIN", "JOIN_VARS", "REDUCE", "JOIN_KEY")) {
+      set <- vapply(choices, function(expr) {
+        is.call(expr) && identical(expr[[1L]], quote(`<-`)) && identical(expr[[2L]], as.name(choice)) &&
+          is.null(expr[[3L]])
+      }, logical(1))
+      expect_identical(sum(set), 1L, info = paste(basename(f), choice))
+    }
+    # An optional choice carries no EDIT: marker, or a finished job would render as a draft.
+    at <- grep("^JOIN <- NULL$", src)
+    expect_false(any(grepl("EDIT:", src[(at - 11L):(at + 3L)], fixed = TRUE)), info = basename(f))
+    expect_true(grepl("list(job_data$provenance_join)", text, fixed = TRUE), info = basename(f))
+  }
+  # Every first job of a set reads its own data; a drop here means one stopped offering the join.
+  expect_identical(readers, 22L)
+})
+
+test_that("descriptive templates join an ancillary dataset, long and one row per patient", {
+  skip_if_not_installed("arrow")
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  templates <- file.path(normalizePath(template_root), "10_descriptive",
+                         c("dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dp-eda.qmd"))
+  root <- file.path(withr::local_tempdir(), "join-study")
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Join route test", study_tracker_id = 1L))
+  data_dir <- hvtiRutilities::study_dir("datasets", root)
+  built <- data.frame(ccfid = 1:3, dead = c(0, 1, 0), iv_dead = c(1, 2, 3))
+  echo <- data.frame(ccfid = c(1L, 1L, 2L, 4L), echo_day = c(5, 9, 5, 5), ef = c(50, 55, 45, 40))
+  utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
+  utils::write.csv(echo, file.path(data_dir, "echo.csv"), row.names = FALSE)
+  suppressWarnings(suppressMessages({
+    hvtiRutilities::register_data(root, built = "built.csv")
+    hvtiRutilities::register_data(root, built = "echo.csv", dataset = "echo", role = "named",
+                                  kind = "ancillary", key = c("ccfid", "echo_day"))
+  }))
+  withr::local_dir(root)
+  for (template in templates) {
+    chunks <- data_route_chunks(template)
+    for (reduce in list(NULL, quote(list(rule = "last", by = "echo_day")))) {
+      code <- set_assignment(use_whole_cohort(chunks$choices), "JOIN", "echo")
+      code <- set_assignment(code, "REDUCE", reduce)
+      env <- new.env(parent = globalenv())
+      env$.root <- "."
+      env$study_config <- hvtiRutilities::study_config
+      eval(code, envir = env)
+      utils::capture.output(eval(chunks$data, envir = env))
+      info <- paste(basename(template), if (is.null(reduce)) "long" else "reduced")
+      expect_identical(nrow(env$d), 3L, info = info)
+      if (is.null(reduce)) {
+        expect_identical(sort(unique(env$d$ccfid)), 1:2, info = info)
+      } else {
+        expect_equal(env$d$ef, c(55, 45, NA), info = info)
+      }
+      steps <- env$job_data$record$step
+      expect_true(all(c("Joined", "Joined records outside the cohort", "Cohort patients with no joined record") %in%
+                        steps), info = info)
+      expect_identical("Reduced to one row per patient" %in% steps, !is.null(reduce), info = info)
+      datasets <- vapply(env$.provenance_data, `[[`, "", "dataset")
+      expect_identical(datasets, c("study", "echo"), info = info)
+    }
+  }
+})
