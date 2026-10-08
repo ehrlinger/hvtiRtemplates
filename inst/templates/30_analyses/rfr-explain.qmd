@@ -350,7 +350,8 @@ plot(gg_variable(forest), xvar = sel)
 # Partial: the forest's prediction with every other variable held at its
 # observed values.
 pd <- cache_fit("rfr-partial", gg_partial_rfsrc(forest, xvar.names = sel),
-                seed = SEED, dir = CACHE_DIR, refit = REFIT)
+                seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                packages = "randomForestSRC")
 plot(pd)
 ```
 
