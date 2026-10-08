@@ -53,10 +53,10 @@ test_that("the SAS guide uses adopted-study paths and loads its packages", {
   expect_true(grepl("library(hvtiRutilities)", article, fixed = TRUE))
   expect_true(grepl("library(hvtiRtemplates)", article, fixed = TRUE))
   expect_false(grepl(
-    "10_descriptive/cohort-eda-dc-tables.qmd", article, fixed = TRUE
+    "10_descriptive/dc.tables.cohort.eda.qmd", article, fixed = TRUE
   ))
   expect_true(grepl(
-    "descriptive/cohort-eda-dc-tables.qmd", article, fixed = TRUE
+    "descriptive/dc.tables.cohort.eda.qmd", article, fixed = TRUE
   ))
 })
 

@@ -250,7 +250,7 @@ the other two fields keep related outputs together:
   organizational labels, not invented analysis choices.
 
 For example, `open_job("dc", "cohort", "eda", qualifier = "tables")`
-creates `descriptive/cohort-eda-dc-tables.qmd` in an adopted legacy study.
+creates `descriptive/dc.tables.cohort.eda.qmd` in an adopted legacy study.
 Its HTML report stays beside the QMD, while its Word table goes under
 `documents/cohort-eda/`. Plot jobs follow the same naming pattern, but trend
 QMDs and HTML reports belong in `graphs/`, and plot PNGs go under

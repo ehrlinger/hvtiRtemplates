@@ -68,7 +68,7 @@ qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dp-
 `dp-gfup`, `dp-postage`, `dp-eda`, `hs-setup`, `hs-concordance`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so
-in a study that already has `<subject>-<type>-hs.qmd` it scaffolds a fresh `hs-setup` job beside it: open the
+in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
 existing job by its file. Use `hs-setup` for one model's predictions against the matched population, and
 `hs-concordance` when each treatment group has its own `hm` model and every patient is to be predicted through
 each of them. `nb-boostmtree` is qualified from the start, because `nb` will also hold a BoostMLR job,
@@ -117,8 +117,9 @@ map by the outcome in the job's fit call, not by the name:
 ## Where a scaffolded job lands
 
 `add_job("ac", "death", "hz")` writes
-`20_distributions/death-hz-ac.qmd` in a new study. Three fields, `-`
-separated: **subject, type, prefix**. The subject groups a job set. It names a
+`20_distributions/ac.death.hz.qmd` in a new study. Three fields, `.`
+separated: **prefix, subject, type**, so a study's jobs sort by template, then
+subject, then type. The subject groups a job set. It names a
 statistical endpoint only when the job analyses one; an endpoint-free job can
 instead use a topic such as `cohort`, `treatment`, or `labs`.
 
@@ -128,15 +129,23 @@ contains both schemes is ambiguous, so job creation stops instead of splitting
 the estate across two spellings of one folder.
 
 A job scaffolded from a qualified template carries the qualifier as a fourth
-field, so `add_job("dp", "cohort", "eda", qualifier = "trends")` writes
-`40_graphs/cohort-eda-dp-trends.qmd` in a new study. A filename that drops the qualifier says
+field after the prefix, so `add_job("dp", "cohort", "eda", qualifier = "trends")` writes
+`40_graphs/dp.trends.cohort.eda.qmd` in a new study. A filename that drops the qualifier says
 only "some `dp` job", which is what splitting the templates exists to fix.
 The template's own name says the same thing in one argument:
-`add_job("dp-trends", "cohort", "eda")` is the same call. A bare qualifier is
+`add_job("dp.trends", "cohort", "eda")` is the same call, and so is the
+dash spelling of the template's file, `"dp-trends"`. A bare qualifier is
 not accepted, because `fit` and `explain` each name three templates and
 `gfup` names two.
 An EDA job's set key is `(subject, eda)`: the subject names what is described,
 and the type is always `eda`.
+
+**Jobs scaffolded before 2026-10 are named the other way round,**
+`<subject>-<type>-<prefix>[-<qualifier>].qmd`, such as `death-hz-ac.qmd`. They
+keep that name and keep rendering: every template's name check reads both
+spellings. `add_job()` refuses to write a second copy of such a job under the
+new name, and `open_job()` opens it. Results folders are the same
+`<subject>-<type>/` under either spelling.
 
 ⭐ **The ordinal was dropped in 1.1.0.** A job named
 `dead_pa-hz-03.01-ac.qmd` is from before that change; `03.01` was the taxonomy
@@ -149,16 +158,16 @@ The layout rule is one sentence, and it holds in every folder:
 
 ```
 <study_root>/
-├── distributions/  dead_pa-hz-ac.qmd        dead_pa-rfs-ac.qmd
+├── distributions/  ac.dead_pa.hz.qmd        ac.dead_pa.rfs.qmd
 ├── estimates/                                dead_pa-hz/ac.rds
-└── graphs/         dead_pa-hz-hp.qmd         dead_pa-hz/hp-fig1.png
+└── graphs/         hp.dead_pa.hz.qmd         dead_pa-hz/hp-fig1.png
 ```
 
 **A set is keyed on `(subject, analysis type)`, not on the subject alone.**
 One subject can be analyzed by several methods, and those chains share their
 upstream — a death-hazard set and a death random-forest-survival set both begin
 from the same life table. Keyed on the subject alone, both would be written to
-`death-ac.qmd`. The cost of carrying the type on every job is that the shared
+`ac.death.qmd`. The cost of carrying the type on every job is that the shared
 upstream runs once per set rather than once per subject; the benefit is that a
 set is self-contained and uniformly named.
 
@@ -178,7 +187,7 @@ prefix is scheduled when:
 **The four bootstrap reports' runners ship with the package.** A bootstrap
 report reads a bag; its runner, a job of its own that runs first, screens and
 saves that bag. `add_job()` writes the runner beside the report, from
-`inst/runners/<prefix>-runner.R`, as `<subject>-<type>-<prefix>-runner.R`,
+`inst/runners/<prefix>-runner.R`, as `<prefix>.<subject>.<type>.runner.R`,
 with the same `SUBJECT` and `TYPE` substitution, and refuses to overwrite one.
 Its study choices carry `EDIT:` markers. It reads its rows with
 `hvtiRtemplates::read_job_data()` and saves the selection that call records in
@@ -408,7 +417,7 @@ default; to make it stop on an unfinished job instead, set the same variable
 `render_job()` sets for you:
 
 ```sh
-HVTI_TEMPLATE_STRICT=1 quarto render <subject>-<type>-ac.qmd
+HVTI_TEMPLATE_STRICT=1 quarto render ac.<subject>.<type>.qmd
 ```
 
 Unset, `0`, `false` and `no` leave the job rendering as a draft, case-insensitively.

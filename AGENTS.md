@@ -200,14 +200,17 @@ before `bh` was renumbered to `04.05`; that register went with the ordinal. So: 
 `NN.MM` in a filename is a pre-1.1.0 job, `04.06-bh` and `04.05-bh` are the same template,
 and no ordinal will ever be issued again. Do not reintroduce the field to explain one.
 
-`add_job(prefix, subject, type, dir = ".", qualifier = NULL)` writes
-`<folder>/<subject>-<type>-<prefix>[-<qualifier>].qmd`, where `<folder>` follows the study's
-numbered or legacy bare layout,
-and **refuses to overwrite an existing job**, because a job file accumulates a study's edits.
-`subject` and `type` name the `(subject, analysis type)` set the job belongs to. The subject
-is a grouping topic; it is a statistical endpoint only when the job analyses one. Both fields
-are required and restricted to `[A-Za-z0-9_]+`, because `-` is the filename's field separator
-and `.` separates the extension.
+`add_job(prefix, subject, type, dir = NULL, qualifier = NULL)` writes
+`<folder>/<prefix>[.<qualifier>].<subject>.<type>.qmd`, where `<folder>` follows the study's
+numbered or legacy bare layout, and **refuses to overwrite an existing job**, under either
+spelling, because a job file accumulates a study's edits. Jobs scaffolded before 2026-10
+are `<subject>-<type>-<prefix>[-<qualifier>].qmd`; they keep that name, and every template's
+name check reads both (`.job_name_fields()` in `R/job-name.R`). `subject` and `type` name the
+`(subject, analysis type)` set the job belongs to. The subject is a grouping topic; it is a
+statistical endpoint only when the job analyses one. Both are required and restricted to
+`[A-Za-z0-9_]+`, because `.` separates the filename's fields. Template *files* in this
+package keep `<prefix>[-<qualifier>].qmd`; `template_list()` shows them as `dp.trends`, and
+results folders stay `<subject>-<type>/`.
 
 **A template must have exactly one `^SUBJECT\s+<- ` line and one `^TYPE\s+<- ` line.**
 `add_job()` substitutes both after copying, and hard-stops if either is missing, duplicated, or
