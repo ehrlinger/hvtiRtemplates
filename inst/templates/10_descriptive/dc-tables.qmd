@@ -197,7 +197,7 @@ OVERRIDES <- list()
 #   list(vars = c("glu_pr", "creat_pr"), with = "a1c_pr", by = "a1c_grp")
 CORR <- NULL
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# Each figure is saved to descriptive/ as a PNG (for Word) and a PDF (for the publisher).
 # SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.

@@ -305,7 +305,9 @@ test_that("visits all at one time draw no mean line, and say so", {
   class(traces) <- c("gg_boost_trajectory", class(traces))
   env <- nb_env(tempdir())
   env$gg_boost_trajectory <- function(fit) traces
-  list2env(list(fit = NULL, SEED = 1, N_TRACES = Inf, .time = "iv_echo", .response = "lvef"), envir = env)
+  # The chunk runs alone, without set's save_figure(); saving is tested elsewhere.
+  list2env(list(fit = NULL, SEED = 1, N_TRACES = Inf, .time = "iv_echo", .response = "lvef",
+                save_figure = function(...) invisible(NULL)), envir = env)
   out <- utils::capture.output(nb_run("fig-traces", env))
   expect_null(env$trace_means)
   expect_true(any(grepl("no mean line is drawn", out, fixed = TRUE)))
