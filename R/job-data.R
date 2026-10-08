@@ -395,6 +395,13 @@
   digest::digest(sort(unique(tuples), method = "radix"), algo = "sha256")
 }
 
+# "built" is a second name for the study dataset (hvtiRutilities 1.5.1). The
+# selection records "study", so an upstream job's record and a downstream
+# setting agree whichever name each used.
+.canonical_job_dataset <- function(dataset) {
+  if (identical(dataset, "built")) "study" else dataset
+}
+
 #' Read a job's data, keep its rows, and record what was done
 #'
 #' @description The shared data step of every analysis template. It reads a
@@ -404,10 +411,11 @@
 #'
 #' @param cfg Study configuration, from \code{\link[hvtiRutilities]{study_config}}.
 #' @param dataset Name of a dataset registered in \code{_study.yml};
-#'   \code{"study"} is the built dataset.
+#'   \code{"built"} and \code{"study"} both name the study dataset, and the
+#'   selection records \code{"study"}.
 #' @param analysis_set Name of an analysis set written by
 #'   \code{hvtiRdatabuild::write_analysis_set()}, or \code{NULL} to read
-#'   \code{dataset} whole. Analysis sets derive from \code{"study"} only.
+#'   \code{dataset} whole. Analysis sets derive from the study dataset only.
 #' @param where Rows to keep: \code{NULL}, one condition from \code{quote()}, or
 #'   a list from \code{rlang::exprs()}, all of which must hold. Conditions follow
 #'   \code{dplyr::filter()}: a row where a condition is \code{NA} is dropped. A
@@ -478,7 +486,8 @@
 #'   The \code{"selection"} attribute is a list that a job saves in its
 #'   hand-off, so a downstream job can rebuild the same rows:
 #'   \itemize{
-#'     \item \code{dataset} and \code{analysis_set}, as given;
+#'     \item \code{dataset}, with \code{"built"} recorded as \code{"study"},
+#'       and \code{analysis_set}, as given;
 #'     \item \code{where}, the exact text of each condition, values included,
 #'       used to rebuild the rows; it stays inside the study and is never
 #'       printed;
@@ -529,7 +538,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   counts <- .check_job_key(kept$data, key, who$id)
   record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts, notes = read$notes)
   attr(record, "selection") <- list(
-    dataset = dataset, analysis_set = analysis_set, where = kept$steps$condition,
+    dataset = .canonical_job_dataset(dataset), analysis_set = analysis_set, where = kept$steps$condition,
     where_shown = kept$steps$shown,
     id = who$id, key = key, rows = counts$rows, patients = counts$patients,
     key_hash = .key_hash(kept$data, key)
@@ -540,14 +549,14 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # Every setting is checked before the read, so a typo fails fast and is named.
 .check_job_settings <- function(dataset, analysis_set, where, id, key) {
   if (!is.character(dataset) || length(dataset) != 1L || is.na(dataset) || !nzchar(dataset)) {
-    stop("DATASET must name one dataset registered in _study.yml, such as \"study\".", call. = FALSE)
+    stop("DATASET must name one dataset registered in _study.yml, such as \"built\".", call. = FALSE)
   }
   if (!is.null(analysis_set) &&
         (!is.character(analysis_set) || length(analysis_set) != 1L || is.na(analysis_set) || !nzchar(analysis_set))) {
     stop("ANALYSIS_SET must be NULL or name one analysis set, such as \"eda\".", call. = FALSE)
   }
-  if (!is.null(analysis_set) && !identical(dataset, "study")) {
-    stop("An analysis set is written from the study dataset, not `", dataset,
+  if (!is.null(analysis_set) && !identical(.canonical_job_dataset(dataset), "study")) {
+    stop("An analysis set is written from the study dataset (\"built\"), not `", dataset,
          "`. Set ANALYSIS_SET <- NULL to read `", dataset, "` whole.", call. = FALSE)
   }
   .where_conditions(where)
@@ -651,6 +660,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 .check_upstream_selection <- function(upstream, settings) {
   if (is.null(settings)) settings <- list()
   if (is.null(upstream)) return(settings)
+  if (!is.null(settings$dataset)) settings$dataset <- .canonical_job_dataset(settings$dataset)
+  if (!is.null(upstream$dataset)) upstream$dataset <- .canonical_job_dataset(upstream$dataset)
   out <- upstream
   for (field in intersect(names(.upstream_fields), names(settings))) {
     mine <- settings[[field]]

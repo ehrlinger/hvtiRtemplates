@@ -147,10 +147,10 @@ Set the values in this chunk before rendering.
 
 ```{r}
 #| label: edit-study-choices
-# EDIT: the built dataset this job reads. "study" is the file named by built:
+# EDIT: the built dataset this job reads. "built" is the file named by built:
 # in _study.yml; any other name must be declared under additional_datasets:,
 # such as a column subset written for R. Analysis sets are derived from
-# "study" only, so another dataset needs ANALYSIS_SET <- NULL.
+# "built" only, so another dataset needs ANALYSIS_SET <- NULL.
 # EDIT: the analysis set this job reads: declare its columns and excluded rows
 # under analysis_sets: in _study.yml, then write it with
 # hvtiRdatabuild::write_analysis_set(). Use NULL only when the whole built
@@ -164,7 +164,7 @@ Set the values in this chunk before rendering.
 # draw them. ALPHA is point transparency for continuous panels: 0.5 lets a dense
 # cohort read as a distribution rather than a blob.
 # MIGRATE-BEGIN: dp-postage-config
-DATASET <- "study"
+DATASET <- "built"
 ANALYSIS_SET <- "eda"
 X_VAR <- "year"                    # EDIT: reference time or year
 VARIABLES <- NULL                  # EDIT: NULL draws every column, or name them
@@ -204,7 +204,7 @@ FIGURES <- NULL
 
      A study can offer a job data three ways, and `_study.yml` says which exist:
 
-     1. The study dataset: the file named by `built:`. `DATASET <- "study"`
+     1. The study dataset: the file named by `built:`. `DATASET <- "built"`
         with `ANALYSIS_SET <- NULL`.
      2. An additional dataset: any file declared under `additional_datasets:`,
         for example a column subset written for R. Set `DATASET` to its
@@ -213,7 +213,7 @@ FIGURES <- NULL
      3. An analysis set: declared under `analysis_sets:` with the columns kept
         and the rows excluded, then written once with
         `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
-        and leave `DATASET` as "study", because a set is always cut from the
+        and leave `DATASET` as "built", because a set is always cut from the
         study dataset. The report shows its exclusions in order.
 
      A name under `additional_datasets:` is not an analysis set, so putting it
@@ -226,15 +226,15 @@ FIGURES <- NULL
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 if (is.null(ANALYSIS_SET)) {
   if (!is.character(DATASET) || length(DATASET) != 1L || is.na(DATASET) || !nzchar(DATASET)) {
-    stop("DATASET must be set to one dataset registered in _study.yml, such as \"study\". ",
+    stop("DATASET must be set to one dataset registered in _study.yml, such as \"built\". ",
          "In a migrated job, see the migration report beside this job.", call. = FALSE)
   }
   .cfg <- study_config(start = .root)
   .data_read <- hvtiRtemplates:::.read_registered(DATASET, .cfg)
   d <- .data_read$value
   .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(.data_read$record))
-} else if (!identical(DATASET, "study")) {
-  stop("An analysis set is written from the study dataset, not `", DATASET,
+} else if (!isTRUE(DATASET %in% c("study", "built"))) {
+  stop("An analysis set is written from the study dataset (\"built\"), not `", DATASET,
        "`. Set ANALYSIS_SET <- NULL to read `", DATASET, "` whole.", call. = FALSE)
 } else {
   # A set the study has not built is named before hvtiRdatabuild is asked for,

@@ -34,7 +34,7 @@ expected_defaults <- function(name) {
     if (reads_data(name)) out <- c(DATASET = "DATASET <- NULL", ANALYSIS_SET = "ANALYSIS_SET <- NULL", out)
   } else {
     out <- c(WHERE = "WHERE <- NULL", ID = 'ID <- "ccfid"', KEY = "KEY <- ID")
-    if (reads_data(name)) out <- c(DATASET = 'DATASET <- "study"', ANALYSIS_SET = "ANALYSIS_SET <- NULL", out)
+    if (reads_data(name)) out <- c(DATASET = 'DATASET <- "built"', ANALYSIS_SET = "ANALYSIS_SET <- NULL", out)
   }
   # hm, hp and hs also take their time-to-event settings from upstream.
   if (name %in% c("hm", "hp", "hs-setup")) out <- c(out, TIME = "TIME <- NULL", EVENT = "EVENT <- NULL")

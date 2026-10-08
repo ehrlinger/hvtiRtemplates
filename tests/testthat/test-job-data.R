@@ -783,3 +783,28 @@ test_that("a rebuilt but unregistered dataset is read, and the data table says s
   expect_false("Note" %in% out$record$step)
   expect_match(out$record$value[out$record$step == "Source"], "built_[0-9]{8}_r2[.]parquet")
 })
+
+test_that("DATASET \"built\" reads the study dataset and records it as \"study\"", {
+  cfg <- job_study(d0)
+  out <- read_job_data(cfg, dataset = "built")
+  expect_identical(out$data, read_job_data(cfg, dataset = "study")$data)
+  expect_identical(attr(out$record, "selection")$dataset, "study")
+  expect_identical(out$provenance$dataset, "study")
+  # The report names the dataset as the job does; only the records are canonical.
+  expect_match(out$record$value[out$record$step == "Source"], "dataset `built`", fixed = TRUE)
+})
+
+test_that("an upstream job's \"study\" agrees with a downstream \"built\", and the reverse", {
+  up <- list(dataset = "study", analysis_set = NULL, id = "ccfid", rows = 3L, patients = 3L)
+  expect_identical(hvtiRtemplates:::.check_upstream_selection(up, list(dataset = "built"))$dataset, "study")
+  # A record written as "built" (hvtiRutilities 1.5.1 with an older template) agrees too.
+  up$dataset <- "built"
+  expect_identical(hvtiRtemplates:::.check_upstream_selection(up, list(dataset = "study"))$dataset, "study")
+  expect_error(hvtiRtemplates:::.check_upstream_selection(up, list(dataset = "other")), "DATASET")
+})
+
+test_that("an analysis set may be read with DATASET \"built\"", {
+  expect_no_error(hvtiRtemplates:::.check_job_settings("built", "eda", NULL, "ccfid", "ccfid"))
+  expect_error(hvtiRtemplates:::.check_job_settings("other", "eda", NULL, "ccfid", "ccfid"),
+               "written from the study dataset (\"built\")", fixed = TRUE)
+})

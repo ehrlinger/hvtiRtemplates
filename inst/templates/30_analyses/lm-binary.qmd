@@ -92,8 +92,8 @@ set_path <- function(kind, file) {
 
 ```{r}
 #| label: edit-study-choices
-# EDIT: the registered dataset this job reads ("study" is the built dataset).
-DATASET <- "study"
+# EDIT: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
 
 # EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
 ANALYSIS_SET <- NULL

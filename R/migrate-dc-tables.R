@@ -236,10 +236,14 @@
   files <- c(cfg$built, vapply(cfg$additional_datasets, function(x) x$built, character(1L)))
   stems <- tolower(tools::file_path_sans_ext(basename(files)))
   matches <- which(tolower(keys) == input | stems == input)
+  # SAS `set built;` names a file, so a stem match above wins. Only when no
+  # file is called built does the word select the study dataset by its name.
+  if (!length(matches) && identical(input, "built")) matches <- 1L
   if (!nzchar(input) || length(matches) != 1L) {
     return(unresolved("SAS input does not uniquely match a registered dataset key or filename stem."))
   }
-  dataset <- keys[[matches]]
+  # Written as "built", as the templates say; "study" is its older name.
+  dataset <- c("built", keys[-1L])[[matches]]
   data <- tryCatch(hvtiRutilities::read_built(cfg, dataset = dataset), error = function(e) e)
   if (inherits(data, "error")) return(unresolved(conditionMessage(data), dataset))
   list(dataset = dataset, data = data, reason = paste("Selected registered dataset", dataset, "by key or filename stem."))

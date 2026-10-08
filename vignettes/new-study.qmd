@@ -211,7 +211,9 @@ synthetic study:
 ```
 
 Read it as a receipt. `data` names the registered file and the checksum of the
-bytes the job read. `packages` and `renv_lock`, omitted here, record every
+bytes the job read. Its `dataset` says `"study"` although the job says
+`DATASET <- "built"`: the two names mean the same dataset, and records always
+use `"study"`, so a sidecar written by an older job compares equal. `packages` and `renv_lock`, omitted here, record every
 package version and the study's lockfile.
 `output` carries the checksum of the HTML it describes, so a sidecar can be
 matched to its report and to nothing else.

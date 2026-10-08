@@ -30,7 +30,7 @@ execute:
 Replaces `datasets/<job>.sas`. This job cuts the study's dataset from a master
 snapshot, records who was excluded and why, writes a draft, and, when
 `PUBLISH` is `TRUE`, publishes a dated release and registers it as this study's
-`"study"` dataset, the one every analysis job reads.
+`"built"` dataset (also called `"study"`), the one every analysis job reads.
 
 What does not belong here: corrections to a patient's values (they belong to
 the master's corrections, in hvtiRdatabuild, so every study sees them);
@@ -154,7 +154,7 @@ KEY <- ID
 DATASET_ID <- "study_cohort"
 
 # FALSE writes a draft and publishes nothing. TRUE publishes a dated release and
-# makes it this study's "study" dataset, which every analysis job then reads.
+# makes it this study's "built" dataset, which every analysis job then reads.
 PUBLISH <- FALSE
 ```
 

@@ -59,7 +59,7 @@ test_that("dc-tables migrates desc_tab groups and types", {
   out <- tables_migrate(root)
   txt <- readLines(out, warn = FALSE)
   for (line in c(
-    'DATASET <- "study"', "ANALYSIS_SET <- NULL", 'BY <- "treatment"',
+    'DATASET <- "built"', "ANALYSIS_SET <- NULL", 'BY <- "treatment"',
     '  Demography = c("female", "race_grp", "age", "bmi"),',
     'CONTINUOUS <- c("age", "bmi", "iv_dead")',
     'CATEGORICAL <- c("race_grp")', 'BINARY <- c("female", "repair")'
@@ -98,6 +98,26 @@ test_that("dc-tables only classifies from the selected registered data", {
   eval(parse(text = tables_region(out, "dc-tables-config")), env)
   expect_identical(env$BINARY, "repair")
   expect_identical(env$CATEGORICAL, c("female", "race_grp"))
+})
+
+test_that("the study dataset is selected as \"built\", by either name or by its file's stem", {
+  # The study dataset's file is cohort.csv, so "built" cannot match a file stem.
+  root <- withr::local_tempdir()
+  suppressMessages(hvtiRutilities::study_setup(root, "Built name", 42L, adopt = TRUE))
+  utils::write.csv(data.frame(ccfid = 1:3), file.path(hvtiRutilities::study_dir("datasets", root), "cohort.csv"),
+                   row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, built = "cohort.csv", role = "study"))
+  for (input in c("built", "study", "cohort")) {
+    expect_identical(hvtiRtemplates:::.dc_tables_dataset(root, input)$dataset, "built", info = input)
+  }
+  expect_true(is.na(hvtiRtemplates:::.dc_tables_dataset(root, "absent")$dataset))
+  # SAS `set built;` names a file: an additional dataset in built.csv keeps it.
+  utils::write.csv(data.frame(ccfid = 1:2), file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
+                   row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv", dataset = "subset", role = "named",
+                                                 population = "Synthetic subset"))
+  expect_identical(hvtiRtemplates:::.dc_tables_dataset(root, "built")$dataset, "subset")
+  expect_identical(hvtiRtemplates:::.dc_tables_dataset(root, "study")$dataset, "built")
 })
 
 tables_chunk <- function(job, label) {
