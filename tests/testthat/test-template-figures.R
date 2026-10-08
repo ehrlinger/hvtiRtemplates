@@ -25,3 +25,25 @@ test_that("no template saves a figure except through save_figure()", {
     expect_false(any(grepl("^\\s*png\\(", src)), info = name)
   }
 })
+
+test_that("every printed figure is also saved, under its documented name", {
+  expected <- list(
+    bc = "bc-frequencies", bh = "bh-frequencies", bl = "bl-frequencies", br = "br-frequencies",
+    `nb-boostmtree` = c("nb-boostmtree-error", "nb-boostmtree-path", "nb-boostmtree-calibration",
+                        "nb-boostmtree-importance", "nb-boostmtree-effects-", "nb-boostmtree-traces"),
+    `rfc-fit` = c("rfc-fit-diagnostics-error", "rfc-fit-diagnostics-roc"),
+    `rfr-fit` = c("rfr-fit-diagnostics-error", "rfr-fit-diagnostics-predicted"),
+    `rfs-fit` = c("rfs-fit-diagnostics-error", "rfs-fit-diagnostics-survival", "rfs-fit-diagnostics-brier")
+  )
+  for (t in c("rfc-explain", "rfr-explain", "rfs-explain")) {
+    expected[[t]] <- paste0(t, c("-importance", "-varpro", "-dependence-marginal", "-dependence-partial",
+                                 "-dependence-varpro"))
+  }
+  for (name in names(expected)) {
+    src <- template_source(name)
+    saves <- src[grepl("save_figure(", src, fixed = TRUE)]
+    for (fig in expected[[name]]) {
+      expect_true(any(grepl(paste0("\"", fig), saves, fixed = TRUE)), info = paste(name, fig))
+    }
+  }
+})

@@ -389,7 +389,9 @@ cached there on its own, so it can be recomputed without regrowing the forest.
 #| fig-cap: "Out-of-bag error by number of trees"
 # Out-of-bag error by number of trees.
 err <- gg_error(forest)
-plot(err)
+.fig <- plot(err)
+save_figure(.fig, "rfs-fit-diagnostics-error")
+.fig
 ```
 
 ```{r}
@@ -397,7 +399,9 @@ plot(err)
 #| fig-cap: "Out-of-bag predicted survival, one curve per patient"
 # Out-of-bag predicted survival, one curve per patient.
 surv <- gg_rfsrc(forest)
-plot(surv)
+.fig <- plot(surv)
+save_figure(.fig, "rfs-fit-diagnostics-survival")
+.fig
 ```
 
 ```{r}
@@ -406,7 +410,9 @@ plot(surv)
 # Brier score over follow-up. Lower is better, and 0.25 is what a coin flip
 # scores.
 brier <- gg_brier(forest)
-plot(brier)
+.fig <- plot(brier)
+save_figure(.fig, "rfs-fit-diagnostics-brier")
+.fig
 ```
 
 ```{r}

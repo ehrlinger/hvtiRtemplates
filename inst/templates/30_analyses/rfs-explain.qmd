@@ -309,7 +309,9 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 #| fig-cap: "Permutation importance of each predictor"
 #| message: true
 vi <- cache_fit("rfs-vimp", vimp(forest), seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(gg_vimp(vi))
+.fig <- plot(gg_vimp(vi))
+save_figure(.fig, "rfs-explain-importance")
+.fig
 ```
 
 ```{r}
@@ -349,7 +351,9 @@ if (is.null(PARTIAL_VARS)) {
 #| message: true
 vp <- cache_fit("rfs-varpro", varpro(model, frame, verbose = FALSE),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(gg_varpro(vp))
+.fig <- plot(gg_varpro(vp))
+save_figure(.fig, "rfs-explain-varpro")
+.fig
 ```
 
 ## Dependence
@@ -359,7 +363,9 @@ plot(gg_varpro(vp))
 #| fig-cap: "Predicted survival against each selected predictor, as observed"
 #| message: true
 # Marginal: predicted survival against each variable, as observed. Cheap.
-plot(gg_variable(forest, time = TIMES), xvar = sel)
+.fig <- plot(gg_variable(forest, time = TIMES), xvar = sel)
+save_figure(.fig, "rfs-explain-dependence-marginal")
+.fig
 ```
 
 ```{r}
@@ -370,7 +376,9 @@ plot(gg_variable(forest, time = TIMES), xvar = sel)
 # observed values.
 pd <- cache_fit("rfs-partial", gg_partial_rfsrc(forest, xvar.names = sel, partial.time = TIMES),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(pd)
+.fig <- plot(pd)
+save_figure(.fig, "rfs-explain-dependence-partial")
+.fig
 ```
 
 ```{r}
@@ -383,7 +391,9 @@ plot(pd)
 # but not a survival curve.
 pv <- cache_fit("rfs-partial-varpro", gg_partial_varpro(object = vp, xvar.names = sel, time = max(TIMES)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(pv)
+.fig <- plot(pv)
+save_figure(.fig, "rfs-explain-dependence-varpro")
+.fig
 ```
 
 ```{r}

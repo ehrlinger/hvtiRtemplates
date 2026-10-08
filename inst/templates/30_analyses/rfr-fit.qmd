@@ -392,7 +392,9 @@ cached there on its own, so it can be recomputed without regrowing the forest.
 #| fig-cap: "Out-of-bag error by number of trees"
 # Out-of-bag error by number of trees.
 err <- gg_error(forest)
-plot(err)
+.fig <- plot(err)
+save_figure(.fig, "rfr-fit-diagnostics-error")
+.fig
 ```
 
 ```{r}
@@ -400,7 +402,9 @@ plot(err)
 #| fig-cap: "Out-of-bag predicted against observed values"
 # Out-of-bag predicted against observed.
 pred <- gg_rfsrc(forest)
-plot(pred)
+.fig <- plot(pred)
+save_figure(.fig, "rfr-fit-diagnostics-predicted")
+.fig
 ```
 
 `gg_brier()` is not here: it supports survival forests only.

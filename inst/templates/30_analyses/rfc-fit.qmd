@@ -395,7 +395,9 @@ cached there on its own, so it can be recomputed without regrowing the forest.
 #| fig-cap: "Out-of-bag error by number of trees, overall and per class"
 # Out-of-bag error by number of trees, overall and per class.
 err <- gg_error(forest)
-plot(err)
+.fig <- plot(err)
+save_figure(.fig, "rfc-fit-diagnostics-error")
+.fig
 ```
 
 ```{r}
@@ -406,7 +408,9 @@ plot(err)
 # so ROC_OUTCOME maps the study's label to its position instead of letting
 # factor ordering decide what this report means.
 roc <- gg_roc(forest, which_outcome = ROC_OUTCOME)
-plot(roc)
+.fig <- plot(roc)
+save_figure(.fig, "rfc-fit-diagnostics-roc")
+.fig
 ```
 
 ```{r}

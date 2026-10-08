@@ -848,13 +848,15 @@ result as an absence of collinearity.
 # The error bar is the point of the figure, not decoration. A bare dot plot
 # invites the reader to rank variables by a difference of two points, which is
 # inside the noise at every frequency near the middle of the range.
-ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
+.fig <- ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
   geom_hline(yintercept = RETAIN_PCT, linetype = "dashed") +
   geom_errorbar(aes(ymin = pct - mc_error, ymax = pct + mc_error), width = 0) +
   geom_point() +
   coord_flip() +
   labs(x = NULL, y = "Replicates selecting the variable (%)") +
   theme_minimal()
+save_figure(.fig, "bl-frequencies", height = 7)
+.fig
 ```
 
 ## Save
