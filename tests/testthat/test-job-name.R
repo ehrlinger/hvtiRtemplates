@@ -35,10 +35,28 @@ test_that("a name in neither form gives no fields", {
 
 test_that("the old spelling of a job is the dash form in the same folder", {
   d <- file.path(withr::local_tempdir(), "study")
-  invisible(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L))
+  invisible(suppressMessages(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L)))
   tl <- template_list()
   row <- hvtiRtemplates:::.select_template(tl, "dp", "trends")
   legacy <- hvtiRtemplates:::.job_path_legacy(row, "cohort", "eda", d)
   expect_identical(basename(legacy), "cohort-eda-dp-trends.qmd")
   expect_identical(dirname(legacy), dirname(hvtiRtemplates:::.job_path(row, "cohort", "eda", d)))
+})
+
+test_that("every template reads its own name through .job_name_fields()", {
+  files <- list.files(system.file("templates", package = "hvtiRtemplates"), pattern = "[.]qmd$",
+                      recursive = TRUE, full.names = TRUE)
+  expect_gt(length(files), 0L)
+  old <- 'strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)'
+  checked <- 0L
+  for (f in files) {
+    src <- readLines(f, warn = FALSE)
+    expect_false(any(grepl(old, src, fixed = TRUE)), info = basename(f))
+    if (any(grepl("knitr::current_input()", src, fixed = TRUE)) && any(grepl("^SUBJECT", src))) {
+      expect_true(any(grepl(".fields <- hvtiRtemplates:::.job_name_fields(.current)", src, fixed = TRUE)),
+                  info = basename(f))
+      checked <- checked + 1L
+    }
+  }
+  expect_identical(checked, length(files))
 })

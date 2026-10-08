@@ -155,8 +155,8 @@ test_that("a bag saved before the data contract stops each report, naming the ba
     # The bag itself is still read: it is the data chunk that stops.
     expect_error(boot_report(prefix, env, "tbl-data"),
                  paste0("\\(the bootstrap bag bagging[.]rds\\) carries no single recorded data selection: it predates ",
-                        "the data contract.*Rerun the bootstrap runner, <subject>-<type>-", prefix,
-                        "-runner[.]R, as add_job\\(\\) now writes it"),
+                        "the data contract.*Rerun the bootstrap runner, ", prefix,
+                        "[.]<subject>[.]<type>[.]runner[.]R, as add_job\\(\\) now writes it"),
                  info = prefix)
   }
 })

@@ -10,7 +10,7 @@ listed_templates <- local({
 
 template_by_name <- function(name) {
   templates <- listed_templates()
-  hit <- which(templates$name == name)
+  hit <- which(templates$name == sub("-", ".", name, fixed = TRUE))
   stopifnot(length(hit) == 1L)
   templates$file[[hit]]
 }
@@ -247,7 +247,7 @@ test_that("only templates with a local dataset choice override the dataset", {
     "rfs-fit", "rfc-fit", "rfr-fit", "nb-boostmtree"
   )
   templates <- template_list()
-  observed <- templates$name[vapply(templates$file, function(path) {
+  observed <- sub(".", "-", templates$name, fixed = TRUE)[vapply(templates$file, function(path) {
     any(grepl("DATASET, .cfg|dataset = DATASET\\b", readLines(path, warn = FALSE)))
   }, logical(1L))]
 
@@ -687,6 +687,25 @@ test_that("an endpoint-free render writes a stem-matched sidecar without invente
   expect_identical(record$subject, "cohort")
   expect_identical(record$type, "eda")
   expect_false(any(c("analysis", "cohort") %in% names(record)))
+})
+
+test_that("a job named template first renders, and its sidecar takes its name", {
+  # add_job() writes <prefix>[.<qualifier>].<subject>.<type>.qmd since 2026-10.
+  # Quarto must name the intermediate, the report and the sidecar for the whole
+  # dotted stem, not cut it at the first period.
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- make_provenance_study(withr::local_tempdir())
+  job <- write_provenance_job(
+    root, "dc.general.cohort.eda", "dc-general",
+    c('SUBJECT <- "cohort"', 'TYPE <- "eda"', 'DATASET <- "study"')
+  )
+  render_provenance_job(job, root)
+  expect_true(file.exists(file.path(root, "dc.general.cohort.eda.html")))
+  sidecar <- file.path(root, "dc.general.cohort.eda.provenance.json")
+  expect_true(file.exists(sidecar))
+  expect_identical(jsonlite::fromJSON(sidecar, simplifyVector = FALSE)$job, "dc.general.cohort.eda")
 })
 
 test_that("an endpoint-driven render writes its local coding and observed cohort", {
