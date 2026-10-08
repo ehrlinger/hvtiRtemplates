@@ -8,8 +8,9 @@ template_path(prefix, qualifier = NULL)
 }
 \arguments{
 \item{prefix}{Analysis prefix, e.g. \code{"ac"}, or a template's full name,
-e.g. \code{"dp-trends"}, which carries its qualifier and leaves
-\code{qualifier} \code{NULL}. See \code{\link{template_list}}.}
+e.g. \code{"dp.trends"} (or \code{"dp-trends"}), which carries its
+qualifier and leaves \code{qualifier} \code{NULL}. See
+\code{\link{template_list}}.}
 
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
 \code{dp}. Required only where a prefix carries more than one template;
@@ -17,7 +18,7 @@ omitting it there is an error naming the choices, never a silent pick.}
 }
 \value{
 The full path, as \code{character(1)}. A template the catalog
-  marks deprecated, such as \code{dp-postage}, still resolves, with a
+  marks deprecated, such as \code{dp.postage}, still resolves, with a
   warning naming its replacement.
 }
 \description{
@@ -27,7 +28,7 @@ Path to a supported template
 template_path("ac")
 
 # A qualified template, by its full name or as prefix plus qualifier.
-template_path("dc-gfup")
+template_path("dc.gfup")
 template_path("dc", qualifier = "gfup")
 
 # A prefix carrying several templates is never resolved by guessing: this

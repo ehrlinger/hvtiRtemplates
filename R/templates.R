@@ -7,7 +7,10 @@
 #' \code{<prefix>-<qualifier>.qmd} where one prefix carries several job
 #' types, and lives in a numbered directory named for the taxonomy folder it
 #' scaffolds into, so \code{folder} is read from the tree rather than looked
-#' up. The directory's leading digits order the folders and are stripped from
+#' up. A qualified template is shown, and selected, as \code{<prefix>.<qualifier>},
+#' e.g. \code{dp.trends}, the spelling a job's name uses; the file keeps its
+#' dash, and \code{"dp-trends"} is still accepted as input. The directory's
+#' leading digits order the folders and are stripped from
 #' \code{folder}. The placement test requires the job catalog and skips when
 #' it is absent. Its internal lookup helper uses the catalog's
 #' \code{(prefix, qualifier)} row, falling back to
@@ -20,7 +23,7 @@
 #'   \code{qualifier}, \code{folder}, \code{call} and \code{file}.
 #'   \code{call} is the \code{\link{add_job}} call that scaffolds the
 #'   template, with only the arguments it requires and runnable as printed,
-#'   e.g. \code{add_job("dc-gfup", subject = "cohort", type = "eda")}. The
+#'   e.g. \code{add_job("dc.gfup", subject = "cohort", type = "eda")}. The
 #'   \code{subject} and \code{type} shown are the template's own defaults;
 #'   change them to name the job. \code{folder} is the
 #'   taxonomy name with the directory's ordering digits stripped, so
@@ -55,7 +58,7 @@ template_list <- function() {
   }
 
   tl <- data.frame(
-    name      = sub("[.]qmd$", "", basename(files)),
+    name      = .template_display_name(files),
     prefix    = fields$prefix,
     qualifier = fields$qualifier,
     folder    = .folder_name(basename(dirname(files))),
@@ -114,26 +117,35 @@ print.hvti_template_list <- function(x, ...) {
   subject <- value("SUBJECT")
   type <- value("TYPE")
   if (is.na(subject) || is.na(type)) return(NA_character_)
-  sprintf('add_job("%s", subject = "%s", type = "%s")', sub("[.]qmd$", "", basename(file)), subject, type)
+  sprintf('add_job("%s", subject = "%s", type = "%s")', .template_display_name(file), subject, type)
+}
+
+# A template's name as shown and accepted: its file stem with the qualifier
+# joined by ".", so "dp-trends.qmd" shows as "dp.trends", the spelling a job's
+# name uses. A template file is <prefix>[-<qualifier>].qmd and neither part
+# contains "-", so the first dash is the only one.
+.template_display_name <- function(file) {
+  sub("-", ".", sub("[.]qmd$", "", basename(file)), fixed = TRUE)
 }
 
 #' Path to a supported template
 #'
 #' @param prefix Analysis prefix, e.g. \code{"ac"}, or a template's full name,
-#'   e.g. \code{"dp-trends"}, which carries its qualifier and leaves
-#'   \code{qualifier} \code{NULL}. See \code{\link{template_list}}.
+#'   e.g. \code{"dp.trends"} (or \code{"dp-trends"}), which carries its
+#'   qualifier and leaves \code{qualifier} \code{NULL}. See
+#'   \code{\link{template_list}}.
 #' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
 #'   \code{dp}. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
 #' @return The full path, as \code{character(1)}. A template the catalog
-#'   marks deprecated, such as \code{dp-postage}, still resolves, with a
+#'   marks deprecated, such as \code{dp.postage}, still resolves, with a
 #'   warning naming its replacement.
 #' @export
 #' @examples
 #' template_path("ac")
 #'
 #' # A qualified template, by its full name or as prefix plus qualifier.
-#' template_path("dc-gfup")
+#' template_path("dc.gfup")
 #' template_path("dc", qualifier = "gfup")
 #'
 #' # A prefix carrying several templates is never resolved by guessing: this
@@ -158,8 +170,8 @@ template_path <- function(prefix, qualifier = NULL) {
   hit <- catalog[!is.na(catalog$prefix) & catalog$prefix == prefix & same &
                    !is.na(catalog$deprecated_by), , drop = FALSE]
   if (nrow(hit) != 1L) return(NULL)
-  list(name = if (is.na(hit$qualifier)) hit$prefix else paste0(hit$prefix, "-", hit$qualifier),
-       deprecated_by = hit$deprecated_by, note = hit$deprecation_note)
+  list(name = if (is.na(hit$qualifier)) hit$prefix else paste0(hit$prefix, ".", hit$qualifier),
+       deprecated_by = sub("-", ".", hit$deprecated_by, fixed = TRUE), note = hit$deprecation_note)
 }
 
 # Warn once when a selected template row is deprecated, naming the caller.
@@ -275,30 +287,31 @@ template_path <- function(prefix, qualifier = NULL) {
 # The qualifiers on offer for a prefix, for an error message. An unqualified
 # template is shown as NA rather than omitted, so a prefix holding one
 # unqualified and two qualified templates reads as the three it is.
-# Each is shown by its full name, "dp-trends", which is also a form a caller
+# Each is shown by its full name, "dp.trends", which is also a form a caller
 # can type back.
 .qualifier_menu <- function(hit) {
-  paste(ifelse(is.na(hit$qualifier), hit$prefix, paste0(hit$prefix, "-", hit$qualifier)), collapse = ", ")
+  paste(ifelse(is.na(hit$qualifier), hit$prefix, paste0(hit$prefix, ".", hit$qualifier)), collapse = ", ")
 }
 
-# Split a template's full name, "dp-trends", into prefix and qualifier, as
-# template_list() reports it in `name`. A prefix may never contain "-", so
-# splitting at the first one is exact. A full name AND a qualifier are two
+# Split a template's full name, "dp.trends", into prefix and qualifier, as
+# template_list() reports it in `name`. The file's dash spelling, "dp-trends",
+# is accepted too. A prefix may contain neither "." nor "-", so splitting at
+# the first one is exact. A full name AND a qualifier are two
 # answers to one question; refusing is safer than preferring either. The
 # qualifier is validated first, so a bad one is reported as itself.
 # `prefix` must already be a single string.
 .split_template_name <- function(prefix, qualifier = NULL) {
   if (!is.null(qualifier)) .check_scalar_string("qualifier", qualifier)
-  if (!grepl("-", prefix, fixed = TRUE)) return(list(prefix = prefix, qualifier = qualifier))
+  if (!grepl("[.-]", prefix)) return(list(prefix = prefix, qualifier = qualifier))
   if (!is.null(qualifier)) {
     stop("template selection: name the template by its full name ('", prefix,
          "') or as prefix plus qualifier, not both.", call. = FALSE)
   }
-  if (!grepl("^[^-]+-[^-]+$", prefix)) {
+  if (!grepl("^[^.-]+[.-][^.-]+$", prefix)) {
     stop("template selection: '", prefix, "' is not a template name; ",
-         "expected <prefix>-<qualifier>, e.g. 'dp-trends'.", call. = FALSE)
+         "expected <prefix>.<qualifier>, e.g. 'dp.trends'.", call. = FALSE)
   }
-  list(prefix = sub("-.*$", "", prefix), qualifier = sub("^[^-]*-", "", prefix))
+  list(prefix = sub("[.-].*$", "", prefix), qualifier = sub("^[^.-]*[.-]", "", prefix))
 }
 
 # Parse a template file name into its fields.

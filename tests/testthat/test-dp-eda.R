@@ -337,7 +337,7 @@ test_that("dp-postage and dp-eda shorten labels with the same code and edit poin
   # dp-eda's from drifting from it.
   tl <- template_list()
   block <- function(qualifier, from, to) {
-    lines <- readLines(tl$file[tl$name == paste0("dp-", qualifier)], warn = FALSE)
+    lines <- readLines(tl$file[tl$name == paste0("dp.", qualifier)], warn = FALSE)
     start <- grep(from, lines)
     end <- start + grep(to, lines[-seq_len(start)])[1L]
     lines[start:end]
@@ -349,7 +349,7 @@ test_that("dp-postage and dp-eda shorten labels with the same code and edit poin
   expect_length(block("eda", "^# Shortened labels stay distinct", "^}$"), 20L)
   # And each draws the key under its sections.
   for (q in c("postage", "eda")) {
-    expect_true(any(grepl("^  abbreviation_key\\(vars\\)$", readLines(tl$file[tl$name == paste0("dp-", q)], warn = FALSE))),
+    expect_true(any(grepl("^  abbreviation_key\\(vars\\)$", readLines(tl$file[tl$name == paste0("dp.", q)], warn = FALSE))),
                 info = q)
   }
 })
