@@ -1,5 +1,11 @@
 # hvtiRtemplates (unreleased)
 
+* Two provenance tests now register a rebuilt dataset with
+  `hvtiRutilities::update_manifest()` before they expect its hash to change.
+  Since hvtiRutilities 1.5.0 a job reads the registered dated parquet, not the
+  source file, so rewriting the source alone no longer changes what a job
+  reads or what its provenance records. Package code is unchanged.
+
 * Running a job's chunks in the console no longer ends with advice to run
   `add_job()`. The final provenance chunk, the one step that needs a render, now
   stops with an error of class `hvtiRtemplates_not_rendered` saying that every
