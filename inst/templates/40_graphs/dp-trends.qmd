@@ -463,9 +463,7 @@ for (sg in names(SUBGROUPS)) {
     if (!is.null(spec$ylim)) p <- p + coord_cartesian(ylim = spec$ylim)
     if (!is.null(XBREAKS)) p <- p + scale_x_continuous(breaks = XBREAKS)
     fname <- paste0("dp-trends-", nm, "-", sg, ".png")
-    png(set_path("graphs", fname), width = 8, height = 6, units = "in", res = 150)
-    print(p)
-    invisible(dev.off())
+    save_figure(p, sub("[.]png$", "", fname), width = 8, height = 6, linked = TRUE)
     .link <- file.path(paste0(SUBJECT, "-", TYPE), fname)
     .child(paste("fig trends", nm, sg), paste0("Trend in ", nm, " by year of operation, ", sg),
            "knitr::include_graphics(.link, error = FALSE)")

@@ -96,7 +96,9 @@ test_that("dp-eda draws the same pages as dp-postage over the same data", {
   run_chunks(eda$job, c("set", "edit-study-choices", "tbl-data", "spec", "sections", "cont-pages", "pct-pages", "cnt-pages"))
   run_chunks(postage$job, c("set", "edit-study-choices", "data", "spec", "pages"))
   graphs <- file.path(root, "graphs", "cohort-eda")
-  pages <- function(stem) list.files(graphs, paste0("^", stem, "-(continuous|percent|count)-"), full.names = TRUE)
+  # PNGs only: a PDF records its creation time, so two renders' PDFs differ byte for byte.
+  pages <- function(stem) list.files(graphs, paste0("^", stem, "-(continuous|percent|count)-.*[.]png$"),
+                                     full.names = TRUE)
   expect_identical(sub("^dp-eda-", "", basename(pages("dp-eda"))),
                    sub("^dp-postage-", "", basename(pages("dp-postage"))))
   # Byte for byte: the same function, arguments and device give the same file.

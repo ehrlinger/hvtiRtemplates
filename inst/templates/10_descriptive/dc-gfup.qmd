@@ -473,8 +473,7 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript()
-  file <- set_path("graphs", paste0("dc-gfup-", nm, ".png"))
-  ggplot2::ggsave(file, p, width = 7, height = 6, units = "in", dpi = 150)
+  file <- save_figure(p, paste0("dc-gfup-", nm), width = 7, height = 6, linked = TRUE)
   .link <- figure_link(file)
   .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", row$title),
          "knitr::include_graphics(.link, error = FALSE)")

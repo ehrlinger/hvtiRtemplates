@@ -554,8 +554,7 @@ for (i in seq_len(nrow(fp$data))) {
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript()
-  file <- set_path("graphs", paste0("dp-eda-gfup-", nm, ".png"))
-  ggplot2::ggsave(file, p, width = 7, height = 6, units = "in", dpi = 150)
+  file <- save_figure(p, paste0("dp-eda-gfup-", nm), width = 7, height = 6, linked = TRUE)
   .link <- figure_link(file)
   .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", row$title),
          "knitr::include_graphics(.link, error = FALSE)")
@@ -601,9 +600,8 @@ draw_section <- function(section) {
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
   files <- character(0)
   for (i in seq_along(pages)) {
-    file <- set_path("graphs", sprintf("dp-eda-%s-page-%02d.png", section, i))
-    ggplot2::ggsave(file, pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
-                    width = 11, height = 8.5, units = "in", dpi = 150)
+    file <- save_figure(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
+                        sprintf("dp-eda-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
     cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")
     .link <- figure_link(file)

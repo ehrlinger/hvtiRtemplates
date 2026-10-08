@@ -413,9 +413,8 @@ for (section in SECTIONS) {
   }
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
   for (i in seq_along(pages)) {
-    file <- set_path("graphs", sprintf("dp-postage-%s-page-%02d.png", section, i))
-    ggplot2::ggsave(file, pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
-                    width = 11, height = 8.5, units = "in", dpi = 150)
+    file <- save_figure(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
+                        sprintf("dp-postage-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
     # Link relative to wherever this document sits. Quarto rewrites an absolute
     # path into a broken relative one and then cannot embed the image, and a

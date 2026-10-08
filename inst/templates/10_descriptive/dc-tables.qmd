@@ -373,9 +373,8 @@ if (is.null(CORR)) {
   }
   cm <- hv_correlation_matrix(d, vars = unique(c(CORR$with, CORR$vars)))
   fname <- "dc-tables-correlation-matrix.png"
-  png(set_path("descriptive", fname), width = 10, height = 10, units = "in", res = 150)
-  print(plot(cm) + theme_hv_manuscript())
-  invisible(dev.off())
+  save_figure(plot(cm) + theme_hv_manuscript(), sub("[.]png$", "", fname), width = 10, height = 10,
+              kind = "descriptive", linked = TRUE)
   .fence <- strrep("`", 3)
   .caption <- sprintf("Spearman and Pearson, %d%% Fisher interval", round(100 * conf_level))
   cat(knitr::knit_child(text = c(
