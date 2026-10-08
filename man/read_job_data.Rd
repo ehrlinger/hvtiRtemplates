@@ -70,7 +70,13 @@ A list:
   \itemize{
     \item \code{data}, the selected rows;
     \item \code{record}, a data frame of \code{step} and \code{value} to
-      print, whose \code{"selection"} attribute holds the settings used;
+      print, whose \code{"selection"} attribute holds the settings used. Its
+      \code{"Source"} row names the file read, the dated version for a
+      dataset registered as one. When the dataset's source has been rebuilt
+      since it was registered, the registered version is read and a final
+      \code{"Note"} row says so, naming
+      \code{hvtiRutilities::update_manifest()}, the call that registers the
+      new file;
     \item \code{provenance}, the read's provenance record;
     \item \code{attrition}, an analysis set's per-rule attrition table, or
       \code{NULL} for a dataset read whole.

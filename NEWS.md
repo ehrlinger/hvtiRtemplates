@@ -1,5 +1,34 @@
 # hvtiRtemplates (unreleased)
 
+* A test now covers a new dataset version registered while a job is reading: the
+  read is rejected as changed, as it already was in practice.
+
+* The six forest templates (`rfc`, `rfs` and `rfr`, fit and explain) now hand
+  `rfsrc()`, `vimp()` and `varpro()` a negative `seed = -abs(SEED)` as well as
+  seeding R's generator through `cache_fit(seed = SEED)`. A study found that either
+  half alone does not reproduce: `rfsrc()` without `seed =` draws one from R's
+  generator, and `varpro()` with a fixed `seed =` still gave different importances
+  after a different chunk. Both together reproduced to the last digit across a
+  192-thread server and a Mac. The templates also set `options(rf.cores = 1L)`, since
+  a varPro cutoff changed with the thread count. Jobs already scaffolded are not
+  changed; to adopt this, make the same edits and render once with `REFIT = TRUE`.
+
+* A new test parses every R chunk of every shipped template and fails on a call
+  that draws from R's generator (`rfsrc`, `varpro`, `mice`, `sample`, `runif` and
+  others) unless it is wrapped in `cache_fit(seed = )` or `with_seed()`, or has a
+  `set.seed()` at most three lines above it in the same chunk. A randomForestSRC
+  call that takes a `seed` must also be given a negative one.
+
+* A job reading a dataset whose source file has been rebuilt but not yet
+  registered runs on the registered version and says so in its "The data this
+  job read" table, with a Note row naming the `update_manifest()` call that
+  registers the new file. Before, hvtiRutilities' message printed bare wherever
+  the data chunk happened to show it. The table's Source row names the dated
+  version the job read, such as `built_20261007.parquet`, rather than the source
+  file. `dp-postage`, which reads outside `read_job_data()`, prints the same note
+  under its "Data read" line. Requires the hvtiRutilities release that added
+  dated versions.
+
 * Running a job's chunks in the console no longer ends with advice to run
   `add_job()`. The final provenance chunk, the one step that needs a render, now
   stops with an error of class `hvtiRtemplates_not_rendered` saying that every
@@ -22,11 +51,10 @@
   leave the global random seed alone. The package description names the
   Cardiovascular Outcomes, Registries and Research (CORR) group in full.
 
-* Vignettes put the table of contents on the left and use the full width
-  of the window, the same layout as the HVTI Quarto books and the
-  hvtiRtemplates jobs. `vignettes/_quarto.yml` sets it once for every
-  vignette, and `pkgdown/extra.css` gives the pkgdown site's articles the
-  same arrangement.
+* Articles on the pkgdown site put the table of contents on the left and use
+  the full width of the window, through `pkgdown/extra.css`. The installed
+  vignettes are unchanged: the Quarto vignette engine renders them in its own
+  minimal format, which has no sidebar layout.
 
 * `hm`'s first stage now holds every shape of each phase, as its two-stage fit
   intends: covariates are screened against `hz`'s shapes before the shapes are freed.

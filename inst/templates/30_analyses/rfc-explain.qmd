@@ -53,6 +53,13 @@ suppressPackageStartupMessages({
   library(ggRandomForests)
   library(hvtiRutilities)
 })
+# One thread, so a forest reproduces from machine to machine. Left unset,
+# randomForestSRC runs on every core its OpenMP build can see, and on a
+# multi-core server a varPro cross-validated cutoff changed with the thread
+# count with every seed held fixed. Raise it for speed on a large forest, at the
+# cost of that guarantee: a cached fit records its seed, data and package
+# versions, never the threads it ran on.
+options(rf.cores = 1L)
 # The versions this template was verified against, end to end, on 2026-09-19.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
@@ -230,6 +237,11 @@ TOP_K <- 8
 PARTIAL_VARS <- NULL
 
 # EDIT: seed for VIMP, VarPro and the partials. It is part of every cache key.
+# cache_fit() seeds R's generator with it before each call, and vimp() and
+# varpro() are also handed it as `seed =`, negated as randomForestSRC
+# documents. Both halves matter: varpro() draws from R's generator as well as
+# from its own seed, so the same seed after a different chunk gave different
+# importances.
 SEED <- 2026
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
@@ -289,7 +301,7 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 #| label: fig-importance
 #| fig-cap: "Permutation importance of each predictor"
 #| message: true
-vi <- cache_fit("rfc-vimp", vimp(forest), seed = SEED, dir = CACHE_DIR, refit = REFIT)
+vi <- cache_fit("rfc-vimp", vimp(forest, seed = -abs(SEED)), seed = SEED, dir = CACHE_DIR, refit = REFIT)
 plot(gg_vimp(vi))
 ```
 
@@ -332,7 +344,7 @@ if (is.null(PARTIAL_VARS)) {
 #| label: fig-varpro
 #| fig-cap: "VarPro importance of each predictor"
 #| message: true
-vp <- cache_fit("rfc-varpro", varpro(model, frame, verbose = FALSE),
+vp <- cache_fit("rfc-varpro", varpro(model, frame, verbose = FALSE, seed = -abs(SEED)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
 plot(gg_varpro(vp))
 ```

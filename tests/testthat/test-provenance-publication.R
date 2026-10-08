@@ -277,14 +277,48 @@ test_that("data capture brackets the actual read and rejects changing bytes", {
   expect_equal(captured$value$id, 1L)
   expect_identical(captured$record$sha256, hvtiRutilities::provenance_data("study", cfg)$sha256)
 
+  # The bracket watches the registered version, the file read_built() reads.
+  registered <- file.path(root, captured$record$path)
+  expect_match(basename(registered), "^cohort_[0-9]{8}[.]parquet$")
   expect_error(
     .provenance_read("study", cfg, function() {
       value <- hvtiRutilities::read_built(cfg)
-      write("changed", hvtiRutilities::built_path(cfg))
+      write("changed", registered)
       value
     }),
     "changed while it was read"
   )
+})
+
+test_that("data capture rejects a new version registered during the read", {
+  # The race the bracket exists for, under registered versions: a rebuild that
+  # update_manifest() registers mid-read replaces the file the job is reading.
+  # From #271, which this supersedes in part.
+  root <- make_hook_study(withr::local_tempdir())
+  cfg <- hvtiRutilities::study_config(root)
+  expect_error(
+    .provenance_read("study", cfg, function() {
+      value <- hvtiRutilities::read_built(cfg)
+      utils::write.csv(data.frame(id = 2L), hvtiRutilities::built_path(cfg), row.names = FALSE)
+      withr::with_dir(root, suppressMessages(hvtiRutilities::update_manifest()))
+      value
+    }),
+    "changed while it was read"
+  )
+})
+
+test_that("data capture is not upset by a source rebuilt during the read", {
+  root <- make_hook_study(withr::local_tempdir())
+  cfg <- hvtiRutilities::study_config(root)
+
+  # A rebuilt source is a newer file waiting for update_manifest(), not a
+  # change to what the job read, so the read stands.
+  expect_no_error(captured <- .provenance_read("study", cfg, function() {
+    value <- hvtiRutilities::read_built(cfg)
+    utils::write.csv(data.frame(id = 2L), hvtiRutilities::built_path(cfg), row.names = FALSE)
+    value
+  }))
+  expect_equal(captured$value$id, 1L)
 })
 
 test_that("file data capture snapshots the file actually read", {
