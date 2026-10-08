@@ -6,8 +6,8 @@
 # subject, type and qualifier match ^[A-Za-z0-9_]+$, so neither "." nor "-"
 # can appear inside a field: the separator tells the spellings apart, and in
 # the period form the field count says whether a qualifier is present. A
-# runner adds .runner.R (or -runner.R). Design: hvtiR
-# dev/specs/2026-10-07-job-naming-template-first-design.md.
+# runner adds .runner.R (or -runner.R). The design is in the hvtiR repository,
+# under dev/specs, dated 2026-10-07: job naming, template first.
 
 .job_stem <- function(prefix, qualifier, subject, type) {
   has_qualifier <- !is.null(qualifier) && !is.na(qualifier)
