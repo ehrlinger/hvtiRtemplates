@@ -1,4 +1,4 @@
-# hvtiRtemplates (unreleased)
+# hvtiRtemplates 1.3.0
 
 * A test now covers a new dataset version registered while a job is reading: the
   read is rejected as changed, as it already was in practice.
@@ -215,6 +215,133 @@
 * `DESCRIPTION` now declares the Quarto command line tool in
   `SystemRequirements`. The vignettes have always needed it to build; the
   field makes that visible to installers and to `R CMD check`.
+
+* **Every template figure is saved as a PNG and a PDF.** Figures go to the
+  job's `graphs/<subject>-<type>/` folder as a 300 dpi PNG, for a Word draft,
+  and a PDF of the same name with fonts embedded, for the publisher. Eight
+  templates saved a PNG before, at 150 dpi; eleven (bc, bh, bl, br,
+  nb-boostmtree and the six random-forest templates) only printed their
+  figures. Each job's study choices gain `SAVE_FIGURES` and `FIGURES` to turn
+  saving off or keep only some figures by name; `inst/templates/README.md`
+  lists the names. A PNG the report shows keeps its name and is always written.
+  The PDF falls back to the default `pdf()` device where `cairo_pdf()` cannot
+  open, as on a Mac without XQuartz, whose R reports cairo as available anyway.
+
+* `rfc-explain`, `rfs-explain` and `rfr-explain` key their partial-dependence
+  cache on randomForestSRC, which computes it. The cache was keyed on
+  ggRandomForests alone, so after a randomForestSRC upgrade it stayed valid and
+  `REFIT = TRUE` kept the old result while the variable importance beside it was
+  recomputed. The `gg_partial_rfsrc()` call now passes
+  `packages = "randomForestSRC"` to `cache_fit()`; the VarPro partial is
+  unchanged, since its varpro fit already carries varPro's version. Each
+  existing `rf?-partial` cache goes stale exactly once, reporting
+  `packages$randomForestSRC (absent) -> x.y.z`, and needs one render with
+  `REFIT = TRUE`. Requires hvtiRutilities 1.5.0 or newer, up from 1.4.5.
+
+* **Templates name the study dataset `"built"`, the team's word for it.** Every
+  job's study choices now say `DATASET <- "built"`, and so do the `bc`, `bh`,
+  `bl` and `br` runners and the jobs `migrate_job()` writes. `"study"` still
+  works, so a job scaffolded before this change keeps running unchanged, and a
+  downstream job agrees with an upstream one whichever name each used. Records
+  still say `"study"`: the selection a job hands on and its provenance sidecar
+  compare equal under either name. Requires hvtiRutilities 1.5.1, which made
+  `"built"` a second name for the study dataset.
+
+* **Jobs are named template first, with periods.** `add_job()` writes
+  `<prefix>[.<qualifier>].<subject>.<type>.qmd`, such as `ac.death.hz.qmd` or
+  `dp.trends.cohort.eda.qmd`, and a bootstrap job's runner beside it as
+  `<prefix>.<subject>.<type>.runner.R`, so a study's jobs sort by template,
+  then subject, then type. Jobs scaffolded before this release keep their
+  `<subject>-<type>-<prefix>[-<qualifier>]` names and keep rendering: every
+  template's name check reads both spellings. `add_job()` and `migrate_job()`
+  refuse to write a second copy of a job that exists under its old name, and
+  `open_job()` opens it. `template_list()` shows qualified templates as
+  `dp.trends`, and its `call` column uses that name; `"dp-trends"` is still
+  accepted. Results folders (`estimates/<subject>-<type>/`,
+  `graphs/<subject>-<type>/`) are unchanged.
+* `add_job()` also refuses when only a job's runner remains under its old `-runner.R`
+  name, so an edited runner is never left behind beside a new, empty one.
+
+* **Jobs can join an ancillary dataset to their cohort.** `read_job_data()`
+  gains `join`, `join_vars`, `reduce` and `join_key`, and the study choices of
+  every template that reads its own data gain `JOIN`, `JOIN_VARS`, `REDUCE`
+  and `JOIN_KEY`, all `NULL` and without an `EDIT:` marker, so a finished job
+  is unchanged. `JOIN` names one dataset registered with
+  `kind = "ancillary"`, such as echoes or labs. The cohort decides the
+  patients and must be one row per patient; the join keeps one row per joined
+  record, keyed on that dataset's key, or one row per patient with
+  `REDUCE = list(rule = "first" | "last" | "nearest", by = ...)`. A tie on
+  `by` stops rather than pick one record silently, and so does a join that
+  matches no cohort patient at all, which is a mismatch of identifiers.
+  `WHERE` applies to the joined rows. The job's data table names the joined dataset and its rows,
+  counts its records outside the cohort and the cohort patients with none, and
+  names the reduction; its provenance records the joined dataset's version. A
+  downstream job rebuilds the same join from its upstream job's selection.
+  A template that models one row per patient (`ac`, `hz`, every `lm-*`,
+  `rfc-fit`, `rfr-fit`, `rfs-fit`, `dc-stddiff`, `dc-gfup`, `dp-gfup` and
+  `hs-concordance`) passes `read_job_data(one_row_per_patient = TRUE)` and stops on a `JOIN` without
+  `REDUCE` before reading any data, since the long form would count every
+  joined record as a patient; the other descriptive templates and
+  `nb-boostmtree` keep the long form.
+* `read_job_data()`'s `key` now defaults to the key registered for the dataset
+  (hvtiRutilities 1.5.1), and to `id` when none is registered, as before. A
+  `KEY` or `JOIN_KEY` that differs from the registered key is used, and noted
+  in the data table. Templates set `KEY` themselves, so they read the same
+  rows as before, with that note when the study registered another key.
+* A stale analysis set that hvtiRdatabuild reads in a draft render is now a
+  note in the job's data table, as an out-of-date dataset already was, rather
+  than a message wherever the chunk prints it.
+
+* **With `REDUCE`, `WHERE` on a joined column now filters the records before
+  one is chosen per patient** (maintainer's decision). `REDUCE <- list(rule =
+  "last", by = "echo_date")` with `WHERE <- quote(echo_type == "TTE")` keeps
+  each patient's last TTE, where it used to keep the last echo and then drop
+  the patient if that echo was not a TTE. A condition on cohort columns still
+  filters the reduced rows. The data table shows the record filter between the
+  join and the reduction, and counts the patients left with no record after
+  it; the selection records the conditions in the order written.
+* `REDUCE`'s `by` may name several columns, such as
+  `c("echo_date", "echo_seq")`: each later one breaks a tie on those before
+  it, in the rule's direction, and a missing tie-break value loses the tie
+  rather than dropping the record. A tie that remains still stops (maintainer's
+  decision), and the message now says what tied (for `"nearest"`, records
+  equally far from the target, not "the same date"), how many patients, and
+  how to break it. `by` and `to` match their columns ignoring case, as every
+  other column setting does.
+* `nb-boostmtree` takes a long join whose visit time is only in the joined
+  dataset: a `KEY` that names a joined column is checked on the joined rows.
+  A `KEY` of cohort columns is checked on the cohort, as before.
+* A join stops when some joined identifiers match the cohort's only once
+  surrounding spaces, leading zeros or letter case are set aside, instead of
+  counting those records as outside the cohort. The message gives counts
+  only. A cohort row with a missing identifier stops a join as missing, rather
+  than as a repeated patient. A long join keeps the cohort's identifier type.
+* `key_hash` covers the joined dataset's key, so a downstream job sees that
+  `REDUCE` chose a different record for a patient. `hm`, `hp` and `hs-setup`
+  record the joined dataset's provenance when they rebuild a joined
+  selection. A selection without a join carries no empty join fields, and a
+  join's `REDUCE` and `JOIN_VARS` are recorded as resolved, so the same join
+  written two ways records the same selection and `hp` accepts matching `ac`
+  and `hz` hand-offs. `hp`'s mismatch message names the join settings. A
+  downstream `JOIN` or `REDUCE` against an upstream selection that read no
+  join stops and names the setting.
+* `read_job_data(one_row_per_patient = TRUE)` also stops when the rows kept
+  repeat a patient, as a dataset of repeated records read whole would. Its
+  refusal names the templates that take repeated records (`dc-general`,
+  `dc-tables`, `dp-eda`, `dp-trends`, `nb-boostmtree`), read from the
+  templates themselves. A patient whose records all lack the `by` value is no
+  longer counted again as a patient with no record; the "no reduction value"
+  row says how many patients it leaves with no record chosen.
+* `KEY <- ID` no longer draws a "differs from the registered key" note when
+  the ID falls back to MRN on a dataset registered on its MRN.
+* `stop_here()` refuses a final render itself, so one the source scan cannot
+  see (inside `if ()`, or called with an argument) no longer truncates a final
+  report silently; in a draft it is recorded as a partial-render stop.
+* A job's name is read through knitr's `.knit.md` and `.utf8.md`
+  intermediates. `dc-stddiff` asks for hvtiRpropensity 0.1.7, as DESCRIPTION
+  does. The cairo probe runs once a session. `dp-gfup`'s deprecation note names
+  `add_job("dc.gfup", ...)`. DESCRIPTION spells out the Heart, Vascular and
+  Thoracic Institute.
 
 # hvtiRtemplates 1.2.5
 
