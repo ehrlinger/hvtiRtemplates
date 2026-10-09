@@ -3,10 +3,6 @@
     "issues": [],
     "note": "The session asked whether this should become a named Table 1 job."
   },
-  "dp-postage": {
-    "issues": [],
-    "note": "No grouping variable, which the legacy EDA report had."
-  },
   "dp-eda": {
     "issues": [],
     "note": "No grouping variable, which the legacy EDA report had."

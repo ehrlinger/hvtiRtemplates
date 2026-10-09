@@ -274,10 +274,8 @@ eda <- open_job("dp", "cohort", "eda", qualifier = "eda")
 ```
 
 Its follow-up section needs the death and follow-up fields; take `"followup"`
-out of `SECTIONS` when the data do not have them. The older `dp-postage`
-template drew the variable sections alone. It is deprecated and will be
-removed in the release after 1.2.3; `SECTIONS <- c("continuous", "percent",
-"count")` in a `dp-eda` job draws the same pages.
+out of `SECTIONS` when the data do not have them; `SECTIONS <- c("continuous",
+"percent", "count")` draws the variable sections alone.
 
 Two additional jobs are conditional. Add `dc-gfup` only when the registered
 event and follow-up fields answer a real completeness question. Add `dp-trends`

@@ -45,14 +45,14 @@ execute:
 3. **Render**: `render_job()`. While a marker remains, the report carries a DRAFT banner.
 4. **Check** what it printed against what you expected.
 
-## We set up, run six jobs in four chapters, then check the output
+## We set up, run five jobs in four chapters, then check the output
 
 | chapter | jobs | what they write |
 |---|---|---|
 | Tables | `dc-tables` | the CORR Word table |
 | Trends | `dp-trends` | trends by year |
 | Goodness of follow-up | `dc-gfup`, `dp-gfup` | interval checks, a figure |
-| EDA plots | `dp-postage`, `dp-eda` | the EDA report |
+| EDA plots | `dp-eda` | the EDA report |
 
 # Set up
 
@@ -227,14 +227,7 @@ Each point is a patient. The dashed diagonal is the most follow-up the close dat
 
 # EDA plots
 
-## `dp-postage` needs one choice: the analysis set
-
-```r
-job <- open_job("dp", "cohort", "demo", dir = root, qualifier = "postage")
-```
-```r
-ANALYSIS_SET <- NULL
-```
+## `VARIABLES <- NULL` draws every column but the ones you would not plot
 
 `VARIABLES <- NULL` draws every column except:
 
@@ -242,7 +235,7 @@ ANALYSIS_SET <- NULL
 - anything in `EXCLUDE`;
 - anything that looks like an **identifier or a date**. The report lists those.
 
-`SECTIONS` picks any of `"continuous"`, `"percent"` and `"count"`. Percent and count bin the year the same way, so their bars line up.
+In `SECTIONS`, `"percent"` and `"count"` bin the year the same way, so their bars line up.
 
 ## The identifier rule leaves out ID-like columns unless you name them
 
@@ -270,7 +263,7 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 
 ## Each `dp-eda` section is its standalone job's figure
 
-Each section calls the same function as its standalone job, with the same arguments, so a section *is* that job's figure. A test checks the pages are byte-identical to `dp-postage`'s.
+Each section calls the same function as its standalone job, with the same arguments, so a section *is* that job's figure.
 
 ## `dp-eda` draws 8 continuous and 7 categorical variables, leaving out patient_id and op_date
 
@@ -341,11 +334,11 @@ key_table("dp-eda")
 Each job, scaffolded with the choices on these slides already applied:
 
 ```r
-demo_job(root, "dp-eda")   # or dc-tables, dp-trends, dc-gfup, dp-gfup, dp-postage
+demo_job(root, "dp-eda")   # or dc-tables, dp-trends, dc-gfup, dp-gfup
 render_job(file.path(root, "10_descriptive", "cohort-demo-dp-eda.qmd"), final = TRUE)
 ```
 
-All six at once, into a fresh study:
+All five at once, into a fresh study:
 
 ```bash
 Rscript dev/demo/descriptives-demo.R ~/eda-demo-all

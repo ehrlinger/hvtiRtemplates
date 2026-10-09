@@ -1,4 +1,4 @@
-# Descriptive family: the six jobs the descriptives demo already renders, with
+# Descriptive family: the five jobs the descriptives demo already renders, with
 # the demo's own choices, plus dc-general and dc-stddiff. The demo cohort needs
 # no extra columns for these; dc-stddiff splits it on the lm family's
 # `approach`, which gallery_data() adds before any job renders.

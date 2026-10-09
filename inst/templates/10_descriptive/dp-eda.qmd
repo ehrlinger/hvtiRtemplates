@@ -25,12 +25,12 @@ variables, categorical variables as percentages and categorical variables as
 counts, each with its table. It is written for the biostatistician choosing
 variables for an analysis set, not for a manuscript.
 
-Each section is also a job of its own, and draws through the same function:
-the follow-up section is `dc-gfup`, its figure (`hvtiPlotR::hv_followup_panels()`)
-and its tables (`hvtiRutilities::followup_check()`), and the other
-three are `dp-postage` (`hvtiPlotR::hv_eda_pages()`). Given the same choices, a
-section here is the same figure as the standalone job, so this report and a
-standalone job cannot disagree about the data.
+Each section draws through a package function. The follow-up section is
+`dc-gfup`, a job of its own: its figure (`hvtiPlotR::hv_followup_panels()`)
+and its tables (`hvtiRutilities::followup_check()`). Given the same choices it
+is the same figure as the standalone job, so this report and that job cannot
+disagree about the data. The other three sections draw their pages through
+`hvtiPlotR::hv_eda_pages()`.
 
 ```{r}
 #| label: setup
@@ -215,7 +215,7 @@ PANELS <- list(
 #               death_time = "iv_dead", label = "Reoperation")
 EVENTS <- list()
 
-# Variables. These are dp-postage's choices, and mean what they mean there.
+# Variables.
 # X_VAR is the reference time every panel is drawn against.
 # VARIABLES is NULL to draw every column, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
@@ -224,8 +224,7 @@ EVENTS <- list()
 # here. A KEY column beside it, such as a visit time, is left out of NULL but
 # drawn when named here, as that column's own distribution; a measure's course
 # over visits is a spaghetti plot, drawn by hvtiPlotR::hv_spaghetti, not a page here.
-# The follow-up columns are drawn too, as
-# dp-postage draws them, so a section here stays the standalone job's figure.
+# The follow-up columns are drawn too, like any other column.
 # A named column that is not in the data stops the render, and the error
 # lists every missing name at once.
 # SECTIONS is any of "followup", "continuous", "percent" and "count". The
@@ -327,8 +326,8 @@ if (!is.null(job_data$attrition)) {
 ```{r}
 #| label: spec
 # unnumbered: checks the choices and defines helpers only; its tables and figures are child chunks elsewhere
-# The follow-up choices are checked by hv_followup_panels() below; these are
-# dp-postage's checks of the variable choices, unchanged.
+# The follow-up choices are checked by hv_followup_panels() below; these
+# check the variable choices.
 column_names <- function(x) is.character(x) && !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
 if (!column_names(X_VAR) || length(X_VAR) != 1L) stop("X_VAR must name one column.", call. = FALSE)
 if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
@@ -587,11 +586,11 @@ for (i in seq_len(nrow(fp$data))) {
 ```{r}
 #| label: sections
 # unnumbered: defines the section helper only; its tables and figures are child chunks
-# One section of hv_eda_pages() pages with its table, drawn exactly as
-# dp-postage draws it. One categorical table serves the percent and the count
-# sections, shown under whichever comes first, because a table can carry both
-# columns where a figure needs two. Missing values are counted as a level, so
-# a percentage is out of every patient, not only those with a value.
+# One section of hv_eda_pages() pages with its table. One categorical table
+# serves the percent and the count sections, shown under whichever comes
+# first, because a table can carry both columns where a figure needs two.
+# Missing values are counted as a level, so a percentage is out of every
+# patient, not only those with a value.
 titles <- c(continuous = "Continuous variables", percent = "Categorical variables, percent",
             count = "Categorical variables, counts")
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]

@@ -141,7 +141,7 @@ hvtiRtemplates:::.guard_partial(knitr::current_input())
      For an EDA job the set key is (subject, eda). SUBJECT names WHAT is
      described: `cohort` for the whole study, or a label for a sub-cohort such
      as `mv_repair`. TYPE is always `eda`. Every EDA job for one subject then
-     shares a set, so its trends, follow-up and postage-stamp figures land
+     shares a set, so its trends, follow-up and EDA figures land
      together under graphs/<subject>-eda/. Decided 2026-09-10, because a trends
      plot describes a cohort rather than analyzing an endpoint.
 

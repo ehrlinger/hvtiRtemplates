@@ -138,7 +138,7 @@ print.hvti_template_list <- function(x, ...) {
 #'   \code{dp}. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
 #' @return The full path, as \code{character(1)}. A template the catalog
-#'   marks deprecated, such as \code{dp.postage}, still resolves, with a
+#'   marks deprecated, such as \code{dp.gfup}, still resolves, with a
 #'   warning naming its replacement.
 #' @export
 #' @examples
