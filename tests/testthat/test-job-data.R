@@ -949,6 +949,35 @@ test_that("join settings are checked before any data is read", {
   expect_error(read_job_data(cfg, dataset = "absent", key = character()), "KEY must be NULL or name")
 })
 
+test_that("a job that models one row per patient refuses a long join, before any data is read", {
+  cfg <- join_study()
+  # Neither dataset may be read before the refusal.
+  testthat::local_mocked_bindings(
+    .read_job_source = function(...) stop("data was read"),
+    .read_registered = function(...) stop("data was read"),
+    .package = "hvtiRtemplates"
+  )
+  err <- tryCatch(read_job_data(cfg, join = "echo", one_row_per_patient = TRUE), error = conditionMessage)
+  expect_match(err, "JOIN names `echo`")
+  expect_match(err, "one row per patient")
+  expect_match(err, "count every joined record as a patient")
+  expect_match(err, "REDUCE <- list(rule = \"last\", by = \"<date>\")", fixed = TRUE)
+  expect_match(err, "repeated measures")
+  expect_no_match(err, "data was read")
+  expect_error(read_job_data(cfg, join = "echo", one_row_per_patient = NA), "one_row_per_patient must be TRUE or FALSE")
+  expect_error(read_job_data(cfg, join = "echo", one_row_per_patient = "yes"), "one_row_per_patient must be")
+})
+
+test_that("a job that models one row per patient accepts a reduced join, and the default a long one", {
+  cfg <- join_study()
+  out <- read_job_data(cfg, join = "echo", reduce = list(rule = "last", by = "echo_date"), one_row_per_patient = TRUE)
+  expect_identical(nrow(out$data), 3L)
+  expect_identical(attr(out$record, "selection")$key, "ccfid")
+  expect_identical(nrow(read_job_data(cfg, join = "echo")$data), 3L)
+  # Without a join the setting changes nothing.
+  expect_identical(read_job_data(cfg, one_row_per_patient = TRUE)$data, read_job_data(cfg)$data)
+})
+
 test_that("a downstream job rebuilds a joined cohort, and its join settings must agree", {
   cfg <- join_study()
   for (reduce in list(NULL, list(rule = "first", by = "echo_date"))) {

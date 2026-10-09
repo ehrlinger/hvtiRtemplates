@@ -478,6 +478,12 @@
 #'   read, since picking one would be a hidden choice.
 #' @param join_key Columns that make the joined dataset's rows unique,
 #'   overriding its registered key. A join needs one or the other.
+#' @param one_row_per_patient \code{TRUE} for a job that models one row per
+#'   patient, such as a hazard, logistic or random forest fit. Such a job stops
+#'   on a \code{join} without \code{reduce}, before any data are read, since
+#'   the long form would count every joined record as a patient. \code{FALSE},
+#'   the default, accepts the long form, as descriptive jobs and jobs that model
+#'   repeated measures need.
 #'
 #' @details Columns named \code{MRN} or \code{eMRN} (ignoring case) are
 #'   dropped unless one is the identifier, from a joined dataset too. An explicit \code{id} or \code{key}
@@ -555,8 +561,8 @@
 #' @export
 read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = NULL,
                           id = "ccfid", key = NULL, join = NULL, join_vars = NULL, reduce = NULL,
-                          join_key = NULL) {
-  .check_job_settings(dataset, analysis_set, where, id, key, join, join_vars, reduce, join_key)
+                          join_key = NULL, one_row_per_patient = FALSE) {
+  .check_job_settings(dataset, analysis_set, where, id, key, join, join_vars, reduce, join_key, one_row_per_patient)
   # The registration JOIN needs is checked before either dataset is read.
   join_shape <- if (!is.null(join)) .join_shape(cfg, join, join_key)
   read <- .read_job_source(cfg, dataset, analysis_set)
@@ -696,7 +702,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 
 # Every setting is checked before the read, so a typo fails fast and is named.
 .check_job_settings <- function(dataset, analysis_set, where, id, key, join = NULL, join_vars = NULL, reduce = NULL,
-                                join_key = NULL) {
+                                join_key = NULL, one_row_per_patient = FALSE) {
   if (!is.character(dataset) || length(dataset) != 1L || is.na(dataset) || !nzchar(dataset)) {
     stop("DATASET must name one dataset registered in _study.yml, such as \"built\".", call. = FALSE)
   }
@@ -732,6 +738,15 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   if (!is.null(join_key) && (!is.character(join_key) || !length(join_key) || anyNA(join_key) ||
                                !all(nzchar(join_key)))) {
     stop("JOIN_KEY must be NULL or name one or more columns.", call. = FALSE)
+  }
+  if (!is.logical(one_row_per_patient) || length(one_row_per_patient) != 1L || is.na(one_row_per_patient)) {
+    stop("one_row_per_patient must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (one_row_per_patient && !is.null(join) && is.null(reduce)) {
+    stop("JOIN names `", join, "`, but this job models one row per patient, so a long join would count every ",
+         "joined record as a patient. Set REDUCE to keep one record per patient, for example ",
+         "REDUCE <- list(rule = \"last\", by = \"<date>\"), or use a template that models repeated measures, ",
+         "such as dc-*, dp-* or nb-boostmtree.", call. = FALSE)
   }
   invisible(TRUE)
 }

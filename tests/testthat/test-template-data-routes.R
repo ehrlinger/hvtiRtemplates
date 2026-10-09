@@ -253,6 +253,14 @@ test_that("dp-postage names the registered version and a waiting rebuild without
   expect_match(note, "update_manifest()", fixed = TRUE)
 })
 
+# The templates that model one row per patient, so refuse a JOIN without REDUCE.
+# Descriptive templates and nb-boostmtree (repeated measures) take the long form.
+patient_level_templates <- c(
+  "ac.qmd", "hz.qmd", "dc-stddiff.qmd", "hs-concordance.qmd", "rfc-fit.qmd", "rfr-fit.qmd", "rfs-fit.qmd",
+  "lm-balancing_count.qmd", "lm-binary.qmd", "lm-checkpred.qmd", "lm-nominal.qmd", "lm-ordinal.qmd",
+  "lm-propensity_binary.qmd", "lm-propensity_nominal.qmd", "lm-propensity_ordinal.qmd"
+)
+
 test_that("every template that reads its own data offers the join and records the joined data", {
   template_root <- system.file("templates", package = "hvtiRtemplates")
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
@@ -280,6 +288,11 @@ test_that("every template that reads its own data offers the join and records th
     at <- grep("^JOIN <- NULL$", src)
     expect_false(any(grepl("EDIT:", src[(at - 11L):(at + 3L)], fixed = TRUE)), info = basename(f))
     expect_true(grepl("list(job_data$provenance_join)", text, fixed = TRUE), info = basename(f))
+    # A job that models one row per patient says so to read_job_data(), and its JOIN comment says what follows.
+    one_row <- basename(f) %in% patient_level_templates
+    expect_identical(grepl("one_row_per_patient = TRUE", text, fixed = TRUE), one_row, info = basename(f))
+    expect_identical(any(grepl("so a JOIN without REDUCE stops here", src[(at - 11L):at], fixed = TRUE)), one_row,
+                     info = basename(f))
   }
   # Every first job of a set reads its own data; a drop here means one stopped offering the join.
   expect_identical(readers, 22L)
@@ -290,7 +303,7 @@ test_that("descriptive templates join an ancillary dataset, long and one row per
   template_root <- system.file("templates", package = "hvtiRtemplates")
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
   templates <- file.path(normalizePath(template_root), "10_descriptive",
-                         c("dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dp-eda.qmd"))
+                         c("dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dp-eda.qmd"))
   root <- file.path(withr::local_tempdir(), "join-study")
   suppressMessages(hvtiRutilities::study_setup(root, study = "Join route test", study_tracker_id = 1L))
   data_dir <- hvtiRutilities::study_dir("datasets", root)
@@ -328,5 +341,66 @@ test_that("descriptive templates join an ancillary dataset, long and one row per
       datasets <- vapply(env$.provenance_data, `[[`, "", "dataset")
       expect_identical(datasets, c("study", "echo"), info = info)
     }
+  }
+})
+
+# The data chunk up to and including its read_job_data() call: the refusal is
+# about the read, and what follows it needs study columns this test has no use for.
+data_read_prefix <- function(code) {
+  at <- which(vapply(code, function(expr) any(grepl("read_job_data(", deparse(expr), fixed = TRUE)), logical(1)))
+  stopifnot(length(at) == 1L)
+  code[seq_len(at)]
+}
+
+test_that("templates that model one row per patient refuse a long join; long-data templates take it", {
+  skip_if_not_installed("arrow")
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  files <- list.files(normalizePath(template_root), pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
+  refuse <- files[basename(files) %in% patient_level_templates]
+  expect_length(refuse, length(patient_level_templates))
+  # Repeated measures (nb-boostmtree's KEY includes TIME) and a descriptive figure keep the long form.
+  accept <- files[basename(files) %in% c("nb-boostmtree.qmd", "dp-trends.qmd")]
+  expect_length(accept, 2L)
+  root <- file.path(withr::local_tempdir(), "one-row-study")
+  suppressMessages(hvtiRutilities::study_setup(root, study = "One row route test", study_tracker_id = 1L))
+  data_dir <- hvtiRutilities::study_dir("datasets", root)
+  built <- data.frame(ccfid = 1:3, dead = c(0, 1, 0), iv_dead = c(1, 2, 3), iv_echo = c(0, 0, 0))
+  echo <- data.frame(ccfid = c(1L, 1L, 2L, 4L), echo_day = c(5, 9, 5, 5), ef = c(50, 55, 45, 40))
+  utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
+  utils::write.csv(echo, file.path(data_dir, "echo.csv"), row.names = FALSE)
+  suppressWarnings(suppressMessages({
+    hvtiRutilities::register_data(root, built = "built.csv")
+    hvtiRutilities::register_data(root, built = "echo.csv", dataset = "echo", role = "named",
+                                  kind = "ancillary", key = c("ccfid", "echo_day"))
+  }))
+  withr::local_dir(root)
+  run <- function(template, reduce) {
+    chunks <- data_route_chunks(template)
+    code <- set_assignment(use_whole_cohort(chunks$choices), "JOIN", "echo")
+    code <- set_assignment(code, "REDUCE", reduce)
+    env <- new.env(parent = globalenv())
+    env$.root <- "."
+    env$study_config <- hvtiRutilities::study_config
+    # Only the settings the read takes: other choices call the model's packages.
+    read_settings <- c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "TIME", "KEY", "JOIN", "JOIN_VARS", "REDUCE", "JOIN_KEY")
+    for (expr in code) {
+      if (is.call(expr) && identical(expr[[1L]], quote(`<-`)) && is.name(expr[[2L]]) &&
+            as.character(expr[[2L]]) %in% read_settings) {
+        eval(expr, envir = env)
+      }
+    }
+    eval(data_read_prefix(chunks$data), envir = env)
+    env$job_data
+  }
+  for (template in refuse) {
+    expect_error(run(template, NULL), "this job models one row per patient", info = basename(template))
+    reduced <- run(template, quote(list(rule = "last", by = "echo_day")))
+    expect_equal(reduced$data$ef, c(55, 45, NA), info = basename(template))
+  }
+  for (template in accept) {
+    long <- run(template, NULL)
+    expect_identical(nrow(long$data), 3L, info = basename(template))
+    expect_identical(sort(unique(long$data$ccfid)), 1:2, info = basename(template))
   }
 })

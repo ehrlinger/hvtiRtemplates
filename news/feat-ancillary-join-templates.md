@@ -13,6 +13,12 @@
   counts its records outside the cohort and the cohort patients with none, and
   names the reduction; its provenance records the joined dataset's version. A
   downstream job rebuilds the same join from its upstream job's selection.
+  A template that models one row per patient (`ac`, `hz`, every `lm-*`,
+  `rfc-fit`, `rfr-fit`, `rfs-fit`, `dc-stddiff` and `hs-concordance`) passes
+  `read_job_data(one_row_per_patient = TRUE)` and stops on a `JOIN` without
+  `REDUCE` before reading any data, since the long form would count every
+  joined record as a patient; descriptive templates and `nb-boostmtree` keep
+  the long form.
 * `read_job_data()`'s `key` now defaults to the key registered for the dataset
   (hvtiRutilities 1.5.1), and to `id` when none is registered, as before. A
   `KEY` or `JOIN_KEY` that differs from the registered key is used, and noted

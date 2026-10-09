@@ -115,8 +115,8 @@ KEY <- ID
 #   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
 #     or "nearest" with to = a cohort date column). A tie stops: picking one
-#     record silently would be a hidden choice. A job that counts or models
-#     patients, one row each, needs REDUCE: NULL would count every record.
+#     record silently would be a hidden choice. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
@@ -141,7 +141,7 @@ hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY)
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
 # This job's data are the model's training data, which lm-checkpred tells from its validation data.
 job_data$provenance$role <- "training"
 if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"
