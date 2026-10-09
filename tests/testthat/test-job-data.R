@@ -1051,9 +1051,14 @@ test_that("a downstream job rebuilds a joined cohort, and its join settings must
                "REDUCE here \\(last by echo_date\\) differs.*first by echo_date")
   same <- hvtiRtemplates:::.check_upstream_selection(sel, list(reduce = list(by = "echo_date", rule = "first")))
   expect_identical(same$reduce, sel$reduce)
-  # A selection recorded before the join fields existed is filled in with the setting as given.
-  older <- hvtiRtemplates:::.check_upstream_selection(list(id = "ccfid"), list(reduce = list(rule = "first", by = "d")))
-  expect_identical(older$reduce, list(rule = "first", by = "d"))
+  # A selection without the join fields read no join, so a join here cannot rebuild it.
+  expect_error(hvtiRtemplates:::.check_upstream_selection(list(id = "ccfid"), list(reduce = list(rule = "first", by = "d"))),
+               "REDUCE here \\(first by d\\) differs from the upstream job's \\(none\\)")
+  plain <- attr(read_job_data(cfg)$record, "selection")
+  expect_error(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = plain), list(join = "echo")),
+               "JOIN here \\(echo\\) differs from the upstream job's \\(none\\)")
+  # Left NULL, as downstream templates leave them, they agree.
+  expect_no_error(hvtiRtemplates:::.check_upstream_selection(plain, list(join = NULL, reduce = NULL)))
 })
 
 test_that("a stale analysis set read in a draft is a note in the data table", {

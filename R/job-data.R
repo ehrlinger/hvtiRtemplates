@@ -951,6 +951,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                       key = "KEY", time = "TIME", event = "EVENT", join = "JOIN", join_vars = "JOIN_VARS",
                       reduce = "REDUCE", join_key = "JOIN_KEY")
 
+.join_fields <- c("join", "join_vars", "reduce", "join_key")
+
 .check_upstream_selection <- function(upstream, settings) {
   if (is.null(settings)) settings <- list()
   if (is.null(upstream)) return(settings)
@@ -961,16 +963,14 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     mine <- settings[[field]]
     if (is.null(mine)) next
     if (field == "reduce") {
-      # Filled in as the list it is; compared as its one-line description.
-      if (!field %in% names(upstream)) {
-        out[[field]] <- mine
-        next
-      }
+      # Compared as its one-line description.
       mine <- .reduce_text(mine)
     } else if (is.call(mine) || is.name(mine) || is.list(mine)) {
       mine <- vapply(.where_conditions(mine), function(x) paste(deparse(x, width.cutoff = 500L), collapse = " "), "")
     }
-    if (!field %in% names(upstream)) {
+    # An upstream selection without the join fields read no join, whether it
+    # predates them or was saved without one, so a join here cannot rebuild it.
+    if (!field %in% names(upstream) && !field %in% .join_fields) {
       out[[field]] <- mine
       next
     }
@@ -987,7 +987,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
         theirs <- .mask_conditions(theirs, cols)
       }
       stop(.upstream_fields[[field]], " here (", paste(mine, collapse = ", "), ") differs from the upstream job's (",
-           paste(theirs, collapse = ", "), "). Leave it NULL to use the upstream value, or rerun ",
+           if (length(theirs)) paste(theirs, collapse = ", ") else "none", "). Leave it NULL to use the upstream value, or rerun ",
            "the upstream job with the new value.", call. = FALSE)
     }
   }
