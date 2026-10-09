@@ -221,7 +221,6 @@ fit <- hvtiRtemplates:::.attach_handoff_lineage(
 # The saved copy holds a study-keyed digest of each patient ID, never the ID, so the file names no
 # patient. A later job reattaches its own data by digesting its IDs with the same key: see lm-checkpred.
 saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
-MODEL_PATH
 ```
 
 ```{r}
