@@ -976,6 +976,26 @@ test_that("a job that models one row per patient refuses a long join, before any
   expect_error(read_job_data(cfg, join = "echo", one_row_per_patient = "yes"), "one_row_per_patient must be")
 })
 
+test_that("WHERE may name a joined column that shares its name with a cohort column JOIN_VARS leaves out", {
+  skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, "Shared name", 42L))
+  dd <- hvtiRutilities::study_dir("datasets", root)
+  # The cohort's ef is a baseline value; the echoes' ef is per record.
+  utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70), ef = c(1, 1, 1)), file.path(dd, "built.csv"),
+                   row.names = FALSE)
+  utils::write.csv(data.frame(ccfid = c(1L, 1L, 2L), echo_date = c(95, 120, 95), ef = c(50, 55, 45)),
+                   file.path(dd, "echo.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key = c("ccfid", "echo_date")))
+  cfg <- hvtiRutilities::study_config(root)
+  for (reduce in list(NULL, list(rule = "last", by = "echo_date"))) {
+    out <- read_job_data(cfg, join = "echo", join_vars = "age", reduce = reduce, where = quote(ef >= 50))
+    expect_true(all(out$data$ef >= 50, na.rm = TRUE))
+  }
+})
+
 test_that("the same join written two ways records the same selection", {
   cfg <- join_study()
   one <- read_job_data(cfg, join = "echo", join_vars = "age", reduce = list(rule = "first", by = "echo_date"))
