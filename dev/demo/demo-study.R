@@ -126,7 +126,6 @@ demo_choices <- list(
   )),
   "dc-gfup" = c(whole_cohort, demo_id, list("^CHECKS <- list\\(\\)$" = "CHECKS <- list(c(\"dead\", \"reop\"))")),
   "dp-gfup" = c(whole_cohort, demo_id, close_2025, reop_event),
-  "dp-postage" = whole_cohort,
   "dp-eda" = c(whole_cohort, demo_id, close_2025, reop_event)
 )
 

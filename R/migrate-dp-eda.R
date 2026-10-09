@@ -1,7 +1,7 @@
 # Legacy EDA reports, the tp.dp.DescriptiveSummary.qmd and
 # tp.dp.EDA_barplots_scatterplots*.R lineage, migrate into a dp-eda job. They
 # drew the continuous, percent and count pages and no follow-up panels, so
-# SECTIONS names those three, which draws the pages dp-postage drew.
+# SECTIONS names those three.
 .migrate_dp_eda <- function(evidence, template) {
   aliases <- c(dta_filename = "DATASET", dataset = "DATASET", pref_time_var = "X_VAR", x_var = "X_VAR",
                variables = "VARIABLES", include = "VARIABLES", varlist = "VARIABLES", exclude = "EXCLUDE",

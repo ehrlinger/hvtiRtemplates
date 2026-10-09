@@ -21,8 +21,7 @@ refuses to overwrite an existing job.
 | `10_descriptive/dc-gfup.qmd` | follow-up interval checks and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-stddiff.qmd` | balance table: standardized differences between two groups, unadjusted, matched and weighted | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dp-postage.qmd` | **deprecated**, use `dp-eda`: EDA panels on numbered PNG pages | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dp-eda.qmd` | the whole EDA report: overview, follow-up, then the postage sections, each with its table | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dp-eda.qmd` | the whole EDA report: overview, follow-up, then the continuous, percent and count sections, each with its table | `10_descriptive/` or `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `30_analyses/` or `analyses/` |
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
@@ -36,10 +35,9 @@ refuses to overwrite an existing job.
 | `30_analyses/rfr-explain.qmd` | importance, VarPro and dependence for an `rfr` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/nb-boostmtree.qmd` | boosted multivariate trees for a response measured at each visit | `30_analyses/` or `analyses/` |
 
-`dp-postage` is deprecated in favor of `dp-eda` and will be removed in the
-release after 1.2.3. It still scaffolds and renders, and `add_job()` warns
-when it is used. A `dp-eda` job with
-`SECTIONS <- c("continuous", "percent", "count")` draws the same pages.
+`dp-postage`, deprecated in favor of `dp-eda` in 1.2.3, was removed after
+1.3.0. A `dp-eda` job, `add_job("dp.eda", subject, type)`, with
+`SECTIONS <- c("continuous", "percent", "count")` draws the pages it drew.
 
 A template is named `<prefix>.qmd`, or `<prefix>-<qualifier>.qmd` where one
 prefix carries several job types, and lives in a numbered directory named for
@@ -55,7 +53,7 @@ from it and the folder from the directory, stripping the ordering digits.
 The placement test requires the job catalog and skips when it is absent.
 Its internal lookup helper uses the catalog's `(prefix, qualifier)` row and
 falls back to `hvti_taxonomy()` when the catalog or matching row is absent.
-The catalog places `dp-postage` in `descriptive/` and `dp-trends` in `graphs/`;
+The catalog places `dp-eda` in `descriptive/` and `dp-trends` in `graphs/`;
 the prefix-wide taxonomy cannot distinguish those jobs. A separate test checks
 that every template directory names a taxonomy folder even without the catalog.
 
@@ -65,7 +63,7 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dp-trends`,
-`dp-gfup`, `dp-postage`, `dp-eda`, `hs-setup`, `hs-concordance`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
+`dp-gfup`, `dp-eda`, `hs-setup`, `hs-concordance`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so
 in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
@@ -334,7 +332,6 @@ where it does not, as on a Mac without XQuartz.
 | dc-stddiff | `dc-stddiff-balance` |
 | dc-tables | `dc-tables-correlation-matrix` (in `descriptive/`) |
 | dp-eda | `dp-eda-gfup-<panel>`, `dp-eda-<section>-page-<NN>` |
-| dp-postage | `dp-postage-<section>-page-<NN>` |
 | dp-gfup | `dp-gfup-<panel>` |
 | dp-trends | `dp-trends-<trend>-<subgroup>` |
 | hp | `hp-survival`, `hp-hazard`, `hp-phases` |

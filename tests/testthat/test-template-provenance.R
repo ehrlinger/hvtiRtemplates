@@ -169,7 +169,7 @@ analysis_templates <- function() {
 
 test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- analysis_templates()
-  expect_equal(nrow(templates), 33L)
+  expect_equal(nrow(templates), 32L)
 
   for (path in templates$file) {
     source <- readLines(path, warn = FALSE)
@@ -204,9 +204,10 @@ test_that("provenance payloads take only the recovered render input", {
 })
 
 test_that("registered data provenance is captured in the chunk that reads it", {
-  # A template reads a registered dataset itself only through .read_registered(),
-  # which brackets the read with .provenance_read() (test-provenance-publication.R).
-  # A bare read_built() must be bracketed in its own chunk.
+  # A template reads a registered dataset through read_job_data(), whose
+  # .read_registered() brackets the read with .provenance_read()
+  # (test-provenance-publication.R). No template calls .read_registered() itself
+  # now. A bare read_built() must be bracketed in its own chunk.
   wrapped <- character()
   for (path in template_list()$file) {
     chunks <- r_chunk_expressions(path)
@@ -218,18 +219,19 @@ test_that("registered data provenance is captured in the chunk that reads it", {
       if (grepl(".read_registered(", text, fixed = TRUE)) wrapped <- c(wrapped, basename(path))
     }
   }
-  expect_identical(wrapped, "dp-postage.qmd")
+  expect_identical(wrapped, character())
   expect_match(paste(deparse(body(hvtiRtemplates:::.read_registered)), collapse = "\n"), ".provenance_read(", fixed = TRUE)
 })
 
 test_that("analysis-set branches capture the parquet file they read", {
-  # read_job_data() captures an analysis set's parquet file itself (test-job-data.R),
-  # so only a template that still reads its own analysis set is checked here.
-  for (prefix in "dp-postage") {
-    source <- readLines(template_by_name(prefix), warn = FALSE)
-    info <- prefix
-    expect_true(any(grepl(".provenance_file_read(", source, fixed = TRUE)), info = info)
-    expect_true(any(grepl('paste0(ANALYSIS_SET, ".parquet")', source, fixed = TRUE)), info = info)
+  # read_job_data() captures an analysis set's parquet file itself (test-job-data.R).
+  # No template reads its own analysis set now; one that does must capture the
+  # file it reads.
+  for (path in template_list()$file) {
+    source <- readLines(path, warn = FALSE)
+    if (any(grepl('paste0(ANALYSIS_SET, ".parquet")', source, fixed = TRUE))) {
+      expect_true(any(grepl(".provenance_file_read(", source, fixed = TRUE)), info = basename(path))
+    }
   }
   for (prefix in c("dc-general", "dc-gfup", "dc-stddiff", "dc-tables", "dp-eda", "dp-gfup", "dp-trends")) {
     source <- readLines(template_by_name(prefix), warn = FALSE)
@@ -241,7 +243,7 @@ test_that("analysis-set branches capture the parquet file they read", {
 test_that("only templates with a local dataset choice override the dataset", {
   expected <- c(
     "ac", "hz", "hm", "hp", "hs-concordance", "hs-setup",
-    "dc-general", "dc-gfup", "dc-stddiff", "dc-tables", "dp-eda", "dp-gfup", "dp-postage", "dp-trends",
+    "dc-general", "dc-gfup", "dc-stddiff", "dc-tables", "dp-eda", "dp-gfup", "dp-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
     "rfs-fit", "rfc-fit", "rfr-fit", "nb-boostmtree"
@@ -256,7 +258,7 @@ test_that("only templates with a local dataset choice override the dataset", {
 
 test_that("endpoint-free templates do not invent analysis or cohort blocks", {
   identity_only <- c(
-    "dc-general", "dc-stddiff", "dc-tables", "dp-postage", "dp-trends"
+    "dc-general", "dc-stddiff", "dc-tables", "dp-trends"
   )
   for (prefix in identity_only) {
     chunk <- provenance_chunk(template_by_name(prefix))

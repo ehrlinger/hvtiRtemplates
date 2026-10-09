@@ -38,7 +38,7 @@ test_that("descriptive templates can read the whole cohort", {
   }
   template_dir <- normalizePath(template_dir)
   templates <- file.path(template_dir, c(
-    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dp-postage.qmd", "dp-eda.qmd"
+    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dp-eda.qmd"
   ))
   root <- file.path(tempdir(), "whole-cohort-study")
   unlink(root, recursive = TRUE)
@@ -97,7 +97,7 @@ test_that("descriptive templates read a named additional dataset", {
   }
   template_dir <- normalizePath(template_dir)
   templates <- file.path(template_dir, c(
-    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dp-postage.qmd", "dp-eda.qmd"
+    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dp-eda.qmd"
   ))
   root <- file.path(tempdir(), "named-dataset-study")
   unlink(root, recursive = TRUE)
@@ -152,18 +152,13 @@ test_that("converter templates name DATASET before reading unresolved data", {
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
   templates <- file.path(normalizePath(template_root), c(
     "10_descriptive/dc-tables.qmd", "10_descriptive/dc-gfup.qmd",
-    "10_descriptive/dp-postage.qmd", "10_descriptive/dp-eda.qmd", "40_graphs/dp-trends.qmd"
+    "10_descriptive/dp-eda.qmd", "40_graphs/dp-trends.qmd"
   ))
   for (template in templates) {
     chunks <- data_route_chunks(template)
     code <- chunks$data
-    # A job that reads through read_job_data() names DATASET the same way; only
-    # the unconverted dp-postage still points a migrated job at its report.
-    message <- if (basename(template) == "dp-postage.qmd") {
-      "DATASET.*_study[.]yml.*\"built\".*migration report"
-    } else {
-      "DATASET.*_study[.]yml.*\"built\""
-    }
+    # Every job reads through read_job_data(), which names DATASET the same way.
+    message <- "DATASET.*_study[.]yml.*\"built\""
     # The manifest check needs a real study; this test is about DATASET alone.
     code <- code[!vapply(code, function(expr) any(grepl("verify_manifest", deparse(expr))), logical(1))]
     choices <- if (length(chunks$choices)) chunks$choices else code
@@ -221,36 +216,6 @@ test_that("converted templates read a whole dataset without hvtiRdatabuild insta
     expect_null(err, info = basename(template))
     expect_equal(env$d, built, info = basename(template))
   }
-})
-
-test_that("dp-postage names the registered version and a waiting rebuild without a bare message", {
-  skip_if_not_installed("arrow")
-  template_root <- system.file("templates", package = "hvtiRtemplates")
-  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
-  template <- file.path(normalizePath(template_root), "10_descriptive", "dp-postage.qmd")
-  root <- file.path(withr::local_tempdir(), "postage-rebuilt-study")
-  suppressMessages(hvtiRutilities::study_setup(root, study = "Postage rebuilt", study_tracker_id = 1L))
-  path <- file.path(hvtiRutilities::study_dir("datasets", root), "built.csv")
-  built <- data.frame(ccfid = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4))
-  utils::write.csv(built, path, row.names = FALSE)
-  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
-  utils::write.csv(rbind(built, data.frame(ccfid = 5L, dead = 0, iv_dead = 5)), path, row.names = FALSE)
-
-  withr::local_dir(root)
-  env <- new.env(parent = globalenv())
-  env$.root <- "."
-  env$study_config <- hvtiRutilities::study_config
-  env$study_dir <- hvtiRutilities::study_dir
-  chunks <- data_route_chunks(template)
-  eval(use_whole_cohort(chunks$choices), envir = env)
-  expect_no_message(shown <- utils::capture.output(eval(chunks$data, envir = env)))
-
-  # The registered rows, not the rebuilt file's five.
-  expect_equal(env$d, built)
-  expect_match(shown, "^Data read: dataset `built` [(]built_[0-9]{8}[.]parquet[)], 4 rows", all = FALSE)
-  note <- grep("^Note: ", shown, value = TRUE)
-  expect_length(note, 1L)
-  expect_match(note, "update_manifest()", fixed = TRUE)
 })
 
 # The templates that model one row per patient, so refuse a JOIN without REDUCE.

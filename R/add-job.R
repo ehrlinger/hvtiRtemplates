@@ -66,7 +66,7 @@
 #' that name and keep rendering; \code{add_job()} refuses to write a second
 #' copy of such a job under the new name, and \code{\link{open_job}} opens it.
 #'
-#' A template the catalog marks deprecated, such as \code{dp.postage}, still
+#' A template the catalog marks deprecated, such as \code{dp.gfup}, still
 #' scaffolds, with a warning naming its replacement; see
 #' \code{\link{template_catalog}}.
 #'

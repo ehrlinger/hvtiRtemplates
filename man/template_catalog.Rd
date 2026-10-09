@@ -12,7 +12,7 @@ A data frame. \code{uses}, \code{upstream}, \code{downstream}, and
   are \code{NA_integer_}.
   \code{description} is a one-sentence summary, given for every template on
   disk and \code{NA} for most queued ones. \code{deprecated_by} names the
-  template replacing a deprecated one, such as \code{"dp-eda"}, and
+  template replacing a deprecated one, such as \code{"dc-gfup"}, and
   \code{deprecation_note} says how to move to it; both are \code{NA} for a
   supported template. A deprecated template still ships, and
   \code{\link{add_job}} warns when it is used.

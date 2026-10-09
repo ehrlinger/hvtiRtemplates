@@ -19,8 +19,7 @@ root <- demo_study(file.path(tempfile("reference-"), "study"))
 reports <- demo_jobs(root)
 
 # ---- Figures -----------------------------------------------------------------
-# One of each kind, not every page: dp-postage is left out because test-dp-eda.R
-# already proves its pages are byte-identical to dp-eda's.
+# One of each kind, not every page.
 graphs <- file.path(study_dir("graphs", root), "cohort-demo")
 figures <- c("dp-trends-chf-all.png", "dp-trends-lvmass-all.png",
              "dp-gfup-all.png", "dp-gfup-reop.png",

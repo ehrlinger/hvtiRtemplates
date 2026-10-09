@@ -64,7 +64,7 @@ test_that("a template sits in the folder its row files it under", {
   # ⭐ The expected folder came from `hvti_taxonomy()` alone until 2026-09-09.
   # That map has ONE row per prefix, and a prefix may span folders: `dp` is
   # `graphs` for trends/gfup/spaghetti/procs, `distributions` for `variable`,
-  # and a `descriptive` row is planned for the postage-stamp sweep. So the old
+  # and `descriptive` for the EDA report, `eda`. So the old
   # form would have failed `dp-variable`, which is ALREADY scheduled in batch
   # 3, the moment anyone wrote it. The job catalog carries `folder` per row,
   # keyed on (prefix, qualifier), and is consulted first; the taxonomy answers
@@ -130,26 +130,26 @@ test_that("a template sits in the folder its row files it under", {
 test_that("the catalog's folder wins over the taxonomy's", {
   # `dp` is `graphs` in the taxonomy. A row filing it under `descriptive` must
   # be believed, or a descriptive/dp template can never ship.
-  rows <- list(list(prefix = "dp", qualifier = "postage",
+  rows <- list(list(prefix = "dp", qualifier = "eda",
                     folder = "descriptive"))
   with_temp_catalog(rows, {
-    got <- expected_template_folders(.tl("dp", "postage", "descriptive"))
+    got <- expected_template_folders(.tl("dp", "eda", "descriptive"))
     expect_identical(got, "descriptive")
     expect_false(identical(got, "graphs"))
   })
 })
 
 test_that("package folder authority matches the qualified catalog row or falls back", {
-  catalog <- data.frame(prefix = c("dp", "dp"), qualifier = c("postage", "trends"),
+  catalog <- data.frame(prefix = c("dp", "dp"), qualifier = c("eda", "trends"),
                         folder = c("descriptive", "graphs"))
-  expect_identical(hvtiRtemplates:::.template_folder_authority("dp", "postage", catalog), "descriptive")
+  expect_identical(hvtiRtemplates:::.template_folder_authority("dp", "eda", catalog), "descriptive")
   expect_identical(hvtiRtemplates:::.template_folder_authority("ac", NA_character_, catalog), "distributions")
-  expect_identical(hvtiRtemplates:::.template_folder_authority("dp", "postage", NULL), "graphs")
-  expect_error(hvtiRtemplates:::.template_folder_authority("dp", "postage", rbind(catalog, catalog)), "more than one row")
+  expect_identical(hvtiRtemplates:::.template_folder_authority("dp", "eda", NULL), "graphs")
+  expect_error(hvtiRtemplates:::.template_folder_authority("dp", "eda", rbind(catalog, catalog)), "more than one row")
 })
 
 test_that("a template with no catalog row falls back to the taxonomy", {
-  rows <- list(list(prefix = "dp", qualifier = "postage",
+  rows <- list(list(prefix = "dp", qualifier = "eda",
                     folder = "descriptive"))
   with_temp_catalog(rows, {
     # `ac` is absent from this catalog, so the taxonomy answers: distributions.
@@ -160,12 +160,12 @@ test_that("a template with no catalog row falls back to the taxonomy", {
 
 test_that("a duplicated pair stops rather than picking the first row", {
   rows <- list(
-    list(prefix = "dp", qualifier = "postage", folder = "descriptive"),
-    list(prefix = "dp", qualifier = "postage", folder = "graphs")
+    list(prefix = "dp", qualifier = "eda", folder = "descriptive"),
+    list(prefix = "dp", qualifier = "eda", folder = "graphs")
   )
   with_temp_catalog(rows, {
-    expect_error(expected_template_folders(.tl("dp", "postage", "descriptive")),
-                 "more than one row.*dp-postage")
+    expect_error(expected_template_folders(.tl("dp", "eda", "descriptive")),
+                 "more than one row.*dp-eda")
   })
 })
 

@@ -530,7 +530,7 @@ test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
   skip_if(is.na(desc) || is.null(desc), "Suggests is not readable here")
 
   for (pkg in c(
-    "hvtiRbootstrap", "hvtiRdatabuild", "hvtiRlifetables", "hvtiPlotR",
+    "hvtiRbootstrap", "hvtiRlifetables", "hvtiPlotR",
     "hvtiRtables", "randomForestSRC", "ggRandomForests", "varPro"
   )) {
     floors <- package_version(character(0))
@@ -558,6 +558,16 @@ test_that("DESCRIPTION's Suggests bounds match what the templates enforce", {
                label = paste0("DESCRIPTION declares ", pkg, " >= ", declared,
                               " but a template refuses below ", max(floors)))
   }
+
+  # hvtiRdatabuild's floor is package code, not a template guard: read_job_data()
+  # asks for it through .require_databuild(). dp-postage, the last template with
+  # a guard of its own, was removed after 1.3.0.
+  code <- paste(deparse(body(hvtiRtemplates:::.require_databuild)), collapse = " ")
+  code_floor <- package_version(sub('.*version < "([0-9.]+)".*', "\\1", code))
+  bound <- regmatches(desc, regexpr("hvtiRdatabuild\\s*\\(>=\\s*[0-9.]+\\)", desc))
+  expect_length(bound, 1L)
+  expect_gte(package_version(gsub("[^0-9.]", "", sub(".*>=", "", bound))), code_floor,
+             label = "DESCRIPTION's hvtiRdatabuild bound")
 })
 
 # ---- qualifier ------------------------------------------------------------

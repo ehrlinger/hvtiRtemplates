@@ -894,15 +894,13 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # message of class hvtiRutilities_out_of_date. The message is kept as a note
 # for the job's data table, where a reader sees it beside the file the job
 # read, instead of a bare message wherever the chunk happens to print it.
-# dp-postage reads outside read_job_data() and calls this too.
 .read_registered <- function(dataset, cfg) {
   .with_out_of_date_notes(.provenance_read(dataset, cfg, function() hvtiRutilities::read_built(cfg = cfg, dataset = dataset)))
 }
 
 # Checked before anything else, hvtiRdatabuild included: a new study has no
 # analysis sets, and the reader's own error is a missing-file path that names
-# neither the setting nor the way out (#173). dp-postage reads its analysis set
-# outside read_job_data() and calls this too.
+# neither the setting nor the way out (#173).
 .check_analysis_set_built <- function(path, analysis_set) {
   if (!file.exists(path)) {
     stop("ANALYSIS_SET names `", analysis_set, "`, an analysis set this study has not built. ",

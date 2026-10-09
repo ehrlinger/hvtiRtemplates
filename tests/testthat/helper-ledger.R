@@ -54,7 +54,7 @@ ledger_rows_or_null <- function() {
 #
 # `hvti_taxonomy()` maps a prefix to ONE folder, but a prefix may span several.
 # `dp` is `graphs` for trends/gfup/spaghetti/procs and `distributions` for
-# variable, with a `descriptive` row planned for the postage-stamp sweep. The
+# variable, and `descriptive` for the EDA report, `eda`. The
 # job catalog records `folder` PER ROW, keyed on (prefix, qualifier), so it is
 # the finer authority and is consulted first. See
 # `dev/specs/2026-09-09-eda-templates-design.md` section 8.3 and issue #97.
