@@ -146,9 +146,10 @@ A list:
       \code{join_key}, the join as read, its key resolved, or \code{NULL},
       and with a join \code{cohort_key}, the cohort's own key;
     \item \code{rows} and \code{patients}, the counts kept;
-    \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
-      a downstream job can tell that it rebuilt the same patients and not
-      only the same counts.
+    \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values,
+      with a join the joined dataset's key values too, so a downstream job
+      can tell that it rebuilt the same patients, and with \code{reduce} the
+      same chosen records, and not only the same counts.
   }
 }
 \description{

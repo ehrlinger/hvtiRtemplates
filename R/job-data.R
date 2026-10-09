@@ -542,9 +542,10 @@
 #'       \code{join_key}, the join as read, its key resolved, or \code{NULL},
 #'       and with a join \code{cohort_key}, the cohort's own key;
 #'     \item \code{rows} and \code{patients}, the counts kept;
-#'     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
-#'       a downstream job can tell that it rebuilt the same patients and not
-#'       only the same counts.
+#'     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values,
+#'       with a join the joined dataset's key values too, so a downstream job
+#'       can tell that it rebuilt the same patients, and with \code{reduce} the
+#'       same chosen records, and not only the same counts.
 #'   }
 #'
 #' @examples
@@ -611,7 +612,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     dataset = .canonical_job_dataset(dataset), analysis_set = analysis_set, where = kept$steps$condition,
     where_shown = kept$steps$shown,
     id = who$id, key = key, rows = counts$rows, patients = counts$patients,
-    key_hash = .key_hash(kept$data, key),
+    # With a join, the joined dataset's key too: a reduced result is keyed on
+    # the ID alone, and only the chosen records' key says which record was chosen.
+    key_hash = .key_hash(kept$data, unique(c(key, joined$join_key))),
     join = join, join_vars = join_vars, reduce = reduce, join_key = joined$join_key,
     cohort_key = if (!is.null(join)) cohort_key
   )

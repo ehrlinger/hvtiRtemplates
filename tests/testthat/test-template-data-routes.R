@@ -395,18 +395,43 @@ test_that("templates that model one row per patient refuse a long join; long-dat
       }
     }
     eval(data_read_prefix(chunks$data), envir = env)
+    # The statement that records what was read, which must name both datasets.
+    records <- vapply(chunks$data, function(expr) {
+      is.call(expr) && identical(expr[[1L]], quote(`<-`)) && identical(expr[[2L]], quote(.provenance_data))
+    }, logical(1))
+    stopifnot(sum(records) == 1L)
+    eval(chunks$data[[which(records)]], envir = env)
+    env$job_data$recorded <- vapply(env$.provenance_data, `[[`, "", "dataset")
     env$job_data
   }
   for (template in refuse) {
     expect_error(run(template, NULL), "this job models one row per patient", info = basename(template))
     reduced <- run(template, quote(list(rule = "last", by = "echo_day")))
     expect_equal(reduced$data$ef, c(55, 45, NA), info = basename(template))
+    expect_identical(reduced$recorded, c("study", "echo"), info = basename(template))
   }
   for (template in accept) {
     long <- run(template, NULL)
     expect_identical(nrow(long$data), 3L, info = basename(template))
     expect_identical(sort(unique(long$data$ccfid)), 1:2, info = basename(template))
+    expect_identical(long$recorded, c("study", "echo"), info = basename(template))
   }
+})
+
+test_that("a downstream job that rebuilds its upstream rows records the joined dataset it re-read", {
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  files <- list.files(normalizePath(template_root), pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
+  rebuilders <- 0L
+  for (f in files) {
+    text <- paste(readLines(f, warn = FALSE), collapse = "\n")
+    if (!grepl(".read_upstream_job_data(", text, fixed = TRUE) || grepl("read = FALSE", text, fixed = TRUE)) next
+    rebuilders <- rebuilders + 1L
+    expect_true(grepl("job_data <- .up$job_data", text, fixed = TRUE), info = basename(f))
+    expect_true(grepl("list(job_data$provenance_join)", text, fixed = TRUE), info = basename(f))
+  }
+  # hm, hp and hs-setup.
+  expect_identical(rebuilders, 3L)
 })
 
 test_that("nb-boostmtree takes a long join whose visit time is only in the joined dataset", {

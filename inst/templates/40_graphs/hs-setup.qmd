@@ -309,7 +309,8 @@ job_data <- .up$job_data
 d <- job_data$data
 TIME <- .up$selection$time
 EVENT <- .up$selection$event
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 

@@ -1058,6 +1058,19 @@ test_that("a downstream job rebuilds a joined cohort with the cohort key the ups
   expect_null(attr(read_job_data(cfg)$record, "selection")$cohort_key)
 })
 
+test_that("a downstream job stops when REDUCE chose a different record for a patient", {
+  cfg <- join_study()
+  first <- attr(read_job_data(cfg, join = "echo", reduce = list(rule = "first", by = "echo_date"))$record, "selection")
+  last <- attr(read_job_data(cfg, join = "echo", reduce = list(rule = "last", by = "echo_date"))$record, "selection")
+  # The same patients and counts; patient 1's chosen echo differs.
+  expect_identical(c(first$rows, first$patients), c(last$rows, last$patients))
+  expect_false(identical(first$key_hash, last$key_hash))
+  # As a rebuild sees it when the joined data changed under an upstream job.
+  first$reduce <- last$reduce
+  expect_error(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = first), list()),
+               "differ from the upstream job's")
+})
+
 test_that("a KEY naming a joined column is checked on the joined rows, so a visit time may live only there", {
   cfg <- join_study()
   # echo_date is in the joined dataset and not the cohort, as a visit time is
