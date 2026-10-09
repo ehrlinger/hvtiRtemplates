@@ -59,7 +59,7 @@ gallery_family(
     "nb-boostmtree" = list(subject = "lvef", type = "boost", prepare = nb_register_echo, choices = list(
       "^Replaces `analyses/<job>`" =
         "Gallery job on the synthetic echo series: LV ejection fraction over follow-up (iv_echo), six baseline predictors.",
-      "^DATASET <- \"study\"$" = "DATASET <- \"echo\"",
+      "^DATASET <- \"built\"$" = "DATASET <- \"echo\"",
       "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
       "^RESPONSE <- " = "RESPONSE <- \"lvef\"",
       # A study's M is in the thousands; 200 keeps the gallery fast, and the
