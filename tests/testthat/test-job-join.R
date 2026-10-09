@@ -153,6 +153,14 @@ test_that("records with no value of `by` are ignored and counted", {
   expect_identical(out$ignored, 1L)
   expect_identical(out$without, 0L)
   expect_true(is.na(out$data$ef[out$data$ccfid == 3L]))
+  # It is counted as a patient once, beside those records: left with none chosen.
+  expect_identical(out$unvalued, 1L)
+  record <- hvtiRtemplates:::.job_record("x", 3L, list(id = "ccfid", fallback = FALSE), character(), NULL,
+                                         list(rows = 3L, patients = 3L),
+                                         join = list(source = "y", rows = 6L, outside = 1L, without = 0L, ignored = 1L,
+                                                     unvalued = 1L, rule = "first by echo_date"))
+  expect_identical(record$value[record$step == "Joined records with no reduction value"],
+                   "1, leaving 1 patient with no record chosen")
 })
 
 test_that("a column in both datasets stops and names JOIN_VARS", {

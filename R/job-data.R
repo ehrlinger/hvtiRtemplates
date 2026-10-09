@@ -772,7 +772,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     data = j$data, key = j$key, dropped = a_ids$dropped, notes = c(jr$notes, resolved$note),
     provenance = jr$record, join_key = replace(jkey, jkey == a_id, cohort_id), id_values = id_values, reduce = j$reduce,
     summary = list(source = jr$source, rows = nrow(a), outside = j$outside, without = j$without,
-                   ignored = j$ignored, rule = j$rule, steps = j$steps)
+                   ignored = j$ignored, unvalued = j$unvalued, rule = j$rule, steps = j$steps)
   )
 }
 
@@ -937,7 +937,14 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     rows[[length(rows) + 1L]] <- c("Cohort patients with no joined record", format(join$without, big.mark = ","))
     if (!is.null(join$rule)) rows[[length(rows) + 1L]] <- c("Reduced to one row per patient", join$rule)
     if (isTRUE(join$ignored > 0L)) {
-      rows[[length(rows) + 1L]] <- c("Joined records with no reduction value", format(join$ignored, big.mark = ","))
+      # A patient whose records all lack the value has none chosen, and is not
+      # among the patients with no joined record above, so is counted here.
+      left <- if (is.null(join$unvalued)) 0L else join$unvalued
+      rows[[length(rows) + 1L]] <- c("Joined records with no reduction value", paste0(
+        format(join$ignored, big.mark = ","),
+        if (left) paste0(", leaving ", format(left, big.mark = ","), if (left == 1L) " patient" else " patients",
+                         " with no record chosen")
+      ))
     }
   }
   rows <- c(rows, .where_rows(steps))

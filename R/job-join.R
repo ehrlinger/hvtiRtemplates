@@ -206,5 +206,6 @@
   # data spell them, so the same choice written two ways records the same.
   resolved <- c(list(by = columns$by, rule = rule), if (identical(rule, "nearest")) list(to = columns$to))
   list(data = out, key = id, outside = outside, without = sum(!cohort_ids %in% with_records), ignored = ignored,
-       rule = .reduce_text(resolved), steps = steps, reduce = resolved)
+       unvalued = sum(cohort_ids %in% with_records & is.na(m)), rule = .reduce_text(resolved), steps = steps,
+       reduce = resolved)
 }
