@@ -40,6 +40,11 @@ test_that("identifiers are matched as text, and a missing one is outside the coh
   expect_identical(nrow(out$data), 3L)
   expect_identical(out$outside, 2L)
   expect_identical(out$without, 2L)
+  # The identifier keeps the cohort's type, as the reduced form's does.
+  expect_identical(out$data$ccfid, c(1L, 1L, 1L))
+  other <- stats::setNames(odd, c("pid", "echo_date", "ef"))
+  expect_identical(hvtiRtemplates:::.join_ancillary(cohort, other, "ccfid", "pid", c("pid", "echo_date"))$data$ccfid,
+                   c(1L, 1L, 1L))
 })
 
 test_that("the joined dataset's identifier may have another name", {
@@ -53,6 +58,16 @@ test_that("a cohort with more than one row per patient stops with a count", {
   twice <- rbind(cohort, cohort[1, ])
   expect_error(hvtiRtemplates:::.join_ancillary(twice, echo, "ccfid", "ccfid", c("ccfid", "echo_date")),
                "1 patient has more than one row in the cohort")
+})
+
+test_that("cohort rows with a missing identifier stop as missing, not as a repeated patient", {
+  gaps <- rbind(cohort, data.frame(ccfid = c(NA, NA), age = 1, dt_surg = 1))
+  err <- tryCatch(hvtiRtemplates:::.join_ancillary(gaps, echo, "ccfid", "ccfid", c("ccfid", "echo_date")),
+                  error = conditionMessage)
+  expect_match(err, "2 cohort rows have no ccfid", fixed = TRUE)
+  expect_no_match(err, "more than one row")
+  expect_error(hvtiRtemplates:::.join_ancillary(gaps[-5, ], echo, "ccfid", "ccfid", c("ccfid", "echo_date")),
+               "1 cohort row has no ccfid", fixed = TRUE)
 })
 
 test_that("first, last and nearest each keep one row per cohort patient", {
@@ -73,6 +88,13 @@ test_that("first, last and nearest each keep one row per cohort patient", {
   near <- join(reduce = list(rule = "nearest", by = "echo_date", to = "dt_surg"))
   expect_identical(near$data$ef[near$data$ccfid == 1L], 50)
   expect_identical(near$rule, "nearest by echo_date to dt_surg")
+})
+
+test_that("REDUCE's by and to match their columns ignoring case, as other column settings do", {
+  first <- join(reduce = list(rule = "first", by = "ECHO_DATE"))
+  expect_identical(first$data$ef, c(50, 45, NA))
+  near <- join(reduce = list(rule = "nearest", by = "Echo_Date", to = "DT_SURG"))
+  expect_identical(near$data$ef, c(50, 45, NA))
 })
 
 test_that("nearest reads dates", {
@@ -123,6 +145,22 @@ test_that("records with no value of `by` are ignored and counted", {
                                           reduce = list(rule = "first", by = "echo_date"))
   expect_identical(out$ignored, 1L)
   expect_identical(out$data$ef[out$data$ccfid == 2L], 45)
+  # A patient whose only records have no `by` value has joined records: they
+  # are counted once, as records with no value, not again as a patient with none.
+  only <- rbind(echo, data.frame(ccfid = 3L, echo_date = NA, ef = 10))
+  out <- hvtiRtemplates:::.join_ancillary(cohort, only, "ccfid", "ccfid", c("ccfid", "ef"),
+                                          reduce = list(rule = "first", by = "echo_date"))
+  expect_identical(out$ignored, 1L)
+  expect_identical(out$without, 0L)
+  expect_true(is.na(out$data$ef[out$data$ccfid == 3L]))
+  # It is counted as a patient once, beside those records: left with none chosen.
+  expect_identical(out$unvalued, 1L)
+  record <- hvtiRtemplates:::.job_record("x", 3L, list(id = "ccfid", fallback = FALSE), character(), NULL,
+                                         list(rows = 3L, patients = 3L),
+                                         join = list(source = "y", rows = 6L, outside = 1L, without = 0L, ignored = 1L,
+                                                     unvalued = 1L, rule = "first by echo_date"))
+  expect_identical(record$value[record$step == "Joined records with no reduction value"],
+                   "1, leaving 1 patient with no record chosen")
 })
 
 test_that("a column in both datasets stops and names JOIN_VARS", {
@@ -153,4 +191,58 @@ test_that("no message names an identifier value", {
                   error = conditionMessage)
   expect_match(err, "more than one record")
   expect_no_match(err, "98765431")
+})
+
+test_that("a nearest tie says the records are equally far from the target, and how to break it", {
+  # Patient 1 has echoes 5 days before and 5 days after surgery; patient 2 the same.
+  even <- data.frame(ccfid = c(1L, 1L, 2L, 2L), echo_date = c(95, 105, 95, 105), seq = c(1, 2, 1, 2), ef = 1:4)
+  err <- tryCatch(hvtiRtemplates:::.join_ancillary(cohort, even, "ccfid", "ccfid", c("ccfid", "echo_date"),
+                                                   reduce = list(rule = "nearest", by = "echo_date", to = "dt_surg")),
+                  error = conditionMessage)
+  expect_match(err, "2 patients have more than one record equally far from dt_surg", fixed = TRUE)
+  expect_no_match(err, "same")
+  expect_match(err, "by = c(\"echo_date\", \"<sequence>\")", fixed = TRUE)
+  expect_match(err, "rule = \"first\" or \"last\"", fixed = TRUE)
+  # A second by column breaks the tie, in the same direction as the rule.
+  near <- hvtiRtemplates:::.join_ancillary(cohort, even, "ccfid", "ccfid", c("ccfid", "echo_date"),
+                                           reduce = list(rule = "nearest", by = c("echo_date", "seq"), to = "dt_surg"))
+  expect_identical(near$data$ef, c(1L, 3L, NA))
+  expect_identical(near$rule, "nearest by echo_date, seq to dt_surg")
+  same <- rbind(even, data.frame(ccfid = 1L, echo_date = 105, seq = 3, ef = 9L))
+  last <- hvtiRtemplates:::.join_ancillary(cohort, same, "ccfid", "ccfid", c("ccfid", "echo_date", "seq"),
+                                           reduce = list(rule = "last", by = c("echo_date", "seq")))
+  expect_identical(last$data$ef, c(9L, 4L, NA))
+  # A tie-break column may be missing where no tie needs breaking: only the first by column must hold a value.
+  sparse <- data.frame(ccfid = c(1L, 1L, 1L), echo_date = c(95, 105, 105), seq = c(NA, 1, NA), ef = 1:3)
+  out <- hvtiRtemplates:::.join_ancillary(cohort, sparse, "ccfid", "ccfid", c("ccfid", "echo_date", "ef"),
+                                          reduce = list(rule = "first", by = c("echo_date", "seq")))
+  expect_identical(out$data$ef[[1L]], 1L)
+  expect_identical(out$ignored, 0L)
+  # Where it does, a missing tie-break value loses the tie.
+  out <- hvtiRtemplates:::.join_ancillary(cohort, sparse, "ccfid", "ccfid", c("ccfid", "echo_date", "ef"),
+                                          reduce = list(rule = "last", by = c("echo_date", "seq")))
+  expect_identical(out$data$ef[[1L]], 2L)
+  # first and last ties name the column, and suggest the second by column.
+  err <- tryCatch(hvtiRtemplates:::.join_ancillary(cohort, same, "ccfid", "ccfid", c("ccfid", "echo_date", "seq"),
+                                                   reduce = list(rule = "last", by = "echo_date")),
+                  error = conditionMessage)
+  expect_match(err, "1 patient has more than one record with the same echo_date", fixed = TRUE)
+  expect_match(err, "by = c(\"echo_date\", \"<sequence>\")", fixed = TRUE)
+})
+
+test_that("identifiers that match only after spaces, leading zeros or case are removed stop, with counts", {
+  # Patient 2's records carry a padded or zero-led identifier; patient 1's match.
+  odd <- data.frame(ccfid = c("1", "1", "0002", " 2", "4"), echo_date = c(95, 110, 95, 96, 100), ef = 1:5)
+  err <- tryCatch(hvtiRtemplates:::.join_ancillary(cohort, odd, "ccfid", "ccfid", c("ccfid", "echo_date")),
+                  error = conditionMessage)
+  expect_match(err, "2 records of the joined dataset, on 1 cohort patient", fixed = TRUE)
+  expect_match(err, "leading zeros", fixed = TRUE)
+  expect_match(err, "dataset build", fixed = TRUE)
+  expect_no_match(err, "0002")
+  # Case, for text identifiers.
+  coh <- data.frame(pid = c("ab1", "ab2"), age = 1:2)
+  anc <- data.frame(pid = c("ab1", "AB2"), d = 1:2)
+  expect_error(hvtiRtemplates:::.join_ancillary(coh, anc, "pid", "pid", c("pid", "d")), "1 record of the joined")
+  # A record of a patient outside the cohort is still only counted.
+  expect_identical(join()$outside, 1L)
 })

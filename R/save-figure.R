@@ -11,8 +11,16 @@
 
 # capabilities("cairo") is not enough: macOS R reports TRUE without XQuartz,
 # and cairo_pdf() then only warns "failed to load cairo DLL" and opens no
-# device, so the PDF would silently not be written. Probe by opening one.
+# device, so the PDF would silently not be written. Probe by opening one,
+# once a session: the answer does not change while R runs.
+.figure_state <- new.env(parent = emptyenv())
+
 .cairo_available <- function() {
+  if (is.null(.figure_state$cairo)) .figure_state$cairo <- .cairo_probe()
+  .figure_state$cairo
+}
+
+.cairo_probe <- function() {
   if (!isTRUE(capabilities("cairo"))) return(FALSE)
   probe <- tempfile(fileext = ".pdf")
   on.exit(unlink(probe), add = TRUE)

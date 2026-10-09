@@ -15,7 +15,10 @@
 #' cannot pass for a whole one. \code{\link{render_job}} with
 #' \code{final = TRUE}, or any render with \code{HVTI_TEMPLATE_STRICT} set,
 #' stops while any remains. Both are found by reading the job's source, so they
-#' show in a diff and in review, as commented-out code does not.
+#' show in a diff and in review, as commented-out code does not. A
+#' \code{stop_here()} the source scan cannot see, as inside an \code{if ()} or
+#' called with an argument, refuses a final render itself when it runs, and in a
+#' draft is recorded in the report's provenance as a stop.
 #'
 #' A \code{skip} must give a reason as a non-empty quoted string;
 #' \code{skip: true} is an error. A skipped chunk is neither run nor shown, so a
@@ -43,6 +46,18 @@
 stop_here <- function(envir = parent.frame()) {
   if (!isTRUE(getOption("knitr.in.progress")) || !requireNamespace("knitr", quietly = TRUE)) {
     return(invisible(NULL))
+  }
+  # The source scan finds only a stop_here() alone on its line, so this one
+  # checks too: one inside an if () or with an argument would otherwise end a
+  # final render early, unnoticed and unrecorded.
+  if (.strict_render()) {
+    stop("stop_here() ran in a render with HVTI_TEMPLATE_STRICT set: a final report is the whole job. ",
+         "Remove each skip and stop_here() first.", call. = FALSE)
+  }
+  if (!any(vapply(.partial_state$points, function(p) identical(p$kind, "stop"), logical(1L)))) {
+    .partial_state$points <- c(.partial_state$points, list(list(
+      line = NA_integer_, kind = "stop", reason = "the render stopped here, at a stop_here() the source scan did not find"
+    )))
   }
   input <- get0(".in", envir = envir, ifnotfound = NULL)
   if (is.null(input)) input <- knitr::current_input(dir = TRUE)
@@ -142,6 +157,9 @@ stop_here <- function(envir = parent.frame()) {
   !identical(parsed, FALSE)
 }
 
+# A final render: HVTI_TEMPLATE_STRICT set, as render_job(final = TRUE) sets it.
+.strict_render <- function() !tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")
+
 # Called by every template's guard-partial chunk, just after the EDIT: guard.
 # Registers the `skip` chunk option, then lists the job's partial-render points
 # in a draft or stops a strict render, by the EDIT: guard's own strictness rule.
@@ -172,7 +190,7 @@ stop_here <- function(envir = parent.frame()) {
   items <- paste0("  - line ", points$line, ": ",
                   ifelse(points$kind == "skip", paste0("chunk skipped, ", points$reason), points$reason))
   msg <- paste0("This job is rendered in part (", nrow(points), " point(s)):\n", paste(items, collapse = "\n"))
-  if (!tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+  if (.strict_render()) {
     stop(msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is set: a final report is the whole job. ",
          "Remove each skip and stop_here() first.", call. = FALSE)
   }

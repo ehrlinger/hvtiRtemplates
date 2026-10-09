@@ -11,7 +11,7 @@ test_that("the catalog marks dp-postage and dp-gfup deprecated, and nothing else
   expect_identical(marked$status, c("shipped", "shipped"))
   expect_match(marked$deprecation_note[[2L]], 'SECTIONS <- c("continuous", "percent", "count")', fixed = TRUE)
   expect_match(marked$deprecation_note[[2L]], "release after hvtiRtemplates 1.2.3", fixed = TRUE)
-  expect_match(marked$deprecation_note[[1L]], 'add_job("dc-gfup", subject = "cohort", type = "eda")', fixed = TRUE)
+  expect_match(marked$deprecation_note[[1L]], 'add_job("dc.gfup", subject = "cohort", type = "eda")', fixed = TRUE)
 })
 
 test_that("add_job() warns once for dp-gfup, names dc-gfup, and still scaffolds", {

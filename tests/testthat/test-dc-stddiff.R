@@ -10,6 +10,15 @@ stddiff_chunk <- function(label) {
   parse(text = lines[seq.int(start + 1L, end - 1L)])
 }
 
+test_that("the job's hvtiRpropensity guard asks for the version DESCRIPTION suggests", {
+  lines <- readLines(template_path("dc", "stddiff"), warn = FALSE)
+  guard <- regmatches(lines, regexpr("packageVersion[(]\"hvtiRpropensity\"[)] < \"[0-9.]+\"", lines))
+  expect_length(guard, 1L)
+  suggests <- utils::packageDescription("hvtiRtemplates")$Suggests
+  minimum <- sub(".*hvtiRpropensity \\(>= ([0-9.]+)\\).*", "\\1", gsub("\\s+", " ", suggests))
+  expect_identical(sub('.*< "([0-9.]+)"$', "\\1", guard), minimum)
+})
+
 stddiff_data <- function() {
   i <- seq_len(60L)
   data.frame(
@@ -28,7 +37,7 @@ stddiff_data <- function() {
 
 # Run the template's own study choices, then the overrides, then derive.
 run_stddiff <- function(..., d = stddiff_data()) {
-  testthat::skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.5")
+  testthat::skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   record <- structure(data.frame(step = character(), value = character()),
                       selection = list(id = "ccfid", key = "ccfid"))
   env <- list2env(list(d = d, job_data = list(record = record)), parent = globalenv())
@@ -97,7 +106,7 @@ test_that("dc-stddiff renders, figure and all", {
   skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.5")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- scaffold_job("dc", "stddiff", list(
     "^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL",

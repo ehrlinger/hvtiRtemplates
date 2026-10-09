@@ -297,6 +297,9 @@ test_that("every template that reads its own data offers the join and records th
   }
   # Every first job of a set reads its own data; a drop here means one stopped offering the join.
   expect_identical(readers, 22L)
+  # The refusal names the rest, read from the same templates.
+  expect_identical(hvtiRtemplates:::.long_join_templates(normalizePath(template_root)),
+                   c("dc-general", "dc-tables", "dp-eda", "dp-trends", "nb-boostmtree"))
 })
 
 test_that("descriptive templates join an ancillary dataset, long and one row per patient", {
@@ -392,16 +395,77 @@ test_that("templates that model one row per patient refuse a long join; long-dat
       }
     }
     eval(data_read_prefix(chunks$data), envir = env)
+    # The statement that records what was read, which must name both datasets.
+    records <- vapply(chunks$data, function(expr) {
+      is.call(expr) && identical(expr[[1L]], quote(`<-`)) && identical(expr[[2L]], quote(.provenance_data))
+    }, logical(1))
+    stopifnot(sum(records) == 1L)
+    eval(chunks$data[[which(records)]], envir = env)
+    env$job_data$recorded <- vapply(env$.provenance_data, `[[`, "", "dataset")
     env$job_data
   }
   for (template in refuse) {
     expect_error(run(template, NULL), "this job models one row per patient", info = basename(template))
     reduced <- run(template, quote(list(rule = "last", by = "echo_day")))
     expect_equal(reduced$data$ef, c(55, 45, NA), info = basename(template))
+    expect_identical(reduced$recorded, c("study", "echo"), info = basename(template))
   }
   for (template in accept) {
     long <- run(template, NULL)
     expect_identical(nrow(long$data), 3L, info = basename(template))
     expect_identical(sort(unique(long$data$ccfid)), 1:2, info = basename(template))
+    expect_identical(long$recorded, c("study", "echo"), info = basename(template))
   }
+})
+
+test_that("a downstream job that rebuilds its upstream rows records the joined dataset it re-read", {
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  files <- list.files(normalizePath(template_root), pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
+  rebuilders <- 0L
+  for (f in files) {
+    text <- paste(readLines(f, warn = FALSE), collapse = "\n")
+    if (!grepl(".read_upstream_job_data(", text, fixed = TRUE) || grepl("read = FALSE", text, fixed = TRUE)) next
+    rebuilders <- rebuilders + 1L
+    expect_true(grepl("job_data <- .up$job_data", text, fixed = TRUE), info = basename(f))
+    expect_true(grepl("list(job_data$provenance_join)", text, fixed = TRUE), info = basename(f))
+  }
+  # hm, hp and hs-setup.
+  expect_identical(rebuilders, 3L)
+})
+
+test_that("nb-boostmtree takes a long join whose visit time is only in the joined dataset", {
+  skip_if_not_installed("arrow")
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  template <- file.path(normalizePath(template_root), "30_analyses", "nb-boostmtree.qmd")
+  root <- file.path(withr::local_tempdir(), "visit-study")
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Visit route test", study_tracker_id = 1L))
+  data_dir <- hvtiRutilities::study_dir("datasets", root)
+  # The cohort has no visit time: iv_echo is a column of the echoes alone.
+  built <- data.frame(ccfid = 1:3, age = c(50, 60, 70))
+  echo <- data.frame(ccfid = c(1L, 1L, 2L, 4L), iv_echo = c(0.5, 1, 0.5, 0.5), ef = c(50, 55, 45, 40))
+  utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
+  utils::write.csv(echo, file.path(data_dir, "echo.csv"), row.names = FALSE)
+  suppressWarnings(suppressMessages({
+    hvtiRutilities::register_data(root, built = "built.csv")
+    hvtiRutilities::register_data(root, built = "echo.csv", dataset = "echo", role = "named",
+                                  kind = "ancillary", key = c("ccfid", "iv_echo"))
+  }))
+  withr::local_dir(root)
+  chunks <- data_route_chunks(template)
+  code <- set_assignment(use_whole_cohort(chunks$choices), "JOIN", "echo")
+  env <- new.env(parent = globalenv())
+  env$.root <- "."
+  env$study_config <- hvtiRutilities::study_config
+  for (expr in code) {
+    if (is.call(expr) && identical(expr[[1L]], quote(`<-`)) && is.name(expr[[2L]]) &&
+          as.character(expr[[2L]]) %in% c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "TIME", "KEY", "JOIN",
+                                          "JOIN_VARS", "REDUCE", "JOIN_KEY")) {
+      eval(expr, envir = env)
+    }
+  }
+  eval(data_read_prefix(chunks$data), envir = env)
+  expect_identical(nrow(env$job_data$data), 3L)
+  expect_identical(attr(env$job_data$record, "selection")$key, c("ccfid", "iv_echo"))
 })

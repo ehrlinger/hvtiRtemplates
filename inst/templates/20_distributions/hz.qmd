@@ -226,8 +226,11 @@ KEY <- ID
 #     and a column both datasets have stops, so list only those the job needs.
 #   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
-#     or "nearest" with to = a cohort date column). A tie stops: picking one
-#     record silently would be a hidden choice. This job models one row per
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. This job models one row per
 #     patient, so a JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL

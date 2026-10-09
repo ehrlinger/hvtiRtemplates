@@ -72,8 +72,12 @@ shorter identifiers relies on the name checks.}
 the key registered for \code{dataset}, and \code{id}, one row per
 patient, when none is registered. Add a visit time or date for repeated
 measures. A key that differs from the registered one is noted in the
-record. With \code{join}, the cohort must be one row per patient, and
-the result is keyed as \code{reduce} says.}
+record. Templates pass their \code{KEY}, a study choice the analyst
+reviews, so the default serves a direct call. With \code{join}, the cohort must be one row per patient. A key
+of cohort columns is checked on the cohort, and the result is keyed as
+\code{reduce} says; a key that names a joined column, such as a visit
+time only the joined dataset carries, is checked on the joined rows and
+keys the result.}
 
 \item{join}{Name of one registered ancillary dataset (such as echoes or
 labs) to join to the cohort on \code{id}, or \code{NULL}. The cohort,
@@ -91,9 +95,12 @@ keeps one row per cohort patient, keyed on \code{id}: the record with
 the smallest \code{by} (\code{"first"}), the largest (\code{"last"}),
 or the one nearest a cohort column (\code{rule = "nearest"} with
 \code{to = "dt_surg"}). A patient with no record keeps the row with the
-joined columns missing. Records with no \code{by} value are left out and
-counted, and a patient whose chosen record ties with another stops the
-read, since picking one would be a hidden choice.}
+joined columns missing. \code{by} may name several columns, such as
+\code{c("echo_date", "echo_seq")}: each later one breaks a tie on those
+before it, in the same direction, and a missing tie-break value loses the
+tie. Records with no value in the first \code{by} column are left out and
+counted, and a patient whose chosen record still ties with another stops
+the read, since picking one would be a hidden choice.}
 
 \item{join_key}{Columns that make the joined dataset's rows unique,
 overriding its registered key. A join needs one or the other.}
@@ -101,7 +108,9 @@ overriding its registered key. A join needs one or the other.}
 \item{one_row_per_patient}{\code{TRUE} for a job that models one row per
 patient, such as a hazard, logistic or random forest fit. Such a job stops
 on a \code{join} without \code{reduce}, before any data are read, since
-the long form would count every joined record as a patient. \code{FALSE},
+the long form would count every joined record as a patient, and on rows
+kept that repeat a patient, as a dataset of repeated records read whole
+would, after the rows are selected. \code{FALSE},
 the default, accepts the long form, as descriptive jobs and jobs that model
 repeated measures need.}
 }
@@ -140,12 +149,16 @@ A list:
     \item \code{id} and \code{key}, the resolved column names, the
       key being the joined result's when there is a join;
     \item \code{join}, \code{join_vars}, \code{reduce} and
-      \code{join_key}, the join as read, its key resolved, or \code{NULL},
-      and with a join \code{cohort_key}, the cohort's own key;
+      \code{join_key}, the join as read, with \code{join_vars},
+      \code{join_key} and \code{reduce}'s columns spelled as the data
+      spell them and \code{reduce}'s fields in name order, so the same join
+      written two ways records the same; and \code{cohort_key}, the cohort's
+      own key. All five are present only with a join;
     \item \code{rows} and \code{patients}, the counts kept;
-    \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values, so
-      a downstream job can tell that it rebuilt the same patients and not
-      only the same counts.
+    \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values,
+      with a join the joined dataset's key values too, so a downstream job
+      can tell that it rebuilt the same patients, and with \code{reduce} the
+      same chosen records, and not only the same counts.
   }
 }
 \description{
@@ -170,7 +183,12 @@ Columns named \code{MRN} or \code{eMRN} (ignoring case) are
   \code{where} applies to the joined rows, so a condition may name a column
   from either dataset, though not a cohort column \code{join_vars} leaves
   out; the joined dataset's identifier values are refused in it as the
-  cohort's are.
+  cohort's are. With \code{reduce}, a condition that names a column of the
+  joined dataset filters its records before one is chosen per patient, so
+  \code{rule = "last"} with \code{echo_type == "TTE"} keeps each patient's
+  last such echo, and a patient left with no record is counted as having none.
+  The other conditions filter the reduced rows. The data table shows them in
+  that order; the selection records them as written.
 }
 \examples{
 \donttest{

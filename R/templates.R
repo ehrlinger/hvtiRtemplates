@@ -319,7 +319,7 @@ template_path <- function(prefix, qualifier = NULL) {
 # A template is named `<prefix>[-<qualifier>].qmd` and lives in a numbered
 # taxonomy directory, `20_distributions/ac.qmd`. The name carries no ordinal.
 #
-# ⭐ The ordinal was dropped on 2026-09-03, see
+# NOTE: The ordinal was dropped on 2026-09-03, see
 # dev/specs/2026-09-03-template-identity-design.md. It was `<NN>.<MM>-`, where
 # `NN` was the taxonomy folder's position and `MM` a key assigned once per
 # folder. `NN` duplicated the directory the file already sits in, and `MM`

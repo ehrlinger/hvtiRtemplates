@@ -18,6 +18,11 @@ test_that("Quarto's intermediate file reads the same as the job", {
   f <- hvtiRtemplates:::.job_name_fields
   expect_identical(f("ac.death.hz.rmarkdown"), c("death", "hz"))
   expect_identical(f("dead_pa-hz-ac.rmarkdown"), c("dead_pa", "hz"))
+  # knitr's intermediates add a field before .md.
+  expect_identical(f("hz.dead.hz.knit.md"), c("dead", "hz"))
+  expect_identical(f("dp.trends.cohort.eda.utf8.md"), c("cohort", "eda"))
+  # A job whose type is "knit" is still read as written.
+  expect_identical(f("hz.dead.knit.qmd"), c("dead", "knit"))
 })
 
 test_that("a report whose type is 'runner' keeps it; only an R script drops it", {

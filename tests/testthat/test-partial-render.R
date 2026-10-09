@@ -87,6 +87,33 @@ test_that("stop_here() does nothing outside a render", {
   expect_null(stop_here())
 })
 
+test_that("a stop_here() the source scan misses still refuses a final render, and is recorded in a draft", {
+  # Neither form is found by reading the source.
+  expect_identical(nrow(.partial_points(c("```{r}", "if (!MODEL_READY) stop_here()", "```"))), 0L)
+  expect_identical(nrow(.partial_points(c("```{r}", "hvtiRtemplates::stop_here(environment())", "```"))), 0L)
+  withr::local_options(knitr.in.progress = TRUE)
+  seen <- NULL
+  testthat::local_mocked_bindings(.embed_provenance = function(...) {
+    seen <<- .partial_state$points
+    "provenance"
+  })
+  testthat::local_mocked_bindings(knit_exit = function(...) invisible(NULL), current_input = function(...) "job.qmd",
+                                  .package = "knitr")
+  old <- .partial_state$points
+  withr::defer(.partial_state$points <- old)
+  .partial_state$points <- NULL
+  withr::with_envvar(c(HVTI_TEMPLATE_STRICT = "1"), {
+    expect_error(stop_here(), "HVTI_TEMPLATE_STRICT")
+  })
+  expect_null(seen)
+  withr::with_envvar(c(HVTI_TEMPLATE_STRICT = NA), stop_here())
+  expect_identical(vapply(seen, `[[`, "", "kind"), "stop")
+  # One the scan found is not listed twice.
+  .partial_state$points <- list(list(line = 3L, kind = "stop", reason = "found"))
+  withr::with_envvar(c(HVTI_TEMPLATE_STRICT = NA), stop_here())
+  expect_length(seen, 1L)
+})
+
 test_that("every template carries the guard-partial chunk, just after the EDIT: guard", {
   for (path in template_list()$file) {
     lines <- readLines(path, warn = FALSE)

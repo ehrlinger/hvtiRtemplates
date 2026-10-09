@@ -872,6 +872,11 @@ test_that("a job without a join reads exactly as before", {
   expect_false(any(grepl("^Joined|Reduced", out$record$step)))
   expect_null(attr(out$record, "selection")$join)
   expect_identical(attr(out$record, "selection")$key, "ccfid")
+  # Nor does its selection carry empty join fields, so it is identical to one saved before the join existed.
+  expect_identical(names(attr(out$record, "selection")),
+                   c("dataset", "analysis_set", "where", "where_shown", "id", "key", "rows", "patients", "key_hash"))
+  again <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = attr(out$record, "selection")), list())
+  expect_identical(attr(again$job_data$record, "selection"), attr(out$record, "selection"))
 })
 
 test_that("WHERE applies to the joined rows, and refuses the joined dataset's identifier values", {
@@ -934,7 +939,7 @@ test_that("JOIN needs the cohort's identifier, by name, in the joined dataset", 
   expect_error(read_job_data(cfg, join = "labs"), "has no `ccfid` column")
 })
 
-test_that("the cohort's KEY is checked before a join", {
+test_that("a KEY column neither the cohort nor the joined dataset has stops", {
   cfg <- join_study()
   expect_error(read_job_data(cfg, key = "nope", join = "echo"), "KEY names a column")
 })
@@ -962,10 +967,66 @@ test_that("a job that models one row per patient refuses a long join, before any
   expect_match(err, "one row per patient")
   expect_match(err, "count every joined record as a patient")
   expect_match(err, "REDUCE <- list(rule = \"last\", by = \"<date>\")", fixed = TRUE)
-  expect_match(err, "repeated measures")
+  expect_match(err, "a template that takes repeated records")
+  # It names the templates that take a long join, read from the templates themselves.
+  expect_match(err, "such as dc-general, dc-tables, dp-eda, dp-trends or nb-boostmtree.", fixed = TRUE)
+  expect_no_match(err, "gfup|dc-\\*|dp-\\*")
   expect_no_match(err, "data was read")
   expect_error(read_job_data(cfg, join = "echo", one_row_per_patient = NA), "one_row_per_patient must be TRUE or FALSE")
   expect_error(read_job_data(cfg, join = "echo", one_row_per_patient = "yes"), "one_row_per_patient must be")
+})
+
+test_that("WHERE may name a joined column that shares its name with a cohort column JOIN_VARS leaves out", {
+  skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, "Shared name", 42L))
+  dd <- hvtiRutilities::study_dir("datasets", root)
+  # The cohort's ef is a baseline value; the echoes' ef is per record.
+  utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70), ef = c(1, 1, 1)), file.path(dd, "built.csv"),
+                   row.names = FALSE)
+  utils::write.csv(data.frame(ccfid = c(1L, 1L, 2L), echo_date = c(95, 120, 95), ef = c(50, 55, 45)),
+                   file.path(dd, "echo.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key = c("ccfid", "echo_date")))
+  cfg <- hvtiRutilities::study_config(root)
+  for (reduce in list(NULL, list(rule = "last", by = "echo_date"))) {
+    out <- read_job_data(cfg, join = "echo", join_vars = "age", reduce = reduce, where = quote(ef >= 50))
+    expect_true(all(out$data$ef >= 50, na.rm = TRUE))
+  }
+  # So may KEY: the cohort's ef is not carried, so KEY's ef is the joined one.
+  out <- read_job_data(cfg, key = c("ccfid", "ef"), join = "echo", join_vars = "age")
+  expect_identical(attr(out$record, "selection")$key, c("ccfid", "ef"))
+})
+
+test_that("the same join written two ways records the same selection", {
+  cfg <- join_study()
+  one <- read_job_data(cfg, join = "echo", join_vars = "age", reduce = list(rule = "first", by = "echo_date"))
+  two <- read_job_data(cfg, join = "echo", join_vars = "AGE", reduce = list(by = "ECHO_DATE", rule = "first"))
+  expect_identical(attr(one$record, "selection"), attr(two$record, "selection"))
+  sel <- attr(one$record, "selection")
+  expect_identical(sel$reduce, list(by = "echo_date", rule = "first"))
+  expect_identical(sel$join_vars, "age")
+  # A downstream setting written either way agrees with it.
+  expect_no_error(hvtiRtemplates:::.check_upstream_selection(sel, list(reduce = list(rule = "first", by = "ECHO_DATE"))))
+  # hp compares ac's and hz's selections whole, and its message names every setting that makes one.
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  hp <- readLines(file.path(template_root, "40_graphs", "hp.qmd"), warn = FALSE)
+  expect_true(any(grepl("JOIN, JOIN_VARS, REDUCE and JOIN_KEY", hp, fixed = TRUE)))
+})
+
+test_that("a job that models one row per patient refuses a long DATASET as it does a long join", {
+  cfg <- join_study()
+  # echo, read whole, is keyed on (ccfid, echo_date): patient 1 has two rows.
+  err <- tryCatch(read_job_data(cfg, dataset = "echo", one_row_per_patient = TRUE), error = conditionMessage)
+  expect_match(err, "This job models one row per patient", fixed = TRUE)
+  expect_match(err, "1 patient has more than one row", fixed = TRUE)
+  expect_match(err, "REDUCE", fixed = TRUE)
+  expect_no_match(err, "9100001")
+  expect_identical(nrow(read_job_data(cfg, dataset = "echo")$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, dataset = "echo", one_row_per_patient = TRUE, where = quote(echo_date < 100))$data),
+                   2L)
 })
 
 test_that("a job that models one row per patient accepts a reduced join, and the default a long one", {
@@ -993,9 +1054,14 @@ test_that("a downstream job rebuilds a joined cohort, and its join settings must
                "REDUCE here \\(last by echo_date\\) differs.*first by echo_date")
   same <- hvtiRtemplates:::.check_upstream_selection(sel, list(reduce = list(by = "echo_date", rule = "first")))
   expect_identical(same$reduce, sel$reduce)
-  # A selection recorded before the join fields existed is filled in with the setting as given.
-  older <- hvtiRtemplates:::.check_upstream_selection(list(id = "ccfid"), list(reduce = list(rule = "first", by = "d")))
-  expect_identical(older$reduce, list(rule = "first", by = "d"))
+  # A selection without the join fields read no join, so a join here cannot rebuild it.
+  expect_error(hvtiRtemplates:::.check_upstream_selection(list(id = "ccfid"), list(reduce = list(rule = "first", by = "d"))),
+               "REDUCE here \\(first by d\\) differs from the upstream job's \\(none\\)")
+  plain <- attr(read_job_data(cfg)$record, "selection")
+  expect_error(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = plain), list(join = "echo")),
+               "JOIN here \\(echo\\) differs from the upstream job's \\(none\\)")
+  # Left NULL, as downstream templates leave them, they agree.
+  expect_no_error(hvtiRtemplates:::.check_upstream_selection(plain, list(join = NULL, reduce = NULL)))
 })
 
 test_that("a stale analysis set read in a draft is a note in the data table", {
@@ -1053,4 +1119,118 @@ test_that("a downstream job rebuilds a joined cohort with the cohort key the ups
   out <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())
   expect_match(out$job_data$record$value[out$job_data$record$step == "Note"], "differs from the registered key")
   expect_null(attr(read_job_data(cfg)$record, "selection")$cohort_key)
+})
+
+test_that("one handler turns an out-of-date message into a note, for a dataset and an analysis set alike", {
+  stale <- function(text) {
+    message(structure(class = c("hvtiRutilities_out_of_date", "message", "condition"),
+                      list(message = paste0(text, "\n"), call = NULL)))
+  }
+  expect_no_message(read <- hvtiRtemplates:::.with_out_of_date_notes({
+    stale("first")
+    stale("first")
+    stale("second")
+    list(value = 1)
+  }))
+  expect_identical(read$value, 1)
+  expect_identical(read$notes, c("first", "second"))
+  # Any other message passes through.
+  expect_message(hvtiRtemplates:::.with_out_of_date_notes(list(value = message("other"))), "other")
+})
+
+test_that("key = NULL, the default, reads the registered key, and the ID when none is registered", {
+  expect_identical(attr(read_job_data(job_study(d0))$record, "selection")$key, "ccfid")
+  root <- withr::local_tempdir()
+  suppressMessages(hvtiRutilities::study_setup(root, "Registered key", 1L, adopt = TRUE))
+  utils::write.csv(d0, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = c("ccfid", "age")))
+  out <- read_job_data(hvtiRutilities::study_config(start = root))
+  expect_identical(attr(out$record, "selection")$key, c("ccfid", "age"))
+  expect_false("Note" %in% out$record$step)
+})
+
+test_that("a KEY of the ID is compared with the registered key as the ID resolved, after an MRN fallback", {
+  root <- withr::local_tempdir()
+  suppressMessages(hvtiRutilities::study_setup(root, "Fallback", 1L, adopt = TRUE))
+  utils::write.csv(d0[-1], file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "mrn"))
+  cfg <- hvtiRutilities::study_config(start = root)
+  # KEY <- ID, with ID the default "ccfid", which falls back to the MRN the dataset is registered on.
+  out <- read_job_data(cfg, key = "ccfid")
+  expect_identical(attr(out$record, "selection")$key, "mrn")
+  expect_false("Note" %in% out$record$step)
+  # A KEY that does differ is still noted.
+  expect_match(read_job_data(cfg, key = c("ccfid", "age"))$record$value, "differs from the registered key", all = FALSE)
+})
+
+test_that("with REDUCE, WHERE on joined columns filters the records before one is chosen", {
+  cfg <- join_study()
+  last <- list(rule = "last", by = "echo_date")
+  # Patient 1's last echo has ef 55; the last with ef < 55 is the earlier one.
+  out <- read_job_data(cfg, join = "echo", reduce = last, where = quote(ef < 55))
+  expect_equal(out$data$ef, c(50, 45, NA))
+  expect_equal(out$data$echo_date, c(95, 95, NA))
+  rec <- stats::setNames(out$record$value, out$record$step)
+  expect_identical(rec[["`ef < 55`"]], "removed 1")
+  expect_identical(rec[["Cohort patients with no joined record"]], "1")
+  # A patient whose every record is filtered out keeps a row, and is counted as having none.
+  none <- read_job_data(cfg, join = "echo", reduce = last, where = quote(ef < 50))
+  expect_equal(none$data$ef, c(NA, 45, NA))
+  expect_identical(none$record$value[none$record$step == "Cohort patients with no joined record"], "2")
+  # A condition on cohort columns filters patients, after the reduction, as before.
+  both <- read_job_data(cfg, join = "echo", reduce = last, where = rlang::exprs(age >= 60, ef < 55))
+  expect_identical(both$data$ccfid, 2:3)
+  expect_equal(both$data$ef, c(45, NA))
+  steps <- both$record$step
+  order <- match(c("Joined", "`ef < 55`", "Cohort patients with no joined record", "Reduced to one row per patient",
+                   "`age >= 60`", "Rows kept"), steps)
+  expect_false(anyNA(order))
+  expect_false(is.unsorted(order))
+  sel <- attr(both$record, "selection")
+  # Recorded as written, so a downstream WHERE in the same order agrees.
+  expect_identical(sel$where, c("age >= 60", "ef < 55"))
+  again <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel),
+                                                    list(where = rlang::exprs(age >= 60, ef < 55)))
+  expect_identical(again$job_data$data, both$data)
+  # The joined dataset's identifier values are still refused.
+  err <- tryCatch(read_job_data(cfg, join = "echo", reduce = last, where = quote(ef != 9100004)),
+                  error = conditionMessage)
+  expect_match(err, "identifier")
+  expect_no_match(err, "9100004")
+  # And a cohort column JOIN_VARS leaves out.
+  expect_error(read_job_data(cfg, join = "echo", reduce = last, join_vars = "dt_surg", where = quote(ef < age)),
+               "a cohort column JOIN_VARS leaves out")
+})
+
+test_that("a downstream job stops when REDUCE chose a different record for a patient", {
+  cfg <- join_study()
+  first <- attr(read_job_data(cfg, join = "echo", reduce = list(rule = "first", by = "echo_date"))$record, "selection")
+  last <- attr(read_job_data(cfg, join = "echo", reduce = list(rule = "last", by = "echo_date"))$record, "selection")
+  # The same patients and counts; patient 1's chosen echo differs.
+  expect_identical(c(first$rows, first$patients), c(last$rows, last$patients))
+  expect_false(identical(first$key_hash, last$key_hash))
+  # As a rebuild sees it when the joined data changed under an upstream job.
+  first$reduce <- last$reduce
+  expect_error(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = first), list()),
+               "differ from the upstream job's")
+})
+
+test_that("a KEY naming a joined column is checked on the joined rows, so a visit time may live only there", {
+  cfg <- join_study()
+  # echo_date is in the joined dataset and not the cohort, as a visit time is
+  # for a repeated-measures job such as nb-boostmtree.
+  out <- read_job_data(cfg, key = c("ccfid", "echo_date"), join = "echo")
+  expect_identical(nrow(out$data), 3L)
+  sel <- attr(out$record, "selection")
+  expect_identical(sel$key, c("ccfid", "echo_date"))
+  expect_identical(sel$cohort_key, c("ccfid", "echo_date"))
+  # Matched ignoring case, as any KEY is.
+  expect_identical(attr(read_job_data(cfg, key = c("ccfid", "ECHO_DATE"), join = "echo")$record, "selection")$key,
+                   c("ccfid", "echo_date"))
+  # A downstream job rebuilds it.
+  again <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())
+  expect_identical(again$job_data$data, out$data)
+  # A KEY that is not unique on the joined rows stops there: two records share echo_date 95.
+  expect_error(read_job_data(cfg, key = c("dt_surg", "echo_date"), join = "echo"), "values? of KEY repeat")
+  expect_error(read_job_data(cfg, key = c("ccfid", "nope"), join = "echo"), "KEY names a column this dataset does not have")
 })
