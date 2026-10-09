@@ -1058,6 +1058,45 @@ test_that("a downstream job rebuilds a joined cohort with the cohort key the ups
   expect_null(attr(read_job_data(cfg)$record, "selection")$cohort_key)
 })
 
+test_that("with REDUCE, WHERE on joined columns filters the records before one is chosen", {
+  cfg <- join_study()
+  last <- list(rule = "last", by = "echo_date")
+  # Patient 1's last echo has ef 55; the last with ef < 55 is the earlier one.
+  out <- read_job_data(cfg, join = "echo", reduce = last, where = quote(ef < 55))
+  expect_equal(out$data$ef, c(50, 45, NA))
+  expect_equal(out$data$echo_date, c(95, 95, NA))
+  rec <- stats::setNames(out$record$value, out$record$step)
+  expect_identical(rec[["`ef < 55`"]], "removed 1")
+  expect_identical(rec[["Cohort patients with no joined record"]], "1")
+  # A patient whose every record is filtered out keeps a row, and is counted as having none.
+  none <- read_job_data(cfg, join = "echo", reduce = last, where = quote(ef < 50))
+  expect_equal(none$data$ef, c(NA, 45, NA))
+  expect_identical(none$record$value[none$record$step == "Cohort patients with no joined record"], "2")
+  # A condition on cohort columns filters patients, after the reduction, as before.
+  both <- read_job_data(cfg, join = "echo", reduce = last, where = rlang::exprs(age >= 60, ef < 55))
+  expect_identical(both$data$ccfid, 2:3)
+  expect_equal(both$data$ef, c(45, NA))
+  steps <- both$record$step
+  order <- match(c("Joined", "`ef < 55`", "Cohort patients with no joined record", "Reduced to one row per patient",
+                   "`age >= 60`", "Rows kept"), steps)
+  expect_false(anyNA(order))
+  expect_false(is.unsorted(order))
+  sel <- attr(both$record, "selection")
+  # Recorded as written, so a downstream WHERE in the same order agrees.
+  expect_identical(sel$where, c("age >= 60", "ef < 55"))
+  again <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel),
+                                                    list(where = rlang::exprs(age >= 60, ef < 55)))
+  expect_identical(again$job_data$data, both$data)
+  # The joined dataset's identifier values are still refused.
+  err <- tryCatch(read_job_data(cfg, join = "echo", reduce = last, where = quote(ef != 9100004)),
+                  error = conditionMessage)
+  expect_match(err, "identifier")
+  expect_no_match(err, "9100004")
+  # And a cohort column JOIN_VARS leaves out.
+  expect_error(read_job_data(cfg, join = "echo", reduce = last, join_vars = "dt_surg", where = quote(ef < age)),
+               "a cohort column JOIN_VARS leaves out")
+})
+
 test_that("a downstream job stops when REDUCE chose a different record for a patient", {
   cfg <- join_study()
   first <- attr(read_job_data(cfg, join = "echo", reduce = list(rule = "first", by = "echo_date"))$record, "selection")

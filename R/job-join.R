@@ -68,7 +68,8 @@
   invisible(TRUE)
 }
 
-.join_ancillary <- function(cohort, ancillary, id, ancillary_id, join_key, join_vars = NULL, reduce = NULL) {
+.join_ancillary <- function(cohort, ancillary, id, ancillary_id, join_key, join_vars = NULL, reduce = NULL,
+                            filter = NULL) {
   cols <- if (is.null(join_vars)) names(cohort) else unique(c(id, .match_columns(join_vars, names(cohort))))
   absent <- setdiff(cols, names(cohort))
   if (length(absent)) {
@@ -102,15 +103,26 @@
   anc_ids <- anc_ids[inside]
   if (!identical(ancillary_id, id)) names(ancillary)[names(ancillary) == ancillary_id] <- id
 
+  carried <- cohort[match(anc_ids, cohort_ids), setdiff(cols, id), drop = FALSE]
   if (is.null(reduce)) {
-    carried <- cohort[match(anc_ids, cohort_ids), setdiff(cols, id), drop = FALSE]
     out <- cbind(ancillary, carried)
     rownames(out) <- NULL
     return(list(data = out, key = replace(join_key, join_key == ancillary_id, id), outside = outside,
-                without = sum(!cohort_ids %in% anc_ids), ignored = 0L, rule = NULL))
+                without = sum(!cohort_ids %in% anc_ids), ignored = 0L, rule = NULL, steps = NULL))
   }
 
   .check_reduce(reduce, ancillary, cohort)
+  # Records are filtered before one is chosen (maintainer's decision,
+  # 2026-10-09), so "last echo where echo_type is TTE" is each patient's last
+  # TTE. `filter` sees each record with the cohort columns it carries, and
+  # returns which rows it keeps and the steps for the data table.
+  steps <- NULL
+  if (!is.null(filter)) {
+    kept <- filter(cbind(ancillary, carried), setdiff(names(ancillary), id))
+    ancillary <- ancillary[kept$rows, , drop = FALSE]
+    anc_ids <- anc_ids[kept$rows]
+    steps <- kept$steps
+  }
   rule <- reduce$rule
   by <- reduce$by
   score <- as.numeric(ancillary[[by]])
@@ -138,5 +150,6 @@
   m <- match(cohort_ids, anc_ids[chosen])
   out <- cbind(cohort[cols], picked[m, , drop = FALSE])
   rownames(out) <- NULL
-  list(data = out, key = id, outside = outside, without = sum(is.na(m)), ignored = ignored, rule = .reduce_text(reduce))
+  list(data = out, key = id, outside = outside, without = sum(is.na(m)), ignored = ignored, rule = .reduce_text(reduce),
+       steps = steps)
 }

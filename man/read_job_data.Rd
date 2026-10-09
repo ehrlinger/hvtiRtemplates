@@ -174,7 +174,12 @@ Columns named \code{MRN} or \code{eMRN} (ignoring case) are
   \code{where} applies to the joined rows, so a condition may name a column
   from either dataset, though not a cohort column \code{join_vars} leaves
   out; the joined dataset's identifier values are refused in it as the
-  cohort's are.
+  cohort's are. With \code{reduce}, a condition that names a column of the
+  joined dataset filters its records before one is chosen per patient, so
+  \code{rule = "last"} with \code{echo_type == "TTE"} keeps each patient's
+  last TTE, and a patient left with no record is counted as having none.
+  The other conditions filter the reduced rows. The data table shows them in
+  that order; the selection records them as written.
 }
 \examples{
 \donttest{
