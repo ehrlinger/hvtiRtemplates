@@ -872,6 +872,11 @@ test_that("a job without a join reads exactly as before", {
   expect_false(any(grepl("^Joined|Reduced", out$record$step)))
   expect_null(attr(out$record, "selection")$join)
   expect_identical(attr(out$record, "selection")$key, "ccfid")
+  # Nor does its selection carry empty join fields, so it is identical to one saved before the join existed.
+  expect_identical(names(attr(out$record, "selection")),
+                   c("dataset", "analysis_set", "where", "where_shown", "id", "key", "rows", "patients", "key_hash"))
+  again <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = attr(out$record, "selection")), list())
+  expect_identical(attr(again$job_data$record, "selection"), attr(out$record, "selection"))
 })
 
 test_that("WHERE applies to the joined rows, and refuses the joined dataset's identifier values", {

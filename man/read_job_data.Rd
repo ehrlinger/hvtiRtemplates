@@ -145,8 +145,8 @@ A list:
     \item \code{id} and \code{key}, the resolved column names, the
       key being the joined result's when there is a join;
     \item \code{join}, \code{join_vars}, \code{reduce} and
-      \code{join_key}, the join as read, its key resolved, or \code{NULL},
-      and with a join \code{cohort_key}, the cohort's own key;
+      \code{join_key}, the join as read, its key resolved, and
+      \code{cohort_key}, the cohort's own key, present only with a join;
     \item \code{rows} and \code{patients}, the counts kept;
     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values,
       with a join the joined dataset's key values too, so a downstream job

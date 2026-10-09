@@ -549,8 +549,8 @@
 #'     \item \code{id} and \code{key}, the resolved column names, the
 #'       key being the joined result's when there is a join;
 #'     \item \code{join}, \code{join_vars}, \code{reduce} and
-#'       \code{join_key}, the join as read, its key resolved, or \code{NULL},
-#'       and with a join \code{cohort_key}, the cohort's own key;
+#'       \code{join_key}, the join as read, its key resolved, and
+#'       \code{cohort_key}, the cohort's own key, present only with a join;
 #'     \item \code{rows} and \code{patients}, the counts kept;
 #'     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values,
 #'       with a join the joined dataset's key values too, so a downstream job
@@ -650,10 +650,15 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     id = who$id, key = key, rows = counts$rows, patients = counts$patients,
     # With a join, the joined dataset's key too: a reduced result is keyed on
     # the ID alone, and only the chosen records' key says which record was chosen.
-    key_hash = .key_hash(kept$data, unique(c(key, joined$join_key))),
-    join = join, join_vars = join_vars, reduce = reduce, join_key = joined$join_key,
-    cohort_key = if (!is.null(join)) cohort_key
+    key_hash = .key_hash(kept$data, unique(c(key, joined$join_key)))
   )
+  # Only with a join: a selection without one keeps the fields it had before
+  # joins existed, so the two compare identical. A NULL field reads as absent.
+  if (!is.null(join)) {
+    attr(record, "selection") <- c(attr(record, "selection"), list(
+      join = join, join_vars = join_vars, reduce = reduce, join_key = joined$join_key, cohort_key = cohort_key
+    ))
+  }
   list(data = kept$data, record = record, provenance = read$record,
        provenance_join = joined$provenance, attrition = attrition)
 }
