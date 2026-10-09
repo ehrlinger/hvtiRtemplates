@@ -14,7 +14,12 @@ read_job_data(
   analysis_set = NULL,
   where = NULL,
   id = "ccfid",
-  key = id
+  key = NULL,
+  join = NULL,
+  join_vars = NULL,
+  reduce = NULL,
+  join_key = NULL,
+  one_row_per_patient = FALSE
 )
 ```
 
@@ -86,8 +91,52 @@ read_job_data(
 
 - key:
 
-  Columns that make a row unique; defaults to `id`, one row per patient.
-  Add a visit time or date for repeated measures.
+  Columns that make a row unique. `NULL` (the default) uses the key
+  registered for `dataset`, and `id`, one row per patient, when none is
+  registered. Add a visit time or date for repeated measures. A key that
+  differs from the registered one is noted in the record. With `join`,
+  the cohort must be one row per patient, and the result is keyed as
+  `reduce` says.
+
+- join:
+
+  Name of one registered ancillary dataset (such as echoes or labs) to
+  join to the cohort on `id`, or `NULL`. The cohort, `dataset` or
+  `analysis_set`, decides the patients: joined records of other patients
+  are dropped and counted. A dataset registered with a `kind` other than
+  `"ancillary"` is refused.
+
+- join_vars:
+
+  Cohort columns each joined row carries, the `id` always among them;
+  `NULL` carries all of them. A column both datasets have stops, so list
+  only the cohort columns the job needs.
+
+- reduce:
+
+  `NULL` keeps one row per joined record, keyed on the joined dataset's
+  key. `list(rule = "first", by = "echo_date")` keeps one row per cohort
+  patient, keyed on `id`: the record with the smallest `by` (`"first"`),
+  the largest (`"last"`), or the one nearest a cohort column
+  (`rule = "nearest"` with `to = "dt_surg"`). A patient with no record
+  keeps the row with the joined columns missing. Records with no `by`
+  value are left out and counted, and a patient whose chosen record ties
+  with another stops the read, since picking one would be a hidden
+  choice.
+
+- join_key:
+
+  Columns that make the joined dataset's rows unique, overriding its
+  registered key. A join needs one or the other.
+
+- one_row_per_patient:
+
+  `TRUE` for a job that models one row per patient, such as a hazard,
+  logistic or random forest fit. Such a job stops on a `join` without
+  `reduce`, before any data are read, since the long form would count
+  every joined record as a patient. `FALSE`, the default, accepts the
+  long form, as descriptive jobs and jobs that model repeated measures
+  need.
 
 ## Value
 
@@ -102,9 +151,15 @@ A list:
   registered, the registered version is read and a final `"Note"` row
   says so, naming
   [`hvtiRutilities::update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html),
-  the call that registers the new file;
+  the call that registers the new file. A stale analysis set read in a
+  draft gets a `"Note"` row the same way. With `join`, rows name the
+  joined dataset and the rows read from it, count its records outside
+  the cohort and the cohort patients with none, and name the reduction;
 
 - `provenance`, the read's provenance record;
+
+- `provenance_join`, the joined dataset's provenance record, naming the
+  version read, or `NULL` without `join`;
 
 - `attrition`, an analysis set's per-rule attrition table, or `NULL` for
   a dataset read whole.
@@ -122,7 +177,12 @@ so a downstream job can rebuild the same rows:
   values of any condition on a `key` column, or using `.data` or a
   string lookup, replaced;
 
-- `id` and `key`, the resolved column names;
+- `id` and `key`, the resolved column names, the key being the joined
+  result's when there is a join;
+
+- `join`, `join_vars`, `reduce` and `join_key`, the join as read, its
+  key resolved, or `NULL`, and with a join `cohort_key`, the cohort's
+  own key;
 
 - `rows` and `patients`, the counts kept;
 
@@ -133,8 +193,8 @@ so a downstream job can rebuild the same rows:
 ## Details
 
 Columns named `MRN` or `eMRN` (ignoring case) are dropped unless one is
-the identifier. An explicit `id` or `key` matches its column ignoring
-case, because
+the identifier, from a joined dataset too. An explicit `id` or `key`
+matches its column ignoring case, because
 [`hvtiRutilities::read_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html)
 lowercases column names. Identifier, key and date values are not
 printed: the record holds counts, and a `where` condition that mentions
@@ -142,7 +202,12 @@ a `key` column, uses `.data` or calls a string lookup such as
 [`get()`](https://rdrr.io/r/base/get.html) is shown, in the record and
 in error messages, with its values replaced by `<value>`. So is a
 condition on `id` in a selection saved before such conditions were
-refused. Every setting is checked before the data are read.
+refused. Every setting is checked before the data are read, and `join`'s
+registration too; only what needs the data, such as whether a column
+exists, is checked after. With `join`, `where` applies to the joined
+rows, so a condition may name a column from either dataset, though not a
+cohort column `join_vars` leaves out; the joined dataset's identifier
+values are refused in it as the cohort's are.
 
 ## Examples
 
@@ -151,7 +216,7 @@ refused. Every setting is checked before the data are read.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
-#> Study: /tmp/RtmpYICJM9/job-data-example
+#> Study: /tmp/Rtmp0B54h0/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -164,7 +229,7 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/RtmpYICJM9/job-data-example
+#> Study: /tmp/Rtmp0B54h0/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
