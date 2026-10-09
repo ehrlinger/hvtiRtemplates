@@ -1562,7 +1562,7 @@
         "hvtiPlotR::hv_followup"
       ],
       "deprecated_by": "dc-gfup",
-      "deprecation_note": "It will be removed in a later release. add_job(\"dc-gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."
+      "deprecation_note": "It will be removed in a later release. add_job(\"dc.gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."
     },
     {
       "prefix": "dp",
