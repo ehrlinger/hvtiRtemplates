@@ -144,6 +144,7 @@ test_that("dc-tables refuses a set cut from another dataset and reads a named re
   env$ANALYSIS_SET <- "eda"
   env$WHERE <- NULL
   env$ID <- env$KEY <- "ccfid"
+  env$JOIN <- env$JOIN_VARS <- env$REDUCE <- env$JOIN_KEY <- NULL
   expect_error(eval(code, env), "written from the study dataset")
   env$ANALYSIS_SET <- NULL
   capture.output(eval(code, env))
