@@ -514,7 +514,7 @@
 #'   cohort's are. With \code{reduce}, a condition that names a column of the
 #'   joined dataset filters its records before one is chosen per patient, so
 #'   \code{rule = "last"} with \code{echo_type == "TTE"} keeps each patient's
-#'   last TTE, and a patient left with no record is counted as having none.
+#'   last such echo, and a patient left with no record is counted as having none.
 #'   The other conditions filter the reduced rows. The data table shows them in
 #'   that order; the selection records them as written.
 #'
@@ -658,7 +658,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
          "dataset of one row per patient, and JOIN the repeated records with REDUCE to keep one per patient, or use a ",
          "template that takes repeated records", .such_as(.long_join_templates()), ".", call. = FALSE)
   }
-  record <-.job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts, notes = unique(notes),
+  record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts, notes = unique(notes),
                         join = joined$summary)
   # Recorded in the order written, wherever each condition ran, so a downstream
   # job's WHERE in that order agrees.
@@ -910,10 +910,10 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 
 # One data-table row per WHERE step.
 .where_rows <- function(steps) {
-  lapply(seq_len(if (is.null(steps)) 0L else nrow(steps)), function(i) c(
-    paste0("`", steps$shown[[i]], "`"),
-    paste0("removed ", steps$removed[[i]], if (steps$missing[[i]]) paste0(" (", steps$missing[[i]], " missing)") else "")
-  ))
+  lapply(seq_len(if (is.null(steps)) 0L else nrow(steps)), function(i) {
+    c(paste0("`", steps$shown[[i]], "`"),
+      paste0("removed ", steps$removed[[i]], if (steps$missing[[i]]) paste0(" (", steps$missing[[i]], " missing)") else ""))
+  })
 }
 
 .job_record <- function(source, rows_read, who, dropped, steps, counts, notes = character(), join = NULL) {

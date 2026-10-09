@@ -10,7 +10,8 @@
 # downstream job's REDUCE with its upstream job's.
 .reduce_text <- function(reduce) {
   if (is.null(reduce)) return(NULL)
-  paste0(reduce$rule, " by ", paste(reduce$by, collapse = ", "), if (identical(reduce$rule, "nearest")) paste0(" to ", reduce$to) else "")
+  paste0(reduce$rule, " by ", paste(reduce$by, collapse = ", "),
+         if (identical(reduce$rule, "nearest")) paste0(" to ", reduce$to) else "")
 }
 
 # An identifier as text with surrounding spaces, leading zeros and letter case
