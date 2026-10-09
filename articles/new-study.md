@@ -77,7 +77,7 @@ directly, in a temporary directory:
 ``` r
 
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L)
-#> Study: /tmp/RtmpN7BnYW/file1e95cb1869f/new-study
+#> Study: /tmp/RtmpWKTLBI/file1e4f28a7753c/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -123,7 +123,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpN7BnYW/file1e95cb1869f/new-study
+#> Study: /tmp/RtmpWKTLBI/file1e4f28a7753c/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -305,10 +305,10 @@ head(template_list()[, c("name", "prefix", "qualifier", "folder")], 10)
 #> 4  dc.stddiff     dc   stddiff   descriptive
 #> 5   dc.tables     dc    tables   descriptive
 #> 6      dp.eda     dp       eda   descriptive
-#> 7  dp.postage     dp   postage   descriptive
-#> 8          ac     ac      <NA> distributions
-#> 9          hz     hz      <NA> distributions
-#> 10         bc     bc      <NA>      analyses
+#> 7          ac     ac      <NA> distributions
+#> 8          hz     hz      <NA> distributions
+#> 9          bc     bc      <NA>      analyses
+#> 10         bh     bh      <NA>      analyses
 ```
 
 The other chains follow the same pattern: a fitting job saves a handoff

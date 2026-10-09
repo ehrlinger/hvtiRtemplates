@@ -124,7 +124,7 @@
 <span>  study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  adopt <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -166,7 +166,7 @@
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -220,7 +220,7 @@
 <p>The EDA report template is also part of this stage, but it requires a meaningful <code>X_VAR</code> for the horizontal axis. Create it when the dataset has an appropriate reference date, calendar year or follow-up measure:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">eda</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"eda"</span><span class="op">)</span></span></code></pre></div>
-<p>Its follow-up section needs the death and follow-up fields; take <code>"followup"</code> out of <code>SECTIONS</code> when the data do not have them. The older <code>dp-postage</code> template drew the variable sections alone. It is deprecated and will be removed in the release after 1.2.3; <code>SECTIONS &lt;- c("continuous", "percent", "count")</code> in a <code>dp-eda</code> job draws the same pages.</p>
+<p>Its follow-up section needs the death and follow-up fields; take <code>"followup"</code> out of <code>SECTIONS</code> when the data do not have them; <code>SECTIONS &lt;- c("continuous", "percent", "count")</code> draws the variable sections alone.</p>
 <p>Two additional jobs are conditional. Add <code>dc-gfup</code> only when the registered event and follow-up fields answer a real completeness question. Add <code>dp-trends</code> only when the data have a meaningful calendar or operation-time field:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gfup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"gfup"</span><span class="op">)</span></span>
@@ -237,15 +237,15 @@
 <span><span class="op">)</span></span>
 <span><span class="va">study_jobs</span></span>
 <span><span class="co">#&gt;                                                                               general </span></span>
-<span><span class="co">#&gt; "/tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt; "/tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                tables </span></span>
-<span><span class="co">#&gt;  "/tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;  "/tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                  gfup </span></span>
-<span><span class="co">#&gt;    "/tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;    "/tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                trends </span></span>
-<span><span class="co">#&gt;       "/tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study/graphs/dp.trends.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;       "/tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study/graphs/dp.trends.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                   eda </span></span>
-<span><span class="co">#&gt;     "/tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study/descriptive/dp.eda.cohort.eda.qmd"</span></span></code></pre></div>
+<span><span class="co">#&gt;     "/tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study/descriptive/dp.eda.cohort.eda.qmd"</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="work-the-jobs-and-generate-output">Work the jobs and generate output<a class="anchor" aria-label="anchor" href="#work-the-jobs-and-generate-output"></a>
 </h2>

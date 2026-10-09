@@ -28,7 +28,7 @@ existing file, because a job accumulates a study’s edits.
 
 Each template carries a light.
 
-- 🟢 **Shipped** (32): on disk and supported. Scaffold it and use it.
+- 🟢 **Shipped** (31): on disk and supported. Scaffold it and use it.
 - 🟡 **In progress** (22): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
 - 🔴 **Not yet on the way** (14): waiting on a function in another
@@ -57,7 +57,6 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `dc-stddiff` | The balance table: the standardized difference of each baseline variable between two groups, unadjusted and, when the study has them, in the matched set and under matching weights, with an optional permutation reference. | `add_job("dc", subject, type, qualifier = "stddiff")` |
 | 🟢 Shipped | `dc-tables` | The formatted descriptive table: every reported variable under its section heading, categorical as n (%) and continuous as the summary you choose, written to Word. | `add_job("dc", subject, type, qualifier = "tables")` |
 | 🟢 Shipped | `dp-eda` | The whole data-checking report in one render: every column’s contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table. | `add_job("dp", subject, type, qualifier = "eda")` |
-| 🟢 Shipped | `dp-postage` | Deprecated in favor of dp-eda, and removed in the release after 1.2.3. Data-checking sweep over a new build: one small panel per variable against operation year, to find coding errors, drift and missingness. Not a manuscript figure. | `add_job("dp", subject, type, qualifier = "postage")` |
 
 ### distributions
 

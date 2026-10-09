@@ -133,7 +133,7 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">new_root</span>, study <span class="op">=</span> <span class="st">"Synthetic new study"</span>, study_tracker_id <span class="op">=</span> <span class="fl">42L</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpN7BnYW/file1e95cb1869f/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpWKTLBI/file1e4f28a7753c/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -168,7 +168,7 @@
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpN7BnYW/file1e95cb1869f/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpWKTLBI/file1e4f28a7753c/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -270,10 +270,10 @@
 <span><span class="co">#&gt; 4  dc.stddiff     dc   stddiff   descriptive</span></span>
 <span><span class="co">#&gt; 5   dc.tables     dc    tables   descriptive</span></span>
 <span><span class="co">#&gt; 6      dp.eda     dp       eda   descriptive</span></span>
-<span><span class="co">#&gt; 7  dp.postage     dp   postage   descriptive</span></span>
-<span><span class="co">#&gt; 8          ac     ac      &lt;NA&gt; distributions</span></span>
-<span><span class="co">#&gt; 9          hz     hz      &lt;NA&gt; distributions</span></span>
-<span><span class="co">#&gt; 10         bc     bc      &lt;NA&gt;      analyses</span></span></code></pre></div>
+<span><span class="co">#&gt; 7          ac     ac      &lt;NA&gt; distributions</span></span>
+<span><span class="co">#&gt; 8          hz     hz      &lt;NA&gt; distributions</span></span>
+<span><span class="co">#&gt; 9          bc     bc      &lt;NA&gt;      analyses</span></span>
+<span><span class="co">#&gt; 10         bh     bh      &lt;NA&gt;      analyses</span></span></code></pre></div>
 </div>
 <p>The other chains follow the same pattern: a fitting job saves a handoff that later jobs read. The random forest jobs (<code>rfc</code>, <code>rfr</code>, <code>rfs</code>) pair a <code>-fit</code> job with an <code>-explain</code> job; the logistic family (<code>lm</code>) fits and validates outcome and propensity models; <code>bh</code> reports bootstrap variable selection.</p>
 </section><script id="quarto-html-after-body" type="application/javascript">

@@ -325,11 +325,7 @@ A legacy EDA report drew no follow-up panels, so
 writes its `dp-eda` job with
 `SECTIONS <- c("continuous", "percent", "count")`: the continuous,
 percent and count pages, each with its table. Add `"followup"` to draw
-the follow-up panels as well. The `dp-postage` template drew those three
-sections on their own. It is deprecated in favor of `dp-eda` and will be
-removed in the release after 1.2.3, and
-[`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
-given `qualifier = "postage"` writes a `dp-eda` job with a warning.
+the follow-up panels as well.
 
 ``` r
 

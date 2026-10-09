@@ -63,7 +63,7 @@ files already shipped; this catalog records the full work plan.</p>
   are <code>NA_integer_</code>.
   <code>description</code> is a one-sentence summary, given for every template on
   disk and <code>NA</code> for most queued ones. <code>deprecated_by</code> names the
-  template replacing a deprecated one, such as <code>"dp-eda"</code>, and
+  template replacing a deprecated one, such as <code>"dc-gfup"</code>, and
   <code>deprecation_note</code> says how to move to it; both are <code>NA</code> for a
   supported template. A deprecated template still ships, and
   <code><a href="add_job.html">add_job</a></code> warns when it is used.</p>
@@ -75,13 +75,12 @@ files already shipped; this catalog records the full work plan.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">catalog</span><span class="op">$</span><span class="va">status</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> in-flight    queued   revisit   shipped </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1        34         1        32 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1        34         1        31 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Templates that still scaffold but name a replacement.</span></span></span>
 <span class="r-in"><span><span class="va">catalog</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">catalog</span><span class="op">$</span><span class="va">deprecated_by</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"prefix"</span>, <span class="st">"qualifier"</span>, <span class="st">"deprecated_by"</span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    prefix qualifier deprecated_by</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 61     dp      gfup       dc-gfup</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 65     dp   postage        dp-eda</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Queued templates waiting on work in another package.</span></span></span>
 <span class="r-in"><span><span class="va">queued</span> <span class="op">&lt;-</span> <span class="va">catalog</span><span class="op">[</span><span class="va">catalog</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"queued"</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">catalog</span><span class="op">$</span><span class="va">blocked_on</span><span class="op">)</span>, <span class="op">]</span></span></span>

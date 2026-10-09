@@ -164,7 +164,7 @@ work.</p>
 <code>&lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> until 2026-10. They keep
 that name and keep rendering; <code>add_job()</code> refuses to write a second
 copy of such a job under the new name, and <code><a href="open_job.html">open_job</a></code> opens it.</p>
-<p>A template the catalog marks deprecated, such as <code>dp.postage</code>, still
+<p>A template the catalog marks deprecated, such as <code>dp.gfup</code>, still
 scaffolds, with a warning naming its replacement; see
 <code><a href="template_catalog.html">template_catalog</a></code>.</p>
     </div>
@@ -191,7 +191,7 @@ scaffolds, with a warning naming its replacement; see
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A job accumulates a study's edits, so an existing one is never overwritten.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">add_job</span><span class="op">(</span>prefix <span class="op">=</span> <span class="st">"ac"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/RtmpDLbHYG/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/Rtmp7VH77i/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span>, pattern <span class="op">=</span> <span class="st">"[.]qmd$"</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "10_descriptive/dc.gfup.cohort.eda.qmd"</span>

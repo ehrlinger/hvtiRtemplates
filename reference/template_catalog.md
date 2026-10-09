@@ -18,7 +18,7 @@ A data frame. `uses`, `upstream`, `downstream`, and `workflows` are list
 columns of character vectors. Unmeasured counts are `NA_integer_`.
 `description` is a one-sentence summary, given for every template on
 disk and `NA` for most queued ones. `deprecated_by` names the template
-replacing a deprecated one, such as `"dp-eda"`, and `deprecation_note`
+replacing a deprecated one, such as `"dc-gfup"`, and `deprecation_note`
 says how to move to it; both are `NA` for a supported template. A
 deprecated template still ships, and
 [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
@@ -31,13 +31,12 @@ catalog <- template_catalog()
 table(catalog$status)
 #> 
 #> in-flight    queued   revisit   shipped 
-#>         1        34         1        32 
+#>         1        34         1        31 
 
 # Templates that still scaffold but name a replacement.
 catalog[!is.na(catalog$deprecated_by), c("prefix", "qualifier", "deprecated_by")]
 #>    prefix qualifier deprecated_by
 #> 61     dp      gfup       dc-gfup
-#> 65     dp   postage        dp-eda
 
 # Queued templates waiting on work in another package.
 queued <- catalog[catalog$status == "queued" & !is.na(catalog$blocked_on), ]

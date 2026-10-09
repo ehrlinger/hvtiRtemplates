@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study
+#> Study: /tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,7 +183,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study
+#> Study: /tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -275,11 +275,9 @@ eda <- open_job("dp", "cohort", "eda", qualifier = "eda")
 ```
 
 Its follow-up section needs the death and follow-up fields; take
-`"followup"` out of `SECTIONS` when the data do not have them. The older
-`dp-postage` template drew the variable sections alone. It is deprecated
-and will be removed in the release after 1.2.3;
-`SECTIONS <- c("continuous", "percent", "count")` in a `dp-eda` job
-draws the same pages.
+`"followup"` out of `SECTIONS` when the data do not have them;
+`SECTIONS <- c("continuous", "percent", "count")` draws the variable
+sections alone.
 
 Two additional jobs are conditional. Add `dc-gfup` only when the
 registered event and follow-up fields answer a real completeness
@@ -306,15 +304,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#> "/tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
 #>                                                                                tables 
-#>  "/tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>  "/tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>    "/tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
 #>                                                                                trends 
-#>       "/tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study/graphs/dp.trends.cohort.eda.qmd" 
+#>       "/tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study/graphs/dp.trends.cohort.eda.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/Rtmp2HDYhf/file1ed97c6d5a46/legacy-study/descriptive/dp.eda.cohort.eda.qmd"
+#>     "/tmp/Rtmp9dplJ0/file1e991c16ae77/legacy-study/descriptive/dp.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output

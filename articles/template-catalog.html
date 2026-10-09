@@ -86,7 +86,7 @@
 </h2>
 <p>Each template carries a light.</p>
 <ul>
-<li>🟢 <strong>Shipped</strong> (32): on disk and supported. Scaffold it and use it.</li>
+<li>🟢 <strong>Shipped</strong> (31): on disk and supported. Scaffold it and use it.</li>
 <li>🟡 <strong>In progress</strong> (22): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
 <li>🔴 <strong>Not yet on the way</strong> (14): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
@@ -158,12 +158,6 @@
 <td style="text-align: left;"><code>dp-eda</code></td>
 <td style="text-align: left;">The whole data-checking report in one render: every column’s contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table.</td>
 <td style="text-align: left;"><code>add_job("dp", subject, type, qualifier = "eda")</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">🟢 Shipped</td>
-<td style="text-align: left;"><code>dp-postage</code></td>
-<td style="text-align: left;">Deprecated in favor of dp-eda, and removed in the release after 1.2.3. Data-checking sweep over a new build: one small panel per variable against operation year, to find coding errors, drift and missingness. Not a manuscript figure.</td>
-<td style="text-align: left;"><code>add_job("dp", subject, type, qualifier = "postage")</code></td>
 </tr>
 </tbody>
 </table></section><section class="level3"><h3 id="distributions">distributions<a class="anchor" aria-label="anchor" href="#distributions"></a>

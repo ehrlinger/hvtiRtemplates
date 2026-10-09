@@ -122,7 +122,7 @@ of such a job under the new name, and
 [`open_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
 opens it.
 
-A template the catalog marks deprecated, such as `dp.postage`, still
+A template the catalog marks deprecated, such as `dp.gfup`, still
 scaffolds, with a warning naming its replacement; see
 [`template_catalog`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md).
 
@@ -150,7 +150,7 @@ tryCatch(add_job("dp.gfup", subject = "cohort", type = "eda", dir = d),
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
 try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
-#> Error : add_job(): '/tmp/RtmpDLbHYG/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
+#> Error : add_job(): '/tmp/Rtmp7VH77i/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #> [1] "10_descriptive/dc.gfup.cohort.eda.qmd"
