@@ -19,9 +19,9 @@ that name the job’s set, and the qualifier when the prefix has one:
 add_job("dp", "cohort", "eda", qualifier = "trends")
 ```
 
-In a new study that writes `40_graphs/cohort-eda-dp-trends.qmd`; a
+In a new study that writes `40_graphs/dp.trends.cohort.eda.qmd`; a
 legacy study that already uses bare folder names gets
-`graphs/cohort-eda-dp-trends.qmd`. The job refuses to overwrite an
+`graphs/dp.trends.cohort.eda.qmd`. The job refuses to overwrite an
 existing file, because a job accumulates a study’s edits.
 
 ## Delivery

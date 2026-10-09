@@ -1,9 +1,10 @@
 # Scaffold a new analysis job from a template
 
 Copies a supported job template into the taxonomy folder it belongs to,
-named `<subject>-<type>-<prefix>[-<qualifier>].qmd`. Refuses to
-overwrite an existing job: a job file accumulates a study's edits, and
-silently replacing one would discard them.
+named `<prefix>[.<qualifier>].<subject>.<type>.qmd`, so a study's jobs
+sort by template, then subject, then type. Refuses to overwrite an
+existing job: a job file accumulates a study's edits, and silently
+replacing one would discard them.
 
 ## Usage
 
@@ -18,8 +19,8 @@ add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   Job type: one of the prefixes reported by
   [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
   or a template's full name as reported in its `name` column, e.g.
-  `"dp-trends"`. A full name carries the qualifier, so `qualifier` must
-  then be left `NULL`.
+  `"dp.trends"`; the dash spelling `"dp-trends"` is accepted too. A full
+  name carries the qualifier, so `qualifier` must then be left `NULL`.
 
 - subject:
 
@@ -27,8 +28,8 @@ add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   subject names a statistical endpoint only when the job analyses one.
   Your choice: there is no list of valid values, and every job of one
   analysis should share it (see Details). Must match `^[A-Za-z0-9_]+$`:
-  `-` separates the filename's fields and `.` separates the extension,
-  so neither may appear here.
+  `.` separates the filename's fields, and `-` separated them in names
+  before 2026-10, so neither may appear here.
 
 - type:
 
@@ -48,7 +49,7 @@ add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   Job type within the prefix, e.g. `"trends"` for `dp`. Required only
   where a prefix carries more than one template; omitting it there is an
   error naming the choices, never a silent pick. Restricted to
-  `[A-Za-z0-9_]+`, because `-` separates the filename's fields.
+  `[A-Za-z0-9_]+`, because `.` separates the filename's fields.
 
 ## Value
 
@@ -66,7 +67,7 @@ for either, only the rule that each matches `^[A-Za-z0-9_]+$`. They are
 more than a filename, though. Together they name the job's set, and the
 set is used in four places:
 
-- the job's filename, `<subject>-<type>-<prefix>[-<qualifier>].qmd`;
+- the job's filename, `<prefix>[.<qualifier>].<subject>.<type>.qmd`;
 
 - the job's own `SUBJECT` and `TYPE` lines, which `add_job()` rewrites
   to your values;
@@ -109,11 +110,19 @@ A template whose job runs from a companion script also writes that
 script beside the job, from `inst/runners/<name>-runner.R`: today the
 bootstrap reports `bl`, `br`, `bc` and `bh`, whose runner screens and
 saves the bag the report reads. The runner is named
-`<subject>-<type>-<prefix>-runner.R`, gets the same `SUBJECT` and `TYPE`
-substitution, and is refused, like the job, if it already exists. Its
-study choices carry `EDIT:` markers for the author to work.
+`<prefix>[.<qualifier>].<subject>.<type>.runner.R`, gets the same
+`SUBJECT` and `TYPE` substitution, and is refused, like the job, if it
+already exists. Its study choices carry `EDIT:` markers for the author
+to work.
 
-A template the catalog marks deprecated, such as `dp-postage`, still
+**Names before 2026-10.** Jobs were named
+`<subject>-<type>-<prefix>[-<qualifier>].qmd` until 2026-10. They keep
+that name and keep rendering; `add_job()` refuses to write a second copy
+of such a job under the new name, and
+[`open_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+opens it.
+
+A template the catalog marks deprecated, such as `dp.postage`, still
 scaffolds, with a warning naming its replacement; see
 [`template_catalog`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md).
 
@@ -132,19 +141,19 @@ invisible(hvtiRutilities::study_setup(
 add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
 
 # A qualified template by its full name, the form template_list()$call prints.
-add_job("dc-gfup", subject = "cohort", type = "eda", dir = d)
+add_job("dc.gfup", subject = "cohort", type = "eda", dir = d)
 
 # A deprecated template still scaffolds, and the warning names its replacement.
-tryCatch(add_job("dp-gfup", subject = "cohort", type = "eda", dir = d),
+tryCatch(add_job("dp.gfup", subject = "cohort", type = "eda", dir = d),
          warning = conditionMessage)
-#> [1] "add_job(): dp-gfup is deprecated in favor of dc-gfup. It will be removed in a later release. add_job(\"dc-gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."
+#> [1] "add_job(): dp.gfup is deprecated in favor of dc.gfup. It will be removed in a later release. add_job(\"dc-gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
 try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
-#> Error : add_job(): '/tmp/RtmpLCEjHa/add-job-example/20_distributions/death-hz-ac.qmd' already exists; refusing to overwrite.
+#> Error : add_job(): '/tmp/Rtmp8O85SM/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
-#> [1] "10_descriptive/cohort-eda-dc-gfup.qmd"
-#> [2] "20_distributions/death-hz-ac.qmd"     
+#> [1] "10_descriptive/dc.gfup.cohort.eda.qmd"
+#> [2] "20_distributions/ac.death.hz.qmd"     
 unlink(d, recursive = TRUE)
 ```

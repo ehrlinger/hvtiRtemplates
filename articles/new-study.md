@@ -77,7 +77,7 @@ directly, in a temporary directory:
 ``` r
 
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L)
-#> Study: /tmp/Rtmp0KQD9Z/file1ffa4d7320e8/new-study
+#> Study: /tmp/Rtmpb3RtCC/file1f3e3ebe8bc6/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -123,12 +123,12 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp0KQD9Z/file1ffa4d7320e8/new-study
+#> Study: /tmp/Rtmpb3RtCC/file1f3e3ebe8bc6/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
-#> [x] dataset — built.csv, registered as built_20261008.parquet
+#> [x] dataset — built.csv, registered as built_20261009.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
@@ -149,8 +149,8 @@ general <- open_job("dc", subject = "cohort", type = "eda", qualifier = "general
 
 [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
 creates the job and opens it in RStudio. The file is named
-`<subject>-<type>-<prefix>-<qualifier>.qmd`, here
-`10_descriptive/cohort-eda-dc-general.qmd`. The subject names what the
+`<prefix>.<qualifier>.<subject>.<type>.qmd`, here
+`10_descriptive/dc.general.cohort.eda.qmd`. The subject names what the
 job is about and need not be a statistical endpoint: `cohort` describes
 the whole registered population. The type names the stage, and the pair
 keeps a set of related jobs and their outputs together.
@@ -161,7 +161,7 @@ The executable example scaffolds without opening an editor:
 
 general <- add_job("dc", subject = "cohort", type = "eda", dir = new_root, qualifier = "general")
 sub(paste0(new_root, "/"), "", general, fixed = TRUE)
-#> [1] "10_descriptive/cohort-eda-dc-general.qmd"
+#> [1] "10_descriptive/dc.general.cohort.eda.qmd"
 ```
 
 Each job carries `EDIT:` markers where the template cannot know the
@@ -197,12 +197,12 @@ render_job(general, final = TRUE)
 
 Both run the same hooks. While the job executes it records what it read;
 once Quarto has written the HTML, the post-render hook publishes a
-sidecar beside it, `cohort-eda-dc-general.provenance.json`. An abridged
+sidecar beside it, `dc.general.cohort.eda.provenance.json`. An abridged
 example from a synthetic study:
 
 ``` json
 {
-  "job": "cohort-eda-dc-general",
+  "job": "dc.general.cohort.eda",
   "rendered": "2026-09-23T14:42:04Z",
   "study": { "name": "Synthetic new study", "file": "_study.yml", "sha256": "35f29fb1..." },
   "r": { "version": "4.6.1", "platform": "aarch64-apple-darwin23" },
@@ -216,10 +216,10 @@ example from a synthetic study:
     }
   ],
   "artifacts": [],
-  "source": "10_descriptive/cohort-eda-dc-general.qmd",
+  "source": "10_descriptive/dc.general.cohort.eda.qmd",
   "subject": "cohort",
   "type": "eda",
-  "output": { "file": "cohort-eda-dc-general.html", "sha256": "95455dd3..." }
+  "output": { "file": "dc.general.cohort.eda.html", "sha256": "95455dd3..." }
 }
 ```
 
@@ -267,17 +267,17 @@ chain <- c(
 )
 sub(paste0(new_root, "/"), "", chain, fixed = TRUE)
 #>                                 ac                                 hz 
-#> "20_distributions/death-hz-ac.qmd" "20_distributions/death-hz-hz.qmd" 
+#> "20_distributions/ac.death.hz.qmd" "20_distributions/hz.death.hz.qmd" 
 #>                                 hp 
-#>        "40_graphs/death-hz-hp.qmd"
+#>        "40_graphs/hp.death.hz.qmd"
 ```
 
-The filenames read `death-hz-ac.qmd`, `death-hz-hz.qmd` and
-`death-hz-hp.qmd`: subject, type, then the template. `hz` appears twice
-in the second because the set is named for its method and the job is
-that method’s template.
+The filenames read `ac.death.hz.qmd`, `hz.death.hz.qmd` and
+`hp.death.hz.qmd`: the template, then subject and type, so a study’s
+jobs sort by template. `hz` appears twice in the second because the set
+is named for its method and the job is that method’s template.
 
-![](data:image/svg+xml;base64,PHN2ZyB2aWV3Ym94PSIwIDAgNjQwIDIxMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsbGVkYnk9ImNoYWluLXRpdGxlIiBzdHlsZT0id2lkdGg6IDEwMCU7IGhlaWdodDogYXV0bzsgY29sb3I6IGluaGVyaXQ7IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTMiPjx0aXRsZSBpZD0iY2hhaW4tdGl0bGUiPlRoZSBkZWF0aCBoYXphcmQgY2hhaW46IGFjIGFuZCBoeiBzYXZlIGhhbmRvZmZzIHRoYXQgaHAgcmVhZHM8L3RpdGxlPgo8ZGVmcz48bWFya2VyIGlkPSJhcnJvdyIgdmlld2JveD0iMCAwIDEwIDEwIiByZWZ4PSI5IiByZWZ5PSI1IiBtYXJrZXJ3aWR0aD0iNyIgbWFya2VyaGVpZ2h0PSI3IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0wLDAgTDEwLDUgTDAsMTAgeiIgZmlsbD0iY3VycmVudENvbG9yIiAvPjwvbWFya2VyPjwvZGVmcz48ZyBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIxLjUiPjxyZWN0IHg9IjEwIiB5PSIyMCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI0NiIgcng9IjYiIC8+PHJlY3QgeD0iMTAiIHk9IjEzMCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI0NiIgcng9IjYiIC8+PHJlY3QgeD0iMjQ1IiB5PSIyMCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI0NiIgcng9IjYiIHN0cm9rZS1kYXNoYXJyYXk9IjQgMyIgLz48cmVjdCB4PSIyNDUiIHk9IjEzMCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI0NiIgcng9IjYiIHN0cm9rZS1kYXNoYXJyYXk9IjQgMyIgLz48cmVjdCB4PSI0ODAiIHk9Ijc1IiB3aWR0aD0iMTUwIiBoZWlnaHQ9IjQ2IiByeD0iNiIgLz48cGF0aCBkPSJNMTYwLDQzIEwyNDMsNDMiIG1hcmtlci1lbmQ9InVybCgjYXJyb3cpIiAvPjxwYXRoIGQ9Ik0xNjAsMTUzIEwyNDMsMTUzIiBtYXJrZXItZW5kPSJ1cmwoI2Fycm93KSIgLz48cGF0aCBkPSJNMzk1LDQzIEM0NDAsNDMgNDQwLDkwIDQ3OCw5NSIgbWFya2VyLWVuZD0idXJsKCNhcnJvdykiIC8+PHBhdGggZD0iTTM5NSwxNTMgQzQ0MCwxNTMgNDQwLDEwNiA0NzgsMTAxIiBtYXJrZXItZW5kPSJ1cmwoI2Fycm93KSIgLz48L2c+PGcgZmlsbD0iY3VycmVudENvbG9yIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dGV4dCB4PSI4NSIgeT0iNDEiPmRlYXRoLWh6LWFjLnFtZDwvdGV4dD48dGV4dCB4PSI4NSIgeT0iNTgiIGZvbnQtc2l6ZT0iMTEiPmFjdHVhcmlhbCBsaWZlIHRhYmxlPC90ZXh0Pjx0ZXh0IHg9Ijg1IiB5PSIxNTEiPmRlYXRoLWh6LWh6LnFtZDwvdGV4dD48dGV4dCB4PSI4NSIgeT0iMTY4IiBmb250LXNpemU9IjExIj5wYXJhbWV0cmljIGhhemFyZDwvdGV4dD48dGV4dCB4PSIzMjAiIHk9IjQxIj5hYy5yZHM8L3RleHQ+PHRleHQgeD0iMzIwIiB5PSI1OCIgZm9udC1zaXplPSIxMSI+OTBfZXN0aW1hdGVzL2RlYXRoLWh6LzwvdGV4dD48dGV4dCB4PSIzMjAiIHk9IjE1MSI+aHoucmRzPC90ZXh0Pjx0ZXh0IHg9IjMyMCIgeT0iMTY4IiBmb250LXNpemU9IjExIj45MF9lc3RpbWF0ZXMvZGVhdGgtaHovPC90ZXh0Pjx0ZXh0IHg9IjU1NSIgeT0iOTYiPmRlYXRoLWh6LWhwLnFtZDwvdGV4dD48dGV4dCB4PSI1NTUiIHk9IjExMyIgZm9udC1zaXplPSIxMSI+b3ZlcmxheSBwbG90PC90ZXh0Pjx0ZXh0IHg9IjMyMCIgeT0iMjAwIiBmb250LXNpemU9IjExIj5lYWNoIGpvYiBhbHNvIHB1Ymxpc2hlcyBhIC5wcm92ZW5hbmNlLmpzb24gYmVzaWRlIGl0cyBIVE1MPC90ZXh0PjwvZz48L3N2Zz4=)
+![](data:image/svg+xml;base64,PHN2ZyB2aWV3Ym94PSIwIDAgNjQwIDIxMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsbGVkYnk9ImNoYWluLXRpdGxlIiBzdHlsZT0id2lkdGg6IDEwMCU7IGhlaWdodDogYXV0bzsgY29sb3I6IGluaGVyaXQ7IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTMiPjx0aXRsZSBpZD0iY2hhaW4tdGl0bGUiPlRoZSBkZWF0aCBoYXphcmQgY2hhaW46IGFjIGFuZCBoeiBzYXZlIGhhbmRvZmZzIHRoYXQgaHAgcmVhZHM8L3RpdGxlPgo8ZGVmcz48bWFya2VyIGlkPSJhcnJvdyIgdmlld2JveD0iMCAwIDEwIDEwIiByZWZ4PSI5IiByZWZ5PSI1IiBtYXJrZXJ3aWR0aD0iNyIgbWFya2VyaGVpZ2h0PSI3IiBvcmllbnQ9ImF1dG8iPjxwYXRoIGQ9Ik0wLDAgTDEwLDUgTDAsMTAgeiIgZmlsbD0iY3VycmVudENvbG9yIiAvPjwvbWFya2VyPjwvZGVmcz48ZyBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIxLjUiPjxyZWN0IHg9IjEwIiB5PSIyMCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI0NiIgcng9IjYiIC8+PHJlY3QgeD0iMTAiIHk9IjEzMCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI0NiIgcng9IjYiIC8+PHJlY3QgeD0iMjQ1IiB5PSIyMCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI0NiIgcng9IjYiIHN0cm9rZS1kYXNoYXJyYXk9IjQgMyIgLz48cmVjdCB4PSIyNDUiIHk9IjEzMCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI0NiIgcng9IjYiIHN0cm9rZS1kYXNoYXJyYXk9IjQgMyIgLz48cmVjdCB4PSI0ODAiIHk9Ijc1IiB3aWR0aD0iMTUwIiBoZWlnaHQ9IjQ2IiByeD0iNiIgLz48cGF0aCBkPSJNMTYwLDQzIEwyNDMsNDMiIG1hcmtlci1lbmQ9InVybCgjYXJyb3cpIiAvPjxwYXRoIGQ9Ik0xNjAsMTUzIEwyNDMsMTUzIiBtYXJrZXItZW5kPSJ1cmwoI2Fycm93KSIgLz48cGF0aCBkPSJNMzk1LDQzIEM0NDAsNDMgNDQwLDkwIDQ3OCw5NSIgbWFya2VyLWVuZD0idXJsKCNhcnJvdykiIC8+PHBhdGggZD0iTTM5NSwxNTMgQzQ0MCwxNTMgNDQwLDEwNiA0NzgsMTAxIiBtYXJrZXItZW5kPSJ1cmwoI2Fycm93KSIgLz48L2c+PGcgZmlsbD0iY3VycmVudENvbG9yIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dGV4dCB4PSI4NSIgeT0iNDEiPmFjLmRlYXRoLmh6LnFtZDwvdGV4dD48dGV4dCB4PSI4NSIgeT0iNTgiIGZvbnQtc2l6ZT0iMTEiPmFjdHVhcmlhbCBsaWZlIHRhYmxlPC90ZXh0Pjx0ZXh0IHg9Ijg1IiB5PSIxNTEiPmh6LmRlYXRoLmh6LnFtZDwvdGV4dD48dGV4dCB4PSI4NSIgeT0iMTY4IiBmb250LXNpemU9IjExIj5wYXJhbWV0cmljIGhhemFyZDwvdGV4dD48dGV4dCB4PSIzMjAiIHk9IjQxIj5hYy5yZHM8L3RleHQ+PHRleHQgeD0iMzIwIiB5PSI1OCIgZm9udC1zaXplPSIxMSI+OTBfZXN0aW1hdGVzL2RlYXRoLWh6LzwvdGV4dD48dGV4dCB4PSIzMjAiIHk9IjE1MSI+aHoucmRzPC90ZXh0Pjx0ZXh0IHg9IjMyMCIgeT0iMTY4IiBmb250LXNpemU9IjExIj45MF9lc3RpbWF0ZXMvZGVhdGgtaHovPC90ZXh0Pjx0ZXh0IHg9IjU1NSIgeT0iOTYiPmhwLmRlYXRoLmh6LnFtZDwvdGV4dD48dGV4dCB4PSI1NTUiIHk9IjExMyIgZm9udC1zaXplPSIxMSI+b3ZlcmxheSBwbG90PC90ZXh0Pjx0ZXh0IHg9IjMyMCIgeT0iMjAwIiBmb250LXNpemU9IjExIj5lYWNoIGpvYiBhbHNvIHB1Ymxpc2hlcyBhIC5wcm92ZW5hbmNlLmpzb24gYmVzaWRlIGl0cyBIVE1MPC90ZXh0PjwvZz48L3N2Zz4=)
 
 Solid boxes are jobs; dashed boxes are the saved handoffs they share
 through the set's folder.
@@ -300,12 +300,12 @@ lists every template with its prefix, qualifier and folder:
 head(template_list()[, c("name", "prefix", "qualifier", "folder")], 10)
 #>          name prefix qualifier        folder
 #> 1          bd     bd      <NA>      datasets
-#> 2  dc-general     dc   general   descriptive
-#> 3     dc-gfup     dc      gfup   descriptive
-#> 4  dc-stddiff     dc   stddiff   descriptive
-#> 5   dc-tables     dc    tables   descriptive
-#> 6      dp-eda     dp       eda   descriptive
-#> 7  dp-postage     dp   postage   descriptive
+#> 2  dc.general     dc   general   descriptive
+#> 3     dc.gfup     dc      gfup   descriptive
+#> 4  dc.stddiff     dc   stddiff   descriptive
+#> 5   dc.tables     dc    tables   descriptive
+#> 6      dp.eda     dp       eda   descriptive
+#> 7  dp.postage     dp   postage   descriptive
 #> 8          ac     ac      <NA> distributions
 #> 9          hz     hz      <NA> distributions
 #> 10         bc     bc      <NA>      analyses

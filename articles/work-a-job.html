@@ -92,19 +92,19 @@
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">tl</span>, <span class="va">qualifier</span> <span class="op">==</span> <span class="st">"gfup"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">name</span>, <span class="va">folder</span>, <span class="va">call</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>Two templates come back. <code>dc-gfup</code> is the one to use; <code>dp-gfup</code> still works but is deprecated, and says so with a warning when you add it.</p>
+<p>Two templates come back. <code>dc.gfup</code> is the one to use; <code>dp.gfup</code> still works but is deprecated, and says so with a warning when you add it.</p>
 </section><section class="level2"><h2 id="add-it-to-the-study">Add it to the study<a class="anchor" aria-label="anchor" href="#add-it-to-the-study"></a>
 </h2>
 <p>Copy the call, and change two words before you run it:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc-gfup"</span>, subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc.gfup"</span>, subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p><code>subject</code> and <code>type</code> name <em>your</em> job, not the template. Together they say which set of work the job belongs to: here, exploratory checks (<code>eda</code>) on the whole cohort (<code>cohort</code>). A job modeling death might be <code>subject = "dead"</code>, <code>type = "hz"</code>. Use letters, digits and underscores only, because the two words become part of the filename.</p>
-<p>The job lands in the folder the template belongs in, named <code>&lt;subject&gt;-&lt;type&gt;-&lt;template&gt;.qmd</code>, so the line above writes <code>10_descriptive/cohort-eda-dc-gfup.qmd</code> (or <code>descriptive/...</code> in a study that kept the older, unnumbered folder names). <code><a href="../reference/add_job.html">add_job()</a></code> never overwrites a job that already exists, because a job collects your edits. To open a job, creating it first if it is not there yet, use <code><a href="../reference/open_job.html">open_job()</a></code> with the same arguments; it opens the file in RStudio.</p>
+<p>The job lands in the folder the template belongs in, named <code>&lt;template&gt;.&lt;subject&gt;.&lt;type&gt;.qmd</code>, so the line above writes <code>10_descriptive/dc.gfup.cohort.eda.qmd</code> (or <code>descriptive/...</code> in a study that kept the older, unnumbered folder names). <code><a href="../reference/add_job.html">add_job()</a></code> never overwrites a job that already exists, because a job collects your edits. To open a job, creating it first if it is not there yet, use <code><a href="../reference/open_job.html">open_job()</a></code> with the same arguments; it opens the file in RStudio.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">job</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc-gfup"</span>, subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">job</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc.gfup"</span>, subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="find-what-you-have-to-change">Find what you have to change<a class="anchor" aria-label="anchor" href="#find-what-you-have-to-change"></a>
 </h2>
@@ -139,7 +139,7 @@
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/render_job.html">render_job</a></span><span class="op">(</span><span class="va">job</span>, final <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>A final render is the accepted result. It refuses to finish while any <code>EDIT:</code> marker remains, rather than producing a report that looks done and is not. It also records the job’s <em>provenance</em>, which data it read and a fingerprint of the job file that read it, and writes it beside the report as <code>cohort-eda-dc-gfup.provenance.json</code>, so the numbers can be traced back later.</p>
+<p>A final render is the accepted result. It refuses to finish while any <code>EDIT:</code> marker remains, rather than producing a report that looks done and is not. It also records the job’s <em>provenance</em>, which data it read and a fingerprint of the job file that read it, and writes it beside the report as <code>dc.gfup.cohort.eda.provenance.json</code>, so the numbers can be traced back later.</p>
 </section><section class="level2"><h2 id="render-part-of-a-job">Render part of a job<a class="anchor" aria-label="anchor" href="#render-part-of-a-job"></a>
 </h2>
 <p>Sometimes a job is half built. The cohort tables are right, but the model below them waits on a corrected variable, and you want a report of what works. The SAS jobs did this by commenting the unfinished part out. Here there are two ways to leave part of a job out, and both keep it visible.</p>
@@ -172,7 +172,7 @@ hvtiRtemplates::stop_here()
 </ul></section><section class="level2"><h2 id="when-the-job-stops-you">When the job stops you<a class="anchor" aria-label="anchor" href="#when-the-job-stops-you"></a>
 </h2>
 <p>Most stops are the package refusing to guess. The message says what it needs; these are the ones you meet first.</p>
-<p><strong>“prefix ‘dc’ carries 3 templates; name one with <code>qualifier</code>, or by its full name.”</strong> Several templates share the <code>dc</code> prefix. Use the template’s full name, <code>add_job("dc-gfup", ...)</code>, as the <code>call</code> column prints it.</p>
+<p><strong>“prefix ‘dc’ carries 3 templates; name one with <code>qualifier</code>, or by its full name.”</strong> Several templates share the <code>dc</code> prefix. Use the template’s full name, <code>add_job("dc.gfup", ...)</code>, as the <code>call</code> column prints it.</p>
 <p><strong>“… already exists; refusing to overwrite.”</strong> The job is there already. Open it with <code><a href="../reference/open_job.html">open_job()</a></code> instead of adding it again.</p>
 <p><strong>“… is deprecated in favor of …”</strong> A warning, not an error: the job is still written. The message names the template that replaces it; use that one for new work.</p>
 <p><strong>“N unresolved EDIT: marker(s) remain in this job”</strong>, from <code>render_job(final = TRUE)</code>. The job is not finished. Find the markers as above, or render a draft to see them listed.</p>

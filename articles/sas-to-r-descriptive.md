@@ -54,7 +54,7 @@ stage of work.
 
 1.  Scaffold the job. For example,
     `job <- open_job("dc", "cohort", "eda", qualifier = "tables")`
-    writes `descriptive/cohort-eda-dc-tables.qmd` in an adopted legacy
+    writes `descriptive/dc.tables.cohort.eda.qmd` in an adopted legacy
     study and opens it in the editor. `study_dir("descriptive")`
     resolves the actual directory, including `10_descriptive/` in a
     numbered-layout study.

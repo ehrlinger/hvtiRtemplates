@@ -13,8 +13,8 @@ template_path(prefix, qualifier = NULL)
 - prefix:
 
   Analysis prefix, e.g. `"ac"`, or a template's full name, e.g.
-  `"dp-trends"`, which carries its qualifier and leaves `qualifier`
-  `NULL`. See
+  `"dp.trends"` (or `"dp-trends"`), which carries its qualifier and
+  leaves `qualifier` `NULL`. See
   [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md).
 
 - qualifier:
@@ -26,7 +26,7 @@ template_path(prefix, qualifier = NULL)
 ## Value
 
 The full path, as `character(1)`. A template the catalog marks
-deprecated, such as `dp-postage`, still resolves, with a warning naming
+deprecated, such as `dp.postage`, still resolves, with a warning naming
 its replacement.
 
 ## Examples
@@ -36,7 +36,7 @@ template_path("ac")
 #> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/20_distributions/ac.qmd"
 
 # A qualified template, by its full name or as prefix plus qualifier.
-template_path("dc-gfup")
+template_path("dc.gfup")
 #> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd"
 template_path("dc", qualifier = "gfup")
 #> [1] "/home/runner/work/_temp/Library/hvtiRtemplates/templates/10_descriptive/dc-gfup.qmd"
@@ -44,5 +44,5 @@ template_path("dc", qualifier = "gfup")
 # A prefix carrying several templates is never resolved by guessing: this
 # is an error that lists the choices.
 try(template_path("dc"))
-#> Error : prefix 'dc' carries 4 templates; name one with `qualifier`, or by its full name. Available: dc-general, dc-gfup, dc-stddiff, dc-tables
+#> Error : prefix 'dc' carries 4 templates; name one with `qualifier`, or by its full name. Available: dc.general, dc.gfup, dc.stddiff, dc.tables
 ```

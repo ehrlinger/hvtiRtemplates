@@ -18,8 +18,8 @@ open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   Job type: one of the prefixes reported by
   [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
   or a template's full name as reported in its `name` column, e.g.
-  `"dp-trends"`. A full name carries the qualifier, so `qualifier` must
-  then be left `NULL`.
+  `"dp.trends"`; the dash spelling `"dp-trends"` is accepted too. A full
+  name carries the qualifier, so `qualifier` must then be left `NULL`.
 
 - subject:
 
@@ -27,8 +27,8 @@ open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   subject names a statistical endpoint only when the job analyses one.
   Your choice: there is no list of valid values, and every job of one
   analysis should share it (see Details). Must match `^[A-Za-z0-9_]+$`:
-  `-` separates the filename's fields and `.` separates the extension,
-  so neither may appear here.
+  `.` separates the filename's fields, and `-` separated them in names
+  before 2026-10, so neither may appear here.
 
 - type:
 
@@ -46,7 +46,7 @@ open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   Job type within the prefix, e.g. `"trends"` for `dp`. Required only
   where a prefix carries more than one template; omitting it there is an
   error naming the choices, never a silent pick. Restricted to
-  `[A-Za-z0-9_]+`, because `-` separates the filename's fields.
+  `[A-Za-z0-9_]+`, because `.` separates the filename's fields.
 
 ## Value
 
@@ -58,7 +58,9 @@ The study root is the nearest directory at or above `dir` holding
 `_study.yml`, so this can be called from anywhere inside a study.
 Naming, prefix and qualifier rules are those of
 [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md).
-The editor is opened only in an interactive session.
+A job scaffolded before 2026-10, named
+`<subject>-<type>-<prefix>[-<qualifier>].qmd`, is found and opened under
+that name. The editor is opened only in an interactive session.
 
 ## See also
 
@@ -72,7 +74,7 @@ root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L
 ))
-#> Study: /tmp/RtmpLCEjHa/open-job-example
+#> Study: /tmp/Rtmp8O85SM/open-job-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project

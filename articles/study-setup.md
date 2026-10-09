@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/RtmpClntSa/file203e8dfc0e9/legacy-study
+#> Study: /tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,12 +183,12 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpClntSa/file203e8dfc0e9/legacy-study
+#> Study: /tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
-#> [x] dataset — built.csv, registered as built_20261008.parquet
+#> [x] dataset — built.csv, registered as built_20261009.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
@@ -249,7 +249,7 @@ template; the other two fields keep related outputs together:
   These are organizational labels, not invented analysis choices.
 
 For example, `open_job("dc", "cohort", "eda", qualifier = "tables")`
-creates `descriptive/cohort-eda-dc-tables.qmd` in an adopted legacy
+creates `descriptive/dc.tables.cohort.eda.qmd` in an adopted legacy
 study. Its HTML report stays beside the QMD, while its Word table goes
 under `documents/cohort-eda/`. Plot jobs follow the same naming pattern,
 but trend QMDs and HTML reports belong in `graphs/`, and plot PNGs go
@@ -306,15 +306,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                              general 
-#> "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dc-general.qmd" 
+#> "/tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
 #>                                                                               tables 
-#>  "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dc-tables.qmd" 
+#>  "/tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
 #>                                                                                 gfup 
-#>    "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" 
+#>    "/tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
 #>                                                                               trends 
-#>       "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/graphs/cohort-eda-dp-trends.qmd" 
+#>       "/tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study/graphs/dp.trends.cohort.eda.qmd" 
 #>                                                                                  eda 
-#>     "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dp-eda.qmd"
+#>     "/tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study/descriptive/dp.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output

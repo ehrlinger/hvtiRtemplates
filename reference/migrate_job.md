@@ -145,7 +145,7 @@ writeLines(c("data followup;", "  set built;", "run;",
              "proc means data=followup; var iv_dead; by dead; run;"), sas)
 job <- migrate_job(sas, subject = "cohort", type = "eda")
 basename(job)
-#> [1] "cohort-eda-dc-gfup.qmd"
+#> [1] "dc.gfup.cohort.eda.qmd"
 
 # The choices it translated into the new job ...
 grep("^(EVENT|FOLLOWUP) <- ", readLines(job), value = TRUE)

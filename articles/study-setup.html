@@ -124,7 +124,7 @@
 <span>  study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  adopt <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpClntSa/file203e8dfc0e9/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -166,12 +166,12 @@
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpClntSa/file203e8dfc0e9/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
 <span><span class="co">#&gt; [x] manifest.yaml — 1 dataset entry verified by checksum</span></span>
-<span><span class="co">#&gt; [x] dataset — built.csv, registered as built_20261008.parquet</span></span>
+<span><span class="co">#&gt; [x] dataset — built.csv, registered as built_20261009.parquet</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars</span></span>
@@ -210,7 +210,7 @@
 <li>Qualifiers such as <code>general</code>, <code>tables</code> and <code>eda</code> select one template in that family.</li>
 <li>During EDA there may be no modeled endpoint or analysis method. <code>cohort</code> names the subject being described and <code>eda</code> names the stage. These are organizational labels, not invented analysis choices.</li>
 </ul>
-<p>For example, <code>open_job("dc", "cohort", "eda", qualifier = "tables")</code> creates <code>descriptive/cohort-eda-dc-tables.qmd</code> in an adopted legacy study. Its HTML report stays beside the QMD, while its Word table goes under <code>documents/cohort-eda/</code>. Plot jobs follow the same naming pattern, but trend QMDs and HTML reports belong in <code>graphs/</code>, and plot PNGs go under <code>graphs/cohort-eda/</code>.</p>
+<p>For example, <code>open_job("dc", "cohort", "eda", qualifier = "tables")</code> creates <code>descriptive/dc.tables.cohort.eda.qmd</code> in an adopted legacy study. Its HTML report stays beside the QMD, while its Word table goes under <code>documents/cohort-eda/</code>. Plot jobs follow the same naming pattern, but trend QMDs and HTML reports belong in <code>graphs/</code>, and plot PNGs go under <code>graphs/cohort-eda/</code>.</p>
 </section><section class="level3"><h3 id="start-with-the-generally-applicable-jobs">Start with the generally applicable jobs<a class="anchor" aria-label="anchor" href="#start-with-the-generally-applicable-jobs"></a>
 </h3>
 <p>Create general checks and descriptive tables for every registered study:</p>
@@ -237,15 +237,15 @@
 <span><span class="op">)</span></span>
 <span><span class="va">study_jobs</span></span>
 <span><span class="co">#&gt;                                                                              general </span></span>
-<span><span class="co">#&gt; "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dc-general.qmd" </span></span>
+<span><span class="co">#&gt; "/tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                               tables </span></span>
-<span><span class="co">#&gt;  "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dc-tables.qmd" </span></span>
+<span><span class="co">#&gt;  "/tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                 gfup </span></span>
-<span><span class="co">#&gt;    "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dc-gfup.qmd" </span></span>
+<span><span class="co">#&gt;    "/tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                               trends </span></span>
-<span><span class="co">#&gt;       "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/graphs/cohort-eda-dp-trends.qmd" </span></span>
+<span><span class="co">#&gt;       "/tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study/graphs/dp.trends.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                  eda </span></span>
-<span><span class="co">#&gt;     "/tmp/RtmpClntSa/file203e8dfc0e9/legacy-study/descriptive/cohort-eda-dp-eda.qmd"</span></span></code></pre></div>
+<span><span class="co">#&gt;     "/tmp/RtmpTWPcVj/file1f81aca7ebe/legacy-study/descriptive/dp.eda.cohort.eda.qmd"</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="work-the-jobs-and-generate-output">Work the jobs and generate output<a class="anchor" aria-label="anchor" href="#work-the-jobs-and-generate-output"></a>
 </h2>

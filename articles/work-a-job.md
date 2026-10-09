@@ -43,7 +43,7 @@ find the follow-up jobs, ask for their job type:
 subset(tl, qualifier == "gfup", c(name, folder, call))
 ```
 
-Two templates come back. `dc-gfup` is the one to use; `dp-gfup` still
+Two templates come back. `dc.gfup` is the one to use; `dp.gfup` still
 works but is deprecated, and says so with a warning when you add it.
 
 ## Add it to the study
@@ -52,7 +52,7 @@ Copy the call, and change two words before you run it:
 
 ``` r
 
-add_job("dc-gfup", subject = "cohort", type = "eda")
+add_job("dc.gfup", subject = "cohort", type = "eda")
 ```
 
 `subject` and `type` name *your* job, not the template. Together they
@@ -62,8 +62,8 @@ say which set of work the job belongs to: here, exploratory checks
 only, because the two words become part of the filename.
 
 The job lands in the folder the template belongs in, named
-`<subject>-<type>-<template>.qmd`, so the line above writes
-`10_descriptive/cohort-eda-dc-gfup.qmd` (or `descriptive/...` in a study
+`<template>.<subject>.<type>.qmd`, so the line above writes
+`10_descriptive/dc.gfup.cohort.eda.qmd` (or `descriptive/...` in a study
 that kept the older, unnumbered folder names).
 [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 never overwrites a job that already exists, because a job collects your
@@ -73,7 +73,7 @@ with the same arguments; it opens the file in RStudio.
 
 ``` r
 
-job <- open_job("dc-gfup", subject = "cohort", type = "eda")
+job <- open_job("dc.gfup", subject = "cohort", type = "eda")
 ```
 
 ## Find what you have to change
@@ -159,7 +159,7 @@ A final render is the accepted result. It refuses to finish while any
 `EDIT:` marker remains, rather than producing a report that looks done
 and is not. It also records the job’s *provenance*, which data it read
 and a fingerprint of the job file that read it, and writes it beside the
-report as `cohort-eda-dc-gfup.provenance.json`, so the numbers can be
+report as `dc.gfup.cohort.eda.provenance.json`, so the numbers can be
 traced back later.
 
 ## Render part of a job
@@ -219,7 +219,7 @@ needs; these are the ones you meet first.
 
 **“prefix ‘dc’ carries 3 templates; name one with `qualifier`, or by its
 full name.”** Several templates share the `dc` prefix. Use the
-template’s full name, `add_job("dc-gfup", ...)`, as the `call` column
+template’s full name, `add_job("dc.gfup", ...)`, as the `call` column
 prints it.
 
 **“… already exists; refusing to overwrite.”** The job is there already.

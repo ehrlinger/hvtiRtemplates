@@ -64,7 +64,7 @@
       <h1>The template catalog</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-10-08</p>
+      <p class="date">2026-10-09</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/vignettes/template-catalog.qmd" class="external-link"><code>vignettes/template-catalog.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -81,7 +81,7 @@
 <p>A template becomes a job in your study with <code><a href="../reference/add_job.html">add_job()</a></code>. The first argument is the template’s prefix, then the subject and type that name the job’s set, and the qualifier when the prefix has one:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"trends"</span><span class="op">)</span></span></code></pre></div>
-<p>In a new study that writes <code>40_graphs/cohort-eda-dp-trends.qmd</code>; a legacy study that already uses bare folder names gets <code>graphs/cohort-eda-dp-trends.qmd</code>. The job refuses to overwrite an existing file, because a job accumulates a study’s edits.</p>
+<p>In a new study that writes <code>40_graphs/dp.trends.cohort.eda.qmd</code>; a legacy study that already uses bare folder names gets <code>graphs/dp.trends.cohort.eda.qmd</code>. The job refuses to overwrite an existing file, because a job accumulates a study’s edits.</p>
 </section><section class="level2"><h2 id="delivery">Delivery<a class="anchor" aria-label="anchor" href="#delivery"></a>
 </h2>
 <p>Each template carries a light.</p>
