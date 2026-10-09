@@ -40,6 +40,11 @@ test_that("identifiers are matched as text, and a missing one is outside the coh
   expect_identical(nrow(out$data), 3L)
   expect_identical(out$outside, 2L)
   expect_identical(out$without, 2L)
+  # The identifier keeps the cohort's type, as the reduced form's does.
+  expect_identical(out$data$ccfid, c(1L, 1L, 1L))
+  other <- stats::setNames(odd, c("pid", "echo_date", "ef"))
+  expect_identical(hvtiRtemplates:::.join_ancillary(cohort, other, "ccfid", "pid", c("pid", "echo_date"))$data$ccfid,
+                   c(1L, 1L, 1L))
 })
 
 test_that("the joined dataset's identifier may have another name", {

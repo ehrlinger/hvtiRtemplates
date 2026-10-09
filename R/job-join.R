@@ -127,6 +127,8 @@
   ancillary <- ancillary[inside, , drop = FALSE]
   anc_ids <- anc_ids[inside]
   if (!identical(ancillary_id, id)) names(ancillary)[names(ancillary) == ancillary_id] <- id
+  # The cohort's identifier, as its own type: matched as text, it may be stored another way here.
+  ancillary[[id]] <- cohort[[id]][match(anc_ids, cohort_ids)]
 
   carried <- cohort[match(anc_ids, cohort_ids), setdiff(cols, id), drop = FALSE]
   if (is.null(reduce)) {
