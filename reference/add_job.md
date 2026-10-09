@@ -146,11 +146,11 @@ add_job("dc.gfup", subject = "cohort", type = "eda", dir = d)
 # A deprecated template still scaffolds, and the warning names its replacement.
 tryCatch(add_job("dp.gfup", subject = "cohort", type = "eda", dir = d),
          warning = conditionMessage)
-#> [1] "add_job(): dp.gfup is deprecated in favor of dc.gfup. It will be removed in a later release. add_job(\"dc-gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."
+#> [1] "add_job(): dp.gfup is deprecated in favor of dc.gfup. It will be removed in a later release. add_job(\"dc.gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
 try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
-#> Error : add_job(): '/tmp/RtmpZCVokt/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
+#> Error : add_job(): '/tmp/RtmpDqhdD9/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #> [1] "10_descriptive/dc.gfup.cohort.eda.qmd"

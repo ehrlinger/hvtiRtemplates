@@ -94,9 +94,13 @@ read_job_data(
   Columns that make a row unique. `NULL` (the default) uses the key
   registered for `dataset`, and `id`, one row per patient, when none is
   registered. Add a visit time or date for repeated measures. A key that
-  differs from the registered one is noted in the record. With `join`,
-  the cohort must be one row per patient, and the result is keyed as
-  `reduce` says.
+  differs from the registered one is noted in the record. Templates pass
+  their `KEY`, a study choice the analyst reviews, so the default serves
+  a direct call. With `join`, the cohort must be one row per patient. A
+  key of cohort columns is checked on the cohort, and the result is
+  keyed as `reduce` says; a key that names a joined column, such as a
+  visit time only the joined dataset carries, is checked on the joined
+  rows and keys the result.
 
 - join:
 
@@ -119,8 +123,11 @@ read_job_data(
   patient, keyed on `id`: the record with the smallest `by` (`"first"`),
   the largest (`"last"`), or the one nearest a cohort column
   (`rule = "nearest"` with `to = "dt_surg"`). A patient with no record
-  keeps the row with the joined columns missing. Records with no `by`
-  value are left out and counted, and a patient whose chosen record ties
+  keeps the row with the joined columns missing. `by` may name several
+  columns, such as `c("echo_date", "echo_seq")`: each later one breaks a
+  tie on those before it, in the same direction, and a missing tie-break
+  value loses the tie. Records with no value in the first `by` column
+  are left out and counted, and a patient whose chosen record still ties
   with another stops the read, since picking one would be a hidden
   choice.
 
@@ -134,9 +141,10 @@ read_job_data(
   `TRUE` for a job that models one row per patient, such as a hazard,
   logistic or random forest fit. Such a job stops on a `join` without
   `reduce`, before any data are read, since the long form would count
-  every joined record as a patient. `FALSE`, the default, accepts the
-  long form, as descriptive jobs and jobs that model repeated measures
-  need.
+  every joined record as a patient, and on rows kept that repeat a
+  patient, as a dataset of repeated records read whole would, after the
+  rows are selected. `FALSE`, the default, accepts the long form, as
+  descriptive jobs and jobs that model repeated measures need.
 
 ## Value
 
@@ -180,15 +188,18 @@ so a downstream job can rebuild the same rows:
 - `id` and `key`, the resolved column names, the key being the joined
   result's when there is a join;
 
-- `join`, `join_vars`, `reduce` and `join_key`, the join as read, its
-  key resolved, or `NULL`, and with a join `cohort_key`, the cohort's
-  own key;
+- `join`, `join_vars`, `reduce` and `join_key`, the join as read, with
+  `join_vars`, `join_key` and `reduce`'s columns spelled as the data
+  spell them and `reduce`'s fields in name order, so the same join
+  written two ways records the same; and `cohort_key`, the cohort's own
+  key. All five are present only with a join;
 
 - `rows` and `patients`, the counts kept;
 
-- `key_hash`, a SHA-256 hash of the kept `key` values, so a downstream
-  job can tell that it rebuilt the same patients and not only the same
-  counts.
+- `key_hash`, a SHA-256 hash of the kept `key` values, with a join the
+  joined dataset's key values too, so a downstream job can tell that it
+  rebuilt the same patients, and with `reduce` the same chosen records,
+  and not only the same counts.
 
 ## Details
 
@@ -207,7 +218,13 @@ registration too; only what needs the data, such as whether a column
 exists, is checked after. With `join`, `where` applies to the joined
 rows, so a condition may name a column from either dataset, though not a
 cohort column `join_vars` leaves out; the joined dataset's identifier
-values are refused in it as the cohort's are.
+values are refused in it as the cohort's are. With `reduce`, a condition
+that names a column of the joined dataset filters its records before one
+is chosen per patient, so `rule = "last"` with `echo_type == "TTE"`
+keeps each patient's last such echo, and a patient left with no record
+is counted as having none. The other conditions filter the reduced rows.
+The data table shows them in that order; the selection records them as
+written.
 
 ## Examples
 
@@ -216,7 +233,7 @@ values are refused in it as the cohort's are.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
-#> Study: /tmp/RtmpZCVokt/job-data-example
+#> Study: /tmp/RtmpDqhdD9/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -229,7 +246,7 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/RtmpZCVokt/job-data-example
+#> Study: /tmp/RtmpDqhdD9/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project

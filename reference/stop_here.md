@@ -34,7 +34,10 @@ report cannot pass for a whole one.
 [`render_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
 with `final = TRUE`, or any render with `HVTI_TEMPLATE_STRICT` set,
 stops while any remains. Both are found by reading the job's source, so
-they show in a diff and in review, as commented-out code does not.
+they show in a diff and in review, as commented-out code does not. A
+`stop_here()` the source scan cannot see, as inside an `if ()` or called
+with an argument, refuses a final render itself when it runs, and in a
+draft is recorded in the report's provenance as a stop.
 
 A `skip` must give a reason as a non-empty quoted string; `skip: true`
 is an error. A skipped chunk is neither run nor shown, so a later chunk

@@ -139,8 +139,12 @@ shorter identifiers relies on the name checks.</p></dd>
 the key registered for <code>dataset</code>, and <code>id</code>, one row per
 patient, when none is registered. Add a visit time or date for repeated
 measures. A key that differs from the registered one is noted in the
-record. With <code>join</code>, the cohort must be one row per patient, and
-the result is keyed as <code>reduce</code> says.</p></dd>
+record. Templates pass their <code>KEY</code>, a study choice the analyst
+reviews, so the default serves a direct call. With <code>join</code>, the cohort must be one row per patient. A key
+of cohort columns is checked on the cohort, and the result is keyed as
+<code>reduce</code> says; a key that names a joined column, such as a visit
+time only the joined dataset carries, is checked on the joined rows and
+keys the result.</p></dd>
 
 
 <dt id="arg-join">join<a class="anchor" aria-label="anchor" href="#arg-join"></a></dt>
@@ -164,9 +168,12 @@ keeps one row per cohort patient, keyed on <code>id</code>: the record with
 the smallest <code>by</code> (<code>"first"</code>), the largest (<code>"last"</code>),
 or the one nearest a cohort column (<code>rule = "nearest"</code> with
 <code>to = "dt_surg"</code>). A patient with no record keeps the row with the
-joined columns missing. Records with no <code>by</code> value are left out and
-counted, and a patient whose chosen record ties with another stops the
-read, since picking one would be a hidden choice.</p></dd>
+joined columns missing. <code>by</code> may name several columns, such as
+<code>c("echo_date", "echo_seq")</code>: each later one breaks a tie on those
+before it, in the same direction, and a missing tie-break value loses the
+tie. Records with no value in the first <code>by</code> column are left out and
+counted, and a patient whose chosen record still ties with another stops
+the read, since picking one would be a hidden choice.</p></dd>
 
 
 <dt id="arg-join-key">join_key<a class="anchor" aria-label="anchor" href="#arg-join-key"></a></dt>
@@ -178,7 +185,9 @@ overriding its registered key. A join needs one or the other.</p></dd>
 <dd><p><code>TRUE</code> for a job that models one row per
 patient, such as a hazard, logistic or random forest fit. Such a job stops
 on a <code>join</code> without <code>reduce</code>, before any data are read, since
-the long form would count every joined record as a patient. <code>FALSE</code>,
+the long form would count every joined record as a patient, and on rows
+kept that repeat a patient, as a dataset of repeated records read whole
+would, after the rows are selected. <code>FALSE</code>,
 the default, accepts the long form, as descriptive jobs and jobs that model
 repeated measures need.</p></dd>
 
@@ -214,12 +223,16 @@ repeated measures need.</p></dd>
 <li><p><code>id</code> and <code>key</code>, the resolved column names, the
       key being the joined result's when there is a join;</p></li>
 <li><p><code>join</code>, <code>join_vars</code>, <code>reduce</code> and
-      <code>join_key</code>, the join as read, its key resolved, or <code>NULL</code>,
-      and with a join <code>cohort_key</code>, the cohort's own key;</p></li>
+      <code>join_key</code>, the join as read, with <code>join_vars</code>,
+      <code>join_key</code> and <code>reduce</code>'s columns spelled as the data
+      spell them and <code>reduce</code>'s fields in name order, so the same join
+      written two ways records the same; and <code>cohort_key</code>, the cohort's
+      own key. All five are present only with a join;</p></li>
 <li><p><code>rows</code> and <code>patients</code>, the counts kept;</p></li>
-<li><p><code>key_hash</code>, a SHA-256 hash of the kept <code>key</code> values, so
-      a downstream job can tell that it rebuilt the same patients and not
-      only the same counts.</p></li>
+<li><p><code>key_hash</code>, a SHA-256 hash of the kept <code>key</code> values,
+      with a join the joined dataset's key values too, so a downstream job
+      can tell that it rebuilt the same patients, and with <code>reduce</code> the
+      same chosen records, and not only the same counts.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -238,7 +251,12 @@ repeated measures need.</p></dd>
   <code>where</code> applies to the joined rows, so a condition may name a column
   from either dataset, though not a cohort column <code>join_vars</code> leaves
   out; the joined dataset's identifier values are refused in it as the
-  cohort's are.</p>
+  cohort's are. With <code>reduce</code>, a condition that names a column of the
+  joined dataset filters its records before one is chosen per patient, so
+  <code>rule = "last"</code> with <code>echo_type == "TTE"</code> keeps each patient's
+  last such echo, and a patient left with no record is counted as having none.
+  The other conditions filter the reduced rows. The data table shows them in
+  that order; the selection records them as written.</p>
     </div>
 
     <div class="section level2">
@@ -247,7 +265,7 @@ repeated measures need.</p></dd>
 <span class="r-in"><span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"job-data-example"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"Example"</span>, <span class="fl">1L</span>, adopt <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpZCVokt/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpDqhdD9/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
@@ -260,7 +278,7 @@ repeated measures need.</p></dd>
 <span class="r-in"><span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"built.csv"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpZCVokt/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpDqhdD9/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
