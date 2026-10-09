@@ -60,6 +60,16 @@ test_that("a cohort with more than one row per patient stops with a count", {
                "1 patient has more than one row in the cohort")
 })
 
+test_that("cohort rows with a missing identifier stop as missing, not as a repeated patient", {
+  gaps <- rbind(cohort, data.frame(ccfid = c(NA, NA), age = 1, dt_surg = 1))
+  err <- tryCatch(hvtiRtemplates:::.join_ancillary(gaps, echo, "ccfid", "ccfid", c("ccfid", "echo_date")),
+                  error = conditionMessage)
+  expect_match(err, "2 cohort rows have no ccfid", fixed = TRUE)
+  expect_no_match(err, "more than one row")
+  expect_error(hvtiRtemplates:::.join_ancillary(gaps[-5, ], echo, "ccfid", "ccfid", c("ccfid", "echo_date")),
+               "1 cohort row has no ccfid", fixed = TRUE)
+})
+
 test_that("first, last and nearest each keep one row per cohort patient", {
   first <- join(reduce = list(rule = "first", by = "echo_date"))
   expect_identical(nrow(first$data), 3L)

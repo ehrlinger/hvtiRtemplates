@@ -95,6 +95,13 @@
          ". List only the cohort columns this job needs in JOIN_VARS.", call. = FALSE)
   }
   cohort_ids <- .id_text(cohort[[id]])
+  # A row with no identifier names no patient, so no record can join it.
+  missing <- sum(is.na(cohort_ids))
+  if (missing) {
+    stop(missing, if (missing == 1L) " cohort row has" else " cohort rows have", " no ", id, ". JOIN matches records ",
+         "to patients by ", id, ", so every cohort row needs one: drop or fix those rows in the dataset build.",
+         call. = FALSE)
+  }
   # The cohort decides the patients, one row each; with more, every joined
   # record would be repeated once per cohort row.
   repeats <- length(unique(cohort_ids[duplicated(cohort_ids)]))
