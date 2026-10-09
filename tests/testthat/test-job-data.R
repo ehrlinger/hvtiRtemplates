@@ -1063,6 +1063,23 @@ test_that("a downstream job rebuilds a joined cohort with the cohort key the ups
   expect_null(attr(read_job_data(cfg)$record, "selection")$cohort_key)
 })
 
+test_that("one handler turns an out-of-date message into a note, for a dataset and an analysis set alike", {
+  stale <- function(text) {
+    message(structure(class = c("hvtiRutilities_out_of_date", "message", "condition"),
+                      list(message = paste0(text, "\n"), call = NULL)))
+  }
+  expect_no_message(read <- hvtiRtemplates:::.with_out_of_date_notes({
+    stale("first")
+    stale("first")
+    stale("second")
+    list(value = 1)
+  }))
+  expect_identical(read$value, 1)
+  expect_identical(read$notes, c("first", "second"))
+  # Any other message passes through.
+  expect_message(hvtiRtemplates:::.with_out_of_date_notes(list(value = message("other"))), "other")
+})
+
 test_that("key = NULL, the default, reads the registered key, and the ID when none is registered", {
   expect_identical(attr(read_job_data(job_study(d0))$record, "selection")$key, "ccfid")
   root <- withr::local_tempdir()

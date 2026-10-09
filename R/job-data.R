@@ -845,19 +845,23 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   .require_databuild()
   # A stale set, read in a draft, signals hvtiRutilities_out_of_date; the
   # message becomes a note in the data table, as a dataset's does.
-  notes <- character()
-  read <- withCallingHandlers(
-    .provenance_file_read(
-      paste0("analysis_set:", analysis_set), path, cfg,
-      function() hvtiRdatabuild::read_analysis_set(analysis_set, cfg = cfg),
-      role = paste0("analysis_set:", analysis_set)
-    ),
-    hvtiRutilities_out_of_date = function(m) {
-      notes <<- c(notes, trimws(conditionMessage(m)))
-      invokeRestart("muffleMessage")
-    }
-  )
+  read <- .with_out_of_date_notes(.provenance_file_read(
+    paste0("analysis_set:", analysis_set), path, cfg,
+    function() hvtiRdatabuild::read_analysis_set(analysis_set, cfg = cfg),
+    role = paste0("analysis_set:", analysis_set)
+  ))
   read$source <- paste0("analysis set `", analysis_set, "` of the study dataset")
+  read
+}
+
+# Runs a read (a list), keeping each hvtiRutilities_out_of_date message as a
+# note in its `notes` instead of letting it print. Any other message passes.
+.with_out_of_date_notes <- function(read) {
+  notes <- character()
+  read <- withCallingHandlers(read, hvtiRutilities_out_of_date = function(m) {
+    notes <<- c(notes, trimws(conditionMessage(m)))
+    invokeRestart("muffleMessage")
+  })
   read$notes <- unique(notes)
   read
 }
@@ -869,16 +873,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # read, instead of a bare message wherever the chunk happens to print it.
 # dp-postage reads outside read_job_data() and calls this too.
 .read_registered <- function(dataset, cfg) {
-  notes <- character()
-  read <- withCallingHandlers(
-    .provenance_read(dataset, cfg, function() hvtiRutilities::read_built(cfg = cfg, dataset = dataset)),
-    hvtiRutilities_out_of_date = function(m) {
-      notes <<- c(notes, trimws(conditionMessage(m)))
-      invokeRestart("muffleMessage")
-    }
-  )
-  read$notes <- unique(notes)
-  read
+  .with_out_of_date_notes(.provenance_read(dataset, cfg, function() hvtiRutilities::read_built(cfg = cfg, dataset = dataset)))
 }
 
 # Checked before anything else, hvtiRdatabuild included: a new study has no
