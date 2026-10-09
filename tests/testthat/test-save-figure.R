@@ -63,8 +63,22 @@ test_that("the cairo probe answers only TRUE when cairo_pdf() opens a device, an
     }
     file.exists(probe)
   }, error = function(e) FALSE)
-  expect_identical(hvtiRtemplates:::.cairo_available(), writes)
+  expect_identical(hvtiRtemplates:::.cairo_probe(), writes)
   expect_identical(grDevices::dev.cur(), c("null device" = 1L))
+})
+
+test_that("the cairo probe runs once a session, not once a PDF", {
+  old <- hvtiRtemplates:::.figure_state$cairo
+  withr::defer(assign("cairo", old, envir = hvtiRtemplates:::.figure_state))
+  assign("cairo", NULL, envir = hvtiRtemplates:::.figure_state)
+  probes <- 0L
+  local_mocked_bindings(.cairo_probe = function() {
+    probes <<- probes + 1L
+    TRUE
+  })
+  expect_true(hvtiRtemplates:::.cairo_available())
+  expect_true(hvtiRtemplates:::.cairo_available())
+  expect_identical(probes, 1L)
 })
 
 test_that("anything else is refused by name", {
