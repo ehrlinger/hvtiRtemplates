@@ -41,20 +41,13 @@ hazard_rows <- list(
 hazard_counts <- list(
   "^EXPECTED <- list\\(n = NA_integer_" = "EXPECTED <- list(n = 725L, n_events = 402L, n_censored = 323L)"
 )
-# hz's starting values and probes, shared by the chain's hz and by each
-# treatment group's hz that hs-concordance reads.
+# hz's starting values, shared by the chain's hz and by each treatment group's
+# hz that hs-concordance reads. The probes need no override: since #169 the
+# template perturbs only the free positions, read from each phase's fixed set.
 hazard_hz_choices <- list(
   "^  early = hzr_phase\\(\"cdf\", t_half = 1" = "  early = hzr_phase(\"cdf\", t_half = 0.04, nu = 1, m = 1),",
   "^theta0 <- c\\(log\\(1\\), log\\(1\\), 1, 1,$" = "theta0 <- c(log(0.05), log(0.04), 1, 1,",
-  "^            log\\(1\\), log\\(1\\), 1, 1, 1\\)$" = "            log(0.035), log(1), 1, 1, 1)",
-  # The template's probes shift every position of theta0, the three the
-  # late phase holds fixed (tau, gamma, alpha) included, so a probe fits a
-  # different model and can "beat" the reported fit by changing it.
-  # Perturb the free positions only.
-  "^probes <- rbind\\(theta0, theta0 \\+ 0.5, theta0 - 0.5\\)$" = paste(
-    ".free  <- !theta_names %in% c(\"late.log_tau\", \"late.gamma\", \"late.alpha\")",
-    "probes <- rbind(theta0, theta0 + 0.5 * .free, theta0 - 0.5 * .free)", sep = "\n"
-  )
+  "^            log\\(1\\), log\\(1\\), 1, 1, 1\\)$" = "            log(0.035), log(1), 1, 1, 1)"
 )
 
 # The companion SAS job hm reads its candidate covariates from. A real
@@ -94,17 +87,13 @@ concordance_groups <- c("surgical", "transcatheter")
 # transcatheter group: four of its 265 deaths fall on the day of operation,
 # and from every start tried the early phase collapses onto them (nu -> 0,
 # t_half at its bound), which hz's check_fit() refuses as a positive
-# objective. The other starting values are the whole-cohort estimates too,
-# and the probes perturb only the free positions.
+# objective. The other starting values are the whole-cohort estimates too.
+# The template's probes already leave the fixed nu where it is.
 concordance_hz_choices <- list(
   "^  early = hzr_phase\\(\"cdf\", t_half = 1" =
     "  early = hzr_phase(\"cdf\", t_half = 0.0017, nu = 1.85, m = -0.11, fixed = \"nu\"),",
   "^theta0 <- c\\(log\\(1\\), log\\(1\\), 1, 1,$" = "theta0 <- c(-3.85, -6.40, 1.85, -0.11,",
-  "^            log\\(1\\), log\\(1\\), 1, 1, 1\\)$" = "            -2.47, log(1), 1, 1, 0.83)",
-  "^probes <- rbind\\(theta0, theta0 \\+ 0.5, theta0 - 0.5\\)$" = paste(
-    ".free  <- !theta_names %in% c(\"early.nu\", \"late.log_tau\", \"late.gamma\", \"late.alpha\")",
-    "probes <- rbind(theta0, theta0 + 0.5 * .free, theta0 - 0.5 * .free)", sep = "\n"
-  )
+  "^            log\\(1\\), log\\(1\\), 1, 1, 1\\)$" = "            -2.47, log(1), 1, 1, 0.83)"
 )
 
 # A group's hm reads a smaller companion SAS job than the chain's hm: age in
