@@ -1063,6 +1063,17 @@ test_that("a downstream job rebuilds a joined cohort with the cohort key the ups
   expect_null(attr(read_job_data(cfg)$record, "selection")$cohort_key)
 })
 
+test_that("key = NULL, the default, reads the registered key, and the ID when none is registered", {
+  expect_identical(attr(read_job_data(job_study(d0))$record, "selection")$key, "ccfid")
+  root <- withr::local_tempdir()
+  suppressMessages(hvtiRutilities::study_setup(root, "Registered key", 1L, adopt = TRUE))
+  utils::write.csv(d0, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = c("ccfid", "age")))
+  out <- read_job_data(hvtiRutilities::study_config(start = root))
+  expect_identical(attr(out$record, "selection")$key, c("ccfid", "age"))
+  expect_false("Note" %in% out$record$step)
+})
+
 test_that("a KEY of the ID is compared with the registered key as the ID resolved, after an MRN fallback", {
   root <- withr::local_tempdir()
   suppressMessages(hvtiRutilities::study_setup(root, "Fallback", 1L, adopt = TRUE))

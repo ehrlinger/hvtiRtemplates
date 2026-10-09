@@ -460,7 +460,8 @@
 #'   the key registered for \code{dataset}, and \code{id}, one row per
 #'   patient, when none is registered. Add a visit time or date for repeated
 #'   measures. A key that differs from the registered one is noted in the
-#'   record. With \code{join}, the cohort must be one row per patient. A key
+#'   record. Templates pass their \code{KEY}, a study choice the analyst
+#'   reviews, so the default serves a direct call. With \code{join}, the cohort must be one row per patient. A key
 #'   of cohort columns is checked on the cohort, and the result is keyed as
 #'   \code{reduce} says; a key that names a joined column, such as a visit
 #'   time only the joined dataset carries, is checked on the joined rows and
