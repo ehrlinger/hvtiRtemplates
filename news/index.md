@@ -1,5 +1,482 @@
 # Changelog
 
+## hvtiRtemplates 1.3.0
+
+- A test now covers a new dataset version registered while a job is
+  reading: the read is rejected as changed, as it already was in
+  practice.
+
+- The six forest templates (`rfc`, `rfs` and `rfr`, fit and explain) now
+  hand `rfsrc()`, `vimp()` and `varpro()` a negative `seed = -abs(SEED)`
+  as well as seeding R’s generator through `cache_fit(seed = SEED)`. A
+  study found that either half alone does not reproduce: `rfsrc()`
+  without `seed =` draws one from R’s generator, and `varpro()` with a
+  fixed `seed =` still gave different importances after a different
+  chunk. Both together reproduced to the last digit across a 192-thread
+  server and a Mac. The templates also set `options(rf.cores = 1L)`,
+  since a varPro cutoff changed with the thread count. Jobs already
+  scaffolded are not changed; to adopt this, make the same edits and
+  render once with `REFIT = TRUE`.
+
+- A new test parses every R chunk of every shipped template and fails on
+  a call that draws from R’s generator (`rfsrc`, `varpro`, `mice`,
+  `sample`, `runif` and others) unless it is wrapped in
+  `cache_fit(seed = )` or `with_seed()`, or has a
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) at most three lines
+  above it in the same chunk. A randomForestSRC call that takes a `seed`
+  must also be given a negative one.
+
+- A job reading a dataset whose source file has been rebuilt but not yet
+  registered runs on the registered version and says so in its “The data
+  this job read” table, with a Note row naming the
+  [`update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
+  call that registers the new file. Before, hvtiRutilities’ message
+  printed bare wherever the data chunk happened to show it. The table’s
+  Source row names the dated version the job read, such as
+  `built_20261007.parquet`, rather than the source file. `dp-postage`,
+  which reads outside
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md),
+  prints the same note under its “Data read” line. Requires the
+  hvtiRutilities release that added dated versions.
+
+- Running a job’s chunks in the console no longer ends with advice to
+  run
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md).
+  The final provenance chunk, the one step that needs a render, now
+  stops with an error of class `hvtiRtemplates_not_rendered` saying that
+  every chunk above it ran and that the job should be rendered, with
+  [`hvtiRtemplates::render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  or the Render button. A render outside the study’s Quarto project
+  keeps the existing message about installing the hooks.
+
+- The test suite runs in about two-thirds of the time: expensive fits
+  and renders are shared within a test file, and fixtures are smaller.
+  No assertion was dropped. About 40 tests, the end-to-end Quarto
+  renders, model fits and saved-file identifier scans, are skipped on
+  CRAN (`skip_on_cran()`), so a CRAN-mode check fits the 10-minute
+  budget; CI sets `NOT_CRAN=true` and still runs every one.
+
+- [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  and
+  [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+  default to `dir = NULL`, which finds the study root by walking up from
+  the working directory, and stop outside a study rather than writing a
+  job into whatever directory R is in. A call from a study’s subfolder
+  now scaffolds into the study instead of under the subfolder. An
+  explicit `dir` means what it did.
+
+- Tests use at most two cores (`rf.cores`, `mc.cores` and
+  `OMP_THREAD_LIMIT`) and leave the global random seed alone. The
+  package description names the Cardiovascular Outcomes, Registries and
+  Research (CORR) group in full.
+
+- Articles on the pkgdown site put the table of contents on the left and
+  use the full width of the window, through `pkgdown/extra.css`. The
+  installed vignettes are unchanged: the Quarto vignette engine renders
+  them in its own minimal format, which has no sidebar layout.
+
+- `hm`’s first stage now holds every shape of each phase, as its
+  two-stage fit intends: covariates are screened against `hz`’s shapes
+  before the shapes are freed. It read the shapes from a field a
+  TemporalHazard phase does not have, so stage 1 held nothing beyond
+  `hz`’s own fixed set and fitted the same model as stage 2. A shape a
+  g3 `constraint` derives is left free, since it may not be fixed.
+
+- A part-built job’s report no longer lists a
+  [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md)
+  that cannot run: one in a skipped chunk, or in a chunk whose `eval` is
+  false as knitr reads it (`false`, `no`, `off` or `n` in any case, or
+  `!expr FALSE`).
+
+- Rendering a part-built job leaves the R session’s options as they
+  were. The record of skipped chunks is kept inside the package, and the
+  `skip` chunk option acts only on the job that registered it, so
+  another document knit later in the same session is not affected.
+
+- `hz` no longer passes `condition = 14` to `hazard()`. It mirrored
+  SAS’s `CONDITION=` option, which `hazard()` does not have, so
+  TemporalHazard ignored it and printed a warning into the report for
+  every fit. The fit still reports the conditioning of its Hessian, as
+  `rcond` in the convergence table
+  ([\#172](https://github.com/ehrlinger/hvtiRtemplates/issues/172)).
+
+- `hz`’s start probes move only the free parameters. They used to shift
+  every position of `theta0`, the fixed late-phase shapes included, so
+  each probe fitted a different model and could beat the reported fit,
+  falsely suggesting it was in the wrong basin. The held positions are
+  read from `phases`: each phase’s `fixed` set and any shape a g3
+  `constraint` derives. A probe edited to move one stops the job, naming
+  the parameter
+  ([\#169](https://github.com/ehrlinger/hvtiRtemplates/issues/169)).
+
+- `ac` and `hz` stop at the cohort when `TIME` holds a time of exactly
+  zero or a negative time, giving the count of each. A same-day death
+  used to stop `hz` later with an optimizer error that named neither.
+  The message says to correct the times in the dataset build, since a
+  job reshapes data and never corrects it: move only the zeros to a
+  small positive value, such as 0.00025 years, and trace a negative time
+  to its source
+  ([\#175](https://github.com/ehrlinger/hvtiRtemplates/issues/175)).
+
+- `hm` and `hs-setup` no longer carry `EXPECTED` counts. The counts
+  reconciled with the SAS reference are typed once, in `ac` and `hz`,
+  whose hand-off already records them; `hm`, `hs-setup` and now `hp`
+  count their rebuilt rows and stop when they differ from the upstream
+  job’s, naming the upstream file and both sets of counts. An upstream
+  file that records no counts stops too, asking for it to be rerun
+  ([\#177](https://github.com/ehrlinger/hvtiRtemplates/issues/177)).
+  `hs-concordance` keeps its own `EXPECTED`: it predicts for a cohort it
+  chooses, spanning several `hm` models, so no single upstream job has
+  its counts.
+
+- The *Work a job* and *Adopt an existing study* articles say to always
+  render a job, never to run its chunks by hand: Run All works in the
+  current R session, where a setting left by another job can stand in
+  for this job’s and read the wrong patients. To look at the data,
+  render a draft; to see only the top of a long job, use
+  [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md).
+
+- An `ANALYSIS_SET` the study has not built is named, with the fix: set
+  `ANALYSIS_SET <- NULL` to read the registered study dataset. This
+  covers every template reading through
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+  and the deprecated `dp-postage`, which reads its analysis set itself.
+  They used to stop with a missing-file path that named neither, or,
+  without hvtiRdatabuild installed, ask for it
+  ([\#173](https://github.com/ehrlinger/hvtiRtemplates/issues/173)).
+
+- New template, `dc-stddiff`: the balance table. It reports the
+  standardized difference of each baseline variable between two groups,
+  from
+  [`hvtiRpropensity::ps_stddiff()`](https://ehrlinger.github.io/hvtiRpropensity/reference/ps_stddiff.html),
+  the port of the 2019 `%stddiff` macro. The comparison is unadjusted,
+  plus the matched set when `MATCH` names its column and matching
+  weights when `WEIGHT` does. It counts the variables above a threshold
+  (0.10 by default) and draws the differences with
+  [`hvtiPlotR::hv_balance()`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_balance.html).
+  `N_PERM` adds the `%stddiffci` permutation reference through
+  `ps_stddiff_perm()`. A study with three or more arms runs a job per
+  pair, keeping the pair with `WHERE` and naming its group 1 with
+  `GROUP_1`. Needs `hvtiRpropensity` 0.1.5 or later, which the existing
+  `Suggests` bound of 0.1.7 already covers
+  ([\#216](https://github.com/ehrlinger/hvtiRtemplates/issues/216)).
+
+- `hm` stops when the reported fit has no variance matrix, or when any
+  of its free parameters has no finite standard error, instead of saving
+  `hm.rds` with only a TemporalHazard warning in the log. The message
+  names the phases and covariates involved. A degenerate fit, a phase
+  whose `log_mu` has run off, used to fail only later in a downstream
+  job ([\#228](https://github.com/ehrlinger/hvtiRtemplates/issues/228)).
+  The table that warned of covariates without a standard error is gone,
+  since the stop now covers it.
+
+- `hs-concordance` stops in its predictions when a group model gives no
+  confidence limits, naming the model and saying its `hm` fit has no
+  usable variance matrix. It used to stop later in the decision with
+  “missing value where TRUE/FALSE needed”. A job that has deleted the
+  decision now stops too, where it used to save predictions without
+  limits
+  ([\#227](https://github.com/ehrlinger/hvtiRtemplates/issues/227)).
+  Limits that are undefined only because predicted survival at `HORIZON`
+  is exactly 0 or 1 stop with their own message, not as a missing
+  variance matrix.
+
+- The
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  help page and the template gallery now say plainly what `subject` and
+  `type` are: names you choose, with no list to pick from, that name the
+  job file, its `SUBJECT` and `TYPE` lines and the folder its results
+  are saved in. Every job of one analysis should share them, because the
+  next job in a chain finds the last one’s results by that pair: `hm`
+  reads `hz.rds` only when it carries the same subject and type as `hz`.
+
+- [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+  prints only `name`, `prefix`, `qualifier` and `folder`, so the listing
+  fits the console. `call` and `file` are still in the data frame: read
+  them with `$call` and `$file`, or print a selection such as
+  `tl[, c("name", "call")]`, which prints as selected.
+
+- The descriptive templates report the 15th and 85th percentiles where
+  they reported the quartiles: `dc-general`’s quantile table, the
+  follow-up tables in `dc-gfup` and `dp-eda`, and the variable summaries
+  in `dp-eda` and `dp-postage`. The follow-up tables take them from
+  [`hvtiRutilities::followup_check()`](https://ehrlinger.github.io/hvtiRutilities/reference/followup_check.html),
+  whose default changed in hvtiRutilities 1.4.5, now the minimum.
+
+- [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  and
+  [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+  called without `subject` or `type` now say which is missing, explain
+  that both are names you choose (any name matching `^[A-Za-z0-9_]+$`,
+  not a list in the catalog), and show the template’s own call from
+  `template_list()$call` as an example, in place of R’s bare “argument
+  is missing, with no default”
+  ([\#224](https://github.com/ehrlinger/hvtiRtemplates/issues/224)).
+
+- Now requires R 4.4.0 or newer, up from 4.1.0, to match the rest of the
+  HVTI family. `hvtiR::install()` installs the members together, and
+  several already required 4.4.0, so on an older R the install failed
+  whatever this package declared.
+
+- New tutorial, *Work a job, from template to final report*, for a study
+  author new to the package: find a template in the gallery or
+  [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
+  add it with its `call`, find the `EDIT:` markers three ways, draft and
+  final renders, rendering part of a job with `skip` and
+  [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md),
+  and what the common refusals mean.
+
+- The template gallery is on the package site, at
+  <https://ehrlinger.github.io/hvtiRtemplates/gallery/>, linked from the
+  site’s navbar and the README. Each template shows what it is for, the
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  call that adds it, and the report it produces on a synthetic study.
+  The table is generated from the catalog and the rendered reports, so
+  it does not drift.
+
+- Help-page examples for the job workflow.
+  [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  and
+  [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md),
+  which had none, migrate a small legacy SAS job and render a draft and
+  a final. The examples for
+  [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
+  [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md),
+  [`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md),
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  and
+  [`build_cohort()`](https://ehrlinger.github.io/hvtiRtemplates/reference/build_cohort.md)
+  now find a template by qualifier and copy its `call`, select a
+  qualified template, show the refusal to guess an ambiguous prefix and
+  to overwrite a job, show a deprecation warning, and read a cohort’s
+  attrition table.
+
+- `dc-gfup` prints one follow-up table, a row per interval and patient
+  group (all patients, event, censored), in place of five one-row
+  tables. It shows missing, negative and zero counts within each group,
+  and one set of quartiles, SAS `QNTLDEF=5`, where it printed two that
+  could disagree. The suspicious-row table is shown only when there are
+  suspicious rows; otherwise a sentence says there are none. `dp-eda`’s
+  follow-up section shows the same table for each death panel.
+
+- `dc-general` prints one frequency table and one quantile table per
+  variable group, in place of a frequency table, a one-row count table
+  and a quantile table for every variable. Each variable’s extremes stay
+  in their own table.
+
+- A conditional table no longer leaves a gap in the table numbering when
+  it is not shown.
+
+- A part-built job renders. Give a chunk the option `skip` with the
+  reason in quotes, `#| skip: "waiting on the corrected coding"`, to
+  leave it out, or call the new
+  [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md)
+  in a chunk to leave out everything below it. This replaces commenting
+  unfinished sections out, which the SAS jobs did with a skip macro. A
+  draft lists every skipped chunk and stop, by line, in a PARTIAL
+  callout at the top of the report, and records them in its provenance.
+  A final render, `render_job(final = TRUE)`, refuses them as it refuses
+  an unresolved `EDIT:` marker. Every template carries a new
+  `guard-partial` chunk, just after its `EDIT:` guard, that does this.
+
+- [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+  gains a `call` column: the
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  call that scaffolds each template, with only the arguments it requires
+  and runnable as printed, e.g.
+  `add_job("dc-gfup", subject = "cohort", type = "eda")`. The full name
+  selects the template on its own, so no `qualifier =` is needed;
+  `subject` and `type` are the template’s own defaults, shown by name
+  because they are yours to change.
+
+- `dc-gfup` draws the goodness-of-follow-up figure beside its tables, so
+  one job covers follow-up. It takes the figure’s choices from `dp-gfup`
+  (`OPYRS`, `ORIGIN_YEAR`, `CLOSE_DATE`, `PANELS`, `EVENTS`, `ALPHA` and
+  `COLORS`), adds the operation-year and close-date table, and saves
+  `dc-gfup-*.png` to `graphs/`. It now needs hvtiPlotR \>= 2.8.0.
+
+- `dp-gfup` is deprecated in favor of `dc-gfup` and will be removed in a
+  later release. It still scaffolds;
+  [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md),
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  and
+  [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+  warn, and
+  [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  writes a `dc-gfup` job.
+
+- `DESCRIPTION` now declares the Quarto command line tool in
+  `SystemRequirements`. The vignettes have always needed it to build;
+  the field makes that visible to installers and to `R CMD check`.
+
+- **Every template figure is saved as a PNG and a PDF.** Figures go to
+  the job’s `graphs/<subject>-<type>/` folder as a 300 dpi PNG, for a
+  Word draft, and a PDF of the same name with fonts embedded, for the
+  publisher. Eight templates saved a PNG before, at 150 dpi; eleven (bc,
+  bh, bl, br, nb-boostmtree and the six random-forest templates) only
+  printed their figures. Each job’s study choices gain `SAVE_FIGURES`
+  and `FIGURES` to turn saving off or keep only some figures by name;
+  `inst/templates/README.md` lists the names. A PNG the report shows
+  keeps its name and is always written. The PDF falls back to the
+  default [`pdf()`](https://rdrr.io/r/grDevices/pdf.html) device where
+  [`cairo_pdf()`](https://rdrr.io/r/grDevices/cairo.html) cannot open,
+  as on a Mac without XQuartz, whose R reports cairo as available
+  anyway.
+
+- `rfc-explain`, `rfs-explain` and `rfr-explain` key their
+  partial-dependence cache on randomForestSRC, which computes it. The
+  cache was keyed on ggRandomForests alone, so after a randomForestSRC
+  upgrade it stayed valid and `REFIT = TRUE` kept the old result while
+  the variable importance beside it was recomputed. The
+  `gg_partial_rfsrc()` call now passes `packages = "randomForestSRC"` to
+  [`cache_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_fit.html);
+  the VarPro partial is unchanged, since its varpro fit already carries
+  varPro’s version. Each existing `rf?-partial` cache goes stale exactly
+  once, reporting `packages$randomForestSRC (absent) -> x.y.z`, and
+  needs one render with `REFIT = TRUE`. Requires hvtiRutilities 1.5.0 or
+  newer, up from 1.4.5.
+
+- **Templates name the study dataset `"built"`, the team’s word for
+  it.** Every job’s study choices now say `DATASET <- "built"`, and so
+  do the `bc`, `bh`, `bl` and `br` runners and the jobs
+  [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  writes. `"study"` still works, so a job scaffolded before this change
+  keeps running unchanged, and a downstream job agrees with an upstream
+  one whichever name each used. Records still say `"study"`: the
+  selection a job hands on and its provenance sidecar compare equal
+  under either name. Requires hvtiRutilities 1.5.1, which made `"built"`
+  a second name for the study dataset.
+
+- **Jobs are named template first, with periods.**
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  writes `<prefix>[.<qualifier>].<subject>.<type>.qmd`, such as
+  `ac.death.hz.qmd` or `dp.trends.cohort.eda.qmd`, and a bootstrap job’s
+  runner beside it as `<prefix>.<subject>.<type>.runner.R`, so a study’s
+  jobs sort by template, then subject, then type. Jobs scaffolded before
+  this release keep their `<subject>-<type>-<prefix>[-<qualifier>]`
+  names and keep rendering: every template’s name check reads both
+  spellings.
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  and
+  [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  refuse to write a second copy of a job that exists under its old name,
+  and
+  [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+  opens it.
+  [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+  shows qualified templates as `dp.trends`, and its `call` column uses
+  that name; `"dp-trends"` is still accepted. Results folders
+  (`estimates/<subject>-<type>/`, `graphs/<subject>-<type>/`) are
+  unchanged.
+
+- [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  also refuses when only a job’s runner remains under its old
+  `-runner.R` name, so an edited runner is never left behind beside a
+  new, empty one.
+
+- **Jobs can join an ancillary dataset to their cohort.**
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+  gains `join`, `join_vars`, `reduce` and `join_key`, and the study
+  choices of every template that reads its own data gain `JOIN`,
+  `JOIN_VARS`, `REDUCE` and `JOIN_KEY`, all `NULL` and without an
+  `EDIT:` marker, so a finished job is unchanged. `JOIN` names one
+  dataset registered with `kind = "ancillary"`, such as echoes or labs.
+  The cohort decides the patients and must be one row per patient; the
+  join keeps one row per joined record, keyed on that dataset’s key, or
+  one row per patient with
+  `REDUCE = list(rule = "first" | "last" | "nearest", by = ...)`. A tie
+  on `by` stops rather than pick one record silently, and so does a join
+  that matches no cohort patient at all, which is a mismatch of
+  identifiers. `WHERE` applies to the joined rows. The job’s data table
+  names the joined dataset and its rows, counts its records outside the
+  cohort and the cohort patients with none, and names the reduction; its
+  provenance records the joined dataset’s version. A downstream job
+  rebuilds the same join from its upstream job’s selection. A template
+  that models one row per patient (`ac`, `hz`, every `lm-*`, `rfc-fit`,
+  `rfr-fit`, `rfs-fit`, `dc-stddiff`, `dc-gfup`, `dp-gfup` and
+  `hs-concordance`) passes `read_job_data(one_row_per_patient = TRUE)`
+  and stops on a `JOIN` without `REDUCE` before reading any data, since
+  the long form would count every joined record as a patient; the other
+  descriptive templates and `nb-boostmtree` keep the long form.
+
+- [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)’s
+  `key` now defaults to the key registered for the dataset
+  (hvtiRutilities 1.5.1), and to `id` when none is registered, as
+  before. A `KEY` or `JOIN_KEY` that differs from the registered key is
+  used, and noted in the data table. Templates set `KEY` themselves, so
+  they read the same rows as before, with that note when the study
+  registered another key.
+
+- A stale analysis set that hvtiRdatabuild reads in a draft render is
+  now a note in the job’s data table, as an out-of-date dataset already
+  was, rather than a message wherever the chunk prints it.
+
+- **With `REDUCE`, `WHERE` on a joined column now filters the records
+  before one is chosen per patient** (maintainer’s decision).
+  `REDUCE <- list(rule = "last", by = "echo_date")` with
+  `WHERE <- quote(echo_type == "TTE")` keeps each patient’s last TTE,
+  where it used to keep the last echo and then drop the patient if that
+  echo was not a TTE. A condition on cohort columns still filters the
+  reduced rows. The data table shows the record filter between the join
+  and the reduction, and counts the patients left with no record after
+  it; the selection records the conditions in the order written.
+
+- `REDUCE`’s `by` may name several columns, such as
+  `c("echo_date", "echo_seq")`: each later one breaks a tie on those
+  before it, in the rule’s direction, and a missing tie-break value
+  loses the tie rather than dropping the record. A tie that remains
+  still stops (maintainer’s decision), and the message now says what
+  tied (for `"nearest"`, records equally far from the target, not “the
+  same date”), how many patients, and how to break it. `by` and `to`
+  match their columns ignoring case, as every other column setting does.
+
+- `nb-boostmtree` takes a long join whose visit time is only in the
+  joined dataset: a `KEY` that names a joined column is checked on the
+  joined rows. A `KEY` of cohort columns is checked on the cohort, as
+  before.
+
+- A join stops when some joined identifiers match the cohort’s only once
+  surrounding spaces, leading zeros or letter case are set aside,
+  instead of counting those records as outside the cohort. The message
+  gives counts only. A cohort row with a missing identifier stops a join
+  as missing, rather than as a repeated patient. A long join keeps the
+  cohort’s identifier type.
+
+- `key_hash` covers the joined dataset’s key, so a downstream job sees
+  that `REDUCE` chose a different record for a patient. `hm`, `hp` and
+  `hs-setup` record the joined dataset’s provenance when they rebuild a
+  joined selection. A selection without a join carries no empty join
+  fields, and a join’s `REDUCE` and `JOIN_VARS` are recorded as
+  resolved, so the same join written two ways records the same selection
+  and `hp` accepts matching `ac` and `hz` hand-offs. `hp`’s mismatch
+  message names the join settings. A downstream `JOIN` or `REDUCE`
+  against an upstream selection that read no join stops and names the
+  setting.
+
+- `read_job_data(one_row_per_patient = TRUE)` also stops when the rows
+  kept repeat a patient, as a dataset of repeated records read whole
+  would. Its refusal names the templates that take repeated records
+  (`dc-general`, `dc-tables`, `dp-eda`, `dp-trends`, `nb-boostmtree`),
+  read from the templates themselves. A patient whose records all lack
+  the `by` value is no longer counted again as a patient with no record;
+  the “no reduction value” row says how many patients it leaves with no
+  record chosen.
+
+- `KEY <- ID` no longer draws a “differs from the registered key” note
+  when the ID falls back to MRN on a dataset registered on its MRN.
+
+- [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md)
+  refuses a final render itself, so one the source scan cannot see
+  (inside `if ()`, or called with an argument) no longer truncates a
+  final report silently; in a draft it is recorded as a partial-render
+  stop.
+
+- A job’s name is read through knitr’s `.knit.md` and `.utf8.md`
+  intermediates. `dc-stddiff` asks for hvtiRpropensity 0.1.7, as
+  DESCRIPTION does. The cairo probe runs once a session. `dp-gfup`’s
+  deprecation note names `add_job("dc.gfup", ...)`. DESCRIPTION spells
+  out the Heart, Vascular and Thoracic Institute.
+
 ## hvtiRtemplates 1.2.5
 
 - Every figure and table a template shows is numbered. Quarto numbers a
