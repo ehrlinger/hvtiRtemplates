@@ -97,9 +97,10 @@ or the one nearest a cohort column (\code{rule = "nearest"} with
 \code{to = "dt_surg"}). A patient with no record keeps the row with the
 joined columns missing. \code{by} may name several columns, such as
 \code{c("echo_date", "echo_seq")}: each later one breaks a tie on those
-before it, in the same direction. Records with no \code{by} value are
-left out and counted, and a patient whose chosen record still ties with
-another stops the read, since picking one would be a hidden choice.}
+before it, in the same direction, and a missing tie-break value loses the
+tie. Records with no value in the first \code{by} column are left out and
+counted, and a patient whose chosen record still ties with another stops
+the read, since picking one would be a hidden choice.}
 
 \item{join_key}{Columns that make the joined dataset's rows unique,
 overriding its registered key. A join needs one or the other.}

@@ -173,7 +173,9 @@
   # A patient whose records all lack a by value still has records: counted
   # once, with them, and not again as a patient with none.
   with_records <- unique(anc_ids)
-  usable <- Reduce(`&`, lapply(scores, function(x) !is.na(x)))
+  # Only the first by column must hold a value; a missing tie-break value sorts
+  # last, so it loses a tie and changes nothing where there is none.
+  usable <- !is.na(scores[[1L]])
   ignored <- sum(!usable)
   ancillary <- ancillary[usable, , drop = FALSE]
   anc_ids <- anc_ids[usable]

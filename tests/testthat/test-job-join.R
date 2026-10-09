@@ -204,6 +204,16 @@ test_that("a nearest tie says the records are equally far from the target, and h
   last <- hvtiRtemplates:::.join_ancillary(cohort, same, "ccfid", "ccfid", c("ccfid", "echo_date", "seq"),
                                            reduce = list(rule = "last", by = c("echo_date", "seq")))
   expect_identical(last$data$ef, c(9L, 4L, NA))
+  # A tie-break column may be missing where no tie needs breaking: only the first by column must hold a value.
+  sparse <- data.frame(ccfid = c(1L, 1L, 1L), echo_date = c(95, 105, 105), seq = c(NA, 1, NA), ef = 1:3)
+  out <- hvtiRtemplates:::.join_ancillary(cohort, sparse, "ccfid", "ccfid", c("ccfid", "echo_date", "ef"),
+                                          reduce = list(rule = "first", by = c("echo_date", "seq")))
+  expect_identical(out$data$ef[[1L]], 1L)
+  expect_identical(out$ignored, 0L)
+  # Where it does, a missing tie-break value loses the tie.
+  out <- hvtiRtemplates:::.join_ancillary(cohort, sparse, "ccfid", "ccfid", c("ccfid", "echo_date", "ef"),
+                                          reduce = list(rule = "last", by = c("echo_date", "seq")))
+  expect_identical(out$data$ef[[1L]], 2L)
   # first and last ties name the column, and suggest the second by column.
   err <- tryCatch(hvtiRtemplates:::.join_ancillary(cohort, same, "ccfid", "ccfid", c("ccfid", "echo_date", "seq"),
                                                    reduce = list(rule = "last", by = "echo_date")),
