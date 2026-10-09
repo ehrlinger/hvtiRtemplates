@@ -23,6 +23,8 @@
 .job_name_fields <- function(path) {
   base <- basename(path)
   stem <- sub("[.][^.]+$", "", base)
+  # knitr's intermediates (<stem>.knit.md, <stem>.utf8.md) add a field first.
+  if (grepl("[.]md$", base)) stem <- sub("([.](knit|utf8))+$", "", stem)
   if (grepl("[.]R$", base)) stem <- sub("([.]|-)runner$", "", stem)
   if (grepl("-", stem, fixed = TRUE)) {
     parts <- strsplit(stem, "-", fixed = TRUE)[[1L]]
