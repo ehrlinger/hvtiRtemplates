@@ -10,7 +10,7 @@
 # downstream job's REDUCE with its upstream job's.
 .reduce_text <- function(reduce) {
   if (is.null(reduce)) return(NULL)
-  paste0(reduce$rule, " by ", reduce$by, if (identical(reduce$rule, "nearest")) paste0(" to ", reduce$to) else "")
+  paste0(reduce$rule, " by ", paste(reduce$by, collapse = ", "), if (identical(reduce$rule, "nearest")) paste0(" to ", reduce$to) else "")
 }
 
 # An identifier as text with surrounding spaces, leading zeros and letter case
@@ -36,12 +36,15 @@
   if (!is.character(rule) || length(rule) != 1L || !rule %in% .reduce_rules) {
     stop("REDUCE needs rule = \"first\", \"last\" or \"nearest\". Change REDUCE in edit-study-choices.", call. = FALSE)
   }
-  for (field in c("by", if (identical(rule, "nearest")) "to")) {
-    value <- reduce[[field]]
-    if (!is.character(value) || length(value) != 1L || is.na(value) || !nzchar(value)) {
-      stop("REDUCE", if (identical(rule, "nearest")) " with rule = \"nearest\"", " needs ", field,
-           " = one column name.", call. = FALSE)
-    }
+  # by may name more than one column: the later ones break a tie on the first.
+  by <- reduce$by
+  if (!is.character(by) || !length(by) || anyNA(by) || !all(nzchar(by)) || anyDuplicated(tolower(by))) {
+    stop("REDUCE needs by = one column name, or several to break ties, such as c(\"echo_date\", \"echo_seq\").",
+         call. = FALSE)
+  }
+  to <- reduce$to
+  if (identical(rule, "nearest") && (!is.character(to) || length(to) != 1L || is.na(to) || !nzchar(to))) {
+    stop("REDUCE with rule = \"nearest\" needs to = one column name.", call. = FALSE)
   }
   if (!identical(rule, "nearest") && !is.null(reduce$to)) {
     stop("REDUCE's to is used only with rule = \"nearest\".", call. = FALSE)
@@ -54,12 +57,16 @@
   rule <- reduce$rule
   by <- reduce$by
   to <- reduce$to
-  if (!by %in% names(ancillary)) {
-    stop("REDUCE's by names a column the joined dataset does not have: ", toString(by), ".", call. = FALSE)
+  absent <- setdiff(by, names(ancillary))
+  if (length(absent)) {
+    stop("REDUCE's by names a column the joined dataset does not have: ", toString(absent), ".", call. = FALSE)
   }
-  if (!.join_orderable(ancillary[[by]])) {
-    stop("REDUCE's by column, ", by, ", must be a number or a date.", call. = FALSE)
+  for (col in by) {
+    if (!.join_orderable(ancillary[[col]])) {
+      stop("REDUCE's by column, ", col, ", must be a number or a date.", call. = FALSE)
+    }
   }
+  by <- by[[1L]]
   if (identical(rule, "nearest")) {
     if (!to %in% names(cohort) || !.join_orderable(cohort[[to]])) {
       stop("REDUCE with rule = \"nearest\" needs to = a cohort column holding a number or a date.", call. = FALSE)
@@ -143,27 +150,37 @@
   }
   rule <- reduce$rule
   by <- reduce$by
-  score <- as.numeric(ancillary[[by]])
-  if (identical(rule, "nearest")) score <- abs(score - as.numeric(cohort[[reduce$to]][match(anc_ids, cohort_ids)]))
-  if (identical(rule, "last")) score <- -score
-  usable <- !is.na(score)
+  # One score per by column, smallest best: the first is the order the rule
+  # names (or the distance to `to`), and each later one breaks a tie on those
+  # before it, in the same direction.
+  scores <- lapply(by, function(col) as.numeric(ancillary[[col]]))
+  if (identical(rule, "nearest")) {
+    scores[[1L]] <- abs(scores[[1L]] - as.numeric(cohort[[reduce$to]][match(anc_ids, cohort_ids)]))
+  }
+  if (identical(rule, "last")) scores <- lapply(scores, `-`)
+  usable <- Reduce(`&`, lapply(scores, function(x) !is.na(x)))
   ignored <- sum(!usable)
   ancillary <- ancillary[usable, , drop = FALSE]
   anc_ids <- anc_ids[usable]
-  score <- score[usable]
+  scores <- lapply(scores, `[`, usable)
 
-  if (length(score)) {
-    best <- stats::ave(score, anc_ids, FUN = min)
-    at_best <- stats::ave(as.numeric(score == best), anc_ids, FUN = sum)
-    ties <- length(unique(anc_ids[at_best > 1]))
-    if (ties) {
-      stop(ties, if (ties == 1L) " patient has" else " patients have", " more than one record at the same ", by,
-           ". REDUCE cannot choose between them; choose another rule, or reduce the joined dataset when it is built.",
-           call. = FALSE)
+  chosen <- do.call(order, c(list(anc_ids), scores, list(method = "radix")))
+  best <- chosen[!duplicated(anc_ids[chosen])]
+  # A tie: another record of the patient scores the same as the chosen one.
+  tuple <- do.call(paste, c(list(anc_ids), lapply(scores, sprintf, fmt = "%.17g"), sep = "\r"))
+  ties <- sum(tuple[best] %in% tuple[duplicated(tuple)])
+  if (ties) {
+    what <- if (identical(rule, "nearest") && length(by) == 1L) {
+      paste0(" equally far from ", reduce$to, " (by ", by, ")")
+    } else {
+      paste0(" with the same ", paste(by, collapse = " and "))
     }
+    stop(ties, if (ties == 1L) " patient has" else " patients have", " more than one record", what,
+         ", so REDUCE cannot choose between them. Break the tie with another by column, such as by = c(\"",
+         by[[1L]], "\", \"<sequence>\")", if (identical(rule, "nearest")) ", or use rule = \"first\" or \"last\"",
+         ", or reduce the joined dataset when it is built.", call. = FALSE)
   }
-  chosen <- order(anc_ids, score, method = "radix")
-  chosen <- chosen[!duplicated(anc_ids[chosen])]
+  chosen <- best
   picked <- ancillary[chosen, setdiff(names(ancillary), id), drop = FALSE]
   m <- match(cohort_ids, anc_ids[chosen])
   out <- cbind(cohort[cols], picked[m, , drop = FALSE])

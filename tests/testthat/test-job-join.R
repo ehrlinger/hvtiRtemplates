@@ -155,6 +155,33 @@ test_that("no message names an identifier value", {
   expect_no_match(err, "98765431")
 })
 
+test_that("a nearest tie says the records are equally far from the target, and how to break it", {
+  # Patient 1 has echoes 5 days before and 5 days after surgery; patient 2 the same.
+  even <- data.frame(ccfid = c(1L, 1L, 2L, 2L), echo_date = c(95, 105, 95, 105), seq = c(1, 2, 1, 2), ef = 1:4)
+  err <- tryCatch(hvtiRtemplates:::.join_ancillary(cohort, even, "ccfid", "ccfid", c("ccfid", "echo_date"),
+                                                   reduce = list(rule = "nearest", by = "echo_date", to = "dt_surg")),
+                  error = conditionMessage)
+  expect_match(err, "2 patients have more than one record equally far from dt_surg", fixed = TRUE)
+  expect_no_match(err, "same")
+  expect_match(err, "by = c(\"echo_date\", \"<sequence>\")", fixed = TRUE)
+  expect_match(err, "rule = \"first\" or \"last\"", fixed = TRUE)
+  # A second by column breaks the tie, in the same direction as the rule.
+  near <- hvtiRtemplates:::.join_ancillary(cohort, even, "ccfid", "ccfid", c("ccfid", "echo_date"),
+                                           reduce = list(rule = "nearest", by = c("echo_date", "seq"), to = "dt_surg"))
+  expect_identical(near$data$ef, c(1L, 3L, NA))
+  expect_identical(near$rule, "nearest by echo_date, seq to dt_surg")
+  same <- rbind(even, data.frame(ccfid = 1L, echo_date = 105, seq = 3, ef = 9L))
+  last <- hvtiRtemplates:::.join_ancillary(cohort, same, "ccfid", "ccfid", c("ccfid", "echo_date", "seq"),
+                                           reduce = list(rule = "last", by = c("echo_date", "seq")))
+  expect_identical(last$data$ef, c(9L, 4L, NA))
+  # first and last ties name the column, and suggest the second by column.
+  err <- tryCatch(hvtiRtemplates:::.join_ancillary(cohort, same, "ccfid", "ccfid", c("ccfid", "echo_date", "seq"),
+                                                   reduce = list(rule = "last", by = "echo_date")),
+                  error = conditionMessage)
+  expect_match(err, "1 patient has more than one record with the same echo_date", fixed = TRUE)
+  expect_match(err, "by = c(\"echo_date\", \"<sequence>\")", fixed = TRUE)
+})
+
 test_that("identifiers that match only after spaces, leading zeros or case are removed stop, with counts", {
   # Patient 2's records carry a padded or zero-led identifier; patient 1's match.
   odd <- data.frame(ccfid = c("1", "1", "0002", " 2", "4"), echo_date = c(95, 110, 95, 96, 100), ef = 1:5)
