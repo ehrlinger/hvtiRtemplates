@@ -976,6 +976,19 @@ test_that("a job that models one row per patient refuses a long join, before any
   expect_error(read_job_data(cfg, join = "echo", one_row_per_patient = "yes"), "one_row_per_patient must be")
 })
 
+test_that("a job that models one row per patient refuses a long DATASET as it does a long join", {
+  cfg <- join_study()
+  # echo, read whole, is keyed on (ccfid, echo_date): patient 1 has two rows.
+  err <- tryCatch(read_job_data(cfg, dataset = "echo", one_row_per_patient = TRUE), error = conditionMessage)
+  expect_match(err, "This job models one row per patient", fixed = TRUE)
+  expect_match(err, "1 patient has more than one row", fixed = TRUE)
+  expect_match(err, "REDUCE", fixed = TRUE)
+  expect_no_match(err, "9100001")
+  expect_identical(nrow(read_job_data(cfg, dataset = "echo")$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, dataset = "echo", one_row_per_patient = TRUE, where = quote(echo_date < 100))$data),
+                   2L)
+})
+
 test_that("a job that models one row per patient accepts a reduced join, and the default a long one", {
   cfg <- join_study()
   out <- read_job_data(cfg, join = "echo", reduce = list(rule = "last", by = "echo_date"), one_row_per_patient = TRUE)

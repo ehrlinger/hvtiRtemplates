@@ -490,7 +490,9 @@
 #' @param one_row_per_patient \code{TRUE} for a job that models one row per
 #'   patient, such as a hazard, logistic or random forest fit. Such a job stops
 #'   on a \code{join} without \code{reduce}, before any data are read, since
-#'   the long form would count every joined record as a patient. \code{FALSE},
+#'   the long form would count every joined record as a patient, and on rows
+#'   kept that repeat a patient, as a dataset of repeated records read whole
+#'   would, after the rows are selected. \code{FALSE},
 #'   the default, accepts the long form, as descriptive jobs and jobs that model
 #'   repeated measures need.
 #'
@@ -640,7 +642,19 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                        cols = c(who$id, key), identifiers = identifiers,
                        id_values = if (is.null(id_values)) list() else id_values)
   counts <- .check_job_key(kept$data, key, who$id)
-  record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts, notes = unique(notes),
+  # A long DATASET, such as an ancillary one read whole, would count every
+  # record as a patient as a long JOIN would. Checked on the rows kept, the
+  # one test that holds for every route: a registered kind or key cannot see an
+  # analysis set or dataset with repeated patients under a key of the ID alone.
+  if (one_row_per_patient && counts$rows > counts$patients) {
+    ids_kept <- .id_text(kept$data[[who$id]])
+    repeats <- length(unique(ids_kept[duplicated(ids_kept)]))
+    stop("This job models one row per patient, but ", repeats, if (repeats == 1L) " patient has" else " patients have",
+         " more than one row in the data read (", counts$rows, " rows on ", counts$patients, " patients). Read a ",
+         "dataset of one row per patient, and JOIN the repeated records with REDUCE to keep one per patient, or use a ",
+         "template that takes repeated records", .such_as(.long_join_templates()), ".", call. = FALSE)
+  }
+  record <-.job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts, notes = unique(notes),
                         join = joined$summary)
   # Recorded in the order written, wherever each condition ran, so a downstream
   # job's WHERE in that order agrees.
