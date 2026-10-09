@@ -80,6 +80,13 @@ test_that("first, last and nearest each keep one row per cohort patient", {
   expect_identical(near$rule, "nearest by echo_date to dt_surg")
 })
 
+test_that("REDUCE's by and to match their columns ignoring case, as other column settings do", {
+  first <- join(reduce = list(rule = "first", by = "ECHO_DATE"))
+  expect_identical(first$data$ef, c(50, 45, NA))
+  near <- join(reduce = list(rule = "nearest", by = "Echo_Date", to = "DT_SURG"))
+  expect_identical(near$data$ef, c(50, 45, NA))
+})
+
 test_that("nearest reads dates", {
   dated <- transform(cohort, dt_surg = as.Date("2020-01-01") + dt_surg)
   dechos <- transform(echo, echo_date = as.Date("2020-01-01") + echo_date)

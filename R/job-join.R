@@ -55,8 +55,10 @@
 .check_reduce <- function(reduce, ancillary, cohort) {
   .check_reduce_setting(reduce)
   rule <- reduce$rule
-  by <- reduce$by
-  to <- reduce$to
+  # Matched ignoring case, as every column setting is.
+  by <- .match_columns(reduce$by, names(ancillary))
+  to <- if (!is.null(reduce$to)) .match_columns(reduce$to, names(cohort))
+  resolved <- list(by = by, to = to)
   absent <- setdiff(by, names(ancillary))
   if (length(absent)) {
     stop("REDUCE's by names a column the joined dataset does not have: ", toString(absent), ".", call. = FALSE)
@@ -76,7 +78,7 @@
            .join_order_kind(cohort[[to]]), ") must be the same kind of value for rule = \"nearest\".", call. = FALSE)
     }
   }
-  invisible(TRUE)
+  invisible(resolved)
 }
 
 .join_ancillary <- function(cohort, ancillary, id, ancillary_id, join_key, join_vars = NULL, reduce = NULL,
@@ -138,7 +140,7 @@
                 without = sum(!cohort_ids %in% anc_ids), ignored = 0L, rule = NULL, steps = NULL))
   }
 
-  .check_reduce(reduce, ancillary, cohort)
+  columns <- .check_reduce(reduce, ancillary, cohort)
   # Records are filtered before one is chosen (maintainer's decision,
   # 2026-10-09), so "last echo where echo_type is TTE" is each patient's last
   # TTE. `filter` sees each record with the cohort columns it carries, and
@@ -151,13 +153,13 @@
     steps <- kept$steps
   }
   rule <- reduce$rule
-  by <- reduce$by
+  by <- columns$by
   # One score per by column, smallest best: the first is the order the rule
   # names (or the distance to `to`), and each later one breaks a tie on those
   # before it, in the same direction.
   scores <- lapply(by, function(col) as.numeric(ancillary[[col]]))
   if (identical(rule, "nearest")) {
-    scores[[1L]] <- abs(scores[[1L]] - as.numeric(cohort[[reduce$to]][match(anc_ids, cohort_ids)]))
+    scores[[1L]] <- abs(scores[[1L]] - as.numeric(cohort[[columns$to]][match(anc_ids, cohort_ids)]))
   }
   if (identical(rule, "last")) scores <- lapply(scores, `-`)
   usable <- Reduce(`&`, lapply(scores, function(x) !is.na(x)))
@@ -173,7 +175,7 @@
   ties <- sum(tuple[best] %in% tuple[duplicated(tuple)])
   if (ties) {
     what <- if (identical(rule, "nearest") && length(by) == 1L) {
-      paste0(" equally far from ", reduce$to, " (by ", by, ")")
+      paste0(" equally far from ", columns$to, " (by ", by, ")")
     } else {
       paste0(" with the same ", paste(by, collapse = " and "))
     }
