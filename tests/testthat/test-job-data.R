@@ -976,6 +976,23 @@ test_that("a job that models one row per patient refuses a long join, before any
   expect_error(read_job_data(cfg, join = "echo", one_row_per_patient = "yes"), "one_row_per_patient must be")
 })
 
+test_that("the same join written two ways records the same selection", {
+  cfg <- join_study()
+  one <- read_job_data(cfg, join = "echo", join_vars = "age", reduce = list(rule = "first", by = "echo_date"))
+  two <- read_job_data(cfg, join = "echo", join_vars = "AGE", reduce = list(by = "ECHO_DATE", rule = "first"))
+  expect_identical(attr(one$record, "selection"), attr(two$record, "selection"))
+  sel <- attr(one$record, "selection")
+  expect_identical(sel$reduce, list(by = "echo_date", rule = "first"))
+  expect_identical(sel$join_vars, "age")
+  # A downstream setting written either way agrees with it.
+  expect_no_error(hvtiRtemplates:::.check_upstream_selection(sel, list(reduce = list(rule = "first", by = "ECHO_DATE"))))
+  # hp compares ac's and hz's selections whole, and its message names every setting that makes one.
+  template_root <- system.file("templates", package = "hvtiRtemplates")
+  if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
+  hp <- readLines(file.path(template_root, "40_graphs", "hp.qmd"), warn = FALSE)
+  expect_true(any(grepl("JOIN, JOIN_VARS, REDUCE and JOIN_KEY", hp, fixed = TRUE)))
+})
+
 test_that("a job that models one row per patient refuses a long DATASET as it does a long join", {
   cfg <- join_study()
   # echo, read whole, is keyed on (ccfid, echo_date): patient 1 has two rows.

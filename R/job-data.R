@@ -552,8 +552,11 @@
 #'     \item \code{id} and \code{key}, the resolved column names, the
 #'       key being the joined result's when there is a join;
 #'     \item \code{join}, \code{join_vars}, \code{reduce} and
-#'       \code{join_key}, the join as read, its key resolved, and
-#'       \code{cohort_key}, the cohort's own key, present only with a join;
+#'       \code{join_key}, the join as read, with \code{join_vars},
+#'       \code{join_key} and \code{reduce}'s columns spelled as the data
+#'       spell them and \code{reduce}'s fields in name order, so the same join
+#'       written two ways records the same; and \code{cohort_key}, the cohort's
+#'       own key. All five are present only with a join;
 #'     \item \code{rows} and \code{patients}, the counts kept;
 #'     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values,
 #'       with a join the joined dataset's key values too, so a downstream job
@@ -629,6 +632,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     cohort_only <- all(tolower(key) %in% tolower(names(ids$data)))
     if (cohort_only) .check_job_key(ids$data, key, who$id)
     cohort_key <- key
+    cohort_cols <- ids$data[0L, , drop = FALSE]
     joined <- .read_join(cfg, join, join_shape, ids$data, who$id, join_vars, reduce, values = !is.null(where),
                          filter = record_filter)
     .check_where_join_vars(where, setdiff(names(ids$data), names(joined$data)))
@@ -671,7 +675,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   # joins existed, so the two compare identical. A NULL field reads as absent.
   if (!is.null(join)) {
     attr(record, "selection") <- c(attr(record, "selection"), list(
-      join = join, join_vars = join_vars, reduce = reduce, join_key = joined$join_key, cohort_key = cohort_key
+      join = join, join_vars = if (!is.null(join_vars)) .match_columns(join_vars, names(cohort_cols)),
+      reduce = joined$reduce, join_key = joined$join_key, cohort_key = cohort_key
     ))
   }
   list(data = kept$data, record = record, provenance = read$record,
@@ -761,7 +766,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                        filter = if (!is.null(filter)) function(records, cols) filter(records, cols, id_values))
   list(
     data = j$data, key = j$key, dropped = a_ids$dropped, notes = c(jr$notes, resolved$note),
-    provenance = jr$record, join_key = replace(jkey, jkey == a_id, cohort_id), id_values = id_values,
+    provenance = jr$record, join_key = replace(jkey, jkey == a_id, cohort_id), id_values = id_values, reduce = j$reduce,
     summary = list(source = jr$source, rows = nrow(a), outside = j$outside, without = j$without,
                    ignored = j$ignored, rule = j$rule, steps = j$steps)
   )
@@ -970,7 +975,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
       next
     }
     theirs <- if (field == "reduce") .reduce_text(upstream[[field]]) else as.character(upstream[[field]])
-    same <- if (field %in% c("id", "key", "join_vars", "join_key")) {
+    same <- if (field %in% c("id", "key", "join_vars", "join_key", "reduce")) {
       identical(tolower(mine), tolower(theirs))
     } else {
       identical(as.character(mine), theirs)

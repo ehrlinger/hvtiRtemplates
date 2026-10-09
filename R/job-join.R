@@ -196,6 +196,9 @@
   m <- match(cohort_ids, anc_ids[chosen])
   out <- cbind(cohort[cols], picked[m, , drop = FALSE])
   rownames(out) <- NULL
-  list(data = out, key = id, outside = outside, without = sum(is.na(m)), ignored = ignored, rule = .reduce_text(reduce),
-       steps = steps)
+  # The reduction as resolved, its fields in name order and its columns as the
+  # data spell them, so the same choice written two ways records the same.
+  resolved <- c(list(by = columns$by, rule = rule), if (identical(rule, "nearest")) list(to = columns$to))
+  list(data = out, key = id, outside = outside, without = sum(is.na(m)), ignored = ignored, rule = .reduce_text(resolved),
+       steps = steps, reduce = resolved)
 }

@@ -148,8 +148,11 @@ A list:
     \item \code{id} and \code{key}, the resolved column names, the
       key being the joined result's when there is a join;
     \item \code{join}, \code{join_vars}, \code{reduce} and
-      \code{join_key}, the join as read, its key resolved, and
-      \code{cohort_key}, the cohort's own key, present only with a join;
+      \code{join_key}, the join as read, with \code{join_vars},
+      \code{join_key} and \code{reduce}'s columns spelled as the data
+      spell them and \code{reduce}'s fields in name order, so the same join
+      written two ways records the same; and \code{cohort_key}, the cohort's
+      own key. All five are present only with a join;
     \item \code{rows} and \code{patients}, the counts kept;
     \item \code{key_hash}, a SHA-256 hash of the kept \code{key} values,
       with a join the joined dataset's key values too, so a downstream job

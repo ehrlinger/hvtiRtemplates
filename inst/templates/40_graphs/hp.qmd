@@ -287,8 +287,8 @@ if (!is.null(.hz_read$lineage$selection) && is.null(.ac_read$lineage$selection))
 }
 if (!is.null(.hz_read$lineage$selection) &&
       !identical(.ac_read$lineage$selection, .hz_read$lineage$selection)) {
-  stop("The ac and hz handoffs read different data, rows, time or event. Rebuild both with the same ",
-       "DATASET, ANALYSIS_SET, WHERE, ID, KEY, TIME and EVENT.", call. = FALSE)
+  stop("The ac and hz handoffs read different data, rows, time, event or join. Rebuild both with the same ",
+       "DATASET, ANALYSIS_SET, WHERE, ID, KEY, TIME, EVENT, JOIN, JOIN_VARS, REDUCE and JOIN_KEY.", call. = FALSE)
 }
 ac_art <- .ac_read$value
 hz_art <- .hz_read$value
