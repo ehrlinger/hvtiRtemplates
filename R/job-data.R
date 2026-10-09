@@ -752,10 +752,29 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   if (one_row_per_patient && !is.null(join) && is.null(reduce)) {
     stop("JOIN names `", join, "`, but this job models one row per patient, so a long join would count every ",
          "joined record as a patient. Set REDUCE to keep one record per patient, for example ",
-         "REDUCE <- list(rule = \"last\", by = \"<date>\"), or use a template that models repeated measures, ",
-         "such as dc-*, dp-* or nb-boostmtree.", call. = FALSE)
+         "REDUCE <- list(rule = \"last\", by = \"<date>\"), or use a template that takes repeated records",
+         .such_as(.long_join_templates()), ".", call. = FALSE)
   }
   invisible(TRUE)
+}
+
+# The templates that take a long join: each one that reads its own data with
+# read_job_data() and does not set one_row_per_patient = TRUE. Read from the
+# installed templates, where that setting is written, so the refusal above
+# cannot name a template that refuses too.
+.long_join_templates <- function(root = system.file("templates", package = "hvtiRtemplates")) {
+  files <- list.files(root, pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
+  takes <- vapply(files, function(f) {
+    text <- paste(readLines(f, warn = FALSE), collapse = "\n")
+    grepl("read_job_data(.cfg, dataset = DATASET", text, fixed = TRUE) &&
+      !grepl("one_row_per_patient = TRUE", text, fixed = TRUE)
+  }, logical(1L))
+  sort(sub("[.]qmd$", "", basename(files[takes])), method = "radix")
+}
+
+.such_as <- function(x) {
+  if (!length(x)) return("")
+  paste0(", such as ", if (length(x) == 1L) x else paste(toString(x[-length(x)]), "or", x[length(x)]))
 }
 
 .require_databuild <- function(version = if (requireNamespace("hvtiRdatabuild", quietly = TRUE)) {
