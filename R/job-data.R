@@ -457,8 +457,11 @@
 #'   the key registered for \code{dataset}, and \code{id}, one row per
 #'   patient, when none is registered. Add a visit time or date for repeated
 #'   measures. A key that differs from the registered one is noted in the
-#'   record. With \code{join}, the cohort must be one row per patient, and
-#'   the result is keyed as \code{reduce} says.
+#'   record. With \code{join}, the cohort must be one row per patient. A key
+#'   of cohort columns is checked on the cohort, and the result is keyed as
+#'   \code{reduce} says; a key that names a joined column, such as a visit
+#'   time only the joined dataset carries, is checked on the joined rows and
+#'   keys the result.
 #' @param join Name of one registered ancillary dataset (such as echoes or
 #'   labs) to join to the cohort on \code{id}, or \code{NULL}. The cohort,
 #'   \code{dataset} or \code{analysis_set}, decides the patients: joined
@@ -584,14 +587,18 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   }
   joined <- NULL
   if (!is.null(join)) {
-    # The cohort's own KEY is checked before the join, which needs one row per patient.
-    .check_job_key(ids$data, key, who$id)
+    # A KEY wholly of cohort columns is the cohort's own, checked before the
+    # join, and the joined rows are keyed as the join says. A KEY that names a
+    # joined column, such as a visit time only the joined records carry, is the
+    # joined rows' key and is checked on them, after WHERE, as any KEY is.
+    cohort_only <- all(tolower(key) %in% tolower(names(ids$data)))
+    if (cohort_only) .check_job_key(ids$data, key, who$id)
     cohort_key <- key
     joined <- .read_join(cfg, join, join_shape, ids$data, who$id, join_vars, reduce, values = !is.null(where))
     .check_where_join_vars(where, setdiff(names(ids$data), names(joined$data)))
     ids$data <- joined$data
     ids$dropped <- unique(c(ids$dropped, joined$dropped))
-    key <- joined$key
+    key <- if (cohort_only) joined$key else .match_columns(key, names(joined$data))
     notes <- c(notes, joined$notes)
     for (col in names(joined$id_values)) id_values[[col]] <- unique(c(id_values[[col]], joined$id_values[[col]]))
   }

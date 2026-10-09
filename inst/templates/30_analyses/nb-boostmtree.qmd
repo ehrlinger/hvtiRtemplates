@@ -232,7 +232,9 @@ WHERE <- NULL
 ID <- "ccfid"
 
 # EDIT: the visit time, in years. The data hold one row per visit, built
-# upstream, so the time is part of what makes a row unique.
+# upstream, so the time is part of what makes a row unique. With JOIN below,
+# the visit time may be a column of the joined dataset alone: KEY is then
+# checked on the joined rows.
 TIME <- "iv_echo"
 
 # EDIT: what makes a row unique. The ID alone does not: a patient has a row per

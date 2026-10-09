@@ -72,8 +72,11 @@ shorter identifiers relies on the name checks.}
 the key registered for \code{dataset}, and \code{id}, one row per
 patient, when none is registered. Add a visit time or date for repeated
 measures. A key that differs from the registered one is noted in the
-record. With \code{join}, the cohort must be one row per patient, and
-the result is keyed as \code{reduce} says.}
+record. With \code{join}, the cohort must be one row per patient. A key
+of cohort columns is checked on the cohort, and the result is keyed as
+\code{reduce} says; a key that names a joined column, such as a visit
+time only the joined dataset carries, is checked on the joined rows and
+keys the result.}
 
 \item{join}{Name of one registered ancillary dataset (such as echoes or
 labs) to join to the cohort on \code{id}, or \code{NULL}. The cohort,

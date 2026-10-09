@@ -934,7 +934,7 @@ test_that("JOIN needs the cohort's identifier, by name, in the joined dataset", 
   expect_error(read_job_data(cfg, join = "labs"), "has no `ccfid` column")
 })
 
-test_that("the cohort's KEY is checked before a join", {
+test_that("a KEY column neither the cohort nor the joined dataset has stops", {
   cfg <- join_study()
   expect_error(read_job_data(cfg, key = "nope", join = "echo"), "KEY names a column")
 })
@@ -1053,4 +1053,24 @@ test_that("a downstream job rebuilds a joined cohort with the cohort key the ups
   out <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())
   expect_match(out$job_data$record$value[out$job_data$record$step == "Note"], "differs from the registered key")
   expect_null(attr(read_job_data(cfg)$record, "selection")$cohort_key)
+})
+
+test_that("a KEY naming a joined column is checked on the joined rows, so a visit time may live only there", {
+  cfg <- join_study()
+  # echo_date is in the joined dataset and not the cohort, as a visit time is
+  # for a repeated-measures job such as nb-boostmtree.
+  out <- read_job_data(cfg, key = c("ccfid", "echo_date"), join = "echo")
+  expect_identical(nrow(out$data), 3L)
+  sel <- attr(out$record, "selection")
+  expect_identical(sel$key, c("ccfid", "echo_date"))
+  expect_identical(sel$cohort_key, c("ccfid", "echo_date"))
+  # Matched ignoring case, as any KEY is.
+  expect_identical(attr(read_job_data(cfg, key = c("ccfid", "ECHO_DATE"), join = "echo")$record, "selection")$key,
+                   c("ccfid", "echo_date"))
+  # A downstream job rebuilds it.
+  again <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())
+  expect_identical(again$job_data$data, out$data)
+  # A KEY that is not unique on the joined rows stops there: two records share echo_date 95.
+  expect_error(read_job_data(cfg, key = c("dt_surg", "echo_date"), join = "echo"), "values? of KEY repeat")
+  expect_error(read_job_data(cfg, key = c("ccfid", "nope"), join = "echo"), "KEY names a column this dataset does not have")
 })
