@@ -8,7 +8,8 @@
   it; the selection records the conditions in the order written.
 * `REDUCE`'s `by` may name several columns, such as
   `c("echo_date", "echo_seq")`: each later one breaks a tie on those before
-  it, in the rule's direction. A tie that remains still stops (maintainer's
+  it, in the rule's direction, and a missing tie-break value loses the tie
+  rather than dropping the record. A tie that remains still stops (maintainer's
   decision), and the message now says what tied (for `"nearest"`, records
   equally far from the target, not "the same date"), how many patients, and
   how to break it. `by` and `to` match their columns ignoring case, as every
@@ -27,13 +28,16 @@
   selection. A selection without a join carries no empty join fields, and a
   join's `REDUCE` and `JOIN_VARS` are recorded as resolved, so the same join
   written two ways records the same selection and `hp` accepts matching `ac`
-  and `hz` hand-offs. `hp`'s mismatch message names the join settings.
+  and `hz` hand-offs. `hp`'s mismatch message names the join settings. A
+  downstream `JOIN` or `REDUCE` against an upstream selection that read no
+  join stops and names the setting.
 * `read_job_data(one_row_per_patient = TRUE)` also stops when the rows kept
   repeat a patient, as a dataset of repeated records read whole would. Its
   refusal names the templates that take repeated records (`dc-general`,
   `dc-tables`, `dp-eda`, `dp-trends`, `nb-boostmtree`), read from the
   templates themselves. A patient whose records all lack the `by` value is no
-  longer counted again as a patient with no record.
+  longer counted again as a patient with no record; the "no reduction value"
+  row says how many patients it leaves with no record chosen.
 * `KEY <- ID` no longer draws a "differs from the registered key" note when
   the ID falls back to MRN on a dataset registered on its MRN.
 * `stop_here()` refuses a final render itself, so one the source scan cannot
