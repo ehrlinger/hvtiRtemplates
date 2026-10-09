@@ -38,6 +38,19 @@ test_that("every template is free of study identifiers", {
   }
 })
 
+test_that("no template prints a path into its report", {
+  # A bare `MODEL_PATH` line auto-prints the absolute path, study folder included,
+  # into a report that is shared. lm-binary did this until 1.3.0.
+  tl <- template_list()
+  for (i in seq_len(nrow(tl))) {
+    txt <- readLines(tl$file[[i]], warn = FALSE)
+    expect_false(
+      any(grepl("^\\s*[A-Z_]*(PATH|DIR|FILE)[A-Z_]*\\s*$", txt)),
+      label = paste("template", tl$name[[i]], "prints a path variable")
+    )
+  }
+})
+
 test_that("every template names the current job scaffolder", {
   tl <- template_list()
   for (i in seq_len(nrow(tl))) {
