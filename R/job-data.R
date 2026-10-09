@@ -585,7 +585,10 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   attrition <- attr(d, "attrition", exact = TRUE)
   rows_read <- nrow(d)
   who <- .resolve_job_id(d, id)
-  resolved <- .resolve_job_key(key, if (is.null(analysis_set)) .registered_shape(cfg, dataset)$key, id, "KEY",
+  # Compared as the ID resolved, so KEY <- ID after a fallback to MRN agrees
+  # with a dataset registered on its MRN.
+  resolved <- .resolve_job_key(if (!is.null(key)) replace(key, key == id, who$id),
+                               if (is.null(analysis_set)) .registered_shape(cfg, dataset)$key, who$id, "KEY",
                                "the registered key")
   key <- .match_columns(replace(resolved$key, resolved$key == id, who$id), names(d))
   ids <- .drop_identifiers(d, who$id)

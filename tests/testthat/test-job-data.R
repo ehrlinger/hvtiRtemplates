@@ -1058,6 +1058,20 @@ test_that("a downstream job rebuilds a joined cohort with the cohort key the ups
   expect_null(attr(read_job_data(cfg)$record, "selection")$cohort_key)
 })
 
+test_that("a KEY of the ID is compared with the registered key as the ID resolved, after an MRN fallback", {
+  root <- withr::local_tempdir()
+  suppressMessages(hvtiRutilities::study_setup(root, "Fallback", 1L, adopt = TRUE))
+  utils::write.csv(d0[-1], file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "mrn"))
+  cfg <- hvtiRutilities::study_config(start = root)
+  # KEY <- ID, with ID the default "ccfid", which falls back to the MRN the dataset is registered on.
+  out <- read_job_data(cfg, key = "ccfid")
+  expect_identical(attr(out$record, "selection")$key, "mrn")
+  expect_false("Note" %in% out$record$step)
+  # A KEY that does differ is still noted.
+  expect_match(read_job_data(cfg, key = c("ccfid", "age"))$record$value, "differs from the registered key", all = FALSE)
+})
+
 test_that("with REDUCE, WHERE on joined columns filters the records before one is chosen", {
   cfg <- join_study()
   last <- list(rule = "last", by = "echo_date")
