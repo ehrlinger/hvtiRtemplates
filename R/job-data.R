@@ -630,7 +630,10 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     # join, and the joined rows are keyed as the join says. A KEY that names a
     # joined column, such as a visit time only the joined records carry, is the
     # joined rows' key and is checked on them, after WHERE, as any KEY is.
-    cohort_only <- all(tolower(key) %in% tolower(names(ids$data)))
+    # The cohort columns the joined rows carry: one JOIN_VARS leaves out is not
+    # the cohort's in KEY, even when the joined dataset has one of that name.
+    carried <- if (is.null(join_vars)) names(ids$data) else c(who$id, join_vars)
+    cohort_only <- all(tolower(key) %in% tolower(intersect(names(ids$data), .match_columns(carried, names(ids$data)))))
     if (cohort_only) .check_job_key(ids$data, key, who$id)
     cohort_key <- key
     cohort_cols <- ids$data[0L, , drop = FALSE]

@@ -994,6 +994,9 @@ test_that("WHERE may name a joined column that shares its name with a cohort col
     out <- read_job_data(cfg, join = "echo", join_vars = "age", reduce = reduce, where = quote(ef >= 50))
     expect_true(all(out$data$ef >= 50, na.rm = TRUE))
   }
+  # So may KEY: the cohort's ef is not carried, so KEY's ef is the joined one.
+  out <- read_job_data(cfg, key = c("ccfid", "ef"), join = "echo", join_vars = "age")
+  expect_identical(attr(out$record, "selection")$key, c("ccfid", "ef"))
 })
 
 test_that("the same join written two ways records the same selection", {
