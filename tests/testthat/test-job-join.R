@@ -154,3 +154,20 @@ test_that("no message names an identifier value", {
   expect_match(err, "more than one record")
   expect_no_match(err, "98765431")
 })
+
+test_that("identifiers that match only after spaces, leading zeros or case are removed stop, with counts", {
+  # Patient 2's records carry a padded or zero-led identifier; patient 1's match.
+  odd <- data.frame(ccfid = c("1", "1", "0002", " 2", "4"), echo_date = c(95, 110, 95, 96, 100), ef = 1:5)
+  err <- tryCatch(hvtiRtemplates:::.join_ancillary(cohort, odd, "ccfid", "ccfid", c("ccfid", "echo_date")),
+                  error = conditionMessage)
+  expect_match(err, "2 records of the joined dataset, on 1 cohort patient", fixed = TRUE)
+  expect_match(err, "leading zeros", fixed = TRUE)
+  expect_match(err, "dataset build", fixed = TRUE)
+  expect_no_match(err, "0002")
+  # Case, for text identifiers.
+  coh <- data.frame(pid = c("ab1", "ab2"), age = 1:2)
+  anc <- data.frame(pid = c("ab1", "AB2"), d = 1:2)
+  expect_error(hvtiRtemplates:::.join_ancillary(coh, anc, "pid", "pid", c("pid", "d")), "1 record of the joined")
+  # A record of a patient outside the cohort is still only counted.
+  expect_identical(join()$outside, 1L)
+})

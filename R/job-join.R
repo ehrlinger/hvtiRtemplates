@@ -13,6 +13,10 @@
   paste0(reduce$rule, " by ", reduce$by, if (identical(reduce$rule, "nearest")) paste0(" to ", reduce$to) else "")
 }
 
+# An identifier as text with surrounding spaces, leading zeros and letter case
+# set aside, only to detect a format mismatch, never to join on.
+.loose_id <- function(text) sub("^0+(?=.)", "", toupper(trimws(text)), perl = TRUE)
+
 .join_orderable <- function(x) is.numeric(x) || inherits(x, c("Date", "POSIXt"))
 
 # What kind of order a column carries: a number, a date or a date-time. Nearest
@@ -98,6 +102,20 @@
   if (length(anc_ids) && !any(inside)) {
     stop("No record of the joined dataset belongs to a cohort patient: check that both hold the same ",
          "identifier, stored the same way.", call. = FALSE)
+  }
+  # Some matching is no proof the rest are other patients: records whose
+  # identifier matches a cohort patient's once spaces, leading zeros and case
+  # are set aside were stored another way, and would be lost as "outside".
+  # Never coerced here, which would hide the build's mistake.
+  loose <- .loose_id(anc_ids)
+  near <- !inside & !is.na(anc_ids) & loose %in% .loose_id(cohort_ids[!is.na(cohort_ids)])
+  if (any(near)) {
+    n <- sum(near)
+    who <- length(unique(loose[near]))
+    stop(n, if (n == 1L) " record" else " records", " of the joined dataset, on ", who,
+         if (who == 1L) " cohort patient," else " cohort patients,", " carry an identifier that matches the cohort's ",
+         "only once surrounding spaces, leading zeros or letter case are set aside. Store the identifier the same way ",
+         "in both datasets, in the dataset build, and register them again.", call. = FALSE)
   }
   ancillary <- ancillary[inside, , drop = FALSE]
   anc_ids <- anc_ids[inside]
