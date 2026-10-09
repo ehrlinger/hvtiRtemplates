@@ -30,7 +30,10 @@ and reason, in a callout at the top of the report, so a partial report
 cannot pass for a whole one. \code{\link{render_job}} with
 \code{final = TRUE}, or any render with \code{HVTI_TEMPLATE_STRICT} set,
 stops while any remains. Both are found by reading the job's source, so they
-show in a diff and in review, as commented-out code does not.
+show in a diff and in review, as commented-out code does not. A
+\code{stop_here()} the source scan cannot see, as inside an \code{if ()} or
+called with an argument, refuses a final render itself when it runs, and in a
+draft is recorded in the report's provenance as a stop.
 
 A \code{skip} must give a reason as a non-empty quoted string;
 \code{skip: true} is an error. A skipped chunk is neither run nor shown, so a
