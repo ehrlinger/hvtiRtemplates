@@ -51,52 +51,52 @@ gallery_family(
   },
   jobs = list(
     "lm-binary" = list(subject = "stroke", type = "model", choices = c(lm_id, lm_era("year < 2015"), list(
-      "^DATASET <- " = "DATASET <- \"study\"",
+      "^DATASET <- " = "DATASET <- \"built\"",
       "^OUTCOME <- " = "OUTCOME <- \"stroke\"",
       "^PREDICTORS <- " = paste("PREDICTORS <-", lm_covariates),
       "^OUTCOME_LEVELS <- " = "OUTCOME_LEVELS <- c(\"no\", \"yes\")",
       "^EVENT_LEVEL <- " = "EVENT_LEVEL <- \"yes\""
     ))),
     "lm-checkpred" = list(subject = "stroke", type = "model", choices = c(lm_patient, lm_era("year >= 2015"), list(
-      "^DATASET <- " = "DATASET <- \"study\"",
+      "^DATASET <- " = "DATASET <- \"built\"",
       "^OUTCOME <- " = "OUTCOME <- \"stroke\"",
       "^GROUPS <- " = "GROUPS <- 5L"
     ))),
     "lm-ordinal" = list(subject = "mr", type = "model", choices = c(lm_id, list(
-      "^DATASET <- " = "DATASET <- \"study\"",
+      "^DATASET <- " = "DATASET <- \"built\"",
       "^OUTCOME <- " = "OUTCOME <- \"mr_grade\"",
       "^PREDICTORS <- " = paste("PREDICTORS <-", lm_covariates),
       "^OUTCOME_LEVELS <- " = "OUTCOME_LEVELS <- c(\"none\", \"mild\", \"moderate\", \"severe\")"
     ))),
     "lm-nominal" = list(subject = "discharge", type = "model", choices = c(lm_id, list(
-      "^DATASET <- " = "DATASET <- \"study\"",
+      "^DATASET <- " = "DATASET <- \"built\"",
       "^OUTCOME <- " = "OUTCOME <- \"discharge\"",
       "^PREDICTORS <- " = paste("PREDICTORS <-", lm_covariates),
       "^OUTCOME_LEVELS <- " = "OUTCOME_LEVELS <- c(\"home\", \"rehab\", \"nursing\")",
       "^REFERENCE_LEVEL <- " = "REFERENCE_LEVEL <- \"home\""
     ))),
     "lm-propensity_binary" = list(subject = "approach", type = "propensity", choices = c(lm_id, list(
-      "^DATASET <- " = "DATASET <- \"study\"",
+      "^DATASET <- " = "DATASET <- \"built\"",
       "^TREATMENT <- " = "TREATMENT <- \"approach\"",
       "^PREDICTORS <- " = paste("PREDICTORS <-", lm_covariates),
       "^TREATMENT_LEVELS <- " = "TREATMENT_LEVELS <- c(\"surgical\", \"transcatheter\")",
       "^TREATED_LEVEL <- " = "TREATED_LEVEL <- \"transcatheter\""
     ))),
     "lm-propensity_ordinal" = list(subject = "valvesize", type = "propensity", choices = c(lm_id, list(
-      "^DATASET <- " = "DATASET <- \"study\"",
+      "^DATASET <- " = "DATASET <- \"built\"",
       "^TREATMENT <- " = "TREATMENT <- \"valve_size\"",
       "^PREDICTORS <- " = paste("PREDICTORS <-", lm_covariates),
       "^TREATMENT_LEVELS <- " = "TREATMENT_LEVELS <- c(\"small\", \"medium\", \"large\")"
     ))),
     "lm-propensity_nominal" = list(subject = "valvetype", type = "propensity", choices = c(lm_id, list(
-      "^DATASET <- " = "DATASET <- \"study\"",
+      "^DATASET <- " = "DATASET <- \"built\"",
       "^TREATMENT <- " = "TREATMENT <- \"valve_type\"",
       "^PREDICTORS <- " = paste("PREDICTORS <-", lm_covariates),
       "^TREATMENT_LEVELS <- " = "TREATMENT_LEVELS <- c(\"mechanical\", \"bioprosthetic\", \"homograft\")",
       "^REFERENCE_LEVEL <- " = "REFERENCE_LEVEL <- \"mechanical\""
     ))),
     "lm-balancing_count" = list(subject = "priorops", type = "balancing", choices = c(lm_id, list(
-      "^DATASET <- " = "DATASET <- \"study\"",
+      "^DATASET <- " = "DATASET <- \"built\"",
       "^OUTCOME <- " = "OUTCOME <- \"prior_ops\"",
       "^PREDICTORS <- " = paste("PREDICTORS <-", lm_covariates),
       "^DISTRIBUTION <- " = "DISTRIBUTION <- \"poisson\"",
