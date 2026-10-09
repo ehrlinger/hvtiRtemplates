@@ -169,6 +169,9 @@
     scores[[1L]] <- abs(scores[[1L]] - as.numeric(cohort[[columns$to]][match(anc_ids, cohort_ids)]))
   }
   if (identical(rule, "last")) scores <- lapply(scores, `-`)
+  # A patient whose records all lack a by value still has records: counted
+  # once, with them, and not again as a patient with none.
+  with_records <- unique(anc_ids)
   usable <- Reduce(`&`, lapply(scores, function(x) !is.na(x)))
   ignored <- sum(!usable)
   ancillary <- ancillary[usable, , drop = FALSE]
@@ -199,6 +202,6 @@
   # The reduction as resolved, its fields in name order and its columns as the
   # data spell them, so the same choice written two ways records the same.
   resolved <- c(list(by = columns$by, rule = rule), if (identical(rule, "nearest")) list(to = columns$to))
-  list(data = out, key = id, outside = outside, without = sum(is.na(m)), ignored = ignored, rule = .reduce_text(resolved),
-       steps = steps, reduce = resolved)
+  list(data = out, key = id, outside = outside, without = sum(!cohort_ids %in% with_records), ignored = ignored,
+       rule = .reduce_text(resolved), steps = steps, reduce = resolved)
 }

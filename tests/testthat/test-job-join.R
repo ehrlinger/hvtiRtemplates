@@ -145,6 +145,14 @@ test_that("records with no value of `by` are ignored and counted", {
                                           reduce = list(rule = "first", by = "echo_date"))
   expect_identical(out$ignored, 1L)
   expect_identical(out$data$ef[out$data$ccfid == 2L], 45)
+  # A patient whose only records have no `by` value has joined records: they
+  # are counted once, as records with no value, not again as a patient with none.
+  only <- rbind(echo, data.frame(ccfid = 3L, echo_date = NA, ef = 10))
+  out <- hvtiRtemplates:::.join_ancillary(cohort, only, "ccfid", "ccfid", c("ccfid", "ef"),
+                                          reduce = list(rule = "first", by = "echo_date"))
+  expect_identical(out$ignored, 1L)
+  expect_identical(out$without, 0L)
+  expect_true(is.na(out$data$ef[out$data$ccfid == 3L]))
 })
 
 test_that("a column in both datasets stops and names JOIN_VARS", {
