@@ -254,9 +254,10 @@ test_that("dp-postage names the registered version and a waiting rebuild without
 })
 
 # The templates that model one row per patient, so refuse a JOIN without REDUCE.
-# Descriptive templates and nb-boostmtree (repeated measures) take the long form.
+# Other descriptive templates and nb-boostmtree (repeated measures) take the long form.
 patient_level_templates <- c(
-  "ac.qmd", "hz.qmd", "dc-stddiff.qmd", "hs-concordance.qmd", "rfc-fit.qmd", "rfr-fit.qmd", "rfs-fit.qmd",
+  "ac.qmd", "hz.qmd", "dc-stddiff.qmd", "dc-gfup.qmd", "dp-gfup.qmd", "hs-concordance.qmd",
+  "rfc-fit.qmd", "rfr-fit.qmd", "rfs-fit.qmd",
   "lm-balancing_count.qmd", "lm-binary.qmd", "lm-checkpred.qmd", "lm-nominal.qmd", "lm-ordinal.qmd",
   "lm-propensity_binary.qmd", "lm-propensity_nominal.qmd", "lm-propensity_ordinal.qmd"
 )
@@ -303,7 +304,7 @@ test_that("descriptive templates join an ancillary dataset, long and one row per
   template_root <- system.file("templates", package = "hvtiRtemplates")
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
   templates <- file.path(normalizePath(template_root), "10_descriptive",
-                         c("dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dp-eda.qmd"))
+                         c("dc-general.qmd", "dc-tables.qmd", "dp-eda.qmd"))
   root <- file.path(withr::local_tempdir(), "join-study")
   suppressMessages(hvtiRutilities::study_setup(root, study = "Join route test", study_tracker_id = 1L))
   data_dir <- hvtiRutilities::study_dir("datasets", root)
