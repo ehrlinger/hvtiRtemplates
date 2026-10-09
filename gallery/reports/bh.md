@@ -146,12 +146,12 @@ TYPE    <- "boot"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -173,6 +173,13 @@ set_path <- function(kind, file) {
                  paste0(SUBJECT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
+}
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
 }
 
 # The screen this job reports on was run by a companion script, which wrote its
@@ -241,6 +248,13 @@ CLUSTERS <- list(
 
 # Correlation cutoff for near-duplicate candidates.
 COLLINEAR_R <- 0.99
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## The screen
@@ -253,7 +267,7 @@ Code
 
 ### The runner
 
-The screen is run by its own job, `<subject>-<type>-bh-runner.R`, which
+The screen is run by its own job, `bh.<subject>.<type>.runner.R`, which
 `add_job()` writes beside this file. Run it first: it reads its rows
 with `hvtiRtemplates::read_job_data()`, screens, and saves the bag with
 the selection that call records. This report only reads the bag. It
@@ -325,7 +339,7 @@ Code
 }
 .sel <- hvtiRtemplates:::.read_upstream_job_data(
   .cfg, .bootstrap_lineage, list(where = WHERE, id = ID, key = KEY), read = FALSE, source = .bag_name,
-  rerun = paste("Rerun the bootstrap runner, <subject>-<type>-bh-runner.R, as add_job() now writes it: it records",
+  rerun = paste("Rerun the bootstrap runner, bh.<subject>.<type>.runner.R, as add_job() now writes it: it records",
                 "the selection. Then render this report again.")
 )$selection
 knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
@@ -452,7 +466,7 @@ provenance
     9                                                                        0
     10                                                                     0.1
     11                                                          version:1.2.12
-    12 sha256:1c4d37bc9b73dc545752f9242c11c1b71169e1df3e0a817f255f609a8fe5e7db
+    12 sha256:ecad1d83bedca5d692b6314a2fca905e9716c8424d2ae8ff1643774eaee02baa
     13                                               4 distinct (listed below)
 
 Code
@@ -919,7 +933,7 @@ Code
 # The error bar is the point of the figure, not decoration. A bare dot plot
 # invites the reader to rank variables by a difference of two points, which is
 # inside the noise at every frequency near the middle of the range.
-ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
+.fig <- ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
   geom_hline(yintercept = RETAIN_PCT, linetype = "dashed") +
   geom_errorbar(aes(ymin = pct - mc_error, ymax = pct + mc_error), width = 0) +
   geom_point() +
@@ -927,6 +941,8 @@ ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
   facet_wrap(~phase, scales = "free_y") +
   labs(x = NULL, y = "Replicates selecting the variable (%)") +
   theme_minimal()
+save_figure(.fig, "bh-frequencies", height = 7)
+.fig
 ```
 
 ![](assets/ea1fbf23cb90938bda6be806ba268072.png)

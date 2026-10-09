@@ -2373,12 +2373,12 @@ vertical-align: -.125em;
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># yet, so this is a no-op in that case rather than a spurious error.</span></span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>.current <span class="ot">&lt;-</span> knitr<span class="sc">::</span><span class="fu">current_input</span>()</span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.current)) {</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Quarto knits through an intermediate, so `knitr::current_input()` returns</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># `&lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;.rmarkdown` here rather than the</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># `.qmd` this was scaffolded as. Strip whatever extension is actually present</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># rather than hard-coding one, so this doesn&#39;t depend on a build-tool detail</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># staying the same.</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  .fields <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(<span class="fu">sub</span>(<span class="st">&quot;[.][^.]+$&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">basename</span>(.current)), <span class="st">&quot;-&quot;</span>, <span class="at">fixed =</span> <span class="cn">TRUE</span>)[[<span class="dv">1</span>L]]</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The name is template first, &lt;prefix&gt;[.&lt;qualifier&gt;].&lt;subject&gt;.&lt;type&gt;, or</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># &lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;] for a job scaffolded before</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 2026-10. .job_name_fields() reads subject and type from either, whatever</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the extension: Quarto knits through an intermediate, so</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  .fields <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_name_fields</span>(.current)</span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  .name_subject <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(.fields) <span class="sc">&gt;=</span> <span class="dv">1</span>L) .fields[[<span class="dv">1</span>L]] <span class="cf">else</span> <span class="cn">NA_character_</span></span>
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  .name_type     <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(.fields) <span class="sc">&gt;=</span> <span class="dv">2</span>L) .fields[[<span class="dv">2</span>L]] <span class="cf">else</span> <span class="cn">NA_character_</span></span>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">identical</span>(.name_subject, SUBJECT) <span class="sc">||</span> <span class="sc">!</span><span class="fu">identical</span>(.name_type, TYPE)) {</span>
@@ -2413,8 +2413,8 @@ vertical-align: -.125em;
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the registered dataset this job reads (&quot;study&quot; is the built dataset).</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;study&quot;</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the registered dataset this job reads (&quot;built&quot; is the study dataset).</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;built&quot;</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>ANALYSIS_SET <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
@@ -2432,26 +2432,46 @@ vertical-align: -.125em;
 <span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># add their visit time or date, for example KEY &lt;- c(ID, &quot;iv_echo&quot;).</span></span>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> ID</span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Model phases and fixed parameters.</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: phases and the fixed set on each.</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>phases <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">early =</span> <span class="fu">hzr_phase</span>(<span class="st">&quot;cdf&quot;</span>, <span class="at">t_half =</span> <span class="fl">0.04</span>, <span class="at">nu =</span> <span class="dv">1</span>, <span class="at">m =</span> <span class="dv">1</span>),</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">late  =</span> <span class="fu">hzr_phase</span>(<span class="st">&quot;g3&quot;</span>, <span class="at">tau =</span> <span class="dv">1</span>, <span class="at">gamma =</span> <span class="dv">1</span>, <span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">eta =</span> <span class="dv">1</span>,</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>                    <span class="at">fixed =</span> <span class="fu">c</span>(<span class="st">&quot;tau&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;alpha&quot;</span>))</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Starting values in the order returned by hzr_theta_names(phases).</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: starting values from the SAS estimates.</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>theta0 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">log</span>(<span class="fl">0.05</span>), <span class="fu">log</span>(<span class="fl">0.04</span>), <span class="dv">1</span>, <span class="dv">1</span>,</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>            <span class="fu">log</span>(<span class="fl">0.035</span>), <span class="fu">log</span>(<span class="dv">1</span>), <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: time, event, and counts from the SAS reference for the rows this job</span></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co"># analyses. Leave these invalid defaults in place until the job is reconciled.</span></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>TIME   <span class="ot">&lt;-</span> <span class="st">&quot;iv_dead&quot;</span></span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>EVENT  <span class="ot">&lt;-</span> <span class="st">&quot;dead&quot;</span></span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>EXPECTED <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n =</span> <span class="dv">725</span>L, <span class="at">n_events =</span> <span class="dv">402</span>L, <span class="at">n_censored =</span> <span class="dv">323</span>L)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional, and needs no edit: NULL reads the cohort alone. To join one</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># registered ancillary dataset (echoes, labs), name it in JOIN. The cohort</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># above decides the patients, one row each; the joined records of other</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are dropped and counted in the data table.</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#     and a column both datasets have stops, so list only those the job needs.</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#   REDUCE: NULL keeps a row per joined record, keyed on that dataset&#39;s key;</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     list(rule = &quot;first&quot;, by = &quot;echo_date&quot;) keeps one row per patient (&quot;last&quot;,</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     or &quot;nearest&quot; with to = a cohort date column). WHERE on a joined column</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co">#     filters the records first, so &quot;last&quot; with WHERE echo_type == &quot;TTE&quot;</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co">#     keeps each patient&#39;s last TTE. A tie stops: picking one record</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co">#     silently would be a hidden choice; by = c(&quot;echo_date&quot;, &quot;echo_seq&quot;)</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co">#     breaks it. This job models one row per</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co">#     patient, so a JOIN without REDUCE stops here.</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_KEY: overrides the joined dataset&#39;s registered key.</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>JOIN <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>JOIN_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>REDUCE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>JOIN_KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Model phases and fixed parameters.</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: phases and the fixed set on each.</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>phases <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">early =</span> <span class="fu">hzr_phase</span>(<span class="st">&quot;cdf&quot;</span>, <span class="at">t_half =</span> <span class="fl">0.04</span>, <span class="at">nu =</span> <span class="dv">1</span>, <span class="at">m =</span> <span class="dv">1</span>),</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>  <span class="at">late  =</span> <span class="fu">hzr_phase</span>(<span class="st">&quot;g3&quot;</span>, <span class="at">tau =</span> <span class="dv">1</span>, <span class="at">gamma =</span> <span class="dv">1</span>, <span class="at">alpha =</span> <span class="dv">1</span>, <span class="at">eta =</span> <span class="dv">1</span>,</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>                    <span class="at">fixed =</span> <span class="fu">c</span>(<span class="st">&quot;tau&quot;</span>, <span class="st">&quot;gamma&quot;</span>, <span class="st">&quot;alpha&quot;</span>))</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Starting values in the order returned by hzr_theta_names(phases).</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: starting values from the SAS estimates.</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>theta0 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">log</span>(<span class="fl">0.05</span>), <span class="fu">log</span>(<span class="fl">0.04</span>), <span class="dv">1</span>, <span class="dv">1</span>,</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>            <span class="fu">log</span>(<span class="fl">0.035</span>), <span class="fu">log</span>(<span class="dv">1</span>), <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: time, event, and counts from the SAS reference for the rows this job</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="co"># analyses. Leave these invalid defaults in place until the job is reconciled.</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>TIME   <span class="ot">&lt;-</span> <span class="st">&quot;iv_dead&quot;</span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>EVENT  <span class="ot">&lt;-</span> <span class="st">&quot;dead&quot;</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>EXPECTED <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n =</span> <span class="dv">725</span>L, <span class="at">n_events =</span> <span class="dv">402</span>L, <span class="at">n_censored =</span> <span class="dv">323</span>L)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2465,10 +2485,12 @@ vertical-align: -.125em;
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>hvtiRutilities<span class="sc">::</span><span class="fu">verify_manifest</span>(<span class="fu">file.path</span>(.root, <span class="st">&quot;manifest.yaml&quot;</span>))</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>.cfg <span class="ot">&lt;-</span> <span class="fu">study_config</span>(<span class="at">start =</span> .root)</span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>job_data <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">read_job_data</span>(.cfg, <span class="at">dataset =</span> DATASET, <span class="at">analysis_set =</span> ANALYSIS_SET,</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id =</span> ID, <span class="at">key =</span> KEY)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance))</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id =</span> ID, <span class="at">key =</span> KEY, <span class="at">join =</span> JOIN, <span class="at">join_vars =</span> JOIN_VARS,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY, <span class="at">one_row_per_patient =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-data" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2487,7 +2509,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>study</code> (built.rds)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261009.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2538,10 +2560,27 @@ Table 1: The data this job read
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cc <span class="ot">&lt;-</span> <span class="fu">cohort_counts</span>(d, <span class="at">event =</span> EVENT, <span class="at">time =</span> TIME)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">assert_cohort</span>(d, <span class="at">expected =</span> EXPECTED, <span class="at">event =</span> EVENT, <span class="at">time =</span> TIME)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(<span class="st">&quot;n_analysable&quot;</span>, <span class="st">&quot;n_events&quot;</span>, <span class="st">&quot;n_censored&quot;</span>),</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">n        =</span> <span class="fu">c</span>(cc<span class="sc">$</span>n, cc<span class="sc">$</span>n_events, cc<span class="sc">$</span>n_censored)</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># A time of zero, a death on the day of operation, leaves the hazard likelihood</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># undefined, and the fit below would stop on an optimizer error that names</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># neither the time nor the patient. The fix belongs in the dataset build, not</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># here: a job reshapes data and never corrects it, and every job reading the</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co"># cohort must see the same follow-up.</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Only rows the cohort counts are checked: a row with no EVENT is not analyzed.</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>.t <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(d[[TIME]])[<span class="sc">!</span><span class="fu">is.na</span>(d[[EVENT]])]</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>.n_zero <span class="ot">&lt;-</span> <span class="fu">sum</span>(.t <span class="sc">==</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>.n_neg  <span class="ot">&lt;-</span> <span class="fu">sum</span>(.t <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (.n_zero <span class="sc">+</span> .n_neg <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(TIME, <span class="st">&quot; has &quot;</span>, .n_zero, <span class="st">&quot; time(s) of exactly zero and &quot;</span>, .n_neg, <span class="st">&quot; negative time(s). &quot;</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;Correct them in the dataset build, not in this job. Move only the zeros to a small positive &quot;</span>,</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;value, such as 0.00025 years as the template gallery does; moving every time up to one day &quot;</span>,</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;ties the early deaths together. A negative time is an error in the data: trace it to its source.&quot;</span>,</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(<span class="st">&quot;n_analysable&quot;</span>, <span class="st">&quot;n_events&quot;</span>, <span class="st">&quot;n_censored&quot;</span>),</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">n        =</span> <span class="fu">c</span>(cc<span class="sc">$</span>n, cc<span class="sc">$</span>n_events, cc<span class="sc">$</span>n_censored)</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-cohort" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2859,21 +2898,15 @@ Table 4: Events in the cohort gate against events in the response as built
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fit_det <span class="ot">&lt;-</span> <span class="fu">hazard</span>(surv_formula, <span class="at">data =</span> resp, <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">phases =</span> phases, <span class="at">theta =</span> theta0, <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">conserve =</span> <span class="cn">TRUE</span>, <span class="at">condition =</span> <span class="dv">14</span>,</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">n_starts =</span> <span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">2000</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: &#39;control&#39; element(s) with no effect on this dist = &quot;multiphase&quot; fit,
-ignored: control$condition (SAS&#39;s CONDITION= has no equivalent: hazard() has no
-condition-number stop, and reports the Hessian&#39;s conditioning after the fit
-instead).</code></pre>
-</div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_fit</span>(fit_det, <span class="st">&quot;deterministic&quot;</span>)</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_det)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># No `condition` in control: SAS&#39;s CONDITION= option has no equivalent in</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># hazard(), which ignores the element with a warning in the report. The fit</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># reports the conditioning of its Hessian afterwards instead, as rcond below.</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>fit_det <span class="ot">&lt;-</span> <span class="fu">hazard</span>(surv_formula, <span class="at">data =</span> resp, <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">phases =</span> phases, <span class="at">theta =</span> theta0, <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">conserve =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">n_starts =</span> <span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">2000</span>))</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">check_fit</span>(fit_det, <span class="st">&quot;deterministic&quot;</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_det)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Multiphase hazard model (2 phases)
@@ -2910,25 +2943,25 @@ Coefficients (internal scale):
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># There is no logLik() method for class &quot;hazard&quot;: the log-likelihood is</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># fit$fit$objective.</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># rcond and pd are read OFF THE FIT rather than recomputed from vcov(): vcov()</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co"># includes every FIXED parameter as an all-NA row and column, and rcond()</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co"># cannot take an NA matrix. The fit&#39;s own values are computed on the free</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co"># parameters, which is also what SAS&#39;s condition number refers to.</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co"># A multiphase fit reports how many times the optimizer evaluated the function</span></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="co"># and its gradient, not an iteration count. Each value is read through .one(),</span></span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="co"># so a field a fit does not carry shows as &quot;not reported&quot; rather than changing</span></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the number of rows and stopping the render.</span></span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>.one <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) <span class="cf">if</span> (<span class="fu">length</span>(x) <span class="sc">==</span> <span class="dv">1</span>L <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(x)) <span class="fu">format</span>(x, ...) <span class="cf">else</span> <span class="st">&quot;not reported&quot;</span></span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(</span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(<span class="st">&quot;log-likelihood&quot;</span>, <span class="st">&quot;converged&quot;</span>, <span class="st">&quot;function evaluations&quot;</span>, <span class="st">&quot;gradient evaluations&quot;</span>, <span class="st">&quot;rcond&quot;</span>, <span class="st">&quot;pd&quot;</span>),</span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">value    =</span> <span class="fu">c</span>(<span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>objective, <span class="at">digits =</span> <span class="dv">10</span>), <span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>converged),</span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>               <span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>counts[<span class="st">&quot;function&quot;</span>]), <span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>counts[<span class="st">&quot;gradient&quot;</span>]),</span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>               <span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>rcond, <span class="at">digits =</span> <span class="dv">6</span>), <span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>pd))</span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># There is no logLik() method for class &quot;hazard&quot;: the log-likelihood is</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># fit$fit$objective.</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># rcond and pd are read OFF THE FIT rather than recomputed from vcov(): vcov()</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co"># includes every FIXED parameter as an all-NA row and column, and rcond()</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co"># cannot take an NA matrix. The fit&#39;s own values are computed on the free</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co"># parameters, which is also what SAS&#39;s condition number refers to.</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co"># A multiphase fit reports how many times the optimizer evaluated the function</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co"># and its gradient, not an iteration count. Each value is read through .one(),</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co"># so a field a fit does not carry shows as &quot;not reported&quot; rather than changing</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the number of rows and stopping the render.</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>.one <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) <span class="cf">if</span> (<span class="fu">length</span>(x) <span class="sc">==</span> <span class="dv">1</span>L <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(x)) <span class="fu">format</span>(x, ...) <span class="cf">else</span> <span class="st">&quot;not reported&quot;</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(<span class="st">&quot;log-likelihood&quot;</span>, <span class="st">&quot;converged&quot;</span>, <span class="st">&quot;function evaluations&quot;</span>, <span class="st">&quot;gradient evaluations&quot;</span>, <span class="st">&quot;rcond&quot;</span>, <span class="st">&quot;pd&quot;</span>),</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">value    =</span> <span class="fu">c</span>(<span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>objective, <span class="at">digits =</span> <span class="dv">10</span>), <span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>converged),</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>               <span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>counts[<span class="st">&quot;function&quot;</span>]), <span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>counts[<span class="st">&quot;gradient&quot;</span>]),</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>               <span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>rcond, <span class="at">digits =</span> <span class="dv">6</span>), <span class="fu">.one</span>(fit_det<span class="sc">$</span>fit<span class="sc">$</span>pd))</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-convergence" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2982,44 +3015,52 @@ Table 5: Convergence quantities of the reported fit
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The probes run at n_starts = 1 ON PURPOSE. Multi-start is what makes the</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># reported fit robust -- it perturbs around its start until it escapes small</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># basins -- which is exactly what would HIDE a second basin from this check. A</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># single start goes where its starting point leads, so it is the thing that</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co"># actually finds another optimum if one is there.</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: widen or add probes if your model has more phases or free parameters.</span></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Every row must differ from every other row: a duplicated start is a fit that</span></span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="co"># costs time and tests nothing.</span></span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>.free  <span class="ot">&lt;-</span> <span class="sc">!</span>theta_names <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;late.log_tau&quot;</span>, <span class="st">&quot;late.gamma&quot;</span>, <span class="st">&quot;late.alpha&quot;</span>)</span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>probes <span class="ot">&lt;-</span> <span class="fu">rbind</span>(theta0, theta0 <span class="sc">+</span> <span class="fl">0.5</span> <span class="sc">*</span> .free, theta0 <span class="sc">-</span> <span class="fl">0.5</span> <span class="sc">*</span> .free)</span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">anyDuplicated</span>(probes)) {</span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Two probe rows are identical: that fit costs time and tests nothing.&quot;</span>,</span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The probes run at n_starts = 1 ON PURPOSE. Multi-start is what makes the</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co"># reported fit robust -- it perturbs around its start until it escapes small</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co"># basins -- which is exactly what would HIDE a second basin from this check. A</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># single start goes where its starting point leads, so it is the thing that</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># actually finds another optimum if one is there.</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Only the FREE positions move. hazard() holds a fixed parameter at the value</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="co"># theta gives it, so a probe that moved one would fit a different model, and</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="co"># could beat the reported fit without the reported fit being in the wrong</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="co"># basin. The held positions are each phase&#39;s `fixed` set, plus the shape a g3</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="co"># `constraint` derives from the others, which hazard() would replace anyway.</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>held <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">lapply</span>(<span class="fu">names</span>(phases), <span class="cf">function</span>(nm) {</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  ph <span class="ot">&lt;-</span> phases[[nm]]</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  derived <span class="ot">&lt;-</span> <span class="cf">switch</span>(<span class="cf">if</span> (<span class="fu">is.null</span>(ph<span class="sc">$</span>constraint)) <span class="st">&quot;none&quot;</span> <span class="cf">else</span> ph<span class="sc">$</span>constraint,</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>                    <span class="at">alpha_gamma_eta =</span> <span class="st">&quot;alpha&quot;</span>, <span class="at">eta_gamma =</span> <span class="st">&quot;eta&quot;</span>, <span class="fu">character</span>(<span class="dv">0</span>))</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">c</span>(ph<span class="sc">$</span>fixed, derived)</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(nm, <span class="st">&quot;.&quot;</span>, <span class="fu">c</span>(p, <span class="fu">paste0</span>(<span class="st">&quot;log_&quot;</span>, p)))</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>free <span class="ot">&lt;-</span> <span class="sc">!</span>(theta_names <span class="sc">%in%</span> held)</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: widen or add probes if your model has more phases or free parameters.</span></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Every row must differ from every other row: a duplicated start is a fit that</span></span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="co"># costs time and tests nothing. Move only positions where `free` is TRUE.</span></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>probes <span class="ot">&lt;-</span> <span class="fu">rbind</span>(theta0, theta0 <span class="sc">+</span> <span class="fl">0.5</span> <span class="sc">*</span> free, theta0 <span class="sc">-</span> <span class="fl">0.5</span> <span class="sc">*</span> free)</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">anyDuplicated</span>(probes)) {</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Two probe rows are identical: that fit costs time and tests nothing.&quot;</span>,</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>.moved <span class="ot">&lt;-</span> theta_names[<span class="sc">!</span>free][<span class="fu">colSums</span>(probes[, <span class="sc">!</span>free, <span class="at">drop =</span> <span class="cn">FALSE</span>] <span class="sc">!=</span> <span class="fu">rep</span>(theta0[<span class="sc">!</span>free], <span class="at">each =</span> <span class="fu">nrow</span>(probes))) <span class="sc">&gt;</span> <span class="dv">0</span>]</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.moved)) {</span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;A probe moves a fixed parameter (&quot;</span>, <span class="fu">paste</span>(.moved, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;), so it fits a different &quot;</span>,</span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;model and its log-likelihood cannot be compared with the reported fit&#39;s.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>probe_ll <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(probes)), <span class="cf">function</span>(i) {</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">try</span>(<span class="fu">hazard</span>(surv_formula, <span class="at">data =</span> resp, <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">phases =</span> phases, <span class="at">theta =</span> probes[i, ], <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">conserve =</span> <span class="cn">TRUE</span>, <span class="at">condition =</span> <span class="dv">14</span>,</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">n_starts =</span> <span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">2000</span>)), <span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">inherits</span>(f, <span class="st">&quot;try-error&quot;</span>)) <span class="cn">NA_real_</span> <span class="cf">else</span> f<span class="sc">$</span>fit<span class="sc">$</span>objective</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>}, <span class="fu">numeric</span>(<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>probe_ll <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(probes)), <span class="cf">function</span>(i) {</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">try</span>(<span class="fu">hazard</span>(surv_formula, <span class="at">data =</span> resp, <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">phases =</span> phases, <span class="at">theta =</span> probes[i, ], <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">conserve =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">n_starts =</span> <span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">2000</span>)), <span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">inherits</span>(f, <span class="st">&quot;try-error&quot;</span>)) <span class="cn">NA_real_</span> <span class="cf">else</span> f<span class="sc">$</span>fit<span class="sc">$</span>objective</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>}, <span class="fu">numeric</span>(<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: &#39;control&#39; element(s) with no effect on this dist = &quot;multiphase&quot; fit,
-ignored: control$condition (SAS&#39;s CONDITION= has no equivalent: hazard() has no
-condition-number stop, and reports the Hessian&#39;s conditioning after the fit
-instead).
-Warning: &#39;control&#39; element(s) with no effect on this dist = &quot;multiphase&quot; fit,
-ignored: control$condition (SAS&#39;s CONDITION= has no equivalent: hazard() has no
-condition-number stop, and reports the Hessian&#39;s conditioning after the fit
-instead).</code></pre>
-</div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in .hzr_safe_solve(hess_result): Hessian is not positive-definite at
 the optimum; standard errors may be unreliable</code></pre>
@@ -3028,20 +3069,14 @@ the optimum; standard errors may be unreliable</code></pre>
 <pre><code>Warning in .hzr_safe_solve(hess_result): Non-positive variance estimates; the
 optimum may not be a proper maximum</code></pre>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: &#39;control&#39; element(s) with no effect on this dist = &quot;multiphase&quot; fit,
-ignored: control$condition (SAS&#39;s CONDITION= has no equivalent: hazard() has no
-condition-number stop, and reports the Hessian&#39;s conditioning after the fit
-instead).</code></pre>
-</div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>probe_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">probe       =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(probes)),</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">logLik      =</span> probe_ll,</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">vs_reported =</span> probe_ll <span class="sc">-</span> fit_det<span class="sc">$</span>fit<span class="sc">$</span>objective</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(probe_table, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>probe_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">probe       =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(probes)),</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">logLik      =</span> probe_ll,</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">vs_reported =</span> probe_ll <span class="sc">-</span> fit_det<span class="sc">$</span>fit<span class="sc">$</span>objective</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(probe_table, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-multistart" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -3089,40 +3124,31 @@ Table 6: Log-likelihood of each single-start probe fit against the reported fit
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>fit_nc <span class="ot">&lt;-</span> <span class="fu">hazard</span>(surv_formula, <span class="at">data =</span> resp, <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">phases =</span> phases, <span class="at">theta =</span> theta0, <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">control =</span> <span class="fu">list</span>(<span class="at">conserve =</span> <span class="cn">FALSE</span>, <span class="at">condition =</span> <span class="dv">14</span>,</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>                                <span class="at">n_starts =</span> <span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">2000</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: &#39;control&#39; element(s) with no effect on this dist = &quot;multiphase&quot; fit,
-ignored: control$condition (SAS&#39;s CONDITION= has no equivalent: hazard() has no
-condition-number stop, and reports the Hessian&#39;s conditioning after the fit
-instead).</code></pre>
-</div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">check_fit</span>(fit_nc, <span class="st">&quot;noconserve&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>fit_nc <span class="ot">&lt;-</span> <span class="fu">hazard</span>(surv_formula, <span class="at">data =</span> resp, <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">phases =</span> phases, <span class="at">theta =</span> theta0, <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">control =</span> <span class="fu">list</span>(<span class="at">conserve =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>                                <span class="at">n_starts =</span> <span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">2000</span>))</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="fu">check_fit</span>(fit_nc, <span class="st">&quot;noconserve&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sum_i Lambda(t_i) is what `conserve` pins to the event count. Reporting it</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="co"># under BOTH settings is the only way a reader can tell &quot;the control did</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="co"># nothing&quot; from &quot;the control had almost nothing to do&quot; -- the two are identical</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="co"># in the likelihood column and mean opposite things.</span></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>sum_lambda <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="fu">predict</span>(fit_det, <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>)),</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="fu">predict</span>(fit_nc, <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>))</span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>conservation <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">conserve   =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>),</span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">sum_lambda =</span> sum_lambda,</span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">events     =</span> cc<span class="sc">$</span>n_events</span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>conservation<span class="sc">$</span>excess <span class="ot">&lt;-</span> conservation<span class="sc">$</span>sum_lambda <span class="sc">-</span> conservation<span class="sc">$</span>events</span>
-<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(conservation, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sum_i Lambda(t_i) is what `conserve` pins to the event count. Reporting it</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="co"># under BOTH settings is the only way a reader can tell &quot;the control did</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co"># nothing&quot; from &quot;the control had almost nothing to do&quot; -- the two are identical</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="co"># in the likelihood column and mean opposite things.</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>sum_lambda <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="fu">predict</span>(fit_det, <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>)),</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="fu">predict</span>(fit_nc, <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>))</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>conservation <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">conserve   =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>),</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">sum_lambda =</span> sum_lambda,</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">events     =</span> cc<span class="sc">$</span>n_events</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>conservation<span class="sc">$</span>excess <span class="ot">&lt;-</span> conservation<span class="sc">$</span>sum_lambda <span class="sc">-</span> conservation<span class="sc">$</span>events</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(conservation, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-conservation-binding" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -3167,43 +3193,43 @@ Table 7: Sum of the cumulative hazard against the event count, with and without
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>cf <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_det)</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="co"># vcov() returns a scalar NA rather than a matrix when the Hessian could not be</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="co"># inverted, so diag() on it errors. That is a result ABOUT the fit, not a bug</span></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="co"># to route around: report it and carry on with what does not need curvature.</span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>V <span class="ot">&lt;-</span> <span class="fu">vcov</span>(fit_det)</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>se_available <span class="ot">&lt;-</span> <span class="fu">is.matrix</span>(V) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(V) <span class="sc">==</span> <span class="fu">length</span>(cf) <span class="sc">&amp;&amp;</span> <span class="fu">any</span>(<span class="fu">is.finite</span>(<span class="fu">diag</span>(V)))</span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">NOTE</span><span class="co"> the brace. At top level `if (a) x` &lt;newline&gt; `else y` is a PARSE ERROR:</span></span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="co"># `else` must not start a line outside a block. knitr captures that error into</span></span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="co"># the document and carries on, so the chunk &quot;runs&quot; and silently emits nothing.</span></span>
-<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>se <span class="ot">&lt;-</span> <span class="cf">if</span> (se_available) {</span>
-<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(<span class="fu">sqrt</span>(<span class="fu">diag</span>(V)), <span class="fu">names</span>(cf))</span>
-<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(<span class="fu">rep</span>(<span class="cn">NA_real_</span>, <span class="fu">length</span>(cf)), <span class="fu">names</span>(cf))</span>
-<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: map your coefficients to their natural scale, and to the SAS names a</span></span>
-<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a><span class="co"># reader will be comparing against. exp() where R reports a log, identity where</span></span>
-<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a><span class="co"># it already reports the natural value.</span></span>
-<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>est <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">parameter     =</span> <span class="fu">c</span>(<span class="st">&quot;MUE&quot;</span>, <span class="st">&quot;THALF&quot;</span>, <span class="st">&quot;NU&quot;</span>, <span class="st">&quot;M&quot;</span>, <span class="st">&quot;MUL&quot;</span>, <span class="st">&quot;ETA&quot;</span>),</span>
-<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">estimate      =</span> <span class="fu">c</span>(<span class="fu">exp</span>(cf[[<span class="st">&quot;early.log_mu&quot;</span>]]), <span class="fu">exp</span>(cf[[<span class="st">&quot;early.log_t_half&quot;</span>]]),</span>
-<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>                    cf[[<span class="st">&quot;early.nu&quot;</span>]], cf[[<span class="st">&quot;early.m&quot;</span>]],</span>
-<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">exp</span>(cf[[<span class="st">&quot;late.log_mu&quot;</span>]]), cf[[<span class="st">&quot;late.eta&quot;</span>]]),</span>
-<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">se_on_r_scale =</span> <span class="fu">c</span>(se[[<span class="st">&quot;early.log_mu&quot;</span>]], se[[<span class="st">&quot;early.log_t_half&quot;</span>]],</span>
-<span id="cb32-27"><a href="#cb32-27" aria-hidden="true" tabindex="-1"></a>                    se[[<span class="st">&quot;early.nu&quot;</span>]], se[[<span class="st">&quot;early.m&quot;</span>]],</span>
-<span id="cb32-28"><a href="#cb32-28" aria-hidden="true" tabindex="-1"></a>                    se[[<span class="st">&quot;late.log_mu&quot;</span>]], se[[<span class="st">&quot;late.eta&quot;</span>]]),</span>
-<span id="cb32-29"><a href="#cb32-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">r_scale       =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;log&quot;</span>, <span class="st">&quot;natural&quot;</span>, <span class="st">&quot;natural&quot;</span>, <span class="st">&quot;log&quot;</span>, <span class="st">&quot;natural&quot;</span>),</span>
-<span id="cb32-30"><a href="#cb32-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names     =</span> <span class="cn">NULL</span></span>
-<span id="cb32-31"><a href="#cb32-31" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>cf <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_det)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># vcov() returns a scalar NA rather than a matrix when the Hessian could not be</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="co"># inverted, so diag() on it errors. That is a result ABOUT the fit, not a bug</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="co"># to route around: report it and carry on with what does not need curvature.</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>V <span class="ot">&lt;-</span> <span class="fu">vcov</span>(fit_det)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>se_available <span class="ot">&lt;-</span> <span class="fu">is.matrix</span>(V) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(V) <span class="sc">==</span> <span class="fu">length</span>(cf) <span class="sc">&amp;&amp;</span> <span class="fu">any</span>(<span class="fu">is.finite</span>(<span class="fu">diag</span>(V)))</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">NOTE</span><span class="co"> the brace. At top level `if (a) x` &lt;newline&gt; `else y` is a PARSE ERROR:</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="co"># `else` must not start a line outside a block. knitr captures that error into</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="co"># the document and carries on, so the chunk &quot;runs&quot; and silently emits nothing.</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>se <span class="ot">&lt;-</span> <span class="cf">if</span> (se_available) {</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(<span class="fu">sqrt</span>(<span class="fu">diag</span>(V)), <span class="fu">names</span>(cf))</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(<span class="fu">rep</span>(<span class="cn">NA_real_</span>, <span class="fu">length</span>(cf)), <span class="fu">names</span>(cf))</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: map your coefficients to their natural scale, and to the SAS names a</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a><span class="co"># reader will be comparing against. exp() where R reports a log, identity where</span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a><span class="co"># it already reports the natural value.</span></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>est <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">parameter     =</span> <span class="fu">c</span>(<span class="st">&quot;MUE&quot;</span>, <span class="st">&quot;THALF&quot;</span>, <span class="st">&quot;NU&quot;</span>, <span class="st">&quot;M&quot;</span>, <span class="st">&quot;MUL&quot;</span>, <span class="st">&quot;ETA&quot;</span>),</span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">estimate      =</span> <span class="fu">c</span>(<span class="fu">exp</span>(cf[[<span class="st">&quot;early.log_mu&quot;</span>]]), <span class="fu">exp</span>(cf[[<span class="st">&quot;early.log_t_half&quot;</span>]]),</span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>                    cf[[<span class="st">&quot;early.nu&quot;</span>]], cf[[<span class="st">&quot;early.m&quot;</span>]],</span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">exp</span>(cf[[<span class="st">&quot;late.log_mu&quot;</span>]]), cf[[<span class="st">&quot;late.eta&quot;</span>]]),</span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">se_on_r_scale =</span> <span class="fu">c</span>(se[[<span class="st">&quot;early.log_mu&quot;</span>]], se[[<span class="st">&quot;early.log_t_half&quot;</span>]],</span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>                    se[[<span class="st">&quot;early.nu&quot;</span>]], se[[<span class="st">&quot;early.m&quot;</span>]],</span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a>                    se[[<span class="st">&quot;late.log_mu&quot;</span>]], se[[<span class="st">&quot;late.eta&quot;</span>]]),</span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">r_scale       =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;log&quot;</span>, <span class="st">&quot;natural&quot;</span>, <span class="st">&quot;natural&quot;</span>, <span class="st">&quot;log&quot;</span>, <span class="st">&quot;natural&quot;</span>),</span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names     =</span> <span class="cn">NULL</span></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(est, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(est, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-estimates" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -3267,17 +3293,17 @@ Table 8: Parameter estimates on the natural scale, with standard errors on the 
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: its child chunk carries its own label and caption</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>se_available) {</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  no_se <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">warning =</span> <span class="st">&quot;The Hessian could not be inverted: NO standard errors are available.&quot;</span></span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-estimates-no-se&quot;</span>,</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">Standard errors could not be computed</span><span class="sc">\&quot;</span><span class="st">&quot;</span>, <span class="st">&quot;knitr::kable(no_se)&quot;</span>, .fence</span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: its child chunk carries its own label and caption</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>se_available) {</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  no_se <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">warning =</span> <span class="st">&quot;The Hessian could not be inverted: NO standard errors are available.&quot;</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-estimates-no-se&quot;</span>,</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">Standard errors could not be computed</span><span class="sc">\&quot;</span><span class="st">&quot;</span>, <span class="st">&quot;knitr::kable(no_se)&quot;</span>, .fence</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <p><strong>A caveat that must travel with these standard errors.</strong> Under a near-singular Hessian — check <code>rcond</code> above — the marginal standard errors on weakly identified shape parameters are unstable while the fitted curve is not. The data can pin the survival function tightly and still leave individual shape parameters loose, because <code>se(S(t))² = gᵀVg</code> can be well determined when the diagonal of <code>V</code> is not.</p>
 <p>So report per-parameter standard errors with that caveat attached, and treat the survival curve and its band — computed in the companion <code>hp</code> job — as the quantity that actually reaches a clinician.</p>
@@ -3287,27 +3313,27 @@ Table 8: Parameter estimates on the natural scale, with standard errors on the 
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># `hp` plots what this writes and `hm` fixes its shape parameters at these</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="co"># values, both by set. A job that persists nothing cannot be chained from.</span></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>hz_art <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">deterministic =</span> fit_det, <span class="at">noconserve =</span> fit_nc,</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">phases =</span> phases, <span class="at">theta0 =</span> theta0)</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>hz_art <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>  hz_art,</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
-<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
-<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> cc,</span>
-<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hm, hp and hs rebuild exactly these rows from this record, and take TIME</span></span>
-<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># and EVENT from it, so the chain cannot drift from the fit it builds on.</span></span>
-<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">c</span>(<span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>), <span class="fu">list</span>(<span class="at">time =</span> TIME, <span class="at">event =</span> EVENT))</span>
-<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hz_art, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;hz.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># `hp` plots what this writes and `hm` fixes its shape parameters at these</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="co"># values, both by set. A job that persists nothing cannot be chained from.</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>hz_art <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">deterministic =</span> fit_det, <span class="at">noconserve =</span> fit_nc,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">phases =</span> phases, <span class="at">theta0 =</span> theta0)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>hz_art <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  hz_art,</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> cc,</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hm, hp and hs rebuild exactly these rows from this record, and take TIME</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># and EVENT from it, so the chain cannot drift from the fit it builds on.</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">c</span>(<span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>), <span class="fu">list</span>(<span class="at">time =</span> TIME, <span class="at">event =</span> EVENT))</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hz_art, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;hz.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dead-hz-hz","rendered":"2026-10-06T10:07:20Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.2.5","source":null},{"package":"hvtiRutilities","version":"1.4.4","source":"github","sha":"b08735e0c81cc1503f793960d2a76040829685e8"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"numDeriv","version":"2016.8.1.1","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"TemporalHazard","version":"1.2.12","source":"github","sha":"e9ab82728ba4173df78c77286857e1923b22eb90"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built.rds","role":"analysis","bytes":29325,"mtime":"2026-10-06T10:04:15Z","sha256":"1c4d37bc9b73dc545752f9242c11c1b71169e1df3e0a817f255f609a8fe5e7db"}],"artifacts":[],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":402,"n_censored":323},"source":"20_distributions/dead-hz-hz.qmd",".hvti_render_id":"e54e67ff176d7111ea4c6d3a27e7f5127123850c4e6cf35cd8af680b61d3cc4c",".hvti_source_sha256":"a75f053ea3928186a1c029b2d0b6bb85dd7e01b627d896ad18e09f8c363f02d8"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"hz.dead.hz","rendered":"2026-10-09T15:20:14Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.3.0","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"numDeriv","version":"2016.8.1.1","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"TemporalHazard","version":"1.2.12","source":"github","sha":"e9ab82728ba4173df78c77286857e1923b22eb90"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261009.parquet","role":"analysis","bytes":57934,"mtime":"2026-10-09T15:16:37Z","sha256":"ecad1d83bedca5d692b6314a2fca905e9716c8424d2ae8ff1643774eaee02baa"}],"artifacts":[],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":402,"n_censored":323},"source":"20_distributions/hz.dead.hz.qmd",".hvti_render_id":"efde2a61b40d877f7fc6b65157fc8d4a8736a7a202483316955d7b5d52e08866",".hvti_source_sha256":"66694588ac11c9b3c8244759de4dd65a545db6c3a978c9e9241c810aa44d5f75"}</script>
 </section>
 
 </main>

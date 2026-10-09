@@ -125,12 +125,12 @@ TYPE    <- "hz"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -152,6 +152,13 @@ set_path <- function(kind, file) {
                  paste0(SUBJECT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
+}
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
 }
 
 # `hp` both READS and WRITES through this: the upstream `ac.rds` and `hz.rds`
@@ -188,6 +195,13 @@ ID <- NULL
 KEY <- NULL
 TIME <- NULL
 EVENT <- NULL
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Upstream
@@ -238,8 +252,8 @@ if (!is.null(.hz_read$lineage$selection) && is.null(.ac_read$lineage$selection))
 }
 if (!is.null(.hz_read$lineage$selection) &&
       !identical(.ac_read$lineage$selection, .hz_read$lineage$selection)) {
-  stop("The ac and hz handoffs read different data, rows, time or event. Rebuild both with the same ",
-       "DATASET, ANALYSIS_SET, WHERE, ID, KEY, TIME and EVENT.", call. = FALSE)
+  stop("The ac and hz handoffs read different data, rows, time, event or join. Rebuild both with the same ",
+       "DATASET, ANALYSIS_SET, WHERE, ID, KEY, TIME, EVENT, JOIN, JOIN_VARS, REDUCE and JOIN_KEY.", call. = FALSE)
 }
 ac_art <- .ac_read$value
 hz_art <- .hz_read$value
@@ -273,18 +287,21 @@ job_data <- .up$job_data
 d <- job_data$data
 TIME <- .up$selection$time
 EVENT <- .up$selection$event
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+# The counts hz.rds records, from hz's EXPECTED; a mismatch names both.
+hvtiRtemplates:::.check_upstream_cohort(d, .hz_read$lineage, event = EVENT, time = TIME, source = "hz.rds")
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| `!is.na(creat_pr)`  | removed 75                  |
-| Rows kept           | 725 rows on 725 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `study` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| `!is.na(creat_pr)`  | removed 75                               |
+| Rows kept           | 725 rows on 725 patients                 |
 
 Table 1: The data this job read, as hz read it
 
@@ -483,30 +500,21 @@ s_pct  <- 100 * unname(predict(fit, newdata = data.frame(time = t_plot),
                                type = "survival"))
 x_plot <- t_plot * 12
 
-png(set_path("graphs", "hp-survival.png"),
-    width = 1400, height = 1000, res = 150)
-plot(NA, xlim = range(x_plot), ylim = c(0, 100),
-     xlab = "Months after operation", ylab = "Survival (%)",
-     main = "Actuarial and parametric survival")
-lines(x_plot, s_pct, lty = 1)
-# The actuarial estimate is a STEP function; type = "s" rather than a line
-# through the knots, which would draw an estimate nobody computed.
-lines(km$time * 12, 100 * km$survival, lty = 2, type = "s")
-legend("bottomleft", c("parametric (hz)", "actuarial (ac)"),
-       lty = c(1, 2), bty = "n")
-dev.off()
+draw <- function() {
+  plot(NA, xlim = range(x_plot), ylim = c(0, 100),
+       xlab = "Months after operation", ylab = "Survival (%)",
+       main = "Actuarial and parametric survival")
+  lines(x_plot, s_pct, lty = 1)
+  # The actuarial estimate is a STEP function; type = "s" rather than a line
+  # through the knots, which would draw an estimate nobody computed.
+  lines(km$time * 12, 100 * km$survival, lty = 2, type = "s")
+  legend("bottomleft", c("parametric (hz)", "actuarial (ac)"),
+         lty = c(1, 2), bty = "n")
+}
+knitr::include_graphics(save_figure(draw, "hp-survival", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
 ```
 
-    quartz_off_screen 
-                    2 
-
-Code
-
-``` r
-knitr::include_graphics(set_path("graphs", "hp-survival.png"))
-```
-
-![](assets/5a83a509e2126b39113334033ba11596.png)
+![](assets/fefcc2ab3668641bd0792bd2c629d374.png)
 
 Figure 1: Actuarial and parametric survival after the operation
 
@@ -516,24 +524,15 @@ Code
 h_pcpm <- 100 / 12 * unname(predict(fit, newdata = data.frame(time = t_plot),
                                     type = "hazard"))
 
-png(set_path("graphs", "hp-hazard.png"),
-    width = 1400, height = 1000, res = 150)
-plot(x_plot, h_pcpm, type = "l", log = "y",
-     xlab = "Months after operation", ylab = "Hazard (% per month)",
-     main = "Hazard function")
-dev.off()
+draw <- function() {
+  plot(x_plot, h_pcpm, type = "l", log = "y",
+       xlab = "Months after operation", ylab = "Hazard (% per month)",
+       main = "Hazard function")
+}
+knitr::include_graphics(save_figure(draw, "hp-hazard", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
 ```
 
-    quartz_off_screen 
-                    2 
-
-Code
-
-``` r
-knitr::include_graphics(set_path("graphs", "hp-hazard.png"))
-```
-
-![](assets/5995d973b8d3f3db40966d57d9041489.png)
+![](assets/ee19bd28dda2a35cc8a6fd1c7d72a287.png)
 
 Figure 2: Hazard of the parametric model after the operation
 
@@ -568,30 +567,21 @@ if ("total" %in% comp) {
   }
 }
 
-png(set_path("graphs", "hp-phases.png"),
-    width = 1400, height = 1000, res = 150)
-plot(NA, xlim = range(t_plot), ylim = range(unlist(dec[comp])),
-     xlab = "Years after operation", ylab = "Cumulative hazard",
-     main = "Phase decomposition of the cumulative hazard")
-for (i in seq_along(comp)) {
-  lines(dec$time, dec[[comp[i]]], col = i,
-        lty = if (comp[i] == "total") 1 else 2)
+draw <- function() {
+  plot(NA, xlim = range(t_plot), ylim = range(unlist(dec[comp])),
+       xlab = "Years after operation", ylab = "Cumulative hazard",
+       main = "Phase decomposition of the cumulative hazard")
+  for (i in seq_along(comp)) {
+    lines(dec$time, dec[[comp[i]]], col = i,
+          lty = if (comp[i] == "total") 1 else 2)
+  }
+  legend("topleft", comp, col = seq_along(comp),
+         lty = ifelse(comp == "total", 1, 2), bty = "n")
 }
-legend("topleft", comp, col = seq_along(comp),
-       lty = ifelse(comp == "total", 1, 2), bty = "n")
-dev.off()
+knitr::include_graphics(save_figure(draw, "hp-phases", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
 ```
 
-    quartz_off_screen 
-                    2 
-
-Code
-
-``` r
-knitr::include_graphics(set_path("graphs", "hp-phases.png"))
-```
-
-![](assets/6ccb03a4f9c4a41ed57368aed3846c06.png)
+![](assets/62bef4d670b57e24f1e6bb6e091c7bdb.png)
 
 Figure 3: Phase decomposition of the cumulative hazard
 

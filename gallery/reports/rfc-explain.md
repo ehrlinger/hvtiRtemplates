@@ -30,6 +30,13 @@ suppressPackageStartupMessages({
   library(ggRandomForests)
   library(hvtiRutilities)
 })
+# One thread, so a forest reproduces from machine to machine. Left unset,
+# randomForestSRC runs on every core its OpenMP build can see, and on a
+# multi-core server a varPro cross-validated cutoff changed with the thread
+# count with every seed held fixed. Raise it for speed on a large forest, at the
+# cost of that guarantee: a cached fit records its seed, data and package
+# versions, never the threads it ran on.
+options(rf.cores = 1L)
 # The versions this template was verified against, end to end, on 2026-09-19.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
@@ -138,12 +145,12 @@ TYPE    <- "rf"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -165,6 +172,13 @@ set_path <- function(kind, file) {
                  paste0(SUBJECT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
+}
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
 }
 
 # `rfc-explain` reads the forest `rfc-fit` wrote in this same set, and caches
@@ -193,12 +207,24 @@ TOP_K <- 4
 PARTIAL_VARS <- NULL
 
 # Demo: seed for VIMP, VarPro and the partials. It is part of every cache key.
+# cache_fit() seeds R's generator with it before each call, and vimp() and
+# varpro() are also handed it as `seed =`, negated as randomForestSRC
+# documents. Both halves matter: varpro() draws from R's generator as well as
+# from its own seed, so the same seed after a different chunk gave different
+# importances.
 SEED <- 2026
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
 # render instead of returning the old result; TRUE recomputes only the caches
 # that are out of date.
 REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## The forest
@@ -261,11 +287,13 @@ Table 1: The data the fit job read
 Code
 
 ``` r
-vi <- cache_fit("rfc-vimp", vimp(forest), seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(gg_vimp(vi))
+vi <- cache_fit("rfc-vimp", vimp(forest, seed = -abs(SEED)), seed = SEED, dir = CACHE_DIR, refit = REFIT)
+.fig <- plot(gg_vimp(vi))
+save_figure(.fig, "rfc-explain-importance")
+.fig
 ```
 
-![](assets/7ea5285d13c650c934130a5acfa39fa1.png)
+![](assets/b2a2f9ebfd9737bf85529756d98cef97.png)
 
 Figure 1: Permutation importance of each predictor
 
@@ -287,15 +315,15 @@ data.frame(variable = ranked,
 ```
 
       variable    vimp min_depth
-    1 creat_pr  0.1502      2.27
-    2     lvef  0.0937      1.54
-    3   hx_chf  0.0539      1.41
-    4      age  0.0429      1.62
-    5 plvmassi  0.0330      2.12
-    6      bmi  0.0117      2.65
-    7    hx_dm  0.0088      4.13
-    8   female -0.0013      4.31
-    9  nyha_pr -0.0085      2.85
+    1 creat_pr  0.1417      2.11
+    2     lvef  0.0675      1.57
+    3   hx_chf  0.0406      1.57
+    4      age  0.0313      1.49
+    5 plvmassi  0.0144      2.17
+    6    hx_dm  0.0057      3.91
+    7      bmi  0.0050      2.69
+    8   female -0.0027      4.12
+    9  nyha_pr -0.0112      3.02
 
 Table 2: Permutation importance and minimal depth of each predictor, in
 order of importance
@@ -322,7 +350,7 @@ if (is.null(PARTIAL_VARS)) {
 Code
 
 ``` r
-vp <- cache_fit("rfc-varpro", varpro(model, frame, verbose = FALSE),
+vp <- cache_fit("rfc-varpro", varpro(model, frame, verbose = FALSE, seed = -abs(SEED)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
 ```
 
@@ -332,10 +360,12 @@ vp <- cache_fit("rfc-varpro", varpro(model, frame, verbose = FALSE),
 Code
 
 ``` r
-plot(gg_varpro(vp))
+.fig <- plot(gg_varpro(vp))
+save_figure(.fig, "rfc-explain-varpro")
+.fig
 ```
 
-![](assets/2d93be50e122ac7f04084c1b8f530352.png)
+![](assets/8a9fc7ec92c148d5fdc658b2b41f98b1.png)
 
 Figure 2: VarPro importance of each predictor
 
@@ -345,7 +375,8 @@ Code
 
 ``` r
 # Marginal: predicted class probability against each variable, as observed.
-plot(gg_variable(forest), xvar = sel)
+.fig <- plot(gg_variable(forest), xvar = sel)
+save_figure(.fig, "rfc-explain-dependence-marginal")
 ```
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
@@ -368,7 +399,51 @@ plot(gg_variable(forest), xvar = sel)
     Warning: Removed 800 rows containing missing values or values outside the scale range
     (`geom_point()`).
 
-![](assets/1af30723fc20f8fa3f659043a782511e.png)
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    Warning: Removed 75 rows containing non-finite outside the scale range
+    (`stat_smooth()`).
+    Removed 800 rows containing missing values or values outside the scale range
+    (`geom_point()`).
+
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    Warning: Removed 800 rows containing missing values or values outside the scale range
+    (`geom_point()`).
+    Removed 800 rows containing missing values or values outside the scale range
+    (`geom_point()`).
+
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    Warning: Removed 800 rows containing missing values or values outside the scale range
+    (`geom_point()`).
+
+Code
+
+``` r
+.fig
+```
+
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    Warning: Removed 75 rows containing non-finite outside the scale range
+    (`stat_smooth()`).
+    Removed 800 rows containing missing values or values outside the scale range
+    (`geom_point()`).
+
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    Warning: Removed 800 rows containing missing values or values outside the scale range
+    (`geom_point()`).
+    Removed 800 rows containing missing values or values outside the scale range
+    (`geom_point()`).
+
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    Warning: Removed 800 rows containing missing values or values outside the scale range
+    (`geom_point()`).
+
+![](assets/94408cbca4e15c67e1133d2600af08fd.png)
 
 Figure 3: Predicted class probability against each selected predictor,
 as observed
@@ -379,11 +454,14 @@ Code
 # Partial: the forest's prediction with every other variable held at its
 # observed values.
 pd <- cache_fit("rfc-partial", gg_partial_rfsrc(forest, xvar.names = sel),
-                seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(pd)
+                seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                packages = "randomForestSRC")
+.fig <- plot(pd)
+save_figure(.fig, "rfc-explain-dependence-partial")
+.fig
 ```
 
-![](assets/9b6a6c908ab209f2b2901902c2cf38a1.png)
+![](assets/e9e12193467bf705c7e5a2b897c5f057.png)
 
 Figure 4: Partial dependence of the forest’s prediction on each selected
 predictor
@@ -394,12 +472,24 @@ Code
 # The VarPro partial, computed from the varpro fit.
 pv <- cache_fit("rfc-partial-varpro", gg_partial_varpro(object = vp, xvar.names = sel),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(pv)
+.fig <- plot(pv)
+save_figure(.fig, "rfc-explain-dependence-varpro")
 ```
 
-    Warning: Removed 228 rows containing non-finite outside the scale range
+    Warning: Removed 216 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
+    Removed 216 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/d252f828fefcf5b7c66f03aef0174eb4.png)
+Code
+
+``` r
+.fig
+```
+
+    Warning: Removed 216 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
+
+![](assets/176a73f3fbddd5001cb19d2b46aea49d.png)
 
 Figure 5: VarPro partial dependence on each selected predictor

@@ -59,7 +59,7 @@ SUBJECT <- "discharge"
 TYPE    <- "model"
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -78,8 +78,8 @@ set_path <- function(kind, file) {
 Code
 
 ``` r
-# Demo: the registered dataset this job reads ("study" is the built dataset).
-DATASET <- "study"
+# Demo: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
 ANALYSIS_SET <- NULL
@@ -96,6 +96,26 @@ ID <- "patient_id"
 # Demo: what makes a row unique; one row per patient unless repeated measures
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 
 OUTCOME <- "discharge"
 PREDICTORS <- c("age", "female", "hx_chf", "hx_dm", "lvef", "bmi")
@@ -114,23 +134,26 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
 # This job's data are the model's training data, which lm-checkpred tells from its validation data.
 job_data$provenance$role <- "training"
+if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 # The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
 .id <- attr(job_data$record, "selection")$id
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| Rows kept           | 800 rows on 800 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| Rows kept           | 800 rows on 800 patients                 |
 
 Table 1: The data this job read
 

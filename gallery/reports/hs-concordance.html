@@ -2369,12 +2369,12 @@ vertical-align: -.125em;
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># yet, so this is a no-op in that case rather than a spurious error.</span></span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>.current <span class="ot">&lt;-</span> knitr<span class="sc">::</span><span class="fu">current_input</span>()</span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.current)) {</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Quarto knits through an intermediate, so `knitr::current_input()` returns</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># `&lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;.rmarkdown` here rather than the</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># `.qmd` this was scaffolded as. Strip whatever extension is actually present</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># rather than hard-coding one, so this doesn&#39;t depend on a build-tool detail</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># staying the same.</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  .fields <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(<span class="fu">sub</span>(<span class="st">&quot;[.][^.]+$&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">basename</span>(.current)), <span class="st">&quot;-&quot;</span>, <span class="at">fixed =</span> <span class="cn">TRUE</span>)[[<span class="dv">1</span>L]]</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The name is template first, &lt;prefix&gt;[.&lt;qualifier&gt;].&lt;subject&gt;.&lt;type&gt;, or</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># &lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;] for a job scaffolded before</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 2026-10. .job_name_fields() reads subject and type from either, whatever</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the extension: Quarto knits through an intermediate, so</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  .fields <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_name_fields</span>(.current)</span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  .name_subject <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(.fields) <span class="sc">&gt;=</span> <span class="dv">1</span>L) .fields[[<span class="dv">1</span>L]] <span class="cf">else</span> <span class="cn">NA_character_</span></span>
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  .name_type     <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(.fields) <span class="sc">&gt;=</span> <span class="dv">2</span>L) .fields[[<span class="dv">2</span>L]] <span class="cf">else</span> <span class="cn">NA_character_</span></span>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">identical</span>(.name_subject, SUBJECT) <span class="sc">||</span> <span class="sc">!</span><span class="fu">identical</span>(.name_type, TYPE)) {</span>
@@ -2413,52 +2413,72 @@ vertical-align: -.125em;
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># job&#39;s own choice, not taken from a model: each hm model was fitted on ONE</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># group&#39;s rows, and this job predicts for all of them.</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the dataset, and a WHERE that keeps every group being compared.</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;study&quot;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;built&quot;</span></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>ANALYSIS_SET <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="fu">quote</span>(<span class="sc">!</span><span class="fu">is.na</span>(creat_pr))</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> ID</span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the follow-up time and event columns every hm model was fitted on. The</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#       models chunk stops if any model records a different time column,</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#       because HORIZON below is one number applied to every model.</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>TIME  <span class="ot">&lt;-</span> <span class="st">&quot;iv_dead&quot;</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>EVENT <span class="ot">&lt;-</span> <span class="st">&quot;dead&quot;</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the counts this cohort must have. The invalid defaults stop an unedited</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#       job before it predicts for a cohort nobody reconciled.</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>EXPECTED <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n =</span> <span class="dv">725</span>L, <span class="at">n_events =</span> <span class="dv">402</span>L, <span class="at">n_censored =</span> <span class="dv">323</span>L)</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: one entry per treatment group. The NAME is the group&#39;s label and must</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#       be a value of the GROUP column. The VALUE is the set whose hm job</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#       fitted that group&#39;s model, &quot;&lt;subject&gt;-&lt;type&gt;&quot;.</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>MODELS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">surgical =</span> <span class="st">&quot;dead-surgical&quot;</span>, <span class="at">transcatheter =</span> <span class="st">&quot;dead-transcatheter&quot;</span>)</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the column recording the treatment each patient actually received.</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>GROUP <span class="ot">&lt;-</span> <span class="st">&quot;approach&quot;</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the single horizon, in TIME&#39;s own units. If the hm jobs worked in</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co">#       years, 30 days is 30/365.25, not 30. A wrong unit gives a plausible</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co">#       number at the wrong time, the failure with no symptom.</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="ot">&lt;-</span> <span class="dv">5</span></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: columns a later plotting job needs beside each prediction, such as</span></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co">#       age. They are saved once per patient, because the saved predictions</span></span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co">#       carry a row number, not a patient identifier.</span></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>CARRY <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>)</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how the cohort was made comparable across groups: &quot;none&quot;, &quot;matched&quot;</span></span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="co">#       or &quot;common_support&quot;. Say which, and why, in the text above. The three</span></span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="co">#       studies this template was drawn from made three different choices,</span></span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="co">#       so there is no default.</span></span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>OVERLAP <span class="ot">&lt;-</span> <span class="st">&quot;none&quot;</span></span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: TRUE only when a MODELS entry is a path to another study&#39;s hm.rds.</span></span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="co">#       Setting it is also your statement that the other study&#39;s time is in</span></span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="co">#       TIME&#39;s unit: the saved model records its time column&#39;s name and no</span></span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="co">#       unit, so this is the one check here that rests on your word. Write</span></span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="co">#       the unit in the text above.</span></span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>CROSS_STUDY <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional, and needs no edit: NULL reads the cohort alone. To join one</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># registered ancillary dataset (echoes, labs), name it in JOIN. The cohort</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># above decides the patients, one row each; the joined records of other</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are dropped and counted in the data table.</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#     and a column both datasets have stops, so list only those the job needs.</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#   REDUCE: NULL keeps a row per joined record, keyed on that dataset&#39;s key;</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#     list(rule = &quot;first&quot;, by = &quot;echo_date&quot;) keeps one row per patient (&quot;last&quot;,</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#     or &quot;nearest&quot; with to = a cohort date column). WHERE on a joined column</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#     filters the records first, so &quot;last&quot; with WHERE echo_type == &quot;TTE&quot;</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#     keeps each patient&#39;s last TTE. A tie stops: picking one record</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#     silently would be a hidden choice; by = c(&quot;echo_date&quot;, &quot;echo_seq&quot;)</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#     breaks it. This job models one row per</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#     patient, so a JOIN without REDUCE stops here.</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_KEY: overrides the joined dataset&#39;s registered key.</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>JOIN <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>JOIN_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>REDUCE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>JOIN_KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the follow-up time and event columns every hm model was fitted on. The</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co">#       models chunk stops if any model records a different time column,</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co">#       because HORIZON below is one number applied to every model.</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>TIME  <span class="ot">&lt;-</span> <span class="st">&quot;iv_dead&quot;</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>EVENT <span class="ot">&lt;-</span> <span class="st">&quot;dead&quot;</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the counts this cohort must have. The invalid defaults stop an unedited</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co">#       job before it predicts for a cohort nobody reconciled.</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>EXPECTED <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n =</span> <span class="dv">725</span>L, <span class="at">n_events =</span> <span class="dv">402</span>L, <span class="at">n_censored =</span> <span class="dv">323</span>L)</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: one entry per treatment group. The NAME is the group&#39;s label and must</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="co">#       be a value of the GROUP column. The VALUE is the set whose hm job</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="co">#       fitted that group&#39;s model, &quot;&lt;subject&gt;-&lt;type&gt;&quot;.</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>MODELS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">surgical =</span> <span class="st">&quot;dead-surgical&quot;</span>, <span class="at">transcatheter =</span> <span class="st">&quot;dead-transcatheter&quot;</span>)</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the column recording the treatment each patient actually received.</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>GROUP <span class="ot">&lt;-</span> <span class="st">&quot;approach&quot;</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the single horizon, in TIME&#39;s own units. If the hm jobs worked in</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="co">#       years, 30 days is 30/365.25, not 30. A wrong unit gives a plausible</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="co">#       number at the wrong time, the failure with no symptom.</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: columns a later plotting job needs beside each prediction, such as</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="co">#       age. They are saved once per patient, because the saved predictions</span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="co">#       carry a row number, not a patient identifier.</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>CARRY <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>)</span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how the cohort was made comparable across groups: &quot;none&quot;, &quot;matched&quot;</span></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="co">#       or &quot;common_support&quot;. Say which, and why, in the text above. The three</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="co">#       studies this template was drawn from made three different choices,</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="co">#       so there is no default.</span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>OVERLAP <span class="ot">&lt;-</span> <span class="st">&quot;none&quot;</span></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: TRUE only when a MODELS entry is a path to another study&#39;s hm.rds.</span></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a><span class="co">#       Setting it is also your statement that the other study&#39;s time is in</span></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a><span class="co">#       TIME&#39;s unit: the saved model records its time column&#39;s name and no</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a><span class="co">#       unit, so this is the one check here that rests on your word. Write</span></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a><span class="co">#       the unit in the text above.</span></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>CROSS_STUDY <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2472,10 +2492,12 @@ vertical-align: -.125em;
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>hvtiRutilities<span class="sc">::</span><span class="fu">verify_manifest</span>(<span class="fu">file.path</span>(.root, <span class="st">&quot;manifest.yaml&quot;</span>))</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>.cfg <span class="ot">&lt;-</span> <span class="fu">study_config</span>(<span class="at">start =</span> .root)</span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>job_data <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">read_job_data</span>(.cfg, <span class="at">dataset =</span> DATASET, <span class="at">analysis_set =</span> ANALYSIS_SET,</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id =</span> ID, <span class="at">key =</span> KEY)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance))</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id =</span> ID, <span class="at">key =</span> KEY, <span class="at">join =</span> JOIN, <span class="at">join_vars =</span> JOIN_VARS,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY, <span class="at">one_row_per_patient =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-data" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2494,7 +2516,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>study</code> (built.rds)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261009.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2877,34 +2899,57 @@ Table 4: Patients outside each model’s fitted range, by covariate
 <span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="fu">sum</span>(.bad), <span class="st">&quot; of &quot;</span>, <span class="fu">nrow</span>(pred), <span class="st">&quot; predictions are NA or non-finite, from model(s) &quot;</span>,</span>
 <span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>       <span class="fu">paste</span>(<span class="fu">unique</span>(pred<span class="sc">$</span>model[.bad]), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(pred<span class="sc">$</span>fit <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;</span> pred<span class="sc">$</span>fit <span class="sc">&lt;=</span> <span class="dv">1</span>))</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="co"># One row per patient: the treatment received and the CARRY columns a plotting</span></span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="co"># job needs. The patient identifier is never saved: a study&#39;s ID can be the</span></span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a><span class="co"># medical record number, and this file travels.</span></span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>.id_col <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)<span class="sc">$</span>id</span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>.carry_bad <span class="ot">&lt;-</span> CARRY[<span class="fu">tolower</span>(CARRY) <span class="sc">%in%</span> <span class="fu">tolower</span>(<span class="fu">c</span>(.id_col, ID, <span class="st">&quot;mrn&quot;</span>, <span class="st">&quot;emrn&quot;</span>))]</span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.carry_bad)) {</span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;CARRY may not name a patient identifier: &quot;</span>, <span class="fu">paste</span>(.carry_bad, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a><span class="co"># `row` and `group` are the frame&#39;s own columns; a CARRY column of either name</span></span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a><span class="co"># would sit beside them under the same name, and a reader takes the first.</span></span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>.carry_clash <span class="ot">&lt;-</span> <span class="fu">intersect</span>(CARRY, <span class="fu">c</span>(<span class="st">&quot;row&quot;</span>, <span class="st">&quot;group&quot;</span>))</span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.carry_clash)) {</span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;CARRY may not name &quot;</span>, <span class="fu">paste</span>(.carry_clash, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;: the saved frame already has &quot;</span>,</span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;`row` and `group` columns. The treatment received is saved as `group` whatever GROUP is called.&quot;</span>,</span>
-<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>.carry_miss <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(CARRY, <span class="fu">names</span>(d))</span>
-<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.carry_miss)) {</span>
-<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;CARRY names column(s) not in the cohort: &quot;</span>, <span class="fu">paste</span>(.carry_miss, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">row =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(d)), <span class="at">group =</span> .actual)</span>
-<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> <span class="fu">cbind</span>(patients, d[, CARRY, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="co"># A finite fit with NA limits has one of two causes, and the fixes differ.</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Without a usable variance matrix, predict() returns se.fit as NA, and every</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="co"># limit with it. With one, a limit can still be undefined at the boundary: the</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="co"># logit limits need 0 &lt; survival &lt; 1, so a prediction of exactly 1 (or 0) has</span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a><span class="co"># none. Left alone, either NA reaches the decision below, which stops on</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;missing value where TRUE/FALSE needed&quot; and names neither the model nor the</span></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a><span class="co"># cause. This stops even where the decision is deleted: predictions without</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="co"># limits are not a result to save.</span></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>.no_cl <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">is.finite</span>(pred<span class="sc">$</span>lower) <span class="sc">|</span> <span class="sc">!</span><span class="fu">is.finite</span>(pred<span class="sc">$</span>upper)</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>.no_se <span class="ot">&lt;-</span> .no_cl <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.finite</span>(pred<span class="sc">$</span>se.fit)</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(.no_se)) {</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;No confidence limits from the model(s) for &quot;</span>, <span class="fu">paste</span>(<span class="fu">unique</span>(pred<span class="sc">$</span>model[.no_se]), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;: the hm fit has no usable variance matrix, missing or with a standard error &quot;</span>,</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;that is not finite, so no difference between groups can be judged. Refit that &quot;</span>,</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;group&#39;s hm model with fewer candidate covariates or with its shapes fixed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(.no_cl)) {</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="fu">sum</span>(.no_cl), <span class="st">&quot; of &quot;</span>, <span class="fu">nrow</span>(pred), <span class="st">&quot; predictions from model(s) &quot;</span>,</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>       <span class="fu">paste</span>(<span class="fu">unique</span>(pred<span class="sc">$</span>model[.no_cl]), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot; have a standard error but no &quot;</span>,</span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;confidence limits: the logit limits are undefined where predicted survival at &quot;</span>,</span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;HORIZON is exactly 0 or 1 (here &quot;</span>, <span class="fu">paste</span>(<span class="fu">unique</span>(<span class="fu">signif</span>(pred<span class="sc">$</span>fit[.no_cl], <span class="dv">3</span>)), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;). Check HORIZON and the patients predicted there.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(pred<span class="sc">$</span>fit <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;</span> pred<span class="sc">$</span>fit <span class="sc">&lt;=</span> <span class="dv">1</span>))</span>
 <span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>summary_tbl <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">aggregate</span>(fit <span class="sc">~</span> model <span class="sc">+</span> group, <span class="at">data =</span> pred, <span class="at">FUN =</span> stats<span class="sc">::</span>median)</span>
-<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(summary_tbl)[<span class="fu">names</span>(summary_tbl) <span class="sc">==</span> <span class="st">&quot;fit&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;median_survival&quot;</span></span>
-<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summary_tbl, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a><span class="co"># One row per patient: the treatment received and the CARRY columns a plotting</span></span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a><span class="co"># job needs. The patient identifier is never saved: a study&#39;s ID can be the</span></span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a><span class="co"># medical record number, and this file travels.</span></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>.id_col <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)<span class="sc">$</span>id</span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>.carry_bad <span class="ot">&lt;-</span> CARRY[<span class="fu">tolower</span>(CARRY) <span class="sc">%in%</span> <span class="fu">tolower</span>(<span class="fu">c</span>(.id_col, ID, <span class="st">&quot;mrn&quot;</span>, <span class="st">&quot;emrn&quot;</span>))]</span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.carry_bad)) {</span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;CARRY may not name a patient identifier: &quot;</span>, <span class="fu">paste</span>(.carry_bad, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a><span class="co"># `row` and `group` are the frame&#39;s own columns; a CARRY column of either name</span></span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a><span class="co"># would sit beside them under the same name, and a reader takes the first.</span></span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a>.carry_clash <span class="ot">&lt;-</span> <span class="fu">intersect</span>(CARRY, <span class="fu">c</span>(<span class="st">&quot;row&quot;</span>, <span class="st">&quot;group&quot;</span>))</span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.carry_clash)) {</span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;CARRY may not name &quot;</span>, <span class="fu">paste</span>(.carry_clash, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;: the saved frame already has &quot;</span>,</span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;`row` and `group` columns. The treatment received is saved as `group` whatever GROUP is called.&quot;</span>,</span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>.carry_miss <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(CARRY, <span class="fu">names</span>(d))</span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.carry_miss)) {</span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;CARRY names column(s) not in the cohort: &quot;</span>, <span class="fu">paste</span>(.carry_miss, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">row =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(d)), <span class="at">group =</span> .actual)</span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> <span class="fu">cbind</span>(patients, d[, CARRY, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a>summary_tbl <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">aggregate</span>(fit <span class="sc">~</span> model <span class="sc">+</span> group, <span class="at">data =</span> pred, <span class="at">FUN =</span> stats<span class="sc">::</span>median)</span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(summary_tbl)[<span class="fu">names</span>(summary_tbl) <span class="sc">==</span> <span class="st">&quot;fit&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;median_survival&quot;</span></span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summary_tbl, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-predict" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2925,22 +2970,22 @@ Table 5: Median predicted survival at 5, by model and treatment received
 <tr class="odd">
 <td style="text-align: left;">surgical</td>
 <td style="text-align: left;">surgical</td>
-<td style="text-align: right;">0.7890</td>
+<td style="text-align: right;">0.8027</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">transcatheter</td>
 <td style="text-align: left;">surgical</td>
-<td style="text-align: right;">0.7690</td>
+<td style="text-align: right;">0.7729</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">surgical</td>
 <td style="text-align: left;">transcatheter</td>
-<td style="text-align: right;">0.6101</td>
+<td style="text-align: right;">0.6280</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">transcatheter</td>
 <td style="text-align: left;">transcatheter</td>
-<td style="text-align: right;">0.6214</td>
+<td style="text-align: right;">0.6255</td>
 </tr>
 </tbody>
 </table>
@@ -3047,15 +3092,15 @@ Table 6: Treatment received against best-predicted treatment, every patient
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">surgical</td>
-<td style="text-align: right;">337</td>
-<td style="text-align: right;">123</td>
+<td style="text-align: right;">378</td>
+<td style="text-align: right;">82</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">transcatheter</td>
-<td style="text-align: right;">116</td>
-<td style="text-align: right;">149</td>
+<td style="text-align: right;">138</td>
+<td style="text-align: right;">127</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
 </tr>
@@ -3074,7 +3119,7 @@ Table 6: Treatment received against best-predicted treatment, every patient
 <div id="tbl-decision-optimal" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-decision-optimal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 7: Treatment received against optimal treatment, the 49 patients whose choice is separated at ~68%; 676 are not
+Table 7: Treatment received against optimal treatment, the 170 patients whose choice is separated at ~68%; 555 are not
 </figcaption>
 <div aria-describedby="tbl-decision-optimal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -3089,13 +3134,13 @@ Table 7: Treatment received against optimal treatment, the 49 patients whose ch
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">surgical</td>
+<td style="text-align: right;">109</td>
 <td style="text-align: right;">5</td>
-<td style="text-align: right;">8</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">transcatheter</td>
-<td style="text-align: right;">2</td>
-<td style="text-align: right;">34</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">26</td>
 </tr>
 </tbody>
 </table>
@@ -3130,7 +3175,7 @@ Table 7: Treatment received against optimal treatment, the 49 patients whose ch
 </details>
 </div>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dead-approach-hs-concordance","rendered":"2026-10-06T10:08:05Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.2.5","source":null},{"package":"hvtiRutilities","version":"1.4.4","source":"github","sha":"b08735e0c81cc1503f793960d2a76040829685e8"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"TemporalHazard","version":"1.2.12","source":"github","sha":"e9ab82728ba4173df78c77286857e1923b22eb90"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built.rds","role":"analysis","bytes":29325,"mtime":"2026-10-06T10:04:15Z","sha256":"1c4d37bc9b73dc545752f9242c11c1b71169e1df3e0a817f255f609a8fe5e7db"},{"dataset":"study","path":"00_datasets/built.rds","role":"analysis","bytes":29325,"mtime":"2026-10-06T10:04:15Z","sha256":"1c4d37bc9b73dc545752f9242c11c1b71169e1df3e0a817f255f609a8fe5e7db"},{"dataset":"study","path":"00_datasets/built.rds","role":"analysis","bytes":29325,"mtime":"2026-10-06T10:04:15Z","sha256":"1c4d37bc9b73dc545752f9242c11c1b71169e1df3e0a817f255f609a8fe5e7db"},{"dataset":"study","path":"00_datasets/built.rds","role":"analysis","bytes":29325,"mtime":"2026-10-06T10:04:15Z","sha256":"1c4d37bc9b73dc545752f9242c11c1b71169e1df3e0a817f255f609a8fe5e7db"},{"dataset":"study","path":"00_datasets/built.rds","role":"analysis","bytes":29325,"mtime":"2026-10-06T10:04:15Z","sha256":"1c4d37bc9b73dc545752f9242c11c1b71169e1df3e0a817f255f609a8fe5e7db"}],"artifacts":[{"path":"90_estimates/dead-surgical/hm.rds","role":"hazard-regression-model","bytes":52610,"mtime":"2026-10-06T10:07:49Z","sha256":"6ba36ed56790eee46754b6066aa346483d63bbc93a8bf7339aa2d8737eff1eae"},{"path":"90_estimates/dead-surgical/hz.rds","role":"hazard-shape-model","bytes":5659,"mtime":"2026-10-06T10:07:43Z","sha256":"f6c8bbf97884b9c54e914fcea676ba76ef5df2b94537dfa09c36b289a7ef7eb2"},{"path":"90_estimates/dead-transcatheter/hm.rds","role":"hazard-regression-model","bytes":29064,"mtime":"2026-10-06T10:08:00Z","sha256":"68a0fab98481edbde1952e33aea7c8219ddece08fc695845812832fe205ed08c"},{"path":"90_estimates/dead-transcatheter/hz.rds","role":"hazard-shape-model","bytes":4554,"mtime":"2026-10-06T10:07:54Z","sha256":"ca541a7cb47501b5f07116bb13e425f8600aff54838030198418081afa5c8d96"}],"subject":"dead","type":"approach","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":402,"n_censored":323},"source":"40_graphs/dead-approach-hs-concordance.qmd",".hvti_render_id":"c6f79c1b06ae0f8fcc4fe48cf485510ad53fbb7c2e9af1da1134e063103bfd34",".hvti_source_sha256":"ed6d5741fcba7921cb07c30c5b05a473df6b0798ac873f47f16bdf53fb9c8baf"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"hs.concordance.dead.approach","rendered":"2026-10-09T15:21:06Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.3.0","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"TemporalHazard","version":"1.2.12","source":"github","sha":"e9ab82728ba4173df78c77286857e1923b22eb90"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261009.parquet","role":"analysis","bytes":57934,"mtime":"2026-10-09T15:16:37Z","sha256":"ecad1d83bedca5d692b6314a2fca905e9716c8424d2ae8ff1643774eaee02baa"},{"dataset":"study","path":"00_datasets/built_20261009.parquet","role":"analysis","bytes":57934,"mtime":"2026-10-09T15:16:37Z","sha256":"ecad1d83bedca5d692b6314a2fca905e9716c8424d2ae8ff1643774eaee02baa"},{"dataset":"study","path":"00_datasets/built_20261009.parquet","role":"analysis","bytes":57934,"mtime":"2026-10-09T15:16:37Z","sha256":"ecad1d83bedca5d692b6314a2fca905e9716c8424d2ae8ff1643774eaee02baa"},{"dataset":"study","path":"00_datasets/built_20261009.parquet","role":"analysis","bytes":57934,"mtime":"2026-10-09T15:16:37Z","sha256":"ecad1d83bedca5d692b6314a2fca905e9716c8424d2ae8ff1643774eaee02baa"},{"dataset":"study","path":"00_datasets/built_20261009.parquet","role":"analysis","bytes":57934,"mtime":"2026-10-09T15:16:37Z","sha256":"ecad1d83bedca5d692b6314a2fca905e9716c8424d2ae8ff1643774eaee02baa"}],"artifacts":[{"path":"90_estimates/dead-surgical/hm.rds","role":"hazard-regression-model","bytes":51200,"mtime":"2026-10-09T15:20:46Z","sha256":"28723db34de5cde7c768942b95dfa7c69cda6caed38c5d336f08f1f1385accb2"},{"path":"90_estimates/dead-surgical/hz.rds","role":"hazard-shape-model","bytes":5649,"mtime":"2026-10-09T15:20:38Z","sha256":"c55b9284c8af30102ca23923273ed6c3e883b7979ad9b484c1f098fc107e1c16"},{"path":"90_estimates/dead-transcatheter/hm.rds","role":"hazard-regression-model","bytes":28824,"mtime":"2026-10-09T15:21:00Z","sha256":"fc4010683e26c4541045c1d07bbc12469314480979c7dd816cdf4af17d88426a"},{"path":"90_estimates/dead-transcatheter/hz.rds","role":"hazard-shape-model","bytes":4544,"mtime":"2026-10-09T15:20:53Z","sha256":"24d76921252a0add5caa814ca03fc8ea2d528f3fdaf89a1ecc37fc50ad94735f"}],"subject":"dead","type":"approach","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":402,"n_censored":323},"source":"40_graphs/hs.concordance.dead.approach.qmd",".hvti_render_id":"26da9d28f5ff10b2500134b6da96770bca629f68b2d5d00f7276497539b5d5ab",".hvti_source_sha256":"a152c58f40371c6ec1f88c1074f85ba5231a513a83543460ff5cff68ad3b4ed6"}</script>
 </section>
 
 </main>

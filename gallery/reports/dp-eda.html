@@ -2261,7 +2261,7 @@ vertical-align: -.125em;
 <!-- Demo: name the EDA report this replaces, or delete this line for a new study. -->
 <p>Replaces an older EDA report.</p>
 <p>A <code>dp-eda</code> job is the whole data-checking report over a new build, in one render: an overview of every column, goodness of follow-up, then continuous variables, categorical variables as percentages and categorical variables as counts, each with its table. It is written for the biostatistician choosing variables for an analysis set, not for a manuscript.</p>
-<p>Each section is also a job of its own, and draws through the same function: the follow-up section is <code>dc-gfup</code>, its figure (<code>hvtiPlotR::hv_followup_panels()</code>) and its tables (<code>hvtiRutilities::followup_check()</code>), and the other three are <code>dp-postage</code> (<code>hvtiPlotR::hv_eda_pages()</code>). Given the same choices, a section here is the same figure as the standalone job, so this report and a standalone job cannot disagree about the data.</p>
+<p>Each section draws through a package function. The follow-up section is <code>dc-gfup</code>, a job of its own: its figure (<code>hvtiPlotR::hv_followup_panels()</code>) and its tables (<code>hvtiRutilities::followup_check()</code>). Given the same choices it is the same figure as the standalone job, so this report and that job cannot disagree about the data. The other three sections draw their pages through <code>hvtiPlotR::hv_eda_pages()</code>.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -2282,13 +2282,14 @@ vertical-align: -.125em;
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.8.0 for hv_eda_pages(), hv_followup_panels() and scale_color_hv(); &quot;</span>,</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRutilities&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;1.4.2&quot;</span>) {</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRutilities &gt;= 1.4.2 for followup_check() and study_abbreviations(); &quot;</span>,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRutilities&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;patchwork&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs the patchwork package. Install it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRutilities&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;1.4.5&quot;</span>) {</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRutilities &gt;= 1.4.5 for followup_check()&#39;s 15th and 85th percentiles &quot;</span>,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;and study_abbreviations(); &quot;</span>,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRutilities&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;patchwork&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs the patchwork package. Install it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <details class="code-fold">
@@ -2337,7 +2338,7 @@ vertical-align: -.125em;
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>.current <span class="ot">&lt;-</span> knitr<span class="sc">::</span><span class="fu">current_input</span>()</span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.current)) {</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  .fields <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(<span class="fu">sub</span>(<span class="st">&quot;[.][^.]+$&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">basename</span>(.current)), <span class="st">&quot;-&quot;</span>, <span class="at">fixed =</span> <span class="cn">TRUE</span>)[[<span class="dv">1</span>L]]</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  .fields <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_name_fields</span>(.current)</span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  .name_subject <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(.fields) <span class="sc">&gt;=</span> <span class="dv">1</span>L) .fields[[<span class="dv">1</span>L]] <span class="cf">else</span> <span class="cn">NA_character_</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  .name_type <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(.fields) <span class="sc">&gt;=</span> <span class="dv">2</span>L) .fields[[<span class="dv">2</span>L]] <span class="cf">else</span> <span class="cn">NA_character_</span></span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">identical</span>(.name_subject, SUBJECT) <span class="sc">||</span> <span class="sc">!</span><span class="fu">identical</span>(.name_type, TYPE)) {</span>
@@ -2353,7 +2354,14 @@ vertical-align: -.125em;
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">paste0</span>(SUBJECT, <span class="st">&quot;-&quot;</span>, TYPE))</span>
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(d)) <span class="fu">dir.create</span>(d, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(d, file)</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png and &lt;name&gt;.pdf in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>                                SAVE_FIGURES, FIGURES, linked)</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <section id="study-choices" class="level2">
@@ -2362,9 +2370,9 @@ vertical-align: -.125em;
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the registered dataset this job reads (&quot;study&quot; is the built dataset).</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the registered dataset this job reads (&quot;built&quot; is the study dataset).</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># MIGRATE-</span><span class="re">BEGIN</span><span class="co">: dp-eda-data</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;study&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;built&quot;</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># MIGRATE-</span><span class="re">END</span><span class="co">: dp-eda-data</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.</span></span>
@@ -2383,84 +2391,110 @@ vertical-align: -.125em;
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co"># add their visit time or date, for example KEY &lt;- c(ID, &quot;iv_echo&quot;).</span></span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> ID</span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Follow-up. These are dc-gfup&#39;s choices, and mean what they mean there.</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the years-since-origin interval to the operation, and that origin. The</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co"># origin differs between studies, and a wrong one slides every point along the</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># x-axis without any other symptom, which is why the operation years are</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co"># checked and printed below.</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>OPYRS <span class="ot">&lt;-</span> <span class="st">&quot;iv_opyrs&quot;</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>ORIGIN_YEAR <span class="ot">&lt;-</span> <span class="dv">1990</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the close date of follow-up, as.Date(&quot;YYYY-MM-DD&quot;). NULL estimates it</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"># as the latest operation date plus follow-up in the data, which is the date</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co"># follow-up is known to reach, not the date it was closed; the report says</span></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co"># which one it drew.</span></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>CLOSE_DATE <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2025-12-31&quot;</span>)</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: one entry per death panel. `status` is the 1/0 death indicator and</span></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co"># `time` its follow-up in years. Each panel also gets dc-gfup&#39;s tables, over</span></span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co"># the same two columns. A study that ascertains deaths two ways draws both,</span></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="co"># for example</span></span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="co">#   systematic = list(status = &quot;deads&quot;, time = &quot;iv_deads&quot;, title = &quot;Systematic deaths&quot;)</span></span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>PANELS <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">all =</span> <span class="fu">list</span>(<span class="at">status =</span> <span class="st">&quot;dead&quot;</span>, <span class="at">time =</span> <span class="st">&quot;iv_dead&quot;</span>, <span class="at">title =</span> <span class="st">&quot;All deaths&quot;</span>)</span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: optional event panels, one entry per non-fatal event. `event` and</span></span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="co"># `time` are the event&#39;s indicator and interval; `death` and `death_time` the</span></span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="co"># death it competes with. A flagged event counts only when it comes strictly</span></span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="co"># before death, so ties go to death. list() draws none. For example</span></span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="co">#   reop = list(event = &quot;ev_reop&quot;, time = &quot;iv_reop&quot;, death = &quot;dead&quot;,</span></span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="co">#               death_time = &quot;iv_dead&quot;, label = &quot;Reoperation&quot;)</span></span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>EVENTS <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">reop =</span> <span class="fu">list</span>(<span class="at">event =</span> <span class="st">&quot;reop&quot;</span>, <span class="at">time =</span> <span class="st">&quot;iv_reop&quot;</span>, <span class="at">death =</span> <span class="st">&quot;dead&quot;</span>, <span class="at">death_time =</span> <span class="st">&quot;iv_dead&quot;</span>, <span class="at">label =</span> <span class="st">&quot;Reoperation&quot;</span>))</span>
-<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables. These are dp-postage&#39;s choices, and mean what they mean there.</span></span>
-<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="co"># X_VAR is the reference time every panel is drawn against.</span></span>
-<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="co"># VARIABLES is NULL to draw every column, or the columns to draw, in page</span></span>
-<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="co"># order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an</span></span>
-<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="co"># identifier or a date, and the report lists what it left out; name such a</span></span>
-<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="co"># column here to draw it anyway. The job&#39;s ID is never drawn, even when named</span></span>
-<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a><span class="co"># here. A KEY column beside it, such as a visit time, is left out of NULL but</span></span>
-<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn when named here, as that column&#39;s own distribution; a measure&#39;s course</span></span>
-<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="co"># over visits is a spaghetti plot, drawn by hvtiPlotR::hv_spaghetti, not a page here.</span></span>
-<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="co"># The follow-up columns are drawn too, as</span></span>
-<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a><span class="co"># dp-postage draws them, so a section here stays the standalone job&#39;s figure.</span></span>
-<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a><span class="co"># A named column that is not in the data stops the render, and the error</span></span>
-<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="co"># lists every missing name at once.</span></span>
-<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a><span class="co"># SECTIONS is any of &quot;followup&quot;, &quot;continuous&quot;, &quot;percent&quot; and &quot;count&quot;. The</span></span>
-<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a><span class="co"># report keeps this order whatever order they are named in, so the report</span></span>
-<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a><span class="co"># reads the same across studies.</span></span>
-<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a><span class="co"># ALPHA is point transparency, for the follow-up figures and the continuous</span></span>
-<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a><span class="co"># panels: 0.5 lets a dense cohort read as a distribution rather than a blob.</span></span>
-<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a><span class="co"># MIGRATE-</span><span class="re">BEGIN</span><span class="co">: dp-eda-variables</span></span>
-<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>X_VAR <span class="ot">&lt;-</span> <span class="st">&quot;year&quot;</span>                    <span class="co"># Demo: reference time or year</span></span>
-<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>VARIABLES <span class="ot">&lt;-</span> <span class="cn">NULL</span>                  <span class="co"># Demo: NULL draws every column, or name them</span></span>
-<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>EXCLUDE <span class="ot">&lt;-</span> <span class="fu">character</span>(<span class="dv">0</span>)</span>
-<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>GRID_NCOL <span class="ot">&lt;-</span> <span class="dv">4</span>L</span>
-<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a>GRID_NROW <span class="ot">&lt;-</span> <span class="dv">4</span>L</span>
-<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>UNIQUE_LIMIT <span class="ot">&lt;-</span> <span class="dv">6</span>L</span>
-<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a>SECTIONS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;followup&quot;</span>, <span class="st">&quot;continuous&quot;</span>, <span class="st">&quot;percent&quot;</span>, <span class="st">&quot;count&quot;</span>)</span>
-<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a>ALPHA <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
-<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a><span class="co"># MIGRATE-</span><span class="re">END</span><span class="co">: dp-eda-variables</span></span>
-<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead</span></span>
-<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a><span class="co"># vermillion, alive blue and a non-fatal event green, all colorblind safe. Name</span></span>
-<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a><span class="co"># all three to choose your own; c(alive = &quot;#377EB8&quot;, dead = &quot;#E41A1C&quot;,</span></span>
-<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a><span class="co"># event = &quot;#4DAF4A&quot;) is ColorBrewer Set1, what these jobs drew before 1.2.3.</span></span>
-<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a>COLORS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the longest label the figure pages and their captions show, in</span></span>
-<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a><span class="co"># characters. Longer labels are shortened so that two labels that differ never</span></span>
-<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a><span class="co"># read the same: a shared heading is abbreviated, then the label is cut and</span></span>
-<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a><span class="co"># marked. Inf shows every label whole. Tables keep full labels, so a reader can</span></span>
-<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a><span class="co"># look up what a shortened one stands for.</span></span>
-<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a>LABEL_MAX <span class="ot">&lt;-</span> <span class="dv">40</span></span>
-<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: this job&#39;s own abbreviations, beyond the study&#39;s list, as</span></span>
-<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a><span class="co"># c(&quot;Phrase&quot; = &quot;Abbrev&quot;); NA drops one the study or group list supplies. NULL</span></span>
-<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a><span class="co"># uses the study&#39;s list alone. The study&#39;s list is the abbreviations: block in</span></span>
-<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a><span class="co"># _study.yml, over the group default shipped in hvtiRutilities.</span></span>
-<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a>ABBREVIATIONS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional, and needs no edit: NULL reads the cohort alone. To join one</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># registered ancillary dataset (echoes, labs), name it in JOIN. The cohort</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co"># above decides the patients, one row each; the joined records of other</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are dropped and counted in the data table.</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     and a column both datasets have stops, so list only those the job needs.</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#   REDUCE: NULL keeps a row per joined record, keyed on that dataset&#39;s key;</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co">#     list(rule = &quot;first&quot;, by = &quot;echo_date&quot;) keeps one row per patient (&quot;last&quot;,</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co">#     or &quot;nearest&quot; with to = a cohort date column). WHERE on a joined column</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co">#     filters the records first, so &quot;last&quot; with WHERE echo_type == &quot;TTE&quot;</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co">#     keeps each patient&#39;s last TTE. A tie stops: picking one record</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co">#     silently would be a hidden choice; by = c(&quot;echo_date&quot;, &quot;echo_seq&quot;)</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co">#     breaks it. A job that counts or models</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co">#     patients, one row each, needs REDUCE: NULL would count every record.</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_KEY: overrides the joined dataset&#39;s registered key.</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>JOIN <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>JOIN_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>REDUCE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>JOIN_KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Follow-up. These are dc-gfup&#39;s choices, and mean what they mean there.</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the years-since-origin interval to the operation, and that origin. The</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a><span class="co"># origin differs between studies, and a wrong one slides every point along the</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="co"># x-axis without any other symptom, which is why the operation years are</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="co"># checked and printed below.</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>OPYRS <span class="ot">&lt;-</span> <span class="st">&quot;iv_opyrs&quot;</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>ORIGIN_YEAR <span class="ot">&lt;-</span> <span class="dv">1990</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the close date of follow-up, as.Date(&quot;YYYY-MM-DD&quot;). NULL estimates it</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="co"># as the latest operation date plus follow-up in the data, which is the date</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a><span class="co"># follow-up is known to reach, not the date it was closed; the report says</span></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="co"># which one it drew.</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>CLOSE_DATE <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2025-12-31&quot;</span>)</span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: one entry per death panel. `status` is the 1/0 death indicator and</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="co"># `time` its follow-up in years. Each panel also gets dc-gfup&#39;s tables, over</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="co"># the same two columns. A study that ascertains deaths two ways draws both,</span></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a><span class="co"># for example</span></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="co">#   systematic = list(status = &quot;deads&quot;, time = &quot;iv_deads&quot;, title = &quot;Systematic deaths&quot;)</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>PANELS <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>  <span class="at">all =</span> <span class="fu">list</span>(<span class="at">status =</span> <span class="st">&quot;dead&quot;</span>, <span class="at">time =</span> <span class="st">&quot;iv_dead&quot;</span>, <span class="at">title =</span> <span class="st">&quot;All deaths&quot;</span>)</span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: optional event panels, one entry per non-fatal event. `event` and</span></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a><span class="co"># `time` are the event&#39;s indicator and interval; `death` and `death_time` the</span></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a><span class="co"># death it competes with. A flagged event counts only when it comes strictly</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a><span class="co"># before death, so ties go to death. list() draws none. For example</span></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a><span class="co">#   reop = list(event = &quot;ev_reop&quot;, time = &quot;iv_reop&quot;, death = &quot;dead&quot;,</span></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a><span class="co">#               death_time = &quot;iv_dead&quot;, label = &quot;Reoperation&quot;)</span></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>EVENTS <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">reop =</span> <span class="fu">list</span>(<span class="at">event =</span> <span class="st">&quot;reop&quot;</span>, <span class="at">time =</span> <span class="st">&quot;iv_reop&quot;</span>, <span class="at">death =</span> <span class="st">&quot;dead&quot;</span>, <span class="at">death_time =</span> <span class="st">&quot;iv_dead&quot;</span>, <span class="at">label =</span> <span class="st">&quot;Reoperation&quot;</span>))</span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables.</span></span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a><span class="co"># X_VAR is the reference time every panel is drawn against.</span></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a><span class="co"># VARIABLES is NULL to draw every column, or the columns to draw, in page</span></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a><span class="co"># order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an</span></span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a><span class="co"># identifier or a date, and the report lists what it left out; name such a</span></span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a><span class="co"># column here to draw it anyway. The job&#39;s ID is never drawn, even when named</span></span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a><span class="co"># here. A KEY column beside it, such as a visit time, is left out of NULL but</span></span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn when named here, as that column&#39;s own distribution; a measure&#39;s course</span></span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a><span class="co"># over visits is a spaghetti plot, drawn by hvtiPlotR::hv_spaghetti, not a page here.</span></span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a><span class="co"># The follow-up columns are drawn too, like any other column.</span></span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a><span class="co"># A named column that is not in the data stops the render, and the error</span></span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a><span class="co"># lists every missing name at once.</span></span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a><span class="co"># SECTIONS is any of &quot;followup&quot;, &quot;continuous&quot;, &quot;percent&quot; and &quot;count&quot;. The</span></span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a><span class="co"># report keeps this order whatever order they are named in, so the report</span></span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a><span class="co"># reads the same across studies.</span></span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a><span class="co"># ALPHA is point transparency, for the follow-up figures and the continuous</span></span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a><span class="co"># panels: 0.5 lets a dense cohort read as a distribution rather than a blob.</span></span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a><span class="co"># MIGRATE-</span><span class="re">BEGIN</span><span class="co">: dp-eda-variables</span></span>
+<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a>X_VAR <span class="ot">&lt;-</span> <span class="st">&quot;year&quot;</span>                    <span class="co"># Demo: reference time or year</span></span>
+<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a>VARIABLES <span class="ot">&lt;-</span> <span class="cn">NULL</span>                  <span class="co"># Demo: NULL draws every column, or name them</span></span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a>EXCLUDE <span class="ot">&lt;-</span> <span class="fu">character</span>(<span class="dv">0</span>)</span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a>GRID_NCOL <span class="ot">&lt;-</span> <span class="dv">4</span>L</span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a>GRID_NROW <span class="ot">&lt;-</span> <span class="dv">4</span>L</span>
+<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a>UNIQUE_LIMIT <span class="ot">&lt;-</span> <span class="dv">6</span>L</span>
+<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a>SECTIONS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;followup&quot;</span>, <span class="st">&quot;continuous&quot;</span>, <span class="st">&quot;percent&quot;</span>, <span class="st">&quot;count&quot;</span>)</span>
+<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a>ALPHA <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
+<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a><span class="co"># MIGRATE-</span><span class="re">END</span><span class="co">: dp-eda-variables</span></span>
+<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-101"><a href="#cb5-101" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead</span></span>
+<span id="cb5-102"><a href="#cb5-102" aria-hidden="true" tabindex="-1"></a><span class="co"># vermillion, alive blue and a non-fatal event green, all colorblind safe. Name</span></span>
+<span id="cb5-103"><a href="#cb5-103" aria-hidden="true" tabindex="-1"></a><span class="co"># all three to choose your own; c(alive = &quot;#377EB8&quot;, dead = &quot;#E41A1C&quot;,</span></span>
+<span id="cb5-104"><a href="#cb5-104" aria-hidden="true" tabindex="-1"></a><span class="co"># event = &quot;#4DAF4A&quot;) is ColorBrewer Set1, what these jobs drew before 1.2.3.</span></span>
+<span id="cb5-105"><a href="#cb5-105" aria-hidden="true" tabindex="-1"></a>COLORS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-106"><a href="#cb5-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-107"><a href="#cb5-107" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the longest label the figure pages and their captions show, in</span></span>
+<span id="cb5-108"><a href="#cb5-108" aria-hidden="true" tabindex="-1"></a><span class="co"># characters. Longer labels are shortened so that two labels that differ never</span></span>
+<span id="cb5-109"><a href="#cb5-109" aria-hidden="true" tabindex="-1"></a><span class="co"># read the same: a shared heading is abbreviated, then the label is cut and</span></span>
+<span id="cb5-110"><a href="#cb5-110" aria-hidden="true" tabindex="-1"></a><span class="co"># marked. Inf shows every label whole. Tables keep full labels, so a reader can</span></span>
+<span id="cb5-111"><a href="#cb5-111" aria-hidden="true" tabindex="-1"></a><span class="co"># look up what a shortened one stands for.</span></span>
+<span id="cb5-112"><a href="#cb5-112" aria-hidden="true" tabindex="-1"></a>LABEL_MAX <span class="ot">&lt;-</span> <span class="dv">40</span></span>
+<span id="cb5-113"><a href="#cb5-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-114"><a href="#cb5-114" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: this job&#39;s own abbreviations, beyond the study&#39;s list, as</span></span>
+<span id="cb5-115"><a href="#cb5-115" aria-hidden="true" tabindex="-1"></a><span class="co"># c(&quot;Phrase&quot; = &quot;Abbrev&quot;); NA drops one the study or group list supplies. NULL</span></span>
+<span id="cb5-116"><a href="#cb5-116" aria-hidden="true" tabindex="-1"></a><span class="co"># uses the study&#39;s list alone. The study&#39;s list is the abbreviations: block in</span></span>
+<span id="cb5-117"><a href="#cb5-117" aria-hidden="true" tabindex="-1"></a><span class="co"># _study.yml, over the group default shipped in hvtiRutilities.</span></span>
+<span id="cb5-118"><a href="#cb5-118" aria-hidden="true" tabindex="-1"></a>ABBREVIATIONS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-119"><a href="#cb5-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-120"><a href="#cb5-120" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).</span></span>
+<span id="cb5-121"><a href="#cb5-121" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves neither; FIGURES keeps only the figures whose names</span></span>
+<span id="cb5-122"><a href="#cb5-122" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
+<span id="cb5-123"><a href="#cb5-123" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb5-124"><a href="#cb5-124" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb5-125"><a href="#cb5-125" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2470,7 +2504,7 @@ vertical-align: -.125em;
 
      A study can offer a job data three ways, and `_study.yml` says which exist:
 
-     1. The study dataset: the file named by `built:`. `DATASET <- "study"`
+     1. The study dataset: the file named by `built:`. `DATASET <- "built"`
         with `ANALYSIS_SET <- NULL`.
      2. An additional dataset: any file declared under `additional_datasets:`,
         for example a column subset written for R. Set `DATASET` to its
@@ -2479,7 +2513,7 @@ vertical-align: -.125em;
      3. An analysis set: declared under `analysis_sets:` with the columns kept
         and the rows excluded, then written once with
         `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
-        and leave `DATASET` as "study", because a set is always cut from the
+        and leave `DATASET` as "built", because a set is always cut from the
         study dataset. The report shows its exclusions in order.
 
      A name under `additional_datasets:` is not an analysis set, so putting it
@@ -2493,10 +2527,12 @@ vertical-align: -.125em;
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>hvtiRutilities<span class="sc">::</span><span class="fu">verify_manifest</span>(<span class="fu">file.path</span>(.root, <span class="st">&quot;manifest.yaml&quot;</span>))</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>.cfg <span class="ot">&lt;-</span> <span class="fu">study_config</span>(<span class="at">start =</span> .root)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>job_data <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">read_job_data</span>(.cfg, <span class="at">dataset =</span> DATASET, <span class="at">analysis_set =</span> ANALYSIS_SET,</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id =</span> ID, <span class="at">key =</span> KEY)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance))</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id =</span> ID, <span class="at">key =</span> KEY, <span class="at">join =</span> JOIN, <span class="at">join_vars =</span> JOIN_VARS,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-data" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2515,7 +2551,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>study</code> (built.rds)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261009.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2556,8 +2592,8 @@ Table 1: The data this job read
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: checks the choices and defines helpers only; its tables and figures are child chunks elsewhere</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The follow-up choices are checked by hv_followup_panels() below; these are</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># dp-postage&#39;s checks of the variable choices, unchanged.</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The follow-up choices are checked by hv_followup_panels() below; these</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># check the variable choices.</span></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>column_names <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">is.character</span>(x) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">anyNA</span>(x) <span class="sc">&amp;&amp;</span> <span class="fu">all</span>(<span class="fu">nzchar</span>(x)) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">anyDuplicated</span>(x)</span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">column_names</span>(X_VAR) <span class="sc">||</span> <span class="fu">length</span>(X_VAR) <span class="sc">!=</span> <span class="dv">1</span>L) <span class="fu">stop</span>(<span class="st">&quot;X_VAR must name one column.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(VARIABLES) <span class="sc">&amp;&amp;</span> (<span class="sc">!</span><span class="fu">column_names</span>(VARIABLES) <span class="sc">||</span> <span class="sc">!</span><span class="fu">length</span>(VARIABLES))) {</span>
@@ -3082,8 +3118,8 @@ Table 3: Operation years and the close date
 <span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>    count <span class="ot">&lt;-</span> <span class="cf">function</span>(test) <span class="fu">vapply</span>(m<span class="sc">$</span>variable, <span class="cf">function</span>(v) <span class="fu">sum</span>(<span class="fu">test</span>(d[[v]][keep]), <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="fu">integer</span>(<span class="dv">1</span>L))</span>
 <span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">interval =</span> m<span class="sc">$</span>variable, <span class="at">patients =</span> groups[[g]], <span class="at">n =</span> m<span class="sc">$</span>n, <span class="at">missing =</span> m<span class="sc">$</span>nmiss,</span>
 <span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>               <span class="at">negative =</span> <span class="fu">count</span>(<span class="cf">function</span>(x) x <span class="sc">&lt;</span> <span class="dv">0</span>), <span class="at">zero =</span> <span class="fu">count</span>(<span class="cf">function</span>(x) x <span class="sc">==</span> <span class="dv">0</span>),</span>
-<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>               <span class="at">mean =</span> m<span class="sc">$</span>mean, <span class="at">sd =</span> m<span class="sc">$</span>std, <span class="at">min =</span> m<span class="sc">$</span>min, <span class="at">p25 =</span> m<span class="sc">$</span>p25, <span class="at">median =</span> m<span class="sc">$</span>median,</span>
-<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>               <span class="at">p75 =</span> m<span class="sc">$</span>p75, <span class="at">max =</span> m<span class="sc">$</span>max, <span class="at">row.names =</span> <span class="cn">NULL</span>)</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>               <span class="at">mean =</span> m<span class="sc">$</span>mean, <span class="at">sd =</span> m<span class="sc">$</span>std, <span class="at">min =</span> m<span class="sc">$</span>min, <span class="at">p15 =</span> m<span class="sc">$</span>p15, <span class="at">median =</span> m<span class="sc">$</span>median,</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>               <span class="at">p85 =</span> m<span class="sc">$</span>p85, <span class="at">max =</span> m<span class="sc">$</span>max, <span class="at">row.names =</span> <span class="cn">NULL</span>)</span>
 <span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>  })</span>
 <span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, rows)</span>
 <span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>  out[<span class="fu">order</span>(<span class="fu">match</span>(out<span class="sc">$</span>interval, <span class="fu">unique</span>(out<span class="sc">$</span>interval))), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
@@ -3114,13 +3150,12 @@ Table 3: Operation years and the close date
 <span id="cb18-59"><a href="#cb18-59" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb18-60"><a href="#cb18-60" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Year of operation&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Follow-up (years)&quot;</span>, <span class="at">color =</span> <span class="cn">NULL</span>, <span class="at">shape =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
 <span id="cb18-61"><a href="#cb18-61" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_hv_manuscript</span>()</span>
-<span id="cb18-62"><a href="#cb18-62" aria-hidden="true" tabindex="-1"></a>  file <span class="ot">&lt;-</span> <span class="fu">set_path</span>(<span class="st">&quot;graphs&quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;dp-eda-gfup-&quot;</span>, nm, <span class="st">&quot;.png&quot;</span>))</span>
-<span id="cb18-63"><a href="#cb18-63" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">ggsave</span>(file, p, <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="dv">6</span>, <span class="at">units =</span> <span class="st">&quot;in&quot;</span>, <span class="at">dpi =</span> <span class="dv">150</span>)</span>
-<span id="cb18-64"><a href="#cb18-64" aria-hidden="true" tabindex="-1"></a>  .link <span class="ot">&lt;-</span> <span class="fu">figure_link</span>(file)</span>
-<span id="cb18-65"><a href="#cb18-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig gfup&quot;</span>, nm), <span class="fu">paste0</span>(<span class="st">&quot;Follow-up against year of operation, &quot;</span>, row<span class="sc">$</span>title),</span>
-<span id="cb18-66"><a href="#cb18-66" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>)</span>
-<span id="cb18-67"><a href="#cb18-67" aria-hidden="true" tabindex="-1"></a>  figure_files <span class="ot">&lt;-</span> <span class="fu">c</span>(figure_files, file)</span>
-<span id="cb18-68"><a href="#cb18-68" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb18-62"><a href="#cb18-62" aria-hidden="true" tabindex="-1"></a>  file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(p, <span class="fu">paste0</span>(<span class="st">&quot;dp-eda-gfup-&quot;</span>, nm), <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="dv">6</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-63"><a href="#cb18-63" aria-hidden="true" tabindex="-1"></a>  .link <span class="ot">&lt;-</span> <span class="fu">figure_link</span>(file)</span>
+<span id="cb18-64"><a href="#cb18-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig gfup&quot;</span>, nm), <span class="fu">paste0</span>(<span class="st">&quot;Follow-up against year of operation, &quot;</span>, row<span class="sc">$</span>title),</span>
+<span id="cb18-65"><a href="#cb18-65" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>)</span>
+<span id="cb18-66"><a href="#cb18-66" aria-hidden="true" tabindex="-1"></a>  figure_files <span class="ot">&lt;-</span> <span class="fu">c</span>(figure_files, file)</span>
+<span id="cb18-67"><a href="#cb18-67" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <section id="all-deaths" class="level3">
 <h3 class="anchored" data-anchor-id="all-deaths">All deaths</h3>
@@ -3164,9 +3199,9 @@ Table 4: Follow-up, All deaths, by patient group: missing, negative and zero va
 <th style="text-align: right;">mean</th>
 <th style="text-align: right;">sd</th>
 <th style="text-align: right;">min</th>
-<th style="text-align: right;">p25</th>
+<th style="text-align: right;">p15</th>
 <th style="text-align: right;">median</th>
-<th style="text-align: right;">p75</th>
+<th style="text-align: right;">p85</th>
 <th style="text-align: right;">max</th>
 </tr>
 </thead>
@@ -3181,9 +3216,9 @@ Table 4: Follow-up, All deaths, by patient group: missing, negative and zero va
 <td style="text-align: right;">9.964</td>
 <td style="text-align: right;">8.510</td>
 <td style="text-align: right;">0.000</td>
-<td style="text-align: right;">3.060</td>
+<td style="text-align: right;">1.744</td>
 <td style="text-align: right;">7.614</td>
-<td style="text-align: right;">14.732</td>
+<td style="text-align: right;">19.702</td>
 <td style="text-align: right;">35.696</td>
 </tr>
 <tr class="even">
@@ -3196,9 +3231,9 @@ Table 4: Follow-up, All deaths, by patient group: missing, negative and zero va
 <td style="text-align: right;">7.056</td>
 <td style="text-align: right;">6.465</td>
 <td style="text-align: right;">0.000</td>
-<td style="text-align: right;">1.866</td>
+<td style="text-align: right;">0.957</td>
 <td style="text-align: right;">5.012</td>
-<td style="text-align: right;">10.992</td>
+<td style="text-align: right;">14.079</td>
 <td style="text-align: right;">27.287</td>
 </tr>
 <tr class="odd">
@@ -3211,9 +3246,9 @@ Table 4: Follow-up, All deaths, by patient group: missing, negative and zero va
 <td style="text-align: right;">13.573</td>
 <td style="text-align: right;">9.331</td>
 <td style="text-align: right;">0.021</td>
-<td style="text-align: right;">5.769</td>
+<td style="text-align: right;">3.918</td>
 <td style="text-align: right;">11.190</td>
-<td style="text-align: right;">20.318</td>
+<td style="text-align: right;">25.845</td>
 <td style="text-align: right;">35.696</td>
 </tr>
 </tbody>
@@ -3232,7 +3267,7 @@ Table 4: Follow-up, All deaths, by patient group: missing, negative and zero va
 <div id="fig-gfup-all" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-gfup-all-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/8012782ffc4d393890acb06147148d38.png" class="img-fluid figure-img" width="525">
+<img role="img" src="assets/fdb447a47788fbaffef2a931e326ee22.png" class="img-fluid figure-img" width="1050">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-gfup-all-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 1: Follow-up against year of operation, All deaths
@@ -3254,7 +3289,7 @@ Figure 1: Follow-up against year of operation, All deaths
 <div id="fig-gfup-reop" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-gfup-reop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/2d082c32a1c7508c2ea700160eb76da8.png" class="img-fluid figure-img" width="525">
+<img role="img" src="assets/799f059b3f4cd93edab363e90e7aef5b.png" class="img-fluid figure-img" width="1050">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-gfup-reop-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: Follow-up against year of operation, Reoperation
@@ -3267,11 +3302,11 @@ Figure 2: Follow-up against year of operation, Reoperation
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: defines the section helper only; its tables and figures are child chunks</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co"># One section of hv_eda_pages() pages with its table, drawn exactly as</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co"># dp-postage draws it. One categorical table serves the percent and the count</span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># sections, shown under whichever comes first, because a table can carry both</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># columns where a figure needs two. Missing values are counted as a level, so</span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co"># a percentage is out of every patient, not only those with a value.</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co"># One section of hv_eda_pages() pages with its table. One categorical table</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co"># serves the percent and the count sections, shown under whichever comes</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># first, because a table can carry both columns where a figure needs two.</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Missing values are counted as a level, so a percentage is out of every</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co"># patient, not only those with a value.</span></span>
 <span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>titles <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">continuous =</span> <span class="st">&quot;Continuous variables&quot;</span>, <span class="at">percent =</span> <span class="st">&quot;Categorical variables, percent&quot;</span>,</span>
 <span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">count =</span> <span class="st">&quot;Categorical variables, counts&quot;</span>)</span>
 <span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>freq_section <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">c</span>(<span class="st">&quot;percent&quot;</span>, <span class="st">&quot;count&quot;</span>), SECTIONS)[<span class="dv">1</span>L]</span>
@@ -3286,7 +3321,7 @@ Figure 2: Follow-up against year of operation, Reoperation
 <span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  vars <span class="ot">&lt;-</span> sec<span class="sc">$</span>data<span class="sc">$</span>variable</span>
 <span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (section <span class="sc">==</span> <span class="st">&quot;continuous&quot;</span>) {</span>
 <span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    stats <span class="ot">&lt;-</span> hvtiRutilities<span class="sc">::</span><span class="fu">proc_means</span>(d, <span class="at">vars =</span> vars, <span class="at">stats =</span> <span class="fu">c</span>(<span class="st">&quot;n&quot;</span>, <span class="st">&quot;nmiss&quot;</span>, <span class="st">&quot;mean&quot;</span>, <span class="st">&quot;std&quot;</span>, <span class="st">&quot;min&quot;</span>,</span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>                                                                  <span class="st">&quot;p25&quot;</span>, <span class="st">&quot;median&quot;</span>, <span class="st">&quot;p75&quot;</span>, <span class="st">&quot;max&quot;</span>))</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>                                                                  <span class="st">&quot;p15&quot;</span>, <span class="st">&quot;median&quot;</span>, <span class="st">&quot;p85&quot;</span>, <span class="st">&quot;max&quot;</span>))</span>
 <span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl eda&quot;</span>, section, <span class="st">&quot;summary&quot;</span>), <span class="st">&quot;Continuous variables&quot;</span>,</span>
 <span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::kable(stats, digits = 2, row.names = FALSE)&quot;</span>)</span>
 <span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">identical</span>(section, freq_section)) {</span>
@@ -3302,20 +3337,19 @@ Figure 2: Follow-up against year of operation, Reoperation
 <span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>  pages <span class="ot">&lt;-</span> <span class="fu">plot</span>(sec, <span class="at">ncol =</span> GRID_NCOL, <span class="at">nrow =</span> GRID_NROW, <span class="at">alpha =</span> ALPHA)</span>
 <span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>  files <span class="ot">&lt;-</span> <span class="fu">character</span>(<span class="dv">0</span>)</span>
 <span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(pages)) {</span>
-<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>    file <span class="ot">&lt;-</span> <span class="fu">set_path</span>(<span class="st">&quot;graphs&quot;</span>, <span class="fu">sprintf</span>(<span class="st">&quot;dp-eda-%s-page-%02d.png&quot;</span>, section, i))</span>
-<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ggsave</span>(file, pages[[i]] <span class="sc">&amp;</span> <span class="fu">scale_fill_hv</span>() <span class="sc">&amp;</span> <span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">8</span>),</span>
-<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>                    <span class="at">width =</span> <span class="dv">11</span>, <span class="at">height =</span> <span class="fl">8.5</span>, <span class="at">units =</span> <span class="st">&quot;in&quot;</span>, <span class="at">dpi =</span> <span class="dv">150</span>)</span>
-<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>    on_page <span class="ot">&lt;-</span> <span class="fu">attr</span>(pages[[i]], <span class="st">&quot;variables&quot;</span>)</span>
-<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">### &quot;</span>, titles[[section]], <span class="st">&quot;, page &quot;</span>, i, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>    .link <span class="ot">&lt;-</span> <span class="fu">figure_link</span>(file)</span>
-<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig eda&quot;</span>, section, <span class="st">&quot;page&quot;</span>, i),</span>
-<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>           <span class="fu">paste0</span>(titles[[section]], <span class="st">&quot;, page &quot;</span>, i, <span class="st">&quot;: &quot;</span>, <span class="fu">paste</span>(labels[on_page], <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>)),</span>
-<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>)</span>
-<span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a>    files <span class="ot">&lt;-</span> <span class="fu">c</span>(files, file)</span>
-<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abbreviation_key</span>(vars)</span>
-<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">invisible</span>(files)</span>
-<span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>    file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(pages[[i]] <span class="sc">&amp;</span> <span class="fu">scale_fill_hv</span>() <span class="sc">&amp;</span> <span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">8</span>),</span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">sprintf</span>(<span class="st">&quot;dp-eda-%s-page-%02d&quot;</span>, section, i), <span class="at">width =</span> <span class="dv">11</span>, <span class="at">height =</span> <span class="fl">8.5</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>    on_page <span class="ot">&lt;-</span> <span class="fu">attr</span>(pages[[i]], <span class="st">&quot;variables&quot;</span>)</span>
+<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">### &quot;</span>, titles[[section]], <span class="st">&quot;, page &quot;</span>, i, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>    .link <span class="ot">&lt;-</span> <span class="fu">figure_link</span>(file)</span>
+<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig eda&quot;</span>, section, <span class="st">&quot;page&quot;</span>, i),</span>
+<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>           <span class="fu">paste0</span>(titles[[section]], <span class="st">&quot;, page &quot;</span>, i, <span class="st">&quot;: &quot;</span>, <span class="fu">paste</span>(labels[on_page], <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>)),</span>
+<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>)</span>
+<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a>    files <span class="ot">&lt;-</span> <span class="fu">c</span>(files, file)</span>
+<span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abbreviation_key</span>(vars)</span>
+<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">invisible</span>(files)</span>
+<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <details class="code-fold">
@@ -3347,7 +3381,7 @@ Table 5: Continuous variables
 <col style="width: 6%">
 <col style="width: 5%">
 <col style="width: 5%">
-<col style="width: 6%">
+<col style="width: 5%">
 <col style="width: 6%">
 <col style="width: 6%">
 <col style="width: 6%">
@@ -3361,9 +3395,9 @@ Table 5: Continuous variables
 <th style="text-align: right;">mean</th>
 <th style="text-align: right;">std</th>
 <th style="text-align: right;">min</th>
-<th style="text-align: right;">p25</th>
+<th style="text-align: right;">p15</th>
 <th style="text-align: right;">median</th>
-<th style="text-align: right;">p75</th>
+<th style="text-align: right;">p85</th>
 <th style="text-align: right;">max</th>
 </tr>
 </thead>
@@ -3376,9 +3410,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">17.43</td>
 <td style="text-align: right;">9.83</td>
 <td style="text-align: right;">0.07</td>
-<td style="text-align: right;">9.05</td>
+<td style="text-align: right;">5.80</td>
 <td style="text-align: right;">17.38</td>
-<td style="text-align: right;">25.96</td>
+<td style="text-align: right;">29.02</td>
 <td style="text-align: right;">34.94</td>
 </tr>
 <tr class="even">
@@ -3389,9 +3423,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">62.38</td>
 <td style="text-align: right;">12.18</td>
 <td style="text-align: right;">32.00</td>
-<td style="text-align: right;">54.00</td>
+<td style="text-align: right;">49.00</td>
 <td style="text-align: right;">63.00</td>
-<td style="text-align: right;">71.00</td>
+<td style="text-align: right;">75.00</td>
 <td style="text-align: right;">100.00</td>
 </tr>
 <tr class="odd">
@@ -3402,9 +3436,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">27.90</td>
 <td style="text-align: right;">4.46</td>
 <td style="text-align: right;">15.10</td>
-<td style="text-align: right;">24.80</td>
+<td style="text-align: right;">23.20</td>
 <td style="text-align: right;">27.80</td>
-<td style="text-align: right;">30.85</td>
+<td style="text-align: right;">32.35</td>
 <td style="text-align: right;">44.80</td>
 </tr>
 <tr class="even">
@@ -3415,9 +3449,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">51.78</td>
 <td style="text-align: right;">9.79</td>
 <td style="text-align: right;">20.00</td>
-<td style="text-align: right;">45.00</td>
+<td style="text-align: right;">42.00</td>
 <td style="text-align: right;">52.00</td>
-<td style="text-align: right;">59.00</td>
+<td style="text-align: right;">62.00</td>
 <td style="text-align: right;">75.00</td>
 </tr>
 <tr class="odd">
@@ -3428,9 +3462,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">121.03</td>
 <td style="text-align: right;">29.41</td>
 <td style="text-align: right;">28.00</td>
-<td style="text-align: right;">100.00</td>
+<td style="text-align: right;">91.00</td>
 <td style="text-align: right;">121.00</td>
-<td style="text-align: right;">141.00</td>
+<td style="text-align: right;">152.00</td>
 <td style="text-align: right;">207.00</td>
 </tr>
 <tr class="even">
@@ -3441,9 +3475,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">1.09</td>
 <td style="text-align: right;">0.36</td>
 <td style="text-align: right;">0.43</td>
-<td style="text-align: right;">0.83</td>
+<td style="text-align: right;">0.75</td>
 <td style="text-align: right;">1.02</td>
-<td style="text-align: right;">1.28</td>
+<td style="text-align: right;">1.43</td>
 <td style="text-align: right;">2.76</td>
 </tr>
 <tr class="odd">
@@ -3454,9 +3488,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">9.96</td>
 <td style="text-align: right;">8.51</td>
 <td style="text-align: right;">0.00</td>
-<td style="text-align: right;">3.06</td>
+<td style="text-align: right;">1.74</td>
 <td style="text-align: right;">7.61</td>
-<td style="text-align: right;">14.73</td>
+<td style="text-align: right;">19.70</td>
 <td style="text-align: right;">35.70</td>
 </tr>
 <tr class="even">
@@ -3467,9 +3501,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">7.57</td>
 <td style="text-align: right;">7.07</td>
 <td style="text-align: right;">0.00</td>
-<td style="text-align: right;">2.24</td>
+<td style="text-align: right;">1.32</td>
 <td style="text-align: right;">5.25</td>
-<td style="text-align: right;">10.60</td>
+<td style="text-align: right;">14.96</td>
 <td style="text-align: right;">35.61</td>
 </tr>
 <tr class="odd">
@@ -3480,9 +3514,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">33.92</td>
 <td style="text-align: right;">20.15</td>
 <td style="text-align: right;">4.00</td>
-<td style="text-align: right;">18.00</td>
+<td style="text-align: right;">10.00</td>
 <td style="text-align: right;">34.00</td>
-<td style="text-align: right;">48.00</td>
+<td style="text-align: right;">56.00</td>
 <td style="text-align: right;">108.00</td>
 </tr>
 <tr class="even">
@@ -3493,9 +3527,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">6.32</td>
 <td style="text-align: right;">2.62</td>
 <td style="text-align: right;">1.00</td>
-<td style="text-align: right;">5.00</td>
+<td style="text-align: right;">4.00</td>
 <td style="text-align: right;">6.00</td>
-<td style="text-align: right;">7.00</td>
+<td style="text-align: right;">9.00</td>
 <td style="text-align: right;">19.00</td>
 </tr>
 <tr class="odd">
@@ -3506,9 +3540,9 @@ Table 5: Continuous variables
 <td style="text-align: right;">1.76</td>
 <td style="text-align: right;">0.40</td>
 <td style="text-align: right;">0.00</td>
-<td style="text-align: right;">1.61</td>
+<td style="text-align: right;">1.39</td>
 <td style="text-align: right;">1.79</td>
-<td style="text-align: right;">1.95</td>
+<td style="text-align: right;">2.20</td>
 <td style="text-align: right;">2.94</td>
 </tr>
 </tbody>
@@ -3529,7 +3563,7 @@ Table 5: Continuous variables
 <div id="fig-eda-continuous-page-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-eda-continuous-page-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/70f8bad79d8f37342bcf27fb18dbc753.png" class="img-fluid figure-img" width="825">
+<img role="img" src="assets/09ebc339dc14e86cbd694fbbd789b07d.png" class="img-fluid figure-img" width="1650">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eda-continuous-page-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 3: Continuous variables, page 1: Years from 1 January 1990 to operation, Age at operation (years), Body mass index (kg/m2), LV ejection fraction (%), LV mass index (g/m2), Creatinine (mg/dL), Follow-up to death or censoring (years), Follow-up to reoperation (years), Hours in intensive care, Postoperative length of stay (days), Postoperative length of stay (log days)
@@ -3862,7 +3896,7 @@ Table 6: Categorical variables, missing counted
 <div id="fig-eda-percent-page-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-eda-percent-page-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/ee5e1bcb8a9bb23a255bf4efa66f67c6.png" class="img-fluid figure-img" width="825">
+<img role="img" src="assets/d3c65ed44594d7c283f2d9329bce51bb.png" class="img-fluid figure-img" width="1650">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eda-percent-page-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 4: Categorical variables, percent, page 1: Female, Race, History of heart failure, Diabetes, NYHA functional class, Death, Reoperation, Prolonged ventilation, Male, Non-white race, Postoperative stroke, Postoperative mitral regurgitation grade, Discharge destination, Surgical or transcatheter replacement, Prosthesis size, Prosthesis type
@@ -3883,7 +3917,7 @@ Figure 4: Categorical variables, percent, page 1: Female, Race, History of hear
 <div id="fig-eda-percent-page-2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-eda-percent-page-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/838e90fa82eed027f075757e63e971f0.png" class="img-fluid figure-img" width="825">
+<img role="img" src="assets/a2bcc6b20a13b8668771ad68629eaaf4.png" class="img-fluid figure-img" width="1650">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eda-percent-page-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 5: Categorical variables, percent, page 2: Number of prior cardiac operations, Major postoperative complication
@@ -3911,7 +3945,7 @@ Figure 5: Categorical variables, percent, page 2: Number of prior cardiac opera
 <div id="fig-eda-count-page-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-eda-count-page-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/87f7a03deefe506ab5296b99a286ac14.png" class="img-fluid figure-img" width="825">
+<img role="img" src="assets/4db9761dfe6ce1077e0b9089ef84ba40.png" class="img-fluid figure-img" width="1650">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eda-count-page-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 6: Categorical variables, counts, page 1: Female, Race, History of heart failure, Diabetes, NYHA functional class, Death, Reoperation, Prolonged ventilation, Male, Non-white race, Postoperative stroke, Postoperative mitral regurgitation grade, Discharge destination, Surgical or transcatheter replacement, Prosthesis size, Prosthesis type
@@ -3932,7 +3966,7 @@ Figure 6: Categorical variables, counts, page 1: Female, Race, History of heart
 <div id="fig-eda-count-page-2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-eda-count-page-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/eaa61a7232ebf4494ceaae972f458fbd.png" class="img-fluid figure-img" width="825">
+<img role="img" src="assets/be9dc1d9c8e6cd7996e33785e4dc6045.png" class="img-fluid figure-img" width="1650">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-eda-count-page-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 7: Categorical variables, counts, page 2: Number of prior cardiac operations, Major postoperative complication
@@ -3942,7 +3976,7 @@ Figure 7: Categorical variables, counts, page 2: Number of prior cardiac operat
 </div>
 </div>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"cohort-eda-dp-eda","rendered":"2026-10-06T10:07:03Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.3","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.5","source":null},{"package":"hvtiRtemplates","version":"1.2.5","source":null},{"package":"hvtiRutilities","version":"1.4.4","source":"github","sha":"b08735e0c81cc1503f793960d2a76040829685e8"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.4","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built.rds","role":"analysis","bytes":29325,"mtime":"2026-10-06T10:04:15Z","sha256":"1c4d37bc9b73dc545752f9242c11c1b71169e1df3e0a817f255f609a8fe5e7db"}],"artifacts":[],"subject":"cohort","type":"eda","label_max":40,"abbreviations":[{"phrase":"Left ventricular","abbreviation":"LV","source":"default"},{"phrase":"Right ventricular","abbreviation":"RV","source":"default"},{"phrase":"Left atrial","abbreviation":"LA","source":"default"},{"phrase":"Pulmonary artery","abbreviation":"PA","source":"default"},{"phrase":"Right coronary artery","abbreviation":"RCA","source":"default"},{"phrase":"Internal mammary artery","abbreviation":"IMA","source":"default"},{"phrase":"Aortic valve","abbreviation":"AV","source":"default"},{"phrase":"Mitral valve","abbreviation":"MV","source":"default"},{"phrase":"Tricuspid valve","abbreviation":"TV","source":"default"},{"phrase":"Pulmonary valve","abbreviation":"PV","source":"default"},{"phrase":"Aortic valve replacement","abbreviation":"AVR","source":"default"},{"phrase":"Aortic valve repair","abbreviation":"AVr","source":"default"},{"phrase":"Mitral valve replacement","abbreviation":"MVR","source":"default"},{"phrase":"Mitral valve repair","abbreviation":"MVr","source":"default"},{"phrase":"Tricuspid valve replacement","abbreviation":"TVR","source":"default"},{"phrase":"Tricuspid valve repair","abbreviation":"TVr","source":"default"},{"phrase":"Pulmonary valve repair","abbreviation":"PVr","source":"default"},{"phrase":"Coronary artery bypass graft","abbreviation":"CABG","source":"default"},{"phrase":"Coronary artery bypass grafting","abbreviation":"CABG","source":"default"},{"phrase":"Percutaneous coronary intervention","abbreviation":"PCI","source":"default"},{"phrase":"Cardiopulmonary bypass","abbreviation":"CPB","source":"default"},{"phrase":"Intra-aortic balloon pump","abbreviation":"IABP","source":"default"},{"phrase":"Carotid endarterectomy","abbreviation":"CEA","source":"default"},{"phrase":"Coronary artery disease","abbreviation":"CAD","source":"default"},{"phrase":"Congenital heart disease","abbreviation":"CHD","source":"default"},{"phrase":"Hypertrophic obstructive cardiomyopathy","abbreviation":"HOCM","source":"default"},{"phrase":"Atrial fibrillation","abbreviation":"AF","source":"default"},{"phrase":"Cerebral vascular accident","abbreviation":"CVA","source":"default"},{"phrase":"Cerebrovascular accident","abbreviation":"CVA","source":"default"},{"phrase":"Transient ischemic attack","abbreviation":"TIA","source":"default"},{"phrase":"Chronic obstructive pulmonary disease","abbreviation":"COPD","source":"default"},{"phrase":"Deep sternal wound infection","abbreviation":"DSWI","source":"default"},{"phrase":"New York Heart Association","abbreviation":"NYHA","source":"default"},{"phrase":"Ejection fraction","abbreviation":"EF","source":"default"},{"phrase":"Left ventricular inner diameter in diastole","abbreviation":"LVIDd","source":"default"},{"phrase":"Left ventricular internal diameter in diastole","abbreviation":"LVIDd","source":"default"},{"phrase":"Left ventricular inner diameter in systole","abbreviation":"LVIDs","source":"default"},{"phrase":"Left ventricular internal diameter in systole","abbreviation":"LVIDs","source":"default"},{"phrase":"Relative wall thickness","abbreviation":"RWT","source":"default"},{"phrase":"Fresh frozen plasma","abbreviation":"FFP","source":"default"},{"phrase":"Red blood cell","abbreviation":"RBC","source":"default"},{"phrase":"Red blood cells","abbreviation":"RBC","source":"default"},{"phrase":"Length of stay","abbreviation":"LOS","source":"default"},{"phrase":"Preoperative","abbreviation":"Preop","source":"default"}],"sections":["followup","continuous","percent","count"],"followup":{"origin_year":1990,"close_date":"2025-12-31","close_date_source":"set in CLOSE_DATE","panels":{"all":{"drawn":800,"excluded":0},"reop":{"drawn":800,"excluded":0}}},"source":"10_descriptive/cohort-eda-dp-eda.qmd",".hvti_render_id":"68aaa6aad55e98f99848da64cf1a1a07b881cd120daf809286cdb70ac6077a5e",".hvti_source_sha256":"58c0b33bf9eec1b0541cf9ca3b332089287975fcf72c7306395748682a80ecfa"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"dp.eda.cohort.eda","rendered":"2026-10-09T15:19:49Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.3","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.5","source":null},{"package":"hvtiRtemplates","version":"1.3.0","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.4","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261009.parquet","role":"analysis","bytes":57934,"mtime":"2026-10-09T15:16:37Z","sha256":"ecad1d83bedca5d692b6314a2fca905e9716c8424d2ae8ff1643774eaee02baa"}],"artifacts":[],"subject":"cohort","type":"eda","label_max":40,"abbreviations":[{"phrase":"Left ventricular","abbreviation":"LV","source":"default"},{"phrase":"Right ventricular","abbreviation":"RV","source":"default"},{"phrase":"Left atrial","abbreviation":"LA","source":"default"},{"phrase":"Pulmonary artery","abbreviation":"PA","source":"default"},{"phrase":"Right coronary artery","abbreviation":"RCA","source":"default"},{"phrase":"Internal mammary artery","abbreviation":"IMA","source":"default"},{"phrase":"Aortic valve","abbreviation":"AV","source":"default"},{"phrase":"Mitral valve","abbreviation":"MV","source":"default"},{"phrase":"Tricuspid valve","abbreviation":"TV","source":"default"},{"phrase":"Pulmonary valve","abbreviation":"PV","source":"default"},{"phrase":"Aortic valve replacement","abbreviation":"AVR","source":"default"},{"phrase":"Aortic valve repair","abbreviation":"AVr","source":"default"},{"phrase":"Mitral valve replacement","abbreviation":"MVR","source":"default"},{"phrase":"Mitral valve repair","abbreviation":"MVr","source":"default"},{"phrase":"Tricuspid valve replacement","abbreviation":"TVR","source":"default"},{"phrase":"Tricuspid valve repair","abbreviation":"TVr","source":"default"},{"phrase":"Pulmonary valve repair","abbreviation":"PVr","source":"default"},{"phrase":"Coronary artery bypass graft","abbreviation":"CABG","source":"default"},{"phrase":"Coronary artery bypass grafting","abbreviation":"CABG","source":"default"},{"phrase":"Percutaneous coronary intervention","abbreviation":"PCI","source":"default"},{"phrase":"Cardiopulmonary bypass","abbreviation":"CPB","source":"default"},{"phrase":"Intra-aortic balloon pump","abbreviation":"IABP","source":"default"},{"phrase":"Carotid endarterectomy","abbreviation":"CEA","source":"default"},{"phrase":"Coronary artery disease","abbreviation":"CAD","source":"default"},{"phrase":"Congenital heart disease","abbreviation":"CHD","source":"default"},{"phrase":"Hypertrophic obstructive cardiomyopathy","abbreviation":"HOCM","source":"default"},{"phrase":"Atrial fibrillation","abbreviation":"AF","source":"default"},{"phrase":"Cerebral vascular accident","abbreviation":"CVA","source":"default"},{"phrase":"Cerebrovascular accident","abbreviation":"CVA","source":"default"},{"phrase":"Transient ischemic attack","abbreviation":"TIA","source":"default"},{"phrase":"Chronic obstructive pulmonary disease","abbreviation":"COPD","source":"default"},{"phrase":"Deep sternal wound infection","abbreviation":"DSWI","source":"default"},{"phrase":"New York Heart Association","abbreviation":"NYHA","source":"default"},{"phrase":"Ejection fraction","abbreviation":"EF","source":"default"},{"phrase":"Left ventricular inner diameter in diastole","abbreviation":"LVIDd","source":"default"},{"phrase":"Left ventricular internal diameter in diastole","abbreviation":"LVIDd","source":"default"},{"phrase":"Left ventricular inner diameter in systole","abbreviation":"LVIDs","source":"default"},{"phrase":"Left ventricular internal diameter in systole","abbreviation":"LVIDs","source":"default"},{"phrase":"Relative wall thickness","abbreviation":"RWT","source":"default"},{"phrase":"Fresh frozen plasma","abbreviation":"FFP","source":"default"},{"phrase":"Red blood cell","abbreviation":"RBC","source":"default"},{"phrase":"Red blood cells","abbreviation":"RBC","source":"default"},{"phrase":"Length of stay","abbreviation":"LOS","source":"default"},{"phrase":"Preoperative","abbreviation":"Preop","source":"default"}],"sections":["followup","continuous","percent","count"],"followup":{"origin_year":1990,"close_date":"2025-12-31","close_date_source":"set in CLOSE_DATE","panels":{"all":{"drawn":800,"excluded":0},"reop":{"drawn":800,"excluded":0}}},"source":"10_descriptive/dp.eda.cohort.eda.qmd",".hvti_render_id":"0188d17f72b60d456bb0c5d6a6e60a47297b1fb6f6a142ab14dff6fd91b56cc1",".hvti_source_sha256":"c7d1fa45c2330ec4694cbbf2302561c63321c393c9cf64b4bcba1b7b9f9e2303"}</script>
 </section>
 </section>
 

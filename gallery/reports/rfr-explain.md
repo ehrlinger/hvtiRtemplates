@@ -30,6 +30,13 @@ suppressPackageStartupMessages({
   library(ggRandomForests)
   library(hvtiRutilities)
 })
+# One thread, so a forest reproduces from machine to machine. Left unset,
+# randomForestSRC runs on every core its OpenMP build can see, and on a
+# multi-core server a varPro cross-validated cutoff changed with the thread
+# count with every seed held fixed. Raise it for speed on a large forest, at the
+# cost of that guarantee: a cached fit records its seed, data and package
+# versions, never the threads it ran on.
+options(rf.cores = 1L)
 # The versions this template was verified against, end to end, on 2026-09-19.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
@@ -138,12 +145,12 @@ TYPE    <- "rf"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -165,6 +172,13 @@ set_path <- function(kind, file) {
                  paste0(SUBJECT, "-", TYPE))
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
+}
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
 }
 
 # `rfr-explain` reads the forest `rfr-fit` wrote in this same set, and caches
@@ -193,12 +207,24 @@ TOP_K <- 4
 PARTIAL_VARS <- NULL
 
 # Demo: seed for VIMP, VarPro and the partials. It is part of every cache key.
+# cache_fit() seeds R's generator with it before each call, and vimp() and
+# varpro() are also handed it as `seed =`, negated as randomForestSRC
+# documents. Both halves matter: varpro() draws from R's generator as well as
+# from its own seed, so the same seed after a different chunk gave different
+# importances.
 SEED <- 2026
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
 # render instead of returning the old result; TRUE recomputes only the caches
 # that are out of date.
 REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## The forest
@@ -261,11 +287,13 @@ Table 1: The data the fit job read
 Code
 
 ``` r
-vi <- cache_fit("rfr-vimp", vimp(forest), seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(gg_vimp(vi))
+vi <- cache_fit("rfr-vimp", vimp(forest, seed = -abs(SEED)), seed = SEED, dir = CACHE_DIR, refit = REFIT)
+.fig <- plot(gg_vimp(vi))
+save_figure(.fig, "rfr-explain-importance")
+.fig
 ```
 
-![](assets/b35f9640874df5e2c55e9a2dd108ba13.png)
+![](assets/c502700b7dd7e28b246536e3b1c8b55c.png)
 
 Figure 1: Permutation importance of each predictor
 
@@ -282,16 +310,16 @@ data.frame(variable = ranked,
            row.names = NULL)
 ```
 
-      variable    vimp min_depth
-    1      age  0.1854      1.05
-    2     lvef  0.0525      1.46
-    3      bmi  0.0286      2.09
-    4    hx_dm  0.0206      1.87
-    5  nyha_pr  0.0191      2.21
-    6 plvmassi  0.0163      2.67
-    7   hx_chf  0.0032      3.23
-    8 creat_pr  0.0020      7.13
-    9   female -0.0002      4.33
+      variable   vimp min_depth
+    1      age 0.1795      0.94
+    2     lvef 0.0532      1.51
+    3      bmi 0.0264      2.14
+    4  nyha_pr 0.0208      2.00
+    5    hx_dm 0.0190      2.00
+    6 plvmassi 0.0186      2.75
+    7   hx_chf 0.0045      3.39
+    8 creat_pr 0.0021      6.60
+    9   female 0.0002      4.37
 
 Table 2: Permutation importance and minimal depth of each predictor, in
 order of importance
@@ -318,7 +346,7 @@ if (is.null(PARTIAL_VARS)) {
 Code
 
 ``` r
-vp <- cache_fit("rfr-varpro", varpro(model, frame, verbose = FALSE),
+vp <- cache_fit("rfr-varpro", varpro(model, frame, verbose = FALSE, seed = -abs(SEED)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
 ```
 
@@ -328,10 +356,12 @@ vp <- cache_fit("rfr-varpro", varpro(model, frame, verbose = FALSE),
 Code
 
 ``` r
-plot(gg_varpro(vp))
+.fig <- plot(gg_varpro(vp))
+save_figure(.fig, "rfr-explain-varpro")
+.fig
 ```
 
-![](assets/225bc449800f1fd181cc63e2ac3be725.png)
+![](assets/ada5aa0f3e0df31ad31238e03cc2a549.png)
 
 Figure 2: VarPro importance of each predictor
 
@@ -341,14 +371,128 @@ Code
 
 ``` r
 # Marginal: predicted outcome against each variable, as observed.
-plot(gg_variable(forest), xvar = sel)
+.fig <- plot(gg_variable(forest), xvar = sel)
+save_figure(.fig, "rfr-explain-dependence-marginal")
 ```
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/cb87cb4a5087f361de71c43df65e4746.png)
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : pseudoinverse used at 0.985
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : neighborhood radius 2.015
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : reciprocal condition number 1.4829e-15
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : There are other near singularities as well. 4.0602
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : pseudoinverse used at
+    0.985
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : neighborhood radius
+    2.015
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : reciprocal condition
+    number 1.4829e-15
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : There are other near
+    singularities as well. 4.0602
+
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : pseudoinverse used at 0.985
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : neighborhood radius 2.015
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : reciprocal condition number 1.4829e-15
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : There are other near singularities as well. 4.0602
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : pseudoinverse used at
+    0.985
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : neighborhood radius
+    2.015
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : reciprocal condition
+    number 1.4829e-15
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : There are other near
+    singularities as well. 4.0602
+
+Code
+
+``` r
+.fig
+```
+
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : pseudoinverse used at 0.985
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : neighborhood radius 2.015
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : reciprocal condition number 1.4829e-15
+
+    Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
+    : There are other near singularities as well. 4.0602
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : pseudoinverse used at
+    0.985
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : neighborhood radius
+    2.015
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : reciprocal condition
+    number 1.4829e-15
+
+    Warning in predLoess(object$y, object$x, newx = if (is.null(newdata)) object$x
+    else if (is.data.frame(newdata))
+    as.matrix(model.frame(delete.response(terms(object)), : There are other near
+    singularities as well. 4.0602
+
+![](assets/6102c4252ebcff35fdd25b865c93755e.png)
 
 Figure 3: Predicted outcome against each selected predictor, as observed
 
@@ -358,11 +502,14 @@ Code
 # Partial: the forest's prediction with every other variable held at its
 # observed values.
 pd <- cache_fit("rfr-partial", gg_partial_rfsrc(forest, xvar.names = sel),
-                seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(pd)
+                seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                packages = "randomForestSRC")
+.fig <- plot(pd)
+save_figure(.fig, "rfr-explain-dependence-partial")
+.fig
 ```
 
-![](assets/cab1d441b52b7ede7a1dfb6bfc3bb724.png)
+![](assets/1cbf8142a6ff0a2d9d8423f1ac70d4f7.png)
 
 Figure 4: Partial dependence of the forest’s prediction on each selected
 predictor
@@ -373,12 +520,24 @@ Code
 # The VarPro partial, computed from the varpro fit.
 pv <- cache_fit("rfr-partial-varpro", gg_partial_varpro(object = vp, xvar.names = sel),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-plot(pv)
+.fig <- plot(pv)
+save_figure(.fig, "rfr-explain-dependence-varpro")
 ```
 
-    Warning: Removed 112 rows containing non-finite outside the scale range
+    Warning: Removed 40 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
+    Removed 40 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/8c2816de87fd36ffa01eef6fb8a3cf97.png)
+Code
+
+``` r
+.fig
+```
+
+    Warning: Removed 40 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
+
+![](assets/9f5e032f63cca5821f7aa97ab8c66650.png)
 
 Figure 5: VarPro partial dependence on each selected predictor

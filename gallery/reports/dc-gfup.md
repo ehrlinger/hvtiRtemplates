@@ -39,8 +39,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRutilities") < "1.4.1") {
-  stop("This job needs hvtiRutilities >= 1.4.1 for followup_check(); ",
+if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
+  stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles; ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
@@ -99,7 +99,7 @@ TYPE    <- "eda"
 
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -116,6 +116,13 @@ set_path <- function(kind, file) {
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 ```
 
 ## Study choices
@@ -125,9 +132,9 @@ Set the values in this chunk before rendering.
 Code
 
 ``` r
-# Demo: the registered dataset this job reads ("study" is the built dataset).
+# Demo: the registered dataset this job reads ("built" is the study dataset).
 # MIGRATE-BEGIN: dc-gfup-data
-DATASET <- "study"
+DATASET <- "built"
 # MIGRATE-END: dc-gfup-data
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -145,6 +152,26 @@ ID <- "patient_id"
 # Demo: what makes a row unique; one row per patient unless repeated measures
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 
 # MIGRATE-BEGIN: dc-gfup-config
 EVENT <- "dead"       # Demo: binary event indicator, 1=event and 0=censored
@@ -196,6 +223,13 @@ ALPHA <- 0.5
 # all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
 # event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
 COLORS <- NULL
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Data
@@ -206,19 +240,21 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| Rows kept           | 800 rows on 800 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| Rows kept           | 800 rows on 800 patients                 |
 
 Table 1: The data this job read
 
@@ -240,13 +276,13 @@ if (!is.null(job_data$attrition)) {
 
 One row per follow-up interval and patient group: every patient, those
 with the event and those censored. A patient with no event status counts
-among all patients only, and the report says how many there are.
-Quartiles are SAS `QNTLDEF=5`, as `proc_means()` computes them.
-Suspicious rows have missing event status or at least one missing,
-negative or zero interval. The local review prints at most
-`MAX_REVIEW_ROWS` of them, in source order, with only the selected
-fields. Identifiers stay out until you select one; check the output
-before sharing a report that contains an identifier.
+among all patients only, and the report says how many there are. The
+15th and 85th percentiles and the median are SAS `QNTLDEF=5`, as
+`proc_means()` computes them. Suspicious rows have missing event status
+or at least one missing, negative or zero interval. The local review
+prints at most `MAX_REVIEW_ROWS` of them, in source order, with only the
+selected fields. Identifiers stay out until you select one; check the
+output before sharing a report that contains an identifier.
 
 Code
 
@@ -273,8 +309,8 @@ review_rows <- fc$review
     count <- function(test) vapply(m$variable, function(v) sum(test(d[[v]][keep]), na.rm = TRUE), integer(1L))
     data.frame(interval = m$variable, patients = groups[[g]], n = m$n, missing = m$nmiss,
                negative = count(function(x) x < 0), zero = count(function(x) x == 0),
-               mean = m$mean, sd = m$std, min = m$min, p25 = m$p25, median = m$median,
-               p75 = m$p75, max = m$max, row.names = NULL)
+               mean = m$mean, sd = m$std, min = m$min, p15 = m$p15, median = m$median,
+               p85 = m$p85, max = m$max, row.names = NULL)
   })
   out <- do.call(rbind, rows)
   out[order(match(out$interval, unique(out$interval))), , drop = FALSE]
@@ -288,11 +324,11 @@ Code
 knitr::kable(followup_table, row.names = FALSE, digits = 3)
 ```
 
-| interval | patients | n | missing | negative | zero | mean | sd | min | p25 | median | p75 | max |
+| interval | patients | n | missing | negative | zero | mean | sd | min | p15 | median | p85 | max |
 |:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| iv_dead | All patients | 800 | 0 | 0 | 0 | 9.964 | 8.510 | 0.000 | 3.060 | 7.614 | 14.732 | 35.696 |
-| iv_dead | Event | 443 | 0 | 0 | 0 | 7.056 | 6.465 | 0.000 | 1.866 | 5.012 | 10.992 | 27.287 |
-| iv_dead | Censored | 357 | 0 | 0 | 0 | 13.573 | 9.331 | 0.021 | 5.769 | 11.190 | 20.318 | 35.696 |
+| iv_dead | All patients | 800 | 0 | 0 | 0 | 9.964 | 8.510 | 0.000 | 1.744 | 7.614 | 19.702 | 35.696 |
+| iv_dead | Event | 443 | 0 | 0 | 0 | 7.056 | 6.465 | 0.000 | 0.957 | 5.012 | 14.079 | 27.287 |
+| iv_dead | Censored | 357 | 0 | 0 | 0 | 13.573 | 9.331 | 0.021 | 3.918 | 11.190 | 25.845 | 35.696 |
 
 Table 2: Follow-up by interval and patient group: missing, negative and
 zero values, and the distribution (years)
@@ -452,8 +488,7 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript()
-  file <- set_path("graphs", paste0("dc-gfup-", nm, ".png"))
-  ggplot2::ggsave(file, p, width = 7, height = 6, units = "in", dpi = 150)
+  file <- save_figure(p, paste0("dc-gfup-", nm), width = 7, height = 6, linked = TRUE)
   .link <- figure_link(file)
   .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", row$title),
          "knitr::include_graphics(.link, error = FALSE)")
@@ -470,7 +505,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/8012782ffc4d393890acb06147148d38.png)
+![](assets/fdb447a47788fbaffef2a931e326ee22.png)
 
 Figure 1: Follow-up against year of operation, All deaths
 

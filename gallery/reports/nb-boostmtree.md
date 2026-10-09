@@ -133,12 +133,12 @@ TYPE    <- "boost"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -162,6 +162,13 @@ set_path <- function(kind, file) {
   file.path(d, file)
 }
 
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
 # The fit is cached and saved through set_path(), by set, so a later render or job finds this set's fit and no other's.
 ```
 
@@ -172,7 +179,7 @@ Edit these values for this study before rendering.
 Code
 
 ``` r
-# Demo: the registered dataset this job reads ("study" is the built dataset).
+# Demo: the registered dataset this job reads ("built" is the study dataset).
 DATASET <- "echo"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -188,12 +195,34 @@ WHERE <- NULL
 ID <- "patient_id"
 
 # Demo: the visit time, in years. The data hold one row per visit, built
-# upstream, so the time is part of what makes a row unique.
+# upstream, so the time is part of what makes a row unique. With JOIN below,
+# the visit time may be a column of the joined dataset alone: KEY is then
+# checked on the joined rows.
 TIME <- "iv_echo"
 
 # Demo: what makes a row unique. The ID alone does not: a patient has a row per
 # visit. A duplicated visit then stops the read rather than double-counting.
 KEY <- c(ID, TIME)
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. A job that counts or models
+#     patients, one row each, needs REDUCE: NULL would count every record.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 
 # Demo: the response measured at each visit, and its kind: "continuous",
 # "binary", "ordinal" or "nominal".
@@ -226,6 +255,13 @@ N_TRACES <- 100
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
 # render instead of returning the old fit; TRUE recomputes it.
 REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Cohort
@@ -236,9 +272,11 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY)
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 .selection <- attr(job_data$record, "selection")
 .id <- .selection$id
@@ -308,13 +346,13 @@ if (length(.chr)) {
 }
 ```
 
-| Data                |                            |
-|:--------------------|:---------------------------|
-| Source              | dataset `echo` (echo.rds)  |
-| Rows read           | 1,177                      |
-| ID                  | `patient_id`               |
-| Identifiers dropped | none                       |
-| Rows kept           | 1,177 rows on 300 patients |
+| Data                |                                        |
+|:--------------------|:---------------------------------------|
+| Source              | dataset `echo` (echo_20261009.parquet) |
+| Rows read           | 1,177                                  |
+| ID                  | `patient_id`                           |
+| Identifiers dropped | none                                   |
+| Rows kept           | 1,177 rows on 300 patients             |
 
 Table 1: The data this job read
 
@@ -411,7 +449,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 195 | 0.853548 |
+| l2 | lvef | 162 | 0.8590475 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -421,10 +459,11 @@ Code
 # The cross-validated error by iteration, and the fitted rho, phi and lambda.
 # Best M at the right edge means M was too small.
 p_error <- plot(gg_boost_error(fit))
+save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/15e663094ae00c59fbcfd7d588ef6b20.png)
+![](assets/594a23906fdcd7811dc8b497d02a5924.png)
 
 Figure 1: Cross-validated error by boosting iteration
 
@@ -432,10 +471,11 @@ Code
 
 ``` r
 p_path <- plot(gg_boost_path(fit))
+save_figure(p_path, "nb-boostmtree-path")
 p_path
 ```
 
-![](assets/3bd5206df3eb7ddfbaa37e2889ff872c.png)
+![](assets/6c55c4a9e8bb79133c9b8f2b2806303f.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration
 
@@ -444,10 +484,11 @@ Code
 ``` r
 # Observed against fitted values over follow-up, in time bins.
 p_calibration <- plot(gg_boost_calibration(fit))
+save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/22d90b9dbc5584689a8493ceeb69b793.png)
+![](assets/5d44fe33fcc0cd011e2828563e6a6269.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins
 
@@ -458,10 +499,11 @@ Code
 # interaction is where a predictor whose effect changes over follow-up shows.
 vimp <- vimp.boostmtree(fit)
 p_vimp <- plot(gg_boost_vimp(vimp))
+save_figure(p_vimp, "nb-boostmtree-importance")
 p_vimp
 ```
 
-![](assets/9cc639ec52afa0d1c3433bb55ddd0ae6.png)
+![](assets/8fb2311bae274a579df46f0a2d63e484.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time
@@ -516,6 +558,7 @@ p_effects <- lapply(unname(.parts), function(v) {
 })
 for (.i in seq_along(p_effects)) {
   .p <- p_effects[[.i]]
+  save_figure(.p, paste0("nb-boostmtree-effects-", .kinds[[.i]]))
   .child(paste("fig effects", .kinds[[.i]]), paste0("Partial effects over follow-up, ", .kinds[[.i]], " predictors"), ".p")
 }
 ```
@@ -526,7 +569,7 @@ Code
 .p
 ```
 
-![](assets/7a4a98244d688884125afa0abf252c1f.png)
+![](assets/d23192281c62c6db8db018617afcf9de.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors
 
@@ -568,10 +611,11 @@ if (length(.edges) < 2L) {
     ggplot2::geom_line(data = trace_means, ggplot2::aes(x = .data[["time"]], y = .data[["fitted"]]),
                        linewidth = 1.2, inherit.aes = FALSE)
 }
+save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/f9b6e25013e232723485e975e733eea9.png)
+![](assets/b50901860c6e16eab406b65ba31119c6.png)
 
 Figure 6: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time

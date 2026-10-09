@@ -94,7 +94,7 @@ TYPE    <- "eda"
 
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -110,6 +110,13 @@ set_path <- function(kind, file) {
   if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
   file.path(dir, file)
 }
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 ```
 
 ## Study choices
@@ -119,9 +126,9 @@ Set the values in this chunk before rendering.
 Code
 
 ``` r
-# Demo: the registered dataset this job reads ("study" is the built dataset).
+# Demo: the registered dataset this job reads ("built" is the study dataset).
 # MIGRATE-BEGIN: dc-tables-data
-DATASET <- "study"
+DATASET <- "built"
 # MIGRATE-END: dc-tables-data
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -139,6 +146,26 @@ ID <- "patient_id"
 # Demo: what makes a row unique; one row per patient unless repeated measures
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. A job that counts or models
+#     patients, one row each, needs REDUCE: NULL would count every record.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 
 # Demo: the variables to report, grouped. Each name is a section heading and
 # becomes a row group in the table, in this order. These are the /* Demography */
@@ -174,6 +201,13 @@ OVERRIDES <- list()
 # every pair), and an optional stratum:
 #   list(vars = c("glu_pr", "creat_pr"), with = "a1c_pr", by = "a1c_grp")
 CORR <- NULL
+
+# Each figure is saved to descriptive/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Data
@@ -186,19 +220,21 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY)
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| Rows kept           | 800 rows on 800 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| Rows kept           | 800 rows on 800 patients                 |
 
 Table 1: The data this job read
 
@@ -337,9 +373,8 @@ if (is.null(CORR)) {
   }
   cm <- hv_correlation_matrix(d, vars = unique(c(CORR$with, CORR$vars)))
   fname <- "dc-tables-correlation-matrix.png"
-  png(set_path("descriptive", fname), width = 10, height = 10, units = "in", res = 150)
-  print(plot(cm) + theme_hv_manuscript())
-  invisible(dev.off())
+  save_figure(plot(cm) + theme_hv_manuscript(), sub("[.]png$", "", fname), width = 10, height = 10,
+              kind = "descriptive", linked = TRUE)
   .fence <- strrep("`", 3)
   .caption <- sprintf("Spearman and Pearson, %d%% Fisher interval", round(100 * conf_level))
   cat(knitr::knit_child(text = c(

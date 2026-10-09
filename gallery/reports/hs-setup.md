@@ -157,12 +157,12 @@ TYPE    <- "hz"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -210,10 +210,11 @@ KEY <- NULL
 TIME <- NULL
 EVENT <- NULL
 
-# Expected counts and prediction horizons.
-# Demo: expected counts and prediction horizons.
-EXPECTED <- list(n = 725L, n_events = 402L, n_censored = 323L)
+# No expected counts here: they are typed once, in the hz job, and hm.rds
+# carries them. The cohort chunk checks this job's rows against them.
 
+# Prediction horizons.
+# Demo: prediction horizons.
 HORIZONS <- c(1, 5, 10)
 
 # Population survival matching columns and life table.
@@ -264,26 +265,27 @@ job_data <- .up$job_data
 d <- job_data$data
 TIME <- .up$selection$time
 EVENT <- .up$selection$event
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| `!is.na(creat_pr)`  | removed 75                  |
-| Rows kept           | 725 rows on 725 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `study` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| `!is.na(creat_pr)`  | removed 75                               |
+| Rows kept           | 725 rows on 725 patients                 |
 
 Table 1: The data this job read, as hz read it
 
 Code
 
 ``` r
-cc <- cohort_counts(d, event = EVENT, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+# The counts hm.rds records, which hm checked against hz's EXPECTED.
+cc <- hvtiRtemplates:::.check_upstream_cohort(d, .hm_read$lineage, event = EVENT, time = TIME, source = "hm.rds")
 ```
 
 Code
@@ -478,9 +480,9 @@ knitr::kable(summary_tbl, row.names = FALSE, digits = 4)
 
 | horizon |   n | median |    min |    max |
 |--------:|----:|-------:|-------:|-------:|
-|       1 | 725 | 0.9268 | 0.4803 | 0.9896 |
-|       5 | 725 | 0.7518 | 0.1419 | 0.9577 |
-|      10 | 725 | 0.5780 | 0.0293 | 0.9197 |
+|       1 | 725 | 0.9238 | 0.4588 | 0.9895 |
+|       5 | 725 | 0.7502 | 0.1330 | 0.9577 |
+|      10 | 725 | 0.5804 | 0.0288 | 0.9194 |
 
 Table 2: Predicted survival by horizon, across the cohort
 
@@ -590,9 +592,9 @@ knitr::kable(obs_vs_exp, row.names = FALSE, digits = 4)
 
 | horizon | observed | expected |  ratio |
 |--------:|---------:|---------:|-------:|
-|       1 |   0.9058 |   0.9812 | 0.9232 |
-|       5 |   0.7103 |   0.8999 | 0.7892 |
-|      10 |   0.5462 |   0.7843 | 0.6963 |
+|       1 |   0.9014 |   0.9812 | 0.9187 |
+|       5 |   0.7104 |   0.8999 | 0.7894 |
+|      10 |   0.5472 |   0.7843 | 0.6977 |
 
 Table 4: Model-predicted against age, sex and race matched population
 survival

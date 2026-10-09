@@ -136,12 +136,12 @@ TYPE    <- "approach"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -181,11 +181,31 @@ Code
 # job's own choice, not taken from a model: each hm model was fitted on ONE
 # group's rows, and this job predicts for all of them.
 # Demo: the dataset, and a WHERE that keeps every group being compared.
-DATASET <- "study"
+DATASET <- "built"
 ANALYSIS_SET <- NULL
 WHERE <- quote(!is.na(creat_pr))
 ID <- "patient_id"
 KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 
 # Demo: the follow-up time and event columns every hm model was fitted on. The
 #       models chunk stops if any model records a different time column,
@@ -239,20 +259,22 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| `!is.na(creat_pr)`  | removed 75                  |
-| Rows kept           | 725 rows on 725 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| `!is.na(creat_pr)`  | removed 75                               |
+| Rows kept           | 725 rows on 725 patients                 |
 
 Table 1: The data this job read
 
@@ -506,6 +528,29 @@ if (any(.bad)) {
   stop(sum(.bad), " of ", nrow(pred), " predictions are NA or non-finite, from model(s) ",
        paste(unique(pred$model[.bad]), collapse = ", "), ".", call. = FALSE)
 }
+# A finite fit with NA limits has one of two causes, and the fixes differ.
+# Without a usable variance matrix, predict() returns se.fit as NA, and every
+# limit with it. With one, a limit can still be undefined at the boundary: the
+# logit limits need 0 < survival < 1, so a prediction of exactly 1 (or 0) has
+# none. Left alone, either NA reaches the decision below, which stops on
+# "missing value where TRUE/FALSE needed" and names neither the model nor the
+# cause. This stops even where the decision is deleted: predictions without
+# limits are not a result to save.
+.no_cl <- !is.finite(pred$lower) | !is.finite(pred$upper)
+.no_se <- .no_cl & !is.finite(pred$se.fit)
+if (any(.no_se)) {
+  stop("No confidence limits from the model(s) for ", paste(unique(pred$model[.no_se]), collapse = ", "),
+       ": the hm fit has no usable variance matrix, missing or with a standard error ",
+       "that is not finite, so no difference between groups can be judged. Refit that ",
+       "group's hm model with fewer candidate covariates or with its shapes fixed.", call. = FALSE)
+}
+if (any(.no_cl)) {
+  stop(sum(.no_cl), " of ", nrow(pred), " predictions from model(s) ",
+       paste(unique(pred$model[.no_cl]), collapse = ", "), " have a standard error but no ",
+       "confidence limits: the logit limits are undefined where predicted survival at ",
+       "HORIZON is exactly 0 or 1 (here ", paste(unique(signif(pred$fit[.no_cl], 3)), collapse = ", "),
+       "). Check HORIZON and the patients predicted there.", call. = FALSE)
+}
 stopifnot(all(pred$fit >= 0 & pred$fit <= 1))
 
 # One row per patient: the treatment received and the CARRY columns a plotting
@@ -538,10 +583,10 @@ knitr::kable(summary_tbl, row.names = FALSE, digits = 4)
 
 | model         | group         | median_survival |
 |:--------------|:--------------|----------------:|
-| surgical      | surgical      |          0.7890 |
-| transcatheter | surgical      |          0.7690 |
-| surgical      | transcatheter |          0.6101 |
-| transcatheter | transcatheter |          0.6214 |
+| surgical      | surgical      |          0.8027 |
+| transcatheter | surgical      |          0.7729 |
+| surgical      | transcatheter |          0.6280 |
+| transcatheter | transcatheter |          0.6255 |
 
 Table 5: Median predicted survival at 5, by model and treatment received
 
@@ -629,8 +674,8 @@ knitr::kable(best_tbl)
 
 |               | surgical | transcatheter | (tie) | (no choice) |
 |:--------------|---------:|--------------:|------:|------------:|
-| surgical      |      337 |           123 |     0 |           0 |
-| transcatheter |      116 |           149 |     0 |           0 |
+| surgical      |      378 |            82 |     0 |           0 |
+| transcatheter |      138 |           127 |     0 |           0 |
 
 Table 6: Treatment received against best-predicted treatment, every
 patient
@@ -643,11 +688,11 @@ knitr::kable(table(received = factor(decision$group[.sep], .levels), optimal = f
 
 |               | surgical | transcatheter |
 |:--------------|---------:|--------------:|
-| surgical      |        5 |             8 |
-| transcatheter |        2 |            34 |
+| surgical      |      109 |             5 |
+| transcatheter |       30 |            26 |
 
-Table 7: Treatment received against optimal treatment, the 49 patients
-whose choice is separated at ~68%; 676 are not
+Table 7: Treatment received against optimal treatment, the 170 patients
+whose choice is separated at ~68%; 555 are not
 
 ## Save
 

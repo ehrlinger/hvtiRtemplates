@@ -36,6 +36,13 @@ suppressPackageStartupMessages({
   library(ggRandomForests)
   library(hvtiRutilities)
 })
+# One thread, so a forest reproduces from machine to machine. Left unset,
+# randomForestSRC runs on every core its OpenMP build can see, and on a
+# multi-core server a varPro cross-validated cutoff changed with the thread
+# count with every seed held fixed. Raise it for speed on a large forest, at the
+# cost of that guarantee: a cached fit records its seed, data and package
+# versions, never the threads it ran on.
+options(rf.cores = 1L)
 # The versions this template was verified against, end to end, on 2026-09-19.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
@@ -141,12 +148,12 @@ TYPE    <- "rf"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -170,6 +177,13 @@ set_path <- function(kind, file) {
   file.path(d, file)
 }
 
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
 # `rfr-fit` writes the forest through this and `rfr-explain` reads it back,
 # both by set, so an explanation can never be filed against a different set
 # than the forest it explains. The write is the `save` chunk at the foot of
@@ -183,8 +197,8 @@ Edit these values for this study before rendering.
 Code
 
 ``` r
-# Demo: the registered dataset this job reads ("study" is the built dataset).
-DATASET <- "study"
+# Demo: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
 ANALYSIS_SET <- NULL
@@ -202,6 +216,26 @@ ID <- "patient_id"
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
 
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
+
 # Demo: the continuous outcome. Transform it first if its distribution calls
 # for it (a length of stay is usually logged); the forest predicts on the
 # scale given here.
@@ -214,7 +248,11 @@ PREDICTORS <- c("age", "female", "bmi", "hx_chf", "hx_dm", "nyha_pr", "lvef", "p
 
 # Demo: forest size and seed. The error-by-trees plot below says whether NTREE
 # was enough: a curve still falling at its right edge was not. SEED makes the
-# forest reproducible and is part of its cache key.
+# forest reproducible and is part of its cache key. It is used twice, on
+# purpose: cache_fit() seeds R's generator with it, and rfsrc() is handed it
+# as `seed =`, negated as randomForestSRC documents. Without that
+# argument rfsrc() draws a seed from R's generator, so the forest would depend
+# on whatever ran before it.
 NTREE <- 300
 SEED  <- 2026
 
@@ -227,6 +265,13 @@ NA_ACTION <- "na.impute"
 # render instead of returning the old forest; TRUE recomputes only the caches
 # that are out of date, so it is safe to leave on while iterating.
 REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Cohort
@@ -239,9 +284,11 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 .outcomes <- intersect(RESPONSE, PREDICTORS)
 if (length(.outcomes)) {
@@ -295,13 +342,13 @@ if (length(.chr)) {
 }
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| Rows kept           | 800 rows on 800 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| Rows kept           | 800 rows on 800 patients                 |
 
 Table 1: The data this job read
 
@@ -336,7 +383,7 @@ model <- stats::reformulate(".", response = RESPONSE)
 environment(model) <- globalenv()
 forest <- cache_fit(
   "rfr-forest",
-  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none"),
+  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none", seed = -abs(SEED)),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
 )
 forest
@@ -346,7 +393,7 @@ forest
                         Was data imputed: yes
                          Number of trees: 300
                Forest terminal node size: 5
-           Average no. of terminal nodes: 105.9
+           Average no. of terminal nodes: 105.78
     No. of variables tried at each split: 3
                   Total no. of variables: 9
            Resampling used to grow trees: swor
@@ -355,8 +402,8 @@ forest
                                   Family: regr
                           Splitting rule: mse *random*
            Number of random split points: 10
-                         (OOB) R squared: 0.27075985
-       (OOB) Requested performance error: 0.11860237
+                         (OOB) R squared: 0.26844434
+       (OOB) Requested performance error: 0.11897896
 
 `importance = "none"` is deliberate. Importance is the explain job’s
 work, and cached there on its own, so it can be recomputed without
@@ -369,10 +416,12 @@ Code
 ``` r
 # Out-of-bag error by number of trees.
 err <- gg_error(forest)
-plot(err)
+.fig <- plot(err)
+save_figure(.fig, "rfr-fit-diagnostics-error")
+.fig
 ```
 
-![](assets/2bc1d5d0a6b6f6878f7b212300248f07.png)
+![](assets/1c42822bdebabf4f5e0daeda22792e57.png)
 
 Figure 1: Out-of-bag error by number of trees
 
@@ -381,10 +430,12 @@ Code
 ``` r
 # Out-of-bag predicted against observed.
 pred <- gg_rfsrc(forest)
-plot(pred)
+.fig <- plot(pred)
+save_figure(.fig, "rfr-fit-diagnostics-predicted")
+.fig
 ```
 
-![](assets/fc5f721bd0865cdde845ba50a403ffa9.png)
+![](assets/632f6eede0cd93316f295b84a284c92f.png)
 
 Figure 2: Out-of-bag predicted against observed values
 

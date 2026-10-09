@@ -11,13 +11,13 @@ categorical variables as counts, each with its table. It is written for
 the biostatistician choosing variables for an analysis set, not for a
 manuscript.
 
-Each section is also a job of its own, and draws through the same
-function: the follow-up section is `dc-gfup`, its figure
+Each section draws through a package function. The follow-up section is
+`dc-gfup`, a job of its own: its figure
 (`hvtiPlotR::hv_followup_panels()`) and its tables
-(`hvtiRutilities::followup_check()`), and the other three are
-`dp-postage` (`hvtiPlotR::hv_eda_pages()`). Given the same choices, a
-section here is the same figure as the standalone job, so this report
-and a standalone job cannot disagree about the data.
+(`hvtiRutilities::followup_check()`). Given the same choices it is the
+same figure as the standalone job, so this report and that job cannot
+disagree about the data. The other three sections draw their pages
+through `hvtiPlotR::hv_eda_pages()`.
 
 Code
 
@@ -39,8 +39,9 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
   stop("This job needs hvtiPlotR >= 2.8.0 for hv_eda_pages(), hv_followup_panels() and scale_color_hv(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiRutilities") < "1.4.2") {
-  stop("This job needs hvtiRutilities >= 1.4.2 for followup_check() and study_abbreviations(); ",
+if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
+  stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles ",
+       "and study_abbreviations(); ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
 if (!requireNamespace("patchwork", quietly = TRUE)) {
@@ -98,7 +99,7 @@ TYPE    <- "eda"
 
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -115,6 +116,13 @@ set_path <- function(kind, file) {
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 ```
 
 ## Study choices
@@ -126,9 +134,9 @@ dataset.
 Code
 
 ``` r
-# Demo: the registered dataset this job reads ("study" is the built dataset).
+# Demo: the registered dataset this job reads ("built" is the study dataset).
 # MIGRATE-BEGIN: dp-eda-data
-DATASET <- "study"
+DATASET <- "built"
 # MIGRATE-END: dp-eda-data
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -146,6 +154,26 @@ ID <- "patient_id"
 # Demo: what makes a row unique; one row per patient unless repeated measures
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. A job that counts or models
+#     patients, one row each, needs REDUCE: NULL would count every record.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 
 # Follow-up. These are dc-gfup's choices, and mean what they mean there.
 # Demo: the years-since-origin interval to the operation, and that origin. The
@@ -178,7 +206,7 @@ PANELS <- list(
 #               death_time = "iv_dead", label = "Reoperation")
 EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", death_time = "iv_dead", label = "Reoperation"))
 
-# Variables. These are dp-postage's choices, and mean what they mean there.
+# Variables.
 # X_VAR is the reference time every panel is drawn against.
 # VARIABLES is NULL to draw every column, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
@@ -187,8 +215,7 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", dea
 # here. A KEY column beside it, such as a visit time, is left out of NULL but
 # drawn when named here, as that column's own distribution; a measure's course
 # over visits is a spaghetti plot, drawn by hvtiPlotR::hv_spaghetti, not a page here.
-# The follow-up columns are drawn too, as
-# dp-postage draws them, so a section here stays the standalone job's figure.
+# The follow-up columns are drawn too, like any other column.
 # A named column that is not in the data stops the render, and the error
 # lists every missing name at once.
 # SECTIONS is any of "followup", "continuous", "percent" and "count". The
@@ -225,6 +252,13 @@ LABEL_MAX <- 40
 # uses the study's list alone. The study's list is the abbreviations: block in
 # _study.yml, over the group default shipped in hvtiRutilities.
 ABBREVIATIONS <- NULL
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Data
@@ -235,19 +269,21 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY)
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| Rows kept           | 800 rows on 800 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| Rows kept           | 800 rows on 800 patients                 |
 
 Table 1: The data this job read
 
@@ -269,8 +305,8 @@ Code
 
 ``` r
 # unnumbered: checks the choices and defines helpers only; its tables and figures are child chunks elsewhere
-# The follow-up choices are checked by hv_followup_panels() below; these are
-# dp-postage's checks of the variable choices, unchanged.
+# The follow-up choices are checked by hv_followup_panels() below; these
+# check the variable choices.
 column_names <- function(x) is.character(x) && !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
 if (!column_names(X_VAR) || length(X_VAR) != 1L) stop("X_VAR must name one column.", call. = FALSE)
 if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
@@ -568,8 +604,8 @@ status_colors <- function(levels) {
     count <- function(test) vapply(m$variable, function(v) sum(test(d[[v]][keep]), na.rm = TRUE), integer(1L))
     data.frame(interval = m$variable, patients = groups[[g]], n = m$n, missing = m$nmiss,
                negative = count(function(x) x < 0), zero = count(function(x) x == 0),
-               mean = m$mean, sd = m$std, min = m$min, p25 = m$p25, median = m$median,
-               p75 = m$p75, max = m$max, row.names = NULL)
+               mean = m$mean, sd = m$std, min = m$min, p15 = m$p15, median = m$median,
+               p85 = m$p85, max = m$max, row.names = NULL)
   })
   out <- do.call(rbind, rows)
   out[order(match(out$interval, unique(out$interval))), , drop = FALSE]
@@ -600,8 +636,7 @@ for (i in seq_len(nrow(fp$data))) {
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript()
-  file <- set_path("graphs", paste0("dp-eda-gfup-", nm, ".png"))
-  ggplot2::ggsave(file, p, width = 7, height = 6, units = "in", dpi = 150)
+  file <- save_figure(p, paste0("dp-eda-gfup-", nm), width = 7, height = 6, linked = TRUE)
   .link <- figure_link(file)
   .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", row$title),
          "knitr::include_graphics(.link, error = FALSE)")
@@ -619,11 +654,11 @@ Code
 knitr::kable(.followup, row.names = FALSE, digits = 3)
 ```
 
-| interval | patients | n | missing | negative | zero | mean | sd | min | p25 | median | p75 | max |
+| interval | patients | n | missing | negative | zero | mean | sd | min | p15 | median | p85 | max |
 |:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| iv_dead | All patients | 800 | 0 | 0 | 0 | 9.964 | 8.510 | 0.000 | 3.060 | 7.614 | 14.732 | 35.696 |
-| iv_dead | Event | 443 | 0 | 0 | 0 | 7.056 | 6.465 | 0.000 | 1.866 | 5.012 | 10.992 | 27.287 |
-| iv_dead | Censored | 357 | 0 | 0 | 0 | 13.573 | 9.331 | 0.021 | 5.769 | 11.190 | 20.318 | 35.696 |
+| iv_dead | All patients | 800 | 0 | 0 | 0 | 9.964 | 8.510 | 0.000 | 1.744 | 7.614 | 19.702 | 35.696 |
+| iv_dead | Event | 443 | 0 | 0 | 0 | 7.056 | 6.465 | 0.000 | 0.957 | 5.012 | 14.079 | 27.287 |
+| iv_dead | Censored | 357 | 0 | 0 | 0 | 13.573 | 9.331 | 0.021 | 3.918 | 11.190 | 25.845 | 35.696 |
 
 Table 4: Follow-up, All deaths, by patient group: missing, negative and
 zero values, and the distribution (years)
@@ -634,7 +669,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/8012782ffc4d393890acb06147148d38.png)
+![](assets/fdb447a47788fbaffef2a931e326ee22.png)
 
 Figure 1: Follow-up against year of operation, All deaths
 
@@ -648,7 +683,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/2d082c32a1c7508c2ea700160eb76da8.png)
+![](assets/799f059b3f4cd93edab363e90e7aef5b.png)
 
 Figure 2: Follow-up against year of operation, Reoperation
 
@@ -656,11 +691,11 @@ Code
 
 ``` r
 # unnumbered: defines the section helper only; its tables and figures are child chunks
-# One section of hv_eda_pages() pages with its table, drawn exactly as
-# dp-postage draws it. One categorical table serves the percent and the count
-# sections, shown under whichever comes first, because a table can carry both
-# columns where a figure needs two. Missing values are counted as a level, so
-# a percentage is out of every patient, not only those with a value.
+# One section of hv_eda_pages() pages with its table. One categorical table
+# serves the percent and the count sections, shown under whichever comes
+# first, because a table can carry both columns where a figure needs two.
+# Missing values are counted as a level, so a percentage is out of every
+# patient, not only those with a value.
 titles <- c(continuous = "Continuous variables", percent = "Categorical variables, percent",
             count = "Categorical variables, counts")
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
@@ -675,7 +710,7 @@ draw_section <- function(section) {
   vars <- sec$data$variable
   if (section == "continuous") {
     stats <- hvtiRutilities::proc_means(d, vars = vars, stats = c("n", "nmiss", "mean", "std", "min",
-                                                                  "p25", "median", "p75", "max"))
+                                                                  "p15", "median", "p85", "max"))
     .child(paste("tbl eda", section, "summary"), "Continuous variables",
            "knitr::kable(stats, digits = 2, row.names = FALSE)")
   } else if (identical(section, freq_section)) {
@@ -691,9 +726,8 @@ draw_section <- function(section) {
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
   files <- character(0)
   for (i in seq_along(pages)) {
-    file <- set_path("graphs", sprintf("dp-eda-%s-page-%02d.png", section, i))
-    ggplot2::ggsave(file, pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
-                    width = 11, height = 8.5, units = "in", dpi = 150)
+    file <- save_figure(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
+                        sprintf("dp-eda-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
     cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")
     .link <- figure_link(file)
@@ -721,19 +755,19 @@ Code
 knitr::kable(stats, digits = 2, row.names = FALSE)
 ```
 
-| variable | label | n | nmiss | mean | std | min | p25 | median | p75 | max |
+| variable | label | n | nmiss | mean | std | min | p15 | median | p85 | max |
 |:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| iv_opyrs | Years from 1 January 1990 to operation | 800 | 0 | 17.43 | 9.83 | 0.07 | 9.05 | 17.38 | 25.96 | 34.94 |
-| age | Age at operation (years) | 800 | 0 | 62.38 | 12.18 | 32.00 | 54.00 | 63.00 | 71.00 | 100.00 |
-| bmi | Body mass index (kg/m2) | 800 | 0 | 27.90 | 4.46 | 15.10 | 24.80 | 27.80 | 30.85 | 44.80 |
-| lvef | LV ejection fraction (%) | 800 | 0 | 51.78 | 9.79 | 20.00 | 45.00 | 52.00 | 59.00 | 75.00 |
-| plvmassi | LV mass index (g/m2) | 800 | 0 | 121.03 | 29.41 | 28.00 | 100.00 | 121.00 | 141.00 | 207.00 |
-| creat_pr | Creatinine (mg/dL) | 725 | 75 | 1.09 | 0.36 | 0.43 | 0.83 | 1.02 | 1.28 | 2.76 |
-| iv_dead | Follow-up to death or censoring (years) | 800 | 0 | 9.96 | 8.51 | 0.00 | 3.06 | 7.61 | 14.73 | 35.70 |
-| iv_reop | Follow-up to reoperation (years) | 800 | 0 | 7.57 | 7.07 | 0.00 | 2.24 | 5.25 | 10.60 | 35.61 |
-| icu_hours | Hours in intensive care | 800 | 0 | 33.92 | 20.15 | 4.00 | 18.00 | 34.00 | 48.00 | 108.00 |
-| los | Postoperative length of stay (days) | 800 | 0 | 6.32 | 2.62 | 1.00 | 5.00 | 6.00 | 7.00 | 19.00 |
-| log_los | Postoperative length of stay (log days) | 800 | 0 | 1.76 | 0.40 | 0.00 | 1.61 | 1.79 | 1.95 | 2.94 |
+| iv_opyrs | Years from 1 January 1990 to operation | 800 | 0 | 17.43 | 9.83 | 0.07 | 5.80 | 17.38 | 29.02 | 34.94 |
+| age | Age at operation (years) | 800 | 0 | 62.38 | 12.18 | 32.00 | 49.00 | 63.00 | 75.00 | 100.00 |
+| bmi | Body mass index (kg/m2) | 800 | 0 | 27.90 | 4.46 | 15.10 | 23.20 | 27.80 | 32.35 | 44.80 |
+| lvef | LV ejection fraction (%) | 800 | 0 | 51.78 | 9.79 | 20.00 | 42.00 | 52.00 | 62.00 | 75.00 |
+| plvmassi | LV mass index (g/m2) | 800 | 0 | 121.03 | 29.41 | 28.00 | 91.00 | 121.00 | 152.00 | 207.00 |
+| creat_pr | Creatinine (mg/dL) | 725 | 75 | 1.09 | 0.36 | 0.43 | 0.75 | 1.02 | 1.43 | 2.76 |
+| iv_dead | Follow-up to death or censoring (years) | 800 | 0 | 9.96 | 8.51 | 0.00 | 1.74 | 7.61 | 19.70 | 35.70 |
+| iv_reop | Follow-up to reoperation (years) | 800 | 0 | 7.57 | 7.07 | 0.00 | 1.32 | 5.25 | 14.96 | 35.61 |
+| icu_hours | Hours in intensive care | 800 | 0 | 33.92 | 20.15 | 4.00 | 10.00 | 34.00 | 56.00 | 108.00 |
+| los | Postoperative length of stay (days) | 800 | 0 | 6.32 | 2.62 | 1.00 | 4.00 | 6.00 | 9.00 | 19.00 |
+| log_los | Postoperative length of stay (log days) | 800 | 0 | 1.76 | 0.40 | 0.00 | 1.39 | 1.79 | 2.20 | 2.94 |
 
 Table 5: Continuous variables
 
@@ -745,7 +779,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/70f8bad79d8f37342bcf27fb18dbc753.png)
+![](assets/09ebc339dc14e86cbd694fbbd789b07d.png)
 
 Figure 3: Continuous variables, page 1: Years from 1 January 1990 to
 operation, Age at operation (years), Body mass index (kg/m2), LV
@@ -827,7 +861,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/ee5e1bcb8a9bb23a255bf4efa66f67c6.png)
+![](assets/d3c65ed44594d7c283f2d9329bce51bb.png)
 
 Figure 4: Categorical variables, percent, page 1: Female, Race, History
 of heart failure, Diabetes, NYHA functional class, Death, Reoperation,
@@ -843,7 +877,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/838e90fa82eed027f075757e63e971f0.png)
+![](assets/a2bcc6b20a13b8668771ad68629eaaf4.png)
 
 Figure 5: Categorical variables, percent, page 2: Number of prior
 cardiac operations, Major postoperative complication
@@ -864,7 +898,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/87f7a03deefe506ab5296b99a286ac14.png)
+![](assets/4db9761dfe6ce1077e0b9089ef84ba40.png)
 
 Figure 6: Categorical variables, counts, page 1: Female, Race, History
 of heart failure, Diabetes, NYHA functional class, Death, Reoperation,
@@ -880,7 +914,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/eaa61a7232ebf4494ceaae972f458fbd.png)
+![](assets/be9dc1d9c8e6cd7996e33785e4dc6045.png)
 
 Figure 7: Categorical variables, counts, page 2: Number of prior cardiac
 operations, Major postoperative complication

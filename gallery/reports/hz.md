@@ -120,12 +120,12 @@ TYPE    <- "hz"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -161,8 +161,8 @@ Edit these values for this study before rendering.
 Code
 
 ``` r
-# Demo: the registered dataset this job reads ("study" is the built dataset).
-DATASET <- "study"
+# Demo: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
 ANALYSIS_SET <- NULL
@@ -179,6 +179,26 @@ ID <- "patient_id"
 # Demo: what makes a row unique; one row per patient unless repeated measures
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 
 # Model phases and fixed parameters.
 # Demo: phases and the fixed set on each.
@@ -212,20 +232,22 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| `!is.na(creat_pr)`  | removed 75                  |
-| Rows kept           | 725 rows on 725 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| `!is.na(creat_pr)`  | removed 75                               |
+| Rows kept           | 725 rows on 725 patients                 |
 
 Table 1: The data this job read
 
@@ -248,6 +270,23 @@ Code
 ``` r
 cc <- cohort_counts(d, event = EVENT, time = TIME)
 assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+
+# A time of zero, a death on the day of operation, leaves the hazard likelihood
+# undefined, and the fit below would stop on an optimizer error that names
+# neither the time nor the patient. The fix belongs in the dataset build, not
+# here: a job reshapes data and never corrects it, and every job reading the
+# cohort must see the same follow-up.
+# Only rows the cohort counts are checked: a row with no EVENT is not analyzed.
+.t <- as.numeric(d[[TIME]])[!is.na(d[[EVENT]])]
+.n_zero <- sum(.t == 0, na.rm = TRUE)
+.n_neg  <- sum(.t < 0, na.rm = TRUE)
+if (.n_zero + .n_neg > 0) {
+  stop(TIME, " has ", .n_zero, " time(s) of exactly zero and ", .n_neg, " negative time(s). ",
+       "Correct them in the dataset build, not in this job. Move only the zeros to a small positive ",
+       "value, such as 0.00025 years as the template gallery does; moving every time up to one day ",
+       "ties the early deaths together. A negative time is an error in the data: trace it to its source.",
+       call. = FALSE)
+}
 
 knitr::kable(data.frame(
   quantity = c("n_analysable", "n_events", "n_censored"),
@@ -480,20 +519,13 @@ reproducible from the file alone.
 Code
 
 ``` r
+# No `condition` in control: SAS's CONDITION= option has no equivalent in
+# hazard(), which ignores the element with a warning in the report. The fit
+# reports the conditioning of its Hessian afterwards instead, as rcond below.
 fit_det <- hazard(surv_formula, data = resp, dist = "multiphase",
                   phases = phases, theta = theta0, fit = TRUE,
-                  control = list(conserve = TRUE, condition = 14,
+                  control = list(conserve = TRUE,
                                  n_starts = 1, maxit = 2000))
-```
-
-    Warning: 'control' element(s) with no effect on this dist = "multiphase" fit,
-    ignored: control$condition (SAS's CONDITION= has no equivalent: hazard() has no
-    condition-number stop, and reports the Hessian's conditioning after the fit
-    instead).
-
-Code
-
-``` r
 check_fit(fit_det, "deterministic")
 summary(fit_det)
 ```
@@ -574,14 +606,32 @@ Code
 # single start goes where its starting point leads, so it is the thing that
 # actually finds another optimum if one is there.
 #
+# Only the FREE positions move. hazard() holds a fixed parameter at the value
+# theta gives it, so a probe that moved one would fit a different model, and
+# could beat the reported fit without the reported fit being in the wrong
+# basin. The held positions are each phase's `fixed` set, plus the shape a g3
+# `constraint` derives from the others, which hazard() would replace anyway.
+held <- unlist(lapply(names(phases), function(nm) {
+  ph <- phases[[nm]]
+  derived <- switch(if (is.null(ph$constraint)) "none" else ph$constraint,
+                    alpha_gamma_eta = "alpha", eta_gamma = "eta", character(0))
+  p <- c(ph$fixed, derived)
+  paste0(nm, ".", c(p, paste0("log_", p)))
+}))
+free <- !(theta_names %in% held)
+
 # Demo: widen or add probes if your model has more phases or free parameters.
 # Every row must differ from every other row: a duplicated start is a fit that
-# costs time and tests nothing.
-.free  <- !theta_names %in% c("late.log_tau", "late.gamma", "late.alpha")
-probes <- rbind(theta0, theta0 + 0.5 * .free, theta0 - 0.5 * .free)
+# costs time and tests nothing. Move only positions where `free` is TRUE.
+probes <- rbind(theta0, theta0 + 0.5 * free, theta0 - 0.5 * free)
 if (anyDuplicated(probes)) {
   stop("Two probe rows are identical: that fit costs time and tests nothing.",
        call. = FALSE)
+}
+.moved <- theta_names[!free][colSums(probes[, !free, drop = FALSE] != rep(theta0[!free], each = nrow(probes))) > 0]
+if (length(.moved)) {
+  stop("A probe moves a fixed parameter (", paste(.moved, collapse = ", "), "), so it fits a different ",
+       "model and its log-likelihood cannot be compared with the reported fit's.", call. = FALSE)
 }
 ```
 
@@ -591,31 +641,17 @@ Code
 probe_ll <- vapply(seq_len(nrow(probes)), function(i) {
   f <- try(hazard(surv_formula, data = resp, dist = "multiphase",
                   phases = phases, theta = probes[i, ], fit = TRUE,
-                  control = list(conserve = TRUE, condition = 14,
+                  control = list(conserve = TRUE,
                                  n_starts = 1, maxit = 2000)), silent = TRUE)
   if (inherits(f, "try-error")) NA_real_ else f$fit$objective
 }, numeric(1))
 ```
-
-    Warning: 'control' element(s) with no effect on this dist = "multiphase" fit,
-    ignored: control$condition (SAS's CONDITION= has no equivalent: hazard() has no
-    condition-number stop, and reports the Hessian's conditioning after the fit
-    instead).
-    Warning: 'control' element(s) with no effect on this dist = "multiphase" fit,
-    ignored: control$condition (SAS's CONDITION= has no equivalent: hazard() has no
-    condition-number stop, and reports the Hessian's conditioning after the fit
-    instead).
 
     Warning in .hzr_safe_solve(hess_result): Hessian is not positive-definite at
     the optimum; standard errors may be unreliable
 
     Warning in .hzr_safe_solve(hess_result): Non-positive variance estimates; the
     optimum may not be a proper maximum
-
-    Warning: 'control' element(s) with no effect on this dist = "multiphase" fit,
-    ignored: control$condition (SAS's CONDITION= has no equivalent: hazard() has no
-    condition-number stop, and reports the Hessian's conditioning after the fit
-    instead).
 
 Code
 
@@ -653,18 +689,8 @@ Code
 ``` r
 fit_nc <- hazard(surv_formula, data = resp, dist = "multiphase",
                  phases = phases, theta = theta0, fit = TRUE,
-                 control = list(conserve = FALSE, condition = 14,
+                 control = list(conserve = FALSE,
                                 n_starts = 1, maxit = 2000))
-```
-
-    Warning: 'control' element(s) with no effect on this dist = "multiphase" fit,
-    ignored: control$condition (SAS's CONDITION= has no equivalent: hazard() has no
-    condition-number stop, and reports the Hessian's conditioning after the fit
-    instead).
-
-Code
-
-``` r
 check_fit(fit_nc, "noconserve")
 ```
 

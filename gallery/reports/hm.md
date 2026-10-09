@@ -124,12 +124,12 @@ TYPE    <- "hz"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -176,9 +176,8 @@ KEY <- NULL
 TIME <- NULL
 EVENT <- NULL
 
-# Demo: counts from the SAS reference for the rows this job analyses. Leave
-# these invalid defaults in place until they agree with the hz job's rows.
-EXPECTED <- list(n = 725L, n_events = 402L, n_censored = 323L)
+# No expected counts here: they are typed once, in the hz job, and hz.rds
+# carries them. The cohort chunk checks this job's rows against them.
 
 # Demo: SAS job and macro holding covariate blocks.
 SAS_JOB   <- c("analyses", "hm.dead.sas")
@@ -237,26 +236,27 @@ job_data <- .up$job_data
 d <- job_data$data
 TIME <- .up$selection$time
 EVENT <- .up$selection$event
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| `!is.na(creat_pr)`  | removed 75                  |
-| Rows kept           | 725 rows on 725 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `study` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| `!is.na(creat_pr)`  | removed 75                               |
+| Rows kept           | 725 rows on 725 patients                 |
 
 Table 1: The data this job read, as hz read it
 
 Code
 
 ``` r
-cc <- cohort_counts(d, event = EVENT, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+# The counts hz.rds records, from hz's EXPECTED; a mismatch names both.
+cc <- hvtiRtemplates:::.check_upstream_cohort(d, .hz_read$lineage, event = EVENT, time = TIME, source = "hz.rds")
 
 knitr::kable(data.frame(
   quantity = c("n_analysable", "n_events", "n_censored"),
@@ -446,8 +446,19 @@ hz_fit <- hz_art$deterministic
 make_phases <- function(hold_shapes) {
   p <- hz_art$phases
   if (!hold_shapes) return(p)
+  # Every shape the phase's family has, as hzr_phase() expands fixed = "shapes":
+  # g3 holds tau, gamma, alpha and eta, less one a `constraint` derives (it is
+  # computed, and may not be named in `fixed`); cdf and hazard hold t_half, nu
+  # and m; constant has none. A phase object has no `par` field to read them
+  # from, and reading one held nothing, so stage 1 was stage 2.
   lapply(p, function(ph) {
-    ph$fixed <- unique(c(ph$fixed, setdiff(names(ph$par), ph$fixed)))
+    derived <- switch(if (is.null(ph$constraint)) "none" else ph$constraint,
+                      alpha_gamma_eta = "alpha", eta_gamma = "eta", character(0))
+    shapes <- switch(ph$type,
+                     g3 = setdiff(c("tau", "gamma", "alpha", "eta"), derived),
+                     cdf = , hazard = c("t_half", "nu", "m"),
+                     character(0))
+    ph$fixed <- union(ph$fixed, shapes)
     ph
   })
 }
@@ -575,7 +586,7 @@ knitr::kable(stages, digits = 6)
 
 | stage | converged | objective | rcond | pd | free_params | free_without_se |
 |:---|:---|---:|:---|:---|---:|---:|
-| 1: shapes fixed at hz | TRUE | -1409.877 | 6.31e-09 | TRUE | 16 | 0 |
+| 1: shapes fixed at hz | TRUE | -1420.774 | 5.37e-08 | TRUE | 12 | 0 |
 | 2: shapes freed from stage 1 | TRUE | -1409.877 | 6.31e-09 | TRUE | 16 | 0 |
 
 Table 7: Convergence and fit of each stage
@@ -603,7 +614,7 @@ knitr::kable(data.frame(
 
 | objective_gain_from_freeing_shapes | max_abs_covariate_change | changed_by_more_than_0.01 |
 |---:|---:|---:|
-| 0 | 0 | 0 |
+| 10.89681 | 0.244146 | 5 |
 
 Table 8: Change in the covariate estimates when the shape parameters are
 freed
@@ -620,10 +631,50 @@ SAS `%final`, which frees them. It is legitimate when the table above is
 the evidence for it. If `free_without_se` is 0 for stage 2 and `pd` is
 `TRUE`, prefer stage 2.
 
+**Whichever you report, the render stops below if any of its free
+parameters has no standard error**, and names the phase and covariates
+involved. A fit without a variance matrix gives `hs` no limits to work
+with.
+
 Code
 
 ``` r
 reported <- stage1   # Demo: stage2 if the table above favors it
+```
+
+Code
+
+``` r
+# A fit can degenerate -- a phase runs off, its log_mu heading for -850 -- and
+# still report converged = TRUE. It then carries no variance matrix, vcov()
+# returns a scalar NA, and the only sign is a TemporalHazard warning the fits
+# above suppress. Saved anyway, hm.rds fails far from the cause: hs cannot put
+# limits on a prediction from it. So stop here, naming what is involved.
+#
+# FIXED parameters carry an all-NA row in vcov() by design; only FREE ones are
+# checked. A negative variance is as unusable as a missing one.
+.v <- vcov(reported)
+.free <- names(coef(reported))[!as.logical(reported$fit$fixed_mask)]
+.var <- if (is.matrix(.v) && nrow(.v) == length(coef(reported))) {
+  stats::setNames(diag(.v), names(coef(reported)))[.free]
+} else {
+  stats::setNames(rep(NA_real_, length(.free)), .free)
+}
+.no_se <- .free[!(is.finite(.var) & .var >= 0)]
+if (length(.no_se)) {
+  .phase <- sub("[.].*$", "", .no_se)
+  stop(if (is.matrix(.v)) "The reported fit has no finite standard error for "
+       else "The reported fit has no variance matrix, so no standard error for ",
+       length(.no_se), " of its ", length(.free), " free parameters. By phase: ",
+       paste0(unique(.phase), " (",
+              vapply(split(sub("^[^.]*[.]", "", .no_se), factor(.phase, unique(.phase))),
+                     paste, character(1), collapse = ", "), ")", collapse = "; "),
+       ". Covariates among them: ",
+       if (length(setdiff(.no_se, SHAPE_PARAMS))) paste(setdiff(.no_se, SHAPE_PARAMS), collapse = ", ") else "none",
+       ". A phase whose log_mu has run off has left the model; check its estimate. Refit with fewer ",
+       "candidate covariates in that phase, or with its shapes fixed.",
+       call. = FALSE)
+}
 ```
 
 ## Estimates
@@ -661,37 +712,19 @@ knitr::kable(est[order(-abs(est$estimate)), ], digits = 6, row.names = FALSE)
 
 | parameter      |  estimate |       se |   iqr | hr_per_iqr |
 |:---------------|----------:|---------:|------:|-----------:|
-| early.creat_pr |  0.936408 | 0.699070 |  0.45 |   1.524069 |
-| late.hx_chf    |  0.761046 | 0.118710 |  1.00 |   2.140514 |
-| early.hx_dm    | -0.709780 | 0.925671 |  0.00 |         NA |
-| late.hx_dm     |  0.455192 | 0.124358 |  0.00 |         NA |
-| early.hx_chf   |  0.454578 | 0.659918 |  1.00 |   1.575508 |
-| late.creat_pr  |  0.103506 | 0.150293 |  0.45 |   1.047680 |
-| early.age      |  0.078611 | 0.020879 | 17.00 |   3.805267 |
-| late.age       |  0.043979 | 0.004942 | 17.00 |   2.112023 |
-| late.lvef      | -0.018941 | 0.005510 | 14.00 |   0.767067 |
-| early.lvef     | -0.009649 | 0.027950 | 14.00 |   0.873637 |
+| early.creat_pr |  0.961085 | 0.586133 |  0.45 |   1.541087 |
+| late.hx_chf    |  0.747069 | 0.118993 |  1.00 |   2.110805 |
+| early.hx_chf   |  0.683661 | 0.541436 |  1.00 |   1.981118 |
+| early.hx_dm    | -0.465688 | 0.687614 |  0.00 |         NA |
+| late.hx_dm     |  0.453113 | 0.122488 |  0.00 |         NA |
+| late.creat_pr  |  0.091371 | 0.145576 |  0.45 |   1.041974 |
+| early.age      |  0.076389 | 0.019254 | 17.00 |   3.664187 |
+| late.age       |  0.043786 | 0.004828 | 17.00 |   2.105112 |
+| late.lvef      | -0.018780 | 0.005528 | 14.00 |   0.768804 |
+| early.lvef     | -0.012608 | 0.025462 | 14.00 |   0.838188 |
 
 Table 9: Covariate estimates with standard errors and hazard ratios per
 interquartile range, largest first
-
-Code
-
-``` r
-# unnumbered: its child chunk carries its own label and caption
-missing_se <- sum(is.na(est$se))
-if (missing_se > 0) {
-  no_se <- data.frame(
-    warning = paste(missing_se, "covariate(s) have NO standard error.",
-                    "The Hessian is not positive-definite in those directions.")
-  )
-  .fence <- strrep("`", 3)
-  cat(knitr::knit_child(text = c(
-    paste0(.fence, "{r}"), "#| label: tbl-estimates-no-se",
-    "#| tbl-cap: \"Covariates without a standard error\"", "knitr::kable(no_se)", .fence
-  ), envir = environment(), quiet = TRUE), sep = "\n")
-}
-```
 
 ## Selection
 
@@ -905,29 +938,29 @@ print(dec)
     10 groups, 402 observed events, 402 expected
 
      group  n events expected observed_rate expected_rate chi_sq p_value
-         1 73     12     20.5         0.164         0.281 3.5500  0.0597
-         2 72     22     24.3         0.306         0.337 0.2170  0.6410
-         3 73     30     28.4         0.411         0.389 0.0943  0.7590
-         4 72     33     36.5         0.458         0.507 0.3400  0.5600
-         5 73     45     36.8         0.616         0.504 1.8200  0.1780
-         6 72     47     38.5         0.653         0.535 1.8800  0.1700
-         7 73     46     41.6         0.630         0.570 0.4660  0.4950
-         8 72     50     48.0         0.694         0.667 0.0803  0.7770
-         9 73     58     60.6         0.795         0.831 0.1140  0.7360
-        10 72     59     66.7         0.819         0.927 0.8910  0.3450
+         1 73     12     20.7         0.164         0.283 3.6200  0.0569
+         2 72     22     24.4         0.306         0.339 0.2340  0.6280
+         3 73     30     28.4         0.411         0.388 0.0957  0.7570
+         4 72     33     36.9         0.458         0.513 0.4190  0.5170
+         5 73     45     36.0         0.616         0.493 2.2500  0.1330
+         6 72     47     38.5         0.653         0.535 1.8700  0.1720
+         7 73     46     41.7         0.630         0.572 0.4330  0.5100
+         8 72     50     47.9         0.694         0.666 0.0896  0.7650
+         9 73     59     61.1         0.808         0.837 0.0720  0.7880
+        10 72     58     66.4         0.806         0.922 1.0600  0.3030
      mean_survival mean_cumhaz
-             0.849       0.281
-             0.773       0.337
-             0.708       0.389
-             0.656       0.507
-             0.605       0.504
-             0.545       0.535
-             0.483       0.570
-             0.399       0.667
-             0.293       0.831
-             0.148       0.927
+             0.848       0.283
+             0.773       0.339
+             0.709       0.388
+             0.657       0.513
+             0.606       0.493
+             0.546       0.535
+             0.485       0.572
+             0.402       0.666
+             0.295       0.837
+             0.150       0.922
 
-    Overall: chi-sq = 9.45 on 9 df, p = 0.397 
+    Overall: chi-sq = 10.2 on 9 df, p = 0.338 
 
 Table 11: Observed against expected events in ten groups of predicted
 risk
@@ -953,16 +986,16 @@ knitr::kable(utils::tail(gof[, intersect(c("time", "km_surv", "par_surv",
 
 |   time | km_surv | par_surv | cum_observed | cum_expected | residual |
 |-------:|--------:|---------:|-------------:|-------------:|---------:|
-| 32.742 | 0.25766 |  0.17442 |          402 |     392.8191 | -9.18094 |
-| 32.909 | 0.25766 |  0.17290 |          402 |     393.2396 | -8.76035 |
-| 33.117 | 0.25766 |  0.17103 |          402 |     393.8450 | -8.15502 |
-| 33.328 | 0.25766 |  0.16915 |          402 |     395.1359 | -6.86413 |
-| 33.344 | 0.25766 |  0.16901 |          402 |     396.6055 | -5.39455 |
-| 33.383 | 0.25766 |  0.16867 |          402 |     399.3589 | -2.64111 |
-| 34.784 | 0.25766 |  0.15675 |          402 |     399.8061 | -2.19388 |
-| 35.567 | 0.25766 |  0.15046 |          402 |     400.3451 | -1.65491 |
-| 35.611 | 0.25766 |  0.15012 |          402 |     401.0033 | -0.99668 |
-| 35.696 | 0.25766 |  0.14945 |          402 |     402.0000 |  0.00003 |
+| 32.742 | 0.25766 |  0.17410 |          402 |     392.8100 | -9.19000 |
+| 32.909 | 0.25766 |  0.17257 |          402 |     393.2364 | -8.76363 |
+| 33.117 | 0.25766 |  0.17069 |          402 |     393.8451 | -8.15488 |
+| 33.328 | 0.25766 |  0.16881 |          402 |     395.1374 | -6.86257 |
+| 33.344 | 0.25766 |  0.16867 |          402 |     396.6103 | -5.38967 |
+| 33.383 | 0.25766 |  0.16832 |          402 |     399.3362 | -2.66377 |
+| 34.784 | 0.25766 |  0.15636 |          402 |     399.7868 | -2.21317 |
+| 35.567 | 0.25766 |  0.15005 |          402 |     400.3300 | -1.66996 |
+| 35.611 | 0.25766 |  0.14970 |          402 |     400.9915 | -1.00853 |
+| 35.696 | 0.25766 |  0.14903 |          402 |     401.9979 | -0.00215 |
 
 Table 12: Observed vs parametric, last ten event times
 

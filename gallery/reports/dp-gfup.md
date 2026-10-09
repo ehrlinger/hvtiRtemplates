@@ -6,7 +6,7 @@ Replaces `graphs/dp.gfup`: list the follow-up panels it draws.
 
 **Deprecated.** `dp-gfup` is deprecated in favor of `dc-gfup`, and will
 be removed in a later release. For the same figure, start a `dc-gfup`
-job with `add_job("dc-gfup", subject = "cohort", type = "eda")`: it
+job with `add_job("dc.gfup", subject = "cohort", type = "eda")`: it
 draws these panels with the same choices and the same call to
 `hv_followup_panels()`, beside the follow-up tables, saved as
 `dc-gfup-*.png` rather than `dp-gfup-*.png`.
@@ -95,7 +95,7 @@ TYPE    <- "eda"
 
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -112,6 +112,13 @@ set_path <- function(kind, file) {
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 ```
 
 ## Study choices
@@ -123,8 +130,8 @@ before it is tuned.
 Code
 
 ``` r
-# Demo: the registered dataset this job reads ("study" is the built dataset).
-DATASET <- "study"
+# Demo: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
 ANALYSIS_SET <- NULL
@@ -141,6 +148,26 @@ ID <- "patient_id"
 # Demo: what makes a row unique; one row per patient unless repeated measures
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 
 # Read the same data and rows as this study's dc-gfup job, so the figure and
 # the tables describe the same patients.
@@ -183,6 +210,13 @@ ALPHA <- 0.5
 # all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
 # event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
 COLORS <- NULL
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Data
@@ -193,19 +227,21 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| Rows kept           | 800 rows on 800 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| Rows kept           | 800 rows on 800 patients                 |
 
 Table 1: The data this job read
 
@@ -291,9 +327,7 @@ Code
 show_figure <- function(p, fname, title, nm) {
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript()
-  png(set_path("graphs", fname), width = 7, height = 6, units = "in", res = 150)
-  print(p)
-  invisible(dev.off())
+  save_figure(p, sub("[.]png$", "", fname), width = 7, height = 6, linked = TRUE)
   .link <- file.path(paste0(SUBJECT, "-", TYPE), fname)
   .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", title),
          "knitr::include_graphics(.link, error = FALSE)")
@@ -343,7 +377,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/e773382390e5c09bf10d2fe7199730bc.png)
+![](assets/fdb447a47788fbaffef2a931e326ee22.png)
 
 Figure 1: Follow-up against year of operation, All deaths
 
@@ -357,6 +391,6 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/541cd30ea2adc18cbfbfbff99752322e.png)
+![](assets/799f059b3f4cd93edab363e90e7aef5b.png)
 
 Figure 2: Follow-up against year of operation, Reoperation

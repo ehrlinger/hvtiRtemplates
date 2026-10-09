@@ -133,11 +133,12 @@ TYPE    <- "eda"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `...-03.01-ac.rmarkdown` here, not `...-03.01-ac.qmd`. Strip whatever
-  # extension is actually present rather than hard-coding one, so this
-  # doesn't depend on a build-tool detail staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -160,6 +161,13 @@ set_path <- function(kind, file) {
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
   file.path(d, file)
 }
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 ```
 
 ## Study choices
@@ -169,9 +177,9 @@ Set the values in this chunk before rendering.
 Code
 
 ``` r
-# Demo: the registered dataset this job reads ("study" is the built dataset).
+# Demo: the registered dataset this job reads ("built" is the study dataset).
 # MIGRATE-BEGIN: dp-trends-data
-DATASET <- "study"
+DATASET <- "built"
 # MIGRATE-END: dp-trends-data
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -191,6 +199,26 @@ ID <- "patient_id"
 # Demo: what makes a row unique; one row per patient unless repeated measures
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. A job that counts or models
+#     patients, one row each, needs REDUCE: NULL would count every record.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 
 # Demo: one entry per figure. `cols` are the columns drawn together: several
 # columns become several series in one figure, which is how a set of 0/1
@@ -225,6 +253,13 @@ XBREAKS <- NULL
 # MIGRATE-BEGIN: dp-trends-subgroups
 SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)), diabetic = function(d) d$hx_dm == 1)
 # MIGRATE-END: dp-trends-subgroups
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Data
@@ -235,19 +270,21 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY)
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| Rows kept           | 800 rows on 800 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| Rows kept           | 800 rows on 800 patients                 |
 
 Table 1: The data this job read
 
@@ -440,9 +477,7 @@ for (sg in names(SUBGROUPS)) {
     if (!is.null(spec$ylim)) p <- p + coord_cartesian(ylim = spec$ylim)
     if (!is.null(XBREAKS)) p <- p + scale_x_continuous(breaks = XBREAKS)
     fname <- paste0("dp-trends-", nm, "-", sg, ".png")
-    png(set_path("graphs", fname), width = 8, height = 6, units = "in", res = 150)
-    print(p)
-    invisible(dev.off())
+    save_figure(p, sub("[.]png$", "", fname), width = 8, height = 6, linked = TRUE)
     .link <- file.path(paste0(SUBJECT, "-", TYPE), fname)
     .child(paste("fig trends", nm, sg), paste0("Trend in ", nm, " by year of operation, ", sg),
            "knitr::include_graphics(.link, error = FALSE)")
@@ -460,7 +495,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/0dfc78e355f188df8917620c99f4a86b.png)
+![](assets/b605c2e0573cab7fda9a3646c45cb727.png)
 
 Figure 1: Trend in chf by year of operation, all
 
@@ -472,7 +507,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/7b8e4859581eb90963f109cbd677b13d.png)
+![](assets/8626a45ddbd227d76eade9084e8bf565.png)
 
 Figure 2: Trend in lvmass by year of operation, all
 
@@ -486,7 +521,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/956f0a3107674bd63040d70543ab8361.png)
+![](assets/99075792f08a8c052ebac5220ad1a21f.png)
 
 Figure 3: Trend in chf by year of operation, diabetic
 
@@ -498,7 +533,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/2627c81565b18d47ae20ae1212fb50d7.png)
+![](assets/f0954779617469540faab4ab4911109e.png)
 
 Figure 4: Trend in lvmass by year of operation, diabetic
 

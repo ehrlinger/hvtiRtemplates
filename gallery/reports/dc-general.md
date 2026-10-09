@@ -77,7 +77,7 @@ TYPE    <- "eda"
 
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -103,8 +103,8 @@ Edit these values for this study before rendering.
 Code
 
 ``` r
-# Demo: the registered dataset this job reads ("study" is the built dataset).
-DATASET <- "study"
+# Demo: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
 ANALYSIS_SET <- NULL
@@ -121,6 +121,26 @@ ID <- "patient_id"
 # Demo: what makes a row unique; one row per patient unless repeated measures
 # add their visit time or date, for example KEY <- c(ID, "iv_echo").
 KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. A job that counts or models
+#     patients, one row each, needs REDUCE: NULL would count every record.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 
 # Demo: grouped categorical variables. Each name is a section heading, in this
 # order. Carry the /* Demography */ banners across from the SAS %macro freq
@@ -156,19 +176,21 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY)
 d <- job_data$data
-.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
-| Data                |                             |
-|:--------------------|:----------------------------|
-| Source              | dataset `study` (built.rds) |
-| Rows read           | 800                         |
-| ID                  | `patient_id`                |
-| Identifiers dropped | none                        |
-| Rows kept           | 800 rows on 800 patients    |
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261009.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| Rows kept           | 800 rows on 800 patients                 |
 
 Table 1: The data this job read
 
@@ -193,7 +215,8 @@ Code
 # have no ccfid. It is kept out of every summary, because the overall minimum
 # and maximum would each be one patient's identifier.
 .id <- attr(job_data$record, "selection")$id
-PROBS <- c(0, 0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99, 1)
+# The group reports the 15th and 85th percentiles, not the quartiles.
+PROBS <- c(0, 0.01, 0.05, 0.10, 0.15, 0.50, 0.85, 0.90, 0.95, 0.99, 1)
 check_group_names <- function(x, setting) {
   if (!length(x)) return(invisible())
   nm <- names(x)
@@ -555,10 +578,10 @@ Code
 knitr::kable(.quant, row.names = FALSE)
 ```
 
-| variable |   n | nmiss |   0% |    1% |   5% |  10% |  25% |  50% |   75% |  90% |   95% |   99% |  100% |
+| variable |   n | nmiss |   0% |    1% |   5% |  10% |  15% |  50% |   85% |  90% |   95% |   99% |  100% |
 |:---------|----:|------:|-----:|------:|-----:|-----:|-----:|-----:|------:|-----:|------:|------:|------:|
-| age      | 800 |     0 | 32.0 | 35.00 | 41.0 | 46.0 | 54.0 | 63.0 | 71.00 | 78.0 | 82.00 | 90.00 | 100.0 |
-| bmi      | 800 |     0 | 15.1 | 18.05 | 20.8 | 22.2 | 24.8 | 27.8 | 30.85 | 33.6 | 35.35 | 39.85 |  44.8 |
+| age      | 800 |     0 | 32.0 | 35.00 | 41.0 | 46.0 | 49.0 | 63.0 | 75.00 | 78.0 | 82.00 | 90.00 | 100.0 |
+| bmi      | 800 |     0 | 15.1 | 18.05 | 20.8 | 22.2 | 23.2 | 27.8 | 32.35 | 33.6 | 35.35 | 39.85 |  44.8 |
 
 Table 6: Quantiles, Demography (SAS QNTLDEF=5)
 
@@ -612,10 +635,10 @@ Code
 knitr::kable(.quant, row.names = FALSE)
 ```
 
-| variable |   n | nmiss |  0% |  1% |  5% | 10% | 25% | 50% | 75% | 90% | 95% |   99% | 100% |
+| variable |   n | nmiss |  0% |  1% |  5% | 10% | 15% | 50% | 85% | 90% | 95% |   99% | 100% |
 |:---------|----:|------:|----:|----:|----:|----:|----:|----:|----:|----:|----:|------:|-----:|
-| lvef     | 800 |     0 |  20 |  28 |  35 |  39 |  45 |  52 |  59 |  64 |  67 |  73.0 |   75 |
-| plvmassi | 800 |     0 |  28 |  53 |  73 |  83 | 100 | 121 | 141 | 158 | 170 | 191.5 |  207 |
+| lvef     | 800 |     0 |  20 |  28 |  35 |  39 |  42 |  52 |  62 |  64 |  67 |  73.0 |   75 |
+| plvmassi | 800 |     0 |  28 |  53 |  73 |  83 |  91 | 121 | 152 | 158 | 170 | 191.5 |  207 |
 
 Table 9: Quantiles, Echo (SAS QNTLDEF=5)
 
@@ -669,9 +692,9 @@ Code
 knitr::kable(.quant, row.names = FALSE)
 ```
 
-| variable |   n | nmiss |   0% |   1% |   5% | 10% |  25% |  50% |  75% |  90% | 95% |  99% | 100% |
+| variable |   n | nmiss |   0% |   1% |   5% | 10% |  15% |  50% |  85% |  90% | 95% |  99% | 100% |
 |:---------|----:|------:|-----:|-----:|-----:|----:|-----:|-----:|-----:|-----:|----:|-----:|-----:|
-| creat_pr | 725 |    75 | 0.43 | 0.53 | 0.63 | 0.7 | 0.83 | 1.02 | 1.28 | 1.52 | 1.7 | 2.34 | 2.76 |
+| creat_pr | 725 |    75 | 0.43 | 0.53 | 0.63 | 0.7 | 0.75 | 1.02 | 1.43 | 1.52 | 1.7 | 2.34 | 2.76 |
 
 Table 12: Quantiles, Laboratory (SAS QNTLDEF=5)
 
