@@ -162,6 +162,15 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
     stop("add_job(): this job already exists as '", legacy, "', its name before 2026-10; refusing to write a ",
          "second copy. Open it with open_job(), or rename it to '", basename(out), "' first.", call. = FALSE)
   }
+  # Its runner too: a pre-2026-10 runner left behind after its .qmd was removed
+  # still holds the study's edits, and a new runner beside it would split them.
+  # Raised by Codex on #277.
+  legacy_runner <- if (length(runner)) sub("[.]qmd$", "-runner.R", legacy) else character()
+  if (length(legacy_runner) && file.exists(legacy_runner)) {
+    stop("add_job(): this job's runner already exists as '", legacy_runner, "', its name before 2026-10; ",
+         "refusing to write a second runner. Rename it to '", basename(runner), "', then run add_job() again.",
+         call. = FALSE)
+  }
 
   for (path in c(out, runner)) {
     if (file.exists(path)) {
