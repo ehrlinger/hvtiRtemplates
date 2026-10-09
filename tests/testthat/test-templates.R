@@ -621,7 +621,7 @@ test_that("template_list()$call scaffolds its own template, every row", {
     call$dir <- dir
     out <- withCallingHandlers(eval(call, asNamespace("hvtiRtemplates")),
                                hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
-    expect_identical(basename(out), paste0(call$subject, "-", call$type, "-", tl$name[[i]], ".qmd"),
+    expect_identical(basename(out), paste0(tl$name[[i]], ".", call$subject, ".", call$type, ".qmd"),
                      info = tl$name[[i]])
   }
 })
@@ -847,8 +847,9 @@ test_that("a chunk is labeled edit- exactly when it holds an EDIT marker", {
 })
 
 # ---- template stem ---------------------------------------------------------
-# A template can be named by its filename stem, "dp-trends", as template_list()
-# reports it in `name`. A prefix never contains "-", so the split is exact.
+# A template can be named "dp.trends", as template_list() reports it in
+# `name`, or by its filename stem, "dp-trends". A prefix never contains "." or
+# "-", so the split is exact.
 
 test_that(".select_template() resolves a template stem", {
   tl <- data.frame(
@@ -857,9 +858,11 @@ test_that(".select_template() resolves a template stem", {
     file = c("a.qmd", "b.qmd", "c.qmd"), stringsAsFactors = FALSE
   )
   expect_equal(hvtiRtemplates:::.select_template(tl, "dp-trends")$file, "a.qmd")
+  expect_equal(hvtiRtemplates:::.select_template(tl, "dp.trends")$file, "a.qmd")
   expect_equal(hvtiRtemplates:::.select_template(tl, "ac")$file, "c.qmd")
   expect_error(hvtiRtemplates:::.select_template(tl, "dp-nope"), "no template qualified")
-  for (bad in c("dp-", "-trends", "dp-trends-x")) {
+  expect_error(hvtiRtemplates:::.select_template(tl, "dp.nope"), "no template qualified")
+  for (bad in c("dp-", "-trends", "dp-trends-x", "dp.", ".trends", "dp.trends.x", "dp.trends-x")) {
     expect_error(hvtiRtemplates:::.select_template(tl, bad), "not a template name", info = bad)
   }
 })
@@ -869,6 +872,7 @@ test_that("a stem and a qualifier together are refused, not reconciled", {
   # other, even when they agree today.
   expect_error(template_path("dp-trends", "trends"), "not both")
   expect_error(template_path("dp-trends", "gfup"), "not both")
+  expect_error(template_path("dp.trends", "trends"), "not both")
   expect_error(add_job("dp-trends", "cohort", "eda", dir = tempdir(), qualifier = "trends"),
                "add_job\\(\\).*not both")
   # A malformed qualifier is reported as itself, not as a clash.
@@ -879,7 +883,7 @@ test_that("a stem and a qualifier together are refused, not reconciled", {
 
 test_that("the choices on offer are shown by full name, the form a caller can type", {
   expect_error(template_path("dp"), "name one with `qualifier`, or by its full name")
-  expect_error(template_path("dp"), "dp-trends")
+  expect_error(template_path("dp"), "dp.trends", fixed = TRUE)
   expect_error(template_path("ac-foo"), "Available for this prefix: ac")
 })
 
@@ -898,7 +902,7 @@ test_that("an unqualified hs is refused, naming both job types", {
   # (dev/specs/2026-09-30-hs-concordance-design.md), so a caller naming no
   # qualifier has not said which job they mean.
   tl <- template_list()
-  expect_setequal(tl$name[tl$prefix == "hs"], c("hs-concordance", "hs-setup"))
+  expect_setequal(tl$name[tl$prefix == "hs"], c("hs.concordance", "hs.setup"))
   expect_error(template_path("hs"), "concordance")
   expect_error(template_path("hs"), "setup")
   expect_identical(basename(template_path("hs", qualifier = "setup")), "hs-setup.qmd")
@@ -933,4 +937,19 @@ test_that("template_list() prints its summary columns, and a selection as select
   dc <- tl[tl$prefix == "dc", ]
   shown <- capture.output(print(dc))
   expect_identical(sub(" .*$", "", trimws(shown[2:(nrow(dc) + 1L)])), rownames(dc))
+})
+
+test_that("template_list shows qualified templates with a period, and the call uses it", {
+  tl <- template_list()
+  row <- tl[!is.na(tl$qualifier) & tl$prefix == "dp" & tl$qualifier == "trends", ]
+  expect_identical(row$name, "dp.trends")
+  expect_match(row$call, '^add_job\\("dp[.]trends"')
+  expect_false(any(grepl("-", tl$name, fixed = TRUE)))
+  # Every name resolves under either spelling.
+  for (i in seq_len(nrow(tl))) {
+    dash <- sub(".", "-", tl$name[[i]], fixed = TRUE)
+    path <- withCallingHandlers(template_path(dash),
+                                hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
+    expect_identical(path, tl$file[[i]], info = dash)
+  }
 })

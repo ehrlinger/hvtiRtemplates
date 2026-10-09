@@ -12,7 +12,7 @@ test_that("open_job creates a missing job under the study root found from a subd
 
   expect_identical(
     normalizePath(out, winslash = "/", mustWork = FALSE),
-    normalizePath(file.path(root, "20_distributions", "dead-eda-ac.qmd"), winslash = "/", mustWork = FALSE)
+    normalizePath(file.path(root, "20_distributions", "ac.dead.eda.qmd"), winslash = "/", mustWork = FALSE)
   )
   expect_true(file.exists(out))
 })
@@ -53,7 +53,7 @@ test_that("open_job reports an invalid field under its own name, not add_job()'s
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
 
   expect_error(open_job(prefix = "ac", subject = "a-b", type = "eda", dir = root), "^open_job\\(\\): `subject`")
-  expect_false(file.exists(file.path(root, "20_distributions", "a-b-eda-ac.qmd")))
+  expect_false(file.exists(file.path(root, "20_distributions", "ac.a-b.eda.qmd")))
 })
 
 test_that("open_job's positional argument order matches add_job's", {
@@ -68,15 +68,15 @@ test_that("open_job's positional argument order matches add_job's", {
 
   expect_identical(
     normalizePath(out, winslash = "/", mustWork = FALSE),
-    normalizePath(file.path(root, "20_distributions", "demo-eda-ac.qmd"), winslash = "/", mustWork = FALSE)
+    normalizePath(file.path(root, "20_distributions", "ac.demo.eda.qmd"), winslash = "/", mustWork = FALSE)
   )
   expect_true(file.exists(out))
 })
 
 test_that("open_job returns exactly the path add_job would write, qualified and not", {
   for (spec in list(
-    list(prefix = "ac", qualifier = NULL, pattern = "-ac.qmd"),
-    list(prefix = "dc", qualifier = "tables", pattern = "-dc-tables.qmd")
+    list(prefix = "ac", qualifier = NULL, pattern = "ac.dead.eda.qmd"),
+    list(prefix = "dc", qualifier = "tables", pattern = "dc.tables.dead.eda.qmd")
   )) {
     root <- tempfile("openjob-samepath-")
     on.exit(unlink(root, recursive = TRUE), add = TRUE)
@@ -102,9 +102,20 @@ test_that("add_job() and open_job() accept a template stem", {
   suppressMessages(hvtiRutilities::study_setup(root, study = "Stem", study_tracker_id = 1L))
   local_mocked_bindings(.open_in_editor = function(path) invisible(path))
   out <- add_job("dc-tables", subject = "dead", type = "eda", dir = root)
-  expect_match(basename(out), "^dead-eda-dc-tables[.]qmd$")
+  expect_match(basename(out), "^dc[.]tables[.]dead[.]eda[.]qmd$")
   expect_identical(
     normalizePath(suppressMessages(open_job("dc-tables", subject = "dead", type = "eda", dir = root))),
     normalizePath(out)
   )
+})
+
+test_that("open_job opens a job scaffolded under the old spelling", {
+  d <- file.path(withr::local_tempdir(), "study")
+  invisible(suppressMessages(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L)))
+  old <- file.path(hvtiRutilities::study_dir("distributions", d), "dead_pa-hz-ac.qmd")
+  dir.create(dirname(old), recursive = TRUE, showWarnings = FALSE)
+  file.copy(template_path("ac"), old)
+  expect_message(out <- open_job("ac", "dead_pa", "hz", dir = d), "already exists")
+  expect_identical(normalizePath(out), normalizePath(old))
+  expect_false(file.exists(file.path(dirname(old), "ac.dead_pa.hz.qmd")))
 })

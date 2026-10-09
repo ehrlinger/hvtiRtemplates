@@ -238,6 +238,13 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
       stop("migrate_job(): output must remain beneath the study root.", call. = FALSE)
     }
   }
+  # The same job scaffolded before 2026-10 has the dash spelling. add_job()
+  # refuses a second copy of it, and so does this, for the same reason.
+  legacy <- .job_path_legacy(row, subject, type, root)
+  if (.migration_target_exists(legacy)) {
+    stop("Migration output already exists under its name before 2026-10; refusing to write a second copy: ",
+         .canonical_path(legacy), call. = FALSE)
+  }
   list(
     lines = readLines(staged, warn = FALSE),
     out = file.path(folder, basename(staged)),

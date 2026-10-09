@@ -188,12 +188,12 @@ TYPE    <- "hz"
 # yet, so this is a no-op in that case rather than a spurious error.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  # Quarto knits through an intermediate, so `knitr::current_input()` returns
-  # `<subject>-<type>-<prefix>.rmarkdown` here rather than the
-  # `.qmd` this was scaffolded as. Strip whatever extension is actually present
-  # rather than hard-coding one, so this doesn't depend on a build-tool detail
-  # staying the same.
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
+  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
+  # 2026-10. .job_name_fields() reads subject and type from either, whatever
+  # the extension: Quarto knits through an intermediate, so
+  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
@@ -307,7 +307,7 @@ FIGURES <- NULL
 
 ### The runner
 
-The screen is run by its own job, `<subject>-<type>-bh-runner.R`, which
+The screen is run by its own job, `bh.<subject>.<type>.runner.R`, which
 `add_job()` writes beside this file. Run it first: it reads its rows with
 `hvtiRtemplates::read_job_data()`, screens, and saves the bag with the
 selection that call records. This report only reads the bag. It prints that
@@ -378,7 +378,7 @@ if (length(.chunk_files)) {
 }
 .sel <- hvtiRtemplates:::.read_upstream_job_data(
   .cfg, .bootstrap_lineage, list(where = WHERE, id = ID, key = KEY), read = FALSE, source = .bag_name,
-  rerun = paste("Rerun the bootstrap runner, <subject>-<type>-bh-runner.R, as add_job() now writes it: it records",
+  rerun = paste("Rerun the bootstrap runner, bh.<subject>.<type>.runner.R, as add_job() now writes it: it records",
                 "the selection. Then render this report again.")
 )$selection
 knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),

@@ -95,8 +95,9 @@ sidecar and retain its recovery backup with a warning.
 
 Templates are `<prefix>[-<qualifier>].qmd` in a numbered directory
 (`20_distributions/ac.qmd`); a job is
-`<subject>-<type>-<prefix>[-<qualifier>].qmd` in the study's matching taxonomy
-folder. New studies use numbered folders and existing bare-folder studies keep
+`<prefix>[.<qualifier>].<subject>.<type>.qmd` in the study's matching taxonomy
+folder, so a study's jobs sort by template. Jobs scaffolded before 2026-10 keep
+their `<subject>-<type>-<prefix>[-<qualifier>].qmd` names and keep rendering. New studies use numbered folders and existing bare-folder studies keep
 their layout. The ordinal that once prefixed filenames was dropped in 1.1.0.
 
 The subject groups a job set. It is a statistical endpoint when the job analyses
@@ -136,8 +137,8 @@ job <- hvtiRtemplates::migrate_job(
 
 Use your study's source and evidence filenames. `lst`, `log`, and `reference`
 are optional; supplied files must exist beneath `dir`. The call writes
-`descriptive/cohort-eda-dc-tables.qmd` and
-`descriptive/cohort-eda-dc-tables-migration.md` in a study with bare folders.
+`descriptive/dc.tables.cohort.eda.qmd` and
+`descriptive/dc.tables.cohort.eda-migration.md` in a study with bare folders.
 It preserves the evidence files and refuses to overwrite either output.
 
 Migration supports `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-eda`.

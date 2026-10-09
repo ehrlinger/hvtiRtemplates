@@ -51,7 +51,7 @@
 #'   utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
 #'                    row.names = FALSE)
 #'   invisible(hvtiRutilities::register_data(root, "built.csv"))
-#'   job <- add_job("dc-gfup", subject = "cohort", type = "eda", dir = root)
+#'   job <- add_job("dc.gfup", subject = "cohort", type = "eda", dir = root)
 #'
 #'   # A draft: the new job still holds EDIT: markers, so the report carries a
 #'   # DRAFT banner listing them, and renders all the same.

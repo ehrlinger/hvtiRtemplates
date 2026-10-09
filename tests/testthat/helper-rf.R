@@ -335,7 +335,7 @@ boot_settings <- function(prefix, ...) {
 # `root`, for the set the report's `set` chunk names.
 boot_scaffold <- function(prefix, root) {
   suppressMessages(add_job(prefix, "dead_pa", "hz", dir = root))
-  sub("[.]qmd$", "-runner.R", hvtiRtemplates:::.job_path(
+  sub("[.]qmd$", ".runner.R", hvtiRtemplates:::.job_path(
     hvtiRtemplates:::.select_template(template_list(), prefix, NULL), "dead_pa", "hz", root
   ))
 }

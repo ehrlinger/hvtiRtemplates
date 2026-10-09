@@ -79,7 +79,8 @@ def _template_call(path, name):
     subject, type_ = value("SUBJECT"), value("TYPE")
     if subject is None or type_ is None:
         return None
-    return f'add_job("{name}", subject = "{subject}", type = "{type_}")'
+    # template_list()$call shows a qualified template as "dp.trends".
+    return f'add_job("{name.replace("-", ".", 1)}", subject = "{subject}", type = "{type_}")'
 
 
 def _first_sentence(text):

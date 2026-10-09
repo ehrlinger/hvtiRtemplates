@@ -24,7 +24,7 @@ test_that("a prefix given without a qualifier still reads the qualifier from the
   job <- migrate_job(
     source = source, subject = "cohort", type = "eda", prefix = "dc", dir = root
   )
-  expect_identical(basename(job), "cohort-eda-dc-tables.qmd")
+  expect_identical(basename(job), "dc.tables.cohort.eda.qmd")
   custom <- file.path(root, "descriptive", "dc.custom.sas")
   writeLines("proc means; run;", custom)
   expect_error(
@@ -70,7 +70,7 @@ test_that("migrate_job scaffolds a template with no converter and says so", {
 
   out <- migrate_job(source = src, subject = "dead", type = "eda")
 
-  expect_identical(basename(out), "dead-eda-ac.qmd")
+  expect_identical(basename(out), "ac.dead.eda.qmd")
   tpl <- readLines(template_path("ac"), warn = FALSE)
   tok <- paste0("ED", "IT", ":")
   expect_identical(sum(grepl(tok, readLines(out), fixed = TRUE)), sum(grepl(tok, tpl, fixed = TRUE)))
@@ -325,7 +325,7 @@ test_that("template staging delegates names and declarations without publishing 
     dir.create(file.path(root, folder))
     row <- .select_template(template_list(), "dc", "tables")
     prepared <- .migration_template(row, subject = "mortality", type = "eda", root = root)
-    expect_identical(prepared$out, file.path(root, folder, "mortality-eda-dc-tables.qmd"))
+    expect_identical(prepared$out, file.path(root, folder, "dc.tables.mortality.eda.qmd"))
     expect_true('SUBJECT <- "mortality"' %in% prepared$lines)
     expect_true('TYPE    <- "eda"' %in% prepared$lines)
     expect_length(list.files(root, recursive = TRUE, all.files = TRUE), 0L)
@@ -341,7 +341,7 @@ test_that("migration completion publishes the prepared job and report beside int
   prepared <- .migration_template(.select_template(template_list(), "dc", "tables"), subject = "cohort", type = "eda", root = root)
   result <- list(regions = character(), translated = data.frame(), unresolved = data.frame(), ignored = data.frame())
   out <- .migration_finish(prepared, evidence, result)
-  expect_identical(out, file.path(root, "descriptive", "cohort-eda-dc-tables.qmd"))
+  expect_identical(out, file.path(root, "descriptive", "dc.tables.cohort.eda.qmd"))
   expect_identical(readLines(out), prepared$lines)
   report <- sub("[.]qmd$", "-migration.md", out)
   expect_true(file.exists(report))
@@ -473,7 +473,7 @@ test_that("a qualifier given without a prefix is honored, not ignored", {
   source <- file.path(root, "descriptive", "dc.gfup.sas")
   writeLines(c("%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);"), source)
   job <- migrate_job(source = source, subject = "cohort", type = "eda", qualifier = "tables", dir = root)
-  expect_identical(basename(job), "cohort-eda-dc-tables.qmd")
+  expect_identical(basename(job), "dc.tables.cohort.eda.qmd")
   expect_error(
     migrate_job(source = source, subject = "cohort", type = "eda", qualifier = "nosuch", dir = root),
     "migrate_job\\(\\).*nosuch"
@@ -645,7 +645,7 @@ test_that("migrate_job() accepts a template's full name, as add_job() does", {
   source <- file.path(root, "descriptive", "odd_name.sas")
   writeLines("%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);", source)
   job <- migrate_job(source = source, subject = "cohort", type = "eda", prefix = "dc-tables", dir = root)
-  expect_identical(basename(job), "cohort-eda-dc-tables.qmd")
+  expect_identical(basename(job), "dc.tables.cohort.eda.qmd")
   expect_error(
     migrate_job(source = source, subject = "other", type = "eda", prefix = "dc-tables",
                 qualifier = "tables", dir = root),
@@ -656,7 +656,7 @@ test_that("migrate_job() accepts a template's full name, as add_job() does", {
   gfup <- file.path(root, "descriptive", "dc.gfup.sas")
   writeLines("%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);", gfup)
   job <- migrate_job(source = gfup, subject = "named", type = "eda", prefix = "dc-tables", dir = root)
-  expect_identical(basename(job), "named-eda-dc-tables.qmd")
+  expect_identical(basename(job), "dc.tables.named.eda.qmd")
   expect_error(
     migrate_job(source = source, subject = "other", type = "eda", prefix = "dc-", dir = root),
     "migrate_job\\(\\).*not a template name"
@@ -676,5 +676,19 @@ test_that("migrating a SAS hs job needs its qualifier, which the filename does n
 
   expect_error(migrate_job(source = src, subject = "dead", type = "hz"), "concordance")
   out <- migrate_job(source = src, subject = "dead", type = "hz", qualifier = "setup")
-  expect_identical(basename(out), "dead-hz-hs-setup.qmd")
+  expect_identical(basename(out), "hs.setup.dead.hz.qmd")
+})
+
+test_that("migrate_job() refuses a job that exists under its name before 2026-10", {
+  root <- migration_study_fixture()
+  source <- file.path(root, "descriptive", "odd_name.sas")
+  writeLines("%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);", source)
+  old <- file.path(root, "descriptive", "cohort-eda-dc-tables.qmd")
+  writeLines("edited", old)
+  expect_error(
+    migrate_job(source = source, subject = "cohort", type = "eda", prefix = "dc.tables", dir = root),
+    "before 2026-10"
+  )
+  expect_false(file.exists(file.path(root, "descriptive", "dc.tables.cohort.eda.qmd")))
+  expect_identical(readLines(old), "edited")
 })

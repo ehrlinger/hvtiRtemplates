@@ -1,7 +1,7 @@
 test_that("add_job scaffolds nb-boostmtree with its subject and type", {
   dir <- withr::local_tempdir("nb-job-")
   job <- add_job("nb", subject = "lvef", type = "boost", dir = dir, qualifier = "boostmtree")
-  expect_match(basename(job), "^lvef-boost-nb-boostmtree[.]qmd$")
+  expect_match(basename(job), "^nb[.]boostmtree[.]lvef[.]boost[.]qmd$")
   txt <- readLines(job)
   expect_identical(grep("^SUBJECT <- ", txt, value = TRUE), "SUBJECT <- \"lvef\"")
   expect_identical(grep("^TYPE\\s+<- ", txt, value = TRUE), "TYPE    <- \"boost\"")

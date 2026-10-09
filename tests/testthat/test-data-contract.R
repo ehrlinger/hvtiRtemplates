@@ -2,7 +2,10 @@
 # dev/specs/2026-09-29-template-data-contract-design.md. Families not yet
 # converted are listed here; each family's conversion removes its names, and
 # the list is empty when the work is done.
-pending_contract_families <- setdiff(template_list()$name, c(
+# Keyed on the template's file stem ("dc-general"), not its display name.
+template_stems <- function(tl = template_list()) sub("[.]qmd$", "", basename(tl$file))
+
+pending_contract_families <- setdiff(template_stems(), c(
   "ac", "hz", "hm", "hp", "hs-concordance", "hs-setup",
   "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-trends",
   "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
@@ -49,9 +52,9 @@ test_that("every converted template has the shared settings and a conforming dat
   # pending_contract_families still names every template and the loop below
   # runs zero times.
   expect_gt(nrow(tl), 0L)
-  todo <- setdiff(tl$name, pending_contract_families)
-  for (i in match(todo, tl$name)) {
-    name <- tl$name[[i]]
+  todo <- setdiff(template_stems(tl), pending_contract_families)
+  for (i in match(todo, template_stems(tl))) {
+    name <- template_stems(tl)[[i]]
     src <- readLines(tl$file[[i]], warn = FALSE)
     choices <- template_chunk(src, "edit-study-choices")
     expect_false(is.null(choices), info = name)
@@ -80,13 +83,13 @@ test_that("no converted template uses a retired name for the shared vocabulary",
   # Same "empty test" guard as above.
   expect_gt(nrow(tl), 0L)
   retired <- c("^STATUS\\s*<-", "^KEY_COLS\\s*<-", '"iu_dead"', '"idead"', '^ID\\s*<-\\s*"id"')
-  for (i in match(setdiff(tl$name, pending_contract_families), tl$name)) {
+  for (i in match(setdiff(template_stems(tl), pending_contract_families), template_stems(tl))) {
     src <- readLines(tl$file[[i]], warn = FALSE)
-    for (pattern in retired) expect_false(any(grepl(pattern, src)), info = paste(tl$name[[i]], pattern))
+    for (pattern in retired) expect_false(any(grepl(pattern, src)), info = paste(template_stems(tl)[[i]], pattern))
   }
 })
 
 test_that("the pending and downstream lists name only real templates", {
-  expect_true(all(pending_contract_families %in% template_list()$name))
-  expect_true(all(downstream_templates %in% template_list()$name))
+  expect_true(all(pending_contract_families %in% template_stems()))
+  expect_true(all(downstream_templates %in% template_stems()))
 })

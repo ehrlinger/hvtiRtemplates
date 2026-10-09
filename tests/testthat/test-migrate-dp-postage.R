@@ -20,7 +20,7 @@ postage_config <- function(result) {
 # here. Read its path from template_list(), not template_path(), which warns.
 postage_template <- function() {
   tl <- template_list()
-  tl$file[tl$name == "dp-postage"]
+  tl$file[tl$name == "dp.postage"]
 }
 
 test_that("postage migration selects registered data and explicit ordered EDA controls", {
@@ -45,7 +45,7 @@ test_that("postage migration selects registered data and explicit ordered EDA co
   expect_identical(env$GRID_NROW, 4L)
   # A legacy EDA report drew no follow-up panels, so the dp-eda job draws the
   # three sections dp-postage drew, and no more.
-  expect_identical(basename(job), "cohort-eda-dp-eda.qmd")
+  expect_identical(basename(job), "dp.eda.cohort.eda.qmd")
   expect_identical(env$SECTIONS, c("continuous", "percent", "count"))
   expect_identical(readBin(source, "raw", n = file.info(source)$size), bytes)
   report <- paste(readLines(sub("[.]qmd$", "-migration.md", job)), collapse = "\n")
@@ -148,7 +148,7 @@ test_that("a migrated legacy EDA report renders real eighteen-panel pages under 
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   out <- render_migrated_fixture("dp-postage")
-  expect_identical(basename(out$job), "cohort-eda-dp-eda.qmd")
+  expect_identical(basename(out$job), "dp.eda.cohort.eda.qmd")
   expected <- file.path(out$root, "graphs", "cohort-eda",
                         sprintf("dp-eda-%s-page-01.png", c("continuous", "percent", "count")))
   expect_true(all(expected %in% out$outputs))
@@ -510,9 +510,9 @@ test_that("naming the deprecated dp-postage in migrate_job() warns and writes a 
   root <- migration_study_fixture("dp-postage")
   source <- file.path(root, "descriptive", "dp.postage.qmd")
   expect_warning(job <- migrate_job(source, "cohort", "eda", "dp", "postage", dir = root),
-                 "dp-postage is deprecated in favor of dp-eda", class = "hvtiRtemplates_deprecated")
-  expect_identical(basename(job), "cohort-eda-dp-eda.qmd")
-  expect_false(file.exists(file.path(root, "descriptive", "cohort-eda-dp-postage.qmd")))
+                 "dp.postage is deprecated in favor of dp.eda", class = "hvtiRtemplates_deprecated")
+  expect_identical(basename(job), "dp.eda.cohort.eda.qmd")
+  expect_false(file.exists(file.path(root, "descriptive", "dp.postage.cohort.eda.qmd")))
   lines <- readLines(job, warn = FALSE)
   expect_true('SECTIONS <- c("continuous", "percent", "count")' %in% lines)
   expect_true('X_VAR <- "iv_dead"' %in% lines)
@@ -520,7 +520,7 @@ test_that("naming the deprecated dp-postage in migrate_job() warns and writes a 
   other <- migration_study_fixture("dp-postage")
   expect_warning(job <- migrate_job(file.path(other, "descriptive", "dp.postage.qmd"), "cohort", "eda",
                                     prefix = "dp", dir = other), class = "hvtiRtemplates_deprecated")
-  expect_identical(basename(job), "cohort-eda-dp-eda.qmd")
+  expect_identical(basename(job), "dp.eda.cohort.eda.qmd")
 })
 
 test_that("postage names an analysis set the study has not built (#173)", {

@@ -3,11 +3,11 @@
 # and evaluated in one environment.
 
 # The file of the template called `name`, as template_list() names it: "hm", or
-# "hs-setup" for a qualified one. template_path() takes a prefix and stops on
-# one that carries several templates.
+# "hs.setup" for a qualified one; the file stem "hs-setup" is accepted too.
+# template_path() takes a prefix and stops on one that carries several templates.
 hazard_template <- function(name) {
   templates <- template_list()
-  hit <- which(templates$name == name)
+  hit <- which(templates$name == sub("-", ".", name, fixed = TRUE))
   if (length(hit) != 1L) stop("template '", name, "' found ", length(hit), " times", call. = FALSE)
   templates$file[[hit]]
 }

@@ -55,7 +55,7 @@ test_that("add_job preserves a legacy study layout", {
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   out <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
   expect_true(file.exists(out))
-  expect_equal(out, file.path(dir, "distributions", "dead_pa-hz-ac.qmd"))
+  expect_equal(out, file.path(dir, "distributions", "ac.dead_pa.hz.qmd"))
 })
 
 test_that("add_job follows a numbered study layout", {
@@ -69,7 +69,7 @@ test_that("add_job follows a numbered study layout", {
 
   expect_equal(
     out,
-    file.path(dir, "20_distributions", "dead_pa-hz-ac.qmd")
+    file.path(dir, "20_distributions", "ac.dead_pa.hz.qmd")
   )
   config <- yaml::read_yaml(file.path(dir, "_quarto.yml"))
   expect_identical(tail(config$project$`pre-render`, 1L), .provenance_hook_command("pre"))
@@ -86,7 +86,7 @@ test_that("add_job leaves no job when provenance hooks cannot be installed", {
   writeLines("project: [", file.path(dir, "_quarto.yml"))
 
   expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "_quarto[.]yml")
-  expect_false(file.exists(file.path(dir, "20_distributions", "dead_pa-hz-ac.qmd")))
+  expect_false(file.exists(file.path(dir, "20_distributions", "ac.dead_pa.hz.qmd")))
 })
 
 test_that("add_job rejects inline project mappings without installing hook files", {
@@ -106,7 +106,7 @@ test_that("add_job rejects inline project mappings without installing hook files
 
   expect_identical(readLines(config_path, warn = FALSE), before)
   expect_false(any(file.exists(file.path(dir, .provenance_hook_files()))))
-  expect_false(file.exists(file.path(dir, "20_distributions", "dead_pa-hz-ac.qmd")))
+  expect_false(file.exists(file.path(dir, "20_distributions", "ac.dead_pa.hz.qmd")))
 })
 
 test_that("add_job refuses a mixed study layout", {
@@ -119,14 +119,14 @@ test_that("add_job refuses a mixed study layout", {
   expect_false(file.exists(file.path(
     dir,
     "distributions",
-    "dead_pa-hz-ac.qmd"
+    "ac.dead_pa.hz.qmd"
   )))
 })
 
 test_that("add_job distinguishes two analysis types over one subject", {
   # This is the collision the type field exists to prevent. A death-hazard set
   # and a death-RFS set share the same Kaplan-Meier upstream, so keyed on
-  # subject alone both would be `dead_pa-ac.qmd` -- two sets, one file.
+  # subject alone both would be `ac.dead_pa.qmd` -- two sets, one file.
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   a <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
@@ -139,7 +139,7 @@ test_that("add_job distinguishes two analysis types over one subject", {
   # values silently resolves set_path() into the OTHER set's directory. Each
   # written file's SUBJECT/TYPE declarations must match its own name.
   for (path in c(a, b)) {
-    fields <- strsplit(sub("[.]qmd$", "", basename(path)), "-", fixed = TRUE)[[1L]]
+    fields <- hvtiRtemplates:::.job_name_fields(path)
     txt <- readLines(path, warn = FALSE)
     declared_subject <- sub('^SUBJECT <- "(.*)"$', "\\1", grep("^SUBJECT <- ", txt, value = TRUE))
     declared_type     <- sub('^TYPE\\s+<- "(.*)"$', "\\1", grep("^TYPE\\s+<- ", txt, value = TRUE))
@@ -173,7 +173,7 @@ test_that("add_job errors when the template lacks the SUBJECT/TYPE marker lines"
   # -- a job named for one set but declaring the template's placeholder set
   # -- must not survive: the partially-written file must be gone, not just
   # the error raised.
-  out <- file.path(dir, "distributions", "dead_pa-hz-zz.qmd")
+  out <- file.path(dir, "distributions", "zz.dead_pa.hz.qmd")
   expect_false(file.exists(out))
 })
 
@@ -218,7 +218,7 @@ test_that("add_job names a missing subject or type and shows the template's call
   expect_match(conditionMessage(e), ac_call, fixed = TRUE)
 
   # A qualified template's example is its own row's call, not its prefix's first.
-  gfup_call <- template_list()$call[template_list()$name == "dc-gfup"]
+  gfup_call <- template_list()$call[template_list()$name == "dc.gfup"]
   e <- expect_error(add_job("dc-gfup", type = "eda", dir = dir), "`subject` is missing")
   expect_match(conditionMessage(e), gfup_call, fixed = TRUE)
 
@@ -334,16 +334,16 @@ test_that("add_job writes the companion runner beside a bootstrap job, and only 
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   for (prefix in c("bl", "br", "bc", "bh")) {
     job <- add_job(prefix = prefix, subject = "dead_pa", type = "boot", dir = dir)
-    runner <- sub("[.]qmd$", "-runner.R", job)
-    expect_identical(basename(runner), paste0("dead_pa-boot-", prefix, "-runner.R"))
+    runner <- sub("[.]qmd$", ".runner.R", job)
+    expect_identical(basename(runner), paste0(prefix, ".dead_pa.boot.runner.R"))
     expect_true(file.exists(runner), info = prefix)
     txt <- readLines(runner, warn = FALSE)
     expect_identical(grep("^SUBJECT <- ", txt, value = TRUE), "SUBJECT <- \"dead_pa\"", info = prefix)
     expect_identical(grep("^TYPE\\s+<- ", txt, value = TRUE), "TYPE    <- \"boot\"", info = prefix)
   }
   job <- add_job(prefix = "ac", subject = "dead_pa", type = "boot", dir = dir)
-  expect_false(any(grepl("-runner[.]R$", list.files(dirname(job)))))
-  expect_length(list.files(dir, pattern = "-runner[.]R$", recursive = TRUE), 4L)
+  expect_false(any(grepl("[.]runner[.]R$", list.files(dirname(job)))))
+  expect_length(list.files(dir, pattern = "[.]runner[.]R$", recursive = TRUE), 4L)
 })
 
 test_that("add_job refuses to overwrite an existing runner, and writes nothing", {
@@ -351,7 +351,7 @@ test_that("add_job refuses to overwrite an existing runner, and writes nothing",
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   job <- add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir)
-  runner <- sub("[.]qmd$", "-runner.R", job)
+  runner <- sub("[.]qmd$", ".runner.R", job)
   writeLines("edited", runner)
   unlink(job)
   # Match the file name literally: a Windows path's backslashes would be read as regex escapes.
@@ -359,6 +359,23 @@ test_that("add_job refuses to overwrite an existing runner, and writes nothing",
                paste0(basename(runner), "' already exists; refusing to overwrite"), fixed = TRUE)
   expect_false(file.exists(job))
   expect_identical(readLines(runner), "edited")
+})
+
+test_that("add_job refuses when only the job's runner remains under its pre-2026-10 name", {
+  # The .qmd was removed but its edited runner survives under the dash spelling.
+  # Writing a new runner beside it would leave the study's edits in the old one.
+  # Raised by Codex on #277.
+  dir <- tempfile("newjob-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  job <- add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir)
+  unlink(c(job, sub("[.]qmd$", ".runner.R", job)))
+  legacy_runner <- file.path(dirname(job), "dead_pa-boot-bl-runner.R")
+  writeLines("edited", legacy_runner)
+  expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir),
+               "dead_pa-boot-bl-runner.R', its name before 2026-10", fixed = TRUE)
+  expect_false(file.exists(job))
+  expect_false(file.exists(sub("[.]qmd$", ".runner.R", job)))
+  expect_identical(readLines(legacy_runner), "edited")
 })
 
 test_that("add_job leaves neither file when the runner lacks its set markers", {
@@ -369,7 +386,7 @@ test_that("add_job leaves neither file when the runner lacks its set markers", {
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir), "SUBJECT")
-  expect_length(list.files(dir, pattern = "^dead_pa-boot-bl", recursive = TRUE), 0L)
+  expect_length(list.files(dir, pattern = "^bl[.]dead_pa[.]boot", recursive = TRUE), 0L)
 })
 
 test_that("add_job() and open_job() find the study from the working directory, or stop", {
@@ -403,4 +420,14 @@ test_that("a malformed manifest is reported as itself, not as no study (#258)", 
   e <- expect_error(open_job("dc-gfup", subject = "cohort", type = "eda"), "Parser error")
   expect_no_match(conditionMessage(e), "not inside a study")
   expect_identical(sort(list.files(root, all.files = TRUE, no.. = TRUE)), "_study.yml")
+})
+
+test_that("add_job refuses a job whose old spelling already exists", {
+  d <- file.path(withr::local_tempdir(), "study")
+  invisible(suppressMessages(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L)))
+  old <- file.path(hvtiRutilities::study_dir("distributions", d), "dead_pa-hz-ac.qmd")
+  dir.create(dirname(old), recursive = TRUE, showWarnings = FALSE)
+  file.copy(template_path("ac"), old)
+  expect_error(add_job("ac", "dead_pa", "hz", dir = d), "dead_pa-hz-ac.qmd", fixed = TRUE)
+  expect_false(file.exists(file.path(dirname(old), "ac.dead_pa.hz.qmd")))
 })

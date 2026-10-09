@@ -2,7 +2,7 @@
 
 nb_template <- function() {
   templates <- template_list()
-  hit <- which(templates$name == "nb-boostmtree")
+  hit <- which(templates$name == "nb.boostmtree")
   if (length(hit) != 1L) stop("template 'nb-boostmtree' found ", length(hit), " times", call. = FALSE)
   templates$file[[hit]]
 }

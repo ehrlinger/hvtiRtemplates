@@ -1,7 +1,7 @@
 # Companion runner for a `bc` bootstrap report: a Cox screen with boot_select() and fit_cox().
 #
 # add_job("bc", subject, type) writes this file beside the report, named
-# <subject>-<type>-bc-runner.R. It is a job of its own and runs FIRST:
+# bc.<subject>.<type>.runner.R. It is a job of its own and runs FIRST:
 # it screens and saves the bag, and the report only reads that bag. Run it from
 # anywhere inside the study, with Rscript or source(), before rendering the
 # report. Every study choice is marked by an EDIT marker below; work each

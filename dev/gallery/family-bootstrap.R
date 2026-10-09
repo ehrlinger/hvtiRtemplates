@@ -1,7 +1,7 @@
 # Bootstrap variable selection family: bl (logistic), br (linear), bc (Cox)
 # and bh (multiphase hazard). These templates REPORT on a screen; they do not
 # run one. add_job() writes each report's companion runner beside it,
-# <subject>-<type>-<prefix>-runner.R, and each job's prepare() works that
+# <prefix>.<subject>.<type>.runner.R, and each job's prepare() works that
 # runner as a study author would: it sets the runner's study choices
 # (FINISHED <- TRUE among them), runs it with Rscript from inside the study,
 # and leaves the bag where the report reads it, under the job's own set in
@@ -43,7 +43,7 @@ bootstrap_death_pool <- c("age", "hx_chf", "lvef", "hx_dm", "creat_pr", "female"
 r_vector <- function(x) paste0("c(", paste0("\"", x, "\"", collapse = ", "), ")")
 
 # The runner add_job() wrote beside a report.
-bootstrap_runner <- function(job) sub("[.]qmd$", "-runner.R", job)
+bootstrap_runner <- function(job) sub("[.]qmd$", ".runner.R", job)
 
 # Run a runner as its header says to: with Rscript, from inside the study.
 # `env` adds environment variables to that one run. Stops with the runner's

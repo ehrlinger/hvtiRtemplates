@@ -252,7 +252,7 @@ test_that("dc-tables merges repeated headings and rejects conflicting groups or 
     root <- migration_study_fixture("dc-tables")
     tables_source(root, source)
     expect_error(tables_migrate(root, evidence = FALSE), "group|variable|vartype|desc_tab")
-    expect_false(file.exists(file.path(root, "descriptive", "cohort-eda-dc-tables.qmd")))
+    expect_false(file.exists(file.path(root, "descriptive", "dc.tables.cohort.eda.qmd")))
   }
   for (second in c(
     "%desc_tab(vartype=category,input=built,varlist=/* D */ age);",

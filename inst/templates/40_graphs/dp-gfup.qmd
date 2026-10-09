@@ -24,7 +24,7 @@ Replaces `graphs/dp.gfup`: list the follow-up panels it draws.
 
 **Deprecated.** `dp-gfup` is deprecated in favor of `dc-gfup`, and will be
 removed in a later release. For the same figure, start a `dc-gfup` job with
-`add_job("dc-gfup", subject = "cohort", type = "eda")`: it draws these panels
+`add_job("dc.gfup", subject = "cohort", type = "eda")`: it draws these panels
 with the same choices and the same call to `hv_followup_panels()`, beside the
 follow-up tables, saved as `dc-gfup-*.png` rather than `dp-gfup-*.png`.
 
@@ -109,7 +109,7 @@ TYPE    <- "eda"
 
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
   .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
   if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {

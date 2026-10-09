@@ -104,7 +104,7 @@ TYPE    <- "build"
 # declaration that drifts from it stops here.
 .current <- knitr::current_input()
 if (!is.null(.current)) {
-  .fields <- strsplit(sub("[.][^.]+$", "", basename(.current)), "-", fixed = TRUE)[[1L]]
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
   if (!identical(.fields[1L], SUBJECT) || !identical(.fields[2L], TYPE)) {
     .bd_stop("set", "the file's name and its SUBJECT and TYPE disagree. Fix the declaration or the name.")
   }

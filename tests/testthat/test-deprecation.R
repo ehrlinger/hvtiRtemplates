@@ -17,12 +17,12 @@ test_that("the catalog marks dp-postage and dp-gfup deprecated, and nothing else
 test_that("add_job() warns once for dp-gfup, names dc-gfup, and still scaffolds", {
   root <- migration_study_fixture(NULL)
   expect_warning(job <- add_job("dp-gfup", "cohort", "eda", dir = root),
-                 "dp-gfup is deprecated in favor of dc-gfup", class = "hvtiRtemplates_deprecated")
+                 "dp.gfup is deprecated in favor of dc.gfup", class = "hvtiRtemplates_deprecated")
   expect_true(file.exists(job))
 })
 
 test_that("template_path(), add_job() and open_job() warn once for dp-postage and still work", {
-  expect_warning(path <- template_path("dp", "postage"), "dp-postage is deprecated in favor of dp-eda",
+  expect_warning(path <- template_path("dp", "postage"), "dp.postage is deprecated in favor of dp.eda",
                  class = "hvtiRtemplates_deprecated")
   expect_true(file.exists(path))
   expect_warning(template_path("dp-postage"), class = "hvtiRtemplates_deprecated")
@@ -40,7 +40,7 @@ test_that("template_path(), add_job() and open_job() warn once for dp-postage an
   expect_length(caught, 1L)
   expect_s3_class(caught[[1L]], "hvtiRtemplates_deprecated")
   message <- conditionMessage(caught[[1L]])
-  expect_match(message, "^add_job\\(\\): dp-postage is deprecated in favor of dp-eda")
+  expect_match(message, "^add_job\\(\\): dp[.]postage is deprecated in favor of dp[.]eda")
   expect_match(message, 'qualifier = "eda"', fixed = TRUE)
   expect_match(message, 'SECTIONS <- c("continuous", "percent", "count")', fixed = TRUE)
 
@@ -54,7 +54,7 @@ test_that("template_path(), add_job() and open_job() warn once for dp-postage an
     }
   ))
   expect_length(caught, 1L)
-  expect_match(conditionMessage(caught[[1L]]), "^open_job\\(\\): dp-postage is deprecated")
+  expect_match(conditionMessage(caught[[1L]]), "^open_job\\(\\): dp[.]postage is deprecated")
 })
 
 test_that("a supported template does not warn", {
