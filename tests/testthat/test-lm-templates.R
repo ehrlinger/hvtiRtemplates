@@ -72,6 +72,16 @@ test_that("every lm template stops on a column its study choices name and the da
   }
 })
 
+test_that("the model-column check accepts the `.` all-columns term", {
+  d <- data.frame(age = 1, female = 0)
+  # `.` stands for every column, so it is never a missing one.
+  expect_identical(hvtiRtemplates:::.check_job_columns(d, PREDICTORS = "."), d)
+  expect_identical(hvtiRtemplates:::.check_job_columns(d, PREDICTORS = c(".", "age")), d)
+  # A real missing column beside it still stops.
+  expect_error(hvtiRtemplates:::.check_job_columns(d, PREDICTORS = c(".", "nope")),
+               "^PREDICTORS names a column this dataset does not have: nope[.]")
+})
+
 test_that("LM set markers must agree with the rendered job filename", {
   qualifiers <- names(lm_qualifiers)
   expect_length(qualifiers, 8L)

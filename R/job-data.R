@@ -394,13 +394,14 @@
 # PREDICTORS. A column the data lack stops here, naming the setting to change,
 # rather than inside the fitting package with an error that names one of its
 # functions. A setting may hold model terms such as "I(age^2)", so the columns
-# are the variables those terms use. NULL settings are skipped.
+# are the variables those terms use. `.`, the all-columns shorthand, is never
+# missing. NULL settings are skipped.
 .check_job_columns <- function(d, ...) {
   settings <- list(...)
   for (setting in names(settings)) {
     terms <- settings[[setting]]
     if (is.null(terms)) next
-    absent <- setdiff(all.vars(stats::reformulate(terms)), names(d))
+    absent <- setdiff(all.vars(stats::reformulate(terms)), c(names(d), "."))
     if (length(absent)) {
       stop(setting, " names ", if (length(absent) == 1L) "a column" else "columns",
            " this dataset does not have: ", paste(absent, collapse = ", "),
