@@ -126,7 +126,7 @@ test_that("the final migration verifier returns four lasting rendered fixtures",
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
   results <- render_all_migration_fixtures()
-  expect_named(results, c("dc-tables", "dc-gfup", "dp-trends", "dp-postage"))
+  expect_named(results, c("dc-tables", "dc-gfup", "dc-trends", "dp-postage"))
   for (result in results) {
     expect_true(dir.exists(result$root))
     expect_true(file.exists(result$job))
@@ -135,6 +135,6 @@ test_that("the final migration verifier returns four lasting rendered fixtures",
     expect_true(all(file.exists(result$outputs)))
   }
   expect_true(any(grepl("[.]docx$", results[["dc-tables"]]$outputs)))
-  expect_true(all(sprintf("dp-eda-%s-page-01.png", c("continuous", "percent", "count")) %in%
+  expect_true(all(sprintf("dc-eda-%s-page-01.png", c("continuous", "percent", "count")) %in%
                     basename(results[["dp-postage"]]$outputs)))
 })

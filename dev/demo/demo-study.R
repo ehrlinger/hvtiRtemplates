@@ -7,7 +7,7 @@
 # describe the same 800 patients. Every number is simulated: no study,
 # patient or identifier from any real dataset appears here.
 #
-# Needs hvtiRtemplates with dp-eda, hvtiPlotR >= 2.7.17, hvtiRutilities >=
+# Needs hvtiRtemplates with dc-eda, hvtiPlotR >= 2.7.17, hvtiRutilities >=
 # 1.4.1, hvtiRtables, patchwork, and quarto (the R package and the CLI).
 
 suppressPackageStartupMessages({
@@ -119,14 +119,14 @@ demo_choices <- list(
     ),
     "^  Symptoms   = c\\(\"nyha_pr\"\\)$" = "  Laboratory = \"creat_pr\""
   )),
-  "dp-trends" = c(demo_id, list(
+  "dc-trends" = c(demo_id, list(
     "^d\\$year <- floor\\(d\\$iv_opyrs\\) \\+ 1985$" = "d$year <- floor(d$iv_opyrs) + 1990",
     "^SUBGROUPS <- " = paste0("SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)), ",
                               "diabetic = function(d) d$hx_dm == 1)")
   )),
-  "dc-gfup" = c(whole_cohort, demo_id, list("^CHECKS <- list\\(\\)$" = "CHECKS <- list(c(\"dead\", \"reop\"))")),
-  "dp-gfup" = c(whole_cohort, demo_id, close_2025, reop_event),
-  "dp-eda" = c(whole_cohort, demo_id, close_2025, reop_event)
+  "dc-gfup" = c(whole_cohort, demo_id, close_2025, reop_event,
+                list("^CHECKS <- list\\(\\)$" = "CHECKS <- list(c(\"dead\", \"reop\"))")),
+  "dc-eda" = c(whole_cohort, demo_id, close_2025, reop_event)
 )
 
 # Apply a job's choices, then resolve its markers. Each pattern must match one

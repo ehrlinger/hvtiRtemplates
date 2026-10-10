@@ -38,7 +38,7 @@ test_that("descriptive templates can read the whole cohort", {
   }
   template_dir <- normalizePath(template_dir)
   templates <- file.path(template_dir, c(
-    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dp-eda.qmd"
+    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dc-eda.qmd"
   ))
   root <- file.path(tempdir(), "whole-cohort-study")
   unlink(root, recursive = TRUE)
@@ -97,7 +97,7 @@ test_that("descriptive templates read a named additional dataset", {
   }
   template_dir <- normalizePath(template_dir)
   templates <- file.path(template_dir, c(
-    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dp-eda.qmd"
+    "dc-general.qmd", "dc-tables.qmd", "dc-gfup.qmd", "dc-stddiff.qmd", "dc-eda.qmd"
   ))
   root <- file.path(tempdir(), "named-dataset-study")
   unlink(root, recursive = TRUE)
@@ -152,7 +152,7 @@ test_that("converter templates name DATASET before reading unresolved data", {
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
   templates <- file.path(normalizePath(template_root), c(
     "10_descriptive/dc-tables.qmd", "10_descriptive/dc-gfup.qmd",
-    "10_descriptive/dp-eda.qmd", "40_graphs/dp-trends.qmd"
+    "10_descriptive/dc-eda.qmd", "10_descriptive/dc-trends.qmd"
   ))
   for (template in templates) {
     chunks <- data_route_chunks(template)
@@ -190,7 +190,7 @@ test_that("converted templates read a whole dataset without hvtiRdatabuild insta
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
   templates <- file.path(normalizePath(template_root), c(
     "10_descriptive/dc-general.qmd", "10_descriptive/dc-gfup.qmd", "10_descriptive/dc-tables.qmd",
-    "10_descriptive/dp-eda.qmd", "40_graphs/dp-gfup.qmd", "40_graphs/dp-trends.qmd"
+    "10_descriptive/dc-eda.qmd", "10_descriptive/dc-trends.qmd"
   ))
   root <- file.path(withr::local_tempdir(), "no-databuild-study")
   suppressMessages(hvtiRutilities::study_setup(root, study = "No databuild", study_tracker_id = 1L))
@@ -221,7 +221,7 @@ test_that("converted templates read a whole dataset without hvtiRdatabuild insta
 # The templates that model one row per patient, so refuse a JOIN without REDUCE.
 # Other descriptive templates and nb-boostmtree (repeated measures) take the long form.
 patient_level_templates <- c(
-  "ac.qmd", "hz.qmd", "dc-stddiff.qmd", "dc-gfup.qmd", "dp-gfup.qmd", "hs-concordance.qmd",
+  "ac.qmd", "hz.qmd", "dc-stddiff.qmd", "dc-gfup.qmd", "hs-concordance.qmd",
   "rfc-fit.qmd", "rfr-fit.qmd", "rfs-fit.qmd",
   "lm-balancing_count.qmd", "lm-binary.qmd", "lm-checkpred.qmd", "lm-nominal.qmd", "lm-ordinal.qmd",
   "lm-propensity_binary.qmd", "lm-propensity_nominal.qmd", "lm-propensity_ordinal.qmd"
@@ -261,10 +261,10 @@ test_that("every template that reads its own data offers the join and records th
                      info = basename(f))
   }
   # Every first job of a set reads its own data; a drop here means one stopped offering the join.
-  expect_identical(readers, 22L)
+  expect_identical(readers, 21L)
   # The refusal names the rest, read from the same templates.
   expect_identical(hvtiRtemplates:::.long_join_templates(normalizePath(template_root)),
-                   c("dc-general", "dc-tables", "dp-eda", "dp-trends", "nb-boostmtree"))
+                   c("dc-eda", "dc-general", "dc-tables", "dc-trends", "nb-boostmtree"))
 })
 
 test_that("descriptive templates join an ancillary dataset, long and one row per patient", {
@@ -272,7 +272,7 @@ test_that("descriptive templates join an ancillary dataset, long and one row per
   template_root <- system.file("templates", package = "hvtiRtemplates")
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
   templates <- file.path(normalizePath(template_root), "10_descriptive",
-                         c("dc-general.qmd", "dc-tables.qmd", "dp-eda.qmd"))
+                         c("dc-general.qmd", "dc-tables.qmd", "dc-eda.qmd"))
   root <- file.path(withr::local_tempdir(), "join-study")
   suppressMessages(hvtiRutilities::study_setup(root, study = "Join route test", study_tracker_id = 1L))
   data_dir <- hvtiRutilities::study_dir("datasets", root)
@@ -329,7 +329,7 @@ test_that("templates that model one row per patient refuse a long join; long-dat
   refuse <- files[basename(files) %in% patient_level_templates]
   expect_length(refuse, length(patient_level_templates))
   # Repeated measures (nb-boostmtree's KEY includes TIME) and a descriptive figure keep the long form.
-  accept <- files[basename(files) %in% c("nb-boostmtree.qmd", "dp-trends.qmd")]
+  accept <- files[basename(files) %in% c("nb-boostmtree.qmd", "dc-trends.qmd")]
   expect_length(accept, 2L)
   root <- file.path(withr::local_tempdir(), "one-row-study")
   suppressMessages(hvtiRutilities::study_setup(root, study = "One row route test", study_tracker_id = 1L))

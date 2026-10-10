@@ -19,7 +19,7 @@ format:
 
 Replaces an older EDA report.
 
-A `dp-eda` job is the whole data-checking report over a new build, in one
+A `dc-eda` job is the whole data-checking report over a new build, in one
 render: an overview of every column, goodness of follow-up, then continuous
 variables, categorical variables as percentages and categorical variables as
 counts, each with its table. It is written for the biostatistician choosing
@@ -144,9 +144,9 @@ all-deaths follow-up panel and every column of the study dataset.
 ```{r}
 #| label: edit-study-choices
 # EDIT: the registered dataset this job reads ("built" is the study dataset).
-# MIGRATE-BEGIN: dp-eda-data
+# MIGRATE-BEGIN: dc-eda-data
 DATASET <- "built"
-# MIGRATE-END: dp-eda-data
+# MIGRATE-END: dc-eda-data
 
 # EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
 ANALYSIS_SET <- NULL
@@ -232,7 +232,7 @@ EVENTS <- list()
 # reads the same across studies.
 # ALPHA is point transparency, for the follow-up figures and the continuous
 # panels: 0.5 lets a dense cohort read as a distribution rather than a blob.
-# MIGRATE-BEGIN: dp-eda-variables
+# MIGRATE-BEGIN: dc-eda-variables
 X_VAR <- "year"                    # EDIT: reference time or year
 VARIABLES <- NULL                  # EDIT: NULL draws every column, or name them
 EXCLUDE <- character(0)
@@ -241,7 +241,7 @@ GRID_NROW <- 4L
 UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
-# MIGRATE-END: dp-eda-variables
+# MIGRATE-END: dc-eda-variables
 
 # EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
 # vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
@@ -533,7 +533,7 @@ status_colors <- function(levels) {
   scale_color_manual(values = stats::setNames(COLORS[keys], levels))
 }
 # dc-gfup's follow-up table, one row per interval and patient group, so a panel
-# here shows the table that job shows. test-dp-eda.R keeps the two copies equal.
+# here shows the table that job shows. test-dc-eda.R keeps the two copies equal.
 .followup_table <- function(fc, d, event) {
   ev <- d[[event]]
   groups <- c(full = "All patients", event = "Event", censored = "Censored")
@@ -575,7 +575,7 @@ for (i in seq_len(nrow(fp$data))) {
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript()
-  file <- save_figure(p, paste0("dp-eda-gfup-", nm), width = 7, height = 6, linked = TRUE)
+  file <- save_figure(p, paste0("dc-eda-gfup-", nm), width = 7, height = 6, linked = TRUE)
   .link <- figure_link(file)
   .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", row$title),
          "knitr::include_graphics(.link, error = FALSE)")
@@ -622,7 +622,7 @@ draw_section <- function(section) {
   files <- character(0)
   for (i in seq_along(pages)) {
     file <- save_figure(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
-                        sprintf("dp-eda-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)
+                        sprintf("dc-eda-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
     cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")
     .link <- figure_link(file)

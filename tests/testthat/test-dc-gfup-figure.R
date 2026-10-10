@@ -151,8 +151,8 @@ test_that("dc-gfup's window table counts operations before the origin when hvtiP
   expect_match(window_table(NULL), "first operation", fixed = TRUE)
 })
 
-test_that("dp-eda's window table carries the same row", {
-  lines <- readLines(template_path("dp", "eda"), warn = FALSE)
+test_that("dc-eda's window table carries the same row", {
+  lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   expect_true(any(grepl("operation before origin", lines, fixed = TRUE)))
   expect_true(any(grepl(".before <- fp$meta$n_opyrs_negative", lines, fixed = TRUE)))
 })

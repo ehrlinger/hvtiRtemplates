@@ -1,4 +1,4 @@
-# dp-eda is rendered, not only read: its sections call hv_followup_panels(),
+# dc-eda is rendered, not only read: its sections call hv_followup_panels(),
 # followup_check() and hv_eda_pages() at render time, and a static test would
 # pass a template whose section chunk fails. scaffold_job() is in
 # helper-migration.R. One fixture per render keeps the check time down.
@@ -16,12 +16,12 @@ eda_job_data <- function(id, key = id) {
   list(record = structure(data.frame(step = character(), value = character()), selection = list(id = id, key = key)))
 }
 
-test_that("dp-eda renders every section into one self-contained report", {
+test_that("dc-eda renders every section into one self-contained report", {
   skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   # An event panel too: its color and shape mapping is this template's own
-  # code, not hv_followup_panels()'s, so test-dp-gfup.R does not cover it here.
+  # code, not hv_followup_panels()'s, so test-dc-gfup-figure.R does not cover it here.
   edits <- c(eda_edits, list(
     "^EVENTS <- list\\(\\)$" = paste0(
       "EVENTS <- list(repair = list(event = \"repair\", time = \"iv_fup\", ",
@@ -29,13 +29,13 @@ test_that("dp-eda renders every section into one self-contained report", {
     ),
     "^ABBREVIATIONS <- NULL$" = "ABBREVIATIONS <- c(\"Goodness of follow-up\" = \"GFU\")"
   ))
-  s <- scaffold_job("dp", "eda", edits, kind = "dp-postage")
+  s <- scaffold_job("dc", "eda", edits, kind = "dp-postage")
   quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
   html <- sub("[.]qmd$", ".html", s$job)
   expect_true(file.exists(html))
   graphs <- file.path(s$root, "graphs", "cohort-eda")
-  pages <- sprintf("dp-eda-%s-page-01.png", c("continuous", "percent", "count"))
-  pngs <- file.path(graphs, c("dp-eda-gfup-all.png", "dp-eda-gfup-repair.png", pages))
+  pages <- sprintf("dc-eda-%s-page-01.png", c("continuous", "percent", "count"))
+  pngs <- file.path(graphs, c("dc-eda-gfup-all.png", "dc-eda-gfup-repair.png", pages))
   expect_true(all(file.exists(pngs)))
   # Each figure's publication copy sits beside its PNG, under the same name.
   expect_true(all(file.exists(sub("[.]png$", ".pdf", pngs))))
@@ -48,7 +48,7 @@ test_that("dp-eda renders every section into one self-contained report", {
   # embed-resources: every saved figure is inside the report. An image Quarto
   # could not find is left as a file link and would not be counted here.
   # regmatches(), not length(gregexpr()): no match returns -1, whose length is 1.
-  n_png <- length(list.files(graphs, "^dp-eda-.*[.]png$"))
+  n_png <- length(list.files(graphs, "^dc-eda-.*[.]png$"))
   expect_identical(length(regmatches(text, gregexpr("src=\"data:image/png", text))[[1L]]), n_png)
   # The label cap and the merged abbreviation list are recorded in provenance,
   # so the report can say which list shaped its labels.
@@ -63,26 +63,26 @@ test_that("dp-eda renders every section into one self-contained report", {
   expect_identical(unname(payload[i + 1:2]), c("GFU", "job"))
 })
 
-test_that("dp-eda leaves out a section not named in SECTIONS", {
+test_that("dc-eda leaves out a section not named in SECTIONS", {
   skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   edits <- c(eda_edits, list("^SECTIONS <- " = "SECTIONS <- c(\"count\", \"continuous\")"))
-  s <- scaffold_job("dp", "eda", edits, kind = "dp-postage", subfolder = "checks")
+  s <- scaffold_job("dc", "eda", edits, kind = "dp-postage", subfolder = "checks")
   quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
   graphs <- file.path(s$root, "graphs", "cohort-eda")
-  expect_false(file.exists(file.path(graphs, "dp-eda-gfup-all.png")))
-  expect_length(list.files(graphs, "^dp-eda-percent-"), 0L)
-  expect_true(file.exists(file.path(graphs, "dp-eda-count-page-01.png")))
+  expect_false(file.exists(file.path(graphs, "dc-eda-gfup-all.png")))
+  expect_length(list.files(graphs, "^dc-eda-percent-"), 0L)
+  expect_true(file.exists(file.path(graphs, "dc-eda-count-page-01.png")))
   # A job kept in a subfolder still embeds its pages.
   text <- paste(readLines(sub("[.]qmd$", ".html", s$job), warn = FALSE), collapse = "\n")
-  n_png <- length(list.files(graphs, "^dp-eda-.*[.]png$"))
+  n_png <- length(list.files(graphs, "^dc-eda-.*[.]png$"))
   expect_identical(length(regmatches(text, gregexpr("src=\"data:image/png", text))[[1L]]), n_png)
   # The heading, not the folded source that prints it.
   expect_false(grepl("<h2[^>]*>[^<]*Goodness of follow-up", text))
 })
 
-test_that("dp-eda colors every point of an event panel, by the house rule or from COLORS", {
+test_that("dc-eda colors every point of an event panel, by the house rule or from COLORS", {
   # A manual scale whose names miss one of the panel's levels still draws: the
   # unmatched points go gray and ggplot says nothing while any level matches.
   # Only the built plot shows it, so this runs the template's own chunks, once
@@ -93,7 +93,7 @@ test_that("dp-eda colors every point of an event panel, by the house rule or fro
   # The panels' tables and figures are child chunks.
   local_child_chunks()
   root <- migration_study_fixture(NULL)
-  job <- add_job("dp", "cohort", "eda", dir = root, qualifier = "eda")
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "eda")
   chunk <- function(label) {
     lines <- readLines(job, warn = FALSE)
     start <- match(paste0("#| label: ", label), lines)
@@ -145,7 +145,7 @@ test_that("dp-eda colors every point of an event panel, by the house rule or fro
   expect_error(event_panel_colors(own, old = TRUE), "COLOURS is now COLORS", fixed = TRUE)
 })
 
-test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps", {
+test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps", {
   # read_job_data() drops MRN and eMRN but keeps the ID, so the ID reaches d and
   # the spec chunk must leave it out. Run through a real study: the data chunk
   # and then the spec chunk, as a render would.
@@ -158,7 +158,7 @@ test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps",
                       age = 40 + seq_len(n))
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
-  lines <- readLines(template_path("dp", "eda"), warn = FALSE)
+  lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   chunk <- function(label) {
     start <- match(paste0("#| label: ", label), lines)
     end <- start + match("```", lines[-seq_len(start)])
@@ -211,11 +211,11 @@ test_that("dp-eda never draws the job's ID or KEY, which read_job_data() keeps",
   expect_identical(env$VARIABLES, c("age", "hosp_id"))
 })
 
-# A chunk of the dp-eda template, parsed. The tests below run the spec chunk,
+# A chunk of the dc-eda template, parsed. The tests below run the spec chunk,
 # and the section chunks after it, without a render: the rules under test are
 # the template's own code, not a package function's.
 eda_chunk <- function(label) {
-  lines <- readLines(template_path("dp", "eda"), warn = FALSE)
+  lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   start <- match(paste0("#| label: ", label), lines)
   end <- start + match("```", lines[-seq_len(start)])
   parse(text = lines[seq.int(start + 1L, end - 1L)])
@@ -234,7 +234,7 @@ eda_spec_env <- function(d, ...) {
   env
 }
 
-test_that("dp-eda's spec chunk checks every variable and plotting choice", {
+test_that("dc-eda's spec chunk checks every variable and plotting choice", {
   spec <- eda_chunk("spec")
   env <- eda_spec_env(data.frame(year = 1:10, age = 41:50, patient_id = 11:20, visit_date = 21:30),
                       VARIABLES = "age")
@@ -267,7 +267,7 @@ test_that("dp-eda's spec chunk checks every variable and plotting choice", {
   expect_error(eval(spec, env), "No EDA variables")
 })
 
-test_that("dp-eda VARIABLES = NULL draws every column but ids, dates and exclusions, and says so", {
+test_that("dc-eda VARIABLES = NULL draws every column but ids, dates and exclusions, and says so", {
   spec <- eda_chunk("spec")
   env <- eda_spec_env(data.frame(year = 1:10, age = 41:50, patient_id = 11:20, op_date = Sys.Date() + 0:9,
                                  female = rep(0:1, 5), bmi = 21:30),
@@ -285,7 +285,7 @@ test_that("dp-eda VARIABLES = NULL draws every column but ids, dates and exclusi
   expect_error(eval(spec, env), "SECTIONS")
 })
 
-test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a separator", {
+test_that("dc-eda VARIABLES = NULL leaves out identifiers written without a separator", {
   spec <- eda_chunk("spec")
   # ccfid, the CCF patient identifier, has no "_" before "id", so the token rule
   # alone drew it as one bar per patient. carotid, steroid and case end the same
@@ -312,11 +312,11 @@ test_that("dp-eda VARIABLES = NULL leaves out identifiers written without a sepa
   expect_false("ccfid" %in% env$VARIABLES)
 })
 
-test_that("dp-eda's overview leaves out identifiers but keeps dates", {
+test_that("dc-eda's overview leaves out identifiers but keeps dates", {
   local_child_chunks()
   # Named in VARIABLES, so the spec chunk's NULL branch does not decide this:
   # the overview applies the rule itself.
-  lines <- readLines(template_path("dp", "eda"), warn = FALSE)
+  lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   chunk <- function(label) {
     start <- match(paste0("#| label: ", label), lines)
     end <- start + match("```", lines[-seq_len(start)])
@@ -340,23 +340,20 @@ test_that("dp-eda's overview leaves out identifiers but keeps dates", {
   expect_match(out, "Identifier columns, not described: ccfid, patientid, eMRN", fixed = TRUE)
 })
 
-test_that("dc-gfup, dp-gfup and dp-eda choose follow-up colors with the same code", {
-  # dp-eda's copy is drawn and checked above; this keeps the others from drifting.
-  # dp-gfup is deprecated, so its warning is muffled.
+test_that("dc-gfup and dc-eda choose follow-up colors with the same code", {
+  # dc-eda's copy is drawn and checked above; this keeps dc-gfup's from drifting.
   block <- function(prefix, qualifier) {
-    lines <- readLines(suppressWarnings(template_path(prefix, qualifier), classes = "hvtiRtemplates_deprecated"),
-                       warn = FALSE)
+    lines <- readLines(template_path(prefix, qualifier), warn = FALSE)
     start <- grep("^if \\(exists\\(\"COLOURS\"", lines)
     end <- start + match("}", lines[-seq_len(start)])
     end <- end + match("}", lines[-seq_len(end)])
     lines[start:end]
   }
   expect_length(block("dc", "gfup"), 13L)
-  expect_identical(block("dc", "gfup"), block("dp", "eda"))
-  expect_identical(block("dp", "gfup"), block("dp", "eda"))
+  expect_identical(block("dc", "gfup"), block("dc", "eda"))
 })
 
-test_that("dc-gfup and dp-eda build their follow-up table with the same function", {
+test_that("dc-gfup and dc-eda build their follow-up table with the same function", {
   block <- function(prefix, qualifier) {
     lines <- readLines(template_path(prefix, qualifier), warn = FALSE)
     start <- grep("^\\.followup_table <- function", lines)
@@ -364,7 +361,7 @@ test_that("dc-gfup and dp-eda build their follow-up table with the same function
     lines[start:end]
   }
   expect_gt(length(block("dc", "gfup")), 10L)
-  expect_identical(block("dc", "gfup"), block("dp", "eda"))
+  expect_identical(block("dc", "gfup"), block("dc", "eda"))
 })
 
 # The variable sections, run through the template's own set, spec and sections
@@ -383,7 +380,7 @@ eda_draw <- function(root, d, ...) {
   list(env = env, files = files, text = paste(out, collapse = "\n"))
 }
 
-test_that("dp-eda routes its pages through numbered study folders", {
+test_that("dc-eda routes its pages through numbered study folders", {
   root <- migration_study_fixture("dp-postage")
   local_child_chunks()
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
@@ -394,13 +391,13 @@ test_that("dp-eda routes its pages through numbered study folders", {
   expect_true(all(file.rename(file.path(root, folders), file.path(root, numbered))))
   drawn <- eda_draw(root, d, VARIABLES = c("age", "bmi", "lvmassi"))
   # All three are continuous, so only that section draws pages: two at 2 x 1.
-  expected <- file.path(root, "40_graphs", "cohort-eda", sprintf("dp-eda-continuous-page-%02d.png", 1:2))
+  expected <- file.path(root, "40_graphs", "cohort-eda", sprintf("dc-eda-continuous-page-%02d.png", 1:2))
   expect_identical(as.character(drawn$files), expected)
   expect_true(all(file.info(expected)$size > 1000))
   expect_false(dir.exists(file.path(root, "graphs")))
 })
 
-test_that("dp-eda draws its categorical pages in the role colors", {
+test_that("dc-eda draws its categorical pages in the role colors", {
   # The page is handed to ggsave() whole, so capture it there and build each
   # panel: every bar must be a house color, blue first, missing gray.
   root <- migration_study_fixture("dp-postage")
@@ -412,7 +409,7 @@ test_that("dp-eda draws its categorical pages in the role colors", {
   }, .package = "ggplot2")
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   suppressWarnings(eda_draw(root, d, VARIABLES = c("female", "hx_chf"), SECTIONS = "percent"))
-  expect_identical(names(saved), c("dp-eda-percent-page-01.png", "dp-eda-percent-page-01.pdf"))
+  expect_identical(names(saved), c("dc-eda-percent-page-01.png", "dc-eda-percent-page-01.pdf"))
   page <- saved[[1L]]
   fills <- unique(unlist(lapply(seq_along(page), function(k) ggplot2::ggplot_build(page[[k]])$data[[1L]]$fill)))
   expect_true(all(fills %in% c(hvtiPlotR::hv_ppt_palette("light"), "#CCCCCC")), info = paste(fills, collapse = ", "))
@@ -431,7 +428,7 @@ without_group_list <- function(env = parent.frame()) {
   )
 }
 
-test_that("dp-eda shortens labels that share a heading and prints their key", {
+test_that("dc-eda shortens labels that share a heading and prints their key", {
   # Two labels over LABEL_MAX share a heading: both show its abbreviation, and
   # the section says what it stands for. A job's own entry beats the initials.
   root <- migration_study_fixture("dp-postage")
@@ -454,7 +451,7 @@ test_that("dp-eda shortens labels that share a heading and prints their key", {
   expect_match(own$text, "Abbreviations: Proc = Surgical procedure.", fixed = TRUE)
 })
 
-test_that("dp-eda prints a key only under sections whose labels were shortened, from every level", {
+test_that("dc-eda prints a key only under sections whose labels were shortened, from every level", {
   # A label that already says "SP" in its own words (systolic pressure) is not
   # a shortened label: its section gets no key claiming SP = Surgical procedure.
   # The study's list applies unless the job overrides it.
@@ -483,7 +480,7 @@ test_that("dp-eda prints a key only under sections whose labels were shortened, 
   expect_match(job$labels, "^Proc: ")
 })
 
-test_that("dp-eda's group abbreviation list shortens further, when it is installed", {
+test_that("dc-eda's group abbreviation list shortens further, when it is installed", {
   skip_if(!length(hvtiRutilities::study_abbreviations(list())), "hvtiRutilities has no group abbreviation list")
   root <- migration_study_fixture("dp-postage")
   local_child_chunks()

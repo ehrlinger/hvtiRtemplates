@@ -12,7 +12,7 @@ check a run of the slides (`../descriptives-slides.qmd`) or of
   differ between machines; the shape of the data should not.
 
 Regenerate with `Rscript dev/demo/make-reference.R` from the repository root.
-It renders all five jobs in a temporary study, copies the figures, and computes
+It renders all four jobs in a temporary study, copies the figures, and computes
 the numbers with the functions the jobs call. It stops if a rendered report
 does not print a number the reference records. Review the diff before
 committing: an unexpected change here is the thing this set exists to catch.

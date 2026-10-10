@@ -66,9 +66,17 @@
 #' that name and keep rendering; \code{add_job()} refuses to write a second
 #' copy of such a job under the new name, and \code{\link{open_job}} opens it.
 #'
-#' A template the catalog marks deprecated, such as \code{dp.gfup}, still
-#' scaffolds, with a warning naming its replacement; see
-#' \code{\link{template_catalog}}.
+#' A template the catalog marks deprecated still scaffolds, with a warning
+#' naming its replacement; see \code{\link{template_catalog}}.
+#'
+#' \strong{Renamed templates.} \code{dp.eda} and \code{dp.trends} were renamed
+#' \code{dc.eda} and \code{dc.trends} on 2026-10-10. The old names still
+#' scaffold the renamed template, with a warning naming the new name, through
+#' the next release, and are removed in the one after. A \code{dc.trends} job
+#' is written to the \code{descriptive} folder, where a \code{dp.trends} job
+#' was written to \code{graphs}. A job scaffolded under the old name keeps it
+#' and keeps rendering; \code{add_job()} refuses to write a second copy of it
+#' under the new name, and \code{\link{open_job}} opens it.
 #'
 #' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
 #'   \code{dp}. Required only where a prefix carries more than one template;
@@ -77,8 +85,8 @@
 #'   filename's fields.
 #' @param prefix Job type: one of the prefixes reported by
 #'   \code{\link{template_list}}, or a template's full name as reported in
-#'   its \code{name} column, e.g. \code{"dp.trends"}; the dash spelling
-#'   \code{"dp-trends"} is accepted too. A full name carries the qualifier, so
+#'   its \code{name} column, e.g. \code{"dc.trends"}; the dash spelling
+#'   \code{"dc-trends"} is accepted too. A full name carries the qualifier, so
 #'   \code{qualifier} must then be left \code{NULL}.
 #' @param subject Grouping topic for the job set, e.g. \code{"death"} or
 #'   \code{"cohort"}. A subject names a statistical endpoint only when the
@@ -114,8 +122,9 @@
 #' # A qualified template by its full name, the form template_list()$call prints.
 #' add_job("dc.gfup", subject = "cohort", type = "eda", dir = d)
 #'
-#' # A deprecated template still scaffolds, and the warning names its replacement.
-#' tryCatch(add_job("dp.gfup", subject = "cohort", type = "eda", dir = d),
+#' # A template's name before a rename still works, and the warning names the
+#' # new one.
+#' tryCatch(add_job("dp.trends", subject = "cohort", type = "eda", dir = d),
 #'          warning = conditionMessage)
 #'
 #' # A job accumulates a study's edits, so an existing one is never overwritten.
@@ -161,6 +170,15 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   if (file.exists(legacy)) {
     stop("add_job(): this job already exists as '", legacy, "', its name before 2026-10; refusing to write a ",
          "second copy. Open it with open_job(), or rename it to '", basename(out), "' first.", call. = FALSE)
+  }
+  # The same job scaffolded under the template's name before a rename, such as
+  # graphs/dp.trends.<subject>.<type>.qmd for a dc.trends job, for the same reason.
+  renamed <- .job_paths_renamed(row, subject, type, dir)
+  renamed <- renamed[file.exists(renamed)]
+  if (length(renamed)) {
+    stop("add_job(): this job already exists as '", renamed[[1L]], "', under the template's name before it ",
+         "was renamed; refusing to write a second copy. Open it with open_job(), or move it to '", out, "' first.",
+         call. = FALSE)
   }
   # Its runner too: a pre-2026-10 runner left behind after its .qmd was removed
   # still holds the study's edits, and a new runner beside it would split them.
@@ -282,7 +300,7 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
 # existence and must not create the directory as a side effect of looking.
 #
 # The job carries the template's qualifier. A job scaffolded from
-# dp-trends.qmd is a trends job, and a filename that drops that says only
+# dc-trends.qmd is a trends job, and a filename that drops that says only
 # "some dp job", which is the thing the template split exists to fix.
 #
 # No ordinal in the filename: the taxonomy folder records placement. The

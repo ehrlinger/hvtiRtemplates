@@ -44,7 +44,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**67 templates in scope**, of which 33 exist on disk.
+**65 templates in scope**, of which 32 exist on disk.
 
 ## By family
 
@@ -76,12 +76,11 @@ row has no template on disk.
 
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `dp-eda` | shipped | — | — | — | — |
-| `dp-gfup` | shipped, deprecated for `dc-gfup` | — | 48 | 4 | — |
+| `dc-eda` | shipped | — | — | — | — |
+| `dc-trends` | shipped | — | 80 | 75 | — |
+| `dc-variable` | queued | — | 237 | 2 | — |
 | `dp-procs` | queued | — | 35 | 0 | — |
 | `dp-spaghetti` | queued | — | 40 | 40 | — |
-| `dp-trends` | shipped | — | 80 | 75 | — |
-| `dp-variable` | queued | — | 237 | 2 | — |
 | `hp` | **revisit** | 557 | 541 | 16 | — |
 | `lp` | queued | 636 | 310 | 186 | — |
 | `mp` | queued | 82 | 41 | 4 | — |
@@ -89,7 +88,7 @@ row has no template on disk.
 | `rp` | queued | 76 | 68 | 5 | — |
 | `ce` | queued | 131 | 128 | 1 | hvtiPlotR#134 |
 | `cp` | queued | 5 | 4 | 1 | hvtiPlotR#135 |
-| `dp-boxplot` | queued | — | 9 | 2 | — |
+| `dc-boxplot` | queued | — | 9 | 2 | — |
 | `fp` | queued | 19 | 11 | 11 | hvtiPlotR#133 |
 | `gp` | queued | 50 | 50 | 2 | hvtiPlotR#136 |
 
@@ -104,7 +103,6 @@ row has no template on disk.
 | `lg` | queued | 367 | 362 | 0 | — |
 | `rg` | queued | 45 | 45 | 0 | — |
 | `dc-stddiff` | shipped | — | 120 | 0 | — |
-| `dc-trends` | queued | — | 43 | 0 | — |
 
 ### machine-learning (unscheduled)
 

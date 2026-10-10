@@ -8,8 +8,8 @@
 #' types, and lives in a numbered directory named for the taxonomy folder it
 #' scaffolds into, so \code{folder} is read from the tree rather than looked
 #' up. A qualified template is shown, and selected, as \code{<prefix>.<qualifier>},
-#' e.g. \code{dp.trends}, the spelling a job's name uses; the file keeps its
-#' dash, and \code{"dp-trends"} is still accepted as input. The directory's
+#' e.g. \code{dc.trends}, the spelling a job's name uses; the file keeps its
+#' dash, and \code{"dc-trends"} is still accepted as input. The directory's
 #' leading digits order the folders and are stripped from
 #' \code{folder}. The placement test requires the job catalog and skips when
 #' it is absent. Its internal lookup helper uses the catalog's
@@ -121,7 +121,7 @@ print.hvti_template_list <- function(x, ...) {
 }
 
 # A template's name as shown and accepted: its file stem with the qualifier
-# joined by ".", so "dp-trends.qmd" shows as "dp.trends", the spelling a job's
+# joined by ".", so "dc-trends.qmd" shows as "dc.trends", the spelling a job's
 # name uses. A template file is <prefix>[-<qualifier>].qmd and neither part
 # contains "-", so the first dash is the only one.
 .template_display_name <- function(file) {
@@ -131,15 +131,17 @@ print.hvti_template_list <- function(x, ...) {
 #' Path to a supported template
 #'
 #' @param prefix Analysis prefix, e.g. \code{"ac"}, or a template's full name,
-#'   e.g. \code{"dp.trends"} (or \code{"dp-trends"}), which carries its
+#'   e.g. \code{"dc.trends"} (or \code{"dc-trends"}), which carries its
 #'   qualifier and leaves \code{qualifier} \code{NULL}. See
 #'   \code{\link{template_list}}.
 #' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
-#'   \code{dp}. Required only where a prefix carries more than one template;
+#'   \code{dc}. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
 #' @return The full path, as \code{character(1)}. A template the catalog
-#'   marks deprecated, such as \code{dp.gfup}, still resolves, with a
-#'   warning naming its replacement.
+#'   marks deprecated still resolves, with a warning naming its replacement.
+#'   So does a template's name before a rename, such as \code{dp.trends},
+#'   now \code{dc.trends}: it resolves to the renamed template, with a
+#'   warning naming the new name, until the old name is removed.
 #' @export
 #' @examples
 #' template_path("ac")
@@ -155,6 +157,54 @@ template_path <- function(prefix, qualifier = NULL) {
   row <- .select_template(template_list(), prefix, qualifier)
   .warn_if_deprecated(row, "template_path")
   row$file[[1L]]
+}
+
+# The catalog's `renamed` list: one row per template name retired by a rename,
+# with the name it became (`to`), the folder its jobs were written to under the
+# old name (`from_folder`) and the sentence the warning ends with. Renaming a
+# template, like deprecating one, is a catalog edit, so no template name is
+# written into the code. Names are the file spelling, "dp-trends". Empty when
+# the catalog is absent or lists none.
+.template_renames <- function() {
+  path <- system.file("extdata", "templates.json", package = "hvtiRtemplates")
+  none <- data.frame(from = character(0), to = character(0), from_folder = character(0),
+                     note = character(0), stringsAsFactors = FALSE)
+  if (!nzchar(path)) return(none)
+  rows <- jsonlite::fromJSON(path, simplifyVector = FALSE)$renamed
+  if (!length(rows)) return(none)
+  field <- function(f) vapply(rows, function(r) as.character(r[[f]]), character(1))
+  data.frame(from = field("from"), to = field("to"), from_folder = field("from_folder"),
+             note = field("note"), stringsAsFactors = FALSE)
+}
+
+# The rename retiring (prefix, qualifier), as a one-row data frame, or NULL.
+# A name still on disk is never treated as an alias, so a template list that
+# carries the old name, as a test's own list may, selects it as it stands.
+.template_rename <- function(tl, prefix, qualifier) {
+  if (is.null(qualifier)) return(NULL)
+  if (any(!is.na(tl$prefix) & tl$prefix == prefix & !is.na(tl$qualifier) & tl$qualifier == qualifier)) {
+    return(NULL)
+  }
+  renames <- .template_renames()
+  hit <- renames[renames$from == paste0(prefix, "-", qualifier), , drop = FALSE]
+  if (nrow(hit) == 1L) hit else NULL
+}
+
+# The paths a job of the selected row was written to under each name the
+# template had before a rename: the period and dash spellings, in the folder
+# the old name scaffolded into. add_job() refuses to write a second copy beside
+# one, and open_job() opens it, as both do for the dash spelling.
+.job_paths_renamed <- function(row, subject, type, root) {
+  renames <- .template_renames()
+  name <- paste0(row$prefix[[1L]], if (!is.na(row$qualifier[[1L]])) paste0("-", row$qualifier[[1L]]))
+  renames <- renames[renames$to == name, , drop = FALSE]
+  # character(0), not NULL, when nothing was renamed to this template: file.exists(NULL) is an error.
+  as.character(unlist(lapply(seq_len(nrow(renames)), function(i) {
+    old <- .split_template_name(renames$from[[i]])
+    old_row <- data.frame(prefix = old$prefix, qualifier = old$qualifier, folder = renames$from_folder[[i]],
+                          stringsAsFactors = FALSE)
+    c(.job_path(old_row, subject, type, root), .job_path_legacy(old_row, subject, type, root))
+  }), use.names = FALSE))
 }
 
 # The catalog row marking (prefix, qualifier) deprecated, or NULL. The marker
@@ -174,8 +224,15 @@ template_path <- function(prefix, qualifier = NULL) {
        deprecated_by = sub("-", ".", hit$deprecated_by, fixed = TRUE), note = hit$deprecation_note)
 }
 
-# Warn once when a selected template row is deprecated, naming the caller.
+# Warn once when a selected template row is deprecated, or was selected by
+# its name before a rename, naming the caller.
 .warn_if_deprecated <- function(row, fn) {
+  renamed <- attr(row, "renamed")
+  if (!is.null(renamed)) {
+    return(.warn_deprecated(paste0(fn, "(): ", sub("-", ".", renamed$from, fixed = TRUE),
+                                   " is deprecated in favor of ", sub("-", ".", renamed$to, fixed = TRUE),
+                                   ". ", renamed$note)))
+  }
   deprecated <- .template_deprecation(row$prefix[[1L]], row$qualifier[[1L]])
   if (is.null(deprecated)) return(invisible(NULL))
   .warn_deprecated(paste0(fn, "(): ", deprecated$name, " is deprecated in favor of ",
@@ -200,7 +257,21 @@ template_path <- function(prefix, qualifier = NULL) {
 #
 # `qualifier = NULL` is still accepted where the prefix has exactly one
 # template, so existing unqualified calls keep their meaning.
+#
+# A template's name before a rename selects the renamed template, and the row
+# carries the rename as its "renamed" attribute, for .warn_if_deprecated().
 .select_template <- function(tl, prefix, qualifier = NULL) {
+  .check_scalar_string("prefix", prefix)
+  parts <- .split_template_name(prefix, qualifier)
+  renamed <- .template_rename(tl, parts$prefix, parts$qualifier)
+  if (is.null(renamed)) return(.select_template_row(tl, parts$prefix, parts$qualifier))
+  new <- .split_template_name(renamed$to)
+  row <- .select_template_row(tl, new$prefix, new$qualifier)
+  attr(row, "renamed") <- renamed
+  row
+}
+
+.select_template_row <- function(tl, prefix, qualifier = NULL) {
   # Validate before comparing. `hit$qualifier == NA_character_` is NA, not
   # FALSE, so an NA qualifier produces NA-indexed rows and an error that names
   # nothing useful; a length-2 qualifier recycles silently. `add_job()` screens
@@ -217,7 +288,13 @@ template_path <- function(prefix, qualifier = NULL) {
   qualifier <- parts$qualifier
   hit <- tl[!is.na(tl$prefix) & tl$prefix == prefix, , drop = FALSE]
   if (!nrow(hit)) {
+    # A template removed from one prefix often has a namesake under another:
+    # dp.gfup went, and dc.gfup draws the same figure. Naming it is the answer
+    # the caller came for.
+    same <- tl[!is.null(qualifier) & !is.na(tl$qualifier) & tl$qualifier %in% qualifier, , drop = FALSE]
     stop("unknown template: ", prefix,
+         if (!is.null(qualifier)) paste0(".", qualifier),
+         if (nrow(same)) paste0(". Qualified '", qualifier, "': ", .qualifier_menu(same)),
          if (nrow(tl)) {
            paste0(". Available: ",
                   paste(sort(unique(stats::na.omit(tl$prefix))), collapse = ", "))
@@ -287,14 +364,14 @@ template_path <- function(prefix, qualifier = NULL) {
 # The qualifiers on offer for a prefix, for an error message. An unqualified
 # template is shown as NA rather than omitted, so a prefix holding one
 # unqualified and two qualified templates reads as the three it is.
-# Each is shown by its full name, "dp.trends", which is also a form a caller
+# Each is shown by its full name, "dc.trends", which is also a form a caller
 # can type back.
 .qualifier_menu <- function(hit) {
   paste(ifelse(is.na(hit$qualifier), hit$prefix, paste0(hit$prefix, ".", hit$qualifier)), collapse = ", ")
 }
 
-# Split a template's full name, "dp.trends", into prefix and qualifier, as
-# template_list() reports it in `name`. The file's dash spelling, "dp-trends",
+# Split a template's full name, "dc.trends", into prefix and qualifier, as
+# template_list() reports it in `name`. The file's dash spelling, "dc-trends",
 # is accepted too. A prefix may contain neither "." nor "-", so splitting at
 # the first one is exact. A full name AND a qualifier are two
 # answers to one question; refusing is safer than preferring either. The
@@ -309,7 +386,7 @@ template_path <- function(prefix, qualifier = NULL) {
   }
   if (!grepl("^[^.-]+[.-][^.-]+$", prefix)) {
     stop("template selection: '", prefix, "' is not a template name; ",
-         "expected <prefix>.<qualifier>, e.g. 'dp.trends'.", call. = FALSE)
+         "expected <prefix>.<qualifier>, e.g. 'dc.trends'.", call. = FALSE)
   }
   list(prefix = sub("[.-].*$", "", prefix), qualifier = sub("^[^.-]*[.-]", "", prefix))
 }

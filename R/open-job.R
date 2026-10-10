@@ -11,7 +11,9 @@
 #' Naming, prefix and qualifier rules are those of \code{\link{add_job}}.
 #' A job scaffolded before 2026-10, named
 #' \code{<subject>-<type>-<prefix>[-<qualifier>].qmd}, is found and opened
-#' under that name.
+#' under that name. So is a job scaffolded under a template's name before a
+#' rename, such as \code{graphs/dp.trends.<subject>.<type>.qmd} for
+#' \code{dc.trends}, whichever of the two names the call uses.
 #' The editor is opened only in an interactive session.
 #'
 #' @inheritParams add_job
@@ -45,10 +47,14 @@ open_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   .check_field("type", type, fn = "open_job")
   .warn_if_deprecated(row, "open_job")
   out <- .job_path(row, subject, type, root)
-  # A job scaffolded before 2026-10 keeps its dash spelling; open it rather
-  # than scaffold a second, empty copy under the new name.
-  legacy <- .job_path_legacy(row, subject, type, root)
-  if (!file.exists(out) && file.exists(legacy)) out <- legacy
+  # A job scaffolded before 2026-10 keeps its dash spelling, and one scaffolded
+  # under the template's name before a rename keeps that name; open either
+  # rather than scaffold a second, empty copy under the new name.
+  if (!file.exists(out)) {
+    earlier <- c(.job_path_legacy(row, subject, type, root), .job_paths_renamed(row, subject, type, root))
+    earlier <- earlier[file.exists(earlier)]
+    if (length(earlier)) out <- earlier[[1L]]
+  }
   if (file.exists(out)) {
     message("open_job(): '", out, "' already exists; opening it unchanged.")
   } else {

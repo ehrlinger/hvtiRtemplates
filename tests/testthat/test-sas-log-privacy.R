@@ -1,9 +1,11 @@
 test_that("every migration log path reports diagnostics without patient-like message text", {
-  for (kind in c("dc-tables", "dc-gfup", "dp-trends", "dp-postage-sas", "dp-postage-qmd")) {
+  for (kind in c("dc-tables", "dc-gfup", "dc-trends", "dp-postage-sas", "dp-postage-qmd")) {
     fixture <- sub("-(sas|qmd)$", "", kind)
     root <- migration_study_fixture(fixture)
-    folder <- if (kind == "dp-trends") "graphs" else "descriptive"
-    source <- file.path(root, folder, paste0(gsub("-", ".", fixture), if (kind == "dp-postage-qmd") ".qmd" else ".sas"))
+    folder <- if (kind == "dc-trends") "graphs" else "descriptive"
+    # The legacy trends source keeps its corpus name, dp.trends.sas.
+    stem <- if (fixture == "dc-trends") "dp.trends" else gsub("-", ".", fixture)
+    source <- file.path(root, folder, paste0(stem, if (kind == "dp-postage-qmd") ".qmd" else ".sas"))
     if (kind == "dp-postage-sas") {
       writeLines("set built; %let pref_time_var=iv_dead; %let variables=age;", source)
     }
@@ -17,9 +19,9 @@ test_that("every migration log path reports diagnostics without patient-like mes
       "NOTE: The data set REVIEW_TOKEN_DATASET has 24 observations and 13 variables."
     ), log)
     before <- tools::md5sum(c(source, log))
-    # A legacy EDA source migrates to dp-eda.
+    # A legacy EDA source migrates to dc-eda.
     qualifier <- if (fixture == "dp-postage") "eda" else sub("^[^-]+-", "", fixture)
-    job <- migrate_job(source, "cohort", "eda", substr(fixture, 1L, 2L), qualifier, log = log, dir = root)
+    job <- migrate_job(source, "cohort", "eda", "dc", qualifier, log = log, dir = root)
     report <- readLines(sub("[.]qmd$", "-migration.md", job))
     text <- paste(report, collapse = "\n")
     expect_false(grepl("REVIEW_TOKEN|98765432", text), info = kind)
