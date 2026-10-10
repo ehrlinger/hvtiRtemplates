@@ -26,19 +26,19 @@ local_template_list_once <- function(.local_envir = parent.frame()) {
 }
 
 inline_privacy_migrate <- function(root, kind, middle, after = TRUE) {
-  prefix <- if (startsWith(kind, "dc-")) "dc" else "dp"
+  prefix <- "dc"
   qualifier <- sub("^[^-]+-", "", kind)
   before <- switch(kind,
     "dc-tables" = "%desc_tab(vartype=continuous,input=built,varlist=/* Before */ age);",
     "dc-gfup" = "set built; proc means; var iv_dead; by dead; run;",
-    "dp-trends" = "set built; year=floor(iv_opyrs)+1985; %let continuous=lvmassi;",
-    "dp-eda" = "set built; %let pref_time_var=iv_dead; %let variables=age;"
+    "dc-trends" = "set built; year=floor(iv_opyrs)+1985; %let continuous=lvmassi;",
+    "dc-eda" = "set built; %let pref_time_var=iv_dead; %let variables=age;"
   )
   suffix <- switch(kind,
     "dc-tables" = "%desc_tab(vartype=continuous,input=built,varlist=/* After */ bmi);",
     "dc-gfup" = "proc means; var iv_fup; run;",
-    "dp-trends" = "%let percent=hx_chf;",
-    "dp-eda" = "%let ncol=2;"
+    "dc-trends" = "%let percent=hx_chf;",
+    "dc-eda" = "%let ncol=2;"
   )
   path <- file.path(root, "descriptive", "inline.sas")
   writeLines(c(before, middle, if (after) c("age=age+10; if female=1;", suffix)), path)
@@ -51,7 +51,7 @@ inline_privacy_migrate <- function(root, kind, middle, after = TRUE) {
 test_that("every SAS adapter withholds all inline aliases after apostrophe comments", {
   skip_on_cran()
   local_template_list_once()
-  for (kind in c("dc-tables", "dc-gfup", "dp-trends", "dp-eda")) {
+  for (kind in c("dc-tables", "dc-gfup", "dc-trends", "dc-eda")) {
     for (alias in c("datalines", "cards", "lines", "datalines4", "cards4", "lines4")) {
       for (comment in c("* don't disclose records;", "%* don't disclose records;")) {
         out <- inline_privacy_migrate(inline_privacy_study(), kind, c(
@@ -64,7 +64,7 @@ test_that("every SAS adapter withholds all inline aliases after apostrophe comme
         expect_true(any(grepl("if female=1;", out$report, fixed = TRUE)))
         expect_true(any(grepl("EDIT:.*withheld", out$job)))
         expected <- switch(kind, "dc-tables" = "After =", "dc-gfup" = "iv_fup",
-                           "dp-trends" = "hx_chf", "dp-eda" = "GRID_NCOL <- 2L")
+                           "dc-trends" = "hx_chf", "dc-eda" = "GRID_NCOL <- 2L")
         expect_true(any(grepl(expected, out$job, fixed = TRUE)), info = kind)
         expect_true(out$unchanged)
       }
@@ -87,7 +87,7 @@ test_that("SAS adapters fail closed for ambiguous delimiters and uncertain token
       c(paste0(alias, ";"), "PATIENT_SENTINEL_472 ' unmatched quote")
     ))
   }
-  for (kind in c("dc-tables", "dc-gfup", "dp-trends", "dp-eda")) {
+  for (kind in c("dc-tables", "dc-gfup", "dc-trends", "dc-eda")) {
     for (rows in cases) {
       out <- inline_privacy_migrate(inline_privacy_study(), kind, rows, after = FALSE)
       expect_false(any(grepl("PATIENT_SENTINEL", c(out$job, out$report), fixed = TRUE)), info = paste(kind, rows[[1L]]))

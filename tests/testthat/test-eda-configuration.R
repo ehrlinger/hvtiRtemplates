@@ -1,10 +1,10 @@
 test_that("jobs present their study choices before reading data", {
   files <- c("10_descriptive/dc-general.qmd", "10_descriptive/dc-gfup.qmd",
-             "10_descriptive/dc-tables.qmd", "10_descriptive/dp-eda.qmd",
+             "10_descriptive/dc-tables.qmd", "10_descriptive/dc-eda.qmd",
              "20_distributions/ac.qmd", "20_distributions/hz.qmd",
              "30_analyses/bc.qmd", "30_analyses/bh.qmd", "30_analyses/bl.qmd",
-             "30_analyses/br.qmd", "30_analyses/hm.qmd", "40_graphs/dp-gfup.qmd",
-             "40_graphs/dp-trends.qmd",
+             "30_analyses/br.qmd", "30_analyses/hm.qmd",
+             "10_descriptive/dc-trends.qmd",
              "40_graphs/hp.qmd", "40_graphs/hs-concordance.qmd",
              "40_graphs/hs-setup.qmd")
   required <- list(
@@ -12,7 +12,7 @@ test_that("jobs present their study choices before reading data", {
     `dc-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "EVENT", "FOLLOWUP", "CHECKS", "OPYRS", "ORIGIN_YEAR",
                       "CLOSE_DATE", "PANELS", "EVENTS", "ALPHA", "COLORS"),
     `dc-tables.qmd` = c("DATASET", "ANALYSIS_SET", "GROUPS", "WORD_FILE", "CORR"),
-    `dp-eda.qmd` = c("DATASET", "ANALYSIS_SET", "OPYRS", "ORIGIN_YEAR", "CLOSE_DATE", "PANELS", "EVENTS",
+    `dc-eda.qmd` = c("DATASET", "ANALYSIS_SET", "OPYRS", "ORIGIN_YEAR", "CLOSE_DATE", "PANELS", "EVENTS",
                      "X_VAR", "VARIABLES", "GRID_NCOL", "SECTIONS", "ALPHA"),
     `ac.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "DERIVED", "TIME", "EVENT", "grid", "labs"),
     `hz.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "phases", "theta0"),
@@ -22,9 +22,7 @@ test_that("jobs present their study choices before reading data", {
     `br.qmd` = c("EXPECT_BOOT", "BOOT_FILE", "RETAIN_PCT", "CLUSTERS", "COLLINEAR_R"),
     `hm.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "SAS_JOB", "SAS_MACRO",
                  "SHAPE_PARAMS", "DECILE_TIME"),
-    `dp-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "OPYRS", "ORIGIN_YEAR", "CLOSE_DATE",
-                      "PANELS", "EVENTS", "ALPHA"),
-    `dp-trends.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TRENDS", "XBREAKS", "SUBGROUPS"),
+    `dc-trends.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TRENDS", "XBREAKS", "SUBGROUPS"),
     `hp.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "years", "t_max", "TIME", "EVENT"),
     `hs-concordance.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "MODELS", "GROUP",
                              "HORIZON", "CARRY", "OVERLAP", "CROSS_STUDY"),

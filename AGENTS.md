@@ -148,7 +148,7 @@ by counting assertions: revert the code and confirm the new tests go red.
 
 A template file is `<prefix>[-<qualifier>].qmd` and lives in a numbered directory named for
 the taxonomy folder it scaffolds into, e.g. `inst/templates/20_distributions/ac.qmd` or
-`inst/templates/40_graphs/dp-trends.qmd`.
+`inst/templates/10_descriptive/dc-trends.qmd`.
 
 ```
 00_datasets   10_descriptive   20_distributions   30_analyses
@@ -165,12 +165,22 @@ bare taxonomy names. `add_job()` delegates placement to `hvtiRutilities::study_d
 preserves either consistent scheme and rejects a mixed study rather than splitting its estate
 across two spellings of one folder. `template_list()` reports the taxonomy name without digits.
 
-**The qualifier names a job type within a prefix, and is optional.** `dp-trends` is the
-first template to carry one. The qualifier exists because `graphs/dp` is `trends`,
+**The qualifier names a job type within a prefix, and is optional.** `dp-trends`, now
+`dc-trends`, was the first template to carry one. The qualifier exists because `graphs/dp` is `trends`,
 `spaghetti`, `procs` and more
 under one prefix, and a filename that cannot say which job it is, is one a study author
 cannot search. Decided 2026-09-02, see
 `dev/specs/2026-09-02-dp-dc-decomposition-design.md`.
+
+⚠️ **No shipped template uses `dp` since 2026-10-10, and the taxonomy keeps its `dp` row.**
+`dp-eda` and `dp-trends` were renamed `dc-eda` and `dc-trends`, `dp-gfup` was removed, and the
+queued `dp-variable` and `dp-boxplot` rows became `dc-*`. The queued `dp-spaghetti` and
+`dp-procs` rows were left under `dp`, undecided. The taxonomy row stays because thousands
+of legacy corpus jobs are named `dp.*` and `job_census()` counts them. The old template names
+are aliases listed under `renamed` in `inst/extdata/templates.json`: they resolve to the new
+template with a deprecation warning for one release, then go. A rename is not a deprecation:
+`check-roadmap-counts.py` requires a `deprecated_by` row to be on disk, and a renamed template's
+old file is not.
 
 ⚠️ **A prefix may hold SEVERAL ledger rows, keyed on `(prefix, qualifier)`.**
 `check-roadmap-counts.py` enforces the pair, and also enforces that a prefix is **wholly
@@ -209,7 +219,7 @@ name check reads both (`.job_name_fields()` in `R/job-name.R`). `subject` and `t
 `(subject, analysis type)` set the job belongs to. The subject is a grouping topic; it is a
 statistical endpoint only when the job analyses one. Both are required and restricted to
 `[A-Za-z0-9_]+`, because `.` separates the filename's fields. Template *files* in this
-package keep `<prefix>[-<qualifier>].qmd`; `template_list()` shows them as `dp.trends`, and
+package keep `<prefix>[-<qualifier>].qmd`; `template_list()` shows them as `dc.trends`, and
 results folders stay `<subject>-<type>/`.
 
 **A template must have exactly one `^SUBJECT\s+<- ` line and one `^TYPE\s+<- ` line.**

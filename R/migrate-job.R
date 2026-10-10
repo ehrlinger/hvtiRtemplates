@@ -7,12 +7,16 @@
 #'
 #' @details
 #' A converter is available for \code{dc-tables}, \code{dc-gfup},
-#' \code{dp-trends}, and \code{dp-eda}, each interpreting its own source
+#' \code{dc-trends}, and \code{dc-eda}, each interpreting its own source
 #' choices; choices the interpreter does not recognize remain for review.
-#' Legacy EDA reports migrate into \code{dp-eda} with
+#' Legacy EDA reports migrate into \code{dc-eda} with
 #' \code{SECTIONS <- c("continuous", "percent", "count")}, the pages they
-#' drew. Naming a deprecated template, such as \code{dp-gfup}, warns and
-#' writes the job from its replacement. A
+#' drew. Naming a deprecated template warns and writes the job from its
+#' replacement. Naming a template by its name before a rename, such as
+#' \code{dp-trends}, warns and writes the job from the renamed template,
+#' \code{dc-trends}; a legacy source whose own file name carries the old name,
+#' such as \code{dp.trends.sas}, migrates into the renamed template without
+#' a warning, since that name is not the caller's to change. A
 #' template with no converter yet still migrates: it is scaffolded with every
 #' \code{EDIT:} marker kept, the evidence travels with it, and the report
 #' says the migration adapter is not yet available.
@@ -118,7 +122,7 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
   }
   check_string("source", source)
   if (!is.null(qualifier)) .check_field("qualifier", qualifier, fn = "migrate_job")
-  # A full name, "dp-trends", is split before the field check, as in add_job().
+  # A full name, "dc-trends", is split before the field check, as in add_job().
   if (!is.null(prefix)) {
     check_string("prefix", prefix)
     parts <- tryCatch(.split_template_name(prefix, qualifier), error = function(e) {
@@ -176,6 +180,12 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
     .select_template(template_list(), prefix, qualifier),
     error = function(e) stop("migrate_job(): ", conditionMessage(e), call. = FALSE)
   )
+  # A name before a rename selects the renamed template, whose converter runs.
+  if (!is.null(attr(row, "renamed"))) {
+    .warn_if_deprecated(row, "migrate_job")
+    prefix <- row$prefix[[1L]]
+    qualifier <- row$qualifier[[1L]]
+  }
   adapter <- .migration_adapter(prefix, qualifier)
   evidence <- .migration_evidence(paths, root)
   evidence$found <- found
@@ -194,13 +204,23 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
     # The caller's prefix wins, but a qualified prefix still takes its
     # qualifier from the second field when that field names one. Anything
     # else is left for .select_template() to refuse as ambiguous.
+    # A qualifier the prefix carried before a rename counts too, and the
+    # caller's own prefix then draws the rename's warning.
     if (is.null(qualifier) && length(fields) >= 3L &&
-          fields[[2L]] %in% stats::na.omit(tl$qualifier[tl$prefix == prefix])) {
+          (fields[[2L]] %in% stats::na.omit(tl$qualifier[tl$prefix == prefix]) ||
+             !is.null(.template_rename(tl, prefix, fields[[2L]])))) {
       qualifier <- fields[[2L]]
     }
     return(list(prefix = prefix, qualifier = qualifier))
   }
+  # A legacy source keeps the template's name before a rename, dp.trends.sas
+  # for dc-trends, and always will. That name is the corpus's, not the
+  # caller's, so it maps to the renamed template without a warning.
   needed <- if (is.null(qualifier)) 3L else 2L
+  if (length(fields) >= needed) {
+    renamed <- .template_rename(tl, fields[[1L]], if (is.null(qualifier)) fields[[2L]] else qualifier)
+    if (!is.null(renamed)) return(.split_template_name(renamed$to))
+  }
   if (length(fields) < needed || !fields[[1L]] %in% tl$prefix) {
     stop("migrate_job(): cannot read a template prefix from '", basename(source),
          "'; pass `prefix` (and `qualifier`).", call. = FALSE)
@@ -244,6 +264,13 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
   if (.migration_target_exists(legacy)) {
     stop("Migration output already exists under its name before 2026-10; refusing to write a second copy: ",
          .canonical_path(legacy), call. = FALSE)
+  }
+  # So does the same job under the template's name before a rename.
+  for (renamed in .job_paths_renamed(row, subject, type, root)) {
+    if (.migration_target_exists(renamed)) {
+      stop("Migration output already exists under the template's name before it was renamed; refusing to ",
+           "write a second copy: ", .canonical_path(renamed), call. = FALSE)
+    }
   }
   list(
     lines = readLines(staged, warn = FALSE),
@@ -309,8 +336,8 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
   c(
     "dc\rtables" = ".migrate_dc_tables",
     "dc\rgfup" = ".migrate_dc_gfup",
-    "dp\rtrends" = ".migrate_dp_trends",
-    "dp\reda" = ".migrate_dp_eda"
+    "dc\rtrends" = ".migrate_dc_trends",
+    "dc\reda" = ".migrate_dc_eda"
   )
 }
 

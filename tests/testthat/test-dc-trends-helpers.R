@@ -1,10 +1,10 @@
 template <- system.file(
-  "templates", "40_graphs", "dp-trends.qmd",
+  "templates", "10_descriptive", "dc-trends.qmd",
   package = "hvtiRtemplates"
 )
 if (!nzchar(template)) {
   template <- testthat::test_path(
-    "..", "..", "inst", "templates", "40_graphs", "dp-trends.qmd"
+    "..", "..", "inst", "templates", "10_descriptive", "dc-trends.qmd"
   )
 }
 template_lines <- readLines(template, warn = FALSE)

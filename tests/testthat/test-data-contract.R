@@ -7,7 +7,7 @@ template_stems <- function(tl = template_list()) sub("[.]qmd$", "", basename(tl$
 
 pending_contract_families <- setdiff(template_stems(), c(
   "ac", "hz", "hm", "hp", "hs-concordance", "hs-setup",
-  "dc-general", "dc-gfup", "dc-tables", "dp-eda", "dp-gfup", "dp-trends",
+  "dc-general", "dc-gfup", "dc-tables", "dc-eda", "dc-trends",
   "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
   "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
   "rfs-fit", "rfs-explain", "rfc-fit", "rfc-explain", "rfr-fit", "rfr-explain",

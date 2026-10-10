@@ -22,10 +22,10 @@ test_that("SAVE_FIGURES = FALSE writes nothing unless the report links the PNG",
 
 test_that("FIGURES keeps the figures whose names start with one of its entries", {
   dir <- withr::local_tempdir()
-  keep <- c("dp-eda-continuous", "hp-survival")
-  save_figure_(gg(), file.path(dir, "dp-eda-continuous-page-01.png"), keep = keep)
-  save_figure_(gg(), file.path(dir, "dp-eda-count-page-01.png"), keep = keep)
-  expect_setequal(list.files(dir), c("dp-eda-continuous-page-01.png", "dp-eda-continuous-page-01.pdf"))
+  keep <- c("dc-eda-continuous", "hp-survival")
+  save_figure_(gg(), file.path(dir, "dc-eda-continuous-page-01.png"), keep = keep)
+  save_figure_(gg(), file.path(dir, "dc-eda-count-page-01.png"), keep = keep)
+  expect_setequal(list.files(dir), c("dc-eda-continuous-page-01.png", "dc-eda-continuous-page-01.pdf"))
 })
 
 test_that("a list of plots is saved one file pair per element", {

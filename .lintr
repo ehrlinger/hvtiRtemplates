@@ -78,12 +78,7 @@ exclusions: list(
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
-    "inst/templates/40_graphs/dp-trends.qmd" = list(
-      object_name_linter = Inf,
-      commented_code_linter = Inf,
-      object_usage_linter = Inf
-    ),
-    "inst/templates/40_graphs/dp-gfup.qmd" = list(
+    "inst/templates/10_descriptive/dc-trends.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf
@@ -108,7 +103,7 @@ exclusions: list(
       commented_code_linter = Inf,
       object_usage_linter = Inf
     ),
-    "inst/templates/10_descriptive/dp-eda.qmd" = list(
+    "inst/templates/10_descriptive/dc-eda.qmd" = list(
       object_name_linter = Inf,
       commented_code_linter = Inf,
       object_usage_linter = Inf

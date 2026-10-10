@@ -1,8 +1,8 @@
 # Legacy EDA reports, the tp.dp.DescriptiveSummary.qmd and
-# tp.dp.EDA_barplots_scatterplots*.R lineage, migrate into a dp-eda job. They
+# tp.dp.EDA_barplots_scatterplots*.R lineage, migrate into a dc-eda job. They
 # drew the continuous, percent and count pages and no follow-up panels, so
 # SECTIONS names those three.
-.migrate_dp_eda <- function(evidence, template) {
+.migrate_dc_eda <- function(evidence, template) {
   aliases <- c(dta_filename = "DATASET", dataset = "DATASET", pref_time_var = "X_VAR", x_var = "X_VAR",
                variables = "VARIABLES", include = "VARIABLES", varlist = "VARIABLES", exclude = "EXCLUDE",
                ncol = "GRID_NCOL", grid_ncol = "GRID_NCOL", nrow = "GRID_NROW", grid_nrow = "GRID_NROW",
@@ -76,7 +76,7 @@
   declare <- function(names) {
     vapply(names, function(name) paste0(name, " <- ", paste(deparse(config[[name]]), collapse = " ")), character(1L))
   }
-  # dp-eda keeps the data choices apart from the variable choices, with the
+  # dc-eda keeps the data choices apart from the variable choices, with the
   # follow-up choices between them, so each group is its own region. The data
   # region holds DATASET alone: ANALYSIS_SET, WHERE, ID and KEY keep the
   # template's defaults, which read the whole dataset as the legacy job did.
@@ -87,8 +87,8 @@
   if (nrow(decisions$unresolved) || incomplete) {
     variables <- c(variables, "# EDIT: review unresolved EDA source choices in the migration report.")
   }
-  .sas_inline_result(list(regions = c("dp-eda-data" = paste(data, collapse = "\n"),
-                                      "dp-eda-variables" = paste(variables, collapse = "\n")),
+  .sas_inline_result(list(regions = c("dc-eda-data" = paste(data, collapse = "\n"),
+                                      "dc-eda-variables" = paste(variables, collapse = "\n")),
                           translated = decisions$translated, unresolved = decisions$unresolved, ignored = decisions$ignored), inline)
 }
 
