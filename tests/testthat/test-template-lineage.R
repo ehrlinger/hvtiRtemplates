@@ -66,7 +66,7 @@ test_that("RF explain rejects a lineage-free package handoff", {
 })
 
 test_that("lm-checkpred distinguishes training, validation, and model lineage", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   root <- lm_study()
   cfg <- hvtiRutilities::study_config(root)
   d <- lm_data()
@@ -106,7 +106,7 @@ test_that("lm-checkpred distinguishes training, validation, and model lineage", 
 })
 
 test_that("lm-checkpred rejects a lineage-free source model", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   root <- lm_study()
   model_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "outcome-analysis")
   dir.create(model_dir, recursive = TRUE)
@@ -125,7 +125,7 @@ test_that("lm-checkpred rejects a lineage-free source model", {
 })
 
 test_that("lm-checkpred rejects source lineage without runtime model metadata", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   root <- lm_study()
   cfg <- hvtiRutilities::study_config(root)
   raw_model <- hvtiRpropensity::fit_logistic(

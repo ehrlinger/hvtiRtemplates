@@ -12,7 +12,63 @@ test_that("the lm family ships eight engine-specific templates", {
   for (qualifier in names(lm_qualifiers)) {
     src <- readLines(template_path("lm", qualifier), warn = FALSE)
     expect_true(any(grepl(paste0(lm_qualifiers[[qualifier]], "\\("), src)), info = qualifier)
-    expect_true(any(grepl("hvtiRpropensity >= 0.1.7", src, fixed = TRUE)), info = qualifier)
+  }
+})
+
+test_that("every lm template's hvtiRpropensity guard asks for the version DESCRIPTION suggests", {
+  suggests <- utils::packageDescription("hvtiRtemplates")$Suggests
+  minimum <- sub(".*hvtiRpropensity \\(>= ([0-9.]+)\\).*", "\\1", gsub("\\s+", " ", suggests))
+  # 0.1.10 is the release whose ps_ordinal() and ps_nominal() return the balance
+  # table the propensity templates print (#191), and whose count and group
+  # tables name rate ratios and treatment levels correctly (#206).
+  expect_true(package_version(minimum) >= "0.1.10")
+  for (qualifier in names(lm_qualifiers)) {
+    src <- readLines(template_path("lm", qualifier), warn = FALSE)
+    guard <- regmatches(src, regexpr("packageVersion[(]\"hvtiRpropensity\"[)] < \"[0-9.]+\"", src))
+    expect_length(guard, 1L)
+    expect_identical(sub('.*< "([0-9.]+)"$', "\\1", guard), minimum, info = qualifier)
+    expect_true(any(grepl(paste0("hvtiRpropensity >= ", minimum, "."), src, fixed = TRUE)), info = qualifier)
+  }
+})
+
+test_that("every lm template stops on a column its study choices name and the data lack, naming the setting", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  root <- lm_study()
+  # The response setting of each template, and a column of lm_data() it can name.
+  responses <- list(
+    binary = c(OUTCOME = "outcome"), ordinal = c(OUTCOME = "ordinal"), nominal = c(OUTCOME = "nominal"),
+    balancing_count = c(OUTCOME = "count"), propensity_binary = c(TREATMENT = "treatment"),
+    propensity_ordinal = c(TREATMENT = "treatment_ordinal"),
+    propensity_nominal = c(TREATMENT = "treatment_nominal"), checkpred = c(OUTCOME = "outcome")
+  )
+  read <- function(qualifier, choices) {
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    env$study_config <- hvtiRutilities::study_config
+    utils::capture.output(lm_run(qualifier, c("edit-study-choices", "tbl-data"), env, choices))
+    env
+  }
+  for (qualifier in names(responses)) {
+    setting <- names(responses[[qualifier]])
+    good <- stats::setNames(list(responses[[qualifier]][[1L]]), setting)
+    has_predictors <- !identical(qualifier, "checkpred")
+    if (has_predictors) good$PREDICTORS <- c("age", "female")
+    # The declared columns all present: the data step goes through.
+    expect_s3_class(read(qualifier, good)$d, "data.frame")
+    # A response column the data lack names its setting.
+    expect_error(read(qualifier, utils::modifyList(good, stats::setNames(list("nope"), setting))),
+                 paste0("^", setting, " names a column this dataset does not have: nope[.] Change ", setting,
+                        " in edit-study-choices[.]$"), info = qualifier)
+    # So does a predictor, including one used inside a model term.
+    if (has_predictors) {
+      expect_error(read(qualifier, utils::modifyList(good, list(PREDICTORS = c("age", "I(nope^2)", "gone")))),
+                   "^PREDICTORS names columns this dataset does not have: nope, gone[.] Change PREDICTORS",
+                   info = qualifier)
+    }
+    # And ID, through read_job_data(), before anything is fitted.
+    expect_error(read(qualifier, utils::modifyList(good, list(ID = "nope", KEY = "nope"))),
+                 "^ID names a column this dataset does not have: nope[.] Change ID in edit-study-choices[.]$",
+                 info = qualifier)
   }
 })
 
@@ -45,7 +101,7 @@ test_that("LM set markers must agree with the rendered job filename", {
 })
 
 test_that("lm-binary fits and saves a model bundle", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   env <- new.env(parent = globalenv())
   env$d <- lm_data()
   env$set_path <- function(kind, file) tempfile(fileext = file)
@@ -60,7 +116,7 @@ test_that("lm-binary fits and saves a model bundle", {
 })
 
 test_that("lm-binary validates variables inside model terms", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   env <- new.env(parent = globalenv())
   env$.root <- lm_study()
   env$read_built <- hvtiRutilities::read_built
@@ -74,7 +130,7 @@ test_that("lm-binary validates variables inside model terms", {
 })
 
 test_that("lm outcome templates fit every declared family", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   d <- lm_mi_data()
   cases <- list(
     ordinal = list(OUTCOME = "ordinal", PREDICTORS = c("age", "female"),
@@ -101,7 +157,7 @@ test_that("lm outcome templates fit every declared family", {
 })
 
 test_that("lm propensity and count templates expose pooled inference", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   d <- lm_mi_data()
   cases <- list(
     propensity_binary = list(TREATMENT = "treatment", PREDICTORS = c("age", "female"),
@@ -137,7 +193,7 @@ test_that("lm propensity and count templates expose pooled inference", {
 })
 
 test_that("lm-checkpred applies the saved bundle without fitting", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   d <- lm_data()
   model <- hvtiRpropensity::fit_logistic(
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
@@ -174,7 +230,7 @@ test_that("lm-checkpred applies the saved bundle without fitting", {
 })
 
 test_that("lm-checkpred refuses to overwrite its source bundle", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   d <- lm_data()
   model <- hvtiRpropensity::fit_logistic(
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
@@ -204,7 +260,7 @@ test_that("lm-checkpred refuses to overwrite its source bundle", {
 })
 
 test_that("lm-checkpred stops when its validation patients were in the training data", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   # WHERE may not name the patient identifier, so the cohorts are chosen on an
   # ordinary column, an enrollment sequence that follows ccfid.
   built <- lm_data()
@@ -276,9 +332,99 @@ test_that("lm-checkpred stops when its validation patients were in the training 
   }
 })
 
+test_that("lm-checkpred reads a model in another set and validates on a registered validation dataset", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  d <- lm_data()
+  root <- lm_study(data = d)
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  # Each validation cohort is registered as a dataset of its own, as the template's comment says to.
+  register <- function(name, rows) {
+    utils::write.csv(rows, file.path(datasets, paste0(name, ".csv")), row.names = FALSE)
+    suppressMessages(hvtiRutilities::register_data(root, built = paste0(name, ".csv"), dataset = name,
+                                                   role = "named", population = "Later patients"))
+  }
+  register("validation", d[d$ccfid > 60, ])
+  register("overlapping", d[d$ccfid > 50, ])
+  cfg <- hvtiRutilities::study_config(root)
+  # The training job saved its model in a set of its own, stroke-model.
+  model <- hvtiRpropensity::fit_logistic(
+    outcome ~ age + female, d[d$ccfid <= 60, ], family = "binary", outcome_col = "outcome",
+    id_col = "ccfid", outcome_levels = c("none", "event"), event_level = "event"
+  )
+  model_provenance <- hvtiRtemplates:::.lm_fit_provenance(model)
+  model <- hvtiRtemplates:::.attach_handoff_lineage(
+    model, data = list(hvtiRutilities::provenance_data(cfg = cfg, role = "training")),
+    analysis = model_provenance$analysis, cohort = model_provenance$cohort
+  )
+  estimates <- hvtiRutilities::study_dir("estimates", root)
+  dir.create(file.path(estimates, "stroke-model"), recursive = TRUE)
+  saveRDS(hvtiRtemplates:::.digest_bundle_ids(model, root), file.path(estimates, "stroke-model", "lm-binary.rds"))
+  own <- file.path(estimates, "outcome-analysis")
+  check <- function(choices = list(), labels = character()) {
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    env$study_config <- hvtiRutilities::study_config
+    env$set_path <- function(kind, file) {
+      dir.create(own, recursive = TRUE, showWarnings = FALSE)
+      file.path(own, file)
+    }
+    choices <- utils::modifyList(list(DATASET = "validation", OUTCOME = "outcome", GROUPS = 5L), choices)
+    utils::capture.output(lm_run("checkpred", c("edit-study-choices", "tbl-data", "model", "training-overlap", labels),
+                                 env, choices))
+    env
+  }
+  # Without MODEL_SET the job looks in its own set, where there is no model.
+  expect_error(check(), "^Saved model not found: .*outcome-analysis.*set MODEL_FILE and MODEL_SET")
+  env <- check(list(MODEL_SET = "stroke-model"), c("validate", "save"))
+  expect_identical(env$MODEL_PATH, file.path(estimates, "stroke-model", "lm-binary.rds"))
+  expect_identical(nrow(env$d), 60L)
+  expect_s3_class(env$validation, "lm_validation")
+  expect_true(file.exists(file.path(own, "lm-checkpred.rds")))
+  # A registered validation dataset is checked against the training cohort like any other.
+  expect_error(check(list(DATASET = "overlapping", MODEL_SET = "stroke-model")),
+               "^10 validation patients were in the training data")
+  # Neither setting can reach outside the study's estimates.
+  expect_error(check(list(MODEL_SET = "../stroke-model")), "^MODEL_SET must be NULL or one set name")
+  expect_error(check(list(MODEL_FILE = "../stroke-model/lm-binary.rds")), "^MODEL_FILE must name one [.]rds file")
+})
+
+test_that("each propensity template prints its balance table where the binary job does", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  cases <- list(
+    propensity_binary = list(TREATMENT = "treatment", TREATMENT_LEVELS = c("control", "treated"),
+                             TREATED_LEVEL = "treated"),
+    propensity_ordinal = list(TREATMENT = "treatment_ordinal", TREATMENT_LEVELS = c("low", "middle", "high")),
+    propensity_nominal = list(TREATMENT = "treatment_nominal", TREATMENT_LEVELS = c("reference", "level_b", "level_c"),
+                              REFERENCE_LEVEL = "reference")
+  )
+  for (qualifier in names(cases)) {
+    labels <- lm_results(qualifier)
+    # Straight after the covariance table, as in lm-propensity_binary.
+    expect_identical(match("tbl-smd", labels), match("tbl-covariance", labels) + 1L, info = qualifier)
+    env <- new.env(parent = globalenv())
+    env$d <- lm_data()
+    lm_run(qualifier, c("edit-study-choices", "fit"), env,
+           c(cases[[qualifier]], list(PREDICTORS = c("age", "female"), IMPUTATION = NULL)))
+    src <- readLines(template_path("lm", qualifier), warn = FALSE)
+    shown <- paste(eval(parse(text = lm_chunk(src, "tbl-smd")), envir = env), collapse = "\n")
+    expect_match(shown, "female", info = qualifier)
+    # The multi-level table names the pair each row compares.
+    if (!identical(qualifier, "propensity_binary")) expect_match(shown, "versus", info = qualifier)
+  }
+  # The ordinal job says which way its proportional-odds model accumulates, as lm-ordinal does.
+  expect_true("direction" %in% lm_results("propensity_ordinal"))
+  out <- utils::capture.output(lm_run("propensity_ordinal", "direction", env = local({
+    env <- new.env(parent = globalenv())
+    env$d <- lm_data()
+    lm_run("propensity_ordinal", c("edit-study-choices", "fit"), env,
+           c(cases$propensity_ordinal, list(PREDICTORS = c("age", "female"), IMPUTATION = NULL)))
+  })))
+  expect_match(out, "^Cumulative direction: P[(]Y <= level[)]")
+})
+
 test_that("every lm template scaffolds and runs end to end, and one renders through Quarto", {
   skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   # One job goes through Quarto end to end, hooks, provenance and all: checkpred,

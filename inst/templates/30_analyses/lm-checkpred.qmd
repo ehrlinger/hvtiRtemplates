@@ -27,7 +27,7 @@ suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.1.7") stop("This template needs hvtiRpropensity >= 0.1.7.", call. = FALSE)
+if (utils::packageVersion("hvtiRpropensity") < "0.1.10") stop("This template needs hvtiRpropensity >= 0.1.10.", call. = FALSE)
 ```
 
 ```{r}
@@ -88,7 +88,14 @@ set_path <- function(kind, file) {
 ```{r}
 #| label: edit-study-choices
 # The validation cohort: another registered dataset in DATASET, or rows of the
-# study dataset that the training job did not use, chosen by WHERE.
+# study dataset that the training job did not use, chosen by WHERE. To validate
+# on a file of its own, put it in the study's datasets folder and register it
+# once, from the study root, under a name of its own:
+#   hvtiRutilities::register_data(built = "validation.csv", dataset = "validation",
+#                                 role = "named", population = "Operated 2015 onward")
+# then set DATASET <- "validation". It must identify patients by the same column
+# as the training data: the training-overlap chunk compares the two cohorts by
+# that identifier and stops if they share a patient.
 # EDIT: the registered dataset this job reads ("built" is the study dataset).
 DATASET <- "built"
 
@@ -128,7 +135,12 @@ JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
 
-MODEL_FILE <- "lm-binary.rds"              # EDIT: reviewed source bundle in this set's estimates.
+MODEL_FILE <- "lm-binary.rds"              # EDIT: reviewed source bundle, as lm-binary saved it.
+# Optional, and needs no edit: the set whose estimates hold MODEL_FILE. NULL is
+# this job's own set, which is where it is when this job shares the subject and
+# type of the lm-binary job. A validation job in a set of its own names the
+# training job's set, "<subject>-<type>", for example MODEL_SET <- "stroke-model".
+MODEL_SET <- NULL
 OUTCOME <- "outcome"                       # EDIT: validation outcome column.
 GROUPS <- 10L                              # EDIT: calibration-group count justified for this cohort size.
 ```
@@ -152,6 +164,8 @@ d <- job_data$data
 # The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
 .id <- attr(job_data$record, "selection")$id
 knitr::kable(job_data$record, col.names = c("Data", ""))
+# A column the study choices name that the data lack stops here, naming the setting to change.
+hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME)
 ```
 
 ```{r}
@@ -170,8 +184,24 @@ if (!is.null(job_data$attrition)) {
 
 ```{r}
 #| label: model
-MODEL_PATH <- set_path("estimates", MODEL_FILE)
-if (!file.exists(MODEL_PATH)) stop("Saved model not found: ", MODEL_PATH, call. = FALSE)
+# MODEL_FILE is a file name and MODEL_SET a set name, so neither can reach outside the study's estimates.
+if (!is.character(MODEL_FILE) || length(MODEL_FILE) != 1L || !grepl("^[^/\\\\]+[.]rds$", MODEL_FILE)) {
+  stop("MODEL_FILE must name one .rds file, such as \"lm-binary.rds\", with no folder: ",
+       "name another set in MODEL_SET.", call. = FALSE)
+}
+if (!is.null(MODEL_SET) &&
+      (!is.character(MODEL_SET) || length(MODEL_SET) != 1L || !grepl("^[A-Za-z0-9_]+-[A-Za-z0-9_]+$", MODEL_SET))) {
+  stop("MODEL_SET must be NULL or one set name, \"<subject>-<type>\", such as \"stroke-model\".", call. = FALSE)
+}
+MODEL_PATH <- if (is.null(MODEL_SET)) {
+  set_path("estimates", MODEL_FILE)
+} else {
+  file.path(hvtiRutilities::study_dir("estimates", .root), MODEL_SET, MODEL_FILE)
+}
+if (!file.exists(MODEL_PATH)) {
+  stop("Saved model not found: ", MODEL_PATH, ". Render the lm-binary job first, or set MODEL_FILE and ",
+       "MODEL_SET to where it saved its model.", call. = FALSE)
+}
 .model_read <- hvtiRtemplates:::.read_handoff(
   MODEL_PATH, "source-model", hvtiRutilities::study_config(start = .root), "the source lm job"
 )

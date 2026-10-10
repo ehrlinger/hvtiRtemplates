@@ -280,7 +280,7 @@ test_that("all logistic templates publish runtime analysis and cohort metadata",
 })
 
 test_that("logistic fit provenance is derived from runtime metadata and status tables", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   d <- lm_mi_data()
   cases <- list(
     binary = list(
@@ -398,7 +398,7 @@ test_that("logistic fit provenance is derived from runtime metadata and status t
 })
 
 test_that("single-dataset logistic provenance reports rows without claiming unique people", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   env <- new.env(parent = globalenv())
   env$d <- lm_data()
   env$SUBJECT <- "runtime"
@@ -423,7 +423,7 @@ test_that("single-dataset logistic provenance reports rows without claiming uniq
 })
 
 test_that("lm-checkpred separates carried training metadata from runtime validation metadata", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   root <- lm_study()
   cfg <- hvtiRutilities::study_config(root)
   d <- lm_data()

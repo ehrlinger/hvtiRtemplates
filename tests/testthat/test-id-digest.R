@@ -52,7 +52,7 @@ test_that("the same ID gives the same digest, and a missing ID stays missing", {
 })
 
 test_that("every lm fit template saves digested IDs and a model that still scores", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   d <- lm_mi_data()
   common <- list(PREDICTORS = c("age", "female"), ID = "id", IMPUTATION = "imp")
   cases <- list(
@@ -97,7 +97,7 @@ test_that("every lm fit template saves digested IDs and a model that still score
 
 test_that("a rendered lm-binary keyed on MRN saves no MRN anywhere in the file", {
   skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   d <- lm_data()

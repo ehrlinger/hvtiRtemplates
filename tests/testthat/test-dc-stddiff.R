@@ -37,7 +37,7 @@ stddiff_data <- function() {
 
 # Run the template's own study choices, then the overrides, then derive.
 run_stddiff <- function(..., d = stddiff_data()) {
-  testthat::skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  testthat::skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   record <- structure(data.frame(step = character(), value = character()),
                       selection = list(id = "ccfid", key = "ccfid"))
   env <- list2env(list(d = d, job_data = list(record = record)), parent = globalenv())
@@ -106,7 +106,7 @@ test_that("dc-stddiff renders, figure and all", {
   skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.7")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- scaffold_job("dc", "stddiff", list(
     "^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL",
