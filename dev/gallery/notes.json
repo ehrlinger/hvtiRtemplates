@@ -70,61 +70,49 @@
   },
   "lm-binary": {
     "issues": [
-      179,
       174
     ],
     "note": ""
   },
   "lm-checkpred": {
-    "issues": [
-      180,
-      179
-    ],
+    "issues": [],
     "note": "AUC 0.75 and observed/expected 1.16 on the 2015-onward cohort."
   },
   "lm-ordinal": {
     "issues": [
-      179,
       174
     ],
     "note": ""
   },
   "lm-nominal": {
     "issues": [
-      179,
       174
     ],
     "note": ""
   },
   "lm-propensity_binary": {
     "issues": [
-      179,
       174
     ],
-    "note": "Group counts print as control and treated, not the declared levels (hvtiRpropensity#47)."
+    "note": ""
   },
   "lm-propensity_ordinal": {
     "issues": [
-      191,
-      179,
       174
     ],
-    "note": "No balance table, unlike the binary job."
+    "note": ""
   },
   "lm-propensity_nominal": {
     "issues": [
-      191,
-      179,
       174
     ],
-    "note": "No balance table, unlike the binary job."
+    "note": ""
   },
   "lm-balancing_count": {
     "issues": [
-      179,
       174
     ],
-    "note": "The rate ratio column is labelled odds_ratio (hvtiRpropensity#46)."
+    "note": ""
   },
   "nb-boostmtree": {
     "issues": [],

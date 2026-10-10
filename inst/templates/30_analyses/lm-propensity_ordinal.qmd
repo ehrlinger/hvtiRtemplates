@@ -26,7 +26,7 @@ suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.1.7") stop("This template needs hvtiRpropensity >= 0.1.7.", call. = FALSE)
+if (utils::packageVersion("hvtiRpropensity") < "0.1.10") stop("This template needs hvtiRpropensity >= 0.1.10.", call. = FALSE)
 ```
 
 ```{r}
@@ -151,6 +151,8 @@ d <- job_data$data
 # The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
 .id <- attr(job_data$record, "selection")$id
 knitr::kable(job_data$record, col.names = c("Data", ""))
+# A column the study choices name that the data lack stops here, naming the setting to change.
+hvtiRtemplates:::.check_job_columns(d, TREATMENT = TREATMENT, PREDICTORS = PREDICTORS)
 ```
 
 ```{r}
@@ -178,6 +180,13 @@ fit <- hvtiRpropensity::ps_ordinal(
 ```
 
 ```{r}
+#| label: direction
+# A proportional-odds model's signs depend on which way it accumulates; this
+# line says which, as lm-ordinal's does.
+cat("Cumulative direction:", fit$meta$cumulative_direction, "\n")
+```
+
+```{r}
 #| label: tbl-fit-status
 #| tbl-cap: "Fit status of the model"
 knitr::kable(fit$tables$fit_status)
@@ -193,6 +202,13 @@ knitr::kable(fit$tables$estimates)
 #| label: tbl-covariance
 #| tbl-cap: "Covariance matrix of the coefficient estimates"
 knitr::kable(fit$tables$covariance)
+```
+
+```{r}
+#| label: tbl-smd
+#| tbl-cap: "Standardized mean differences, each treatment level against the reference level"
+# One row per covariate and level: `level` is compared with `versus`.
+knitr::kable(fit$tables$smd)
 ```
 
 ```{r}

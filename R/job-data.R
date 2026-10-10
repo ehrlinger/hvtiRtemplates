@@ -390,6 +390,27 @@
   list(rows = nrow(d), patients = length(unique(d[[id]])))
 }
 
+# A model job's settings name the columns it models, such as OUTCOME and
+# PREDICTORS. A column the data lack stops here, naming the setting to change,
+# rather than inside the fitting package with an error that names one of its
+# functions. A setting may hold model terms such as "I(age^2)", so the columns
+# are the variables those terms use. `.`, the all-columns shorthand, is never
+# missing. NULL settings are skipped.
+.check_job_columns <- function(d, ...) {
+  settings <- list(...)
+  for (setting in names(settings)) {
+    terms <- settings[[setting]]
+    if (is.null(terms)) next
+    absent <- setdiff(all.vars(stats::reformulate(terms)), c(names(d), "."))
+    if (length(absent)) {
+      stop(setting, " names ", if (length(absent) == 1L) "a column" else "columns",
+           " this dataset does not have: ", paste(absent, collapse = ", "),
+           ". Change ", setting, " in edit-study-choices.", call. = FALSE)
+    }
+  }
+  invisible(d)
+}
+
 # Which patients were kept, not only how many: a hash of the sorted KEY values,
 # one string per row with the KEY columns joined by "\r". Sorted by radix, which
 # does not depend on the locale. Only the hash is recorded, never the values.
