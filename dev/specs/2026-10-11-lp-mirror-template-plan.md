@@ -21,7 +21,7 @@
 - News fragment `news/feat-lp-mirror.md`; NEWS.md is not edited.
 - `Version:` in DESCRIPTION is untouched.
 - Tests run with `NOT_CRAN=true`, one file per command.
-- Never install into the user's R library. Everything installs into the scratch library `/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror`, called `LIB` in prose below; every command spells it out in full.
+- Never install into the user's R library. Everything installs into the scratch library `$SCRATCH/lib-lpmirror`, called `LIB` in prose below; every command spells it out in full.
 - Lines are at most 135 characters (`.lintr`).
 - Branch `feat/lp-mirror` from `origin/main`. Never push to `main`.
 
@@ -57,10 +57,12 @@
 
 **Interfaces:** produces the scratch library `LIB` holding hvtiRutilities 1.5.1, hvtiRdatabuild and hvtiRpropensity from their `origin/main`, and this branch's hvtiRtemplates. hvtiPlotR 2.8.5 is read from the user library, which `R_LIBS` still searches after `LIB`.
 
-- [ ] **Step 1: Branch from origin/main.**
+- [ ] **Step 1: Set the two locations, then branch from origin/main.** `REPOS` is the folder holding the hvtiR clones, and `SCRATCH` a scratch folder outside every repo. Every later command uses both.
 
 ```bash
-cd /Users/ehrlinj/Documents/GitHub/hvtiRtemplates
+export REPOS=<folder holding the hvtiR clones>
+export SCRATCH=<scratch folder outside any repo>
+cd $REPOS/hvtiRtemplates
 git fetch origin
 git checkout -b feat/lp-mirror origin/main
 ```
@@ -68,28 +70,28 @@ git checkout -b feat/lp-mirror origin/main
 - [ ] **Step 2: Export the three dependencies from their local clones and install them into LIB.**
 
 ```bash
-mkdir -p /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror
-mkdir -p /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/src-lpmirror
-git -C /Users/ehrlinj/Documents/GitHub/hvtiRutilities fetch --tags origin
-git -C /Users/ehrlinj/Documents/GitHub/hvtiRutilities archive --prefix=hvtiRutilities/ v1.5.1 | tar -x -C /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/src-lpmirror
-git -C /Users/ehrlinj/Documents/GitHub/hvtiRdatabuild fetch origin
-git -C /Users/ehrlinj/Documents/GitHub/hvtiRdatabuild archive --prefix=hvtiRdatabuild/ origin/main | tar -x -C /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/src-lpmirror
-git -C /Users/ehrlinj/Documents/GitHub/hvtiRpropensity fetch origin
-git -C /Users/ehrlinj/Documents/GitHub/hvtiRpropensity archive --prefix=hvtiRpropensity/ origin/main | tar -x -C /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/src-lpmirror
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror R CMD INSTALL --no-docs -l /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/src-lpmirror/hvtiRutilities /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/src-lpmirror/hvtiRdatabuild /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/src-lpmirror/hvtiRpropensity
+mkdir -p $SCRATCH/lib-lpmirror
+mkdir -p $SCRATCH/src-lpmirror
+git -C $REPOS/hvtiRutilities fetch --tags origin
+git -C $REPOS/hvtiRutilities archive --prefix=hvtiRutilities/ v1.5.1 | tar -x -C $SCRATCH/src-lpmirror
+git -C $REPOS/hvtiRdatabuild fetch origin
+git -C $REPOS/hvtiRdatabuild archive --prefix=hvtiRdatabuild/ origin/main | tar -x -C $SCRATCH/src-lpmirror
+git -C $REPOS/hvtiRpropensity fetch origin
+git -C $REPOS/hvtiRpropensity archive --prefix=hvtiRpropensity/ origin/main | tar -x -C $SCRATCH/src-lpmirror
+R_LIBS=$SCRATCH/lib-lpmirror R CMD INSTALL --no-docs -l $SCRATCH/lib-lpmirror $SCRATCH/src-lpmirror/hvtiRutilities $SCRATCH/src-lpmirror/hvtiRdatabuild $SCRATCH/src-lpmirror/hvtiRpropensity
 ```
 
 - [ ] **Step 3: Install this branch's hvtiRtemplates into LIB.** A Quarto render calls `hvtiRtemplates:::` internals from the installed package, not from `load_all()`, so this same command is rerun before every render below (Tasks 1, 7, 8 and 9 say where).
 
 ```bash
-cd /Users/ehrlinj/Documents/GitHub/hvtiRtemplates
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror R CMD INSTALL --no-docs -l /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror .
+cd $REPOS/hvtiRtemplates
+R_LIBS=$SCRATCH/lib-lpmirror R CMD INSTALL --no-docs -l $SCRATCH/lib-lpmirror .
 ```
 
 - [ ] **Step 4: Verify the versions the gates run against.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror Rscript -e 'for (p in c("hvtiRutilities", "hvtiRdatabuild", "hvtiRpropensity", "hvtiPlotR", "hvtiRtemplates")) cat(p, as.character(packageVersion(p)), "\n")'
+R_LIBS=$SCRATCH/lib-lpmirror Rscript -e 'for (p in c("hvtiRutilities", "hvtiRdatabuild", "hvtiRpropensity", "hvtiPlotR", "hvtiRtemplates")) cat(p, as.character(packageVersion(p)), "\n")'
 ```
 
 Expected: `hvtiRutilities 1.5.1`, `hvtiRdatabuild` at least `0.2.3` (0.2.4 on 2026-10-11), `hvtiRpropensity` at least `0.1.10` (0.1.11 on 2026-10-11), `hvtiPlotR` at least `2.8.0` (2.8.5 installed), `hvtiRtemplates` the DESCRIPTION version of this branch. If hvtiPlotR is missing or older, stop and ask: do not install it into the user library.
@@ -97,7 +99,7 @@ Expected: `hvtiRutilities 1.5.1`, `hvtiRdatabuild` at least `0.2.3` (0.2.4 on 20
 - [ ] **Step 5: Baseline.** Record the suite state before any change, so a later failure can be told from a pre-existing one:
 
 ```bash
-for f in tests/testthat/test-*.R; do echo "== $f"; R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e "devtools::load_all(quiet=TRUE); testthat::test_file('$f')" 2>&1 | grep -E "FAIL [0-9]+ \| WARN [0-9]+ \| SKIP [0-9]+ \| PASS [0-9]+"; done > /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lp-baseline.txt
+for f in tests/testthat/test-*.R; do echo "== $f"; R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e "devtools::load_all(quiet=TRUE); testthat::test_file('$f')" 2>&1 | grep -E "FAIL [0-9]+ \| WARN [0-9]+ \| SKIP [0-9]+ \| PASS [0-9]+"; done > $SCRATCH/lp-baseline.txt
 ```
 
 Expected: FAIL 0 everywhere. One known exception, measured while writing this plan: on `origin/main` with hvtiRdatabuild 0.2.3, `test-job-data.R` errors once (`$ operator is invalid for atomic vectors`), unrelated to this work. Record what it reports with LIB's hvtiRdatabuild, and compare against this file in Task 9. No commit in this task.
@@ -159,7 +161,7 @@ test_that(".bundle_ids() digests IDs for a digested bundle and leaves them as te
 - [ ] **Step 2: Run it.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-handoff-path.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-handoff-path.R")'
 ```
 
 Expected FAIL: errors `object '.handoff_path' not found` and `object '.bundle_ids' not found`.
@@ -249,9 +251,9 @@ The three comment lines above it stay. Confirm nothing else reads `.digested`: `
 - [ ] **Step 4: Reinstall (the lm-checkpred render test calls the installed helpers) and run both files.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror R CMD INSTALL --no-docs -l /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror .
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-handoff-path.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lm-templates.R")'
+R_LIBS=$SCRATCH/lib-lpmirror R CMD INSTALL --no-docs -l $SCRATCH/lib-lpmirror .
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-handoff-path.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lm-templates.R")'
 ```
 
 Expected PASS: `test-handoff-path.R` `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 15 ]`; `test-lm-templates.R` FAIL 0 and SKIP 0, its MODEL_SET and training-overlap tests unchanged and green.
@@ -274,10 +276,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ```bash
 sed -i '' 's/ || is.na(file)//' R/handoff-path.R
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-handoff-path.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-handoff-path.R")'
 git checkout -- R/handoff-path.R
 sed -i '' 's/if (isTRUE(bundle\$meta\$id_digest)) .id_digest(ids, .bundle_id_key(bundle, root)) else as.character(ids)/as.character(ids)/' R/handoff-path.R
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-handoff-path.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-handoff-path.R")'
 git checkout -- R/handoff-path.R
 git status --short
 ```
@@ -340,7 +342,7 @@ test_that("the job's package guards ask for the versions DESCRIPTION suggests", 
 - [ ] **Step 2: Run it.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 ```
 
 Expected FAIL: `add_job(): unknown template: lp.mirror. Available: ac, bc, ...`, `nrow(row)` 0, and `unknown template: lp.mirror` from `template_path()`.
@@ -571,13 +573,13 @@ The `SUBJECT` and `TYPE` instruction is an HTML comment, as in `hp.qmd`, not an 
 - [ ] **Step 7: Run.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-provenance.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-templates.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-catalog.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-catalog-rules.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-roadmap.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-add-job.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-provenance.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-templates.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-catalog.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-catalog-rules.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-roadmap.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-add-job.R")'
 python3 dev/specs/artifacts/check-roadmap-counts.py
 ```
 
@@ -600,7 +602,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ```bash
 sed -i '' 's/packageVersion("hvtiPlotR") < "2.8.0"/packageVersion("hvtiPlotR") < "2.7.0"/' inst/templates/40_graphs/lp-mirror.qmd
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 git checkout -- inst/templates/40_graphs/lp-mirror.qmd
 ```
 
@@ -722,7 +724,7 @@ test_that("a bundle without lineage, or built from data that changed since, stop
 - [ ] **Step 3: Run them.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 ```
 
 Expected FAIL: `env$MODEL_PATH` is `NULL`, `env$scores` is `NULL`, and every `expect_error()` reports that no error was thrown.
@@ -805,9 +807,9 @@ to:
 - [ ] **Step 5: Run.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-data-routes.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-numbering.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-data-routes.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-numbering.R")'
 ```
 
 Expected PASS: FAIL 0 in each.
@@ -830,7 +832,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ```bash
 sed -i '' 's/list(), source = MODEL_FILE,/list(), read = FALSE, source = MODEL_FILE,/' inst/templates/40_graphs/lp-mirror.qmd
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 git checkout -- inst/templates/40_graphs/lp-mirror.qmd
 ```
 
@@ -924,7 +926,7 @@ test_that("the treated bars are above the axis and the y-limits are symmetric, f
 - [ ] **Step 3: Run them.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 ```
 
 Expected FAIL: `attempt to apply non-function` for `h$mirror_groups` and `h$mirror_hist`.
@@ -1017,8 +1019,8 @@ groups <- mirror_groups(.meta, GROUP_LABELS)
 - [ ] **Step 5: Run.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-numbering.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-numbering.R")'
 ```
 
 Expected PASS: FAIL 0 in each (the `helpers` chunk calls `plot(` and stays unnumbered because its first comment is `# unnumbered: ...`).
@@ -1040,10 +1042,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ```bash
 sed -i '' 's/levels <- c(treated, setdiff(declared, treated))/levels <- c(setdiff(declared, treated), treated)/' inst/templates/40_graphs/lp-mirror.qmd
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 git checkout -- inst/templates/40_graphs/lp-mirror.qmd
 sed -i '' 's/mh\$meta\$lower <- -limit/mh$meta$lower <- min(mh$data$y) - 1/' inst/templates/40_graphs/lp-mirror.qmd
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 git checkout -- inst/templates/40_graphs/lp-mirror.qmd
 ```
 
@@ -1105,7 +1107,7 @@ test_that("the job saves the unmatched and weighted figures, with a count table 
 - [ ] **Step 2: Run them.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 ```
 
 Expected FAIL: `attempt to apply non-function` for `h$mirror_counts`, and no files in `graphs`.
@@ -1188,9 +1190,9 @@ and in the `expected` list of "every printed figure is also saved, under its doc
 - [ ] **Step 4: Run.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-figures.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-numbering.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-figures.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-numbering.R")'
 ```
 
 Expected PASS: FAIL 0 in each.
@@ -1213,7 +1215,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ```bash
 sed -i '' 's/args\$weight_col <- "weight"/args$weight_col <- "score"/' inst/templates/40_graphs/lp-mirror.qmd
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 git checkout -- inst/templates/40_graphs/lp-mirror.qmd
 ```
 
@@ -1276,7 +1278,7 @@ test_that("with MATCH the job joins the flag through the study key and keeps no 
 - [ ] **Step 2: Run them.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 ```
 
 Expected FAIL: `attempt to apply non-function` for `h$mirror_join`; `env$scores$matched` all 0; `env$.join` and `env$mh_matched` `NULL`.
@@ -1403,12 +1405,12 @@ with
 - [ ] **Step 4: Run.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-provenance.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-data-routes.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-figures.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-numbering.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-templates.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-provenance.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-data-routes.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-figures.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-numbering.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-templates.R")'
 ```
 
 Expected PASS: FAIL 0 in each.
@@ -1431,13 +1433,13 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ```bash
 sed -i '' 's/matched = as.integer(!is.na(value) \& value == 1),/matched = as.integer(value == 1),/' inst/templates/40_graphs/lp-mirror.qmd
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 git checkout -- inst/templates/40_graphs/lp-mirror.qmd
 sed -i '' 's|if (sum(joined) < length(bundle_ids) / 2) {|if (sum(joined) < 0) {|' inst/templates/40_graphs/lp-mirror.qmd
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 git checkout -- inst/templates/40_graphs/lp-mirror.qmd
 sed -i '' 's/hvtiRtemplates:::.bundle_ids(bundle, match_data\$data\[\[.id\]\], .root)/as.character(match_data$data[[.id]])/' inst/templates/40_graphs/lp-mirror.qmd
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 git checkout -- inst/templates/40_graphs/lp-mirror.qmd
 ```
 
@@ -1497,8 +1499,8 @@ test_that("the job renders two figures without MATCH and three with it, naming n
 - [ ] **Step 2: Reinstall and run.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror R CMD INSTALL --no-docs -l /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror .
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror R CMD INSTALL --no-docs -l $SCRATCH/lib-lpmirror .
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 ```
 
 Expected FAIL: the figure and identifier expectations pass already, and the payload ones fail: `payload$mirror$model_file` is `NULL`, `payload$analysis` is `NULL`.
@@ -1525,9 +1527,9 @@ cat(hvtiRtemplates:::.embed_provenance(
 - [ ] **Step 4: Reinstall and run.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror R CMD INSTALL --no-docs -l /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror .
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-provenance.R")'
+R_LIBS=$SCRATCH/lib-lpmirror R CMD INSTALL --no-docs -l $SCRATCH/lib-lpmirror .
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-provenance.R")'
 ```
 
 Expected PASS: `test-lp-mirror.R` FAIL 0, SKIP 0; `test-template-provenance.R` FAIL 0.
@@ -1550,7 +1552,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```bash
 sed -i '' 's/^  scores\$matched <- .join\$matched$/  scores$matched <- .join$matched\n  cat(match_data$data[[.id]][1L], "\\n")/' inst/templates/40_graphs/lp-mirror.qmd
 grep -n 'match_data\$data\[\[.id\]\]\[1L\]' inst/templates/40_graphs/lp-mirror.qmd
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
+R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lp-mirror.R")'
 git checkout -- inst/templates/40_graphs/lp-mirror.qmd
 ```
 
@@ -1652,9 +1654,9 @@ Check the file still parses: `python3 -c 'import json; json.load(open("dev/galle
 - [ ] **Step 4: Reinstall and render the three jobs.** Run from the repo root, through `Rscript -e`, so `gallery.R` finds `dev/gallery` from the working directory:
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror R CMD INSTALL --no-docs -l /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror .
-rm -rf /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lp-gallery
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror Rscript -e 'source("dev/gallery/gallery.R"); root <- gallery_study("/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lp-gallery/study"); built <- gallery_build(root, only = c("lm-propensity_binary", "lp-mirror", "lp-mirror-matched")); print(built[, c("template", "seconds", "error")], row.names = FALSE); print(list.files(study_dir("graphs", root), recursive = TRUE, pattern = "[.]png$"))'
+R_LIBS=$SCRATCH/lib-lpmirror R CMD INSTALL --no-docs -l $SCRATCH/lib-lpmirror .
+rm -rf $SCRATCH/lp-gallery
+R_LIBS=$SCRATCH/lib-lpmirror Rscript -e 'source("dev/gallery/gallery.R"); root <- gallery_study("$SCRATCH/lp-gallery/study"); built <- gallery_build(root, only = c("lm-propensity_binary", "lp-mirror", "lp-mirror-matched")); print(built[, c("template", "seconds", "error")], row.names = FALSE); print(list.files(study_dir("graphs", root), recursive = TRUE, pattern = "[.]png$"))'
 ```
 
 Expected: three rows with `error` `NA`; PNGs `approach-propensity/lp-mirror-unmatched.png`, `approach-propensity/lp-mirror-weighted.png`, and the three `approach-matched/lp-mirror-*.png`. Open `approach-matched/lp-mirror-matched.png` and confirm by eye: transcatheter above the axis, surgical below, grey "All patients" behind colored matched bars, one legend row, symmetric y-axis.
@@ -1738,7 +1740,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - [ ] **Step 4: Gate: roxygen leaves no diff.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror Rscript -e 'devtools::document()'
+R_LIBS=$SCRATCH/lib-lpmirror Rscript -e 'devtools::document()'
 git status --short
 ```
 
@@ -1747,7 +1749,7 @@ Expected: `git status --short` prints nothing (both new helpers are `@noRd`).
 - [ ] **Step 5: Gate: lint.**
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror Rscript -e 'l <- lintr::lint_package(); print(l); quit(status = length(l) > 0)'
+R_LIBS=$SCRATCH/lib-lpmirror Rscript -e 'l <- lintr::lint_package(); print(l); quit(status = length(l) > 0)'
 ```
 
 Expected: `No lints found.`, exit 0.
@@ -1755,8 +1757,8 @@ Expected: `No lints found.`, exit 0.
 - [ ] **Step 6: Gate: the full suite, one file per command.** Reinstall first, then run every test file:
 
 ```bash
-R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror R CMD INSTALL --no-docs -l /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror .
-for f in tests/testthat/test-*.R; do echo "== $f"; R_LIBS=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/5ab41848-1658-48be-b975-25e0a7dc4b87/scratchpad/lib-lpmirror NOT_CRAN=true Rscript -e "devtools::load_all(quiet=TRUE); testthat::test_file('$f')" 2>&1 | grep -E "FAIL [0-9]+ \| WARN [0-9]+ \| SKIP [0-9]+ \| PASS [0-9]+"; done
+R_LIBS=$SCRATCH/lib-lpmirror R CMD INSTALL --no-docs -l $SCRATCH/lib-lpmirror .
+for f in tests/testthat/test-*.R; do echo "== $f"; R_LIBS=$SCRATCH/lib-lpmirror NOT_CRAN=true Rscript -e "devtools::load_all(quiet=TRUE); testthat::test_file('$f')" 2>&1 | grep -E "FAIL [0-9]+ \| WARN [0-9]+ \| SKIP [0-9]+ \| PASS [0-9]+"; done
 ```
 
 Expected: every line `FAIL 0`, apart from anything recorded in Task 0's baseline file, which must be unchanged. `SKIP 0` everywhere on macOS. `WARN 0` everywhere except `test-rf-templates.R`, whose known varPro notices are muffled on CI but can show locally; compare its WARN count with the baseline rather than accepting it unread. Any other WARN, SKIP or FAIL is new and is investigated before going on.
