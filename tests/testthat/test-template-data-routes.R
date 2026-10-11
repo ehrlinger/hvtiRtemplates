@@ -221,7 +221,7 @@ test_that("converted templates read a whole dataset without hvtiRdatabuild insta
 # The templates that model one row per patient, so refuse a JOIN without REDUCE.
 # Other descriptive templates and nb-boostmtree (repeated measures) take the long form.
 patient_level_templates <- c(
-  "ac.qmd", "hz.qmd", "dc-stddiff.qmd", "dc-gfup.qmd", "hs-concordance.qmd",
+  "ac.qmd", "hz.qmd", "dc-stddiff.qmd", "dc-gfup.qmd", "hs-concordance.qmd", "lg.qmd",
   "rfc-fit.qmd", "rfr-fit.qmd", "rfs-fit.qmd",
   "lm-balancing_count.qmd", "lm-binary.qmd", "lm-checkpred.qmd", "lm-nominal.qmd", "lm-ordinal.qmd",
   "lm-propensity_binary.qmd", "lm-propensity_nominal.qmd", "lm-propensity_ordinal.qmd"
@@ -263,7 +263,7 @@ test_that("every template that reads its own data offers the join and records th
                      info = basename(f))
   }
   # Every first job of a set reads its own data; a drop here means one stopped offering the join.
-  expect_identical(readers, 21L)
+  expect_identical(readers, 22L)
   # The refusal names the rest, read from the same templates.
   expect_identical(hvtiRtemplates:::.long_join_templates(normalizePath(template_root)),
                    c("dc-eda", "dc-general", "dc-tables", "dc-trends", "nb-boostmtree"))

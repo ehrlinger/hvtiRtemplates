@@ -212,3 +212,57 @@ lp_register_match <- function(root, rows, foreign = 0L, flag = lp_data()$match[r
   suppressMessages(hvtiRutilities::register_data(root, "match_file.csv", dataset = "match_file", role = "named",
                                                  key = "ccfid"))
 }
+
+# lg: a study whose built dataset the lg job calibrates, and the job scaffolded
+# and its markers worked. Kept in this file because it calls the lm_* helpers
+# above, which object_usage_linter must see.
+
+# Seven-digit identifiers that occur nowhere else, so a report that printed one
+# would be caught. `dead` and `iv_dead` are a death and its follow-up in years,
+# the risk rising with age and NYHA class; `hdead` is an in-hospital death, the
+# binary event; `nyha` is the ordinal covariate; `n_prior` counts prior
+# operations and is 0 for most patients, which breaks the log and the inverse.
+lg_data <- function(n = 400L) {
+  withr::local_seed(11)
+  age <- round(stats::rnorm(n, 62, 12))
+  nyha <- sample(1:4, n, replace = TRUE, prob = c(0.2, 0.4, 0.3, 0.1))
+  t_death <- stats::rexp(n, exp(-3 + 0.03 * (age - 60) + 0.4 * (nyha - 2)))
+  censor <- stats::runif(n, 1, 10)
+  data.frame(
+    ccfid = 8300000L + seq_len(n), age = age, nyha = nyha,
+    n_prior = stats::rpois(n, 0.4),
+    dead = as.integer(t_death <= censor), iv_dead = round(pmin(t_death, censor), 3) + 0.001,
+    hdead = stats::rbinom(n, 1L, stats::plogis(-3 + 0.04 * (age - 60) + 0.5 * (nyha - 2)))
+  )
+}
+
+# The VARIABLES the fixture's job calibrates unless a test gives others: age, with
+# a scale chosen, so the job renders without the warning a blank choice raises.
+lg_chosen_variables <- c(
+  "VARIABLES <- data.frame(",
+  "  name = c(\"age\"),",
+  "  chosen = c(\"log\")",
+  ")"
+)
+
+# A study with an lg job scaffolded into it. Each element of `lines` replaces the
+# study-choice line that starts with its setting's name, as lp_fixture() does;
+# `variables` is the lines of the whole VARIABLES data frame, since it runs over
+# several, and NULL leaves the template's own. Returns the root and the job.
+lg_fixture <- function(lines = character(), variables = lg_chosen_variables, data = lg_data(),
+                       .local_envir = parent.frame()) {
+  root <- lm_study(.local_envir = .local_envir, data = data)
+  job <- add_job("lg", "dead", "calibration", dir = root)
+  src <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
+  for (line in lines) {
+    key <- sub(" .*", "", line)
+    src[grepl(paste0("^", key, " <- "), src)] <- line
+  }
+  if (!is.null(variables)) {
+    at <- which(src == "VARIABLES <- data.frame(")
+    end <- at + which(src[(at + 1L):length(src)] == ")")[[1L]]
+    src <- c(src[seq_len(at - 1L)], variables, src[-seq_len(end)])
+  }
+  writeLines(src, job)
+  list(root = root, job = job)
+}

@@ -169,7 +169,7 @@ analysis_templates <- function() {
 
 test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- analysis_templates()
-  expect_equal(nrow(templates), 32L)
+  expect_equal(nrow(templates), 33L)
 
   for (path in templates$file) {
     source <- readLines(path, warn = FALSE)
@@ -245,7 +245,7 @@ test_that("only templates with a local dataset choice override the dataset", {
     "ac", "hz", "hm", "hp", "hs-concordance", "hs-setup",
     "dc-general", "dc-gfup", "dc-stddiff", "dc-tables", "dc-eda", "dc-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
-    "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal", "lp-mirror",
+    "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal", "lp-mirror", "lg",
     "rfs-fit", "rfc-fit", "rfr-fit", "nb-boostmtree"
   )
   templates <- template_list()

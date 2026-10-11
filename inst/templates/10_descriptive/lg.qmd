@@ -1,0 +1,291 @@
+---
+title: "Logit calibration"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-location: left
+    page-layout: full
+    grid:
+      body-width: 2000px
+      sidebar-width: 250px
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the SAS job this replaces (descriptive/lg.<outcome>, or the
+     tp.lg.hdead or tp.lg.dead.constant template it was copied from) and say
+     which event and which link it used. -->
+
+Replaces `descriptive/lg.<outcome>`: say which.
+
+An `lg` job decides which scale a covariate should enter a model on, before it
+goes into `PREDICTORS` in an `lm` job. A model of an event rate on a covariate
+assumes the rate is straight in the covariate on the link scale, and a covariate
+that is skewed, or that acts through its inverse, breaks that quietly: the model
+fits and reports a coefficient for a shape the data do not have. This job shows
+the shape first.
+
+For each covariate it ranks the patients into groups (usually five), takes the
+event rate of each group on a link scale, and plots that against the covariate on
+six candidate scales, so the analyst can pick the one that comes out straightest.
+It replaces the SAS `%logit` macro, which ranked with `PROC RANK`, and
+`%logitgr`, which took each level of an ordinal covariate as a group. The link is
+the logit, `log(p / (1 - p))`, for a binary event, or, for time-related death, the
+log of the constant hazard rate, `log(events / sum of follow-up)`, which is what
+the SAS jobs called with `cox=1`. The R-squared in each panel is the weighted
+straight-line fit of the groups, weighted by group size. It is guidance for
+"straightest", not a decision: the choice goes in `chosen`, and the job saves it.
+
+```{r}
+#| label: setup
+# unnumbered: loads packages only
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages(library(hvtiRutilities))
+```
+
+```{r}
+#| label: guard-edits
+#| results: asis
+# The markers in this file name work a study author still has to do, and a job
+# that still contains one has not been finished. This chunk is what makes that
+# TRUE rather than merely stated: an unedited job would otherwise render green
+# over placeholder columns.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it."
+    )
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Unresolved markers remain. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: guard-partial
+#| results: asis
+# unnumbered: a callout, printed only when part of the job is left out
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one here; a
+# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
+hvtiRtemplates:::.guard_partial(knitr::current_input())
+```
+
+```{r}
+#| label: set
+SUBJECT <- "dead"
+TYPE    <- "calibration"
+
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject,
+         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
+         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.",
+         call. = FALSE)
+  }
+}
+
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(SUBJECT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+```
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+```{r}
+#| label: edit-study-choices
+# EDIT: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
+
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
+
+# EDIT: the event, a 0/1 column, 1 for a patient who had it (the SAS macro's
+# EVENT=). TRUE and FALSE also work. A patient with no value is ranked with the
+# rest, as in SAS, but counts toward no group's rate.
+EVENT <- "dead"
+
+# EDIT: the link, the scale the group rates are put on before they are plotted.
+# "hazard" is the log of the constant hazard rate, log(events / sum of follow-up),
+# for an event with variable follow-up such as death (the SAS call's cox=1).
+# "logit" is log(p / (1 - p)), for an event every patient was followed to the same
+# point for, such as in-hospital death or a complication.
+LINK <- "hazard"
+
+# EDIT: the follow-up column, in the unit the study reports (years here). Only
+# "hazard" reads it, and INTERVAL below reads it for either link. A patient with
+# no value is left out of a "hazard" calibration, as the SAS macro left them out.
+TIME <- "iv_dead"
+
+# EDIT: NULL, or a window on follow-up, c(lower, upper), such as c(0.25, 5): the
+# patients whose TIME is in it, both ends included, are calibrated and the rest
+# are left out and counted. It is how the SAS jobs took one phase of a hazard,
+# early, constant or late. It leaves patients out; it does not censor them at the
+# upper end, so a patient followed past it does not count.
+INTERVAL <- NULL
+
+# EDIT: the covariates to calibrate, one row each. `name` is a column of the data;
+# `kind` is "continuous" (ranked into groups) or "ordinal" (each level is a
+# group). The other columns are optional, and a covariate that does not give
+# one takes the default:
+#   groups    5      how many groups a continuous covariate is ranked into
+#   constant  the covariate's median to one significant figure; the c in the
+#             inverse, inverse squared, squared and exponential scales
+#   shift     0      added before the log, for a covariate that can be 0
+#   label     the name   the heading over its table and figure
+#   chosen    NA     the scale to use: "raw", "log", "inverse",
+#                    "inverse_squared", "squared" or "exp". Leave it NA until
+#                    you have seen the figure; the job then warns, and a final
+#                    render stops until every covariate has one.
+VARIABLES <- data.frame(
+  name   = c("age"),
+  kind   = c("continuous"),
+  chosen = c(NA)
+)
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("lg-age"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
+```
+
+## Data
+
+<!-- How this job finds its data. Read this before touching the chunk below.
+
+     A study can offer a job data three ways, and `_study.yml` says which exist:
+
+     1. The study dataset: the file named by `built:`. `DATASET <- "built"`
+        with `ANALYSIS_SET <- NULL`.
+     2. An additional dataset: any file declared under `additional_datasets:`,
+        for example a column subset written for R. Set `DATASET` to its
+        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: only
+        `WHERE` removes rows.
+     3. An analysis set: declared under `analysis_sets:` with the columns kept
+        and the rows excluded, then written once with
+        `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
+        and leave `DATASET` as "built", because a set is always cut from the
+        study dataset. The report shows its exclusions in order.
+
+     A name under `additional_datasets:` is not an analysis set, so putting it
+     in `ANALYSIS_SET` stops with "No analysis set". Whichever route is taken,
+     the report prints what it read, the identifier it used, the rows each
+     `WHERE` condition removed and the rows and patients kept, so a reader
+     never has to ask which data a table describes. -->
+
+```{r}
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(job_data$attrition)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  extra = list(subject = SUBJECT, type = TYPE)
+))
+```
