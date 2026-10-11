@@ -18,7 +18,7 @@ open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   Job type: one of the prefixes reported by
   [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
   or a template's full name as reported in its `name` column, e.g.
-  `"dp.trends"`; the dash spelling `"dp-trends"` is accepted too. A full
+  `"dc.trends"`; the dash spelling `"dc-trends"` is accepted too. A full
   name carries the qualifier, so `qualifier` must then be left `NULL`.
 
 - subject:
@@ -60,7 +60,10 @@ Naming, prefix and qualifier rules are those of
 [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md).
 A job scaffolded before 2026-10, named
 `<subject>-<type>-<prefix>[-<qualifier>].qmd`, is found and opened under
-that name. The editor is opened only in an interactive session.
+that name. So is a job scaffolded under a template's name before a
+rename, such as `graphs/dp.trends.<subject>.<type>.qmd` for `dc.trends`,
+whichever of the two names the call uses. The editor is opened only in
+an interactive session.
 
 ## See also
 
@@ -74,7 +77,7 @@ root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L
 ))
-#> Study: /tmp/Rtmppt3U6x/open-job-example
+#> Study: /tmp/RtmpOHM1wr/open-job-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project

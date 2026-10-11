@@ -124,7 +124,7 @@
 <span>  study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  adopt <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -166,12 +166,12 @@
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
 <span><span class="co">#&gt; [x] manifest.yaml — 1 dataset entry verified by checksum</span></span>
-<span><span class="co">#&gt; [x] dataset — built.csv, registered as built_20261010.parquet</span></span>
+<span><span class="co">#&gt; [x] dataset — built.csv, registered as built_20261011.parquet</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars</span></span>
@@ -206,11 +206,11 @@
 <p>Each call supplies four fields. <code>prefix</code> and <code>qualifier</code> select a template; the other two fields keep related outputs together:</p>
 <ul>
 <li>
-<code>dc</code> means descriptive computation and <code>dp</code> means descriptive plot.</li>
+<code>dc</code> means descriptive: the checks, tables and EDA plots. Legacy studies also hold <code>dp</code> (descriptive plot) jobs, which these templates replace.</li>
 <li>Qualifiers such as <code>general</code>, <code>tables</code> and <code>eda</code> select one template in that family.</li>
 <li>During EDA there may be no modeled endpoint or analysis method. <code>cohort</code> names the subject being described and <code>eda</code> names the stage. These are organizational labels, not invented analysis choices.</li>
 </ul>
-<p>For example, <code>open_job("dc", "cohort", "eda", qualifier = "tables")</code> creates <code>descriptive/dc.tables.cohort.eda.qmd</code> in an adopted legacy study. Its HTML report stays beside the QMD, while its Word table goes under <code>documents/cohort-eda/</code>. Plot jobs follow the same naming pattern, but trend QMDs and HTML reports belong in <code>graphs/</code>, and plot PNGs go under <code>graphs/cohort-eda/</code>.</p>
+<p>For example, <code>open_job("dc", "cohort", "eda", qualifier = "tables")</code> creates <code>descriptive/dc.tables.cohort.eda.qmd</code> in an adopted legacy study. Its HTML report stays beside the QMD, while its Word table goes under <code>documents/cohort-eda/</code>. The trends and EDA report jobs sit in <code>descriptive/</code> too, and their plot PNGs go under <code>graphs/cohort-eda/</code>.</p>
 </section><section class="level3"><h3 id="start-with-the-generally-applicable-jobs">Start with the generally applicable jobs<a class="anchor" aria-label="anchor" href="#start-with-the-generally-applicable-jobs"></a>
 </h3>
 <p>Create general checks and descriptive tables for every registered study:</p>
@@ -219,12 +219,12 @@
 <span><span class="va">tables</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"tables"</span><span class="op">)</span></span></code></pre></div>
 <p>The EDA report template is also part of this stage, but it requires a meaningful <code>X_VAR</code> for the horizontal axis. Create it when the dataset has an appropriate reference date, calendar year or follow-up measure:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">eda</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"eda"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">eda</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"eda"</span><span class="op">)</span></span></code></pre></div>
 <p>Its follow-up section needs the death and follow-up fields; take <code>"followup"</code> out of <code>SECTIONS</code> when the data do not have them; <code>SECTIONS &lt;- c("continuous", "percent", "count")</code> draws the variable sections alone.</p>
-<p>Two additional jobs are conditional. Add <code>dc-gfup</code> only when the registered event and follow-up fields answer a real completeness question. Add <code>dp-trends</code> only when the data have a meaningful calendar or operation-time field:</p>
+<p>Two additional jobs are conditional. Add <code>dc-gfup</code> only when the registered event and follow-up fields answer a real completeness question. Add <code>dc-trends</code> only when the data have a meaningful calendar or operation-time field:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gfup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"gfup"</span><span class="op">)</span></span>
-<span><span class="va">trends</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"trends"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">trends</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"trends"</span><span class="op">)</span></span></code></pre></div>
 <p>The synthetic data have all of those fields, so the executable example scaffolds all five jobs without opening editor windows:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
@@ -232,26 +232,26 @@
 <span>  general <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"general"</span><span class="op">)</span>,</span>
 <span>  tables <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"tables"</span><span class="op">)</span>,</span>
 <span>  gfup <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"gfup"</span><span class="op">)</span>,</span>
-<span>  trends <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"trends"</span><span class="op">)</span>,</span>
-<span>  eda <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"eda"</span><span class="op">)</span></span>
+<span>  trends <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"trends"</span><span class="op">)</span>,</span>
+<span>  eda <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"eda"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">study_jobs</span></span>
 <span><span class="co">#&gt;                                                                               general </span></span>
-<span><span class="co">#&gt; "/tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt; "/tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                tables </span></span>
-<span><span class="co">#&gt;  "/tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;  "/tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                  gfup </span></span>
-<span><span class="co">#&gt;    "/tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;    "/tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                trends </span></span>
-<span><span class="co">#&gt;       "/tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study/graphs/dp.trends.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;  "/tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study/descriptive/dc.trends.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                   eda </span></span>
-<span><span class="co">#&gt;     "/tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study/descriptive/dp.eda.cohort.eda.qmd"</span></span></code></pre></div>
+<span><span class="co">#&gt;     "/tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study/descriptive/dc.eda.cohort.eda.qmd"</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="work-the-jobs-and-generate-output">Work the jobs and generate output<a class="anchor" aria-label="anchor" href="#work-the-jobs-and-generate-output"></a>
 </h2>
 <p>Each new job contains <code>EDIT:</code> markers for decisions that cannot come from the template: variables, labels, groups, units and output choices. <code><a href="../reference/open_job.html">open_job()</a></code> opens the QMD in RStudio’s file editor. Edit the file there, working from the top marker downward, and <strong>Render</strong> to see what your choices do. A draft render carries a DRAFT banner while any marker remains.</p>
 <p>Always render; do not run the chunks by hand with <strong>Run All</strong>. Rendering starts at the top in a clean session, much like running a SAS job from beginning to end, so the report comes from this job alone. Run All works in your current session, where an object or a setting left by another job can stand in for one this job does not make. Render every edited job before leaving the study so the saved QMD is still in an executable state. If you want the same final check from the Console, run <code>render_job(tables, final = TRUE)</code>, substituting the job you edited.</p>
-<p>The HTML report stays beside its QMD in <code>descriptive/</code> or <code>graphs/</code>. The descriptive Word table is filed under <code>documents/cohort-eda/</code>; trend and EDA PNGs are filed under <code>graphs/cohort-eda/</code>. Open those artifacts and check the population, variables, labels, counts, summaries and axes—not merely that the files exist.</p>
+<p>The HTML report stays beside its QMD in <code>descriptive/</code>. The descriptive Word table is filed under <code>documents/cohort-eda/</code>; trend and EDA PNGs are filed under <code>graphs/cohort-eda/</code>. Open those artifacts and check the population, variables, labels, counts, summaries and axes—not merely that the files exist.</p>
 <p>If the study has older SAS jobs, continue with <a href="sas-to-r-descriptive.html">From SAS descriptive jobs to R</a>. That article owns the detailed source mapping and migration workflow so adoption itself remains short and non-destructive.</p>
 <section class="level3"><h3 id="when-registered-data-change">When registered data change<a class="anchor" aria-label="anchor" href="#when-registered-data-change"></a>
 </h3>

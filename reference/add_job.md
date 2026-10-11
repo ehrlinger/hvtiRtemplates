@@ -19,7 +19,7 @@ add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   Job type: one of the prefixes reported by
   [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
   or a template's full name as reported in its `name` column, e.g.
-  `"dp.trends"`; the dash spelling `"dp-trends"` is accepted too. A full
+  `"dc.trends"`; the dash spelling `"dc-trends"` is accepted too. A full
   name carries the qualifier, so `qualifier` must then be left `NULL`.
 
 - subject:
@@ -122,9 +122,19 @@ of such a job under the new name, and
 [`open_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
 opens it.
 
-A template the catalog marks deprecated, such as `dp.gfup`, still
-scaffolds, with a warning naming its replacement; see
+A template the catalog marks deprecated still scaffolds, with a warning
+naming its replacement; see
 [`template_catalog`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md).
+
+**Renamed templates.** `dp.eda` and `dp.trends` were renamed `dc.eda`
+and `dc.trends` on 2026-10-10. The old names still scaffold the renamed
+template, with a warning naming the new name, through the next release,
+and are removed in the one after. A `dc.trends` job is written to the
+`descriptive` folder, where a `dp.trends` job was written to `graphs`. A
+job scaffolded under the old name keeps it and keeps rendering;
+`add_job()` refuses to write a second copy of it under the new name, and
+[`open_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+opens it.
 
 ## See also
 
@@ -143,14 +153,15 @@ add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
 # A qualified template by its full name, the form template_list()$call prints.
 add_job("dc.gfup", subject = "cohort", type = "eda", dir = d)
 
-# A deprecated template still scaffolds, and the warning names its replacement.
-tryCatch(add_job("dp.gfup", subject = "cohort", type = "eda", dir = d),
+# A template's name before a rename still works, and the warning names the
+# new one.
+tryCatch(add_job("dp.trends", subject = "cohort", type = "eda", dir = d),
          warning = conditionMessage)
-#> [1] "add_job(): dp.gfup is deprecated in favor of dc.gfup. It will be removed in a later release. add_job(\"dc.gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."
+#> [1] "add_job(): dp.trends is deprecated in favor of dc.trends. Renamed on 2026-10-10, and a new job is now written to descriptive/ rather than graphs/. The old name keeps working, with this warning, through the next release and is removed in the one after."
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
 try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
-#> Error : add_job(): '/tmp/Rtmppt3U6x/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
+#> Error : add_job(): '/tmp/RtmpOHM1wr/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #> [1] "10_descriptive/dc.gfup.cohort.eda.qmd"

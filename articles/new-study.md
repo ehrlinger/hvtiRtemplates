@@ -77,7 +77,7 @@ directly, in a temporary directory:
 ``` r
 
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L)
-#> Study: /tmp/RtmpP5PBKn/file1e73439629ec/new-study
+#> Study: /tmp/Rtmp3fgBXa/file1f4648074632/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -123,12 +123,12 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpP5PBKn/file1e73439629ec/new-study
+#> Study: /tmp/Rtmp3fgBXa/file1f4648074632/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
-#> [x] dataset — built.csv, registered as built_20261010.parquet
+#> [x] dataset — built.csv, registered as built_20261011.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
@@ -300,15 +300,15 @@ lists every template with its prefix, qualifier and folder:
 head(template_list()[, c("name", "prefix", "qualifier", "folder")], 10)
 #>          name prefix qualifier        folder
 #> 1          bd     bd      <NA>      datasets
-#> 2  dc.general     dc   general   descriptive
-#> 3     dc.gfup     dc      gfup   descriptive
-#> 4  dc.stddiff     dc   stddiff   descriptive
-#> 5   dc.tables     dc    tables   descriptive
-#> 6      dp.eda     dp       eda   descriptive
-#> 7          ac     ac      <NA> distributions
-#> 8          hz     hz      <NA> distributions
-#> 9          bc     bc      <NA>      analyses
-#> 10         bh     bh      <NA>      analyses
+#> 2      dc.eda     dc       eda   descriptive
+#> 3  dc.general     dc   general   descriptive
+#> 4     dc.gfup     dc      gfup   descriptive
+#> 5  dc.stddiff     dc   stddiff   descriptive
+#> 6   dc.tables     dc    tables   descriptive
+#> 7   dc.trends     dc    trends   descriptive
+#> 8          ac     ac      <NA> distributions
+#> 9          hz     hz      <NA> distributions
+#> 10         bc     bc      <NA>      analyses
 ```
 
 The other chains follow the same pattern: a fitting job saves a handoff

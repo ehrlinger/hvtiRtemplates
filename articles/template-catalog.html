@@ -64,7 +64,7 @@
       <h1>The template catalog</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-10-10</p>
+      <p class="date">2026-10-11</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/vignettes/template-catalog.qmd" class="external-link"><code>vignettes/template-catalog.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -80,15 +80,15 @@
 <p>Every analysis job an HVTI study runs starts from a template: a Quarto file with the study-specific lines marked <code>EDIT:</code>. This page lists them all, what each one does, and how close each is to being delivered. It is built from the package’s own catalog when the page is rendered, so a template added, renamed or shipped shows up here without anyone remembering to update the page.</p>
 <p>A template becomes a job in your study with <code><a href="../reference/add_job.html">add_job()</a></code>. The first argument is the template’s prefix, then the subject and type that name the job’s set, and the qualifier when the prefix has one:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dp"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"trends"</span><span class="op">)</span></span></code></pre></div>
-<p>In a new study that writes <code>40_graphs/dp.trends.cohort.eda.qmd</code>; a legacy study that already uses bare folder names gets <code>graphs/dp.trends.cohort.eda.qmd</code>. The job refuses to overwrite an existing file, because a job accumulates a study’s edits.</p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"trends"</span><span class="op">)</span></span></code></pre></div>
+<p>In a new study that writes <code>10_descriptive/dc.trends.cohort.eda.qmd</code>; a legacy study that already uses bare folder names gets <code>descriptive/dc.trends.cohort.eda.qmd</code>. The job refuses to overwrite an existing file, because a job accumulates a study’s edits.</p>
 </section><section class="level2"><h2 id="delivery">Delivery<a class="anchor" aria-label="anchor" href="#delivery"></a>
 </h2>
 <p>Each template carries a light.</p>
 <ul>
-<li>🟢 <strong>Shipped</strong> (31): on disk and supported. Scaffold it and use it.</li>
+<li>🟢 <strong>Shipped</strong> (30): on disk and supported. Scaffold it and use it.</li>
 <li>🟡 <strong>In progress</strong> (22): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
-<li>🔴 <strong>Not yet on the way</strong> (14): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
+<li>🔴 <strong>Not yet on the way</strong> (13): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
 </h2>
 <p>Every template on disk, grouped by the study folder a job lands in, named without its digits (<code>graphs</code> is <code>40_graphs</code> in a new study). <code><a href="../reference/add_job.html">add_job()</a></code> places each one; you do not choose the folder.</p>
@@ -131,33 +131,39 @@
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">🟢 Shipped</td>
+<td style="text-align: left;"><code>dc-eda</code></td>
+<td style="text-align: left;">The whole data-checking report in one render: every column’s contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table.</td>
+<td style="text-align: left;"><code>add_job("dc", subject, type, qualifier = "eda")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>dc-general</code></td>
 <td style="text-align: left;">First look at a built cohort: what the data contain, how each categorical variable breaks down, how each continuous variable is distributed, and which variables move together.</td>
 <td style="text-align: left;"><code>add_job("dc", subject, type, qualifier = "general")</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>dc-gfup</code></td>
 <td style="text-align: left;">Checks follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals, then the goodness-of-follow-up figure, each patient’s follow-up against operation year under the diagonal the close date allows.</td>
 <td style="text-align: left;"><code>add_job("dc", subject, type, qualifier = "gfup")</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>dc-stddiff</code></td>
 <td style="text-align: left;">The balance table: the standardized difference of each baseline variable between two groups, unadjusted and, when the study has them, in the matched set and under matching weights, with an optional permutation reference.</td>
 <td style="text-align: left;"><code>add_job("dc", subject, type, qualifier = "stddiff")</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>dc-tables</code></td>
 <td style="text-align: left;">The formatted descriptive table: every reported variable under its section heading, categorical as n (%) and continuous as the summary you choose, written to Word.</td>
 <td style="text-align: left;"><code>add_job("dc", subject, type, qualifier = "tables")</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🟢 Shipped</td>
-<td style="text-align: left;"><code>dp-eda</code></td>
-<td style="text-align: left;">The whole data-checking report in one render: every column’s contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table.</td>
-<td style="text-align: left;"><code>add_job("dp", subject, type, qualifier = "eda")</code></td>
+<td style="text-align: left;"><code>dc-trends</code></td>
+<td style="text-align: left;">How the cohort changed over the years of operation: the share with a characteristic, or the level of a measurement, year by year with a smooth.</td>
+<td style="text-align: left;"><code>add_job("dc", subject, type, qualifier = "trends")</code></td>
 </tr>
 </tbody>
 </table></section><section class="level3"><h3 id="distributions">distributions<a class="anchor" aria-label="anchor" href="#distributions"></a>
@@ -330,10 +336,10 @@
 </h3>
 <table class="table caption-top">
 <colgroup>
-<col style="width: 4%">
-<col style="width: 5%">
-<col style="width: 73%">
-<col style="width: 17%">
+<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 62%">
+<col style="width: 24%">
 </colgroup>
 <thead><tr class="header">
 <th style="text-align: left;">Delivery</th>
@@ -342,18 +348,6 @@
 <th style="text-align: left;">Scaffold</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
-<td style="text-align: left;">🟢 Shipped</td>
-<td style="text-align: left;"><code>dp-gfup</code></td>
-<td style="text-align: left;">Deprecated in favor of dc-gfup, which draws the same figure beside its follow-up tables. The goodness-of-follow-up figure: each patient’s follow-up against operation year, alive in blue and dead in red, under the diagonal the close date allows.</td>
-<td style="text-align: left;"><code>add_job("dp", subject, type, qualifier = "gfup")</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">🟢 Shipped</td>
-<td style="text-align: left;"><code>dp-trends</code></td>
-<td style="text-align: left;">How the cohort changed over the years of operation: the share with a characteristic, or the level of a measurement, year by year with a smooth.</td>
-<td style="text-align: left;"><code>add_job("dp", subject, type, qualifier = "trends")</code></td>
-</tr>
 <tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>hp</code></td>
@@ -431,7 +425,7 @@
 </tr>
 <tr class="even">
 <td style="text-align: left;">🟡 In progress</td>
-<td style="text-align: left;"><code>dp-variable</code></td>
+<td style="text-align: left;"><code>dc-variable</code></td>
 <td style="text-align: left;">Distribution of a variable</td>
 <td style="text-align: left;">237</td>
 <td style="text-align: left;"></td>
@@ -571,61 +565,54 @@
 </tr>
 <tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
-<td style="text-align: left;"><code>dc-trends</code></td>
-<td style="text-align: left;">Descriptive: trends</td>
-<td style="text-align: left;">43</td>
-<td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>mi</code></td>
 <td style="text-align: left;">Multiple imputation</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: left;">hvtiRimputation</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>fp</code></td>
 <td style="text-align: left;">Forest plot</td>
 <td style="text-align: left;">11</td>
 <td style="text-align: left;">hvtiPlotR#133</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
-<td style="text-align: left;"><code>dp-boxplot</code></td>
+<td style="text-align: left;"><code>dc-boxplot</code></td>
 <td style="text-align: left;">Descriptive plot: boxplot</td>
 <td style="text-align: left;">9</td>
 <td style="text-align: left;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>cp</code></td>
 <td style="text-align: left;">Cumulative probability plot</td>
 <td style="text-align: left;">4</td>
 <td style="text-align: left;">hvtiPlotR#135</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>bq</code></td>
 <td style="text-align: left;">Bootstrap quantile</td>
 <td style="text-align: left;">2</td>
 <td style="text-align: left;">hvtiRbootstrap#16</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>nb-boostmlr</code></td>
 <td style="text-align: left;">Boosting: BoostMLR</td>
 <td style="text-align: left;">unmeasured</td>
 <td style="text-align: left;"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>sid</code></td>
 <td style="text-align: left;">Random forest clustering (sidClustering)</td>
 <td style="text-align: left;">unmeasured</td>
 <td style="text-align: left;">hvtiRforests#1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>vt</code></td>
 <td style="text-align: left;">Virtual twins</td>

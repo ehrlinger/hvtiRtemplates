@@ -56,22 +56,24 @@
 
 <dl><dt id="arg-prefix">prefix<a class="anchor" aria-label="anchor" href="#arg-prefix"></a></dt>
 <dd><p>Analysis prefix, e.g. <code>"ac"</code>, or a template's full name,
-e.g. <code>"dp.trends"</code> (or <code>"dp-trends"</code>), which carries its
+e.g. <code>"dc.trends"</code> (or <code>"dc-trends"</code>), which carries its
 qualifier and leaves <code>qualifier</code> <code>NULL</code>. See
 <code><a href="template_list.html">template_list</a></code>.</p></dd>
 
 
 <dt id="arg-qualifier">qualifier<a class="anchor" aria-label="anchor" href="#arg-qualifier"></a></dt>
 <dd><p>Job type within the prefix, e.g. <code>"trends"</code> for
-<code>dp</code>. Required only where a prefix carries more than one template;
+<code>dc</code>. Required only where a prefix carries more than one template;
 omitting it there is an error naming the choices, never a silent pick.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The full path, as <code>character(1)</code>. A template the catalog
-  marks deprecated, such as <code>dp.gfup</code>, still resolves, with a
-  warning naming its replacement.</p>
+  marks deprecated still resolves, with a warning naming its replacement.
+  So does a template's name before a rename, such as <code>dp.trends</code>,
+  now <code>dc.trends</code>: it resolves to the renamed template, with a
+  warning naming the new name, until the old name is removed.</p>
     </div>
 
     <div class="section level2">
@@ -88,7 +90,7 @@ omitting it there is an error naming the choices, never a silent pick.</p></dd>
 <span class="r-in"><span><span class="co"># A prefix carrying several templates is never resolved by guessing: this</span></span></span>
 <span class="r-in"><span><span class="co"># is an error that lists the choices.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">template_path</span><span class="op">(</span><span class="st">"dc"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : prefix 'dc' carries 4 templates; name one with `qualifier`, or by its full name. Available: dc.general, dc.gfup, dc.stddiff, dc.tables</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : prefix 'dc' carries 6 templates; name one with `qualifier`, or by its full name. Available: dc.eda, dc.general, dc.gfup, dc.stddiff, dc.tables, dc.trends</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -47,8 +47,8 @@ stage of work.
 |:---|:---|:---|:---|
 | `descriptive/dc.tables.ods.sas` (`%desc_tab`) | `dc-tables` | `10_descriptive/dc-tables.qmd` | `hv_tbl_summary()`; `hv_correlation_table()` and `hv_correlation_matrix()` |
 | `descriptive/dc.gfup.sas` | `dc-gfup` | `10_descriptive/dc-gfup.qmd` | [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |
-| `graphs/dp.trends.R` | `dp-trends` | `40_graphs/dp-trends.qmd` | `hv_trends()` |
-| `tp.dp.DescriptiveSummary.qmd`, `tp.dp.EDA_barplots_scatterplots*.R` | `dp-eda` | `10_descriptive/dp-eda.qmd` | `hv_eda()`, through `hv_eda_pages()` |
+| `graphs/dp.trends.R` | `dc-trends` | `10_descriptive/dc-trends.qmd` | `hv_trends()` |
+| `tp.dp.DescriptiveSummary.qmd`, `tp.dp.EDA_barplots_scatterplots*.R` | `dc-eda` | `10_descriptive/dc-eda.qmd` | `hv_eda()`, through `hv_eda_pages()` |
 
 ## Five steps for every job
 
@@ -284,9 +284,9 @@ if (requireNamespace("hvtiRutilities", quietly = TRUE)) {
 #> 4 0.1445 1.088 3.56575 6.6895  9.8770
 ```
 
-## Trends over operation year: `dp-trends`
+## Trends over operation year: `dc-trends`
 
-The shipped `dp-trends` template replaces hand-built annual summaries
+The shipped `dc-trends` template replaces hand-built annual summaries
 and per-series `smooth.spline(df = 6)` calls with `hv_trends()`. Its
 smoother is LOESS, not the SAS-era smoothing spline, so compare the old
 and new figures by shape rather than pointwise equality.
@@ -309,9 +309,9 @@ if (requireNamespace("hvtiPlotR", quietly = TRUE)) {
 #> (`stat_smooth()`).
 ```
 
-![](sas-to-r-descriptive_files/figure-html/dp-trends-1.png)
+![](sas-to-r-descriptive_files/figure-html/dc-trends-1.png)
 
-## EDA report: `dp-eda`
+## EDA report: `dc-eda`
 
 The older `Function_DataPlotting()` loops become one `hv_eda()` call per
 entry in `VARS`. Character and factor columns produce bars. A numeric
@@ -322,7 +322,7 @@ panels out in printable pages.
 
 A legacy EDA report drew no follow-up panels, so
 [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
-writes its `dp-eda` job with
+writes its `dc-eda` job with
 `SECTIONS <- c("continuous", "percent", "count")`: the continuous,
 percent and count pages, each with its table. Add `"followup"` to draw
 the follow-up panels as well.
@@ -342,14 +342,14 @@ panels <- lapply(names(variables), function(v) {
 panels[[1]]
 ```
 
-![](sas-to-r-descriptive_files/figure-html/dp-eda-1.png)
+![](sas-to-r-descriptive_files/figure-html/dc-eda-1.png)
 
 ``` r
 
 panels[[2]]
 ```
 
-![](sas-to-r-descriptive_files/figure-html/dp-eda-2.png)
+![](sas-to-r-descriptive_files/figure-html/dc-eda-2.png)
 
 ## Where the numbers differ
 

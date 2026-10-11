@@ -31,12 +31,12 @@ catalog <- template_catalog()
 table(catalog$status)
 #> 
 #> in-flight    queued   revisit   shipped 
-#>         1        34         1        31 
+#>         1        33         1        30 
 
 # Templates that still scaffold but name a replacement.
 catalog[!is.na(catalog$deprecated_by), c("prefix", "qualifier", "deprecated_by")]
-#>    prefix qualifier deprecated_by
-#> 61     dp      gfup       dc-gfup
+#> [1] prefix        qualifier     deprecated_by
+#> <0 rows> (or 0-length row.names)
 
 # Queued templates waiting on work in another package.
 queued <- catalog[catalog$status == "queued" & !is.na(catalog$blocked_on), ]

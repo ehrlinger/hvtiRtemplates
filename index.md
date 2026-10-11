@@ -150,7 +150,7 @@ call writes `descriptive/dc.tables.cohort.eda.qmd` and
 folders. It preserves the evidence files and refuses to overwrite either
 output.
 
-Migration supports `dc-tables`, `dc-gfup`, `dp-trends`, and `dp-eda`.
+Migration supports `dc-tables`, `dc-gfup`, `dc-trends`, and `dc-eda`.
 Each adapter reads a defined source shape. Only deterministic extraction
 can remove an `EDIT:` marker; uncertain choices remain in the job and
 report for you to resolve before rendering. Logs, listings, and RTF/DOCX

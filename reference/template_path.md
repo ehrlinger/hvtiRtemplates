@@ -13,21 +13,23 @@ template_path(prefix, qualifier = NULL)
 - prefix:
 
   Analysis prefix, e.g. `"ac"`, or a template's full name, e.g.
-  `"dp.trends"` (or `"dp-trends"`), which carries its qualifier and
+  `"dc.trends"` (or `"dc-trends"`), which carries its qualifier and
   leaves `qualifier` `NULL`. See
   [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md).
 
 - qualifier:
 
-  Job type within the prefix, e.g. `"trends"` for `dp`. Required only
+  Job type within the prefix, e.g. `"trends"` for `dc`. Required only
   where a prefix carries more than one template; omitting it there is an
   error naming the choices, never a silent pick.
 
 ## Value
 
 The full path, as `character(1)`. A template the catalog marks
-deprecated, such as `dp.gfup`, still resolves, with a warning naming its
-replacement.
+deprecated still resolves, with a warning naming its replacement. So
+does a template's name before a rename, such as `dp.trends`, now
+`dc.trends`: it resolves to the renamed template, with a warning naming
+the new name, until the old name is removed.
 
 ## Examples
 
@@ -44,5 +46,5 @@ template_path("dc", qualifier = "gfup")
 # A prefix carrying several templates is never resolved by guessing: this
 # is an error that lists the choices.
 try(template_path("dc"))
-#> Error : prefix 'dc' carries 4 templates; name one with `qualifier`, or by its full name. Available: dc.general, dc.gfup, dc.stddiff, dc.tables
+#> Error : prefix 'dc' carries 6 templates; name one with `qualifier`, or by its full name. Available: dc.eda, dc.general, dc.gfup, dc.stddiff, dc.tables, dc.trends
 ```

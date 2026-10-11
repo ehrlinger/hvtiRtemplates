@@ -16,22 +16,22 @@ that name the job’s set, and the qualifier when the prefix has one:
 
 ``` r
 
-add_job("dp", "cohort", "eda", qualifier = "trends")
+add_job("dc", "cohort", "eda", qualifier = "trends")
 ```
 
-In a new study that writes `40_graphs/dp.trends.cohort.eda.qmd`; a
+In a new study that writes `10_descriptive/dc.trends.cohort.eda.qmd`; a
 legacy study that already uses bare folder names gets
-`graphs/dp.trends.cohort.eda.qmd`. The job refuses to overwrite an
+`descriptive/dc.trends.cohort.eda.qmd`. The job refuses to overwrite an
 existing file, because a job accumulates a study’s edits.
 
 ## Delivery
 
 Each template carries a light.
 
-- 🟢 **Shipped** (31): on disk and supported. Scaffold it and use it.
+- 🟢 **Shipped** (30): on disk and supported. Scaffold it and use it.
 - 🟡 **In progress** (22): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
-- 🔴 **Not yet on the way** (14): waiting on a function in another
+- 🔴 **Not yet on the way** (13): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
   now, write it by hand.
 
@@ -52,11 +52,12 @@ places each one; you do not choose the folder.
 
 | Delivery | Template | Description | Scaffold |
 |:---|:---|:---|:---|
+| 🟢 Shipped | `dc-eda` | The whole data-checking report in one render: every column’s contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table. | `add_job("dc", subject, type, qualifier = "eda")` |
 | 🟢 Shipped | `dc-general` | First look at a built cohort: what the data contain, how each categorical variable breaks down, how each continuous variable is distributed, and which variables move together. | `add_job("dc", subject, type, qualifier = "general")` |
 | 🟢 Shipped | `dc-gfup` | Checks follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals, then the goodness-of-follow-up figure, each patient’s follow-up against operation year under the diagonal the close date allows. | `add_job("dc", subject, type, qualifier = "gfup")` |
 | 🟢 Shipped | `dc-stddiff` | The balance table: the standardized difference of each baseline variable between two groups, unadjusted and, when the study has them, in the matched set and under matching weights, with an optional permutation reference. | `add_job("dc", subject, type, qualifier = "stddiff")` |
 | 🟢 Shipped | `dc-tables` | The formatted descriptive table: every reported variable under its section heading, categorical as n (%) and continuous as the summary you choose, written to Word. | `add_job("dc", subject, type, qualifier = "tables")` |
-| 🟢 Shipped | `dp-eda` | The whole data-checking report in one render: every column’s contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table. | `add_job("dp", subject, type, qualifier = "eda")` |
+| 🟢 Shipped | `dc-trends` | How the cohort changed over the years of operation: the share with a characteristic, or the level of a measurement, year by year with a smooth. | `add_job("dc", subject, type, qualifier = "trends")` |
 
 ### distributions
 
@@ -94,8 +95,6 @@ places each one; you do not choose the folder.
 
 | Delivery | Template | Description | Scaffold |
 |:---|:---|:---|:---|
-| 🟢 Shipped | `dp-gfup` | Deprecated in favor of dc-gfup, which draws the same figure beside its follow-up tables. The goodness-of-follow-up figure: each patient’s follow-up against operation year, alive in blue and dead in red, under the diagonal the close date allows. | `add_job("dp", subject, type, qualifier = "gfup")` |
-| 🟢 Shipped | `dp-trends` | How the cohort changed over the years of operation: the share with a characteristic, or the level of a measurement, year by year with a smooth. | `add_job("dp", subject, type, qualifier = "trends")` |
 | 🟡 In progress | `hp` | Nomogram and hazard figures, read from the ac life table and the hz fit rather than recomputed. | `add_job("hp", subject, type)` |
 | 🟢 Shipped | `hs-concordance` | Every patient predicted through every treatment group’s hm model at one horizon, with an optional table of actual against best-predicted treatment. | `add_job("hs", subject, type, qualifier = "concordance")` |
 | 🟢 Shipped | `hs-setup` | Patient-level predictions from the hm model, set against the survival of a matched general population. | `add_job("hs", subject, type, qualifier = "setup")` |
@@ -115,7 +114,7 @@ as zero.
 | 🟡 In progress | `lp` | Logistic plot | 310 |  |
 | 🟡 In progress | `nd` | Non-linear distributions | 244 |  |
 | 🟡 In progress | `np` | Non-linear plot | 241 |  |
-| 🟡 In progress | `dp-variable` | Distribution of a variable | 237 |  |
+| 🟡 In progress | `dc-variable` | Distribution of a variable | 237 |  |
 | 🟡 In progress | `cd` | Cumulative distribution | 190 |  |
 | 🟡 In progress | `dc-dead` | Descriptive: mortality | 171 |  |
 | 🟡 In progress | `rm` | Regression model | 170 |  |
@@ -135,10 +134,9 @@ as zero.
 | 🔴 Not yet on the way | `ce` | Competing events | 128 | hvtiPlotR#134 |
 | 🔴 Not yet on the way | `bn` | Bootstrap non-linear | 108 |  |
 | 🔴 Not yet on the way | `gp` | Generalized model plot | 50 | hvtiPlotR#136 |
-| 🔴 Not yet on the way | `dc-trends` | Descriptive: trends | 43 |  |
 | 🔴 Not yet on the way | `mi` | Multiple imputation | 18 | hvtiRimputation |
 | 🔴 Not yet on the way | `fp` | Forest plot | 11 | hvtiPlotR#133 |
-| 🔴 Not yet on the way | `dp-boxplot` | Descriptive plot: boxplot | 9 |  |
+| 🔴 Not yet on the way | `dc-boxplot` | Descriptive plot: boxplot | 9 |  |
 | 🔴 Not yet on the way | `cp` | Cumulative probability plot | 4 | hvtiPlotR#135 |
 | 🔴 Not yet on the way | `bq` | Bootstrap quantile | 2 | hvtiRbootstrap#16 |
 | 🔴 Not yet on the way | `nb-boostmlr` | Boosting: BoostMLR | unmeasured |  |

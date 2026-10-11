@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study
+#> Study: /tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,12 +183,12 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study
+#> Study: /tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
-#> [x] dataset — built.csv, registered as built_20261010.parquet
+#> [x] dataset — built.csv, registered as built_20261011.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
@@ -241,7 +241,9 @@ exists, it opens the study-authored file without replacing any edits.
 Each call supplies four fields. `prefix` and `qualifier` select a
 template; the other two fields keep related outputs together:
 
-- `dc` means descriptive computation and `dp` means descriptive plot.
+- `dc` means descriptive: the checks, tables and EDA plots. Legacy
+  studies also hold `dp` (descriptive plot) jobs, which these templates
+  replace.
 - Qualifiers such as `general`, `tables` and `eda` select one template
   in that family.
 - During EDA there may be no modeled endpoint or analysis method.
@@ -251,9 +253,8 @@ template; the other two fields keep related outputs together:
 For example, `open_job("dc", "cohort", "eda", qualifier = "tables")`
 creates `descriptive/dc.tables.cohort.eda.qmd` in an adopted legacy
 study. Its HTML report stays beside the QMD, while its Word table goes
-under `documents/cohort-eda/`. Plot jobs follow the same naming pattern,
-but trend QMDs and HTML reports belong in `graphs/`, and plot PNGs go
-under `graphs/cohort-eda/`.
+under `documents/cohort-eda/`. The trends and EDA report jobs sit in
+`descriptive/` too, and their plot PNGs go under `graphs/cohort-eda/`.
 
 ### Start with the generally applicable jobs
 
@@ -271,7 +272,7 @@ has an appropriate reference date, calendar year or follow-up measure:
 
 ``` r
 
-eda <- open_job("dp", "cohort", "eda", qualifier = "eda")
+eda <- open_job("dc", "cohort", "eda", qualifier = "eda")
 ```
 
 Its follow-up section needs the death and follow-up fields; take
@@ -281,13 +282,13 @@ sections alone.
 
 Two additional jobs are conditional. Add `dc-gfup` only when the
 registered event and follow-up fields answer a real completeness
-question. Add `dp-trends` only when the data have a meaningful calendar
+question. Add `dc-trends` only when the data have a meaningful calendar
 or operation-time field:
 
 ``` r
 
 gfup <- open_job("dc", "cohort", "eda", qualifier = "gfup")
-trends <- open_job("dp", "cohort", "eda", qualifier = "trends")
+trends <- open_job("dc", "cohort", "eda", qualifier = "trends")
 ```
 
 The synthetic data have all of those fields, so the executable example
@@ -299,20 +300,20 @@ study_jobs <- c(
   general = add_job("dc", "cohort", "eda", adopted_root, "general"),
   tables = add_job("dc", "cohort", "eda", adopted_root, "tables"),
   gfup = add_job("dc", "cohort", "eda", adopted_root, "gfup"),
-  trends = add_job("dp", "cohort", "eda", adopted_root, "trends"),
-  eda = add_job("dp", "cohort", "eda", adopted_root, "eda")
+  trends = add_job("dc", "cohort", "eda", adopted_root, "trends"),
+  eda = add_job("dc", "cohort", "eda", adopted_root, "eda")
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#> "/tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
 #>                                                                                tables 
-#>  "/tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>  "/tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>    "/tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
 #>                                                                                trends 
-#>       "/tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study/graphs/dp.trends.cohort.eda.qmd" 
+#>  "/tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/RtmpAcEiRg/file1eb65808b84f/legacy-study/descriptive/dp.eda.cohort.eda.qmd"
+#>     "/tmp/RtmpkPJLEH/file1f8b7a50ee8e/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output
@@ -333,11 +334,11 @@ before leaving the study so the saved QMD is still in an executable
 state. If you want the same final check from the Console, run
 `render_job(tables, final = TRUE)`, substituting the job you edited.
 
-The HTML report stays beside its QMD in `descriptive/` or `graphs/`. The
-descriptive Word table is filed under `documents/cohort-eda/`; trend and
-EDA PNGs are filed under `graphs/cohort-eda/`. Open those artifacts and
-check the population, variables, labels, counts, summaries and axes—not
-merely that the files exist.
+The HTML report stays beside its QMD in `descriptive/`. The descriptive
+Word table is filed under `documents/cohort-eda/`; trend and EDA PNGs
+are filed under `graphs/cohort-eda/`. Open those artifacts and check the
+population, variables, labels, counts, summaries and axes—not merely
+that the files exist.
 
 If the study has older SAS jobs, continue with [From SAS descriptive
 jobs to
