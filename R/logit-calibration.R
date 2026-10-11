@@ -29,3 +29,81 @@
   }
   list(group = group, missing = sum(!seen))
 }
+
+# An event as 0 and 1. A logical is read as 1 for TRUE; anything else that is not 0, 1 or
+# missing stops, so a column coded 1 and 2 does not become a rate of 1.5.
+.lg_event <- function(event) {
+  if (is.logical(event)) event <- as.integer(event)
+  if (!is.numeric(event) || !all(event[!is.na(event)] %in% c(0, 1))) {
+    stop("event must be coded 0 and 1 (or TRUE and FALSE), 1 for an event.", call. = FALSE)
+  }
+  event
+}
+
+# One row per group: the covariate's mean, minimum and maximum, the patients with
+# an event value (n), their events, the event rate and its value on the link scale.
+#   logit:  rate = events / n, link = log(rate / (1 - rate))
+#   hazard: rate = events / sum(time), link = log(rate), the constant-hazard
+#           rate %logit calls with cox=1 (events per unit of follow-up).
+# A patient with no covariate value, or under "hazard" no follow-up, is left out
+# before the groups are formed, as %logit deletes them. A patient with no event
+# value is ranked with the rest, as in SAS, but counts in neither n nor events.
+# A group whose link cannot be computed (a rate of 0 or 1, or no events under
+# "hazard") keeps its row with a missing link and is named in attr(, "notes").
+# attr(, "dropped") counts the patients without a covariate, without follow-up
+# and without an event value.
+.lg_table <- function(x, event, time = NULL, groups = 5L, kind = c("continuous", "ordinal"),
+                      link = c("logit", "hazard")) {
+  kind <- match.arg(kind)
+  link <- match.arg(link)
+  hazard <- identical(link, "hazard")
+  if (length(event) != length(x)) stop("x and event must be the same length.", call. = FALSE)
+  event <- .lg_event(event)
+  if (hazard) {
+    if (is.null(time)) stop("link = \"hazard\" needs time, the follow-up of each patient.", call. = FALSE)
+    if (!is.numeric(time) || length(time) != length(x)) {
+      stop("time must be numeric, one value for each patient.", call. = FALSE)
+    }
+    negative <- sum(time < 0, na.rm = TRUE)
+    if (negative) {
+      stop("time holds ", negative, " negative value", if (negative > 1L) "s", ": follow-up cannot be negative.",
+           call. = FALSE)
+    }
+  }
+  keep <- !is.na(x) & (if (hazard) !is.na(time) else TRUE)
+  dropped <- c(covariate = sum(is.na(x)), follow_up = if (hazard) sum(!is.na(x) & is.na(time)) else 0L,
+               event = sum(keep & is.na(event)))
+  x <- x[keep]
+  event <- event[keep]
+  follow_up <- if (hazard) time[keep]
+  rows <- split(seq_along(x), .lg_groups(x, groups, kind)$group)
+  n <- vapply(rows, function(i) sum(!is.na(event[i])), integer(1L), USE.NAMES = FALSE)
+  events <- vapply(rows, function(i) as.integer(sum(event[i], na.rm = TRUE)), integer(1L), USE.NAMES = FALSE)
+  total <- if (hazard) vapply(rows, function(i) sum(follow_up[i]), numeric(1L), USE.NAMES = FALSE)
+  defined <- if (hazard) events > 0L & total > 0 else events > 0L & events < n
+  rate <- if (hazard) events / total else events / n
+  rate[!is.finite(rate)] <- NA_real_
+  value <- rep(NA_real_, length(rows))
+  value[defined] <- if (hazard) log(rate[defined]) else log(rate[defined] / (1 - rate[defined]))
+  out <- data.frame(
+    group = seq_along(rows),
+    mean = vapply(rows, function(i) mean(x[i]), numeric(1L), USE.NAMES = FALSE),
+    min = vapply(rows, function(i) min(x[i]), numeric(1L), USE.NAMES = FALSE),
+    max = vapply(rows, function(i) max(x[i]), numeric(1L), USE.NAMES = FALSE),
+    n = n, events = events, rate = rate, link = value
+  )
+  why <- function(k) {
+    if (hazard) {
+      if (events[[k]] == 0L) return("no patient had the event, so the hazard rate is 0 and its log is undefined")
+      return("the follow-up time sums to 0, so the hazard rate is undefined")
+    }
+    if (n[[k]] == 0L) return("no patient has an event value, so there is no rate")
+    if (events[[k]] == 0L) return("no patient had the event, so the rate is 0 and its logit is undefined")
+    "every patient had the event, so the rate is 1 and its logit is undefined"
+  }
+  attr(out, "notes") <- vapply(which(!defined), function(k) {
+    paste0("Group ", k, " (n = ", n[[k]], ", events = ", events[[k]], "): ", why(k), ". The point is left blank.")
+  }, character(1L))
+  attr(out, "dropped") <- dropped
+  out
+}
