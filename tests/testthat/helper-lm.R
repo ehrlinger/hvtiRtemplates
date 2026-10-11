@@ -160,3 +160,55 @@ lm_eval_job <- function(job) {
   })
   env
 }
+
+# lp-mirror: a study whose lm-propensity_binary job has run, and the mirror
+# job's own helpers. Kept in this file because they call the lm_* helpers above.
+
+# The lm cohort with a pair-match flag, as a SAS match would leave it: two
+# patients in three are matched. The identifiers are seven digits that occur
+# nowhere else, so a report that printed one would be caught.
+lp_data <- function(n = 120L) {
+  d <- lm_data(n)
+  d$ccfid <- 9100000L + d$ccfid
+  d$match <- as.integer(d$ccfid %% 3L != 0L)
+  d
+}
+
+# A study whose lm-propensity_binary job ran in the outcome-analysis set, with
+# an lp-mirror job scaffolded beside it and its markers worked. Each element of
+# `lines` replaces the study-choice line that starts with its setting's name,
+# as lm_render_fixture() does. Returns the root, the job and the bundle path.
+lp_fixture <- function(lines = character(), data = lp_data(), .local_envir = parent.frame()) {
+  fit <- lm_render_fixture("propensity_binary", data = data, render = FALSE, .local_envir = .local_envir)
+  job <- add_job("lp.mirror", "outcome", "analysis", dir = fit$root)
+  src <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
+  for (line in lines) {
+    key <- sub(" .*", "", line)
+    src[grepl(paste0("^", key, " <- "), src)] <- line
+  }
+  writeLines(src, job)
+  list(root = fit$root, job = job, bundle = fit$env$MODEL_PATH)
+}
+
+# The lp-mirror template's helper functions, in an environment of their own.
+lp_helpers <- function() {
+  env <- new.env(parent = globalenv())
+  src <- readLines(template_path("lp", "mirror"), warn = FALSE)
+  # The package's own template chunk, as lm_run() evaluates the lm templates.
+  eval(parse(text = lm_chunk(src, "helpers")), envir = env)
+  env
+}
+
+# A second dataset in the fixture's study, registered as `match_file`, holding
+# only the patients in `rows` of lp_data() plus `foreign` patients the scores
+# were not computed for, with the pair-match flag `flag` for the kept rows.
+lp_register_match <- function(root, rows, foreign = 0L, flag = lp_data()$match[rows]) {
+  d <- lp_data()[rows, c("ccfid", "match"), drop = FALSE]
+  d$match <- flag
+  if (foreign > 0L) {
+    d <- rbind(d, data.frame(ccfid = 9200000L + seq_len(foreign), match = rep(1L, foreign)))
+  }
+  utils::write.csv(d, file.path(root, "00_datasets", "match_file.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "match_file.csv", dataset = "match_file", role = "named",
+                                                 key = "ccfid"))
+}

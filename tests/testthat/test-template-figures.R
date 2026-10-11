@@ -1,4 +1,4 @@
-figure_templates <- c("dc-gfup", "dc-stddiff", "dc-tables", "dc-eda", "dc-trends", "hp",
+figure_templates <- c("dc-gfup", "dc-stddiff", "dc-tables", "dc-eda", "dc-trends", "hp", "lp-mirror",
                       "bc", "bh", "bl", "br", "nb-boostmtree", "rfc-explain", "rfr-explain", "rfs-explain",
                       "rfc-fit", "rfr-fit", "rfs-fit")
 
@@ -29,6 +29,7 @@ test_that("no template saves a figure except through save_figure()", {
 test_that("every printed figure is also saved, under its documented name", {
   expected <- list(
     bc = "bc-frequencies", bh = "bh-frequencies", bl = "bl-frequencies", br = "br-frequencies",
+    `lp-mirror` = c("lp-mirror-unmatched", "lp-mirror-weighted", "lp-mirror-matched"),
     `nb-boostmtree` = c("nb-boostmtree-error", "nb-boostmtree-path", "nb-boostmtree-calibration",
                         "nb-boostmtree-importance", "nb-boostmtree-effects-", "nb-boostmtree-traces"),
     `rfc-fit` = c("rfc-fit-diagnostics-error", "rfc-fit-diagnostics-roc"),

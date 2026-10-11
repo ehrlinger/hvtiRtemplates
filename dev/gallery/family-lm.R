@@ -2,7 +2,9 @@
 # report reads as one job. lm-checkpred validates the bundle lm-binary saves,
 # so the two share the stroke-model set and lm-binary renders first. The
 # outcomes, treatments and the count exposure are simulated from the demo
-# covariates, so every model has something to find.
+# covariates, so every model has something to find. lp-mirror draws the
+# lm-propensity_binary bundle, once in its approach-propensity set and once,
+# as lp-mirror-matched, from a set of its own with a simulated match flag.
 
 # lm-binary fits on operations before 2015 and lm-checkpred validates on 2015
 # onward: one registered dataset, split by each job's WHERE.
@@ -32,6 +34,10 @@ gallery_family(
       size <- cut(-1.4 * d$female + 0.12 * (d$bmi - 27) + stats::rlogis(n), c(-Inf, -1.2, 0.8, Inf), labels = FALSE)
       valve <- pick(cbind(-0.5 + 1.1 * a, -2.4 - 0.4 * a))
       prior <- stats::rpois(n, exp(-1.2 + 0.25 * a + 0.5 * d$hx_chf))
+      # A pair-match flag, as a SAS match would leave it: most transcatheter
+      # patients find a surgical partner, and fewer surgical ones are used.
+      # Drawn last, so no draw above moves.
+      paired <- stats::rbinom(n, 1L, ifelse(tavr == 1L, 0.85, 0.45))
     })
     d$stroke <- c("no", "yes")[stroke + 1L]
     d$mr_grade <- c("none", "mild", "moderate", "severe")[mr]
@@ -40,11 +46,12 @@ gallery_family(
     d$valve_size <- c("small", "medium", "large")[size]
     d$valve_type <- c("mechanical", "bioprosthetic", "homograft")[valve]
     d$prior_ops <- prior
+    d$match_pair <- paired
     labels <- c(
       stroke = "Postoperative stroke", mr_grade = "Postoperative mitral regurgitation grade",
       discharge = "Discharge destination", approach = "Surgical or transcatheter replacement",
       valve_size = "Prosthesis size", valve_type = "Prosthesis type",
-      prior_ops = "Number of prior cardiac operations"
+      prior_ops = "Number of prior cardiac operations", match_pair = "In a matched pair (simulated)"
     )
     for (v in names(labels)) attr(d[[v]], "label") <- labels[[v]]
     d
@@ -82,6 +89,18 @@ gallery_family(
       "^TREATMENT_LEVELS <- " = "TREATMENT_LEVELS <- c(\"surgical\", \"transcatheter\")",
       "^TREATED_LEVEL <- " = "TREATED_LEVEL <- \"transcatheter\""
     ))),
+    # The mirrored histogram of that bundle, in its set, with no match flag.
+    "lp-mirror" = list(subject = "approach", type = "propensity", choices = list(
+      "^GROUP_LABELS <- " = "GROUP_LABELS <- c(surgical = \"Surgical\", transcatheter = \"Transcatheter\")"
+    )),
+    # The same bundle from a set of its own, with the simulated match flag, so
+    # the matched figure is drawn too.
+    "lp-mirror-matched" = list(template = "lp-mirror", subject = "approach", type = "matched", choices = list(
+      "^MODEL_SET <- " = "MODEL_SET <- \"approach-propensity\"",
+      "^GROUP_LABELS <- " = "GROUP_LABELS <- c(surgical = \"Surgical\", transcatheter = \"Transcatheter\")",
+      "^MATCH <- " = "MATCH <- \"match_pair\"",
+      "^ID <- " = "ID <- \"patient_id\""
+    )),
     "lm-propensity_ordinal" = list(subject = "valvesize", type = "propensity", choices = c(lm_id, list(
       "^DATASET <- " = "DATASET <- \"built\"",
       "^TREATMENT <- " = "TREATMENT <- \"valve_size\"",

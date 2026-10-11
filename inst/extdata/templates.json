@@ -794,24 +794,27 @@
     },
     {
       "prefix": "lp",
-      "qualifier": null,
-      "name": "Logistic plot",
+      "qualifier": "mirror",
+      "name": "Logistic plot: mirrored propensity histogram",
+      "description": "The mirrored histogram of the propensity score, treated above the axis and controls below, drawn from a saved lm-propensity_binary bundle without refitting: all patients, under the matching weights, and matched when the study has a match flag.",
       "folder": "graphs",
       "family": "plots",
       "kind": "job",
-      "status": "queued",
+      "status": "shipped",
       "batch": 3,
       "sas_breadth": 636,
       "r_exemplars": 186,
       "r_jobs": 606,
-      "upstream": [],
+      "upstream": [
+        "lm"
+      ],
       "downstream": [],
       "workflows": [
         "propensity-matching"
       ],
       "blocked_on": null,
-      "spec": null,
-      "note": null,
+      "spec": "dev/specs/2026-10-11-lp-mirror-template-design.md",
+      "note": "A read-only survey on 2026-10-10 of 23 R lp jobs from 19 studies found about 94% of the 612 R-side lp jobs are propensity plots, about 284 of them mirrored histograms, and none refits. The balance plot ships as dc-stddiff. lp became a qualified prefix on 2026-10-11 so a later lp shape, such as calibration, arrives as its own qualifier. The breadth and exemplar counts above are the whole lp prefix's, measured before the split.",
       "sas_breadth_jobs": 310,
       "disposition": "thin",
       "uses": [

@@ -44,8 +44,8 @@ calibration, arrives as its own qualifier.
   same checks lm-checkpred makes: a bare `.rds` name and a valid set name, so
   nothing outside the study's estimates can be reached.
 - **Lineage.** It checks the bundle's lineage as `hp` checks its upstreams. A bundle
-  with no source lineage, or one built from data that has changed since, stops
-  with the command to rebuild it.
+  with no source lineage, or one whose rebuilt read has different rows,
+  patients or patient hash, stops with the command to rebuild it.
 - **It never refits.**
 - **What the bundle supplies.** Its `$data` holds, for each patient:
   - the score (`prob_t`) and its logit;

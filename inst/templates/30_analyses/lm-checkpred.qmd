@@ -185,23 +185,8 @@ if (!is.null(job_data$attrition)) {
 ```{r}
 #| label: model
 # MODEL_FILE is a file name and MODEL_SET a set name, so neither can reach outside the study's estimates.
-if (!is.character(MODEL_FILE) || length(MODEL_FILE) != 1L || !grepl("^[^/\\\\]+[.]rds$", MODEL_FILE)) {
-  stop("MODEL_FILE must name one .rds file, such as \"lm-binary.rds\", with no folder: ",
-       "name another set in MODEL_SET.", call. = FALSE)
-}
-if (!is.null(MODEL_SET) &&
-      (!is.character(MODEL_SET) || length(MODEL_SET) != 1L || !grepl("^[A-Za-z0-9_]+-[A-Za-z0-9_]+$", MODEL_SET))) {
-  stop("MODEL_SET must be NULL or one set name, \"<subject>-<type>\", such as \"stroke-model\".", call. = FALSE)
-}
-MODEL_PATH <- if (is.null(MODEL_SET)) {
-  set_path("estimates", MODEL_FILE)
-} else {
-  file.path(hvtiRutilities::study_dir("estimates", .root), MODEL_SET, MODEL_FILE)
-}
-if (!file.exists(MODEL_PATH)) {
-  stop("Saved model not found: ", MODEL_PATH, ". Render the lm-binary job first, or set MODEL_FILE and ",
-       "MODEL_SET to where it saved its model.", call. = FALSE)
-}
+MODEL_PATH <- hvtiRtemplates:::.handoff_path(MODEL_FILE, MODEL_SET, .root, function(file) set_path("estimates", file),
+                                             upstream = "lm-binary", set_example = "stroke-model")
 .model_read <- hvtiRtemplates:::.read_handoff(
   MODEL_PATH, "source-model", hvtiRutilities::study_config(start = .root), "the source lm job"
 )
@@ -239,12 +224,7 @@ if (anyNA(d[[.id]]) || anyNA(model$data[[.train_id]])) {
 # A model saved by a current lm template keeps a study-keyed digest of each training ID, so the validation
 # IDs are digested with the same key to compare. One saved before that holds raw identifiers, and is
 # compared raw so it still validates; re-save it with its lm template to clear them from the file.
-.digested <- isTRUE(model$meta$id_digest)
-.validation_ids <- if (.digested) {
-  unique(hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.bundle_id_key(model, .root)))
-} else {
-  unique(as.character(d[[.id]]))
-}
+.validation_ids <- unique(hvtiRtemplates:::.bundle_ids(model, d[[.id]], .root))
 .shared <- sum(.validation_ids %in% as.character(model$data[[.train_id]]))
 if (.shared && .shared == length(.validation_ids)) {
   stop("The validation data are the training data: set DATASET or WHERE to the validation cohort.", call. = FALSE)

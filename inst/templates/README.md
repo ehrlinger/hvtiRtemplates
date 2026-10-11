@@ -15,6 +15,7 @@ refuses to overwrite an existing job.
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-setup.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-concordance.qmd` | every patient through every treatment group's model, with an optional best-treatment table | `40_graphs/` or `graphs/` |
+| `40_graphs/lp-mirror.qmd` | mirrored histogram of a saved propensity score: all patients, under the matching weights, and matched | `40_graphs/` or `graphs/` |
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-gfup.qmd` | follow-up interval checks and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
@@ -81,14 +82,16 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dc-trends`,
-`dc-eda`, `hs-setup`, `hs-concordance`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
+`dc-eda`, `hs-setup`, `hs-concordance`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so
 in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
 existing job by its file. Use `hs-setup` for one model's predictions against the matched population, and
 `hs-concordance` when each treatment group has its own `hm` model and every patient is to be predicted through
 each of them. `nb-boostmtree` is qualified from the start, because `nb` will also hold a BoostMLR job,
-`nb-boostmlr`, which is still to come. The other prefixes here remain unqualified. A
+`nb-boostmlr`, which is still to come.
+`lp` is qualified from its first template, `lp-mirror`, so a later `lp` shape, such as calibration, arrives as a
+qualifier of its own. The other prefixes here remain unqualified. A
 prefix is wholly qualified or wholly unqualified, never half-decomposed.
 
 ### Logistic-model jobs
@@ -351,6 +354,7 @@ where it does not, as on a Mac without XQuartz.
 | dc-eda | `dc-eda-gfup-<panel>`, `dc-eda-<section>-page-<NN>` |
 | dc-trends | `dc-trends-<trend>-<subgroup>` |
 | hp | `hp-survival`, `hp-hazard`, `hp-phases` |
+| lp-mirror | `lp-mirror-unmatched`, `lp-mirror-weighted`, and `lp-mirror-matched` when `MATCH` is set |
 | bc, bh, bl, br | `<prefix>-frequencies` |
 | nb-boostmtree | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>`, `-traces` |
 | rfc-, rfr-, rfs-explain | `<template>-importance`, `-varpro`, `-dependence-marginal`, `-dependence-partial`, `-dependence-varpro` |
