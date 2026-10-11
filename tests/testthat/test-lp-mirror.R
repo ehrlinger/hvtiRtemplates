@@ -143,3 +143,37 @@ test_that("the treated bars are above the axis and the y-limits are symmetric, f
   limits <- ggplot2::layer_scales(h$mirror_figure(mh, "unmatched"))$y$get_limits()
   expect_identical(limits, c(-h$mirror_limit(mh$data$y), h$mirror_limit(mh$data$y)))
 })
+
+test_that("the weighted bars are the sum of the matching weights in each group and bin", {
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  h <- lp_helpers()
+  s <- lp_scores()
+  groups <- list(levels = c("treated", "control"), labels = c("Treated", "Control"))
+  mh <- h$mirror_hist(s, "weighted", groups, 10)
+  bins <- cut(100 * s$score, seq(0, 100, 10), right = TRUE, include.lowest = TRUE)
+  for (g in groups$levels) {
+    label <- groups$labels[groups$levels == g]
+    want <- tapply(s$weight[s$group == g], bins[s$group == g], sum)
+    want[is.na(want)] <- 0
+    got <- mh$data$y[mh$data$layer == "Weighted" & mh$data$group == label]
+    expect_equal(abs(got), as.numeric(want), info = g)
+  }
+  counts <- h$mirror_counts(mh, "weighted")
+  expect_identical(counts$patients, c(20L, 20L))
+  expect_equal(counts$weighted, c(sum(s$weight[s$group == "treated"]), sum(s$weight[s$group == "control"])))
+})
+
+test_that("the job saves the unmatched and weighted figures, with a count table under each", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  s <- lp_fixture()
+  env <- lm_eval_job(s$job)
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "outcome-analysis")
+  expect_setequal(list.files(graphs), c("lp-mirror-unmatched.png", "lp-mirror-unmatched.pdf",
+                                        "lp-mirror-weighted.png", "lp-mirror-weighted.pdf"))
+  d <- lp_data()
+  n <- c(sum(d$treatment == "treated"), sum(d$treatment == "control"))
+  expect_identical(env$mirror_counts(env$mh_unmatched, "unmatched")$patients, n)
+  expect_identical(env$mirror_counts(env$mh_weighted, "weighted")$patients, n)
+  expect_named(env$mirror_counts(env$mh_unmatched, "unmatched"), c("group", "patients"))
+})

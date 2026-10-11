@@ -229,6 +229,23 @@ mirror_figure <- function(mh, kind = c("unmatched", "weighted", "matched")) {
                   y = if (identical(kind, "weighted")) "Patients, or sum of matching weights" else "Patients") +
     ggplot2::theme(legend.position = "top")
 }
+
+# Patients in each group; the sum of the matching weights for the weighted
+# figure, and the matched patients for the matched one. Counts only.
+mirror_counts <- function(mh, kind = c("unmatched", "weighted", "matched")) {
+  kind <- match.arg(kind)
+  w <- mh$tables$working
+  levels <- mh$meta$group_levels
+  out <- data.frame(group = mh$meta$group_labels,
+                    patients = vapply(levels, function(g) sum(w$group == g), integer(1L), USE.NAMES = FALSE))
+  if (identical(kind, "weighted")) {
+    out$weighted <- vapply(levels, function(g) sum(w$weight[w$group == g]), numeric(1L), USE.NAMES = FALSE)
+  }
+  if (identical(kind, "matched")) {
+    out$matched <- vapply(levels, function(g) sum(w$group == g & w$matched == 1L), integer(1L), USE.NAMES = FALSE)
+  }
+  out
+}
 ```
 
 ## The saved bundle
@@ -285,6 +302,41 @@ if (anyDuplicated(scores$id)) {
   stop("The saved bundle holds a patient more than once; a mirrored histogram counts each patient once. ",
        "Rebuild it by rendering the lm-propensity_binary job with the current template.", call. = FALSE)
 }
+```
+
+## Figures
+
+```{r}
+#| label: fig-mirror-unmatched
+#| fig-cap: "Propensity score of each group: treated above the axis, controls below"
+mh_unmatched <- mirror_hist(scores, "unmatched", groups, BINWIDTH)
+file <- save_figure(mirror_figure(mh_unmatched, "unmatched"), "lp-mirror-unmatched", width = 7, height = 5,
+                    linked = TRUE)
+knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
+                        error = FALSE)
+```
+
+```{r}
+#| label: tbl-mirror-unmatched
+#| tbl-cap: "Patients in each group"
+knitr::kable(mirror_counts(mh_unmatched, "unmatched"), col.names = c("Group", "Patients"))
+```
+
+```{r}
+#| label: fig-mirror-weighted
+#| fig-cap: "Propensity score of each group under the matching weights, over all patients in grey"
+mh_weighted <- mirror_hist(scores, "weighted", groups, BINWIDTH)
+file <- save_figure(mirror_figure(mh_weighted, "weighted"), "lp-mirror-weighted", width = 7, height = 5,
+                    linked = TRUE)
+knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
+                        error = FALSE)
+```
+
+```{r}
+#| label: tbl-mirror-weighted
+#| tbl-cap: "Patients in each group, and the sum of their matching weights"
+knitr::kable(mirror_counts(mh_weighted, "weighted"), col.names = c("Group", "Patients", "Sum of matching weights"),
+             digits = 1)
 ```
 
 ```{r}
