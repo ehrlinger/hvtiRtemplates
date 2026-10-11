@@ -44,7 +44,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**65 templates in scope**, of which 32 exist on disk.
+**65 templates in scope**, of which 33 exist on disk.
 
 ## By family
 
@@ -82,7 +82,7 @@ row has no template on disk.
 | `dp-procs` | queued | — | 35 | 0 | — |
 | `dp-spaghetti` | queued | — | 40 | 40 | — |
 | `hp` | **revisit** | 557 | 541 | 16 | — |
-| `lp` | queued | 636 | 310 | 186 | — |
+| `lp-mirror` | shipped | 636 | 310 | 186 | — |
 | `mp` | queued | 82 | 41 | 4 | — |
 | `np` | queued | 248 | 241 | 45 | — |
 | `rp` | queued | 76 | 68 | 5 | — |
@@ -173,11 +173,11 @@ Members: `ac`, `hm`, `hp`, `hs-concordance`, `hs-setup`, `hz`
 
 **Complete.**
 
-### propensity-matching — 8/12
+### propensity-matching — 9/12
 
-Members: `bd`, `bl`, `cm`, `dc-stddiff`, `hp`, `lm-balancing_count`, `lm-propensity_binary`, `lm-propensity_nominal`, `lm-propensity_ordinal`, `lp`, `rm`, `rp`
+Members: `bd`, `bl`, `cm`, `dc-stddiff`, `hp`, `lm-balancing_count`, `lm-propensity_binary`, `lm-propensity_nominal`, `lm-propensity_ordinal`, `lp-mirror`, `rm`, `rp`
 
-Outstanding: `cm`, `lp`, `rm`, `rp`.
+Outstanding: `cm`, `rm`, `rp`.
 
 <!-- END GENERATED -->
 

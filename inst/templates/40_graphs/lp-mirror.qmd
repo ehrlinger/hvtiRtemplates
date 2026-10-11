@@ -1,0 +1,170 @@
+---
+title: "Mirrored histogram of the propensity score"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-location: left
+    page-layout: full
+    grid:
+      body-width: 2000px
+      sidebar-width: 250px
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+Draws the propensity score of the treated patients above the axis and of the
+controls below it, from the bundle an `lm-propensity_binary` job saved. This
+job reads that bundle and never refits the model.
+
+```{r}
+#| label: setup
+# unnumbered: loads packages and checks versions only
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+.provenance_artifacts <- list()
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages({
+  library(hvtiRutilities)
+  library(hvtiPlotR)
+  library(ggplot2)
+})
+# The bundle records its declared treatment levels from hvtiRpropensity 0.1.10.
+if (utils::packageVersion("hvtiRpropensity") < "0.1.10") {
+  stop("This job needs hvtiRpropensity >= 0.1.10, whose bundles record their treatment levels; ",
+       utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
+}
+if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
+  stop("This job needs hvtiPlotR >= 2.8.0 for hv_mirror_hist(); ",
+       utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
+}
+```
+
+```{r}
+#| label: guard-edits
+#| results: asis
+# The token is built, not written, so this chunk does not find itself.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+                   paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"))
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      warning(.msg, "\nRendering as a draft; remove every marker for a final result.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n", .msg, "\n:::\n", sep = "")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'.", call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: guard-partial
+#| results: asis
+# unnumbered: a callout, printed only when part of the job is left out
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one here; a
+# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
+hvtiRtemplates:::.guard_partial(knitr::current_input())
+```
+
+<!-- EDIT: scaffold this job with the subject and type of the
+     lm-propensity_binary job it plots, add_job("lp.mirror", subject, type),
+     so it shares that job's set and finds the saved bundle with no path to
+     type. The two lines below are written by add_job() and checked against
+     this file's name; to plot from a set of its own, set MODEL_SET instead. -->
+
+```{r}
+#| label: set
+SUBJECT  <- "treatment"
+TYPE     <- "propensity"
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject,
+         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
+         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.", call. = FALSE)
+  }
+}
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root), paste0(SUBJECT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder,
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+```
+
+## Study choices
+
+```{r}
+#| label: edit-study-choices
+# EDIT: the bar width on the 0 to 100 score scale. 5 suits most cohorts; use 10
+# for a small one, and 1 for a rare treatment whose scores sit near zero.
+BINWIDTH <- 5
+
+# Optional, and needs no edit: the saved bundle. NULL in MODEL_SET is this
+# job's own set, where the bundle is when SUBJECT and TYPE match the
+# lm-propensity_binary job's. A mirror job in a set of its own names that job's
+# set, "<subject>-<type>", for example MODEL_SET <- "treatment-propensity".
+MODEL_FILE <- "lm-propensity_binary.rds"
+MODEL_SET <- NULL
+
+# Optional, and needs no edit: the group labels. NULL labels each group by its
+# treatment level, as the propensity job declared it. To relabel, name both
+# levels: GROUP_LABELS <- c(control = "Surgical", treated = "Transcatheter").
+GROUP_LABELS <- NULL
+
+# Optional, and needs no edit: a pair-match flag, 1 for a matched patient. NULL
+# draws no matched figure. A study whose dataset carries a flag, from a SAS
+# match for example, names that column, and DATASET and ID say where to read
+# it. The flag is joined onto the bundle's patients by a study-keyed digest of
+# ID, so no identifier is kept or printed.
+MATCH <- NULL
+DATASET <- "built"
+ID <- "ccfid"
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("lp-mirror-weighted"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
+```
+
+```{r}
+#| label: helpers
+# unnumbered: defines the figure helpers and shows nothing
+# The figure helpers. Each takes what it draws as an argument, so the tests
+# call them on synthetic data.
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  artifacts = .provenance_artifacts,
+  extra = list(subject = SUBJECT, type = TYPE)
+))
+```
