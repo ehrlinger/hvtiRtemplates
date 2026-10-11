@@ -155,6 +155,80 @@ FIGURES <- NULL
 # unnumbered: defines the figure helpers and shows nothing
 # The figure helpers. Each takes what it draws as an argument, so the tests
 # call them on synthetic data.
+
+# The two groups, treated first: hv_mirror_hist() draws its first level above
+# the axis. Labelled by the levels the propensity job declared, or by
+# GROUP_LABELS, named by those levels.
+mirror_groups <- function(meta, labels = NULL) {
+  declared <- as.character(meta$treatment_levels)
+  treated <- as.character(meta$treated_level)
+  if (length(declared) != 2L || anyNA(declared) || length(treated) != 1L || !treated %in% declared) {
+    stop("The saved bundle does not declare two treatment levels and the treated one: rebuild it by ",
+         "rendering the lm-propensity_binary job with the current template.", call. = FALSE)
+  }
+  levels <- c(treated, setdiff(declared, treated))
+  if (is.null(labels)) return(list(levels = levels, labels = levels))
+  if (!is.character(labels) || length(labels) != 2L || anyNA(labels) || is.null(names(labels)) ||
+        !setequal(names(labels), declared)) {
+    stop("GROUP_LABELS must be NULL or two labels named by the treatment levels, such as c(",
+         paste0(declared, " = \"", declared, "\"", collapse = ", "), ").", call. = FALSE)
+  }
+  list(levels = levels, labels = unname(labels[levels]))
+}
+
+# The y-axis limit: the tallest bar on either side, plus a tenth of it and at
+# least 1, as hv_mirror_hist() pads. The same limit above and below, so both
+# groups are read on one scale.
+mirror_limit <- function(y) {
+  top <- max(abs(y), 0)
+  top + max(1, ceiling(0.1 * top))
+}
+
+# One hv_mirror_hist() object. `scores` has one row per patient: score, group,
+# weight and matched. The unmatched figure keeps only the all-patient bars.
+mirror_hist <- function(scores, kind = c("unmatched", "weighted", "matched"), groups, binwidth) {
+  kind <- match.arg(kind)
+  args <- list(scores, score_col = "score", group_col = "group", group_levels = groups$levels,
+               group_labels = groups$labels, binwidth = binwidth)
+  if (identical(kind, "weighted")) {
+    args$weight_col <- "weight"
+  } else {
+    args$match_col <- "matched"
+    args$matched_value <- 1L
+  }
+  mh <- suppressMessages(do.call(hvtiPlotR::hv_mirror_hist, args))
+  if (identical(kind, "unmatched")) mh$data <- mh$data[mh$data$layer == "Before", , drop = FALSE]
+  mh
+}
+
+# The figure: the derived symmetric axis, and a fill that names each layer.
+mirror_figure <- function(mh, kind = c("unmatched", "weighted", "matched")) {
+  kind <- match.arg(kind)
+  limit <- mirror_limit(mh$data$y)
+  breaks <- pretty(c(-limit, limit), n = 8)
+  mh$meta$lower <- -limit
+  mh$meta$upper <- limit
+  mh$meta$y_breaks <- breaks[abs(breaks) <= limit]
+  labels <- mh$meta$group_labels
+  colors <- hvtiPlotR::hv_palette(2L)
+  fill <- switch(kind,
+    unmatched = c(before_g0 = colors[[1L]], before_g1 = colors[[2L]]),
+    weighted = c(before_g0 = "grey85", before_g1 = "grey85", weighted_g0 = colors[[1L]], weighted_g1 = colors[[2L]]),
+    matched = c(before_g0 = "grey85", before_g1 = "grey85", matched_g0 = colors[[1L]], matched_g1 = colors[[2L]])
+  )
+  # The grey all-patient bars are one legend entry, not one a group.
+  shown <- if (identical(kind, "unmatched")) names(fill) else names(fill)[-2L]
+  names_shown <- switch(kind,
+    unmatched = labels,
+    weighted = c("All patients", paste(labels, "(weighted)")),
+    matched = c("All patients", paste(labels, "(matched)"))
+  )
+  plot(mh) +
+    ggplot2::scale_fill_manual(values = fill, breaks = shown, labels = names_shown, name = NULL) +
+    ggplot2::labs(x = "Propensity score (%)",
+                  y = if (identical(kind, "weighted")) "Patients, or sum of matching weights" else "Patients") +
+    ggplot2::theme(legend.position = "top")
+}
 ```
 
 ## The saved bundle
@@ -199,6 +273,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 #| label: scores
 # One row per patient: the score, the treatment, the matching weight and the
 # patient's ID digest, which only the MATCH join reads.
+groups <- mirror_groups(.meta, GROUP_LABELS)
 scores <- data.frame(
   id = bundle$data[[.meta$id_col]],
   score = bundle$data[[.meta$score_col]],

@@ -88,3 +88,50 @@ test_that("a bundle without lineage, or built from data that changed since, stop
   resave(changed)
   expect_error(lm_eval_job(s$job), "The data changed since the upstream job ran")
 })
+
+test_that("the groups are labelled by the bundle's declared levels, treated first, unless GROUP_LABELS says", {
+  h <- lp_helpers()
+  meta <- list(treatment_levels = c("control", "treated"), treated_level = "treated")
+  expect_identical(h$mirror_groups(meta), list(levels = c("treated", "control"), labels = c("treated", "control")))
+  # Named by level, in either order.
+  expect_identical(h$mirror_groups(meta, c(control = "Surgical", treated = "Transcatheter"))$labels,
+                   c("Transcatheter", "Surgical"))
+  expect_identical(h$mirror_groups(meta, c(treated = "Transcatheter", control = "Surgical"))$labels,
+                   c("Transcatheter", "Surgical"))
+  expect_error(h$mirror_groups(meta, c("Surgical", "Transcatheter")),
+               "^GROUP_LABELS must be NULL or two labels named by the treatment levels, such as c[(]control")
+  expect_error(h$mirror_groups(meta, c(control = "a", other = "b")), "^GROUP_LABELS must be NULL")
+  # A bundle saved before hvtiRpropensity 0.1.10 declares no levels.
+  expect_error(h$mirror_groups(list(treatment_levels = NULL, treated_level = NULL)),
+               "does not declare two treatment levels")
+  # The job reads them from the saved bundle.
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  s <- lp_fixture("GROUP_LABELS <- c(control = \"Surgical\", treated = \"Transcatheter\")")
+  env <- lm_eval_job(s$job)
+  expect_identical(env$groups, list(levels = c("treated", "control"), labels = c("Transcatheter", "Surgical")))
+})
+
+lp_scores <- function() {
+  i <- seq_len(40L)
+  data.frame(id = paste0("p", i), score = (i - 0.5) / 40, group = rep(c("treated", "control"), 20L),
+             weight = 0.25 + (i %% 4L) / 4, matched = as.integer(i %% 3L != 0L))
+}
+
+test_that("the treated bars are above the axis and the y-limits are symmetric, from the tallest bar", {
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  h <- lp_helpers()
+  groups <- list(levels = c("treated", "control"), labels = c("Treated", "Control"))
+  mh <- h$mirror_hist(lp_scores(), "unmatched", groups, 5)
+  expect_true(all(mh$data$y[mh$data$group == "Treated"] >= 0))
+  expect_true(all(mh$data$y[mh$data$group == "Control"] <= 0))
+  # Only the all-patient bars: an unmatched figure has no matched layer.
+  expect_setequal(unique(mh$data$layer), "Before")
+  top <- max(abs(mh$data$y))
+  expect_identical(h$mirror_limit(mh$data$y), top + max(1, ceiling(0.1 * top)))
+  expect_identical(h$mirror_limit(c(3, -12)), 14)
+  expect_identical(h$mirror_limit(numeric()), 1)
+  p <- h$mirror_figure(mh, "unmatched")
+  limits <- ggplot2::layer_scales(p)$y$get_limits()
+  expect_identical(limits, c(-h$mirror_limit(mh$data$y), h$mirror_limit(mh$data$y)))
+})

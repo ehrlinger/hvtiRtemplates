@@ -189,3 +189,12 @@ lp_fixture <- function(lines = character(), data = lp_data(), .local_envir = par
   writeLines(src, job)
   list(root = fit$root, job = job, bundle = fit$env$MODEL_PATH)
 }
+
+# The lp-mirror template's helper functions, in an environment of their own.
+lp_helpers <- function() {
+  env <- new.env(parent = globalenv())
+  src <- readLines(template_path("lp", "mirror"), warn = FALSE)
+  # The package's own template chunk, as lm_run() evaluates the lm templates.
+  eval(parse(text = lm_chunk(src, "helpers")), envir = env)
+  env
+}
