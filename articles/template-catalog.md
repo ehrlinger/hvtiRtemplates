@@ -28,8 +28,8 @@ existing file, because a job accumulates a study’s edits.
 
 Each template carries a light.
 
-- 🟢 **Shipped** (30): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (22): on disk but being reworked, or scheduled into
+- 🟢 **Shipped** (31): on disk and supported. Scaffold it and use it.
+- 🟡 **In progress** (21): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
 - 🔴 **Not yet on the way** (13): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
@@ -98,6 +98,7 @@ places each one; you do not choose the folder.
 | 🟡 In progress | `hp` | Nomogram and hazard figures, read from the ac life table and the hz fit rather than recomputed. | `add_job("hp", subject, type)` |
 | 🟢 Shipped | `hs-concordance` | Every patient predicted through every treatment group’s hm model at one horizon, with an optional table of actual against best-predicted treatment. | `add_job("hs", subject, type, qualifier = "concordance")` |
 | 🟢 Shipped | `hs-setup` | Patient-level predictions from the hm model, set against the survival of a matched general population. | `add_job("hs", subject, type, qualifier = "setup")` |
+| 🟢 Shipped | `lp-mirror` | The mirrored histogram of the propensity score, treated above the axis and controls below, drawn from a saved lm-propensity_binary bundle without refitting: all patients, under the matching weights, and matched when the study has a match flag. | `add_job("lp", subject, type, qualifier = "mirror")` |
 
 ## Coming
 
@@ -111,7 +112,6 @@ as zero.
 |:---|:---|:---|:---|:---|
 | 🟡 In progress | `ar` | Analysis report | 394 |  |
 | 🟡 In progress | `lg` | Logit trends | 362 |  |
-| 🟡 In progress | `lp` | Logistic plot | 310 |  |
 | 🟡 In progress | `nd` | Non-linear distributions | 244 |  |
 | 🟡 In progress | `np` | Non-linear plot | 241 |  |
 | 🟡 In progress | `dc-variable` | Distribution of a variable | 237 |  |

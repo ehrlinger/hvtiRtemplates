@@ -94,7 +94,8 @@ tl
 #> 30                    hp     hp               <NA>        graphs
 #> 31        hs.concordance     hs        concordance        graphs
 #> 32              hs.setup     hs              setup        graphs
-#> # 32 templates; `call` and `file` not shown. Read them with $call and $file.
+#> 33             lp.mirror     lp             mirror        graphs
+#> # 33 templates; `call` and `file` not shown. Read them with $call and $file.
 
 # Every template, where its job is written, and the call that scaffolds it.
 tl[, c("name", "folder", "call")]
@@ -131,6 +132,7 @@ tl[, c("name", "folder", "call")]
 #> 30                    hp        graphs
 #> 31        hs.concordance        graphs
 #> 32              hs.setup        graphs
+#> 33             lp.mirror        graphs
 #>                                                                            call
 #> 1                              add_job("bd", subject = "study", type = "build")
 #> 2                           add_job("dc.eda", subject = "cohort", type = "eda")
@@ -164,6 +166,7 @@ tl[, c("name", "folder", "call")]
 #> 30                              add_job("hp", subject = "dead_pa", type = "hz")
 #> 31                  add_job("hs.concordance", subject = "dead_pa", type = "hz")
 #> 32                        add_job("hs.setup", subject = "dead_pa", type = "hz")
+#> 33             add_job("lp.mirror", subject = "treatment", type = "propensity")
 
 # Find a template by its qualifier, then copy its call: the follow-up jobs.
 subset(tl, qualifier == "gfup", c(name, folder, call))
