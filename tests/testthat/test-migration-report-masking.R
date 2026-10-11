@@ -35,7 +35,7 @@ test_that("reports mask literals, comments, long numbers and macro values for ev
   cases <- list(
     "dc-tables" = c(folder = "descriptive", stem = "dc.tables", prefix = "dc", qualifier = "tables"),
     "dc-gfup" = c(folder = "descriptive", stem = "dc.gfup", prefix = "dc", qualifier = "gfup"),
-    "dp-trends" = c(folder = "graphs", stem = "dp.trends", prefix = "dp", qualifier = "trends")
+    "dc-trends" = c(folder = "graphs", stem = "dp.trends", prefix = "dc", qualifier = "trends")
   )
   for (kind in names(cases)) {
     spec <- cases[[kind]]
@@ -54,7 +54,7 @@ test_that("reports mask the same values for a SAS dp-postage source", {
   source <- file.path(root, "descriptive", "dp.postage.sas")
   writeLines(c(setdiff(sas_planted_lines, "data drop; set nothing;"), "%let dta_filename = built;", "%let pref_time_var = iv_dead;",
                "%let variables = age bmi;"), source)
-  job <- migrate_job(source, "cohort", "eda", "dp", "eda", dir = root)
+  job <- migrate_job(source, "cohort", "eda", "dc", "eda", dir = root)
   expect_no_sentinel(masked_report(job), sas_sentinels, info = "dp-postage sas")
 })
 
@@ -73,7 +73,7 @@ test_that("reports withhold qmd prose and YAML and mask R literals and comments"
     "```",
     "More prose naming SENTINEL_PROSE2."
   ), source)
-  job <- migrate_job(source, "cohort", "eda", "dp", "eda", dir = root)
+  job <- migrate_job(source, "cohort", "eda", "dc", "eda", dir = root)
   report <- masked_report(job)
   expect_no_sentinel(report, c("SENTINEL_YAML", "SENTINEL_AUTHOR", "SENTINEL_PROSE", "SENTINEL_RDQ",
                                "SENTINEL_RSQ", "7654321", "SENTINEL_RCOMMENT", "SENTINEL_RLINECOMMENT"))
@@ -131,7 +131,7 @@ test_that("macro-quoted %let values, %put text and unquoted titles are masked fo
   cases <- list(
     "dc-tables" = c(folder = "descriptive", stem = "dc.tables", prefix = "dc", qualifier = "tables"),
     "dc-gfup" = c(folder = "descriptive", stem = "dc.gfup", prefix = "dc", qualifier = "gfup"),
-    "dp-trends" = c(folder = "graphs", stem = "dp.trends", prefix = "dp", qualifier = "trends")
+    "dc-trends" = c(folder = "graphs", stem = "dp.trends", prefix = "dc", qualifier = "trends")
   )
   for (kind in names(cases)) {
     spec <- cases[[kind]]
@@ -185,6 +185,6 @@ test_that("reports mask R raw strings in a qmd source", {
     "d4 <- r\"{SENTINEL_RAW4}\"",
     "```"
   ), source)
-  job <- migrate_job(source, "cohort", "eda", "dp", "eda", dir = root)
+  job <- migrate_job(source, "cohort", "eda", "dc", "eda", dir = root)
   expect_no_sentinel(masked_report(job), paste0("SENTINEL_RAW", 1:4))
 })

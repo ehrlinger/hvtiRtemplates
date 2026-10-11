@@ -587,8 +587,8 @@ test_that("dc-tables carries the registered-data and checked Word pipeline contr
 })
 
 test_that("a qualified template name parses into three fields", {
-  f <- hvtiRtemplates:::.template_fields("dp-trends.qmd")
-  expect_equal(f$prefix, "dp")
+  f <- hvtiRtemplates:::.template_fields("dc-trends.qmd")
+  expect_equal(f$prefix, "dc")
   expect_equal(f$qualifier, "trends")
 })
 
@@ -602,10 +602,10 @@ test_that("an unqualified name still parses, with qualifier NA", {
 })
 
 test_that("the prefix capture does not swallow the qualifier", {
-  # It was `.+`, which is greedy, so "dp-trends.qmd" parsed as the single
-  # prefix "dp-trends". That validates and is wrong.
-  f <- hvtiRtemplates:::.template_fields("dp-trends.qmd")
-  expect_false(identical(f$prefix, "dp-trends"))
+  # It was `.+`, which is greedy, so "dc-trends.qmd" parsed as the single
+  # prefix "dc-trends". That validates and is wrong.
+  f <- hvtiRtemplates:::.template_fields("dc-trends.qmd")
+  expect_false(identical(f$prefix, "dc-trends"))
 })
 
 test_that("a trailing separator with no qualifier is rejected", {
@@ -857,22 +857,22 @@ test_that("a chunk is labeled edit- exactly when it holds an EDIT marker", {
 })
 
 # ---- template stem ---------------------------------------------------------
-# A template can be named "dp.trends", as template_list() reports it in
-# `name`, or by its filename stem, "dp-trends". A prefix never contains "." or
+# A template can be named "dc.trends", as template_list() reports it in
+# `name`, or by its filename stem, "dc-trends". A prefix never contains "." or
 # "-", so the split is exact.
 
 test_that(".select_template() resolves a template stem", {
   tl <- data.frame(
-    prefix = c("dp", "dp", "ac"), qualifier = c("trends", "gfup", NA_character_),
-    folder = c("graphs", "graphs", "distributions"),
+    prefix = c("dc", "dc", "ac"), qualifier = c("trends", "gfup", NA_character_),
+    folder = c("descriptive", "descriptive", "distributions"),
     file = c("a.qmd", "b.qmd", "c.qmd"), stringsAsFactors = FALSE
   )
-  expect_equal(hvtiRtemplates:::.select_template(tl, "dp-trends")$file, "a.qmd")
-  expect_equal(hvtiRtemplates:::.select_template(tl, "dp.trends")$file, "a.qmd")
+  expect_equal(hvtiRtemplates:::.select_template(tl, "dc-trends")$file, "a.qmd")
+  expect_equal(hvtiRtemplates:::.select_template(tl, "dc.trends")$file, "a.qmd")
   expect_equal(hvtiRtemplates:::.select_template(tl, "ac")$file, "c.qmd")
-  expect_error(hvtiRtemplates:::.select_template(tl, "dp-nope"), "no template qualified")
-  expect_error(hvtiRtemplates:::.select_template(tl, "dp.nope"), "no template qualified")
-  for (bad in c("dp-", "-trends", "dp-trends-x", "dp.", ".trends", "dp.trends.x", "dp.trends-x")) {
+  expect_error(hvtiRtemplates:::.select_template(tl, "dc-nope"), "no template qualified")
+  expect_error(hvtiRtemplates:::.select_template(tl, "dc.nope"), "no template qualified")
+  for (bad in c("dc-", "-trends", "dc-trends-x", "dc.", ".trends", "dc.trends.x", "dc.trends-x")) {
     expect_error(hvtiRtemplates:::.select_template(tl, bad), "not a template name", info = bad)
   }
 })
@@ -880,20 +880,20 @@ test_that(".select_template() resolves a template stem", {
 test_that("a stem and a qualifier together are refused, not reconciled", {
   # Two answers to one question. Preferring either would silently discard the
   # other, even when they agree today.
-  expect_error(template_path("dp-trends", "trends"), "not both")
-  expect_error(template_path("dp-trends", "gfup"), "not both")
-  expect_error(template_path("dp.trends", "trends"), "not both")
-  expect_error(add_job("dp-trends", "cohort", "eda", dir = tempdir(), qualifier = "trends"),
+  expect_error(template_path("dc-trends", "trends"), "not both")
+  expect_error(template_path("dc-trends", "gfup"), "not both")
+  expect_error(template_path("dc.trends", "trends"), "not both")
+  expect_error(add_job("dc-trends", "cohort", "eda", dir = tempdir(), qualifier = "trends"),
                "add_job\\(\\).*not both")
   # A malformed qualifier is reported as itself, not as a clash.
   for (bad in list(NA_character_, character(0), "")) {
-    expect_error(template_path("dp-trends", bad), "single non-empty, non-NA")
+    expect_error(template_path("dc-trends", bad), "single non-empty, non-NA")
   }
 })
 
 test_that("the choices on offer are shown by full name, the form a caller can type", {
-  expect_error(template_path("dp"), "name one with `qualifier`, or by its full name")
-  expect_error(template_path("dp"), "dp.trends", fixed = TRUE)
+  expect_error(template_path("dc"), "name one with `qualifier`, or by its full name")
+  expect_error(template_path("dc"), "dc.trends", fixed = TRUE)
   expect_error(template_path("ac-foo"), "Available for this prefix: ac")
 })
 
@@ -951,9 +951,9 @@ test_that("template_list() prints its summary columns, and a selection as select
 
 test_that("template_list shows qualified templates with a period, and the call uses it", {
   tl <- template_list()
-  row <- tl[!is.na(tl$qualifier) & tl$prefix == "dp" & tl$qualifier == "trends", ]
-  expect_identical(row$name, "dp.trends")
-  expect_match(row$call, '^add_job\\("dp[.]trends"')
+  row <- tl[!is.na(tl$qualifier) & tl$prefix == "dc" & tl$qualifier == "trends", ]
+  expect_identical(row$name, "dc.trends")
+  expect_match(row$call, '^add_job\\("dc[.]trends"')
   expect_false(any(grepl("-", tl$name, fixed = TRUE)))
   # Every name resolves under either spelling.
   for (i in seq_len(nrow(tl))) {

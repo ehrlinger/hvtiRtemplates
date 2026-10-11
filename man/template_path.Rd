@@ -8,18 +8,20 @@ template_path(prefix, qualifier = NULL)
 }
 \arguments{
 \item{prefix}{Analysis prefix, e.g. \code{"ac"}, or a template's full name,
-e.g. \code{"dp.trends"} (or \code{"dp-trends"}), which carries its
+e.g. \code{"dc.trends"} (or \code{"dc-trends"}), which carries its
 qualifier and leaves \code{qualifier} \code{NULL}. See
 \code{\link{template_list}}.}
 
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
-\code{dp}. Required only where a prefix carries more than one template;
+\code{dc}. Required only where a prefix carries more than one template;
 omitting it there is an error naming the choices, never a silent pick.}
 }
 \value{
 The full path, as \code{character(1)}. A template the catalog
-  marks deprecated, such as \code{dp.gfup}, still resolves, with a
-  warning naming its replacement.
+  marks deprecated still resolves, with a warning naming its replacement.
+  So does a template's name before a rename, such as \code{dp.trends},
+  now \code{dc.trends}: it resolves to the renamed template, with a
+  warning naming the new name, until the old name is removed.
 }
 \description{
 Path to a supported template

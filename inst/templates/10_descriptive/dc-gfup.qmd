@@ -35,7 +35,7 @@ before any time-related analysis.
 
 The figure is `hvtiPlotR::hv_followup_panels()`, which the EDA report also
 calls, so its follow-up panels are these. It was the separate `dp-gfup` job,
-now deprecated in favor of this one.
+since removed in favor of this one.
 
 ```{r}
 #| label: setup
@@ -194,7 +194,7 @@ MAX_REVIEW_ROWS <- 25L
 # Missing values are shown. Use list() when no additional checks are needed.
 CHECKS <- list()
 
-# The figure. These are dp-eda's follow-up choices, and mean what they mean there.
+# The figure. These are dc-eda's follow-up choices, and mean what they mean there.
 # EDIT: the years-since-origin interval to the operation, and that origin, a
 # calendar year such as 1990. The origin differs between studies, and a wrong
 # one slides every point along the x-axis without any other symptom, which is
@@ -320,8 +320,8 @@ review_rows <- fc$review
 # checks for all patients, and one proc_means() row per group. This is them as
 # one table, a row per interval and group. The counts are each group's n, the
 # negative and zero checks are counted within each group, and the summaries are
-# proc_means()'s alone, so there is one quantile definition, not two. dp-eda
-# carries the same function; test-dp-eda.R keeps the two from drifting.
+# proc_means()'s alone, so there is one quantile definition, not two. dc-eda
+# carries the same function; test-dc-eda.R keeps the two from drifting.
 .followup_table <- function(fc, d, event) {
   ev <- d[[event]]
   groups <- c(full = "All patients", event = "Event", censored = "Censored")
@@ -443,7 +443,7 @@ the line; it is the **blue** points drifting below it that need an explanation.
 # unnumbered: each child chunk below carries its own label and caption
 # This document sits in descriptive/ and its figures are written to graphs/
 # through set_path(), so the image link is the figure's path relative to this
-# document, worked out at render time, as dp-eda's is.
+# document, worked out at render time, as dc-eda's is.
 .fence <- strrep("`", 3)
 .seen <- new.env()
 .child <- function(label, caption, code) {

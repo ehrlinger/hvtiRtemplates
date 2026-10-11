@@ -1,7 +1,7 @@
 test_that(".infer_template reads prefix and qualifier from a corpus job name", {
   expect_identical(.infer_template("x/dc.tables.ods.sas", NULL, NULL), list(prefix = "dc", qualifier = "tables"))
   expect_identical(.infer_template("x/ac.dead.sas", NULL, NULL), list(prefix = "ac", qualifier = NULL))
-  expect_identical(.infer_template("x/odd_name.sas", "dp", "trends"), list(prefix = "dp", qualifier = "trends"))
+  expect_identical(.infer_template("x/odd_name.sas", "dc", "trends"), list(prefix = "dc", qualifier = "trends"))
 })
 
 test_that(".infer_template refuses a qualified prefix it cannot resolve", {

@@ -52,8 +52,8 @@ follow-up jobs, ask for their job type:
 subset(tl, qualifier == "gfup", c(name, folder, call))
 ```
 
-Two templates come back. `dc.gfup` is the one to use; `dp.gfup` still works but
-is deprecated, and says so with a warning when you add it.
+One template comes back, `dc.gfup`, with the folder its job goes in and the
+call that adds it.
 
 ## Add it to the study
 

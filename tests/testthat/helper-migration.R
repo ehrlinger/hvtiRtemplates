@@ -34,7 +34,7 @@ migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame()) 
     fixture <- testthat::test_path("fixtures-migration", kind)
     if (!dir.exists(fixture)) stop("Missing migration fixture: ", kind)
     entries <- list.files(fixture, full.names = TRUE, all.files = TRUE, no.. = TRUE)
-    folder <- if (identical(kind, "dp-trends")) "graphs" else "descriptive"
+    folder <- if (identical(kind, "dc-trends")) "graphs" else "descriptive"
     for (entry in entries) {
       destination <- if (dir.exists(entry)) {
         root
@@ -66,9 +66,9 @@ render_migrated_fixture <- function(kind, root = NULL) {
   mapping <- list(
     "dc-tables" = c(prefix = "dc", qualifier = "tables", source = "descriptive/dc.tables.sas"),
     "dc-gfup" = c(prefix = "dc", qualifier = "gfup", source = "descriptive/dc.gfup.sas"),
-    "dp-trends" = c(prefix = "dp", qualifier = "trends", source = "graphs/dp.trends.sas"),
-    # The fixture keeps its legacy name; a legacy EDA report now migrates to dp-eda.
-    "dp-postage" = c(prefix = "dp", qualifier = "eda", source = "descriptive/dp.postage.qmd")
+    "dc-trends" = c(prefix = "dc", qualifier = "trends", source = "graphs/dp.trends.sas"),
+    # The fixture keeps its legacy name; a legacy EDA report now migrates to dc-eda.
+    "dp-postage" = c(prefix = "dc", qualifier = "eda", source = "descriptive/dp.postage.qmd")
   )
   if (length(kind) != 1L || is.na(kind) || !kind %in% names(mapping)) stop("Unknown migration fixture.")
   spec <- mapping[[kind]]
@@ -103,7 +103,7 @@ render_migrated_fixture <- function(kind, root = NULL) {
 }
 
 render_all_migration_fixtures <- function() {
-  kinds <- c("dc-tables", "dc-gfup", "dp-trends", "dp-postage")
+  kinds <- c("dc-tables", "dc-gfup", "dc-trends", "dp-postage")
   # Keep all four roots alive in the caller's scope for artifact inspection.
   caller <- parent.frame()
   roots <- lapply(kinds, migration_study_fixture, .local_envir = caller)

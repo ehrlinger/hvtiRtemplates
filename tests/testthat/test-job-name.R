@@ -1,15 +1,18 @@
 test_that("the stem is template first, with periods", {
   expect_identical(hvtiRtemplates:::.job_stem("ac", NA_character_, "death", "hz"), "ac.death.hz")
-  expect_identical(hvtiRtemplates:::.job_stem("dp", "trends", "cohort", "eda"), "dp.trends.cohort.eda")
+  expect_identical(hvtiRtemplates:::.job_stem("dc", "trends", "cohort", "eda"), "dc.trends.cohort.eda")
   expect_identical(hvtiRtemplates:::.job_stem("ac", NULL, "death", "hz"), "ac.death.hz")
 })
 
 test_that("subject and type are read from either spelling", {
   f <- hvtiRtemplates:::.job_name_fields
   expect_identical(f("x/20_distributions/ac.death.hz.qmd"), c("death", "hz"))
-  expect_identical(f("dp.trends.cohort.eda.qmd"), c("cohort", "eda"))
+  expect_identical(f("dc.trends.cohort.eda.qmd"), c("cohort", "eda"))
   expect_identical(f("bl.death.boot.runner.R"), c("death", "boot"))
   expect_identical(f("dead_pa-hz-ac.qmd"), c("dead_pa", "hz"))
+  expect_identical(f("cohort-eda-dc-trends.qmd"), c("cohort", "eda"))
+  # A job scaffolded under a template's name before a rename reads the same.
+  expect_identical(f("dp.trends.cohort.eda.qmd"), c("cohort", "eda"))
   expect_identical(f("cohort-eda-dp-trends.qmd"), c("cohort", "eda"))
   expect_identical(f("dead_pa-boot-bl-runner.R"), c("dead_pa", "boot"))
 })
@@ -20,7 +23,7 @@ test_that("Quarto's intermediate file reads the same as the job", {
   expect_identical(f("dead_pa-hz-ac.rmarkdown"), c("dead_pa", "hz"))
   # knitr's intermediates add a field before .md.
   expect_identical(f("hz.dead.hz.knit.md"), c("dead", "hz"))
-  expect_identical(f("dp.trends.cohort.eda.utf8.md"), c("cohort", "eda"))
+  expect_identical(f("dc.trends.cohort.eda.utf8.md"), c("cohort", "eda"))
   # A job whose type is "knit" is still read as written.
   expect_identical(f("hz.dead.knit.qmd"), c("dead", "knit"))
 })
@@ -42,9 +45,9 @@ test_that("the old spelling of a job is the dash form in the same folder", {
   d <- file.path(withr::local_tempdir(), "study")
   invisible(suppressMessages(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L)))
   tl <- template_list()
-  row <- hvtiRtemplates:::.select_template(tl, "dp", "trends")
+  row <- hvtiRtemplates:::.select_template(tl, "dc", "trends")
   legacy <- hvtiRtemplates:::.job_path_legacy(row, "cohort", "eda", d)
-  expect_identical(basename(legacy), "cohort-eda-dp-trends.qmd")
+  expect_identical(basename(legacy), "cohort-eda-dc-trends.qmd")
   expect_identical(dirname(legacy), dirname(hvtiRtemplates:::.job_path(row, "cohort", "eda", d)))
 })
 

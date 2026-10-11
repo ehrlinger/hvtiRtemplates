@@ -242,7 +242,8 @@ exists, it opens the study-authored file without replacing any edits.
 Each call supplies four fields. `prefix` and `qualifier` select a template;
 the other two fields keep related outputs together:
 
-- `dc` means descriptive computation and `dp` means descriptive plot.
+- `dc` means descriptive: the checks, tables and EDA plots. Legacy studies
+  also hold `dp` (descriptive plot) jobs, which these templates replace.
 - Qualifiers such as `general`, `tables` and `eda` select one template in
   that family.
 - During EDA there may be no modeled endpoint or analysis method. `cohort`
@@ -252,9 +253,8 @@ the other two fields keep related outputs together:
 For example, `open_job("dc", "cohort", "eda", qualifier = "tables")`
 creates `descriptive/dc.tables.cohort.eda.qmd` in an adopted legacy study.
 Its HTML report stays beside the QMD, while its Word table goes under
-`documents/cohort-eda/`. Plot jobs follow the same naming pattern, but trend
-QMDs and HTML reports belong in `graphs/`, and plot PNGs go under
-`graphs/cohort-eda/`.
+`documents/cohort-eda/`. The trends and EDA report jobs sit in `descriptive/`
+too, and their plot PNGs go under `graphs/cohort-eda/`.
 
 ### Start with the generally applicable jobs
 
@@ -270,7 +270,7 @@ meaningful `X_VAR` for the horizontal axis. Create it when the dataset has an
 appropriate reference date, calendar year or follow-up measure:
 
 ```r
-eda <- open_job("dp", "cohort", "eda", qualifier = "eda")
+eda <- open_job("dc", "cohort", "eda", qualifier = "eda")
 ```
 
 Its follow-up section needs the death and follow-up fields; take `"followup"`
@@ -278,12 +278,12 @@ out of `SECTIONS` when the data do not have them; `SECTIONS <- c("continuous",
 "percent", "count")` draws the variable sections alone.
 
 Two additional jobs are conditional. Add `dc-gfup` only when the registered
-event and follow-up fields answer a real completeness question. Add `dp-trends`
+event and follow-up fields answer a real completeness question. Add `dc-trends`
 only when the data have a meaningful calendar or operation-time field:
 
 ```r
 gfup <- open_job("dc", "cohort", "eda", qualifier = "gfup")
-trends <- open_job("dp", "cohort", "eda", qualifier = "trends")
+trends <- open_job("dc", "cohort", "eda", qualifier = "trends")
 ```
 
 The synthetic data have all of those fields, so the executable example
@@ -295,8 +295,8 @@ study_jobs <- c(
   general = add_job("dc", "cohort", "eda", adopted_root, "general"),
   tables = add_job("dc", "cohort", "eda", adopted_root, "tables"),
   gfup = add_job("dc", "cohort", "eda", adopted_root, "gfup"),
-  trends = add_job("dp", "cohort", "eda", adopted_root, "trends"),
-  eda = add_job("dp", "cohort", "eda", adopted_root, "eda")
+  trends = add_job("dc", "cohort", "eda", adopted_root, "trends"),
+  eda = add_job("dc", "cohort", "eda", adopted_root, "eda")
 )
 study_jobs
 ```
@@ -317,7 +317,7 @@ this job does not make. Render every edited job before leaving the study so the
 saved QMD is still in an executable state. If you want the same final check from the Console, run
 `render_job(tables, final = TRUE)`, substituting the job you edited.
 
-The HTML report stays beside its QMD in `descriptive/` or `graphs/`. The
+The HTML report stays beside its QMD in `descriptive/`. The
 descriptive Word table is filed under `documents/cohort-eda/`; trend and
 EDA PNGs are filed under `graphs/cohort-eda/`. Open those artifacts and
 check the population, variables, labels, counts, summaries and axes—not merely

@@ -45,14 +45,14 @@ execute:
 3. **Render**: `render_job()`. While a marker remains, the report carries a DRAFT banner.
 4. **Check** what it printed against what you expected.
 
-## We set up, run five jobs in four chapters, then check the output
+## We set up, run four jobs in four chapters, then check the output
 
 | chapter | jobs | what they write |
 |---|---|---|
 | Tables | `dc-tables` | the CORR Word table |
-| Trends | `dp-trends` | trends by year |
-| Goodness of follow-up | `dc-gfup`, `dp-gfup` | interval checks, a figure |
-| EDA plots | `dp-eda` | the EDA report |
+| Trends | `dc-trends` | trends by year |
+| Goodness of follow-up | `dc-gfup` | interval checks, a figure |
+| EDA plots | `dc-eda` | the EDA report |
 
 # Set up
 
@@ -63,10 +63,10 @@ You need R, the [Quarto CLI](https://quarto.org), and a clone of `hvtiRtemplates
 ```bash
 git clone https://github.com/ehrlinger/hvtiRtemplates.git
 cd hvtiRtemplates
-git checkout feat/dp-eda   # only until PR #155 merges; then stay on main
+git checkout feat/dc-eda   # only until PR #155 merges; then stay on main
 ```
 
-Install the package from the clone, which carries `dp-eda`, and check the rest:
+Install the package from the clone, which carries `dc-eda`, and check the rest:
 
 ```r
 renv::install(".")   # or devtools::install()
@@ -148,10 +148,10 @@ The Word file is written to `50_documents/cohort-demo/`.
 
 # Trends
 
-## Set `dp-trends` to the demo's origin year, 1990
+## Set `dc-trends` to the demo's origin year, 1990
 
 ```r
-job <- open_job("dp", "cohort", "demo", dir = root, qualifier = "trends")
+job <- open_job("dc", "cohort", "demo", dir = root, qualifier = "trends")
 ```
 
 The template's placeholder says 1985. A wrong origin slides every figure along the x-axis with no other symptom:
@@ -169,16 +169,16 @@ SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)),
 
 `TRENDS` already names `hx_chf` and `plvmassi`, which the demo has.
 
-## `dp-trends`: heart failure falls from 45% to 14%, and LV mass index falls too
+## `dc-trends`: heart failure falls from 45% to 14%, and LV mass index falls too
 
 Each panel plots one variable by year of operation, with a smooth trend.
 
 :::: {.columns}
 ::: {.column width="50%"}
-![Heart failure, % of operations](reference/dp-trends-chf-all.png)
+![Heart failure, % of operations](reference/dc-trends-chf-all.png)
 :::
 ::: {.column width="50%"}
-![LV mass index: about 130 to 115](reference/dp-trends-lvmass-all.png)
+![LV mass index: about 130 to 115](reference/dc-trends-lvmass-all.png)
 :::
 ::::
 
@@ -198,13 +198,9 @@ CHECKS <- list(c("dead", "reop"))   # cross-tab of event coding
 **364** deaths, **436** censored, no missing, negative or zero intervals.
 :::
 
-## Scaffold `dp-gfup` with the close date and a reoperation event
+## Give `dc-gfup` the close date and a reoperation event for its figure
 
 ```r
-job <- open_job("dp", "cohort", "demo", dir = root, qualifier = "gfup")
-```
-```r
-ANALYSIS_SET <- NULL
 CLOSE_DATE <- as.Date("2025-12-31")   # NULL: estimated, and the report says so
 EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
                            death_time = "iv_dead", label = "Reoperation"))
@@ -212,16 +208,16 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 
 `ORIGIN_YEAR` stays 1990, and `PANELS` already names `dead` and `iv_dead`.
 
-## `dp-gfup`: blue circles below the diagonal are patients lost to follow-up early
+## `dc-gfup`: blue circles below the diagonal are patients lost to follow-up early
 
 Each point is a patient. The dashed diagonal is the most follow-up the close date allows; vermillion crosses (deaths) belong below it.
 
 :::: {.columns}
 ::: {.column width="50%"}
-![All deaths](reference/dp-gfup-all.png)
+![All deaths](reference/dc-gfup-all.png)
 :::
 ::: {.column width="50%"}
-![Reoperation](reference/dp-gfup-reop.png)
+![Reoperation](reference/dc-gfup-reop.png)
 :::
 ::::
 
@@ -243,10 +239,10 @@ In `SECTIONS`, `"percent"` and `"count"` bin the year the same way, so their bar
 The identifier rule catches `patient_id`, names with no separator such as `ccfid` and `patientid`, and any name holding `mrn`. Name a column in `VARIABLES` to draw it anyway.
 :::
 
-## `dp-eda` writes the five-section EDA report in one render
+## `dc-eda` writes the five-section EDA report in one render
 
 ```r
-job <- open_job("dp", "cohort", "demo", dir = root, qualifier = "eda")
+job <- open_job("dc", "cohort", "demo", dir = root, qualifier = "eda")
 ```
 ```r
 ANALYSIS_SET <- NULL
@@ -261,20 +257,20 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 4. **categorical** variables as **percentages**;
 5. the same categorical variables as **counts**.
 
-## Each `dp-eda` section is its standalone job's figure
+## Each `dc-eda` section is its standalone job's figure
 
 Each section calls the same function as its standalone job, with the same arguments, so a section *is* that job's figure.
 
-## `dp-eda` draws 8 continuous and 7 categorical variables, leaving out patient_id and op_date
+## `dc-eda` draws 8 continuous and 7 categorical variables, leaving out patient_id and op_date
 
 Each panel is one variable by year of operation. Percent panels stack each level's share in blue, vermillion, green and on; missing is light gray.
 
 :::: {.columns}
 ::: {.column width="50%"}
-![Continuous variables (8)](reference/dp-eda-continuous-page-01.png)
+![Continuous variables (8)](reference/dc-eda-continuous-page-01.png)
 :::
 ::: {.column width="50%"}
-![Categorical, percent (7)](reference/dp-eda-percent-page-01.png)
+![Categorical, percent (7)](reference/dc-eda-percent-page-01.png)
 :::
 ::::
 
@@ -310,7 +306,7 @@ key_table(c("all", "dc-tables"))
 ```{r}
 #| eval: true
 #| echo: false
-key_table("dp-trends")
+key_table("dc-trends")
 ```
 
 ## Expected numbers: Goodness of follow-up
@@ -318,7 +314,7 @@ key_table("dp-trends")
 ```{r}
 #| eval: true
 #| echo: false
-key_table(c("dc-gfup", "dp-gfup"))
+key_table("dc-gfup")
 ```
 
 ## Expected numbers: EDA plots
@@ -326,7 +322,7 @@ key_table(c("dc-gfup", "dp-gfup"))
 ```{r}
 #| eval: true
 #| echo: false
-key_table("dp-eda")
+key_table("dc-eda")
 ```
 
 ## Fell behind? Catch up with `demo_job()`
@@ -334,11 +330,11 @@ key_table("dp-eda")
 Each job, scaffolded with the choices on these slides already applied:
 
 ```r
-demo_job(root, "dp-eda")   # or dc-tables, dp-trends, dc-gfup, dp-gfup
-render_job(file.path(root, "10_descriptive", "cohort-demo-dp-eda.qmd"), final = TRUE)
+demo_job(root, "dc-eda")   # or dc-tables, dc-trends, dc-gfup
+render_job(file.path(root, "10_descriptive", "dc.eda.cohort.demo.qmd"), final = TRUE)
 ```
 
-All five at once, into a fresh study:
+All four at once, into a fresh study:
 
 ```bash
 Rscript dev/demo/descriptives-demo.R ~/eda-demo-all
@@ -347,4 +343,4 @@ Rscript dev/demo/descriptives-demo.R ~/eda-demo-all
 ## Two pieces are still to come
 
 - **Shorter labels that stay distinct**, with a study abbreviation list. This needs the next hvtiRutilities release.
-- **Acceptance**: Lauren checks `dp-eda` on a real study against the SAS EDA output.
+- **Acceptance**: Lauren checks `dc-eda` on a real study against the SAS EDA output.

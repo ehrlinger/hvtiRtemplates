@@ -15,13 +15,12 @@ refuses to overwrite an existing job.
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-setup.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-concordance.qmd` | every patient through every treatment group's model, with an optional best-treatment table | `40_graphs/` or `graphs/` |
-| `40_graphs/dp-trends.qmd` | trends over operation year (EDA) | `40_graphs/` or `graphs/` |
-| `40_graphs/dp-gfup.qmd` | **deprecated**, use `dc-gfup`: goodness-of-follow-up figure | `40_graphs/` or `graphs/` |
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-gfup.qmd` | follow-up interval checks and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-stddiff.qmd` | balance table: standardized differences between two groups, unadjusted, matched and weighted | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dp-eda.qmd` | the whole EDA report: overview, follow-up, then the continuous, percent and count sections, each with its table | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-eda.qmd` | the whole EDA report: overview, follow-up, then the continuous, percent and count sections, each with its table | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-trends.qmd` | trends over operation year (EDA) | `10_descriptive/` or `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `30_analyses/` or `analyses/` |
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
@@ -35,9 +34,27 @@ refuses to overwrite an existing job.
 | `30_analyses/rfr-explain.qmd` | importance, VarPro and dependence for an `rfr` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/nb-boostmtree.qmd` | boosted multivariate trees for a response measured at each visit | `30_analyses/` or `analyses/` |
 
-`dp-postage`, deprecated in favor of `dp-eda` in 1.2.3, was removed after
-1.3.0. A `dp-eda` job, `add_job("dp.eda", subject, type)`, with
-`SECTIONS <- c("continuous", "percent", "count")` draws the pages it drew.
+`dc-eda` and `dc-trends` were `dp-eda` and `dp-trends` until 2026-10-10, and
+`dc-trends` then moved from `40_graphs/` to `10_descriptive/`, so a new
+`dc-trends` job is written to the study's descriptive folder rather than its
+graphs folder. Its figures are still saved under
+`graphs/<subject>-<type>/`. The old names, `dp.eda` and `dp.trends`, still work
+in `add_job()`, `open_job()`, `template_path()` and `migrate_job()`, with a
+warning naming the new one, through the next release, and are removed in the
+one after. The renames are listed under `renamed` in
+`inst/extdata/templates.json`. A job already scaffolded under an old name keeps
+that name and keeps rendering; `add_job()` refuses to write a second copy of it
+under the new name, and `open_job()` opens it.
+
+`dp-gfup`, deprecated in favor of `dc-gfup` in 1.3.0, is removed:
+`add_job("dc.gfup", subject, type)` draws the same panels beside the
+follow-up tables. `dp-postage`, deprecated in favor of `dp-eda` (now `dc-eda`)
+in 1.2.3, was removed after 1.3.0. A `dc-eda` job, `add_job("dc.eda", subject,
+type)`, with `SECTIONS <- c("continuous", "percent", "count")` draws the pages
+it drew.
+
+The taxonomy keeps its `dp` row, "Descriptive plot", because legacy study jobs
+are named `dp.*` and the census counts them; no template uses `dp` now.
 
 A template is named `<prefix>.qmd`, or `<prefix>-<qualifier>.qmd` where one
 prefix carries several job types, and lives in a numbered directory named for
@@ -53,8 +70,9 @@ from it and the folder from the directory, stripping the ordering digits.
 The placement test requires the job catalog and skips when it is absent.
 Its internal lookup helper uses the catalog's `(prefix, qualifier)` row and
 falls back to `hvti_taxonomy()` when the catalog or matching row is absent.
-The catalog places `dp-eda` in `descriptive/` and `dp-trends` in `graphs/`;
-the prefix-wide taxonomy cannot distinguish those jobs. A separate test checks
+The catalog places `dc-variable` in `distributions/` and `dc-boxplot` in
+`graphs/`, both still queued, where the prefix-wide taxonomy places every `dc`
+job in `descriptive/`. A separate test checks
 that every template directory names a taxonomy folder even without the catalog.
 
 ⚠️ **The digits are ASSIGNED, not derived.** `estimates` is 90 though it is
@@ -62,8 +80,8 @@ fifth in the taxonomy, because it holds saved output rather than jobs. The
 decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
-qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dp-trends`,
-`dp-gfup`, `dp-eda`, `hs-setup`, `hs-concordance`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
+qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dc-trends`,
+`dc-eda`, `hs-setup`, `hs-concordance`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so
 in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
@@ -127,14 +145,13 @@ contains both schemes is ambiguous, so job creation stops instead of splitting
 the estate across two spellings of one folder.
 
 A job scaffolded from a qualified template carries the qualifier as a fourth
-field after the prefix, so `add_job("dp", "cohort", "eda", qualifier = "trends")` writes
-`40_graphs/dp.trends.cohort.eda.qmd` in a new study. A filename that drops the qualifier says
-only "some `dp` job", which is what splitting the templates exists to fix.
+field after the prefix, so `add_job("dc", "cohort", "eda", qualifier = "trends")` writes
+`10_descriptive/dc.trends.cohort.eda.qmd` in a new study. A filename that drops the qualifier says
+only "some `dc` job", which is what splitting the templates exists to fix.
 The template's own name says the same thing in one argument:
-`add_job("dp.trends", "cohort", "eda")` is the same call, and so is the
-dash spelling of the template's file, `"dp-trends"`. A bare qualifier is
-not accepted, because `fit` and `explain` each name three templates and
-`gfup` names two.
+`add_job("dc.trends", "cohort", "eda")` is the same call, and so is the
+dash spelling of the template's file, `"dc-trends"`. A bare qualifier is
+not accepted, because `fit` and `explain` each name three templates.
 An EDA job's set key is `(subject, eda)`: the subject names what is described,
 and the type is always `eda`.
 
@@ -331,9 +348,8 @@ where it does not, as on a Mac without XQuartz.
 | dc-gfup | `dc-gfup-<panel>` |
 | dc-stddiff | `dc-stddiff-balance` |
 | dc-tables | `dc-tables-correlation-matrix` (in `descriptive/`) |
-| dp-eda | `dp-eda-gfup-<panel>`, `dp-eda-<section>-page-<NN>` |
-| dp-gfup | `dp-gfup-<panel>` |
-| dp-trends | `dp-trends-<trend>-<subgroup>` |
+| dc-eda | `dc-eda-gfup-<panel>`, `dc-eda-<section>-page-<NN>` |
+| dc-trends | `dc-trends-<trend>-<subgroup>` |
 | hp | `hp-survival`, `hp-hazard`, `hp-phases` |
 | bc, bh, bl, br | `<prefix>-frequencies` |
 | nb-boostmtree | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>`, `-traces` |
@@ -349,8 +365,8 @@ standards still to be settled.
 
 ## Editing a scaffolded job
 
-`migrate_job()` can prefill `dc-tables`, `dc-gfup`, `dp-trends`, and
-`dp-eda` from their supported legacy source shapes. It writes a report
+`migrate_job()` can prefill `dc-tables`, `dc-gfup`, `dc-trends`, and
+`dc-eda` from their supported legacy source shapes. It writes a report
 beside the job with evidence checksums, source lines, translated values, and
 unresolved choices. The existing source and evidence files remain in place.
 Only deterministic extraction can remove a marker. Review inferred values,

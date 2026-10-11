@@ -169,7 +169,7 @@ analysis_templates <- function() {
 
 test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- analysis_templates()
-  expect_equal(nrow(templates), 32L)
+  expect_equal(nrow(templates), 31L)
 
   for (path in templates$file) {
     source <- readLines(path, warn = FALSE)
@@ -233,7 +233,7 @@ test_that("analysis-set branches capture the parquet file they read", {
       expect_true(any(grepl(".provenance_file_read(", source, fixed = TRUE)), info = basename(path))
     }
   }
-  for (prefix in c("dc-general", "dc-gfup", "dc-stddiff", "dc-tables", "dp-eda", "dp-gfup", "dp-trends")) {
+  for (prefix in c("dc-general", "dc-gfup", "dc-stddiff", "dc-tables", "dc-eda", "dc-trends")) {
     source <- readLines(template_by_name(prefix), warn = FALSE)
     expect_true(any(grepl("analysis_set = ANALYSIS_SET", source, fixed = TRUE)), info = prefix)
     expect_true(any(grepl("list(job_data$provenance)", source, fixed = TRUE)), info = prefix)
@@ -243,7 +243,7 @@ test_that("analysis-set branches capture the parquet file they read", {
 test_that("only templates with a local dataset choice override the dataset", {
   expected <- c(
     "ac", "hz", "hm", "hp", "hs-concordance", "hs-setup",
-    "dc-general", "dc-gfup", "dc-stddiff", "dc-tables", "dp-eda", "dp-gfup", "dp-trends",
+    "dc-general", "dc-gfup", "dc-stddiff", "dc-tables", "dc-eda", "dc-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
     "rfs-fit", "rfc-fit", "rfr-fit", "nb-boostmtree"
@@ -258,7 +258,7 @@ test_that("only templates with a local dataset choice override the dataset", {
 
 test_that("endpoint-free templates do not invent analysis or cohort blocks", {
   identity_only <- c(
-    "dc-general", "dc-stddiff", "dc-tables", "dp-trends"
+    "dc-general", "dc-stddiff", "dc-tables", "dc-trends"
   )
   for (prefix in identity_only) {
     chunk <- provenance_chunk(template_by_name(prefix))

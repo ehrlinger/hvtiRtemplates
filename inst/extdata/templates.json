@@ -1513,11 +1513,11 @@
       ]
     },
     {
-      "prefix": "dp",
+      "prefix": "dc",
       "qualifier": "trends",
       "name": "Descriptive plot: trends",
       "description": "How the cohort changed over the years of operation: the share with a characteristic, or the level of a measurement, year by year with a smooth.",
-      "folder": "graphs",
+      "folder": "descriptive",
       "family": "plots",
       "kind": "job",
       "status": "shipped",
@@ -1531,38 +1531,11 @@
       "workflows": [],
       "blocked_on": null,
       "spec": "dev/specs/2026-09-10-dp-trends-template-design.md",
-      "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
+      "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier (graphs/dp, 80). Shipped as dp-trends and renamed dc-trends on 2026-10-10, moving from graphs to descriptive. It absorbed the queued dc-trends row, which measured 43 more studies under descriptive/dc (a token count over the whole job name gave 58) with the legacy templates tp.dc.trends.vsd.loess and tp.dc.linear_trends.continuous.",
       "disposition": "thin",
       "uses": [
         "hvtiPlotR::hv_trends"
       ]
-    },
-    {
-      "prefix": "dp",
-      "qualifier": "gfup",
-      "name": "Descriptive plot: follow-up",
-      "description": "Deprecated in favor of dc-gfup, which draws the same figure beside its follow-up tables. The goodness-of-follow-up figure: each patient's follow-up against operation year, alive in blue and dead in red, under the diagonal the close date allows.",
-      "folder": "graphs",
-      "family": "plots",
-      "kind": "job",
-      "status": "shipped",
-      "batch": 3,
-      "sas_breadth": null,
-      "sas_breadth_jobs": 48,
-      "r_exemplars": 4,
-      "r_jobs": 50,
-      "upstream": [],
-      "downstream": [],
-      "workflows": [],
-      "blocked_on": null,
-      "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
-      "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
-      "disposition": "thin",
-      "uses": [
-        "hvtiPlotR::hv_followup"
-      ],
-      "deprecated_by": "dc-gfup",
-      "deprecation_note": "It will be removed in a later release. add_job(\"dc.gfup\", subject = \"cohort\", type = \"eda\") draws the same panels with the same choices, beside the follow-up tables."
     },
     {
       "prefix": "dp",
@@ -1614,7 +1587,7 @@
       ]
     },
     {
-      "prefix": "dp",
+      "prefix": "dc",
       "qualifier": "variable",
       "name": "Distribution of a variable",
       "folder": "distributions",
@@ -1639,7 +1612,7 @@
       ]
     },
     {
-      "prefix": "dp",
+      "prefix": "dc",
       "qualifier": "eda",
       "name": "Descriptive plot: EDA report",
       "description": "The whole data-checking report in one render: every column's contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table.",
@@ -1657,7 +1630,7 @@
       "workflows": [],
       "blocked_on": null,
       "spec": "dev/specs/2026-09-25-eda-composite-design.md",
-      "note": "A composite, not a new shape: its sections are dp-gfup, dc-gfup's tables and the pages the removed dp-postage drew, drawn through the same package functions (hv_followup_panels(), followup_check(), hv_eda_pages()) with the same arguments, so each section is the standalone job's figure. Asked for in the 2026-09-24 template review. dp-postage was deprecated in its favor in 1.2.3 and removed after 1.3.0; SECTIONS <- c(\"continuous\", \"percent\", \"count\") draws the pages it drew. Counts are null because the legacy EDA report is named by dataset, not by an `eda` field.",
+      "note": "A composite, not a new shape: its sections are dc-gfup's figure and tables and the pages the removed dp-postage drew, drawn through the same package functions (hv_followup_panels(), followup_check(), hv_eda_pages()) with the same arguments, so each section is the standalone job's figure. Asked for in the 2026-09-24 template review. dp-postage was deprecated in its favor in 1.2.3 and removed after 1.3.0; SECTIONS <- c(\"continuous\", \"percent\", \"count\") draws the pages it drew. Counts are null because the legacy EDA report is named by dataset, not by an `eda` field. Shipped as dp-eda and renamed dc-eda on 2026-10-10.",
       "disposition": "thin",
       "uses": [
         "hvtiPlotR::hv_followup_panels",
@@ -1670,28 +1643,6 @@
     },
     {
       "prefix": "dc",
-      "qualifier": "trends",
-      "name": "Descriptive: trends",
-      "folder": "descriptive",
-      "family": "descriptive",
-      "kind": "job",
-      "status": "queued",
-      "batch": null,
-      "sas_breadth": null,
-      "sas_breadth_jobs": 43,
-      "r_exemplars": 0,
-      "r_jobs": 0,
-      "upstream": [],
-      "downstream": [],
-      "workflows": [],
-      "blocked_on": null,
-      "spec": null,
-      "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier (descriptive/dc, 43). A token count over the whole job name gave 58 and is not this field's unit. Legacy templates: tp.dc.trends.vsd.loess, tp.dc.linear_trends.continuous. Admitted by the 2026-09-10 triage; batch not yet assigned.",
-      "disposition": "scaffold",
-      "uses": []
-    },
-    {
-      "prefix": "dp",
       "qualifier": "boxplot",
       "name": "Descriptive plot: boxplot",
       "folder": "graphs",
@@ -1763,6 +1714,20 @@
       ],
       "evidence": "dc 88, ac 71, bd 58, hp 55, hz 45",
       "note": "Matched or matching-weight versions of an analysis. The counts are upper bounds, because `match` is also a variable name. Counts are distinct studies over the 2026-08-27 census, from job names; decided in the 2026-09-10 triage."
+    }
+  ],
+  "renamed": [
+    {
+      "from": "dp-eda",
+      "to": "dc-eda",
+      "from_folder": "descriptive",
+      "note": "Renamed on 2026-10-10. The old name keeps working, with this warning, through the next release and is removed in the one after."
+    },
+    {
+      "from": "dp-trends",
+      "to": "dc-trends",
+      "from_folder": "graphs",
+      "note": "Renamed on 2026-10-10, and a new job is now written to descriptive/ rather than graphs/. The old name keeps working, with this warning, through the next release and is removed in the one after."
     }
   ]
 }

@@ -79,7 +79,7 @@ def _template_call(path, name):
     subject, type_ = value("SUBJECT"), value("TYPE")
     if subject is None or type_ is None:
         return None
-    # template_list()$call shows a qualified template as "dp.trends".
+    # template_list()$call shows a qualified template as "dc.trends".
     return f'add_job("{name.replace("-", ".", 1)}", subject = "{subject}", type = "{type_}")'
 
 

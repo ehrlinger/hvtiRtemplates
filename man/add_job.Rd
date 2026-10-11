@@ -9,8 +9,8 @@ add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
 \code{\link{template_list}}, or a template's full name as reported in
-its \code{name} column, e.g. \code{"dp.trends"}; the dash spelling
-\code{"dp-trends"} is accepted too. A full name carries the qualifier, so
+its \code{name} column, e.g. \code{"dc.trends"}; the dash spelling
+\code{"dc-trends"} is accepted too. A full name carries the qualifier, so
 \code{qualifier} must then be left \code{NULL}.}
 
 \item{subject}{Grouping topic for the job set, e.g. \code{"death"} or
@@ -108,9 +108,17 @@ work.
 that name and keep rendering; \code{add_job()} refuses to write a second
 copy of such a job under the new name, and \code{\link{open_job}} opens it.
 
-A template the catalog marks deprecated, such as \code{dp.gfup}, still
-scaffolds, with a warning naming its replacement; see
-\code{\link{template_catalog}}.
+A template the catalog marks deprecated still scaffolds, with a warning
+naming its replacement; see \code{\link{template_catalog}}.
+
+\strong{Renamed templates.} \code{dp.eda} and \code{dp.trends} were renamed
+\code{dc.eda} and \code{dc.trends} on 2026-10-10. The old names still
+scaffold the renamed template, with a warning naming the new name, through
+the next release, and are removed in the one after. A \code{dc.trends} job
+is written to the \code{descriptive} folder, where a \code{dp.trends} job
+was written to \code{graphs}. A job scaffolded under the old name keeps it
+and keeps rendering; \code{add_job()} refuses to write a second copy of it
+under the new name, and \code{\link{open_job}} opens it.
 }
 \examples{
 d <- file.path(tempdir(), "add-job-example")
@@ -122,8 +130,9 @@ add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
 # A qualified template by its full name, the form template_list()$call prints.
 add_job("dc.gfup", subject = "cohort", type = "eda", dir = d)
 
-# A deprecated template still scaffolds, and the warning names its replacement.
-tryCatch(add_job("dp.gfup", subject = "cohort", type = "eda", dir = d),
+# A template's name before a rename still works, and the warning names the
+# new one.
+tryCatch(add_job("dp.trends", subject = "cohort", type = "eda", dir = d),
          warning = conditionMessage)
 
 # A job accumulates a study's edits, so an existing one is never overwritten.

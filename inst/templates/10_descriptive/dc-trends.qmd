@@ -26,7 +26,7 @@ format:
 
 Replaces `graphs/dp.trends`: list the trend figures it draws.
 
-A `dp-trends` job shows how the cohort changed over the years of operation: the
+A `dc-trends` job shows how the cohort changed over the years of operation: the
 share of patients with a characteristic, or the level of a measurement, year by
 year, with a smooth through it. It **describes** the cohort. It fits no model and
 tests nothing, so a trend here is a prompt for an analysis, not a result.
@@ -37,7 +37,7 @@ the per-year summary itself, so this job never aggregates by hand. The
 older trends jobs carry are exactly what it replaces.
 
 Two neighbors are **not** this job. Procedure volume per year is `dp-procs`, and
-the distribution of a single variable is `dp-variable`.
+the distribution of a single variable is `dc-variable`.
 
 ```{r}
 #| label: setup
@@ -209,9 +209,9 @@ Set the values in this chunk before rendering.
 ```{r}
 #| label: edit-study-choices
 # EDIT: the registered dataset this job reads ("built" is the study dataset).
-# MIGRATE-BEGIN: dp-trends-data
+# MIGRATE-BEGIN: dc-trends-data
 DATASET <- "built"
-# MIGRATE-END: dp-trends-data
+# MIGRATE-END: dc-trends-data
 
 # EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
 ANALYSIS_SET <- NULL
@@ -261,29 +261,29 @@ JOIN_KEY <- NULL
 # may be set alone, and `ylim` zooms without dropping any patient.
 # `summary` is the per-year point drawn under the smooth. Percent trends must
 # use "mean" (the default); continuous trends may use "mean" or "median".
-# MIGRATE-BEGIN: dp-trends-trends
+# MIGRATE-BEGIN: dc-trends-trends
 TRENDS <- list(
   chf = list(cols = "hx_chf", kind = "percent", labels = "Heart failure",
              ylab = "Patients (%)", ylim = c(0, 100), ybreaks = seq(0, 100, 20)),
   lvmass = list(cols = "plvmassi", kind = "continuous", labels = "LV mass index",
                 ylab = "LV mass index", ylim = NULL, ybreaks = NULL)
 )
-# MIGRATE-END: dp-trends-trends
+# MIGRATE-END: dc-trends-trends
 
 # EDIT: optional. x-axis breaks shared by every figure, e.g. seq(1985, 2025, 5).
 # NULL lets ggplot choose.
-# MIGRATE-BEGIN: dp-trends-xbreaks
+# MIGRATE-BEGIN: dc-trends-xbreaks
 XBREAKS <- NULL
-# MIGRATE-END: dp-trends-xbreaks
+# MIGRATE-END: dc-trends-xbreaks
 
 # EDIT: optional. Each entry is a filter, given as a function of the data that
 # returns TRUE for the rows to keep. Every trend is drawn once per entry with
 # the same axes, so the figures can be read side by side. The default draws the
 # whole cohort only. A second entry might be
 #   complex = function(d) d$complex == 1
-# MIGRATE-BEGIN: dp-trends-subgroups
+# MIGRATE-BEGIN: dc-trends-subgroups
 SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)))
-# MIGRATE-END: dp-trends-subgroups
+# MIGRATE-END: dc-trends-subgroups
 
 # Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
 # SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
@@ -335,9 +335,9 @@ if (!is.null(job_data$attrition)) {
 # the origin. The origin differs between studies, 1985 in one and 2000 in
 # another, and a wrong one moves every figure along the x-axis, which is why
 # the range is checked and printed below.
-# MIGRATE-BEGIN: dp-trends-year
+# MIGRATE-BEGIN: dc-trends-year
 d$year <- floor(d$iv_opyrs) + 1985
-# MIGRATE-END: dp-trends-year
+# MIGRATE-END: dc-trends-year
 ```
 
 ```{r}
@@ -434,9 +434,9 @@ trend_long <- function(d, spec) {
 #| label: figures
 #| results: asis
 # unnumbered: each child chunk below carries its own label and caption
-# The image link is relative to THIS document, which always sits in graphs/,
-# so it is <set>/<file> whichever directory the render executes from. The file
-# itself is written through set_path(), which resolves from the project root.
+# This document sits in descriptive/ and its figures are written to graphs/
+# through set_path(), so the image link is the figure's path relative to this
+# document, worked out at render time, as dc-gfup's is.
 .fence <- strrep("`", 3)
 .seen <- new.env()
 .child <- function(label, caption, code) {
@@ -447,6 +447,9 @@ trend_long <- function(d, spec) {
   cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
                         envir = parent.frame(), quiet = TRUE), sep = "\n")
   cat("\n")
+}
+figure_link <- function(file) {
+  xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd(), error = FALSE)
 }
 for (sg in names(SUBGROUPS)) {
   keep <- SUBGROUPS[[sg]](d)
@@ -485,9 +488,9 @@ for (sg in names(SUBGROUPS)) {
     if (!is.null(spec$ybreaks)) p <- p + scale_y_continuous(breaks = spec$ybreaks)
     if (!is.null(spec$ylim)) p <- p + coord_cartesian(ylim = spec$ylim)
     if (!is.null(XBREAKS)) p <- p + scale_x_continuous(breaks = XBREAKS)
-    fname <- paste0("dp-trends-", nm, "-", sg, ".png")
-    save_figure(p, sub("[.]png$", "", fname), width = 8, height = 6, linked = TRUE)
-    .link <- file.path(paste0(SUBJECT, "-", TYPE), fname)
+    fname <- paste0("dc-trends-", nm, "-", sg, ".png")
+    file <- save_figure(p, sub("[.]png$", "", fname), width = 8, height = 6, linked = TRUE)
+    .link <- figure_link(file)
     .child(paste("fig trends", nm, sg), paste0("Trend in ", nm, " by year of operation, ", sg),
            "knitr::include_graphics(.link, error = FALSE)")
   }

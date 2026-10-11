@@ -60,8 +60,8 @@ the subject being described and `eda` names the stage of work.
 |:--|:--|:--|:--|
 | `descriptive/dc.tables.ods.sas` (`%desc_tab`) | `dc-tables` | `10_descriptive/dc-tables.qmd` | `hv_tbl_summary()`; `hv_correlation_table()` and `hv_correlation_matrix()` |
 | `descriptive/dc.gfup.sas` | `dc-gfup` | `10_descriptive/dc-gfup.qmd` | `proc_means()` |
-| `graphs/dp.trends.R` | `dp-trends` | `40_graphs/dp-trends.qmd` | `hv_trends()` |
-| `tp.dp.DescriptiveSummary.qmd`, `tp.dp.EDA_barplots_scatterplots*.R` | `dp-eda` | `10_descriptive/dp-eda.qmd` | `hv_eda()`, through `hv_eda_pages()` |
+| `graphs/dp.trends.R` | `dc-trends` | `10_descriptive/dc-trends.qmd` | `hv_trends()` |
+| `tp.dp.DescriptiveSummary.qmd`, `tp.dp.EDA_barplots_scatterplots*.R` | `dc-eda` | `10_descriptive/dc-eda.qmd` | `hv_eda()`, through `hv_eda_pages()` |
 
 ## Five steps for every job
 
@@ -258,9 +258,9 @@ if (requireNamespace("hvtiRutilities", quietly = TRUE)) {
 }
 ```
 
-## Trends over operation year: `dp-trends`
+## Trends over operation year: `dc-trends`
 
-The shipped `dp-trends` template replaces hand-built annual summaries and
+The shipped `dc-trends` template replaces hand-built annual summaries and
 per-series `smooth.spline(df = 6)` calls with `hv_trends()`. Its smoother is
 LOESS, not the SAS-era smoothing spline, so compare the old and new figures by
 shape rather than pointwise equality.
@@ -269,7 +269,7 @@ shape rather than pointwise equality.
 fit <- smooth.spline(year, annual_mean, df = 6)
 ```
 
-```{r dp-trends}
+```{r dc-trends}
 if (requireNamespace("hvtiPlotR", quietly = TRUE)) {
   d <- hvtiPlotR::sample_eda_data(n = 120)
   trend_data <- data.frame(year = d$year, value = d$ef, group = "EF")
@@ -277,7 +277,7 @@ if (requireNamespace("hvtiPlotR", quietly = TRUE)) {
 }
 ```
 
-## EDA report: `dp-eda`
+## EDA report: `dc-eda`
 
 The older `Function_DataPlotting()` loops become one `hv_eda()` call per entry
 in `VARS`. Character and factor columns produce bars. A numeric column produces
@@ -286,7 +286,7 @@ is a non-negative whole number no greater than six; otherwise it produces a
 scatter panel. The template lays those panels out in printable pages.
 
 A legacy EDA report drew no follow-up panels, so `migrate_job()` writes its
-`dp-eda` job with `SECTIONS <- c("continuous", "percent", "count")`: the
+`dc-eda` job with `SECTIONS <- c("continuous", "percent", "count")`: the
 continuous, percent and count pages, each with its table. Add `"followup"` to
 draw the follow-up panels as well.
 
@@ -294,7 +294,7 @@ draw the follow-up panels as well.
 for (v in variables) Function_DataPlotting(data, v, "year")
 ```
 
-```{r dp-eda, eval=requireNamespace("hvtiPlotR", quietly = TRUE)}
+```{r dc-eda, eval=requireNamespace("hvtiPlotR", quietly = TRUE)}
 d <- hvtiPlotR::sample_eda_data(n = 120)
 variables <- c(male = "Male", ef = "Ejection fraction")
 panels <- lapply(names(variables), function(v) {

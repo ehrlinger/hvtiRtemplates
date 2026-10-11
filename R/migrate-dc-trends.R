@@ -1,4 +1,4 @@
-.migrate_dp_trends <- function(evidence, template) {
+.migrate_dc_trends <- function(evidence, template) {
   inline <- .sas_inline_data(evidence$source)
   evidence$source <- inline$source
   # This is the fixture's declaration grammar, not a SAS execution engine.
@@ -164,12 +164,12 @@
     keep <- decisions_env$status == category
     data.frame(line = rows$line[keep], text = rows$text[keep], reason = decisions_env$reason[keep])
   }
-  regions <- list("dp-trends-data" = data, "dp-trends-year" = year, "dp-trends-trends" = trends,
-                  "dp-trends-xbreaks" = xbreaks, "dp-trends-subgroups" = subgroups)
+  regions <- list("dc-trends-data" = data, "dc-trends-year" = year, "dc-trends-trends" = trends,
+                  "dc-trends-xbreaks" = xbreaks, "dc-trends-subgroups" = subgroups)
   regions <- vapply(regions, paste, character(1L), collapse = "\n")
   for (name in names(regions)) {
     tryCatch(parse(text = regions[[name]]), error = function(e) {
-      stop("Generated dp-trends region '", name, "' is not valid R: ", conditionMessage(e), call. = FALSE)
+      stop("Generated dc-trends region '", name, "' is not valid R: ", conditionMessage(e), call. = FALSE)
     })
   }
   .sas_inline_result(list(regions = regions, translated = decisions("translated"),

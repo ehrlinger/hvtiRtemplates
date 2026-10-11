@@ -21,10 +21,10 @@ reports <- demo_jobs(root)
 # ---- Figures -----------------------------------------------------------------
 # One of each kind, not every page.
 graphs <- file.path(study_dir("graphs", root), "cohort-demo")
-figures <- c("dp-trends-chf-all.png", "dp-trends-lvmass-all.png",
-             "dp-gfup-all.png", "dp-gfup-reop.png",
-             "dp-eda-continuous-page-01.png", "dp-eda-percent-page-01.png",
-             "dp-eda-count-page-01.png")
+figures <- c("dc-trends-chf-all.png", "dc-trends-lvmass-all.png",
+             "dc-gfup-all.png", "dc-gfup-reop.png",
+             "dc-eda-continuous-page-01.png", "dc-eda-percent-page-01.png",
+             "dc-eda-count-page-01.png")
 stopifnot(all(file.exists(file.path(graphs, figures))))
 unlink(list.files(out, "[.]png$", full.names = TRUE))
 invisible(file.copy(file.path(graphs, figures), out))
@@ -38,7 +38,7 @@ fp <- hvtiPlotR::hv_followup_panels(
   events = list(reop = list(event = "reop", time = "iv_reop", death = "dead",
                             death_time = "iv_dead", label = "Reoperation"))
 )
-# dp-eda's default VARIABLES: every column but the x variable and the columns
+# dc-eda's default VARIABLES: every column but the x variable and the columns
 # that look like an identifier or a date.
 vars <- setdiff(names(d), c("year", "patient_id", "op_date"))
 n_vars <- vapply(c("continuous", "percent", "count"), function(s) {
@@ -48,8 +48,8 @@ pct <- function(x) sprintf("%d (%.0f%%)", sum(x), 100 * mean(x))
 chf <- function(years) sprintf("%.0f%%", 100 * mean(d$hx_chf[d$year %in% years]))
 
 numbers <- data.frame(
-  report = c(rep("all", 2L), rep("dc-tables", 4L), rep("dp-trends", 2L),
-             rep("dc-gfup", 3L), rep("dp-gfup", 3L), rep("dp-eda", 4L)),
+  report = c(rep("all", 2L), rep("dc-tables", 4L), rep("dc-trends", 2L),
+             rep("dc-gfup", 6L), rep("dc-eda", 4L)),
   quantity = c(
     "rows", "columns",
     "Age at operation, median", "Female, n (%)", "Race White, n (%)", "Creatinine, N non-missing",
@@ -77,7 +77,7 @@ report_text <- function(name) {
 }
 must_show <- list(
   "dc-tables" = c(pct(d$female), pct(d$race_grp == "White")),
-  "dp-eda" = c(sprintf("Continuous variables (%d)", n_vars[["continuous"]]),
+  "dc-eda" = c(sprintf("Continuous variables (%d)", n_vars[["continuous"]]),
                sprintf("Categorical variables, percent (%d)", n_vars[["percent"]]),
                sprintf("Categorical variables, counts (%d)", n_vars[["count"]]),
                "patient_id, op_date")

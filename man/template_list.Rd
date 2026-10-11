@@ -41,8 +41,8 @@ A template is named \code{<prefix>.qmd}, or
 types, and lives in a numbered directory named for the taxonomy folder it
 scaffolds into, so \code{folder} is read from the tree rather than looked
 up. A qualified template is shown, and selected, as \code{<prefix>.<qualifier>},
-e.g. \code{dp.trends}, the spelling a job's name uses; the file keeps its
-dash, and \code{"dp-trends"} is still accepted as input. The directory's
+e.g. \code{dc.trends}, the spelling a job's name uses; the file keeps its
+dash, and \code{"dc-trends"} is still accepted as input. The directory's
 leading digits order the folders and are stripped from
 \code{folder}. The placement test requires the job catalog and skips when
 it is absent. Its internal lookup helper uses the catalog's

@@ -1,4 +1,4 @@
-figure_templates <- c("dc-gfup", "dc-stddiff", "dc-tables", "dp-eda", "dp-gfup", "dp-trends", "hp",
+figure_templates <- c("dc-gfup", "dc-stddiff", "dc-tables", "dc-eda", "dc-trends", "hp",
                       "bc", "bh", "bl", "br", "nb-boostmtree", "rfc-explain", "rfr-explain", "rfs-explain",
                       "rfc-fit", "rfr-fit", "rfs-fit")
 

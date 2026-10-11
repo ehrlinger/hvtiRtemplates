@@ -9,8 +9,8 @@ open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
 \code{\link{template_list}}, or a template's full name as reported in
-its \code{name} column, e.g. \code{"dp.trends"}; the dash spelling
-\code{"dp-trends"} is accepted too. A full name carries the qualifier, so
+its \code{name} column, e.g. \code{"dc.trends"}; the dash spelling
+\code{"dc-trends"} is accepted too. A full name carries the qualifier, so
 \code{qualifier} must then be left \code{NULL}.}
 
 \item{subject}{Grouping topic for the job set, e.g. \code{"death"} or
@@ -49,7 +49,9 @@ The study root is the nearest directory at or above \code{dir} holding
 Naming, prefix and qualifier rules are those of \code{\link{add_job}}.
 A job scaffolded before 2026-10, named
 \code{<subject>-<type>-<prefix>[-<qualifier>].qmd}, is found and opened
-under that name.
+under that name. So is a job scaffolded under a template's name before a
+rename, such as \code{graphs/dp.trends.<subject>.<type>.qmd} for
+\code{dc.trends}, whichever of the two names the call uses.
 The editor is opened only in an interactive session.
 }
 \examples{

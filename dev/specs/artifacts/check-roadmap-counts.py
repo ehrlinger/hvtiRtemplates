@@ -32,7 +32,7 @@ OPTIONAL_FIELDS = ["description", "deprecated_by", "deprecation_note"]
 
 # A deprecated template still ships, so it keeps an on-disk status and gains
 # these two fields together: `deprecated_by` names the template that replaces
-# it, as a full name such as "dp-eda", and `deprecation_note` is the sentence
+# it, as a full name such as "dc-gfup", and `deprecation_note` is the sentence
 # add_job() appends to its warning. A new status would have had to be taught
 # to every reader of ON_DISK; two optional fields leave them all unchanged.
 DEPRECATION_FIELDS = ["deprecated_by", "deprecation_note"]
