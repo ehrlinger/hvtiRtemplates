@@ -27,6 +27,13 @@ gallery_family(
         "^BINARY      <- " = "BINARY      <- c(\"female\", \"hx_chf\", \"hx_dm\")",
         "^CATEGORICAL <- " = "CATEGORICAL <- \"race_grp\"",
         "^N_PERM <- " = "N_PERM <- 200L"
+      ))),
+      # Death against age (continuous, five rank groups) and NYHA class (ordinal, a group each), on the
+      # constant-hazard link, with the scale chosen for each once the figures were read.
+      "lg" = list(subject = "dead", type = "calibration", choices = c(whole_cohort, demo_id, list(
+        "^  name   = c\\(\"age\"\\),$" = "  name   = c(\"age\", \"nyha_pr\"),",
+        "^  kind   = c\\(\"continuous\"\\),$" = "  kind   = c(\"continuous\", \"ordinal\"),",
+        "^  chosen = c\\(NA\\)$" = "  chosen = c(\"raw\", \"raw\")"
       )))
     )
   )
