@@ -107,3 +107,86 @@
   attr(out, "dropped") <- dropped
   out
 }
+
+# The six scales a covariate might enter a model on, with the id each is chosen
+# by in VARIABLES$chosen. The order is the figure's panel order.
+.lg_scale_ids <- c("raw", "log", "inverse", "inverse_squared", "squared", "exp")
+
+.lg_one_number <- function(x) is.numeric(x) && length(x) == 1L && is.finite(x)
+
+# The default scale constant: the covariate's median, rounded to one significant
+# figure. The SAS jobs typed it by hand (50 for an age, 80 for a weight); it only
+# sets the inverse and exponential scales to a readable range, so a round number
+# near the middle of the data does the same work.
+.lg_constant <- function(x, name = "x") {
+  if (!any(!is.na(x))) stop("`", name, "` has no value to take a median of.", call. = FALSE)
+  constant <- signif(stats::median(x, na.rm = TRUE), 1L)
+  if (constant == 0) {
+    stop("The median of `", name, "` rounds to 0, so there is no default constant: set constant for it in VARIABLES.",
+         call. = FALSE)
+  }
+  constant
+}
+
+# The six scales of the group means, one column each and one row per group: raw
+# is the mean, log is log(mean + shift), inverse is constant / mean, inverse_squared
+# is that squared, squared is (mean / constant)^2 and exp is exp(mean / constant).
+# A scale that cannot be computed is NA in every group, not only the group that
+# breaks it: a line drawn through the other groups would look like a straight one.
+# attr(, "notes") names why, by scale. The log of a mean at or below -shift, an
+# inverse through a mean of 0 and an overflowing exponential are the cases.
+.lg_scales <- function(mean, constant, shift = 0) {
+  if (!is.numeric(mean)) stop("mean must be numeric.", call. = FALSE)
+  if (!.lg_one_number(constant) || constant == 0) {
+    stop("constant must be one finite number other than 0.", call. = FALSE)
+  }
+  if (!.lg_one_number(shift)) stop("shift must be one finite number.", call. = FALSE)
+  out <- list(
+    raw = mean,
+    log = suppressWarnings(log(mean + shift)),
+    inverse = constant / mean,
+    inverse_squared = (constant / mean)^2,
+    squared = (mean / constant)^2,
+    exp = exp(mean / constant)
+  )
+  notes <- character()
+  if (any(mean + shift <= 0)) {
+    notes[["log"]] <- paste0("A group mean plus the shift is not positive (the smallest is ", format(min(mean + shift), digits = 3),
+                             "), so the log is undefined. Set shift for this covariate in VARIABLES to move it above 0.")
+  }
+  if (any(mean == 0)) {
+    notes[["inverse"]] <- "A group mean is 0, so the constant over the mean is undefined."
+    notes[["inverse_squared"]] <- "A group mean is 0, so the constant over the mean is undefined."
+  }
+  if (any(!is.finite(out$exp))) {
+    notes[["exp"]] <- "The exponential of the mean over the constant overflows. Set a larger constant for this covariate in VARIABLES."
+  }
+  for (id in names(notes)) out[[id]][] <- NA_real_
+  out <- as.data.frame(out)
+  attr(out, "notes") <- notes
+  out
+}
+
+# A variable as a model term: backquoted when its name is not a syntactic one.
+.lg_variable_term <- function(name) if (identical(make.names(name), name)) name else paste0("`", name, "`")
+
+# A number as it is written in a term: never in exponent form, never padded.
+.lg_number <- function(x) format(x, digits = 15L, scientific = FALSE, trim = TRUE)
+
+# The term for one chosen scale, ready for an lm job's PREDICTORS. Evaluated on
+# the covariate it gives the scale .lg_scales() draws, which the tests check.
+.lg_term <- function(name, scale, constant, shift = 0) {
+  if (!scale %in% .lg_scale_ids) {
+    stop("scale must be one of ", paste(.lg_scale_ids, collapse = ", "), ".", call. = FALSE)
+  }
+  v <- .lg_variable_term(name)
+  k <- .lg_number(constant)
+  switch(scale,
+    raw = v,
+    log = if (shift == 0) paste0("log(", v, ")") else paste0("log(", v, if (shift < 0) " - " else " + ", .lg_number(abs(shift)), ")"),
+    inverse = paste0("I(", k, " / ", v, ")"),
+    inverse_squared = paste0("I((", k, " / ", v, ")^2)"),
+    squared = paste0("I((", v, " / ", k, ")^2)"),
+    exp = paste0("I(exp(", v, " / ", k, "))")
+  )
+}
