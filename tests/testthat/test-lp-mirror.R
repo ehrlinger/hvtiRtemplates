@@ -177,3 +177,124 @@ test_that("the job saves the unmatched and weighted figures, with a count table 
   expect_identical(env$mirror_counts(env$mh_weighted, "weighted")$patients, n)
   expect_named(env$mirror_counts(env$mh_unmatched, "unmatched"), c("group", "patients"))
 })
+
+test_that("the match flag joins by ID digest, counts both kinds of miss, and stops on another cohort", {
+  h <- lp_helpers()
+  bundle_ids <- paste0("d", 1:10)
+  # Patients 9 and 10 have no flag; the dataset has two patients with no score.
+  out <- h$mirror_join(bundle_ids, c(paste0("d", 1:8), "x1", "x2"), c(1, 0, 1, 1, 0, 1, 1, 1, 1, 1))
+  expect_identical(out$matched, c(1L, 0L, 1L, 1L, 0L, 1L, 1L, 1L, 0L, 0L))
+  expect_identical(out$counts$patients, c(2L, 2L))
+  # Fewer than half the scored patients in the dataset: another cohort, or another identifier.
+  expect_error(h$mirror_join(bundle_ids, c("d1", "d2", paste0("x", 1:8)), rep(1, 10)),
+               "^Only 2 of the 10 patients the scores were computed for are in the dataset read for MATCH")
+  expect_error(h$mirror_join(bundle_ids, c("d1", "d1"), c(1, 1)), "holds a patient more than once")
+})
+
+test_that("with MATCH the job joins the flag through the study key and keeps no identifier", {
+  local_child_chunks()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  s <- lp_fixture("MATCH <- \"match\"")
+  env <- lm_eval_job(s$job)
+  d <- lp_data()
+  expect_identical(env$scores$matched, d$match)
+  expect_identical(env$.join$counts$patients, c(0L, 0L))
+  expect_identical(env$mirror_counts(env$mh_matched, "matched")$matched,
+                   c(sum(d$match[d$treatment == "treated"]), sum(d$match[d$treatment == "control"])))
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "outcome-analysis")
+  expect_true(all(file.exists(file.path(graphs, c("lp-mirror-matched.png", "lp-mirror-matched.pdf")))))
+  # The scores hold the study-keyed digest, never the identifier.
+  expect_false(any(as.character(d$ccfid) %in% env$scores$id))
+  # A dataset keyed on another identifier stops by name.
+  src <- readLines(s$job, warn = FALSE)
+  writeLines(sub("^ID <- .*$", "ID <- \"id\"", src), s$job)
+  expect_error(lm_eval_job(s$job), "identifies patients by `id`, the bundle by `ccfid`")
+})
+
+test_that("without MATCH the job draws no matched figure and joins nothing", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  s <- lp_fixture()
+  env <- lm_eval_job(s$job)
+  expect_null(env$.join)
+  expect_false(exists("mh_matched", envir = env, inherits = FALSE))
+  expect_false(exists("match_data", envir = env, inherits = FALSE))
+  expect_true(all(env$scores$matched == 0L))
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "outcome-analysis")
+  expect_true(all(file.exists(file.path(graphs, c("lp-mirror-unmatched.png", "lp-mirror-weighted.png")))))
+  expect_false(any(file.exists(file.path(graphs, c("lp-mirror-matched.png", "lp-mirror-matched.pdf")))))
+})
+
+test_that("a scored patient with no flag is drawn as unmatched and counted, never dropped", {
+  local_child_chunks()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  s <- lp_fixture(c("MATCH <- \"match\"", "DATASET <- \"match_file\""))
+  d <- lp_data()
+  # 100 of the 120 scored patients are in the file, 5 of them with the flag blank,
+  # and the file holds 7 patients with no score.
+  flag <- d$match[1:100]
+  flag[c(3, 40, 41, 77, 100)] <- NA
+  lp_register_match(s$root, 1:100, foreign = 7L, flag = flag)
+  env <- lm_eval_job(s$job)
+  expect_identical(env$.join$counts$patients, c(25L, 7L))
+  expect_identical(env$scores$matched, c(ifelse(is.na(flag), 0L, flag), rep(0L, 20L)))
+  # Every scored patient is still in the figure's data.
+  counts <- env$mirror_counts(env$mh_matched, "matched")
+  expect_identical(sum(counts$patients), 120L)
+  expect_identical(sum(counts$matched), sum(flag == 1L, na.rm = TRUE))
+  expect_identical(env$.join$counts$count,
+                   c("Patients with a score and no match flag", "Patients with a match flag and no score"))
+})
+
+test_that("the job stops, saying why, when fewer than half the scored patients are in the MATCH dataset", {
+  local_child_chunks()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  s <- lp_fixture(c("MATCH <- \"match\"", "DATASET <- \"match_file\""))
+  lp_register_match(s$root, 1:59, foreign = 61L)
+  expect_error(lm_eval_job(s$job), "^Only 59 of the 120 patients the scores were computed for are in the dataset read for MATCH")
+  expect_error(lm_eval_job(s$job), "not the cohort the scores came from, or its ID does not identify patients")
+  # Exactly half is enough.
+  half <- lp_fixture(c("MATCH <- \"match\"", "DATASET <- \"match_file\""))
+  lp_register_match(half$root, 1:60, foreign = 60L)
+  expect_identical(lm_eval_job(half$job)$.join$counts$patients, c(60L, 60L))
+})
+
+test_that("the join reports counts only: no identifier, raw or digested, is printed or kept in an output", {
+  local_child_chunks()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  s <- lp_fixture(c("MATCH <- \"match\"", "DATASET <- \"match_file\""))
+  lp_register_match(s$root, 1:100, foreign = 7L)
+  # What the job's asis chunks would print: the child chunks they knit, and the
+  # tables those chunks draw.
+  printed <- character()
+  testthat::local_mocked_bindings(
+    knit_child = function(text, envir, ...) {
+      printed <<- c(printed, text)
+      for (line in grep("^knitr::kable", text, value = TRUE)) {
+        printed <<- c(printed, utils::capture.output(print(eval(parse(text = line), envir = envir))))
+      }
+      ""
+    },
+    .package = "knitr"
+  )
+  env <- lm_eval_job(s$job)
+  expect_gt(length(printed), 0L)
+  # Seven-digit identifiers occur nowhere else in the fixture.
+  digests <- env$scores$id
+  expect_false(any(grepl("91[0-9]{5}|92[0-9]{5}", printed)))
+  expect_false(any(vapply(digests, function(x) any(grepl(x, printed, fixed = TRUE)), logical(1L))))
+  # The join result and every table built from it hold counts and nothing else.
+  expect_named(env$.join, c("matched", "counts"))
+  expect_named(env$.join$counts, c("count", "patients"))
+  expect_false(is.null(env$match_data$provenance))
+  outputs <- list(env$.join$counts, env$mirror_counts(env$mh_matched, "matched"), env$.provenance_data,
+                  env$.provenance_artifacts)
+  text <- paste(vapply(outputs, function(x) paste(unlist(rapply(x, as.character, how = "list")), collapse = " "),
+                       character(1L)), collapse = " ")
+  expect_false(grepl("91[0-9]{5}|92[0-9]{5}", text))
+  expect_false(any(vapply(digests, function(x) grepl(x, text, fixed = TRUE), logical(1L))))
+})

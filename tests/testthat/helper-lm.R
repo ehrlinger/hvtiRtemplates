@@ -198,3 +198,17 @@ lp_helpers <- function() {
   eval(parse(text = lm_chunk(src, "helpers")), envir = env)
   env
 }
+
+# A second dataset in the fixture's study, registered as `match_file`, holding
+# only the patients in `rows` of lp_data() plus `foreign` patients the scores
+# were not computed for, with the pair-match flag `flag` for the kept rows.
+lp_register_match <- function(root, rows, foreign = 0L, flag = lp_data()$match[rows]) {
+  d <- lp_data()[rows, c("ccfid", "match"), drop = FALSE]
+  d$match <- flag
+  if (foreign > 0L) {
+    d <- rbind(d, data.frame(ccfid = 9200000L + seq_len(foreign), match = rep(1L, foreign)))
+  }
+  utils::write.csv(d, file.path(root, "00_datasets", "match_file.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "match_file.csv", dataset = "match_file", role = "named",
+                                                 key = "ccfid"))
+}

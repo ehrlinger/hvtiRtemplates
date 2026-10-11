@@ -236,8 +236,10 @@ test_that("every template that reads its own data offers the join and records th
     src <- readLines(f, warn = FALSE)
     text <- paste(src, collapse = "\n")
     # A job that reads with its own DATASET; downstream and bootstrap reports
-    # rebuild the selection their upstream job recorded instead.
-    if (!grepl("read_job_data(.cfg, dataset = DATASET", text, fixed = TRUE)) next
+    # rebuild the selection their upstream job recorded instead. lp-mirror
+    # reads DATASET only for its MATCH column, joined onto the bundle's
+    # patients by ID digest, so it offers no JOIN.
+    if (!grepl("read_job_data(.cfg, dataset = DATASET", text, fixed = TRUE) || basename(f) == "lp-mirror.qmd") next
     readers <- readers + 1L
     for (arg in c("join = JOIN", "join_vars = JOIN_VARS", "reduce = REDUCE", "join_key = JOIN_KEY")) {
       expect_true(grepl(arg, text, fixed = TRUE), info = paste(basename(f), arg))

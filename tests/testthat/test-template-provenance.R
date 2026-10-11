@@ -245,7 +245,7 @@ test_that("only templates with a local dataset choice override the dataset", {
     "ac", "hz", "hm", "hp", "hs-concordance", "hs-setup",
     "dc-general", "dc-gfup", "dc-stddiff", "dc-tables", "dc-eda", "dc-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
-    "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
+    "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal", "lp-mirror",
     "rfs-fit", "rfc-fit", "rfr-fit", "nb-boostmtree"
   )
   templates <- template_list()

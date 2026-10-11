@@ -246,6 +246,33 @@ mirror_counts <- function(mh, kind = c("unmatched", "weighted", "matched")) {
   }
   out
 }
+
+# The match flag of each bundle patient, joined by ID digest. `ids` are the
+# dataset's identifiers made comparable with the bundle's by .bundle_ids(),
+# and `flag` the MATCH column. Returns the 0/1 flag for each bundle patient
+# and the two counts the job reports; stops when fewer than half of the
+# bundle's patients are in the dataset.
+mirror_join <- function(bundle_ids, ids, flag) {
+  if (anyDuplicated(ids[!is.na(ids)])) {
+    stop("The dataset holds a patient more than once, so the match flag cannot be joined one to one: set ",
+         "DATASET to a dataset with one row per patient.", call. = FALSE)
+  }
+  at <- match(bundle_ids, ids)
+  joined <- !is.na(at)
+  if (sum(joined) < length(bundle_ids) / 2) {
+    stop("Only ", sum(joined), " of the ", length(bundle_ids), " patients the scores were computed for are in ",
+         "the dataset read for MATCH. The dataset is not the cohort the scores came from, or its ID does not ",
+         "identify patients as the propensity job's did: check DATASET and ID.", call. = FALSE)
+  }
+  value <- flag[at]
+  list(
+    matched = as.integer(!is.na(value) & value == 1),
+    counts = data.frame(
+      count = c("Patients with a score and no match flag", "Patients with a match flag and no score"),
+      patients = c(sum(is.na(value)), sum(!ids[!is.na(ids)] %in% bundle_ids))
+    )
+  )
+}
 ```
 
 ## The saved bundle
@@ -304,6 +331,39 @@ if (anyDuplicated(scores$id)) {
 }
 ```
 
+```{r}
+#| label: match
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+# The flag is joined by a digest of ID under the study key, the digest the
+# bundle holds, so this job keeps and prints no identifier. A scored patient
+# with no flag is drawn as unmatched and counted, never dropped.
+.join <- NULL
+if (!is.null(MATCH)) {
+  if (!is.character(MATCH) || length(MATCH) != 1L || is.na(MATCH)) {
+    stop("MATCH must be NULL or one column name.", call. = FALSE)
+  }
+  match_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, id = ID, one_row_per_patient = TRUE)
+  match_data$provenance$role <- "match"
+  .provenance_data <- c(.provenance_data, list(match_data$provenance))
+  .id <- attr(match_data$record, "selection")$id
+  hvtiRtemplates:::.check_job_columns(match_data$data, MATCH = MATCH)
+  if (!identical(tolower(.id), tolower(.meta$id_col))) {
+    stop("The dataset read for MATCH identifies patients by `", .id, "`, the bundle by `", .meta$id_col,
+         "`: set ID so both use the same identifier.", call. = FALSE)
+  }
+  .join <- mirror_join(scores$id, hvtiRtemplates:::.bundle_ids(bundle, match_data$data[[.id]], .root),
+                       match_data$data[[MATCH]])
+  scores$matched <- .join$matched
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-match-join",
+    "#| tbl-cap: \"The match flag joined onto the scored patients\"",
+    "knitr::kable(.join$counts, col.names = c(\"\", \"Patients\"))", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
 ## Figures
 
 ```{r}
@@ -337,6 +397,28 @@ knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in
 #| tbl-cap: "Patients in each group, and the sum of their matching weights"
 knitr::kable(mirror_counts(mh_weighted, "weighted"), col.names = c("Group", "Patients", "Sum of matching weights"),
              digits = 1)
+```
+
+```{r}
+#| label: mirror-matched
+#| results: asis
+# unnumbered: its child chunks carry their own labels and captions
+if (!is.null(MATCH)) {
+  mh_matched <- mirror_hist(scores, "matched", groups, BINWIDTH)
+  file <- save_figure(mirror_figure(mh_matched, "matched"), "lp-mirror-matched", width = 7, height = 5,
+                      linked = TRUE)
+  .link <- xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE)
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: fig-mirror-matched",
+    "#| fig-cap: \"Propensity score of the matched patients in each group, over all patients in grey\"",
+    "knitr::include_graphics(.link, error = FALSE)", .fence, "",
+    paste0(.fence, "{r}"), "#| label: tbl-mirror-matched",
+    "#| tbl-cap: \"Patients in each group, and those matched\"",
+    "knitr::kable(mirror_counts(mh_matched, \"matched\"), col.names = c(\"Group\", \"Patients\", \"Matched\"))",
+    .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
 ```
 
 ```{r}
