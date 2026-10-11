@@ -141,3 +141,97 @@ test_that("a group or scale that cannot be computed is named under its table, an
   expect_match(env$.notes, "^Inverse squared: A group mean is 0", all = FALSE)
   expect_false(any(grepl("^Exponential", env$.notes)))
 })
+test_that("the job saves lg-scales.rds with the term, constant and shift of each chosen scale, and the PREDICTORS line", {
+  local_child_chunks()
+  d <- lg_data()
+  s <- lg_fixture(variables = c(
+    "VARIABLES <- data.frame(",
+    "  name = c(\"age\", \"nyha\"),",
+    "  kind = c(\"continuous\", \"ordinal\"),",
+    "  chosen = c(\"log\", \"inverse\")",
+    ")"
+  ))
+  # Nothing is warned when every covariate has a usable choice.
+  expect_no_warning(env <- lm_eval_job(s$job))
+  saved <- readRDS(file.path(hvtiRutilities::study_dir("estimates", s$root), "dead-calibration", "lg-scales.rds"))
+  expect_s3_class(saved, "data.frame")
+  expect_named(saved, c("variable", "chosen", "term", "constant", "shift"))
+  expect_identical(saved$variable, c("age", "nyha"))
+  expect_identical(saved$chosen, c("log", "inverse"))
+  expect_identical(saved$constant, c(signif(stats::median(d$age), 1L), signif(stats::median(d$nyha), 1L)))
+  expect_identical(saved$shift, c(0, 0))
+  # The term is the constant and the name, written as an lm job takes it.
+  expect_identical(saved$term, c("log(age)", paste0("I(", saved$constant[[2L]], " / nyha)")))
+  expect_identical(env$.predictors, paste0("PREDICTORS <- c(\"log(age)\", \"", saved$term[[2L]], "\")"))
+  # The file carries the lineage of the data it came from, and no patient.
+  lineage <- attr(saved, "hvti_provenance")
+  expect_length(lineage$data, 1L)
+  expect_identical(lineage$analysis$event, "dead")
+  expect_identical(lineage$analysis$link, "hazard")
+  expect_identical(lineage$cohort$patients, nrow(d))
+  # The terms go into a model as they stand: lm's own check finds the columns, and the model fits.
+  expect_silent(hvtiRtemplates:::.check_job_columns(d, PREDICTORS = saved$term))
+  fit <- stats::glm(stats::reformulate(saved$term, response = "hdead"), family = stats::binomial, data = d)
+  expect_s3_class(fit, "glm")
+})
+
+test_that("a blank chosen warns in a draft, saves only the covariates chosen, and stops a final render", {
+  local_child_chunks()
+  two <- c(
+    "VARIABLES <- data.frame(",
+    "  name = c(\"age\", \"nyha\"),",
+    "  chosen = c(\"log\", NA)",
+    ")"
+  )
+  s <- lg_fixture(variables = two)
+  file <- file.path(hvtiRutilities::study_dir("estimates", s$root), "dead-calibration", "lg-scales.rds")
+  expect_warning(env <- lm_eval_job(s$job),
+                 "^These covariates have no usable scale chosen: `nyha`: no scale chosen yet. Read each figure")
+  expect_identical(names(env$choices$problems), "nyha")
+  expect_identical(readRDS(file)$variable, "age")
+  expect_identical(env$.predictors, "PREDICTORS <- c(\"log(age)\")")
+  unlink(file)
+  # A final render, with HVTI_TEMPLATE_STRICT set as render_job(final = TRUE) sets it, stops, and saves nothing.
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "1")
+  expect_error(lm_eval_job(s$job), paste0("^These covariates have no usable scale chosen: `nyha`: no scale chosen yet.*",
+                                          "This render stops because HVTI_TEMPLATE_STRICT is '1'"))
+  expect_false(file.exists(file))
+  # Unset, or set to a false word, it is a draft again.
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "false")
+  expect_warning(lm_eval_job(s$job), "no usable scale chosen")
+})
+
+test_that("the template's own blank chosen is a draft warning for the first covariate", {
+  local_child_chunks()
+  s <- lg_fixture(variables = NULL)
+  expect_warning(env <- lm_eval_job(s$job), "^These covariates have no usable scale chosen: `age`: no scale chosen yet")
+  expect_identical(nrow(readRDS(file.path(hvtiRutilities::study_dir("estimates", s$root), "dead-calibration", "lg-scales.rds"))), 0L)
+  expect_identical(env$.predictors, "No scale is chosen yet, so there is no PREDICTORS line.")
+})
+
+test_that("a chosen scale that cannot be computed warns in a draft and stops a final render", {
+  local_child_chunks()
+  # n_prior is 0 in its lowest group, so its log is undefined.
+  s <- lg_fixture(variables = c(
+    "VARIABLES <- data.frame(",
+    "  name = c(\"n_prior\"),",
+    "  constant = c(1),",
+    "  chosen = c(\"log\")",
+    ")"
+  ))
+  expect_warning(lm_eval_job(s$job),
+                 "`n_prior`: the chosen scale, log, cannot be computed: A group mean plus the shift is not positive")
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "yes")
+  expect_error(lm_eval_job(s$job), "`n_prior`: the chosen scale, log, cannot be computed")
+  # A shift makes it computable, and the term says so.
+  fixed <- lg_fixture(variables = c(
+    "VARIABLES <- data.frame(",
+    "  name = c(\"n_prior\"),",
+    "  constant = c(1),",
+    "  shift = c(1),",
+    "  chosen = c(\"log\")",
+    ")"
+  ))
+  env <- lm_eval_job(fixed$job)
+  expect_identical(env$choices$table$term, "log(n_prior + 1)")
+})

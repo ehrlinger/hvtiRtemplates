@@ -397,3 +397,62 @@ test_that(".lg_interval() keeps the patients whose follow-up is in the window, b
   }
   expect_error(hvtiRtemplates:::.lg_interval(d, "later", c(1, 2)), "^TIME names a column this dataset does not have: later")
 })
+
+lg_chosen_fixture <- function() {
+  variables <- data.frame(
+    name = c("age", "wt", "nyha", "los"), kind = "continuous", groups = 5L, constant = c(50, 80, 2, 1),
+    shift = c(0, 1, 0, 0), label = c("age", "wt", "nyha", "los"), chosen = c("log", "inverse", "raw", NA)
+  )
+  scales <- list(
+    age = hvtiRtemplates:::.lg_scales(c(40, 50, 60), 50),
+    wt = hvtiRtemplates:::.lg_scales(c(60, 80, 100), 80, 1),
+    nyha = hvtiRtemplates:::.lg_scales(c(1, 2, 3), 2),
+    los = hvtiRtemplates:::.lg_scales(c(0, 1, 2), 1)
+  )
+  list(variables = variables, scales = scales)
+}
+
+test_that(".lg_choices() gives each chosen scale as the term, constant and shift an lm job takes", {
+  f <- lg_chosen_fixture()
+  got <- hvtiRtemplates:::.lg_choices(f$variables[1:3, ], f$scales)
+  expect_named(got$table, c("variable", "chosen", "term", "constant", "shift"))
+  expect_identical(got$table$variable, c("age", "wt", "nyha"))
+  expect_identical(got$table$chosen, c("log", "inverse", "raw"))
+  expect_identical(got$table$term, c("log(age)", "I(80 / wt)", "nyha"))
+  expect_identical(got$table$constant, c(50, 80, 2))
+  expect_identical(got$table$shift, c(0, 1, 0))
+  expect_length(got$problems, 0L)
+})
+
+test_that("a covariate with no choice, or a choice that cannot be computed, is a problem and not a row", {
+  f <- lg_chosen_fixture()
+  # los has no choice. Its log cannot be computed (a group mean is 0), so choosing it is a problem too.
+  got <- hvtiRtemplates:::.lg_choices(f$variables, f$scales)
+  expect_identical(got$table$variable, c("age", "wt", "nyha"))
+  expect_identical(unname(got$problems), "no scale chosen yet")
+  expect_named(got$problems, "los")
+  f$variables$chosen[[4L]] <- "log"
+  got <- hvtiRtemplates:::.lg_choices(f$variables, f$scales)
+  expect_identical(got$table$variable, c("age", "wt", "nyha"))
+  expect_named(got$problems, "los")
+  expect_match(got$problems[["los"]], "^the chosen scale, log, cannot be computed: A group mean plus the shift is not positive")
+  # Nothing chosen at all is an empty table with the same columns, and a problem for each.
+  none <- hvtiRtemplates:::.lg_choices(transform(f$variables, chosen = NA_character_), f$scales)
+  expect_identical(nrow(none$table), 0L)
+  expect_named(none$table, c("variable", "chosen", "term", "constant", "shift"))
+  expect_named(none$problems, c("age", "wt", "nyha", "los"))
+})
+
+test_that(".lg_predictors() writes the PREDICTORS line to copy into an lm job, and it reads back as the terms", {
+  line <- hvtiRtemplates:::.lg_predictors(c("log(age)", "I(80 / wt)", "nyha"))
+  expect_identical(line, "PREDICTORS <- c(\"log(age)\", \"I(80 / wt)\", \"nyha\")")
+  # The parse() calls read back strings this test built, to show they are valid R and name what was given.
+  expect_identical(eval(parse(text = line)), c("log(age)", "I(80 / wt)", "nyha"))
+  # A long one goes a term to a line, and still reads back.
+  terms <- paste0("I(exp(covariate_number_", 1:6, " / 50))")
+  long <- hvtiRtemplates:::.lg_predictors(terms)
+  expect_match(long, "^PREDICTORS <- c[(]\n  \"I[(]exp[(]covariate_number_1 / 50[)][)]\",\n")
+  expect_match(long, "\n[)]$")
+  expect_identical(eval(parse(text = long)), terms)
+  expect_identical(hvtiRtemplates:::.lg_predictors(character()), "No scale is chosen yet, so there is no PREDICTORS line.")
+})

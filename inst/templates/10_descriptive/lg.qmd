@@ -404,6 +404,65 @@ for (i in seq_len(nrow(variables))) {
 options(.kable_na)
 ```
 
+## Chosen scales
+
+Once you have read the figures, set `chosen` for each covariate in `VARIABLES`
+and render again. The job saves the choice as `lg-scales.rds`, one row for each
+covariate: the scale, the term to write for it, and the constant and shift it
+used. The term goes into the `PREDICTORS` of an `lm` job as it stands, so the
+model is fitted on the scale the figure showed.
+
+A covariate with no choice, or whose chosen scale cannot be computed, is not
+saved. In a draft the job warns and lists it here; a final render stops, as it
+does for an open marker, so a finished job has chosen every scale.
+
+```{r}
+#| label: choices
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+choices <- hvtiRtemplates:::.lg_choices(variables, lapply(calibration, `[[`, "scales"))
+if (length(choices$problems)) {
+  .msg <- paste0("These covariates have no usable scale chosen: ",
+                 paste0("`", names(choices$problems), "`: ", choices$problems, collapse = "; "),
+                 ". Read each figure above and set chosen for it in VARIABLES.")
+  if (hvtiRtemplates:::.strict_render()) {
+    stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '", Sys.getenv("HVTI_TEMPLATE_STRICT"),
+         "': a final report names a scale for every covariate. Unset it, or set it to 0, false or no, ",
+         "to render a draft instead.", call. = FALSE)
+  }
+  warning(.msg, "\nRendering as a draft; the banner goes when every covariate has a choice.", call. = FALSE)
+  cat("\n::: {.callout-important title=\"DRAFT -- a scale is not chosen\"}\n", .msg, "\n:::\n\n", sep = "")
+}
+# What is saved holds the covariates with a usable choice and no patient: the
+# scale, its term, constant and shift. Its lineage says which data it came from.
+saveRDS(
+  hvtiRtemplates:::.attach_handoff_lineage(
+    choices$table,
+    data = .provenance_data,
+    analysis = Filter(Negate(is.null), list(event = EVENT, link = LINK, time = if (.needs_time) TIME, interval = INTERVAL)),
+    cohort = list(patients = nrow(d)),
+    selection = attr(job_data$record, "selection")
+  ),
+  set_path("estimates", "lg-scales.rds")
+)
+if (nrow(choices$table)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-lg-scales",
+    "#| tbl-cap: \"The scale chosen for each covariate, and the term to write for it in an lm job\"",
+    "knitr::kable(choices$table, col.names = c(\"Covariate\", \"Scale\", \"Term\", \"Constant\", \"Shift\"), row.names = FALSE)",
+    .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+.predictors <- hvtiRtemplates:::.lg_predictors(choices$table$term)
+if (nrow(choices$table)) {
+  cat("\nThe line to copy into the `PREDICTORS` of an `lm` job, beside its other predictors:\n\n",
+      "```r\n", .predictors, "\n```\n", sep = "")
+} else {
+  cat("\n", .predictors, "\n", sep = "")
+}
+```
+
 ```{r}
 #| label: provenance
 #| echo: false

@@ -351,3 +351,44 @@
   )
   list(data = d[inside, , drop = FALSE], counts = counts)
 }
+
+# The choices made, as the table lg-scales.rds holds: variable, chosen, term,
+# constant and shift, one row for each covariate with a usable choice. `scales`
+# is a list of .lg_scales() results by covariate name. A covariate with no choice,
+# or whose chosen scale cannot be computed, is not a row: it is named in
+# $problems with the reason, so the job can warn in a draft and stop a final
+# render, as an open EDIT marker does.
+.lg_choices <- function(variables, scales) {
+  problems <- character()
+  usable <- logical(nrow(variables))
+  for (i in seq_len(nrow(variables))) {
+    name <- variables$name[[i]]
+    chosen <- variables$chosen[[i]]
+    if (is.na(chosen)) {
+      problems[[name]] <- "no scale chosen yet"
+    } else if (all(is.na(scales[[name]][[chosen]]))) {
+      problems[[name]] <- paste0("the chosen scale, ", chosen, ", cannot be computed: ", attr(scales[[name]], "notes")[[chosen]])
+    } else {
+      usable[[i]] <- TRUE
+    }
+  }
+  kept <- variables[usable, , drop = FALSE]
+  terms <- vapply(seq_len(nrow(kept)), function(i) {
+    .lg_term(kept$name[[i]], kept$chosen[[i]], kept$constant[[i]], kept$shift[[i]])
+  }, character(1L))
+  list(
+    table = data.frame(variable = kept$name, chosen = kept$chosen, term = terms, constant = kept$constant,
+                       shift = kept$shift, stringsAsFactors = FALSE),
+    problems = problems
+  )
+}
+
+# The line an lm job's PREDICTORS takes for these terms: on one line when it fits
+# in 100 characters, a term to a line when it does not.
+.lg_predictors <- function(terms) {
+  if (!length(terms)) return("No scale is chosen yet, so there is no PREDICTORS line.")
+  items <- encodeString(terms, quote = "\"")
+  one <- paste0("PREDICTORS <- c(", paste(items, collapse = ", "), ")")
+  if (nchar(one) <= 100L) return(one)
+  paste0("PREDICTORS <- c(\n", paste0("  ", items, collapse = ",\n"), "\n)")
+}
