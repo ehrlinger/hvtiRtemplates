@@ -134,4 +134,12 @@ test_that("the treated bars are above the axis and the y-limits are symmetric, f
   p <- h$mirror_figure(mh, "unmatched")
   limits <- ggplot2::layer_scales(p)$y$get_limits()
   expect_identical(limits, c(-h$mirror_limit(mh$data$y), h$mirror_limit(mh$data$y)))
+  # A tall treated side and a short control side, past the point where the
+  # padding is one patient: the limits still match.
+  tall <- lp_scores()[rep(seq_len(40L), 12L), ]
+  tall$group[tall$group == "control"][seq_len(200L)] <- "treated"
+  mh <- h$mirror_hist(tall, "unmatched", groups, 5)
+  expect_gt(max(abs(mh$data$y)), 10)
+  limits <- ggplot2::layer_scales(h$mirror_figure(mh, "unmatched"))$y$get_limits()
+  expect_identical(limits, c(-h$mirror_limit(mh$data$y), h$mirror_limit(mh$data$y)))
 })
