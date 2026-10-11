@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/Rtmp7wh8EX/file1f5d4a330d/legacy-study
+#> Study: /tmp/RtmphWhFjE/file1f2f371ba47c/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,7 +183,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp7wh8EX/file1f5d4a330d/legacy-study
+#> Study: /tmp/RtmphWhFjE/file1f2f371ba47c/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -304,16 +304,16 @@ study_jobs <- c(
   eda = add_job("dc", "cohort", "eda", adopted_root, "eda")
 )
 study_jobs
-#>                                                                             general 
-#> "/tmp/Rtmp7wh8EX/file1f5d4a330d/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
-#>                                                                              tables 
-#>  "/tmp/Rtmp7wh8EX/file1f5d4a330d/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
-#>                                                                                gfup 
-#>    "/tmp/Rtmp7wh8EX/file1f5d4a330d/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
-#>                                                                              trends 
-#>  "/tmp/Rtmp7wh8EX/file1f5d4a330d/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
-#>                                                                                 eda 
-#>     "/tmp/Rtmp7wh8EX/file1f5d4a330d/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
+#>                                                                               general 
+#> "/tmp/RtmphWhFjE/file1f2f371ba47c/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#>                                                                                tables 
+#>  "/tmp/RtmphWhFjE/file1f2f371ba47c/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>                                                                                  gfup 
+#>    "/tmp/RtmphWhFjE/file1f2f371ba47c/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>                                                                                trends 
+#>  "/tmp/RtmphWhFjE/file1f2f371ba47c/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
+#>                                                                                   eda 
+#>     "/tmp/RtmphWhFjE/file1f2f371ba47c/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output
