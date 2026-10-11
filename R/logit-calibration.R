@@ -251,3 +251,103 @@
     ggplot2::theme_bw() +
     ggplot2::theme(strip.background = ggplot2::element_rect(fill = "gray92"))
 }
+
+# The VARIABLES table, completed and checked against the data. Only `name` is
+# required. A blank in any other column, or a column left out, takes that
+# covariate's default: continuous, 5 groups, the median-rule constant, no shift,
+# the name as its label, and no scale chosen. `exclude` holds columns that may
+# not be covariates, the patient identifier. Every message names VARIABLES, the
+# setting the author changes; none shows a data value.
+.lg_variables <- function(variables, d, exclude = character()) {
+  columns <- c("name", "kind", "groups", "constant", "shift", "label", "chosen")
+  if (!is.data.frame(variables) || !nrow(variables)) {
+    stop("VARIABLES must be a data frame with one row for each covariate and at least a `name` column.", call. = FALSE)
+  }
+  if (!"name" %in% names(variables)) stop("VARIABLES needs a `name` column.", call. = FALSE)
+  unknown <- setdiff(names(variables), columns)
+  if (length(unknown)) {
+    stop("VARIABLES has a column the job does not use: ", paste(unknown, collapse = ", "),
+         ". The columns are ", paste(columns, collapse = ", "), ".", call. = FALSE)
+  }
+  name <- as.character(variables$name)
+  if (anyNA(name) || any(!nzchar(name))) stop("VARIABLES has a covariate with no name.", call. = FALSE)
+  if (anyDuplicated(name)) {
+    stop("VARIABLES names a covariate more than once: ", paste(unique(name[duplicated(name)]), collapse = ", "), ".",
+         call. = FALSE)
+  }
+  absent <- setdiff(name, names(d))
+  if (length(absent)) {
+    stop("VARIABLES names ", if (length(absent) == 1L) "a column" else "columns", " this dataset does not have: ",
+         paste(absent, collapse = ", "), ". Change VARIABLES in edit-study-choices.", call. = FALSE)
+  }
+  reached <- intersect(name, exclude)
+  if (length(reached)) {
+    stop("VARIABLES names the patient identifier (`", reached[[1L]], "`); a calibration cannot use it as a covariate.",
+         call. = FALSE)
+  }
+  text <- name[!vapply(name, function(v) is.numeric(d[[v]]), logical(1L))]
+  if (length(text)) {
+    stop("VARIABLES names a column that is not numeric: ", paste(text, collapse = ", "),
+         ". A calibration ranks the covariate, so recode it as a number first.", call. = FALSE)
+  }
+  column <- function(field) if (field %in% names(variables)) variables[[field]] else rep(NA, nrow(variables))
+  number <- function(field, what) {
+    x <- column(field)
+    if (!(is.numeric(x) || all(is.na(x)))) stop("VARIABLES$", field, " must be ", what, ".", call. = FALSE)
+    as.numeric(x)
+  }
+  kind <- as.character(column("kind"))
+  kind[is.na(kind)] <- "continuous"
+  if (!all(kind %in% c("continuous", "ordinal"))) {
+    stop("VARIABLES$kind must be \"continuous\" or \"ordinal\".", call. = FALSE)
+  }
+  groups <- number("groups", "a whole number of at least 2")
+  groups[is.na(groups)] <- 5
+  if (any(!is.finite(groups) | groups < 2 | groups != round(groups))) {
+    stop("VARIABLES$groups must be a whole number of at least 2.", call. = FALSE)
+  }
+  constant <- number("constant", "a finite number other than 0")
+  if (any(!is.na(constant) & (!is.finite(constant) | constant == 0))) {
+    stop("VARIABLES$constant must be a finite number other than 0.", call. = FALSE)
+  }
+  for (i in which(is.na(constant))) constant[[i]] <- .lg_constant(d[[name[[i]]]], name[[i]])
+  shift <- number("shift", "a finite number")
+  shift[is.na(shift)] <- 0
+  if (any(!is.finite(shift))) stop("VARIABLES$shift must be a finite number.", call. = FALSE)
+  label <- as.character(column("label"))
+  label[is.na(label) | !nzchar(label)] <- name[is.na(label) | !nzchar(label)]
+  chosen <- as.character(column("chosen"))
+  chosen[!is.na(chosen) & !nzchar(chosen)] <- NA_character_
+  if (any(!is.na(chosen) & !chosen %in% .lg_scale_ids)) {
+    stop("VARIABLES$chosen must be NA or one of ", paste(.lg_scale_ids, collapse = ", "), ".", call. = FALSE)
+  }
+  data.frame(name = name, kind = kind, groups = as.integer(groups), constant = constant, shift = shift,
+             label = label, chosen = chosen, stringsAsFactors = FALSE)
+}
+
+# The patients whose follow-up is in the window c(lower, upper), both ends
+# included, the SAS jobs' early, constant and late phases. Returns the rows kept
+# and a count of what was read, what fell before or after the window, what had no
+# follow-up and what was kept, never a patient. NULL keeps every row.
+.lg_interval <- function(d, time, interval) {
+  if (is.null(interval)) return(list(data = d, counts = NULL))
+  if (!is.numeric(interval) || length(interval) != 2L || anyNA(interval) || interval[[1L]] >= interval[[2L]]) {
+    stop("INTERVAL must be NULL or c(lower, upper) with lower below upper, such as c(0.25, 5).", call. = FALSE)
+  }
+  if (!time %in% names(d)) {
+    stop("TIME names a column this dataset does not have: ", time, ". Change TIME in edit-study-choices.", call. = FALSE)
+  }
+  follow <- d[[time]]
+  inside <- !is.na(follow) & follow >= interval[[1L]] & follow <= interval[[2L]]
+  if (!any(inside)) {
+    stop("INTERVAL keeps no patient: no follow-up falls between ", interval[[1L]], " and ", interval[[2L]],
+         ". Change INTERVAL in edit-study-choices.", call. = FALSE)
+  }
+  counts <- data.frame(
+    count = c("Patients read", "Follow-up before the window", "Follow-up after the window", "Follow-up missing",
+              "Patients kept"),
+    patients = c(nrow(d), sum(follow < interval[[1L]], na.rm = TRUE), sum(follow > interval[[2L]], na.rm = TRUE),
+                 sum(is.na(follow)), sum(inside))
+  )
+  list(data = d[inside, , drop = FALSE], counts = counts)
+}

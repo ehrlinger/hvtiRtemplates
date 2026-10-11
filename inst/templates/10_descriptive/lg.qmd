@@ -280,6 +280,66 @@ if (!is.null(job_data$attrition)) {
 ```
 
 ```{r}
+#| label: derive
+# unnumbered: checks the choices against the data and shows nothing
+# Every choice is checked against the data before any calibration, so a
+# misspelled column stops here by name rather than as an error from inside it.
+.id <- attr(job_data$record, "selection")$id
+if (!identical(LINK, "logit") && !identical(LINK, "hazard")) {
+  stop("LINK must be \"logit\" or \"hazard\".", call. = FALSE)
+}
+one_column <- function(x, setting) {
+  if (!(is.character(x) && length(x) == 1L && !is.na(x))) stop(setting, " must be one column name.", call. = FALSE)
+}
+one_column(EVENT, "EVENT")
+# TIME is read by the hazard link and by INTERVAL, and by nothing else.
+.needs_time <- identical(LINK, "hazard") || !is.null(INTERVAL)
+if (.needs_time) one_column(TIME, "TIME")
+hvtiRtemplates:::.check_job_columns(d, EVENT = EVENT, TIME = if (.needs_time) TIME)
+if (.id %in% c(EVENT, if (.needs_time) TIME)) {
+  stop("EVENT and TIME cannot be the patient identifier.", call. = FALSE)
+}
+if (.needs_time && !is.numeric(d[[TIME]])) {
+  stop("TIME must be a number, the follow-up in years or months: `", TIME, "` is not numeric.", call. = FALSE)
+}
+# INTERVAL leaves patients out before anything else is computed, so the
+# constants and the groups below are those of the patients calibrated.
+.interval <- hvtiRtemplates:::.lg_interval(d, TIME, INTERVAL)
+d <- .interval$data
+variables <- hvtiRtemplates:::.lg_variables(VARIABLES, d, exclude = .id)
+```
+
+```{r}
+#| label: lg-interval
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(.interval$counts)) {
+  .fence <- strrep("`", 3)
+  .cap <- paste0("Patients with follow-up from ", INTERVAL[[1L]], " to ", INTERVAL[[2L]], " (INTERVAL), both ends included")
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-lg-interval",
+    paste0("#| tbl-cap: ", encodeString(.cap, quote = "\"")),
+    "knitr::kable(.interval$counts, col.names = c(\"\", \"Patients\"))", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
+## Covariates
+
+Each covariate with the defaults filled in. The `constant` is the `c` in the
+inverse, inverse squared, squared and exponential scales: it only sets them to a
+readable range, so the median rounded to one figure does the work the SAS jobs'
+hand-typed 50 for an age or 80 for a weight did. Set it, or `shift` for a
+covariate that can be 0, in `VARIABLES` to change either.
+
+```{r}
+#| label: tbl-lg-variables
+#| tbl-cap: "The covariates calibrated, with their defaults"
+knitr::kable(variables, col.names = c("Covariate", "Kind", "Groups", "Constant", "Shift", "Label", "Chosen"),
+             row.names = FALSE)
+```
+
+```{r}
 #| label: provenance
 #| echo: false
 #| results: asis

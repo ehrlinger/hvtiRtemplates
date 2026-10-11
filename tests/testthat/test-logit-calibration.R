@@ -322,3 +322,78 @@ test_that(".lg_plot() leaves a blank link value as a gap and says when no R-squa
   expect_error(hvtiRtemplates:::.lg_plot(tab[1:2, ], hvtiRtemplates:::.lg_scales(means, constant = 20)),
                "^table and scales must have one row for each group")
 })
+
+test_that(".lg_variables() fills every default from the data and keeps what the author gave", {
+  d <- data.frame(age = c(41, 52, 58, 61, 70), nyha = c(1, 2, 2, 3, 4), wt = c(70, 80, 86, 90, 110))
+  v <- hvtiRtemplates:::.lg_variables(data.frame(name = c("age", "nyha")), d)
+  expect_named(v, c("name", "kind", "groups", "constant", "shift", "label", "chosen"))
+  expect_identical(v$name, c("age", "nyha"))
+  expect_identical(v$kind, c("continuous", "continuous"))
+  expect_identical(v$groups, c(5L, 5L))
+  # The median to one significant figure: 58 gives 60, and a median of 2 stays 2.
+  expect_identical(v$constant, c(60, 2))
+  expect_identical(v$shift, c(0, 0))
+  expect_identical(v$label, c("age", "nyha"))
+  expect_identical(v$chosen, c(NA_character_, NA_character_))
+  # What the author gives wins, row by row, and a blank in a column takes that row's default.
+  given <- data.frame(
+    name = c("age", "nyha", "wt"), kind = c("continuous", "ordinal", NA), groups = c(4, NA, 6),
+    constant = c(50, NA, NA), shift = c(NA, 1, 0), label = c("Age (years)", NA, ""), chosen = c("log", "", NA)
+  )
+  v <- hvtiRtemplates:::.lg_variables(given, d)
+  expect_identical(v$kind, c("continuous", "ordinal", "continuous"))
+  expect_identical(v$groups, c(4L, 5L, 6L))
+  expect_identical(v$constant, c(50, 2, 90))
+  expect_identical(v$shift, c(0, 1, 0))
+  expect_identical(v$label, c("Age (years)", "nyha", "wt"))
+  expect_identical(v$chosen, c("log", NA, NA))
+  # A logical NA, as a one-row data frame writes it, is no choice.
+  expect_identical(hvtiRtemplates:::.lg_variables(data.frame(name = "age", chosen = NA), d)$chosen, NA_character_)
+})
+
+test_that(".lg_variables() stops on a table, column, name or value it cannot use, naming VARIABLES", {
+  d <- data.frame(ccfid = 1:5, age = c(41, 52, 58, 61, 70), sex = c("f", "m", "f", "m", "f"), zero = c(0, 0, 0, 0, 1))
+  one <- function(...) hvtiRtemplates:::.lg_variables(data.frame(name = "age", ...), d)
+  expect_error(hvtiRtemplates:::.lg_variables("age", d), "^VARIABLES must be a data frame with one row for each covariate")
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = character()), d), "^VARIABLES must be a data frame")
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(kind = "ordinal"), d), "^VARIABLES needs a `name` column")
+  expect_error(one(color = "red"), "^VARIABLES has a column the job does not use: color. The columns are name, kind")
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = c("age", "age")), d),
+               "^VARIABLES names a covariate more than once: age")
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = c("age", NA)), d), "^VARIABLES has a covariate with no name")
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = c("age", "bmi", "bsa")), d),
+               "^VARIABLES names columns this dataset does not have: bmi, bsa. Change VARIABLES in edit-study-choices[.]")
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = "sex"), d), "^VARIABLES names a column that is not numeric: sex")
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = c("age", "ccfid")), d, exclude = "ccfid"),
+               "^VARIABLES names the patient identifier [(]`ccfid`[)]")
+  expect_error(one(kind = "binary"), "^VARIABLES\\$kind must be \"continuous\" or \"ordinal\"")
+  expect_error(one(groups = 1), "^VARIABLES\\$groups must be a whole number of at least 2")
+  expect_error(one(groups = 2.5), "^VARIABLES\\$groups must be a whole number of at least 2")
+  expect_error(one(groups = "five"), "^VARIABLES\\$groups must be a whole number")
+  expect_error(one(constant = 0), "^VARIABLES\\$constant must be a finite number other than 0")
+  expect_error(one(constant = Inf), "^VARIABLES\\$constant must be a finite number other than 0")
+  expect_error(one(shift = Inf), "^VARIABLES\\$shift must be a finite number")
+  expect_error(one(chosen = "cubic"), "^VARIABLES\\$chosen must be NA or one of raw, log, inverse, inverse_squared, squared, exp")
+  # A covariate whose median rounds to 0 has no default constant, and says where to set one.
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = "zero"), d),
+               "^The median of `zero` rounds to 0, so there is no default constant: set constant for it in VARIABLES")
+  expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "zero", constant = 1), d))
+})
+
+test_that(".lg_interval() keeps the patients whose follow-up is in the window, both ends included, and counts the rest", {
+  d <- data.frame(id = 1:7, t = c(0.1, 0.25, 1, 5, 5.5, NA, 3))
+  got <- hvtiRtemplates:::.lg_interval(d, "t", c(0.25, 5))
+  expect_identical(got$data$id, c(2L, 3L, 4L, 7L))
+  expect_identical(got$counts$patients, c(7L, 1L, 1L, 1L, 4L))
+  expect_identical(got$counts$count, c("Patients read", "Follow-up before the window", "Follow-up after the window",
+                                       "Follow-up missing", "Patients kept"))
+  # No interval keeps everyone and has nothing to report.
+  none <- hvtiRtemplates:::.lg_interval(d, "t", NULL)
+  expect_identical(none$data, d)
+  expect_null(none$counts)
+  expect_error(hvtiRtemplates:::.lg_interval(d, "t", c(10, 20)), "^INTERVAL keeps no patient")
+  for (bad in list(5, c(5, 1), c(1, NA), c(1, 5, 9), "a", c(2, 2))) {
+    expect_error(hvtiRtemplates:::.lg_interval(d, "t", bad), "^INTERVAL must be NULL or c[(]lower, upper[)]")
+  }
+  expect_error(hvtiRtemplates:::.lg_interval(d, "later", c(1, 2)), "^TIME names a column this dataset does not have: later")
+})
