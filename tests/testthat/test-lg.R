@@ -61,3 +61,83 @@ test_that("INTERVAL keeps the patients whose follow-up is in the window and repo
   expect_null(env$.interval$counts)
   expect_identical(env$variables$constant, signif(stats::median(d$age), 1L))
 })
+
+# The two variables of the synthetic study the job's tests calibrate: a continuous
+# age and an ordinal NYHA class, as a VARIABLES data frame the fixture splices in.
+lg_two_variables <- c(
+  "VARIABLES <- data.frame(",
+  "  name = c(\"age\", \"nyha\"),",
+  "  kind = c(\"continuous\", \"ordinal\"),",
+  "  chosen = c(\"log\", \"raw\")",
+  ")"
+)
+
+test_that("the job tabulates each covariate's groups and draws its six-panel figure, saved as PNG and PDF", {
+  local_child_chunks()
+  s <- lg_fixture(variables = lg_two_variables)
+  # What the job's asis chunks would print: the child chunks they knit.
+  printed <- character()
+  testthat::local_mocked_bindings(
+    knit_child = function(text, envir, ...) {
+      printed <<- c(printed, text)
+      ""
+    },
+    .package = "knitr"
+  )
+  env <- lm_eval_job(s$job)
+  d <- lg_data()
+  # The hazard link of the study's death and follow-up, on five rank groups of age and a group per NYHA class.
+  age <- hvtiRtemplates:::.lg_table(d$age, d$dead, d$iv_dead, groups = 5L, link = "hazard")
+  expect_equal(env$calibration$age$table, age)
+  expect_identical(nrow(age), 5L)
+  nyha <- hvtiRtemplates:::.lg_table(d$nyha, d$dead, d$iv_dead, kind = "ordinal", link = "hazard")
+  expect_equal(env$calibration$nyha$table, nyha)
+  expect_identical(nrow(nyha), 4L)
+  expect_equal(env$calibration$age$scales, hvtiRtemplates:::.lg_scales(age$mean, env$variables$constant[[1L]]))
+  # One numbered table and one numbered figure for each covariate, in that order.
+  labels <- sub("^#\\| label: ", "", grep("^#\\| label: (tbl|fig)-lg-(age|nyha)$", printed, value = TRUE))
+  expect_identical(labels, c("tbl-lg-age", "fig-lg-age", "tbl-lg-nyha", "fig-lg-nyha"))
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "dead-calibration")
+  expect_setequal(list.files(graphs), c("lg-age.png", "lg-age.pdf", "lg-nyha.png", "lg-nyha.pdf"))
+})
+
+test_that("the logit link calibrates a binary event with no follow-up, and FIGURES keeps only the PDFs it names", {
+  local_child_chunks()
+  s <- lg_fixture(c("LINK <- \"logit\"", "EVENT <- \"hdead\"", "TIME <- \"later\"", "FIGURES <- c(\"lg-age\")"),
+                  variables = lg_two_variables)
+  env <- lm_eval_job(s$job)
+  d <- lg_data()
+  expect_equal(env$calibration$age$table, hvtiRtemplates:::.lg_table(d$age, d$hdead, groups = 5L, link = "logit"))
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "dead-calibration")
+  # The PNG a report shows is always written; the PDF only for a figure FIGURES keeps.
+  expect_setequal(list.files(graphs), c("lg-age.png", "lg-age.pdf", "lg-nyha.png"))
+})
+
+test_that("a group or scale that cannot be computed is named under its table, and a label never holds an underscore", {
+  local_child_chunks()
+  # n_prior is 0 for most patients, so its lowest group has a mean of 0.
+  s <- lg_fixture(variables = c(
+    "VARIABLES <- data.frame(",
+    "  name = c(\"n_prior\"),",
+    "  constant = c(1),",
+    "  chosen = c(\"raw\")",
+    ")"
+  ))
+  printed <- character()
+  testthat::local_mocked_bindings(
+    knit_child = function(text, envir, ...) {
+      printed <<- c(printed, text)
+      ""
+    },
+    .package = "knitr"
+  )
+  env <- lm_eval_job(s$job)
+  # The labels carry hyphens, the file keeps the column's own name.
+  expect_true(all(c("#| label: tbl-lg-n-prior", "#| label: fig-lg-n-prior") %in% printed))
+  expect_true(file.exists(file.path(hvtiRutilities::study_dir("graphs", s$root), "dead-calibration", "lg-n_prior.png")))
+  # The notes the chunk prints under the table: the three scales a mean of 0 breaks.
+  expect_named(attr(env$calibration$n_prior$scales, "notes"), c("log", "inverse", "inverse_squared"))
+  expect_match(env$.notes, "^Log: A group mean plus the shift is not positive", all = FALSE)
+  expect_match(env$.notes, "^Inverse squared: A group mean is 0", all = FALSE)
+  expect_false(any(grepl("^Exponential", env$.notes)))
+})

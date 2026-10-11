@@ -339,6 +339,71 @@ knitr::kable(variables, col.names = c("Covariate", "Kind", "Groups", "Constant",
              row.names = FALSE)
 ```
 
+## Calibration
+
+For each covariate, a table of its groups and the figure of the groups' link
+values against six scales of the covariate. Read the figure for the panel that
+comes out straightest. The R-squared in each corner is only a guide: it is the
+fit of a straight line weighted by group size, so a panel can score high and
+still bend. A group whose link value cannot be computed keeps its row in the
+table, blank, and is named under it. A scale that cannot be computed for the
+covariate is drawn as an empty panel, and named there too.
+
+```{r}
+#| label: lg
+#| results: asis
+# unnumbered: each covariate's child chunks carry their own labels and captions
+# The figure is saved as PNG and PDF under graphs/<subject>-<type>/lg-<covariate>,
+# and the PNG is the one the report shows.
+.fence <- strrep("`", 3)
+.kable_na <- options(knitr.kable.NA = "")
+calibration <- list()
+for (i in seq_len(nrow(variables))) {
+  .v <- variables[i, ]
+  .tab <- hvtiRtemplates:::.lg_table(d[[.v$name]], d[[EVENT]], if (identical(LINK, "hazard")) d[[TIME]],
+                                     groups = .v$groups, kind = .v$kind, link = LINK)
+  .scales <- hvtiRtemplates:::.lg_scales(.tab$mean, .v$constant, .v$shift)
+  calibration[[.v$name]] <- list(table = .tab, scales = .scales)
+  .plot <- hvtiRtemplates:::.lg_plot(.tab, .scales, LINK, title = .v$label)
+  .file <- save_figure(.plot, paste0("lg-", .v$name), width = 9, height = 6, linked = TRUE)
+  # This document sits in descriptive/ and the figure is written to graphs/, so
+  # the image link is the figure's path relative to this document.
+  .link <- xfun::relative_path(.file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE)
+  # A label holds letters, digits and hyphens, so an underscore in a name cannot
+  # be read as markup in a cross-reference.
+  .slug <- gsub("[^A-Za-z0-9]+", "-", .v$name)
+  .heads <- c("Group", "Mean", "Minimum", "Maximum", "Patients", "Events",
+              if (identical(LINK, "hazard")) "Events per unit of follow-up" else "Event rate",
+              if (identical(LINK, "hazard")) "Log hazard rate" else "Logit")
+  .cap_tbl <- paste0("Groups of ", .v$label, ", with the event rate and its link value")
+  .cap_fig <- paste0(.v$label, ": the link value of each group against the covariate on six scales, ",
+                     "with the R-squared of a weighted straight line")
+  cat("\n### ", .v$label, "\n\n", sep = "")
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), paste0("#| label: tbl-lg-", .slug),
+    paste0("#| tbl-cap: ", encodeString(.cap_tbl, quote = "\"")),
+    "knitr::kable(.tab, col.names = .heads, digits = 3, row.names = FALSE)", .fence, "",
+    paste0(.fence, "{r}"), paste0("#| label: fig-lg-", .slug),
+    paste0("#| fig-cap: ", encodeString(.cap_fig, quote = "\"")),
+    "knitr::include_graphics(.link, error = FALSE)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+  .dropped <- attr(.tab, "dropped")
+  .scale_notes <- attr(.scales, "notes")
+  .left <- c(if (.dropped[["covariate"]] > 0L) paste0(.dropped[["covariate"]], " without a value of the covariate"),
+             if (.dropped[["follow_up"]] > 0L) paste0(.dropped[["follow_up"]], " without follow-up"))
+  .notes <- c(
+    if (length(.left)) paste0("Left out of the groups: ", paste(.left, collapse = ", "), "."),
+    if (.dropped[["event"]] > 0L) {
+      paste0(.dropped[["event"]], " with no event value are ranked but counted in no group's rate.")
+    },
+    attr(.tab, "notes"),
+    if (length(.scale_notes)) paste0(hvtiRtemplates:::.lg_panel_labels[names(.scale_notes)], ": ", .scale_notes)
+  )
+  if (length(.notes)) cat("\n", paste0("- ", .notes, collapse = "\n"), "\n", sep = "")
+}
+options(.kable_na)
+```
+
 ```{r}
 #| label: provenance
 #| echo: false
