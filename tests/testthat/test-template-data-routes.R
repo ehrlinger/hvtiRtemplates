@@ -395,8 +395,8 @@ test_that("a downstream job that rebuilds its upstream rows records the joined d
     expect_true(grepl("job_data <- .up$job_data", text, fixed = TRUE), info = basename(f))
     expect_true(grepl("list(job_data$provenance_join)", text, fixed = TRUE), info = basename(f))
   }
-  # hm, hp and hs-setup.
-  expect_identical(rebuilders, 3L)
+  # hm, hp, hs-setup and lp-mirror.
+  expect_identical(rebuilders, 4L)
 })
 
 test_that("nb-boostmtree takes a long join whose visit time is only in the joined dataset", {

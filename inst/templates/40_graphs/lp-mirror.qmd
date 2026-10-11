@@ -157,6 +157,61 @@ FIGURES <- NULL
 # call them on synthetic data.
 ```
 
+## The saved bundle
+
+```{r}
+#| label: model
+# MODEL_FILE is a file name and MODEL_SET a set name, so neither can reach
+# outside the study's estimates.
+MODEL_PATH <- hvtiRtemplates:::.handoff_path(MODEL_FILE, MODEL_SET, .root, function(file) set_path("estimates", file),
+                                             upstream = "lm-propensity_binary", set_example = "treatment-propensity")
+.cfg <- study_config(start = .root)
+# A bundle without its lineage stops here with the job to render again.
+.model_read <- hvtiRtemplates:::.read_handoff(MODEL_PATH, "propensity-model", .cfg, "the lm-propensity_binary job")
+bundle <- .model_read$value
+.meta <- bundle$meta
+.cols <- c(.meta$id_col, .meta$treatment_col, .meta$score_col, .meta$weight_col)
+if (!inherits(bundle, "ps_logistic") || length(.cols) != 4L || !all(.cols %in% names(bundle$data))) {
+  stop("The saved bundle is not a binary propensity model with its patients, treatment, score and matching ",
+       "weight: rebuild it by rendering the lm-propensity_binary job with the current template.", call. = FALSE)
+}
+.provenance_data <- .model_read$lineage$data
+.provenance_artifacts <- c(.model_read$lineage$artifacts, list(.model_read$record))
+```
+
+```{r}
+#| label: tbl-data
+#| tbl-cap: "The data the propensity job read, read again"
+# The bundle's rows are rebuilt from the data, as the propensity job read them,
+# so a bundle built from data that has changed since stops here.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.up <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, .model_read$lineage, list(), source = MODEL_FILE,
+  rerun = "Render the lm-propensity_binary job again with the current template, then this one."
+)
+job_data <- .up$job_data
+.provenance_data <- c(.provenance_data, list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: scores
+# One row per patient: the score, the treatment, the matching weight and the
+# patient's ID digest, which only the MATCH join reads.
+scores <- data.frame(
+  id = bundle$data[[.meta$id_col]],
+  score = bundle$data[[.meta$score_col]],
+  group = as.character(bundle$data[[.meta$treatment_col]]),
+  weight = bundle$data[[.meta$weight_col]],
+  matched = 0L
+)
+if (anyDuplicated(scores$id)) {
+  stop("The saved bundle holds a patient more than once; a mirrored histogram counts each patient once. ",
+       "Rebuild it by rendering the lm-propensity_binary job with the current template.", call. = FALSE)
+}
+```
+
 ```{r}
 #| label: provenance
 #| echo: false
