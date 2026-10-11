@@ -385,10 +385,15 @@ test_that("the job renders two figures without MATCH and three with it, naming n
     # No patient identifier, raw or digested, appears in the report.
     d <- lp_data()
     key <- hvtiRtemplates:::.study_id_key(s$root)
+    # Embedded images and fonts are base64 data URIs, whose text can spell any short digit run by chance:
+    # on Linux one held "91000033", which contains a fixture ID. They carry no patient data, so they are
+    # dropped before the scan, and an ID counts only as a whole token. The provenance JSON is not a data
+    # URI, so it is still scanned.
+    text <- gsub("data:[A-Za-z0-9.+/-]+(;[^,\"')]*)?,[^\"') ]*", "", html, perl = TRUE)
     for (id in c(as.character(d$ccfid), hvtiRtemplates:::.id_digest(d$ccfid, key))) {
-      at <- regexpr(id, html, fixed = TRUE)[[1L]]
+      at <- regexpr(paste0("(?<![A-Za-z0-9])", id, "(?![A-Za-z0-9])"), text, perl = TRUE)[[1L]]
       # On a hit, show the text around it, so a CI failure says where it came from.
-      expect_false(at > 0L, info = if (at > 0L) substring(html, max(1L, at - 120L), at + 120L) else id)
+      expect_false(at > 0L, info = if (at > 0L) substring(text, max(1L, at - 120L), at + 120L) else id)
     }
     payload <- hvtiRtemplates:::.extract_provenance(html, managed = TRUE)
     expect_identical(payload$mirror$model_file, "lm-propensity_binary.rds")
