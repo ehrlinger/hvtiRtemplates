@@ -288,11 +288,12 @@ mirror_join <- function(bundle_ids, ids, flag) {
     stop("MATCH flags no scored patient as matched (none has a 1): check that MATCH names the pair-match ",
          "flag, with 1 for a matched patient, and that DATASET and ID read the right file.", call. = FALSE)
   }
+  # A dataset row with no flag is not a flagged patient, so it is left out of the second count.
   list(
     matched = as.integer(!is.na(value) & value == 1),
     counts = data.frame(
       count = c("Patients with a score and no match flag", "Patients with a match flag and no score"),
-      patients = c(sum(is.na(value)), sum(!ids[!is.na(ids)] %in% bundle_ids))
+      patients = c(sum(is.na(value)), sum(!is.na(ids) & !is.na(flag) & !ids %in% bundle_ids))
     )
   )
 }

@@ -189,6 +189,9 @@ test_that("the match flag joins by ID digest, counts both kinds of miss, and sto
   expect_error(h$mirror_join(bundle_ids, c("d1", "d2", paste0("x", 1:8)), rep(1, 10)),
                "^Only 2 of the 10 patients the scores were computed for are in the dataset read for MATCH")
   expect_error(h$mirror_join(bundle_ids, c("d1", "d1"), c(1, 1)), "holds a patient more than once")
+  # A dataset row with no score and no flag is not a flagged patient, so it is not counted as one.
+  out <- h$mirror_join(bundle_ids, c(paste0("d", 1:10), "x1", "x2"), c(rep(1, 10L), 1, NA))
+  expect_identical(out$counts$patients, c(0L, 1L))
 })
 
 test_that("a MATCH flag not coded 0 and 1, or with no 1 among the scored patients, stops naming MATCH", {
