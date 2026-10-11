@@ -111,7 +111,7 @@ as zero.
 | Delivery | Template | Description | SAS jobs | Waiting on |
 |:---|:---|:---|:---|:---|
 | 🟡 In progress | `ar` | Analysis report | 394 |  |
-| 🟡 In progress | `lg` | Logit trends | 362 |  |
+| 🟡 In progress | `lg` | Logit calibration | 362 |  |
 | 🟡 In progress | `nd` | Non-linear distributions | 244 |  |
 | 🟡 In progress | `np` | Non-linear plot | 241 |  |
 | 🟡 In progress | `dc-variable` | Distribution of a variable | 237 |  |
