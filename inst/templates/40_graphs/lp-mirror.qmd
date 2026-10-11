@@ -160,7 +160,7 @@ FIGURES <- NULL
 # The two groups, treated first. hv_mirror_hist()'s help says control first and
 # treated above, but the hvtiPlotR 2.8.5 code draws the FIRST level above, so
 # treated is passed first and mirror_hist() checks the sign at run time.
-# Labelled by the levels the propensity job declared, or by
+# Labeled by the levels the propensity job declared, or by
 # GROUP_LABELS, named by those levels.
 mirror_groups <- function(meta, labels = NULL) {
   declared <- as.character(meta$treatment_levels)
@@ -224,10 +224,10 @@ mirror_figure <- function(mh, kind = c("unmatched", "weighted", "matched")) {
   colors <- hvtiPlotR::hv_palette(2L)
   fill <- switch(kind,
     unmatched = c(before_g0 = colors[[1L]], before_g1 = colors[[2L]]),
-    weighted = c(before_g0 = "grey85", before_g1 = "grey85", weighted_g0 = colors[[1L]], weighted_g1 = colors[[2L]]),
-    matched = c(before_g0 = "grey85", before_g1 = "grey85", matched_g0 = colors[[1L]], matched_g1 = colors[[2L]])
+    weighted = c(before_g0 = "gray85", before_g1 = "gray85", weighted_g0 = colors[[1L]], weighted_g1 = colors[[2L]]),
+    matched = c(before_g0 = "gray85", before_g1 = "gray85", matched_g0 = colors[[1L]], matched_g1 = colors[[2L]])
   )
-  # The grey all-patient bars are one legend entry, not one a group.
+  # The gray all-patient bars are one legend entry, not one a group.
   shown <- if (identical(kind, "unmatched")) names(fill) else names(fill)[-2L]
   names_shown <- switch(kind,
     unmatched = labels,
@@ -424,7 +424,7 @@ knitr::kable(mirror_counts(mh_unmatched, "unmatched"), col.names = c("Group", "P
 
 ```{r}
 #| label: fig-mirror-weighted
-#| fig-cap: "Propensity score of each group under the matching weights, over all patients in grey"
+#| fig-cap: "Propensity score of each group under the matching weights, over all patients in gray"
 mh_weighted <- mirror_hist(scores, "weighted", groups, BINWIDTH)
 file <- save_figure(mirror_figure(mh_weighted, "weighted"), "lp-mirror-weighted", width = 7, height = 5,
                     linked = TRUE)
@@ -451,7 +451,7 @@ if (!is.null(MATCH)) {
   .fence <- strrep("`", 3)
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), "#| label: fig-mirror-matched",
-    "#| fig-cap: \"Propensity score of the matched patients in each group, over all patients in grey\"",
+    "#| fig-cap: \"Propensity score of the matched patients in each group, over all patients in gray\"",
     "knitr::include_graphics(.link, error = FALSE)", .fence, "",
     paste0(.fence, "{r}"), "#| label: tbl-mirror-matched",
     "#| tbl-cap: \"Patients in each group, and those matched\"",

@@ -4,7 +4,7 @@
   never refits, drawing treated patients above the axis and controls below:
   all patients, then under the matching weights, and, when `MATCH` names a
   pair-match column, the matched patients. The y-axis is derived from the
-  counts, the same above and below. The groups are labelled by the declared
+  counts, the same above and below. The groups are labeled by the declared
   treatment levels, or by `GROUP_LABELS`. A bundle without lineage, or whose
   rebuilt read has different rows, patients or patient hash, stops with the job to render again.
   `MATCH` is joined onto the scored patients by a study-keyed digest of `ID`,

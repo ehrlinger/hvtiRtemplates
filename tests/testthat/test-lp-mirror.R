@@ -89,7 +89,7 @@ test_that("a bundle without lineage, or built from data that changed since, stop
   expect_error(lm_eval_job(s$job), "The data changed since the upstream job ran")
 })
 
-test_that("the groups are labelled by the bundle's declared levels, treated first, unless GROUP_LABELS says", {
+test_that("the groups are labeled by the bundle's declared levels, treated first, unless GROUP_LABELS says", {
   h <- lp_helpers()
   meta <- list(treatment_levels = c("control", "treated"), treated_level = "treated")
   expect_identical(h$mirror_groups(meta), list(levels = c("treated", "control"), labels = c("treated", "control")))
@@ -386,7 +386,9 @@ test_that("the job renders two figures without MATCH and three with it, naming n
     d <- lp_data()
     key <- hvtiRtemplates:::.study_id_key(s$root)
     for (id in c(as.character(d$ccfid), hvtiRtemplates:::.id_digest(d$ccfid, key))) {
-      expect_false(grepl(id, html, fixed = TRUE), info = id)
+      at <- regexpr(id, html, fixed = TRUE)[[1L]]
+      # On a hit, show the text around it, so a CI failure says where it came from.
+      expect_false(at > 0L, info = if (at > 0L) substring(html, max(1L, at - 120L), at + 120L) else id)
     }
     payload <- hvtiRtemplates:::.extract_provenance(html, managed = TRUE)
     expect_identical(payload$mirror$model_file, "lm-propensity_binary.rds")
