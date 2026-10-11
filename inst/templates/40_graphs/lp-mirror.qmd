@@ -429,6 +429,14 @@ cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
   artifacts = .provenance_artifacts,
-  extra = list(subject = SUBJECT, type = TYPE)
+  extra = list(
+    subject = SUBJECT, type = TYPE,
+    analysis = .model_read$lineage$analysis, cohort = .model_read$lineage$cohort,
+    mirror = Filter(Negate(is.null), list(
+      model_set = if (is.null(MODEL_SET)) paste0(SUBJECT, "-", TYPE) else MODEL_SET,
+      model_file = MODEL_FILE, binwidth = BINWIDTH, match = MATCH,
+      join = if (!is.null(.join)) stats::setNames(as.list(.join$counts$patients), c("no_flag", "no_score"))
+    ))
+  )
 ))
 ```

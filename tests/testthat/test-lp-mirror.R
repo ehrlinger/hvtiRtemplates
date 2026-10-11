@@ -298,3 +298,37 @@ test_that("the join reports counts only: no identifier, raw or digested, is prin
   expect_false(grepl("91[0-9]{5}|92[0-9]{5}", text))
   expect_false(any(vapply(digests, function(x) grepl(x, text, fixed = TRUE), logical(1L))))
 })
+
+test_that("the job renders two figures without MATCH and three with it, naming no patient", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  for (match in c(FALSE, TRUE)) {
+    s <- lp_fixture(if (match) "MATCH <- \"match\"" else character())
+    quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
+    html <- paste(readLines(sub("[.]qmd$", ".html", s$job), warn = FALSE), collapse = "\n")
+    figures <- c("lp-mirror-unmatched", "lp-mirror-weighted", if (match) "lp-mirror-matched")
+    graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "outcome-analysis")
+    expect_setequal(sub("[.]png$", "", list.files(graphs, "[.]png$")), figures)
+    expect_setequal(sub("[.]pdf$", "", list.files(graphs, "[.]pdf$")), figures)
+    shown <- unique(regmatches(html, gregexpr("id=\"fig-mirror-[a-z]+\"", html))[[1L]])
+    expect_setequal(shown, paste0("id=\"fig-", sub("^lp-", "", figures), "\""))
+    # No patient identifier, raw or digested, appears in the report.
+    d <- lp_data()
+    key <- hvtiRtemplates:::.study_id_key(s$root)
+    for (id in c(as.character(d$ccfid), hvtiRtemplates:::.id_digest(d$ccfid, key))) {
+      expect_false(grepl(id, html, fixed = TRUE), info = id)
+    }
+    payload <- hvtiRtemplates:::.extract_provenance(html, managed = TRUE)
+    expect_identical(payload$mirror$model_file, "lm-propensity_binary.rds")
+    expect_identical(payload$mirror$model_set, "outcome-analysis")
+    expect_false(is.null(payload$analysis))
+    if (match) {
+      expect_identical(payload$mirror$match, "match")
+      expect_identical(unlist(payload$mirror$join), c(no_flag = 0L, no_score = 0L))
+      expect_true("match" %in% vapply(payload$data, function(r) r$role, character(1L)))
+    }
+  }
+})
