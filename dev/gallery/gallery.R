@@ -10,7 +10,9 @@
 #     drawing from its own seed so no other family's numbers move;
 #   - jobs: one entry per template, in render order, each naming the set it
 #     belongs to (subject and type) and the study choices typed under its
-#     EDIT: markers, as demo-study.R's set_choices() takes them.
+#     EDIT: markers, as demo-study.R's set_choices() takes them. A second job
+#     of one template takes a name of its own and names its template in
+#     `template`, as lp-mirror-matched does.
 # Every number is simulated: no study, patient or identifier appears here.
 
 .gallery_dir <- local({
@@ -89,7 +91,7 @@ gallery_study <- function(root) {
 # Scaffold one job by its "<prefix>[-<qualifier>]" name into its set, apply
 # its choices, and return the job file.
 gallery_job <- function(root, name, spec) {
-  parts <- strsplit(name, "-", fixed = TRUE)[[1L]]
+  parts <- strsplit(spec$template %||% name, "-", fixed = TRUE)[[1L]]
   qualifier <- if (length(parts) > 1L) paste(parts[-1L], collapse = "-") else NULL
   job <- add_job(parts[[1L]], spec$subject, spec$type, dir = root, qualifier = qualifier)
   if (!is.null(spec$prepare)) spec$prepare(root, job)

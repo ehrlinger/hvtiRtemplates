@@ -96,6 +96,10 @@
     ],
     "note": ""
   },
+  "lp-mirror": {
+    "issues": [],
+    "note": "Two figures, all patients and under the matching weights. A second gallery job, lp-mirror-matched, sets MATCH to a simulated flag and adds the matched figure."
+  },
   "lm-propensity_ordinal": {
     "issues": [
       174
