@@ -470,6 +470,17 @@ if (nrow(choices$table)) {
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
-  extra = list(subject = SUBJECT, type = TYPE)
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE,
+    lg = Filter(Negate(is.null), list(
+      event = EVENT, link = LINK, time = if (.needs_time) TIME,
+      interval = if (!is.null(INTERVAL)) list(lower = INTERVAL[[1L]], upper = INTERVAL[[2L]], kept = nrow(d)),
+      patients = nrow(d),
+      # The VARIABLES table as the job completed it, one entry for each covariate. A scale not yet chosen is left out.
+      variables = lapply(seq_len(nrow(variables)), function(i) Filter(Negate(is.na), as.list(variables[i, ]))),
+      unresolved = if (length(choices$problems)) names(choices$problems)
+    ))
+  )
 ))
 ```
