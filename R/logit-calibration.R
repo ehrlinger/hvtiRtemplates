@@ -190,3 +190,64 @@
     exp = paste0("I(exp(", v, " / ", k, "))")
   )
 }
+
+# The R-squared of a straight line through the group points, weighted by group
+# size, which is the weighted squared correlation of x and y. It is guidance for
+# "straightest", not a decision: a group of 3 patients should not pull the line
+# as hard as a group of 300. NA when fewer than three groups have a link value,
+# or when either side has no spread, because two points are always on a line.
+# Computed from the correlation rather than summary(lm()), which warns on the
+# exact fit this is most often asked to recognize.
+.lg_rsq <- function(x, y, w) {
+  ok <- is.finite(x) & is.finite(y) & w > 0
+  if (sum(ok) < 3L || length(unique(x[ok])) < 2L || length(unique(y[ok])) < 2L) return(NA_real_)
+  w <- w[ok]
+  dx <- x[ok] - sum(w * x[ok]) / sum(w)
+  dy <- y[ok] - sum(w * y[ok]) / sum(w)
+  sum(w * dx * dy)^2 / (sum(w * dx^2) * sum(w * dy^2))
+}
+
+.lg_panel_labels <- c(raw = "Raw", log = "Log", inverse = "Inverse", inverse_squared = "Inverse squared",
+                      squared = "Squared", exp = "Exponential")
+
+# One panel per scale: the group link value against the group mean on that scale,
+# the points joined by a line as the SAS plots did, and the weighted R-squared in
+# the corner. A scale that cannot be computed is an empty panel that says so. No
+# fitted line is drawn: the figure is for reading by eye, and the R-squared is
+# its only aid. `table` is .lg_table()'s result and `scales` .lg_scales()'s.
+.lg_plot <- function(table, scales, link = c("logit", "hazard"), title = NULL) {
+  link <- match.arg(link)
+  if (!requireNamespace("ggplot2", quietly = TRUE)) stop("The ggplot2 package is needed to draw the figure.", call. = FALSE)
+  if (nrow(table) != nrow(scales)) stop("table and scales must have one row for each group.", call. = FALSE)
+  ids <- .lg_scale_ids
+  panel <- function(id) factor(rep(.lg_panel_labels[[id]], nrow(table)), levels = .lg_panel_labels)
+  points <- do.call(rbind, lapply(ids, function(id) data.frame(panel = panel(id), x = scales[[id]], y = table$link)))
+  rsq <- vapply(ids, function(id) .lg_rsq(scales[[id]], table$link, table$n), numeric(1L))
+  empty <- vapply(ids, function(id) all(is.na(scales[[id]])), logical(1L))
+  say <- data.frame(
+    panel = factor(unname(.lg_panel_labels), levels = .lg_panel_labels),
+    label = ifelse(empty, "Not computable",
+                   ifelse(is.na(rsq), "R-squared not available", sprintf("R-squared = %.2f", rsq)))
+  )
+  # An empty panel has no x to scale on, so it is given the unit range.
+  frame <- data.frame(panel = factor(unname(.lg_panel_labels)[empty], levels = .lg_panel_labels))
+  blank <- if (nrow(frame)) {
+    y <- range(table$link, finite = TRUE, na.rm = TRUE)
+    data.frame(panel = rep(frame$panel, each = 2L), x = c(0, 1), y = if (all(is.finite(y))) y else c(0, 1))
+  } else {
+    data.frame(panel = factor(character(), levels = .lg_panel_labels), x = numeric(), y = numeric())
+  }
+  ylab <- if (identical(link, "hazard")) "Log of events per unit of follow-up" else "Logit of the event rate"
+  ggplot2::ggplot(points, ggplot2::aes(x = !!rlang::sym("x"), y = !!rlang::sym("y"))) +
+    ggplot2::geom_blank(data = blank) +
+    ggplot2::geom_line(na.rm = TRUE, color = "gray45") +
+    ggplot2::geom_point(na.rm = TRUE, size = 2) +
+    ggplot2::geom_text(data = say, ggplot2::aes(label = !!rlang::sym("label")), x = -Inf, y = Inf, hjust = -0.1, vjust = 1.6,
+                       size = 3.2, inherit.aes = FALSE) +
+    ggplot2::facet_wrap("panel", ncol = 3L, scales = "free_x") +
+    # Headroom, so the R-squared in the corner never sits on a point.
+    ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0.05, 0.2))) +
+    ggplot2::labs(title = title, x = "Group mean of the covariate, on the scale shown", y = ylab) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(strip.background = ggplot2::element_rect(fill = "gray92"))
+}

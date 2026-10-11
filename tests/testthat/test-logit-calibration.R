@@ -248,3 +248,77 @@ test_that("the default constant is the covariate's median to one significant fig
   expect_error(const(c(NA_real_, NA_real_), "age"), "^`age` has no value")
   expect_error(const(c(0, 0, 0, 5), "los"), "^The median of `los` rounds to 0, so there is no default constant: set constant for it")
 })
+
+test_that(".lg_rsq() is the R-squared of a straight line fitted with the group sizes as weights", {
+  rsq <- hvtiRtemplates:::.lg_rsq
+  # Exactly linear: 1, whatever the weights.
+  expect_equal(rsq(c(1, 2, 3, 4), c(5, 7, 9, 11), c(10, 1, 1, 30)), 1)
+  # Not linear: the weighted squared correlation, worked from its definition.
+  x <- c(1, 2, 3, 4)
+  y <- c(1, 2, 3, 10)
+  w <- c(1, 1, 1, 100)
+  mx <- sum(w * x) / sum(w)
+  my <- sum(w * y) / sum(w)
+  by_hand <- sum(w * (x - mx) * (y - my))^2 / (sum(w * (x - mx)^2) * sum(w * (y - my)^2))
+  expect_equal(rsq(x, y, w), by_hand)
+  # The weights matter: the unweighted fit of the same points is a different number.
+  expect_gt(abs(rsq(x, y, rep(1, 4)) - rsq(x, y, w)), 0.01)
+  # A group with no link value is left out of the fit.
+  expect_equal(rsq(c(1, 2, 3, 4, 5), c(5, 7, NA, 11, 13), c(1, 1, 1, 1, 1)), 1)
+  # Fewer than three points, or no spread, is not a fit worth reporting.
+  expect_identical(rsq(c(1, 2), c(1, 2), c(1, 1)), NA_real_)
+  expect_identical(rsq(c(1, 2, 3), c(4, NA, 6), c(1, 1, 1)), NA_real_)
+  expect_identical(rsq(c(2, 2, 2), c(1, 2, 3), c(1, 1, 1)), NA_real_)
+  expect_identical(rsq(c(1, 2, 3), c(4, 4, 4), c(1, 1, 1)), NA_real_)
+})
+
+# The text each panel of a figure carries, by panel.
+lg_panel_text <- function(p) {
+  layer <- which(vapply(p$layers, function(l) inherits(l$geom, "GeomText"), logical(1L)))
+  stats::setNames(ggplot2::layer_data(p, layer)$label, ggplot2::layer_data(p, layer)$PANEL)
+}
+
+test_that(".lg_plot() draws one panel per scale and reports 1 for points exactly linear on one", {
+  skip_if_not_installed("ggplot2")
+  means <- c(1, 2, 4, 8, 16)
+  tab <- data.frame(group = 1:5, mean = means, n = c(20L, 30L, 25L, 18L, 22L), link = 2 + 3 * log(means))
+  scales <- hvtiRtemplates:::.lg_scales(means, constant = 8)
+  p <- hvtiRtemplates:::.lg_plot(tab, scales, link = "hazard", title = "Age")
+  expect_s3_class(p, "ggplot")
+  built <- ggplot2::ggplot_build(p)
+  expect_identical(nrow(built$layout$layout), 6L)
+  expect_identical(levels(p$data$panel), c("Raw", "Log", "Inverse", "Inverse squared", "Squared", "Exponential"))
+  text <- lg_panel_text(p)
+  # Log is panel 2: the link is 2 + 3 log(mean), a straight line on that scale.
+  expect_identical(unname(text[["2"]]), "R-squared = 1.00")
+  expect_false(identical(unname(text[["1"]]), "R-squared = 1.00"))
+  expect_equal(hvtiRtemplates:::.lg_rsq(scales$log, tab$link, tab$n), 1)
+  expect_match(ggplot2::get_labs(p)$y, "events per unit of follow-up")
+})
+
+test_that(".lg_plot() draws a scale that cannot be computed as an empty panel that says so", {
+  skip_if_not_installed("ggplot2")
+  means <- c(0, 1, 2, 3)
+  tab <- data.frame(group = 1:4, mean = means, n = c(10L, 10L, 10L, 10L), link = c(-1, -0.5, 0, 0.4))
+  scales <- hvtiRtemplates:::.lg_scales(means, constant = 1)
+  p <- hvtiRtemplates:::.lg_plot(tab, scales, link = "logit")
+  text <- lg_panel_text(p)
+  # Log (2), Inverse (3) and Inverse squared (4) are undefined at a mean of 0.
+  expect_identical(unname(text[c("2", "3", "4")]), rep("Not computable", 3L))
+  expect_match(text[["1"]], "^R-squared = ")
+  # The empty panels are still drawn, so the six stay in their places, and the figure renders.
+  expect_identical(nrow(ggplot2::ggplot_build(p)$layout$layout), 6L)
+  png <- withr::local_tempfile(fileext = ".png")
+  hvtiRtemplates:::.save_figure(p, png, width = 9, height = 6)
+  expect_true(file.exists(png) && file.exists(sub("[.]png$", ".pdf", png)))
+})
+
+test_that(".lg_plot() leaves a blank link value as a gap and says when no R-squared is available", {
+  skip_if_not_installed("ggplot2")
+  means <- c(10, 20, 30)
+  tab <- data.frame(group = 1:3, mean = means, n = c(5L, 5L, 5L), link = c(-1, NA, 1))
+  p <- hvtiRtemplates:::.lg_plot(tab, hvtiRtemplates:::.lg_scales(means, constant = 20), link = "logit")
+  expect_true(all(startsWith(lg_panel_text(p), "R-squared not available")))
+  expect_error(hvtiRtemplates:::.lg_plot(tab[1:2, ], hvtiRtemplates:::.lg_scales(means, constant = 20)),
+               "^table and scales must have one row for each group")
+})
