@@ -130,7 +130,8 @@ MODEL_SET <- NULL
 
 # Optional, and needs no edit: the group labels. NULL labels each group by its
 # treatment level, as the propensity job declared it. To relabel, name both
-# levels: GROUP_LABELS <- c(control = "Surgical", treated = "Transcatheter").
+# levels by the treatment column's own values, as they appear in the data; for
+# a 0/1 column that is GROUP_LABELS <- c("0" = "Surgical", "1" = "Transcatheter").
 GROUP_LABELS <- NULL
 
 # Optional, and needs no edit: a pair-match flag, 1 for a matched patient. NULL
@@ -156,8 +157,10 @@ FIGURES <- NULL
 # The figure helpers. Each takes what it draws as an argument, so the tests
 # call them on synthetic data.
 
-# The two groups, treated first: hv_mirror_hist() draws its first level above
-# the axis. Labelled by the levels the propensity job declared, or by
+# The two groups, treated first. hv_mirror_hist()'s help says control first and
+# treated above, but the hvtiPlotR 2.8.5 code draws the FIRST level above, so
+# treated is passed first and mirror_hist() checks the sign at run time.
+# Labelled by the levels the propensity job declared, or by
 # GROUP_LABELS, named by those levels.
 mirror_groups <- function(meta, labels = NULL) {
   declared <- as.character(meta$treatment_levels)
@@ -198,6 +201,14 @@ mirror_hist <- function(scores, kind = c("unmatched", "weighted", "matched"), gr
   }
   mh <- suppressMessages(do.call(hvtiPlotR::hv_mirror_hist, args))
   if (identical(kind, "unmatched")) mh$data <- mh$data[mh$data$layer == "Before", , drop = FALSE]
+  # Treated must be above the axis. A different hvtiPlotR may draw the first
+  # level below it, and a figure with the groups swapped reads as the opposite.
+  if (any(mh$data$y[mh$data$group == groups$labels[1L]] < 0, na.rm = TRUE) ||
+        any(mh$data$y[mh$data$group == groups$labels[2L]] > 0, na.rm = TRUE)) {
+    stop("hv_mirror_hist() in the installed hvtiPlotR (", utils::packageVersion("hvtiPlotR"), ") draws the ",
+         "treated group below the axis: its orientation changed since 2.8.5, which this job was written ",
+         "against. Update the job for that hvtiPlotR before drawing the figure.", call. = FALSE)
+  }
   mh
 }
 
@@ -251,13 +262,14 @@ mirror_counts <- function(mh, kind = c("unmatched", "weighted", "matched")) {
 # dataset's identifiers made comparable with the bundle's by .bundle_ids(),
 # and `flag` the MATCH column. Returns the 0/1 flag for each bundle patient
 # and the two counts the job reports; stops when fewer than half of the
-# bundle's patients are in the dataset.
+# bundle's patients are in the dataset, when the flag is not coded 0 and 1, or
+# when no scored patient has a 1.
 mirror_join <- function(bundle_ids, ids, flag) {
   if (anyDuplicated(ids[!is.na(ids)])) {
     stop("The dataset holds a patient more than once, so the match flag cannot be joined one to one: set ",
          "DATASET to a dataset with one row per patient.", call. = FALSE)
   }
-  at <- match(bundle_ids, ids)
+  at <- match(bundle_ids, ids, incomparables = NA)
   joined <- !is.na(at)
   if (sum(joined) < length(bundle_ids) / 2) {
     stop("Only ", sum(joined), " of the ", length(bundle_ids), " patients the scores were computed for are in ",
@@ -265,6 +277,17 @@ mirror_join <- function(bundle_ids, ids, flag) {
          "identify patients as the propensity job's did: check DATASET and ID.", call. = FALSE)
   }
   value <- flag[at]
+  if (is.logical(value)) value <- as.integer(value)
+  seen <- unique(value[!is.na(value)])
+  if (!all(seen %in% c(0, 1))) {
+    stop("MATCH must be coded 0 and 1 (or TRUE and FALSE), 1 for a matched patient: the column holds ",
+         length(seen), " distinct values for the scored patients, not all 0 or 1. Recode it, or change MATCH ",
+         "in edit-study-choices.", call. = FALSE)
+  }
+  if (!any(value == 1, na.rm = TRUE)) {
+    stop("MATCH flags no scored patient as matched (none has a 1): check that MATCH names the pair-match ",
+         "flag, with 1 for a matched patient, and that DATASET and ID read the right file.", call. = FALSE)
+  }
   list(
     matched = as.integer(!is.na(value) & value == 1),
     counts = data.frame(
@@ -300,8 +323,9 @@ if (!inherits(bundle, "ps_logistic") || length(.cols) != 4L || !all(.cols %in% n
 ```{r}
 #| label: tbl-data
 #| tbl-cap: "The data the propensity job read, read again"
-# The bundle's rows are rebuilt from the data, as the propensity job read them,
-# so a bundle built from data that has changed since stops here.
+# The data are read again as the propensity job read them. The rebuilt read must
+# have the same rows, the same patients and the same hash of the study-keyed IDs
+# (the same patients) as the bundle's lineage, and the manifest must verify.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .up <- hvtiRtemplates:::.read_upstream_job_data(
   .cfg, .model_read$lineage, list(), source = MODEL_FILE,
@@ -325,6 +349,16 @@ scores <- data.frame(
   weight = bundle$data[[.meta$weight_col]],
   matched = 0L
 )
+.bad <- c(`with a missing score` = sum(is.na(scores$score)),
+          `with a missing matching weight` = sum(is.na(scores$weight)),
+          `with a missing treatment` = sum(is.na(scores$group)),
+          `in a group the bundle does not declare` = sum(!is.na(scores$group) & !scores$group %in% groups$levels))
+if (any(.bad > 0)) {
+  .bad <- .bad[.bad > 0]
+  stop("The saved bundle holds ", paste0(.bad, " patient", ifelse(.bad == 1, "", "s"), " ", names(.bad), collapse = ", "),
+       "; a mirrored histogram draws only patients with a score, a weight and a declared group. Rebuild it by ",
+       "rendering the lm-propensity_binary job with the current template.", call. = FALSE)
+}
 if (anyDuplicated(scores$id)) {
   stop("The saved bundle holds a patient more than once; a mirrored histogram counts each patient once. ",
        "Rebuild it by rendering the lm-propensity_binary job with the current template.", call. = FALSE)
@@ -347,6 +381,12 @@ if (!is.null(MATCH)) {
   match_data$provenance$role <- "match"
   .provenance_data <- c(.provenance_data, list(match_data$provenance))
   .id <- attr(match_data$record, "selection")$id
+  # .check_job_columns() reads a setting as formula terms, so "age + sex" and "."
+  # would pass it; MATCH is one column.
+  if (!MATCH %in% names(match_data$data)) {
+    stop("MATCH names a column this dataset does not have: ", MATCH, ". Change MATCH in edit-study-choices.",
+         call. = FALSE)
+  }
   hvtiRtemplates:::.check_job_columns(match_data$data, MATCH = MATCH)
   if (!identical(tolower(.id), tolower(.meta$id_col))) {
     stop("The dataset read for MATCH identifies patients by `", .id, "`, the bundle by `", .meta$id_col,

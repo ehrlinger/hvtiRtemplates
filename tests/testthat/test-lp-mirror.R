@@ -191,6 +191,73 @@ test_that("the match flag joins by ID digest, counts both kinds of miss, and sto
   expect_error(h$mirror_join(bundle_ids, c("d1", "d1"), c(1, 1)), "holds a patient more than once")
 })
 
+test_that("a MATCH flag not coded 0 and 1, or with no 1 among the scored patients, stops naming MATCH", {
+  h <- lp_helpers()
+  bundle_ids <- paste0("d", 1:10)
+  ids <- paste0("d", 1:10)
+  e <- expect_error(h$mirror_join(bundle_ids, ids, rep(c("Y", "N"), 5L)), "^MATCH must be coded 0 and 1")
+  expect_error(h$mirror_join(bundle_ids, ids, rep(c(1, 2), 5L)), "^MATCH must be coded 0 and 1")
+  expect_error(h$mirror_join(bundle_ids, ids, rep(0, 10L)), "^MATCH flags no scored patient")
+  # The message counts distinct values and shows none of them.
+  expect_match(conditionMessage(e), "2 distinct values")
+  expect_false(grepl("Y", conditionMessage(e), fixed = TRUE))
+  # A logical column is 1 and 0, and blanks are not a value.
+  out <- h$mirror_join(bundle_ids, ids, c(rep(c(TRUE, FALSE), 4L), NA, TRUE))
+  expect_identical(out$matched, c(rep(c(1L, 0L), 4L), 0L, 1L))
+})
+
+test_that("an NA identifier on both sides of the join is not a pair", {
+  h <- lp_helpers()
+  out <- h$mirror_join(c(paste0("d", 1:9), NA), c(paste0("d", 1:9), NA, "x1"), rep(1, 11L))
+  expect_identical(out$matched, c(rep(1L, 9L), 0L))
+  expect_identical(out$counts$patients[1L], 1L)
+})
+
+test_that("MATCH must name a column of the dataset, not a formula term", {
+  local_child_chunks()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  for (bad in c(".", "nope")) {
+    s <- lp_fixture(sprintf("MATCH <- \"%s\"", bad))
+    expect_error(lm_eval_job(s$job), paste0("^MATCH names a column this dataset does not have: ", bad,
+                                            "[.] Change MATCH in edit-study-choices[.]"))
+  }
+})
+
+test_that("a score, weight or group the figures cannot draw stops the job, with counts only", {
+  local_child_chunks()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  s <- lp_fixture()
+  bundle <- readRDS(s$bundle)
+  meta <- bundle$meta
+  saved <- bundle
+  bundle$data[[meta$weight_col]][5L] <- NA
+  saveRDS(bundle, s$bundle)
+  expect_error(lm_eval_job(s$job), "^The saved bundle holds 1 patient with a missing matching weight")
+  bundle <- saved
+  bundle$data[[meta$treatment_col]] <- as.character(bundle$data[[meta$treatment_col]])
+  bundle$data[[meta$treatment_col]][7:8] <- "other"
+  saveRDS(bundle, s$bundle)
+  expect_error(lm_eval_job(s$job), "2 patients in a group the bundle does not declare")
+})
+
+test_that("a mirrored histogram whose hvtiPlotR draws the groups the other way up stops", {
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  h <- lp_helpers()
+  groups <- list(levels = c("treated", "control"), labels = c("Treated", "Control"))
+  real <- hvtiPlotR::hv_mirror_hist
+  testthat::local_mocked_bindings(
+    hv_mirror_hist = function(...) {
+      mh <- real(...)
+      mh$data$y <- -mh$data$y
+      mh
+    },
+    .package = "hvtiPlotR"
+  )
+  expect_error(h$mirror_hist(lp_scores(), "unmatched", groups, 5), "hvtiPlotR.*orientation")
+})
+
 test_that("with MATCH the job joins the flag through the study key and keeps no identifier", {
   local_child_chunks()
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
