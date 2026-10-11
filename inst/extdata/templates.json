@@ -565,7 +565,7 @@
     {
       "prefix": "lg",
       "qualifier": null,
-      "name": "Logit trends",
+      "name": "Logit calibration",
       "folder": "descriptive",
       "family": "descriptive",
       "kind": "job",
