@@ -254,7 +254,7 @@ concordance_fit <- function(root, data, groups = c("a", "b"), .local_envir = par
 }
 
 # The core chunks of hs-concordance, in order, without the decision.
-concordance_core <- c("tbl-data", "cohort", "models", "tbl-groups", "tbl-covariates", "horizon", "tbl-support", "tbl-predict")
+concordance_core <- c("tbl-data", "models", "cohort", "tbl-groups", "tbl-covariates", "horizon", "tbl-support", "tbl-predict")
 
 # Choices that make the job runnable against concordance_fit()'s estate.
 concordance_choices <- function(data, ...) {

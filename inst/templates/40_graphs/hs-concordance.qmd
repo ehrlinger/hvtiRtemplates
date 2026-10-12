@@ -241,11 +241,12 @@ JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
 
-# EDIT: the follow-up time and event columns every hm model was fitted on. The
-#       models chunk stops if any model records a different time column,
-#       because HORIZON below is one number applied to every model.
-TIME  <- "iv_dead"
-EVENT <- "dead"
+# The follow-up time and event columns every hm model was fitted on. NULL takes
+# the columns the models recorded; set one only to confirm it. A value that
+# differs from a model's stops the job, and so does a pair of models that
+# disagree, because HORIZON below is one number applied to every model.
+TIME <- NULL
+EVENT <- NULL
 
 # EDIT: the counts this cohort must have. The invalid defaults stop an unedited
 #       job before it predicts for a cohort nobody reconciled.
@@ -315,21 +316,6 @@ if (!is.null(job_data$attrition)) {
 }
 ```
 
-```{r}
-#| label: cohort
-cc <- cohort_counts(d, event = EVENT, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
-
-# The three studies this template was drawn from made three overlap choices,
-# and a fourth study made a fourth. Which one a study makes decides what its
-# comparison means, so it is declared and saved, never defaulted.
-.overlaps <- c("none", "matched", "common_support")
-if (is.null(OVERLAP) || length(OVERLAP) != 1L || !OVERLAP %in% .overlaps) {
-  stop("OVERLAP must be one of ", paste0("\"", .overlaps, "\"", collapse = ", "),
-       ". Say in the text above how the cohort was made comparable across groups.", call. = FALSE)
-}
-```
-
 ## Models
 
 ```{r}
@@ -375,21 +361,51 @@ if (anyDuplicated(.real)) {
 }
 
 models <- list()
+.times <- character()
+.events <- character()
 for (m in .mn) {
   # A model from another study is recorded against that study's root, which
   # is where its provenance is anchored.
   .mcfg <- if (.is_path[[m]]) study_config(start = dirname(.model_path[[m]])) else .cfg
   .read <- hvtiRtemplates:::.read_handoff(.model_path[[m]], "hazard-regression-model", .mcfg,
                                           paste0("the hm job for ", m))
-  .time <- .read$lineage$analysis$time$variable
-  if (!identical(.time, TIME)) {
-    stop("The model for ", m, " was fitted on time column \"", .time, "\", not TIME (\"", TIME, "\"). ",
-         "HORIZON is one number applied to every model, so every model must share one time scale.",
-         call. = FALSE)
+  # The time and event the hm job recorded, checked against TIME and EVENT
+  # when they are set, as hm, hp and hs-setup check theirs against upstream.
+  .rec <- .read$lineage$selection
+  if (is.null(.rec$time) || is.null(.rec$event)) {
+    stop("The hm model for ", m, " records no time and event column: it predates the data contract. ",
+         "Rerun that hm job, then this one.", call. = FALSE)
   }
+  hvtiRtemplates:::.check_upstream_selection(.rec, list(time = TIME, event = EVENT))
+  .times[[m]] <- .rec$time
+  .events[[m]] <- .rec$event
   models[[m]] <- .read$value
   .provenance_data <- c(.provenance_data, .read$lineage$data)
   .provenance_artifacts <- c(.provenance_artifacts, .read$lineage$artifacts, list(.read$record))
+}
+# HORIZON is one number applied to every model, so the models share one time
+# scale and one event.
+if (length(unique(.times)) > 1L || length(unique(.events)) > 1L) {
+  stop("The hm models were fitted on different time or event columns (",
+       paste0(.mn, ": ", .times, " / ", .events, collapse = "; "), "). HORIZON is one number applied to ",
+       "every model, so every model must share one time scale.", call. = FALSE)
+}
+TIME <- unname(.times[[1L]])
+EVENT <- unname(.events[[1L]])
+```
+
+```{r}
+#| label: cohort
+cc <- cohort_counts(d, event = EVENT, time = TIME)
+assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+
+# The three studies this template was drawn from made three overlap choices,
+# and a fourth study made a fourth. Which one a study makes decides what its
+# comparison means, so it is declared and saved, never defaulted.
+.overlaps <- c("none", "matched", "common_support")
+if (is.null(OVERLAP) || length(OVERLAP) != 1L || !OVERLAP %in% .overlaps) {
+  stop("OVERLAP must be one of ", paste0("\"", .overlaps, "\"", collapse = ", "),
+       ". Say in the text above how the cohort was made comparable across groups.", call. = FALSE)
 }
 ```
 
