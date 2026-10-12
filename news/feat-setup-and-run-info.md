@@ -10,17 +10,17 @@
   together, and the `lm` and `lp` templates now print the same marker list as the
   rest (`bd` still prints only the count). The bootstrap templates `bc`,
   `bh`, `bl` and `br` now source the study's `R/` as the others do. Jobs already
-  in studies keep their four chunks and render as before.
+  in studies keep their four chunks and render as before. (#303)
 
 * Every template carries `date: now` and `date-format: "YYYY-MM-DD HH:mm"` in its
-  own front matter, so the title block shows when the report was rendered.
+  own front matter, so the title block shows when the report was rendered. (#303)
 
 * A report opens with a one-line box under the title: whether it is final or a
   draft (with the count of open markers and skipped chunks), the dataset and its
   dated version file with the date it was registered, who rendered it and on which
   host, and the hvtiRtemplates version. The box is printed before the data are
   read, so it names the dataset the job's file declares with
-  `DATASET <- "name"` and otherwise the study dataset.
+  `DATASET <- "name"` and otherwise the study dataset. (#303)
 
 * Every report ends with an unnumbered "About this run" table: the run (start and
   end with time zone, duration, status, user, host), the job (file, template,
@@ -32,4 +32,4 @@
   embedded provenance under `run`. The table holds names, dates, counts and
   hashes, never a patient identifier or a data value. The user and host are the
   login and machine names; `HVTI_RUN_USER` and `HVTI_RUN_HOST` replace them, and
-  the template gallery sets both so its published reports name no one.
+  the template gallery sets both so its published reports name no one. (#303)
