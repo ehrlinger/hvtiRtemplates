@@ -287,8 +287,14 @@ CACHE_DIR <- dirname(.handoff)
 # model nobody fit. The forest keeps no usable formula (`$formula` is NULL and
 # `$call` holds whatever expression the fit job wrote), so the model is rebuilt
 # from the outcome names. `xvar` keeps any missing values under na.impute, and
-# varpro() handles them; the forest's `imputed.data` makes varpro() fail.
+# varpro() drops every patient that has one, so it would describe fewer patients
+# than the forest. The values the forest imputed are put back in below, so both
+# cover the same patients. (Handing varpro() the forest's `imputed.data` as it
+# stands fails: that holds only the imputed patients.)
 frame <- cbind(stats::setNames(data.frame(forest$yvar), forest$yvar.names), forest$xvar)
+if (!is.null(forest$imputed.data)) {
+  frame[forest$imputed.indv, names(forest$imputed.data)] <- forest$imputed.data
+}
 model <- stats::reformulate(".", response = forest$yvar.names)
 ```
 
@@ -355,6 +361,10 @@ if (is.null(PARTIAL_VARS)) {
 
 ## VarPro
 
+VarPro is given the forest's own data. When the fit imputed missing values
+(`NA_ACTION` was `"na.impute"`), that is the imputed data, so VarPro and the
+forest describe the same patients.
+
 ```{r}
 #| label: fig-varpro
 #| fig-cap: "VarPro importance of each predictor"
@@ -373,7 +383,15 @@ save_figure(.fig, "rfc-explain-varpro")
 #| fig-cap: "Predicted class probability against each selected predictor, as observed"
 #| message: true
 # Marginal: predicted class probability against each variable, as observed.
-.fig <- plot(gg_variable(forest), xvar = sel)
+.gv <- gg_variable(forest)
+# plot() reads a factor outcome whose levels are "0" and "1" as TRUE and FALSE
+# with as.logical(), which turns the labels into missing values, and ggplot2
+# then removes every point. Naming the levels after the outcome avoids that.
+.gv$yvar <- factor(.gv$yvar, levels = levels(.gv$yvar), labels = paste0(forest$yvar.names, " = ", levels(.gv$yvar)))
+# A loess smooth needs more than a handful of distinct values, so a predictor
+# with fewer than six, such as a stage or a grade, is drawn as points alone.
+.panels <- lapply(sel, function(v) plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5))
+.fig <- patchwork::wrap_plots(.panels, ncol = 1)
 save_figure(.fig, "rfc-explain-dependence-marginal")
 .fig
 ```
