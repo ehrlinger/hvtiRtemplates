@@ -172,8 +172,14 @@ gallery_family(
       choices = list(
         "^EXPECT_CHUNKS <- " = sprintf("EXPECT_CHUNKS <- %dL    # Demo: four chunks, side by side", bh_chunks),
         "^EXPECT_BOOT   <- " = sprintf("EXPECT_BOOT   <- %dL    # Demo: two replicates each", bh_chunks * bh_per_chunk),
-        "^  early[.]Age  = " = "  early.Age      = \"early.age\",",
-        "^  const[.]Age  = " = "  constant.Heart = c(\"constant.hx_chf\", \"constant.lvef\")"
+        # #300 made the default CLUSTERS an empty list, with the old entries
+        # left as a commented example, so the gallery fills in its own two.
+        "^CLUSTERS <- list\\(\\)$" = paste0(
+          "CLUSTERS <- list(\n",
+          "  early.Age      = \"early.age\",\n",
+          "  constant.Heart = c(\"constant.hx_chf\", \"constant.lvef\")\n",
+          ")"
+        )
       )
     )
   )
