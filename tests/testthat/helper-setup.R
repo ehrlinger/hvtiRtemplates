@@ -23,6 +23,10 @@ eval_setup_chunk <- function(code, env) {
                              ls(env, all.names = TRUE)), envir = env)
   code <- code[!grepl("library\\(", code)]
   dir <- if (is.null(root)) getwd() else root
+  # A render hands the chunk no root: it finds the study itself, and sources the
+  # study's R/ only after assigning .root. Leaving the test's .root in place
+  # would let a helper that reads .root pass here and fail in a real render.
+  if (exists(".root", envir = env, inherits = FALSE)) rm(list = ".root", envir = env)
   utils::capture.output(withr::with_dir(dir, eval(parse(text = code), envir = env)))
   list2env(supplied, envir = env)
   invisible(env)

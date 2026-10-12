@@ -592,6 +592,11 @@
   if (!is.list(artifacts)) stop("Handoff lineage artifacts must be a list of provenance records.", call. = FALSE)
   out <- list(data = data, artifacts = artifacts, analysis = analysis, cohort = cohort)
   if (!is.null(selection)) out$selection <- selection
+  # When the job that saves this bundle began its render, from the run record
+  # .job_setup() started: the one place a downstream report can read it from,
+  # since a file's modification time changes on a copy or a touch. A bundle
+  # saved outside a render, or before this field existed, has none.
+  if (!is.null(.run_state$rendered_at)) out$rendered_at <- .run_state$rendered_at
   out
 }
 
@@ -601,12 +606,12 @@
   object
 }
 
-# The two shapes .handoff_lineage() writes, compared exactly, so a repeated
+# The shapes .handoff_lineage() writes (with or without a selection and a render time), compared exactly, so a repeated
 # or reordered field is not taken for a complete lineage.
 .complete_lineage_shape <- function(lineage) {
   required <- c("data", "artifacts", "analysis", "cohort")
-  is.list(lineage) &&
-    (identical(names(lineage), required) || identical(names(lineage), c(required, "selection"))) &&
+  shapes <- list(required, c(required, "selection"), c(required, "rendered_at"), c(required, "selection", "rendered_at"))
+  is.list(lineage) && any(vapply(shapes, identical, logical(1L), names(lineage))) &&
     is.list(lineage$data) && is.list(lineage$artifacts)
 }
 
@@ -928,6 +933,9 @@
   partial <- .partial_state$points
   if (length(partial)) extra$partial <- partial
   facts <- if (!is.null(run)) .run_facts(run, data, artifacts, cfg, envir)
+  # This render's handoffs are saved by now; a bundle saved after it, from the
+  # console or by the next job in this session, must not carry its start time.
+  .run_state$rendered_at <- NULL
   if (!is.null(facts)) extra$run <- facts
   payload <- hvtiRutilities::capture_provenance(
     job = tools::file_path_sans_ext(basename(source)),

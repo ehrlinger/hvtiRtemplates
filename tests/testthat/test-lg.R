@@ -224,6 +224,19 @@ test_that("a blank chosen warns in a draft, saves only the covariates chosen, an
   expect_warning(lm_eval_job(s$job), "no usable scale chosen")
 })
 
+test_that("a blank chosen makes the run a draft in the end table and the facts, not final", {
+  local_child_chunks()
+  two <- c("VARIABLES <- data.frame(", "  name = c(\"age\", \"nyha\"),", "  chosen = c(\"log\", NA)", ")")
+  s <- lg_fixture(variables = two)
+  expect_warning(env <- lm_eval_job(s$job), "no usable scale chosen")
+  # Setup saw no marker, skip or stop, so the box printed final; the end table must not.
+  expect_identical(env$.job$run$state, "final")
+  facts <- hvtiRtemplates:::.run_facts(env$.job$run, cfg = hvtiRutilities::study_config(start = s$root), envir = env)
+  expect_identical(facts$status, "draft")
+  expect_match(unlist(facts$draft_reasons), "a scale is not chosen", fixed = TRUE)
+  expect_match(paste(hvtiRtemplates:::.run_table(facts), collapse = "\n"), "This run ended as a draft", fixed = TRUE)
+})
+
 test_that("the template's own blank chosen is a draft warning for the first covariate", {
   local_child_chunks()
   s <- lg_fixture(variables = NULL)

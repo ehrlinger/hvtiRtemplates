@@ -65,7 +65,9 @@ knitr::opts_chunk$set(warning = NA, message = NA)
 # show_markers = FALSE: the draft banner and the warning give only the COUNT of
 # open markers. A marker line could sit beside a rule naming a patient, and this
 # report shows no source. The marker text goes to the console.
-.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment(), show_markers = FALSE)
+# box_data = FALSE: this job builds a dataset and reads none, so the box under
+# the title names none; the registered "built" of an earlier build is not its data.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment(), show_markers = FALSE, box_data = FALSE)
 .root <- .job$root
 .provenance_data <- list()
 # The draft banners, if any, and the box under the title, after all the code above.

@@ -140,6 +140,11 @@ test_that("a malformed _study.yml is not reported as a missing study", {
 })
 
 test_that("a hand-off carries the selection, and older four-slot lineage still validates", {
+  # Lineage saved outside a render carries no rendered_at. A .job_setup() earlier
+  # in this session, in another test, must not stamp it: that ordering failed CI.
+  stamp <- hvtiRtemplates:::.run_state$rendered_at
+  assign("rendered_at", NULL, envir = hvtiRtemplates:::.run_state)
+  withr::defer(assign("rendered_at", stamp, envir = hvtiRtemplates:::.run_state))
   sel <- list(dataset = "study", analysis_set = NULL, where = "age >= 18", id = "ccfid", key = "ccfid",
               rows = 3L, patients = 3L)
   obj <- hvtiRtemplates:::.attach_handoff_lineage(list(), data = list(list(dataset = "study")), selection = sel)

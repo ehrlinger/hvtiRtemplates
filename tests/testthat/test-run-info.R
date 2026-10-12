@@ -4,8 +4,8 @@
 # are synthetic.
 
 # A study, a job set up in it, and the study's config.
-run_fixture <- function(.local_envir = parent.frame()) {
-  fx <- setup_fixture(.local_envir = .local_envir)  # nolint: object_usage_linter.
+run_fixture <- function(lines = "A finished job.", .local_envir = parent.frame()) {
+  fx <- setup_fixture(lines, .local_envir = .local_envir)  # nolint: object_usage_linter.
   env <- new.env(parent = globalenv())
   r <- run_setup(env = env)  # nolint: object_usage_linter.
   list(root = fx$root, env = env, run = r$job$run, out = r$out, cfg = hvtiRutilities::study_config(start = fx$root))
@@ -32,7 +32,7 @@ test_that("the run is stamped with the user and host, which two environment vari
 
 test_that("the top box names final or draft, the dataset version and its registration, who ran it, and the package", {
   withr::local_envvar(HVTI_RUN_USER = "tester", HVTI_RUN_HOST = "testhost")
-  rf <- run_fixture()
+  rf <- run_fixture("DATASET <- \"built\"")
   box <- grep("^\\*\\*final\\*\\*", rf$out, value = TRUE)
   expect_length(box, 1L)
   expect_match(box, "data `built` `built_[0-9]{8}[.]parquet`, registered [0-9]{4}-[0-9]{2}-[0-9]{2}")
@@ -52,14 +52,57 @@ test_that("a draft's box counts the open markers and the skipped chunks", {
   expect_match(box, "^\\*\\*draft\\*\\* \\(2 open markers, 1 skipped chunk\\)")
 })
 
-test_that("a study with no registered dataset gets a box without the dataset clause", {
-  fx <- setup_fixture()
+test_that("a study with no registered dataset gets a box that names the dataset and no version", {
+  fx <- setup_fixture("DATASET <- \"built\"")
   unlink(file.path(fx$root, "manifest.yaml"))
   r <- run_setup()
   box <- grep("^\\*\\*final\\*\\*", r$out, value = TRUE)
   expect_length(box, 1L)
-  expect_false(grepl("data `", box, fixed = TRUE))
+  expect_match(box, "data `built` ·", fixed = TRUE)
+  expect_false(grepl("registered", box, fixed = TRUE))
   expect_match(box, "rendered by ", fixed = TRUE)
+})
+
+# The box names a dataset only when the job's file settles which one it reads.
+box_of <- function(lines, .local_envir = parent.frame()) {
+  fx <- setup_fixture(lines, .local_envir = .local_envir)  # nolint: object_usage_linter.
+  r <- run_setup()  # nolint: object_usage_linter.
+  list(box = grep("^\\*\\*final\\*\\*", r$out, value = TRUE), root = fx$root, job = fx$job)
+}
+
+test_that("the box reads a literal DATASET in single quotes as well as double", {
+  s <- box_of("DATASET <- 'echo'")
+  expect_match(s$box, "data `echo`", fixed = TRUE)
+  expect_false(grepl("built", s$box, fixed = TRUE))
+  expect_identical(hvtiRtemplates:::.box_dataset(s$root, s$job)$name, "echo")
+  s <- box_of("DATASET <- \"echo\"  # the echo records")
+  expect_match(s$box, "data `echo`", fixed = TRUE)
+})
+
+test_that("the box names a literal analysis set, and its version when the set was written", {
+  s <- box_of(c("DATASET <- \"built\"", "ANALYSIS_SET <- \"eda\""))
+  expect_match(s$box, "analysis set `eda`", fixed = TRUE)
+  expect_false(grepl("data `built`", s$box, fixed = TRUE))
+  # The sidecar and parquet hvtiRdatabuild writes beside the dataset give the version.
+  datasets <- hvtiRutilities::study_dir("datasets", s$root)
+  writeLines("set: eda\nwritten: '2026-10-12T09:30:00'", file.path(datasets, "eda.set.yml"))
+  writeLines("x", file.path(datasets, "eda.parquet"))
+  box <- hvtiRtemplates:::.run_box(list(state = "final", user = "u", host = "h"),
+                                   hvtiRtemplates:::.box_dataset(s$root, s$job))
+  expect_match(box, "analysis set `eda` `eda.parquet`, written 2026-10-12", fixed = TRUE)
+})
+
+test_that("the box sends the reader to the end table when the dataset is inherited, computed, NULL or undeclared", {
+  cases <- list(c("DATASET <- NULL", "ANALYSIS_SET <- NULL"), "DATASET <- .up$dataset",
+                "DATASET <- paste0(\"b\", \"uilt\")", c("DATASET <- \"built\"", "ANALYSIS_SET <- pick_set()"),
+                c("DATASET <- \"built\"", "DATASET <- \"echo\""), "# DATASET <- \"built\"", "no declaration at all")
+  for (lines in cases) {
+    s <- box_of(lines)
+    info <- paste(lines, collapse = " / ")
+    expect_match(s$box, "data: see About this run", fixed = TRUE, info = info)
+    expect_false(grepl("built", s$box, fixed = TRUE), info = info)
+    expect_null(hvtiRtemplates:::.box_dataset(s$root, s$job), info = info)
+  }
 })
 
 test_that("the end table's facts cover the run, the job and a dataset read", {
@@ -127,6 +170,203 @@ test_that("a newer file waiting is reported against the version the job read", {
   facts <- run_facts(rf, data = list(job$provenance))
   expect_identical(facts$datasets[[1L]]$manifest, "newer file waiting")
   expect_identical(facts$datasets[[1L]]$rows, 160L)
+})
+
+test_that("two reads whose conditions redact to the same text are two entries, and the raw WHERE is not stored", {
+  rf <- run_fixture()
+  older <- read_job_data(rf$cfg, where = quote(age >= 30), key = c("ccfid", "age"))
+  oldest <- read_job_data(rf$cfg, where = quote(age >= 70), key = c("ccfid", "age"))
+  expect_identical(attr(older$record, "selection")$where_shown, attr(oldest$record, "selection")$where_shown)
+  expect_false(identical(nrow(older$data), nrow(oldest$data)))
+  facts <- run_facts(rf, data = list(older$provenance, oldest$provenance))
+  expect_length(facts$datasets, 2L)
+  expect_setequal(vapply(facts$datasets, `[[`, 0L, "rows"), c(nrow(older$data), nrow(oldest$data)))
+  expect_identical(unique(vapply(facts$datasets, function(d) paste(d$where, collapse = ";"), "")), "age >= <value>")
+  # The same read again is still one entry.
+  read_job_data(rf$cfg, where = quote(age >= 30), key = c("ccfid", "age"))
+  expect_length(run_facts(rf, data = list(older$provenance))$datasets, 2L)
+  # Neither a raw condition nor the hash that tells the reads apart reaches the facts or the table.
+  text <- paste(c(unlist(facts), hvtiRtemplates:::.run_table(facts)), collapse = " ")
+  expect_false(grepl("age >= 30", text, fixed = TRUE))
+  expect_false(grepl("age >= 70", text, fixed = TRUE))
+  expect_false(grepl("selection", text, fixed = TRUE))
+})
+
+test_that("a rebuilt joined dataset is reported against the joined dataset, not the cohort", {
+  testthat::skip_if_not_installed("arrow")
+  rf <- run_fixture()
+  d <- hazard_data()
+  datasets <- hvtiRutilities::study_dir("datasets", rf$root)
+  echo <- data.frame(ccfid = rep(d$ccfid[1:3], each = 2L), echo_date = rep(c(95, 120), 3L),
+                     ef = c(50, 55, 45, 40, 52, 48))
+  utils::write.csv(echo, file.path(datasets, "echo.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(rf$root, "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key = c("ccfid", "echo_date")))
+  rf$cfg <- hvtiRutilities::study_config(start = rf$root)
+  status <- function(read) {
+    # One run's reads at a time, as a new setup leaves the ledger.
+    .run_state$reads <- list()
+    job <- read()
+    facts <- run_facts(rf, data = list(job$provenance, job$provenance_join))
+    stats::setNames(vapply(facts$datasets, `[[`, "", "manifest"), vapply(facts$datasets, `[[`, "", "name"))
+  }
+  expect_identical(status(function() read_job_data(rf$cfg, join = "echo")), c(built = "current", echo = "current"))
+  # Rebuild only the joined dataset.
+  utils::write.csv(rbind(echo, data.frame(ccfid = d$ccfid[4], echo_date = 100, ef = 41)),
+                   file.path(datasets, "echo.csv"), row.names = FALSE)
+  expect_identical(status(function() read_job_data(rf$cfg, join = "echo")), c(built = "current", echo = "newer file waiting"))
+  # And only the cohort.
+  utils::write.csv(echo, file.path(datasets, "echo.csv"), row.names = FALSE)
+  utils::write.csv(hazard_data(n = 170L), file.path(datasets, "built.csv"), row.names = FALSE)
+  expect_identical(status(function() read_job_data(rf$cfg, join = "echo")), c(built = "newer file waiting", echo = "current"))
+})
+
+test_that("a conditional stop_here() that fires makes the facts a draft that stopped early, and the report says so", {
+  rf <- run_fixture()
+  expect_identical(rf$run$state, "final")
+  expect_false(rf$run$stopped)
+  rf$env$.job <- list(run = rf$run)
+  withr::local_options(knitr.in.progress = TRUE)
+  testthat::local_mocked_bindings(knit_exit = function(...) invisible(NULL), .package = "knitr")
+  facts <- NULL
+  testthat::local_mocked_bindings(.embed_provenance = function(input, data, extra, run, envir, ...) {
+    facts <<- hvtiRtemplates:::.run_facts(run, data = data, cfg = rf$cfg, envir = envir)
+    paste(hvtiRtemplates:::.run_table(facts), collapse = "\n")
+  })
+  old <- .partial_state$points
+  withr::defer(.partial_state$points <- old)
+  # The setup scan found no stop, as for `if (ready) stop_here()`; now it runs.
+  out <- as.character(stop_here(envir = rf$env))
+  expect_identical(facts$status, "draft")
+  expect_true(facts$stopped_early)
+  expect_match(out, "draft (the render stops early", fixed = TRUE)
+  # The same path as any runtime draft: a reason, and the end-of-report notice that corrects the box.
+  expect_match(facts$draft_reasons[[1L]], "stop_here()", fixed = TRUE)
+  expect_match(out, "This run ended as a draft", fixed = TRUE)
+  expect_match(out, "stop_here()", fixed = TRUE)
+  expect_lt(regexpr("This run ended as a draft", out, fixed = TRUE)[[1L]], regexpr("| Group |", out, fixed = TRUE)[[1L]])
+  # The record setup made is not edited: it is what the box printed.
+  expect_identical(rf$run$state, "final")
+  # A stop the scan found is already in the PARTIAL callout and the box, and gets no second notice.
+  .partial_state$points <- list(list(line = 3L, kind = "stop", reason = "found"))
+  .run_state$draft_reasons <- character()
+  again <- as.character(stop_here(envir = rf$env))
+  expect_false(grepl("This run ended as a draft", again, fixed = TRUE))
+  expect_identical(facts$status, "draft")
+})
+
+test_that(".run_mark_draft() turns a run into a draft with its reason, in the facts and as a notice ahead of the table", {
+  rf <- run_fixture()
+  expect_identical(run_facts(rf)$status, "final")
+  expect_null(run_facts(rf)$draft_reasons)
+  hvtiRtemplates:::.run_mark_draft("a scale is not chosen for 2 covariates")
+  hvtiRtemplates:::.run_mark_draft("a scale is not chosen for 2 covariates")
+  hvtiRtemplates:::.run_mark_draft("the pool is incomplete")
+  facts <- run_facts(rf)
+  expect_identical(facts$status, "draft")
+  expect_identical(unlist(facts$draft_reasons), c("a scale is not chosen for 2 covariates", "the pool is incomplete"))
+  table <- paste(hvtiRtemplates:::.run_table(facts), collapse = "\n")
+  expect_match(table, "This run ended as a draft", fixed = TRUE)
+  expect_match(table, "a scale is not chosen for 2 covariates; the pool is incomplete", fixed = TRUE)
+  expect_match(table, "draft (a scale is not chosen", fixed = TRUE)
+  # What setup recorded, and the box printed, stays as it was; a new setup clears the marks.
+  expect_identical(rf$run$state, "final")
+  run_setup()
+  expect_null(run_facts(rf)$draft_reasons)
+  # A final run has no notice.
+  expect_false(grepl("ended as a draft", paste(hvtiRtemplates:::.run_table(run_facts(rf)), collapse = "\n"), fixed = TRUE))
+})
+
+test_that("every template that prints a runtime draft or provisional callout marks the run a draft", {
+  for (name in c("10_descriptive/lg", "10_descriptive/dc-gfup", "30_analyses/bc", "30_analyses/bh", "30_analyses/bl",
+                 "30_analyses/br")) {
+    src <- readLines(system.file("templates", paste0(name, ".qmd"), package = "hvtiRtemplates"), warn = FALSE)
+    expect_true(any(grepl("hvtiRtemplates:::.run_mark_draft(", src, fixed = TRUE)), info = name)
+  }
+})
+
+test_that("bd's box names no dataset and sends nobody to a table that has none", {
+  src <- readLines(template_path("bd"), warn = FALSE)
+  expect_false(any(grepl("^DATASET\\s*<-", src)))
+  expect_true(any(grepl("box_data = FALSE", src, fixed = TRUE)))
+  fx <- setup_fixture()
+  out <- utils::capture.output(job <- hvtiRtemplates:::.job_setup("cohort", "eda", envir = new.env(), box_data = FALSE))
+  box <- grep("^\\*\\*final\\*\\*", strsplit(as.character(job$notice), "\n", fixed = TRUE)[[1L]], value = TRUE)
+  expect_length(box, 1L)
+  expect_false(grepl("data", box, fixed = TRUE))
+  expect_false(grepl("built", box, fixed = TRUE))
+  # The registered dataset the study already has is not the one bd builds.
+  expect_true(file.exists(file.path(fx$root, "manifest.yaml")))
+})
+
+test_that("a joined read in the table says rows only, with no patients clause and no WHERE row", {
+  facts <- list(status = "final", start = "2026-10-12T10:00:00-0400", end = "2026-10-12T10:00:05-0400", time_zone = "EDT",
+                duration_seconds = 5, user = "u", host = "h", job = list(file = "a.qmd"),
+                datasets = list(
+                  list(name = "built", rows = 120L, patients = 80L, where = character(0)),
+                  list(name = "echo", rows = 10L)
+                ),
+                upstream = list(), reproducibility = list(renv = list(active = FALSE)))
+  table <- paste(hvtiRtemplates:::.run_table(facts), collapse = "\n")
+  expect_false(grepl("NULL", table, fixed = TRUE))
+  expect_false(grepl("on NA", table, fixed = TRUE))
+  expect_match(table, "| 10 rows |", fixed = TRUE)
+  expect_match(table, "120 rows on 80 patients", fixed = TRUE)
+  echo <- sub(".*Dataset `echo`", "", table)
+  expect_false(grepl("WHERE", echo, fixed = TRUE))
+})
+
+test_that("a WHERE with a backtick in a name is shown whole, in a code span that holds it", {
+  facts <- list(status = "final", start = "2026-10-12T10:00:00-0400", end = "2026-10-12T10:00:05-0400", time_zone = "EDT",
+                duration_seconds = 5, user = "u", host = "h", job = list(file = "a.qmd"),
+                datasets = list(list(name = "built", rows = 12L, patients = 8L, where = c("`age at op` > 50", "male == 1"))),
+                upstream = list(), reproducibility = list(renv = list(active = FALSE)))
+  table <- paste(hvtiRtemplates:::.run_table(facts), collapse = "\n")
+  # A double-backtick fence, so the single backticks inside it do not end the span.
+  expect_match(table, "`` `age at op` > 50 ``; `male == 1`", fixed = TRUE)
+  expect_identical(hvtiRtemplates:::.code_span("a"), "`a`")
+  expect_identical(hvtiRtemplates:::.code_span("`a`"), "`` `a` ``")
+  expect_identical(hvtiRtemplates:::.code_span("a``b"), "```a``b```")
+})
+
+test_that("an upstream handoff shows the render time its job recorded, and 'not recorded' for an old bundle", {
+  root <- hazard_study()
+  cfg <- hvtiRutilities::study_config(start = root)
+  lineage <- hazard_lineage(root)
+  withr::local_dir(root)
+  testthat::local_mocked_bindings(current_input = function(dir = FALSE) NULL, .package = "knitr")
+  # The upstream job: its run begins, and it saves a bundle.
+  upstream <- run_setup(env = new.env(parent = globalenv()))
+  fresh <- hazard_save(list(ok = TRUE), lineage, hazard_set_path(root, "hm.rds"))
+  stamp <- attr(readRDS(fresh), "hvti_provenance")$rendered_at
+  expect_identical(stamp, hvtiRtemplates:::.iso_time(upstream$job$run$started))
+  expect_match(stamp, "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}[+-][0-9]{4}$")
+  # A bundle saved before this change has no such field.
+  old <- readRDS(fresh)
+  attr(old, "hvti_provenance")$rendered_at <- NULL
+  expect_false("rendered_at" %in% names(attr(old, "hvti_provenance")))
+  oldpath <- hazard_set_path(root, "hp.rds")
+  saveRDS(old, oldpath)
+  # The downstream job reads both.
+  env <- new.env(parent = globalenv())
+  r <- run_setup(env = env)
+  read_new <- hvtiRtemplates:::.read_handoff(fresh, "hazard-moments", cfg, "the hm job")
+  read_old <- hvtiRtemplates:::.read_handoff(oldpath, "hazard-prediction", cfg, "the hp job")
+  expect_identical(read_new$lineage$rendered_at, stamp)
+  facts <- hvtiRtemplates:::.run_facts(r$job$run, data = lineage$data,
+                                       artifacts = list(read_new$record, read_old$record), cfg = cfg, envir = env)
+  by_file <- stats::setNames(facts$upstream, vapply(facts$upstream, function(u) basename(u$file), ""))
+  expect_identical(by_file[["hm.rds"]]$rendered_at, stamp)
+  expect_null(by_file[["hp.rds"]]$rendered_at)
+  expect_null(by_file[["hm.rds"]]$saved)
+  table <- hvtiRtemplates:::.run_table(facts)
+  row_new <- grep("hm.rds", table, value = TRUE, fixed = TRUE)
+  row_old <- grep("hp.rds", table, value = TRUE, fixed = TRUE)
+  expect_match(row_new, sub("T", " ", substr(stamp, 1L, 19L)), fixed = TRUE)
+  expect_match(row_new, substr(stamp, 20L, 24L), fixed = TRUE)
+  expect_match(row_old, "rendered not recorded", fixed = TRUE)
+  # The file's own modification time is not a stand-in for either.
+  expect_false(grepl(substr(read_old$record$mtime, 1L, 19L), row_old, fixed = TRUE))
 })
 
 test_that("the table holds every field, by group", {
@@ -205,7 +445,7 @@ test_that("a handoff read is listed as upstream with its job set, role, time and
   expect_identical(basename(up$file), "hm.rds")
   expect_identical(up$set, "dead_pa-hz")
   expect_identical(up$role, "hazard-moments")
-  expect_identical(up$saved, read$record$mtime)
+  expect_null(up$saved)
   expect_identical(up$dataset_version, basename(lineage$data[[1L]]$path))
   table <- paste(hvtiRtemplates:::.run_table(facts), collapse = "\n")
   expect_match(table, "Upstream", fixed = TRUE)

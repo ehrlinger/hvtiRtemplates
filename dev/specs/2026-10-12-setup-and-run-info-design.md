@@ -97,8 +97,10 @@ with no code. (This design first said it also lands in the HTML `dcterms.date`
 meta tag; Quarto 1.10.18 puts it in the title block only, measured while building
 it.) Templates carry their own `format:` block by rule, so the
 two lines go in each template, not a shared `_quarto.yml`. Jobs already in
-studies do not gain them; their render time still appears in the end table, which
-comes from `.job_setup()`.
+studies do not gain them, and gain neither the box nor the end table: an old
+four-chunk header never calls `.job_setup()`, so it starts no run record, and its
+provenance carries no `run`. (This design first promised those jobs the end table.
+Its compatibility test already expects none.)
 
 **The top box** is one line, as a callout under the title. It holds what Quarto
 cannot know:
@@ -108,6 +110,25 @@ cannot know:
 
 In a draft, it reads **draft** and gives the count of open markers and skipped
 chunks, so it points at the DRAFT banner the guard already prints.
+
+- **The box names data only when it can be resolved with certainty.** The box is
+  printed before the data are read, so it reads the job's own file: a literal
+  `ANALYSIS_SET <- "x"` names the analysis set (and the time it was written, when
+  its sidecar says), else a literal `DATASET <- "x"` or `'x'` names the dataset
+  (and its version file and registration date, when the manifest has them). If the
+  value is `NULL`, inherited from an upstream handoff, computed or not declared, the
+  box says "data: see About this run" and never guesses the study dataset, `built`.
+  The end table is the record of what was read. `bd`, which builds a dataset and
+  reads none, leaves the data clause out.
+- **The box cannot take back "final".** It is printed first, and a report can turn
+  out to be a draft after that: a `stop_here()` that the source scan could not see
+  and that runs, a scale not chosen in `lg`, an incomplete bootstrap pool, a figure
+  not drawn. Each calls one internal hook, `.run_mark_draft(reason)`. The run facts
+  are reconciled when they are emitted: status `draft`, `stopped_early` for a stop,
+  and `draft_reasons`; the end table's status reads draft and a callout above the
+  table, "This run ended as a draft", names each reason. A final render (strict)
+  still refuses a runtime `stop_here()`, so a final report cannot be truncated by
+  one.
 
 **The end table, "About this run",** is drawn in the existing `provenance`
 chunk, before the JSON is embedded:
@@ -124,6 +145,12 @@ chunk, before the JSON is embedded:
   record, the manifest entry (`extract_date`, `parquet`), the handoff lineage and
   `.provenance_data`. The new values are the start time, the duration, user,
   host, the seed and renv.
+- **The upstream render time is recorded, never inferred.** A handoff bundle's
+  lineage holds no producer timestamp of its own, and a file's modification time
+  changes on a copy or a touch. So a job that saves a bundle records `rendered_at`
+  in the bundle's lineage, the start of its own render from the run record, as ISO
+  8601 with a time zone. The end table shows it, or "not recorded" for a bundle
+  saved before this change. The file's modification time is never used.
 - **The same facts go into the embedded provenance JSON,** under `run`, so they
   are machine-readable too.
 - **No patient identifier and no data value appears.** The table holds names,

@@ -333,6 +333,8 @@ hvtiRtemplates:::.check_bag_identifiers(bag, .sel$id, paste("The bootstrap bag",
 if (!is.null(.shortfall)) {
   cat("\n::: {.callout-warning title=\"Provisional -- this pool is incomplete\"}\n")
   cat(.shortfall, "\n", sep = "")
+  # The box under the title was printed before this was known; the end table says draft.
+  hvtiRtemplates:::.run_mark_draft("the bootstrap pool is incomplete")
   cat(":::\n\n")
 }
 ```

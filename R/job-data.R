@@ -704,7 +704,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
       reduce = joined$reduce, join_key = joined$join_key, cohort_key = cohort_key
     ))
   }
-  .note_job_read(read$record, attr(record, "selection"), unique(notes), joined)
+  .note_job_read(read$record, attr(record, "selection"), read$notes, joined)
   list(data = kept$data, record = record, provenance = read$record,
        provenance_join = joined$provenance, attrition = attrition)
 }

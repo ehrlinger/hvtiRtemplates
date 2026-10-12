@@ -32,8 +32,12 @@ cannot pass for a whole one. \code{\link{render_job}} with
 stops while any remains. Both are found by reading the job's source, so they
 show in a diff and in review, as commented-out code does not. A
 \code{stop_here()} the source scan cannot see, as inside an \code{if ()} or
-called with an argument, refuses a final render itself when it runs, and in a
-draft is recorded in the report's provenance as a stop.
+called with an argument, refuses a final render itself when it runs. In a
+draft it is recorded in the report's provenance as a stop, the run facts
+there and in the "About this run" table report a draft that stopped early
+(the box under the title was printed before the stop ran, and still reads as
+it did at the start), and a notice above the table says the run ended as a
+draft and why.
 
 A \code{skip} must give a reason as a non-empty quoted string;
 \code{skip: true} is an error. A skipped chunk is neither run nor shown, so a

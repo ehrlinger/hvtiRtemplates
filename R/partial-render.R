@@ -17,8 +17,12 @@
 #' stops while any remains. Both are found by reading the job's source, so they
 #' show in a diff and in review, as commented-out code does not. A
 #' \code{stop_here()} the source scan cannot see, as inside an \code{if ()} or
-#' called with an argument, refuses a final render itself when it runs, and in a
-#' draft is recorded in the report's provenance as a stop.
+#' called with an argument, refuses a final render itself when it runs. In a
+#' draft it is recorded in the report's provenance as a stop, the run facts
+#' there and in the "About this run" table report a draft that stopped early
+#' (the box under the title was printed before the stop ran, and still reads as
+#' it did at the start), and a notice above the table says the run ended as a
+#' draft and why.
 #'
 #' A \code{skip} must give a reason as a non-empty quoted string;
 #' \code{skip: true} is an error. A skipped chunk is neither run nor shown, so a
@@ -54,10 +58,16 @@ stop_here <- function(envir = parent.frame()) {
     stop("stop_here() ran in a render with HVTI_TEMPLATE_STRICT set: a final report is the whole job. ",
          "Remove each skip and stop_here() first.", call. = FALSE)
   }
-  if (!any(vapply(.partial_state$points, function(p) identical(p$kind, "stop"), logical(1L)))) {
+  unseen <- !any(vapply(.partial_state$points, function(p) identical(p$kind, "stop"), logical(1L)))
+  if (unseen) {
     .partial_state$points <- c(.partial_state$points, list(list(
       line = NA_integer_, kind = "stop", reason = "the render stopped here, at a stop_here() the source scan did not find"
     )))
+    # A stop the source scan found is already in the PARTIAL callout and the box
+    # above it. One it did not find is in neither, and the box was printed before
+    # it ran, so it is marked as any runtime draft is: the facts say draft, and
+    # the end of the report says why.
+    .run_mark_draft("a stop_here() the source scan did not find ran, and everything below it is left out")
   }
   input <- get0(".in", envir = envir, ifnotfound = NULL)
   if (is.null(input)) input <- knitr::current_input(dir = TRUE)
