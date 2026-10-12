@@ -85,28 +85,18 @@ test_that("the model-column check accepts the `.` all-columns term", {
 test_that("LM set markers must agree with the rendered job filename", {
   qualifiers <- names(lm_qualifiers)
   expect_length(qualifiers, 8L)
-  template_dir <- system.file(
-    "templates", "30_analyses", package = "hvtiRtemplates"
-  )
-  if (!nzchar(template_dir)) {
-    template_dir <- testthat::test_path("..", "..", "inst", "templates", "30_analyses")
-  }
 
-  testthat::local_mocked_bindings(
-    current_input = function(...) file.path(tempdir(), "other-eda-lm.qmd"),
-    .package = "knitr"
-  )
+  # The name is checked inside a study, by the setup chunk, after the root is found.
+  root <- lm_study()
+  job <- file.path(root, "other-eda-lm.qmd")
+  writeLines("A finished job.", job)
+  testthat::local_mocked_bindings(current_input = function(...) job, .package = "knitr")
 
   for (qualifier in qualifiers) {
-    source <- readLines(file.path(template_dir, paste0("lm-", qualifier, ".qmd")),
-                        warn = FALSE)
     env <- new.env(parent = globalenv())
-    env$.root <- tempdir()
+    env$.root <- root
 
-    expect_error(
-      eval(parse(text = lm_chunk(source, "set")), envir = env),
-      "but declares SUBJECT", info = qualifier
-    )
+    expect_error(lm_run(qualifier, "set", env), "but declares SUBJECT", info = qualifier)
   }
 })
 

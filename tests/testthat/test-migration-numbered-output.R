@@ -1,9 +1,9 @@
 numbered_output_chunk <- function(job, label) {
   lines <- readLines(job)
   # A chunk holding an EDIT: marker is labeled edit-<label>; either names it.
-  start <- grep(paste0("^#\\| label: (edit-)?", label, "$"), lines)[[1L]]
+  start <- grep(paste0("^#\\| label: (edit-)?", setup_label(label), "$"), lines)[[1L]]  # nolint: object_usage_linter.
   end <- start + match("```", lines[-seq_len(start)])
-  parse(text = lines[seq.int(start + 1L, end - 1L)])
+  chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)  # nolint: object_usage_linter.
 }
 
 test_that("numbered migrated jobs save and embed figures in their logical folders", {
@@ -30,9 +30,9 @@ test_that("numbered migrated jobs save and embed figures in their logical folder
       labs = ggplot2::labs, scale_y_continuous = ggplot2::scale_y_continuous,
       scale_x_continuous = ggplot2::scale_x_continuous, coord_cartesian = ggplot2::coord_cartesian
     ))
+    eval(numbered_output_chunk(job, "set"), env)
     # The figure link is worked out from the job's own folder, as a render does.
     env$.in <- job
-    eval(numbered_output_chunk(job, "set"), env)
     if (trends) {
       eval(numbered_output_chunk(job, "edit-study-choices"), env)
       capture.output(eval(numbered_output_chunk(job, "tbl-data"), env))

@@ -96,9 +96,9 @@ test_that("dc-eda colors every point of an event panel, by the house rule or fro
   job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "eda")
   chunk <- function(label) {
     lines <- readLines(job, warn = FALSE)
-    start <- match(paste0("#| label: ", label), lines)
+    start <- match(paste0("#| label: ", setup_label(label)), lines)
     end <- start + match("```", lines[-seq_len(start)])
-    parse(text = lines[seq.int(start + 1L, end - 1L)])
+    chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)
   }
   # old = TRUE mimics the choices chunk of a job older than the COLORS rename.
   event_panel_colors <- function(colors, old = FALSE) {
@@ -160,9 +160,9 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
   suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
   lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   chunk <- function(label) {
-    start <- match(paste0("#| label: ", label), lines)
+    start <- match(paste0("#| label: ", setup_label(label)), lines)
     end <- start + match("```", lines[-seq_len(start)])
-    parse(text = lines[seq.int(start + 1L, end - 1L)])
+    chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)
   }
   run <- function(id = "ccfid", variables = NULL, key = id) {
     env <- new.env(parent = globalenv())
@@ -216,9 +216,9 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
 # the template's own code, not a package function's.
 eda_chunk <- function(label) {
   lines <- readLines(template_path("dc", "eda"), warn = FALSE)
-  start <- match(paste0("#| label: ", label), lines)
+  start <- match(paste0("#| label: ", setup_label(label)), lines)  # nolint: object_usage_linter.
   end <- start + match("```", lines[-seq_len(start)])
-  parse(text = lines[seq.int(start + 1L, end - 1L)])
+  chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)  # nolint: object_usage_linter.
 }
 
 # The choices the spec chunk reads, with a stand-in label_map(); `...` replaces
@@ -318,9 +318,9 @@ test_that("dc-eda's overview leaves out identifiers but keeps dates", {
   # the overview applies the rule itself.
   lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   chunk <- function(label) {
-    start <- match(paste0("#| label: ", label), lines)
+    start <- match(paste0("#| label: ", setup_label(label)), lines)
     end <- start + match("```", lines[-seq_len(start)])
-    parse(text = lines[seq.int(start + 1L, end - 1L)])
+    chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)
   }
   n <- 12L
   env <- list2env(list(d = data.frame(year = seq_len(n), age = 40 + seq_len(n), ccfid = 1000L + seq_len(n),

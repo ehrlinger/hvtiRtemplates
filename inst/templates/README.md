@@ -403,9 +403,9 @@ by searching for `EDIT:`, and the guard below lists them all. The comments aroun
 to type — several exist because the alternative fails quietly rather than
 loudly.
 
-**That property is enforced, not merely stated.** Each template carries an
-`guard-edits` chunk that scans the rendering file for markers and lists the ones
-it found. Until 1.0.5 it was a convention only, and an unedited `ac` template
+**That property is enforced, not merely stated.** Each template's
+single `setup` chunk runs a guard that scans the rendering file for markers and
+lists the ones it found. Until 1.0.5 it was a convention only, and an unedited `ac` template
 rendered green over a meaningless stratification: the `derive` chunk, now `edit-derive`, indexed a
 placeholder column, and when a column is absent `!is.na(d$<col>)` is
 `logical(0)`, which makes the assignment a **silent no-op** rather than an
@@ -458,3 +458,42 @@ The guard does not catch a marker that was worked *wrongly* — a placeholder
 replaced with a mistyped column name leaves nothing to scan for. That case is
 covered separately, by assertions in `derive_cats()` and against `DERIVED`,
 which fail when a named column is not in the data.
+
+## What every report says about its run
+
+A template opens with one `setup` chunk, where it used to open with four
+(`setup`, `guard-edits`, `guard-partial` and `set`). The chunk declares
+`SUBJECT` and `TYPE`, attaches the template's packages and calls
+`hvtiRtemplates:::.job_setup()`, which finds the study root, sources the study's
+`R/`, runs the guards, checks the file name against `SUBJECT` and `TYPE` and
+starts the run record. The report therefore opens with one "Code" fold. A job
+scaffolded before 1.3.1 keeps its four chunks and renders as it did, without the
+run information below.
+
+Every report says four things about the run that made it.
+
+- **The render date**, in the title block (`date: now` in the template's own
+  front matter, shown as `YYYY-MM-DD HH:mm`).
+- **A one-line box under the title:** whether the report is final or a draft
+  (with the count of open `EDIT:` markers and skipped chunks), the dataset and
+  its dated version file with the date it was registered, who rendered the
+  report and on which host, and the hvtiRtemplates version. The box is printed
+  before the job reads its data, so its dataset is the one the job's file
+  declares (`DATASET <- "name"`) or, failing that, the study dataset, `built`;
+  the table below is the record of what was read.
+- **An "About this run" table as the last section,** unnumbered so it moves no
+  figure or table number: the run (start and end with time zone, duration,
+  status, user, host), the job (file, template, subject, type, hvtiRtemplates
+  version), each dataset read (registered name, version file, registration date,
+  source file, rows and patients kept, `WHERE`, the first 12 characters of the
+  sha256, and whether a newer source file is waiting), each upstream handoff
+  (the set it was saved in, its role, when it was saved and the dataset version
+  it was built from), the seed when the job sets `SEED`, and whether renv is
+  active with the first 12 characters of `renv.lock`'s sha256. It holds names,
+  dates, counts and hashes, never a patient identifier or a data value.
+- **The same facts in the provenance JSON,** under `run`.
+
+The user and host are the person's login name and the machine's name, and a
+report shared outside the group carries them. `HVTI_RUN_USER` and
+`HVTI_RUN_HOST` replace the two (the template gallery sets both to `gallery`,
+so the published reports name no one).

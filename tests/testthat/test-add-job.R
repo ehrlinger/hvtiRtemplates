@@ -305,8 +305,9 @@ test_that("the ac template resolves artifact paths from its set markers", {
   # would need a path edited by hand -- the mistake the markers exist to
   # prevent.
   txt <- readLines(template_path("ac"), warn = FALSE)
-  expect_true(any(grepl("set_path <- function\\(kind, file\\)", txt)))
-  expect_true(any(grepl("paste0\\(SUBJECT, \"-\", TYPE\\)", txt)))
+  expect_true(any(grepl("^set_path <- \\.job\\$set_path$", txt)))
+  # .job_setup() builds set_path() from SUBJECT and TYPE, the set key.
+  expect_match(paste(deparse(body(hvtiRtemplates:::.job_setup)), collapse = "\n"), "SUBJECT.*\"-\".*TYPE")
 })
 
 test_that("template artifact paths follow a numbered study layout", {
@@ -321,12 +322,14 @@ test_that("template artifact paths follow a numbered study layout", {
     # produces the study's dataset, not an artifact under SUBJECT-TYPE.
     if (basename(template) == "bd.qmd") next
     lines <- readLines(template, warn = FALSE)
-    label <- grep("^#\\| label: set$", lines)
-    end <- label + which(lines[-seq_len(label)] == "```")[[1L]]
-    code <- parse(text = lines[(label + 1L):(end - 1L)])
+    subject <- sub('^SUBJECT\\s+<- "(.*)"$', "\\1", grep("^SUBJECT\\s+<- ", lines, value = TRUE))
+    type <- sub('^TYPE\\s+<- "(.*)"$', "\\1", grep("^TYPE\\s+<- ", lines, value = TRUE))
     env <- new.env(parent = globalenv())
+    # Outside a render, setup finds the study from the working directory.
+    withr::with_dir(root, utils::capture.output(env$set_path <- hvtiRtemplates:::.job_setup(subject, type, envir = env)$set_path))
+    env$SUBJECT <- subject
+    env$TYPE <- type
     env$.root <- root
-    eval(code, envir = env)
 
     path <- env$set_path("estimates", "result.rds")
 

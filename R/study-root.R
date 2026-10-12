@@ -1,4 +1,4 @@
-# The study root for a template's setup chunk, with a message a new analyst can
+# The study root for a template's setup (.job_setup()), with a message a new analyst can
 # act on. hvtiRutilities::study_root()'s own message points to a server-side
 # recovery command, which is the wrong first step for a study never set up.
 # Only a study with no _study.yml gets that message; any other failure, such as

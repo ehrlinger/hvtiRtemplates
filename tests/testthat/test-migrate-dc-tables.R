@@ -122,9 +122,9 @@ test_that("the study dataset is selected as \"built\", by either name or by its 
 
 tables_chunk <- function(job, label) {
   lines <- readLines(job, warn = FALSE)
-  start <- match(paste0("#| label: ", label), lines)
+  start <- match(paste0("#| label: ", setup_label(label)), lines)  # nolint: object_usage_linter.
   end <- start + match("```", lines[-seq_len(start)])
-  parse(text = lines[seq.int(start + 1L, end - 1L)])
+  chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)  # nolint: object_usage_linter.
 }
 
 test_that("dc-tables refuses a set cut from another dataset and reads a named registered dataset", {

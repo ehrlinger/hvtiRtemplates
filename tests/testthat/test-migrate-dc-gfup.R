@@ -10,10 +10,10 @@ gfup_evidence <- function(root, extra = character()) {
 
 gfup_chunk <- function(job, label) {
   lines <- readLines(job, warn = FALSE)
-  start <- match(paste0("#| label: ", label), lines)
+  start <- match(paste0("#| label: ", setup_label(label)), lines)  # nolint: object_usage_linter.
   if (is.na(start)) stop("Missing chunk: ", label)
   end <- start + match("```", lines[-seq_len(start)])
-  parse(text = lines[seq.int(start + 1L, end - 1L)])
+  chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)  # nolint: object_usage_linter.
 }
 
 gfup_env <- function(d) {

@@ -10,11 +10,17 @@ nb_template <- function() {
 # Evaluate chunks `labels` in `env`; `choices` overwrite edit-study-choices.
 nb_run <- function(labels, env, choices = list()) {
   src <- readLines(nb_template(), warn = FALSE)
-  for (label in labels) {
+  # "set" is the old name of the setup chunk, and a list that names both runs it once.
+  for (label in unique(vapply(labels, setup_label, ""))) {  # nolint: object_usage_linter.
     at <- which(trimws(src) == paste0("#| label: ", label))
     if (length(at) != 1L) stop("chunk '", label, "' found ", length(at), " times", call. = FALSE)
     end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
-    suppressMessages(eval(parse(text = src[(at + 1L):(end - 1L)]), envir = env))
+    code <- src[(at + 1L):(end - 1L)]
+    if (identical(label, "setup")) {
+      eval_setup_chunk(code, env)  # nolint: object_usage_linter.
+    } else {
+      suppressMessages(eval(parse(text = code), envir = env))
+    }
     if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   }
   invisible(env)
@@ -83,13 +89,14 @@ nb_env <- function(root, parent = globalenv()) {
   env
 }
 
-# The setup chunk without the lines that need a study or attach packages.
+# The setup chunk without the lines that need a study or attach packages: what
+# is left is the version floors.
 nb_setup_code <- function() {
   src <- readLines(nb_template(), warn = FALSE)
   at <- which(trimws(src) == "#| label: setup")
   end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
   setup <- src[(at + 1L):(end - 1L)]
-  setup[!grepl("find_study_root|list.files|library\\(", setup)]
+  setup[!grepl("^\\.in <-|^\\.job|^\\.root <-|^set_path <-|library\\(", setup)]
 }
 
 # The real packages are installed, so the mocked version is the only thing that

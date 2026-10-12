@@ -1,5 +1,7 @@
 ---
 title: "Binary-treatment propensity model"
+date: now
+date-format: "YYYY-MM-DD HH:mm"
 format:
   html:
     theme: cosmo
@@ -19,10 +21,10 @@ stacked imputations and the scored columns used by matching and weighting jobs.
 
 ```{r}
 #| label: setup
+#| results: asis
+SUBJECT  <- "treatment"
+TYPE     <- "propensity"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
-for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
@@ -30,61 +32,17 @@ suppressPackageStartupMessages({
 if (utils::packageVersion("hvtiRpropensity") < "0.1.10") {
   stop("This template needs hvtiRpropensity >= 0.1.10.", call. = FALSE)
 }
-```
-
-```{r}
-#| label: guard-edits
-#| results: asis
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    .msg <- paste0(length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-                   paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"))
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      warning(.msg, "\nRendering as a draft; remove every marker for a final result.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n", .msg, "\n:::\n", sep = "")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'.", call. = FALSE)
-    }
-  }
-}
-```
-
-```{r}
-#| label: guard-partial
-#| results: asis
-# unnumbered: a callout, printed only when part of the job is left out
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
-```
-
-```{r}
-#| label: set
-SUBJECT  <- "treatment"
-TYPE     <- "propensity"
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject,
-         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
-         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.", call. = FALSE)
-  }
-}
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root), paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
 
 ```{r}
@@ -236,6 +194,7 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
+  run = .job$run,
   extra = list(
     subject = SUBJECT, type = TYPE,
     analysis = .fit_provenance$analysis, cohort = .fit_provenance$cohort

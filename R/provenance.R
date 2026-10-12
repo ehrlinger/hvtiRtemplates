@@ -636,11 +636,9 @@
   if (!identical(before[c("bytes", "sha256")], after[c("bytes", "sha256")])) {
     stop("The artifact changed while it was read; discard this render and read it again.", call. = FALSE)
   }
-  list(
-    value = value,
-    record = before,
-    lineage = .validate_handoff_lineage(value, path, rebuild)
-  )
+  lineage <- .validate_handoff_lineage(value, path, rebuild)
+  .note_handoff(before, lineage)
+  list(value = value, record = before, lineage = lineage)
 }
 
 # A bag or chunk comes from a bootstrap runner, which attaches its lineage and
@@ -656,7 +654,9 @@
     stop("The bootstrap artifact '", path, "' has no carried lineage. Rerun its bootstrap runner, which attaches it.",
          call. = FALSE)
   }
-  list(value = value, record = before, lineage = .validate_handoff_lineage(value, path, "the bootstrap runner"))
+  lineage <- .validate_handoff_lineage(value, path, "the bootstrap runner")
+  .note_handoff(before, lineage)
+  list(value = value, record = before, lineage = lineage)
 }
 
 .combine_handoff_lineage <- function(lineages = list(), data = list(),
@@ -901,7 +901,11 @@
   ))
 }
 
-.embed_provenance <- function(input, data, artifacts = list(), extra = list(), cfg = hvtiRutilities::study_config()) {
+# With `run`, the run record .job_setup() returned, the report also gets its
+# "About this run" table ahead of the JSON, and the same facts go into the JSON
+# under `run`. `envir` is where the job's SEED is looked for.
+.embed_provenance <- function(input, data, artifacts = list(), extra = list(), cfg = hvtiRutilities::study_config(),
+                              run = NULL, envir = parent.frame()) {
   if (is.null(input)) .not_rendered_abort()
   root <- normalizePath(cfg$root, winslash = "/", mustWork = TRUE)
   project <- Sys.getenv("QUARTO_PROJECT_DIR", unset = NA_character_)
@@ -923,6 +927,8 @@
   # the stop, as .guard_partial() recorded them for this render.
   partial <- .partial_state$points
   if (length(partial)) extra$partial <- partial
+  facts <- if (!is.null(run)) .run_facts(run, data, artifacts, cfg, envir)
+  if (!is.null(facts)) extra$run <- facts
   payload <- hvtiRutilities::capture_provenance(
     job = tools::file_path_sans_ext(basename(source)),
     data = data,
@@ -934,7 +940,8 @@
     )),
     cfg = cfg
   )
-  .provenance_html(payload)
+  html <- .provenance_html(payload)
+  if (is.null(facts)) html else paste(c(.run_table(facts), html), collapse = "\n")
 }
 
 .provenance_post_render <- function(root = Sys.getenv("QUARTO_PROJECT_DIR", unset = getwd()), outputs = NULL) {

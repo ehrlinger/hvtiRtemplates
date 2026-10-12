@@ -226,6 +226,18 @@ results folders stay `<subject>-<type>/`.
 `add_job()` substitutes both after copying, and hard-stops if either is missing, duplicated, or
 moved — a template that fails this check cannot be scaffolded at all.
 
+**A template opens with ONE chunk, labeled `setup`, ahead of its study choices.** It declares `SUBJECT`
+and `TYPE`, sets `.in`, attaches the template's packages and checks their version floors, then calls
+`hvtiRtemplates:::.job_setup()`, takes `.root` and `set_path` from the result, starts
+`.provenance_data`, and ends on `.job$notice` so the report shows one "Code" fold. `.job_setup()` finds
+the study root, sources the study's `R/`, runs the marker and partial-render guards, checks the file
+name and starts the run record that the top box and the "About this run" table read. There is no
+`guard-edits`, `guard-partial` or `set` chunk: a change to a guard is a change to `R/job-setup.R`, not
+34 edits. The `provenance` chunk passes `run = .job$run`. `.find_study_root`, `.guard_partial` and
+`.job_name_fields` stay because jobs already in studies still carry the four old chunks.
+`inst/templates/README.md` ("What every report says about its run") has the rest. The tests that run
+chunks by label map `set` to `setup` in `tests/testthat/helper-setup.R`.
+
 ## Gotchas
 
 - **`object_usage_linter` can never pass inside `inst/templates/`.** The templates call
