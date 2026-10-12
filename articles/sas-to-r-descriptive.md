@@ -129,8 +129,8 @@ render_job(job, final = TRUE)
 
 [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
 runs Quarto from the job’s own directory, so the same call works for
-adopted and numbered study layouts. A final render fails at the
-`guard-edits` chunk with the unresolved list.
+adopted and numbered study layouts. A final render fails at the `setup`
+chunk with the unresolved list.
 
 ## Which data a job reads
 
