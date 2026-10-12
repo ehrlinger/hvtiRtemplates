@@ -31,7 +31,7 @@ catalog <- template_catalog()
 table(catalog$status)
 #> 
 #> in-flight    queued   revisit   shipped 
-#>         1        32         1        31 
+#>         1        31         1        32 
 
 # Templates that still scaffold but name a replacement.
 catalog[!is.na(catalog$deprecated_by), c("prefix", "qualifier", "deprecated_by")]

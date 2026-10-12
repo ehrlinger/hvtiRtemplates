@@ -28,8 +28,8 @@ existing file, because a job accumulates a study’s edits.
 
 Each template carries a light.
 
-- 🟢 **Shipped** (31): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (21): on disk but being reworked, or scheduled into
+- 🟢 **Shipped** (32): on disk and supported. Scaffold it and use it.
+- 🟡 **In progress** (20): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
 - 🔴 **Not yet on the way** (13): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
@@ -58,6 +58,7 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `dc-stddiff` | The balance table: the standardized difference of each baseline variable between two groups, unadjusted and, when the study has them, in the matched set and under matching weights, with an optional permutation reference. | `add_job("dc", subject, type, qualifier = "stddiff")` |
 | 🟢 Shipped | `dc-tables` | The formatted descriptive table: every reported variable under its section heading, categorical as n (%) and continuous as the summary you choose, written to Word. | `add_job("dc", subject, type, qualifier = "tables")` |
 | 🟢 Shipped | `dc-trends` | How the cohort changed over the years of operation: the share with a characteristic, or the level of a measurement, year by year with a smooth. | `add_job("dc", subject, type, qualifier = "trends")` |
+| 🟢 Shipped | `lg` | Calibrates a continuous or ordinal covariate against an event: it groups the covariate, takes each group’s event rate on a logit or constant-hazard scale, and plots it against six candidate scales of the covariate, so the analyst can pick the straightest and save the term for an lm job’s PREDICTORS. | `add_job("lg", subject, type)` |
 
 ### distributions
 
@@ -111,7 +112,6 @@ as zero.
 | Delivery | Template | Description | SAS jobs | Waiting on |
 |:---|:---|:---|:---|:---|
 | 🟡 In progress | `ar` | Analysis report | 394 |  |
-| 🟡 In progress | `lg` | Logit calibration | 362 |  |
 | 🟡 In progress | `nd` | Non-linear distributions | 244 |  |
 | 🟡 In progress | `np` | Non-linear plot | 241 |  |
 | 🟡 In progress | `dc-variable` | Distribution of a variable | 237 |  |

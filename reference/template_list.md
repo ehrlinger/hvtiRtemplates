@@ -69,33 +69,34 @@ tl
 #> 5             dc.stddiff     dc            stddiff   descriptive
 #> 6              dc.tables     dc             tables   descriptive
 #> 7              dc.trends     dc             trends   descriptive
-#> 8                     ac     ac               <NA> distributions
-#> 9                     hz     hz               <NA> distributions
-#> 10                    bc     bc               <NA>      analyses
-#> 11                    bh     bh               <NA>      analyses
-#> 12                    bl     bl               <NA>      analyses
-#> 13                    br     br               <NA>      analyses
-#> 14                    hm     hm               <NA>      analyses
-#> 15    lm.balancing_count     lm    balancing_count      analyses
-#> 16             lm.binary     lm             binary      analyses
-#> 17          lm.checkpred     lm          checkpred      analyses
-#> 18            lm.nominal     lm            nominal      analyses
-#> 19            lm.ordinal     lm            ordinal      analyses
-#> 20  lm.propensity_binary     lm  propensity_binary      analyses
-#> 21 lm.propensity_nominal     lm propensity_nominal      analyses
-#> 22 lm.propensity_ordinal     lm propensity_ordinal      analyses
-#> 23         nb.boostmtree     nb         boostmtree      analyses
-#> 24           rfc.explain    rfc            explain      analyses
-#> 25               rfc.fit    rfc                fit      analyses
-#> 26           rfr.explain    rfr            explain      analyses
-#> 27               rfr.fit    rfr                fit      analyses
-#> 28           rfs.explain    rfs            explain      analyses
-#> 29               rfs.fit    rfs                fit      analyses
-#> 30                    hp     hp               <NA>        graphs
-#> 31        hs.concordance     hs        concordance        graphs
-#> 32              hs.setup     hs              setup        graphs
-#> 33             lp.mirror     lp             mirror        graphs
-#> # 33 templates; `call` and `file` not shown. Read them with $call and $file.
+#> 8                     lg     lg               <NA>   descriptive
+#> 9                     ac     ac               <NA> distributions
+#> 10                    hz     hz               <NA> distributions
+#> 11                    bc     bc               <NA>      analyses
+#> 12                    bh     bh               <NA>      analyses
+#> 13                    bl     bl               <NA>      analyses
+#> 14                    br     br               <NA>      analyses
+#> 15                    hm     hm               <NA>      analyses
+#> 16    lm.balancing_count     lm    balancing_count      analyses
+#> 17             lm.binary     lm             binary      analyses
+#> 18          lm.checkpred     lm          checkpred      analyses
+#> 19            lm.nominal     lm            nominal      analyses
+#> 20            lm.ordinal     lm            ordinal      analyses
+#> 21  lm.propensity_binary     lm  propensity_binary      analyses
+#> 22 lm.propensity_nominal     lm propensity_nominal      analyses
+#> 23 lm.propensity_ordinal     lm propensity_ordinal      analyses
+#> 24         nb.boostmtree     nb         boostmtree      analyses
+#> 25           rfc.explain    rfc            explain      analyses
+#> 26               rfc.fit    rfc                fit      analyses
+#> 27           rfr.explain    rfr            explain      analyses
+#> 28               rfr.fit    rfr                fit      analyses
+#> 29           rfs.explain    rfs            explain      analyses
+#> 30               rfs.fit    rfs                fit      analyses
+#> 31                    hp     hp               <NA>        graphs
+#> 32        hs.concordance     hs        concordance        graphs
+#> 33              hs.setup     hs              setup        graphs
+#> 34             lp.mirror     lp             mirror        graphs
+#> # 34 templates; `call` and `file` not shown. Read them with $call and $file.
 
 # Every template, where its job is written, and the call that scaffolds it.
 tl[, c("name", "folder", "call")]
@@ -107,32 +108,33 @@ tl[, c("name", "folder", "call")]
 #> 5             dc.stddiff   descriptive
 #> 6              dc.tables   descriptive
 #> 7              dc.trends   descriptive
-#> 8                     ac distributions
-#> 9                     hz distributions
-#> 10                    bc      analyses
-#> 11                    bh      analyses
-#> 12                    bl      analyses
-#> 13                    br      analyses
-#> 14                    hm      analyses
-#> 15    lm.balancing_count      analyses
-#> 16             lm.binary      analyses
-#> 17          lm.checkpred      analyses
-#> 18            lm.nominal      analyses
-#> 19            lm.ordinal      analyses
-#> 20  lm.propensity_binary      analyses
-#> 21 lm.propensity_nominal      analyses
-#> 22 lm.propensity_ordinal      analyses
-#> 23         nb.boostmtree      analyses
-#> 24           rfc.explain      analyses
-#> 25               rfc.fit      analyses
-#> 26           rfr.explain      analyses
-#> 27               rfr.fit      analyses
-#> 28           rfs.explain      analyses
-#> 29               rfs.fit      analyses
-#> 30                    hp        graphs
-#> 31        hs.concordance        graphs
-#> 32              hs.setup        graphs
-#> 33             lp.mirror        graphs
+#> 8                     lg   descriptive
+#> 9                     ac distributions
+#> 10                    hz distributions
+#> 11                    bc      analyses
+#> 12                    bh      analyses
+#> 13                    bl      analyses
+#> 14                    br      analyses
+#> 15                    hm      analyses
+#> 16    lm.balancing_count      analyses
+#> 17             lm.binary      analyses
+#> 18          lm.checkpred      analyses
+#> 19            lm.nominal      analyses
+#> 20            lm.ordinal      analyses
+#> 21  lm.propensity_binary      analyses
+#> 22 lm.propensity_nominal      analyses
+#> 23 lm.propensity_ordinal      analyses
+#> 24         nb.boostmtree      analyses
+#> 25           rfc.explain      analyses
+#> 26               rfc.fit      analyses
+#> 27           rfr.explain      analyses
+#> 28               rfr.fit      analyses
+#> 29           rfs.explain      analyses
+#> 30               rfs.fit      analyses
+#> 31                    hp        graphs
+#> 32        hs.concordance        graphs
+#> 33              hs.setup        graphs
+#> 34             lp.mirror        graphs
 #>                                                                            call
 #> 1                              add_job("bd", subject = "study", type = "build")
 #> 2                           add_job("dc.eda", subject = "cohort", type = "eda")
@@ -141,32 +143,33 @@ tl[, c("name", "folder", "call")]
 #> 5                   add_job("dc.stddiff", subject = "cohort", type = "balance")
 #> 6                        add_job("dc.tables", subject = "cohort", type = "eda")
 #> 7                        add_job("dc.trends", subject = "cohort", type = "eda")
-#> 8                               add_job("ac", subject = "dead_pa", type = "hz")
-#> 9                               add_job("hz", subject = "dead_pa", type = "hz")
-#> 10                              add_job("bc", subject = "dead_pa", type = "hz")
-#> 11                              add_job("bh", subject = "dead_pa", type = "hz")
-#> 12                              add_job("bl", subject = "dead_pa", type = "hz")
-#> 13                              add_job("br", subject = "dead_pa", type = "hz")
-#> 14                              add_job("hm", subject = "dead_pa", type = "hz")
-#> 15      add_job("lm.balancing_count", subject = "exposure", type = "balancing")
-#> 16                 add_job("lm.binary", subject = "outcome", type = "analysis")
-#> 17              add_job("lm.checkpred", subject = "outcome", type = "analysis")
-#> 18                add_job("lm.nominal", subject = "outcome", type = "analysis")
-#> 19                add_job("lm.ordinal", subject = "outcome", type = "analysis")
-#> 20  add_job("lm.propensity_binary", subject = "treatment", type = "propensity")
-#> 21 add_job("lm.propensity_nominal", subject = "treatment", type = "propensity")
-#> 22 add_job("lm.propensity_ordinal", subject = "treatment", type = "propensity")
-#> 23                   add_job("nb.boostmtree", subject = "lvef", type = "boost")
-#> 24                       add_job("rfc.explain", subject = "dead", type = "rfc")
-#> 25                           add_job("rfc.fit", subject = "dead", type = "rfc")
-#> 26                        add_job("rfr.explain", subject = "los", type = "rfr")
-#> 27                            add_job("rfr.fit", subject = "los", type = "rfr")
-#> 28                       add_job("rfs.explain", subject = "dead", type = "rfs")
-#> 29                           add_job("rfs.fit", subject = "dead", type = "rfs")
-#> 30                              add_job("hp", subject = "dead_pa", type = "hz")
-#> 31                  add_job("hs.concordance", subject = "dead_pa", type = "hz")
-#> 32                        add_job("hs.setup", subject = "dead_pa", type = "hz")
-#> 33             add_job("lp.mirror", subject = "treatment", type = "propensity")
+#> 8                         add_job("lg", subject = "dead", type = "calibration")
+#> 9                               add_job("ac", subject = "dead_pa", type = "hz")
+#> 10                              add_job("hz", subject = "dead_pa", type = "hz")
+#> 11                              add_job("bc", subject = "dead_pa", type = "hz")
+#> 12                              add_job("bh", subject = "dead_pa", type = "hz")
+#> 13                              add_job("bl", subject = "dead_pa", type = "hz")
+#> 14                              add_job("br", subject = "dead_pa", type = "hz")
+#> 15                              add_job("hm", subject = "dead_pa", type = "hz")
+#> 16      add_job("lm.balancing_count", subject = "exposure", type = "balancing")
+#> 17                 add_job("lm.binary", subject = "outcome", type = "analysis")
+#> 18              add_job("lm.checkpred", subject = "outcome", type = "analysis")
+#> 19                add_job("lm.nominal", subject = "outcome", type = "analysis")
+#> 20                add_job("lm.ordinal", subject = "outcome", type = "analysis")
+#> 21  add_job("lm.propensity_binary", subject = "treatment", type = "propensity")
+#> 22 add_job("lm.propensity_nominal", subject = "treatment", type = "propensity")
+#> 23 add_job("lm.propensity_ordinal", subject = "treatment", type = "propensity")
+#> 24                   add_job("nb.boostmtree", subject = "lvef", type = "boost")
+#> 25                       add_job("rfc.explain", subject = "dead", type = "rfc")
+#> 26                           add_job("rfc.fit", subject = "dead", type = "rfc")
+#> 27                        add_job("rfr.explain", subject = "los", type = "rfr")
+#> 28                            add_job("rfr.fit", subject = "los", type = "rfr")
+#> 29                       add_job("rfs.explain", subject = "dead", type = "rfs")
+#> 30                           add_job("rfs.fit", subject = "dead", type = "rfs")
+#> 31                              add_job("hp", subject = "dead_pa", type = "hz")
+#> 32                  add_job("hs.concordance", subject = "dead_pa", type = "hz")
+#> 33                        add_job("hs.setup", subject = "dead_pa", type = "hz")
+#> 34             add_job("lp.mirror", subject = "treatment", type = "propensity")
 
 # Find a template by its qualifier, then copy its call: the follow-up jobs.
 subset(tl, qualifier == "gfup", c(name, folder, call))
