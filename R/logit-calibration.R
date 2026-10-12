@@ -407,6 +407,19 @@
 # returns the event and follow-up as they are. `counts` reports what was read, left
 # out before the start or for want of follow-up, kept, censored at the end and the
 # events that fell after it, never a patient.
+# Follow-up is a duration, so a negative value is a data error. It is refused
+# rather than used: a hazard would sum it into time at risk, and a window with a
+# start below 0 would even turn it positive. Counts only, never values.
+.lg_follow_up <- function(x, name) {
+  negative <- sum(x < 0, na.rm = TRUE)
+  if (negative) {
+    stop(negative, if (negative == 1L) " patient has" else " patients have", " negative follow-up in ", name,
+         ". Follow-up is a duration and cannot be below 0: correct the data, or change TIME in edit-study-choices.",
+         call. = FALSE)
+  }
+  invisible(x)
+}
+
 .lg_interval <- function(d, event, time, interval) {
   e <- .lg_event(d[[event]])
   if (is.null(interval)) {
@@ -415,13 +428,16 @@
   if (!is.numeric(interval) || length(interval) != 2L || anyNA(interval) || interval[[1L]] >= interval[[2L]]) {
     stop("INTERVAL must be NULL or c(start, end) with start below end, such as c(0.25, 5).", call. = FALSE)
   }
+  if (interval[[1L]] < 0) {
+    stop("INTERVAL must have a start of 0 or later: follow-up is measured from 0.", call. = FALSE)
+  }
   if (is.null(time)) stop("INTERVAL needs TIME, the follow-up column.", call. = FALSE)
   if (!time %in% names(d)) {
     stop("TIME names a column this dataset does not have: ", time, ". Change TIME in edit-study-choices.", call. = FALSE)
   }
   start <- interval[[1L]]
   end <- interval[[2L]]
-  follow <- d[[time]]
+  follow <- .lg_follow_up(d[[time]], time)
   before <- !is.na(follow) & follow < start
   missing <- is.na(follow)
   kept <- !before & !missing

@@ -310,6 +310,7 @@ if (.id %in% c(EVENT, if (.needs_time) TIME)) {
 if (.needs_time && !is.numeric(d[[TIME]])) {
   stop("TIME must be a number, the follow-up in years or months: `", TIME, "` is not numeric.", call. = FALSE)
 }
+if (.needs_time) hvtiRtemplates:::.lg_follow_up(d[[TIME]], TIME)
 # INTERVAL leaves patients out and censors the rest before anything else is
 # computed, so the constants and the groups below are those of the patients
 # calibrated, and the event and follow-up the tables read are the windowed ones.

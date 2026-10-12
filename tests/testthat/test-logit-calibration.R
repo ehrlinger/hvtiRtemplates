@@ -465,6 +465,17 @@ test_that(".lg_variables() stops when a group has fewer than 5 patients, naming 
                                               time = c(1, 1, 1, 1, rep(NA, 16L))), "smallest has 2")
 })
 
+test_that(".lg_interval() refuses a negative start and negative follow-up", {
+  d <- data.frame(dead = c(1L, 0L, 1L), iv_dead = c(-1, 2, 6))
+  # A negative start would turn a negative follow-up into positive time at risk.
+  expect_error(hvtiRtemplates:::.lg_interval(d, "dead", "iv_dead", c(-2, 5)), "start of 0 or later")
+  # Follow-up cannot be negative, window or not; the message counts, never shows, the values.
+  e <- expect_error(hvtiRtemplates:::.lg_interval(d, "dead", "iv_dead", c(0, 5)), "1 patient has negative follow-up")
+  expect_false(grepl("-1", conditionMessage(e), fixed = TRUE))
+  expect_error(hvtiRtemplates:::.lg_follow_up(d$iv_dead, "iv_dead"), "1 patient has negative follow-up")
+  expect_silent(hvtiRtemplates:::.lg_follow_up(c(0, 2, NA), "iv_dead"))
+})
+
 test_that(".lg_interval() drops patients who ended before the start and censors the rest at the end", {
   # Eight patients, the window c(0.25, 5), worked by hand:
   #   id   follow-up  event  what happens
