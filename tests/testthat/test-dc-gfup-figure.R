@@ -59,9 +59,9 @@ refused_chunks <- function(s) {
   out <- withCallingHandlers(
     utils::capture.output(for (label in c("set", "edit-study-choices", "tbl-data", "qc", "tbl-qc-followup", "window",
                                           "figures")) {
-      start <- match(paste0("#| label: ", setup_label(label)), lines)
+      start <- match(paste0("#| label: ", setup_label(label)), lines)  # nolint: object_usage_linter.
       end <- start + match("```", lines[-seq_len(start)])
-      eval(chunk_expression(lines[seq.int(start + 1L, end - 1L)], label), env)
+      eval(chunk_expression(lines[seq.int(start + 1L, end - 1L)], label), env)  # nolint: object_usage_linter.
     }),
     warning = function(w) {
       if (grepl("figure was not drawn", conditionMessage(w), fixed = TRUE)) {

@@ -18,12 +18,16 @@ hazard_template <- function(name) {
 hazard_run <- function(prefix, labels, env, choices = list()) {
   src <- readLines(hazard_template(prefix), warn = FALSE)
   # "set" is the old name of the setup chunk, and a list that names both runs it once.
-  for (label in unique(vapply(labels, setup_label, ""))) {
+  for (label in unique(vapply(labels, setup_label, ""))) {  # nolint: object_usage_linter.
     at <- which(trimws(src) == paste0("#| label: ", label))
     if (length(at) != 1L) stop("chunk '", label, "' found ", length(at), " times", call. = FALSE)
     end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
     code <- src[(at + 1L):(end - 1L)]
-    if (identical(label, "setup")) eval_setup_chunk(code, env) else suppressMessages(eval(parse(text = code), envir = env))
+    if (identical(label, "setup")) {
+      eval_setup_chunk(code, env)  # nolint: object_usage_linter.
+    } else {
+      suppressMessages(eval(parse(text = code), envir = env))
+    }
     if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   }
   invisible(env)

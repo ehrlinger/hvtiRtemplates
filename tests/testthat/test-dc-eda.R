@@ -216,9 +216,9 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
 # the template's own code, not a package function's.
 eda_chunk <- function(label) {
   lines <- readLines(template_path("dc", "eda"), warn = FALSE)
-  start <- match(paste0("#| label: ", setup_label(label)), lines)
+  start <- match(paste0("#| label: ", setup_label(label)), lines)  # nolint: object_usage_linter.
   end <- start + match("```", lines[-seq_len(start)])
-  chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)
+  chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)  # nolint: object_usage_linter.
 }
 
 # The choices the spec chunk reads, with a stand-in label_map(); `...` replaces

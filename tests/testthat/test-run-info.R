@@ -5,9 +5,9 @@
 
 # A study, a job set up in it, and the study's config.
 run_fixture <- function(.local_envir = parent.frame()) {
-  fx <- setup_fixture(.local_envir = .local_envir)
+  fx <- setup_fixture(.local_envir = .local_envir)  # nolint: object_usage_linter.
   env <- new.env(parent = globalenv())
-  r <- run_setup(env = env)
+  r <- run_setup(env = env)  # nolint: object_usage_linter.
   list(root = fx$root, env = env, run = r$job$run, out = r$out, cfg = hvtiRutilities::study_config(start = fx$root))
 }
 
@@ -249,10 +249,10 @@ test_that("the facts serialize to JSON with their names intact", {
 # ---- Rendered ----------------------------------------------------------------
 
 skip_unless_quarto <- function() {
-  skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
-  skip_if_not_installed("quarto")
-  skip_if_not(quarto::quarto_available())
+  testthat::skip_on_cran()
+  testthat::skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  testthat::skip_if_not_installed("quarto")
+  testthat::skip_if_not(quarto::quarto_available())
 }
 
 report_html <- function(job) {

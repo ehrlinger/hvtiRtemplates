@@ -59,10 +59,10 @@ rf_study <- function(data = data.frame(ccfid = 1:2, time = c(1, 2), event = c(1,
 rf_run <- function(prefix, qualifier, labels, env, choices = list()) {
   src <- readLines(template_path(prefix, qualifier), warn = FALSE)
   # "set" is the old name of the setup chunk, and a list that names both runs it once.
-  for (label in unique(vapply(labels, setup_label, ""))) {
+  for (label in unique(vapply(labels, setup_label, ""))) {  # nolint: object_usage_linter.
     if (identical(label, "fig-dependence-varpro")) assign("gg_partial_varpro", rf_gg_partial_varpro, envir = env)
     if (identical(label, "setup")) {
-      eval_setup_chunk(rf_chunk(src, label), env)
+      eval_setup_chunk(rf_chunk(src, label), env)  # nolint: object_usage_linter.
     } else {
       withCallingHandlers(
         suppressMessages(eval(parse(text = rf_chunk(src, label)), envir = env)),
@@ -394,9 +394,9 @@ boot_report <- function(prefix, env, labels = boot_report_labels, choices = list
   defaults <- list(EXPECT_BOOT = 30L, CLUSTERS = list(Age = "age"))
   choices <- c(choices, defaults[setdiff(names(defaults), names(choices))])
   src <- readLines(template_path(prefix), warn = FALSE)
-  utils::capture.output(for (label in unique(vapply(labels, setup_label, ""))) {
+  utils::capture.output(for (label in unique(vapply(labels, setup_label, ""))) {  # nolint: object_usage_linter.
     if (identical(label, "setup")) {
-      eval_setup_chunk(rf_chunk(src, label), env)
+      eval_setup_chunk(rf_chunk(src, label), env)  # nolint: object_usage_linter.
     } else {
       eval(parse(text = rf_chunk(src, label)), envir = env)
     }

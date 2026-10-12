@@ -1,9 +1,9 @@
 numbered_output_chunk <- function(job, label) {
   lines <- readLines(job)
   # A chunk holding an EDIT: marker is labeled edit-<label>; either names it.
-  start <- grep(paste0("^#\\| label: (edit-)?", setup_label(label), "$"), lines)[[1L]]
+  start <- grep(paste0("^#\\| label: (edit-)?", setup_label(label), "$"), lines)[[1L]]  # nolint: object_usage_linter.
   end <- start + match("```", lines[-seq_len(start)])
-  chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)
+  chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)  # nolint: object_usage_linter.
 }
 
 test_that("numbered migrated jobs save and embed figures in their logical folders", {

@@ -44,7 +44,7 @@ chunk_expression <- function(code, label) {
 # job is named for the template a real one would carry. knitr::current_input()
 # is mocked to name it, as a render does, and the working directory is the job's.
 setup_fixture <- function(lines = "A finished job.", .local_envir = parent.frame()) {
-  root <- hazard_study(.local_envir = .local_envir)
+  root <- hazard_study(.local_envir = .local_envir)  # nolint: object_usage_linter.
   dir.create(file.path(root, "R"))
   writeLines("study_helper <- function() \"from the study\"", file.path(root, "R", "helpers.R"))
   dir <- hvtiRutilities::study_dir("descriptive", root)

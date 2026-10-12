@@ -5,9 +5,9 @@
 
 stddiff_chunk <- function(label) {
   lines <- readLines(template_path("dc", "stddiff"), warn = FALSE)
-  start <- match(paste0("#| label: ", setup_label(label)), lines)
+  start <- match(paste0("#| label: ", setup_label(label)), lines)  # nolint: object_usage_linter.
   end <- start + match("```", lines[-seq_len(start)])
-  chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)
+  chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)  # nolint: object_usage_linter.
 }
 
 test_that("the job's hvtiRpropensity guard asks for the version DESCRIPTION suggests", {
