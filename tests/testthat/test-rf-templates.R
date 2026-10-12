@@ -599,6 +599,10 @@ rf_panels <- function(fig) lapply(seq_len(length(fig$patches$plots) + 1L), funct
 # them on a cohort this size is drawn wrongly, so the drawing is repeated here
 # with nothing muffled.
 rf_draw_warnings <- function(fig) {
+  # Drawing needs a device; with none open ggplotGrob() opens a pdf one and
+  # leaves it, which a later test that checks for no open device then sees.
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
   msgs <- character()
   for (p in rf_panels(fig)) {
     withCallingHandlers(
