@@ -37,7 +37,7 @@ test them; a p-value here is a prompt for an analysis, not a result.
 ```{r}
 #| label: setup
 #| results: asis
-# unnumbered: loads packages and checks versions only
+# unnumbered: setup, and the box under the title
 SUBJECT <- "cohort"
 TYPE    <- "eda"
 .in <- knitr::current_input(dir = TRUE)

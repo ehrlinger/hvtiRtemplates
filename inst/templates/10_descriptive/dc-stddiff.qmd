@@ -40,7 +40,7 @@ optional permutation reference is `ps_stddiff_perm()`, the port of
 ```{r}
 #| label: setup
 #| results: asis
-# unnumbered: loads packages and checks versions only
+# unnumbered: setup, and the box under the title
 SUBJECT <- "cohort"
 TYPE    <- "balance"
 .in <- knitr::current_input(dir = TRUE)

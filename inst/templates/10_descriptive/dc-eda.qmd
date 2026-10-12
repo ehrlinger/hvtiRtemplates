@@ -37,7 +37,7 @@ disagree about the data. The other three sections draw their pages through
 ```{r}
 #| label: setup
 #| results: asis
-# unnumbered: loads packages and checks versions only
+# unnumbered: setup, and the box under the title
 SUBJECT <- "cohort"
 TYPE    <- "eda"
 .in <- knitr::current_input(dir = TRUE)

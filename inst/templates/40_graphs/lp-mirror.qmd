@@ -29,7 +29,7 @@ job reads that bundle and never refits the model.
 ```{r}
 #| label: setup
 #| results: asis
-# unnumbered: loads packages and checks versions only
+# unnumbered: setup, and the box under the title
 SUBJECT  <- "treatment"
 TYPE     <- "propensity"
 .in <- knitr::current_input(dir = TRUE)

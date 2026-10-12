@@ -56,7 +56,7 @@ the distribution of a single variable is `dc-variable`.
 ```{r}
 #| label: setup
 #| results: asis
-# unnumbered: loads packages and checks versions only
+# unnumbered: setup, and the box under the title
 SUBJECT <- "cohort"
 TYPE    <- "eda"
 .in <- knitr::current_input(dir = TRUE)

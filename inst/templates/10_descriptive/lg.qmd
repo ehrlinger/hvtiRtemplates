@@ -43,7 +43,7 @@ straight-line fit of the groups, weighted by group size. It is guidance for
 ```{r}
 #| label: setup
 #| results: asis
-# unnumbered: loads packages only
+# unnumbered: setup, and the box under the title
 SUBJECT <- "dead"
 TYPE    <- "calibration"
 .in <- knitr::current_input(dir = TRUE)
