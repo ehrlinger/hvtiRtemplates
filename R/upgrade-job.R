@@ -79,15 +79,20 @@ upgrade_job <- function(path, dir = NULL) {
   target <- .job_path(row, fields$subject, fields$type, root)
   backup <- paste0(path, ".pre-upgrade")
   report_path <- sub("[.]qmd$", "-upgrade.md", target)
-  if (file.exists(backup)) stop("upgrade_job(): '", backup, "' already exists; refusing to overwrite.", call. = FALSE)
-  if (file.exists(report_path)) {
-    stop("upgrade_job(): '", report_path, "' already exists; refusing to overwrite.", call. = FALSE)
+  # A symbolic link counts as taken even when it dangles: file.exists() says
+  # FALSE for one, and writing through it would create a file wherever it points.
+  taken <- function(p) {
+    link <- Sys.readlink(p)
+    file.exists(p) | (!is.na(link) & nzchar(link))
+  }
+  for (p in c(backup, report_path)) {
+    if (taken(p)) stop("upgrade_job(): '", p, "' already exists; refusing to overwrite.", call. = FALSE)
   }
   # Any other spelling of this job, current, before 2026-10 or under the
   # template's name before a rename, is a second copy of the same set's edits.
   others <- c(target, .job_path_legacy(row, fields$subject, fields$type, root),
               .job_paths_renamed(row, fields$subject, fields$type, root))
-  others <- others[file.exists(others) & normalizePath(others, winslash = "/", mustWork = FALSE) != path]
+  others <- others[taken(others) & normalizePath(others, winslash = "/", mustWork = FALSE) != path]
   if (length(others)) {
     stop("upgrade_job(): '", others[[1L]], "' is another copy of this job; refusing to write a second.",
          call. = FALSE)
@@ -103,6 +108,16 @@ upgrade_job <- function(path, dir = NULL) {
   upgraded <- .upgrade_lines(old, readLines(staged, warn = FALSE))
 
   report <- .upgrade_report(upgraded, row$name[[1L]], old, path, backup, root)
+  # A renamed template can live in another folder, which the study may not have
+  # yet. Wherever it resolves to, it must be inside the study.
+  if (!dir.exists(dirname(target))) dir.create(dirname(target), recursive = TRUE)
+  if (!.path_within(normalizePath(dirname(target), winslash = "/", mustWork = TRUE), root)) {
+    stop("upgrade_job(): the upgraded job's folder resolves outside the study root.", call. = FALSE)
+  }
+  # The current template's provenance checks need the study's hooks, which a
+  # study older than them may lack; add_job() installs them the same way.
+  .install_provenance_hooks(root)
+  mode <- file.info(path)$mode
   if (!file.rename(path, backup)) stop("upgrade_job(): could not set the old job aside as '", backup, "'.", call. = FALSE)
   ok <- FALSE
   on.exit(if (!ok) {
@@ -111,6 +126,8 @@ upgrade_job <- function(path, dir = NULL) {
   }, add = TRUE)
   writeLines(upgraded$lines, target)
   writeLines(report, report_path)
+  # The job keeps its permissions: a job closed to other readers stays closed.
+  Sys.chmod(c(target, report_path), mode, use_umask = FALSE)
   ok <- TRUE
   .open_in_editor(target)
 }
@@ -138,30 +155,35 @@ upgrade_job <- function(path, dir = NULL) {
 .edit_token <- function() paste0("ED", "IT", ":")
 
 # R chunks: a data frame of label, first and last code line (fences excluded).
+# A fence is three or more backticks, and the chunk closes on a fence of the
+# same length, as Quarto reads it. A label may be quoted.
 .qmd_chunks <- function(lines) {
-  open <- grep("^```\\{r", lines)
-  close <- grep("^```\\s*$", lines)
+  open <- grep("^`{3,}\\{r[ ,}]", lines)
   rows <- lapply(open, function(o) {
+    ticks <- sub("^(`+).*$", "\\1", lines[[o]])
+    close <- which(lines == ticks | grepl(paste0("^", ticks, "\\s*$"), lines))
     e <- close[close > o][1L]
     if (is.na(e)) return(NULL)
     body <- if (e > o + 1L) (o + 1L):(e - 1L) else integer()
     lab <- sub("^#\\|\\s*label:\\s*", "", grep("^#\\|\\s*label:", lines[body], value = TRUE))
     # knitr's header form, ```{r label, opt = x}, names a chunk too.
-    head <- regmatches(lines[[o]], regexec("^```\\{r[ ,]+([A-Za-z0-9_.-]+)\\s*[,}]", lines[[o]]))[[1L]]
+    head <- regmatches(lines[[o]], regexec("^`{3,}\\{r[ ,]+([A-Za-z0-9_.-]+)\\s*[,}]", lines[[o]]))[[1L]]
     if (!length(lab) && length(head)) lab <- head[[2L]]
-    data.frame(label = if (length(lab)) trimws(lab[[1L]]) else NA_character_, open = o, close = e)
+    lab <- if (length(lab)) gsub("^[\"']|[\"']$", "", trimws(lab[[1L]])) else NA_character_
+    data.frame(label = lab, open = o, close = e)
   })
   do.call(rbind, c(list(data.frame(label = character(), open = integer(), close = integer())), rows))
 }
 
 # A study's choices: top-level `NAME <- value` in `edit-*` chunks, with NAME
-# upper case. A data frame of name, chunk, the assignment's first and last
-# line, and whether an EDIT marker sits on it or in the comment block above.
+# upper case. A data frame of name, chunk, the assignment's first and last line
+# and its first and last byte on them (two statements can share a line), and
+# whether an EDIT marker sits on its lines or in the comment block above.
 .job_choices <- function(lines) {
   chunks <- .qmd_chunks(lines)
   chunks <- chunks[!is.na(chunks$label) & startsWith(chunks$label, "edit-"), , drop = FALSE]
   empty <- data.frame(name = character(), chunk = character(), start = integer(), end = integer(),
-                      marker = logical())
+                      first_byte = integer(), last_byte = integer(), marker = logical(), block_start = integer())
   rows <- lapply(seq_len(nrow(chunks)), function(i) {
     first <- chunks$open[[i]] + 1L
     code <- lines[first:(chunks$close[[i]] - 1L)]
@@ -184,15 +206,51 @@ upgrade_job <- function(path, dir = NULL) {
       while (above >= first && grepl("^\\s*#", lines[[above]]) && !grepl("^#\\|", lines[[above]])) above <- above - 1L
       block <- if (above + 1L <= start - 1L) lines[(above + 1L):(start - 1L)] else character()
       data.frame(name = name, chunk = chunks$label[[i]], start = start, end = end,
+                 first_byte = refs[[j]][[2L]], last_byte = refs[[j]][[4L]],
                  marker = any(grepl(.edit_token(), c(block, lines[start:end]), fixed = TRUE)),
                  block_start = above + 1L)
     })
-    do.call(rbind, c(list(cbind(empty, block_start = integer())), hits))
+    do.call(rbind, c(list(empty), hits))
   })
-  out <- do.call(rbind, c(list(cbind(empty, block_start = integer())), rows))
+  out <- do.call(rbind, c(list(empty), rows))
   # A name assigned twice cannot be carried by name; it is reported instead.
   out$duplicated <- out$name %in% out$name[duplicated(out$name)]
   out
+}
+
+# Bytes `from` to `to` of a line, as srcref counts them.
+.bytes <- function(x, from, to = .Machine$integer.max) {
+  r <- charToRaw(x)
+  to <- min(to, length(r))
+  if (from > to) "" else rawToChar(r[from:to])
+}
+
+# A choice's lines split three ways: the text before it on its first line, its
+# own source text, and the text after it on its last line.
+.choice_parts <- function(lines, ch) {
+  own <- lines[ch$start:ch$end]
+  n <- length(own)
+  if (n == 1L) {
+    own <- .bytes(own, ch$first_byte, ch$last_byte)
+  } else {
+    own[[1L]] <- .bytes(own[[1L]], ch$first_byte)
+    own[[n]] <- .bytes(own[[n]], 1L, ch$last_byte)
+  }
+  list(before = .bytes(lines[[ch$start]], 1L, ch$first_byte - 1L), own = own,
+       after = .bytes(lines[[ch$end]], ch$last_byte + 1L))
+}
+
+# A chunk's code with its choices taken out and comments and blank lines
+# dropped: the code an upgrade does not carry.
+.residual_code <- function(lines, chunk, choices) {
+  for (i in rev(seq_len(nrow(choices)))) {
+    ch <- choices[i, ]
+    parts <- .choice_parts(lines, ch)
+    lines <- c(lines[seq_len(ch$start - 1L)], paste0(parts$before, parts$after),
+               rep("", ch$end - ch$start), lines[-seq_len(ch$end)])
+  }
+  code <- gsub("^[;[:space:]]+|[;[:space:]]+$", "", lines[(chunk$open + 1L):(chunk$close - 1L)])
+  code[nzchar(code) & !startsWith(code, "#")]
 }
 
 # The upgraded job's lines and what happened to each choice.
@@ -200,15 +258,28 @@ upgrade_job <- function(path, dir = NULL) {
   oc <- .job_choices(old)
   nc <- .job_choices(new)
   carry <- nc[nc$name %in% oc$name[!oc$duplicated] & !nc$duplicated, , drop = FALSE]
+  token <- .edit_token()
   out <- new
   # Bottom up, so each replacement leaves the earlier line numbers valid.
   for (i in rev(seq_len(nrow(carry)))) {
     o <- oc[oc$name == carry$name[[i]], , drop = FALSE][1L, ]
-    if (!o$marker && carry$block_start[[i]] < carry$start[[i]]) {
-      above <- carry$block_start[[i]]:(carry$start[[i]] - 1L)
-      out[above] <- sub(paste0(.edit_token(), "\\s*"), "", out[above])
+    n <- carry[i, ]
+    parts <- .choice_parts(out, n)
+    above <- if (n$block_start < n$start) n$block_start:(n$start - 1L) else integer()
+    if (!o$marker) {
+      # Resolved in the old job, so resolved here.
+      out[above] <- sub(paste0(token, "\\s*"), "", out[above])
+      parts$after <- sub(paste0(token, "\\s*"), "", parts$after)
     }
-    out <- c(out[seq_len(carry$start[[i]] - 1L)], old[o$start:o$end], out[-seq_len(carry$end[[i]])])
+    carried <- .choice_parts(old, o)$own
+    carried[[1L]] <- paste0(parts$before, carried[[1L]])
+    carried[[length(carried)]] <- paste0(carried[[length(carried)]], parts$after)
+    # Still open in the old job: it stays open, whether or not the current
+    # template marks this choice.
+    if (o$marker && !any(grepl(token, c(out[above], carried), fixed = TRUE))) {
+      carried <- c(paste("#", token, "still open in the old job; decide it, then delete this line."), carried)
+    }
+    out <- c(out[seq_len(n$start - 1L)], carried, out[-seq_len(n$end)])
   }
   unplaced <- oc[!oc$name %in% carry$name, , drop = FALSE]
   if (nrow(unplaced)) {
@@ -216,14 +287,14 @@ upgrade_job <- function(path, dir = NULL) {
     at <- chunks$close[which(chunks$label == "edit-study-choices")[1L]]
     if (is.na(at)) stop("upgrade_job(): the current template has no `edit-study-choices` chunk to hold the ",
                         "choices it could not place.", call. = FALSE)
-    note <- c("", paste("#", .edit_token(), "upgrade_job() could not place these choices from the old job;",
+    note <- c("", paste("#", token, "upgrade_job() could not place these choices from the old job;",
                         "the current template has no assignment of the same name. Decide each, then delete this block."))
-    for (i in seq_len(nrow(unplaced))) note <- c(note, paste0("# ", old[unplaced$start[[i]]:unplaced$end[[i]]]))
+    for (i in seq_len(nrow(unplaced))) note <- c(note, paste0("# ", .choice_parts(old, unplaced[i, ])$own))
     out <- append(out, note, after = at - 1L)
   }
-  list(lines = out, carried = carry$name, unplaced = unplaced,
-       new = setdiff(nc$name, oc$name), old_chunks = .qmd_chunks(old), new_chunks = .qmd_chunks(new),
-       old = old, new_lines = new)
+  list(lines = out, carried = carry$name, unplaced = unplaced, new = setdiff(nc$name, oc$name),
+       old_chunks = .qmd_chunks(old), new_chunks = .qmd_chunks(new), old_choices = oc, new_choices = nc,
+       new_lines = new)
 }
 
 .upgrade_report <- function(u, template, old, path, backup, root,
@@ -252,7 +323,17 @@ upgrade_job <- function(path, dir = NULL) {
     where <- paste0("old lines ", oc$open[[k]], "-", oc$close[[k]])
     if (is.na(lab)) {
       review <- c(review, paste0("an unlabeled chunk, ", where))
-    } else if (startsWith(lab, "edit-") || lab %in% retired) {
+    } else if (startsWith(lab, "edit-")) {
+      # Choices are carried; any other code in the chunk is not.
+      k_new <- which(nc$label == lab)[1L]
+      kept_old <- .residual_code(old, oc[k, ], u$old_choices[u$old_choices$chunk == lab, , drop = FALSE])
+      kept_new <- if (is.na(k_new)) character() else
+        .residual_code(nl, nc[k_new, ], u$new_choices[u$new_choices$chunk == lab, , drop = FALSE])
+      if (!identical(kept_old, kept_new)) {
+        review <- c(review, paste0("`", lab, "`, ", where, ": code other than its choices differs from the ",
+                                   "current template, and only the choices were carried"))
+      }
+    } else if (lab %in% retired) {
       next
     } else if (!lab %in% nc$label) {
       review <- c(review, paste0("`", lab, "`, ", where, ": not in the current template"))
@@ -278,6 +359,6 @@ upgrade_job <- function(path, dir = NULL) {
     "Code outside the choices comes from the current template. These chunks of the old job may hold an ",
     "edit of your own; compare them with the old job.", "",
     lst(review), "",
-    "## Markers left", "", lst(paste0("line ", markers, ": ", trimws(substr(u$lines[markers], 1L, 96L)))), ""
+    "## Markers left", "", lst(paste0("line ", markers)), ""
   )
 }

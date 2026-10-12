@@ -108,7 +108,7 @@ test_that("add_job() stamps its job and upgrade_job() reads the stamp", {
   expect_true(any(grepl(paste0("came from: ", version, "$"), report)))
 })
 
-test_that("choices are read from header-labelled chunks, beside calls that are not assignments", {
+test_that("choices are read from header-labeled chunks, beside calls that are not assignments", {
   lines <- c("```{r edit-study-choices, echo = FALSE}", "utils::head(1)", "DATASET <- \"x\"", "```",
              "```{r echo = FALSE}", "KEEP <- 1", "```")
   ch <- .job_choices(lines)
@@ -127,4 +127,104 @@ test_that("upgrade_job() refuses when another spelling of the job exists", {
   file.create(file.path(root, "analyses", "rfs.fit.dead.rfs.qmd"))
   expect_error(upgrade_job(path), "another copy of this job")
   expect_true(file.exists(path))
+})
+
+# Review of #313, at d3b741e: nine cases, one test each.
+
+test_that("the report names marker lines and never quotes them", {
+  # dc-tables marks WORD_FILE inline, so a value left unresolved shares its
+  # line with the marker the report lists.
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "tables")
+  lines <- readLines(job)
+  i <- grep("^WORD_FILE <- ", lines)
+  lines[[i]] <- sub('"dc-tables.docx"', '"x99999123.docx"', lines[[i]], fixed = TRUE)
+  writeLines(lines, job)
+  upgraded <- upgrade_job(job)
+  expect_true(any(grepl("x99999123", readLines(upgraded), fixed = TRUE)))
+  report <- readLines(sub("[.]qmd$", "-upgrade.md", upgraded))
+  expect_false(any(grepl("x99999123", report, fixed = TRUE)))
+})
+
+test_that("an upgraded job keeps the old job's permissions", {
+  skip_on_os("windows")
+  root <- migration_study_fixture()
+  path <- old_rfs_job(root)
+  Sys.chmod(path, "600", use_umask = FALSE)
+  umask <- Sys.umask("022")
+  withr::defer(Sys.umask(umask))
+  job <- upgrade_job(path)
+  expect_identical(format(file.info(job)$mode), "600")
+  expect_identical(format(file.info(sub("[.]qmd$", "-upgrade.md", job))$mode), "600")
+})
+
+test_that("a dangling link where the job would go is refused, and nothing is written through it", {
+  skip_on_os("windows")
+  root <- migration_study_fixture()
+  path <- old_rfs_job(root)
+  outside <- file.path(withr::local_tempdir(), "escaped.qmd")
+  file.symlink(outside, file.path(root, "analyses", "rfs.fit.dead.rfs.qmd"))
+  expect_error(upgrade_job(path), "another copy of this job")
+  expect_false(file.exists(outside))
+  expect_true(file.exists(path))
+})
+
+test_that("choices are read from four-backtick fences and quoted labels", {
+  old <- c("````{r}", "#| label: \"edit-study-choices\"", "DATASET <- \"chosen\"", "````")
+  new <- c("```{r}", "#| label: edit-study-choices", "DATASET <- \"built\"", "```")
+  expect_identical(.upgrade_lines(old, new)$lines[[3L]], "DATASET <- \"chosen\"")
+})
+
+test_that("a marker still open in the old job stays open when the template has none there", {
+  token <- paste0("ED", "IT", ":")
+  old <- c("```{r}", "#| label: edit-study-choices", paste("#", token, "pick a seed"), "SEED <- 7", "```")
+  new <- c("```{r}", "#| label: edit-study-choices", "SEED <- 1", "```")
+  out <- .upgrade_lines(old, new)$lines
+  i <- grep("^SEED <- 7$", out)
+  expect_true(grepl(token, out[[i - 1L]], fixed = TRUE))
+})
+
+test_that("code in an edit chunk other than its choices is reported, not dropped unseen", {
+  root <- migration_study_fixture()
+  path <- old_rfs_job(root)
+  lines <- readLines(path)
+  i <- grep("^NTREE <- ", lines)
+  lines <- append(lines, "d <- subset(d, age >= 18)", after = i)
+  writeLines(lines, path)
+  report <- readLines(sub("[.]qmd$", "-upgrade.md", upgrade_job(path)))
+  expect_true(any(grepl("`edit-study-choices`.*code other than its choices differs", report)))
+})
+
+test_that("two statements on one line carry only the choice the template has", {
+  token <- paste0("ED", "IT", ":")
+  old <- c("```{r}", "#| label: edit-study-choices", "NTREE <- 250; OLD_KNOB <- 3", "```")
+  new <- c("```{r}", "#| label: edit-study-choices", "NTREE <- 1000", "```")
+  u <- .upgrade_lines(old, new)
+  expect_identical(u$lines[[3L]], "NTREE <- 250")
+  expect_false(any(grepl("^OLD_KNOB", u$lines)))
+  expect_true("# OLD_KNOB <- 3" %in% u$lines)
+  expect_identical(u$unplaced$name, "OLD_KNOB")
+  expect_true(any(grepl(token, u$lines, fixed = TRUE)))
+})
+
+test_that("a job under a renamed template moves to its folder, created if the study lacks it", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "trends")
+  old <- file.path(root, "graphs", "dp.trends.cohort.eda.qmd")
+  file.rename(job, old)
+  unlink(file.path(root, "descriptive"), recursive = TRUE)
+  upgraded <- suppressWarnings(upgrade_job(old))
+  expect_identical(basename(dirname(upgraded)), "descriptive")
+  expect_identical(basename(upgraded), "dc.trends.cohort.eda.qmd")
+  expect_true(file.exists(paste0(old, ".pre-upgrade")))
+})
+
+test_that("upgrade_job() installs the study's provenance hooks", {
+  root <- migration_study_fixture()
+  path <- old_rfs_job(root)
+  unlink(file.path(root, "_quarto.yml"))
+  upgrade_job(path)
+  config <- readLines(file.path(root, "_quarto.yml"))
+  expect_true(any(grepl("pre-render", config, fixed = TRUE)))
+  expect_true(any(grepl("post-render", config, fixed = TRUE)))
 })
