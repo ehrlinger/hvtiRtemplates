@@ -310,6 +310,18 @@ test_that("a runner and report keyed on MRN save no MRN when run outside the glo
   }
 })
 
+test_that("bc's narration states what the BASE workaround does and costs, not that a term can be forced", {
+  # Neither boot_select() nor fit_cox() can force a term; the runner names a
+  # screened candidate as the base instead, which removes it from the frequency
+  # tables (#186).
+  text <- paste(readLines(template_path("bc"), warn = FALSE), collapse = " ")
+  text <- gsub("\\s+", " ", text)
+  expect_false(grepl("Force at least one term", text, fixed = TRUE))
+  expect_match(text, "can force a term into a Cox model", fixed = TRUE)
+  expect_match(text, "take that variable out of every frequency table", fixed = TRUE)
+  expect_match(text, "The cost is the missing frequency", fixed = TRUE)
+})
+
 test_that("bh's default CLUSTERS names nothing, and an empty list reports no clusters instead of stopping", {
   # The old default named early.age and early.ln_age, terms a small pool may
   # never carry; boot_clusters() refuses a name no replicate has, so a fresh job
