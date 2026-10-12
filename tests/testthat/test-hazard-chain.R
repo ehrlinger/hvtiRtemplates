@@ -179,6 +179,36 @@ test_that("hm saves no MRN when its chunks run outside the global environment", 
   expect_false(hazard_file_holds_any(root, "hm.rds", data$MRN))
 })
 
+test_that("hm offers each covariate only to the phases whose block names it (#171)", {
+  skip_on_cran()
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  skip_if_not_installed("hvtiRlifetables", minimum_version = "0.1.2")
+  skip_if_not_installed("numDeriv")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  withr::local_package("hvtiRlifetables")
+  data <- hazard_data()
+  root <- hazard_study(data)
+  # hazard_chain_run() offers x1 to both phases and age to the late one only.
+  env <- hazard_chain_run(root, data, hm_env = new.env(parent = globalenv()))
+  for (fit in list(env$stage1, env$stage2)) {
+    cf <- names(coef(fit))
+    expect_true(all(c("early.x1", "late.x1", "late.age") %in% cf))
+    expect_false("early.age" %in% cf)
+  }
+
+  # A block for a phase the hz fit does not have stops rather than vanishing.
+  env$COVARIATES <- list(early = "x1", middle = "age")
+  expect_error(hazard_run("hm", "edit-fit", env), "phases the hz fit does not have: middle")
+})
+
+test_that("hm with no SAS job asks for its covariate lists rather than reading a missing file (#178)", {
+  skip_if_not_installed("hvtiRutilities")
+  env <- new.env(parent = globalenv())
+  env$SAS_JOB <- NULL
+  expect_error(hazard_run("hm", "edit-covariates", env), "list COVARIATES")
+})
+
 test_that("hz's convergence table keeps its rows when a fit leaves a field out", {
   # A multiphase fit carries no iteration count (#168); a missing field must
   # show as "not reported", not change the row count and stop the render.
