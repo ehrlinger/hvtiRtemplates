@@ -164,6 +164,7 @@ test_that("every template has one chunk before its study choices, labeled setup"
     at <- which(src == "#| label: setup")
     chunk <- src[(at + 1L):(at + which(src[(at + 1L):length(src)] == "```")[[1L]] - 1L)]
     expect_identical(utils::tail(chunk, 1L), ".job$notice", info = info)
+    expect_no_error(parse(text = chunk))
   }
 })
 
