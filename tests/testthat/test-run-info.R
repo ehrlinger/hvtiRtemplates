@@ -203,19 +203,22 @@ test_that("a rebuilt joined dataset is reported against the joined dataset, not 
   suppressMessages(hvtiRutilities::register_data(rf$root, "echo.csv", dataset = "echo", role = "named",
                                                  kind = "ancillary", key = c("ccfid", "echo_date")))
   rf$cfg <- hvtiRutilities::study_config(start = rf$root)
-  status <- function(job) {
+  status <- function(read) {
+    # One run's reads at a time, as a new setup leaves the ledger.
+    .run_state$reads <- list()
+    job <- read()
     facts <- run_facts(rf, data = list(job$provenance, job$provenance_join))
     stats::setNames(vapply(facts$datasets, `[[`, "", "manifest"), vapply(facts$datasets, `[[`, "", "name"))
   }
-  expect_identical(status(read_job_data(rf$cfg, join = "echo")), c(built = "current", echo = "current"))
+  expect_identical(status(function() read_job_data(rf$cfg, join = "echo")), c(built = "current", echo = "current"))
   # Rebuild only the joined dataset.
   utils::write.csv(rbind(echo, data.frame(ccfid = d$ccfid[4], echo_date = 100, ef = 41)),
                    file.path(datasets, "echo.csv"), row.names = FALSE)
-  expect_identical(status(read_job_data(rf$cfg, join = "echo")), c(built = "current", echo = "newer file waiting"))
+  expect_identical(status(function() read_job_data(rf$cfg, join = "echo")), c(built = "current", echo = "newer file waiting"))
   # And only the cohort.
   utils::write.csv(echo, file.path(datasets, "echo.csv"), row.names = FALSE)
   utils::write.csv(hazard_data(n = 170L), file.path(datasets, "built.csv"), row.names = FALSE)
-  expect_identical(status(read_job_data(rf$cfg, join = "echo")), c(built = "newer file waiting", echo = "current"))
+  expect_identical(status(function() read_job_data(rf$cfg, join = "echo")), c(built = "newer file waiting", echo = "current"))
 })
 
 test_that("a conditional stop_here() that fires makes the facts a draft that stopped early, and the report says so", {
@@ -230,23 +233,100 @@ test_that("a conditional stop_here() that fires makes the facts a draft that sto
     facts <<- hvtiRtemplates:::.run_facts(run, data = data, cfg = rf$cfg, envir = envir)
     paste(hvtiRtemplates:::.run_table(facts), collapse = "\n")
   })
-  old <- hvtiRtemplates:::.partial_state$points
-  withr::defer(hvtiRtemplates:::.partial_state$points <- old)
+  old <- .partial_state$points
+  withr::defer(.partial_state$points <- old)
   # The setup scan found no stop, as for `if (ready) stop_here()`; now it runs.
   out <- as.character(stop_here(envir = rf$env))
   expect_identical(facts$status, "draft")
   expect_true(facts$stopped_early)
-  expect_match(out, "draft (the render stops early)", fixed = TRUE)
-  expect_match(out, "STOPPED -- this render ended early", fixed = TRUE)
-  # The notice comes ahead of the table, so it is not mistaken for part of it.
-  expect_lt(regexpr("STOPPED", out, fixed = TRUE)[[1L]], regexpr("About this run", out, fixed = TRUE)[[1L]])
+  expect_match(out, "draft (the render stops early", fixed = TRUE)
+  # The same path as any runtime draft: a reason, and the end-of-report notice that corrects the box.
+  expect_match(facts$draft_reasons[[1L]], "stop_here()", fixed = TRUE)
+  expect_match(out, "This run ended as a draft", fixed = TRUE)
+  expect_match(out, "stop_here()", fixed = TRUE)
+  expect_lt(regexpr("This run ended as a draft", out, fixed = TRUE)[[1L]], regexpr("| Group |", out, fixed = TRUE)[[1L]])
   # The record setup made is not edited: it is what the box printed.
   expect_identical(rf$run$state, "final")
-  # A stop the scan found is already in the PARTIAL callout, and gets no second notice.
-  hvtiRtemplates:::.partial_state$points <- list(list(line = 3L, kind = "stop", reason = "found"))
+  # A stop the scan found is already in the PARTIAL callout and the box, and gets no second notice.
+  .partial_state$points <- list(list(line = 3L, kind = "stop", reason = "found"))
+  .run_state$draft_reasons <- character()
   again <- as.character(stop_here(envir = rf$env))
-  expect_false(grepl("STOPPED", again, fixed = TRUE))
+  expect_false(grepl("This run ended as a draft", again, fixed = TRUE))
   expect_identical(facts$status, "draft")
+})
+
+test_that(".run_mark_draft() turns a run into a draft with its reason, in the facts and as a notice ahead of the table", {
+  rf <- run_fixture()
+  expect_identical(run_facts(rf)$status, "final")
+  expect_null(run_facts(rf)$draft_reasons)
+  hvtiRtemplates:::.run_mark_draft("a scale is not chosen for 2 covariates")
+  hvtiRtemplates:::.run_mark_draft("a scale is not chosen for 2 covariates")
+  hvtiRtemplates:::.run_mark_draft("the pool is incomplete")
+  facts <- run_facts(rf)
+  expect_identical(facts$status, "draft")
+  expect_identical(unlist(facts$draft_reasons), c("a scale is not chosen for 2 covariates", "the pool is incomplete"))
+  table <- paste(hvtiRtemplates:::.run_table(facts), collapse = "\n")
+  expect_match(table, "This run ended as a draft", fixed = TRUE)
+  expect_match(table, "a scale is not chosen for 2 covariates; the pool is incomplete", fixed = TRUE)
+  expect_match(table, "draft (a scale is not chosen", fixed = TRUE)
+  # What setup recorded, and the box printed, stays as it was; a new setup clears the marks.
+  expect_identical(rf$run$state, "final")
+  run_setup()
+  expect_null(run_facts(rf)$draft_reasons)
+  # A final run has no notice.
+  expect_false(grepl("ended as a draft", paste(hvtiRtemplates:::.run_table(run_facts(rf)), collapse = "\n"), fixed = TRUE))
+})
+
+test_that("every template that prints a runtime draft or provisional callout marks the run a draft", {
+  for (name in c("10_descriptive/lg", "10_descriptive/dc-gfup", "30_analyses/bc", "30_analyses/bh", "30_analyses/bl",
+                 "30_analyses/br")) {
+    src <- readLines(system.file("templates", paste0(name, ".qmd"), package = "hvtiRtemplates"), warn = FALSE)
+    expect_true(any(grepl("hvtiRtemplates:::.run_mark_draft(", src, fixed = TRUE)), info = name)
+  }
+})
+
+test_that("bd's box names no dataset and sends nobody to a table that has none", {
+  src <- readLines(template_path("bd"), warn = FALSE)
+  expect_false(any(grepl("^DATASET\\s*<-", src)))
+  expect_true(any(grepl("box_data = FALSE", src, fixed = TRUE)))
+  fx <- setup_fixture()
+  out <- utils::capture.output(job <- hvtiRtemplates:::.job_setup("cohort", "eda", envir = new.env(), box_data = FALSE))
+  box <- grep("^\\*\\*final\\*\\*", strsplit(as.character(job$notice), "\n", fixed = TRUE)[[1L]], value = TRUE)
+  expect_length(box, 1L)
+  expect_false(grepl("data", box, fixed = TRUE))
+  expect_false(grepl("built", box, fixed = TRUE))
+  # The registered dataset the study already has is not the one bd builds.
+  expect_true(file.exists(file.path(fx$root, "manifest.yaml")))
+})
+
+test_that("a joined read in the table says rows only, with no patients clause and no WHERE row", {
+  facts <- list(status = "final", start = "2026-10-12T10:00:00-0400", end = "2026-10-12T10:00:05-0400", time_zone = "EDT",
+                duration_seconds = 5, user = "u", host = "h", job = list(file = "a.qmd"),
+                datasets = list(
+                  list(name = "built", rows = 120L, patients = 80L, where = character(0)),
+                  list(name = "echo", rows = 10L)
+                ),
+                upstream = list(), reproducibility = list(renv = list(active = FALSE)))
+  table <- paste(hvtiRtemplates:::.run_table(facts), collapse = "\n")
+  expect_false(grepl("NULL", table, fixed = TRUE))
+  expect_false(grepl("on NA", table, fixed = TRUE))
+  expect_match(table, "| 10 rows |", fixed = TRUE)
+  expect_match(table, "120 rows on 80 patients", fixed = TRUE)
+  echo <- sub(".*Dataset `echo`", "", table)
+  expect_false(grepl("WHERE", echo, fixed = TRUE))
+})
+
+test_that("a WHERE with a backtick in a name is shown whole, in a code span that holds it", {
+  facts <- list(status = "final", start = "2026-10-12T10:00:00-0400", end = "2026-10-12T10:00:05-0400", time_zone = "EDT",
+                duration_seconds = 5, user = "u", host = "h", job = list(file = "a.qmd"),
+                datasets = list(list(name = "built", rows = 12L, patients = 8L, where = c("`age at op` > 50", "male == 1"))),
+                upstream = list(), reproducibility = list(renv = list(active = FALSE)))
+  table <- paste(hvtiRtemplates:::.run_table(facts), collapse = "\n")
+  # A double-backtick fence, so the single backticks inside it do not end the span.
+  expect_match(table, "`` `age at op` > 50 ``; `male == 1`", fixed = TRUE)
+  expect_identical(hvtiRtemplates:::.code_span("a"), "`a`")
+  expect_identical(hvtiRtemplates:::.code_span("`a`"), "`` `a` ``")
+  expect_identical(hvtiRtemplates:::.code_span("a``b"), "```a``b```")
 })
 
 test_that("an upstream handoff shows the render time its job recorded, and 'not recorded' for an old bundle", {

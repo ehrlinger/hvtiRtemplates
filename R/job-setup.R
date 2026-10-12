@@ -10,7 +10,8 @@
 # Called by a template's setup chunk, after it declares SUBJECT and TYPE and
 # attaches its packages, in the order the four chunks ran:
 #   1. the study root, from the file being rendered or the working directory;
-#   2. the study's R/ sourced into `envir`, the only place this writes;
+#   2. the study's R/ sourced into `envir`, after `.root`, `.in` and `.provenance_data` are
+#      assigned there, as the old setup chunk had them, so a helper can read them;
 #   3. the EDIT: marker guard: a DRAFT callout in a draft, a stop in a final render;
 #   4. the partial-render guard;
 #   5. the file name checked against `subject` and `type`;
@@ -24,6 +25,11 @@
   started <- Sys.time()
   input <- knitr::current_input(dir = TRUE)
   root <- .find_study_root(if (is.null(input)) getwd() else dirname(input))
+  # What the old setup chunk had defined by the time it sourced the study: the file, the root and
+  # an empty provenance. A helper such as `lookup <- file.path(.root, "lookup.csv")` reads them.
+  assign(".in", input, envir = envir)
+  assign(".root", root, envir = envir)
+  assign(".provenance_data", list(), envir = envir)
   for (f in list.files(file.path(root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f, local = envir)
   # What the report says, kept and returned rather than printed: printed, it would
   # split the chunk's code in two "Code" folds, one each side of the output. The
@@ -34,6 +40,8 @@
   # A new run: what the last one read is not this one's.
   .run_state$reads <- list()
   .run_state$handoffs <- list()
+  # Any handoff bundle this job saves records when this render began.
+  .run_state$rendered_at <- .iso_time(started)
   run <- .run_begin(started, input, subject, type, markers)
   notice <- paste0(c(if (length(banner)) paste(banner, collapse = "\n"), as.character(partial),
                      .run_box(run, .box_dataset(root, input))), collapse = "\n")

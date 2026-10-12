@@ -50,6 +50,21 @@
   )
 }
 
+# The run record as it stands when the facts are emitted. .run_begin() counted the
+# skipped chunks and stops the source scan could see, and the box printed that. A
+# stop_here() the scan cannot see, inside an if () or given an argument, adds its
+# stop to .partial_state$points only when it runs, so the setup-time record can
+# say "final" over a report that ended early. The points are read again here, and
+# any stop or skip makes the run a draft that stopped early. The setup record is
+# returned edited, not changed: it is what the box printed.
+.run_reconcile <- function(run) {
+  kinds <- vapply(.partial_state$points, function(p) p$kind, "")
+  run$skipped <- max(run$skipped, sum(kinds == "skip"))
+  run$stopped <- run$stopped || any(kinds == "stop")
+  if (run$markers > 0L || run$skipped > 0L || run$stopped) run$state <- "draft"
+  run
+}
+
 .n_of <- function(n, noun) paste(n, if (n == 1L) noun else paste0(noun, "s"))
 
 .open_summary <- function(run) {
@@ -85,35 +100,68 @@
   NULL
 }
 
-# The dataset the job reads, for the box, which is printed before the data are.
-# The job declares DATASET in its study choices, after the setup chunk, so the
-# declaration is read from the job's own file: a literal DATASET <- "name" wins,
-# and anything else (NULL, an expression, no declaration) is the study's dataset,
-# "built". The end table is the record of what was actually read; the box is
-# the manifest's word for it at the top. A study with no registered dataset gets
-# a box without the clause, not an error.
+# What a job's file declares for one of its study choices, when the declaration
+# settles it: the quoted string of `NAME <- "x"` or `NAME <- 'x'`; NA when the
+# value is NULL (nothing chosen); and NULL when it cannot be known from the file,
+# which is no declaration, a second one, or anything but a literal (an upstream
+# value, a call, a name). Only an assignment at the start of a line counts, as in
+# the template's study choices.
+.declared_literal <- function(src, name, absent = NULL) {
+  hits <- grep(paste0("^", name, "\\s*<-"), src, value = TRUE)
+  if (!length(hits)) return(absent)
+  if (length(hits) > 1L) return(NULL)
+  value <- sub(paste0("^", name, "\\s*<-\\s*"), "", hits)
+  value <- sub("\\s*(#.*)?$", "", value)
+  if (identical(value, "NULL")) return(NA_character_)
+  quoted <- regmatches(value, regexec("^(?:\"([^\"]+)\"|'([^']+)')$", value, perl = TRUE))[[1L]]
+  if (!length(quoted)) return(NULL)
+  quoted[[if (nzchar(quoted[[2L]])) 2L else 3L]]
+}
+
+# The data the job reads, for the box, which is printed before the data are read.
+# The job declares DATASET and ANALYSIS_SET in its study choices, after the setup
+# chunk, so the declarations are read from the job's own file. The box names data
+# ONLY when the file settles it: a literal ANALYSIS_SET (an analysis set of the
+# study dataset, named with the time it was written when its sidecar says), else
+# a literal DATASET. A value that is NULL, inherited from an upstream handoff,
+# computed or not declared is unresolved, and the box never guesses "built" for
+# it: the end table is the record of what was actually read, and the box sends the
+# reader there. Returns NULL when unresolved. A study with no registered dataset
+# gets the name without a version, not an error.
 .box_dataset <- function(root, input) {
-  name <- "built"
-  if (!is.null(input) && file.exists(input)) {
-    src <- readLines(input, warn = FALSE)
-    hit <- regmatches(src, regexec("^DATASET\\s*<-\\s*\"([^\"]+)\"", src))
-    hit <- Filter(length, hit)
-    if (length(hit)) name <- hit[[1L]][[2L]]
+  if (is.null(input) || !file.exists(input)) return(NULL)
+  src <- readLines(input, warn = FALSE)
+  set <- .declared_literal(src, "ANALYSIS_SET", absent = NA_character_)
+  dataset <- .declared_literal(src, "DATASET")
+  # An ANALYSIS_SET the file does not settle leaves the data unknown, whatever DATASET says.
+  if (is.null(set)) return(NULL)
+  if (!is.na(set)) {
+    datasets <- hvtiRutilities::study_dir("datasets", root)
+    parquet <- paste0(set, ".parquet")
+    sidecar <- file.path(datasets, paste0(set, ".set.yml"))
+    written <- if (file.exists(sidecar)) {
+      tryCatch(substr(yaml::read_yaml(sidecar)$written, 1L, 10L), error = function(e) NULL)
+    }
+    return(list(name = set, kind = "analysis set", how = "written", registered = written,
+                version_file = if (file.exists(file.path(datasets, parquet))) parquet))
   }
+  if (is.null(dataset) || is.na(dataset)) return(NULL)
   found <- tryCatch({
     cfg <- hvtiRutilities::study_config(start = root)
-    .manifest_find(root, source = basename(hvtiRutilities::built_path(cfg, name)))
+    .manifest_find(root, source = basename(hvtiRutilities::built_path(cfg, dataset)))
   }, error = function(e) NULL)
-  c(list(name = name), found)
+  c(list(name = dataset, kind = "data", how = "registered"), found)
 }
 
 # ---- The top box -------------------------------------------------------------
 
 .run_box <- function(run, dataset = NULL) {
   state <- if (identical(run$state, "draft")) paste0("**draft** (", .open_summary(run), ")") else "**final**"
-  data <- if (!is.null(dataset) && !is.null(dataset$version_file)) {
-    paste0("data `", dataset$name, "` `", dataset$version_file, "`",
-           if (!is.null(dataset$registered)) paste0(", registered ", dataset$registered))
+  data <- if (is.null(dataset)) {
+    "data: see About this run"
+  } else {
+    paste0(dataset$kind, " `", dataset$name, "`", if (!is.null(dataset$version_file)) paste0(" `", dataset$version_file, "`"),
+           if (!is.null(dataset$registered)) paste0(", ", dataset$how, " ", dataset$registered))
   }
   who <- paste0("rendered by ", .md_text(run$user), " on ", .md_text(run$host))
   line <- paste(c(state, data, who, paste0("hvtiRtemplates ", .package_version())), collapse = " \u00b7 ")
@@ -124,25 +172,34 @@
 
 # One dataset read, summarized: the counts kept, the conditions as a report may
 # show them (never the exact text, which holds values), and whether the source
-# was rebuilt since it was registered.
+# was rebuilt since it was registered. `notes` are the cohort source's own, and
+# the joined source's are in `join$notes`: each source's freshness is its own.
+#
+# `selection_id` tells two reads apart by the whole selection, raw WHERE
+# included, and is a hash: the report shows a WHERE with its values masked, and
+# two conditions such as `age >= 30` and `age >= 70` mask to the same text.
+# Used to count a read once; never shown, and never saved with the facts.
 .note_job_read <- function(provenance, selection, notes, join = NULL) {
   add <- function(entry) .run_state$reads[[length(.run_state$reads) + 1L]] <- entry
-  add(list(dataset = provenance$dataset, sha256 = provenance$sha256,
+  newer <- function(x) any(grepl("update_manifest", x, fixed = TRUE))
+  id <- digest::digest(selection)
+  add(list(dataset = provenance$dataset, sha256 = provenance$sha256, selection_id = id,
            rows = as.integer(selection$rows), patients = as.integer(selection$patients),
-           where = as.character(selection$where_shown),
-           newer = any(grepl("update_manifest", notes, fixed = TRUE))))
+           where = as.character(selection$where_shown), newer = newer(notes)))
   if (!is.null(join$provenance)) {
-    add(list(dataset = join$provenance$dataset, sha256 = join$provenance$sha256,
-             rows = as.integer(join$summary$rows), patients = NULL, where = NULL, newer = FALSE))
+    add(list(dataset = join$provenance$dataset, sha256 = join$provenance$sha256, selection_id = paste0(id, "-join"),
+             rows = as.integer(join$summary$rows), patients = NULL, where = NULL, newer = newer(join$notes)))
   }
   invisible(NULL)
 }
 
-# The dated data versions an upstream handoff was built from.
+# The dated data versions an upstream handoff was built from, and when the job
+# that saved it rendered, if the bundle says (one saved before that was recorded
+# does not).
 .note_handoff <- function(record, lineage) {
   versions <- vapply(lineage$data, function(r) if (is.character(r$path)) basename(r$path) else NA_character_, "")
   .run_state$handoffs[[length(.run_state$handoffs) + 1L]] <- list(
-    sha256 = record$sha256, versions = unique(versions[!is.na(versions)])
+    sha256 = record$sha256, versions = unique(versions[!is.na(versions)]), rendered_at = lineage$rendered_at
   )
   invisible(NULL)
 }
@@ -183,7 +240,11 @@
     seen <- c(seen, key)
     reads <- Filter(function(r) identical(r$dataset, record$dataset) && identical(r$sha256, record$sha256),
                     .run_state$reads)
-    reads <- reads[!duplicated(lapply(reads, `[[`, "where"))]
+    # By the selection read, not by the WHERE text shown, which hides values. A
+    # newer file seen on any read of it counts.
+    ids <- vapply(reads, `[[`, "", "selection_id")
+    newer <- vapply(split(vapply(reads, function(r) isTRUE(r$newer), NA), ids), any, NA)
+    reads <- lapply(reads[!duplicated(ids)], function(r) replace(r, "newer", newer[[r$selection_id]]))
     version <- if (is.character(record$path)) basename(record$path)
     found <- if (!is.null(version)) .manifest_find(cfg$root, version = version)
     for (read in if (length(reads)) reads else list(NULL)) {
@@ -208,8 +269,12 @@
     seen <- c(seen, key)
     state <- Filter(function(h) identical(h$sha256, record$sha256), .run_state$handoffs)
     versions <- if (length(state)) state[[length(state)]]$versions
+    # When the upstream job rendered is what its bundle recorded, and absent from a
+    # bundle saved before that was recorded. The file's modification time is not a
+    # substitute: it changes on a copy or a touch.
+    rendered <- if (length(state)) state[[length(state)]]$rendered_at
     out[[length(out) + 1L]] <- Filter(Negate(is.null), list(
-      file = record$path, set = basename(dirname(record$path)), role = record$role, saved = record$mtime,
+      file = record$path, set = basename(dirname(record$path)), role = record$role, rendered_at = rendered,
       dataset_version = if (length(versions)) paste(versions, collapse = ", ")
     ))
   }
@@ -239,7 +304,7 @@
 # reproduces it.
 .run_facts <- function(run, data = list(), artifacts = list(), cfg = hvtiRutilities::study_config(),
                        envir = parent.frame()) {
-  c(.facts_run(run, Sys.time()), list(
+  c(.facts_run(.run_reconcile(run), Sys.time()), list(
     job = .facts_job(run),
     datasets = .facts_datasets(data, cfg),
     upstream = .facts_upstream(artifacts),
@@ -265,8 +330,8 @@
 
 .clock <- function(iso, zone) paste(sub("T", " ", substr(iso, 1L, 19L), fixed = TRUE), zone)
 
-# A time the provenance records, in UTC with a trailing Z, read as a person reads one.
-.clock_utc <- function(iso) sub("Z$", " UTC", sub("T", " ", iso, fixed = TRUE))
+# A time recorded as ISO 8601 with its offset (.iso_time()), read as a person reads one.
+.clock_offset <- function(iso) paste(sub("T", " ", substr(iso, 1L, 19L), fixed = TRUE), substring(iso, 20L))
 
 # At most this many upstream handoffs get a row; a bootstrap bag reads hundreds
 # of chunk files, and the provenance JSON lists them all.
@@ -309,7 +374,7 @@
     group_rows("Upstream", c(
       lapply(utils::head(facts$upstream, .upstream_rows), function(u) {
         c("Handoff", paste0("`", u$set, "/", basename(u$file), "`", if (!is.null(u$role)) paste0(" (", u$role, ")"),
-                            if (!is.null(u$saved)) paste0(", saved ", .clock_utc(u$saved)),
+                            ", rendered ", if (is.null(u$rendered_at)) "not recorded" else .clock_offset(u$rendered_at),
                             if (!is.null(u$dataset_version)) paste0(", data ", u$dataset_version)))
       }),
       if (length(facts$upstream) > .upstream_rows) {

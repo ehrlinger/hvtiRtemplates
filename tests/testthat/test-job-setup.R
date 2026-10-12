@@ -44,6 +44,8 @@ test_that("the study's R/ is sourced into a fresh envir that already holds .root
 
 test_that("the test helper runs a setup chunk without a .root it was handed, so it cannot mask a helper that needs one", {
   fx <- setup_fixture()
+  # The helper runs the chunk from the study root, where no file is being rendered.
+  testthat::local_mocked_bindings(current_input = function(dir = FALSE) NULL, .package = "knitr")
   writeLines("lookup_path <- file.path(.root, \"lookup.csv\")", file.path(fx$root, "R", "lookup.R"))
   env <- new.env(parent = globalenv())
   env$.root <- fx$root
