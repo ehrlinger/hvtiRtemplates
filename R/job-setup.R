@@ -20,8 +20,9 @@
 # Returns the study root, the set_path() function the job writes through, the
 # run record, and the notice the report opens with: the draft banners, if any,
 # then the box. `show_markers = FALSE` keeps a marker's source line out of the
-# report, for a job whose markers can sit beside a patient's name (bd).
-.job_setup <- function(subject, type, envir = parent.frame(), show_markers = TRUE) {
+# report, for a job whose markers can sit beside a patient's name (bd). `box_data = FALSE` leaves the
+# data clause out of the box, for a job that reads no registered dataset (bd builds one).
+.job_setup <- function(subject, type, envir = parent.frame(), show_markers = TRUE, box_data = TRUE) {
   started <- Sys.time()
   input <- knitr::current_input(dir = TRUE)
   root <- .find_study_root(if (is.null(input)) getwd() else dirname(input))
@@ -40,11 +41,12 @@
   # A new run: what the last one read is not this one's.
   .run_state$reads <- list()
   .run_state$handoffs <- list()
+  .run_state$draft_reasons <- character()
   # Any handoff bundle this job saves records when this render began.
   .run_state$rendered_at <- .iso_time(started)
   run <- .run_begin(started, input, subject, type, markers)
   notice <- paste0(c(if (length(banner)) paste(banner, collapse = "\n"), as.character(partial),
-                     .run_box(run, .box_dataset(root, input))), collapse = "\n")
+                     .run_box(run, .box_dataset(root, input), box_data)), collapse = "\n")
   # Resolves from `envir`, not from the arguments, so a test or an author who
   # changes SUBJECT or TYPE afterward moves the set, as the old chunk's did.
   set_path <- function(kind, file) {

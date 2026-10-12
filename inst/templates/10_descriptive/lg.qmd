@@ -384,6 +384,8 @@ if (length(choices$problems)) {
          "to render a draft instead.", call. = FALSE)
   }
   warning(.msg, "\nRendering as a draft; the banner goes when every covariate has a choice.", call. = FALSE)
+  # The box under the title was printed before this was known; the end table says draft.
+  hvtiRtemplates:::.run_mark_draft(paste0("a scale is not chosen for ", length(choices$problems), " covariate(s)"))
   cat("\n::: {.callout-important title=\"DRAFT -- a scale is not chosen\"}\n", .msg, "\n:::\n\n", sep = "")
 }
 # What is saved holds the covariates with a usable choice and no patient: the

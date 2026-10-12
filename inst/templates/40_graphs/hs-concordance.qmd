@@ -95,7 +95,7 @@ suppressPackageStartupMessages({
 set_path <- .job$set_path
 .provenance_data <- list()
 # This job reads other sets' models by path, in the models chunk. It writes only
-# into its own set, the comparison set these two values name.
+# into its own set, the comparison set that SUBJECT and TYPE name.
 # The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```

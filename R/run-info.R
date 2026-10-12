@@ -15,6 +15,7 @@
 .run_state <- new.env(parent = emptyenv())
 .run_state$reads <- list()
 .run_state$handoffs <- list()
+.run_state$draft_reasons <- character()
 
 # Who ran the render, and on which machine. HVTI_RUN_USER and HVTI_RUN_HOST
 # replace the two, for a report that is published and should not carry a real
@@ -57,12 +58,27 @@
 # say "final" over a report that ended early. The points are read again here, and
 # any stop or skip makes the run a draft that stopped early. The setup record is
 # returned edited, not changed: it is what the box printed.
+#
+# A template that finds at run time that its report is a draft (a scale not
+# chosen, a pool incomplete) says so with .run_mark_draft(), the one path a
+# runtime stop_here() takes too. Those reasons are read here as well.
 .run_reconcile <- function(run) {
   kinds <- vapply(.partial_state$points, function(p) p$kind, "")
   run$skipped <- max(run$skipped, sum(kinds == "skip"))
   run$stopped <- run$stopped || any(kinds == "stop")
-  if (run$markers > 0L || run$skipped > 0L || run$stopped) run$state <- "draft"
+  run$reasons <- .run_state$draft_reasons
+  if (run$markers > 0L || run$skipped > 0L || run$stopped || length(run$reasons)) run$state <- "draft"
   run
+}
+
+# Called by a template, or by stop_here(), when the report turns out to be a
+# draft after the box under the title said otherwise. The box was printed at the
+# start, before the data were read, so it cannot be taken back. The report says
+# so where it can: the "About this run" table at the end opens with a notice
+# naming each reason, and its status and the run facts read draft.
+.run_mark_draft <- function(reason) {
+  .run_state$draft_reasons <- unique(c(.run_state$draft_reasons, reason))
+  invisible(NULL)
 }
 
 .n_of <- function(n, noun) paste(n, if (n == 1L) noun else paste0(noun, "s"))
@@ -70,7 +86,17 @@
 .open_summary <- function(run) {
   paste(c(if (run$markers > 0L) .n_of(run$markers, "open marker"),
           if (run$skipped > 0L) .n_of(run$skipped, "skipped chunk"),
-          if (run$stopped) "the render stops early"), collapse = ", ")
+          if (run$stopped) "the render stops early", unlist(run$reasons)), collapse = ", ")
+}
+
+# A value in a Markdown code span. The fence is one backtick longer than the
+# longest run inside, so a name such as `age at op` does not end the span, and
+# the text is padded with a space when it begins or ends with a backtick.
+.code_span <- function(x) {
+  runs <- regmatches(x, gregexpr("`+", x))[[1L]]
+  fence <- strrep("`", max(c(0L, nchar(runs))) + 1L)
+  pad <- if (grepl("^`|`$", x)) " " else ""
+  paste0(fence, pad, x, pad, fence)
 }
 
 # Markdown for a value that is not ours: a user or host name, a file name.
@@ -155,9 +181,11 @@
 
 # ---- The top box -------------------------------------------------------------
 
-.run_box <- function(run, dataset = NULL) {
+.run_box <- function(run, dataset = NULL, data_clause = TRUE) {
   state <- if (identical(run$state, "draft")) paste0("**draft** (", .open_summary(run), ")") else "**final**"
-  data <- if (is.null(dataset)) {
+  data <- if (!data_clause) {
+    NULL
+  } else if (is.null(dataset)) {
     "data: see About this run"
   } else {
     paste0(dataset$kind, " `", dataset$name, "`", if (!is.null(dataset$version_file)) paste0(" `", dataset$version_file, "`"),
@@ -213,7 +241,8 @@
     start = .iso_time(run$started), end = .iso_time(ended), time_zone = format(ended, "%Z"),
     duration_seconds = round(as.numeric(difftime(ended, run$started, units = "secs")), 1),
     status = run$state, open_markers = run$markers, skipped_chunks = run$skipped,
-    stopped_early = run$stopped, user = run$user, host = run$host
+    stopped_early = run$stopped, draft_reasons = if (length(run$reasons)) as.list(run$reasons),
+    user = run$user, host = run$host
   ))
 }
 
@@ -347,7 +376,8 @@
     lapply(seq_along(items), function(k) c(if (k == 1L) group else "", items[[k]]))
   }
   status <- if (identical(facts$status, "draft")) {
-    open <- list(markers = facts$open_markers, skipped = facts$skipped_chunks, stopped = isTRUE(facts$stopped_early))
+    open <- list(markers = facts$open_markers, skipped = facts$skipped_chunks,
+                 stopped = isTRUE(facts$stopped_early), reasons = facts$draft_reasons)
     paste0("draft (", .open_summary(open), ")")
   } else {
     "final"
@@ -363,10 +393,13 @@
       group_rows(paste0("Dataset `", d$name, "`"), list(
         c("Version file", d$version_file), c("Registered", d$registered), c("Source file", d$source_file),
         c("Rows kept", if (!is.null(d$rows)) {
-          paste0(format(d$rows, big.mark = ","), " rows on ", format(d$patients, big.mark = ","), " patients")
+          # A joined source has rows and no patient count of its own.
+          paste0(format(d$rows, big.mark = ","), " rows",
+                 if (!is.null(d$patients)) paste0(" on ", format(d$patients, big.mark = ","), " patients"))
         }),
-        c("WHERE", if (!is.null(d$rows)) {
-          if (length(d$where)) paste0("`", d$where, "`", collapse = "; ") else "none"
+        # The cohort's conditions; a joined source has none of its own to show.
+        c("WHERE", if (!is.null(d$rows) && !is.null(d$where)) {
+          if (length(d$where)) paste(vapply(d$where, .code_span, ""), collapse = "; ") else "none"
         }),
         c("sha256", d$sha256), c("Manifest", d$manifest)
       ))
@@ -389,5 +422,13 @@
   )
   cell <- function(x) gsub("|", "\\|", if (is.null(x) || is.na(x)) "" else x, fixed = TRUE)
   body <- vapply(rows, function(row) paste0("| ", paste(vapply(row, cell, ""), collapse = " | "), " |"), "")
-  c("", "## About this run {.unnumbered}", "", "| Group | Item | Value |", "|:--|:--|:--|", body, "")
+  # The box under the title was printed before the run could know; a run marked a
+  # draft since then says so here, where the reader has the facts in front of them.
+  notice <- if (length(facts$draft_reasons)) {
+    c("::: {.callout-important title=\"This run ended as a draft\"}",
+      paste0("The box under the title was printed at the start of the render and cannot change. ",
+             "This report was found to be a draft while it ran: ", paste(unlist(facts$draft_reasons), collapse = "; "), "."),
+      ":::", "")
+  }
+  c("", "## About this run {.unnumbered}", "", notice, "| Group | Item | Value |", "|:--|:--|:--|", body, "")
 }

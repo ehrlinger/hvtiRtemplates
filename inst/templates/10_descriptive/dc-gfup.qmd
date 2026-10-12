@@ -352,6 +352,8 @@ if (figure_drawn) {
          call. = FALSE)
   }
   warning("The goodness-of-follow-up figure was not drawn: ", conditionMessage(fp), call. = FALSE)
+  # The box under the title was printed before this was known; the end table says draft.
+  hvtiRtemplates:::.run_mark_draft("the goodness-of-follow-up figure was not drawn")
   close_date <- NA
   close_source <- paste("not drawn:", conditionMessage(fp))
 }
