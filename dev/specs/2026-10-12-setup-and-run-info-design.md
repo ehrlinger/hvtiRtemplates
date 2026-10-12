@@ -25,7 +25,8 @@ four "Code" folds before it says anything.
 1. **One setup chunk.** The four chunks become one, labeled `setup`, that calls an
    internal `.job_setup()`. It is kept separate from other changes so the report
    shows one "Code" fold.
-2. **Run information appears twice.**
+2. **The render date goes in the YAML title metadata,** and the rest of the run
+   information appears twice.
    - A one-line box under the title, so a reader sees at a glance what the
      numbers come from.
    - A full "About this run" table at the end of the report.
@@ -83,10 +84,26 @@ one by one.
 
 ## 4. Run information
 
-**The top box** is one line, as a callout under the title:
+**The render date goes in the YAML header,** added to every template's own
+front matter:
 
-> Rendered 2026-10-12 14:03 by jdoe on host · **final** · data `built`
-> `built_20261009.parquet`, registered 2026-10-09 · hvtiRtemplates 1.3.1
+```yaml
+date: now
+date-format: "YYYY-MM-DD HH:mm"
+```
+
+Quarto evaluates `now` at render, so the date appears in the standard title block
+and in the document's metadata (the HTML `dcterms.date`, and Word's date
+property), with no code. Templates carry their own `format:` block by rule, so the
+two lines go in each template, not a shared `_quarto.yml`. Jobs already in
+studies do not gain them; their render time still appears in the end table, which
+comes from `.job_setup()`.
+
+**The top box** is one line, as a callout under the title. It holds what Quarto
+cannot know:
+
+> **final** · data `built` `built_20261009.parquet`, registered 2026-10-09 ·
+> rendered by jdoe on host · hvtiRtemplates 1.3.1
 
 In a draft, it reads **draft** and gives the count of open markers and skipped
 chunks, so it points at the DRAFT banner the guard already prints.
@@ -132,8 +149,10 @@ All fixtures synthetic. Each test fails with its code reverted.
 2. **Template contract.** Every template has exactly one chunk before "Study
    choices", labeled `setup`, and exactly one `SUBJECT` and one `TYPE` line;
    `add_job()` still substitutes them.
-3. **Top box.** It shows the render date, final or draft, the dataset version and
-   registration date, and the hvtiRtemplates version.
+3. **Date and top box.** Every template's YAML has `date: now` and a `date-format`,
+   and the rendered title block shows the date. The box shows final or draft, the
+   dataset version and registration date, user and host, and the hvtiRtemplates
+   version.
 4. **End table.** It holds every field in the table, for a plain job and for a
    downstream job with an upstream handoff.
 5. **renv and seed.** Present when set, absent otherwise. The renv hash is the
