@@ -26,11 +26,7 @@ format:
 
 <!-- EDIT: name the SAS job this replaces, and say what its `selection`
      statement screened: which phases carried candidates, and at what
-     entry/stay levels. -->
-
-Replaces `analyses/<job>.sas`: describe its `PROC HAZARD … selection` call
-here — which covariates were offered to which phase, and at what entry and stay
-levels.
+     entry/stay levels. Replace this comment with that text. -->
 
 An `hm` job builds the risk-factor model **on top of** the shape parameters the
 `hz` job fitted. The shapes are not re-derived here; they are read. Patient-level

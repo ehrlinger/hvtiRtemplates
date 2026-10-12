@@ -16,9 +16,8 @@ format:
 ---
 
 <!-- EDIT: name the job this replaces (descriptive/dc.tables.*) and say whether it
-     was the overall tables, the by-group tables, or the correlation variant. -->
-
-Replaces `descriptive/dc.tables`: say which variant.
+     was the overall tables, the by-group tables, or the correlation variant.
+     Replace this comment with that text. -->
 
 A `dc-tables` job is the formatted descriptive table: every variable the study
 reports, grouped under the section headings the SAS `%desc_tab` lists carried as

@@ -26,9 +26,7 @@ format:
 
 <!-- EDIT: name the job this replaces (an `rfsrc.*` or `rf.*` job with a
      continuous outcome), and say which outcome and candidate predictors it
-     used. -->
-
-Replaces `analyses/<job>`: describe its outcome and candidate predictors here.
+     used. Replace this comment with that text. -->
 
 An `rfr-fit` job grows a regression forest and checks that it learned
 something: out-of-bag error by number of trees, and predicted against

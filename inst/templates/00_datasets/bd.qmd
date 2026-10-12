@@ -27,7 +27,7 @@ execute:
 
 <!-- EDIT: name the SAS job this replaces (usually datasets/bd.data.sas) and the master it read. -->
 
-Replaces `datasets/<job>.sas`. This job cuts the study's dataset from a master
+This job cuts the study's dataset from a master
 snapshot, records who was excluded and why, writes a draft, and, when
 `PUBLISH` is `TRUE`, publishes a dated release and registers it as this study's
 `"built"` dataset (also called `"study"`), the one every analysis job reads.

@@ -25,9 +25,7 @@ format:
 ---
 
 <!-- EDIT: name the SAS job this replaces, and say which treatments it compared
-     and at what horizon. -->
-
-Replaces `graphs/<job>.sas`: name the treatments compared here and the horizon.
+     and at what horizon. Replace this comment with that text. -->
 
 An `hs-concordance` job predicts **every patient through every treatment
 group's model**. Each group's risk-factor model was fitted by its own `hm` job,

@@ -28,11 +28,7 @@ format:
      verbatim. The call is the specification: it names the candidate pool, the
      phases each candidate was offered to, the entry and stay levels, and the
      replicate count. Prose describing it is a paraphrase that drifts; the call
-     does not. -->
-
-Replaces `analyses/<job>.sas`: paste its `%hazboot` call here — the candidate
-pool, which phases carried candidates, the entry and stay levels, and
-`resampl=`.
+     does not. Replace this comment with that text. -->
 
 This job **does not fit the final model**. It screens. The companion `hm` job
 fits the multivariable model.

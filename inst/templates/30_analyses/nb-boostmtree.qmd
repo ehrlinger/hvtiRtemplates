@@ -25,9 +25,8 @@ format:
 ---
 
 <!-- EDIT: name the job this replaces (an `nb.<variable>.Boostmtree` job), and
-     say which response, visit time and predictors it used. -->
-
-Replaces `analyses/<job>`: describe its response, visit time and predictors here.
+     say which response, visit time and predictors it used.
+     Replace this comment with that text. -->
 
 An `nb-boostmtree` job fits boosted multivariate trees to a response measured
 repeatedly over follow-up, one row per visit, and reports how well it fits and

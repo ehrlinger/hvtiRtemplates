@@ -17,9 +17,7 @@ format:
 
 <!-- EDIT: name the job this replaces (descriptive/dc.stddiff, dc.std_dif or
      dc.stddiffci) and say which comparisons it carried: unadjusted, matched,
-     matching-weighted. -->
-
-Replaces `descriptive/dc.stddiff`: say which variant.
+     matching-weighted. Replace this comment with that text. -->
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and, when the

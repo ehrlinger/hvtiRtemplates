@@ -240,6 +240,45 @@ test_that("no template writes the edit marker token literally", {
   }
 })
 
+test_that("no template carries placeholder prose outside an EDIT marker", {
+  # Resolving a marker deletes the marker. A placeholder sentence beside it, such
+  # as "Describe the question here.", is ordinary prose and survives into the
+  # rendered report (#182). Every placeholder belongs inside the marked comment.
+  # `prose` is the document with its chunks and its comments removed, which is
+  # what a finished report would still say.
+  prose <- function(src) {
+    txt <- paste(src, collapse = "\n")
+    txt <- gsub("(?s)<!--.*?-->", "", txt, perl = TRUE)
+    txt <- gsub("(?ms)^```.*?^```", "", txt, perl = TRUE)
+    txt <- sub("(?s)^---.*?\n---\n", "", txt, perl = TRUE)
+    # One line, so a sentence wrapped across two source lines is still one match.
+    gsub("\\s+", " ", txt)
+  }
+  placeholder <- paste(
+    c("<(job|outcome)>",                # a template path left as a slot
+      "Replaces `[^`]*`:",              # "Replaces `x`: describe ...", an instruction
+      "\\b(describe|paste) its\\b",
+      "\\bdescribe the (question|phase structure) here",
+      "\\bsay which (variant)?\\.",
+      "\\bcompared here and the horizon",
+      "\\blist the trend figures"),
+    collapse = "|")
+  found <- function(src) {
+    txt <- prose(src)
+    regmatches(txt, gregexpr(placeholder, txt, ignore.case = TRUE, perl = TRUE))[[1L]]
+  }
+  # The rule can fail: a placeholder left beside its marker is caught, wrapped
+  # across lines or not, and the same sentence inside the marker is not.
+  head <- c("---", "title: x", "---", "<!-- EDIT: say it. -->", "")
+  expect_length(found(c(head, "Describe the question", "here.")), 1L)
+  expect_length(found(c("---", "title: x", "---", "<!-- EDIT: say it. Describe the question here. -->", "", "Prose.")), 0L)
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+  for (f in tl$file) {
+    expect_identical(found(readLines(f, warn = FALSE)), character(0), info = basename(f))
+  }
+})
+
 test_that("the hvtiRutilities helpers templates call are declared and exported", {
   # The trigger this exists for: adding a template that calls a NEWER helper
   # silently leaves DESCRIPTION's `hvtiRutilities (>= x.y.z)` behind. An install

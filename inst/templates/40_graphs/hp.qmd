@@ -26,10 +26,8 @@ format:
 
 <!-- EDIT: name the SAS job this replaces, and say WHICH upstream fits it
      reads. A stratified hp job reads the per-stratum fits and never the
-     overall one; getting that backwards produces a plausible figure. -->
-
-Replaces `graphs/<job>.sas`: describe its `HAZPRED` call and the figures it
-draws.
+     overall one; getting that backwards produces a plausible figure. Describe its HAZPRED call and the figures it draws.
+     Replace this comment with that text. -->
 
 An `hp` job **reads** its inputs and does not recompute them: the actuarial life
 table from the `ac` job and the parametric fit from the `hz` job, both by set. A

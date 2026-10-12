@@ -26,9 +26,7 @@ format:
 
 <!-- EDIT: name the job this replaces (an `rfsrc.*` or `rf.*` job with a
      classification or binary outcome), and say which outcome and candidate
-     predictors it used. -->
-
-Replaces `analyses/<job>`: describe its outcome and candidate predictors here.
+     predictors it used. Replace this comment with that text. -->
 
 An `rfc-fit` job grows a classification forest and checks that it learned
 something: out-of-bag error by number of trees, and the ROC curve with its
