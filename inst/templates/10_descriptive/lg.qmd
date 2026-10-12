@@ -1,0 +1,503 @@
+---
+title: "Logit calibration"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-location: left
+    page-layout: full
+    grid:
+      body-width: 2000px
+      sidebar-width: 250px
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: name the SAS job this replaces (descriptive/lg.<outcome>, or the
+     tp.lg.hdead or tp.lg.dead.constant template it was copied from) and say
+     which event and which link it used. -->
+
+Replaces `descriptive/lg.<outcome>`: say which.
+
+An `lg` job decides which scale a covariate should enter a model on, before it
+goes into `PREDICTORS` in an `lm` job. A model of an event rate on a covariate
+assumes the rate is straight in the covariate on the link scale, and a covariate
+that is skewed, or that acts through its inverse, breaks that quietly: the model
+fits and reports a coefficient for a shape the data do not have. This job shows
+the shape first.
+
+For each covariate it ranks the patients into groups (usually five), takes the
+event rate of each group on a link scale, and plots that against the covariate on
+six candidate scales, so the analyst can pick the one that comes out straightest.
+It replaces the SAS `%logit` macro, which ranked with `PROC RANK`, and
+`%logitgr`, which took each level of an ordinal covariate as a group. The link is
+the logit, `log(p / (1 - p))`, for a binary event, or, for time-related death, the
+log of the constant hazard rate, `log(events / sum of follow-up)`, which is what
+the SAS jobs called with `cox=1`. The R-squared in each panel is the weighted
+straight-line fit of the groups, weighted by group size. It is guidance for
+"straightest", not a decision: the choice goes in `chosen`, and the job saves it.
+
+```{r}
+#| label: setup
+# unnumbered: loads packages only
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+.in <- knitr::current_input(dir = TRUE)
+.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
+.provenance_data <- list()
+for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
+suppressPackageStartupMessages(library(hvtiRutilities))
+```
+
+```{r}
+#| label: guard-edits
+#| results: asis
+# The markers in this file name work a study author still has to do, and a job
+# that still contains one has not been finished. This chunk is what makes that
+# TRUE rather than merely stated: an unedited job would otherwise render green
+# over placeholder columns.
+.tok <- paste0("ED", "IT", ":")
+.cur <- knitr::current_input()
+if (!is.null(.cur)) {
+  .src  <- readLines(.cur, warn = FALSE)
+  .hits <- grep(.tok, .src, fixed = TRUE)
+  if (length(.hits)) {
+    .msg <- paste0(
+      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
+      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
+      "\nA job that still contains one has not been finished. Work each ",
+      "marker and delete it."
+    )
+    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
+      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
+      cat("Unresolved markers remain. **The numbers below are not",
+          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
+      cat(":::\n\n")
+    } else {
+      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
+           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
+           "or no, to render a draft instead.", call. = FALSE)
+    }
+  }
+}
+```
+
+```{r}
+#| label: guard-partial
+#| results: asis
+# unnumbered: a callout, printed only when part of the job is left out
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one here; a
+# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
+hvtiRtemplates:::.guard_partial(knitr::current_input())
+```
+
+```{r}
+#| label: set
+SUBJECT <- "dead"
+TYPE    <- "calibration"
+
+.current <- knitr::current_input()
+if (!is.null(.current)) {
+  .fields <- hvtiRtemplates:::.job_name_fields(.current)
+  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
+  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
+  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
+    stop("This file is named '", .current, "' (subject '", .name_subject,
+         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
+         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.",
+         call. = FALSE)
+  }
+}
+
+set_path <- function(kind, file) {
+  d <- file.path(hvtiRutilities::study_dir(kind, .root),
+                 paste0(SUBJECT, "-", TYPE))
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  file.path(d, file)
+}
+
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+```
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+```{r}
+#| label: edit-study-choices
+# EDIT: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
+
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
+
+# EDIT: the event, a 0/1 column, 1 for a patient who had it (the SAS macro's
+# EVENT=). TRUE and FALSE also work. A patient with no value is ranked with the
+# rest, as in SAS, but counts toward no group's rate: not in its patients, its
+# events or, under "hazard", its follow-up.
+EVENT <- "dead"
+
+# EDIT: the link, the scale the group rates are put on before they are plotted.
+# "hazard" is the log of the constant hazard rate, log(events / sum of follow-up),
+# for an event with variable follow-up such as death (the SAS call's cox=1).
+# "logit" is log(p / (1 - p)), for an event every patient was followed to the same
+# point for, such as in-hospital death or a complication.
+LINK <- "hazard"
+
+# EDIT: the follow-up column, in the unit the study reports (years here). Only
+# "hazard" reads it, and INTERVAL below reads it for either link. A patient with
+# no value is left out of a "hazard" calibration, as the SAS macro left them out.
+TIME <- "iv_dead"
+
+# EDIT: NULL, or a window on follow-up, c(start, end), such as c(0.25, 5): one phase
+# of a hazard, the SAS early, constant or late phase, in the unit of TIME. A patient
+# whose follow-up ended before `start` is left out and counted. Everyone else is
+# censored at `end`: a patient followed past it counts as followed to `end`, and an
+# event after it does not count. Under "hazard" the time at risk is then the time
+# inside the window, TIME capped at `end`, less `start`; the SAS template summed it
+# from 0. Under "logit" the same patients are kept and an event counts only if it
+# falls inside the window. Both counts are reported under the data table.
+INTERVAL <- NULL
+
+# EDIT: the covariates to calibrate, one row each. `name` is a column of the data;
+# `kind` is "continuous" (ranked into groups) or "ordinal" (each level is a
+# group). The other columns are optional, and a covariate that does not give
+# one takes the default:
+#   groups    5      how many groups a continuous covariate is ranked into; the
+#                    job stops if any group has fewer than 5 patients, and for
+#                    an ordinal covariate (at most 20 levels) if any level has
+#   constant  the covariate's median to one significant figure; the c in the
+#             inverse, inverse squared, squared and exponential scales. A
+#             median that rounds to 0 (a 0/1 indicator) leaves it NA, and
+#             those four scales are not computable until you set one
+#   shift     0      added before the log, for a covariate that can be 0
+#   label     the name   the heading over its table and figure
+#   chosen    NA     the scale to use: "raw", "log", "inverse",
+#                    "inverse_squared", "squared" or "exp". Leave it NA until
+#                    you have seen the figure; the job then warns, and a final
+#                    render stops until every covariate has one.
+VARIABLES <- data.frame(
+  name   = c("age"),
+  kind   = c("continuous"),
+  chosen = c(NA)
+)
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("lg-age"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
+```
+
+## Data
+
+<!-- How this job finds its data. Read this before touching the chunk below.
+
+     A study can offer a job data three ways, and `_study.yml` says which exist:
+
+     1. The study dataset: the file named by `built:`. `DATASET <- "built"`
+        with `ANALYSIS_SET <- NULL`.
+     2. An additional dataset: any file declared under `additional_datasets:`,
+        for example a column subset written for R. Set `DATASET` to its
+        name there and `ANALYSIS_SET <- NULL`. It is read as it stands: only
+        `WHERE` removes rows.
+     3. An analysis set: declared under `analysis_sets:` with the columns kept
+        and the rows excluded, then written once with
+        `hvtiRdatabuild::write_analysis_set()`. Set `ANALYSIS_SET` to its name
+        and leave `DATASET` as "built", because a set is always cut from the
+        study dataset. The report shows its exclusions in order.
+
+     A name under `additional_datasets:` is not an analysis set, so putting it
+     in `ANALYSIS_SET` stops with "No analysis set". Whichever route is taken,
+     the report prints what it read, the identifier it used, the rows each
+     `WHERE` condition removed and the rows and patients kept, so a reader
+     never has to ask which data a table describes. -->
+
+```{r}
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
+knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(job_data$attrition)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
+```{r}
+#| label: derive
+# unnumbered: checks the choices against the data and shows nothing
+# Every choice is checked against the data before any calibration, so a
+# misspelled column stops here by name rather than as an error from inside it.
+.id <- attr(job_data$record, "selection")$id
+if (!identical(LINK, "logit") && !identical(LINK, "hazard")) {
+  stop("LINK must be \"logit\" or \"hazard\".", call. = FALSE)
+}
+one_column <- function(x, setting) {
+  if (!(is.character(x) && length(x) == 1L && !is.na(x))) stop(setting, " must be one column name.", call. = FALSE)
+}
+one_column(EVENT, "EVENT")
+# TIME is read by the hazard link and by INTERVAL, and by nothing else.
+.needs_time <- identical(LINK, "hazard") || !is.null(INTERVAL)
+if (.needs_time) one_column(TIME, "TIME")
+hvtiRtemplates:::.check_job_columns(d, EVENT = EVENT, TIME = if (.needs_time) TIME)
+if (.id %in% c(EVENT, if (.needs_time) TIME)) {
+  stop("EVENT and TIME cannot be the patient identifier.", call. = FALSE)
+}
+if (.needs_time && !is.numeric(d[[TIME]])) {
+  stop("TIME must be a number, the follow-up in years or months: `", TIME, "` is not numeric.", call. = FALSE)
+}
+if (.needs_time) hvtiRtemplates:::.lg_follow_up(d[[TIME]], TIME)
+# INTERVAL leaves patients out and censors the rest before anything else is
+# computed, so the constants and the groups below are those of the patients
+# calibrated, and the event and follow-up the tables read are the windowed ones.
+.interval <- hvtiRtemplates:::.lg_interval(d, EVENT, if (.needs_time) TIME, INTERVAL)
+d <- .interval$data
+.event <- .interval$event
+.time <- .interval$time
+variables <- hvtiRtemplates:::.lg_variables(VARIABLES, d, exclude = .id, event = .event,
+                                            time = if (identical(LINK, "hazard")) .time)
+```
+
+```{r}
+#| label: lg-interval
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(.interval$counts)) {
+  .fence <- strrep("`", 3)
+  .cap <- paste0("The window of follow-up from ", INTERVAL[[1L]], " to ", INTERVAL[[2L]], " (INTERVAL): patients left out, ",
+                 "and patients censored at its end")
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-lg-interval",
+    paste0("#| tbl-cap: ", encodeString(.cap, quote = "\"")),
+    "knitr::kable(.interval$counts, col.names = c(\"\", \"Patients\"))", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
+## Covariates
+
+Each covariate with the defaults filled in. The `constant` is the `c` in the
+inverse, inverse squared, squared and exponential scales: it only sets them to a
+readable range, so the median rounded to one figure does the work the SAS jobs'
+hand-typed 50 for an age or 80 for a weight did. Set it, or `shift` for a
+covariate that can be 0, in `VARIABLES` to change either.
+
+```{r}
+#| label: tbl-lg-variables
+#| tbl-cap: "The covariates calibrated, with their defaults"
+knitr::kable(variables, col.names = c("Covariate", "Kind", "Groups", "Constant", "Shift", "Label", "Chosen"),
+             row.names = FALSE)
+```
+
+## Calibration
+
+For each covariate, a table of its groups and the figure of the groups' link
+values against six scales of the covariate. Read the figure for the panel that
+comes out straightest. The R-squared in each corner is only a guide: it is the
+fit of a straight line weighted by group size, so a panel can score high and
+still bend. A group whose link value cannot be computed keeps its row in the
+table, blank, and is named under it. A scale that cannot be computed for the
+covariate is drawn as an empty panel, and named there too.
+
+```{r}
+#| label: lg
+#| results: asis
+# unnumbered: each covariate's child chunks carry their own labels and captions
+# The figure is saved as PNG and PDF under graphs/<subject>-<type>/lg-<covariate>,
+# and the PNG is the one the report shows.
+.fence <- strrep("`", 3)
+.kable_na <- options(knitr.kable.NA = "")
+calibration <- list()
+for (i in seq_len(nrow(variables))) {
+  .v <- variables[i, ]
+  .tab <- hvtiRtemplates:::.lg_table(d[[.v$name]], .event, if (identical(LINK, "hazard")) .time,
+                                     groups = .v$groups, kind = .v$kind, link = LINK)
+  .scales <- hvtiRtemplates:::.lg_scales(.tab$mean, .v$constant, .v$shift)
+  calibration[[.v$name]] <- list(table = .tab, scales = .scales)
+  .plot <- hvtiRtemplates:::.lg_plot(.tab, .scales, LINK, title = .v$label)
+  .file <- save_figure(.plot, paste0("lg-", .v$name), width = 9, height = 6, linked = TRUE)
+  # This document sits in descriptive/ and the figure is written to graphs/, so
+  # the image link is the figure's path relative to this document.
+  .link <- xfun::relative_path(.file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE)
+  # A label holds letters, digits and hyphens, so an underscore in a name cannot
+  # be read as markup in a cross-reference.
+  .slug <- gsub("[^A-Za-z0-9]+", "-", .v$name)
+  .heads <- c("Group", "Mean", "Minimum", "Maximum", "Patients", "Events",
+              if (identical(LINK, "hazard")) "Events per unit of follow-up" else "Event rate",
+              if (identical(LINK, "hazard")) "Log hazard rate" else "Logit")
+  .cap_tbl <- paste0("Groups of ", .v$label, ", with the event rate and its link value")
+  .cap_fig <- paste0(.v$label, ": the link value of each group against the covariate on six scales, ",
+                     "with the R-squared of a weighted straight line")
+  cat("\n### ", .v$label, "\n\n", sep = "")
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), paste0("#| label: tbl-lg-", .slug),
+    paste0("#| tbl-cap: ", encodeString(.cap_tbl, quote = "\"")),
+    "knitr::kable(.tab, col.names = .heads, digits = 3, row.names = FALSE)", .fence, "",
+    paste0(.fence, "{r}"), paste0("#| label: fig-lg-", .slug),
+    paste0("#| fig-cap: ", encodeString(.cap_fig, quote = "\"")),
+    "knitr::include_graphics(.link, error = FALSE)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+  .dropped <- attr(.tab, "dropped")
+  .scale_notes <- attr(.scales, "notes")
+  .left <- c(if (.dropped[["covariate"]] > 0L) paste0(.dropped[["covariate"]], " without a value of the covariate"),
+             if (.dropped[["follow_up"]] > 0L) paste0(.dropped[["follow_up"]], " without follow-up"))
+  .notes <- c(
+    if (length(.left)) paste0("Left out of the groups: ", paste(.left, collapse = ", "), "."),
+    if (.dropped[["event"]] > 0L) {
+      paste0(.dropped[["event"]], " with no event value are ranked but counted in no group's patients, events or follow-up.")
+    },
+    attr(.tab, "notes"),
+    if (length(.scale_notes)) paste0(hvtiRtemplates:::.lg_panel_labels[names(.scale_notes)], ": ", .scale_notes)
+  )
+  if (length(.notes)) cat("\n", paste0("- ", .notes, collapse = "\n"), "\n", sep = "")
+}
+options(.kable_na)
+```
+
+## Chosen scales
+
+Once you have read the figures, set `chosen` for each covariate in `VARIABLES`
+and render again. The job saves the choice as `lg-scales.rds`, one row for each
+covariate: the scale, the term to write for it, and the constant and shift it
+used. The term goes into the `PREDICTORS` of an `lm` job as it stands, so the
+model is fitted on the scale the figure showed.
+
+A covariate with no choice, or whose chosen scale cannot be computed, is not
+saved. In a draft the job warns and lists it here; a final render stops, as it
+does for an open marker, so a finished job has chosen every scale.
+
+```{r}
+#| label: choices
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+choices <- hvtiRtemplates:::.lg_choices(variables, lapply(calibration, `[[`, "scales"), d)
+if (length(choices$problems)) {
+  .msg <- paste0("These covariates have no usable scale chosen: ",
+                 paste0("`", names(choices$problems), "`: ", choices$problems, collapse = "; "),
+                 ". Read each figure above and set chosen for it in VARIABLES.")
+  if (hvtiRtemplates:::.strict_render()) {
+    stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '", Sys.getenv("HVTI_TEMPLATE_STRICT"),
+         "': a final report names a scale for every covariate. Unset it, or set it to 0, false or no, ",
+         "to render a draft instead.", call. = FALSE)
+  }
+  warning(.msg, "\nRendering as a draft; the banner goes when every covariate has a choice.", call. = FALSE)
+  cat("\n::: {.callout-important title=\"DRAFT -- a scale is not chosen\"}\n", .msg, "\n:::\n\n", sep = "")
+}
+# What is saved holds the covariates with a usable choice and no patient: the
+# scale, its term, constant and shift. Its lineage says which data it came from.
+saveRDS(
+  hvtiRtemplates:::.attach_handoff_lineage(
+    choices$table,
+    data = .provenance_data,
+    analysis = Filter(Negate(is.null), list(event = EVENT, link = LINK, time = if (.needs_time) TIME, interval = INTERVAL)),
+    cohort = list(patients = nrow(d)),
+    selection = attr(job_data$record, "selection")
+  ),
+  set_path("estimates", "lg-scales.rds")
+)
+if (nrow(choices$table)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-lg-scales",
+    "#| tbl-cap: \"The scale chosen for each covariate, and the term to write for it in an lm job\"",
+    "knitr::kable(choices$table, col.names = c(\"Covariate\", \"Scale\", \"Term\", \"Constant\", \"Shift\"), row.names = FALSE)",
+    .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+.predictors <- hvtiRtemplates:::.lg_predictors(choices$table$term)
+if (nrow(choices$table)) {
+  cat("\nThe line to copy into the `PREDICTORS` of an `lm` job, beside its other predictors:\n\n",
+      "```r\n", .predictors, "\n```\n", sep = "")
+} else {
+  cat("\n", .predictors, "\n", sep = "")
+}
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE,
+    lg = Filter(Negate(is.null), list(
+      event = EVENT, link = LINK, time = if (.needs_time) TIME,
+      interval = if (!is.null(INTERVAL)) {
+        .n <- .interval$counts$patients
+        list(start = INTERVAL[[1L]], end = INTERVAL[[2L]], left_out = .n[[2L]] + .n[[3L]], kept = .n[[4L]], censored = .n[[5L]])
+      },
+      patients = nrow(d),
+      # The VARIABLES table as the job completed it, one entry for each covariate. A scale not yet chosen is left out.
+      variables = lapply(seq_len(nrow(variables)), function(i) Filter(Negate(is.na), as.list(variables[i, ]))),
+      unresolved = if (length(choices$problems)) names(choices$problems)
+    ))
+  )
+))
+```

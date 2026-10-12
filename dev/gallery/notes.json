@@ -7,6 +7,10 @@
     "issues": [],
     "note": "No grouping variable, which the legacy EDA report had."
   },
+  "lg": {
+    "issues": [],
+    "note": "Death against age and NYHA class on the constant-hazard link, with the scale chosen for each. A real study reads the figures before it fills chosen in."
+  },
   "ac": {
     "issues": [
       177,

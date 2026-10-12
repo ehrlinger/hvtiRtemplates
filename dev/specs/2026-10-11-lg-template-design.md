@@ -108,7 +108,7 @@ descriptive folder the taxonomy gives `lg`. It is scaffolded with
 | `EVENT` | `"dead"` | yes |
 | `LINK` | `"hazard"` | yes; `"logit"` for a binary in-hospital or complication outcome |
 | `TIME` | `"iv_dead"`, used only by `"hazard"` | yes |
-| `INTERVAL` | `NULL`, or a window such as `c(0.25, 5)` | yes. It keeps the patients whose follow-up falls in it: the SAS early, constant and late phases |
+| `INTERVAL` | `NULL`, or a window `c(start, end)` such as `c(0.25, 5)` | yes. One phase of follow-up, as the SAS early, constant and late phases took it: patients who ended before `start` are left out, the rest are censored at `end`, and the hazard sums the time at risk inside the window, `pmin(TIME, end) - start` |
 | `VARIABLES` | a data frame, one row per covariate | yes |
 | `SAVE_FIGURES`, `FIGURES` | as in every template | no |
 
@@ -170,7 +170,7 @@ All fixtures synthetic, no PHI. Each test fails with its code reverted.
 5. **Render.** The template renders two figures and two tables and saves
    `lg-scales.rds` with the right terms.
 6. **Choices.** A blank `chosen` warns in a draft and stops a final render.
-7. **Interval.** `INTERVAL` filters patients and reports how many it kept.
+7. **Interval.** `INTERVAL = c(start, end)` leaves out the patients who ended before `start`, censors the rest at `end`, and reports both counts.
 8. **No identifiers** in the rendered report, using the scan from `lp-mirror`
    that drops `data:` URIs and matches whole tokens.
 

@@ -22,6 +22,7 @@ refuses to overwrite an existing job.
 | `10_descriptive/dc-stddiff.qmd` | balance table: standardized differences between two groups, unadjusted, matched and weighted | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-eda.qmd` | the whole EDA report: overview, follow-up, then the continuous, percent and count sections, each with its table | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-trends.qmd` | trends over operation year (EDA) | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/lg.qmd` | logit calibration: an event's group rates against six scales of a covariate, and the scale chosen for an `lm` job | `10_descriptive/` or `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
 | `30_analyses/bl.qmd` | bootstrap variable selection, logistic | `30_analyses/` or `analyses/` |
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
@@ -354,6 +355,7 @@ where it does not, as on a Mac without XQuartz.
 | dc-eda | `dc-eda-gfup-<panel>`, `dc-eda-<section>-page-<NN>` |
 | dc-trends | `dc-trends-<trend>-<subgroup>` |
 | hp | `hp-survival`, `hp-hazard`, `hp-phases` |
+| lg | `lg-<covariate>`, one for each covariate in `VARIABLES`, such as `lg-age` |
 | lp-mirror | `lp-mirror-unmatched`, `lp-mirror-weighted`, and `lp-mirror-matched` when `MATCH` is set |
 | bc, bh, bl, br | `<prefix>-frequencies` |
 | nb-boostmtree | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>`, `-traces` |
