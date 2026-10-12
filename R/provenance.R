@@ -933,6 +933,9 @@
   partial <- .partial_state$points
   if (length(partial)) extra$partial <- partial
   facts <- if (!is.null(run)) .run_facts(run, data, artifacts, cfg, envir)
+  # This render's handoffs are saved by now; a bundle saved after it, from the
+  # console or by the next job in this session, must not carry its start time.
+  .run_state$rendered_at <- NULL
   if (!is.null(facts)) extra$run <- facts
   payload <- hvtiRutilities::capture_provenance(
     job = tools::file_path_sans_ext(basename(source)),
