@@ -114,20 +114,17 @@ test_that("a stop_here() the source scan misses still refuses a final render, an
   expect_length(seen, 1L)
 })
 
-test_that("every template carries the guard-partial chunk, just after the EDIT: guard", {
+test_that("every template's setup chunk runs the partial-render guard, and its own text trips nothing", {
   for (path in template_list()$file) {
     lines <- readLines(path, warn = FALSE)
-    edits <- match("#| label: guard-edits", lines)
-    partial <- match("#| label: guard-partial", lines)
-    expect_false(is.na(partial), info = basename(path))
-    # Nothing but the guard-edits chunk's own body sits between the two.
-    between <- lines[seq.int(edits, partial)]
-    expect_identical(sum(between == "```{r}"), 1L, info = basename(path))
-    expect_true(any(grepl(".guard_partial(knitr::current_input())", lines, fixed = TRUE)),
-                info = basename(path))
+    expect_true(any(grepl("hvtiRtemplates:::.job_setup(SUBJECT, TYPE", lines, fixed = TRUE)), info = basename(path))
+    expect_false(any(grepl("label: guard-partial", lines, fixed = TRUE)), info = basename(path))
     # The template's own text must not trip the reader.
     expect_identical(nrow(.partial_points(lines)), 0L, info = basename(path))
   }
+  # .job_setup() is what calls the guard, after the EDIT: guard and before the name check.
+  setup_body <- paste(deparse(body(.job_setup)), collapse = "\n")
+  expect_match(setup_body, "\\.guard_edits.*\\.guard_partial.*\\.check_job_name")
 })
 
 test_that("a part-built job renders what is done, and a final render refuses it", {

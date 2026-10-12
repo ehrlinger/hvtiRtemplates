@@ -64,7 +64,7 @@ test_that("every converted template has the shared settings and a conforming dat
       expect_true(any(trimws(sub("#.*$", "", choices)) == defaults[[setting]]), info = paste(name, setting))
     }
     setup <- template_chunk(src, "setup")
-    expect_true(any(grepl("hvtiRtemplates:::.find_study_root(", setup, fixed = TRUE)), info = paste(name, "setup"))
+    expect_true(any(grepl("hvtiRtemplates:::.job_setup(", setup, fixed = TRUE)), info = paste(name, "setup"))
     data <- template_chunk(src, "tbl-data")
     expect_false(is.null(data), info = name)
     # Downstream templates that read data call .read_upstream_job_data() only:

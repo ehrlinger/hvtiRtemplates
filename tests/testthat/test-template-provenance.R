@@ -657,6 +657,9 @@ write_provenance_job <- function(root, stem, prefix, definitions, output_file = 
     "  \"study\", .cfg, function() hvtiRutilities::read_built(cfg = .cfg)",
     ")",
     ".provenance_data <- list(.data_read$record)",
+    # The template's provenance chunk passes the run its setup chunk returned. These jobs have no setup
+    # chunk (the hooks under test need none), so they have no run, and the chunk embeds the JSON alone.
+    ".job <- list()",
     definitions,
     "```", "",
     chunk

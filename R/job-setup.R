@@ -81,8 +81,10 @@
 # the .html is the artifact that gets sent to someone.
 #
 # `show_source = FALSE` gives the report the COUNT only (bd: a marker line can
-# sit beside an EXCLUDE rule that names a patient); the console message keeps
-# the lines. Returns the number of markers, invisibly.
+# sit beside an EXCLUDE rule that names a patient). The report would also embed
+# a warning, so that warning carries the count and the lines go to the console
+# directly, on stderr, where knitr does not collect them. Returns the number of
+# markers, invisibly.
 #
 # The token is built, never written, so this file's own text does not match: a
 # guard that searches for a literal matches its own source and fires on every
@@ -99,11 +101,14 @@
     if (show_source) "\nA job that still contains one has not been finished. Work each marker and delete it."
   )
   if (!.strict_render()) {
-    warning(msg, "\nRendering as a draft; the banner goes when the last marker does. ",
+    if (!show_source) cat(msg, "\n", sep = "", file = stderr())
+    warning(if (show_source) msg else paste0(length(hits), " unresolved ", token, " marker(s) remain in this job."),
+            "\nRendering as a draft; the banner goes when the last marker does. ",
             "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
     cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
     if (show_source) {
-      cat("Unresolved markers remain. **The numbers below are not a result.**\n\n```\n", msg, "\n```\n", sep = "")    } else {
+      cat("Unresolved markers remain. **The numbers below are not a result.**\n\n```\n", msg, "\n```\n", sep = "")
+    } else {
       cat(length(hits), "unresolved markers remain. **This dataset is not finished.**\n")
     }
     cat(":::\n\n")

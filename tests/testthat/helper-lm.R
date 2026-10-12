@@ -16,8 +16,13 @@ lm_results <- function(qualifier) {
 
 lm_run <- function(qualifier, labels, env, choices = list()) {
   src <- readLines(template_path("lm", qualifier), warn = FALSE)
-  for (label in labels) {
-    suppressMessages(eval(parse(text = lm_chunk(src, label)), envir = env))
+  # "set" is the old name of the setup chunk, and a list that names both runs it once.
+  for (label in unique(vapply(labels, setup_label, ""))) {
+    if (identical(label, "setup")) {
+      eval_setup_chunk(lm_chunk(src, label), env)
+    } else {
+      suppressMessages(eval(parse(text = lm_chunk(src, label)), envir = env))
+    }
     if (identical(label, "edit-study-choices")) {
       list2env(choices, envir = env)
       # A test that supplies `d` itself skips the data chunk, which would set

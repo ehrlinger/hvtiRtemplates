@@ -43,8 +43,6 @@ report).
 ```{r}
 #| label: setup
 #| results: asis
-#| warning: !expr NA
-#| message: !expr NA
 # add_job() writes SUBJECT and TYPE from the file's name; a hand-edited
 # declaration that drifts from it stops the render in .job_setup().
 SUBJECT <- "study"
@@ -64,9 +62,9 @@ knitr::opts_chunk$set(warning = NA, message = NA)
 # in a chunk to leave out everything below it. A draft lists each one in a
 # callout; a final render refuses them, as it refuses an unresolved marker.
 # ?stop_here has more.
-# show_markers = FALSE: the draft banner gives only the COUNT of open markers. A
-# marker line could sit beside a rule naming a patient, and this report shows
-# no source. The marker text goes to the console in the warning.
+# show_markers = FALSE: the draft banner and the warning give only the COUNT of
+# open markers. A marker line could sit beside a rule naming a patient, and this
+# report shows no source. The marker text goes to the console.
 .job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment(), show_markers = FALSE)
 .root <- .job$root
 .provenance_data <- list()

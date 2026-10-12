@@ -48,6 +48,10 @@ test_that("bd publishes and registers a release, and ac reads it", {
   ids <- c(m$data$ccfid, m$data$mrn)
   expect_false(any(vapply(ids, grepl, logical(1L), x = html, fixed = TRUE)))
   expect_match(html, "Withdrew consent", fixed = TRUE)
+  # The report says how it was run: the box under the title, and the table that closes it (bd has no
+  # provenance chunk to carry the table, so it has a chunk of its own).
+  expect_true(grepl("<strong>final</strong>", html, fixed = TRUE))
+  expect_true(grepl("About this run", html, fixed = TRUE))
 
   # ac, chunk by chunk as the hazard chain tests run it, reads the release.
   release <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root), cfg$built))

@@ -17,11 +17,13 @@ hazard_template <- function(name) {
 # author's edits would.
 hazard_run <- function(prefix, labels, env, choices = list()) {
   src <- readLines(hazard_template(prefix), warn = FALSE)
-  for (label in labels) {
+  # "set" is the old name of the setup chunk, and a list that names both runs it once.
+  for (label in unique(vapply(labels, setup_label, ""))) {
     at <- which(trimws(src) == paste0("#| label: ", label))
     if (length(at) != 1L) stop("chunk '", label, "' found ", length(at), " times", call. = FALSE)
     end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
-    suppressMessages(eval(parse(text = src[(at + 1L):(end - 1L)]), envir = env))
+    code <- src[(at + 1L):(end - 1L)]
+    if (identical(label, "setup")) eval_setup_chunk(code, env) else suppressMessages(eval(parse(text = code), envir = env))
     if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   }
   invisible(env)
@@ -58,8 +60,9 @@ hazard_study <- function(data = hazard_data(), .local_envir = parent.frame()) {
 }
 
 # A fresh chunk environment for `root`. Its parent is the global environment,
-# as a render's is. The setup chunk is not run, so what it defines is supplied:
-# study_config(), from the hvtiRutilities it attaches, and the empty provenance.
+# as a render's is. Its setup chunk runs without attaching packages, so what
+# those would give is supplied: study_config(), from the hvtiRutilities it
+# attaches, and the empty provenance.
 hazard_env <- function(root) {
   env <- new.env(parent = globalenv())
   env$.root <- root
@@ -205,8 +208,10 @@ hazard_file_holds_any <- function(root, file, ids) {
 }
 
 # hz's phases, starting values and multistart probes, without data or a fit.
-hz_probe_env <- function() {
+hz_probe_env <- function(.local_envir = parent.frame()) {
   env <- new.env(parent = globalenv())
+  # Its setup chunk finds a study from env$.root, so there is one, with no data read.
+  env$.root <- hazard_study(.local_envir = .local_envir)
   hazard_run("hz", c("set", "edit-study-choices"), env)
   utils::capture.output(hazard_run("hz", c("tbl-phases", "edit-start", "edit-multistart"), env))
   env

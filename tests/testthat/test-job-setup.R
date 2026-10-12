@@ -87,13 +87,30 @@ test_that("open EDIT markers draft the job with the DRAFT callout, and a strict 
   }
 })
 
-test_that(".guard_edits() keeps the count-only banner for a job whose report must not show source", {
+test_that(".guard_edits() keeps a marker's source out of the report when asked, and puts it on the console", {
   fx <- setup_fixture(c("prose", edit_marker("EXCLUDE a patient")))
-  expect_warning(out <- utils::capture.output(n <- hvtiRtemplates:::.guard_edits(show_source = FALSE)),
-                 "Rendering as a draft")
+  warned <- NULL
+  console <- utils::capture.output(
+    out <- utils::capture.output(
+      n <- withCallingHandlers(
+        hvtiRtemplates:::.guard_edits(show_source = FALSE),
+        warning = function(w) {
+          warned <<- conditionMessage(w)
+          invokeRestart("muffleWarning")
+        }
+      )
+    ),
+    type = "message"
+  )
   expect_identical(n, 1L)
+  # The warning knitr would embed in the report, and the banner, hold the count and no source.
+  expect_match(warned, paste0("1 unresolved ", paste0("ED", "IT", ":"), " marker(s) remain in this job."), fixed = TRUE)
+  expect_match(warned, "Rendering as a draft", fixed = TRUE)
+  expect_false(grepl("EXCLUDE a patient", warned, fixed = TRUE))
   expect_true(any(grepl("1 unresolved markers remain", out, fixed = TRUE)))
   expect_false(any(grepl("EXCLUDE a patient", out, fixed = TRUE)))
+  # The console has the line.
+  expect_true(any(grepl("EXCLUDE a patient", console, fixed = TRUE)))
   expect_true(file.exists(fx$job))
 })
 
@@ -198,4 +215,6 @@ test_that("a job with the old four-chunk header still renders", {
   payload <- hvtiRtemplates:::.extract_provenance(html, managed = TRUE)
   expect_null(payload$run)
   expect_identical(payload$subject, "outcome")
+  # The chunks this test ran in the session left no graphics device open.
+  expect_null(grDevices::dev.list())
 })

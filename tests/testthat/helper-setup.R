@@ -9,18 +9,35 @@ setup_label <- function(label) if (identical(label, "set")) "setup" else label
 
 # Evaluate a template's setup chunk in `env` the way a test needs it. A render
 # supplies the study root through the file being rendered; a test supplies it
-# as env$.root, so the chunk runs from there, and the root the test chose is
-# kept afterward (a tempdir() spelling can differ from the one the chunk
-# resolves). Its library() calls come out, so a test attaches nothing for the
-# rest of the run; the version floors and the setup itself run as shipped. The
-# top box it prints is the report's, so it is captured here.
+# as env$.root, so the chunk runs from there. What the test set in `env` that
+# the chunk also defines (the root, the provenance it would read the data into,
+# the file being rendered) is kept afterward: a tempdir() spelling can differ
+# from the one the chunk resolves, and a test that skips the data chunk has
+# supplied the provenance that chunk would have recorded. The chunk's library()
+# calls come out, so a test attaches nothing for the rest of the run; the
+# version floors and the setup itself run as shipped. The notice the chunk ends
+# on is the report's, and is not shown.
 eval_setup_chunk <- function(code, env) {
   root <- get0(".root", envir = env, inherits = FALSE)
-  code <- code[!grepl("^\\s*library\\(", code)]
+  supplied <- mget(intersect(c(".root", ".provenance_data", ".provenance_artifacts", ".in"),
+                             ls(env, all.names = TRUE)), envir = env)
+  code <- code[!grepl("library\\(", code)]
   dir <- if (is.null(root)) getwd() else root
   utils::capture.output(withr::with_dir(dir, eval(parse(text = code), envir = env)))
-  if (!is.null(root)) assign(".root", root, envir = env)
+  list2env(supplied, envir = env)
   invisible(env)
+}
+
+# What eval() runs for a chunk's code: the code, parsed; but for the setup chunk
+# (also named "set", as it was), a call that runs it as eval_setup_chunk() does.
+# The tests that keep their own chunk getters use this, so none of their calls
+# that name "set" is edited.
+chunk_expression <- function(code, label) {
+  if (identical(setup_label(label), "setup")) {
+    as.call(list(eval_setup_chunk, code, quote(environment())))
+  } else {
+    parse(text = code)
+  }
 }
 
 # A study with a registered dataset and an R/ folder, and a job file in it. The

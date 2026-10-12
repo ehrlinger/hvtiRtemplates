@@ -139,74 +139,67 @@ test_that("every template directory carries ordering digits", {
                                                collapse = ", ")))
 })
 
-test_that("every template carries a guard-edits chunk", {
+test_that("every template's setup chunk runs the EDIT: guard through .job_setup()", {
   # The EDIT: markers are only a convention until something checks them.
   # README.md claims a job still containing one has not been finished; the
-  # guard chunk in each template is what makes that true. Issue #27: an
-  # unedited job rendered green over a single dummy stratum because the derive
-  # chunk indexed a placeholder column and R treats a zero-length index as a
-  # silent no-op.
+  # guard .job_setup() runs is what makes that true. Issue #27: an unedited job
+  # rendered green over a single dummy stratum because the derive chunk indexed
+  # a placeholder column and R treats a zero-length index as a silent no-op.
   #
-  # This test is what stops a FUTURE template shipping without the guard.
+  # This test is what stops a FUTURE template shipping without the guard, or
+  # carrying a copy of it that drifts from the package's: the guard is one
+  # function now (it was about 30 lines pasted into every template).
   tl <- template_list()
   skip_if(nrow(tl) == 0L, "no templates installed")
   for (f in tl$file) {
     src <- readLines(f, warn = FALSE)
-    expect_true(any(grepl("label: guard-edits", src, fixed = TRUE)),
-                info = paste("no guard-edits chunk in", basename(f)))
-    expect_true(any(grepl("HVTI_TEMPLATE_STRICT", src, fixed = TRUE)),
-                info = paste("guard-edits has no strict switch in", basename(f)))
+    info <- basename(f)
+    expect_true(any(grepl("hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment()", src, fixed = TRUE)),
+                info = info)
+    expect_false(any(grepl("unresolved", src, fixed = TRUE) & grepl("marker(s)", src, fixed = TRUE)), info = info)
+    expect_false(any(grepl("label: guard-edits", src, fixed = TRUE)), info = info)
+    # bd alone keeps a marker's source line out of its report.
+    expect_identical(any(grepl("show_markers = FALSE", src, fixed = TRUE)), identical(info, "bd.qmd"), info = info)
   }
 })
 
-test_that("every guard-edits drafts by default and stops when strict", {
-  # The test above only proves the switch is NAMED. This one runs each
-  # template's own guard chunk, so an inverted branch, a dropped banner, or an
-  # unrecognized value that drafts instead of stopping fails here. The chunk
-  # is run outside Quarto with knitr::current_input() pointed at a job file,
-  # which is the one thing a render supplies to it.
+test_that("the guard drafts by default and stops when strict", {
+  # Runs the package's guard, so an inverted branch, a dropped banner, or an
+  # unrecognized value that drafts instead of stopping fails here. The guard
+  # reads the file being rendered, which a render supplies as
+  # knitr::current_input() and this test mocks.
   skip_if_not_installed("knitr")
-  tl <- template_list()
-  skip_if(nrow(tl) == 0L, "no templates installed")
-
-  guard_code <- function(f) {
-    src <- readLines(f, warn = FALSE)
-    at <- grep("#| label: guard-edits", src, fixed = TRUE)
-    end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
-    src[(at + 1L):(end - 1L)]
-  }
   job <- tempfile(fileext = ".qmd")
   local_mocked_bindings(current_input = function(...) job, .package = "knitr")
   old <- Sys.getenv("HVTI_TEMPLATE_STRICT", unset = NA)
-  # eval() runs this package's own shipped template chunk, the code under test.
-  run <- function(code, strict) {
+  run <- function(strict, ...) {
     if (is.na(strict)) Sys.unsetenv("HVTI_TEMPLATE_STRICT") else Sys.setenv(HVTI_TEMPLATE_STRICT = strict)
-    capture.output(eval(parse(text = code), envir = new.env()))
+    capture.output(hvtiRtemplates:::.guard_edits(...))
   }
   marker <- paste0("# ", paste0("ED", "IT", ":"), " choose the endpoint")
 
   # tryCatch(finally =) rather than withr, which this package does not suggest.
-  tryCatch(for (f in tl$file) {
-    code <- guard_code(f)
-    info <- basename(f)
-
+  tryCatch({
     writeLines("finished job", job)
-    expect_silent(out <- run(code, NA))
+    expect_silent(out <- run(NA))
     expect_length(out, 0L)
 
     writeLines(c("some prose", marker), job)
     for (v in list(NA, "0", "false", "no", "FALSE")) {
-      expect_warning(out <- run(code, v), "Rendering as a draft", info = info)
-      expect_true(any(grepl("DRAFT", out, fixed = TRUE)), info = paste(info, v))
+      expect_warning(out <- run(v), "Rendering as a draft")
+      expect_true(any(grepl("DRAFT", out, fixed = TRUE)), info = v)
+      expect_true(any(grepl("choose the endpoint", out, fixed = TRUE)), info = v)
       # bd's banner gives the marker COUNT only: its report shows no source, and a
       # marker line can sit beside an EXCLUDE rule that names a patient.
-      shown <- if (basename(f) == "bd.qmd") "1 unresolved markers remain" else "choose the endpoint"
-      expect_true(any(grepl(shown, out, fixed = TRUE)), info = paste(info, v))
+      suppressWarnings(console <- capture.output(out <- run(v, show_source = FALSE), type = "message"))
+      expect_true(any(grepl("1 unresolved markers remain", out, fixed = TRUE)), info = v)
+      expect_false(any(grepl("choose the endpoint", out, fixed = TRUE)), info = v)
+      expect_true(any(grepl("choose the endpoint", console, fixed = TRUE)), info = v)
     }
     for (v in c("1", "true", "yes")) {
-      expect_error(run(code, v), "unresolved", info = paste(info, v))
+      expect_error(run(v), "unresolved", info = v)
     }
-    expect_error(run(code, "ture"), "HVTI_TEMPLATE_STRICT is 'ture'", info = info)
+    expect_error(run("ture"), "HVTI_TEMPLATE_STRICT is 'ture'")
   }, finally = {
     unlink(job)
     if (is.na(old)) Sys.unsetenv("HVTI_TEMPLATE_STRICT") else Sys.setenv(HVTI_TEMPLATE_STRICT = old)
@@ -792,46 +785,38 @@ test_that("no template resolves its root from _quarto.yml", {
   for (f in tl$file) {
     src <- readLines(f, warn = FALSE)
     expect_false(any(grepl("file.exists(\"_quarto.yml\")", src, fixed = TRUE)), info = basename(f))
-    expect_true(any(grepl("hvtiRtemplates:::.find_study_root(", src, fixed = TRUE)), info = basename(f))
+    expect_true(any(grepl("hvtiRtemplates:::.job_setup(", src, fixed = TRUE)), info = basename(f))
   }
 })
 
-test_that("every template's root resolves to the study from any depth", {
-  # Runs each template's own root lines with knitr::current_input() mocked to
-  # a job file two levels below the study, then with it NULL (interactive
-  # chunk execution) from a working directory inside the study.
+test_that("the root resolves to the study from any depth, and from the working directory outside a render", {
+  # .job_setup() with knitr::current_input() mocked to a job file two levels
+  # below the study, then with it NULL (interactive chunk execution) from a
+  # working directory inside the study.
   skip_if_not_installed("knitr")
-  tl <- template_list()
-  skip_if(nrow(tl) == 0L, "no templates installed")
-
   root <- tempfile("root-lookup-")
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
   suppressMessages(hvtiRutilities::study_setup(root, study = "Root lookup", study_tracker_id = 1L))
   root <- normalizePath(root)
   deep <- file.path(root, "30_analyses", "sub")
   dir.create(deep, recursive = TRUE)
-  job <- file.path(deep, "job.qmd")
-
-  root_code <- function(f) {
-    src <- readLines(f, warn = FALSE)
-    i <- grep("^\\.in <- knitr::current_input", src)
-    src[c(i, i + 1L)]
-  }
+  job <- file.path(deep, "cohort-eda-dc-general.qmd")
+  writeLines("A finished job.", job)
   input <- job
-  local_mocked_bindings(current_input = function(...) input, .package = "knitr")
-  for (f in tl$file) {
-    code <- root_code(f)
-    expect_length(code, 2L)
-    env <- new.env()
-    input <- job
-    eval(parse(text = code), envir = env)
-    expect_identical(normalizePath(env$.root), root, info = basename(f))
-
-    input <- NULL
-    old <- setwd(deep)
-    tryCatch(eval(parse(text = code), envir = env), finally = setwd(old))
-    expect_identical(normalizePath(env$.root), root, info = paste(basename(f), "interactive"))
+  local_mocked_bindings(
+    current_input = function(dir = FALSE) if (is.null(input)) NULL else if (isTRUE(dir)) input else basename(input),
+    .package = "knitr"
+  )
+  setup_root <- function() {
+    utils::capture.output(job <- hvtiRtemplates:::.job_setup("cohort", "eda", envir = new.env()))
+    normalizePath(job$root)
   }
+  old <- setwd(deep)
+  tryCatch({
+    expect_identical(setup_root(), root)
+    input <- NULL
+    expect_identical(setup_root(), root)
+  }, finally = setwd(old))
 })
 
 test_that("the hz template reads theta names through TemporalHazard's exported API", {

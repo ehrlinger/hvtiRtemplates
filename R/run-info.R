@@ -260,6 +260,9 @@
 
 .clock <- function(iso, zone) paste(sub("T", " ", substr(iso, 1L, 19L), fixed = TRUE), zone)
 
+# A time the provenance records, in UTC with a trailing Z, read as a person reads one.
+.clock_utc <- function(iso) sub("Z$", " UTC", sub("T", " ", iso, fixed = TRUE))
+
 # At most this many upstream handoffs get a row; a bootstrap bag reads hundreds
 # of chunk files, and the provenance JSON lists them all.
 .upstream_rows <- 12L
@@ -267,48 +270,53 @@
 # The "About this run" section: a heading that Quarto does not number, and a
 # table of group, item and value.
 .run_table <- function(facts) {
-  rows <- list()
   # Rows for one group; the group is named on its first row. An item with no
   # value is left out, so a field the run did not have is not shown.
-  add <- function(group, items) {
-    for (item in Filter(function(i) length(i) == 2L, items)) {
-      rows[[length(rows) + 1L]] <<- c(group, item)
-      group <- ""
-    }
+  group_rows <- function(group, items) {
+    items <- Filter(function(i) length(i) == 2L, items)
+    lapply(seq_along(items), function(k) c(if (k == 1L) group else "", items[[k]]))
   }
   status <- if (identical(facts$status, "draft")) {
-    paste0("draft (", .open_summary(list(markers = facts$open_markers, skipped = facts$skipped_chunks,
-                                         stopped = isTRUE(facts$stopped_early))), ")")
-  } else "final"
-  add("Run", list(c("Started", .clock(facts$start, facts$time_zone)), c("Ended", .clock(facts$end, facts$time_zone)),
-                  c("Duration", .fmt_duration(facts$duration_seconds)), c("Status", status),
-                  c("Rendered by", facts$user), c("Host", facts$host)))
+    open <- list(markers = facts$open_markers, skipped = facts$skipped_chunks, stopped = isTRUE(facts$stopped_early))
+    paste0("draft (", .open_summary(open), ")")
+  } else {
+    "final"
+  }
   j <- facts$job
-  add("Job", list(c("File", j$file), c("Template", j$template), c("Subject", j$subject), c("Type", j$type),
-                  c("hvtiRtemplates", j$hvtiRtemplates)))
-  for (d in facts$datasets) {
-    add(paste0("Dataset `", d$name, "`"), list(
-      c("Version file", d$version_file), c("Registered", d$registered), c("Source file", d$source_file),
-      c("Rows kept", if (!is.null(d$rows)) paste0(format(d$rows, big.mark = ","), " rows on ",
-                                                  format(d$patients, big.mark = ","), " patients")),
-      c("WHERE", if (!is.null(d$rows)) if (length(d$where)) paste0("`", d$where, "`", collapse = "; ") else "none"),
-      c("sha256", d$sha256), c("Manifest", d$manifest)
+  rows <- c(
+    group_rows("Run", list(c("Started", .clock(facts$start, facts$time_zone)), c("Ended", .clock(facts$end, facts$time_zone)),
+                           c("Duration", .fmt_duration(facts$duration_seconds)), c("Status", status),
+                           c("Rendered by", facts$user), c("Host", facts$host))),
+    group_rows("Job", list(c("File", j$file), c("Template", j$template), c("Subject", j$subject), c("Type", j$type),
+                           c("hvtiRtemplates", j$hvtiRtemplates))),
+    unlist(lapply(facts$datasets, function(d) {
+      group_rows(paste0("Dataset `", d$name, "`"), list(
+        c("Version file", d$version_file), c("Registered", d$registered), c("Source file", d$source_file),
+        c("Rows kept", if (!is.null(d$rows)) {
+          paste0(format(d$rows, big.mark = ","), " rows on ", format(d$patients, big.mark = ","), " patients")
+        }),
+        c("WHERE", if (!is.null(d$rows)) {
+          if (length(d$where)) paste0("`", d$where, "`", collapse = "; ") else "none"
+        }),
+        c("sha256", d$sha256), c("Manifest", d$manifest)
+      ))
+    }), recursive = FALSE),
+    group_rows("Upstream", c(
+      lapply(utils::head(facts$upstream, .upstream_rows), function(u) {
+        c("Handoff", paste0("`", u$set, "/", basename(u$file), "`", if (!is.null(u$role)) paste0(" (", u$role, ")"),
+                            if (!is.null(u$saved)) paste0(", saved ", .clock_utc(u$saved)),
+                            if (!is.null(u$dataset_version)) paste0(", data ", u$dataset_version)))
+      }),
+      if (length(facts$upstream) > .upstream_rows) {
+        list(c("", paste(length(facts$upstream) - .upstream_rows, "more, listed in the provenance")))
+      }
+    )),
+    group_rows("Reproducibility", list(
+      c("Seed", facts$reproducibility$seed),
+      c("renv", if (isTRUE(facts$reproducibility$renv$active)) "active" else "not active"),
+      c("renv.lock sha256", facts$reproducibility$renv$lock_sha256)
     ))
-  }
-  upstream <- lapply(utils::head(facts$upstream, .upstream_rows), function(u) {
-    c("Handoff", paste0("`", u$set, "/", basename(u$file), "`", if (!is.null(u$role)) paste0(" (", u$role, ")"),
-                        if (!is.null(u$saved)) paste0(", saved ", u$saved),
-                        if (!is.null(u$dataset_version)) paste0(", data ", u$dataset_version)))
-  })
-  if (length(facts$upstream) > .upstream_rows) {
-    upstream <- c(upstream, list(c("", paste(length(facts$upstream) - .upstream_rows, "more, listed in the provenance"))))
-  }
-  add("Upstream", upstream)
-  s <- facts$reproducibility
-  add("Reproducibility", list(
-    c("Seed", s$seed), c("renv", if (isTRUE(s$renv$active)) "active" else "not active"),
-    c("renv.lock sha256", s$renv$lock_sha256)
-  ))
+  )
   cell <- function(x) gsub("|", "\\|", if (is.null(x) || is.na(x)) "" else x, fixed = TRUE)
   body <- vapply(rows, function(row) paste0("| ", paste(vapply(row, cell, ""), collapse = " | "), " |"), "")
   c("", "## About this run {.unnumbered}", "", "| Group | Item | Value |", "|:--|:--|:--|", body, "")

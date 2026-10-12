@@ -49,21 +49,26 @@ rf_study <- function(data = data.frame(ccfid = 1:2, time = c(1, 2), event = c(1,
 
 # Evaluate the chunks `labels` of template (prefix, qualifier) in `env`. After
 # `edit-study-choices` runs, `choices` overwrites the template's placeholders, as a
-# study author's edits would. `setup` is never run: it resolves the study root
-# from the file being rendered, so the caller sets env$.root and attaches the
-# packages instead.
+# study author's edits would. `setup` (or its old name, `set`) runs from the
+# study root, which the caller sets as env$.root, with its library() calls left
+# out: the caller attaches the packages instead.
 #
 # Before the `fig-dependence-varpro` chunk, a gg_partial_varpro() on a coarser
 # grid is put in `env`, where the chunk finds it ahead of ggRandomForests' own:
 # see rf_gg_partial_varpro.
 rf_run <- function(prefix, qualifier, labels, env, choices = list()) {
   src <- readLines(template_path(prefix, qualifier), warn = FALSE)
-  for (label in labels) {
+  # "set" is the old name of the setup chunk, and a list that names both runs it once.
+  for (label in unique(vapply(labels, setup_label, ""))) {
     if (identical(label, "fig-dependence-varpro")) assign("gg_partial_varpro", rf_gg_partial_varpro, envir = env)
-    withCallingHandlers(
-      suppressMessages(eval(parse(text = rf_chunk(src, label)), envir = env)),
-      warning = function(w) if (rf_drawing_notice(label, w)) invokeRestart("muffleWarning")
-    )
+    if (identical(label, "setup")) {
+      eval_setup_chunk(rf_chunk(src, label), env)
+    } else {
+      withCallingHandlers(
+        suppressMessages(eval(parse(text = rf_chunk(src, label)), envir = env)),
+        warning = function(w) if (rf_drawing_notice(label, w)) invokeRestart("muffleWarning")
+      )
+    }
     if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   }
   invisible(env)
@@ -365,7 +370,7 @@ boot_run_runner <- function(prefix, root, env, settings = boot_settings(prefix))
 }
 
 # Every chunk of a boot_select() report, in order, that a render evaluates
-# after `setup` and `guard-edits`.
+# after `setup` (named `set` here, as it once was).
 boot_report_labels <- c(
   "set", "edit-study-choices", "load", "tbl-data", "completeness", "contract", "bootstrap-provenance", "tbl-seeds",
   "dropped-summary", "dropped-detail", "health", "frequencies", "retained", "edit-concept-map",
@@ -373,8 +378,8 @@ boot_report_labels <- c(
   "save"
 )
 
-# A fresh chunk environment for the study at `root`. `setup` is not run, so
-# what it defines is supplied.
+# A fresh chunk environment for the study at `root`, with what `setup` defines
+# supplied before it runs.
 boot_env <- function(root, parent = globalenv()) {
   env <- new.env(parent = parent)
   env$.root <- root
@@ -389,8 +394,12 @@ boot_report <- function(prefix, env, labels = boot_report_labels, choices = list
   defaults <- list(EXPECT_BOOT = 30L, CLUSTERS = list(Age = "age"))
   choices <- c(choices, defaults[setdiff(names(defaults), names(choices))])
   src <- readLines(template_path(prefix), warn = FALSE)
-  utils::capture.output(for (label in labels) {
-    eval(parse(text = rf_chunk(src, label)), envir = env)
+  utils::capture.output(for (label in unique(vapply(labels, setup_label, ""))) {
+    if (identical(label, "setup")) {
+      eval_setup_chunk(rf_chunk(src, label), env)
+    } else {
+      eval(parse(text = rf_chunk(src, label)), envir = env)
+    }
     if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   })
   invisible(env)

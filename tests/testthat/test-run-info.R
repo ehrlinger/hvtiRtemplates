@@ -298,6 +298,7 @@ test_that("a rendered report carries the date, the box under the title, and the 
   html <- report_html(s$job)
   expect_true(grepl("<strong>draft</strong> (1 open marker", html, fixed = TRUE))
   expect_identical(hvtiRtemplates:::.extract_provenance(html, managed = TRUE)$run$status, "draft")
+  expect_null(grDevices::dev.list())
 })
 
 test_that("a downstream report lists its upstream handoff, and names no patient", {
