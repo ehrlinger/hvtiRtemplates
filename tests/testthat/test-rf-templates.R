@@ -353,17 +353,10 @@ test_that("rfr-explain runs VarPro on a forest grown with missing predictors", {
   fit_env <- rf_fit_first("rfr", rfr_data(), rfr_choices)
   env <- new.env(parent = globalenv())
   env$.root <- fit_env$.root
-  # varPro 3.3.0 warns that it drops the rows with missing values; 3.2.0, the
-  # floor, drops them silently. Muffle that one message so the test holds on
-  # both and any other warning still reaches the summary.
-  withCallingHandlers(
-    rf_run("rfr", "explain", explain_labels, env, list(TOP_K = 2, SEED = 1)),
-    warning = function(w) {
-      if (grepl("^varpro\\(\\): omitted [0-9]+ of [0-9]+ observations with missing values",
-                conditionMessage(w))) invokeRestart("muffleWarning")
-    }
-  )
-  expect_true(anyNA(env$frame))   # the raw training data, not imputed.data
+  # VarPro is given the forest's imputed data, so it drops no patient and has
+  # no notice to muffle (varPro 3.3.0 warned when it dropped rows, #166).
+  rf_run("rfr", "explain", explain_labels, env, list(TOP_K = 2, SEED = 1))
+  expect_false(anyNA(env$frame))   # the forest's imputed data, not the raw training rows
   expect_s3_class(env$vp, "varpro")
   for (p in list(env$pd, env$pv)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
 })
@@ -561,5 +554,99 @@ test_that("every fit refuses the patient identifier as its outcome", {
     } else {
       expect_no_error(utils::capture.output(rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data"), env, choices)))
     }
+  }
+})
+
+# ---- #166: VarPro explains the patients the forest was grown on -----------------
+
+test_that("every explain gives VarPro the forest's imputed data, so both cover the same patients (#166)", {
+  veteran <- rfs_data()
+  veteran$karno[c(3, 10, 40)] <- NA
+  iris2 <- rfc_data()
+  iris2$Sepal.Length[c(2, 30, 60, 90)] <- NA
+  cases <- list(
+    list("rfs", veteran, rfs_choices, list(TIMES = c(30, 90))),
+    list("rfc", iris2, rfc_choices, list()),
+    list("rfr", rfr_data(), rfr_choices, list())
+  )
+  for (case in cases) {
+    prefix <- case[[1L]]
+    rf_skip_unless_stack(rf_template_packages(prefix, "explain"))
+    fit_env <- rf_fit_first(prefix, case[[2L]], utils::modifyList(case[[3L]], list(NA_ACTION = "na.impute")))
+    env <- new.env(parent = globalenv())
+    env$.root <- fit_env$.root
+    # No warning is muffled: varpro() says so when it drops a patient.
+    rf_run(prefix, "explain", c("set", "edit-study-choices", "forest", "fig-varpro"), env,
+           c(list(TOP_K = 2, SEED = 1), case[[4L]]))
+    expect_true(anyNA(env$forest$xvar), info = prefix)               # the fit really had missing values
+    expect_identical(nrow(env$vp$x), env$forest$n, info = prefix)    # VarPro explains every patient the forest has
+    expect_false(anyNA(env$frame), info = prefix)
+  }
+})
+
+# ---- #167: the marginal plot --------------------------------------------------
+
+# The panels of a patchwork, in order.
+rf_panels <- function(fig) lapply(seq_len(length(fig$patches$plots) + 1L), function(i) fig[[i]])
+
+# The warnings drawing `fig` raises. rf_run() muffles the drawing notices of a
+# figure chunk, because small cohorts raise them honestly; a figure that raises
+# them on a cohort this size is drawn wrongly, so the drawing is repeated here
+# with nothing muffled.
+rf_draw_warnings <- function(fig) {
+  msgs <- character()
+  for (p in rf_panels(fig)) {
+    withCallingHandlers(
+      suppressMessages(ggplot2::ggplotGrob(p)),
+      warning = function(w) {
+        msgs <<- c(msgs, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    )
+  }
+  msgs
+}
+
+test_that("rfc-explain draws a marginal plot for a 0/1 outcome (#167)", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("rfc", "explain"))
+  fit_env <- rf_fit_first("rfc", rf_mrn_data(), rf_mrn_choices("rfc"))
+  env <- new.env(parent = globalenv())
+  env$.root <- fit_env$.root
+  # age is continuous and grp a factor, so both kinds of panel are drawn.
+  rf_run("rfc", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select",
+                             "fig-dependence-marginal"), env, list(PARTIAL_VARS = c("age", "grp"), SEED = 1))
+  # gg_variable() turns a 0/1 outcome into TRUE/FALSE with as.logical(), which
+  # reads the factor's "0" and "1" as missing, and ggplot2 then removes every point.
+  expect_identical(rf_draw_warnings(env$.fig), character())
+})
+
+test_that("rfs-explain draws no smooth through a predictor with few values (#167)", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
+  env <- new.env(parent = globalenv())
+  env$.root <- rfs_explained_copy()
+  # celltype has four values, and loess cannot fit a smooth through four.
+  rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select",
+                             "fig-dependence-marginal"), env, list(PARTIAL_VARS = c("celltype", "age"), TIMES = c(30, 90), SEED = 1))
+  expect_identical(rf_draw_warnings(env$.fig), character())
+  smooths <- vapply(rf_panels(env$.fig), function(p) any(vapply(p$layers, function(l) inherits(l$geom, "GeomSmooth"), logical(1L))), logical(1L))
+  expect_identical(smooths, c(FALSE, TRUE))   # celltype has no smooth, age keeps its own
+})
+
+# ---- #165: the error-by-trees curve ---------------------------------------------
+
+test_that("every fit records its out-of-bag error at more than one tree count (#165)", {
+  cases <- list(list("rfs", rfs_data(), rfs_choices), list("rfc", rfc_data(), rfc_choices), list("rfr", rfr_data(), rfr_choices))
+  for (case in cases) {
+    prefix <- case[[1L]]
+    rf_skip_unless_stack(rf_template_packages(prefix, "fit"))
+    env <- rf_env(case[[2L]])
+    rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data", "fit"), env, case[[3L]])
+    # importance = "none" leaves randomForestSRC's block.size NULL, so err.rate
+    # holds the error at the last tree alone and the curve is a single point.
+    err <- env$forest$err.rate
+    err <- if (is.matrix(err)) err[, 1L] else err
+    expect_gt(sum(!is.na(err)), 1L, label = paste(prefix, "non-missing error rows"))
   }
 })

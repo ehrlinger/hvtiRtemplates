@@ -412,7 +412,7 @@ model <- stats::reformulate(".", response = RESPONSE)
 environment(model) <- globalenv()
 forest <- cache_fit(
   "rfc-forest",
-  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none", seed = -abs(SEED)),
+  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none", block.size = 1, seed = -abs(SEED)),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
 )
 forest
@@ -420,6 +420,10 @@ forest
 
 `importance = "none"` is deliberate. Importance is the explain job's work, and
 cached there on its own, so it can be recomputed without regrowing the forest.
+
+`block.size = 1` is deliberate too. With importance off, randomForestSRC records the
+out-of-bag error only at the last tree, and the error plot below would be one point.
+One block per tree gives the curve that shows whether `NTREE` was large enough.
 
 ## Does the forest work?
 
