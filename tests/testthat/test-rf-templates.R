@@ -630,7 +630,8 @@ test_that("rfs-explain draws no smooth through a predictor with few values (#167
   rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select",
                              "fig-dependence-marginal"), env, list(PARTIAL_VARS = c("celltype", "age"), TIMES = c(30, 90), SEED = 1))
   expect_identical(rf_draw_warnings(env$.fig), character())
-  smooths <- vapply(rf_panels(env$.fig), function(p) any(vapply(p$layers, function(l) inherits(l$geom, "GeomSmooth"), logical(1L))), logical(1L))
+  has_smooth <- function(p) any(vapply(p$layers, function(l) inherits(l$geom, "GeomSmooth"), logical(1L)))
+  smooths <- vapply(rf_panels(env$.fig), has_smooth, logical(1L))
   expect_identical(smooths, c(FALSE, TRUE))   # celltype has no smooth, age keeps its own
 })
 
