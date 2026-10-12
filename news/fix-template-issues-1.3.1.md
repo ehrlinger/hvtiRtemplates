@@ -30,5 +30,6 @@
   reads, as `hm`, `hp` and `hs-setup` take theirs from upstream, instead of
   declaring `TIME` and `EVENT` itself. Both settings default to `NULL`; a value
   that differs from a model's recorded one stops the job, and so do models that
-  disagree. The `cohort` chunk now follows the `models` chunk, because it needs
-  the columns the models record (#176).
+  disagree. An `hm` model saved before it recorded its data selection stops the
+  job, asking for the `hm` job to be rerun. The `cohort` chunk now follows the
+  `models` chunk, because it needs the columns the models record (#176).

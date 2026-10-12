@@ -258,7 +258,9 @@ test_that("no template carries placeholder prose outside an EDIT marker", {
   # and the instruction sentences themselves.
   phrases <- c("<(job|outcome)>", "Replaces `[^`]*`:", "\\b(describe|paste) its\\b",
                "\\bdescribe the (question|phase structure) here", "\\bsay which (variant)?\\.",
-               "\\bcompared here and the horizon", "\\blist the trend figures")
+               "\\bcompared here and the horizon", "\\blist the trend figures",
+               # Any other instruction to the author that ends in "here".
+               "\\b(describe|paste|name|state) [^.]{0,80}\\bhere\\b")
   placeholder <- paste(phrases, collapse = "|")
   found <- function(src) {
     txt <- prose(src)
