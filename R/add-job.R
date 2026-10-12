@@ -208,6 +208,7 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   ok <- FALSE
   on.exit(if (!ok) unlink(c(out, runner)), add = TRUE)
   .set_markers(out, subject, type)
+  .stamp_job(out, row$name[[1L]])
   if (length(runner)) {
     if (!file.copy(runner_src, runner, overwrite = FALSE)) {
       stop("add_job(): failed to write '", runner, "'.", call. = FALSE)
@@ -347,6 +348,18 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   txt[[i_subject]] <- paste0("SUBJECT <- \"", subject, "\"")
   txt[[i_type]]    <- paste0("TYPE    <- \"", type, "\"")
   writeLines(txt, path)
+}
+
+# Record which template, at which package version, a job was copied from, as
+# one HTML comment after the front matter. upgrade_job() reads it; without it,
+# the template a job came from cannot be recovered. See
+# dev/specs/2026-10-12-upgrade-job-design.md, decision 7.
+.stamp_job <- function(path, template) {
+  txt <- readLines(path, warn = FALSE)
+  fences <- which(txt == "---")
+  at <- if (length(fences) >= 2L && fences[[1L]] == 1L) fences[[2L]] else 0L
+  stamp <- paste0("<!-- hvtiRtemplates: ", template, " ", utils::packageVersion("hvtiRtemplates"), " -->")
+  writeLines(append(txt, c("", stamp), after = at), path)
 }
 
 # The companion runner a template's job runs from, or "" when it has none.

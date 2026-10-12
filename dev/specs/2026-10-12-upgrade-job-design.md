@@ -1,7 +1,7 @@
 # upgrade_job(): rewrite a job from the current version of its template
 
 Issue: [#307](https://github.com/ehrlinger/hvtiRtemplates/issues/307), from the 2026-10-12
-analyst check-in. Status: **design, for review.**
+analyst check-in. Status: **design, approved 2026-10-12** (both open questions settled as recommended).
 
 ## Problem
 
@@ -37,8 +37,9 @@ and so on. Those carry by name, independent of the base.
    warning) resolve as they do everywhere else. A job whose name names no template is an
    error, not a guess.
 
-2. **A choice is a top-level `NAME <- value` assignment** found by `parse()` in the job's R
-   chunks, with `NAME` matching `^[A-Z][A-Z0-9_]*$`. Found by the parser, not by regex, so a
+2. **A choice is a top-level `NAME <- value` assignment** found by `parse()` in the job's
+   `edit-*` chunks (every template has one `edit-study-choices` chunk; `hm`, `hz` and
+   `hs-concordance` have more), with `NAME` matching `^[A-Z][A-Z0-9_]*$`. Found by the parser, not by regex, so a
    multi-line `CATEGORICAL <- list(...)` is one choice. Excluded: `SUBJECT` and `TYPE`, which
    the filename owns and `add_job()` writes; dot-prefixed and lowercase names (`.in`, `.root`,
    `set_path`, `d`), which are the template's machinery, not the analyst's choices.
@@ -61,6 +62,10 @@ and so on. Those carry by name, independent of the base.
      the carried assignments, differs from the current template. Both are listed by label and
      line range; their code is not moved, because without the base the upgrade cannot tell an
      analyst's edit from the old template's text.
+
+   **Prose is not carried.** The upgraded job has the current template's prose, its
+   `EDIT:` markers included, and the report lists every marker left. The old job's prose is
+   in `<file>.pre-upgrade`.
 
    The report quotes **names and line numbers, never values**: a `WHERE` can name a patient,
    and the report is a file that travels.
@@ -96,9 +101,7 @@ and so on. Those carry by name, independent of the base.
 - A choice the current template does not have is listed in the report and marked in the job.
 - `devtools::check()` 0/0/0; new tests proven by mutation (revert the carry and they go red).
 
-## Open questions
+## Settled 2026-10-12
 
-- **Decision 5**: is keeping the old job as `<file>.pre-upgrade` right, or should the old job
-  move into a folder (`.upgrade/`) out of the analyst's way?
-- **Decision 3**: is deleting a marker the analyst already resolved the right default, or should
-  every upgraded job come back a draft until someone reads it?
+- **Decision 5**: the old job stays beside the new one as `<file>.pre-upgrade`.
+- **Decision 3**: a marker the analyst already resolved is dropped from the upgraded job.
