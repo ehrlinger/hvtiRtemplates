@@ -24,3 +24,6 @@ dev/demo/*_files/
 # The built template gallery: published as an asset on the `gallery` release
 # by dev/gallery/publish.sh, fetched by the pkgdown workflow, never committed.
 /pkgdown/assets/gallery/
+
+# R opens a default pdf device when something draws with none open; never commit what it writes.
+Rplots.pdf
