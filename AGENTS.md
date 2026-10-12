@@ -471,12 +471,17 @@ guess.
   `required_approving_review_count` is **0** here, measured 2026-09-10,
   so a solo-authored PR merges on its required status checks alone and
   needs neither a second reviewer nor an `--admin` bypass. The gate that
-  does exist is `required_status_checks`: ten contexts, all of which
+  does exist is `required_status_checks`: six contexts, all of which
   must report `SUCCESS`, which is why a PR briefly shows `BLOCKED` while
-  its checks are still running. Copilot reviews are `COMMENTED`, never
-  `APPROVED`, and would not have satisfied an approval rule anyway.
-  `require_code_owner_review` is **false**, and no repository in the
-  family has a `CODEOWNERS` file.
+  its checks are still running. Only one of them is an `R-CMD-check`
+  leg, `ubuntu-latest (release)`: a pull request runs no other, so
+  requiring macOS, Windows, devel or oldrel-1 would leave every PR
+  waiting on a check that never starts. Those legs run on a push to
+  `main` and in the weekly sweep (since 2026-10-12; until then all five
+  legs ran on every PR and all five were required). Copilot reviews are
+  `COMMENTED`, never `APPROVED`, and would not have satisfied an
+  approval rule anyway. `require_code_owner_review` is **false**, and no
+  repository in the family has a `CODEOWNERS` file.
   _(History (superseded 2026-09-10): this paragraph read “A PR needs one approving review, and you cannot give it to your own PR … `required_approving_review_count` is **1** in eleven of the twelve”, and recommended an admin merge or a second reviewer. That matched the 2026-09-02 measurement below and had stopped being true by 2026-09-10, when [\#101](https://github.com/ehrlinger/hvtiRtemplates/pull/101) showed `CLEAN` with no review decision at all.)
   ⚠️ **The ruleset is near-uniform across the family, with one
   outlier.** Measured over all fifteen `hvti*`/`TemporalHazard`
