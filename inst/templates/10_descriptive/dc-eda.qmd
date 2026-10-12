@@ -408,15 +408,13 @@ if (!length(VARIABLES)) stop("No EDA variables remain after exclusions.", call. 
 .labels <- label_map(d, label_max = LABEL_MAX, abbreviations = .abbreviations)
 labels <- stats::setNames(.labels$label, .labels$key)
 # The abbreviations these variables' labels show, as a key under the section.
-# Only shortened labels count: a label that says "SP" in its own words is not
-# using the key's SP.
+# label_map() records which abbreviation each variable's final label shows, so
+# a label that says "SP" in its own words and is only cut is not counted as
+# using the key's SP; searching the label text could not tell the two apart.
 abbreviation_key <- function(vars) {
   used <- attr(.labels, "abbreviations")
-  row <- match(vars, .labels$key)
-  shown <- .labels$label[row][.labels$label[row] != .labels$label_full[row]]
-  hit <- vapply(used$abbreviation, function(a) {
-    any(grepl(paste0("(?<![[:alnum:]])", gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", a), "(?![[:alnum:]])"), shown, perl = TRUE))
-  }, logical(1L))
+  by_key <- attr(.labels, "abbreviations_by_key")
+  hit <- used$abbreviation %in% by_key$abbreviation[by_key$key %in% vars]
   if (any(hit)) {
     cat("\nAbbreviations: ", paste(used$abbreviation[hit], used$expansion[hit], sep = " = ", collapse = "; "), ".\n\n",
         sep = "")
