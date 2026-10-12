@@ -28,11 +28,7 @@ format:
      verbatim. The call is the specification: it names the candidate pool, the
      phases each candidate was offered to, the entry and stay levels, and the
      replicate count. Prose describing it is a paraphrase that drifts; the call
-     does not. -->
-
-Replaces `analyses/<job>.sas`: paste its `%hazboot` call here — the candidate
-pool, which phases carried candidates, the entry and stay levels, and
-`resampl=`.
+     does not. Replace this comment with that text. -->
 
 This job **does not fit the final model**. It screens. The companion `hm` job
 fits the multivariable model.
@@ -281,11 +277,15 @@ RETAIN_PCT <- 50
 # assume a phase column throughout. PHASE_OF must name a real rule here.
 PHASE_OF <- function(term) sub("[.].*$", "", term)
 
-# Concept groups to report.
-CLUSTERS <- list(
-  early.Age  = c("early.age", "early.ln_age"),
-  const.Age  = c("const.age", "const.ln_age")
-)
+# Concept groups to report. Empty by default, because a cluster may name only
+# terms some replicate carried, and which rare terms a small run reaches cannot
+# be known in advance. Declare them once the frequency table below shows the
+# terms that appeared, as `<phase>.<variable>`:
+# CLUSTERS <- list(
+#   early.Age = c("early.age", "early.ln_age"),
+#   const.Age = c("const.age", "const.ln_age")
+# )
+CLUSTERS <- list()
 
 # Correlation cutoff for near-duplicate candidates.
 COLLINEAR_R <- 0.99
@@ -742,16 +742,22 @@ coefs[cbind(reps$replicate, match(reps$parameter, terms))] <- reps$estimate
 # EDIT: your clusters, one per concept you want reported, and the phase each
 # runs against. The SAS job named eight -- Age, Size, BMI, race, GFR, iv_opyrs,
 # Renal, blrbn_pr -- and ran each against both the early and constant phases.
-# There is no sensible default: which concepts are worth clustering is a
-# statement about your candidate pool.
+# The default is an empty list, because which concepts are worth clustering is a
+# statement about your candidate pool. CLUSTERS, in the study choices above,
+# carries a commented example to copy.
 #
 # Members are PHASE-QUALIFIED, as `<phase>.<variable>`, because a variable
 # offered to two phases is two screening decisions. Naming a term that no
 # replicate carries is refused rather than reported as 0%: a typo that grouped
 # nothing would otherwise read as a concept nobody selected.
 
-clusters <- boot_clusters(coefs, CLUSTERS)
-clusters
+clusters <- data.frame(cluster = character(), n_any = integer(), pct_any = numeric(), members = character())
+if (length(CLUSTERS)) clusters <- boot_clusters(coefs, CLUSTERS)
+if (nrow(clusters)) {
+  clusters
+} else {
+  cat("No clusters declared: CLUSTERS is empty. Declare the concepts to report in the study choices.\n")
+}
 ```
 
 The table above groups by DECLARATION, not by data: `boot_clusters()` counts
@@ -818,7 +824,16 @@ result as an absence of collinearity.
 # The error bar is the point of the figure, not decoration. A bare dot plot
 # invites the reader to rank variables by a difference of two points, which is
 # inside the noise at every frequency near the middle of the range.
-.fig <- ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
+#
+# Each facet is sorted on its own. reorder(variable, pct) would rank a variable
+# once, across both phases, so a variable offered to two phases would sit where
+# its mean falls and neither facet would be in order. The phase goes into the
+# row's key, the key is ordered by pct, and the axis prints the variable alone.
+.fig_data <- freq
+.fig_data$.row <- paste(.fig_data$phase, .fig_data$variable, sep = "\r")
+.fig_data$.row <- factor(.fig_data$.row, levels = .fig_data$.row[order(.fig_data$pct)])
+.fig <- ggplot(.fig_data, aes(x = .row, y = pct)) +
+  scale_x_discrete(labels = function(x) sub("^[^\r]*\r", "", x)) +
   geom_hline(yintercept = RETAIN_PCT, linetype = "dashed") +
   geom_errorbar(aes(ymin = pct - mc_error, ymax = pct + mc_error), width = 0) +
   geom_point() +

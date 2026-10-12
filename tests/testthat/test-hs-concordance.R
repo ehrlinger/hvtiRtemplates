@@ -59,7 +59,29 @@ test_that("hs-concordance refuses what would make the comparison meaningless", {
   other <- file.path(hvtiRutilities::study_dir("estimates", e$root), "dead-b", "hm.rds")
   bad(MODELS = c(a = "dead-a", b = other), msg = "Set CROSS_STUDY")
   bad(MODELS = c(a = "dead-a", b = gsub("/", "\\", other, fixed = TRUE)), msg = "Set CROSS_STUDY")
-  bad(TIME = "age", msg = "fitted on time column")
+  # TIME and EVENT come from the models; a value set here only confirms them.
+  bad(TIME = "age", msg = "TIME here \\(age\\) differs from the upstream job's \\(iv_dead\\)")
+  bad(EVENT = "other", msg = "EVENT here \\(other\\) differs from the upstream job's \\(dead\\)")
+})
+
+test_that("hs-concordance takes TIME and EVENT from the hm models, not from its own settings", {
+  skip_concordance()
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  e <- estate()
+  # Nothing in the choices names either column: the models' recorded selection does.
+  choices <- concordance_choices(e$data)
+  expect_false(any(c("TIME", "EVENT") %in% names(choices)))
+  env <- concordance_run(e$root, choices, c("tbl-data", "models", "cohort"))
+  expect_identical(env$TIME, "iv_dead")
+  expect_identical(env$EVENT, "dead")
+  # Naming the same columns is a confirmation, and passes.
+  expect_no_error(concordance_run(e$root, concordance_choices(e$data, TIME = "iv_dead", EVENT = "dead"),
+                                  c("tbl-data", "models", "cohort")))
+  # The template declares neither column.
+  src <- readLines(hazard_template("hs-concordance"), warn = FALSE)
+  expect_true(all(c("TIME <- NULL", "EVENT <- NULL") %in% trimws(sub("#.*$", "", src))))
+  expect_false(any(grepl('^(TIME|EVENT)\\s+<- "', src)))
 })
 
 test_that("a horizon beyond one model's follow-up names that model alone", {
@@ -67,7 +89,7 @@ test_that("a horizon beyond one model's follow-up names that model alone", {
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
   e <- estate()
-  env <- concordance_run(e$root, concordance_choices(e$data), c("tbl-data", "cohort", "models"))
+  env <- concordance_run(e$root, concordance_choices(e$data), c("tbl-data", "models", "cohort"))
   last <- vapply(env$models, function(a) max(a$reported$data$frame$iv_dead), numeric(1L))
   h <- mean(last)
   short <- names(which.min(last))

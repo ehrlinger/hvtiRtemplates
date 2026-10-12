@@ -310,6 +310,76 @@ test_that("a runner and report keyed on MRN save no MRN when run outside the glo
   }
 })
 
+test_that("bc's narration states what the BASE workaround does and costs, not that a term can be forced", {
+  # Neither boot_select() nor fit_cox() can force a term; the runner names a
+  # screened candidate as the base instead, which removes it from the frequency
+  # tables (#186).
+  text <- paste(readLines(template_path("bc"), warn = FALSE), collapse = " ")
+  text <- gsub("\\s+", " ", text)
+  expect_false(grepl("Force at least one term", text, fixed = TRUE))
+  expect_match(text, "can force a term into a Cox model", fixed = TRUE)
+  expect_match(text, "take that variable out of every frequency table", fixed = TRUE)
+  expect_match(text, "The cost is the missing frequency", fixed = TRUE)
+})
+
+test_that("bh's default CLUSTERS names nothing, and an empty list reports no clusters instead of stopping", {
+  # The old default named early.age and early.ln_age, terms a small pool may
+  # never carry; boot_clusters() refuses a name no replicate has, so a fresh job
+  # stopped at the cluster table (#188).
+  boot_skip_unless_stack("bh")
+  src <- readLines(template_path("bh"), warn = FALSE)
+  choices <- parse(text = rf_chunk(src, "edit-study-choices"), keep.source = FALSE)
+  assigns <- vapply(choices, function(e) {
+    if (is.call(e) && identical(e[[1L]], quote(`<-`)) && is.name(e[[2L]])) as.character(e[[2L]]) else ""
+  }, character(1L))
+  expect_identical(sum(assigns == "CLUSTERS"), 1L)
+  default <- eval(choices[[which(assigns == "CLUSTERS")]][[3L]], new.env())
+  expect_length(default, 0L)
+  # A commented example is left for the author.
+  expect_true(any(grepl("^#\\s*CLUSTERS <- list\\(", src)))
+
+  env <- new.env(parent = globalenv())
+  env$boot_clusters <- hvtiRbootstrap::boot_clusters
+  env$CLUSTERS <- default
+  env$coefs <- matrix(c(1, NA, 2, 3), 2L, dimnames = list(NULL, c("early.age", "const.age")))
+  out <- utils::capture.output(eval(parse(text = rf_chunk(src, "edit-clusters")), envir = env))
+  expect_identical(nrow(env$clusters), 0L)
+  expect_true(any(grepl("No clusters", out)))
+  # A declared cluster is reported as before.
+  env$CLUSTERS <- list(Age = c("early.age", "const.age"))
+  utils::capture.output(eval(parse(text = rf_chunk(src, "edit-clusters")), envir = env))
+  expect_identical(env$clusters$n_any, 2L)
+})
+
+test_that("bh's frequency figure orders the variables within each phase", {
+  # reorder(variable, pct) ranks a variable once, across both phases, so a
+  # variable offered to two phases sits wherever its mean falls and neither
+  # facet is sorted (#189).
+  skip_if_not_installed("ggplot2")
+  src <- readLines(template_path("bh"), warn = FALSE)
+  env <- new.env(parent = globalenv())
+  env$freq <- data.frame(
+    phase = rep(c("early", "constant"), c(3L, 3L)),
+    variable = c("a", "b", "c", "a", "b", "c"),
+    pct = c(100, 50, 75, 20, 80, 60),
+    mc_error = 1
+  )
+  env$RETAIN_PCT <- 50
+  env$save_figure <- function(...) invisible(NULL)
+  withr::local_package("ggplot2")
+  eval(parse(text = rf_chunk(src, "fig-frequencies")), envir = env)
+  built <- ggplot2::ggplot_build(env$.fig)
+  panels <- built$layout$layout
+  expect_identical(nrow(panels), 2L)
+  for (i in seq_len(nrow(panels))) {
+    scale <- built$layout$panel_scales_x[[i]]
+    shown <- as.vector(scale$get_labels(scale$get_breaks()))
+    ph <- as.character(panels$phase[i])
+    rows <- env$freq[env$freq$phase == ph, ]
+    expect_identical(shown, rows$variable[order(rows$pct)], info = ph)
+  }
+})
+
 test_that("bh saves no MRN in its report, in or outside the global environment", {
   boot_skip_unless_stack("bh")
   for (env in list(globalenv(), new.env(parent = globalenv()))) {

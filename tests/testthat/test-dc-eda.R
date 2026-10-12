@@ -493,3 +493,25 @@ test_that("dc-eda's group abbreviation list shortens further, when it is install
   expect_match(drawn$text, "AVR = Aortic valve replacement", fixed = TRUE)
   expect_match(drawn$text, "MVr = Mitral valve repair", fixed = TRUE)
 })
+
+test_that("dc-eda's key comes from label_map()'s abbreviations_by_key, not from label text", {
+  # A label that says "SP" in its own words, is over LABEL_MAX and is only cut,
+  # contains the token SP without SP having shortened anything. Reading the cut
+  # text would print SP = Surgical procedure under its section.
+  root <- migration_study_fixture("dp-postage")
+  local_child_chunks()
+  local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  without_group_list()
+  d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  attr(d$age, "label") <- "SP indicates systolic pressure measured at admission to hospital"
+  attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"
+  attr(d$hx_chf, "label") <- "Surgical procedure: mitral valve repair with annuloplasty ring"
+  drawn <- suppressWarnings(eda_draw(root, d, VARIABLES = c("age", "female", "hx_chf"),
+                                     SECTIONS = c("continuous", "percent"), .cfg = list()))
+  # The age label was cut, not abbreviated, and still contains the token.
+  expect_match(drawn$env$labels[["age"]], "^SP indicates .*[.][.][.]$")
+  sections <- strsplit(drawn$text, "\n## Categorical", fixed = TRUE)[[1L]]
+  expect_length(sections, 2L)
+  expect_false(grepl("Abbreviations:", sections[1L], fixed = TRUE))
+  expect_match(sections[2L], "Abbreviations: SP = Surgical procedure.", fixed = TRUE)
+})

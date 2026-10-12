@@ -22,9 +22,7 @@ format:
 
 <!-- EDIT: name the job this replaces (an older graphs/dp.trends job) and list
      the figures it drew. A trends job usually draws several, and each one
-     becomes one entry in TRENDS below. -->
-
-Replaces `graphs/dp.trends`: list the trend figures it draws.
+     becomes one entry in TRENDS below. Replace this comment with that text. -->
 
 A `dc-trends` job shows how the cohort changed over the years of operation: the
 share of patients with a characteristic, or the level of a measurement, year by

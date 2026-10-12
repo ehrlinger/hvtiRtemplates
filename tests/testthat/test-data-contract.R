@@ -39,8 +39,9 @@ expected_defaults <- function(name) {
     out <- c(WHERE = "WHERE <- NULL", ID = 'ID <- "ccfid"', KEY = "KEY <- ID")
     if (reads_data(name)) out <- c(DATASET = 'DATASET <- "built"', ANALYSIS_SET = "ANALYSIS_SET <- NULL", out)
   }
-  # hm, hp and hs also take their time-to-event settings from upstream.
-  if (name %in% c("hm", "hp", "hs-setup")) out <- c(out, TIME = "TIME <- NULL", EVENT = "EVENT <- NULL")
+  # hm, hp and hs also take their time-to-event settings from upstream;
+  # hs-concordance takes them from the hm models it reads.
+  if (name %in% c("hm", "hp", "hs-setup", "hs-concordance")) out <- c(out, TIME = "TIME <- NULL", EVENT = "EVENT <- NULL")
   # nb-boostmtree reads one row per visit, so the ID alone is not unique.
   if (name == "nb-boostmtree") out[["KEY"]] <- "KEY <- c(ID, TIME)"
   out
