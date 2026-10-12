@@ -381,8 +381,12 @@ substituting a guess.
   ⚠️ **No approving review is required.** `required_approving_review_count` is **0** here,
   measured 2026-09-10, so a solo-authored PR merges on its required status checks alone and
   needs neither a second reviewer nor an `--admin` bypass. The gate that does exist is
-  `required_status_checks`: ten contexts, all of which must report `SUCCESS`, which is why a
-  PR briefly shows `BLOCKED` while its checks are still running. Copilot reviews are
+  `required_status_checks`: six contexts, all of which must report `SUCCESS`, which is why a
+  PR briefly shows `BLOCKED` while its checks are still running. Only one of them is an
+  `R-CMD-check` leg, `ubuntu-latest (release)`: a pull request runs no other, so requiring
+  macOS, Windows, devel or oldrel-1 would leave every PR waiting on a check that never
+  starts. Those legs run on a push to `main` and in the weekly sweep (since 2026-10-12;
+  until then all five legs ran on every PR and all five were required). Copilot reviews are
   `COMMENTED`, never `APPROVED`, and would not have satisfied an approval rule anyway.
   `require_code_owner_review` is **false**, and no repository in the family has a
   `CODEOWNERS` file.
