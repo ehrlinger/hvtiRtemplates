@@ -178,7 +178,8 @@ JOIN_KEY <- NULL
 
 # EDIT: the event, a 0/1 column, 1 for a patient who had it (the SAS macro's
 # EVENT=). TRUE and FALSE also work. A patient with no value is ranked with the
-# rest, as in SAS, but counts toward no group's rate.
+# rest, as in SAS, but counts toward no group's rate: not in its patients, its
+# events or, under "hazard", its follow-up.
 EVENT <- "dead"
 
 # EDIT: the link, the scale the group rates are put on before they are plotted.
@@ -193,20 +194,27 @@ LINK <- "hazard"
 # no value is left out of a "hazard" calibration, as the SAS macro left them out.
 TIME <- "iv_dead"
 
-# EDIT: NULL, or a window on follow-up, c(lower, upper), such as c(0.25, 5): the
-# patients whose TIME is in it, both ends included, are calibrated and the rest
-# are left out and counted. It is how the SAS jobs took one phase of a hazard,
-# early, constant or late. It leaves patients out; it does not censor them at the
-# upper end, so a patient followed past it does not count.
+# EDIT: NULL, or a window on follow-up, c(start, end), such as c(0.25, 5): one phase
+# of a hazard, the SAS early, constant or late phase, in the unit of TIME. A patient
+# whose follow-up ended before `start` is left out and counted. Everyone else is
+# censored at `end`: a patient followed past it counts as followed to `end`, and an
+# event after it does not count. Under "hazard" the time at risk is then the time
+# inside the window, TIME capped at `end`, less `start`; the SAS template summed it
+# from 0. Under "logit" the same patients are kept and an event counts only if it
+# falls inside the window. Both counts are reported under the data table.
 INTERVAL <- NULL
 
 # EDIT: the covariates to calibrate, one row each. `name` is a column of the data;
 # `kind` is "continuous" (ranked into groups) or "ordinal" (each level is a
 # group). The other columns are optional, and a covariate that does not give
 # one takes the default:
-#   groups    5      how many groups a continuous covariate is ranked into
+#   groups    5      how many groups a continuous covariate is ranked into; the
+#                    job stops if any group has fewer than 5 patients, and for
+#                    an ordinal covariate (at most 20 levels) if any level has
 #   constant  the covariate's median to one significant figure; the c in the
-#             inverse, inverse squared, squared and exponential scales
+#             inverse, inverse squared, squared and exponential scales. A
+#             median that rounds to 0 (a 0/1 indicator) leaves it NA, and
+#             those four scales are not computable until you set one
 #   shift     0      added before the log, for a covariate that can be 0
 #   label     the name   the heading over its table and figure
 #   chosen    NA     the scale to use: "raw", "log", "inverse",
@@ -302,11 +310,15 @@ if (.id %in% c(EVENT, if (.needs_time) TIME)) {
 if (.needs_time && !is.numeric(d[[TIME]])) {
   stop("TIME must be a number, the follow-up in years or months: `", TIME, "` is not numeric.", call. = FALSE)
 }
-# INTERVAL leaves patients out before anything else is computed, so the
-# constants and the groups below are those of the patients calibrated.
-.interval <- hvtiRtemplates:::.lg_interval(d, TIME, INTERVAL)
+# INTERVAL leaves patients out and censors the rest before anything else is
+# computed, so the constants and the groups below are those of the patients
+# calibrated, and the event and follow-up the tables read are the windowed ones.
+.interval <- hvtiRtemplates:::.lg_interval(d, EVENT, if (.needs_time) TIME, INTERVAL)
 d <- .interval$data
-variables <- hvtiRtemplates:::.lg_variables(VARIABLES, d, exclude = .id)
+.event <- .interval$event
+.time <- .interval$time
+variables <- hvtiRtemplates:::.lg_variables(VARIABLES, d, exclude = .id, event = .event,
+                                            time = if (identical(LINK, "hazard")) .time)
 ```
 
 ```{r}
@@ -315,7 +327,8 @@ variables <- hvtiRtemplates:::.lg_variables(VARIABLES, d, exclude = .id)
 # unnumbered: its child chunk carries its own label and caption
 if (!is.null(.interval$counts)) {
   .fence <- strrep("`", 3)
-  .cap <- paste0("Patients with follow-up from ", INTERVAL[[1L]], " to ", INTERVAL[[2L]], " (INTERVAL), both ends included")
+  .cap <- paste0("The window of follow-up from ", INTERVAL[[1L]], " to ", INTERVAL[[2L]], " (INTERVAL): patients left out, ",
+                 "and patients censored at its end")
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), "#| label: tbl-lg-interval",
     paste0("#| tbl-cap: ", encodeString(.cap, quote = "\"")),
@@ -360,7 +373,7 @@ covariate is drawn as an empty panel, and named there too.
 calibration <- list()
 for (i in seq_len(nrow(variables))) {
   .v <- variables[i, ]
-  .tab <- hvtiRtemplates:::.lg_table(d[[.v$name]], d[[EVENT]], if (identical(LINK, "hazard")) d[[TIME]],
+  .tab <- hvtiRtemplates:::.lg_table(d[[.v$name]], .event, if (identical(LINK, "hazard")) .time,
                                      groups = .v$groups, kind = .v$kind, link = LINK)
   .scales <- hvtiRtemplates:::.lg_scales(.tab$mean, .v$constant, .v$shift)
   calibration[[.v$name]] <- list(table = .tab, scales = .scales)
@@ -394,7 +407,7 @@ for (i in seq_len(nrow(variables))) {
   .notes <- c(
     if (length(.left)) paste0("Left out of the groups: ", paste(.left, collapse = ", "), "."),
     if (.dropped[["event"]] > 0L) {
-      paste0(.dropped[["event"]], " with no event value are ranked but counted in no group's rate.")
+      paste0(.dropped[["event"]], " with no event value are ranked but counted in no group's patients, events or follow-up.")
     },
     attr(.tab, "notes"),
     if (length(.scale_notes)) paste0(hvtiRtemplates:::.lg_panel_labels[names(.scale_notes)], ": ", .scale_notes)
@@ -420,7 +433,7 @@ does for an open marker, so a finished job has chosen every scale.
 #| label: choices
 #| results: asis
 # unnumbered: its child chunk carries its own label and caption
-choices <- hvtiRtemplates:::.lg_choices(variables, lapply(calibration, `[[`, "scales"))
+choices <- hvtiRtemplates:::.lg_choices(variables, lapply(calibration, `[[`, "scales"), d)
 if (length(choices$problems)) {
   .msg <- paste0("These covariates have no usable scale chosen: ",
                  paste0("`", names(choices$problems), "`: ", choices$problems, collapse = "; "),
@@ -475,7 +488,10 @@ cat(hvtiRtemplates:::.embed_provenance(
     type = TYPE,
     lg = Filter(Negate(is.null), list(
       event = EVENT, link = LINK, time = if (.needs_time) TIME,
-      interval = if (!is.null(INTERVAL)) list(lower = INTERVAL[[1L]], upper = INTERVAL[[2L]], kept = nrow(d)),
+      interval = if (!is.null(INTERVAL)) {
+        .n <- .interval$counts$patients
+        list(start = INTERVAL[[1L]], end = INTERVAL[[2L]], left_out = .n[[2L]] + .n[[3L]], kept = .n[[4L]], censored = .n[[5L]])
+      },
       patients = nrow(d),
       # The VARIABLES table as the job completed it, one entry for each covariate. A scale not yet chosen is left out.
       variables = lapply(seq_len(nrow(variables)), function(i) Filter(Negate(is.na), as.list(variables[i, ]))),

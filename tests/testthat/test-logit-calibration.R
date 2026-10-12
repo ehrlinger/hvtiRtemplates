@@ -132,6 +132,17 @@ test_that(".lg_table() drops a missing covariate or follow-up and counts it, and
   expect_identical(sum(tab$events), 8L)
 })
 
+test_that(".lg_table() under the hazard sums follow-up only over patients whose event is known", {
+  # Six patients in two groups of three by rank. The second patient has no event value and a follow-up of 100: if
+  # that 100 entered the denominator, the first group's rate would be 1 / 103 and not 1 / 3.
+  tab <- hvtiRtemplates:::.lg_table(1:6, c(1, NA, 0, 1, 0, 1), c(1, 100, 2, 3, 4, 5), groups = 2L, link = "hazard")
+  expect_identical(tab$n, c(2L, 3L))
+  expect_identical(tab$events, c(1L, 2L))
+  expect_equal(tab$rate, c(1 / 3, 2 / 12))
+  expect_equal(tab$link, log(c(1 / 3, 2 / 12)))
+  expect_identical(attr(tab, "dropped")[["event"]], 1L)
+})
+
 test_that(".lg_table() takes each level of an ordinal covariate as a group", {
   tab <- hvtiRtemplates:::.lg_table(c(1, 1, 2, 2, 2, 3, 3), c(0L, 1L, 0L, 1L, 1L, 1L, 1L), kind = "ordinal")
   expect_equal(tab$mean, 1:3)
@@ -228,9 +239,26 @@ test_that("a scale that cannot be computed is drawn empty, with a note, not left
   expect_match(attr(big, "notes")[["exp"]], "^The exponential of the mean over the constant overflows")
 })
 
+test_that("with no constant the four constant-based scales are empty and say to set one; raw and log remain", {
+  s <- hvtiRtemplates:::.lg_scales(c(0.2, 0.5, 0.8), constant = NA_real_)
+  expect_equal(s$raw, c(0.2, 0.5, 0.8))
+  expect_equal(s$log, log(c(0.2, 0.5, 0.8)))
+  for (id in c("inverse", "inverse_squared", "squared", "exp")) {
+    expect_true(all(is.na(s[[id]])), info = id)
+    expect_match(attr(s, "notes")[[id]], "set constant for this covariate in VARIABLES", info = id)
+  }
+  expect_named(attr(s, "notes"), c("inverse", "inverse_squared", "squared", "exp"))
+  # The log's own note still comes first when the shift is needed too.
+  both <- hvtiRtemplates:::.lg_scales(c(0, 0.5, 1), constant = NA_real_)
+  expect_named(attr(both, "notes"), c("log", "inverse", "inverse_squared", "squared", "exp"))
+  # A term cannot be written without a constant, except the two that use none.
+  expect_identical(hvtiRtemplates:::.lg_term("flag", "raw", NA_real_), "flag")
+  expect_identical(hvtiRtemplates:::.lg_term("flag", "log", NA_real_, shift = 1), "log(flag + 1)")
+  expect_error(hvtiRtemplates:::.lg_term("flag", "inverse", NA_real_), "^The scale inverse needs a constant")
+})
+
 test_that(".lg_scales() stops on a constant, shift or mean it cannot use", {
   expect_error(hvtiRtemplates:::.lg_scales(c(1, 2), constant = 0), "^constant must be one finite number other than 0")
-  expect_error(hvtiRtemplates:::.lg_scales(c(1, 2), constant = NA_real_), "^constant must be one finite number")
   expect_error(hvtiRtemplates:::.lg_scales(c(1, 2), constant = c(1, 2)), "^constant must be one finite number")
   expect_error(hvtiRtemplates:::.lg_scales(c(1, 2), constant = Inf), "^constant must be one finite number")
   expect_error(hvtiRtemplates:::.lg_scales(c(1, 2), constant = 1, shift = NA_real_), "^shift must be one finite number")
@@ -246,7 +274,10 @@ test_that("the default constant is the covariate's median to one significant fig
   expect_identical(const(c(0.031, 0.04, 0.041, 0.9)), 0.04)
   expect_identical(const(c(1200, 1300, 1900)), 1000)
   expect_error(const(c(NA_real_, NA_real_), "age"), "^`age` has no value")
-  expect_error(const(c(0, 0, 0, 5), "los"), "^The median of `los` rounds to 0, so there is no default constant: set constant for it")
+  # A median that rounds to 0 gives no default, and does not stop the job: the constant-based scales are not
+  # computable for that covariate until the author sets one.
+  expect_identical(const(c(0, 0, 0, 5), "los"), NA_real_)
+  expect_identical(const(c(0, 1, 0, 1, 0)), NA_real_)
 })
 
 test_that(".lg_rsq() is the R-squared of a straight line fitted with the group sizes as weights", {
@@ -323,8 +354,12 @@ test_that(".lg_plot() leaves a blank link value as a gap and says when no R-squa
                "^table and scales must have one row for each group")
 })
 
+# Each row of a five-patient fixture repeated six times, so that no rank group is smaller than the 5 patients
+# .lg_variables() asks for. The values, and so the medians, are those of the five.
+lg_repeat <- function(d, times = 6L) d[rep(seq_len(nrow(d)), each = times), , drop = FALSE]
+
 test_that(".lg_variables() fills every default from the data and keeps what the author gave", {
-  d <- data.frame(age = c(41, 52, 58, 61, 70), nyha = c(1, 2, 2, 3, 4), wt = c(70, 80, 86, 90, 110))
+  d <- lg_repeat(data.frame(age = c(41, 52, 58, 61, 70), nyha = c(1, 2, 2, 3, 4), wt = c(70, 80, 86, 90, 110)))
   v <- hvtiRtemplates:::.lg_variables(data.frame(name = c("age", "nyha")), d)
   expect_named(v, c("name", "kind", "groups", "constant", "shift", "label", "chosen"))
   expect_identical(v$name, c("age", "nyha"))
@@ -352,7 +387,8 @@ test_that(".lg_variables() fills every default from the data and keeps what the 
 })
 
 test_that(".lg_variables() stops on a table, column, name or value it cannot use, naming VARIABLES", {
-  d <- data.frame(ccfid = 1:5, age = c(41, 52, 58, 61, 70), sex = c("f", "m", "f", "m", "f"), zero = c(0, 0, 0, 0, 1))
+  d <- lg_repeat(data.frame(ccfid = 1:5, age = c(41, 52, 58, 61, 70), sex = c("f", "m", "f", "m", "f"),
+                            zero = c(0, 0, 0, 0, 1)))
   one <- function(...) hvtiRtemplates:::.lg_variables(data.frame(name = "age", ...), d)
   expect_error(hvtiRtemplates:::.lg_variables("age", d), "^VARIABLES must be a data frame with one row for each covariate")
   expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = character()), d), "^VARIABLES must be a data frame")
@@ -374,28 +410,117 @@ test_that(".lg_variables() stops on a table, column, name or value it cannot use
   expect_error(one(constant = Inf), "^VARIABLES\\$constant must be a finite number other than 0")
   expect_error(one(shift = Inf), "^VARIABLES\\$shift must be a finite number")
   expect_error(one(chosen = "cubic"), "^VARIABLES\\$chosen must be NA or one of raw, log, inverse, inverse_squared, squared, exp")
-  # A covariate whose median rounds to 0 has no default constant, and says where to set one.
-  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = "zero"), d),
-               "^The median of `zero` rounds to 0, so there is no default constant: set constant for it in VARIABLES")
+  # A covariate whose median rounds to 0 has no default constant: it is left NA, and the job goes on.
+  expect_identical(hvtiRtemplates:::.lg_variables(data.frame(name = "zero"), d)$constant, NA_real_)
   expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "zero", constant = 1), d))
 })
 
-test_that(".lg_interval() keeps the patients whose follow-up is in the window, both ends included, and counts the rest", {
-  d <- data.frame(id = 1:7, t = c(0.1, 0.25, 1, 5, 5.5, NA, 3))
-  got <- hvtiRtemplates:::.lg_interval(d, "t", c(0.25, 5))
-  expect_identical(got$data$id, c(2L, 3L, 4L, 7L))
-  expect_identical(got$counts$patients, c(7L, 1L, 1L, 1L, 4L))
-  expect_identical(got$counts$count, c("Patients read", "Follow-up before the window", "Follow-up after the window",
-                                       "Follow-up missing", "Patients kept"))
-  # No interval keeps everyone and has nothing to report.
-  none <- hvtiRtemplates:::.lg_interval(d, "t", NULL)
+test_that(".lg_variables() stops on an ordinal covariate with more than 20 levels, naming it and what to do", {
+  many <- data.frame(many = rep(1:21, each = 5L))
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = "many", kind = "ordinal"), many),
+               paste0("^VARIABLES: `many` is ordinal with 21 levels, more than the 20 a group each can take. ",
+                      "Treat it as continuous or recode it"))
+  # 20 levels is the most that is allowed, and the same covariate as continuous is not an ordinal.
+  enough <- data.frame(enough = rep(1:20, each = 5L))
+  expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "enough", kind = "ordinal"), enough))
+  expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "many", kind = "continuous"), many))
+  # Missing values are not levels.
+  expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "enough", kind = "ordinal"),
+                                               data.frame(enough = c(rep(1:20, each = 5L), NA, NA))))
+})
+
+test_that(".lg_variables() stops when a group has fewer than 5 patients, naming the covariate and never a value", {
+  # Rank groups of 12 patients: five groups of 2 or 3.
+  d <- data.frame(small = c(101:112), ok = rep(c(1, 2), each = 6L))
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = "small"), d),
+               "^VARIABLES: `small` has a group of fewer than 5 patients [(]the smallest has 2[)]. Lower groups for it in VARIABLES")
+  # The message never carries the covariate's values.
+  msg <- tryCatch(hvtiRtemplates:::.lg_variables(data.frame(name = "small"), d), error = conditionMessage)
+  expect_false(grepl("10[1-9]|11[0-2]", msg))
+  # Fewer groups makes each larger: two groups of six are enough.
+  expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "small", groups = 2), d))
+  expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "ok", groups = 2), d))
+  # An ordinal level held by fewer than 5 patients says to combine levels instead.
+  o <- data.frame(level = c(rep(1, 8), rep(2, 7), rep(3, 2)))
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = "level", kind = "ordinal"), o),
+               "^VARIABLES: `level` has a group of fewer than 5 patients [(]the smallest has 2[)]. Combine levels of it")
+  # Exactly 5 is enough.
+  expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "level", kind = "ordinal"),
+                                               data.frame(level = c(rep(1, 8), rep(2, 7), rep(3, 5)))))
+  # Patients with no covariate value are in no group, and so cannot make one small or large.
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = "level", kind = "ordinal"),
+                                              data.frame(level = c(rep(1, 8), rep(2, 7), rep(3, 2), rep(NA, 30)))),
+               "smallest has 2")
+  # The groups counted are those the table will form: patients with no event value, or under the hazard no
+  # follow-up, are not in n, so a group they empty out is small.
+  e <- rep(c(1, 0), 10)
+  expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "x", groups = 2), data.frame(x = 1:20), event = e))
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = "x", groups = 2), data.frame(x = 1:20),
+                                              event = replace(e, 1:7, NA)), "smallest has 3")
+  # A patient with no follow-up is dropped before the ranking, so the groups re-form on those left: 13 patients
+  # make groups of 6 and 7, and 4 make two groups of 2.
+  expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "x", groups = 2), data.frame(x = 1:20), event = e,
+                                               time = replace(rep(1, 20), 11:17, NA)))
+  expect_error(hvtiRtemplates:::.lg_variables(data.frame(name = "x", groups = 2), data.frame(x = 1:20), event = e,
+                                              time = c(1, 1, 1, 1, rep(NA, 16L))), "smallest has 2")
+})
+
+test_that(".lg_interval() drops patients who ended before the start and censors the rest at the end", {
+  # Eight patients, the window c(0.25, 5), worked by hand:
+  #   id   follow-up  event  what happens
+  #    1     0.10       1     ended before the start: left out
+  #    2     0.25       1     exactly at the start: kept, time at risk 0.25 - 0.25 = 0
+  #    3     1.00       0     kept, time at risk 0.75
+  #    4     5.00       1     exactly at the end: kept with its event, time at risk 4.75
+  #    5     5.50       1     past the end: censored at 5, the event no longer counts, time at risk 4.75
+  #    6      NA        1     no follow-up: left out
+  #    7     3.00       0     kept, time at risk 2.75
+  #    8     8.00       1     past the end: censored, event not counted, time at risk 4.75
+  d <- data.frame(id = 1:8, t = c(0.1, 0.25, 1, 5, 5.5, NA, 3, 8), dead = c(1L, 1L, 0L, 1L, 1L, 1L, 0L, 1L))
+  got <- hvtiRtemplates:::.lg_interval(d, "dead", "t", c(0.25, 5))
+  expect_identical(got$data$id, c(2L, 3L, 4L, 5L, 7L, 8L))
+  expect_identical(got$event, c(1L, 0L, 1L, 0L, 0L, 0L))
+  expect_equal(got$time, c(0, 0.75, 4.75, 4.75, 2.75, 4.75))
+  expect_identical(got$counts$count, c("Patients read", "Left out: follow-up before the start", "Left out: follow-up missing",
+                                       "Patients kept", "Censored at the end", "Events after the end, no longer counted"))
+  expect_identical(got$counts$patients, c(8L, 1L, 1L, 6L, 2L, 2L))
+  # The columns of the data are not changed.
+  expect_identical(got$data$dead, c(1L, 0L, 1L, 1L, 0L, 1L))
+  # An event of NA past the end is censored too, as `dead=0` sets it in SAS.
+  na_event <- hvtiRtemplates:::.lg_interval(transform(d, dead = replace(dead, 8L, NA)), "dead", "t", c(0.25, 5))
+  expect_identical(na_event$event[[6L]], 0L)
+  # No interval keeps everyone and has nothing to report; the event and follow-up come back as they are.
+  none <- hvtiRtemplates:::.lg_interval(d, "dead", "t", NULL)
   expect_identical(none$data, d)
   expect_null(none$counts)
-  expect_error(hvtiRtemplates:::.lg_interval(d, "t", c(10, 20)), "^INTERVAL keeps no patient")
+  expect_identical(none$event, d$dead)
+  expect_identical(none$time, d$t)
+  expect_null(hvtiRtemplates:::.lg_interval(d, "dead", NULL, NULL)$time)
+  # A window that starts at 0, the SAS early phase, leaves nobody out for being early.
+  early <- hvtiRtemplates:::.lg_interval(d, "dead", "t", c(0, 1))
+  expect_identical(early$counts$patients[c(2L, 4L, 5L)], c(0L, 7L, 4L))
+  expect_equal(early$time, c(0.1, 0.25, 1, 1, 1, 1, 1))
+  expect_error(hvtiRtemplates:::.lg_interval(d, "dead", "t", c(10, 20)), "^INTERVAL keeps no patient")
   for (bad in list(5, c(5, 1), c(1, NA), c(1, 5, 9), "a", c(2, 2))) {
-    expect_error(hvtiRtemplates:::.lg_interval(d, "t", bad), "^INTERVAL must be NULL or c[(]lower, upper[)]")
+    expect_error(hvtiRtemplates:::.lg_interval(d, "dead", "t", bad), "^INTERVAL must be NULL or c[(]start, end[)]")
   }
-  expect_error(hvtiRtemplates:::.lg_interval(d, "later", c(1, 2)), "^TIME names a column this dataset does not have: later")
+  expect_error(hvtiRtemplates:::.lg_interval(d, "dead", "later", c(1, 2)), "^TIME names a column this dataset does not have: later")
+  expect_error(hvtiRtemplates:::.lg_interval(d, "dead", NULL, c(1, 2)), "^INTERVAL needs TIME")
+  expect_error(hvtiRtemplates:::.lg_interval(d, "died", "t", NULL), "^event must be coded 0 and 1")
+})
+
+test_that("a constant hazard censored past the window is recovered, not overstated", {
+  # A true constant hazard of 0.1 a year, every patient followed to 10 years at most. The window c(0, 5) censors at
+  # 5; leaving out the patients followed past 5, which keeps only the early events over their short times, would
+  # give about 0.44.
+  withr::local_seed(2026)
+  n <- 20000L
+  t_event <- stats::rexp(n, 0.1)
+  d <- data.frame(x = stats::rnorm(n), follow = pmin(t_event, 10), dead = as.integer(t_event <= 10))
+  got <- hvtiRtemplates:::.lg_interval(d, "dead", "follow", c(0, 5))
+  tab <- hvtiRtemplates:::.lg_table(got$data$x, got$event, got$time, groups = 5L, link = "hazard")
+  expect_lt(max(abs(tab$rate - 0.1)), 0.01)
+  expect_lt(abs(sum(got$event) / sum(got$time) - 0.1), 0.005)
 })
 
 lg_chosen_fixture <- function() {
@@ -409,12 +534,14 @@ lg_chosen_fixture <- function() {
     nyha = hvtiRtemplates:::.lg_scales(c(1, 2, 3), 2),
     los = hvtiRtemplates:::.lg_scales(c(0, 1, 2), 1)
   )
-  list(variables = variables, scales = scales)
+  # The patients behind the means: every value is on the domain of every scale chosen above.
+  d <- data.frame(age = c(35, 45, 55, 65, NA), wt = c(55, 70, 90, 110, 120), nyha = c(1, 2, 2, 3, 3), los = c(0, 0, 1, 2, 3))
+  list(variables = variables, scales = scales, d = d)
 }
 
 test_that(".lg_choices() gives each chosen scale as the term, constant and shift an lm job takes", {
   f <- lg_chosen_fixture()
-  got <- hvtiRtemplates:::.lg_choices(f$variables[1:3, ], f$scales)
+  got <- hvtiRtemplates:::.lg_choices(f$variables[1:3, ], f$scales, f$d)
   expect_named(got$table, c("variable", "chosen", "term", "constant", "shift"))
   expect_identical(got$table$variable, c("age", "wt", "nyha"))
   expect_identical(got$table$chosen, c("log", "inverse", "raw"))
@@ -427,20 +554,70 @@ test_that(".lg_choices() gives each chosen scale as the term, constant and shift
 test_that("a covariate with no choice, or a choice that cannot be computed, is a problem and not a row", {
   f <- lg_chosen_fixture()
   # los has no choice. Its log cannot be computed (a group mean is 0), so choosing it is a problem too.
-  got <- hvtiRtemplates:::.lg_choices(f$variables, f$scales)
+  got <- hvtiRtemplates:::.lg_choices(f$variables, f$scales, f$d)
   expect_identical(got$table$variable, c("age", "wt", "nyha"))
   expect_identical(unname(got$problems), "no scale chosen yet")
   expect_named(got$problems, "los")
   f$variables$chosen[[4L]] <- "log"
-  got <- hvtiRtemplates:::.lg_choices(f$variables, f$scales)
+  got <- hvtiRtemplates:::.lg_choices(f$variables, f$scales, f$d)
   expect_identical(got$table$variable, c("age", "wt", "nyha"))
   expect_named(got$problems, "los")
   expect_match(got$problems[["los"]], "^the chosen scale, log, cannot be computed: A group mean plus the shift is not positive")
   # Nothing chosen at all is an empty table with the same columns, and a problem for each.
-  none <- hvtiRtemplates:::.lg_choices(transform(f$variables, chosen = NA_character_), f$scales)
+  none <- hvtiRtemplates:::.lg_choices(transform(f$variables, chosen = NA_character_), f$scales, f$d)
   expect_identical(nrow(none$table), 0L)
   expect_named(none$table, c("variable", "chosen", "term", "constant", "shift"))
   expect_named(none$problems, c("age", "wt", "nyha", "los"))
+})
+
+test_that("a chosen scale that is not a number for some patient is a problem, even when every group mean is fine", {
+  # Every group mean is above 0, so the scales of the means are all computable; two patients are 0.
+  d <- data.frame(x = c(0, 0, 4, 5, 6, 7, 8, 9, NA))
+  variables <- data.frame(name = "x", kind = "continuous", groups = 2L, constant = 5, shift = 0, label = "x", chosen = "log")
+  scales <- list(x = hvtiRtemplates:::.lg_scales(c(2.5, 7), 5))
+  expect_length(attr(scales$x, "notes"), 0L)
+  got <- hvtiRtemplates:::.lg_choices(variables, scales, d)
+  expect_identical(nrow(got$table), 0L)
+  expect_named(got$problems, "x")
+  expect_identical(got$problems[["x"]], paste0("the chosen scale, log, is not a number for 2 patients: ",
+                                               "the covariate plus the shift is not above 0 for them. ",
+                                               "Set shift for this covariate in VARIABLES, or choose another scale."))
+  # The count of patients, never a value.
+  expect_false(grepl("[0-9]+[.][0-9]", got$problems[["x"]]))
+  # A shift that clears the zeros makes it computable.
+  variables$shift <- 1
+  scales <- list(x = hvtiRtemplates:::.lg_scales(c(2.5, 7), 5, 1))
+  expect_identical(hvtiRtemplates:::.lg_choices(variables, scales, d)$table$term, "log(x + 1)")
+  # The same zeros break the inverse, and one patient is said in the singular.
+  variables$chosen <- "inverse"
+  variables$shift <- 0
+  one <- hvtiRtemplates:::.lg_choices(variables, scales, data.frame(x = c(0, 4, 5, 6, 7, 8)))
+  expect_match(one$problems[["x"]], "^the chosen scale, inverse, is not a number for 1 patient: the constant over the covariate")
+  # A raw scale is never impossible, and a patient with no value is not counted.
+  variables$chosen <- "raw"
+  expect_identical(hvtiRtemplates:::.lg_choices(variables, scales, d)$table$term, "x")
+  # The exponential that overflows for a patient, though not for any mean.
+  variables$chosen <- "exp"
+  variables$constant <- 1
+  big <- hvtiRtemplates:::.lg_choices(variables, list(x = hvtiRtemplates:::.lg_scales(c(2.5, 7), 1)),
+                                      data.frame(x = c(1, 2, 1000)))
+  expect_match(big$problems[["x"]], "^the chosen scale, exp, is not a number for 1 patient: the exponential overflows")
+})
+
+test_that("a covariate with no constant cannot be given a constant-based scale, and can be given raw or log", {
+  d <- data.frame(flag = c(0, 0, 0, 1, 1, 0, 1, 0))
+  variables <- data.frame(name = "flag", kind = "continuous", groups = 2L, constant = NA_real_, shift = 1, label = "flag",
+                          chosen = "inverse")
+  scales <- list(flag = hvtiRtemplates:::.lg_scales(c(0.1, 0.8), NA_real_, 1))
+  got <- hvtiRtemplates:::.lg_choices(variables, scales, d)
+  expect_match(got$problems[["flag"]],
+               "^the chosen scale, inverse, cannot be computed: .*set constant for this covariate in VARIABLES")
+  variables$chosen <- "log"
+  expect_identical(hvtiRtemplates:::.lg_choices(variables, scales, d)$table$term, "log(flag + 1)")
+  variables$chosen <- "raw"
+  got <- hvtiRtemplates:::.lg_choices(variables, scales, d)
+  expect_identical(got$table$term, "flag")
+  expect_true(is.na(got$table$constant))
 })
 
 test_that(".lg_predictors() writes the PREDICTORS line to copy into an lm job, and it reads back as the terms", {

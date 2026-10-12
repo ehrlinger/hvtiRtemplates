@@ -43,11 +43,13 @@
 # One row per group: the covariate's mean, minimum and maximum, the patients with
 # an event value (n), their events, the event rate and its value on the link scale.
 #   logit:  rate = events / n, link = log(rate / (1 - rate))
-#   hazard: rate = events / sum(time), link = log(rate), the constant-hazard
-#           rate %logit calls with cox=1 (events per unit of follow-up).
+#   hazard: rate = events / sum(time) over the patients with an event value,
+#           link = log(rate), the constant-hazard rate %logit calls with cox=1
+#           (events per unit of follow-up).
 # A patient with no covariate value, or under "hazard" no follow-up, is left out
 # before the groups are formed, as %logit deletes them. A patient with no event
-# value is ranked with the rest, as in SAS, but counts in neither n nor events.
+# value is ranked with the rest, as in SAS, but counts in none of n, events and
+# (under "hazard") follow-up, so a rate never divides by time it has no event for.
 # A group whose link cannot be computed (a rate of 0 or 1, or no events under
 # "hazard") keeps its row with a missing link and is named in attr(, "notes").
 # attr(, "dropped") counts the patients without a covariate, without follow-up
@@ -79,7 +81,7 @@
   rows <- split(seq_along(x), .lg_groups(x, groups, kind)$group)
   n <- vapply(rows, function(i) sum(!is.na(event[i])), integer(1L), USE.NAMES = FALSE)
   events <- vapply(rows, function(i) as.integer(sum(event[i], na.rm = TRUE)), integer(1L), USE.NAMES = FALSE)
-  total <- if (hazard) vapply(rows, function(i) sum(follow_up[i]), numeric(1L), USE.NAMES = FALSE)
+  total <- if (hazard) vapply(rows, function(i) sum(follow_up[i][!is.na(event[i])]), numeric(1L), USE.NAMES = FALSE)
   defined <- if (hazard) events > 0L & total > 0 else events > 0L & events < n
   rate <- if (hazard) events / total else events / n
   rate[!is.finite(rate)] <- NA_real_
@@ -117,15 +119,32 @@
 # The default scale constant: the covariate's median, rounded to one significant
 # figure. The SAS jobs typed it by hand (50 for an age, 80 for a weight); it only
 # sets the inverse and exponential scales to a readable range, so a round number
-# near the middle of the data does the same work.
+# near the middle of the data does the same work. A median that rounds to 0 (a
+# 0/1 covariate) has no such number: the default is NA, which leaves the four
+# constant-based scales not computable for that covariate until the author sets
+# a constant, and does not stop the job.
 .lg_constant <- function(x, name = "x") {
   if (!any(!is.na(x))) stop("`", name, "` has no value to take a median of.", call. = FALSE)
   constant <- signif(stats::median(x, na.rm = TRUE), 1L)
-  if (constant == 0) {
-    stop("The median of `", name, "` rounds to 0, so there is no default constant: set constant for it in VARIABLES.",
-         call. = FALSE)
-  }
-  constant
+  if (constant == 0) NA_real_ else constant
+}
+
+# The scales that read the constant; raw and log do not.
+.lg_constant_scales <- c("inverse", "inverse_squared", "squared", "exp")
+
+# One scale of a covariate's values, whether the values are group means or
+# patients. The figure draws it, the model term writes it, and the chosen-scale
+# check applies it to each patient, so all three read the same formula. A
+# constant of NA gives NA for the scales that use it.
+.lg_transform <- function(x, scale, constant, shift = 0) {
+  switch(scale,
+    raw = x,
+    log = suppressWarnings(log(x + shift)),
+    inverse = constant / x,
+    inverse_squared = (constant / x)^2,
+    squared = (x / constant)^2,
+    exp = exp(x / constant)
+  )
 }
 
 # The six scales of the group means, one column each and one row per group: raw
@@ -134,32 +153,35 @@
 # A scale that cannot be computed is NA in every group, not only the group that
 # breaks it: a line drawn through the other groups would look like a straight one.
 # attr(, "notes") names why, by scale. The log of a mean at or below -shift, an
-# inverse through a mean of 0 and an overflowing exponential are the cases.
+# inverse through a mean of 0 and an overflowing exponential are the cases. With
+# no constant (NA), the four scales that use one are not computable.
 .lg_scales <- function(mean, constant, shift = 0) {
   if (!is.numeric(mean)) stop("mean must be numeric.", call. = FALSE)
-  if (!.lg_one_number(constant) || constant == 0) {
+  no_constant <- is.numeric(constant) && length(constant) == 1L && is.na(constant)
+  if (!no_constant && (!.lg_one_number(constant) || constant == 0)) {
     stop("constant must be one finite number other than 0.", call. = FALSE)
   }
   if (!.lg_one_number(shift)) stop("shift must be one finite number.", call. = FALSE)
-  out <- list(
-    raw = mean,
-    log = suppressWarnings(log(mean + shift)),
-    inverse = constant / mean,
-    inverse_squared = (constant / mean)^2,
-    squared = (mean / constant)^2,
-    exp = exp(mean / constant)
-  )
+  out <- lapply(stats::setNames(nm = .lg_scale_ids), function(id) .lg_transform(mean, id, constant, shift))
   notes <- character()
   if (any(mean + shift <= 0)) {
     notes[["log"]] <- paste0("A group mean plus the shift is not positive (the smallest is ", format(min(mean + shift), digits = 3),
                              "), so the log is undefined. Set shift for this covariate in VARIABLES to move it above 0.")
   }
-  if (any(mean == 0)) {
-    notes[["inverse"]] <- "A group mean is 0, so the constant over the mean is undefined."
-    notes[["inverse_squared"]] <- "A group mean is 0, so the constant over the mean is undefined."
-  }
-  if (any(!is.finite(out$exp))) {
-    notes[["exp"]] <- "The exponential of the mean over the constant overflows. Set a larger constant for this covariate in VARIABLES."
+  if (no_constant) {
+    for (id in .lg_constant_scales) {
+      notes[[id]] <- paste0("There is no default constant, because the median of this covariate rounds to 0: ",
+                            "set constant for this covariate in VARIABLES to compute this scale.")
+    }
+  } else {
+    if (any(mean == 0)) {
+      notes[["inverse"]] <- "A group mean is 0, so the constant over the mean is undefined."
+      notes[["inverse_squared"]] <- "A group mean is 0, so the constant over the mean is undefined."
+    }
+    if (any(!is.finite(out$exp))) {
+      notes[["exp"]] <- paste0("The exponential of the mean over the constant overflows. ",
+                               "Set a larger constant for this covariate in VARIABLES.")
+    }
   }
   for (id in names(notes)) out[[id]][] <- NA_real_
   out <- as.data.frame(out)
@@ -179,8 +201,11 @@
   if (!scale %in% .lg_scale_ids) {
     stop("scale must be one of ", paste(.lg_scale_ids, collapse = ", "), ".", call. = FALSE)
   }
+  if (scale %in% .lg_constant_scales && !.lg_one_number(constant)) {
+    stop("The scale ", scale, " needs a constant: set constant for this covariate in VARIABLES.", call. = FALSE)
+  }
   v <- .lg_variable_term(name)
-  k <- .lg_number(constant)
+  k <- if (.lg_one_number(constant)) .lg_number(constant)
   switch(scale,
     raw = v,
     log = if (shift == 0) paste0("log(", v, ")") else paste0("log(", v, if (shift < 0) " - " else " + ", .lg_number(abs(shift)), ")"),
@@ -252,13 +277,51 @@
     ggplot2::theme(strip.background = ggplot2::element_rect(fill = "gray92"))
 }
 
+# The smallest group a rate is read from, and the most levels an ordinal
+# covariate takes a group each for.
+.lg_min_group <- 5L
+.lg_max_levels <- 20L
+
+# One covariate's groups, checked: an ordinal covariate with more than
+# .lg_max_levels levels, or any group with fewer than .lg_min_group patients,
+# stops. The count is the table's n: patients with a covariate value (and, under
+# the hazard, follow-up) and an event value, in the group the ranking gives them.
+.lg_check_groups <- function(name, x, kind, groups, event = NULL, time = NULL) {
+  if (identical(kind, "ordinal")) {
+    levels <- length(unique(x[!is.na(x)]))
+    if (levels > .lg_max_levels) {
+      stop("VARIABLES: `", name, "` is ordinal with ", levels, " levels, more than the ", .lg_max_levels,
+           " a group each can take. Treat it as continuous or recode it into fewer levels.", call. = FALSE)
+    }
+  }
+  seen <- !is.na(x) & (if (is.null(time)) TRUE else !is.na(time))
+  if (!any(seen)) stop("VARIABLES: `", name, "` has no patient with a value to group.", call. = FALSE)
+  group <- .lg_groups(x[seen], groups, kind)$group
+  counted <- if (is.null(event)) rep(TRUE, sum(seen)) else !is.na(event[seen])
+  size <- vapply(sort(unique(group)), function(g) sum(group == g & counted), integer(1L))
+  if (min(size) < .lg_min_group) {
+    stop("VARIABLES: `", name, "` has a group of fewer than ", .lg_min_group, " patients (the smallest has ", min(size), "). ",
+         if (identical(kind, "ordinal")) {
+           "Combine levels of it, by recoding the column, so that each group is larger."
+         } else {
+           "Lower groups for it in VARIABLES so that each group is larger."
+         }, call. = FALSE)
+  }
+}
+
 # The VARIABLES table, completed and checked against the data. Only `name` is
 # required. A blank in any other column, or a column left out, takes that
-# covariate's default: continuous, 5 groups, the median-rule constant, no shift,
-# the name as its label, and no scale chosen. `exclude` holds columns that may
-# not be covariates, the patient identifier. Every message names VARIABLES, the
-# setting the author changes; none shows a data value.
-.lg_variables <- function(variables, d, exclude = character()) {
+# covariate's default: continuous, 5 groups, the median-rule constant (NA when
+# that rounds to 0), no shift, the name as its label, and no scale chosen.
+# `exclude` holds columns that may not be covariates, the patient identifier.
+# Two checks keep a figure from resting on groups too small to read: an ordinal
+# covariate has at most 20 levels, and no group has fewer than 5 patients. The
+# groups counted are those .lg_table() will form, so `event` (patients with no
+# event value are in no group's n) and `time` (under the hazard, patients with
+# no follow-up are left out before the ranking) are passed when the job has
+# them. Every message names VARIABLES, the setting the author changes; none
+# shows a data value.
+.lg_variables <- function(variables, d, exclude = character(), event = NULL, time = NULL) {
   columns <- c("name", "kind", "groups", "constant", "shift", "label", "chosen")
   if (!is.data.frame(variables) || !nrow(variables)) {
     stop("VARIABLES must be a data frame with one row for each covariate and at least a `name` column.", call. = FALSE)
@@ -306,6 +369,7 @@
   if (any(!is.finite(groups) | groups < 2 | groups != round(groups))) {
     stop("VARIABLES$groups must be a whole number of at least 2.", call. = FALSE)
   }
+  for (i in seq_along(name)) .lg_check_groups(name[[i]], d[[name[[i]]]], kind[[i]], as.integer(groups[[i]]), event, time)
   constant <- number("constant", "a finite number other than 0")
   if (any(!is.na(constant) & (!is.finite(constant) | constant == 0))) {
     stop("VARIABLES$constant must be a finite number other than 0.", call. = FALSE)
@@ -325,40 +389,69 @@
              label = label, chosen = chosen, stringsAsFactors = FALSE)
 }
 
-# The patients whose follow-up is in the window c(lower, upper), both ends
-# included, the SAS jobs' early, constant and late phases. Returns the rows kept
-# and a count of what was read, what fell before or after the window, what had no
-# follow-up and what was kept, never a patient. NULL keeps every row.
-.lg_interval <- function(d, time, interval) {
-  if (is.null(interval)) return(list(data = d, counts = NULL))
-  if (!is.numeric(interval) || length(interval) != 2L || anyNA(interval) || interval[[1L]] >= interval[[2L]]) {
-    stop("INTERVAL must be NULL or c(lower, upper) with lower below upper, such as c(0.25, 5).", call. = FALSE)
+# One phase of follow-up, as the SAS jobs took it (the legacy constant-hazard
+# template): INTERVAL = c(start, end).
+#   * A patient whose follow-up ended before `start` is left out and counted
+#     (`iv_dead < start` deleted them), as is one with no follow-up. A follow-up of
+#     exactly `start` stays.
+#   * Every other patient is censored at `end`: one followed past it (`iv_dead > end`)
+#     has no event and counts as followed to `end`, and an event after `end` is not
+#     counted. A follow-up of exactly `end` stays, with its event.
+# The follow-up the hazard link sums is then the time at risk inside the window,
+# pmin(time, end) - start. The legacy template summed pmin(time, end) from 0, so the
+# months before `start` entered every patient's denominator; the shift is the one
+# deliberate difference, and it is this line: `pmin(follow, end) - start`.
+# The logit link keeps the same patients and the same censored events, and reads
+# no follow-up. The columns of `d` are not changed: the adjusted event and
+# follow-up come back as vectors for the rows kept. NULL keeps every row, and
+# returns the event and follow-up as they are. `counts` reports what was read, left
+# out before the start or for want of follow-up, kept, censored at the end and the
+# events that fell after it, never a patient.
+.lg_interval <- function(d, event, time, interval) {
+  e <- .lg_event(d[[event]])
+  if (is.null(interval)) {
+    return(list(data = d, event = e, time = if (!is.null(time)) d[[time]], counts = NULL))
   }
+  if (!is.numeric(interval) || length(interval) != 2L || anyNA(interval) || interval[[1L]] >= interval[[2L]]) {
+    stop("INTERVAL must be NULL or c(start, end) with start below end, such as c(0.25, 5).", call. = FALSE)
+  }
+  if (is.null(time)) stop("INTERVAL needs TIME, the follow-up column.", call. = FALSE)
   if (!time %in% names(d)) {
     stop("TIME names a column this dataset does not have: ", time, ". Change TIME in edit-study-choices.", call. = FALSE)
   }
+  start <- interval[[1L]]
+  end <- interval[[2L]]
   follow <- d[[time]]
-  inside <- !is.na(follow) & follow >= interval[[1L]] & follow <= interval[[2L]]
-  if (!any(inside)) {
-    stop("INTERVAL keeps no patient: no follow-up falls between ", interval[[1L]], " and ", interval[[2L]],
-         ". Change INTERVAL in edit-study-choices.", call. = FALSE)
+  before <- !is.na(follow) & follow < start
+  missing <- is.na(follow)
+  kept <- !before & !missing
+  if (!any(kept)) {
+    stop("INTERVAL keeps no patient: no follow-up reaches ", start, ". Change INTERVAL in edit-study-choices.", call. = FALSE)
   }
+  follow <- follow[kept]
+  e <- e[kept]
+  past <- follow > end
   counts <- data.frame(
-    count = c("Patients read", "Follow-up before the window", "Follow-up after the window", "Follow-up missing",
-              "Patients kept"),
-    patients = c(nrow(d), sum(follow < interval[[1L]], na.rm = TRUE), sum(follow > interval[[2L]], na.rm = TRUE),
-                 sum(is.na(follow)), sum(inside))
+    count = c("Patients read", "Left out: follow-up before the start", "Left out: follow-up missing", "Patients kept",
+              "Censored at the end", "Events after the end, no longer counted"),
+    patients = c(nrow(d), sum(before), sum(missing), sum(kept), sum(past), sum(e[past] == 1, na.rm = TRUE))
   )
-  list(data = d[inside, , drop = FALSE], counts = counts)
+  e[past] <- 0L
+  list(data = d[kept, , drop = FALSE], event = e, time = pmin(follow, end) - start, counts = counts)
 }
 
 # The choices made, as the table lg-scales.rds holds: variable, chosen, term,
 # constant and shift, one row for each covariate with a usable choice. `scales`
-# is a list of .lg_scales() results by covariate name. A covariate with no choice,
-# or whose chosen scale cannot be computed, is not a row: it is named in
-# $problems with the reason, so the job can warn in a draft and stop a final
-# render, as an open EDIT marker does.
-.lg_choices <- function(variables, scales) {
+# is a list of .lg_scales() results by covariate name and `d` the data the groups
+# came from. A covariate with no choice, or whose chosen scale cannot be computed,
+# is not a row: it is named in $problems with the reason, so the job can warn in
+# a draft and stop a final render, as an open EDIT marker does. A chosen scale is
+# impossible when its group means cannot be computed, and also when it is not a
+# number for some patient, though every mean is fine: the log of a covariate that
+# is 0 for a few patients, say, whose lowest group still has a mean above 0. The
+# model would drop those patients without a word. The message counts them and
+# shows no value.
+.lg_choices <- function(variables, scales, d) {
   problems <- character()
   usable <- logical(nrow(variables))
   for (i in seq_len(nrow(variables))) {
@@ -369,7 +462,14 @@
     } else if (all(is.na(scales[[name]][[chosen]]))) {
       problems[[name]] <- paste0("the chosen scale, ", chosen, ", cannot be computed: ", attr(scales[[name]], "notes")[[chosen]])
     } else {
-      usable[[i]] <- TRUE
+      x <- d[[name]]
+      broken <- sum(!is.finite(.lg_transform(x[!is.na(x)], chosen, variables$constant[[i]], variables$shift[[i]])))
+      if (broken) {
+        problems[[name]] <- paste0("the chosen scale, ", chosen, ", is not a number for ", broken, " patient",
+                                   if (broken > 1L) "s", ": ", .lg_patient_reason(chosen))
+      } else {
+        usable[[i]] <- TRUE
+      }
     }
   }
   kept <- variables[usable, , drop = FALSE]
@@ -380,6 +480,19 @@
     table = data.frame(variable = kept$name, chosen = kept$chosen, term = terms, constant = kept$constant,
                        shift = kept$shift, stringsAsFactors = FALSE),
     problems = problems
+  )
+}
+
+# Why a scale is not a number for a patient, and what to change.
+.lg_patient_reason <- function(scale) {
+  switch(scale,
+    log = paste0("the covariate plus the shift is not above 0 for them. ",
+                 "Set shift for this covariate in VARIABLES, or choose another scale."),
+    inverse = , inverse_squared = paste0("the constant over the covariate is undefined for them, ",
+                                         "because the covariate is 0. Choose another scale."),
+    squared = , exp = paste0("the ", if (identical(scale, "exp")) "exponential" else "square",
+                             " overflows for them. Set a larger constant for this covariate in VARIABLES."),
+    "the covariate is not a finite number for them."
   )
 }
 

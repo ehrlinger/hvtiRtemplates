@@ -44,22 +44,45 @@ test_that("the job checks its choices against the data before any calibration, n
                "^TIME names a column this dataset does not have: later")
 })
 
-test_that("INTERVAL keeps the patients whose follow-up is in the window and reports how many it kept", {
+test_that("INTERVAL drops patients who ended before the start, censors the rest at the end, and reports both counts", {
   local_child_chunks()
   d <- lg_data()
-  inside <- d$iv_dead >= 0.25 & d$iv_dead <= 5
+  kept <- d$iv_dead >= 0.25
+  past <- kept & d$iv_dead > 5
   s <- lg_fixture("INTERVAL <- c(0.25, 5)")
   env <- lm_eval_job(s$job)
-  expect_identical(nrow(env$d), sum(inside))
+  expect_identical(nrow(env$d), sum(kept))
+  # Patients read, left out before the start, left out for no follow-up, kept, censored at the end,
+  # and the events that fell after it.
   expect_identical(env$.interval$counts$patients,
-                   c(nrow(d), sum(d$iv_dead < 0.25), sum(d$iv_dead > 5), 0L, sum(inside)))
+                   c(nrow(d), sum(d$iv_dead < 0.25), 0L, sum(kept), sum(past), sum(d$dead[past])))
+  expect_gt(sum(d$iv_dead < 0.25), 0L)
+  expect_gt(sum(past), 0L)
+  # What the tables will read: no event after the end, and the time at risk inside the window.
+  expect_identical(env$.event, ifelse(d$iv_dead[kept] > 5, 0L, d$dead[kept]))
+  expect_equal(env$.time, pmin(d$iv_dead[kept], 5) - 0.25)
   # The covariates' defaults are those of the patients kept.
-  expect_identical(env$variables$constant, signif(stats::median(d$age[inside]), 1L))
-  # Without an interval, every patient is calibrated and there is nothing to report.
+  expect_identical(env$variables$constant, signif(stats::median(d$age[kept]), 1L))
+  # Without an interval, every patient is calibrated as read and there is nothing to report.
   env <- lm_eval_job(lg_fixture()$job)
   expect_identical(nrow(env$d), nrow(d))
   expect_null(env$.interval$counts)
+  expect_identical(env$.event, d$dead)
+  expect_equal(env$.time, d$iv_dead)
   expect_identical(env$variables$constant, signif(stats::median(d$age), 1L))
+})
+
+test_that("under INTERVAL the hazard sums the time at risk inside the window and the logit counts only events inside it", {
+  local_child_chunks()
+  d <- lg_data()
+  kept <- d$iv_dead >= 0.25
+  inside <- ifelse(d$iv_dead[kept] > 5, 0L, d$dead[kept])
+  hazard <- lm_eval_job(lg_fixture("INTERVAL <- c(0.25, 5)")$job)
+  expected <- hvtiRtemplates:::.lg_table(d$age[kept], inside, pmin(d$iv_dead[kept], 5) - 0.25, groups = 5L, link = "hazard")
+  expect_equal(hazard$calibration$age$table, expected)
+  expect_lt(sum(expected$events), sum(d$dead[kept]))
+  logit <- lm_eval_job(lg_fixture(c("LINK <- \"logit\"", "INTERVAL <- c(0.25, 5)"))$job)
+  expect_equal(logit$calibration$age$table, hvtiRtemplates:::.lg_table(d$age[kept], inside, groups = 5L, link = "logit"))
 })
 
 # The two variables of the synthetic study the job's tests calibrate: a continuous
@@ -236,6 +259,66 @@ test_that("a chosen scale that cannot be computed warns in a draft and stops a f
   expect_identical(env$choices$table$term, "log(n_prior + 1)")
 })
 
+test_that("a chosen scale that is not a number for some patient warns in a draft and stops a final render", {
+  local_child_chunks()
+  # Four patients are 0, but they sit in a lowest group whose mean is far above 0, so every scale of the group
+  # means is computable. The log and the inverse of those four patients are not.
+  d <- lg_data()
+  d$age_z <- d$age
+  d$age_z[1:4] <- 0
+  pick <- function(scale) {
+    lg_fixture(variables = c("VARIABLES <- data.frame(", "  name = c(\"age_z\"),", paste0("  chosen = c(\"", scale, "\")"), ")"),
+               data = d, .local_envir = parent.frame())$job
+  }
+  for (scale in c("log", "inverse")) {
+    expect_warning(env <- lm_eval_job(pick(scale)), paste0("`age_z`: the chosen scale, ", scale, ", is not a number for 4 patients"))
+    expect_identical(nrow(env$choices$table), 0L)
+    expect_false(any(is.na(env$calibration$age_z$scales[[scale]])))
+    withr::with_envvar(c(HVTI_TEMPLATE_STRICT = "1"), {
+      expect_error(lm_eval_job(pick(scale)), paste0("`age_z`: the chosen scale, ", scale, ", is not a number for 4 patients"))
+    })
+  }
+  # A scale every patient can take is not a problem.
+  expect_no_warning(lm_eval_job(pick("raw")))
+})
+
+test_that("a covariate whose median rounds to 0 gets no default constant: the job goes on, and a constant-based choice is a problem", {
+  local_child_chunks()
+  d <- lg_data()
+  d$flag <- as.integer(seq_len(nrow(d)) %% 4L == 0L)
+  pick <- function(scale) {
+    lg_fixture(variables = c("VARIABLES <- data.frame(", "  name = c(\"flag\"),", paste0("  chosen = c(\"", scale, "\")"), ")"),
+               data = d, .local_envir = parent.frame())$job
+  }
+  env <- lm_eval_job(pick("raw"))
+  expect_true(is.na(env$variables$constant))
+  expect_identical(env$choices$table$term, "flag")
+  scales <- env$calibration$flag$scales
+  expect_false(any(is.na(scales$raw)))
+  expect_true(all(is.na(scales$inverse)) && all(is.na(scales$exp)))
+  expect_match(env$.notes, "^Inverse: .*set constant for this covariate in VARIABLES", all = FALSE)
+  expect_warning(lm_eval_job(pick("inverse")), "`flag`: the chosen scale, inverse, cannot be computed: .*set constant")
+  withr::with_envvar(c(HVTI_TEMPLATE_STRICT = "1"), {
+    expect_error(lm_eval_job(pick("exp")), "`flag`: the chosen scale, exp, cannot be computed: .*set constant")
+  })
+})
+
+test_that("the job stops on a covariate with a group of fewer than 5 patients or an ordinal with more than 20 levels", {
+  local_child_chunks()
+  d <- lg_data()
+  d$rare <- ifelse(seq_len(nrow(d)) <= 3L, 2L, 1L)
+  d$many <- rep(1:25, length.out = nrow(d))
+  run <- function(name, kind) {
+    lm_eval_job(lg_fixture(variables = c("VARIABLES <- data.frame(", paste0("  name = \"", name, "\","),
+                                         paste0("  kind = \"", kind, "\","), "  chosen = \"raw\"", ")"),
+                           data = d, .local_envir = parent.frame())$job)
+  }
+  expect_error(run("rare", "ordinal"),
+               "^VARIABLES: `rare` has a group of fewer than 5 patients [(]the smallest has 3[)]. Combine levels")
+  expect_error(run("many", "ordinal"), "^VARIABLES: `many` is ordinal with 25 levels")
+  expect_no_error(run("many", "continuous"))
+})
+
 test_that("the job renders two figures and two tables for two covariates, naming no patient", {
   skip_on_cran()
   skip_if_not_installed("ggplot2")
@@ -287,9 +370,10 @@ test_that("the job renders two figures and two tables for two covariates, naming
     expect_identical(vapply(payload$lg$variables, function(v) v$name, ""), c("age", "nyha"))
     expect_identical(vapply(payload$lg$variables, function(v) v$chosen, ""), c("log", "raw"))
     if (window == "window") {
-      inside <- d$iv_dead >= 0.25 & d$iv_dead <= 5
-      expect_identical(unlist(payload$lg$interval), c(lower = 0.25, upper = 5, kept = sum(inside)))
-      expect_identical(payload$lg$patients, sum(inside))
+      kept <- d$iv_dead >= 0.25
+      expect_identical(unlist(payload$lg$interval), c(start = 0.25, end = 5, left_out = sum(!kept), kept = sum(kept),
+                                                      censored = sum(kept & d$iv_dead > 5)))
+      expect_identical(payload$lg$patients, sum(kept))
     } else {
       expect_null(payload$lg$interval)
       expect_identical(payload$lg$patients, nrow(d))
