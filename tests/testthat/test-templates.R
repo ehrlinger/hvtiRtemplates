@@ -254,15 +254,12 @@ test_that("no template carries placeholder prose outside an EDIT marker", {
     # One line, so a sentence wrapped across two source lines is still one match.
     gsub("\\s+", " ", txt)
   }
-  placeholder <- paste(
-    c("<(job|outcome)>",                # a template path left as a slot
-      "Replaces `[^`]*`:",              # "Replaces `x`: describe ...", an instruction
-      "\\b(describe|paste) its\\b",
-      "\\bdescribe the (question|phase structure) here",
-      "\\bsay which (variant)?\\.",
-      "\\bcompared here and the horizon",
-      "\\blist the trend figures"),
-    collapse = "|")
+  # A template path left as a slot; "Replaces `x`: describe ...", an instruction;
+  # and the instruction sentences themselves.
+  phrases <- c("<(job|outcome)>", "Replaces `[^`]*`:", "\\b(describe|paste) its\\b",
+               "\\bdescribe the (question|phase structure) here", "\\bsay which (variant)?\\.",
+               "\\bcompared here and the horizon", "\\blist the trend figures")
+  placeholder <- paste(phrases, collapse = "|")
   found <- function(src) {
     txt <- prose(src)
     regmatches(txt, gregexpr(placeholder, txt, ignore.case = TRUE, perl = TRUE))[[1L]]

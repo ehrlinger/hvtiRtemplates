@@ -279,7 +279,7 @@ PHASE_OF <- function(term) sub("[.].*$", "", term)
 
 # Concept groups to report. Empty by default, because a cluster may name only
 # terms some replicate carried, and which rare terms a small run reaches cannot
-# be known in advance. Declare them once the frequency table above shows the
+# be known in advance. Declare them once the frequency table below shows the
 # terms that appeared, as `<phase>.<variable>`:
 # CLUSTERS <- list(
 #   early.Age = c("early.age", "early.ln_age"),
@@ -751,11 +751,8 @@ coefs[cbind(reps$replicate, match(reps$parameter, terms))] <- reps$estimate
 # replicate carries is refused rather than reported as 0%: a typo that grouped
 # nothing would otherwise read as a concept nobody selected.
 
-clusters <- if (length(CLUSTERS)) {
-  boot_clusters(coefs, CLUSTERS)
-} else {
-  data.frame(cluster = character(), n_any = integer(), pct_any = numeric(), members = character())
-}
+clusters <- data.frame(cluster = character(), n_any = integer(), pct_any = numeric(), members = character())
+if (length(CLUSTERS)) clusters <- boot_clusters(coefs, CLUSTERS)
 if (nrow(clusters)) {
   clusters
 } else {
