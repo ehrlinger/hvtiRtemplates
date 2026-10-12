@@ -15,7 +15,8 @@
 - The template has exactly one `^SUBJECT\s+<- ` line and one `^TYPE\s+<- ` line.
 - An `EDIT:` marker appears only inside a chunk whose label starts with `edit-`; the optional settings (`JOIN` and its three companions, `SAVE_FIGURES`, `FIGURES`) carry none.
 - The template carries no study identifier, and no output, raw or digested, holds a patient identifier: every table and figure is per group.
-- Settings and defaults, from the spec: `EVENT <- "dead"`, `LINK <- "hazard"` (or `"logit"`), `TIME <- "iv_dead"` (read only by `"hazard"` and by `INTERVAL`), `INTERVAL <- NULL` (or `c(lower, upper)`), `DATASET <- "built"`, `ID <- "ccfid"`, `WHERE <- NULL`.
+- Settings and defaults, from the spec: `EVENT <- "dead"`, `LINK <- "hazard"` (or `"logit"`), `TIME <- "iv_dead"` (read only by `"hazard"` and by `INTERVAL`), `INTERVAL <- NULL` (or `c(start, end)`), `DATASET <- "built"`, `ID <- "ccfid"`, `WHERE <- NULL`.
+- `INTERVAL = c(start, end)` follows the SAS constant-phase template: patients whose follow-up ended before `start` are left out and counted; every other patient is censored at `end` (no event after it counts, and the follow-up caps there); under `"hazard"` the time at risk is `pmin(TIME, end) - start`; under `"logit"` the same patients are kept and an event counts only inside the window. The counts of the patients left out and of the patients censored are reported.
 - `VARIABLES` is a data frame, one row per covariate, with columns `name`, `kind` (`"continuous"` default, or `"ordinal"`), `groups` (default 5), `constant` (default the median to one significant figure), `shift` (default 0), `label` (default the name) and `chosen` (default `NA`).
 - The six scales and their ids, in panel order: `raw` (`mean`), `log` (`log(mean + shift)`), `inverse` (`c / mean`), `inverse_squared` (`(c / mean)^2`), `squared` (`(mean / c)^2`), `exp` (`exp(mean / c)`).
 - Grouping is `PROC RANK GROUPS=G`: group `floor(rank * G / (n + 1))`, rank averaged over ties; an ordinal covariate takes each level as a group.
@@ -1269,11 +1270,14 @@ LINK <- "hazard"
 # no value is left out of a "hazard" calibration, as the SAS macro left them out.
 TIME <- "iv_dead"
 
-# EDIT: NULL, or a window on follow-up, c(lower, upper), such as c(0.25, 5): the
-# patients whose TIME is in it, both ends included, are calibrated and the rest
-# are left out and counted. It is how the SAS jobs took one phase of a hazard,
-# early, constant or late. It leaves patients out; it does not censor them at the
-# upper end, so a patient followed past it does not count.
+# EDIT: NULL, or a window on follow-up, c(start, end), such as c(0.25, 5): one phase
+# of a hazard, the SAS early, constant or late phase, in the unit of TIME. A patient
+# whose follow-up ended before `start` is left out and counted. Everyone else is
+# censored at `end`: a patient followed past it counts as followed to `end`, and an
+# event after it does not count. Under "hazard" the time at risk is then the time
+# inside the window, TIME capped at `end`, less `start`; the SAS template summed it
+# from 0. Under "logit" the same patients are kept and an event counts only if it
+# falls inside the window. Both counts are reported under the data table.
 INTERVAL <- NULL
 
 # EDIT: the covariates to calibrate, one row each. `name` is a column of the data;
@@ -1423,8 +1427,8 @@ Expected: the roadmap check fails (a template on disk with a queued row) and `te
 
 **Interfaces:**
 - Produces `.lg_variables(variables, d, exclude = character())`: the `VARIABLES` data frame completed and checked against `d`: columns `name`, `kind`, `groups` (integer), `constant` (numeric), `shift`, `label`, `chosen` (character, `NA` for none). A blank in any column but `name`, or a column left out, takes that covariate's default; the constant default is `.lg_constant()` of the covariate in `d`. `exclude` names columns that may not be covariates (the patient identifier). Every message starts `VARIABLES` and none shows a data value.
-- Produces `.lg_interval(d, time, interval)`: `list(data, counts)`. `interval = NULL` gives `d` and `NULL`. Otherwise keeps the rows with `interval[1] <= d[[time]] <= interval[2]` (both ends included) and `counts` is a data frame `count`, `patients` of `Patients read`, `Follow-up before the window`, `Follow-up after the window`, `Follow-up missing`, `Patients kept`. Stops with `INTERVAL must be NULL or c(lower, upper) with lower below upper, such as c(0.25, 5).`, `TIME names a column this dataset does not have: <time>...`, or `INTERVAL keeps no patient...`.
-- Produces in the template, from `derive`: `.id`, `.needs_time`, `.interval`, the filtered `d` and `variables`; and the chunks `derive`, `lg-interval` (unnumbered, emits child chunk `tbl-lg-interval` only with an `INTERVAL`) and `tbl-lg-variables`.
+- Produces `.lg_interval(d, event, time, interval)`: `list(data, event, time, counts)`. `interval = NULL` returns `d`, the event as 0/1 and `d[[time]]` (`NULL` when `time` is `NULL`), and `counts` `NULL`. Otherwise, with `interval = c(start, end)`: a patient with `follow-up < start`, or with no follow-up, is left out (a follow-up of exactly `start` stays); every other patient is censored at `end`: `follow-up > end` has event 0 (even a missing one, as `dead=0` sets it in SAS), and a follow-up of exactly `end` keeps its event. `data` is the rows kept, unchanged; `event` the windowed event for them; `time` is `pmin(follow-up, end) - start`, the time at risk inside the window. `counts` is a data frame `count`, `patients` with the rows `Patients read`, `Left out: follow-up before the start`, `Left out: follow-up missing`, `Patients kept`, `Censored at the end`, `Events after the end, no longer counted`. Stops with `INTERVAL must be NULL or c(start, end) with start below end, such as c(0.25, 5).`, `INTERVAL must have a start of 0 or later: follow-up is measured from 0.`, `<n> patients have negative follow-up in <time>...` (from `.lg_follow_up()`, which the template also calls on `TIME` whenever it reads it, so a negative duration never reaches a hazard or a window), `INTERVAL needs TIME, the follow-up column.`, `TIME names a column this dataset does not have: <time>...`, or `INTERVAL keeps no patient...`.
+- Produces in the template, from `derive`: `.id`, `.needs_time`, `.interval`, the filtered `d`, the windowed `.event` and `.time` (the vectors every later table reads in place of `d[[EVENT]]` and `d[[TIME]]`) and `variables`; and the chunks `derive`, `lg-interval` (unnumbered, emits child chunk `tbl-lg-interval` only with an `INTERVAL`) and `tbl-lg-variables`.
 - Consumed by: Tasks 7 and 8.
 
 - [ ] **Step 1: Write the failing tests.** Append to `tests/testthat/test-logit-calibration.R`:
@@ -1487,22 +1491,48 @@ test_that(".lg_variables() stops on a table, column, name or value it cannot use
   expect_silent(hvtiRtemplates:::.lg_variables(data.frame(name = "zero", constant = 1), d))
 })
 
-test_that(".lg_interval() keeps the patients whose follow-up is in the window, both ends included, and counts the rest", {
-  d <- data.frame(id = 1:7, t = c(0.1, 0.25, 1, 5, 5.5, NA, 3))
-  got <- hvtiRtemplates:::.lg_interval(d, "t", c(0.25, 5))
-  expect_identical(got$data$id, c(2L, 3L, 4L, 7L))
-  expect_identical(got$counts$patients, c(7L, 1L, 1L, 1L, 4L))
-  expect_identical(got$counts$count, c("Patients read", "Follow-up before the window", "Follow-up after the window",
-                                       "Follow-up missing", "Patients kept"))
-  # No interval keeps everyone and has nothing to report.
-  none <- hvtiRtemplates:::.lg_interval(d, "t", NULL)
+test_that(".lg_interval() drops patients who ended before the start and censors the rest at the end", {
+  # Eight patients, the window c(0.25, 5), worked by hand:
+  #   id   follow-up  event  what happens
+  #    1     0.10       1     ended before the start: left out
+  #    2     0.25       1     exactly at the start: kept, time at risk 0.25 - 0.25 = 0
+  #    3     1.00       0     kept, time at risk 0.75
+  #    4     5.00       1     exactly at the end: kept with its event, time at risk 4.75
+  #    5     5.50       1     past the end: censored at 5, the event no longer counts, time at risk 4.75
+  #    6      NA        1     no follow-up: left out
+  #    7     3.00       0     kept, time at risk 2.75
+  #    8     8.00       1     past the end: censored, event not counted, time at risk 4.75
+  d <- data.frame(id = 1:8, t = c(0.1, 0.25, 1, 5, 5.5, NA, 3, 8), dead = c(1L, 1L, 0L, 1L, 1L, 1L, 0L, 1L))
+  got <- hvtiRtemplates:::.lg_interval(d, "dead", "t", c(0.25, 5))
+  expect_identical(got$data$id, c(2L, 3L, 4L, 5L, 7L, 8L))
+  expect_identical(got$event, c(1L, 0L, 1L, 0L, 0L, 0L))
+  expect_equal(got$time, c(0, 0.75, 4.75, 4.75, 2.75, 4.75))
+  expect_identical(got$counts$count, c("Patients read", "Left out: follow-up before the start", "Left out: follow-up missing",
+                                       "Patients kept", "Censored at the end", "Events after the end, no longer counted"))
+  expect_identical(got$counts$patients, c(8L, 1L, 1L, 6L, 2L, 2L))
+  # The columns of the data are not changed.
+  expect_identical(got$data$dead, c(1L, 0L, 1L, 1L, 0L, 1L))
+  # An event of NA past the end is censored too, as `dead=0` sets it in SAS.
+  na_event <- hvtiRtemplates:::.lg_interval(transform(d, dead = replace(dead, 8L, NA)), "dead", "t", c(0.25, 5))
+  expect_identical(na_event$event[[6L]], 0L)
+  # No interval keeps everyone and has nothing to report; the event and follow-up come back as they are.
+  none <- hvtiRtemplates:::.lg_interval(d, "dead", "t", NULL)
   expect_identical(none$data, d)
+  expect_identical(none$event, d$dead)
+  expect_identical(none$time, d$t)
   expect_null(none$counts)
-  expect_error(hvtiRtemplates:::.lg_interval(d, "t", c(10, 20)), "^INTERVAL keeps no patient")
+  expect_null(hvtiRtemplates:::.lg_interval(d, "dead", NULL, NULL)$time)
+  # A window that starts at 0, the SAS early phase, leaves nobody out for being early.
+  early <- hvtiRtemplates:::.lg_interval(d, "dead", "t", c(0, 1))
+  expect_identical(early$counts$patients[c(2L, 4L, 5L)], c(0L, 7L, 4L))
+  expect_equal(early$time, c(0.1, 0.25, 1, 1, 1, 1, 1))
+  expect_error(hvtiRtemplates:::.lg_interval(d, "dead", "t", c(10, 20)), "^INTERVAL keeps no patient")
   for (bad in list(5, c(5, 1), c(1, NA), c(1, 5, 9), "a", c(2, 2))) {
-    expect_error(hvtiRtemplates:::.lg_interval(d, "t", bad), "^INTERVAL must be NULL or c[(]lower, upper[)]")
+    expect_error(hvtiRtemplates:::.lg_interval(d, "dead", "t", bad), "^INTERVAL must be NULL or c[(]start, end[)]")
   }
-  expect_error(hvtiRtemplates:::.lg_interval(d, "later", c(1, 2)), "^TIME names a column this dataset does not have: later")
+  expect_error(hvtiRtemplates:::.lg_interval(d, "dead", "later", c(1, 2)), "^TIME names a column this dataset does not have: later")
+  expect_error(hvtiRtemplates:::.lg_interval(d, "dead", NULL, c(1, 2)), "^INTERVAL needs TIME")
+  expect_error(hvtiRtemplates:::.lg_interval(d, "died", "t", NULL), "^event must be coded 0 and 1")
 })
 ```
 
@@ -1527,21 +1557,31 @@ test_that("the job checks its choices against the data before any calibration, n
                "^TIME names a column this dataset does not have: later")
 })
 
-test_that("INTERVAL keeps the patients whose follow-up is in the window and reports how many it kept", {
+test_that("INTERVAL drops patients who ended before the start, censors the rest at the end, and reports both counts", {
   local_child_chunks()
   d <- lg_data()
-  inside <- d$iv_dead >= 0.25 & d$iv_dead <= 5
+  kept <- d$iv_dead >= 0.25
+  past <- kept & d$iv_dead > 5
   s <- lg_fixture("INTERVAL <- c(0.25, 5)")
   env <- lm_eval_job(s$job)
-  expect_identical(nrow(env$d), sum(inside))
+  expect_identical(nrow(env$d), sum(kept))
+  # Patients read, left out before the start, left out for no follow-up, kept, censored at the end,
+  # and the events that fell after it.
   expect_identical(env$.interval$counts$patients,
-                   c(nrow(d), sum(d$iv_dead < 0.25), sum(d$iv_dead > 5), 0L, sum(inside)))
+                   c(nrow(d), sum(d$iv_dead < 0.25), 0L, sum(kept), sum(past), sum(d$dead[past])))
+  expect_gt(sum(d$iv_dead < 0.25), 0L)
+  expect_gt(sum(past), 0L)
+  # What the tables will read: no event after the end, and the time at risk inside the window.
+  expect_identical(env$.event, ifelse(d$iv_dead[kept] > 5, 0L, d$dead[kept]))
+  expect_equal(env$.time, pmin(d$iv_dead[kept], 5) - 0.25)
   # The covariates' defaults are those of the patients kept.
-  expect_identical(env$variables$constant, signif(stats::median(d$age[inside]), 1L))
-  # Without an interval, every patient is calibrated and there is nothing to report.
+  expect_identical(env$variables$constant, signif(stats::median(d$age[kept]), 1L))
+  # Without an interval, every patient is calibrated as read and there is nothing to report.
   env <- lm_eval_job(lg_fixture()$job)
   expect_identical(nrow(env$d), nrow(d))
   expect_null(env$.interval$counts)
+  expect_identical(env$.event, d$dead)
+  expect_equal(env$.time, d$iv_dead)
   expect_identical(env$variables$constant, signif(stats::median(d$age), 1L))
 })
 ```
@@ -1631,31 +1671,55 @@ Expected FAIL: the first, `object '.lg_variables' not found` and `object '.lg_in
              label = label, chosen = chosen, stringsAsFactors = FALSE)
 }
 
-# The patients whose follow-up is in the window c(lower, upper), both ends
-# included, the SAS jobs' early, constant and late phases. Returns the rows kept
-# and a count of what was read, what fell before or after the window, what had no
-# follow-up and what was kept, never a patient. NULL keeps every row.
-.lg_interval <- function(d, time, interval) {
-  if (is.null(interval)) return(list(data = d, counts = NULL))
-  if (!is.numeric(interval) || length(interval) != 2L || anyNA(interval) || interval[[1L]] >= interval[[2L]]) {
-    stop("INTERVAL must be NULL or c(lower, upper) with lower below upper, such as c(0.25, 5).", call. = FALSE)
+# One phase of follow-up, as the SAS jobs took it (the legacy constant-hazard
+# template): INTERVAL = c(start, end).
+#   * A patient whose follow-up ended before `start` is left out and counted
+#     (`iv_dead < start` deleted them), as is one with no follow-up. A follow-up of
+#     exactly `start` stays.
+#   * Every other patient is censored at `end`: one followed past it (`iv_dead > end`)
+#     has no event and counts as followed to `end`, and an event after `end` is not
+#     counted. A follow-up of exactly `end` stays, with its event.
+# The follow-up the hazard link sums is then the time at risk inside the window,
+# pmin(time, end) - start. The legacy template summed pmin(time, end) from 0, so the
+# months before `start` entered every patient's denominator; the shift is the one
+# deliberate difference, and it is this line: `pmin(follow, end) - start`.
+# The logit link keeps the same patients and the same censored events, and reads
+# no follow-up. The columns of `d` are not changed: the adjusted event and
+# follow-up come back as vectors for the rows kept. NULL keeps every row, and
+# returns the event and follow-up as they are. `counts` reports what was read, left
+# out before the start or for want of follow-up, kept, censored at the end and the
+# events that fell after it, never a patient.
+.lg_interval <- function(d, event, time, interval) {
+  e <- .lg_event(d[[event]])
+  if (is.null(interval)) {
+    return(list(data = d, event = e, time = if (!is.null(time)) d[[time]], counts = NULL))
   }
+  if (!is.numeric(interval) || length(interval) != 2L || anyNA(interval) || interval[[1L]] >= interval[[2L]]) {
+    stop("INTERVAL must be NULL or c(start, end) with start below end, such as c(0.25, 5).", call. = FALSE)
+  }
+  if (is.null(time)) stop("INTERVAL needs TIME, the follow-up column.", call. = FALSE)
   if (!time %in% names(d)) {
     stop("TIME names a column this dataset does not have: ", time, ". Change TIME in edit-study-choices.", call. = FALSE)
   }
+  start <- interval[[1L]]
+  end <- interval[[2L]]
   follow <- d[[time]]
-  inside <- !is.na(follow) & follow >= interval[[1L]] & follow <= interval[[2L]]
-  if (!any(inside)) {
-    stop("INTERVAL keeps no patient: no follow-up falls between ", interval[[1L]], " and ", interval[[2L]],
-         ". Change INTERVAL in edit-study-choices.", call. = FALSE)
+  before <- !is.na(follow) & follow < start
+  missing <- is.na(follow)
+  kept <- !before & !missing
+  if (!any(kept)) {
+    stop("INTERVAL keeps no patient: no follow-up reaches ", start, ". Change INTERVAL in edit-study-choices.", call. = FALSE)
   }
+  follow <- follow[kept]
+  e <- e[kept]
+  past <- follow > end
   counts <- data.frame(
-    count = c("Patients read", "Follow-up before the window", "Follow-up after the window", "Follow-up missing",
-              "Patients kept"),
-    patients = c(nrow(d), sum(follow < interval[[1L]], na.rm = TRUE), sum(follow > interval[[2L]], na.rm = TRUE),
-                 sum(is.na(follow)), sum(inside))
+    count = c("Patients read", "Left out: follow-up before the start", "Left out: follow-up missing", "Patients kept",
+              "Censored at the end", "Events after the end, no longer counted"),
+    patients = c(nrow(d), sum(before), sum(missing), sum(kept), sum(past), sum(e[past] == 1, na.rm = TRUE))
   )
-  list(data = d[inside, , drop = FALSE], counts = counts)
+  e[past] <- 0L
+  list(data = d[kept, , drop = FALSE], event = e, time = pmin(follow, end) - start, counts = counts)
 }
 ```
 
@@ -1685,10 +1749,13 @@ if (.id %in% c(EVENT, if (.needs_time) TIME)) {
 if (.needs_time && !is.numeric(d[[TIME]])) {
   stop("TIME must be a number, the follow-up in years or months: `", TIME, "` is not numeric.", call. = FALSE)
 }
-# INTERVAL leaves patients out before anything else is computed, so the
-# constants and the groups below are those of the patients calibrated.
-.interval <- hvtiRtemplates:::.lg_interval(d, TIME, INTERVAL)
+# INTERVAL leaves patients out and censors the rest before anything else is
+# computed, so the constants and the groups below are those of the patients
+# calibrated, and the event and follow-up the tables read are the windowed ones.
+.interval <- hvtiRtemplates:::.lg_interval(d, EVENT, if (.needs_time) TIME, INTERVAL)
 d <- .interval$data
+.event <- .interval$event
+.time <- .interval$time
 variables <- hvtiRtemplates:::.lg_variables(VARIABLES, d, exclude = .id)
 ```
 
@@ -1698,7 +1765,8 @@ variables <- hvtiRtemplates:::.lg_variables(VARIABLES, d, exclude = .id)
 # unnumbered: its child chunk carries its own label and caption
 if (!is.null(.interval$counts)) {
   .fence <- strrep("`", 3)
-  .cap <- paste0("Patients with follow-up from ", INTERVAL[[1L]], " to ", INTERVAL[[2L]], " (INTERVAL), both ends included")
+  .cap <- paste0("The window of follow-up from ", INTERVAL[[1L]], " to ", INTERVAL[[2L]], " (INTERVAL): patients left out, ",
+                 "and patients censored at its end")
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), "#| label: tbl-lg-interval",
     paste0("#| tbl-cap: ", encodeString(.cap, quote = "\"")),
@@ -1723,7 +1791,7 @@ knitr::kable(variables, col.names = c("Covariate", "Kind", "Groups", "Constant",
 ```
 ````
 
-- [ ] **Step 5: Run.** Both commands of Step 2. Expected PASS: `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 180 ]` and `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 28 ]`.
+- [ ] **Step 5: Run.** Both commands of Step 2. Expected PASS: `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 191 ]` and `FAIL 0 | WARN 0 | SKIP 0` for `test-lg.R`.
 
 - [ ] **Step 6: Commit.**
 
@@ -1733,27 +1801,34 @@ git commit -m "lg: check VARIABLES and the settings against the data, and apply 
 
 VARIABLES is completed with each covariate's defaults, the constant from the
 median of the patients calibrated, and every setting that names a column is
-checked before any calibration. INTERVAL keeps the patients whose follow-up is
-in the window, both ends included, and reports what it left out.
+checked before any calibration. INTERVAL = c(start, end) leaves out the patients
+who ended before start and censors the rest at end, as the SAS constant-phase
+template did, with the time at risk counted from start. It reports both counts.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 7: Mutation check.** Three mutations, each restored.
+- [ ] **Step 7: Mutation check.** Five mutations, each restored.
 
 ```bash
-sed -i '' 's/^d <- .interval\$data$/d <- d/' inst/templates/10_descriptive/lg.qmd
-R_LIBS=$SCRATCH/lib-lg NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lg.R")' | grep "FAIL"
-git checkout -- inst/templates/10_descriptive/lg.qmd
-sed -i '' 's/follow <= interval\[\[2L\]\]/follow < interval[[2L]]/' R/logit-calibration.R
+sed -i '' 's/follow < start/follow <= start/' R/logit-calibration.R
 R_LIBS=$SCRATCH/lib-lg NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-logit-calibration.R")' | grep "FAIL"
 git checkout -- R/logit-calibration.R
+sed -i '' 's/time = pmin(follow, end) - start,/time = pmin(follow, end),/' R/logit-calibration.R
+R_LIBS=$SCRATCH/lib-lg NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-logit-calibration.R")' | grep "FAIL"
+git checkout -- R/logit-calibration.R
+sed -i '' 's/^  e\[past\] <- 0L$/  e[past] <- e[past]/' R/logit-calibration.R
+R_LIBS=$SCRATCH/lib-lg NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-logit-calibration.R")' | grep "FAIL"
+git checkout -- R/logit-calibration.R
+sed -i '' 's/^\.event <- \.interval\$event$/.event <- d[[EVENT]]/' inst/templates/10_descriptive/lg.qmd
+R_LIBS=$SCRATCH/lib-lg NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lg.R")' | grep "FAIL"
+git checkout -- inst/templates/10_descriptive/lg.qmd
 sed -i '' '/^hvtiRtemplates:::.check_job_columns(d, EVENT = EVENT/d' inst/templates/10_descriptive/lg.qmd
 R_LIBS=$SCRATCH/lib-lg NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-lg.R")' | grep "FAIL"
 git checkout -- inst/templates/10_descriptive/lg.qmd
 ```
 
-Expected: `[ FAIL 1 | ... ]` (the window no longer filters), `[ FAIL 2 | ... ]` (the upper end is excluded), `[ FAIL 2 | ... ]` (a misspelled column is no longer named). `git status --short` is clean afterwards.
+Expected: red each time: a patient ending exactly at `start` is left out; the time at risk starts at 0 as the legacy template summed it; an event after `end` still counts; the tables read the unwindowed event; a misspelled column is no longer named. `git status --short` is clean afterwards. (Measured on the finished tree: 6, 1, 2, 3 and 1 failures.)
 
 ---
 
@@ -1765,7 +1840,7 @@ Expected: `[ FAIL 1 | ... ]` (the window no longer filters), `[ FAIL 2 | ... ]` 
 - Modify: `tests/testthat/test-template-figures.R`
 
 **Interfaces:**
-- Consumes `variables`, `d`, `EVENT`, `LINK`, `TIME`, `.needs_time`, `save_figure()`, `.in`, and Tasks 2 to 4.
+- Consumes `variables`, `d`, `.event`, `.time` (the windowed event and follow-up of Task 6, equal to `d[[EVENT]]` and `d[[TIME]]` without an `INTERVAL`), `LINK`, `save_figure()`, `.in`, and Tasks 2 to 4.
 - Produces the object `calibration`, a list named by covariate, each `list(table, scales)` (`.lg_table()` and `.lg_scales()` results), and, for each covariate, the saved files `lg-<name>.png` and `lg-<name>.pdf` under `graphs/<subject>-<type>/`, and child chunks `tbl-lg-<slug>` and `fig-lg-<slug>`, where `<slug>` is the name with each run of characters other than letters and digits replaced by one hyphen (`nyha_pr` gives `nyha-pr`), so an underscore is never read as markup in a cross-reference. After the loop `.notes` holds the last covariate's notes (what is printed under its table).
 - Consumed by: Tasks 8 and 9.
 
@@ -1851,6 +1926,19 @@ test_that("a group or scale that cannot be computed is named under its table, an
   expect_match(env$.notes, "^Inverse squared: A group mean is 0", all = FALSE)
   expect_false(any(grepl("^Exponential", env$.notes)))
 })
+
+test_that("under INTERVAL the hazard sums the time at risk inside the window and the logit counts only events inside it", {
+  local_child_chunks()
+  d <- lg_data()
+  kept <- d$iv_dead >= 0.25
+  inside <- ifelse(d$iv_dead[kept] > 5, 0L, d$dead[kept])
+  hazard <- lm_eval_job(lg_fixture("INTERVAL <- c(0.25, 5)")$job)
+  expected <- hvtiRtemplates:::.lg_table(d$age[kept], inside, pmin(d$iv_dead[kept], 5) - 0.25, groups = 5L, link = "hazard")
+  expect_equal(hazard$calibration$age$table, expected)
+  expect_lt(sum(expected$events), sum(d$dead[kept]))
+  logit <- lm_eval_job(lg_fixture(c("LINK <- \"logit\"", "INTERVAL <- c(0.25, 5)"))$job)
+  expect_equal(logit$calibration$age$table, hvtiRtemplates:::.lg_table(d$age[kept], inside, groups = 5L, link = "logit"))
+})
 ```
 
 In `tests/testthat/test-template-figures.R`: add `"lg",` to `figure_templates` after `"lp-mirror",`, and in the `expected` list of `"every printed figure is also saved, under its documented name"` add the line `    lg = "lg-",` after the `lp-mirror` entry (the stem is built from the covariate, so the test looks for the `"lg-"` prefix on a `save_figure(` line, as it does for `nb-boostmtree`'s `"nb-boostmtree-effects-"`).
@@ -1862,7 +1950,7 @@ R_LIBS=$SCRATCH/lib-lg NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE);
 R_LIBS=$SCRATCH/lib-lg NOT_CRAN=true Rscript -e 'devtools::load_all(quiet=TRUE); testthat::test_file("tests/testthat/test-template-figures.R")'
 ```
 
-Expected FAIL: the first, `env$calibration` is `NULL` and the file expectations fail, three new failures; the second, the `"lg-"` expectation (`Expected any(grepl(...)) to be TRUE`).
+Expected FAIL: the first, `env$calibration` is `NULL` and the file expectations fail, four new failures (including the `INTERVAL` test); the second, the `"lg-"` expectation (`Expected any(grepl(...)) to be TRUE`).
 
 - [ ] **Step 3: Implement.** In `lg.qmd`, insert the following immediately before the `provenance` chunk, after the `tbl-lg-variables` chunk of Task 6:
 
@@ -1888,7 +1976,7 @@ covariate is drawn as an empty panel, and named there too.
 calibration <- list()
 for (i in seq_len(nrow(variables))) {
   .v <- variables[i, ]
-  .tab <- hvtiRtemplates:::.lg_table(d[[.v$name]], d[[EVENT]], if (identical(LINK, "hazard")) d[[TIME]],
+  .tab <- hvtiRtemplates:::.lg_table(d[[.v$name]], .event, if (identical(LINK, "hazard")) .time,
                                      groups = .v$groups, kind = .v$kind, link = LINK)
   .scales <- hvtiRtemplates:::.lg_scales(.tab$mean, .v$constant, .v$shift)
   calibration[[.v$name]] <- list(table = .tab, scales = .scales)
@@ -1933,7 +2021,7 @@ options(.kable_na)
 ```
 ````
 
-- [ ] **Step 4: Run.** Both commands of Step 2. Expected PASS: `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 43 ]` and `FAIL 0` in `test-template-figures.R`.
+- [ ] **Step 4: Run.** Both commands of Step 2. Expected PASS: `FAIL 0 | WARN 0 | SKIP 0` for `test-lg.R` and `FAIL 0` in `test-template-figures.R`.
 
 - [ ] **Step 5: Commit.**
 
@@ -2249,7 +2337,7 @@ if (nrow(choices$table)) {
 ```
 ````
 
-- [ ] **Step 5: Run.** Both files. Expected PASS: `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 202 ]` and `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 71 ]`.
+- [ ] **Step 5: Run.** Both files. Expected PASS: `[ FAIL 0 | WARN 0 | SKIP 0 | PASS 213 ]` and `FAIL 0 | WARN 0 | SKIP 0` for `test-lg.R`.
 
 - [ ] **Step 6: Commit.**
 
@@ -2289,7 +2377,7 @@ Expected: `[ FAIL 3 | ... ]` (a final render no longer stops) and red (a blank c
 
 **Interfaces:**
 - Consumes `.provenance_data`, `.needs_time`, `INTERVAL`, `variables`, `choices`, `d`.
-- Produces in the embedded payload, beside `subject` and `type`: `lg`, a list with `event`, `link`, `time` (only when read), `interval` (`lower`, `upper`, `kept`, only with `INTERVAL`), `patients` (the patients calibrated), `variables` (the completed `VARIABLES` table, one entry for each covariate, a scale not yet chosen left out) and `unresolved` (the covariates with no usable choice, when any). `data` carries the dataset the job read; no patient, no identifier.
+- Produces in the embedded payload, beside `subject` and `type`: `lg`, a list with `event`, `link`, `time` (only when read), `interval` (`start`, `end`, `left_out`, `kept`, `censored`, only with `INTERVAL`), `patients` (the patients calibrated), `variables` (the completed `VARIABLES` table, one entry for each covariate, a scale not yet chosen left out) and `unresolved` (the covariates with no usable choice, when any). `data` carries the dataset the job read; no patient, no identifier.
 
 - [ ] **Step 1: Write the failing test.** Append to `tests/testthat/test-lg.R`. It renders the job through Quarto twice, without and with an `INTERVAL`, and scans the report for every patient identifier, raw and digested. The scan drops `data:` URIs first, since base64 text can spell any digit run, and matches an identifier only as a whole token.
 
@@ -2311,7 +2399,7 @@ test_that("the job renders two figures and two tables for two covariates, naming
     ))
     quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
     html <- paste(readLines(sub("[.]qmd$", ".html", s$job), warn = FALSE), collapse = "\n")
-    # Two figures and two tables, one of each for each covariate, numbered; the interval table only with INTERVAL.
+    # Two figures and two tables, one of each for each covariate, numbered; the window table only with INTERVAL.
     ids <- function(prefix) {
       found <- regmatches(html, gregexpr(paste0("id=\"", prefix, "-lg-[a-z-]+\""), html))[[1L]]
       sort(unique(sub("^id=\"(.*)\"$", "\\1", found)))
@@ -2345,9 +2433,10 @@ test_that("the job renders two figures and two tables for two covariates, naming
     expect_identical(vapply(payload$lg$variables, function(v) v$name, ""), c("age", "nyha"))
     expect_identical(vapply(payload$lg$variables, function(v) v$chosen, ""), c("log", "raw"))
     if (window == "window") {
-      inside <- d$iv_dead >= 0.25 & d$iv_dead <= 5
-      expect_identical(unlist(payload$lg$interval), c(lower = 0.25, upper = 5, kept = sum(inside)))
-      expect_identical(payload$lg$patients, sum(inside))
+      kept <- d$iv_dead >= 0.25
+      expect_identical(unlist(payload$lg$interval), c(start = 0.25, end = 5, left_out = sum(!kept), kept = sum(kept),
+                                                      censored = sum(kept & d$iv_dead > 5)))
+      expect_identical(payload$lg$patients, sum(kept))
     } else {
       expect_null(payload$lg$interval)
       expect_identical(payload$lg$patients, nrow(d))
@@ -2386,7 +2475,10 @@ cat(hvtiRtemplates:::.embed_provenance(
     type = TYPE,
     lg = Filter(Negate(is.null), list(
       event = EVENT, link = LINK, time = if (.needs_time) TIME,
-      interval = if (!is.null(INTERVAL)) list(lower = INTERVAL[[1L]], upper = INTERVAL[[2L]], kept = nrow(d)),
+      interval = if (!is.null(INTERVAL)) {
+        .n <- .interval$counts$patients
+        list(start = INTERVAL[[1L]], end = INTERVAL[[2L]], left_out = .n[[2L]] + .n[[3L]], kept = .n[[4L]], censored = .n[[5L]])
+      },
       patients = nrow(d),
       # The VARIABLES table as the job completed it, one entry for each covariate. A scale not yet chosen is left out.
       variables = lapply(seq_len(nrow(variables)), function(i) Filter(Negate(is.na), as.list(variables[i, ]))),
@@ -2539,8 +2631,9 @@ and in the figure-name table, before the `lp-mirror` row, add
   time-related death, the log of the constant hazard, and plots it against the
   covariate on six scales (raw, log, inverse, inverse squared, squared and
   exponential), each panel with the R-squared of a straight line weighted by
-  group size. `INTERVAL` keeps the patients whose follow-up is in a window, the
-  SAS early, constant and late phases. The scale chosen for each covariate is
+  group size. `INTERVAL = c(start, end)` takes one phase of follow-up as the SAS
+  early, constant and late jobs did: patients who ended before `start` are left out, the rest are
+  censored at `end`, and the hazard sums their time at risk inside the window. The scale chosen for each covariate is
   saved as `lg-scales.rds` with the term to write for it, such as `log(age)` or
   `I(50 / weight)`, and the job prints the `PREDICTORS` line to copy into an
   `lm` job. A blank `chosen` warns in a draft and stops a final render, as an
@@ -2625,7 +2718,7 @@ git push -u origin feat/lg
 gh pr create --base main --title "New template: lg" --body "$(cat <<'EOF'
 Implements dev/specs/2026-10-11-lg-template-design.md, following dev/specs/2026-10-11-lg-template-plan.md.
 
-- New `inst/templates/10_descriptive/lg.qmd`, logit calibration: for each covariate it groups the patients (`PROC RANK GROUPS=` exactly, or a group per level for an ordinal one), takes each group's event rate on the logit or constant-hazard link, and plots it against six scales of the covariate with the weighted R-squared of a straight line. `INTERVAL` keeps one phase of follow-up. The scale chosen for each covariate is saved as `lg-scales.rds` with its `lm` term, and the job prints the `PREDICTORS` line to copy. A blank `chosen` warns in a draft and stops a final render.
+- New `inst/templates/10_descriptive/lg.qmd`, logit calibration: for each covariate it groups the patients (`PROC RANK GROUPS=` exactly, or a group per level for an ordinal one), takes each group's event rate on the logit or constant-hazard link, and plots it against six scales of the covariate with the weighted R-squared of a straight line. `INTERVAL = c(start, end)` takes one phase of follow-up as the SAS constant-phase template did: patients who ended before `start` are left out and the rest are censored at `end`. The scale chosen for each covariate is saved as `lg-scales.rds` with its `lm` term, and the job prints the `PREDICTORS` line to copy. A blank `chosen` warns in a draft and stops a final render.
 - The numerical core is internal, in `R/logit-calibration.R`, tested on hand-worked fixtures including a 12-row PROC RANK parity fixture with ties.
 - The `lg` ledger row is shipped and renamed "Logit calibration"; the roadmap is re-rendered.
 - Gallery: an `lg` job on age and NYHA class.
@@ -2645,12 +2738,12 @@ Do not merge.
 
 ## Decisions this plan makes where the spec was silent or the code disagreed
 
-1. **The taxonomy name lives in another package.** The spec says the taxonomy name changes from "Logit trends" to "Logit calibration" in `inst/extdata/templates.json`. That file is this package's catalog, and the `name` there is what changes. `hvti_taxonomy()` is re-exported from hvtiRutilities and still reads "Logit trends"; changing it is a hvtiRutilities release. No test here compares the two, so the plan leaves it and the PR body should say so.
+1. **The taxonomy name lives in another package.** The spec says the taxonomy name changes from "Logit trends" to "Logit calibration" in `inst/extdata/templates.json`. That file is this package's catalog, and the `name` there is what changes. `hvti_taxonomy()` is re-exported from hvtiRutilities and still reads "Logit trends"; the maintainer is renaming that row in a separate hvtiRutilities PR. No test here compares the two.
 2. **`lg-scales.rds` sits in the job's set folder.** The spec says `estimates/lg-scales.rds`. Every template saves into `estimates/<subject>-<type>/` through `set_path()`, and a flat file would collide between two `lg` jobs in one study, so it is `estimates/<subject>-<type>/lg-scales.rds`. It carries the `hvti_provenance` lineage like every other saved artifact, though no job reads it back: an `lm` job takes the printed `PREDICTORS` line.
 3. **An impossible scale is empty for the whole covariate.** The spec says a scale that cannot be computed "is drawn empty with a note". The plan reads that as the whole panel, not only the group that breaks it: a line through the other groups of a log scale with one group at 0 would look straight and mean nothing. A chosen scale that is empty is a problem (Task 8).
 4. **A patient with no event value is ranked, not counted.** `%logit` deletes a missing covariate (and, with `cox=1`, a missing interval) before `PROC RANK`, but leaves a patient with a missing event in the ranking, where `PROC SUMMARY`'s `N(&EVENT)` simply does not count it. `.lg_table()` does the same, so the groups match SAS exactly, and reports how many it left out and how many it ranked without counting.
 5. **`rate` is events per unit of follow-up under `"hazard"`.** The SAS output table's `PROB` column was the plain proportion even with `cox=1`, while the link used `events / sum(interval)`. The spec names one `rate` column, so it is the quantity the link is the log of: the proportion for `"logit"`, events per unit of follow-up for `"hazard"`.
-6. **`INTERVAL` is closed, leaves patients out, and also works with the logit link.** The spec says it "keeps the patients whose follow-up falls in" the window. Both ends are included. It removes patients; it does not cap or censor follow-up at the upper end, which the survey notes the legacy `tp.lg.dead.constant` template did ("filters 3 months to 5 years, caps follow-up"). Whether the phases should censor is John's decision; the template comment says what it does. The spec lists `TIME` as read only by `"hazard"`, but `INTERVAL` needs follow-up with either link, so `TIME` is read when the link is `"hazard"` or `INTERVAL` is set, and only then must the column exist.
+6. **`INTERVAL = c(start, end)` follows the SAS constant-phase template, with one shift.** The maintainer's rule, read against the legacy `tp.lg.dead.constant` (`if iv_dead<(3/12) then delete; if iv_dead>5 then do; dead=0; iv_dead=5; end;`): a patient who ended before `start` is left out and counted (strictly before, so a follow-up of exactly `start` stays, as in `iv_dead<`); a patient with no follow-up is left out too, since SAS deleted a missing `iv_dead` as smaller than `start`; every other patient is censored at `end` (strictly after, so a follow-up of exactly `end` keeps its event, as in `iv_dead>`), with the event set to 0 even when it was missing, as `dead=0` does. Under `"hazard"` the follow-up the log-rate sums is `pmin(TIME, end) - start`, the time at risk inside the window. **That differs from the legacy template:** it set `iv_dead=5` and summed `iv_dead` from time 0, so the first three months entered every patient's denominator and the constant-hazard rate was understated by `start` per patient. The maintainer's stated rule subtracts `start`, so the plan does too; if exact SAS parity is wanted instead, the whole change is the single expression `pmin(follow, end) - start` in `.lg_interval()`, which Task 6's mutation check names. Under `"logit"` the same patients are kept and an event counts only if it fell inside the window. The spec lists `TIME` as read only by `"hazard"`, but `INTERVAL` needs follow-up under either link, so `TIME` is read, and must exist, when the link is `"hazard"` or `INTERVAL` is set. A table under the data table reports both counts (left out before `start`, censored at `end`, and the events that fell after `end`), and the provenance records them.
 7. **The blank-choice warning comes last.** `chosen` is read by the closing chunk, after every figure is drawn and saved, so a final render that stops there has still written the figures the author needs to read to make the choice. The stop happens before `lg-scales.rds` is written; a draft writes the covariates that have a usable choice and no others (an empty table when none).
 8. **The groups table numbers from 1, `.lg_groups()` from 0.** `.lg_groups()` returns SAS's 0 to `G - 1` so the parity test reads against `PROC RANK` directly; the report's table numbers the groups that exist from 1, because a continuous covariate with heavy ties can leave a rank group empty and a "group 0" heading would read as a mistake.
 9. **Internal signatures go past the spec's.** `.lg_plot(table, scales, link, title)` takes the link, to label its y axis, and the title; `.lg_table()` and `.lg_scales()` return their notes as attributes; `.lg_scales()` returns a data frame, not a list. Eight helpers the spec does not name are added because the template would otherwise hold numerical or validation code: `.lg_event()`, `.lg_constant()`, `.lg_term()`, `.lg_rsq()`, `.lg_variables()`, `.lg_interval()`, `.lg_choices()` and `.lg_predictors()`.
@@ -2689,6 +2782,6 @@ Do not merge.
 | 5. Test 4, R-squared is 1 for points exactly linear on a scale | 4 |
 | 5. Test 5, the template renders two figures and two tables and saves `lg-scales.rds` with the right terms | 7 (evaluated), 8 (saved), 9 (rendered) |
 | 5. Test 6, a blank `chosen` warns in a draft and stops a final render | 8 |
-| 5. Test 7, `INTERVAL` filters and reports how many it kept | 6 (evaluated), 9 (rendered, with the table) |
+| 5. Test 7, `INTERVAL` leaves out the patients who ended before the start, censors the rest at the end, and reports both counts | 6 (the function and the evaluated job), 7 (the tables it feeds), 9 (rendered, with the table and the provenance) |
 | 5. Test 8, no identifiers in the rendered report, with the `data:`-dropping whole-token scan | 9 |
 | 6. Not in this design: Gompertz, fitted line, smoother, `lg.trends*`, a continuous-outcome counterpart | none built |
