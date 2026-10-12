@@ -37,29 +37,10 @@
   subject, type, hvtiRtemplates version), each dataset read (name, version file,
   registration date, source file, rows and patients kept, `WHERE`, the first 12
   characters of the sha256 and whether a newer source file is waiting, each for its
-  own source, a joined dataset's separately), each upstream handoff with the time
-  its job rendered, the seed when the job sets `SEED`, and whether renv is active
-  with the first 12 characters of `renv.lock`'s sha256. Two reads whose `WHERE`
-  shows the same text because its values are masked (`age >= <value>`) are listed
-  separately. The same facts are in the embedded provenance under `run`. The table
+  own source, a joined dataset's separately), each upstream handoff, the seed when
+  the job sets `SEED`, and whether renv is active with the first 12 characters of
+  `renv.lock`'s sha256. The same facts are in the embedded provenance under `run`. The table
   holds names, dates, counts and hashes, never a patient identifier or a data
   value. The user and host are the login and machine names; `HVTI_RUN_USER` and
   `HVTI_RUN_HOST` replace them, and the template gallery sets both so its
   published reports name no one. (#303)
-
-* The handoff bundles that jobs save (`hz`, `ac`, `hs`, `lg`, `lm`, `rf`, `bh` and
-  the rest) now record `rendered_at`, the start of the render that saved them, as
-  ISO 8601 with its time zone. The "About this run" table shows it for each upstream
-  handoff, and "not recorded" for a bundle saved before this change; the file's
-  modification time is never used in its place. Saving the same results again
-  therefore writes a different file. (#303)
-
-* A report that turns out to be a draft after its box was printed no longer reads
-  as final. A `stop_here()` that the source scan could not see (inside an `if ()`)
-  and that runs, an `lg` job with a covariate whose scale is not chosen, an
-  incomplete bootstrap pool in `bc`, `bh`, `bl` or `br`, and a `dc-gfup` follow-up
-  figure that was not drawn each mark the run a draft: the end table's status and the
-  embedded `run` facts say `draft` (with `stopped_early` for a stop and the reasons
-  under `draft_reasons`), and a callout above the table, "This run ended as a
-  draft", names each reason. The box under the title is printed first and cannot
-  change; the callout is what corrects it. (#303)
