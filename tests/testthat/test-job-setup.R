@@ -26,8 +26,31 @@ test_that(".job_setup() sources the study's R/ into envir and writes nowhere els
   expect_true(is.function(r$env$study_helper))
   expect_identical(r$env$study_helper(), "from the study")
   expect_false(exists("study_helper", envir = globalenv(), inherits = FALSE))
-  # It defines nothing else in envir: the template assigns what it keeps from the return.
-  expect_setequal(ls(r$env, all.names = TRUE), "study_helper")
+  # It defines nothing else in envir but what the old setup chunk had defined before it sourced the study:
+  # the template assigns what it keeps from the return.
+  expect_setequal(ls(r$env, all.names = TRUE), c("study_helper", ".root", ".in", ".provenance_data"))
+})
+
+test_that("the study's R/ is sourced into a fresh envir that already holds .root, .in and .provenance_data", {
+  fx <- setup_fixture()
+  writeLines(c("lookup_path <- file.path(.root, \"lookup.csv\")", "seen_in <- .in", "seen_data <- .provenance_data"),
+             file.path(fx$root, "R", "lookup.R"))
+  r <- run_setup(env = new.env(parent = globalenv()))
+  expect_identical(r$env$lookup_path, file.path(r$job$root, "lookup.csv"))
+  expect_identical(r$env$.root, r$job$root)
+  expect_identical(r$env$seen_in, fx$job)
+  expect_identical(r$env$seen_data, list())
+})
+
+test_that("the test helper runs a setup chunk without a .root it was handed, so it cannot mask a helper that needs one", {
+  fx <- setup_fixture()
+  writeLines("lookup_path <- file.path(.root, \"lookup.csv\")", file.path(fx$root, "R", "lookup.R"))
+  env <- new.env(parent = globalenv())
+  env$.root <- fx$root
+  chunk <- c("SUBJECT <- \"cohort\"", "TYPE <- \"eda\"", ".in <- knitr::current_input(dir = TRUE)",
+             "hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())")
+  expect_no_error(eval_setup_chunk(chunk, env))
+  expect_identical(env$lookup_path, file.path(env$.root, "lookup.csv"))
 })
 
 test_that("set_path() creates <kind>/<subject>-<type>/ and follows SUBJECT and TYPE in envir", {
