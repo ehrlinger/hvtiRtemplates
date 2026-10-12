@@ -40,7 +40,9 @@ rf_predictors <- paste0(
 rf_fit_choices <- function(what, na_action) {
   list(
     "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
-    "^Replaces `analyses/<job>`" = paste0("Gallery job on the synthetic cohort: ", what, "."),
+    # #300 made the job's "replaces" note a multi-line EDIT comment; the
+    # sentence takes its opening line and the rest stays a hidden comment.
+    "^<!-- EDIT: name the job this replaces" = paste0("Gallery job on the synthetic cohort: ", what, ".\n\n<!--"),
     "^PREDICTORS <- " = rf_predictors,
     "^NTREE <- " = "NTREE <- 300",
     "^NA_ACTION <- " = paste0("NA_ACTION <- \"", na_action, "\"")
@@ -49,8 +51,8 @@ rf_fit_choices <- function(what, na_action) {
 
 rf_explain_choices <- function(prefix, extra = list()) {
   c(list(
-    "^Explains the forest the `" = paste0("Explains the forest the `", prefix, "-fit` job in this set saved: which"),
-    "^here\\.$" = "predictors drive it, and how.",
+    "^Explains the forest the `" =
+      paste0("Explains the forest the `", prefix, "-fit` job in this set saved: which predictors drive it, and how."),
     "^TOP_K <- " = "TOP_K <- 4"
   ), extra)
 }

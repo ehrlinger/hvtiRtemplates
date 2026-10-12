@@ -57,8 +57,10 @@ gallery_family(
   "nb",
   jobs = list(
     "nb-boostmtree" = list(subject = "lvef", type = "boost", prepare = nb_register_echo, choices = list(
-      "^Replaces `analyses/<job>`" =
+      "^<!-- EDIT: name the job this replaces" = paste0(
         "Gallery job on the synthetic echo series: LV ejection fraction over follow-up (iv_echo), six baseline predictors.",
+        "\n\n<!--"
+      ),
       "^DATASET <- \"built\"$" = "DATASET <- \"echo\"",
       "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
       "^RESPONSE <- " = "RESPONSE <- \"lvef\"",
