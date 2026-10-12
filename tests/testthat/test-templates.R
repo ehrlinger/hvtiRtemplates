@@ -159,7 +159,8 @@ test_that("every template's setup chunk runs the EDIT: guard through .job_setup(
     expect_false(any(grepl("unresolved", src, fixed = TRUE) & grepl("marker(s)", src, fixed = TRUE)), info = info)
     expect_false(any(grepl("label: guard-edits", src, fixed = TRUE)), info = info)
     # bd alone keeps a marker's source line out of its report.
-    expect_identical(any(grepl("show_markers = FALSE", src, fixed = TRUE)), identical(info, "bd.qmd"), info = info)
+    expect_identical(any(grepl("^\\.job <- .*\\(SUBJECT, TYPE, envir = environment\\(\\), show_markers = FALSE\\)$", src)),
+                     identical(info, "bd.qmd"), info = info)
   }
 })
 
