@@ -1,8 +1,8 @@
 Package: hvtiRtemplates
 Type: Package
 Title: Analysis Job Templates for the HVTI CORR Group
-Version: 1.3.0
-Date: 2026-10-09
+Version: 1.3.1
+Date: 2026-10-12
 Authors@R: c(
     person(
       "John", "Ehrlinger",
@@ -54,7 +54,7 @@ Suggests:
     haven,
     hvtiPlotR (>= 2.8.0),
     hvtiRtables (>= 1.0.1),
-    hvtiRdatabuild (>= 0.2.3),
+    hvtiRdatabuild (>= 0.3.0),
     hvtiRbootstrap (>= 0.9.3),
     hvtiRlifetables (>= 0.1.2),
     hvtiRpropensity (>= 0.1.10),

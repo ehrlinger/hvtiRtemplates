@@ -1,3 +1,266 @@
+# hvtiRtemplates 1.3.1
+
+* `lm-binary` no longer prints the saved model's full path in its report. A
+  bare `MODEL_PATH` line showed the absolute path, study folder included, in a
+  report meant to be shared. A test now stops any template from printing a path
+  variable this way.
+
+* `dp-postage` is removed, as its deprecation promised for the release after
+  1.2.3. Use `dc-eda`: `add_job("dc.eda", subject, type)` with
+  `SECTIONS <- c("continuous", "percent", "count")` draws the pages it drew.
+  Asking for `dp.postage` now stops with the usual unknown-template error.
+
+* Every `lm` template now checks the columns its study choices name before it
+  fits, and a missing one stops with the setting to change, such as "OUTCOME
+  names a column this dataset does not have: severity. Change OUTCOME in
+  edit-study-choices." `OUTCOME` or `TREATMENT` and `PREDICTORS` are checked,
+  including a variable used inside a term such as `I(age^2)`; `ID` and `KEY`
+  were already checked by `read_job_data()`. Before, only `lm-binary` checked,
+  and elsewhere a wrong name failed inside hvtiRpropensity with an error naming
+  one of its functions (#179).
+
+* `lm-checkpred` can read a model saved in another set. A new optional
+  `MODEL_SET` names the training job's set, such as `"stroke-model"`, so a
+  validation job no longer has to share the subject and type of its `lm-binary`
+  job. `MODEL_FILE` must be a file name and `MODEL_SET` a set name, so neither
+  can reach outside the study's estimates. The template now says how to register
+  a validation cohort as a dataset of its own and read it with `DATASET`; it is
+  checked against the training patients like any other cohort (#180).
+
+* `lm-propensity_ordinal` and `lm-propensity_nominal` print a balance table, the
+  standardized mean difference of each covariate between each treatment level
+  and the reference level, in the place `lm-propensity_binary` prints its own.
+  `lm-propensity_ordinal` also prints the cumulative direction of its
+  proportional-odds model, as `lm-ordinal` does, which a reader needs to
+  interpret the signs of its coefficients (#191).
+
+* hvtiRpropensity 0.1.10 or later is now required, up from 0.1.7, by
+  `DESCRIPTION` and by the version check of every `lm` template and of
+  `dc-stddiff`. 0.1.10 returns the multi-level balance tables, labels the count
+  family's exponentiated coefficients `rate_ratio` rather than `odds_ratio`,
+  and names the declared treatment levels in `lm-propensity_binary`'s group
+  counts rather than "control" and "treated" (#206).
+
+* `dp-eda` and `dp-trends` are renamed `dc-eda` and `dc-trends`, so every
+  descriptive template now carries the `dc` prefix. The old names, `dp.eda` and
+  `dp.trends`, still work in `add_job()`, `open_job()`, `template_path()` and
+  `migrate_job()` through the next release, each call warning once that the
+  name is deprecated in favor of its `dc` replacement, and are removed in the
+  release after. A job already scaffolded as `dp.eda.*` or `dp.trends.*` (or
+  `*-dp-eda.qmd`, `*-dp-trends.qmd`) keeps its name and keeps rendering:
+  `open_job()` opens it under either name, and `add_job()` refuses to write a
+  second copy under the new one. A legacy SAS source named `dp.trends.*`
+  migrates into `dc-trends` without a warning. The taxonomy keeps its `dp`
+  row, since legacy jobs carry that prefix; the queued `dp-variable` and
+  `dp-boxplot` templates are planned as `dc-variable` and `dc-boxplot`.
+
+* A new `dc-trends` job is written to the study's descriptive folder
+  (`10_descriptive/`, or `descriptive/` in a legacy study), where `dp-trends`
+  wrote it to `graphs/`. Its figures are still saved under
+  `graphs/<subject>-<type>/`, and the report links them from its new folder.
+
+* `dp-gfup`, deprecated in favor of `dc-gfup` in 1.3.0, is removed.
+  `add_job("dc.gfup", subject, type)` draws the same panels beside the
+  follow-up tables. Asking for `dp.gfup` now stops with an error naming
+  `dc.gfup`: an unknown template's error lists any template with the same
+  qualifier under another prefix.
+
+* New template `lp-mirror`, the mirrored histogram of the propensity score:
+  `add_job("lp.mirror", subject, type)` with the subject and type of the
+  `lm-propensity_binary` job it plots. It reads that job's saved bundle and
+  never refits, drawing treated patients above the axis and controls below:
+  all patients, then under the matching weights, and, when `MATCH` names a
+  pair-match column, the matched patients. The y-axis is derived from the
+  counts, the same above and below. The groups are labeled by the declared
+  treatment levels, or by `GROUP_LABELS`. A bundle without lineage, or whose
+  rebuilt read has different rows, patients or patient hash, stops with the job to render again.
+  `MATCH` is joined onto the scored patients by a study-keyed digest of `ID`,
+  so the job keeps and prints no identifier; it counts the scored patients
+  with no flag and the flags with no score, and stops when fewer than half
+  the scored patients are in the dataset, when `MATCH` is not a column coded 0 and 1 or flags no
+  scored patient, and when a score, weight or group is missing. `lp` becomes a qualified prefix.
+
+* `lm-checkpred`'s `MODEL_FILE` and `MODEL_SET` checks are now shared with
+  `lp-mirror`. An `NA` in either now stops with the setting's own message
+  rather than an R error.
+
+* The template catalog names the `lg` prefix "Logit calibration", not "Logit
+  trends", matching `hvti_taxonomy()` from hvtiRutilities. The description is
+  unchanged: `lg` jobs calibrate a covariate against an event to choose its scale.
+
+* New template `lg`, logit calibration: `add_job("lg", subject, type)`, usually
+  with the outcome as the subject, as in `lg.dead.calibration`. It decides which
+  scale a covariate should enter a model on, before it goes into `PREDICTORS` in
+  an `lm` job. Each covariate in `VARIABLES`, continuous or ordinal, is ranked
+  into groups as `PROC RANK GROUPS=` does, or takes each level as a group, as
+  `%logitgr` did. The job takes each group's event rate on the logit, or, for
+  time-related death, the log of the constant hazard, and plots it against the
+  covariate on six scales (raw, log, inverse, inverse squared, squared and
+  exponential), each panel with the R-squared of a straight line weighted by
+  group size. `INTERVAL = c(start, end)` takes one phase of follow-up as the SAS
+  early, constant and late jobs did: patients who ended before `start` are left
+  out, and the rest are censored at `end`, so an event after `end` no longer
+  counts. Under the hazard link the time at risk is the time inside the window,
+  `pmin(TIME, end) - start`; the SAS template summed it from 0, which is the one
+  deliberate difference. Under the logit link the same patients are kept and an
+  event counts only inside the window. The job reports how many patients it left
+  out, how many it censored and how many events fell after `end`. The scale
+  chosen for each covariate is saved as `lg-scales.rds` with the term to write
+  for it, such as `log(age)` or `I(50 / weight)`, and the job prints the
+  `PREDICTORS` line to copy into an `lm` job. A blank `chosen` warns in a draft
+  and stops a final render, as an open `EDIT:` marker does, and so does a chosen
+  scale that is not a number for some patient, such as the log of a covariate
+  that is 0 for a few, though every group mean is fine; the message counts those
+  patients and shows no value. A group whose link value cannot be computed keeps
+  its row, blank, and is named under its table; a scale that cannot be computed
+  for a covariate is drawn as an empty panel. A patient with no event value is
+  ranked but counts in no group's patients, events or follow-up. A covariate
+  whose median rounds to 0, such as a 0/1 indicator, has no default `constant`:
+  the inverse, inverse squared, squared and exponential scales are not computable
+  for it until `constant` is set, and raw and log remain. Two checks keep a
+  figure from resting on groups too small to read: an ordinal covariate with more
+  than 20 levels stops the job, and so does any group with fewer than 5 patients,
+  naming the covariate and never a value.
+
+* `rfs-fit`, `rfc-fit` and `rfr-fit` now draw the out-of-bag error by number of
+  trees as a curve. With importance off, randomForestSRC records the error only
+  at the last tree, so the figure was one point and could not show whether
+  `NTREE` was large enough. The fit now passes `block.size = 1`, which records
+  the error after every tree and leaves importance off (#165).
+
+* `rfs-explain`, `rfc-explain` and `rfr-explain` give VarPro the forest's
+  imputed data when the fit used `na.impute`, so VarPro and the forest describe
+  the same patients. Before, varPro dropped every patient with a missing value
+  and its importance and partials described fewer patients than the forest, with
+  a notice in the rendered report. The report now says that VarPro was given the
+  imputed data. A saved `-varpro` result from an earlier render describes the
+  old, smaller cohort, so `cache_fit()` stops on it and names the change: set
+  `REFIT <- TRUE` once to recompute it (#166).
+
+* The marginal plot of `rfs-explain`, `rfc-explain` and `rfr-explain` draws no
+  loess smooth through a predictor with fewer than six distinct values, which
+  stops the dozens of loess warnings a four-valued predictor raised in the
+  rendered report. `rfc-explain` also draws its points for a 0/1 outcome:
+  ggRandomForests read the outcome's levels "0" and "1" as missing, so every
+  point was removed and only the smooths were left (#167).
+
+* `dc-eda` prints the abbreviation key under a section from the abbreviations
+  `label_map()` records for that section's variables, instead of searching the
+  shortened labels for each abbreviation. A label that says "SP" in its own
+  words and is only cut no longer produces `SP = Surgical procedure` under its
+  section (#194).
+
+* No template leaves placeholder prose in the rendered report. Sentences such as
+  "Describe the question here." in the `rf*-explain` templates and "Replaces
+  `analyses/<job>`: describe its outcome and candidate predictors here." in the
+  `rf*-fit`, `ac`, `hz`, `hm`, `hp`, `hs`, `bh`, `bl`, `br`, `bc`, `nb`, `bd`,
+  `dc-stddiff`, `dc-tables`, `dc-trends` and `lg` templates now sit inside the
+  `EDIT:` marker that asks for them, so resolving the marker removes them (#182).
+
+* The `bh` frequency figure sorts the variables within each phase. Before, one
+  ordering across both phases left a variable offered to two phases out of order
+  in each facet (#189).
+
+* The `bh` default `CLUSTERS` is an empty list, with a commented example, and an
+  empty list reports no clusters instead of stopping. The old default named
+  terms such as `early.age` that a small run may never carry, and
+  `boot_clusters()` refuses a name no replicate has (#188).
+
+* The `bc` template says what its runner's `BASE` setting does and costs.
+  Neither `boot_select()` nor `fit_cox()` can force a term into a Cox model, so
+  `BASE` only names a screened candidate whose frequency the tables leave out
+  and whose spread the check watches; the old advice to "force at least one
+  term" could not be followed (#186).
+
+* `hs-concordance` takes its time and event columns from the `hm` models it
+  reads, as `hm`, `hp` and `hs-setup` take theirs from upstream, instead of
+  declaring `TIME` and `EVENT` itself. Both settings default to `NULL`; a value
+  that differs from a model's recorded one stops the job, and so do models that
+  disagree. An `hm` model saved before it recorded its data selection stops the
+  job, asking for the `hm` job to be rerun. The `cohort` chunk now follows the
+  `models` chunk, because it needs the columns the models record (#176).
+
+* Every template opens with one `setup` chunk, where it opened with four
+  (`setup`, `guard-edits`, `guard-partial` and `set`). The chunk declares
+  `SUBJECT` and `TYPE`, attaches the template's packages and calls one internal
+  function, `.job_setup()`, which finds the study root, sources the study's `R/`
+  (with `.root`, `.in` and `.provenance_data` already set, as the old chunk had
+  them), runs the `EDIT:` marker and partial-render guards, checks the file name
+  against `SUBJECT` and `TYPE`, and returns the root and `set_path()`. A report now
+  opens with one "Code" fold instead of four, and a change to the marker guard is
+  one edit instead of 34. The guard's behavior and messages are unchanged, with
+  three exceptions: the draft callout's first sentence read "not" and "a result"
+  run together, the `lm` and `lp` templates now print the same marker list as the
+  rest (`bd` still prints only the count), and `bd`'s file-name check, which
+  stopped with "bd: set (<file>): the file's name and its SUBJECT and TYPE
+  disagree", now stops with the message every other template gives, "This file is
+  named ... but declares SUBJECT = ... Fix the declaration or the filename". The
+  bootstrap templates `bc`, `bh`, `bl` and `br` now source the study's `R/` as the
+  others do. Jobs already in studies keep their four chunks and render as before;
+  they gain neither the box nor the end table below. (#303)
+
+* Every template carries `date: now` and `date-format: "YYYY-MM-DD HH:mm"` in its
+  own front matter, so the title block shows when the report was rendered. (#303)
+
+* A report opens with a one-line box under the title: whether it is final or a
+  draft (with the count of open markers and skipped chunks), the data it reads,
+  who rendered it and on which host, and the hvtiRtemplates version. The box is
+  printed before the data are read, so it names data only when the job's file
+  settles which: a literal `ANALYSIS_SET <- "name"` (with the time the set was
+  written, when its sidecar says), or a literal `DATASET <- "name"`, in single or
+  double quotes, with the dated version file and registration date when the
+  manifest has them. When `DATASET` is `NULL`, inherited from an upstream handoff,
+  computed or not declared, the box says "data: see About this run" and does not
+  guess the study dataset; `bd`, which builds a dataset and reads none, names no
+  data. (#303)
+
+* Every report ends with an unnumbered "About this run" table: the run (start and
+  end with time zone, duration, status, user, host), the job (file, template,
+  subject, type, hvtiRtemplates version), each dataset read (name, version file,
+  registration date, source file, rows and patients kept, `WHERE`, the first 12
+  characters of the sha256 and whether a newer source file is waiting, each for its
+  own source, a joined dataset's separately), each upstream handoff, the seed when
+  the job sets `SEED`, and whether renv is active with the first 12 characters of
+  `renv.lock`'s sha256. The same facts are in the embedded provenance under `run`. The table
+  holds names, dates, counts and hashes, never a patient identifier or a data
+  value. The user and host are the login and machine names; `HVTI_RUN_USER` and
+  `HVTI_RUN_HOST` replace them, and the template gallery sets both so its
+  published reports name no one. (#303)
+
+* The package no longer ships two stray, blank `Rplots.pdf` files (at the top
+  level and in `tests/testthat/`) that a test run had left in the source; `R CMD
+  check` flagged the top-level one as a non-standard file.
+
+* The handoff bundles that jobs save now record `rendered_at`, the start of the
+  render that saved them, as ISO 8601 with its time zone. The "About this run" table
+  shows it for each upstream handoff, and "not recorded" for a bundle saved before
+  this change; the file's modification time is never used in its place. Saving the
+  same results again therefore writes a different file. (#306)
+
+* A report that turns out to be a draft after its box was printed no longer reads
+  as final. A `stop_here()` that the source scan could not see (inside an `if ()`)
+  and that runs, an `lg` job with a covariate whose scale is not chosen, an
+  incomplete bootstrap pool in `bc`, `bh`, `bl` or `br`, and a `dc-gfup` follow-up
+  figure that was not drawn each mark the run a draft: the end table's status and the
+  embedded `run` facts say `draft` (with `stopped_early` for a stop and the reasons
+  under `draft_reasons`), and a callout above the table, "This run ended as a
+  draft", names each reason. The box under the title is printed first and cannot
+  change; the callout is what corrects it. (#306)
+
+* In the "About this run" table, two reads of one dataset whose `WHERE` shows the
+  same text because its values are masked (`age >= <value>`) are listed separately;
+  a joined dataset's rows no longer read "on NULL patients" and carry no `WHERE`
+  row of its own; and a `WHERE` that names a column with a space or backtick is
+  shown whole. (#306)
+
+* **`ANALYSIS_SET` now needs hvtiRdatabuild 0.3.0** (was 0.2.1), and 1.3.1 is
+  tested against it. 0.2.4 stopped with "$ operator is invalid for atomic
+  vectors" in `read_analysis_set()` and `write_analysis_set()` on any study
+  registered with hvtiRutilities 1.5.1, which this package already requires.
+  A stale analysis set no longer stops a draft in 0.3.0: it is read, and the
+  "About this run" table carries a note naming the `write_analysis_set()` call
+  that updates it. A final render (`render_job(final = TRUE)`) still stops.
+
 # hvtiRtemplates 1.3.0
 
 * A test now covers a new dataset version registered while a job is reading: the

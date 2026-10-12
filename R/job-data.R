@@ -871,8 +871,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 .require_databuild <- function(version = if (requireNamespace("hvtiRdatabuild", quietly = TRUE)) {
   utils::packageVersion("hvtiRdatabuild")
 }) {
-  if (is.null(version) || version < "0.2.1") {
-    stop("ANALYSIS_SET needs hvtiRdatabuild 0.2.1 or later",
+  if (is.null(version) || version < "0.3.0") {
+    stop("ANALYSIS_SET needs hvtiRdatabuild 0.3.0 or later",
          if (!is.null(version)) paste0(" (", version, " is installed)"),
          "; install it or set ANALYSIS_SET <- NULL.", call. = FALSE)
   }

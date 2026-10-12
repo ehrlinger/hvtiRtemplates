@@ -129,8 +129,8 @@ test_that("EDA migration does not require databuild for registered data but vali
   expect_error(eval(data, env), "DATASET must name one dataset")
   env$DATASET <- "study"
   env$ANALYSIS_SET <- "eda"
-  if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.2.1") {
-    expect_error(eval(data, env), "hvtiRdatabuild 0.2.1", fixed = TRUE)
+  if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.3.0") {
+    expect_error(eval(data, env), "hvtiRdatabuild 0.3.0", fixed = TRUE)
   }
 })
 
