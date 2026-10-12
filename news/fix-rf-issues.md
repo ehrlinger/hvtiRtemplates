@@ -10,7 +10,8 @@
   and its importance and partials described fewer patients than the forest, with
   a notice in the rendered report. The report now says that VarPro was given the
   imputed data. A saved `-varpro` result from an earlier render describes the
-  old, smaller cohort: set `REFIT <- TRUE` once to recompute it (#166).
+  old, smaller cohort, so `cache_fit()` stops on it and names the change: set
+  `REFIT <- TRUE` once to recompute it (#166).
 
 * The marginal plot of `rfs-explain`, `rfc-explain` and `rfr-explain` draws no
   loess smooth through a predictor with fewer than six distinct values, which

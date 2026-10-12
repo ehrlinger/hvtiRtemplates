@@ -383,7 +383,7 @@ save_figure(.fig, "rfr-explain-varpro")
 # A loess smooth needs more than a handful of distinct values, so a predictor
 # with fewer than six, such as a stage or a grade, is drawn as points alone.
 .gv <- gg_variable(forest)
-.panels <- lapply(sel, function(v) plot(.gv, xvar = v, smooth = length(unique(.gv[[v]])) > 5))
+.panels <- lapply(sel, function(v) plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5))
 .fig <- patchwork::wrap_plots(.panels, ncol = 1)
 save_figure(.fig, "rfr-explain-dependence-marginal")
 .fig

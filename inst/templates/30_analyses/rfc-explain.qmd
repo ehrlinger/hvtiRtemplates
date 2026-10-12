@@ -388,10 +388,10 @@ save_figure(.fig, "rfc-explain-varpro")
 # plot() reads a factor outcome whose levels are "0" and "1" as TRUE and FALSE
 # with as.logical(), which turns the labels into missing values, and ggplot2
 # then removes every point. Naming the levels after the outcome avoids that.
-.gv$yvar <- factor(.gv$yvar, labels = paste0(forest$yvar.names, " = ", levels(.gv$yvar)))
+.gv$yvar <- factor(.gv$yvar, levels = levels(.gv$yvar), labels = paste0(forest$yvar.names, " = ", levels(.gv$yvar)))
 # A loess smooth needs more than a handful of distinct values, so a predictor
 # with fewer than six, such as a stage or a grade, is drawn as points alone.
-.panels <- lapply(sel, function(v) plot(.gv, xvar = v, smooth = length(unique(.gv[[v]])) > 5))
+.panels <- lapply(sel, function(v) plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5))
 .fig <- patchwork::wrap_plots(.panels, ncol = 1)
 save_figure(.fig, "rfc-explain-dependence-marginal")
 .fig

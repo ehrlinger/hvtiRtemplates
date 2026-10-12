@@ -581,6 +581,11 @@ test_that("every explain gives VarPro the forest's imputed data, so both cover t
     expect_true(anyNA(env$forest$xvar), info = prefix)               # the fit really had missing values
     expect_identical(nrow(env$vp$x), env$forest$n, info = prefix)    # VarPro explains every patient the forest has
     expect_false(anyNA(env$frame), info = prefix)
+    # The imputed values land on the patients they were imputed for, and no other cell changes.
+    imputed <- env$forest$imputed.data
+    expect_equal(env$frame[env$forest$imputed.indv, names(imputed)], imputed, ignore_attr = TRUE, info = prefix)
+    kept <- !is.na(env$forest$xvar)
+    expect_equal(as.matrix(env$frame[names(env$forest$xvar)])[kept], as.matrix(env$forest$xvar)[kept], info = prefix)
   }
 })
 
