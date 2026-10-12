@@ -81,6 +81,10 @@ suppressPackageStartupMessages({
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. In THIS file that would be a table of best treatments,
+# which reads as a clinical recommendation whether or not anyone finished the
+# job.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -92,8 +96,7 @@ set_path <- .job$set_path
 .provenance_data <- list()
 # This job reads other sets' models by path, in the models chunk. It writes only
 # into its own set, the comparison set these two values name.
-# What the setup has to say, after all the code above: the draft banners, if any, and
-# the box under the title.
+# The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 

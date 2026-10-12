@@ -116,7 +116,7 @@
            if (!is.null(dataset$registered)) paste0(", registered ", dataset$registered))
   }
   who <- paste0("rendered by ", .md_text(run$user), " on ", .md_text(run$host))
-  line <- paste(c(state, data, who, paste0("hvtiRtemplates ", .package_version())), collapse = " · ")
+  line <- paste(c(state, data, who, paste0("hvtiRtemplates ", .package_version())), collapse = " \u00b7 ")
   paste0("\n::: {.callout-note appearance=\"simple\" icon=false}\n", line, "\n:::\n\n")
 }
 
@@ -171,6 +171,9 @@
   ))
 }
 
+# One entry for each dataset version the job read, and for each distinct WHERE
+# it read it under: the data records say which versions, and the ledger says
+# what was kept from them.
 .facts_datasets <- function(data, cfg) {
   seen <- character(0)
   out <- list()
@@ -180,16 +183,18 @@
     seen <- c(seen, key)
     reads <- Filter(function(r) identical(r$dataset, record$dataset) && identical(r$sha256, record$sha256),
                     .run_state$reads)
-    read <- if (length(reads)) reads[[length(reads)]]
+    reads <- reads[!duplicated(lapply(reads, `[[`, "where"))]
     version <- if (is.character(record$path)) basename(record$path)
     found <- if (!is.null(version)) .manifest_find(cfg$root, version = version)
-    out[[length(out) + 1L]] <- Filter(Negate(is.null), list(
-      name = if (identical(record$dataset, "study")) "built" else record$dataset,
-      version_file = version, registered = found$registered, source_file = found$source_file,
-      rows = read$rows, patients = read$patients, where = read$where,
-      sha256 = if (is.character(record$sha256)) substr(record$sha256, 1L, 12L),
-      manifest = if (is.null(found)) "not in the manifest" else if (isTRUE(read$newer)) "newer file waiting" else "current"
-    ))
+    for (read in if (length(reads)) reads else list(NULL)) {
+      out[[length(out) + 1L]] <- Filter(Negate(is.null), list(
+        name = if (identical(record$dataset, "study")) "built" else record$dataset,
+        version_file = version, registered = found$registered, source_file = found$source_file,
+        rows = read$rows, patients = read$patients, where = read$where,
+        sha256 = if (is.character(record$sha256)) substr(record$sha256, 1L, 12L),
+        manifest = if (is.null(found)) "not in the manifest" else if (isTRUE(read$newer)) "newer file waiting" else "current"
+      ))
+    }
   }
   out
 }

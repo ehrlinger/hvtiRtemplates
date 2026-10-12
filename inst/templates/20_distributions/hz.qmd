@@ -65,6 +65,12 @@ suppressPackageStartupMessages({
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. In THIS file the unedited `theta0` is a vector of
+# neutral 1s and the unedited `phases` are all-neutral shapes: that is a
+# well-formed model, so it fits, converges, reports standard errors and saves an
+# .rds for `hp` and `hm` to read. Nothing errors, and nothing in the output says
+# the numbers describe no study.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -77,8 +83,7 @@ set_path <- .job$set_path
 # An `hz` job ALWAYS persists: `hp` plots what it writes and `hm` fixes its
 # shape parameters at these converged values, both by set. The write itself is
 # in the `save` chunk at the foot of this file, not here.
-# What the setup has to say, after all the code above: the draft banners, if any, and
-# the box under the title.
+# The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 

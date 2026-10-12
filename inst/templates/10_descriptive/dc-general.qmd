@@ -45,8 +45,7 @@ suppressPackageStartupMessages(library(hvtiRutilities))
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# What the setup has to say, after all the code above: the draft banners, if any, and
-# the box under the title.
+# The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 

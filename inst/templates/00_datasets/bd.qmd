@@ -68,8 +68,7 @@ knitr::opts_chunk$set(warning = NA, message = NA)
 .job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment(), show_markers = FALSE)
 .root <- .job$root
 .provenance_data <- list()
-# What the setup has to say, after all the code above: the draft banners, if any, and
-# the box under the title.
+# The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 

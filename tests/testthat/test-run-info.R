@@ -108,6 +108,17 @@ test_that("a dataset read with no WHERE says none, and a read counts once howeve
   expect_identical(facts$datasets[[1L]]$where, character(0))
 })
 
+test_that("one dataset read under two filters is listed once for each", {
+  rf <- run_fixture()
+  adults <- read_job_data(rf$cfg, where = quote(age >= 30))
+  everyone <- read_job_data(rf$cfg)
+  facts <- run_facts(rf, data = list(adults$provenance, everyone$provenance))
+  expect_length(facts$datasets, 2L)
+  expect_identical(vapply(facts$datasets, function(d) paste(d$where, collapse = ";"), ""), c("age >= 30", ""))
+  expect_identical(vapply(facts$datasets, `[[`, 0L, "rows"), c(nrow(adults$data), nrow(everyone$data)))
+  expect_identical(facts$datasets[[1L]]$sha256, facts$datasets[[2L]]$sha256)
+})
+
 test_that("a newer file waiting is reported against the version the job read", {
   rf <- run_fixture()
   utils::write.csv(hazard_data(n = 170L), file.path(hvtiRutilities::study_dir("datasets", rf$root), "built.csv"),

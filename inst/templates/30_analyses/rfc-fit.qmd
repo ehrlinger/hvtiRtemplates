@@ -88,6 +88,10 @@ if (utils::packageVersion("ggRandomForests") < "4.0.0") {
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. Here that is a forest grown on the template's
+# placeholder outcome, predictors and tree count, whose error curve and ROC
+# curve look exactly like a result.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -108,8 +112,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 # both by set, so an explanation can never be filed against a different set
 # than the forest it explains. The write is the `save` chunk at the foot of
 # this file.
-# What the setup has to say, after all the code above: the draft banners, if any, and
-# the box under the title.
+# The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 

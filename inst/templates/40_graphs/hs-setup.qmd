@@ -100,6 +100,12 @@ if (utils::packageVersion("TemporalHazard") < "1.2.12") {
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. In THIS file the danger is sharper than a wrong number:
+# the unedited entry and stay levels are `hzr_stepwise()`'s defaults, which are
+# LOOSER than the SAS job's, so an unedited screen admits variables the job
+# being reproduced rejected -- and reports them as risk factors, in a table that
+# looks exactly like a result.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -112,8 +118,7 @@ set_path <- .job$set_path
 # `hm` reads the `hz` fit through this and writes its own model back, both by
 # set, so a model can never be filed against a different set than the shapes it
 # was built on. The write is in the `save` chunk at the foot of this file.
-# What the setup has to say, after all the code above: the draft banners, if any, and
-# the box under the title.
+# The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 
