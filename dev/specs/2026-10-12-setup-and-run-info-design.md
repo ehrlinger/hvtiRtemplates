@@ -93,8 +93,9 @@ date-format: "YYYY-MM-DD HH:mm"
 ```
 
 Quarto evaluates `now` at render, so the date appears in the standard title block
-and in the document's metadata (the HTML `dcterms.date`, and Word's date
-property), with no code. Templates carry their own `format:` block by rule, so the
+with no code. (This design first said it also lands in the HTML `dcterms.date`
+meta tag; Quarto 1.10.18 puts it in the title block only, measured while building
+it.) Templates carry their own `format:` block by rule, so the
 two lines go in each template, not a shared `_quarto.yml`. Jobs already in
 studies do not gain them; their render time still appears in the end table, which
 comes from `.job_setup()`.
@@ -127,6 +128,11 @@ chunk, before the JSON is embedded:
   are machine-readable too.
 - **No patient identifier and no data value appears.** The table holds names,
   dates, counts and hashes.
+- **User and host can be overridden** with the environment variables
+  `HVTI_RUN_USER` and `HVTI_RUN_HOST`, read before `Sys.info()`; an empty value
+  is ignored. The gallery build sets both to `gallery`, because the gallery is
+  published and must not carry a real username. Environment variables, not an
+  option, because Quarto renders in a child process.
 
 ## 5. Placement in the report
 
