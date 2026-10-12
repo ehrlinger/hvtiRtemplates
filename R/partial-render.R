@@ -64,7 +64,8 @@ stop_here <- function(envir = parent.frame()) {
   extra <- Filter(Negate(is.null), list(subject = get0("SUBJECT", envir = envir, ifnotfound = NULL),
                                         type = get0("TYPE", envir = envir, ifnotfound = NULL)))
   provenance <- .embed_provenance(input, data = get0(".provenance_data", envir = envir, ifnotfound = list()),
-                                  extra = extra)
+                                  extra = extra, run = get0(".job", envir = envir, ifnotfound = list())$run,
+                                  envir = envir)
   knitr::knit_exit()
   knitr::asis_output(provenance)
 }
@@ -160,7 +161,8 @@ stop_here <- function(envir = parent.frame()) {
 # A final render: HVTI_TEMPLATE_STRICT set, as render_job(final = TRUE) sets it.
 .strict_render <- function() !tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")
 
-# Called by every template's guard-partial chunk, just after the EDIT: guard.
+# Called by .job_setup(), just after the EDIT: guard (and by the guard-partial
+# chunk of a job scaffolded before 1.3.1).
 # Registers the `skip` chunk option, then lists the job's partial-render points
 # in a draft or stops a strict render, by the EDIT: guard's own strictness rule.
 .guard_partial <- function(input) {
@@ -197,7 +199,7 @@ stop_here <- function(envir = parent.frame()) {
   warning(msg, call. = FALSE)
   out <- paste0("\n::: {.callout-important title=\"PARTIAL -- parts of this job are left out\"}\n",
                 "**This report is not the whole job.**\n\n```\n", msg, "\n```\n:::\n\n")
-  # Returned, not cat(): the guard-partial chunk is `results: asis`, so knitr
+  # Returned, not cat(): a guard-partial chunk is `results: asis`, so knitr
   # prints it into the report, and nothing is written to the console. knitr is
   # only suggested; without it there is no report to print into.
   if (!requireNamespace("knitr", quietly = TRUE)) return(invisible(out))

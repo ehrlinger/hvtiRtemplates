@@ -37,6 +37,23 @@
   character(0)
 }
 
+# The template a job's file name says it came from, c(prefix, qualifier), the
+# qualifier NA when there is none; character(0) when the name is in neither
+# spelling. Read by the run information a report prints.
+.job_name_template <- function(path) {
+  stem <- sub("[.][^.]+$", "", basename(path))
+  if (grepl("-", stem, fixed = TRUE)) {
+    parts <- strsplit(stem, "-", fixed = TRUE)[[1L]]
+    if (length(parts) < 3L) return(character(0))
+    return(c(prefix = parts[[3L]], qualifier = if (length(parts) >= 4L) parts[[4L]] else NA_character_))
+  }
+  parts <- strsplit(stem, ".", fixed = TRUE)[[1L]]
+  if (length(parts) %in% 3:4 && all(grepl("^[A-Za-z0-9_]+$", parts))) {
+    return(c(prefix = parts[[1L]], qualifier = if (length(parts) == 4L) parts[[2L]] else NA_character_))
+  }
+  character(0)
+}
+
 # The same job in the dash spelling, so add_job() can refuse a duplicate and
 # open_job() can open a job scaffolded before 2026-10.
 .job_path_legacy <- function(row, subject, type, root) {

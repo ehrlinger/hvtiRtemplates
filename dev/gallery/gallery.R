@@ -102,6 +102,11 @@ gallery_job <- function(root, name, spec) {
 # so a job that reads another's saved output renders after it. Returns a data
 # frame: one row per job, with its report, or the error that stopped it.
 gallery_build <- function(root, quiet = TRUE, only = NULL) {
+  # Every report says who rendered it and on which machine ("About this run"),
+  # and the gallery is published. HVTI_RUN_USER and HVTI_RUN_HOST replace the
+  # two, so no real username or host name reaches the site. Environment
+  # variables, not options(): Quarto renders in a process of its own.
+  withr::local_envvar(c(HVTI_RUN_USER = "gallery", HVTI_RUN_HOST = "gallery"))
   jobs <- gallery_jobs()
   if (!is.null(only)) jobs <- jobs[names(jobs) %in% only]
   rows <- lapply(names(jobs), function(name) {

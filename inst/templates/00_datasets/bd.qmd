@@ -1,5 +1,7 @@
 ---
 title: "Study dataset build"
+date: now
+date-format: "YYYY-MM-DD HH:mm"
 # Carried in the file rather than inherited from _quarto.yml, as every template
 # is: a file meant to be copied must not depend on the directory it sits in.
 format:
@@ -40,75 +42,37 @@ report).
 
 ```{r}
 #| label: setup
-# The study root is the nearest directory above this file holding _study.yml,
-# so the job runs the same from the Render button, quarto render, or as a
-# script run from inside the study.
+#| results: asis
+#| warning: !expr NA
+#| message: !expr NA
+# add_job() writes SUBJECT and TYPE from the file's name; a hand-edited
+# declaration that drifts from it stops the render in .job_setup().
+SUBJECT <- "study"
+TYPE    <- "build"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
 # Quarto knits through an intermediate, so the name is put back to .qmd.
 .job_file <- if (is.null(.in)) "this job" else sub("[.][^.]+$", ".qmd", basename(.in))
 # Every stop names its step and this file, and never a data value.
 .bd_stop <- function(step, ...) stop("bd: ", step, " (", .job_file, "): ", ..., call. = FALSE)
 # Later chunks send warnings and messages to the console rather than the report.
 knitr::opts_chunk$set(warning = NA, message = NA)
-```
-
-```{r}
-#| label: guard-edits
-#| results: asis
-# A job with unresolved markers renders as a draft, as every template does.
-# Outside a render (the purled script) knitr has no input file and this guard does not run,
-# so a scheduled script must be run from a finished job.
-# Unlike the others, the banner gives only the COUNT: a marker line could sit
-# beside a rule naming a patient, and this report shows no source. The marker
-# text goes to the console in the warning.
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    .msg <- paste0(length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-                   paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"))
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
-              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat(length(.hits), "unresolved markers remain. **This dataset is not finished.**\n")
-      cat(":::\n\n")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '", Sys.getenv("HVTI_TEMPLATE_STRICT"),
-           "'. Unset it, or set it to 0, false or no, to render a draft instead.", call. = FALSE)
-    }
-  }
-}
-```
-
-```{r}
-#| label: guard-partial
-#| results: asis
-# unnumbered: a callout, printed only when part of the job is left out
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
-```
-
-```{r}
-#| label: set
-SUBJECT <- "study"
-TYPE    <- "build"
-
-# add_job() writes SUBJECT and TYPE from the file's name; a hand-edited
-# declaration that drifts from it stops here.
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  if (!identical(.fields[1L], SUBJECT) || !identical(.fields[2L], TYPE)) {
-    .bd_stop("set", "the file's name and its SUBJECT and TYPE disagree. Fix the declaration or the name.")
-  }
-}
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+# show_markers = FALSE: the draft banner gives only the COUNT of open markers. A
+# marker line could sit beside a rule naming a patient, and this report shows
+# no source. The marker text goes to the console in the warning.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment(), show_markers = FALSE)
+.root <- .job$root
+.provenance_data <- list()
+# What the setup has to say, after all the code above: the draft banners, if any, and
+# the box under the title.
+.job$notice
 ```
 
 ## Study choices
@@ -374,4 +338,12 @@ knitr::kable(data.frame(
   }, ""),
   row.names = NULL
 ))
+```
+
+```{r}
+#| label: about-run
+#| echo: false
+#| results: asis
+# unnumbered: the section is a table the package draws, headed "About this run"
+cat(hvtiRtemplates:::.about_run(.job$run, cfg = hvtiRutilities::study_config(start = .root), envir = environment()))
 ```
