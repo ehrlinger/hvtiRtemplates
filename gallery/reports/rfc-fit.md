@@ -2,6 +2,10 @@
 
 # Random forest classification: fit
 
+Published
+
+2026-10-12 16:26
+
 Gallery job on the synthetic cohort: major postoperative complication
 (complication, 0/1).
 
@@ -20,13 +24,9 @@ from the job’s fit call and not from its name: a survival outcome is
 Code
 
 ``` r
-# The study root is the nearest directory above this file holding _study.yml,
-# so the job renders the same from the Render button, quarto render, or
-# render_job(), at any depth, with no path in this document to edit.
+SUBJECT <- "complication"
+TYPE    <- "rf"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
-for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(randomForestSRC)
   library(ggRandomForests)
@@ -50,128 +50,22 @@ if (utils::packageVersion("ggRandomForests") < "4.0.0") {
   stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
-```
-
-Code
-
-``` r
-# The markers in this file name work a study author still has to do, and
-# README.md says a job that still contains one has not been finished. This
-# chunk is what makes that TRUE rather than merely stated.
-#
-# Without it an unedited job renders green over a meaningless analysis. Here
-# that is a forest grown on the template's placeholder outcome, predictors and
-# tree count, whose error curve and ROC curve look exactly like a result.
-#
-# knitr::current_input() is NULL outside a render -- a study author stepping
-# through chunks in RStudio -- and there is no file to scan then, so this is a
-# no-op in that case. Same handling as the `set` guard below, for the same
-# reason.
-#
-# The token is BUILT, not written literally, and that is not stylistic. Quarto
-# knits through an intermediate and current_input() returns THAT file, so the
-# scan reads a copy of this chunk along with everything else: a literal
-# grep("<token>", .src) here matches its own source line, and the guard then
-# fires on every render, finished or not. Measured, not theorised -- a probe
-# found three markers in a file containing two. A guard that cries wolf on a
-# finished job is a guard that gets deleted, which returns us to issue #27.
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src  <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    # Report the marker TEXT. Line numbers here are the intermediate's, not
-    # this .qmd's, so they need not match what the author sees in an editor.
-    .msg <- paste0(
-      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
-      "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it."
-    )
-    # A job renders as a draft by default, so an author can iterate on a
-    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
-    # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognized value stops on purpose, so a
-    # mistyped switch is seen rather than quietly ignored, which is the safe
-    # direction to be wrong in.
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      # The banner is not optional. A draft render that looks like a finished
-      # one is the same defect with an extra step: the warning scrolls past in
-      # a log, while the .html is the artifact that gets sent to someone.
-      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
-              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Unresolved markers remain. **The numbers below are not",
-          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
-      cat(":::\n\n")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
-           "or no, to render a draft instead.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. Here that is a forest grown on the template's
+# placeholder outcome, predictors and tree count, whose error curve and ROC
+# curve look exactly like a result.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
-```
-
-Code
-
-``` r
-SUBJECT <- "complication"
-TYPE    <- "rf"
-
-# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
-# name, but a hand-edited declaration can drift from it afterward. set_path()
-# below resolves from the declarations, not the filename, so a drifted
-# declaration would silently write into ANOTHER set's artifact directory --
-# exactly the collision the (subject, type) key exists to prevent, re-entered
-# through the body instead of the name.
-#
-# knitr::current_input() is NULL outside a render (a study author running
-# chunks interactively in RStudio), and there is no filename to check against
-# yet, so this is a no-op in that case rather than a spurious error.
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
-  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
-  # 2026-10. .job_name_fields() reads subject and type from either, whatever
-  # the extension: Quarto knits through an intermediate, so
-  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
-         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
-         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
-  }
-}
-
-# Resolve a path inside this set's artifact directory. `kind` is the artifact
-# folder -- "estimates" for serialized results, "graphs" for figures. The set
-# directory sits one layer under the kind and never two, which is the whole
-# layout rule.
-#
-# Created on first use rather than up front, so a job that writes nothing leaves
-# no empty directories behind.
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
 # Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
@@ -183,7 +77,12 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 # both by set, so an explanation can never be filed against a different set
 # than the forest it explains. The write is the `save` chunk at the foot of
 # this file.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
+
+**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
+· rendered by gallery on gallery · hvtiRtemplates 1.3.1
 
 ## Study choices
 
@@ -347,7 +246,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261009.parquet) |
+| Source              | dataset `built` (built_20261012.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -386,7 +285,7 @@ model <- stats::reformulate(".", response = RESPONSE)
 environment(model) <- globalenv()
 forest <- cache_fit(
   "rfc-forest",
-  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none", seed = -abs(SEED)),
+  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none", block.size = 1, seed = -abs(SEED)),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
 )
 forest
@@ -431,6 +330,11 @@ forest
 work, and cached there on its own, so it can be recomputed without
 regrowing the forest.
 
+`block.size = 1` is deliberate too. With importance off, randomForestSRC
+records the out-of-bag error only at the last tree, and the error plot
+below would be one point. One block per tree gives the curve that shows
+whether `NTREE` was large enough.
+
 ## Does the forest work?
 
 Code
@@ -443,7 +347,7 @@ save_figure(.fig, "rfc-fit-diagnostics-error")
 .fig
 ```
 
-![](assets/ab8a9dafede4a4b7b570ad93eb5f2831.png)
+![](assets/ec1e98fcb58012e650a173f825662444.png)
 
 Figure 1: Out-of-bag error by number of trees, overall and per class
 
@@ -499,3 +403,28 @@ forest <- hvtiRtemplates:::.attach_handoff_lineage(
 )
 saveRDS(forest, set_path("estimates", "rfc.rds"))
 ```
+
+## About this run
+
+| Group           | Item           | Value                       |
+|:----------------|:---------------|:----------------------------|
+| Run             | Started        | 2026-10-12 16:26:13 EDT     |
+|                 | Ended          | 2026-10-12 16:26:17 EDT     |
+|                 | Duration       | 4 s                         |
+|                 | Status         | final                       |
+|                 | Rendered by    | gallery                     |
+|                 | Host           | gallery                     |
+| Job             | File           | rfc.fit.complication.rf.qmd |
+|                 | Template       | rfc.fit                     |
+|                 | Subject        | complication                |
+|                 | Type           | rf                          |
+|                 | hvtiRtemplates | 1.3.1                       |
+| Dataset `built` | Version file   | built_20261012.parquet      |
+|                 | Registered     | 2026-10-12                  |
+|                 | Source file    | built.rds                   |
+|                 | Rows kept      | 800 rows on 800 patients    |
+|                 | WHERE          | none                        |
+|                 | sha256         | 27b97c1d78ec                |
+|                 | Manifest       | current                     |
+| Reproducibility | Seed           | 2026                        |
+|                 | renv           | not active                  |

@@ -2,6 +2,10 @@
 
 # Goodness of follow-up
 
+Published
+
+2026-10-12 16:16
+
 Replaces `descriptive/dc.gfup`.
 
 A `dc-gfup` job checks follow-up before time-related analyses. We
@@ -21,19 +25,15 @@ a follow-up problem to settle before any time-related analysis.
 
 The figure is `hvtiPlotR::hv_followup_panels()`, which the EDA report
 also calls, so its follow-up panels are these. It was the separate
-`dp-gfup` job, now deprecated in favor of this one.
+`dp-gfup` job, since removed in favor of this one.
 
 Code
 
 ``` r
-# unnumbered: loads packages and checks versions only
-# The study root is the nearest directory above this file holding _study.yml,
-# so the job renders the same from the Render button, quarto render, or
-# render_job(), at any depth, with no path in this document to edit.
+# unnumbered: setup, and the box under the title
+SUBJECT <- "cohort"
+TYPE    <- "eda"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
-for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(hvtiRutilities)
   library(hvtiPlotR)
@@ -47,83 +47,30 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
   stop("This job needs hvtiPlotR >= 2.8.0 for hv_followup_panels() and scale_color_hv(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
-```
-
-Code
-
-``` r
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    .msg <- paste0(
-      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
-      "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it."
-    )
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
-              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Unresolved markers remain. **The numbers below are not",
-          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
-      cat(":::\n\n")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
-           "or no, to render a draft instead.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
-```
-
-Code
-
-``` r
-SUBJECT <- "cohort"
-TYPE    <- "eda"
-
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject,
-         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
-         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.",
-         call. = FALSE)
-  }
-}
-
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
 # Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
                                 SAVE_FIGURES, FIGURES, linked)
 }
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
+
+**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
+· rendered by gallery on gallery · hvtiRtemplates 1.3.1
 
 ## Study choices
 
@@ -183,7 +130,7 @@ MAX_REVIEW_ROWS <- 25L
 # Missing values are shown. Use list() when no additional checks are needed.
 CHECKS <- list(c("dead", "reop"))
 
-# The figure. These are dp-eda's follow-up choices, and mean what they mean there.
+# The figure. These are dc-eda's follow-up choices, and mean what they mean there.
 # Demo: the years-since-origin interval to the operation, and that origin, a
 # calendar year such as 1990. The origin differs between studies, and a wrong
 # one slides every point along the x-axis without any other symptom, which is
@@ -195,7 +142,7 @@ ORIGIN_YEAR <- 1990
 # as the latest operation date plus follow-up in the data, which is the date
 # follow-up is known to reach, not the date it was closed; the report says
 # which one it drew.
-CLOSE_DATE <- NULL
+CLOSE_DATE <- as.Date("2025-12-31")
 
 # Demo: one entry per death panel. `status` is the 1/0 death indicator and
 # `time` its follow-up in years; the default draws the same columns as the
@@ -212,7 +159,7 @@ PANELS <- list(
 # before death, so ties go to death. list() draws none. For example
 #   reop = list(event = "ev_reop", time = "iv_reop", death = "dead",
 #               death_time = "iv_dead", label = "Reoperation")
-EVENTS <- list()
+EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", death_time = "iv_dead", label = "Reoperation"))
 
 # Demo: point transparency. 0.5 lets a dense cohort read as a distribution
 # rather than a blob; raise it for a small one.
@@ -250,7 +197,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261009.parquet) |
+| Source              | dataset `built` (built_20261012.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -298,8 +245,8 @@ review_rows <- fc$review
 # checks for all patients, and one proc_means() row per group. This is them as
 # one table, a row per interval and group. The counts are each group's n, the
 # negative and zero checks are counted within each group, and the summaries are
-# proc_means()'s alone, so there is one quantile definition, not two. dp-eda
-# carries the same function; test-dp-eda.R keeps the two from drifting.
+# proc_means()'s alone, so there is one quantile definition, not two. dc-eda
+# carries the same function; test-dc-eda.R keeps the two from drifting.
 .followup_table <- function(fc, d, event) {
   ev <- d[[event]]
   groups <- c(full = "All patients", event = "Event", censored = "Censored")
@@ -391,6 +338,8 @@ if (figure_drawn) {
          call. = FALSE)
   }
   warning("The goodness-of-follow-up figure was not drawn: ", conditionMessage(fp), call. = FALSE)
+  # The box under the title was printed before this was known; the end table says draft.
+  hvtiRtemplates:::.run_mark_draft("the goodness-of-follow-up figure was not drawn")
   close_date <- NA
   close_source <- paste("not drawn:", conditionMessage(fp))
 }
@@ -412,14 +361,14 @@ knitr::kable(data.frame(
 ))
 ```
 
-| quantity | value |
-|:---|:---|
-| patients | 800 |
-| operation year missing | 0 |
-| first operation | 1990-01-25 |
-| last operation | 2024-12-10 |
-| close date | 2025-12-31 |
-| close date is | estimated: the latest operation plus follow-up in the data |
+| quantity               | value             |
+|:-----------------------|:------------------|
+| patients               | 800               |
+| operation year missing | 0                 |
+| first operation        | 1990-01-25        |
+| last operation         | 2024-12-10        |
+| close date             | 2025-12-31        |
+| close date is          | set in CLOSE_DATE |
 
 Table 3: Operation years and the close date
 
@@ -436,7 +385,7 @@ Code
 # unnumbered: each child chunk below carries its own label and caption
 # This document sits in descriptive/ and its figures are written to graphs/
 # through set_path(), so the image link is the figure's path relative to this
-# document, worked out at render time, as dp-eda's is.
+# document, worked out at render time, as dc-eda's is.
 .fence <- strrep("`", 3)
 .seen <- new.env()
 .child <- function(label, caption, code) {
@@ -509,6 +458,20 @@ knitr::include_graphics(.link, error = FALSE)
 
 Figure 1: Follow-up against year of operation, All deaths
 
+### Reoperation
+
+800 patients drawn; 0 missing a column this panel needs.
+
+Code
+
+``` r
+knitr::include_graphics(.link, error = FALSE)
+```
+
+![](assets/799f059b3f4cd93edab363e90e7aef5b.png)
+
+Figure 2: Follow-up against year of operation, Reoperation
+
 ## Event-coding consistency
 
 Code
@@ -550,3 +513,27 @@ knitr::kable(.check)
 | 1    | 1    |   80 |
 
 Table 4: dead by reop
+
+## About this run
+
+| Group           | Item           | Value                    |
+|:----------------|:---------------|:-------------------------|
+| Run             | Started        | 2026-10-12 16:16:35 EDT  |
+|                 | Ended          | 2026-10-12 16:16:36 EDT  |
+|                 | Duration       | 1 s                      |
+|                 | Status         | final                    |
+|                 | Rendered by    | gallery                  |
+|                 | Host           | gallery                  |
+| Job             | File           | dc.gfup.cohort.eda.qmd   |
+|                 | Template       | dc.gfup                  |
+|                 | Subject        | cohort                   |
+|                 | Type           | eda                      |
+|                 | hvtiRtemplates | 1.3.1                    |
+| Dataset `built` | Version file   | built_20261012.parquet   |
+|                 | Registered     | 2026-10-12               |
+|                 | Source file    | built.rds                |
+|                 | Rows kept      | 800 rows on 800 patients |
+|                 | WHERE          | none                     |
+|                 | sha256         | 27b97c1d78ec             |
+|                 | Manifest       | current                  |
+| Reproducibility | renv           | not active               |

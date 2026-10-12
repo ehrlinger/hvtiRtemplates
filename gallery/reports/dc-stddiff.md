@@ -2,7 +2,9 @@
 
 # Standardized differences
 
-Replaces `descriptive/dc.stddiff`: say which variant.
+Published
+
+2026-10-12 16:17
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -24,109 +26,48 @@ variables only. The optional permutation reference is
 Code
 
 ``` r
-# unnumbered: loads packages and checks versions only
-# The study root is the nearest directory above this file holding _study.yml,
-# so the job renders the same from the Render button, quarto render, or
-# render_job(), at any depth, with no path in this document to edit.
+# unnumbered: setup, and the box under the title
+SUBJECT <- "approach"
+TYPE    <- "balance"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
-for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(hvtiRutilities)
   library(hvtiRpropensity)
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.1.7") {
-  stop("This job needs hvtiRpropensity >= 0.1.7 for ps_stddiff() and ps_stddiff_perm(); ",
+if (utils::packageVersion("hvtiRpropensity") < "0.1.10") {
+  stop("This job needs hvtiRpropensity >= 0.1.10 for ps_stddiff() and ps_stddiff_perm(); ",
        utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
   stop("This job needs hvtiPlotR >= 2.8.0 for hv_balance() and theme_hv_manuscript(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
-```
-
-Code
-
-``` r
-# The markers in this file name work a study author still has to do, and a job
-# that still contains one has not been finished. This chunk is what makes that
-# TRUE rather than merely stated: an unedited job would otherwise render green
-# over placeholder columns.
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src  <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    .msg <- paste0(
-      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
-      "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it."
-    )
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
-              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Unresolved markers remain. **The numbers below are not",
-          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
-      cat(":::\n\n")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
-           "or no, to render a draft instead.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
-```
-
-Code
-
-``` r
-SUBJECT <- "approach"
-TYPE    <- "balance"
-
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject,
-         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
-         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.",
-         call. = FALSE)
-  }
-}
-
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
 # Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
                                 SAVE_FIGURES, FIGURES, linked)
 }
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
+
+**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
+· rendered by gallery on gallery · hvtiRtemplates 1.3.1
 
 ## Study choices
 
@@ -240,7 +181,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261009.parquet) |
+| Source              | dataset `built` (built_20261012.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -558,3 +499,28 @@ than chance assignment tends to produce; 16 to 84 is the central 68%.
 The treatment effect under matching weights, the SAS `%mw_var` macro, is
 `hvtiRpropensity::ps_mw_var()`. It estimates an outcome difference
 rather than balance, so it is not part of this job.
+
+## About this run
+
+| Group           | Item           | Value                           |
+|:----------------|:---------------|:--------------------------------|
+| Run             | Started        | 2026-10-12 16:17:03 EDT         |
+|                 | Ended          | 2026-10-12 16:17:04 EDT         |
+|                 | Duration       | 1 s                             |
+|                 | Status         | final                           |
+|                 | Rendered by    | gallery                         |
+|                 | Host           | gallery                         |
+| Job             | File           | dc.stddiff.approach.balance.qmd |
+|                 | Template       | dc.stddiff                      |
+|                 | Subject        | approach                        |
+|                 | Type           | balance                         |
+|                 | hvtiRtemplates | 1.3.1                           |
+| Dataset `built` | Version file   | built_20261012.parquet          |
+|                 | Registered     | 2026-10-12                      |
+|                 | Source file    | built.rds                       |
+|                 | Rows kept      | 800 rows on 800 patients        |
+|                 | WHERE          | none                            |
+|                 | sha256         | 27b97c1d78ec                    |
+|                 | Manifest       | current                         |
+| Reproducibility | Seed           | 20261006                        |
+|                 | renv           | not active                      |

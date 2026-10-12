@@ -2,6 +2,10 @@
 
 # General descriptive checks
 
+Published
+
+2026-10-12 16:16
+
 Replaces `descriptive/dc.general`.
 
 A `dc-general` job is the first look at a built cohort, before any table
@@ -13,88 +17,28 @@ table is a `dc-tables` job.
 Code
 
 ``` r
+SUBJECT <- "cohort"
+TYPE    <- "eda"
+.in <- knitr::current_input(dir = TRUE)
+suppressPackageStartupMessages(library(hvtiRutilities))
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
-.in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
-for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
-suppressPackageStartupMessages(library(hvtiRutilities))
-```
-
-Code
-
-``` r
-# The markers in this file name work a study author still has to do, and a job
-# that still contains one has not been finished. This chunk is what makes that
-# TRUE rather than merely stated: an unedited job would otherwise render green
-# over placeholder columns.
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src  <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    .msg <- paste0(
-      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
-      "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it."
-    )
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
-              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Unresolved markers remain. **The numbers below are not",
-          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
-      cat(":::\n\n")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
-           "or no, to render a draft instead.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
 
-Code
-
-``` r
-SUBJECT <- "cohort"
-TYPE    <- "eda"
-
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject,
-         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
-         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.",
-         call. = FALSE)
-  }
-}
-
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-```
+**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
+· rendered by gallery on gallery · hvtiRtemplates 1.3.1
 
 ## Study choices
 
@@ -186,7 +130,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261009.parquet) |
+| Source              | dataset `built` (built_20261012.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -316,13 +260,13 @@ proc_contents(d)
 ```
 
     Observations: 800
-    Variables:    32
+    Variables:    33
 
        num     variable type format                                    label
     1    5          age  Num   <NA>                 Age at operation (years)
     2   26     approach Char   <NA>    Surgical or transcatheter replacement
     3    8          bmi  Num   <NA>                  Body mass index (kg/m2)
-    4   30 complication  Num   <NA>         Major postoperative complication
+    4   31 complication  Num   <NA>         Major postoperative complication
     5   14     creat_pr  Num   <NA>                       Creatinine (mg/dL)
     6   15         dead  Num   <NA>                                    Death
     7   25    discharge Char   <NA>                    Discharge destination
@@ -333,24 +277,25 @@ proc_contents(d)
     12  16      iv_dead  Num   <NA>  Follow-up to death or censoring (years)
     13   3     iv_opyrs  Num   <NA>   Years from 1 January 1990 to operation
     14  18      iv_reop  Num   <NA>         Follow-up to reoperation (years)
-    15  32      log_los  Num   <NA>  Postoperative length of stay (log days)
-    16  31          los  Num   <NA>      Postoperative length of stay (days)
+    15  33      log_los  Num   <NA>  Postoperative length of stay (log days)
+    16  32          los  Num   <NA>      Postoperative length of stay (days)
     17  12         lvef  Num   <NA>                 LV ejection fraction (%)
     18  21         male  Num   <NA>                                     Male
-    19  24     mr_grade Char   <NA> Postoperative mitral regurgitation grade
-    20  22     nonwhite  Num   <NA>                           Non-white race
-    21  11      nyha_pr  Num   <NA>                    NYHA functional class
-    22   2      op_date  Num   <NA>                        Date of operation
-    23   1   patient_id Char   <NA>           Patient identifier (synthetic)
-    24  13     plvmassi  Num   <NA>                     LV mass index (g/m2)
-    25  29    prior_ops  Num   <NA>       Number of prior cardiac operations
-    26   7     race_grp Char   <NA>                                     Race
-    27  17         reop  Num   <NA>                              Reoperation
-    28  23       stroke Char   <NA>                     Postoperative stroke
-    29  27   valve_size Char   <NA>                          Prosthesis size
-    30  28   valve_type Char   <NA>                          Prosthesis type
-    31  19         vent  Num   <NA>                    Prolonged ventilation
-    32   4         year  Num   <NA>                        Year of operation
+    19  30   match_pair  Num   <NA>            In a matched pair (simulated)
+    20  24     mr_grade Char   <NA> Postoperative mitral regurgitation grade
+    21  22     nonwhite  Num   <NA>                           Non-white race
+    22  11      nyha_pr  Num   <NA>                    NYHA functional class
+    23   2      op_date  Num   <NA>                        Date of operation
+    24   1   patient_id Char   <NA>           Patient identifier (synthetic)
+    25  13     plvmassi  Num   <NA>                     LV mass index (g/m2)
+    26  29    prior_ops  Num   <NA>       Number of prior cardiac operations
+    27   7     race_grp Char   <NA>                                     Race
+    28  17         reop  Num   <NA>                              Reoperation
+    29  23       stroke Char   <NA>                     Postoperative stroke
+    30  27   valve_size Char   <NA>                          Prosthesis size
+    31  28   valve_type Char   <NA>                          Prosthesis type
+    32  19         vent  Num   <NA>                    Prolonged ventilation
+    33   4         year  Num   <NA>                        Year of operation
            class n_unique pct_missing
     1    numeric       65         0.0
     2  character        2         0.0
@@ -370,20 +315,21 @@ proc_contents(d)
     16   integer       19         0.0
     17   numeric       53         0.0
     18   integer        2         0.0
-    19 character        4         0.0
-    20   integer        2         0.0
-    21   numeric        4         0.0
-    22      Date      766         0.0
-    23 character      800         0.0
-    24   numeric      141         0.0
-    25   integer        4         0.0
-    26 character        3         0.0
-    27   integer        2         0.0
-    28 character        2         0.0
-    29 character        3         0.0
+    19   integer        2         0.0
+    20 character        4         0.0
+    21   integer        2         0.0
+    22   numeric        4         0.0
+    23      Date      766         0.0
+    24 character      800         0.0
+    25   numeric      141         0.0
+    26   integer        4         0.0
+    27 character        3         0.0
+    28   integer        2         0.0
+    29 character        2         0.0
     30 character        3         0.0
-    31   integer        2         0.0
-    32   numeric       35         0.0
+    31 character        3         0.0
+    32   integer        2         0.0
+    33   numeric       35         0.0
 
 Table 2: Contents of the data: each column, its type and its label
 
@@ -429,9 +375,10 @@ proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min",
     18         male                                    Male 800     0    0.626250
     19     nonwhite                          Non-white race 800     0    0.211250
     20    prior_ops      Number of prior cardiac operations 800     0    0.392500
-    21 complication        Major postoperative complication 800     0    0.182500
-    22          los     Postoperative length of stay (days) 800     0    6.317500
-    23      log_los Postoperative length of stay (log days) 800     0    1.763026
+    21   match_pair           In a matched pair (simulated) 800     0    0.593750
+    22 complication        Major postoperative complication 800     0    0.182500
+    23          los     Postoperative length of stay (days) 800     0    6.317500
+    24      log_los Postoperative length of stay (log days) 800     0    1.763026
               std      min       max         sum
     1   9.8319268 6.60e-02   34.9400   13945.911
     2   9.8260923 1.99e+03 2024.0000 1605552.000
@@ -453,9 +400,10 @@ proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min",
     18  0.4841011 0.00e+00    1.0000     501.000
     19  0.4084507 0.00e+00    1.0000     169.000
     20  0.6663323 0.00e+00    3.0000     314.000
-    21  0.3864977 0.00e+00    1.0000     146.000
-    22  2.6249394 1.00e+00   19.0000    5054.000
-    23  0.4032844 0.00e+00    2.9444    1410.421
+    21  0.4914395 0.00e+00    1.0000     475.000
+    22  0.3864977 0.00e+00    1.0000     146.000
+    23  2.6249394 1.00e+00   19.0000    5054.000
+    24  0.4032844 0.00e+00    2.9444    1410.421
 
 Table 3: Summary statistics of the overall variables
 
@@ -766,3 +714,27 @@ default. The highest extremes are listed largest first (SAS lists them
 ascending). The SAS job printed `ccfid` beside every extreme value so an
 author could look the patient up; this job prints the values alone
 unless `ID_COL` is set under Study choices.
+
+## About this run
+
+| Group           | Item           | Value                     |
+|:----------------|:---------------|:--------------------------|
+| Run             | Started        | 2026-10-12 16:16:56 EDT   |
+|                 | Ended          | 2026-10-12 16:16:57 EDT   |
+|                 | Duration       | 0 s                       |
+|                 | Status         | final                     |
+|                 | Rendered by    | gallery                   |
+|                 | Host           | gallery                   |
+| Job             | File           | dc.general.cohort.eda.qmd |
+|                 | Template       | dc.general                |
+|                 | Subject        | cohort                    |
+|                 | Type           | eda                       |
+|                 | hvtiRtemplates | 1.3.1                     |
+| Dataset `built` | Version file   | built_20261012.parquet    |
+|                 | Registered     | 2026-10-12                |
+|                 | Source file    | built.rds                 |
+|                 | Rows kept      | 800 rows on 800 patients  |
+|                 | WHERE          | none                      |
+|                 | sha256         | 27b97c1d78ec              |
+|                 | Manifest       | current                   |
+| Reproducibility | renv           | not active                |

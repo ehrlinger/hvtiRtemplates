@@ -15,6 +15,20 @@ window.GALLERY = [
   "note": ""
  },
  {
+  "name": "dc-eda",
+  "folder": "10_descriptive",
+  "title": "Descriptive plot: EDA report",
+  "use": "The whole data-checking report in one render: every column's contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table.",
+  "deprecated_by": null,
+  "call": "add_job(\"dc.eda\", subject = \"cohort\", type = \"eda\")",
+  "tables": 6,
+  "figures": 7,
+  "seconds": 14.4,
+  "report": true,
+  "issues": [],
+  "note": "No grouping variable, which the legacy EDA report had."
+ },
+ {
   "name": "dc-general",
   "folder": "10_descriptive",
   "title": "Descriptive: general",
@@ -23,7 +37,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.general\", subject = \"cohort\", type = \"eda\")",
   "tables": 14,
   "figures": 0,
-  "seconds": 5.1,
+  "seconds": 6.2,
   "report": true,
   "issues": [],
   "note": ""
@@ -36,8 +50,8 @@ window.GALLERY = [
   "deprecated_by": null,
   "call": "add_job(\"dc.gfup\", subject = \"cohort\", type = \"eda\")",
   "tables": 4,
-  "figures": 1,
-  "seconds": 5.8,
+  "figures": 2,
+  "seconds": 6.8,
   "report": true,
   "issues": [],
   "note": ""
@@ -51,7 +65,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.stddiff\", subject = \"cohort\", type = \"balance\")",
   "tables": 5,
   "figures": 1,
-  "seconds": 6.2,
+  "seconds": 6.3,
   "report": true,
   "issues": [],
   "note": ""
@@ -65,24 +79,38 @@ window.GALLERY = [
   "call": "add_job(\"dc.tables\", subject = \"cohort\", type = \"eda\")",
   "tables": 2,
   "figures": 0,
-  "seconds": 7.1,
+  "seconds": 10.2,
   "report": true,
   "issues": [],
   "note": "The session asked whether this should become a named Table 1 job."
  },
  {
-  "name": "dp-eda",
+  "name": "dc-trends",
   "folder": "10_descriptive",
-  "title": "Descriptive plot: EDA report",
-  "use": "The whole data-checking report in one render: every column's contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table.",
+  "title": "Descriptive plot: trends",
+  "use": "How the cohort changed over the years of operation: the share with a characteristic, or the level of a measurement, year by year with a smooth.",
   "deprecated_by": null,
-  "call": "add_job(\"dp.eda\", subject = \"cohort\", type = \"eda\")",
-  "tables": 6,
-  "figures": 7,
-  "seconds": 13.1,
+  "call": "add_job(\"dc.trends\", subject = \"cohort\", type = \"eda\")",
+  "tables": 2,
+  "figures": 4,
+  "seconds": 6.8,
   "report": true,
   "issues": [],
-  "note": "No grouping variable, which the legacy EDA report had."
+  "note": ""
+ },
+ {
+  "name": "lg",
+  "folder": "10_descriptive",
+  "title": "Logit calibration",
+  "use": "Calibrates a continuous or ordinal covariate against an event: it groups the covariate, takes each group's event rate on a logit or constant-hazard scale, and plots it against six candidate scales of the covariate, so the analyst can pick the straightest and save the term for an lm job's PREDICTORS.",
+  "deprecated_by": null,
+  "call": "add_job(\"lg\", subject = \"dead\", type = \"calibration\")",
+  "tables": 5,
+  "figures": 2,
+  "seconds": 6.8,
+  "report": true,
+  "issues": [],
+  "note": "Death against age and NYHA class on the constant-hazard link, with the scale chosen for each. A real study reads the figures before it fills chosen in."
  },
  {
   "name": "ac",
@@ -93,7 +121,7 @@ window.GALLERY = [
   "call": "add_job(\"ac\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 8,
   "figures": 0,
-  "seconds": 5.2,
+  "seconds": 5.4,
   "report": true,
   "issues": [
    177,
@@ -110,7 +138,7 @@ window.GALLERY = [
   "call": "add_job(\"hz\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 8,
   "figures": 0,
-  "seconds": 8.0,
+  "seconds": 7.9,
   "report": true,
   "issues": [
    169,
@@ -128,7 +156,7 @@ window.GALLERY = [
   "call": "add_job(\"bc\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 13.8,
+  "seconds": 15.7,
   "report": true,
   "issues": [
    185,
@@ -147,7 +175,7 @@ window.GALLERY = [
   "call": "add_job(\"bh\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 116.7,
+  "seconds": 113.3,
   "report": true,
   "issues": [
    185,
@@ -167,7 +195,7 @@ window.GALLERY = [
   "call": "add_job(\"bl\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 18.2,
+  "seconds": 20.9,
   "report": true,
   "issues": [
    185,
@@ -185,7 +213,7 @@ window.GALLERY = [
   "call": "add_job(\"br\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 8.8,
+  "seconds": 9.5,
   "report": true,
   "issues": [
    185,
@@ -203,7 +231,7 @@ window.GALLERY = [
   "call": "add_job(\"hm\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 12,
   "figures": 0,
-  "seconds": 7.2,
+  "seconds": 7.8,
   "report": true,
   "issues": [
    228,
@@ -227,10 +255,9 @@ window.GALLERY = [
   "seconds": 4.9,
   "report": true,
   "issues": [
-   179,
    174
   ],
-  "note": "The rate ratio column is labelled odds_ratio (hvtiRpropensity#46)."
+  "note": ""
  },
  {
   "name": "lm-binary",
@@ -241,10 +268,9 @@ window.GALLERY = [
   "call": "add_job(\"lm.binary\", subject = \"outcome\", type = \"analysis\")",
   "tables": 4,
   "figures": 0,
-  "seconds": 4.7,
+  "seconds": 4.4,
   "report": true,
   "issues": [
-   179,
    174
   ],
   "note": ""
@@ -258,12 +284,9 @@ window.GALLERY = [
   "call": "add_job(\"lm.checkpred\", subject = \"outcome\", type = \"analysis\")",
   "tables": 3,
   "figures": 0,
-  "seconds": 4.7,
+  "seconds": 4.5,
   "report": true,
-  "issues": [
-   180,
-   179
-  ],
+  "issues": [],
   "note": "AUC 0.75 and observed/expected 1.16 on the 2015-onward cohort."
  },
  {
@@ -275,10 +298,9 @@ window.GALLERY = [
   "call": "add_job(\"lm.nominal\", subject = \"outcome\", type = \"analysis\")",
   "tables": 4,
   "figures": 0,
-  "seconds": 4.9,
+  "seconds": 4.7,
   "report": true,
   "issues": [
-   179,
    174
   ],
   "note": ""
@@ -292,10 +314,9 @@ window.GALLERY = [
   "call": "add_job(\"lm.ordinal\", subject = \"outcome\", type = \"analysis\")",
   "tables": 4,
   "figures": 0,
-  "seconds": 4.8,
+  "seconds": 4.7,
   "report": true,
   "issues": [
-   179,
    174
   ],
   "note": ""
@@ -309,13 +330,12 @@ window.GALLERY = [
   "call": "add_job(\"lm.propensity_binary\", subject = \"treatment\", type = \"propensity\")",
   "tables": 6,
   "figures": 0,
-  "seconds": 4.8,
+  "seconds": 4.9,
   "report": true,
   "issues": [
-   179,
    174
   ],
-  "note": "Group counts print as control and treated, not the declared levels (hvtiRpropensity#47)."
+  "note": ""
  },
  {
   "name": "lm-propensity_nominal",
@@ -324,16 +344,14 @@ window.GALLERY = [
   "use": "Generalized-logit propensity model for a nominal treatment with an explicit reference level.",
   "deprecated_by": null,
   "call": "add_job(\"lm.propensity_nominal\", subject = \"treatment\", type = \"propensity\")",
-  "tables": 5,
+  "tables": 6,
   "figures": 0,
   "seconds": 4.8,
   "report": true,
   "issues": [
-   191,
-   179,
    174
   ],
-  "note": "No balance table, unlike the binary job."
+  "note": ""
  },
  {
   "name": "lm-propensity_ordinal",
@@ -342,16 +360,14 @@ window.GALLERY = [
   "use": "Proportional-odds propensity model for an ordered treatment.",
   "deprecated_by": null,
   "call": "add_job(\"lm.propensity_ordinal\", subject = \"treatment\", type = \"propensity\")",
-  "tables": 7,
+  "tables": 8,
   "figures": 0,
-  "seconds": 4.9,
+  "seconds": 4.8,
   "report": true,
   "issues": [
-   191,
-   179,
    174
   ],
-  "note": "No balance table, unlike the binary job."
+  "note": ""
  },
  {
   "name": "nb-boostmtree",
@@ -362,7 +378,7 @@ window.GALLERY = [
   "call": "add_job(\"nb.boostmtree\", subject = \"lvef\", type = \"boost\")",
   "tables": 3,
   "figures": 6,
-  "seconds": 310.0,
+  "seconds": 305.6,
   "report": true,
   "issues": [],
   "note": "Reads a synthetic echo series, 300 patients with 2 to 6 visits; M = 200, so it is the slowest job here."
@@ -376,7 +392,7 @@ window.GALLERY = [
   "call": "add_job(\"rfc.explain\", subject = \"dead\", type = \"rfc\")",
   "tables": 2,
   "figures": 5,
-  "seconds": 21.9,
+  "seconds": 22.7,
   "report": true,
   "issues": [
    166,
@@ -393,7 +409,7 @@ window.GALLERY = [
   "call": "add_job(\"rfc.fit\", subject = \"dead\", type = \"rfc\")",
   "tables": 1,
   "figures": 2,
-  "seconds": 9.3,
+  "seconds": 9.9,
   "report": true,
   "issues": [
    165,
@@ -411,7 +427,7 @@ window.GALLERY = [
   "call": "add_job(\"rfr.explain\", subject = \"los\", type = \"rfr\")",
   "tables": 2,
   "figures": 5,
-  "seconds": 22.5,
+  "seconds": 22.0,
   "report": true,
   "issues": [
    166,
@@ -428,7 +444,7 @@ window.GALLERY = [
   "call": "add_job(\"rfr.fit\", subject = \"los\", type = \"rfr\")",
   "tables": 1,
   "figures": 2,
-  "seconds": 8.6,
+  "seconds": 8.9,
   "report": true,
   "issues": [
    165,
@@ -446,7 +462,7 @@ window.GALLERY = [
   "call": "add_job(\"rfs.explain\", subject = \"dead\", type = \"rfs\")",
   "tables": 2,
   "figures": 5,
-  "seconds": 107.9,
+  "seconds": 104.4,
   "report": true,
   "issues": [
    166,
@@ -463,41 +479,13 @@ window.GALLERY = [
   "call": "add_job(\"rfs.fit\", subject = \"dead\", type = \"rfs\")",
   "tables": 1,
   "figures": 3,
-  "seconds": 12.8,
+  "seconds": 12.9,
   "report": true,
   "issues": [
    165,
    181,
    182
   ],
-  "note": ""
- },
- {
-  "name": "dp-gfup",
-  "folder": "40_graphs",
-  "title": "Descriptive plot: follow-up",
-  "use": "Deprecated in favor of dc-gfup, which draws the same figure beside its follow-up tables.",
-  "deprecated_by": "dc-gfup",
-  "call": "add_job(\"dp.gfup\", subject = \"cohort\", type = \"eda\")",
-  "tables": 2,
-  "figures": 2,
-  "seconds": 5.8,
-  "report": true,
-  "issues": [],
-  "note": ""
- },
- {
-  "name": "dp-trends",
-  "folder": "40_graphs",
-  "title": "Descriptive plot: trends",
-  "use": "How the cohort changed over the years of operation: the share with a characteristic, or the level of a measurement, year by year with a smooth.",
-  "deprecated_by": null,
-  "call": "add_job(\"dp.trends\", subject = \"cohort\", type = \"eda\")",
-  "tables": 2,
-  "figures": 4,
-  "seconds": 6.4,
-  "report": true,
-  "issues": [],
   "note": ""
  },
  {
@@ -509,7 +497,7 @@ window.GALLERY = [
   "call": "add_job(\"hp\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 4,
   "figures": 3,
-  "seconds": 5.5,
+  "seconds": 5.3,
   "report": true,
   "issues": [
    177,
@@ -526,7 +514,7 @@ window.GALLERY = [
   "call": "add_job(\"hs.concordance\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 7,
   "figures": 0,
-  "seconds": 33.5,
+  "seconds": 31.7,
   "report": true,
   "issues": [
    227,
@@ -543,13 +531,27 @@ window.GALLERY = [
   "call": "add_job(\"hs.setup\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 4,
   "figures": 0,
-  "seconds": 5.3,
+  "seconds": 5.8,
   "report": true,
   "issues": [
    183,
    177
   ],
   "note": "Needs hand-derived 0/1 sex and race columns."
+ },
+ {
+  "name": "lp-mirror",
+  "folder": "40_graphs",
+  "title": "Logistic plot: mirrored propensity histogram",
+  "use": "The mirrored histogram of the propensity score, treated above the axis and controls below, drawn from a saved lm-propensity_binary bundle without refitting: all patients, under the matching weights, and matched when the study has a match flag.",
+  "deprecated_by": null,
+  "call": "add_job(\"lp.mirror\", subject = \"treatment\", type = \"propensity\")",
+  "tables": 3,
+  "figures": 2,
+  "seconds": 6.1,
+  "report": true,
+  "issues": [],
+  "note": "Two figures, all patients and under the matching weights. A second gallery job, lp-mirror-matched, sets MATCH to a simulated flag and adds the matched figure."
  }
 ];
-window.GALLERY_BUILT = "1.3.0 \u00b7 built 2026-10-09";
+window.GALLERY_BUILT = "1.3.1 \u00b7 built 2026-10-12";

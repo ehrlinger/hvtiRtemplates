@@ -2,8 +2,9 @@
 
 # Bootstrap variable selection: linear
 
-Replaces `analyses/<job>.sas`: paste its `%bootreg` call here — the
-candidate pool, `sle=`, `sls=`, `resampl=` and `proc=reg`.
+Published
+
+2026-10-12 16:14
 
 This job reports a bootstrap variable selection screen over a **linear**
 model: how often each candidate survived stepwise selection across
@@ -27,12 +28,9 @@ variable falls on, and that is the part resampling noise moves.
 Code
 
 ``` r
-# The study root is the nearest directory above this file holding _study.yml,
-# so the job renders the same from the Render button, quarto render, or
-# render_job(), at any depth, with no path in this document to edit.
+SUBJECT <- "icu"
+TYPE    <- "boot"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
 .provenance_artifacts <- list()
 # TemporalHazard is deliberately absent: a linear screen never touches it.
 # The runner calls hvtiRbootstrap::boot_select() with fit_linear() and
@@ -70,129 +68,23 @@ if (utils::packageVersion("hvtiRbootstrap") < "0.9.3") {
        "table below would name criteria it never used.\nUpdate it, then ",
        "re-render.", call. = FALSE)
 }
-```
-
-Code
-
-``` r
-# The markers in this file name work a study author still has to do, and
-# README.md says a job that still contains one has not been finished. This
-# chunk is what makes that TRUE rather than merely stated.
-#
-# Without it an unedited job renders green over a meaningless analysis. In THIS
-# file the danger is that EXPECT_BOOT still holds the template's number, so the
-# completeness check compares the run against a denominator nobody chose -- and
-# passes, reporting frequencies over the wrong base.
-#
-# knitr::current_input() is NULL outside a render -- a study author stepping
-# through chunks in RStudio -- and there is no file to scan then, so this is a
-# no-op in that case. Same handling as the `set` guard below, for the same
-# reason.
-#
-# The token is BUILT, not written literally, and that is not stylistic. Quarto
-# knits through an intermediate and current_input() returns THAT file, so the
-# scan reads a copy of this chunk along with everything else: a literal
-# grep("<token>", .src) here matches its own source line, and the guard then
-# fires on every render, finished or not. Measured, not theorised -- a probe
-# found three markers in a file containing two. A guard that cries wolf on a
-# finished job is a guard that gets deleted, which returns us to issue #27.
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src  <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    # Report the marker TEXT. Line numbers here are the intermediate's, not
-    # this .qmd's, so they need not match what the author sees in an editor.
-    .msg <- paste0(
-      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
-      "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it."
-    )
-    # A job renders as a draft by default, so an author can iterate on a
-    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
-    # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognized value stops on purpose, so a
-    # mistyped switch is seen rather than quietly ignored, which is the safe
-    # direction to be wrong in.
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      # The banner is not optional. A draft render that looks like a finished
-      # one is the same defect with an extra step: the warning scrolls past in
-      # a log, while the .html is the artifact that gets sent to someone.
-      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
-              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Unresolved markers remain. **The numbers below are not",
-          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
-      cat(":::\n\n")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
-           "or no, to render a draft instead.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. In THIS file the danger is that EXPECT_BOOT still holds
+# the template's number, so the completeness check compares the run against a
+# denominator nobody chose -- and passes, reporting frequencies over the wrong
+# base.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
-```
-
-Code
-
-``` r
-SUBJECT <- "icu"
-TYPE    <- "boot"
-
-# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
-# name, but a hand-edited declaration can drift from it afterward. set_path()
-# below resolves from the declarations, not the filename, so a drifted
-# declaration would silently write into ANOTHER set's artifact directory --
-# exactly the collision the (subject, type) key exists to prevent, re-entered
-# through the body instead of the name.
-#
-# knitr::current_input() is NULL outside a render (a study author running
-# chunks interactively in RStudio), and there is no filename to check against
-# yet, so this is a no-op in that case rather than a spurious error.
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
-  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
-  # 2026-10. .job_name_fields() reads subject and type from either, whatever
-  # the extension: Quarto knits through an intermediate, so
-  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
-         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
-         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
-  }
-}
-
-# Resolve a path inside this set's artifact directory. `kind` is the artifact
-# folder -- "estimates" for serialized results, "graphs" for figures. The set
-# directory sits one layer under the kind and never two, which is the whole
-# layout rule.
-#
-# Created on first use rather than up front, so a job that writes nothing leaves
-# no empty directories behind.
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
 # Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
@@ -203,7 +95,12 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 # The screen this job reports on was run by a companion script, which wrote its
 # chunks into this set's `estimates` directory. Reading them through set_path()
 # is what keeps a screen filed against the set whose candidates it screened.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
+
+**final** · data: see About this run · rendered by gallery on gallery ·
+hvtiRtemplates 1.3.1
 
 ## Study choices
 
@@ -409,6 +306,8 @@ Code
 if (!is.null(.shortfall)) {
   cat("\n::: {.callout-warning title=\"Provisional -- this pool is incomplete\"}\n")
   cat(.shortfall, "\n", sep = "")
+  # The box under the title was printed before this was known; the end table says draft.
+  hvtiRtemplates:::.run_mark_draft("the bootstrap pool is incomplete")
   cat(":::\n\n")
 }
 ```
@@ -488,7 +387,7 @@ provenance
     9                                                                        0
     10                                                                     0.0
     11                                                           version:0.9.4
-    12 sha256:ecad1d83bedca5d692b6314a2fca905e9716c8424d2ae8ff1643774eaee02baa
+    12 sha256:27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6
     13                                               1 distinct (listed below)
 
 Code
@@ -994,3 +893,28 @@ report <- hvtiRtemplates:::.attach_handoff_lineage(
 )
 saveRDS(report, report_file)
 ```
+
+## About this run
+
+| Group | Item | Value |
+|:---|:---|:---|
+| Run | Started | 2026-10-12 16:14:02 EDT |
+|  | Ended | 2026-10-12 16:14:03 EDT |
+|  | Duration | 1 s |
+|  | Status | final |
+|  | Rendered by | gallery |
+|  | Host | gallery |
+| Job | File | br.icu.boot.qmd |
+|  | Template | br |
+|  | Subject | icu |
+|  | Type | boot |
+|  | hvtiRtemplates | 1.3.1 |
+| Dataset `built` | Version file | built_20261012.parquet |
+|  | Registered | 2026-10-12 |
+|  | Source file | built.rds |
+|  | Rows kept | 800 rows on 800 patients |
+|  | WHERE | none |
+|  | sha256 | 27b97c1d78ec |
+|  | Manifest | current |
+| Upstream | Handoff | `icu-boot/bagging.rds` (bootstrap-bag), rendered not recorded, data built_20261012.parquet |
+| Reproducibility | renv | not active |

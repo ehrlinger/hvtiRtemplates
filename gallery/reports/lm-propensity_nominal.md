@@ -2,77 +2,39 @@
 
 # Nominal-treatment propensity model
 
+Published
+
+2026-10-12 16:19
+
 Fits a generalized-logit propensity model for a nominal treatment with
 an explicit reference level.
 
 Code
 
 ``` r
+SUBJECT <- "valvetype"
+TYPE    <- "propensity"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
-for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.1.7") stop("This template needs hvtiRpropensity >= 0.1.7.", call. = FALSE)
-```
-
-Code
-
-``` r
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    .msg <- paste0(length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-                   paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"))
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      warning(.msg, "\nRendering as a draft; remove every marker for a final result.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n", .msg, "\n:::\n", sep = "")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '", Sys.getenv("HVTI_TEMPLATE_STRICT"), "'.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
+if (utils::packageVersion("hvtiRpropensity") < "0.1.10") stop("This template needs hvtiRpropensity >= 0.1.10.", call. = FALSE)
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
 
-Code
-
-``` r
-SUBJECT <- "valvetype"
-TYPE    <- "propensity"
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject,
-         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
-         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.", call. = FALSE)
-  }
-}
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root), paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-```
+**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
+· rendered by gallery on gallery · hvtiRtemplates 1.3.1
 
 Code
 
@@ -144,11 +106,13 @@ d <- job_data$data
 # The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
 .id <- attr(job_data$record, "selection")$id
 knitr::kable(job_data$record, col.names = c("Data", ""))
+# A column the study choices name that the data lack stops here, naming the setting to change.
+hvtiRtemplates:::.check_job_columns(d, TREATMENT = TREATMENT, PREDICTORS = PREDICTORS)
 ```
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261009.parquet) |
+| Source              | dataset `built` (built_20261012.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -246,6 +210,31 @@ Table 4: Covariance matrix of the coefficient estimates
 Code
 
 ``` r
+# One row per covariate and level: `level` is compared with `versus`.
+knitr::kable(fit$tables$smd)
+```
+
+| variable | level         | versus     |     smd |
+|:---------|:--------------|:-----------|--------:|
+| age      | bioprosthetic | mechanical |  1.1656 |
+| female   | bioprosthetic | mechanical |  0.1150 |
+| hx_chf   | bioprosthetic | mechanical | -0.0868 |
+| hx_dm    | bioprosthetic | mechanical |  0.0561 |
+| lvef     | bioprosthetic | mechanical |  0.1322 |
+| bmi      | bioprosthetic | mechanical |  0.0639 |
+| age      | homograft     | mechanical | -0.3438 |
+| female   | homograft     | mechanical | -0.0926 |
+| hx_chf   | homograft     | mechanical | -0.2172 |
+| hx_dm    | homograft     | mechanical |  0.0579 |
+| lvef     | homograft     | mechanical |  0.1187 |
+| bmi      | homograft     | mechanical |  0.3478 |
+
+Table 5: Standardized mean differences, each treatment level against the
+reference level
+
+Code
+
+``` r
 knitr::kable(fit$tables$group_counts)
 ```
 
@@ -255,7 +244,7 @@ knitr::kable(fit$tables$group_counts)
 | bioprosthetic | 361 |
 | homograft     |  52 |
 
-Table 5: Patients in each group
+Table 6: Patients in each group
 
 Code
 
@@ -271,3 +260,27 @@ fit <- hvtiRtemplates:::.attach_handoff_lineage(
 # patient. A later job reattaches its own data by digesting its IDs with the same key: see lm-checkpred.
 saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 ```
+
+## About this run
+
+| Group | Item | Value |
+|:---|:---|:---|
+| Run | Started | 2026-10-12 16:18:59 EDT |
+|  | Ended | 2026-10-12 16:19:00 EDT |
+|  | Duration | 0 s |
+|  | Status | final |
+|  | Rendered by | gallery |
+|  | Host | gallery |
+| Job | File | lm.propensity_nominal.valvetype.propensity.qmd |
+|  | Template | lm.propensity_nominal |
+|  | Subject | valvetype |
+|  | Type | propensity |
+|  | hvtiRtemplates | 1.3.1 |
+| Dataset `built` | Version file | built_20261012.parquet |
+|  | Registered | 2026-10-12 |
+|  | Source file | built.rds |
+|  | Rows kept | 800 rows on 800 patients |
+|  | WHERE | none |
+|  | sha256 | 27b97c1d78ec |
+|  | Manifest | current |
+| Reproducibility | renv | not active |

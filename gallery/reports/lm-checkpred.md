@@ -2,84 +2,52 @@
 
 # Validate a saved binary logistic model
 
+Published
+
+2026-10-12 16:18
+
 Applies a saved `lm-binary` bundle to a declared validation cohort. This
 job never refits, updates, or overwrites the source model.
 
 Code
 
 ``` r
+SUBJECT <- "stroke"
+TYPE    <- "model"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
-for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.1.7") stop("This template needs hvtiRpropensity >= 0.1.7.", call. = FALSE)
-```
-
-Code
-
-``` r
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    .msg <- paste0(length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-                   paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"))
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      warning(.msg, "\nRendering as a draft; remove every marker for a final result.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n", .msg, "\n:::\n", sep = "")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
+if (utils::packageVersion("hvtiRpropensity") < "0.1.10") stop("This template needs hvtiRpropensity >= 0.1.10.", call. = FALSE)
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
 
-Code
-
-``` r
-SUBJECT <- "stroke"
-TYPE    <- "model"
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject,
-         "', type '", .name_type, "'), but declares SUBJECT = \"", SUBJECT,
-         "\", TYPE = \"", TYPE, "\". Fix the declaration or the filename before rendering.", call. = FALSE)
-  }
-}
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root), paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-```
+**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
+· rendered by gallery on gallery · hvtiRtemplates 1.3.1
 
 Code
 
 ``` r
 # The validation cohort: another registered dataset in DATASET, or rows of the
-# study dataset that the training job did not use, chosen by WHERE.
+# study dataset that the training job did not use, chosen by WHERE. To validate
+# on a file of its own, put it in the study's datasets folder and register it
+# once, from the study root, under a name of its own:
+#   hvtiRutilities::register_data(built = "validation.csv", dataset = "validation",
+#                                 role = "named", population = "Operated 2015 onward")
+# then set DATASET <- "validation". It must identify patients by the same column
+# as the training data: the training-overlap chunk compares the two cohorts by
+# that identifier and stops if they share a patient.
 # Demo: the registered dataset this job reads ("built" is the study dataset).
 DATASET <- "built"
 
@@ -119,7 +87,12 @@ JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
 
-MODEL_FILE <- "lm-binary.rds"              # Demo: reviewed source bundle in this set's estimates.
+MODEL_FILE <- "lm-binary.rds"              # Demo: reviewed source bundle, as lm-binary saved it.
+# Optional, and needs no edit: the set whose estimates hold MODEL_FILE. NULL is
+# this job's own set, which is where it is when this job shares the subject and
+# type of the lm-binary job. A validation job in a set of its own names the
+# training job's set, "<subject>-<type>", for example MODEL_SET <- "stroke-model".
+MODEL_SET <- NULL
 OUTCOME <- "stroke"
 GROUPS <- 5L
 ```
@@ -143,11 +116,13 @@ d <- job_data$data
 # The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
 .id <- attr(job_data$record, "selection")$id
 knitr::kable(job_data$record, col.names = c("Data", ""))
+# A column the study choices name that the data lack stops here, naming the setting to change.
+hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME)
 ```
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261009.parquet) |
+| Source              | dataset `built` (built_20261012.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -173,8 +148,9 @@ if (!is.null(job_data$attrition)) {
 Code
 
 ``` r
-MODEL_PATH <- set_path("estimates", MODEL_FILE)
-if (!file.exists(MODEL_PATH)) stop("Saved model not found: ", MODEL_PATH, call. = FALSE)
+# MODEL_FILE is a file name and MODEL_SET a set name, so neither can reach outside the study's estimates.
+MODEL_PATH <- hvtiRtemplates:::.handoff_path(MODEL_FILE, MODEL_SET, .root, function(file) set_path("estimates", file),
+                                             upstream = "lm-binary", set_example = "stroke-model")
 .model_read <- hvtiRtemplates:::.read_handoff(
   MODEL_PATH, "source-model", hvtiRutilities::study_config(start = .root), "the source lm job"
 )
@@ -213,12 +189,7 @@ if (anyNA(d[[.id]]) || anyNA(model$data[[.train_id]])) {
 # A model saved by a current lm template keeps a study-keyed digest of each training ID, so the validation
 # IDs are digested with the same key to compare. One saved before that holds raw identifiers, and is
 # compared raw so it still validates; re-save it with its lm template to clear them from the file.
-.digested <- isTRUE(model$meta$id_digest)
-.validation_ids <- if (.digested) {
-  unique(hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.bundle_id_key(model, .root)))
-} else {
-  unique(as.character(d[[.id]]))
-}
+.validation_ids <- unique(hvtiRtemplates:::.bundle_ids(model, d[[.id]], .root))
 .shared <- sum(.validation_ids %in% as.character(model$data[[.train_id]]))
 if (.shared && .shared == length(.validation_ids)) {
   stop("The validation data are the training data: set DATASET or WHERE to the validation cohort.", call. = FALSE)
@@ -296,3 +267,28 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
                                             skip = if (isTRUE(model$meta$id_digest)) "models"),
         VALIDATION_PATH)
 ```
+
+## About this run
+
+| Group | Item | Value |
+|:---|:---|:---|
+| Run | Started | 2026-10-12 16:18:23 EDT |
+|  | Ended | 2026-10-12 16:18:24 EDT |
+|  | Duration | 0 s |
+|  | Status | final |
+|  | Rendered by | gallery |
+|  | Host | gallery |
+| Job | File | lm.checkpred.stroke.model.qmd |
+|  | Template | lm.checkpred |
+|  | Subject | stroke |
+|  | Type | model |
+|  | hvtiRtemplates | 1.3.1 |
+| Dataset `built` | Version file | built_20261012.parquet |
+|  | Registered | 2026-10-12 |
+|  | Source file | built.rds |
+|  | Rows kept | 228 rows on 228 patients |
+|  | WHERE | `year >= 2015` |
+|  | sha256 | 27b97c1d78ec |
+|  | Manifest | current |
+| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-12 16:18:19 -0400, data built_20261012.parquet |
+| Reproducibility | renv | not active |

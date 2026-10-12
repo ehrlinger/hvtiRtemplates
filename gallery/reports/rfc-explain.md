@@ -2,6 +2,10 @@
 
 # Random forest classification: explain
 
+Published
+
+2026-10-12 16:26
+
 Explains the forest the `rfc-fit` job in this set saved: which
 predictors drive it, and how.
 
@@ -17,13 +21,9 @@ and nothing else.
 Code
 
 ``` r
-# The study root is the nearest directory above this file holding _study.yml,
-# so the job renders the same from the Render button, quarto render, or
-# render_job(), at any depth, with no path in this document to edit.
+SUBJECT <- "complication"
+TYPE    <- "rf"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
-for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(randomForestSRC)
   library(varPro)
@@ -52,128 +52,21 @@ if (utils::packageVersion("varPro") < "3.2.0") {
   stop("This job needs varPro >= 3.2.0; ", utils::packageVersion("varPro"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
-```
-
-Code
-
-``` r
-# The markers in this file name work a study author still has to do, and
-# README.md says a job that still contains one has not been finished. This
-# chunk is what makes that TRUE rather than merely stated.
-#
-# Without it an unedited job renders green over a meaningless analysis. Here
-# that is dependence plots for a placeholder number of variables, which look
-# exactly like a result.
-#
-# knitr::current_input() is NULL outside a render -- a study author stepping
-# through chunks in RStudio -- and there is no file to scan then, so this is a
-# no-op in that case. Same handling as the `set` guard below, for the same
-# reason.
-#
-# The token is BUILT, not written literally, and that is not stylistic. Quarto
-# knits through an intermediate and current_input() returns THAT file, so the
-# scan reads a copy of this chunk along with everything else: a literal
-# grep("<token>", .src) here matches its own source line, and the guard then
-# fires on every render, finished or not. Measured, not theorised -- a probe
-# found three markers in a file containing two. A guard that cries wolf on a
-# finished job is a guard that gets deleted, which returns us to issue #27.
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src  <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    # Report the marker TEXT. Line numbers here are the intermediate's, not
-    # this .qmd's, so they need not match what the author sees in an editor.
-    .msg <- paste0(
-      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
-      "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it."
-    )
-    # A job renders as a draft by default, so an author can iterate on a
-    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
-    # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognized value stops on purpose, so a
-    # mistyped switch is seen rather than quietly ignored, which is the safe
-    # direction to be wrong in.
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      # The banner is not optional. A draft render that looks like a finished
-      # one is the same defect with an extra step: the warning scrolls past in
-      # a log, while the .html is the artifact that gets sent to someone.
-      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
-              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Unresolved markers remain. **The numbers below are not",
-          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
-      cat(":::\n\n")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
-           "or no, to render a draft instead.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. Here that is dependence plots for a placeholder number
+# of variables, which look exactly like a result.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
-```
-
-Code
-
-``` r
-SUBJECT <- "complication"
-TYPE    <- "rf"
-
-# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
-# name, but a hand-edited declaration can drift from it afterward. set_path()
-# below resolves from the declarations, not the filename, so a drifted
-# declaration would silently write into ANOTHER set's artifact directory --
-# exactly the collision the (subject, type) key exists to prevent, re-entered
-# through the body instead of the name.
-#
-# knitr::current_input() is NULL outside a render (a study author running
-# chunks interactively in RStudio), and there is no filename to check against
-# yet, so this is a no-op in that case rather than a spurious error.
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
-  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
-  # 2026-10. .job_name_fields() reads subject and type from either, whatever
-  # the extension: Quarto knits through an intermediate, so
-  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
-         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
-         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
-  }
-}
-
-# Resolve a path inside this set's artifact directory. `kind` is the artifact
-# folder -- "estimates" for serialized results, "graphs" for figures. The set
-# directory sits one layer under the kind and never two, which is the whole
-# layout rule.
-#
-# Created on first use rather than up front, so a job that writes nothing leaves
-# no empty directories behind.
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
 # Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
@@ -183,7 +76,12 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 
 # `rfc-explain` reads the forest `rfc-fit` wrote in this same set, and caches
 # its own work beside it.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
+
+**final** · data: see About this run · rendered by gallery on gallery ·
+hvtiRtemplates 1.3.1
 
 ## Study choices
 
@@ -252,8 +150,14 @@ CACHE_DIR <- dirname(.handoff)
 # model nobody fit. The forest keeps no usable formula (`$formula` is NULL and
 # `$call` holds whatever expression the fit job wrote), so the model is rebuilt
 # from the outcome names. `xvar` keeps any missing values under na.impute, and
-# varpro() handles them; the forest's `imputed.data` makes varpro() fail.
+# varpro() drops every patient that has one, so it would describe fewer patients
+# than the forest. The values the forest imputed are put back in below, so both
+# cover the same patients. (Handing varpro() the forest's `imputed.data` as it
+# stands fails: that holds only the imputed patients.)
 frame <- cbind(stats::setNames(data.frame(forest$yvar), forest$yvar.names), forest$xvar)
+if (!is.null(forest$imputed.data)) {
+  frame[forest$imputed.indv, names(forest$imputed.data)] <- forest$imputed.data
+}
 model <- stats::reformulate(".", response = forest$yvar.names)
 ```
 
@@ -347,25 +251,21 @@ if (is.null(PARTIAL_VARS)) {
 
 ## VarPro
 
+VarPro is given the forest’s own data. When the fit imputed missing
+values (`NA_ACTION` was `"na.impute"`), that is the imputed data, so
+VarPro and the forest describe the same patients.
+
 Code
 
 ``` r
 vp <- cache_fit("rfc-varpro", varpro(model, frame, verbose = FALSE, seed = -abs(SEED)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-```
-
-    Warning: varpro(): omitted 75 of 800 observations with missing values (725
-    retained)
-
-Code
-
-``` r
 .fig <- plot(gg_varpro(vp))
 save_figure(.fig, "rfc-explain-varpro")
 .fig
 ```
 
-![](assets/8a9fc7ec92c148d5fdc658b2b41f98b1.png)
+![](assets/bbef1afb413bba3c6b75dc0e2685b73f.png)
 
 Figure 2: VarPro importance of each predictor
 
@@ -375,7 +275,15 @@ Code
 
 ``` r
 # Marginal: predicted class probability against each variable, as observed.
-.fig <- plot(gg_variable(forest), xvar = sel)
+.gv <- gg_variable(forest)
+# plot() reads a factor outcome whose levels are "0" and "1" as TRUE and FALSE
+# with as.logical(), which turns the labels into missing values, and ggplot2
+# then removes every point. Naming the levels after the outcome avoids that.
+.gv$yvar <- factor(.gv$yvar, levels = levels(.gv$yvar), labels = paste0(forest$yvar.names, " = ", levels(.gv$yvar)))
+# A loess smooth needs more than a handful of distinct values, so a predictor
+# with fewer than six, such as a stage or a grade, is drawn as points alone.
+.panels <- lapply(sel, function(v) plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5))
+.fig <- patchwork::wrap_plots(.panels, ncol = 1)
 save_figure(.fig, "rfc-explain-dependence-marginal")
 ```
 
@@ -384,39 +292,20 @@ save_figure(.fig, "rfc-explain-dependence-marginal")
     Warning: Removed 75 rows containing non-finite outside the scale range
     (`stat_smooth()`).
 
-    Warning: Removed 800 rows containing missing values or values outside the scale range
+    Warning: Removed 75 rows containing missing values or values outside the scale range
     (`geom_point()`).
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-    Warning: Removed 800 rows containing missing values or values outside the scale range
-    (`geom_point()`).
-    Removed 800 rows containing missing values or values outside the scale range
-    (`geom_point()`).
-
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-    Warning: Removed 800 rows containing missing values or values outside the scale range
-    (`geom_point()`).
-
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
     Warning: Removed 75 rows containing non-finite outside the scale range
     (`stat_smooth()`).
-    Removed 800 rows containing missing values or values outside the scale range
+    Removed 75 rows containing missing values or values outside the scale range
     (`geom_point()`).
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-    Warning: Removed 800 rows containing missing values or values outside the scale range
-    (`geom_point()`).
-    Removed 800 rows containing missing values or values outside the scale range
-    (`geom_point()`).
-
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-    Warning: Removed 800 rows containing missing values or values outside the scale range
-    (`geom_point()`).
 
 Code
 
@@ -428,22 +317,13 @@ Code
 
     Warning: Removed 75 rows containing non-finite outside the scale range
     (`stat_smooth()`).
-    Removed 800 rows containing missing values or values outside the scale range
+    Removed 75 rows containing missing values or values outside the scale range
     (`geom_point()`).
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-
-    Warning: Removed 800 rows containing missing values or values outside the scale range
-    (`geom_point()`).
-    Removed 800 rows containing missing values or values outside the scale range
-    (`geom_point()`).
-
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-    Warning: Removed 800 rows containing missing values or values outside the scale range
-    (`geom_point()`).
-
-![](assets/94408cbca4e15c67e1133d2600af08fd.png)
+![](assets/3606d7ee01b840feefbca69a7c5e0daf.png)
 
 Figure 3: Predicted class probability against each selected predictor,
 as observed
@@ -476,9 +356,9 @@ pv <- cache_fit("rfc-partial-varpro", gg_partial_varpro(object = vp, xvar.names 
 save_figure(.fig, "rfc-explain-dependence-varpro")
 ```
 
-    Warning: Removed 216 rows containing non-finite outside the scale range
+    Warning: Removed 252 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 216 rows containing non-finite outside the scale range
+    Removed 252 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
 Code
@@ -487,9 +367,33 @@ Code
 .fig
 ```
 
-    Warning: Removed 216 rows containing non-finite outside the scale range
+    Warning: Removed 252 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/176a73f3fbddd5001cb19d2b46aea49d.png)
+![](assets/3c2a5629d7a17bcc0bdc375c4fedccca.png)
 
 Figure 5: VarPro partial dependence on each selected predictor
+
+## About this run
+
+| Group | Item | Value |
+|:---|:---|:---|
+| Run | Started | 2026-10-12 16:26:22 EDT |
+|  | Ended | 2026-10-12 16:26:39 EDT |
+|  | Duration | 17 s |
+|  | Status | final |
+|  | Rendered by | gallery |
+|  | Host | gallery |
+| Job | File | rfc.explain.complication.rf.qmd |
+|  | Template | rfc.explain |
+|  | Subject | complication |
+|  | Type | rf |
+|  | hvtiRtemplates | 1.3.1 |
+| Dataset `built` | Version file | built_20261012.parquet |
+|  | Registered | 2026-10-12 |
+|  | Source file | built.rds |
+|  | sha256 | 27b97c1d78ec |
+|  | Manifest | current |
+| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-12 16:26:13 -0400, data built_20261012.parquet |
+| Reproducibility | Seed | 2026 |
+|  | renv | not active |

@@ -2,9 +2,9 @@
 
 # Bootstrap variable selection
 
-Replaces `analyses/<job>.sas`: paste its `%hazboot` call here — the
-candidate pool, which phases carried candidates, the entry and stay
-levels, and `resampl=`.
+Published
+
+2026-10-12 16:16
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -19,12 +19,9 @@ screened for reliability first. It was not.
 Code
 
 ``` r
-# The study root is the nearest directory above this file holding _study.yml,
-# so the job renders the same from the Render button, quarto render, or
-# render_job(), at any depth, with no path in this document to edit.
+SUBJECT <- "dead"
+TYPE    <- "boot"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
 .provenance_artifacts <- list()
 suppressPackageStartupMessages({
   library(TemporalHazard)
@@ -52,129 +49,23 @@ if (utils::packageVersion("hvtiRbootstrap") < "0.9.0") {
        "is not followed by a separator, and reports the wrong variable name ",
        "without erroring.\nUpdate it, then re-render.", call. = FALSE)
 }
-```
-
-Code
-
-``` r
-# The markers in this file name work a study author still has to do, and
-# README.md says a job that still contains one has not been finished. This
-# chunk is what makes that TRUE rather than merely stated.
-#
-# Without it an unedited job renders green over a meaningless analysis. In THIS
-# file the danger is that EXPECT_CHUNKS and EXPECT_BOOT still hold the template's
-# numbers, so the completeness check compares the run against a denominator
-# nobody chose -- and passes, reporting frequencies over the wrong base.
-#
-# knitr::current_input() is NULL outside a render -- a study author stepping
-# through chunks in RStudio -- and there is no file to scan then, so this is a
-# no-op in that case. Same handling as the `set` guard below, for the same
-# reason.
-#
-# The token is BUILT, not written literally, and that is not stylistic. Quarto
-# knits through an intermediate and current_input() returns THAT file, so the
-# scan reads a copy of this chunk along with everything else: a literal
-# grep("<token>", .src) here matches its own source line, and the guard then
-# fires on every render, finished or not. Measured, not theorised -- a probe
-# found three markers in a file containing two. A guard that cries wolf on a
-# finished job is a guard that gets deleted, which returns us to issue #27.
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src  <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    # Report the marker TEXT. Line numbers here are the intermediate's, not
-    # this .qmd's, so they need not match what the author sees in an editor.
-    .msg <- paste0(
-      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
-      "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it."
-    )
-    # A job renders as a draft by default, so an author can iterate on a
-    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
-    # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognized value stops on purpose, so a
-    # mistyped switch is seen rather than quietly ignored, which is the safe
-    # direction to be wrong in.
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      # The banner is not optional. A draft render that looks like a finished
-      # one is the same defect with an extra step: the warning scrolls past in
-      # a log, while the .html is the artifact that gets sent to someone.
-      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
-              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Unresolved markers remain. **The numbers below are not",
-          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
-      cat(":::\n\n")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
-           "or no, to render a draft instead.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. In THIS file the danger is that EXPECT_CHUNKS and
+# EXPECT_BOOT still hold the template's numbers, so the completeness check
+# compares the run against a denominator nobody chose -- and passes, reporting
+# frequencies over the wrong base.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
-```
-
-Code
-
-``` r
-SUBJECT <- "dead"
-TYPE    <- "boot"
-
-# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
-# name, but a hand-edited declaration can drift from it afterward. set_path()
-# below resolves from the declarations, not the filename, so a drifted
-# declaration would silently write into ANOTHER set's artifact directory --
-# exactly the collision the (subject, type) key exists to prevent, re-entered
-# through the body instead of the name.
-#
-# knitr::current_input() is NULL outside a render (a study author running
-# chunks interactively in RStudio), and there is no filename to check against
-# yet, so this is a no-op in that case rather than a spurious error.
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
-  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
-  # 2026-10. .job_name_fields() reads subject and type from either, whatever
-  # the extension: Quarto knits through an intermediate, so
-  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
-         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
-         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
-  }
-}
-
-# Resolve a path inside this set's artifact directory. `kind` is the artifact
-# folder -- "estimates" for serialized results, "graphs" for figures. The set
-# directory sits one layer under the kind and never two, which is the whole
-# layout rule.
-#
-# Created on first use rather than up front, so a job that writes nothing leaves
-# no empty directories behind.
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
 # Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
@@ -185,7 +76,12 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 # The screen this job reports on was run by a companion script, which wrote its
 # chunks into this set's `estimates` directory. Reading them through set_path()
 # is what keeps a screen filed against the set whose candidates it screened.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
+
+**final** · data: see About this run · rendered by gallery on gallery ·
+hvtiRtemplates 1.3.1
 
 ## Study choices
 
@@ -240,7 +136,14 @@ RETAIN_PCT <- 50
 # assume a phase column throughout. PHASE_OF must name a real rule here.
 PHASE_OF <- function(term) sub("[.].*$", "", term)
 
-# Concept groups to report.
+# Concept groups to report. Empty by default, because a cluster may name only
+# terms some replicate carried, and which rare terms a small run reaches cannot
+# be known in advance. Declare them once the frequency table below shows the
+# terms that appeared, as `<phase>.<variable>`:
+# CLUSTERS <- list(
+#   early.Age = c("early.age", "early.ln_age"),
+#   const.Age = c("const.age", "const.ln_age")
+# )
 CLUSTERS <- list(
   early.Age      = "early.age",
   constant.Heart = c("constant.hx_chf", "constant.lvef")
@@ -379,6 +282,8 @@ Code
 if (!is.null(.shortfall)) {
   cat("\n::: {.callout-warning title=\"Provisional -- this pool is incomplete\"}\n")
   cat(.shortfall, "\n", sep = "")
+  # The box under the title was printed before this was known; the end table says draft.
+  hvtiRtemplates:::.run_mark_draft("the bootstrap pool is incomplete")
   cat(":::\n\n")
 }
 ```
@@ -466,7 +371,7 @@ provenance
     9                                                                        0
     10                                                                     0.1
     11                                                          version:1.2.12
-    12 sha256:ecad1d83bedca5d692b6314a2fca905e9716c8424d2ae8ff1643774eaee02baa
+    12 sha256:27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6
     13                                               4 distinct (listed below)
 
 Code
@@ -850,16 +755,22 @@ Code
 # Demo: your clusters, one per concept you want reported, and the phase each
 # runs against. The SAS job named eight -- Age, Size, BMI, race, GFR, iv_opyrs,
 # Renal, blrbn_pr -- and ran each against both the early and constant phases.
-# There is no sensible default: which concepts are worth clustering is a
-# statement about your candidate pool.
+# The default is an empty list, because which concepts are worth clustering is a
+# statement about your candidate pool. CLUSTERS, in the study choices above,
+# carries a commented example to copy.
 #
 # Members are PHASE-QUALIFIED, as `<phase>.<variable>`, because a variable
 # offered to two phases is two screening decisions. Naming a term that no
 # replicate carries is refused rather than reported as 0%: a typo that grouped
 # nothing would otherwise read as a concept nobody selected.
 
-clusters <- boot_clusters(coefs, CLUSTERS)
-clusters
+clusters <- data.frame(cluster = character(), n_any = integer(), pct_any = numeric(), members = character())
+if (length(CLUSTERS)) clusters <- boot_clusters(coefs, CLUSTERS)
+if (nrow(clusters)) {
+  clusters
+} else {
+  cat("No clusters declared: CLUSTERS is empty. Declare the concepts to report in the study choices.\n")
+}
 ```
 
              cluster n_any pct_any                        members
@@ -933,7 +844,16 @@ Code
 # The error bar is the point of the figure, not decoration. A bare dot plot
 # invites the reader to rank variables by a difference of two points, which is
 # inside the noise at every frequency near the middle of the range.
-.fig <- ggplot(freq, aes(x = stats::reorder(variable, pct), y = pct)) +
+#
+# Each facet is sorted on its own. reorder(variable, pct) would rank a variable
+# once, across both phases, so a variable offered to two phases would sit where
+# its mean falls and neither facet would be in order. The phase goes into the
+# row's key, the key is ordered by pct, and the axis prints the variable alone.
+.fig_data <- freq
+.fig_data$.row <- paste(.fig_data$phase, .fig_data$variable, sep = "\r")
+.fig_data$.row <- factor(.fig_data$.row, levels = .fig_data$.row[order(.fig_data$pct)])
+.fig <- ggplot(.fig_data, aes(x = .row, y = pct)) +
+  scale_x_discrete(labels = function(x) sub("^[^\r]*\r", "", x)) +
   geom_hline(yintercept = RETAIN_PCT, linetype = "dashed") +
   geom_errorbar(aes(ymin = pct - mc_error, ymax = pct + mc_error), width = 0) +
   geom_point() +
@@ -945,7 +865,7 @@ save_figure(.fig, "bh-frequencies", height = 7)
 .fig
 ```
 
-![](assets/ea1fbf23cb90938bda6be806ba268072.png)
+![](assets/61a64a17a377298475121ff02101c679.png)
 
 Figure 1: Selection frequency by phase, with Monte-Carlo error and the
 retention threshold
@@ -992,3 +912,31 @@ report <- hvtiRtemplates:::.attach_handoff_lineage(
 )
 saveRDS(report, report_file)
 ```
+
+## About this run
+
+| Group | Item | Value |
+|:---|:---|:---|
+| Run | Started | 2026-10-12 16:16:11 EDT |
+|  | Ended | 2026-10-12 16:16:12 EDT |
+|  | Duration | 1 s |
+|  | Status | final |
+|  | Rendered by | gallery |
+|  | Host | gallery |
+| Job | File | bh.dead.boot.qmd |
+|  | Template | bh |
+|  | Subject | dead |
+|  | Type | boot |
+|  | hvtiRtemplates | 1.3.1 |
+| Dataset `built` | Version file | built_20261012.parquet |
+|  | Registered | 2026-10-12 |
+|  | Source file | built.rds |
+|  | Rows kept | 725 rows on 725 patients |
+|  | WHERE | `!is.na(creat_pr)` |
+|  | sha256 | 27b97c1d78ec |
+|  | Manifest | current |
+| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261012.parquet |
+|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261012.parquet |
+|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261012.parquet |
+|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261012.parquet |
+| Reproducibility | renv | not active |

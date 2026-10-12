@@ -2,8 +2,9 @@
 
 # Concordance: every patient through every group’s model
 
-Replaces `graphs/<job>.sas`: name the treatments compared here and the
-horizon.
+Published
+
+2026-10-12 16:18
 
 An `hs-concordance` job predicts **every patient through every treatment
 group’s model**. Each group’s risk-factor model was fitted by its own
@@ -31,144 +32,38 @@ each guard below exists for, is in
 Code
 
 ``` r
-# The study root is the nearest directory above this file holding _study.yml,
-# so the job renders the same from the Render button, quarto render, or
-# render_job(), at any depth, with no path in this document to edit.
+SUBJECT <- "dead"
+TYPE    <- "approach"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
 .provenance_artifacts <- list()
-for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 suppressPackageStartupMessages({
   library(TemporalHazard)
   library(hvtiRutilities)
 })
-```
-
-Code
-
-``` r
-# The markers in this file name work a study author still has to do, and
-# README.md says a job that still contains one has not been finished. This
-# chunk is what makes that TRUE rather than merely stated.
-#
-# Without it an unedited job renders green over a meaningless analysis. In THIS
-# file that would be a table of best treatments, which reads as a clinical
-# recommendation whether or not anyone finished the job.
-#
-# knitr::current_input() is NULL outside a render -- a study author stepping
-# through chunks in RStudio -- and there is no file to scan then, so this is a
-# no-op in that case. Same handling as the `set` guard below, for the same
-# reason.
-#
-# The token is BUILT, not written literally, and that is not stylistic. Quarto
-# knits through an intermediate and current_input() returns THAT file, so the
-# scan reads a copy of this chunk along with everything else: a literal
-# grep("<token>", .src) here matches its own source line, and the guard then
-# fires on every render, finished or not. Measured, not theorized -- a probe
-# found three markers in a file containing two. A guard that cries wolf on a
-# finished job is a guard that gets deleted, which returns us to issue #27.
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src  <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    # Report the marker TEXT. Line numbers here are the intermediate's, not
-    # this .qmd's, so they need not match what the author sees in an editor.
-    .msg <- paste0(
-      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
-      "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it."
-    )
-    # A job renders as a draft by default, so an author can iterate on a
-    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
-    # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognized value stops on purpose, so a
-    # mistyped switch is seen rather than quietly ignored, which is the safe
-    # direction to be wrong in.
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      # The banner is not optional. A draft render that looks like a finished
-      # one is the same defect with an extra step: the warning scrolls past in
-      # a log, while the .html is the artifact that gets sent to someone.
-      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
-              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Unresolved markers remain. **The numbers below are not",
-          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
-      cat(":::\n\n")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
-           "or no, to render a draft instead.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. In THIS file that would be a table of best treatments,
+# which reads as a clinical recommendation whether or not anyone finished the
+# job.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
-```
-
-Code
-
-``` r
-SUBJECT <- "dead"
-TYPE    <- "approach"
-
-# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
-# name, but a hand-edited declaration can drift from it afterward. set_path()
-# below resolves from the declarations, not the filename, so a drifted
-# declaration would silently write into ANOTHER set's artifact directory --
-# exactly the collision the (subject, type) key exists to prevent, re-entered
-# through the body instead of the name.
-#
-# knitr::current_input() is NULL outside a render (a study author running
-# chunks interactively in RStudio), and there is no filename to check against
-# yet, so this is a no-op in that case rather than a spurious error.
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
-  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
-  # 2026-10. .job_name_fields() reads subject and type from either, whatever
-  # the extension: Quarto knits through an intermediate, so
-  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
-         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
-         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
-  }
-}
-
-# Resolve a path inside this set's artifact directory. `kind` is the artifact
-# folder -- "estimates" for serialized results, "graphs" for figures. The set
-# directory sits one layer under the kind and never two, which is the whole
-# layout rule.
-#
-# Created on first use rather than up front, so a job that writes nothing leaves
-# no empty directories behind.
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-
-
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
 # This job reads other sets' models by path, in the models chunk. It writes only
-# into its own set, the comparison set these two values name.
+# into its own set, the comparison set that SUBJECT and TYPE name.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
+
+**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
+· rendered by gallery on gallery · hvtiRtemplates 1.3.1
 
 ## Study choices
 
@@ -207,11 +102,12 @@ JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
 
-# Demo: the follow-up time and event columns every hm model was fitted on. The
-#       models chunk stops if any model records a different time column,
-#       because HORIZON below is one number applied to every model.
-TIME  <- "iv_dead"
-EVENT <- "dead"
+# The follow-up time and event columns every hm model was fitted on. NULL takes
+# the columns the models recorded; set one only to confirm it. A value that
+# differs from a model's stops the job, and so does a pair of models that
+# disagree, because HORIZON below is one number applied to every model.
+TIME <- NULL
+EVENT <- NULL
 
 # Demo: the counts this cohort must have. The invalid defaults stop an unedited
 #       job before it predicts for a cohort nobody reconciled.
@@ -269,7 +165,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261009.parquet) |
+| Source              | dataset `built` (built_20261012.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -289,22 +185,6 @@ if (!is.null(job_data$attrition)) {
     paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
     "knitr::kable(job_data$attrition)", .fence
   ), envir = environment(), quiet = TRUE), sep = "\n")
-}
-```
-
-Code
-
-``` r
-cc <- cohort_counts(d, event = EVENT, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
-
-# The three studies this template was drawn from made three overlap choices,
-# and a fourth study made a fourth. Which one a study makes decides what its
-# comparison means, so it is declared and saved, never defaulted.
-.overlaps <- c("none", "matched", "common_support")
-if (is.null(OVERLAP) || length(OVERLAP) != 1L || !OVERLAP %in% .overlaps) {
-  stop("OVERLAP must be one of ", paste0("\"", .overlaps, "\"", collapse = ", "),
-       ". Say in the text above how the cohort was made comparable across groups.", call. = FALSE)
 }
 ```
 
@@ -354,21 +234,52 @@ if (anyDuplicated(.real)) {
 }
 
 models <- list()
+.times <- character()
+.events <- character()
 for (m in .mn) {
   # A model from another study is recorded against that study's root, which
   # is where its provenance is anchored.
   .mcfg <- if (.is_path[[m]]) study_config(start = dirname(.model_path[[m]])) else .cfg
   .read <- hvtiRtemplates:::.read_handoff(.model_path[[m]], "hazard-regression-model", .mcfg,
                                           paste0("the hm job for ", m))
-  .time <- .read$lineage$analysis$time$variable
-  if (!identical(.time, TIME)) {
-    stop("The model for ", m, " was fitted on time column \"", .time, "\", not TIME (\"", TIME, "\"). ",
-         "HORIZON is one number applied to every model, so every model must share one time scale.",
-         call. = FALSE)
+  # The time and event the hm job recorded, checked against TIME and EVENT
+  # when they are set, as hm, hp and hs-setup check theirs against upstream.
+  .rec <- .read$lineage$selection
+  if (is.null(.rec$time) || is.null(.rec$event)) {
+    stop("The hm model for ", m, " records no time and event column: it predates the data contract. ",
+         "Rerun that hm job, then this one.", call. = FALSE)
   }
+  hvtiRtemplates:::.check_upstream_selection(.rec, list(time = TIME, event = EVENT))
+  .times[[m]] <- .rec$time
+  .events[[m]] <- .rec$event
   models[[m]] <- .read$value
   .provenance_data <- c(.provenance_data, .read$lineage$data)
   .provenance_artifacts <- c(.provenance_artifacts, .read$lineage$artifacts, list(.read$record))
+}
+# HORIZON is one number applied to every model, so the models share one time
+# scale and one event.
+if (length(unique(.times)) > 1L || length(unique(.events)) > 1L) {
+  stop("The hm models were fitted on different time or event columns (",
+       paste0(.mn, ": ", .times, " / ", .events, collapse = "; "), "). HORIZON is one number applied to ",
+       "every model, so every model must share one time scale.", call. = FALSE)
+}
+TIME <- unname(.times[[1L]])
+EVENT <- unname(.events[[1L]])
+```
+
+Code
+
+``` r
+cc <- cohort_counts(d, event = EVENT, time = TIME)
+assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+
+# The three studies this template was drawn from made three overlap choices,
+# and a fourth study made a fourth. Which one a study makes decides what its
+# comparison means, so it is declared and saved, never defaulted.
+.overlaps <- c("none", "matched", "common_support")
+if (is.null(OVERLAP) || length(OVERLAP) != 1L || !OVERLAP %in% .overlaps) {
+  stop("OVERLAP must be one of ", paste0("\"", .overlaps, "\"", collapse = ", "),
+       ". Say in the text above how the cohort was made comparable across groups.", call. = FALSE)
 }
 ```
 
@@ -717,3 +628,31 @@ art <- hvtiRtemplates:::.attach_handoff_lineage(
 )
 saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 ```
+
+## About this run
+
+| Group | Item | Value |
+|:---|:---|:---|
+| Run | Started | 2026-10-12 16:18:14 EDT |
+|  | Ended | 2026-10-12 16:18:14 EDT |
+|  | Duration | 0 s |
+|  | Status | final |
+|  | Rendered by | gallery |
+|  | Host | gallery |
+| Job | File | hs.concordance.dead.approach.qmd |
+|  | Template | hs.concordance |
+|  | Subject | dead |
+|  | Type | approach |
+|  | hvtiRtemplates | 1.3.1 |
+| Dataset `built` | Version file | built_20261012.parquet |
+|  | Registered | 2026-10-12 |
+|  | Source file | built.rds |
+|  | Rows kept | 725 rows on 725 patients |
+|  | WHERE | `!is.na(creat_pr)` |
+|  | sha256 | 27b97c1d78ec |
+|  | Manifest | current |
+| Upstream | Handoff | `dead-surgical/hz.rds` (hazard-shape-model), rendered not recorded |
+|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-10-12 16:17:53 -0400, data built_20261012.parquet |
+|  | Handoff | `dead-transcatheter/hz.rds` (hazard-shape-model), rendered not recorded |
+|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-10-12 16:18:07 -0400, data built_20261012.parquet |
+| Reproducibility | renv | not active |

@@ -2,6 +2,10 @@
 
 # Boosted multivariate trees: boostmtree
 
+Published
+
+2026-10-12 16:24
+
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
 
@@ -14,10 +18,9 @@ effects over time, and a sample of patients’ fitted trajectories.
 Code
 
 ``` r
+SUBJECT <- "lvef"
+TYPE    <- "boost"
 .in <- knitr::current_input(dir = TRUE)
-.root <- hvtiRtemplates:::.find_study_root(if (is.null(.in)) getwd() else dirname(.in))
-.provenance_data <- list()
-for (f in list.files(file.path(.root, "R"), pattern = "[.]R$", full.names = TRUE)) source(f)
 # boostmtree must be the CCF fork, 2.0.2 or later. Every study fits with
 # cv.flag = TRUE, and in boostmtree 2.0.0 (the CRAN release) that flag leaves the
 # in-sample fit frozen, so the stored coefficients diverge with M and every
@@ -40,128 +43,19 @@ suppressPackageStartupMessages({
   library(ggBoostedTrees)
   library(hvtiRutilities)
 })
-```
-
-Code
-
-``` r
-# The markers in this file name work a study author still has to do, and
-# README.md says a job that still contains one has not been finished. This
-# chunk is what makes that TRUE rather than merely stated.
-#
-# Without it an unedited job renders green over a meaningless analysis. Here
-# that is a boosted fit on the template's placeholder response, predictors and
-# iteration count, whose error path and effect plots look exactly like a result.
-#
-# knitr::current_input() is NULL outside a render -- a study author stepping
-# through chunks in RStudio -- and there is no file to scan then, so this is a
-# no-op in that case. Same handling as the `set` guard below, for the same
-# reason.
-#
-# The token is BUILT, not written literally, and that is not stylistic. Quarto
-# knits through an intermediate and current_input() returns THAT file, so the
-# scan reads a copy of this chunk along with everything else: a literal
-# grep("<token>", .src) here matches its own source line, and the guard then
-# fires on every render, finished or not. Measured, not theorised -- a probe
-# found three markers in a file containing two. A guard that cries wolf on a
-# finished job is a guard that gets deleted, which returns us to issue #27.
-.tok <- paste0("ED", "IT", ":")
-.cur <- knitr::current_input()
-if (!is.null(.cur)) {
-  .src  <- readLines(.cur, warn = FALSE)
-  .hits <- grep(.tok, .src, fixed = TRUE)
-  if (length(.hits)) {
-    # Report the marker TEXT. Line numbers here are the intermediate's, not
-    # this .qmd's, so they need not match what the author sees in an editor.
-    .msg <- paste0(
-      length(.hits), " unresolved ", .tok, " marker(s) remain in this job:\n",
-      paste0("  - ", trimws(substr(.src[.hits], 1L, 96L)), collapse = "\n"),
-      "\nA job that still contains one has not been finished. Work each ",
-      "marker and delete it."
-    )
-    # A job renders as a draft by default, so an author can iterate on a
-    # working report and remove markers as they go. HVTI_TEMPLATE_STRICT
-    # turns the draft into a stop for a final render. Only unset, 0, false
-    # and no mean "not strict": an unrecognized value stops on purpose, so a
-    # mistyped switch is seen rather than quietly ignored, which is the safe
-    # direction to be wrong in.
-    if (tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
-      # The banner is not optional. A draft render that looks like a finished
-      # one is the same defect with an extra step: the warning scrolls past in
-      # a log, while the .html is the artifact that gets sent to someone.
-      warning(.msg, "\nRendering as a draft; the banner goes when the last marker does. ",
-              "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
-      cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
-      cat("Unresolved markers remain. **The numbers below are not",
-          "a result.**\n\n```\n", .msg, "\n```\n", sep = "")
-      cat(":::\n\n")
-    } else {
-      stop(.msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '",
-           Sys.getenv("HVTI_TEMPLATE_STRICT"), "'. Unset it, or set it to 0, false ",
-           "or no, to render a draft instead.", call. = FALSE)
-    }
-  }
-}
-```
-
-Code
-
-``` r
-# unnumbered: a callout, printed only when part of the job is left out
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. Here that is a boosted fit on the template's placeholder
+# response, predictors and iteration count, whose error path and effect plots
+# look exactly like a result.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
-# in a chunk to leave out everything below it. A draft lists each one here; a
-# final render refuses them, as it refuses an EDIT marker. ?stop_here has more.
-hvtiRtemplates:::.guard_partial(knitr::current_input())
-```
-
-Code
-
-``` r
-SUBJECT <- "lvef"
-TYPE    <- "boost"
-
-# `add_job()` writes SUBJECT/TYPE from the same values it put in this file's
-# name, but a hand-edited declaration can drift from it afterward. set_path()
-# below resolves from the declarations, not the filename, so a drifted
-# declaration would silently write into ANOTHER set's artifact directory --
-# exactly the collision the (subject, type) key exists to prevent, re-entered
-# through the body instead of the name.
-#
-# knitr::current_input() is NULL outside a render (a study author running
-# chunks interactively in RStudio), and there is no filename to check against
-# yet, so this is a no-op in that case rather than a spurious error.
-.current <- knitr::current_input()
-if (!is.null(.current)) {
-  # The name is template first, <prefix>[.<qualifier>].<subject>.<type>, or
-  # <subject>-<type>-<prefix>[-<qualifier>] for a job scaffolded before
-  # 2026-10. .job_name_fields() reads subject and type from either, whatever
-  # the extension: Quarto knits through an intermediate, so
-  # `knitr::current_input()` names the `.rmarkdown` file here, not the `.qmd`.
-  .fields <- hvtiRtemplates:::.job_name_fields(.current)
-  .name_subject <- if (length(.fields) >= 1L) .fields[[1L]] else NA_character_
-  .name_type     <- if (length(.fields) >= 2L) .fields[[2L]] else NA_character_
-  if (!identical(.name_subject, SUBJECT) || !identical(.name_type, TYPE)) {
-    stop("This file is named '", .current, "' (subject '", .name_subject, "', type '",
-         .name_type, "'), but declares SUBJECT = \"", SUBJECT, "\", TYPE = \"", TYPE,
-         "\". Fix the declaration or the filename before rendering.", call. = FALSE)
-  }
-}
-
-# Resolve a path inside this set's artifact directory. `kind` is the artifact
-# folder -- "estimates" for serialized results, "graphs" for figures. The set
-# directory sits one layer under the kind and never two, which is the whole
-# layout rule.
-#
-# Created on first use rather than up front, so a job that writes nothing leaves
-# no empty directories behind.
-set_path <- function(kind, file) {
-  d <- file.path(hvtiRutilities::study_dir(kind, .root),
-                 paste0(SUBJECT, "-", TYPE))
-  if (!dir.exists(d)) dir.create(d, recursive = TRUE)
-  file.path(d, file)
-}
-
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
 # Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
@@ -170,7 +64,12 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 }
 
 # The fit is cached and saved through set_path(), by set, so a later render or job finds this set's fit and no other's.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
 ```
+
+**final** · data `echo` `echo_20261012.parquet`, registered 2026-10-12 ·
+rendered by gallery on gallery · hvtiRtemplates 1.3.1
 
 ## Study choices
 
@@ -348,7 +247,7 @@ if (length(.chr)) {
 
 | Data                |                                        |
 |:--------------------|:---------------------------------------|
-| Source              | dataset `echo` (echo_20261009.parquet) |
+| Source              | dataset `echo` (echo_20261012.parquet) |
 | Rows read           | 1,177                                  |
 | ID                  | `patient_id`                           |
 | Identifiers dropped | none                                   |
@@ -449,7 +348,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 162 | 0.8590475 |
+| l2 | lvef | 176 | 0.8592758 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -463,7 +362,7 @@ save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/594a23906fdcd7811dc8b497d02a5924.png)
+![](assets/fba1475188a348a6f85184002803ee6a.png)
 
 Figure 1: Cross-validated error by boosting iteration
 
@@ -475,7 +374,7 @@ save_figure(p_path, "nb-boostmtree-path")
 p_path
 ```
 
-![](assets/6c55c4a9e8bb79133c9b8f2b2806303f.png)
+![](assets/fa5b78f93e33f25f02d5c8378f082be9.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration
 
@@ -488,7 +387,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/5d44fe33fcc0cd011e2828563e6a6269.png)
+![](assets/b25dc7d17fa79612e4e261ae628d3a10.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins
 
@@ -503,7 +402,7 @@ save_figure(p_vimp, "nb-boostmtree-importance")
 p_vimp
 ```
 
-![](assets/8fb2311bae274a579df46f0a2d63e484.png)
+![](assets/cd832d9a83697c42df8a1d10a1a1dd5d.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time
@@ -569,7 +468,7 @@ Code
 .p
 ```
 
-![](assets/d23192281c62c6db8db018617afcf9de.png)
+![](assets/475d0aaf5d026ad965fc913b670de9ea.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors
 
@@ -615,7 +514,7 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/b50901860c6e16eab406b65ba31119c6.png)
+![](assets/f5a077aeac3b8cc940cc08ad402c4d13.png)
 
 Figure 6: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time
@@ -635,3 +534,28 @@ fit <- hvtiRtemplates:::.attach_handoff_lineage(
 )
 saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 ```
+
+## About this run
+
+| Group           | Item           | Value                        |
+|:----------------|:---------------|:-----------------------------|
+| Run             | Started        | 2026-10-12 16:19:10 EDT      |
+|                 | Ended          | 2026-10-12 16:24:09 EDT      |
+|                 | Duration       | 5 min 0 s                    |
+|                 | Status         | final                        |
+|                 | Rendered by    | gallery                      |
+|                 | Host           | gallery                      |
+| Job             | File           | nb.boostmtree.lvef.boost.qmd |
+|                 | Template       | nb.boostmtree                |
+|                 | Subject        | lvef                         |
+|                 | Type           | boost                        |
+|                 | hvtiRtemplates | 1.3.1                        |
+| Dataset `echo`  | Version file   | echo_20261012.parquet        |
+|                 | Registered     | 2026-10-12                   |
+|                 | Source file    | echo.rds                     |
+|                 | Rows kept      | 1,177 rows on 300 patients   |
+|                 | WHERE          | none                         |
+|                 | sha256         | 11f499d1f236                 |
+|                 | Manifest       | current                      |
+| Reproducibility | Seed           | 2026                         |
+|                 | renv           | not active                   |
