@@ -27,10 +27,8 @@ format:
 <!-- EDIT: name the SAS job this replaces, and paste its `%bootreg` call
      verbatim. The call is the specification: it names the candidate pool, the
      entry and stay levels, the replicate count and `proc=`. Prose describing
-     it is a paraphrase that drifts; the call does not. -->
-
-Replaces `analyses/<job>.sas`: paste its `%bootreg` call here — the candidate
-pool, `sle=`, `sls=`, `resampl=` and `proc=phreg`.
+     it is a paraphrase that drifts; the call does not.
+     Replace this comment with that text. -->
 
 This job reports a bootstrap variable selection screen over a **Cox
 proportional hazards** model: how often each candidate survived stepwise selection across resamples,
@@ -541,7 +539,7 @@ if (nrow(dropped)) {
 ## Did the screen actually run?
 
 ⚠️ **A Cox model has no intercept, so the base model is whatever terms you
-forced into every replicate.** `boot_bag()` refuses a `base_params` naming a
+name as the base.** `boot_bag()` refuses a `base_params` naming a
 term the screen does not carry, which is exactly what `"(Intercept)"` copied
 from a logistic runner does here — and that refusal is correct: every frequency
 below excludes the base model, so a name matching nothing would exclude nothing
@@ -551,8 +549,17 @@ If your screen forces nothing, there is no free base parameter and the
 standard-deviation check below reports `NA` rather than passing. **That check
 is then not running.** It is the one that catches a bootstrap which refit
 nothing and reported every replicate a success, so a screen whose frequencies
-are all 100% would render green with nothing to stop it. Force at least one
-term, or read the frequency table knowing the guard is inactive.
+are all 100% would render green with nothing to stop it.
+
+**Neither `boot_select()` nor `fit_cox()` can force a term into a Cox model,
+so the runner works around it.** It sets `BASE` to one screened candidate,
+`age` by default. That does not force the term in: the stepwise fit still
+chooses it or drops it in each replicate. What naming it does is take that
+variable out of every frequency table, so this report states no selection
+frequency for it, and make the standard-deviation check watch it. The cost is
+the missing frequency, so pick a variable whose frequency you do not need, and
+do not read its absence from the tables as a result. With `BASE` empty the
+guard is inactive, and you read the frequency table without it.
 
 ⚠️ **A screen that selected nothing is a failure, not a finding.** Nothing
 about it looks like an error: `boot_select()` keeps drawing until it has the

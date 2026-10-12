@@ -25,10 +25,8 @@ format:
 ---
 
 <!-- EDIT: name the SAS job this replaces, and say what its PROC HAZARD call
-     fits: which phases, which parameters are free, and which are fixed. -->
-
-Replaces `distributions/<job>.sas`: describe its `PROC HAZARD` call here — the
-phase structure, what is estimated and what is held fixed.
+     fits: which phases, which parameters are free, and which are fixed.
+     Replace this comment with that text. -->
 
 An `hz` job produces a parametric fit and persists it. The life table it is read
 against is an `ac` job, the figures over it are `hp`, and the covariate model
@@ -351,11 +349,9 @@ if (!requireNamespace("numDeriv", quietly = TRUE)) {
 <!-- EDIT: this prose. Say which parameters are free and which are fixed, and
      name the branch. With TAU = GAMMA = ALPHA = 1 the late phase is the pure
      Weibull `G3 = t^eta`; say so if that is what your SAS job did, because a
-     reader cannot tell a fixed 1 from an estimated 1 in the output. -->
-
-Describe the phase structure here: how many phases, which of `THALF`, `NU`,
-`M`, `MUE`, `TAU`, `GAMMA`, `ALPHA`, `ETA`, `MUL` are estimated, and which are
-held.
+     reader cannot tell a fixed 1 from an estimated 1 in the output. Describe the phase structure: how many
+     phases, which of `THALF`, `NU`, `M`, `MUE`, `TAU`, `GAMMA`, `ALPHA`, `ETA`,
+     `MUL` are estimated, and which are held. -->
 
 ⚠️ **A SAS hazard fit is always three-phase.** An absent phase sits in the model
 at zero rather than being removed, so classify from the sums table, never from

@@ -44,13 +44,13 @@ test_that("jobs present their study choices before reading data", {
     choices <- lines[(config + 1L):(end - 1L)]
     expect_true(any(grepl("^# EDIT:", choices)), info = paste(file, "edit markers"))
     # hm, hp and hs set TIME and EVENT again in their data chunk, from the
-    # selection hz recorded. That is not a second place to edit them.
-    data_at <- grep("^#\\| label: tbl-data$", lines)
-    outside <- lines
-    if (length(data_at) == 1L) {
-      data_end <- data_at + which(lines[(data_at + 1L):length(lines)] == "```")[[1L]]
-      outside <- lines[-seq.int(data_at, data_end)]
+    # selection hz recorded; hs-concordance does in its models chunk, from the
+    # selection its hm models recorded. That is not a second place to edit them.
+    drop <- rep(FALSE, length(lines))
+    for (at in grep("^#\\| label: (tbl-data|models)$", lines)) {
+      drop[seq.int(at, at + which(lines[(at + 1L):length(lines)] == "```")[[1L]])] <- TRUE
     }
+    outside <- lines[!drop]
     for (name in required[[basename(file)]]) {
       expect_true(any(grepl(paste0("^", name, "[[:space:]]*<-"), choices)),
                   info = paste(file, name))

@@ -24,10 +24,8 @@ format:
     embed-resources: true
 ---
 
-<!-- EDIT: name the SAS job this replaces, and say what its %KAPLAN calls do. -->
-
-Replaces `distributions/<job>.sas`: describe its `%KAPLAN` calls here — overall,
-and each stratification.
+<!-- EDIT: name the SAS job this replaces, and say what its %KAPLAN calls do.
+     Replace this comment with that text. -->
 
 An `ac` job produces life tables. Figures over the same estimates are an `hp`
 job, and the parametric fit is `hz`; neither belongs here.

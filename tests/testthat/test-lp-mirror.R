@@ -353,9 +353,12 @@ test_that("the join reports counts only: no identifier, raw or digested, is prin
   )
   env <- lm_eval_job(s$job)
   expect_gt(length(printed), 0L)
-  # Seven-digit identifiers occur nowhere else in the fixture.
+  # The fixture's own identifiers, as whole tokens: a pattern such as 91[0-9]{5}
+  # also matched a file size in the provenance on Windows, with no patient in it.
+  ids <- c(lp_data()$ccfid, 9200000L + seq_len(7L))
+  id_token <- paste0("(?<![A-Za-z0-9])(", paste(ids, collapse = "|"), ")(?![A-Za-z0-9])")
   digests <- env$scores$id
-  expect_false(any(grepl("91[0-9]{5}|92[0-9]{5}", printed)))
+  expect_false(any(grepl(id_token, printed, perl = TRUE)))
   expect_false(any(vapply(digests, function(x) any(grepl(x, printed, fixed = TRUE)), logical(1L))))
   # The join result and every table built from it hold counts and nothing else.
   expect_named(env$.join, c("matched", "counts"))
@@ -365,7 +368,7 @@ test_that("the join reports counts only: no identifier, raw or digested, is prin
                   env$.provenance_artifacts)
   text <- paste(vapply(outputs, function(x) paste(unlist(rapply(x, as.character, how = "list")), collapse = " "),
                        character(1L)), collapse = " ")
-  expect_false(grepl("91[0-9]{5}|92[0-9]{5}", text))
+  expect_false(grepl(id_token, text, perl = TRUE))
   expect_false(any(vapply(digests, function(x) grepl(x, text, fixed = TRUE), logical(1L))))
 })
 

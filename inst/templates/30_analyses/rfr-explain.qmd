@@ -27,8 +27,7 @@ format:
 <!-- EDIT: say which rfr-fit job in this set this explains, and what question
      the importance and dependence plots are meant to answer. -->
 
-Explains the forest the `rfr-fit` job in this set saved. Describe the question
-here.
+Explains the forest the `rfr-fit` job in this set saved.
 
 An `rfr-explain` job never grows a forest. It reads `rfr.rds`, which the fit
 job writes, and rebuilds the training data and the model from the forest

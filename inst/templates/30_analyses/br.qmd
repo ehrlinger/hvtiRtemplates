@@ -27,10 +27,8 @@ format:
 <!-- EDIT: name the SAS job this replaces, and paste its `%bootreg` call
      verbatim. The call is the specification: it names the candidate pool, the
      entry and stay levels, the replicate count and `proc=`. Prose describing
-     it is a paraphrase that drifts; the call does not. -->
-
-Replaces `analyses/<job>.sas`: paste its `%bootreg` call here — the candidate
-pool, `sle=`, `sls=`, `resampl=` and `proc=reg`.
+     it is a paraphrase that drifts; the call does not.
+     Replace this comment with that text. -->
 
 This job reports a bootstrap variable selection screen over a **linear**
 model: how often each candidate survived stepwise selection across resamples,
