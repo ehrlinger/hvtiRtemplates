@@ -24,7 +24,13 @@ Replaces `descriptive/dc.general`.
 A `dc-general` job is the first look at a built cohort, before any table or
 model: what the data contain, how each categorical variable breaks down, how
 each continuous variable is distributed, and which variables move together. It
-uses base procedures only. The formatted manuscript table is a `dc-tables` job.
+uses base procedures only.
+
+The tables below are checks on the data, not tables for a paper. For a
+manuscript table, run a `dc-tables` job alongside this one:
+`add_job("dc", SUBJECT, TYPE, qualifier = "tables")`. It takes the same grouped
+variable lists, renders them in the CORR house format, and saves the table to
+Word.
 
 ```{r}
 #| label: setup
