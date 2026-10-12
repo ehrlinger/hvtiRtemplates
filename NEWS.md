@@ -253,6 +253,14 @@
   row of its own; and a `WHERE` that names a column with a space or backtick is
   shown whole. (#306)
 
+* **`ANALYSIS_SET` now needs hvtiRdatabuild 0.3.0** (was 0.2.1), and 1.3.1 is
+  tested against it. 0.2.4 stopped with "$ operator is invalid for atomic
+  vectors" in `read_analysis_set()` and `write_analysis_set()` on any study
+  registered with hvtiRutilities 1.5.1, which this package already requires.
+  A stale analysis set no longer stops a draft in 0.3.0: it is read, and the
+  "About this run" table carries a note naming the `write_analysis_set()` call
+  that updates it. A final render (`render_job(final = TRUE)`) still stops.
+
 # hvtiRtemplates 1.3.0
 
 * A test now covers a new dataset version registered while a job is reading: the

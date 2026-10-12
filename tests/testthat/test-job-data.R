@@ -359,14 +359,14 @@ test_that("settings are checked before any data is read", {
   expect_error(read_job_data(cfg, dataset = ""), "DATASET")
 })
 
-test_that("an analysis set needs hvtiRdatabuild 0.2.1 or later", {
-  expect_error(hvtiRtemplates:::.require_databuild(NULL), "hvtiRdatabuild 0.2.1")
-  expect_error(hvtiRtemplates:::.require_databuild(package_version("0.2.0")), "0.2.1 or later.*0.2.0")
-  expect_silent(hvtiRtemplates:::.require_databuild(package_version("0.2.1")))
+test_that("an analysis set needs hvtiRdatabuild 0.3.0 or later", {
+  expect_error(hvtiRtemplates:::.require_databuild(NULL), "hvtiRdatabuild 0.3.0")
+  expect_error(hvtiRtemplates:::.require_databuild(package_version("0.2.4")), "0.3.0 or later.*0.2.4")
+  expect_silent(hvtiRtemplates:::.require_databuild(package_version("0.3.0")))
 })
 
 test_that("read_job_data() reads an analysis set and keeps its attrition", {
-  skip_if_not_installed("hvtiRdatabuild", "0.2.1")
+  skip_if_not_installed("hvtiRdatabuild", "0.3.0")
   skip_if_not_installed("arrow")
   skip_if_not_installed("hvtiPlotR")
   cfg <- job_study(d0)
@@ -1070,7 +1070,7 @@ test_that("a downstream job rebuilds a joined cohort, and its join settings must
 })
 
 test_that("a stale analysis set read in a draft is a note in the data table", {
-  skip_if_not_installed("hvtiRdatabuild", "0.2.1")
+  skip_if_not_installed("hvtiRdatabuild", "0.3.0")
   cfg <- job_study(d0)
   path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), "eda.parquet")
   writeLines("stand-in", path)

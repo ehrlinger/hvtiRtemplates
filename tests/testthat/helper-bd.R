@@ -3,7 +3,7 @@
 # parquet and its sidecar are the real formats. Every value is simulated.
 
 bd_skip <- function() {
-  testthat::skip_if_not_installed("hvtiRdatabuild", "0.2.3")
+  testthat::skip_if_not_installed("hvtiRdatabuild", "0.3.0")
   testthat::skip_if_not_installed("arrow")
   testthat::skip_if_not_installed("haven")
 }
