@@ -39,3 +39,10 @@ test_that("action = 'stop' names the columns and their counts instead of fitting
   expect_identical(hvtiRtemplates:::.missing_cases(d[2L, c("time", "event")], TIME = "time", action = "stop")$Variable,
                    "Complete cases")
 })
+
+test_that("stacked imputations are counted per imputation, not summed across the stack", {
+  one <- data.frame(y = c(1, 0, 1, 0), x = c(1, NA, 3, 4))
+  d <- rbind(cbind(one, imp = 1L), cbind(one, imp = 2L), cbind(one, imp = 3L))
+  tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = "x", imputation = "imp")
+  expect_identical(tab$Missing, c("1", "3 of 4 rows analysed in each of 3 imputations; 1 dropped"))
+})

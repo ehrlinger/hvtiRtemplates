@@ -418,7 +418,10 @@
 # each variable with a missing value, most missing first, then the cohort.
 # action: "drop" (the fit drops incomplete rows), "impute" (it keeps and
 # imputes them) or "stop" (the fit cannot take them, so stop here, naming them).
-.missing_cases <- function(d, ..., action = c("drop", "impute", "stop")) {
+# imputation names the column of stacked multiply imputed data, which a fit
+# takes one imputation at a time: counts are then per imputation, the most
+# any one imputation has, not summed across the stack.
+.missing_cases <- function(d, ..., action = c("drop", "impute", "stop"), imputation = NULL) {
   action <- match.arg(action)
   settings <- Filter(Negate(is.null), list(...))
   vars <- character()
@@ -428,10 +431,13 @@
     used <- setdiff(intersect(used, names(d)), names(vars))
     vars[used] <- setting
   }
-  missing <- vapply(names(vars), function(v) sum(is.na(d[[v]])), integer(1L))
+  stacks <- if (is.null(imputation)) list(d) else unname(split(d, d[[imputation]]))
+  per_stack <- function(f) max(vapply(stacks, f, integer(1L)), 0L)
+  missing <- vapply(names(vars), function(v) per_stack(function(s) sum(is.na(s[[v]]))), integer(1L))
   missing <- sort(missing[missing > 0L], decreasing = TRUE)
-  n <- nrow(d)
-  incomplete <- if (length(vars)) sum(!stats::complete.cases(d[names(vars)])) else 0L
+  n <- per_stack(nrow)
+  incomplete <- if (length(vars)) per_stack(function(s) sum(!stats::complete.cases(s[names(vars)]))) else 0L
+  per <- if (length(stacks) > 1L) paste(" in each of", length(stacks), "imputations") else ""
   if (action == "stop" && incomplete) {
     stop(incomplete, " of ", n, " rows have a missing value in the model's variables: ",
          paste0(names(missing), " (", missing, ")", collapse = ", "),
@@ -439,9 +445,10 @@
          paste(unique(vars[names(missing)]), collapse = " or "), ".", call. = FALSE)
   }
   cohort <- if (action == "impute") {
-    paste0(n, " of ", n, " rows analysed; ", if (incomplete) paste(incomplete, "with a missing value imputed") else "none imputed")
+    paste0(n, " of ", n, " rows analysed", per, "; ",
+           if (incomplete) paste(incomplete, "with a missing value imputed") else "none imputed")
   } else {
-    paste0(n - incomplete, " of ", n, " rows analysed; ", if (incomplete) paste(incomplete, "dropped") else "none dropped")
+    paste0(n - incomplete, " of ", n, " rows analysed", per, "; ", if (incomplete) paste(incomplete, "dropped") else "none dropped")
   }
   data.frame(Variable = c(names(missing), "Complete cases"), Setting = c(unname(vars[names(missing)]), ""),
              Missing = c(as.character(missing), cohort), row.names = NULL)
