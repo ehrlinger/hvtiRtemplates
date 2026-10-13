@@ -31,3 +31,8 @@ test_that("a level the column never takes stops, naming the values it does take"
   expect_error(hvtiRtemplates:::.lifetable_indicator(sex, character(), "sex", "MALE_LEVEL"),
                "^MALE_LEVEL must name at least one value of sex")
 })
+
+test_that("a logical column reads as 0/1, so the default level 1 means TRUE", {
+  out <- hvtiRtemplates:::.lifetable_indicator(c(TRUE, FALSE, NA), 1, "male", "MALE_LEVEL")
+  expect_identical(as.vector(out), c(1L, 0L, NA))
+})

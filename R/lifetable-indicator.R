@@ -12,6 +12,9 @@
   if (!length(levels) || anyNA(levels)) {
     stop(setting, " must name at least one value of ", col, ", and no NA.", call. = FALSE)
   }
+  # A logical column reads as 0/1, as us_matched() took it before the levels
+  # existed, so the default level 1 still means TRUE.
+  if (is.logical(x)) x <- as.integer(x)
   values <- as.character(x)
   absent <- setdiff(as.character(levels), values)
   if (length(absent)) {
