@@ -10,8 +10,12 @@ hvtiGraphics book, which gets a pull request of its own.
 2. **A faceted or multi-panel figure is sized freely** for now. Facets, small multiples, a
    scatter-plot matrix and a correlation matrix are the cases where 6 by 4 leaves each panel too
    small to read. Each exception carries a comment saying why it is one.
-3. **Type is 12 pt**, meaning a ggplot2 `base_size` of 12, in every figure, the faceted ones
-   included. `theme_hv_manuscript()` already defaults to 12. ggplot2's own themes
+3. **Type is 12 pt**, meaning a ggplot2 `base_size` of 12, in every figure but one kind: a
+   **page of small panels**, `dc-eda`'s grids of four to a row, is **8 pt**. At 12 pt a
+   legend over each panel ran past the page edge and the year labels printed over one
+   another, so those pages drop the legend and name each category beside its panel in its
+   own color, with about five labels on the year axis (`.eda_direct_labels()`). Decided
+   2026-10-13. The test accepts 8 pt only on a line that also applies the direct labels. `theme_hv_manuscript()` already defaults to 12. ggplot2's own themes
    (`theme_minimal()`, `theme_bw()`, the default `theme_grey()`) default to 11, so a template
    using one of them must say `base_size = 12`.
 4. **Every figure has a numbered caption**, meaning a chunk label starting `fig-` with a
