@@ -114,6 +114,8 @@ d <- job_data$data
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 # The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
 .id <- attr(job_data$record, "selection")$id
+# The imputation column read_job_data() matched, in the data's own spelling.
+IMPUTATION <- attr(job_data$record, "selection")$imputation
 knitr::kable(job_data$record, col.names = c("Data", ""))
 # A column the study choices name that the data lack stops here, naming the setting to change.
 hvtiRtemplates:::.check_job_columns(d, TREATMENT = TREATMENT, PREDICTORS = PREDICTORS)

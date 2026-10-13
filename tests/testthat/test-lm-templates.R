@@ -484,3 +484,14 @@ test_that("every lm template that takes IMPUTATION reads stacked imputations pas
     expect_identical(out$env$fit$meta$n_imputations, 2L, info = qualifier)
   }
 })
+
+test_that("every lm template that takes IMPUTATION fits when the choice is spelled differently from the column", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  # read_job_data() matches the name ignoring case; the fit and the missing-case table need the data's own spelling.
+  for (qualifier in setdiff(names(lm_qualifiers), "checkpred")) {
+    out <- lm_render_fixture(qualifier, data = lm_mi_data(), render = FALSE, choices = 'IMPUTATION <- "IMP"')
+    expect_identical(out$env$IMPUTATION, "imp", info = qualifier)
+    expect_identical(out$env$fit$meta$n_imputations, 2L, info = qualifier)
+  }
+})

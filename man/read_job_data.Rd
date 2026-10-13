@@ -161,6 +161,9 @@ A list:
       \code{.data} or a string lookup, replaced;
     \item \code{id} and \code{key}, the resolved column names, the
       key being the joined result's when there is a join;
+    \item \code{imputation}, the resolved name of the imputation column in
+      the data's own spelling, present only when \code{imputation} was
+      given, so a job can pass it on to a fit;
     \item \code{join}, \code{join_vars}, \code{reduce} and
       \code{join_key}, the join as read, with \code{join_vars},
       \code{join_key} and \code{reduce}'s columns spelled as the data

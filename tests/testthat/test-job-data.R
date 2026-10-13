@@ -1280,6 +1280,59 @@ test_that("a patient repeated within one imputation, or with no imputation, is s
                "1 patient has more than one row in the data read (3 rows on 2 patients)", fixed = TRUE)
 })
 
+test_that("stacked imputations record the imputation column as the data spell it", {
+  d <- data.frame(ccfid = rep(1:4, 2L), imp = rep(1:2, each = 4L), age = c(50, 60, 70, 80, 51, 61, 71, 81))
+  cfg <- stacked_study(d, key = c("ccfid", "imp"))
+  out <- read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "IMP")
+  expect_identical(attr(out$record, "selection")$imputation, "imp")
+  # A downstream job rebuilds the rows from that selection, and keeps the field upstream recorded.
+  sel <- attr(out$record, "selection")
+  again <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())
+  expect_identical(again$selection$imputation, "imp")
+  expect_identical(again$job_data$data, out$data)
+  # A read without imputations records no field at all.
+  plain <- read_job_data(cfg, key = c("ccfid", "imp"))
+  expect_false("imputation" %in% names(attr(plain$record, "selection")))
+})
+
+test_that("stacked integer64 IDs are paired by value, not by their bits", {
+  skip_if_not_installed("bit64")
+  skip_if_not_installed("arrow")
+  # bit64 keeps the value in the bits of a double, which sprintf("%.0f") reads as nearly zero,
+  # so every patient looked like the same one. Parquet is what hands R an integer64.
+  i64_study <- function(data, key, env = parent.frame()) {
+    root <- file.path(withr::local_tempdir(.local_envir = env), "study")
+    suppressMessages(hvtiRutilities::study_setup(root, "Integer64", 42L))
+    arrow::write_parquet(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.parquet"))
+    suppressMessages(hvtiRutilities::register_data(root, "built.parquet", key = key))
+    hvtiRutilities::study_config(root)
+  }
+  ids <- bit64::as.integer64(9100000000000 + 1:4)
+  d <- data.frame(ccfid = rep(ids, 2L), imp = rep(1:2, each = 4L), age = c(50, 60, 70, 80, 51, 61, 71, 81))
+  cfg <- i64_study(d, key = c("ccfid", "imp"))
+  expect_s3_class(hvtiRutilities::read_built(cfg)$ccfid, "integer64")
+  out <- read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "imp")
+  expect_identical(nrow(out$data), 8L)
+  expect_identical(attr(out$record, "selection")$patients, 4L)
+  # One patient twice in one imputation is still refused, and counted once.
+  dup <- d
+  dup$ccfid[2L] <- dup$ccfid[1L]
+  dup$visit <- c(1L, 2L, rep(1L, 6L))
+  cfg <- i64_study(dup, key = c("ccfid", "imp", "visit"))
+  expect_error(read_job_data(cfg, key = c("ccfid", "imp", "visit"), one_row_per_patient = TRUE, imputation = "imp"),
+               "1 patient has more than one row within an imputation")
+  # A single dataset, with no imputation, keeps reading.
+  cfg <- i64_study(d[1:4, c("ccfid", "age")], key = "ccfid")
+  expect_identical(nrow(read_job_data(cfg, key = "ccfid", one_row_per_patient = TRUE)$data), 4L)
+  # Plain double and character IDs behave as before.
+  for (conv in list(as.numeric, as.character)) {
+    x <- d
+    x$ccfid <- conv(bit64::as.character.integer64(x$ccfid))
+    cfg <- stacked_study(x, key = c("ccfid", "imp"))
+    expect_identical(nrow(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "imp")$data), 8L)
+  }
+})
+
 test_that("the imputation setting is checked", {
   d <- data.frame(ccfid = rep(1:2, 2L), imp = rep(1:2, each = 2L), age = 50:53)
   cfg <- stacked_study(d, key = c("ccfid", "imp"))

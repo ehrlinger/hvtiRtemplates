@@ -112,7 +112,8 @@ lm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = c
   lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
   for (replacement in replacements) {
     key <- sub(" .*", "", replacement)
-    lines[grepl(paste0("^", key, " <- "), lines)] <- replacement
+    # The first line only: the study choice, not a later `IMPUTATION <- attr(...)` that reads a resolved value back.
+    lines[which(grepl(paste0("^", key, " <- "), lines))[1L]] <- replacement
   }
   writeLines(lines, job)
   if (identical(qualifier, "checkpred")) {

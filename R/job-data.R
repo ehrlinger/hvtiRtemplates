@@ -643,6 +643,9 @@
 #'       \code{.data} or a string lookup, replaced;
 #'     \item \code{id} and \code{key}, the resolved column names, the
 #'       key being the joined result's when there is a join;
+#'     \item \code{imputation}, the resolved name of the imputation column in
+#'       the data's own spelling, present only when \code{imputation} was
+#'       given, so a job can pass it on to a fit;
 #'     \item \code{join}, \code{join_vars}, \code{reduce} and
 #'       \code{join_key}, the join as read, with \code{join_vars},
 #'       \code{join_key} and \code{reduce}'s columns spelled as the data
@@ -756,7 +759,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     repeated <- if (is.null(imputation_col)) {
       counts$rows > counts$patients
     } else {
-      anyDuplicated(paste(.id_text(kept$data[[who$id]]), .id_text(kept$data[[imputation_col]]), sep = "\r")) > 0L
+      # Compared on the two columns themselves, as the KEY check does, so an integer64 ID keeps its own values.
+      anyDuplicated(kept$data[c(who$id, imputation_col)]) > 0L
     }
     if (repeated) .stop_repeated_patients(kept$data, who$id, counts, imputation_col)
   }
@@ -773,6 +777,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     # the ID alone, and only the chosen records' key says which record was chosen.
     key_hash = .key_hash(kept$data, unique(c(key, joined$join_key)))
   )
+  # Only with stacked imputations, and in the data's own spelling, as the ID is: a
+  # selection without them keeps the fields it had before, so the two compare identical.
+  if (!is.null(imputation_col)) attr(record, "selection")$imputation <- imputation_col
   # Only with a join: a selection without one keeps the fields it had before
   # joins existed, so the two compare identical. A NULL field reads as absent.
   if (!is.null(join)) {
@@ -809,9 +816,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # The refusal for a repeated patient. With IMPUTATION the patient is repeated
 # within an imputation, which the message says; the counts are those of the read.
 .stop_repeated_patients <- function(d, id, counts, imputation = NULL) {
-  ids_kept <- .id_text(d[[id]])
-  within <- if (is.null(imputation)) ids_kept else paste(ids_kept, .id_text(d[[imputation]]), sep = "\r")
-  repeats <- length(unique(ids_kept[duplicated(within)]))
+  # Compared on the columns themselves, not on their text, so an integer64 ID keeps its own values.
+  repeats <- length(unique(d[[id]][duplicated(d[c(id, imputation)])]))
   stop("This job models one row per patient, but ", repeats, if (repeats == 1L) " patient has" else " patients have",
        " more than one row ", if (is.null(imputation)) "in the data read" else "within an imputation of the data read",
        " (", counts$rows, " rows on ", counts$patients, " patients). Read a ",
