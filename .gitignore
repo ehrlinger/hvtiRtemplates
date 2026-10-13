@@ -27,3 +27,6 @@ dev/demo/*_files/
 
 # R opens a default pdf device when something draws with none open; never commit what it writes.
 Rplots.pdf
+
+# testthat writes a failing test's reproduction here; never commit it.
+tests/testthat/_problems/
