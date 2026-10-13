@@ -50,8 +50,8 @@ SUBJECT <- "dead"
 TYPE    <- "calibration"
 .in <- knitr::current_input(dir = TRUE)
 suppressPackageStartupMessages(library(hvtiRutilities))
-if (utils::packageVersion("hvtiPlotR") < "2.8.7") {
-  stop("This job needs hvtiPlotR >= 2.8.7 for hv_panel_size(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.8") {
+  stop("This job needs hvtiPlotR >= 2.8.8 for hv_panel_size()'s 6.5 inch page; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -324,9 +324,8 @@ for (i in seq_len(nrow(variables))) {
   .scales <- hvtiRtemplates:::.lg_scales(.tab$mean, .v$constant, .v$shift)
   calibration[[.v$name]] <- list(table = .tab, scales = .scales)
   .plot <- hvtiRtemplates:::.lg_plot(.tab, .scales, LINK, title = .v$label)
-  # Six facets, one per scale, in three rows of two: hv_panel_size() gives each a 3 by 2
-  # inch panel, shrunk together to fit a 6 inch page. Three to a row, each with its own
-  # x axis, would leave panels under the 1.75 inch the function allows.
+  # Six facets, one per scale, in two rows of three: hv_panel_size() gives each a 3 by 2
+  # inch panel, shrunk together to fit a 6.5 inch page, so the figure is no wider than a page.
   .dims <- hvtiPlotR::hv_panel_size(.plot)
   .file <- save_figure(.plot, paste0("lg-", .v$name), width = .dims$width, height = .dims$height, linked = TRUE)
   # This document sits in descriptive/ and the figure is written to graphs/, so
