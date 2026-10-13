@@ -20,6 +20,7 @@ from pathlib import Path
 SHAPES = ("balancing_continuous", "linear")
 MIGRATIONS = ("migration_mm", "migration_gm", "migration_nm")
 PROGRAM_SUFFIXES = {".sas", ".r", ".rmd", ".rnw", ".qmd"}
+R_SUFFIXES = {".r", ".rmd", ".rnw", ".qmd"}
 PREFIX_RE = re.compile(r"(?:^|[._-])(rm)(?:[._-]|$)", re.IGNORECASE)
 SKIP_DIRS = {".git", ".rproj.user", "node_modules", "packrat", "renv"}
 
@@ -34,13 +35,25 @@ def study_key(path):
     return str(Path(*parts[:at]))
 
 
+def strip_comments(text, suffix):
+    """Drop comments so commented-out fits do not count as fits."""
+    text = re.sub(r"/\*.*?\*/", " ", text, flags=re.DOTALL)
+    text = re.sub(r"(^|;)(\s*)\*[^;]*;", r"\1\2", text)
+    if suffix.lower() in R_SUFFIXES:
+        text = re.sub(r"#[^\n]*", "", text)
+    return text
+
+
 def signals(path, text):
     lower_name = path.name.lower()
-    lower = text.lower()
+    lower = strip_comments(text.lower(), path.suffix)
+    glm_repeated = bool(re.search(r"\bproc\s+glm\b", lower) and re.search(r"\brepeated\b", lower))
     both = lower_name + "\n" + lower
     return {
-        "ols": bool(re.search(r"\bproc\s+(?:reg|glm)\b|(?<![._a-z])lm\s*\(", lower)),
-        "mixed": bool(re.search(r"\bproc\s+(?:mixed|glimmix)\b|\blmer?\s*\(|\blme\s*\(", lower)),
+        "ols": bool(re.search(r"\bproc\s+reg\b|(?<![._a-z])lm\s*\(", lower))
+        or (bool(re.search(r"\bproc\s+glm\b", lower)) and not glm_repeated),
+        "mixed": glm_repeated
+        or bool(re.search(r"\bproc\s+(?:mixed|glimmix)\b|\blmer?\s*\(|\blme\s*\(", lower)),
         "genmod": bool(re.search(r"\bproc\s+genmod\b|\bglm\.nb\s*\(|(?<![._a-z])glm\s*\(", lower)),
         "nlin": bool(re.search(r"\bproc\s+nlin\b|\bnls\s*\(", lower)),
         "balancing": bool(re.search(
@@ -107,6 +120,8 @@ def main():
             "transformed": found["transformed"],
         })
     if not rows:
+        if candidates:
+            raise SystemExit(f"{len(candidates)} rm candidates found but none could be read.")
         raise SystemExit("No rm candidates found: check the corpus root and the mount name.")
 
     args.private_csv.parent.mkdir(parents=True, exist_ok=True)

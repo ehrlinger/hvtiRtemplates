@@ -50,6 +50,28 @@ class Classify(unittest.TestCase):
         self.assertIsNone(census.PREFIX_RE.search("form.sas"))
         self.assertIsNotNone(census.PREFIX_RE.search("rm.los.sas"))
 
+    def test_block_commented_mixed_is_ignored(self):
+        text = "/* proc mixed data=x; model y = a; run; */ proc reg data=x; model y = a; run;"
+        self.assertEqual(shape("rm.y.sas", text), "linear")
+
+    def test_statement_commented_fit_is_ignored(self):
+        self.assertEqual(shape("rm.y.sas", "* proc reg data=x; model y = a; run;"), "misfiled")
+
+    def test_multiplication_is_not_a_comment(self):
+        self.assertEqual(shape("rm.y.sas", "x = a * b; proc reg; model y = x; run;"), "linear")
+
+    def test_r_line_comment_is_ignored(self):
+        text = "# fit <- lmer(y ~ (1|id), d)\nfit <- lm(y ~ a, d)"
+        self.assertEqual(shape("rm.y.R", text), "linear")
+
+    def test_glm_with_repeated_is_mm(self):
+        text = "proc glm data=x; class t; model y1 y2 y3 = grp; repeated time 3; run;"
+        self.assertEqual(shape("rm.y.sas", text), "migration_mm")
+
+    def test_glm_with_repeated_beside_reg_needs_a_person(self):
+        text = "proc reg data=x; model y = a; run; proc glm data=x; model y1 y2 = g; repeated time 2; run;"
+        self.assertEqual(shape("rm.y.sas", text), "manual_review")
+
 
 if __name__ == "__main__":
     unittest.main()
