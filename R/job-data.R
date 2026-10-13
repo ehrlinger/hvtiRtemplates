@@ -445,10 +445,10 @@
          paste(unique(vars[names(missing)]), collapse = " or "), ".", call. = FALSE)
   }
   cohort <- if (action == "impute") {
-    paste0(n, " of ", n, " rows analysed", per, "; ",
+    paste0(n, " of ", n, " rows analyzed", per, "; ",
            if (incomplete) paste(incomplete, "with a missing value imputed") else "none imputed")
   } else {
-    paste0(n - incomplete, " of ", n, " rows analysed", per, "; ", if (incomplete) paste(incomplete, "dropped") else "none dropped")
+    paste0(n - incomplete, " of ", n, " rows analyzed", per, "; ", if (incomplete) paste(incomplete, "dropped") else "none dropped")
   }
   data.frame(Variable = c(names(missing), "Complete cases"), Setting = c(unname(vars[names(missing)]), ""),
              Missing = c(as.character(missing), cohort), row.names = NULL)

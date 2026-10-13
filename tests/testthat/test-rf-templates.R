@@ -670,9 +670,9 @@ test_that("rfs-fit says who na.omit drops, and that na.impute keeps them (#174)"
   env <- rf_env(d)
   rf_run("rfs", "fit", labels, env, rfs_choices)
   expect_identical(env$.missing_values$Variable, c("karno", "age", "Complete cases"))
-  expect_identical(env$.missing_values$Missing, c("2", "1", paste(nrow(d) - 2L, "of", nrow(d), "rows analysed; 2 dropped")))
+  expect_identical(env$.missing_values$Missing, c("2", "1", paste(nrow(d) - 2L, "of", nrow(d), "rows analyzed; 2 dropped")))
   env <- rf_env(d)
   rf_run("rfs", "fit", labels, env, utils::modifyList(rfs_choices, list(NA_ACTION = "na.impute")))
   expect_identical(env$.missing_values$Missing[[3L]],
-                   paste(nrow(d), "of", nrow(d), "rows analysed; 2 with a missing value imputed"))
+                   paste(nrow(d), "of", nrow(d), "rows analyzed; 2 with a missing value imputed"))
 })

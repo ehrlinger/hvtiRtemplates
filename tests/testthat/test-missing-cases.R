@@ -5,7 +5,7 @@ test_that("the missing-values table names each variable and the cohort the fit w
   # Only variables with a missing value, the most missing first, and then the cohort.
   expect_identical(tab$Variable, c("age", "outcome", "Complete cases"))
   expect_identical(tab$Setting, c("PREDICTORS", "OUTCOME", ""))
-  expect_identical(tab$Missing, c("2", "1", "1 of 4 rows analysed; 3 dropped"))
+  expect_identical(tab$Missing, c("2", "1", "1 of 4 rows analyzed; 3 dropped"))
 })
 
 test_that("a variable used inside a model term is counted, and `.` means every column", {
@@ -14,20 +14,20 @@ test_that("a variable used inside a model term is counted, and `.` means every c
   expect_identical(tab$Variable, c("x", "Complete cases"))
   tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = ".")
   expect_setequal(tab$Variable, c("x", "z", "Complete cases"))
-  expect_identical(tab$Missing[[3L]], "1 of 3 rows analysed; 2 dropped")
+  expect_identical(tab$Missing[[3L]], "1 of 3 rows analyzed; 2 dropped")
 })
 
 test_that("a cohort with nothing missing says so", {
   d <- data.frame(y = c(1, 0), x = c(1, 2))
   tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = "x")
   expect_identical(tab$Variable, "Complete cases")
-  expect_identical(tab$Missing, "2 of 2 rows analysed; none dropped")
+  expect_identical(tab$Missing, "2 of 2 rows analyzed; none dropped")
 })
 
 test_that("under imputation the rows are kept, and the table says so", {
   d <- data.frame(y = c(1, 0, 1), x = c(1, NA, 3))
   tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = "x", action = "impute")
-  expect_identical(tab$Missing[[2L]], "3 of 3 rows analysed; 1 with a missing value imputed")
+  expect_identical(tab$Missing[[2L]], "3 of 3 rows analyzed; 1 with a missing value imputed")
 })
 
 test_that("action = 'stop' names the columns and their counts instead of fitting", {
@@ -44,5 +44,5 @@ test_that("stacked imputations are counted per imputation, not summed across the
   one <- data.frame(y = c(1, 0, 1, 0), x = c(1, NA, 3, 4))
   d <- rbind(cbind(one, imp = 1L), cbind(one, imp = 2L), cbind(one, imp = 3L))
   tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = "x", imputation = "imp")
-  expect_identical(tab$Missing, c("1", "3 of 4 rows analysed in each of 3 imputations; 1 dropped"))
+  expect_identical(tab$Missing, c("1", "3 of 4 rows analyzed in each of 3 imputations; 1 dropped"))
 })
