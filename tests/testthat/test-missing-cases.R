@@ -59,7 +59,7 @@ test_that("a term's own missing values count, not only its column's (#318 review
   expect_identical(tab$Missing, "4 of 4 rows analyzed; none dropped")
 })
 
-test_that("imputations that analyze different numbers of rows are shown as a labelled range", {
+test_that("imputations that analyze different numbers of rows are shown as a labeled range", {
   d <- data.frame(y = 1, x = c(1, 2, 3, 4, 1, NA, NA, 4), imp = rep(1:2, each = 4L))
   tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = "x", imputation = "imp")
   expect_identical(tab$Missing, c("0 to 2", "2 to 4 of 4 rows analyzed per imputation, across 2 imputations; 0 to 2 dropped"))
