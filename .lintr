@@ -225,5 +225,9 @@ exclusions: list(
     "inst/runners/bl-runner.R" = list(object_name_linter = Inf),
     "inst/runners/br-runner.R" = list(object_name_linter = Inf),
     "inst/runners/bc-runner.R" = list(object_name_linter = Inf),
-    "inst/runners/bh-runner.R" = list(object_name_linter = Inf)
+    "inst/runners/bh-runner.R" = list(object_name_linter = Inf),
+    # A frozen copy of rfs-fit as released in v1.3.0, the job upgrade_job() is
+    # tested against. It must stay byte for byte what that release shipped, so
+    # it is excluded whole: its findings belong to the release, not this tree.
+    "tests/testthat/fixtures-upgrade/rfs-fit-v1.3.0.qmd" = Inf
   )

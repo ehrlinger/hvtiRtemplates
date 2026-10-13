@@ -13,6 +13,7 @@ export(stop_here)
 export(template_catalog)
 export(template_list)
 export(template_path)
+export(upgrade_job)
 importFrom(hvtiRutilities,
   hvti_non_prefixes,
   hvti_taxonomy
