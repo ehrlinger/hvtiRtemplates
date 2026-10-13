@@ -4,6 +4,8 @@ date: now
 date-format: "YYYY-MM-DD HH:mm"
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -406,7 +408,11 @@ with no values. `ps_stddiff()`'s help page gives every formula.
 
 ```{r}
 #| label: fig-balance
-#| fig-cap: "Standardized differences, with the imbalance threshold dotted"
+#| fig-cap: >-
+#|   Standardized difference of each variable, one row per variable, for each comparison. A blue circle,
+#|   vermillion triangle and green square mark the first, second and third comparison in turn, the solid
+#|   vertical line zero difference, the dotted vertical lines the imbalance threshold, and the dashed
+#|   horizontal lines the variable rows.
 # The figure keeps the table's units, proportions of a standard deviation, so
 # the threshold lines sit at the THRESHOLD the summary table counts against.
 long <- do.call(rbind, lapply(names(results), function(nm) {
@@ -423,10 +429,11 @@ p <- plot(bal) +
   scale_color_manual(values = stats::setNames(hv_palette(length(.levels)), .levels)) +
   scale_shape_manual(values = stats::setNames(c(16, 17, 15)[seq_along(.levels)], .levels)) +
   labs(x = "Standardized difference (group 1 minus group 0)", y = NULL, color = NULL, shape = NULL) +
-  theme_hv_manuscript() +
+  theme_hv_manuscript(base_size = 12) +
   # The manuscript theme drops the legend; this figure needs it to say which
   # comparison each point is.
   theme(legend.position = "top")
+# Free size: one row per variable, so the height grows with the list.
 file <- save_figure(p, "dc-stddiff-balance", width = 7, height = max(3, 1.5 + 0.25 * nrow(balance)), linked = TRUE)
 # This document sits in descriptive/ and the figure is written to graphs/, so
 # the image link is the figure's path relative to this document.

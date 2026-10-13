@@ -13,6 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -335,31 +337,34 @@ One block per tree gives the curve that shows whether `NTREE` was large enough.
 
 ```{r}
 #| label: fig-diagnostics-error
-#| fig-cap: "Out-of-bag error by number of trees"
+#| fig-cap: "Out-of-bag error by number of trees. The black solid line is the out-of-bag error after each additional tree."
 # Out-of-bag error by number of trees.
 err <- gg_error(forest)
-.fig <- plot(err)
+.fig <- plot(err) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rfs-fit-diagnostics-error")
 .fig
 ```
 
 ```{r}
 #| label: fig-diagnostics-survival
-#| fig-cap: "Out-of-bag predicted survival, one curve per patient"
+#| fig-cap: "Out-of-bag predicted survival, one curve per patient. Each step line is one patient's predicted survival over
+#|   follow-up, one color for patients who had the event and another for those who did not, as in the legend."
 # Out-of-bag predicted survival, one curve per patient.
 surv <- gg_rfsrc(forest)
-.fig <- plot(surv)
+# The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.
+.fig <- plot(surv) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(.fig, "rfs-fit-diagnostics-survival")
 .fig
 ```
 
 ```{r}
 #| label: fig-diagnostics-brier
-#| fig-cap: "Brier score over follow-up"
+#| fig-cap: "Brier score over follow-up. The black solid line is the out-of-bag Brier score at each time, lower being better."
 # Brier score over follow-up. Lower is better, and 0.25 is what a coin flip
 # scores.
 brier <- gg_brier(forest)
-.fig <- plot(brier)
+.fig <- plot(brier) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rfs-fit-diagnostics-brier")
 .fig
 ```

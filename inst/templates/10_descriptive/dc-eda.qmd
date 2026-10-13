@@ -4,6 +4,8 @@ date: now
 date-format: "YYYY-MM-DD HH:mm"
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -191,6 +193,8 @@ ALPHA <- 0.5
 # vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
 # all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
 # event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
+# Each figure caption names these colors, so choosing your own means naming them
+# in the caption key too, where the figures are drawn.
 COLORS <- NULL
 
 # EDIT: the longest label the figure pages and their captions show, in
@@ -499,6 +503,8 @@ for (i in seq_len(nrow(fp$data))) {
   panel_counts[[nm]] <- list(drawn = row$n_drawn, excluded = row$n_excluded)
   cat("\n### ", row$title, "\n\n", row$n_drawn, " patients drawn; ", row$n_excluded,
       " missing a column this panel needs.\n\n", sep = "")
+  # The caption key names the house colors that COLORS <- NULL draws and the
+  # shapes set here, so a study that sets COLORS renames them in .key below.
   if (row$type == "followup") {
     fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time)
     .followup <- .followup_table(fc, d, PANELS[[nm]]$status)
@@ -509,17 +515,22 @@ for (i in seq_len(nrow(fp$data))) {
     p <- plots[[nm]] +
       status_colors(c("Alive", "Dead")) +
       scale_shape_manual(values = c(Alive = 1, Dead = 4))
+    .key <- "Blue open circles mark patients alive and vermillion crosses patients who died"
   } else {
     levels <- c("No event", row$title, "Death")
     p <- plots[[nm]] +
       status_colors(levels) +
       scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
+    .key <- paste0("Blue open circles mark patients without the event, green open triangles patients with the event, ",
+                   "and vermillion crosses patients who died")
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
-    theme_hv_manuscript()
-  file <- save_figure(p, paste0("dc-eda-gfup-", nm), width = 7, height = 6, linked = TRUE)
+    theme_hv_manuscript(base_size = 12)
+  file <- save_figure(p, paste0("dc-eda-gfup-", nm), linked = TRUE)
   .link <- figure_link(file)
-  .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", row$title),
+  .child(paste("fig gfup", nm),
+         paste0("Follow-up against year of operation, ", row$title, ". ", .key, " and the dashed orange diagonal ",
+                "the longest follow-up possible for each year of operation."),
          "knitr::include_graphics(.link, error = FALSE)")
   figure_files <- c(figure_files, file)
 }
@@ -535,6 +546,13 @@ for (i in seq_len(nrow(fp$data))) {
 # patient, not only those with a value.
 titles <- c(continuous = "Continuous variables", percent = "Categorical variables, percent",
             count = "Categorical variables, counts")
+# What each panel draws, for the caption: a continuous page has no legend to read it from.
+.eda_key <- c(continuous = paste0("Black filled circles mark patients, the solid blue line a LOESS smooth where a variable has ",
+                                  "enough distinct values, and gray ticks along the bottom the patients missing the variable."),
+              percent = paste("Stacked bars give the share of patients at each reference value, one color per category",
+                              "named in that color beside the panel."),
+              count = paste("Stacked bars give the number of patients at each reference value, one color per category",
+                            "named in that color beside the panel."))
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
 draw_section <- function(section) {
   sec <- hvtiPlotR::hv_eda_pages(d, x_col = X_VAR, section = section, vars = VARIABLES,
@@ -563,13 +581,17 @@ draw_section <- function(section) {
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
   files <- character(0)
   for (i in seq_along(pages)) {
-    file <- save_figure(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
+    # Free size: a page is a grid of panels, so it keeps a page of its own to leave each readable.
+    # 8 pt, not 12, because four panels share a row. Categories are named beside each panel in
+    # their own color rather than in a legend, which runs past the page edge at this width.
+    .page <- hvtiRtemplates:::.eda_direct_labels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
+    file <- save_figure(.page,
                         sprintf("dc-eda-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
     cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")
     .link <- figure_link(file)
     .child(paste("fig eda", section, "page", i),
-           paste0(titles[[section]], ", page ", i, ": ", paste(labels[on_page], collapse = ", ")),
+           paste0(titles[[section]], ", page ", i, ": ", paste(labels[on_page], collapse = ", "), ". ", .eda_key[[section]]),
            "knitr::include_graphics(.link, error = FALSE)")
     files <- c(files, file)
   }

@@ -4,6 +4,8 @@ date: now
 date-format: "YYYY-MM-DD HH:mm"
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -48,6 +50,10 @@ SUBJECT <- "dead"
 TYPE    <- "calibration"
 .in <- knitr::current_input(dir = TRUE)
 suppressPackageStartupMessages(library(hvtiRutilities))
+if (utils::packageVersion("hvtiPlotR") < "2.8.8") {
+  stop("This job needs hvtiPlotR >= 2.8.8 for hv_panel_size()'s 6.5 inch page; ",
+       utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -318,7 +324,10 @@ for (i in seq_len(nrow(variables))) {
   .scales <- hvtiRtemplates:::.lg_scales(.tab$mean, .v$constant, .v$shift)
   calibration[[.v$name]] <- list(table = .tab, scales = .scales)
   .plot <- hvtiRtemplates:::.lg_plot(.tab, .scales, LINK, title = .v$label)
-  .file <- save_figure(.plot, paste0("lg-", .v$name), width = 9, height = 6, linked = TRUE)
+  # Six facets, one per scale, in two rows of three: hv_panel_size() gives each a 3 by 2
+  # inch panel, shrunk together to fit a 6.5 inch page, so the figure is no wider than a page.
+  .dims <- hvtiPlotR::hv_panel_size(.plot)
+  .file <- save_figure(.plot, paste0("lg-", .v$name), width = .dims$width, height = .dims$height, linked = TRUE)
   # This document sits in descriptive/ and the figure is written to graphs/, so
   # the image link is the figure's path relative to this document.
   .link <- xfun::relative_path(.file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE)
@@ -330,7 +339,8 @@ for (i in seq_len(nrow(variables))) {
               if (identical(LINK, "hazard")) "Log hazard rate" else "Logit")
   .cap_tbl <- paste0("Groups of ", .v$label, ", with the event rate and its link value")
   .cap_fig <- paste0(.v$label, ": the link value of each group against the covariate on six scales, ",
-                     "with the R-squared of a weighted straight line")
+                     "with the R-squared of a weighted straight line. Black filled circles mark the groups, joined by a ",
+                     "gray line, and the text in each panel corner gives the R-squared")
   cat("\n### ", .v$label, "\n\n", sep = "")
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), paste0("#| label: tbl-lg-", .slug),

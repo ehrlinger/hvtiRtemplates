@@ -9,6 +9,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # of being self-contained.
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -375,7 +377,8 @@ for (sg in names(SUBGROUPS)) {
         " missing the year or the value.\n\n", sep = "")
     p <- plot(tr) +
       labs(x = "Year of operation", y = spec$ylab, color = NULL, shape = NULL) +
-      theme_hv_manuscript()
+      # The manuscript theme hides the legend; several series need it to be told apart.
+      theme_hv_manuscript(base_size = 12, legend.position = "top")
     # Limits through coord_cartesian(), not scale limits. A scale limit DROPS
     # the patients outside it before the smooth is fitted, so the curve would
     # stop passing through the yearly points hv_trends() computed from all of
@@ -385,9 +388,12 @@ for (sg in names(SUBGROUPS)) {
     if (!is.null(spec$ylim)) p <- p + coord_cartesian(ylim = spec$ylim)
     if (!is.null(XBREAKS)) p <- p + scale_x_continuous(breaks = XBREAKS)
     fname <- paste0("dc-trends-", nm, "-", sg, ".png")
-    file <- save_figure(p, sub("[.]png$", "", fname), width = 8, height = 6, linked = TRUE)
+    file <- save_figure(p, sub("[.]png$", "", fname), linked = TRUE)
     .link <- figure_link(file)
-    .child(paste("fig trends", nm, sg), paste0("Trend in ", nm, " by year of operation, ", sg),
+    .child(paste("fig trends", nm, sg),
+           paste0("Trend in ", nm, " by year of operation, ", sg, ". Filled circles mark the yearly summary and the ",
+                  "solid line a LOESS smooth of the patients; a single series is black circles on a blue line, ",
+                  "several get one color and point shape each, as in the legend."),
            "knitr::include_graphics(.link, error = FALSE)")
   }
 }

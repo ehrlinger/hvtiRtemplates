@@ -4,6 +4,8 @@ date: now
 date-format: "YYYY-MM-DD HH:mm"
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left

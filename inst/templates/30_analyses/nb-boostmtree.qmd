@@ -13,6 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -360,39 +362,51 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 ```{r}
 #| label: fig-error
-#| fig-cap: "Cross-validated error by boosting iteration"
+#| fig-cap: "Cross-validated error by boosting iteration. The black solid line is the error after each iteration, and the
+#|   black dashed vertical line marks the iteration with the lowest error, Best M."
 # The cross-validated error by iteration, and the fitted rho, phi and lambda.
 # Best M at the right edge means M was too small.
-p_error <- plot(gg_boost_error(fit))
+p_error <- plot(gg_boost_error(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
 ```{r}
 #| label: fig-path
-#| fig-cap: "Fitted rho, phi and lambda by boosting iteration"
-p_path <- plot(gg_boost_path(fit))
-save_figure(p_path, "nb-boostmtree-path")
+#| fig-cap: "Fitted rho, phi and lambda by boosting iteration, one panel per parameter. Each black solid line is the
+#|   parameter's fitted value after each iteration."
+#| fig-height: 8
+# Free size: three stacked panels, one per parameter.
+p_path <- plot(gg_boost_path(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
 ```{r}
 #| label: fig-calibration
-#| fig-cap: "Observed against fitted values over follow-up, in time bins"
+#| fig-cap: "Observed against fitted values over follow-up, in time bins. Each gray horizontal segment spans a time bin at
+#|   its observed mean, with a vertical black bar for the interval around it; black circles mark the observed means,
+#|   black triangles the fitted means, and the black dashed line joins the fitted means over time."
 # Observed against fitted values over follow-up, in time bins.
-p_calibration <- plot(gg_boost_calibration(fit))
+# The manuscript theme hides the legend and its title, and the caption reads the shapes from the legend.
+p_calibration <- plot(gg_boost_calibration(fit)) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
 ```{r}
 #| label: fig-importance
-#| fig-cap: "Importance of each predictor's main effect and of its interaction with time"
+#| fig-cap: "Importance of each predictor's main effect and of its interaction with time, one panel for each. Horizontal
+#|   dark gray bars give the importance of each predictor."
+#| fig-width: 9
+#| fig-height: 7
 # Importance of each predictor's main effect and its interaction with time; the
 # interaction is where a predictor whose effect changes over follow-up shows.
 vimp <- vimp.boostmtree(fit)
-p_vimp <- plot(gg_boost_vimp(vimp))
-save_figure(p_vimp, "nb-boostmtree-importance")
+# Free size: one row per predictor, and one panel per effect.
+p_vimp <- plot(gg_boost_vimp(vimp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(p_vimp, "nb-boostmtree-importance", width = 9, height = 7)
 p_vimp
 ```
 
@@ -413,12 +427,12 @@ if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unkno
 # Each component is renamed as the fit summary names it, not by its bare level.
 .fence <- strrep("`", 3)
 .seen <- new.env()
-.child <- function(label, caption, code) {
+.child <- function(label, caption, code, opts = NULL) {
   label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
   if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
   .seen[[label]] <- TRUE
   .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
-  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, opts, code, .fence),
                         envir = parent.frame(), quiet = TRUE), sep = "\n")
   cat("\n")
 }
@@ -442,18 +456,28 @@ levels(.effect$response) <- .relabel
 p_effects <- lapply(unname(.parts), function(v) {
   part <- .effect[.effect$variable %in% v, , drop = FALSE]
   part$variable <- droplevels(part$variable)
-  plot(part)
+  # The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.
+  plot(part) + hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 })
+# Free size: one panel per predictor, and per response component when there are several.
+.key <- c(continuous = paste("Each solid line is the effect at one follow-up time, colored from dark to light blue by",
+                             "time as in the color bar."),
+          categorical = paste("Each point is the effect at one level and follow-up time, colored from dark to light blue by",
+                              "time as in the color bar."))
 for (.i in seq_along(p_effects)) {
   .p <- p_effects[[.i]]
-  save_figure(.p, paste0("nb-boostmtree-effects-", .kinds[[.i]]))
-  .child(paste("fig effects", .kinds[[.i]]), paste0("Partial effects over follow-up, ", .kinds[[.i]], " predictors"), ".p")
+  save_figure(.p, paste0("nb-boostmtree-effects-", .kinds[[.i]]), width = 9, height = 7)
+  .child(paste("fig effects", .kinds[[.i]]),
+         paste0("Partial effects over follow-up, ", .kinds[[.i]], " predictors, one panel per predictor. ", .key[[.kinds[[.i]]]]),
+         ".p", opts = c("#| fig-width: 9", "#| fig-height: 7"))
 }
 ```
 
 ```{r}
 #| label: fig-traces
-#| fig-cap: "Fitted trajectories for a sample of patients, with the cohort's mean fitted value over time"
+#| fig-cap: "Fitted trajectories for a sample of patients, with the cohort's mean fitted value over time. Thin translucent
+#|   black lines trace each sampled patient's fitted values, translucent black circles their observed values, and the
+#|   thick black line the cohort's mean fitted value within ten time bins."
 # Fitted trajectories for a sample of patients, with their observed values as
 # points, and the cohort's mean fitted value over time drawn across them. The
 # patients are labeled by digest, so none is identified.
@@ -466,7 +490,8 @@ traces <- gg_boost_trajectory(fit)
 .edges <- unique(stats::quantile(traces$time, seq(0, 1, length.out = 11L), names = FALSE))
 # plot() reports that it chose the patients at random; SEED makes the choice
 # the same on every render.
-p_traces <- withr::with_seed(SEED, plot(traces, n_max = N_TRACES)) + ggplot2::labs(x = .time, y = .response)
+p_traces <- withr::with_seed(SEED, plot(traces, n_max = N_TRACES)) + ggplot2::labs(x = .time, y = .response) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
 if (length(.edges) < 2L) {
   # Every visit at one time leaves no span to bin, and no line to draw.
   trace_means <- NULL

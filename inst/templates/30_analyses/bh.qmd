@@ -13,6 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -719,7 +721,10 @@ result as an absence of collinearity.
 ```{r}
 #| label: fig-frequencies
 #| fig-height: 7
-#| fig-cap: "Selection frequency by phase, with Monte-Carlo error and the retention threshold"
+#| fig-cap: "Bootstrap selection frequency of each candidate variable, one panel per phase. Black filled circles mark the
+#|   percent of replicates selecting the variable, horizontal black bars ±1 Monte Carlo error, and the dashed
+#|   vertical line the retention threshold."
+# Free size: faceted by phase, with one row per variable, so the height grows with the list.
 # The error bar is the point of the figure, not decoration. A bare dot plot
 # invites the reader to rank variables by a difference of two points, which is
 # inside the noise at every frequency near the middle of the range.
@@ -739,7 +744,7 @@ result as an absence of collinearity.
   coord_flip() +
   facet_wrap(~phase, scales = "free_y") +
   labs(x = NULL, y = "Replicates selecting the variable (%)") +
-  theme_minimal()
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "bh-frequencies", height = 7)
 .fig
 ```

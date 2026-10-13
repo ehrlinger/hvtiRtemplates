@@ -4,6 +4,8 @@ date: now
 date-format: "YYYY-MM-DD HH:mm"
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -335,7 +337,8 @@ if (is.null(CORR)) {
   }
   cm <- hv_correlation_matrix(d, vars = unique(c(CORR$with, CORR$vars)))
   fname <- "dc-tables-correlation-matrix.png"
-  save_figure(plot(cm) + theme_hv_manuscript(), sub("[.]png$", "", fname), width = 10, height = 10,
+  # Free size: a scatter-plot matrix, so a single 6 by 4 panel would leave each cell too small to read.
+  save_figure(plot(cm) + theme_hv_manuscript(base_size = 12), sub("[.]png$", "", fname), width = 10, height = 10,
               kind = "descriptive", linked = TRUE)
   .fence <- strrep("`", 3)
   .caption <- sprintf("Spearman and Pearson, %d%% Fisher interval", round(100 * conf_level))
@@ -343,7 +346,8 @@ if (is.null(CORR)) {
     paste0(.fence, "{r}"), "#| label: tbl-correlation", paste0("#| tbl-cap: ", encodeString(.caption, quote = "\"")),
     "knitr::kable(ct)", .fence, "",
     paste0(.fence, "{r}"), "#| label: fig-correlation-matrix",
-    "#| fig-cap: \"Scatter-plot matrix of the correlated variables.\"",
+    paste0("#| fig-cap: \"Scatter-plot matrix of the correlated variables. Each cell plots one variable against another, ",
+           "each patient a small translucent black filled circle.\""),
     "knitr::include_graphics(file.path(paste0(SUBJECT, \"-\", TYPE), fname), error = FALSE)", .fence
   ), envir = environment(), quiet = TRUE), sep = "\n")
 }

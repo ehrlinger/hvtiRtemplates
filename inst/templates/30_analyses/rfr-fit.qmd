@@ -13,6 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -337,20 +339,21 @@ One block per tree gives the curve that shows whether `NTREE` was large enough.
 
 ```{r}
 #| label: fig-diagnostics-error
-#| fig-cap: "Out-of-bag error by number of trees"
+#| fig-cap: "Out-of-bag error by number of trees. The black solid line is the out-of-bag error after each additional tree."
 # Out-of-bag error by number of trees.
 err <- gg_error(forest)
-.fig <- plot(err)
+.fig <- plot(err) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rfr-fit-diagnostics-error")
 .fig
 ```
 
 ```{r}
 #| label: fig-diagnostics-predicted
-#| fig-cap: "Out-of-bag predicted against observed values"
+#| fig-cap: "Out-of-bag predicted values. Black circles, jittered sideways, mark the individual predictions, and the unfilled
+#|   notched box plot marks their median and quartiles."
 # Out-of-bag predicted against observed.
 pred <- gg_rfsrc(forest)
-.fig <- plot(pred)
+.fig <- plot(pred) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rfr-fit-diagnostics-predicted")
 .fig
 ```
