@@ -61,6 +61,7 @@ ruled out.
 | 4 | What is versioned? | **Only a registered dataset, and every registered dataset the same way:** a dated version (`<stem>_YYYYMMDD[_rN].parquet`), whatever produced it. How it was produced is provenance recorded on the version, not a second scheme |
 | 5 | How does a legacy study enter (#225)? | **It registers its existing `built`.** That is decision 4 applied to a file SAS made. Its next version may come from a `bd` cut, which `compare_built()` checks against the legacy one |
 | 6 | What does a study do with a value it believes is wrong? | **It records a correction in the study's overlay, applies it locally, and proposes it upstream.** See section 5 |
+| 8 | How is the master built? (sub-project C) | **Port the SAS program; do not lift its snapshot.** The port runs **query, rename, correct, derive**, as three layers: base views over the warehouse (the pull, with names aligned to the standard), adjudicated corrections applied to base columns and pinned with `as_of`, and derived views that read corrected base columns only. Decided 2026-10-13; see section 7, item 0, for the measurement it rests on |
 | 7 | Order of work | **A (one version scheme) before B (#225),** so the adoption job is built on the scheme that stays |
 
 ## 4. The model
@@ -146,7 +147,7 @@ datasets:
 
 ## 7. Open
 
-0. **C's first question: lift the snapshot, or port the program?** `lift_master()` loads a
+0. **Settled by decision 8: port the program.** The measurement behind it: `lift_master()` loads a
    frozen SAS snapshot into a base table, a copy SAS made. Porting the program would make its
    pull and derivations views over the warehouse's own tables, leaving no SAS-made copy. The
    cardiac build was measured on 2026-10-13 by a structure-only scan (statement kinds, tables,
@@ -158,12 +159,19 @@ datasets:
    - **The pull does not align names.** The base query selects the warehouse views' columns as
      they stand (`c.*, v.*, w.*` over `vw_CardSurg_Base`, `_Valve` and `_Cabg`), renaming only the
      MRN to `ccfid`; the build adds a handful of `rename` statements.
-   - **Corrections are not last.** Key-matched fixes sit in three data steps among the
-     derivations, and two large derivation steps run after them, so later variables derive from
-     corrected values. A port therefore needs base views, then corrections, then derived
-     views, not one view with corrections applied on top. The scan counted 10 single-statement
-     key-matched fixes against the 2026-09-23 count of 18; `then do;` blocks and multi-line `in`
-     lists probably account for the difference, which needs a closer pass.
+   - **Corrections are not last, and one runs too late.** 18 key-matched fix statements correct
+     6 columns (counting `then do;` blocks, which agrees with the 2026-09-23 count). Three
+     corrected columns feed later derivations: `dt_disc` (`hdeath`, `iv_dead`, `iv_fup`),
+     `dt_fcst` (`iv_fup`) and `ht` (`bsa`, `wtht`). `dt_birth` and `dt_admt` are read by nothing
+     after their fix. **`age` is read before it is corrected:** `crcl_pr` is derived from it
+     about 270 lines before the five `age` fixes, so the master holds a creatinine clearance
+     computed from the uncorrected age for those patients. Correcting last would repeat that
+     defect for every corrected input; correcting before deriving fixes it.
+   - **What the scan cannot see.** It is static: macro-generated code, arrays and columns read
+     inside `proc sql` are not followed, and only the corrected columns' readers were traced.
+     The port's parity check against a dated build is the proof, and it will differ, by design,
+     for exactly the patients whose corrections feed a derivation; those differences are listed
+     and accepted as the fix.
    - **The master reads more than the warehouse:** pre-op echo, labs, ECG, the SSDI death index,
      one imported CSV, and four study `built` datasets joined in by `proc sql`. Data already
      flows from studies into the master as files. Each needs a source decision before a port.
