@@ -1165,27 +1165,57 @@
     },
     {
       "prefix": "rm",
-      "qualifier": null,
-      "name": "Regression model",
+      "qualifier": "balancing_continuous",
+      "name": "Regression model: continuous balancing score",
+      "description": "Least-squares balancing score for a continuous exposure: the averaged fitted value and its strata.",
       "folder": "analyses",
       "family": "models",
       "kind": "job",
-      "status": "queued",
+      "status": "shipped",
       "batch": 6,
-      "sas_breadth": 174,
-      "r_exemplars": 8,
-      "r_jobs": 94,
+      "sas_breadth": null,
+      "r_exemplars": null,
+      "r_jobs": null,
       "upstream": [],
       "downstream": [],
       "workflows": [
         "propensity-matching"
       ],
       "blocked_on": null,
-      "spec": null,
-      "note": null,
-      "sas_breadth_jobs": 170,
-      "disposition": "scaffold",
-      "uses": []
+      "spec": "dev/specs/2026-10-13-rm-template-family-design.md",
+      "note": "Counts pending the 2026-10-13 rm shape census.",
+      "sas_breadth_jobs": null,
+      "disposition": "thin",
+      "uses": [
+        "hvtiRpropensity::bs_continuous"
+      ]
+    },
+    {
+      "prefix": "rm",
+      "qualifier": "linear",
+      "name": "Regression model: continuous outcome",
+      "description": "Ordinary least-squares outcome model with Rubin-pooled inference.",
+      "folder": "analyses",
+      "family": "models",
+      "kind": "job",
+      "status": "queued",
+      "batch": 6,
+      "sas_breadth": null,
+      "r_exemplars": null,
+      "r_jobs": null,
+      "upstream": [],
+      "downstream": [],
+      "workflows": [
+        "propensity-matching"
+      ],
+      "blocked_on": null,
+      "spec": "dev/specs/2026-10-13-rm-template-family-design.md",
+      "note": "Counts pending the 2026-10-13 rm shape census.",
+      "sas_breadth_jobs": null,
+      "disposition": "thin",
+      "uses": [
+        "hvtiRpropensity::fit_linear"
+      ]
     },
     {
       "prefix": "rp",

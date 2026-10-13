@@ -9,7 +9,7 @@ pending_contract_families <- setdiff(template_stems(), c(
   "ac", "hz", "hm", "hp", "hs-concordance", "hs-setup",
   "dc-general", "dc-gfup", "dc-tables", "dc-eda", "dc-trends",
   "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
-  "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal",
+  "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal", "rm-balancing_continuous",
   "rfs-fit", "rfs-explain", "rfc-fit", "rfc-explain", "rfr-fit", "rfr-explain",
   "bl", "br", "bc", "bh", "nb-boostmtree"
 ))

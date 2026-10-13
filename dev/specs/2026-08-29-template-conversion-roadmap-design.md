@@ -265,7 +265,7 @@ case — it is not a prefix and never was:
 | check covariate balance | `lp`, `rp` | `graphs/` | `tp.lp.propen.cov_balance.R`, `tp.rp.blnc_scr.cov_balance.R` |
 | matched descriptives | `dc` | `descriptive/` | `tp.dc.match.outcomes_paired.sas` |
 | outcome, count | `pm` | `analyses/` | `tp.pm.count.balncing_score.sas` |
-| outcome, continuous | `rm` | `analyses/` | `tp.rm.continuous.balncing_score.sas` |
+| balancing score, continuous exposure | `rm` | `analyses/` | `tp.rm.continuous.balncing_score.sas` |
 | outcome, time-to-event | `cm` | `analyses/` | `tp.cm.CoxPH-evnts-propensity-IPTW-mtch-CoxPH.sas` |
 | bootstrap on matched | `bl` | `analyses/` | `tp.bl.median.cost.matched.boot_ci_anes.sas` |
 | matched survival plots | `hp` | `graphs/` | `tp.hp.dead.matching_weight.sas` |
