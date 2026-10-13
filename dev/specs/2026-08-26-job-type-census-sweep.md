@@ -15,13 +15,13 @@ it.
 `shape-census.R` lives in the **study tree**, not in a repo:
 
 ```
-/studies/vascular/thoracic-aorta/dissection/ascending/acute/preserve_root/analyses/R_hazard/R/shape-census.R
+/studies/<study>/analyses/R_hazard/R/shape-census.R
 ```
 
 Run server-side (never over SMB), R 4.6.0, TemporalHazard ≥ 1.2.6:
 
 ```
-cd /studies/vascular/thoracic-aorta/dissection/ascending/acute/preserve_root/analyses/R_hazard/R
+cd /studies/<study>/analyses/R_hazard/R
 env -u R_HOME /opt/R/4.6.0/bin/Rscript shape-census.R /studies
 ```
 

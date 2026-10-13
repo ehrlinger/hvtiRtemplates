@@ -1,6 +1,6 @@
 # R_hazard Job Templates Implementation Plan
 
-> **Migrated 2026-08-18** from `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_hazard/docs/plans/2026-08-12-r-hazard-job-templates.md`.
+> **Migrated 2026-08-18** from `/Volumes/qhsstudies/<study>/analyses/R_hazard/docs/plans/2026-08-12-r-hazard-job-templates.md`.
 > Cross-references to the other migrated documents have been repointed to their
 > paths in this repository; the text is otherwise unchanged. Study folders on the
 > share do not host git repositories, so the design record lives with the package
@@ -31,7 +31,7 @@
 
   **Do not retry a failed render.** Each attempt leaves another tombstone, and the directory then blocks even `rm -rf` until the share is remounted.
 
-- The tree is at `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival` (server: `/studies/...`).
+- The tree is at `/Volumes/qhsstudies/<study>` (server: `/studies/...`).
 - **No literal study path in any R or `.qmd` file.** Paths resolve at runtime via `study_root()`. The server and the Mac mount disagree on the absolute prefix.
 - **No PHI** in code, notes, commits, or rendered output.
 - **`R/` holds side-effect-free helpers only.** Anything with top-level executable code goes in `scripts/`. Every consumer sources `R/` wholesale with `list.files()`; a side effect there runs on every render. Enforced by a test in Task 5.

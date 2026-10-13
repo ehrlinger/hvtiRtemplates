@@ -21,8 +21,8 @@ The exemplars are **not in this repo**. Re-fetch them before Task 1 — the
 scratchpad copy from the design session is gone:
 
 ```bash
-LVF=/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_hazard
-PR=/Volumes/qhsstudies/vascular/thoracic-aorta/dissection/ascending/acute/preserve_root/analyses
+LVF=/Volumes/qhsstudies/<study>/analyses/R_hazard
+PR=/Volumes/qhsstudies/<study>/analyses
 cp "$LVF/example-jobs/bh.example.qmd" "$PR/bh.dead_summary.sas" "$PR/bh.dead.sas" .
 ```
 

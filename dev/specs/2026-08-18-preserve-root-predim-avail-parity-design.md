@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-18
 **Status:** Approved design
-**Study:** `/studies/vascular/thoracic-aorta/dissection/ascending/acute/preserve_root`
+**Study:** `/studies/<study>`
 **Study title:** Fate of Preserved Aortic Root in Acute Type A Aortic Dissection (2009–2021)
 **Spec home:** this repository. The study folders are on a network share that
 does not host git repositories, so the design record lives with the package that

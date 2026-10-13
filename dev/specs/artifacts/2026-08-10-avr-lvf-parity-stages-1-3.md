@@ -1,6 +1,6 @@
 # AVR / LV-function TemporalHazard Parity — Stages 1–3 Implementation Plan
 
-> **Migrated 2026-08-18** from `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_parity/docs/plans/2026-08-10-avr-lvf-parity-stages-1-3.md`.
+> **Migrated 2026-08-18** from `/Volumes/qhsstudies/<study>/analyses/R_parity/docs/plans/2026-08-10-avr-lvf-parity-stages-1-3.md`.
 > Cross-references to the other migrated documents have been repointed to their
 > paths in this repository; the text is otherwise unchanged. Study folders on the
 > share do not host git repositories, so the design record lives with the package
@@ -20,7 +20,7 @@
 ## Global Constraints
 
 - **Execution target is the CCF server**, not a Mac. The Mac mount is authoring only.
-- **No R file may hardcode a study path.** Server is `/studies/cardiac/...`; Mac mount is `/Volumes/qhsstudies/cardiac/...`. All paths resolve at runtime from the study root.
+- **No R file may hardcode a study path.** Server is `/studies/<study>`; Mac mount is `/Volumes/qhsstudies/<study>`. All paths resolve at runtime from the study root.
 - **Read-only discipline:** nothing under `analyses/R_parity/` writes outside itself — not to `datasets/`, `distributions/`, `graphs/`, `estimates/`, nor to the SAS files in its own parent `analyses/`.
 - **Target cohort: N = 3049, 1032 events, 2017 right-censored.** `n=3316` and `n=3687` in the SAS sources are stale strings; ignore them.
 - **Tolerance classes** (spec §5.2.1) — `exact` (atol 0, rtol 0); `printed` (atol = half-ULP of printed value, rtol 0); `optimizer` (atol 1e-6, rtol 1e-3); `curvature` (atol 1e-6, rtol 1e-2).
