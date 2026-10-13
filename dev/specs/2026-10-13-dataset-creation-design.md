@@ -55,8 +55,8 @@ ruled out.
 
 | # | question | answer |
 |---|---|---|
-| 1 | Where does the master live? | **In the warehouse, as one corrected view.** SAS and parquet are a one-time route in (`snapshot_master()` then `lift_master()`), not a copy that persists alongside it |
-| 2 | How does a study get its data from the master? | **It cuts the view, pinned with `as_of`, and keeps a file.** Jobs keep reading a checksummed file under the existing manifest contract; no render needs a warehouse connection |
+| 1 | Where does the master live? | **In the warehouse, as layered views over its own tables** (decision 8). No SAS-made copy persists: a dated SAS build is snapshotted only as a temporary parity baseline for the port (section 6, C) |
+| 2 | How does a study get its data from the master? | **It cuts the corrected base, pinned with `as_of`, applies its own corrections, recomputes the master's derivations, and keeps a file** (section 5). Jobs keep reading a checksummed file under the existing manifest contract; no render needs a warehouse connection |
 | 3 | What is a study's working data? | **One undated file, `built`,** whatever produced it: a legacy SAS build, a `bd` cut of the view, or a rebuild. It is overwritten in place |
 | 4 | What is versioned? | **Only a registered dataset, and every registered dataset the same way:** a dated version (`<stem>_YYYYMMDD[_rN].parquet`), whatever produced it. How it was produced is provenance recorded on the version, not a second scheme |
 | 5 | How does a legacy study enter (#225)? | **It registers its existing `built`.** That is decision 4 applied to a file SAS made. Its next version may come from a `bd` cut, which `compare_built()` checks against the legacy one |
@@ -67,20 +67,25 @@ ruled out.
 ## 4. The model
 
 ```
-SAS built.master --snapshot_master()--> parquet --lift_master()--> warehouse table
-                                                                      |
-                 corrections tables (propose / decide, as_of) --------+
-                                                                      v
-                                                        corrected master VIEW
-                                                                      |  bd cuts, pinned as_of
-                                                                      v
-legacy SAS study built --+                        study overlay: corrections (section 5)
+warehouse tables --query, rename--> BASE views
+                                       |
+     corrections tables (propose / decide; read at as_of) --> CORRECTED BASE   (layer 2)
+                                       |                           |
+                                       |                           +--derive--> DERIVED views (layer 3)
+                                       v  bd cuts corrected base, pinned as_of
+                       study overlay (section 5) applied to base columns
+                                       |
+                                       v  the SAME derivations, run on the cut
+legacy SAS study built --+
                          +--> datasets/built   (working: undated, overwritten)
                    bd ---+         |   each overlay row is also proposed upstream, pending
                                    v   register_data()
                      built_YYYYMMDD[_rN].parquet + manifest entry   (registered: dated, with provenance)
                                    |
                                    v   jobs: verify_manifest(); the freeze = every job CURRENT
+
+parity baseline only: a dated SAS built.master --snapshot_master()--> parquet, compared with the
+port's output by compare_built(); never lifted, never read by a study
 ```
 
 Three states, matching the data-freeze design's: **working** (`built`, unregistered; a render
@@ -96,16 +101,28 @@ key, the `variable`, the `expected_prior` value, the `new_value`, `evidence_type
 1. **The overlay.** A study keeps its corrections in one file under `00_datasets/`, one row
    per cell. The file holds keys and values, so it is study data: it lives on the share with
    the dataset and never in a repository.
-2. **Apply.** `bd` applies each overlay row to its cut, after checking that the cut holds
+2. **Apply, to base columns.** `bd` cuts the *corrected base* (layer 2), not the derived
+   view, and applies each overlay row to it, after checking that the cut holds
    `expected_prior`. A row whose prior no longer matches stops the build, naming the variable
-   and the count, never the key or the value.
-3. **Propose.** Each new overlay row is proposed upstream with `propose_correction()`. It is
+   and the count, never the key or the value. An overlay row may only name a base column; a
+   derived column is corrected by correcting its inputs.
+3. **Derive.** `bd` then computes every derived column from the corrected cut, using the
+   master's own derivation definitions (layer 3), so a local correction to `age` reaches
+   `crcl_pr` exactly as an upstream one would. This requires C to write the derivations once,
+   in a form that both defines the warehouse's derived views and runs on a study's cut (for
+   example SQL that duckdb runs over the cut); two copies would drift. Registration refuses a
+   cut whose derivations were not recomputed after its overlay was applied.
+4. **Propose.** Each new overlay row is proposed upstream with `propose_correction()`. It is
    pending there until `decide_correction()` decides it.
-4. **Reconcile, on every later cut.** For each overlay row, the latest upstream decision says
-   what happens: `accept`, the view now carries the value, so the row is a no-op and is
-   retired; `reject`, the build stops until the study drops the row or argues it again; no
-   decision yet, the row stays applied and pending.
-5. **Report.** The build lists, by variable and count, how many corrections were applied,
+5. **Reconcile, on every later cut, at that cut's own watermark.** Decisions are read as of
+   the same `as_of` the cut is pinned to, never "latest", because an acceptance made after the
+   watermark is not in the cut, and an accepted correction can still be stale and unapplied.
+   So the test for retiring a row is the **effective value**: if the cut, before the overlay,
+   already holds the row's `new_value` for that cell, the row is a no-op and is retired. If the
+   latest decision at the watermark is `reject`, the build stops until the study drops the row
+   or argues it again. In every other case (no decision, accepted after the watermark, accepted
+   but not applied) the row stays applied and pending.
+6. **Report.** The build lists, by variable and count, how many corrections were applied,
    pending, accepted and retired, or rejected. The registered version's provenance records
    the overlay's SHA-256.
 
@@ -121,8 +138,8 @@ Each gets its own design, plan and pull request.
 |---|---|---|---|
 | **A** | One version scheme for study datasets: dated versions only, with provenance | hvtiRutilities | none |
 | **B** | #225: register a legacy study's `built` (a `00_datasets` job named from `tp.bd.SAStoR`) | hvtiRtemplates | A |
-| **C** | The master in the warehouse: run `snapshot_master()`, `lift_master()`, `backfill_corrections()` for the cardiac master. A runbook, needing warehouse write access and the registries team's agreement | hvtiRdatabuild | none |
-| **D** | `bd` cuts the view, pinned with `as_of`, writes `built` and registers it | hvtiRtemplates | A, C |
+| **C** | Port the master program (decision 8): base views with the renames, corrections applied to base columns, and derivations written once so they define the derived views and run on a study's cut (section 5, step 3). Proved against a dated SAS build snapshotted as a parity baseline with `snapshot_master()` and compared with `compare_built()`, differing by design where corrections now precede derivations. `lift_master()` is not used. Needs warehouse write access and the registries team's agreement | hvtiRdatabuild | none |
+| **D** | `bd` cuts the corrected base, pinned with `as_of`, derives, writes `built` and registers it | hvtiRtemplates | A, C |
 | **E** | The study corrections overlay, and its reconciliation | hvtiRdatabuild, hvtiRtemplates | C, D |
 | **F** | Fold the data-freeze design into this model (`draft:` reads become reads of an unregistered `built`) | hvtiRtemplates, hvtiRutilities | A |
 
