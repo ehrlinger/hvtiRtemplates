@@ -289,6 +289,16 @@ if (!is.null(job_data$attrition)) {
 }
 ```
 
+```{r}
+#| label: tbl-missing
+#| tbl-cap: "Missing values in the model's variables"
+# na.omit drops a patient missing any predictor and na.impute keeps them, so the
+# cohort the forest is grown on is said here, before it is.
+.na_handling <- if (NA_ACTION == "na.impute") "impute" else "drop"
+.missing_values <- hvtiRtemplates:::.missing_cases(d, RESPONSE = RESPONSE, PREDICTORS = PREDICTORS, action = .na_handling)
+knitr::kable(.missing_values)
+```
+
 ## Forest
 
 ```{r}

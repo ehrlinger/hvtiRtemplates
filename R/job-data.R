@@ -411,6 +411,42 @@
   invisible(d)
 }
 
+# Who the model will lose to missing values, said beside the data rather than
+# left for a fit to drop silently or to fail on with an error about lengths.
+# Settings are read as .check_job_columns() reads them; `.` is every column. A
+# variable named by two settings is listed under the first. The table lists
+# each variable with a missing value, most missing first, then the cohort.
+# action: "drop" (the fit drops incomplete rows), "impute" (it keeps and
+# imputes them) or "stop" (the fit cannot take them, so stop here, naming them).
+.missing_cases <- function(d, ..., action = c("drop", "impute", "stop")) {
+  action <- match.arg(action)
+  settings <- Filter(Negate(is.null), list(...))
+  vars <- character()
+  for (setting in names(settings)) {
+    used <- all.vars(stats::reformulate(settings[[setting]]))
+    if ("." %in% used) used <- c(setdiff(used, "."), names(d))
+    used <- setdiff(intersect(used, names(d)), names(vars))
+    vars[used] <- setting
+  }
+  missing <- vapply(names(vars), function(v) sum(is.na(d[[v]])), integer(1L))
+  missing <- sort(missing[missing > 0L], decreasing = TRUE)
+  n <- nrow(d)
+  incomplete <- if (length(vars)) sum(!stats::complete.cases(d[names(vars)])) else 0L
+  if (action == "stop" && incomplete) {
+    stop(incomplete, " of ", n, " rows have a missing value in the model's variables: ",
+         paste0(names(missing), " (", missing, ")", collapse = ", "),
+         ". Resolve them in the dataset build, or leave the variable out of ",
+         paste(unique(vars[names(missing)]), collapse = " or "), ".", call. = FALSE)
+  }
+  cohort <- if (action == "impute") {
+    paste0(n, " of ", n, " rows analysed; ", if (incomplete) paste(incomplete, "with a missing value imputed") else "none imputed")
+  } else {
+    paste0(n - incomplete, " of ", n, " rows analysed; ", if (incomplete) paste(incomplete, "dropped") else "none dropped")
+  }
+  data.frame(Variable = c(names(missing), "Complete cases"), Setting = c(unname(vars[names(missing)]), ""),
+             Missing = c(as.character(missing), cohort), row.names = NULL)
+}
+
 # Which patients were kept, not only how many: a hash of the sorted KEY values,
 # one string per row with the KEY columns joined by "\r". Sorted by radix, which
 # does not depend on the locale. Only the hash is recorded, never the values.

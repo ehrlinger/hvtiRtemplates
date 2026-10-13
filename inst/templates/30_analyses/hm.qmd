@@ -284,6 +284,11 @@ if (any(grepl("^ERROR", audit$action))) {
        ". Resolve these before fitting.", call. = FALSE)
 }
 
+# hazard() cannot take a missing value, and failed on one with "Predictor rows
+# must match the length of 'time'", naming neither the column nor why. Stop
+# here instead, naming each column and how many rows it is missing.
+invisible(hvtiRtemplates:::.missing_cases(d, TIME = TIME, EVENT = EVENT, COVARIATES = unlist(COVARIATES), action = "stop"))
+
 # Only the columns the model uses. A hazard() fit keeps a copy of its data,
 # which is saved in hm.rds, and `d` also holds the patient identifier.
 dd <- covariates_to_numeric(d[unique(c(TIME, EVENT, unlist(COVARIATES)))], unlist(COVARIATES))
