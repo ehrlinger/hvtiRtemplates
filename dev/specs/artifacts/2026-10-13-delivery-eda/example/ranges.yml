@@ -1,0 +1,7 @@
+# Clinical ranges for OUT-RANGE. Variables not listed fall back to the robust fence.
+age: [18, 100]
+bmi: [12, 80]
+creatinine: [0.2, 20]
+lvef_preop: [5, 85]
+lvef: [5, 85]
+peak_gradient: [0, 150]

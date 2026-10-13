@@ -1,0 +1,279 @@
+---
+title: "Data delivery report"
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    theme: default
+    fig-width: 9
+    fig-height: 5
+    fig-dpi: 110
+execute:
+  echo: false
+  warning: false
+  message: false
+params:
+  config: "params.yml"
+---
+
+```{r setup}
+#| include: false
+source("R/checks.R")
+source("R/plots.R")
+library(ggplot2)
+
+# One scalar parameter pointing at a YAML file. Quarto simplifies nested
+# parameters (lists of events become data frames), so the report reads the
+# file itself and gets plain lists.
+p <- yaml::read_yaml(params$config)
+stopifnot(p$audience %in% c("internal", "delivery"))
+internal <- identical(p$audience, "internal")
+
+res <- run_checks(p)
+notes <- if (!is.null(p$notes) && file.exists(p$notes)) yaml::read_yaml(p$notes) else list()
+flags <- attach_notes(res$flags, notes %||% list())
+
+if (internal && !is.null(p$flags_out)) write_flags_json(flags, p$flags_out)
+
+# Belt and braces: the runner gates on this too.
+if (!internal && nrow(unexplained(flags)) > 0) {
+  u <- unexplained(flags)
+  stop(sprintf("Delivery report refused: %d warning/error flag(s) have no note, e.g. %s %s.%s.",
+               nrow(u), u$check[1], u$table[1], u$variable[1]))
+}
+
+pts <- res$patients
+ps <- res$pspec
+fmt_n <- function(x) format(x, big.mark = ",", scientific = FALSE)
+fmt_d <- function(x) format(x, "%b %-d, %Y")
+kable_html <- function(df, ...) {
+  knitr::kable(df, format = "html", escape = TRUE,
+               table.attr = 'class="table table-sm table-striped small"', ...)
+}
+```
+
+::: {.callout-note appearance="minimal"}
+**Request `r p$request_id`.** `r if (internal) "Internal quality check: not for delivery. Contains record IDs." else "Delivery report: describes the data in this bundle."`
+Generated `r format(Sys.time(), "%Y-%m-%d %H:%M %Z")`.
+:::
+
+## What was delivered
+
+```{r summary-text}
+#| results: asis
+dates <- if (!is.null(ps$date_var)) range(pts[[ps$date_var]], na.rm = TRUE) else NULL
+cat(sprintf("The cohort has **%s patients**", fmt_n(nrow(pts))))
+if (!is.null(dates)) {
+  cat(sprintf(" with index dates from %s to %s", fmt_d(dates[1]), fmt_d(dates[2])))
+}
+cat(sprintf(". Follow-up is assessed against a close date of **%s**%s.\n\n",
+            fmt_d(res$close_date),
+            if (res$close_estimated) " (estimated as the latest observed date; no close date was given)" else ""))
+
+if (!is.null(ps$date_var)) {
+  pot <- as.numeric(res$close_date - pts[[ps$date_var]]) / 365.25
+  cat(sprintf("Median potential follow-up is %.1f years (range %.1f to %.1f).\n\n",
+              stats::median(pot, na.rm = TRUE), min(pot, na.rm = TRUE), max(pot, na.rm = TRUE)))
+}
+
+tabs <- tibble::tibble(
+  Table = vapply(p$tables, `[[`, "", "name"),
+  Kind = ifelse(vapply(p$tables, `[[`, "", "role") == "patient", "One row per patient", "Repeated measures"),
+  Rows = fmt_n(c(nrow(pts), vapply(res$longitudinal, function(l) nrow(l$data), integer(1)))[
+    match(vapply(p$tables, `[[`, "", "name"), c(ps$name, names(res$longitudinal)))]),
+  Columns = c(ncol(pts), vapply(res$longitudinal, function(l) ncol(l$data) - 2L, integer(1)))[
+    match(vapply(p$tables, `[[`, "", "name"), c(ps$name, names(res$longitudinal)))]
+)
+print(kable_html(tabs))
+
+ev <- ps$events %||% list()
+if (length(ev)) {
+  et <- tibble::tibble(
+    Event = vapply(ev, `[[`, "", "label"),
+    Events = vapply(ev, function(e) fmt_n(sum(pts[[e$event]] == 1, na.rm = TRUE)), ""),
+    `Completeness (C)` = vapply(ev, function(e) sprintf("%.2f", res$followup$completeness[[e$label]] %||% NA), "")
+  )
+  print(kable_html(et))
+}
+```
+
+## Flags
+
+```{r flag-table}
+#| results: asis
+if (nrow(flags) == 0) {
+  cat("No checks raised a flag.\n")
+} else {
+  n_err <- sum(flags$severity == "error"); n_warn <- sum(flags$severity == "warning")
+  n_unx <- nrow(unexplained(flags))
+  cat(sprintf("%d error(s), %d warning(s), %d informational. ", n_err, n_warn,
+              sum(flags$severity == "info")))
+  if (internal) {
+    cat(sprintf("**%d flag(s) need a note before delivery.** Notes go in `notes.yml`, keyed by table, variable and check.\n\n", n_unx))
+  } else {
+    cat("Each warning and error carries the data team's note on what it means for this delivery.\n\n")
+  }
+  ft <- tibble::tibble(
+    Severity = flags$severity, Table = flags$table,
+    Variable = ifelse(flags$variable == "_table", "(table)", flags$variable),
+    Check = flags$check, N = fmt_n(flags$n), Finding = flags$detail,
+    Note = ifelse(is.na(flags$note),
+                  ifelse(flags$severity == "info", "", if (internal) "UNEXPLAINED" else ""),
+                  flags$note)
+  )
+  if (!internal) {
+    # One root cause often raises several checks on a variable (a unit change
+    # raises LONG-SHIFT, LONG-JUMP and OUT-RANGE). Show its note once.
+    key <- ifelse(ft$Note == "", paste0("row", seq_len(nrow(ft))),
+                  paste(ft$Table, ft$Variable, ft$Note))
+    ft <- dplyr::summarise(
+      dplyr::group_by(dplyr::mutate(ft, .key = factor(key, levels = unique(key))), .key),
+      Severity = Severity[1], Table = Table[1], Variable = Variable[1],
+      Check = paste(Check, collapse = ", "), N = paste(unique(N), collapse = " / "),
+      Finding = paste(Finding, collapse = " "), Note = Note[1], .groups = "drop")
+    ft$.key <- NULL
+  }
+  cat("::: {.column-page}\n\n")
+  print(kable_html(ft))
+  cat("\n\n:::\n")
+}
+```
+
+```{r patient-header}
+#| results: asis
+cat(sprintf("\n\n## Patients: `%s`\n\n", ps$name))
+```
+
+### Follow-up
+
+```{r gof}
+#| results: asis
+#| fig-height: 4.5
+if (is.null(res$followup$gof)) {
+  cat("Skipped: no `date_var` or no events were given for this table.\n")
+} else {
+  print(plot_gof(res$followup$gof, res$close_date))
+}
+```
+
+### Missingness
+
+```{r missing}
+#| results: asis
+m <- res$missing$summary
+miss_vars <- m$variable[m$n_missing > 0]
+h_miss <- 1.3 + 0.32 * length(miss_vars)
+if (length(miss_vars) == 0) {
+  cat("No analysis variable has missing values.\n\n")
+} else {
+  cat(sprintf("%d of %d analysis variables have missing values.\n\n", length(miss_vars), nrow(m)))
+}
+```
+
+```{r missing-plots}
+#| results: asis
+#| fig-height: !expr h_miss
+if (length(miss_vars) > 0) {
+  print(plot_missing_share(m)); cat("\n\n")
+  e <- plot_missing_era(res$missing$by_year, miss_vars)
+  if (!is.null(e)) { print(e); cat("\n\n") }
+}
+```
+
+### Continuous variables
+
+```{r continuous}
+#| results: asis
+#| fig-height: 6.5
+cont <- res$kinds$variable[res$kinds$kind == "continuous"]
+if (length(cont) == 0) {
+  cat("None.\n")
+} else {
+  for (vs in chunk(cont, 9)) {
+    print(plot_continuous_stamps(pts, vs, ps$date_var, res$bounds)); cat("\n\n")
+  }
+}
+```
+
+### Categorical variables
+
+```{r categorical-size}
+#| include: false
+catv <- res$kinds$variable[res$kinds$kind == "categorical"]
+h_cat <- 2.4 * ceiling(min(length(catv), 6) / 2)
+```
+
+```{r categorical}
+#| results: asis
+#| fig-height: !expr max(h_cat, 2.4)
+if (length(catv) == 0) {
+  cat("None.\n")
+} else {
+  for (vs in chunk(catv, 6)) {
+    print(plot_categorical_stamps(pts, vs, ps$date_var, unlist(p$unknown_codes))); cat("\n\n")
+  }
+}
+```
+
+```{r other-vars}
+#| results: asis
+other <- res$kinds[res$kinds$kind %in% c("date", "text"), ]
+if (nrow(other) > 0) {
+  cat("Not plotted: ", paste0("`", other$variable, "` (", other$kind, ")", collapse = ", "), ".\n\n", sep = "")
+}
+```
+
+```{r longitudinal}
+#| results: asis
+#| fig-height: 5.5
+for (nm in names(res$longitudinal)) {
+  L <- res$longitudinal[[nm]]
+  cat(sprintf("\n\n## Repeated measures: `%s`\n\n", nm))
+  pp <- L$per_patient
+  cat(sprintf("%s measurements of %s for %s cohort patients; median %s per patient.\n\n",
+              fmt_n(nrow(L$data)), paste0("`", L$spec$values, "`", collapse = ", "),
+              fmt_n(sum(pp$n > 0)), stats::median(pp$n)))
+  cat("### Measurement density and timing\n\n")
+  print(patchwork::wrap_plots(plot_per_patient(pp), plot_measurement_timing(L$data, pts, L$spec, ps),
+                              ncol = 1, heights = c(1, 2.6)))
+  cat("\n\n")
+  cat("### Values over time\n\n")
+  for (v in L$spec$values) {
+    g <- plot_trajectories(L$data, L$spec, v)
+    if (!is.null(g)) { print(g); cat("\n\n") }
+  }
+}
+```
+
+```{r appendix}
+#| results: asis
+if (internal) {
+  with_ids <- flags[lengths(flags$ids) > 0 & flags$severity != "info", ]
+  cat("\n\n## Appendix: records behind each flag\n\n")
+  cat(sprintf("Internal only. Up to %d IDs per flag. This section is not rendered in the delivery report.\n\n",
+              res$thresholds$id_cap))
+  if (nrow(with_ids) == 0) cat("No flags carry record IDs.\n")
+  for (i in seq_len(nrow(with_ids))) {
+    cat(sprintf("**%s** `%s.%s` (%s flagged; %d ID(s) shown): %s\n\n", with_ids$check[i], with_ids$table[i],
+                with_ids$variable[i], fmt_n(with_ids$n[i]), length(with_ids$ids[[i]]),
+                paste0("`", with_ids$ids[[i]], "`", collapse = ", ")))
+  }
+}
+```
+
+## About this report
+
+```{r about}
+#| results: asis
+th <- res$thresholds
+cat(sprintf(paste0(
+  "Checks cover missingness, follow-up and outliers. Missing means a database null or an empty string; ",
+  "explicit unknown codes (%s) are counted separately. Outliers use the clinical ranges supplied with the request ",
+  "where they exist, and otherwise the median plus or minus %g scaled MADs. Completeness C is observed over ",
+  "potential person-time (Clark, Altman and De Stavola, Lancet 2002), with potential follow-up ending at the close date, ",
+  "at the event, or at a terminal event.\n\n"),
+  if (length(p$unknown_codes)) paste0("'", unlist(p$unknown_codes), "'", collapse = ", ") else "none given",
+  th$fence_k))
+```
