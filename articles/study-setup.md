@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/Rtmp5mcK9W/file1ff677411a59/legacy-study
+#> Study: /tmp/RtmpvYonys/file1fbf22c5dc33/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,7 +183,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp5mcK9W/file1ff677411a59/legacy-study
+#> Study: /tmp/RtmpvYonys/file1fbf22c5dc33/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -305,15 +305,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/Rtmp5mcK9W/file1ff677411a59/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#> "/tmp/RtmpvYonys/file1fbf22c5dc33/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
 #>                                                                                tables 
-#>  "/tmp/Rtmp5mcK9W/file1ff677411a59/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>  "/tmp/RtmpvYonys/file1fbf22c5dc33/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/Rtmp5mcK9W/file1ff677411a59/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>    "/tmp/RtmpvYonys/file1fbf22c5dc33/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
 #>                                                                                trends 
-#>  "/tmp/Rtmp5mcK9W/file1ff677411a59/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
+#>  "/tmp/RtmpvYonys/file1fbf22c5dc33/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/Rtmp5mcK9W/file1ff677411a59/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
+#>     "/tmp/RtmpvYonys/file1fbf22c5dc33/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output
@@ -350,12 +350,14 @@ adoption itself remains short and non-destructive.
 
 Registration is endpoint-neutral: it records the dataset file, its
 population description and manifest facts, but does not declare a
-study-wide endpoint or cohort. For a catalog-pinned registration, first
-review a published candidate with
-[`hvtiRutilities::review_data_update()`](https://ehrlinger.github.io/hvtiRutilities/reference/review_data_update.html),
-supplying its exact release ID. The review describes structural drift
-without changing either manifest. After reviewing the candidate, call
-[`hvtiRutilities::adopt_data_update()`](https://ehrlinger.github.io/hvtiRutilities/reference/adopt_data_update.html)
-with that same exact release ID. Adoption repeats the review and updates
-`_study.yml` and `manifest.yaml` together as a recoverable pair. Then
-review dependent analysis sets and rerender their jobs.
+study-wide endpoint or cohort. After the study dataset is rebuilt,
+review the rebuilt file before registering it.
+[`hvtiRutilities::review_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/review_built.html)
+compares the working file in the datasets folder with its registered
+version and describes how the data changed, without writing anything. It
+does not certify that the new file is analytically or clinically
+correct; that judgment stays with you. When the review reads as
+expected, `hvtiRutilities::update_manifest(dataset = "study")` registers
+the rebuilt file as the next dated version, keeps every earlier version
+and records the change in `manifest.yaml`. Jobs read the new version
+from then on, so review dependent analysis sets and rerender their jobs.
