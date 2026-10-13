@@ -32,9 +32,10 @@ execute:
 <!-- EDIT: name the SAS job this replaces (usually datasets/bd.data.sas) and the master it read. -->
 
 This job cuts the study's dataset from a master
-snapshot, records who was excluded and why, writes a draft, and, when
-`PUBLISH` is `TRUE`, publishes a dated release and registers it as this study's
-`"built"` dataset (also called `"study"`), the one every analysis job reads.
+snapshot, records who was excluded and why, and writes the study's working
+dataset with its build record beside it. When `REGISTER` is `TRUE` it registers
+that file as a dated version of this study's `"built"` dataset (also called
+`"study"`), the one every analysis job reads.
 
 What does not belong here: corrections to a patient's values (they belong to
 the master's corrections, in hvtiRdatabuild, so every study sees them);
@@ -54,6 +55,11 @@ TYPE    <- "build"
 .job_file <- if (is.null(.in)) "this job" else sub("[.][^.]+$", ".qmd", basename(.in))
 # Every stop names its step and this file, and never a data value.
 .bd_stop <- function(step, ...) stop("bd: ", step, " (", .job_file, "): ", ..., call. = FALSE)
+# Registering claims the build record only from hvtiRutilities 1.5.3; an older one would record a bd cut as legacy.
+if (utils::packageVersion("hvtiRutilities") < "1.5.3") {
+  .bd_stop("setup", "this job needs hvtiRutilities >= 1.5.3 to register its build record; ",
+           utils::packageVersion("hvtiRutilities"), " is installed.")
+}
 # Later chunks send warnings and messages to the console rather than the report.
 knitr::opts_chunk$set(warning = NA, message = NA)
 # The study root is the nearest directory above this file holding _study.yml,
@@ -85,7 +91,7 @@ knitr::opts_chunk$set(warning = NA, message = NA)
 MASTER <- "/path/to/snapshots/built_YYYYMMDD.parquet"
 
 # TRUE rehashes the whole snapshot against its sidecar, which takes minutes on a
-# large master. Worth it on the render that publishes.
+# large master. Worth it on the render that registers.
 VERIFY_MASTER <- FALSE
 
 # EDIT: a cohort list (a REDCap export or data-request CSV) kept beside the data, or NULL for a cohort the rules define.
@@ -108,19 +114,23 @@ KEEP <- c("age", "sex", "dt_surg")
 #   ccfid %in% c("<id>", "<id>") ~ "Withdrew consent"
 # and one row per patient is a rule after ordering the rows in the derive chunk's place, for example
 #   duplicated(ccfid) ~ "Later operation"
-# The report shows each rule's reason and counts, never its text.
+# The report shows each rule's reason and counts, never its text, and the build record keeps only a hash of the
+# rules, so a rule naming a patient stays in this file.
 EXCLUDE <- list(is.na(dt_surg) ~ "No surgery date")
 
 # The patient, and what makes a row unique: one row per patient unless repeated measures.
 ID  <- "ccfid"
 KEY <- ID
 
-# EDIT: the catalog name of this study's dataset: lower-case letters, digits and underscores.
+# EDIT: the name of this study's dataset, written as datasets/<DATASET_ID>.rds: lower-case letters, digits and
+# underscores. A study already registered keeps the name it was registered under.
 DATASET_ID <- "study_cohort"
 
-# FALSE writes a draft and publishes nothing. TRUE publishes a dated release and
-# makes it this study's "built" dataset, which every analysis job then reads.
-PUBLISH <- FALSE
+# FALSE writes the working file and registers nothing. TRUE registers it as a
+# dated version of this study's "built" dataset, which every analysis job then
+# reads. Before registering a rebuild, hvtiRutilities::review_built() shows how
+# the working file differs from the version registered now.
+REGISTER <- FALSE
 ```
 
 ```{r}
@@ -131,8 +141,8 @@ if (!is.character(DATASET_ID) || length(DATASET_ID) != 1L || !grepl("^[a-z0-9_]+
   .bd_stop("check-choices", "DATASET_ID must be lower-case letters, digits and underscores.")
 }
 if (!is.character(KEEP) || !length(KEEP)) .bd_stop("check-choices", "KEEP is empty. Name the master columns to carry.")
-if (!is.logical(PUBLISH) || length(PUBLISH) != 1L || is.na(PUBLISH)) {
-  .bd_stop("check-choices", "PUBLISH must be TRUE or FALSE.")
+if (!is.logical(REGISTER) || length(REGISTER) != 1L || is.na(REGISTER)) {
+  .bd_stop("check-choices", "REGISTER must be TRUE or FALSE.")
 }
 if (!is.character(MASTER) || length(MASTER) != 1L) .bd_stop("check-choices", "MASTER must be one path.")
 if (inherits(EXCLUDE, "formula")) EXCLUDE <- list(EXCLUDE)
@@ -208,7 +218,7 @@ if (nrow(d) != .rows_before_derive) {
 ```
 
 ```{r}
-#| label: write-draft
+#| label: write-built
 .datasets <- hvtiRutilities::study_dir("datasets", .root)
 .derived <- setdiff(names(d), .columns_before_derive)
 .carry <- unique(c(ID, KEY, JOIN_BY, KEEP, .derived))
@@ -217,78 +227,97 @@ d <- d[, intersect(.carry, names(d)), drop = FALSE]
 d <- d[, !(names(d) %in% setdiff(c("mrn", "emrn"), ID)), drop = FALSE]
 .repeats <- sum(duplicated(d[KEY]))
 if (.repeats) {
-  .bd_stop("write-draft", .repeats, " row(s) repeat a value of KEY (", toString(KEY), "). Exclude the extra rows in ",
+  .bd_stop("write-built", .repeats, " row(s) repeat a value of KEY (", toString(KEY), "). Exclude the extra rows in ",
            "EXCLUDE, or add a column to KEY.")
 }
-.draft <- file.path(.datasets, paste0("draft-", DATASET_ID, ".rds"))
-saveRDS(d, .draft)
+# The working file is overwritten in place. Jobs keep reading the version registered
+# last until a render with REGISTER = TRUE registers this one.
+.built <- file.path(.datasets, paste0(DATASET_ID, ".rds"))
+saveRDS(d, .built)
 
-# The build record sits beside the data and is never rendered, so it holds the
-# rules in full: it is how a release can be cut again.
+# The build record sits beside the working file, as <stem>.build.yml. Registering
+# the file claims it only if built_sha256 is the hash of these bytes, and moves it
+# beside the dated version. It is never rendered and never committed, and it holds
+# no key and no data value: the rules are recorded as their hash, and the rules
+# themselves stay in this job, which is how the cut can be made again.
+.sha256_text <- function(x) digest::digest(x, algo = "sha256", serialize = FALSE)
+.cohort_rules <- list(
+  cohort_sha256 = if (is.null(COHORT)) NULL else digest::digest(COHORT, algo = "sha256", file = TRUE),
+  join_by = JOIN_BY, keep = KEEP, id = ID, key = KEY,
+  exclude = vapply(EXCLUDE, function(rule) paste(deparse(rule), collapse = " "), "")
+)
+# The job's path within the study. A purled script run with source() has no file to name.
+.job_path <- if (is.null(.in)) {
+  "(not rendered: run as a script)"
+} else {
+  .job_dir <- normalizePath(dirname(.in), winslash = "/")
+  .root_dir <- normalizePath(.root, winslash = "/")
+  .job_rel <- substring(.job_dir, nchar(.root_dir) + 2L)
+  if (nzchar(.job_rel)) file.path(.job_rel, .job_file) else .job_file
+}
 .record <- list(
+  schema = 1L,
+  built_sha256 = digest::digest(.built, algo = "sha256", file = TRUE),
+  job = .job_path,
+  view = basename(.master$file),
+  # A snapshot is pinned by its bytes; its modification time is when it was taken.
+  as_of = format(file.mtime(.master$file), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+  cohort_sha256 = .sha256_text(yaml::as.yaml(.cohort_rules)),
+  # This job applies no study corrections overlay yet, so its derivations always follow the (absent) overlay.
+  overlay_sha256 = NULL,
+  derived_after_overlay = TRUE,
   master = .master,
-  settings = list(cohort = COHORT, join_by = JOIN_BY, keep = KEEP, id = ID, key = KEY, dataset_id = DATASET_ID,
-                  exclude = vapply(EXCLUDE, function(rule) paste(deparse(rule), collapse = " "), "")),
+  settings = list(cohort = COHORT, join_by = JOIN_BY, keep = KEEP, id = ID, key = KEY, dataset_id = DATASET_ID),
   attrition = .cut$attrition,
   hvtiRtemplates = as.character(utils::packageVersion("hvtiRtemplates"))
 )
-.record_file <- file.path(.datasets, paste0("draft-", DATASET_ID, ".build.yml"))
+.record_file <- file.path(.datasets, paste0(DATASET_ID, ".build.yml"))
 yaml::write_yaml(.record, .record_file)
 ```
 
-## Publish
+## Register
 
 ```{r}
-#| label: publish
+#| label: register
+# The dated version registered now, read from the study's manifest: NULL when none is.
+.current_version <- function() {
+  built <- hvtiRutilities::study_config(.root, require_data = FALSE)$built
+  manifest <- file.path(.root, "manifest.yaml")
+  if (is.null(built) || !file.exists(manifest)) return(NULL)
+  entry <- Filter(function(e) is.list(e) && identical(e$file, built), yaml::read_yaml(manifest)$datasets)
+  if (length(entry)) entry[[1L]]$parquet else NULL
+}
 # require_data = FALSE: a study that has registered no dataset yet is the normal first build.
 .registered <- hvtiRutilities::study_config(.root, require_data = FALSE)
-.registered_before <- .registered$release$release_id
-.release <- NULL
-.register_step <- "Draft only: nothing published"
-if (PUBLISH) {
-  # A study that has registered its dataset without a release (legacy) cannot be
-  # replaced by a build. Check this before publishing so no orphan release is left on disk.
-  if (is.null(.registered_before) && !is.null(.registered$built)) {
-    .bd_stop("publish", "this study's dataset was registered without a release (", .registered$built,
-             "), so a build cannot replace it. Ask for it to be moved to this job's releases.")
+.version_before <- .current_version()
+.register_step <- "Working file only: nothing registered"
+if (REGISTER) {
+  # A study registered under another file cannot take this one as its dataset.
+  if (!is.null(.registered$built) && !identical(.registered$built, basename(.built))) {
+    .bd_stop("register", "this study's dataset is registered as ", .registered$built, ", and this job writes ",
+             basename(.built), ". Set DATASET_ID to the registered name if that file is this job's, ",
+             "or move the study to the new file deliberately.")
   }
-  # A study registered to one catalog dataset cannot take a release of another: the release would be
-  # published, then refused at adoption, leaving an orphan on disk.
-  if (!is.null(.registered_before) && !identical(.registered$release$dataset_id, DATASET_ID)) {
-    .bd_stop("publish", "this study's dataset is registered to catalog dataset \"", .registered$release$dataset_id,
-             "\", and DATASET_ID is \"", DATASET_ID, "\". Set DATASET_ID to the registered one, ",
-             "or move the study to the new dataset deliberately.")
-  }
-  # Publishing the same bytes again returns the same release, so a rerender
-  # that changed nothing mints nothing.
-  .release <- tryCatch(
-    hvtiRdatabuild::publish_dataset(.draft, dataset_id = DATASET_ID, datasets_dir = .datasets,
-                                    source = paste0("hvtiRtemplates bd job ", .job_file, "; master sha256 ",
-                                                    .master$sha256)),
-    error = function(e) .bd_stop("publish", "publish_dataset() stopped: ", conditionMessage(e))
-  )
-  # A release's record is written once: an idempotent re-publish returns the existing release and leaves its record alone.
-  .release_record <- file.path(.datasets, sub("[.][^.]+$", ".build.yml", .release$file))
-  if (!file.exists(.release_record)) file.copy(.record_file, .release_record, overwrite = FALSE)
-  # Publish and register stay two steps: a study that READS another's dataset
-  # adopts its releases deliberately, with adopt_data_update(). Here the study
-  # adopts its own build, and this render is the deliberate act.
   .register_step <- tryCatch({
-    if (is.null(.registered_before)) {
-      .status <- hvtiRutilities::register_data(.root, built = .release$file, catalog_dataset = DATASET_ID,
-                                               release_id = .release$release_id)
+    if (is.null(.registered$built)) {
+      hvtiRutilities::register_data(.root, built = basename(.built))
       "Registered as the study dataset"
-    } else if (identical(.registered_before, .release$release_id)) {
-      "Already the study dataset: nothing to do"
     } else {
-      .status <- hvtiRutilities::adopt_data_update(hvtiRutilities::study_config(.root), release_id = .release$release_id)
-      "Adopted as the study dataset"
+      # update_manifest() finds the study from the working directory.
+      .owd <- setwd(.root)
+      .update <- tryCatch(hvtiRutilities::update_manifest(dataset = "study"), finally = setwd(.owd))
+      if (identical(.update$action[[1L]], "registered")) {
+        "Registered as a new version of the study dataset"
+      } else {
+        "Unchanged since the version registered: nothing to do"
+      }
     }
   }, error = function(e) {
     if (startsWith(conditionMessage(e), "bd: ")) stop(e)
-    .bd_stop("publish", "registering the release stopped: ", conditionMessage(e))
+    .bd_stop("register", "registering the dataset stopped: ", conditionMessage(e))
   })
 }
+.version_after <- .current_version()
 ```
 
 ## Report
@@ -299,11 +328,11 @@ if (PUBLISH) {
 knitr::kable(data.frame(
   Item = c("Mode", "Master snapshot", "Master SHA-256", "Rehashed this render", "Master parent release",
            "Rows in the dataset", "Patients", "Columns", "Study dataset before", "Study dataset after", "Registration"),
-  Value = c(if (PUBLISH) "Published" else "Draft", basename(.master$file), .master$sha256,
+  Value = c(if (REGISTER) "Register" else "Working file only", basename(.master$file), .master$sha256,
             if (.master$verified) "yes" else "no", as.character(.master$parent_release), nrow(d),
             length(unique(d[[ID]])), ncol(d),
-            if (is.null(.registered_before)) "none" else .registered_before,
-            if (is.null(.release)) "unchanged" else .release$release_id, .register_step)
+            if (is.null(.version_before)) "none" else .version_before,
+            if (is.null(.version_after)) "none" else .version_after, .register_step)
 ))
 ```
 

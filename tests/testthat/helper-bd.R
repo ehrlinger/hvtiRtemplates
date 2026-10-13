@@ -59,13 +59,25 @@ bd_job <- function(root, edits = list()) {
 # render. `choices` overwrite the study choices after that chunk runs.
 bd_run <- function(root, choices,
                    labels = c("setup", "set", "edit-study-choices", "check-choices", "read-master",
-                              "cohort", "derive", "write-draft", "publish")) {
+                              "cohort", "derive", "write-built", "register")) {
   env <- new.env(parent = globalenv())
   withr::with_dir(root, utils::capture.output(hazard_run("bd", labels, env, choices))) # nolint: object_usage_linter.
   env
 }
 
-bd_catalog_releases <- function(root) {
-  cat <- yaml::read_yaml(file.path(hvtiRutilities::study_dir("datasets", root), "dataset-catalog.yml"))
-  unlist(lapply(cat$datasets, function(ds) vapply(ds$releases, function(r) r$release_id, "")))
+# The dated versions registered from the study's working file, and the provenance
+# row the manifest records for one of them.
+bd_versions <- function(root, stem = "study_cohort") {
+  list.files(hvtiRutilities::study_dir("datasets", root), pattern = paste0("^", stem, "_[0-9]{8}(_r[0-9]+)?[.]parquet$"))
+}
+
+bd_current_version <- function(root) {
+  built <- hvtiRutilities::study_config(root)$built
+  entry <- Filter(function(e) is.list(e) && identical(e$file, built),
+                  yaml::read_yaml(file.path(root, "manifest.yaml"))$datasets)
+  entry[[1L]]$parquet
+}
+
+bd_provenance <- function(root, version = bd_current_version(root)) {
+  yaml::read_yaml(file.path(root, "manifest.yaml"))$provenance[[version]]
 }
