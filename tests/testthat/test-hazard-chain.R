@@ -318,3 +318,29 @@ test_that("hp saves each figure as a PNG and a PDF, and FIGURES keeps only the P
   expect_setequal(run_figures(list(SAVE_FIGURES = FALSE)), paste0(figures, ".png"))
   expect_identical(grDevices::dev.cur(), c("null device" = 1L))
 })
+
+test_that("hs-setup derives the life-table indicators from a female column and a race factor (#183)", {
+  skip_on_cran()
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  skip_if_not_installed("hvtiRlifetables", minimum_version = "0.1.2")
+  skip_if_not_installed("numDeriv")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  withr::local_package("hvtiRlifetables")
+  data <- hazard_data()
+  hazard_chain_run(hazard_study(data), data)
+  reference <- get("expected", envir = globalenv())
+
+  # The same patients, coded as a study might: `female`, and a race factor.
+  recoded <- data
+  recoded$female <- 1L - recoded$male
+  recoded$race <- factor(ifelse(recoded$other == 1L, c("Black", "Asian")[1L + seq_len(nrow(data)) %% 2L], "White"))
+  recoded$male <- recoded$other <- NULL
+  hazard_chain_run(hazard_study(recoded), recoded,
+                   hs_choices = list(MALE_COL = "female", MALE_LEVEL = 0, OTHER_COL = "race",
+                                     OTHER_LEVELS = c("Black", "Asian")))
+  expect_identical(get("expected", envir = globalenv()), reference)
+  strata <- attr(get(".other", envir = globalenv()), "mapping")
+  expect_identical(strata$value, c("Asian", "Black", "White"))
+  expect_identical(strata$counted_as, c("non-white", "non-white", "white"))
+})

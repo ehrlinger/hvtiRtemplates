@@ -153,7 +153,16 @@ AGE_COL   <- "age"
 
 MALE_COL  <- "male"
 
+# EDIT: the values of MALE_COL that mean male, and of OTHER_COL that mean
+# non-white, as the life tables split race. A 0/1 column takes 1; a `female`
+# column takes MALE_LEVEL <- 0, a sex factor MALE_LEVEL <- "M", and a race
+# factor every non-white level, OTHER_LEVELS <- c("Black", "Asian", "Other").
+# A race level left out counts as white: the cohort chunk shows the mapping.
+MALE_LEVEL <- 1
+
 OTHER_COL <- "other"
+
+OTHER_LEVELS <- 1
 
 VINTAGE   <- NULL
 
@@ -417,6 +426,27 @@ knitr::kable(summary_tbl, row.names = FALSE, digits = 4)
 
 ## Expected population survival
 
+```{r}
+#| label: tbl-strata
+#| tbl-cap: "How each patient's sex and race are counted for the life tables"
+# Named columns are checked before use, as the model chunk does for covariates.
+# Without this a typo surfaces as "`id` must be the same length as `age`; got
+# N and 0" from inside us_matched(), which never names the column at fault.
+.absent <- setdiff(c(AGE_COL, MALE_COL, OTHER_COL), names(d))
+if (length(.absent)) {
+  stop("Column(s) not in the cohort: ", paste(.absent, collapse = ", "),
+       ". Set AGE_COL, MALE_COL and OTHER_COL to this study's own column names.",
+       call. = FALSE)
+}
+
+# The 0/1 indicators the life tables take, derived from the study's own coding.
+.male <- hvtiRtemplates:::.lifetable_indicator(d[[MALE_COL]], MALE_LEVEL, MALE_COL, "MALE_LEVEL",
+                                               counted = c("female", "male"))
+.other <- hvtiRtemplates:::.lifetable_indicator(d[[OTHER_COL]], OTHER_LEVELS, OTHER_COL, "OTHER_LEVELS",
+                                                counted = c("white", "non-white"))
+knitr::kable(rbind(attr(.male, "mapping"), attr(.other, "mapping")), row.names = FALSE)
+```
+
 <!-- EDIT: the columns naming each patient's age, sex and race, and the life
      table vintage.
 
@@ -471,21 +501,11 @@ if (!VINTAGE %in% valid_vintages) {
        call. = FALSE)
 }
 
-# Named columns are checked before use, as the model chunk does for covariates.
-# Without this a typo surfaces as "`id` must be the same length as `age`; got
-# N and 0" from inside us_matched(), which never names the column at fault.
-.absent <- setdiff(c(AGE_COL, MALE_COL, OTHER_COL), names(d))
-if (length(.absent)) {
-  stop("Column(s) not in the cohort: ", paste(.absent, collapse = ", "),
-       ". Set AGE_COL, MALE_COL and OTHER_COL to this study's own column names.",
-       call. = FALSE)
-}
-
 # Read this before choosing, and print it in the report:
 knitr::kable(us_lifetable_vintages(), row.names = FALSE)
 
 expected <- us_matched(
-  age = d[[AGE_COL]], male = d[[MALE_COL]], other = d[[OTHER_COL]],
+  age = d[[AGE_COL]], male = as.vector(.male), other = as.vector(.other),
   times = HORIZONS, id = seq_len(nrow(d)),
   vintage = VINTAGE, table = TABLE, scale = SCALE, individual = TRUE
 )
