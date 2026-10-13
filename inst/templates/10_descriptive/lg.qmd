@@ -4,6 +4,8 @@ date: now
 date-format: "YYYY-MM-DD HH:mm"
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -318,6 +320,7 @@ for (i in seq_len(nrow(variables))) {
   .scales <- hvtiRtemplates:::.lg_scales(.tab$mean, .v$constant, .v$shift)
   calibration[[.v$name]] <- list(table = .tab, scales = .scales)
   .plot <- hvtiRtemplates:::.lg_plot(.tab, .scales, LINK, title = .v$label)
+  # Free size: six facets, one per scale, so a 6 by 4 panel would leave each too small to read.
   .file <- save_figure(.plot, paste0("lg-", .v$name), width = 9, height = 6, linked = TRUE)
   # This document sits in descriptive/ and the figure is written to graphs/, so
   # the image link is the figure's path relative to this document.
@@ -330,7 +333,8 @@ for (i in seq_len(nrow(variables))) {
               if (identical(LINK, "hazard")) "Log hazard rate" else "Logit")
   .cap_tbl <- paste0("Groups of ", .v$label, ", with the event rate and its link value")
   .cap_fig <- paste0(.v$label, ": the link value of each group against the covariate on six scales, ",
-                     "with the R-squared of a weighted straight line")
+                     "with the R-squared of a weighted straight line. Black filled circles mark the groups, joined by a ",
+                     "gray line, and the text in each panel corner gives the R-squared")
   cat("\n### ", .v$label, "\n\n", sep = "")
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), paste0("#| label: tbl-lg-", .slug),

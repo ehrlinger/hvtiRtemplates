@@ -273,7 +273,7 @@
     # Headroom, so the R-squared in the corner never sits on a point.
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0.05, 0.2))) +
     ggplot2::labs(title = title, x = "Group mean of the covariate, on the scale shown", y = ylab) +
-    ggplot2::theme_bw() +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12) +
     ggplot2::theme(strip.background = ggplot2::element_rect(fill = "gray92"))
 }
 

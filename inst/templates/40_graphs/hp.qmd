@@ -13,6 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -394,7 +396,8 @@ these numbers are used.
 
 ```{r}
 #| label: fig-survival
-#| fig-cap: "Actuarial and parametric survival after the operation"
+#| fig-cap: "Actuarial and parametric survival after the operation. The solid black line is the parametric (hz) estimate
+#|   and the dashed black step line the actuarial (ac) estimate."
 s_pct  <- 100 * unname(predict(fit, newdata = data.frame(time = t_plot),
                                type = "survival"))
 x_plot <- t_plot * 12
@@ -410,12 +413,13 @@ draw <- function() {
   legend("bottomleft", c("parametric (hz)", "actuarial (ac)"),
          lty = c(1, 2), bty = "n")
 }
-knitr::include_graphics(save_figure(draw, "hp-survival", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
+knitr::include_graphics(save_figure(draw, "hp-survival", linked = TRUE))
 ```
 
 ```{r}
 #| label: fig-hazard
-#| fig-cap: "Hazard of the parametric model after the operation"
+#| fig-cap: "Hazard of the parametric model after the operation. The solid black line is the parametric hazard, in percent
+#|   per month on a logarithmic axis."
 h_pcpm <- 100 / 12 * unname(predict(fit, newdata = data.frame(time = t_plot),
                                     type = "hazard"))
 
@@ -424,7 +428,7 @@ draw <- function() {
        xlab = "Months after operation", ylab = "Hazard (% per month)",
        main = "Hazard function")
 }
-knitr::include_graphics(save_figure(draw, "hp-hazard", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
+knitr::include_graphics(save_figure(draw, "hp-hazard", linked = TRUE))
 ```
 
 ### Phase decomposition
@@ -437,7 +441,8 @@ than papering over.
 
 ```{r}
 #| label: fig-phases
-#| fig-cap: "Phase decomposition of the cumulative hazard"
+#| fig-cap: "Phase decomposition of the cumulative hazard. The solid line is the total and each dashed line one phase, one
+#|   color per curve, as in the legend."
 # predict() returns the decomposition WIDE -- one column per phase plus
 # `total` -- so it is reshaped here rather than assumed to arrive long.
 dec <- predict(fit, newdata = data.frame(time = t_plot),
@@ -469,7 +474,7 @@ draw <- function() {
   legend("topleft", comp, col = seq_along(comp),
          lty = ifelse(comp == "total", 1, 2), bty = "n")
 }
-knitr::include_graphics(save_figure(draw, "hp-phases", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
+knitr::include_graphics(save_figure(draw, "hp-phases", linked = TRUE))
 ```
 
 ## Save

@@ -4,6 +4,8 @@ date: now
 date-format: "YYYY-MM-DD HH:mm"
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -177,6 +179,8 @@ ALPHA <- 0.5
 # vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
 # all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
 # event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
+# Each figure caption names these colors, so choosing your own means naming them
+# in the caption key too, where the figures are drawn.
 COLORS <- NULL
 
 # Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
@@ -429,21 +433,28 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   panel_counts[[nm]] <- list(drawn = row$n_drawn, excluded = row$n_excluded)
   cat("\n### ", row$title, "\n\n", row$n_drawn, " patients drawn; ", row$n_excluded,
       " missing a column this panel needs.\n\n", sep = "")
+  # The caption key names the house colors that COLORS <- NULL draws and the
+  # shapes set here, so a study that sets COLORS renames them in .key below.
   if (row$type == "followup") {
     p <- plots[[nm]] +
       status_colors(c("Alive", "Dead")) +
       scale_shape_manual(values = c(Alive = 1, Dead = 4))
+    .key <- "Blue open circles mark patients alive and vermillion crosses patients who died"
   } else {
     levels <- c("No event", row$title, "Death")
     p <- plots[[nm]] +
       status_colors(levels) +
       scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
+    .key <- paste0("Blue open circles mark patients without the event, green open triangles patients with the event, ",
+                   "and vermillion crosses patients who died")
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
-    theme_hv_manuscript()
-  file <- save_figure(p, paste0("dc-gfup-", nm), width = 7, height = 6, linked = TRUE)
+    theme_hv_manuscript(base_size = 12)
+  file <- save_figure(p, paste0("dc-gfup-", nm), linked = TRUE)
   .link <- figure_link(file)
-  .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", row$title),
+  .child(paste("fig gfup", nm),
+         paste0("Follow-up against year of operation, ", row$title, ". ", .key, " and the dashed orange diagonal ",
+                "the longest follow-up possible for each year of operation."),
          "knitr::include_graphics(.link, error = FALSE)")
 }
 ```

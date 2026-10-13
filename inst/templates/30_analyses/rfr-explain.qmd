@@ -13,6 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -213,11 +215,17 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 
 ```{r}
 #| label: fig-importance
-#| fig-cap: "Permutation importance of each predictor"
+#| fig-cap: "Permutation importance of each predictor. Horizontal bars give the importance of each predictor, in one
+#|   color where the importance is positive and another where it is not, as in the legend."
+#| fig-height: 7
 #| message: true
 vi <- cache_fit("rfr-vimp", vimp(forest, seed = -abs(SEED)), seed = SEED, dir = CACHE_DIR, refit = REFIT)
-.fig <- plot(gg_vimp(vi))
-save_figure(.fig, "rfr-explain-importance")
+# Free size: one row per predictor, so the height grows with the list.
+# The manuscript theme drops the legend, and the caption reads the colors from it.
+.fig <- plot(gg_vimp(vi)) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12) +
+  ggplot2::theme(legend.position = "top")
+save_figure(.fig, "rfr-explain-importance", height = 7)
 .fig
 ```
 
@@ -258,12 +266,16 @@ forest describe the same patients.
 
 ```{r}
 #| label: fig-varpro
-#| fig-cap: "VarPro importance of each predictor"
+#| fig-cap: "VarPro importance of each predictor. Each box spans the 15th to the 85th percentile of the predictor's
+#|   importance, with a line at the median and whiskers to the 5th and 95th percentiles; blue boxes mark the predictors
+#|   VarPro selected, gray boxes the rest, and the dashed red vertical line the selection cutoff."
+#| fig-height: 7
 #| message: true
 vp <- cache_fit("rfr-varpro", varpro(model, frame, verbose = FALSE, seed = -abs(SEED)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-.fig <- plot(gg_varpro(vp))
-save_figure(.fig, "rfr-explain-varpro")
+# Free size: one row per predictor, so the height grows with the list.
+.fig <- plot(gg_varpro(vp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "rfr-explain-varpro", height = 7)
 .fig
 ```
 
@@ -271,41 +283,62 @@ save_figure(.fig, "rfr-explain-varpro")
 
 ```{r}
 #| label: fig-dependence-marginal
-#| fig-cap: "Predicted outcome against each selected predictor, as observed"
+#| fig-cap: "Predicted outcome against each selected predictor, as observed, one panel per predictor. Black filled
+#|   circles are individual patients and the blue line a loess smooth with its gray band, drawn for predictors with more
+#|   than five distinct values; for a categorical predictor the points are jittered over a gray box plot."
+#| fig-height: 20
 #| message: true
 # Marginal: predicted outcome against each variable, as observed.
 # A loess smooth needs more than a handful of distinct values, so a predictor
 # with fewer than six, such as a stage or a grade, is drawn as points alone.
 .gv <- gg_variable(forest)
-.panels <- lapply(sel, function(v) plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5))
+.panels <- lapply(sel, function(v) {
+  plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5) +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12)
+})
+# Free size: one stacked panel per selected predictor, 2.5 in each at TOP_K = 8; scale the height with TOP_K.
 .fig <- patchwork::wrap_plots(.panels, ncol = 1)
-save_figure(.fig, "rfr-explain-dependence-marginal")
+save_figure(.fig, "rfr-explain-dependence-marginal", height = 20)
 .fig
 ```
 
 ```{r}
 #| label: fig-dependence-partial
 #| message: true
-#| fig-cap: "Partial dependence of the forest's prediction on each selected predictor"
+#| fig-cap: "Partial dependence of the forest's prediction on each selected predictor, one panel per predictor. Black
+#|   solid lines trace the partial effect across a continuous predictor, and dark gray bars give it at each level of a
+#|   categorical one."
+#| fig-width: 9
+#| fig-height: 8
 # Partial: the forest's prediction with every other variable held at its
 # observed values.
 pd <- cache_fit("rfr-partial", gg_partial_rfsrc(forest, xvar.names = sel),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT,
                 packages = "randomForestSRC")
-.fig <- plot(pd)
-save_figure(.fig, "rfr-explain-dependence-partial")
+# Free size: one panel per predictor.
+.fig <- plot(pd) &
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "rfr-explain-dependence-partial", width = 9, height = 8)
 .fig
 ```
 
 ```{r}
 #| label: fig-dependence-varpro
 #| message: true
-#| fig-cap: "VarPro partial dependence on each selected predictor"
+#| fig-cap: "VarPro partial dependence on each selected predictor, one panel per predictor. For a continuous
+#|   predictor a black solid line marks the nonparametric partial effect and a black dashed line the parametric one, as in
+#|   the legend; for a categorical predictor black box plots show the spread of the partial effect at each level."
+#| fig-width: 9
+#| fig-height: 8
 # The VarPro partial, computed from the varpro fit.
 pv <- cache_fit("rfr-partial-varpro", gg_partial_varpro(object = vp, xvar.names = sel),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-.fig <- plot(pv)
-save_figure(.fig, "rfr-explain-dependence-varpro")
+# Free size: one panel per predictor.
+# The manuscript theme drops the legend, and the caption reads the line types from it.
+.fig <- plot(pv) &
+  hvtiPlotR::theme_hv_manuscript(base_size = 12) &
+  ggplot2::theme(legend.position = "top")
+save_figure(.fig, "rfr-explain-dependence-varpro", width = 9, height = 8)
 .fig
 ```
 

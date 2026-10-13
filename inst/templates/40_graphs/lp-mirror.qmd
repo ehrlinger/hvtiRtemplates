@@ -4,6 +4,8 @@ date: now
 date-format: "YYYY-MM-DD HH:mm"
 format:
   html:
+    fig-width: 6
+    fig-height: 4
     theme: cosmo
     toc: true
     toc-location: left
@@ -195,6 +197,7 @@ mirror_figure <- function(mh, kind = c("unmatched", "weighted", "matched")) {
     ggplot2::scale_fill_manual(values = fill, breaks = shown, labels = names_shown, name = NULL) +
     ggplot2::labs(x = "Propensity score (%)",
                   y = if (identical(kind, "weighted")) "Patients, or sum of matching weights" else "Patients") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12) +
     ggplot2::theme(legend.position = "top")
 }
 
@@ -366,10 +369,10 @@ if (!is.null(MATCH)) {
 
 ```{r}
 #| label: fig-mirror-unmatched
-#| fig-cap: "Propensity score of each group: treated above the axis, controls below"
+#| fig-cap: "Propensity score of each group: treated above the axis, controls below. Blue bars with a black outline mark
+#|   the treated group above the axis and orange bars with a black outline the controls below it."
 mh_unmatched <- mirror_hist(scores, "unmatched", groups, BINWIDTH)
-file <- save_figure(mirror_figure(mh_unmatched, "unmatched"), "lp-mirror-unmatched", width = 7, height = 5,
-                    linked = TRUE)
+file <- save_figure(mirror_figure(mh_unmatched, "unmatched"), "lp-mirror-unmatched", linked = TRUE)
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
                         error = FALSE)
 ```
@@ -382,10 +385,11 @@ knitr::kable(mirror_counts(mh_unmatched, "unmatched"), col.names = c("Group", "P
 
 ```{r}
 #| label: fig-mirror-weighted
-#| fig-cap: "Propensity score of each group under the matching weights, over all patients in gray"
+#| fig-cap: "Propensity score of each group under the matching weights, over all patients in gray. Gray bars with a black
+#|   outline mark all patients, blue bars the treated group above the axis and orange bars the controls below it,
+#|   both weighted."
 mh_weighted <- mirror_hist(scores, "weighted", groups, BINWIDTH)
-file <- save_figure(mirror_figure(mh_weighted, "weighted"), "lp-mirror-weighted", width = 7, height = 5,
-                    linked = TRUE)
+file <- save_figure(mirror_figure(mh_weighted, "weighted"), "lp-mirror-weighted", linked = TRUE)
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
                         error = FALSE)
 ```
@@ -403,13 +407,14 @@ knitr::kable(mirror_counts(mh_weighted, "weighted"), col.names = c("Group", "Pat
 # unnumbered: its child chunks carry their own labels and captions
 if (!is.null(MATCH)) {
   mh_matched <- mirror_hist(scores, "matched", groups, BINWIDTH)
-  file <- save_figure(mirror_figure(mh_matched, "matched"), "lp-mirror-matched", width = 7, height = 5,
-                      linked = TRUE)
+  file <- save_figure(mirror_figure(mh_matched, "matched"), "lp-mirror-matched", linked = TRUE)
   .link <- xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE)
   .fence <- strrep("`", 3)
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), "#| label: fig-mirror-matched",
-    "#| fig-cap: \"Propensity score of the matched patients in each group, over all patients in gray\"",
+    "#| fig-cap: \"Propensity score of the matched patients in each group, over all patients in gray. Gray bars with a",
+    "#|   black outline mark all patients, blue bars the matched treated patients above the axis and orange",
+    "#|   bars the matched controls below it.\"",
     "knitr::include_graphics(.link, error = FALSE)", .fence, "",
     paste0(.fence, "{r}"), "#| label: tbl-mirror-matched",
     "#| tbl-cap: \"Patients in each group, and those matched\"",
