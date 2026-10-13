@@ -137,7 +137,7 @@ if (!is.null(job_data$attrition)) {
 # The fit drops a row missing any model variable, so the cohort it uses is said here,
 # counted within one imputation when the data are multiply imputed.
 .missing_values <- hvtiRtemplates:::.missing_cases(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS,
-                                                  imputation = IMPUTATION)
+                                                   imputation = IMPUTATION)
 knitr::kable(.missing_values)
 ```
 
