@@ -269,7 +269,7 @@
     ggplot2::geom_point(na.rm = TRUE, size = 2) +
     ggplot2::geom_text(data = say, ggplot2::aes(label = !!rlang::sym("label")), x = -Inf, y = Inf, hjust = -0.1, vjust = 1.6,
                        size = 3.2, inherit.aes = FALSE) +
-    ggplot2::facet_wrap("panel", ncol = 3L, scales = "free_x") +
+    ggplot2::facet_wrap("panel", ncol = 2L, scales = "free_x") +
     # Headroom, so the R-squared in the corner never sits on a point.
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0.05, 0.2))) +
     ggplot2::labs(title = title, x = "Group mean of the covariate, on the scale shown", y = ylab) +

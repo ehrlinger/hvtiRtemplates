@@ -9,3 +9,7 @@
   Every figure's numbered caption now names the shape or line and the color of each mark, so
   the figure can be read from its legend alone. `test-figure-standard.R` guards the size, the
   theme and the captions (`dev/specs/2026-10-13-figure-standard-design.md`).
+* `lg` sizes its figure with hvtiPlotR's `hv_panel_size()`, so it now needs
+  hvtiPlotR 2.8.7, and lays its six scales out in three rows of two rather than
+  two rows of three: three to a row, each with its own x axis, came out under the
+  1.75 inch panel the function allows on a 6 inch page.

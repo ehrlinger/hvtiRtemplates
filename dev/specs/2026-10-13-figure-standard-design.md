@@ -81,3 +81,12 @@ caption names its point type or color, so all of them are rewritten.
 `tests/testthat/test-figure-standard.R` enforces the size in the format block, the theme and
 its `base_size`, and a `fig-cap` on every static `fig-` chunk. It cannot read whether a caption
 names its marks; that stays with review.
+
+## hv_panel_size(), adopted 2026-10-13
+
+hvtiPlotR 2.8.7's `hv_panel_size()` sizes a faceted figure: 3 by 2 inch panels, shrunk together to
+fit a 6 by 9 inch page, refusing panels under 1.75 inches and refusing a patchwork. A template uses
+it only where the method fixes the panel count, because it stops rather than guesses, and a study's
+variable count must never make a job fail. That is `lg` alone today, laid out three rows of two.
+Facet counts that follow the study's variables or response levels (`nb` effects and path,
+`dc-tables`' scatter matrix), patchworks and one-row-per-variable plots stay free size.

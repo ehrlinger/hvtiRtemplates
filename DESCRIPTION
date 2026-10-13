@@ -52,7 +52,7 @@ Suggests:
     ggRandomForests (>= 4.0.0),
     ggplot2,
     haven,
-    hvtiPlotR (>= 2.8.0),
+    hvtiPlotR (>= 2.8.7),
     hvtiRtables (>= 1.0.1),
     hvtiRdatabuild (>= 0.3.0),
     hvtiRbootstrap (>= 0.9.3),
