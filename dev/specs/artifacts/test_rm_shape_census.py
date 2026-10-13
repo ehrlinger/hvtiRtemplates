@@ -110,6 +110,42 @@ class Classify(unittest.TestCase):
         self.assertFalse(found["transformed"])
 
 
+class Round2(unittest.TestCase):
+    def test_glm_step_ends_at_next_proc(self):
+        text = "proc glm; model y=x; proc mixed; repeated / subject=id; run;"
+        self.assertEqual(shape("rm.y.sas", text), "manual_review")
+
+    def test_glm_step_ends_at_next_data(self):
+        text = "proc glm; model y=x; data b; set a; repeated = 1; run;"
+        self.assertNotEqual(shape("rm.y.sas", text), "migration_mm")
+
+    def test_glm_repeated_still_migration(self):
+        text = "proc glm; class t; model y1 y2 y3 = g; repeated time 3; run;"
+        self.assertEqual(shape("rm.y.sas", text), "migration_mm")
+
+    def test_plain_glm_linear(self):
+        self.assertEqual(shape("rm.y.sas", "proc glm; model y = a; run;"), "linear")
+
+    def _t(self, text):
+        return census.signals(Path("/s/study/analyses/rm.y.sas"), text)["transformed"]
+
+    def test_log_names_not_transformed(self):
+        self.assertFalse(self._t("proc reg; model logistic_score = a; run;"))
+        self.assertFalse(self._t("proc reg; model logrank = a; run;"))
+        self.assertFalse(self._t("proc reg; model lvef = a; run;"))
+        self.assertFalse(self._t("proc reg; model los = a; run;"))
+
+    def test_log_names_transformed(self):
+        for n in ("log_los", "ln_los", "l_los", "log10_x", "log"):
+            self.assertTrue(self._t("proc reg; model %s = a; run;" % n), n)
+
+    def test_model_statement_log_covariate_not_transformed(self):
+        self.assertFalse(self._t("proc reg; model los = log(age) lap; run;"))
+
+    def test_assignment_log_still_transformed(self):
+        self.assertTrue(self._t("data a; ly = log(los); run; proc reg; model ly = age; run;"))
+
+
 class Candidates(unittest.TestCase):
     def test_tp_template_copies_are_skipped_and_counted(self):
         with tempfile.TemporaryDirectory() as tmp:

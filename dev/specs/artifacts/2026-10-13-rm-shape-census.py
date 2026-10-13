@@ -52,7 +52,7 @@ def strip_comments(text, suffix):
 
 def glm_has_repeated(lower):
     """True when a REPEATED statement sits inside a PROC GLM step."""
-    steps = re.finditer(r"\bproc\s+glm\b(.*?)(?:\brun\s*;|\bquit\s*;|\Z)", lower, re.DOTALL)
+    steps = re.finditer(r"\bproc\s+glm\b(.*?)(?:\brun\s*;|\bquit\s*;|\bproc\s|\bdata(?!\s*=)\s|\Z)", lower, re.DOTALL)
     return any(re.search(r"\brepeated\b", step.group(1)) for step in steps)
 
 
@@ -60,15 +60,16 @@ def response_transformed(lower, suffix):
     """True only when the model's RESPONSE is transformed, not a covariate."""
     if suffix.lower() in R_SUFFIXES:
         return bool(re.search(r"(?<![._a-z])lm\s*\(\s*(?:log|log10|sqrt)\s*\(", lower))
+    outside_model = re.sub(r"\bmodel\b[^;]*;", " ", lower)
     for statement in re.finditer(r"\bmodel\s+([^=;]+?)\s*=", lower):
         for token in statement.group(1).split():
             name = re.match(r"[a-z_]\w*", token)
             if not name:
                 continue
             name = name.group(0)
-            if name.startswith(("log", "ln_", "l_")):
+            if re.match(r"(?:log|ln|l)_|log(?:10)?(?:_|$)", name):
                 return True
-            if re.search(r"\b" + re.escape(name) + r"\s*=\s*(?:log|log10|sqrt)\s*\(", lower):
+            if re.search(r"\b" + re.escape(name) + r"\s*=\s*(?:log|log10|sqrt)\s*\(", outside_model):
                 return True
     return False
 
