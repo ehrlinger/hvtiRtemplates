@@ -1,4 +1,5 @@
 import importlib.util
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -71,6 +72,55 @@ class Classify(unittest.TestCase):
     def test_glm_with_repeated_beside_reg_needs_a_person(self):
         text = "proc reg data=x; model y = a; run; proc glm data=x; model y1 y2 = g; repeated time 2; run;"
         self.assertEqual(shape("rm.y.sas", text), "manual_review")
+
+    def test_consecutive_statement_comments_are_both_stripped(self):
+        text = "* note;\n* proc reg data=x; model y = a; run;"
+        self.assertEqual(shape("rm.y.sas", text), "misfiled")
+
+    def test_second_commented_fit_does_not_hide_live_mixed(self):
+        text = "* note;\n* proc reg data=x; model y = a; run;\nproc mixed data=x; model y = a; run;"
+        self.assertEqual(shape("rm.y.sas", text), "migration_mm")
+
+    def test_repeated_outside_glm_step_is_ignored(self):
+        text = 'title "repeated measures"; proc glm data=x; model y = a; run;'
+        self.assertEqual(shape("rm.y.sas", text), "linear")
+
+    def test_repeated_after_glm_step_ends_is_ignored(self):
+        text = "proc glm data=x; model y = a; run; proc print; var repeated; run;"
+        self.assertEqual(shape("rm.y.sas", text), "linear")
+
+    def test_transform_of_a_covariate_is_not_flagged(self):
+        found = census.signals(Path("/s/study/analyses/rm.y.sas"), "x = log(a); proc reg; model y = x; run;")
+        self.assertFalse(found["transformed"])
+
+    def test_response_assigned_from_log_is_flagged(self):
+        found = census.signals(Path("/s/study/analyses/rm.y.sas"), "yy = LOG10 (y); proc reg; model yy = a; run;")
+        self.assertTrue(found["transformed"])
+
+    def test_response_named_log_is_flagged(self):
+        found = census.signals(Path("/s/study/analyses/rm.y.sas"), "proc glm; model log_y = a; run;")
+        self.assertTrue(found["transformed"])
+
+    def test_r_log_response_is_flagged(self):
+        found = census.signals(Path("/s/study/analyses/rm.y.R"), "fit <- lm(log(y) ~ a, d)")
+        self.assertTrue(found["transformed"])
+
+    def test_r_log_covariate_is_not_flagged(self):
+        found = census.signals(Path("/s/study/analyses/rm.y.R"), "fit <- lm(y ~ log(a), d)")
+        self.assertFalse(found["transformed"])
+
+
+class Candidates(unittest.TestCase):
+    def test_tp_template_copies_are_skipped_and_counted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "study" / "analyses"
+            folder.mkdir(parents=True)
+            for name in ("tp.rm.x.sas", "TP.rm.y.sas", "rm.x.sas"):
+                (folder / name).write_text("proc reg; run;")
+            found, errors, skipped = census.candidate_files(tmp)
+        self.assertEqual([p.name for p in found], ["rm.x.sas"])
+        self.assertEqual(errors, 0)
+        self.assertEqual(skipped, 2)
 
 
 if __name__ == "__main__":

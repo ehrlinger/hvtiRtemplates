@@ -38,16 +38,45 @@ def study_key(path):
 def strip_comments(text, suffix):
     """Drop comments so commented-out fits do not count as fits."""
     text = re.sub(r"/\*.*?\*/", " ", text, flags=re.DOTALL)
-    text = re.sub(r"(^|;)(\s*)\*[^;]*;", r"\1\2", text)
+    # A statement comment starts at text start or after a ";". Consecutive
+    # comments share a ";", so repeat until the text stops changing.
+    while True:
+        stripped = re.sub(r"(^|;)(\s*)\*[^;]*;", r"\1\2", text)
+        if stripped == text:
+            break
+        text = stripped
     if suffix.lower() in R_SUFFIXES:
         text = re.sub(r"#[^\n]*", "", text)
     return text
 
 
+def glm_has_repeated(lower):
+    """True when a REPEATED statement sits inside a PROC GLM step."""
+    steps = re.finditer(r"\bproc\s+glm\b(.*?)(?:\brun\s*;|\bquit\s*;|\Z)", lower, re.DOTALL)
+    return any(re.search(r"\brepeated\b", step.group(1)) for step in steps)
+
+
+def response_transformed(lower, suffix):
+    """True only when the model's RESPONSE is transformed, not a covariate."""
+    if suffix.lower() in R_SUFFIXES:
+        return bool(re.search(r"(?<![._a-z])lm\s*\(\s*(?:log|log10|sqrt)\s*\(", lower))
+    for statement in re.finditer(r"\bmodel\s+([^=;]+?)\s*=", lower):
+        for token in statement.group(1).split():
+            name = re.match(r"[a-z_]\w*", token)
+            if not name:
+                continue
+            name = name.group(0)
+            if name.startswith(("log", "ln_", "l_")):
+                return True
+            if re.search(r"\b" + re.escape(name) + r"\s*=\s*(?:log|log10|sqrt)\s*\(", lower):
+                return True
+    return False
+
+
 def signals(path, text):
     lower_name = path.name.lower()
     lower = strip_comments(text.lower(), path.suffix)
-    glm_repeated = bool(re.search(r"\bproc\s+glm\b", lower) and re.search(r"\brepeated\b", lower))
+    glm_repeated = glm_has_repeated(lower)
     both = lower_name + "\n" + lower
     return {
         "ols": bool(re.search(r"\bproc\s+reg\b|(?<![._a-z])lm\s*\(", lower))
@@ -59,7 +88,7 @@ def signals(path, text):
         "balancing": bool(re.search(
             r"balanc(?:e|ing)[ _-]*score|balncing|%grp\b|\bbs_continuous\s*\(", both
         )),
-        "transformed": bool(re.search(r"\blog\s*\(|\blog10\s*\(|\bsqrt\s*\(|\bln_", lower)),
+        "transformed": response_transformed(lower, path.suffix),
         "mi": bool(re.search(r"_imputation_|\bimputation(?:_col)?\b|\bproc\s+mianalyze\b", lower)),
     }
 
@@ -79,6 +108,7 @@ def classify(found):
 
 def candidate_files(root):
     out = []
+    template_copies = 0
     traversal_errors = []
     for directory, subdirs, files in os.walk(
             str(root), onerror=traversal_errors.append):
@@ -88,9 +118,13 @@ def candidate_files(root):
         if not folders.intersection({"analyses", "30_analyses"}):
             continue
         for name in files:
+            if name.lower().startswith("tp.") and Path(name).suffix.lower() in PROGRAM_SUFFIXES \
+                    and PREFIX_RE.search(name):
+                template_copies += 1
+                continue
             if PREFIX_RE.search(name) and Path(name).suffix.lower() in PROGRAM_SUFFIXES:
                 out.append(base / name)
-    return sorted(out), len(traversal_errors)
+    return sorted(out), len(traversal_errors), template_copies
 
 
 def main():
@@ -102,7 +136,7 @@ def main():
 
     rows = []
     unreadable_candidates = 0
-    candidates, traversal_errors = candidate_files(args.corpus_root)
+    candidates, traversal_errors, template_copies = candidate_files(args.corpus_root)
     for path in candidates:
         try:
             raw = path.read_bytes()
@@ -169,6 +203,7 @@ def main():
         "sas_breadth_jobs": len({row["study"] for row in sas_rows}),
         "manual_review_programs": sum(r["shape"] == "manual_review" for r in sas_rows),
         "misfiled_programs": sum(r["shape"] == "misfiled" for r in sas_rows),
+        "template_copies_skipped": template_copies,
         "traversal_errors": traversal_errors,
         "unreadable_candidates": unreadable_candidates,
         "shapes": {shape: public(shape) for shape in SHAPES},
