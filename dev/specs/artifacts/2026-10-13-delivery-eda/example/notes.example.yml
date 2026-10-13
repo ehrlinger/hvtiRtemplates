@@ -1,0 +1,27 @@
+# Data manager's notes for DR-EXAMPLE-0001 (synthetic). One note per flag,
+# keyed by table, variable and check. A YAML anchor (&name) lets one root cause
+# explain several flags; the alias (*name) repeats the text.
+
+patients:
+  iv_dead:
+    FU-NEG: "One patient has a death interval of -0.2 years in the source. Left as delivered; set iv_dead to missing before analysis. Raised with data management."
+    FU-PAST-CLOSE: "Two patients have follow-up 1.5 years past the close date: the source updated vital status after the extract cutoff. Truncate at the close date for analysis."
+  iv_reop:
+    FU-AFTER-TERMINAL: "Three patients have reoperation follow-up after death. Two are source errors under review; the third follows from the negative death interval above."
+  lvef_preop:
+    MISS-ERA: &lvef_era "Preoperative LVEF was not collected before 2008; the missing values are structural, not loss. Restrict LVEF analyses to 2008 onward or treat era as a covariate."
+    MISS-RATE: *lvef_era
+  hospital_los:
+    OUT-FENCE: "Two stays of 22 and 33 days. Plausible after complicated recovery; verified against discharge dates. No change."
+  bmi:
+    OUT-RANGE: "Two BMI values near 190 to 210 are weights in pounds entered in the BMI field. Left as delivered; set to missing or recompute from height and weight."
+
+echo:
+  echo_date:
+    LONG-PREINDEX: "Five echoes 2 to 4 years before surgery: older studies attached to the record. Exclude from baseline; the preoperative echo is the one within 30 days."
+    LONG-POSTCLOSE: "Two echoes after the close date. Exclude for analysis; kept so the delivery matches the source."
+  lvef:
+    LONG-SHIFT: &lvef2017 "Every 2017 echo has LVEF recorded as a fraction (0.55) rather than a percent (55). Multiply 2017 values by 100. Raised for correction in the echo feed."
+    LONG-JUMP: *lvef2017
+    OUT-RANGE: *lvef2017
+    LONG-DUP: "Four echoes duplicated with conflicting LVEF; the second reading is an amended report. Keep the later amendment."

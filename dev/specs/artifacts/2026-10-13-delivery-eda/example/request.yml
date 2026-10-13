@@ -1,0 +1,27 @@
+request_id: "DR-EXAMPLE-0001"
+source:
+  kind: sqlite
+  url_env: EXAMPLE_DB_URL        # e.g. sqlite:///example/source.sqlite
+bind_params:
+  start: "2000-01-01"
+  end: "2024-06-30"
+close_date: "2025-06-30"
+unknown_codes: ["unknown", "unk", "not documented"]
+ranges: ranges.yml
+notes: notes.yml
+tables:
+  - name: patients
+    role: patient
+    query: queries/patients.sql
+    id: pt_id
+    date_var: surgery_date
+    events:
+      - {label: "Death", event: dead, interval: iv_dead, unit: years, terminal: true}
+      - {label: "Reoperation", event: reop, interval: iv_reop, unit: years}
+  - name: echo
+    role: longitudinal
+    query: queries/echo.sql
+    id: pt_id
+    time: echo_date
+    values: [lvef, peak_gradient]
+    baseline_window_days: 365

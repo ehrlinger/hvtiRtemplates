@@ -249,3 +249,19 @@ is asserting something the corpus does not support; see
 **Do not sum the family rows.** Every count is a distinct-study count within
 its own scope, so a study running both `dp.trends` and `dp.gfup` is one study
 in `dp` and appears in two family rows.
+
+## 2026-10-13  -  delivery EDA skeleton
+
+A working skeleton for the EDA report that ships with every data delivery, with
+the spec it implements. Handoff:
+[`../2026-10-13-delivery-eda-handoff.md`](../2026-10-13-delivery-eda-handoff.md).
+
+| File | What it is |
+|---|---|
+| `2026-10-13-delivery-eda/SPEC.md` | the design: bundle, executed-query rule, checks, notes gate |
+| `2026-10-13-delivery-eda/README.md` | how to run the synthetic example end to end |
+| `2026-10-13-delivery-eda/report/` | parameterized `eda.qmd`, check functions, testthat tests |
+| `2026-10-13-delivery-eda/runner/` | Python runner and its tests; belongs in the data management repo |
+| `2026-10-13-delivery-eda/example/` | synthetic SQLite generator, request, queries, ranges and notes |
+
+All data in the example is simulated.
