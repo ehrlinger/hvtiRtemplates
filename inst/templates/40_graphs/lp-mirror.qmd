@@ -370,7 +370,7 @@ if (!is.null(MATCH)) {
 ```{r}
 #| label: fig-mirror-unmatched
 #| fig-cap: "Propensity score of each group: treated above the axis, controls below. Blue bars with a black outline mark
-#|   the treated group above the axis and orange bars with a black outline the controls below it."
+#|   the treated group above the axis and vermillion bars with a black outline the controls below it."
 mh_unmatched <- mirror_hist(scores, "unmatched", groups, BINWIDTH)
 file <- save_figure(mirror_figure(mh_unmatched, "unmatched"), "lp-mirror-unmatched", linked = TRUE)
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
@@ -386,7 +386,7 @@ knitr::kable(mirror_counts(mh_unmatched, "unmatched"), col.names = c("Group", "P
 ```{r}
 #| label: fig-mirror-weighted
 #| fig-cap: "Propensity score of each group under the matching weights, over all patients in gray. Gray bars with a black
-#|   outline mark all patients, blue bars the treated group above the axis and orange bars the controls below it,
+#|   outline mark all patients, blue bars the treated group above the axis and vermillion bars the controls below it,
 #|   both weighted."
 mh_weighted <- mirror_hist(scores, "weighted", groups, BINWIDTH)
 file <- save_figure(mirror_figure(mh_weighted, "weighted"), "lp-mirror-weighted", linked = TRUE)

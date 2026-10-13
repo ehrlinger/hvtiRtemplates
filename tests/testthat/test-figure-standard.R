@@ -8,13 +8,13 @@ figure_standard_scan <- function(templates) {
   for (f in list.files(templates, pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)) {
     label <- substring(f, nchar(templates) + 2L)
     src <- readLines(f, warn = FALSE)
-    # A theme named inside a string, such as a stop() message, is not a call.
-    code <- gsub("\"[^\"]*\"", "\"\"", src)
+    # A theme named in a string, such as a stop() message, or in a comment is not a call.
+    code <- sub("#.*$", "", gsub("\"[^\"]*\"", "\"\"", src))
     if (!any(src == "    fig-width: 6") || !any(src == "    fig-height: 4")) {
       out <- c(out, paste0(label, ": format block lacks fig-width: 6 and fig-height: 4"))
     }
     # ggplot2's own themes default to 11 pt, so naming one undoes the standard.
-    for (i in grep("theme_(minimal|bw|grey|gray|classic|light|linedraw)\\(", code)) {
+    for (i in grep("theme_(minimal|bw|gr[ae]y|classic|light|linedraw)\\(", code)) {
       out <- c(out, paste0(label, ":", i, ": a ggplot2 theme, not theme_hv_manuscript(base_size = 12)"))
     }
     for (i in grep("theme_hv_manuscript\\(", code)) {
@@ -24,7 +24,7 @@ figure_standard_scan <- function(templates) {
     }
     for (i in grep("^#\\| label: fig-", src)) {
       opts <- src[i:length(src)]
-      opts <- opts[seq_len(match(FALSE, startsWith(opts, "#|")) - 1L)]
+      opts <- opts[seq_len(match(FALSE, c(startsWith(opts, "#|"), FALSE)) - 1L)]
       if (!any(startsWith(opts, "#| fig-cap:"))) out <- c(out, paste0(label, ":", i, ": a fig- chunk with no fig-cap"))
     }
   }

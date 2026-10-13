@@ -546,11 +546,13 @@ for (i in seq_len(nrow(fp$data))) {
 # patient, not only those with a value.
 titles <- c(continuous = "Continuous variables", percent = "Categorical variables, percent",
             count = "Categorical variables, counts")
-# What each panel draws, so a reader can decode a page without a legend.
+# What each panel draws, for the caption: a continuous page has no legend to read it from.
 .eda_key <- c(continuous = paste0("Black filled circles mark patients, the solid blue line a LOESS smooth where a variable has ",
                                   "enough distinct values, and gray ticks along the bottom the patients missing the variable."),
-              percent = "Stacked bars give the share of patients at each reference value, one color per category.",
-              count = "Stacked bars give the number of patients at each reference value, one color per category.")
+              percent = paste("Stacked bars give the share of patients at each reference value, one color per category",
+                              "as in each panel's legend."),
+              count = paste("Stacked bars give the number of patients at each reference value, one color per category",
+                            "as in each panel's legend."))
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
 draw_section <- function(section) {
   sec <- hvtiPlotR::hv_eda_pages(d, x_col = X_VAR, section = section, vars = VARIABLES,
@@ -580,7 +582,7 @@ draw_section <- function(section) {
   files <- character(0)
   for (i in seq_along(pages)) {
     # Free size: a page is a grid of panels, so it keeps a page of its own to leave each readable.
-    file <- save_figure(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 12),
+    file <- save_figure(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 12, legend.position = "top"),
                         sprintf("dc-eda-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
     cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")

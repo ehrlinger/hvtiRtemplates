@@ -388,10 +388,9 @@ p_path
 #|   its observed mean, with a vertical black bar for the interval around it; black circles mark the observed means,
 #|   black triangles the fitted means, and the black dashed line joins the fitted means over time."
 # Observed against fitted values over follow-up, in time bins.
-# The manuscript theme drops the legend, and the caption reads the shapes from it.
+# The manuscript theme hides the legend and its title, and the caption reads the shapes from the legend.
 p_calibration <- plot(gg_boost_calibration(fit)) +
-  hvtiPlotR::theme_hv_manuscript(base_size = 12) +
-  ggplot2::theme(legend.position = "top")
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
@@ -457,9 +456,8 @@ levels(.effect$response) <- .relabel
 p_effects <- lapply(unname(.parts), function(v) {
   part <- .effect[.effect$variable %in% v, , drop = FALSE]
   part$variable <- droplevels(part$variable)
-  # The manuscript theme drops the legend, and the caption reads the time colors from it.
-  plot(part) + hvtiPlotR::theme_hv_manuscript(base_size = 12) +
-    ggplot2::theme(legend.position = "top")
+  # The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.
+  plot(part) + hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 })
 # Free size: one panel per predictor, and per response component when there are several.
 .key <- c(continuous = paste("Each solid line is the effect at one follow-up time, colored from dark to light blue by",

@@ -329,10 +329,9 @@ One block per tree gives the curve that shows whether `NTREE` was large enough.
 #|   after each additional tree, the line labeled all being the overall error, one color per line as in the legend."
 # Out-of-bag error by number of trees, overall and per class.
 err <- gg_error(forest)
-# The manuscript theme drops the legend, and the caption reads the marks from it.
+# The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.
 .fig <- plot(err) +
-  hvtiPlotR::theme_hv_manuscript(base_size = 12) +
-  ggplot2::theme(legend.position = "top")
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(.fig, "rfc-fit-diagnostics-error")
 .fig
 ```
