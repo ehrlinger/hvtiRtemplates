@@ -583,7 +583,7 @@ draw_section <- function(section) {
   for (i in seq_along(pages)) {
     # Free size: a page is a grid of panels, so it keeps a page of its own to leave each readable.
     # 8 pt, not 12, because four panels share a row. Categories are named beside each panel in
-    # their own colour rather than in a legend, which runs past the page edge at this width.
+    # their own color rather than in a legend, which runs past the page edge at this width.
     .page <- hvtiRtemplates:::.eda_direct_labels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
     file <- save_figure(.page,
                         sprintf("dc-eda-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)

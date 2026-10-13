@@ -12,17 +12,18 @@ eda_data <- function() {
              age = seq(40, 89.5, by = 0.5))
 }
 
-test_that("a percent panel names every category it holds, in its own colour, and drops the legend", {
+test_that("a percent panel names every category it holds, in its own color, and drops the legend", {
   page <- hvtiRtemplates:::.eda_direct_labels(eda_page("percent", eda_data()))
   p <- page[[1L]]
   text <- Filter(function(l) inherits(l$geom, "GeomText"), p$layers)
   expect_length(text, 1L)
   labels <- text[[1L]]$aes_params$label
   expect_setequal(labels, c("Bicuspid", "Tricuspid", "Unicuspid"))
-  # Each label's colour is its band's fill.
+  # Each label's color is its band's fill.
   built <- ggplot2::ggplot_build(p)
   fills <- unique(built$data[[1L]]$fill)
-  expect_true(all(text[[1L]]$aes_params$colour %in% fills))
+  # ggplot2 stores the aesthetic under its British name whatever the call spelled.
+  expect_true(all(unlist(lapply(list(text[[1L]]$aes_params), `[[`, "colour")) %in% fills))
   # Within the panel's height, in order, and apart.
   y <- text[[1L]]$data$y
   expect_true(all(y >= 0 & y <= 1))
@@ -30,7 +31,7 @@ test_that("a percent panel names every category it holds, in its own colour, and
   expect_identical(built$plot$theme$legend.position, "none")
 })
 
-test_that("a count panel is labelled in counts, and the year axis keeps about five labels", {
+test_that("a count panel is labeled in counts, and the year axis keeps about five labels", {
   page <- hvtiRtemplates:::.eda_direct_labels(eda_page("count", eda_data()))
   p <- page[[1L]]
   built <- ggplot2::ggplot_build(p)
