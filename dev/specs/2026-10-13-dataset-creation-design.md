@@ -147,14 +147,26 @@ datasets:
 ## 7. Open
 
 0. **C's first question: lift the snapshot, or port the program?** `lift_master()` loads a
-   frozen SAS snapshot into a base table, a copy SAS made. The cardiac build
-   (`bd.data.master.sas`, measured by statement pattern on 2026-09-23) queries the warehouse
-   (16 `proc sql` blocks), derives (48 data steps) and corrects inline (18 `if ccfid = ...`
-   statements, 2 rule-style fixes) before saving `built.sas7bdat`. Porting the program would
-   make the query and its renames a view over the warehouse's own tables, the derivations
-   view columns, and the inline fixes rows in the corrections tables, leaving no SAS-made copy
-   at all. It is the larger job. Not measured: whether the query or the data steps align column
-   names to the standard, and whether the fixes run last or among the derivations.
+   frozen SAS snapshot into a base table, a copy SAS made. Porting the program would make its
+   pull and derivations views over the warehouse's own tables, leaving no SAS-made copy. The
+   cardiac build was measured on 2026-10-13 by a structure-only scan (statement kinds, tables,
+   counts; no key or value read out):
+   - **It is two programs.** `masterDWpull.sas` makes nine ODBC pass-through queries to the
+     warehouse (base, status, echo, follow-up, follow-up medications, ad hoc, base id, EKG and a
+     cohort table) and saves each as a dated SAS dataset. `bd.data.master.sas` reads
+     `bdbase_&PULLDT`, the date typed by hand to match the pull.
+   - **The pull does not align names.** The base query selects the warehouse views' columns as
+     they stand (`c.*, v.*, w.*` over `vw_CardSurg_Base`, `_Valve` and `_Cabg`), renaming only the
+     MRN to `ccfid`; the build adds a handful of `rename` statements.
+   - **Corrections are not last.** Key-matched fixes sit in three data steps among the
+     derivations, and two large derivation steps run after them, so later variables derive from
+     corrected values. A port therefore needs base views, then corrections, then derived
+     views, not one view with corrections applied on top. The scan counted 10 single-statement
+     key-matched fixes against the 2026-09-23 count of 18; `then do;` blocks and multi-line `in`
+     lists probably account for the difference, which needs a closer pass.
+   - **The master reads more than the warehouse:** pre-op echo, labs, ECG, the SSDI death index,
+     one imported CSV, and four study `built` datasets joined in by `proc sql`. Data already
+     flows from studies into the master as files. Each needs a source decision before a port.
 1. Who runs the warehouse DDL and load for C, and who holds write rights there. The registries
    team declined upstream corrections as of 2026-10-01; section 5's proposals depend on that
    changing, or on the corrections tables being writable by the group.
