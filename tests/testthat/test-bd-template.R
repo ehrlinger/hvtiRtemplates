@@ -219,3 +219,29 @@ test_that("a study registered under a dated release file is never told to name i
                       "^bd: register \\(")
   expect_false(grepl("DATASET_ID", conditionMessage(err), fixed = TRUE))
 })
+
+test_that("a working file never overwrites a published release, even without REGISTER", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  ok <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = FALSE)
+  # A dated name is a release's or a version's, and is refused before the master is read.
+  dated <- file.path(datasets, "study_cohort_20261002.rds")
+  saveRDS(data.frame(ccfid = "PT00001", age = 50), dated)
+  sha <- digest::digest(dated, algo = "sha256", file = TRUE)
+  bd_expect_stop(root, utils::modifyList(ok, list(DATASET_ID = "study_cohort_20261002")), "check-choices")
+  bd_expect_stop(root, utils::modifyList(ok, list(DATASET_ID = "study_cohort_20261002_r2")), "check-choices")
+  expect_identical(digest::digest(dated, algo = "sha256", file = TRUE), sha)
+  # A release the catalog lists under an undated name is refused before it is written.
+  release <- file.path(datasets, "legacy_cut.rds")
+  saveRDS(data.frame(ccfid = "PT00001", age = 50), release)
+  sha <- digest::digest(release, algo = "sha256", file = TRUE)
+  catalog <- list(format_version = 1L, datasets = list(legacy_cut = list(releases = list(
+    list(release_id = "legacy_cut-20261002-r1", file = "legacy_cut.rds", status = "published")
+  ))))
+  yaml::write_yaml(catalog, file.path(datasets, "dataset-catalog.yml"))
+  bd_expect_stop(root, utils::modifyList(ok, list(DATASET_ID = "legacy_cut")), "write-built")
+  expect_identical(digest::digest(release, algo = "sha256", file = TRUE), sha)
+  expect_false(file.exists(file.path(datasets, "legacy_cut.build.yml")))
+})

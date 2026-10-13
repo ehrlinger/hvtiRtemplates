@@ -140,6 +140,12 @@ REGISTER <- FALSE
 if (!is.character(DATASET_ID) || length(DATASET_ID) != 1L || !grepl("^[a-z0-9_]+$", DATASET_ID)) {
   .bd_stop("check-choices", "DATASET_ID must be lower-case letters, digits and underscores.")
 }
+# A dated name (_YYYYMMDD, or _YYYYMMDD_rN) belongs to a published release or a registered
+# version, whose bytes must never change: the working file would be written over them.
+if (grepl("_[0-9]{8}(_r[0-9]+)?$", DATASET_ID)) {
+  .bd_stop("check-choices", "DATASET_ID ends in a date, as a published release or a registered version is named. ",
+           "Choose a name without one.")
+}
 if (!is.character(KEEP) || !length(KEEP)) .bd_stop("check-choices", "KEEP is empty. Name the master columns to carry.")
 if (!is.logical(REGISTER) || length(REGISTER) != 1L || is.na(REGISTER)) {
   .bd_stop("check-choices", "REGISTER must be TRUE or FALSE.")
@@ -233,6 +239,15 @@ if (.repeats) {
 # The working file is overwritten in place. Jobs keep reading the version registered
 # last until a render with REGISTER = TRUE registers this one.
 .built <- file.path(.datasets, paste0(DATASET_ID, ".rds"))
+# A file a retired catalog lists is a published release, whatever its name: stop before writing over it.
+.catalog <- file.path(.datasets, "dataset-catalog.yml")
+.released <- if (file.exists(.catalog)) {
+  unlist(lapply(yaml::read_yaml(.catalog)$datasets, function(ds) lapply(ds$releases, function(r) r$file)))
+}
+if (basename(.built) %in% .released) {
+  .bd_stop("write-built", basename(.built), " is a published release in dataset-catalog.yml, and is never written over. ",
+           "Choose another DATASET_ID.")
+}
 saveRDS(d, .built)
 
 # The build record sits beside the working file, as <stem>.build.yml. Registering
