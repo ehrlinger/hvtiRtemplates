@@ -7,17 +7,18 @@ test_that("add_job() scaffolds bd into the study's 00_datasets folder", {
   expect_true(any(lines == "TYPE    <- \"build\""))
 })
 
-test_that("a draft run writes the draft and its record and publishes nothing", {
+test_that("a run without REGISTER writes the working file and its record and registers nothing", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
   env <- bd_run(root, list(MASTER = m$parquet, KEEP = c("age", "iv_dead", "dead", "dt_surg"),
                            EXCLUDE = list(age < 40 ~ "Under 40")))
   datasets <- hvtiRutilities::study_dir("datasets", root)
-  expect_true(file.exists(file.path(datasets, "draft-study_cohort.rds")))
-  expect_true(file.exists(file.path(datasets, "draft-study_cohort.build.yml")))
-  expect_false(file.exists(file.path(datasets, "dataset-catalog.yml")))
-  expect_null(env$.release)
+  expect_true(file.exists(file.path(datasets, "study_cohort.rds")))
+  expect_true(file.exists(file.path(datasets, "study_cohort.build.yml")))
+  expect_length(bd_versions(root), 0L)
+  expect_null(hvtiRutilities::study_config(root, require_data = FALSE)$built)
+  expect_null(env$.version_after)
   expect_identical(env$.cut$attrition$reason, c("Rows read", "Under 40"))
   # A missing age is not excluded.
   expect_identical(nrow(env$d), nrow(m$data) - sum(m$data$age < 40, na.rm = TRUE))
@@ -29,20 +30,72 @@ test_that("the dataset carries ID, KEY, JOIN_BY and KEEP columns, and drops MRN"
   root <- bd_study()
   env <- bd_run(root, list(MASTER = m$parquet, KEEP = c("age", "mrn"), EXCLUDE = NULL))
   expect_setequal(names(env$d), c("ccfid", "dt_surg", "age"))
-  draft <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root), "draft-study_cohort.rds"))
-  expect_identical(names(draft), names(env$d))
+  built <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds"))
+  expect_identical(names(built), names(env$d))
 })
 
-test_that("the build record holds the master's hash and the rules in full, beside the data", {
+test_that("the build record describes the working file and the master, and holds no key", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
-  env <- bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = list(ccfid == "PT00003" ~ "Withdrew consent")))
+  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = list(ccfid == "PT00003" ~ "Withdrew consent"))
+  env <- bd_run(root, choices)
   rec <- yaml::read_yaml(env$.record_file)
   meta <- jsonlite::read_json(sub("[.]parquet$", ".meta.json", m$parquet))
+  expect_identical(rec$schema, 1L)
+  expect_identical(rec$built_sha256, digest::digest(env$.built, algo = "sha256", file = TRUE))
   expect_identical(rec$master$sha256, meta$parquet_sha256)
-  expect_match(rec$settings$exclude, "PT00003", fixed = TRUE)
+  expect_identical(rec$view, basename(m$parquet))
+  expect_true(rec$derived_after_overlay)
+  expect_true("overlay_sha256" %in% names(rec))
   expect_identical(rec$attrition$reason, c("Rows read", "Withdrew consent"))
+  # A rule naming a patient stays in the job: the record carries its hash, not its text.
+  expect_false(any(grepl("PT00003", readLines(env$.record_file), fixed = TRUE)))
+  expect_match(rec$cohort_sha256, "^[0-9a-f]{64}$")
+  # Replaced whole: modifyList() would merge the two unnamed rule lists and keep the first rule.
+  choices$EXCLUDE <- list(ccfid == "PT00004" ~ "Withdrew consent")
+  other <- bd_run(root, choices)
+  expect_false(identical(yaml::read_yaml(other$.record_file)$cohort_sha256, rec$cohort_sha256))
+})
+
+test_that("REGISTER registers the working file as a dated version whose provenance is bd", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)
+  env <- bd_run(root, choices)
+  expect_identical(hvtiRutilities::study_config(root)$built, "study_cohort.rds")
+  expect_null(env$.version_before)
+  expect_identical(env$.version_after, bd_current_version(root))
+  expect_identical(env$.register_step, "Registered as the study dataset")
+  prov <- bd_provenance(root)
+  expect_identical(prov$origin, "bd")
+  expect_identical(prov$build$view, basename(m$parquet))
+  # The record moved beside the version it describes.
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  expect_true(file.exists(file.path(datasets, prov$build$record)))
+  expect_false(file.exists(file.path(datasets, "study_cohort.build.yml")))
+  # The same cut again registers nothing.
+  again <- bd_run(root, choices)
+  expect_identical(again$.register_step, "Unchanged since the version registered: nothing to do")
+  expect_length(bd_versions(root), 1L)
+})
+
+test_that("a study registered under this job's file without a build record takes the build as a new version", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  # Registered as a legacy study would be: the file bd writes, with no build record beside it.
+  saveRDS(data.frame(ccfid = "PT00001", age = 50), file.path(datasets, "study_cohort.rds"))
+  suppressMessages(hvtiRutilities::register_data(root, built = "study_cohort.rds"))
+  legacy <- bd_current_version(root)
+  expect_identical(bd_provenance(root, legacy)$origin, "legacy")
+  env <- bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE))
+  expect_identical(env$.version_before, legacy)
+  expect_identical(env$.register_step, "Registered as a new version of the study dataset")
+  expect_identical(bd_provenance(root)$origin, "bd")
+  expect_length(bd_versions(root), 2L)
 })
 
 # Every stop names the step and this file, and no message carries a value.
@@ -66,7 +119,7 @@ test_that("failures name the step and the file, never a value", {
   bd_expect_stop(root, utils::modifyList(ok, list(KEEP = c("age", "no_such_column"))), "read-master")
   bd_expect_stop(root, utils::modifyList(ok, list(EXCLUDE = list(ccfid == "PT00001" & nope ~ "Broken"))), "cohort")
   bd_expect_stop(root, utils::modifyList(ok, list(EXCLUDE = list(!is.na(ccfid) ~ "Everyone"))), "cohort")
-  bd_expect_stop(root, utils::modifyList(ok, list(KEY = "dead")), "write-draft")
+  bd_expect_stop(root, utils::modifyList(ok, list(KEY = "dead")), "write-built")
   # A sidecar that disagrees with its parquet, under VERIFY_MASTER.
   bad <- bd_master()
   meta <- sub("[.]parquet$", ".meta.json", bad$parquet)
@@ -100,32 +153,37 @@ test_that("a derivation that changes the row count stops in derive", {
   expect_error(eval(parse(text = check), envir = env), "^bd: derive \\(")
 })
 
-test_that("a legacy-registered dataset (without release) stops publish before writing to disk", {
+test_that("a study registered under another file stops register before registering anything", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
   datasets <- hvtiRutilities::study_dir("datasets", root)
-  # Register a dataset the legacy way: a CSV file, no release.
+  # A study registered as a file this job does not write, as a SAS-built study is.
   utils::write.csv(data.frame(ccfid = "PT00001", age = 50), file.path(datasets, "built.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
-  # Attempt to publish should fail with the legacy-registration check.
-  expect_error(
-    bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, PUBLISH = TRUE)),
-    "^bd: publish \\("
-  )
-  # No dataset-catalog.yml should exist after the failed publish.
-  expect_false(file.exists(file.path(datasets, "dataset-catalog.yml")))
+  before <- bd_current_version(root)
+  bd_expect_stop(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE), "register")
+  # A file this job could not have written: no DATASET_ID to suggest.
+  err <- expect_error(bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)))
+  expect_false(grepl("DATASET_ID", conditionMessage(err), fixed = TRUE))
+  expect_identical(hvtiRutilities::study_config(root)$built, "built.csv")
+  expect_identical(bd_current_version(root), before)
+  expect_length(bd_versions(root), 0L)
 })
 
-test_that("a registered release of another catalog dataset stops publish before minting a release", {
+test_that("a DATASET_ID other than the registered one stops register before registering anything", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
-  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, PUBLISH = TRUE)
+  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)
   bd_run(root, choices)
-  expect_length(bd_catalog_releases(root), 1L)
-  expect_error(bd_run(root, c(choices, list(DATASET_ID = "other_cohort"))), "^bd: publish \\(")
-  expect_length(bd_catalog_releases(root), 1L)
+  expect_length(bd_versions(root), 1L)
+  bd_expect_stop(root, utils::modifyList(choices, list(DATASET_ID = "other_cohort")), "register")
+  expect_error(bd_run(root, utils::modifyList(choices, list(DATASET_ID = "other_cohort"))),
+               "Set DATASET_ID to \"study_cohort\"", fixed = TRUE)
+  expect_identical(hvtiRutilities::study_config(root)$built, "study_cohort.rds")
+  expect_length(bd_versions(root), 1L)
+  expect_length(bd_versions(root, "other_cohort"), 0L)
 })
 
 test_that("a cohort list in the study's datasets folder cuts the dataset to the patients it names", {
@@ -147,4 +205,43 @@ test_that("a master snapshot without its sidecar stops in read-master", {
   root <- bd_study()
   unlink(sub("[.]parquet$", ".meta.json", m$parquet))
   bd_expect_stop(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL), "read-master")
+})
+
+test_that("a study registered under a dated release file is never told to name it in DATASET_ID", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  # A release file's name: following a DATASET_ID suggestion would overwrite its bytes.
+  saveRDS(data.frame(ccfid = "PT00001", age = 50), file.path(datasets, "study_cohort_20261002.rds"))
+  suppressMessages(hvtiRutilities::register_data(root, built = "study_cohort_20261002.rds"))
+  err <- expect_error(bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)),
+                      "^bd: register \\(")
+  expect_false(grepl("DATASET_ID", conditionMessage(err), fixed = TRUE))
+})
+
+test_that("a working file never overwrites a published release, even without REGISTER", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  ok <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = FALSE)
+  # A dated name is a release's or a version's, and is refused before the master is read.
+  dated <- file.path(datasets, "study_cohort_20261002.rds")
+  saveRDS(data.frame(ccfid = "PT00001", age = 50), dated)
+  sha <- digest::digest(dated, algo = "sha256", file = TRUE)
+  bd_expect_stop(root, utils::modifyList(ok, list(DATASET_ID = "study_cohort_20261002")), "check-choices")
+  bd_expect_stop(root, utils::modifyList(ok, list(DATASET_ID = "study_cohort_20261002_r2")), "check-choices")
+  expect_identical(digest::digest(dated, algo = "sha256", file = TRUE), sha)
+  # A release the catalog lists under an undated name is refused before it is written.
+  release <- file.path(datasets, "legacy_cut.rds")
+  saveRDS(data.frame(ccfid = "PT00001", age = 50), release)
+  sha <- digest::digest(release, algo = "sha256", file = TRUE)
+  catalog <- list(format_version = 1L, datasets = list(legacy_cut = list(releases = list(
+    list(release_id = "legacy_cut-20261002-r1", file = "legacy_cut.rds", status = "published")
+  ))))
+  yaml::write_yaml(catalog, file.path(datasets, "dataset-catalog.yml"))
+  bd_expect_stop(root, utils::modifyList(ok, list(DATASET_ID = "legacy_cut")), "write-built")
+  expect_identical(digest::digest(release, algo = "sha256", file = TRUE), sha)
+  expect_false(file.exists(file.path(datasets, "legacy_cut.build.yml")))
 })
