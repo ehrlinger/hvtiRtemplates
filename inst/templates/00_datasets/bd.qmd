@@ -279,24 +279,28 @@ yaml::write_yaml(.record, .record_file)
 
 ```{r}
 #| label: register
-# The dated version registered now, read from the study's manifest: NULL when none is.
-.current_version <- function() {
-  built <- hvtiRutilities::study_config(.root, require_data = FALSE)$built
-  manifest <- file.path(.root, "manifest.yaml")
-  if (is.null(built) || !file.exists(manifest)) return(NULL)
-  entry <- Filter(function(e) is.list(e) && identical(e$file, built), yaml::read_yaml(manifest)$datasets)
-  if (length(entry)) entry[[1L]]$parquet else NULL
+# The dated version registered from `built` now, from the study's manifest: NULL when none is.
+.current_version <- function(built) {
+  if (is.null(built)) NULL else hvtiRtemplates:::.manifest_find(.root, source = built)$version_file
 }
 # require_data = FALSE: a study that has registered no dataset yet is the normal first build.
 .registered <- hvtiRutilities::study_config(.root, require_data = FALSE)
-.version_before <- .current_version()
+.version_before <- .current_version(.registered$built)
 .register_step <- "Working file only: nothing registered"
 if (REGISTER) {
   # A study registered under another file cannot take this one as its dataset.
   if (!is.null(.registered$built) && !identical(.registered$built, basename(.built))) {
+    # Name a DATASET_ID only for a file this job could have written: a dated name is a retired
+    # catalog release, whose bytes must never be overwritten.
+    .own <- grepl("^[a-z0-9_]+[.]rds$", .registered$built) && !grepl("_[0-9]{8}(_r[0-9]+)?[.]rds$", .registered$built)
     .bd_stop("register", "this study's dataset is registered as ", .registered$built, ", and this job writes ",
-             basename(.built), ". Set DATASET_ID to the registered name if that file is this job's, ",
-             "or move the study to the new file deliberately.")
+             basename(.built), ". ",
+             if (.own) {
+               paste0("Set DATASET_ID to \"", sub("[.]rds$", "", .registered$built), "\" if that file is this job's, or ")
+             } else {
+               ""
+             },
+             "move the study to this job's file deliberately.")
   }
   .register_step <- tryCatch({
     if (is.null(.registered$built)) {
@@ -306,18 +310,20 @@ if (REGISTER) {
       # update_manifest() finds the study from the working directory.
       .owd <- setwd(.root)
       .update <- tryCatch(hvtiRutilities::update_manifest(dataset = "study"), finally = setwd(.owd))
-      if (identical(.update$action[[1L]], "registered")) {
-        "Registered as a new version of the study dataset"
-      } else {
-        "Unchanged since the version registered: nothing to do"
-      }
+      switch(.update$action[[1L]],
+        registered = ,
+        migrated = "Registered as a new version of the study dataset",
+        unchanged = "Unchanged since the version registered: nothing to do",
+        # skipped or missing: nothing was registered, and the render must not read as if it had been.
+        .bd_stop("register", "update_manifest() registered nothing (", .update$action[[1L]], "): ", .update$detail[[1L]])
+      )
     }
   }, error = function(e) {
     if (startsWith(conditionMessage(e), "bd: ")) stop(e)
     .bd_stop("register", "registering the dataset stopped: ", conditionMessage(e))
   })
 }
-.version_after <- .current_version()
+.version_after <- .current_version(hvtiRutilities::study_config(.root, require_data = FALSE)$built)
 ```
 
 ## Report

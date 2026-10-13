@@ -163,6 +163,9 @@ test_that("a study registered under another file stops register before registeri
   suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
   before <- bd_current_version(root)
   bd_expect_stop(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE), "register")
+  # A file this job could not have written: no DATASET_ID to suggest.
+  err <- expect_error(bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)))
+  expect_false(grepl("DATASET_ID", conditionMessage(err), fixed = TRUE))
   expect_identical(hvtiRutilities::study_config(root)$built, "built.csv")
   expect_identical(bd_current_version(root), before)
   expect_length(bd_versions(root), 0L)
@@ -176,6 +179,8 @@ test_that("a DATASET_ID other than the registered one stops register before regi
   bd_run(root, choices)
   expect_length(bd_versions(root), 1L)
   bd_expect_stop(root, utils::modifyList(choices, list(DATASET_ID = "other_cohort")), "register")
+  expect_error(bd_run(root, utils::modifyList(choices, list(DATASET_ID = "other_cohort"))),
+               "Set DATASET_ID to \"study_cohort\"", fixed = TRUE)
   expect_identical(hvtiRutilities::study_config(root)$built, "study_cohort.rds")
   expect_length(bd_versions(root), 1L)
   expect_length(bd_versions(root, "other_cohort"), 0L)
@@ -200,4 +205,17 @@ test_that("a master snapshot without its sidecar stops in read-master", {
   root <- bd_study()
   unlink(sub("[.]parquet$", ".meta.json", m$parquet))
   bd_expect_stop(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL), "read-master")
+})
+
+test_that("a study registered under a dated release file is never told to name it in DATASET_ID", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  # A release file's name: following a DATASET_ID suggestion would overwrite its bytes.
+  saveRDS(data.frame(ccfid = "PT00001", age = 50), file.path(datasets, "study_cohort_20261002.rds"))
+  suppressMessages(hvtiRutilities::register_data(root, built = "study_cohort_20261002.rds"))
+  err <- expect_error(bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)),
+                      "^bd: register \\(")
+  expect_false(grepl("DATASET_ID", conditionMessage(err), fixed = TRUE))
 })

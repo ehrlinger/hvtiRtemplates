@@ -3,6 +3,8 @@
 # parquet and its sidecar are the real formats. Every value is simulated.
 
 bd_skip <- function() {
+  # The job stops below 1.5.3, the first hvtiRutilities to claim its build record.
+  testthat::skip_if_not_installed("hvtiRutilities", "1.5.3")
   testthat::skip_if_not_installed("hvtiRdatabuild", "0.3.0")
   testthat::skip_if_not_installed("arrow")
   testthat::skip_if_not_installed("haven")
@@ -72,10 +74,7 @@ bd_versions <- function(root, stem = "study_cohort") {
 }
 
 bd_current_version <- function(root) {
-  built <- hvtiRutilities::study_config(root)$built
-  entry <- Filter(function(e) is.list(e) && identical(e$file, built),
-                  yaml::read_yaml(file.path(root, "manifest.yaml"))$datasets)
-  entry[[1L]]$parquet
+  .manifest_find(root, source = hvtiRutilities::study_config(root)$built)$version_file
 }
 
 bd_provenance <- function(root, version = bd_current_version(root)) {
