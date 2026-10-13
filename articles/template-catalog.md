@@ -46,7 +46,7 @@ places each one; you do not choose the folder.
 
 | Delivery | Template | Description | Scaffold |
 |:---|:---|:---|:---|
-| 🟡 In progress | `bd` | Cuts a study’s dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then a dated release registered as the study dataset. | `add_job("bd", subject, type)` |
+| 🟡 In progress | `bd` | Cuts a study’s dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then the working file and its build record, registered as a dated version of the study dataset. | `add_job("bd", subject, type)` |
 
 ### descriptive
 
