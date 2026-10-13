@@ -1,0 +1,257 @@
+---
+title: "Linear regression model"
+date: now
+date-format: "YYYY-MM-DD HH:mm"
+format:
+  html:
+    fig-width: 6
+    fig-height: 4
+    theme: cosmo
+    toc: true
+    toc-location: left
+    page-layout: full
+    grid:
+      body-width: 2000px
+      sidebar-width: 250px
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+Fits an ordinary least-squares model of a continuous outcome, on one dataset or
+on stacked multiple imputations pooled with Rubin's rules. Coefficients are on
+the outcome's own scale: the expected change in the outcome for a unit change
+in the predictor, with the others held fixed.
+
+```{r}
+#| label: setup
+#| results: asis
+SUBJECT  <- "outcome"
+TYPE     <- "linear"
+.in <- knitr::current_input(dir = TRUE)
+suppressPackageStartupMessages({
+  library(hvtiRpropensity)
+  library(hvtiRutilities)
+  library(ggplot2)
+})
+if (utils::packageVersion("hvtiRpropensity") < "0.1.12") stop("This template needs hvtiRpropensity >= 0.1.12.", call. = FALSE)
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder,
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
+```
+
+```{r}
+#| label: edit-study-choices
+# EDIT: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
+
+# EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+
+# EDIT: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). WHERE on a joined column
+#     filters the records first, so "last" with WHERE echo_type == "TTE"
+#     keeps each patient's last TTE. A tie stops: picking one record
+#     silently would be a hidden choice; by = c("echo_date", "echo_seq")
+#     breaks it. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
+
+# EDIT: the continuous outcome. A skewed outcome such as length of stay is often
+# modeled on the log scale: write log() into the formula in the `fit` chunk and
+# leave OUTCOME naming the column. The coefficients are then on the log scale,
+# and exp() of one is a ratio of geometric means, not a difference.
+OUTCOME <- "continuous_outcome"
+PREDICTORS <- c("age", "female")           # EDIT: the declared model; this job does not select variables.
+IMPUTATION <- NULL                          # EDIT: imputation column, or NULL.
+# Stacked imputations repeat each patient once per imputation.
+if (!is.null(IMPUTATION)) KEY <- unique(c(KEY, IMPUTATION))
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("rm-linear-qq").
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
+```
+
+```{r}
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+job_data$provenance$role <- "training"
+if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
+# The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
+.id <- attr(job_data$record, "selection")$id
+knitr::kable(job_data$record, col.names = c("Data", ""))
+# A column the study choices name that the data lack stops here, naming the setting to change.
+hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS)
+```
+
+```{r}
+#| label: data-attrition
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(job_data$attrition)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
+```{r}
+#| label: tbl-missing
+#| tbl-cap: "Missing values in the model's variables"
+# The fit drops a row missing any model variable, so the cohort it uses is said here,
+# counted within one imputation when the data are multiply imputed.
+.missing_values <- hvtiRtemplates:::.missing_cases(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS,
+                                                   imputation = IMPUTATION)
+knitr::kable(.missing_values)
+```
+
+```{r}
+#| label: fit
+model_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
+fit <- hvtiRpropensity::fit_linear(
+  model_formula, d, outcome_col = OUTCOME, id_col = .id, imputation_col = IMPUTATION
+)
+```
+
+```{r}
+#| label: tbl-fit-status
+#| tbl-cap: "Fit status of the model"
+knitr::kable(fit$tables$fit_status)
+```
+
+```{r}
+#| label: tbl-fit-quality
+#| tbl-cap: "Residual standard error and R-squared of each fit"
+# R-squared is blank for imputed data on purpose. Rubin's rules pool
+# coefficients and their covariance; they define no pooled R-squared, and an
+# average of per-imputation values would look authoritative without being so.
+knitr::kable(fit$tables$fit_quality)
+```
+
+```{r}
+#| label: tbl-estimates
+#| tbl-cap: "Coefficient estimates of the fitted model"
+# A single dataset is inferred on the t with the residual degrees of freedom, as
+# PROC REG reports it; imputed data on Rubin's degrees of freedom.
+knitr::kable(fit$tables$estimates)
+```
+
+```{r}
+#| label: tbl-covariance
+#| tbl-cap: "Covariance matrix of the coefficient estimates"
+knitr::kable(fit$tables$covariance)
+```
+
+## Figures
+
+```{r}
+#| label: fig-residuals
+#| fig-cap: "Residuals against fitted values. Under multiple imputation, the first imputation's fit."
+# A funnel or a curve here means the constant-variance or the linearity
+# assumption fails, and the standard errors above cannot be trusted as printed.
+.model <- fit$models[[1L]]
+.resid <- stats::na.omit(data.frame(fitted = stats::fitted(.model), residual = stats::residuals(.model)))
+.fig <- ggplot(.resid, aes(x = fitted, y = residual)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(alpha = 0.6) +
+  labs(x = "Fitted value", y = "Residual") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "rm-linear-residuals")
+.fig
+```
+
+```{r}
+#| label: fig-qq
+#| fig-cap: "Normal Q-Q plot of the residuals. Under multiple imputation, the first imputation's fit."
+# Heavy tails matter more for prediction intervals than for the coefficients,
+# which are robust to non-normal residuals in a cohort of this size.
+.fig <- ggplot(.resid, aes(sample = residual)) +
+  stat_qq(alpha = 0.6) +
+  stat_qq_line(linetype = "dashed") +
+  labs(x = "Theoretical quantile", y = "Residual quantile") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "rm-linear-qq")
+.fig
+```
+
+```{r}
+#| label: save
+MODEL_PATH <- set_path("estimates", "rm-linear.rds")
+.fit_provenance <- hvtiRtemplates:::.lm_fit_provenance(fit)
+fit <- hvtiRtemplates:::.attach_handoff_lineage(
+  fit, data = if (exists(".provenance_data")) .provenance_data else list(),
+  analysis = .fit_provenance$analysis, cohort = .fit_provenance$cohort,
+  selection = attr(job_data$record, "selection")
+)
+# The saved copy holds a study-keyed digest of each patient ID, never the ID, so the file names no patient.
+saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+.fit_provenance <- hvtiRtemplates:::.lm_fit_provenance(fit)
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  run = .job$run,
+  extra = list(
+    subject = SUBJECT, type = TYPE,
+    analysis = .fit_provenance$analysis, cohort = .fit_provenance$cohort
+  )
+))
+```

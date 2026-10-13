@@ -123,6 +123,27 @@ test_that("a rendered lm-binary keyed on MRN saves no MRN anywhere in the file",
   expect_true(file.exists(file.path(out$root, ".hvti", "id_key")))
 })
 
+test_that("a rendered rm-linear keyed on MRN saves no MRN anywhere in the file", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  d <- rm_data()  # nolint: object_usage_linter.
+  d$MRN <- 73500000L + d$ccfid
+  d$ccfid <- NULL
+  d$id <- NULL
+  out <- rm_render_fixture("linear", data = d)  # nolint: object_usage_linter.
+  path <- file.path(hvtiRutilities::study_dir("estimates", out$root), "outcome-analysis", "rm-linear.rds")
+  expect_true(file.exists(path))
+  saved <- readRDS(path)
+  expect_identical(saved$meta$id_col, "mrn")
+  expect_true(isTRUE(saved$meta$id_digest))
+  bytes <- rds_bytes(path)
+  expect_false(any(vapply(d$MRN, function(v) bytes_hold(bytes, v), logical(1L))))
+  key <- hvtiRtemplates:::.study_id_key(out$root)
+  expect_true(bytes_hold(bytes, hvtiRtemplates:::.id_digest(d$MRN[[1L]], key)))
+})
+
 test_that("a reader of saved digests never makes a key, and notices a replaced one", {
   root <- withr::local_tempdir()
   bundle <- list(meta = list(id_col = "ccfid"), data = data.frame(ccfid = 1:3))

@@ -61,3 +61,63 @@ test_that("rm-balancing_continuous renders end to end", {
                       "rm-balancing_continuous.rds")
   expect_true(file.exists(bundle))
 })
+
+rm_linear_labels <- c("setup", "edit-study-choices", "fit", "tbl-fit-status", "tbl-fit-quality", "tbl-estimates",
+                      "tbl-covariance", "fig-residuals", "fig-qq", "save")
+
+rm_linear_env <- function(d, imputation, .local_envir = parent.frame()) {
+  # eval_setup_chunk() drops the chunk's library() calls, so the figure chunks need ggplot2 attached here.
+  withr::local_package("ggplot2", .local_envir = .local_envir)
+  root <- lm_study(.local_envir = .local_envir)  # nolint: object_usage_linter.
+  job <- file.path(root, "outcome-linear-rm-linear.qmd")
+  writeLines("A job.", job)
+  testthat::local_mocked_bindings(current_input = function(...) job, .package = "knitr", .env = .local_envir)
+  env <- new.env(parent = globalenv())
+  env$d <- d
+  env$.root <- root
+  rm_run("linear", rm_linear_labels, env, list(  # nolint: object_usage_linter.
+    OUTCOME = "outcome", PREDICTORS = c("age", "female"), ID = "id", IMPUTATION = imputation, SAVE_FIGURES = FALSE
+  ))
+  env
+}
+
+test_that("rm-linear on one dataset reports R-squared and t inference", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  env <- rm_linear_env(rm_data(), NULL)
+  expect_s3_class(env$fit, "rm_fit")
+  expect_false(any(env$fit$tables$estimates$pooled))
+  expect_false(is.na(env$fit$tables$fit_quality$r_squared))
+  expect_true(all(is.finite(env$fit$tables$estimates$df)))
+  expect_true(file.exists(env$MODEL_PATH))
+})
+
+test_that("rm-linear on imputations pools and withholds R-squared", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  env <- rm_linear_env(rm_mi_data(), "imp")
+  expect_identical(env$fit$meta$n_imputations, 2L)
+  expect_true(all(env$fit$tables$estimates$pooled))
+  expect_true(all(is.na(env$fit$tables$fit_quality$r_squared)))
+})
+
+test_that("rm set markers must agree with the rendered job filename", {
+  root <- lm_study()  # nolint: object_usage_linter.
+  job <- file.path(root, "other-eda-rm.qmd")
+  writeLines("A finished job.", job)
+  testthat::local_mocked_bindings(current_input = function(...) job, .package = "knitr")
+  for (qualifier in names(rm_qualifiers)) {
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    expect_error(rm_run(qualifier, "set", env), "but declares SUBJECT", info = qualifier)
+  }
+})
+
+test_that("rm-linear renders end to end and saves both figures", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  out <- rm_render_fixture("linear")
+  expect_true(file.exists(out$output))
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", out$root), "outcome-analysis")
+  expect_true(all(file.exists(file.path(graphs, c("rm-linear-residuals.png", "rm-linear-qq.png")))))
+})

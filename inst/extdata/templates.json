@@ -1198,7 +1198,7 @@
       "folder": "analyses",
       "family": "models",
       "kind": "job",
-      "status": "queued",
+      "status": "shipped",
       "batch": 6,
       "sas_breadth": null,
       "r_exemplars": null,

@@ -44,7 +44,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**66 templates in scope**, of which 35 exist on disk.
+**66 templates in scope**, of which 36 exist on disk.
 
 ## By family
 
@@ -137,7 +137,7 @@ row has no template on disk.
 | `mm` | queued | 59 | 56 | 1 | — |
 | `nm` | queued | 122 | 121 | 1 | — |
 | `rm-balancing_continuous` | shipped | — | — | — | — |
-| `rm-linear` | queued | — | — | — | — |
+| `rm-linear` | shipped | — | — | — | — |
 
 ### distributions (batch 7)
 
@@ -174,11 +174,11 @@ Members: `ac`, `hm`, `hp`, `hs-concordance`, `hs-setup`, `hz`
 
 **Complete.**
 
-### propensity-matching — 10/13
+### propensity-matching — 11/13
 
 Members: `bd`, `bl`, `cm`, `dc-stddiff`, `hp`, `lm-balancing_count`, `lm-propensity_binary`, `lm-propensity_nominal`, `lm-propensity_ordinal`, `lp-mirror`, `rm-balancing_continuous`, `rm-linear`, `rp`
 
-Outstanding: `cm`, `rm-linear`, `rp`.
+Outstanding: `cm`, `rp`.
 
 <!-- END GENERATED -->
 

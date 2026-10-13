@@ -225,7 +225,7 @@ patient_level_templates <- c(
   "rfc-fit.qmd", "rfr-fit.qmd", "rfs-fit.qmd",
   "lm-balancing_count.qmd", "lm-binary.qmd", "lm-checkpred.qmd", "lm-nominal.qmd", "lm-ordinal.qmd",
   "lm-propensity_binary.qmd", "lm-propensity_nominal.qmd", "lm-propensity_ordinal.qmd",
-  "rm-balancing_continuous.qmd"
+  "rm-balancing_continuous.qmd", "rm-linear.qmd"
 )
 
 test_that("every template that reads its own data offers the join and records the joined data", {
@@ -264,7 +264,7 @@ test_that("every template that reads its own data offers the join and records th
                      info = basename(f))
   }
   # Every first job of a set reads its own data; a drop here means one stopped offering the join.
-  expect_identical(readers, 23L)
+  expect_identical(readers, 24L)
   # The refusal names the rest, read from the same templates.
   expect_identical(hvtiRtemplates:::.long_join_templates(normalizePath(template_root)),
                    c("dc-eda", "dc-general", "dc-tables", "dc-trends", "nb-boostmtree"))
