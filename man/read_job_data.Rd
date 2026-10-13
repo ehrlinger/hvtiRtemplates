@@ -122,7 +122,8 @@ are then counted within each imputation, so a patient who appears once in
 every imputation passes, and one who appears twice in the same imputation
 still stops the read. The column must be in the data read, and in
 \code{key} for the rows to be unique. It is matched ignoring case, as
-\code{key} is. The record says how many imputations the rows hold. It is
+\code{key} is. It must hold no missing value and must not be the patient
+identifier. The record says how many imputations the rows hold. It is
 not inferred from \code{key}, since a visit column in \code{key} makes a
 long dataset, not an imputation.}
 }

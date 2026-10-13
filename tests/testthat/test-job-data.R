@@ -1271,16 +1271,13 @@ test_that("a patient repeated within one imputation, or with no imputation, is s
   # Patient 1 is twice in imputation 1: the visit column makes the rows unique.
   d <- data.frame(ccfid = c(1L, 1L, 2L, 1L, 2L), imp = c(1L, 1L, 1L, 2L, 2L), visit = c(1L, 2L, 1L, 1L, 1L), age = 50:54)
   cfg <- stacked_study(d, key = c("ccfid", "imp", "visit"))
-  err <- tryCatch(read_job_data(cfg, key = c("ccfid", "imp", "visit"), one_row_per_patient = TRUE, imputation = "imp"),
-                  error = conditionMessage)
-  expect_match(err, "This job models one row per patient", fixed = TRUE)
-  expect_match(err, "1 patient has more than one row", fixed = TRUE)
-  expect_match(err, "within an imputation", fixed = TRUE)
+  expect_error(read_job_data(cfg, key = c("ccfid", "imp", "visit"), one_row_per_patient = TRUE, imputation = "imp"),
+               "This job models one row per patient.*1 patient has more than one row within an imputation")
   # A KEY of the ID and a visit, and no imputation, is a long dataset.
   long <- data.frame(ccfid = c(1L, 1L, 2L), visit = c(1L, 2L, 1L), age = 50:52)
   cfg <- stacked_study(long, key = c("ccfid", "visit"))
-  err <- tryCatch(read_job_data(cfg, key = c("ccfid", "visit"), one_row_per_patient = TRUE), error = conditionMessage)
-  expect_match(err, "1 patient has more than one row in the data read (3 rows on 2 patients)", fixed = TRUE)
+  expect_error(read_job_data(cfg, key = c("ccfid", "visit"), one_row_per_patient = TRUE),
+               "1 patient has more than one row in the data read (3 rows on 2 patients)", fixed = TRUE)
 })
 
 test_that("the imputation setting is checked", {
@@ -1291,4 +1288,15 @@ test_that("the imputation setting is checked", {
   }
   expect_error(read_job_data(cfg, key = c("ccfid", "imp"), imputation = "nope"),
                "imputation names a column this dataset does not have: nope")
+})
+
+test_that("a missing imputation index, or an imputation column that is the ID, is refused", {
+  d <- data.frame(ccfid = rep(1:2, 2L), imp = c(1L, 1L, NA, 2L), age = 50:53)
+  cfg <- stacked_study(d, key = c("ccfid", "imp"))
+  expect_error(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "imp"),
+               "IMPUTATION names a column with 1 missing value.*Every row of stacked imputations needs its imputation index")
+  d <- data.frame(ccfid = rep(1:2, 2L), imp = rep(1:2, each = 2L), age = 50:53)
+  cfg <- stacked_study(d, key = c("ccfid", "imp"))
+  expect_error(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "ccfid"),
+               "IMPUTATION names the patient ID column")
 })

@@ -583,7 +583,8 @@
 #'   every imputation passes, and one who appears twice in the same imputation
 #'   still stops the read. The column must be in the data read, and in
 #'   \code{key} for the rows to be unique. It is matched ignoring case, as
-#'   \code{key} is. The record says how many imputations the rows hold. It is
+#'   \code{key} is. It must hold no missing value and must not be the patient
+#'   identifier. The record says how many imputations the rows hold. It is
 #'   not inferred from \code{key}, since a visit column in \code{key} makes a
 #'   long dataset, not an imputation.
 #'
@@ -741,7 +742,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                        cols = c(who$id, key), identifiers = identifiers,
                        id_values = if (is.null(id_values)) list() else id_values)
   counts <- .check_job_key(kept$data, key, who$id)
-  imputation_col <- if (!is.null(imputation)) .match_imputation(imputation, names(kept$data))
+  imputation_col <- if (!is.null(imputation)) .match_imputation(imputation, names(kept$data), who$id, kept$data)
   if (!is.null(imputation_col)) {
     counts$imputations <- length(unique(kept$data[[imputation_col]][!is.na(kept$data[[imputation_col]])]))
   }
@@ -786,13 +787,23 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 }
 
 # The IMPUTATION column in the data read, matched ignoring case as KEY is.
-.match_imputation <- function(imputation, cols) {
+.match_imputation <- function(imputation, cols, id, d) {
   absent <- setdiff(tolower(imputation), tolower(cols))
   if (length(absent)) {
     stop("imputation names a column this dataset does not have: ", imputation, ". Change IMPUTATION in ",
          "edit-study-choices.", call. = FALSE)
   }
-  .match_columns(imputation, cols)
+  col <- .match_columns(imputation, cols)
+  if (identical(tolower(col), tolower(id))) {
+    stop("IMPUTATION names the patient ID column, ", col, ", which cannot number imputations. Change IMPUTATION in ",
+         "edit-study-choices to the column that holds the imputation index.", call. = FALSE)
+  }
+  missing <- sum(is.na(d[[col]]))
+  if (missing) {
+    stop("IMPUTATION names a column with ", missing, " missing value", if (missing != 1L) "s", ": ", col,
+         ". Every row of stacked imputations needs its imputation index.", call. = FALSE)
+  }
+  col
 }
 
 # The refusal for a repeated patient. With IMPUTATION the patient is repeated
