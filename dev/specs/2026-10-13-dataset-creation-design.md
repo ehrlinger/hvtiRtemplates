@@ -146,6 +146,15 @@ datasets:
 
 ## 7. Open
 
+0. **C's first question: lift the snapshot, or port the program?** `lift_master()` loads a
+   frozen SAS snapshot into a base table, a copy SAS made. The cardiac build
+   (`bd.data.master.sas`, measured by statement pattern on 2026-09-23) queries the warehouse
+   (16 `proc sql` blocks), derives (48 data steps) and corrects inline (18 `if ccfid = ...`
+   statements, 2 rule-style fixes) before saving `built.sas7bdat`. Porting the program would
+   make the query and its renames a view over the warehouse's own tables, the derivations
+   view columns, and the inline fixes rows in the corrections tables, leaving no SAS-made copy
+   at all. It is the larger job. Not measured: whether the query or the data steps align column
+   names to the standard, and whether the fixes run last or among the derivations.
 1. Who runs the warehouse DDL and load for C, and who holds write rights there. The registries
    team declined upstream corrections as of 2026-10-01; section 5's proposals depend on that
    changing, or on the corrections tables being writable by the group.
