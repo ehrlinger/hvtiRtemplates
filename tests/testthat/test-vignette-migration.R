@@ -37,9 +37,12 @@ test_that("study setup explains endpoint-neutral coordinated data updates", {
   article <- paste(readLines(skip_without_vignette(), warn = FALSE), collapse = " ")
 
   expect_true(grepl("endpoint-neutral", article, fixed = TRUE))
-  expect_true(grepl("review_data_update()", article, fixed = TRUE))
-  expect_true(grepl("adopt_data_update()", article, fixed = TRUE))
-  expect_true(grepl("exact release ID", article, fixed = TRUE))
+  expect_true(grepl("review_built()", article, fixed = TRUE))
+  expect_true(grepl('update_manifest(dataset = "study")', article, fixed = TRUE))
+  # hvtiRutilities 1.5.3 retired catalog releases; these names are going.
+  expect_false(grepl("review_data_update", article, fixed = TRUE))
+  expect_false(grepl("adopt_data_update", article, fixed = TRUE))
+  expect_false(grepl("release ID", article, fixed = TRUE))
   expect_false(grepl("Registration also records cohort metadata", article, fixed = TRUE))
   expect_false(grepl("provides its coordinated update operation", article, fixed = TRUE))
 })
