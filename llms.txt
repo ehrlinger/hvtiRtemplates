@@ -189,6 +189,8 @@ the structural check does not establish numerical agreement.
   : List the supported R job templates
 - [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
   : Path to a supported template
+- [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+  : Rewrite a job from the current version of its template
 
 # Articles
 
