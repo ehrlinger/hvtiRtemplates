@@ -72,7 +72,7 @@ bootstrap_runner_choices <- function(pool, n_rep, seed) {
 }
 
 # A boot_select() screen, as the bl, br and bc runners make it: one run, one
-# file, BOOT_FILE's default name.
+# file, <BOOT_PREFIX>.rds under the template's default prefix.
 bootstrap_select <- function(choices) {
   force(choices)
   function(root, job) {

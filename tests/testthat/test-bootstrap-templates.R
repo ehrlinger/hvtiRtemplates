@@ -96,7 +96,7 @@ test_that("each boot_select() runner saves a bag the report reads, with the sele
     boot_skip_unless_stack(prefix)
     root <- rf_study(data)
     dir <- boot_run_runner(prefix, root, new.env(parent = globalenv()), boot_settings(prefix, WHERE = quote(age >= 40)))
-    bag <- readRDS(file.path(dir, "bagging.rds"))
+    bag <- readRDS(file.path(dir, paste0(prefix, ".rds")))
     expect_identical(bag$n_rows, sum(data$age >= 40), info = prefix)
     expect_identical(attr(bag, "hvti_provenance")$selection$where, "age >= 40", info = prefix)
 
@@ -132,10 +132,10 @@ test_that("a report warns when the rows it reads are not the patients the screen
   boot_skip_unless_stack("bl")
   root <- rf_study(data)
   dir <- boot_run_runner("bl", root, new.env(parent = globalenv()))
-  bag <- readRDS(file.path(dir, "bagging.rds"))
+  bag <- readRDS(file.path(dir, "bl.rds"))
   # Same count, other patients: only the key hash can tell.
   attr(bag, "hvti_provenance")$selection$key_hash <- "0000"
-  saveRDS(bag, file.path(dir, "bagging.rds"))
+  saveRDS(bag, file.path(dir, "bl.rds"))
   expect_warning(boot_report("bl", boot_env(root)),
                  "^The rows read now are not the rows this screen ran against: 120 rows now, 120 then[.]")
 })
@@ -148,13 +148,13 @@ test_that("a bag saved before the data contract stops each report, naming the ba
     boot_skip_unless_stack(prefix)
     root <- rf_study(data)
     dir <- boot_run_runner(prefix, root, new.env(parent = globalenv()))
-    bag <- readRDS(file.path(dir, "bagging.rds"))
+    bag <- readRDS(file.path(dir, paste0(prefix, ".rds")))
     attr(bag, "hvti_provenance")$selection <- NULL
-    saveRDS(bag, file.path(dir, "bagging.rds"))
+    saveRDS(bag, file.path(dir, paste0(prefix, ".rds")))
     env <- boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load"))
     # The bag itself is still read: it is the data chunk that stops.
     expect_error(boot_report(prefix, env, "tbl-data"),
-                 paste0("\\(the bootstrap bag bagging[.]rds\\) carries no single recorded data selection: it predates ",
+                 paste0("\\(the bootstrap bag ", prefix, "[.]rds\\) carries no single recorded data selection: it predates ",
                         "the data contract.*Rerun the bootstrap runner, ", prefix,
                         "[.]<subject>[.]<type>[.]runner[.]R, as add_job\\(\\) now writes it"),
                  info = prefix)
@@ -264,11 +264,11 @@ test_that("each report stops on a bag that holds the runner's rows", {
     boot_skip_unless_stack(prefix)
     root <- rf_study(data)
     dir <- boot_run_runner(prefix, root, new.env(parent = globalenv()))
-    bag <- readRDS(file.path(dir, "bagging.rds"))
+    bag <- readRDS(file.path(dir, paste0(prefix, ".rds")))
     bag$rows <- data
-    saveRDS(bag, file.path(dir, "bagging.rds"))
+    saveRDS(bag, file.path(dir, paste0(prefix, ".rds")))
     expect_error(boot_report(prefix, boot_env(root), c("set", "edit-study-choices", "load", "tbl-data")),
-                 "^The bootstrap bag bagging[.]rds holds patient-level data: bag\\$rows\\$MRN", info = prefix)
+                 paste0("^The bootstrap bag ", prefix, "[.]rds holds patient-level data: bag\\$rows\\$MRN"), info = prefix)
   }
   # bh searches every chunk, not only the first, whose fields the pooled bag keeps.
   boot_skip_unless_stack("bh")
@@ -291,7 +291,7 @@ test_that("a runner and report keyed on MRN save no MRN in any file", {
     # The ID fell back to MRN, and the runner and the report both read it.
     expect_identical(run$env$.sel$id, "mrn", info = prefix)
     expect_true("mrn" %in% names(run$env$d), info = prefix)
-    expect_setequal(list.files(run$dir), c("bagging.rds", paste0(prefix, "-report.rds")))
+    expect_setequal(list.files(run$dir), paste0(prefix, c(".rds", "-report.rds")))
     expect_identical(rf_files_holding(run$dir, run$data$MRN), character(), info = prefix)
     # The search finds what is there: every MRN in the data the report read.
     read <- serialize(run$env$d, NULL)

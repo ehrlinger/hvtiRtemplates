@@ -462,8 +462,8 @@ test_that("the thin bootstrap templates read one screen, not pooled chunks", {
     code <- sub("#.*$", "", src[cumsum(fence) %% 2 == 1 & !fence])
     expect_false(any(grepl("boot_pool_chunks(", code, fixed = TRUE)),
                  info = paste(prefix, "pools chunks in the template"))
-    expect_true(any(grepl("BOOT_FILE", code, fixed = TRUE)),
-                info = paste(prefix, "has no BOOT_FILE edit point"))
+    expect_true(any(grepl("BOOT_PREFIX", code, fixed = TRUE)),
+                info = paste(prefix, "has no BOOT_PREFIX edit point"))
   }
 })
 
