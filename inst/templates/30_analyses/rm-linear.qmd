@@ -217,7 +217,7 @@ save_figure(.fig, "rm-linear-residuals")
 #| label: fig-qq
 #| fig-cap: "Normal Q-Q plot of the residuals. Under multiple imputation, the first imputation's fit."
 # Heavy tails matter more for prediction intervals than for the coefficients,
-# which are robust to non-normal residuals in a cohort of this size.
+# which are robust to non-normal residuals in a large enough cohort.
 .fig <- ggplot(.resid, aes(sample = residual)) +
   stat_qq(alpha = 0.6) +
   stat_qq_line(linetype = "dashed") +

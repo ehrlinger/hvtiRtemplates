@@ -189,8 +189,12 @@ could produce a plausible job that fits a different model.
 The implementation replaces the unqualified `rm` row in
 `inst/extdata/templates.json` with one row per shipped qualifier, carrying the
 census counts. The roadmap ledger flips to match, and the propensity-matching
-workflow moves from 9 of 12 to 10 of 12. `inst/templates/README.md` lists the
-new templates.
+workflow, of which both are members, moves from 9 of 12 to 11 of 13: the
+unqualified `rm` row becomes two rows. `rm-linear` belongs because a continuous
+outcome analyzed on the matched cohort is a workflow step, the continuous
+counterpart of `cm` for time to event (spec 1.1 reread the legacy
+balancing-score file, which is why the step is now carried by `rm-linear`, not
+by that file). `inst/templates/README.md` lists the new templates.
 
 ## 9. Verification
 
