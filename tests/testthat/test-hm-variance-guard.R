@@ -22,8 +22,9 @@ test_that("hm stops on a reported fit without a usable variance matrix, naming p
   n_free <- sum(!as.logical(fit$fit$fixed_mask))
   expect_match(err, paste0("for ", n_free, " of its ", n_free, " free parameters"), fixed = TRUE)
   expect_match(err, "By phase: early (", fixed = TRUE)
-  expect_match(err, "x1, age); late (", fixed = TRUE)
-  expect_match(err, "Covariates among them: early.x1, early.age, late.x1, late.age", fixed = TRUE)
+  # age is in the late block only, so only the late phase estimates it (#171).
+  expect_match(err, "early (log_mu, x1); late (log_mu, x1, age)", fixed = TRUE)
+  expect_match(err, "Covariates among them: early.x1, late.x1, late.age", fixed = TRUE)
 
   # A matrix, but one free covariate's variance is missing and another's is negative.
   partial <- fit
