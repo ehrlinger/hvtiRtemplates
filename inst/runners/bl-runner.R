@@ -87,4 +87,4 @@ attr(bag, "hvti_provenance") <- list(data = list(job$provenance), artifacts = li
                                      selection = selection)
 out_dir <- file.path(hvtiRutilities::study_dir("estimates", cfg$root), paste0(SUBJECT, "-", TYPE))
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-saveRDS(bag, file.path(out_dir, "bagging.rds"))
+saveRDS(bag, file.path(out_dir, "bl.rds"))

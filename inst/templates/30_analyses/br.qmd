@@ -156,9 +156,11 @@ Edit these values for this study before rendering.
 # is honestly computed, and only the denominator is not the intended one.
 EXPECT_BOOT <- 1000L   # EDIT: %bootreg(resampl=) -- valid models wanted
 
-# EDIT: the file your runner wrote its screen to, under this set's estimates
-# directory. It must match the runner exactly.
-BOOT_FILE <- "bagging.rds"
+# EDIT: the file-name prefix your runner wrote its screen under. This report
+# reads <BOOT_PREFIX>.rds in this set's estimates directory, the name bh reads
+# for an unchunked run, and br-runner.R writes br.rds. It must match the runner
+# exactly.
+BOOT_PREFIX <- "br"
 
 # EDIT: the bag's recorded selection is used; set any of these only to confirm
 # it. NULL takes the value the bootstrap runner used.
@@ -231,11 +233,11 @@ data contract carries none: rerun its runner.**
 # leaves nothing at all. Keeping the run in a companion file means a failed
 # render costs a re-render rather than a re-run, and it is what lets this
 # report be re-read months later against the screen it actually described.
-.single_file <- set_path("estimates", BOOT_FILE)
+.single_file <- set_path("estimates", paste0(BOOT_PREFIX, ".rds"))
 if (!file.exists(.single_file)) {
   stop("No screen found at ", .single_file, ". This report reads a bag your ",
        "runner wrote with boot_bag(); it does not run the screen.\nRun the ",
-       "companion runner first, or correct BOOT_FILE.", call. = FALSE)
+       "companion runner first, or correct BOOT_PREFIX.", call. = FALSE)
 }
 .cfg <- study_config(start = .root)
 .bag_read <- hvtiRtemplates:::.read_bootstrap_artifact(
@@ -287,7 +289,7 @@ if (is.null(.engine_v) || .engine_v < "0.9.3") {
 
 # A run split across chunks is still supported, and belongs upstream: pool with
 # hvtiRbootstrap::boot_pool_chunks() in your runner and write the pooled bag to
-# BOOT_FILE. Only the runner knows how many chunks it launched, and
+# <BOOT_PREFIX>.rds. Only the runner knows how many chunks it launched, and
 # boot_pool_chunks() refuses chunks that disagree on the dataset checksum, the
 # entry and stay levels, the base parameters or the engine version -- every one
 # of which is silent on its own, showing up as a slightly different frequency
@@ -777,8 +779,8 @@ save_figure(.fig, "br-frequencies", height = 7)
 # was not true. A file whose existence implies a dependency that does not exist
 # is worse than no file.
 
-# NOT BOOT_FILE. The run's INPUT is that name, so writing the report there
-# overwrites the screen it just read. BOOT_FILE is an edit point, so a study
+# NOT <BOOT_PREFIX>.rds. The run's INPUT is that name, so writing the report there
+# overwrites the screen it just read. BOOT_PREFIX is an edit point, so a study
 # can set it to anything, including this name -- checked rather than assumed,
 # because the failure destroys the run instead of erroring, and a screen is
 # hours of compute that boot_select() produces only on return.
@@ -787,7 +789,7 @@ inputs <- normalizePath(c(.single_file, .chunk_files), mustWork = FALSE)
 if (normalizePath(report_file, mustWork = FALSE) %in% inputs) {
   stop("This report would be written to ", basename(report_file), ", which is ",
        "the bootstrap output it just read. That file is the screen itself, and ",
-       "overwriting it cannot be undone.\nChange BOOT_FILE so the runner's ",
+       "overwriting it cannot be undone.\nChange BOOT_PREFIX so the runner's ",
        "output and this report do not collide.", call. = FALSE)
 }
 
