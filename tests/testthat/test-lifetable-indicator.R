@@ -28,11 +28,24 @@ test_that("a level the column never takes stops, naming the values it does take"
   sex <- factor(c("F", "M"))
   expect_error(hvtiRtemplates:::.lifetable_indicator(sex, "Male", "sex", "MALE_LEVEL"),
                "^MALE_LEVEL names a value that sex never takes: Male[.] It takes: F, M[.] Change MALE_LEVEL")
-  expect_error(hvtiRtemplates:::.lifetable_indicator(sex, character(), "sex", "MALE_LEVEL"),
-               "^MALE_LEVEL must name at least one value of sex")
+  expect_error(hvtiRtemplates:::.lifetable_indicator(sex, NA, "sex", "MALE_LEVEL"), "^MALE_LEVEL must not include NA")
 })
 
 test_that("a logical column reads as 0/1, so the default level 1 means TRUE", {
   out <- hvtiRtemplates:::.lifetable_indicator(c(TRUE, FALSE, NA), 1, "male", "MALE_LEVEL")
   expect_identical(as.vector(out), c(1L, 0L, NA))
+})
+
+test_that("a cohort with no one in a stratum is accepted, as us_matched() accepts it", {
+  # All female in a 0/1 column, under the default level 1, or as a logical.
+  expect_identical(as.vector(hvtiRtemplates:::.lifetable_indicator(c(0L, 0L), 1, "male", "MALE_LEVEL")), c(0L, 0L))
+  expect_identical(as.vector(hvtiRtemplates:::.lifetable_indicator(c(FALSE, NA), 1, "male", "MALE_LEVEL")), c(0L, NA))
+  # All white, where the factor declares the levels no patient takes.
+  race <- factor(c("White", "White"), levels = c("White", "Black"))
+  expect_identical(as.vector(hvtiRtemplates:::.lifetable_indicator(race, "Black", "race", "OTHER_LEVELS")), c(0L, 0L))
+  # An empty setting counts no one as 1.
+  out <- hvtiRtemplates:::.lifetable_indicator(c("White", "White"), character(), "race", "OTHER_LEVELS")
+  expect_identical(as.vector(out), c(0L, 0L))
+  # A level outside a 0/1 column is still a typo.
+  expect_error(hvtiRtemplates:::.lifetable_indicator(c(0L, 1L), 2, "male", "MALE_LEVEL"), "never takes: 2[.]")
 })
