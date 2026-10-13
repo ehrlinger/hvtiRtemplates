@@ -336,7 +336,7 @@ cohort. After the study dataset is rebuilt, review the rebuilt file before
 registering it. `hvtiRutilities::review_built()` compares the working file in
 the datasets folder with its registered version and describes how the data
 changed, without writing anything. It does not certify that the new file is
-analytically or clinically correct; that judgement stays with you. When the
+analytically or clinically correct; that judgment stays with you. When the
 review reads as expected, `hvtiRutilities::update_manifest(dataset = "study")`
 registers the rebuilt file as the next dated version, keeps every earlier
 version and records the change in `manifest.yaml`. Jobs read the new version
