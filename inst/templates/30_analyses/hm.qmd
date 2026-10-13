@@ -108,7 +108,8 @@ EVENT <- NULL
 # No expected counts here: they are typed once, in the hz job, and hz.rds
 # carries them. The cohort chunk checks this job's rows against them.
 
-# EDIT: SAS job and macro holding covariate blocks.
+# EDIT: SAS job and macro holding covariate blocks. NULL for a study with no
+# SAS job, which then lists COVARIATES per phase in the edit-covariates chunk.
 SAS_JOB   <- c("analyses", "hm.dead.sas")
 
 SAS_MACRO <- "^\\s*%macro\\s+model\\s*;"
@@ -233,25 +234,36 @@ it. Only the names are taken: the `name=value` coefficients in a block are the
 
 ```{r}
 #| label: edit-covariates
-sas_lines <- readLines(do.call(sas_path, as.list(SAS_JOB)), warn = FALSE)
-
-# EDIT: your phase-block markers. A SAS hazard model offers candidates per
-# phase, and the blocks need not be identical.
-COVARIATES <- list(
+# The covariates offered to each phase, one entry per phase of the hz fit and
+# named as it names them. A SAS hazard model offers candidates per phase and the
+# blocks need not be identical, so a covariate is estimated only in the phases
+# whose entry names it.
+#
+# EDIT: where the lists come from. With SAS_JOB set they are read from that
+# job's phase blocks, by the markers below. A study with no SAS job sets
+# SAS_JOB <- NULL above and lists them here, in place of the read:
+#   COVARIATES <- list(early = c("age", "hx_chf"), late = c("age", "creat_pr"))
+sas_lines <- if (!is.null(SAS_JOB)) readLines(do.call(sas_path, as.list(SAS_JOB)), warn = FALSE)
+COVARIATES <- if (!is.null(sas_lines)) list(
   early = sas_variable_block(sas_lines, "^\\s*early\\s*$", after = SAS_MACRO,
                              what = "early covariate block"),
   late  = sas_variable_block(sas_lines, "^\\s*late\\s*$",  after = SAS_MACRO,
                              what = "late covariate block")
 )
+if (!is.list(COVARIATES) || !length(COVARIATES)) {
+  stop("No covariates to offer. Set SAS_JOB to the SAS job holding the phase blocks, or list COVARIATES ",
+       "per phase in the edit-covariates chunk.", call. = FALSE)
+}
 ```
 
 ```{r}
 #| label: tbl-covariates
-#| tbl-cap: "Number and names of the covariates in each phase"
+#| tbl-cap: "Number and names of the covariates in each phase, and where the lists came from"
 knitr::kable(data.frame(
   phase     = names(COVARIATES),
   n         = vapply(COVARIATES, length, integer(1)),
   variables = vapply(COVARIATES, paste, character(1), collapse = ", "),
+  source    = if (is.null(SAS_JOB)) "listed in this job" else paste0("SAS job ", SAS_JOB[[length(SAS_JOB)]]),
   row.names = NULL
 ))
 ```
@@ -381,15 +393,37 @@ does not change random behavior downstream of it.
 old_seed <- if (exists(".Random.seed", .GlobalEnv)) .GlobalEnv$.Random.seed else NULL
 set.seed(20260827)   # any fixed value; it must not change between renders
 
-# EDIT: your covariate formula, and conserve = FALSE if the SAS final model
-# carries `noconserve`.
-rhs <- paste(unique(unlist(COVARIATES)), collapse = " + ")
-form <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ ", rhs))
+# Each phase carries its own covariates, as the SAS phase blocks do. One
+# formula for the model would offer every covariate to every phase, and the
+# estimates would then not be comparable with the SAS model this replaces. A
+# phase with no entry in COVARIATES is offered none.
+form <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ 1"))
+# Each entry names one phase, once: [[ ]] takes the first of two entries with
+# one name and finds nothing in an unnamed list, so either would drop
+# covariates without a word.
+.names <- names(COVARIATES)
+if (is.null(.names) || anyNA(.names) || !all(nzchar(.names)) || anyDuplicated(.names)) {
+  stop("Name every COVARIATES entry by its phase, once each, e.g. list(early = c(\"age\"), late = c(\"age\")).",
+       call. = FALSE)
+}
+.unknown <- setdiff(.names, names(hz_art$phases))
+if (length(.unknown)) {
+  stop("COVARIATES names phases the hz fit does not have: ", paste(.unknown, collapse = ", "),
+       ". Its phases are ", paste(names(hz_art$phases), collapse = ", "), ".", call. = FALSE)
+}
+with_covariates <- function(phases) {
+  for (p in names(phases)) {
+    rhs <- if (length(COVARIATES[[p]])) paste(COVARIATES[[p]], collapse = " + ") else "1"
+    phases[[p]]$formula <- stats::as.formula(paste("~", rhs))
+  }
+  phases
+}
 
+# EDIT: conserve = FALSE if the SAS final model carries `noconserve`.
 ctl1 <- list(n_starts = 5, maxit = 2000, conserve = FALSE)
 ctl2 <- list(n_starts = 1, maxit = 5000, conserve = FALSE)
-ph1 <- make_phases(TRUE)
-ph2 <- make_phases(FALSE)
+ph1 <- with_covariates(make_phases(TRUE))
+ph2 <- with_covariates(make_phases(FALSE))
 
 # The fits run in an environment holding only what they use. A saved fit keeps
 # the environment of its formula and of its call, and hm.rds would then carry
@@ -398,6 +432,10 @@ ph2 <- make_phases(FALSE)
 fit_env <- list2env(list(dd = dd, form = form, ph1 = ph1, ph2 = ph2, ctl1 = ctl1, ctl2 = ctl2),
                     parent = globalenv())
 environment(fit_env$form) <- fit_env
+# The phase formulas too: each would otherwise keep this chunk's environment.
+for (.ph in c("ph1", "ph2")) {
+  for (p in names(fit_env[[.ph]])) environment(fit_env[[.ph]][[p]]$formula) <- fit_env
+}
 local({
   stage1 <- suppressWarnings(
     hazard(form,

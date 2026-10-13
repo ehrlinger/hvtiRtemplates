@@ -172,8 +172,8 @@ hazard_rds_bytes <- function(path) {
 # in the global environment, which a saved fit refers to by reference only, so
 # they run there, and the names they create are removed when `.local_envir`
 # ends. hm runs in `hm_env`, so a test can also run it somewhere a render does
-# not. Returns the environment hm ran in.
-hazard_chain_run <- function(root, data, hm_env = globalenv(), .local_envir = parent.frame()) {
+# not. `hs_choices` adds to hs-setup's study choices. Returns the environment hm ran in.
+hazard_chain_run <- function(root, data, hm_env = globalenv(), hs_choices = list(), .local_envir = parent.frame()) {
   cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
   expected <- list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)
   env <- globalenv()
@@ -198,8 +198,8 @@ hazard_chain_run <- function(root, data, hm_env = globalenv(), .local_envir = pa
     hazard_run("hm", c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit", "edit-reported",
                        "tbl-calibration", "save"), hm_env)
     hazard_run("hs-setup", c("set", "edit-study-choices"), env,
-               list(HORIZONS = c(1, 2), VINTAGE = "table2023"))
-    hazard_run("hs-setup", c("read-upstream", "tbl-data", "cohort", "model", "horizons", "tbl-predict", "tbl-expected",
+               utils::modifyList(list(HORIZONS = c(1, 2), VINTAGE = "table2023"), hs_choices))
+    hazard_run("hs-setup", c("read-upstream", "tbl-data", "cohort", "model", "horizons", "tbl-predict", "tbl-strata", "tbl-expected",
                              "edit-obs-vs-exp", "tbl-obs-vs-exp", "save"), env)
   }))
   hm_env
