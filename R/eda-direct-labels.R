@@ -39,6 +39,14 @@
 
 .eda_text_width_pt <- function(label, size_pt) {
   if (!length(label)) return(0)
+  # Measuring text needs a device. Inside a render one is open, and the widths
+  # should come from it; outside one, convertWidth() would open R's default
+  # device and leave it open, so a null device is opened and closed instead.
+  if (grDevices::dev.cur() == 1L) {
+    grDevices::pdf(NULL)
+    mine <- grDevices::dev.cur()
+    on.exit(grDevices::dev.off(mine), add = TRUE)
+  }
   max(vapply(label, function(l) {
     grob <- grid::textGrob(l, gp = grid::gpar(fontsize = size_pt, fontface = "bold"))
     grid::convertWidth(grid::grobWidth(grob), "pt", valueOnly = TRUE)

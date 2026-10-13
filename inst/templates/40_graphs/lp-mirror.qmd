@@ -46,8 +46,8 @@ if (utils::packageVersion("hvtiRpropensity") < "0.1.10") {
   stop("This job needs hvtiRpropensity >= 0.1.10, whose bundles record their treatment levels; ",
        utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
-  stop("This job needs hvtiPlotR >= 2.8.0 for hv_mirror_hist(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.9") {
+  stop("This job needs hvtiPlotR >= 2.8.9, the version hvtiRtemplates requires; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,

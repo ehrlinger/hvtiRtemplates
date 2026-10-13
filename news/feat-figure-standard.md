@@ -10,7 +10,8 @@
   the figure can be read from its legend alone. `test-figure-standard.R` guards the size, the
   theme and the captions (`dev/specs/2026-10-13-figure-standard-design.md`).
 * `lg` sizes its figure with hvtiPlotR's `hv_panel_size()`, so it now needs
-  hvtiPlotR 2.8.8, whose 6.5 inch page fits three columns. Its six scales keep
+  hvtiPlotR 2.8.8, whose 6.5 inch page fits three columns, and the package
+  requires 2.8.9, which stops that function leaving a graphics device open. Its six scales keep
   their two rows of three, each panel shrunk together to fit the page, with about
   three ticks on each x axis so the labels of panels under 2 inches wide do not
   run together.

@@ -53,3 +53,16 @@ test_that(".eda_x_breaks keeps the first level and about n in all", {
   expect_identical(hvtiRtemplates:::.eda_x_breaks(letters[1:4]), letters[1:4])
   expect_identical(hvtiRtemplates:::.eda_x_breaks(as.character(1:16)), c("1", "5", "9", "13"))
 })
+
+test_that("measuring a label leaves the graphics devices as it found them", {
+  # From no device at all, which is where the default device used to be opened and left.
+  grDevices::graphics.off()
+  expect_gt(hvtiRtemplates:::.eda_text_width_pt(c("Bicuspid", "Tricuspid"), 8), 0)
+  expect_null(grDevices::dev.list())
+  # With a device open, as during a render, it measures there and leaves it current.
+  grDevices::pdf(NULL)
+  mine <- grDevices::dev.cur()
+  hvtiRtemplates:::.eda_text_width_pt("Bicuspid", 8)
+  expect_identical(grDevices::dev.cur(), mine)
+  grDevices::dev.off()
+})
