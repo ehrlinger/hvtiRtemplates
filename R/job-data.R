@@ -411,6 +411,65 @@
   invisible(d)
 }
 
+# Who the model will lose to missing values, said beside the data rather than
+# left for a fit to drop silently or to fail on with an error about lengths.
+# Each setting holds model terms, as .check_job_columns() reads them, and the
+# terms are evaluated as the fit evaluates them, so log(x) counts the rows where
+# x <= 0 as missing and a term that fills in missing values counts none. `.` is
+# every column. A term named by two settings is listed under the first. The
+# table lists each term with a missing value, most missing first, then the
+# cohort. action: "drop" (the fit drops incomplete rows), "impute" (it keeps and
+# imputes them) or "stop" (the fit cannot take them, so stop here, naming them).
+# imputation names the column of stacked multiply imputed data, which a fit
+# takes one imputation at a time, so each imputation is counted on its own and
+# counts that differ between imputations are shown as a range.
+.missing_cases <- function(d, ..., action = c("drop", "impute", "stop"), imputation = NULL) {
+  action <- match.arg(action)
+  settings <- Filter(Negate(is.null), list(...))
+  stacks <- if (is.null(imputation)) list(d) else unname(split(d, d[[imputation]]))
+  # One logical column per term, TRUE where that row's term is missing.
+  terms_missing <- function(s) {
+    out <- list()
+    for (setting in names(settings)) {
+      mf <- stats::model.frame(stats::reformulate(settings[[setting]]), s, na.action = stats::na.pass)
+      for (term in setdiff(names(mf), names(out))) {
+        x <- mf[[term]]
+        miss <- if (is.matrix(x)) rowSums(is.na(x)) > 0L else is.na(x)
+        out[[term]] <- structure(miss, setting = setting)
+      }
+    }
+    out
+  }
+  counted <- lapply(stacks, terms_missing)
+  setting_of <- vapply(counted[[1L]], attr, "", which = "setting")
+  per_term <- vapply(names(setting_of), function(t) range(vapply(counted, function(m) sum(m[[t]]), 0)), numeric(2L))
+  n <- vapply(stacks, nrow, 0L)
+  incomplete <- vapply(counted, function(m) if (length(m)) sum(Reduce(`|`, m)) else 0L, 0)
+  show <- function(x) if (min(x) == max(x)) format(min(x)) else paste(min(x), "to", max(x))
+  hit <- colnames(per_term)[per_term[2L, ] > 0]
+  hit <- hit[order(-per_term[2L, hit])]
+  if (action == "stop" && any(incomplete > 0)) {
+    stop(show(incomplete), " of ", show(n), " rows have a missing value in the model's variables: ",
+         paste0(hit, " (", vapply(hit, function(t) show(per_term[, t]), ""), ")", collapse = ", "),
+         ". Resolve them in the dataset build, or leave the variable out of ",
+         paste(unique(setting_of[hit]), collapse = " or "), ".", call. = FALSE)
+  }
+  per <- if (length(stacks) == 1L) "" else if (length(unique(incomplete)) == 1L) {
+    paste(" in each of", length(stacks), "imputations")
+  } else {
+    paste(" per imputation, across", length(stacks), "imputations")
+  }
+  cohort <- if (action == "impute") {
+    paste0(show(n), " of ", show(n), " rows analyzed", per, "; ",
+           if (any(incomplete > 0)) paste(show(incomplete), "with a missing value imputed") else "none imputed")
+  } else {
+    paste0(show(n - incomplete), " of ", show(n), " rows analyzed", per, "; ",
+           if (any(incomplete > 0)) paste(show(incomplete), "dropped") else "none dropped")
+  }
+  data.frame(Variable = c(hit, "Complete cases"), Setting = c(unname(setting_of[hit]), ""),
+             Missing = c(vapply(hit, function(t) show(per_term[, t]), ""), cohort), row.names = NULL)
+}
+
 # Which patients were kept, not only how many: a hash of the sorted KEY values,
 # one string per row with the KEY columns joined by "\r". Sorted by radix, which
 # does not depend on the locale. Only the hash is recorded, never the values.

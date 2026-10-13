@@ -355,6 +355,23 @@ test_that("hp saves each figure as a PNG and a PDF, and FIGURES keeps only the P
   expect_identical(grDevices::dev.cur(), c("null device" = 1L))
 })
 
+test_that("hm stops on a missing covariate, naming the column and its count (#174)", {
+  skip_on_cran()
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  skip_if_not_installed("hvtiRlifetables", minimum_version = "0.1.2")
+  skip_if_not_installed("numDeriv")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  withr::local_package("hvtiRlifetables")
+  data <- hazard_data()
+  # ac and hz do not use age, so they fit; hm does, and before #174 it failed
+  # with "Predictor rows must match the length of 'time'", naming neither.
+  data$age[c(3L, 30L, 90L)] <- NA
+  root <- hazard_study(data)
+  expect_error(hazard_chain_run(root, data),
+               "^3 of 160 rows have a missing value in the model's variables: age \\(3\\)[.] Resolve them")
+})
+
 test_that("hs-setup derives the life-table indicators from a female column and a race factor (#183)", {
   skip_on_cran()
   skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")

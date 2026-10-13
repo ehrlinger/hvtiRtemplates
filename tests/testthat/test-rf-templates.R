@@ -660,3 +660,28 @@ test_that("every fit records its out-of-bag error at more than one tree count (#
     expect_gt(sum(!is.na(err)), 1L, label = paste(prefix, "non-missing error rows"))
   }
 })
+
+test_that("rfs-fit says who na.omit drops, and that na.impute keeps them (#174)", {
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
+  d <- rfs_data()
+  d$karno[c(2L, 5L)] <- NA
+  d$age[5L] <- NA
+  labels <- c("set", "edit-study-choices", "tbl-data", "tbl-missing")
+  env <- rf_env(d)
+  rf_run("rfs", "fit", labels, env, rfs_choices)
+  expect_identical(env$.missing_values$Variable, c("karno", "age", "Complete cases"))
+  expect_identical(env$.missing_values$Missing, c("2", "1", paste(nrow(d) - 2L, "of", nrow(d), "rows analyzed; 2 dropped")))
+  env <- rf_env(d)
+  rf_run("rfs", "fit", labels, env, utils::modifyList(rfs_choices, list(NA_ACTION = "na.impute")))
+  expect_identical(env$.missing_values$Missing[[3L]],
+                   paste(nrow(d), "of", nrow(d), "rows analyzed; 2 with a missing value imputed"))
+})
+
+test_that("rfs-fit stops on a predictor with no values, which the forest would discard (#318 review)", {
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
+  d <- rfs_data()
+  d$prior <- NA
+  env <- rf_env(d)
+  expect_error(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "tbl-missing"), env, rfs_choices),
+               "^PREDICTORS names a column with no values: prior[.]")
+})
