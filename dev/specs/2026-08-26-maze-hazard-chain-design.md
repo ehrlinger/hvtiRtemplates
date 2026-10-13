@@ -36,7 +36,7 @@ what stops that.
 
 ## 2. The study
 
-`/studies/cardiac/rhythm/maze/atricure/gender` — *Gender differences in
+`/studies/<study>` — *Gender differences in
 post-op outcomes of RF ablation for treatment of AFIB*, CCF 2001 to 2004.
 
 Chosen because it differs from preserve_root on the axes that matter, while
@@ -130,7 +130,7 @@ points at directly.
 maze has no `_study.yml`. One call, using the gate-verified figures:
 
 ```r
-study_init(root       = "/studies/cardiac/rhythm/maze/atricure/gender",
+study_init(root       = "/studies/<study>",
            study      = "Gender differences in post-op outcomes of RF ablation for AFIB",
            population = "CCF 2001 to 2004",
            built      = "built.sas7bdat",

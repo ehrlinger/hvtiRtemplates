@@ -20,8 +20,8 @@ parity job checks R against SAS's own printed nomogram.
 
 ## Global Constraints
 
-- **Study root:** `/studies/cardiac/rhythm/maze/atricure/gender` (SMB mount:
-  `/Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender`).
+- **Study root:** `/studies/<study>` (SMB mount:
+  `/Volumes/qhsstudies/<study>`).
 - **The study tree is NOT a git workspace.** `preserve_root` carries a stray
   2023 `.git` with no remote; do not `git init`, branch, or commit anywhere
   under `/studies`. **Each task's gate is a verification, not a commit.** Only
@@ -187,7 +187,7 @@ cat("scaffold gate PASS: 512 / 53 / 459\n")
 - [ ] **Step 2: Run it to verify it fails**
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript scratch-gate.R
+cd /Volumes/qhsstudies/<study> && Rscript scratch-gate.R
 ```
 
 Expected: FAIL — `study_config()` errors naming the directories it walked,
@@ -199,7 +199,7 @@ because no `_study.yml` exists yet.
 # Run from the study root.
 suppressMessages(library(hvtiRutilities))
 study_init(
-  root       = "/Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender",
+  root       = "/Volumes/qhsstudies/<study>",
   study      = "Gender differences in post-op outcomes of RF ablation for AFIB",
   population = "CCF 2001 to 2004",
   built      = "built.sas7bdat",
@@ -244,7 +244,7 @@ status_numeric <- function(d) as.numeric(d[[STATUS]])
 - [ ] **Step 4: Run the gate to verify it passes**
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript scratch-gate.R
+cd /Volumes/qhsstudies/<study> && Rscript scratch-gate.R
 ```
 
 Expected: `scaffold gate PASS: 512 / 53 / 459`
@@ -255,7 +255,7 @@ The `.lst` gate is counts **and** the printed time min/max (§6.1). Counts alone
 let a 394-row dataset filtered to 389 stand in for a 389-row job cohort.
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
+cd /Volumes/qhsstudies/<study> && Rscript -e '
 suppressMessages(library(hvtiRutilities)); for (f in list.files("R", "[.]R$", full.names=TRUE)) source(f)
 d <- read_built(); iv <- d[[TIME]]
 # Compare at the precision SAS actually printed. round(x, dp) == printed is the
@@ -273,7 +273,7 @@ Expected: `time-range gate PASS: 0.008213721 - 4.175308`
 - [ ] **Step 6: Remove the scratch file**
 
 ```bash
-rm /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender/scratch-gate.R
+rm /Volumes/qhsstudies/<study>/scratch-gate.R
 ```
 
 No commit — the study tree is not a git workspace (see Global Constraints).
@@ -299,7 +299,7 @@ The deliverable is the scaffold plus two passing gates.
 - [ ] **Step 1: Scaffold the job**
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
+cd /Volumes/qhsstudies/<study> && Rscript -e '
 suppressMessages(library(hvtiRtemplates)); new_job("ac", "dead", "hz", dir = ".")'
 ```
 
@@ -310,7 +310,7 @@ overwrite an existing job.
 - [ ] **Step 2: Verify it fails to render unedited**
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && quarto render distributions/dead-hz-03.01-ac.qmd
+cd /Volumes/qhsstudies/<study> && quarto render distributions/dead-hz-03.01-ac.qmd
 ```
 
 Expected: FAIL. The template ships `EDIT:` markers, and the derived-strata
@@ -368,7 +368,7 @@ saveRDS(list(overall = km, by_female = km_by), set_path("estimates", "ac.rds"))
 - [ ] **Step 4: Render and verify**
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && quarto render distributions/dead-hz-03.01-ac.qmd
+cd /Volumes/qhsstudies/<study> && quarto render distributions/dead-hz-03.01-ac.qmd
 ```
 
 Expected: PASS. The rendered HTML reports `n_analysable` 512, `n_events` 53,
@@ -377,7 +377,7 @@ Expected: PASS. The rendered HTML reports `n_analysable` 512, `n_events` 53,
 - [ ] **Step 5: Verify the artifact landed in the set directory**
 
 ```bash
-ls -l /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender/estimates/dead-hz/ac.rds
+ls -l /Volumes/qhsstudies/<study>/estimates/dead-hz/ac.rds
 ```
 
 Expected: the file exists. If it is at `estimates/ac.rds` instead, `set_path()`
@@ -386,7 +386,7 @@ was bypassed — fix the chunk rather than moving the file.
 - [ ] **Step 6: Confirm no `EDIT:` markers remain**
 
 ```bash
-grep -n "EDIT:" /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender/distributions/dead-hz-03.01-ac.qmd
+grep -n "EDIT:" /Volumes/qhsstudies/<study>/distributions/dead-hz-03.01-ac.qmd
 ```
 
 Expected: no output. A job that still contains one has not been finished.
@@ -684,7 +684,7 @@ saveRDS(list(deterministic = fit_det, multistart = fit_ms, noconserve = fit_nc,
 - [ ] **Step 2: Render and verify it fails on nothing but the numbers**
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && quarto render distributions/dead-hz-03.02-hz.qmd
+cd /Volumes/qhsstudies/<study> && quarto render distributions/dead-hz-03.02-hz.qmd
 ```
 
 Expected: renders. The cohort table shows 512 / 53 / 459.
@@ -692,7 +692,7 @@ Expected: renders. The cohort table shows 512 / 53 / 459.
 - [ ] **Step 3: Check the fit against SAS**
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
+cd /Volumes/qhsstudies/<study> && Rscript -e '
 f <- readRDS("estimates/dead-hz/hz.rds")
 cat("deterministic:", f$deterministic$fit$objective, " SAS -176.934\n")
 cat("noconserve   :", f$noconserve$fit$objective,    " (no SAS reference)\n")
@@ -711,7 +711,7 @@ model.
 - [ ] **Step 4: Verify conservation**
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
+cd /Volumes/qhsstudies/<study> && Rscript -e '
 suppressMessages(library(TemporalHazard))
 f <- readRDS("estimates/dead-hz/hz.rds")$deterministic
 # No newdata -> one value per training row, which is exactly sum_i Lambda(t_i).
@@ -726,7 +726,7 @@ documents do, and note it in the job.
 - [ ] **Step 5: Confirm the artifact path**
 
 ```bash
-ls -l /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender/estimates/dead-hz/hz.rds
+ls -l /Volumes/qhsstudies/<study>/estimates/dead-hz/hz.rds
 ```
 
 Expected: the file exists at that exact path.
@@ -815,7 +815,7 @@ dev.off()
 - [ ] **Step 2: Render**
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && quarto render graphs/dead-hz-06.01-hp.qmd
+cd /Volumes/qhsstudies/<study> && quarto render graphs/dead-hz-06.01-hp.qmd
 ```
 
 Expected: renders; two PNGs written.
@@ -823,7 +823,7 @@ Expected: renders; two PNGs written.
 - [ ] **Step 3: Verify both figures landed in the set directory**
 
 ```bash
-ls -l /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender/graphs/dead-hz/
+ls -l /Volumes/qhsstudies/<study>/graphs/dead-hz/
 ```
 
 Expected: `hp-survival.png` and `hp-hazard.png`, both non-empty.
@@ -1008,7 +1008,7 @@ cat(sprintf("PARITY PASS: overall survival %d/%d, overall hazard %d/%d, male sur
 - [ ] **Step 2: Render**
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && quarto render parity/dead-hz-03.02-hz-parity.qmd
+cd /Volumes/qhsstudies/<study> && quarto render parity/dead-hz-03.02-hz-parity.qmd
 ```
 
 Expected: `PARITY PASS: overall survival 8/8, overall hazard 8/8, male survival 7/7, female survival 7/7`
@@ -1018,7 +1018,7 @@ Expected: `PARITY PASS: overall survival 8/8, overall hazard 8/8, male survival 
 Both have fabricated failures before:
 
 ```bash
-cd /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender && Rscript -e '
+cd /Volumes/qhsstudies/<study> && Rscript -e '
 r <- read.csv("parity/dead-hz/hz-diff.csv")
 r$rel_surv <- abs(r$r_surv - r$sas_surv) / r$sas_surv
 r$rel_haz  <- abs(r$r_haz  - r$sas_haz)  / r$sas_haz
@@ -1033,7 +1033,7 @@ across the rounding interval is the known trap.
 - [ ] **Step 4: Verify the CSV landed under `parity/dead-hz/`**
 
 ```bash
-ls -l /Volumes/qhsstudies/cardiac/rhythm/maze/atricure/gender/parity/dead-hz/hz-diff.csv
+ls -l /Volumes/qhsstudies/<study>/parity/dead-hz/hz-diff.csv
 ```
 
 Expected: exists. `parity/` obeys the same layout rule as every taxonomy

@@ -1,6 +1,6 @@
 # AVR / LV-function survival — TemporalHazard parity pipeline
 
-> **Migrated 2026-08-18** from `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_parity/docs/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`.
+> **Migrated 2026-08-18** from `/Volumes/qhsstudies/<study>/analyses/R_parity/docs/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`.
 > Cross-references to the other migrated documents have been repointed to their
 > paths in this repository; the text is otherwise unchanged. Study folders on the
 > share do not host git repositories, so the design record lives with the package
@@ -9,7 +9,7 @@
 
 **Date:** 2026-08-10
 **Status:** Approved design; stages 1–3 in scope for the first pass
-**Study:** `/studies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival`
+**Study:** `/studies/<study>`
 **Paper:** Mihaljevic T, Nowicki ER, Rajeswaran J, Blackstone EH, Lagazzi L, Thomas J,
 Lytle BW, Cosgrove DM. *Survival after valve replacement for aortic stenosis:
 implications for decision making.* J Thorac Cardiovasc Surg. 2008;135(6):1270-9.
@@ -699,8 +699,8 @@ The study resolves to two different paths:
 
 | Context | Path |
 |---------|------|
-| Server (and all SAS programs) | `/studies/cardiac/valves/.../lv_function/survival` |
-| Mac mount | `/Volumes/qhsstudies/cardiac/valves/.../lv_function/survival` |
+| Server (and all SAS programs) | `/studies/<study>` |
+| Mac mount | `/Volumes/qhsstudies/<study>` |
 
 **No R file may hardcode either path.** All paths resolve relative to the study root,
 discovered at runtime — the `.Rproj`/`renv` root via `here::here()` or an equivalent, not

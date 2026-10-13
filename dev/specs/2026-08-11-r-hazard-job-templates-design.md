@@ -1,6 +1,6 @@
 # R_hazard — job templates for the SAS-to-R hazard migration
 
-> **Migrated 2026-08-18** from `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_hazard/docs/specs/2026-08-11-r-hazard-job-templates-design.md`.
+> **Migrated 2026-08-18** from `/Volumes/qhsstudies/<study>/analyses/R_hazard/docs/specs/2026-08-11-r-hazard-job-templates-design.md`.
 > Cross-references to the other migrated documents have been repointed to their
 > paths in this repository; the text is otherwise unchanged. Study folders on the
 > share do not host git repositories, so the design record lives with the package
@@ -9,7 +9,7 @@
 
 **Date:** 2026-08-11
 **Status:** Approved design
-**Study:** `/studies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival`
+**Study:** `/studies/<study>`
 **Predecessor:** `dev/specs/2026-08-10-avr-lvf-temporalhazard-parity-design.md`
 
 ---

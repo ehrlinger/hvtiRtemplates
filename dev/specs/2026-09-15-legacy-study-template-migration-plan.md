@@ -1226,7 +1226,7 @@ whose message names the failed contract, then rerun Steps 1 through 5.
 **Files:**
 
 - Read:
-  `/Volumes/qhsstudies/vascular/thoracic-aorta/aneurysm/ascending/biomechanics/bio_aggrecan/`
+  `/Volumes/qhsstudies/<study>/`
 - Create after approval: package-owned study state and four migrated jobs in
   that study
 - Create in this branch:

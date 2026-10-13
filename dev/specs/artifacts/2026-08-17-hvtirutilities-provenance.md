@@ -1,6 +1,6 @@
 # Stage 1 — Provenance in `hvtiRutilities` Implementation Plan
 
-> **Migrated 2026-08-18** from `/Volumes/qhsstudies/cardiac/valves/aortic/replacement/pericardial/lv_function/survival/analyses/R_hazard/docs/plans/2026-08-17-hvtirutilities-provenance.md`.
+> **Migrated 2026-08-18** from `/Volumes/qhsstudies/<study>/analyses/R_hazard/docs/plans/2026-08-17-hvtirutilities-provenance.md`.
 > Cross-references to the other migrated documents have been repointed to their
 > paths in this repository; the text is otherwise unchanged. Study folders on the
 > share do not host git repositories, so the design record lives with the package

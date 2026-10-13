@@ -24,7 +24,7 @@ the particular legacy job it replaces. Translation is limited to the source
 shape registered for that template.
 
 The study at
-`/Volumes/qhsstudies/vascular/thoracic-aorta/aneurysm/ascending/biomechanics/bio_aggrecan/`
+`/Volumes/qhsstudies/<study>/`
 is the source exemplar and the live acceptance case. Its identifiers, paths,
 dataset filenames, and variable choices must not enter the installed
 templates or the runnable vignette.
