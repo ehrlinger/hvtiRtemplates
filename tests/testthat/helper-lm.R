@@ -78,7 +78,7 @@ lm_study <- function(.local_envir = parent.frame(), data = lm_data()) {
 # Scaffold the `qualifier` job in a fresh study, work its EDIT: markers, and
 # render it through Quarto, or, with `render = FALSE`, evaluate its chunks in
 # this session (lm_eval_job).
-lm_render_fixture <- function(qualifier, data = NULL, render = TRUE, .local_envir = parent.frame()) {
+lm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = character(), .local_envir = parent.frame()) {
   root <- tempfile("lm-study-")
   withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
   d <- if (is.null(data)) lm_data() else data
@@ -107,6 +107,8 @@ lm_render_fixture <- function(qualifier, data = NULL, render = TRUE, .local_envi
     balancing_count = c('OUTCOME <- "count"', 'DISTRIBUTION <- "poisson"'),
     character()
   )
+  # Study choices a test sets beyond the qualifier's own, such as `IMPUTATION <- "imp"`.
+  replacements <- c(replacements, choices)
   lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
   for (replacement in replacements) {
     key <- sub(" .*", "", replacement)

@@ -354,7 +354,8 @@ test_that("templates that model one row per patient refuse a long join; long-dat
     env$.root <- "."
     env$study_config <- hvtiRutilities::study_config
     # Only the settings the read takes: other choices call the model's packages.
-    read_settings <- c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "TIME", "KEY", "JOIN", "JOIN_VARS", "REDUCE", "JOIN_KEY")
+    read_settings <- c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "TIME", "KEY", "JOIN", "JOIN_VARS", "REDUCE", "JOIN_KEY",
+                       "IMPUTATION")
     for (expr in code) {
       if (is.call(expr) && identical(expr[[1L]], quote(`<-`)) && is.name(expr[[2L]]) &&
             as.character(expr[[2L]]) %in% read_settings) {

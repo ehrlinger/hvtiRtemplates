@@ -576,6 +576,16 @@
 #'   would, after the rows are selected. \code{FALSE},
 #'   the default, accepts the long form, as descriptive jobs and jobs that model
 #'   repeated measures need.
+#' @param imputation \code{NULL}, the default, or the name of the column that
+#'   numbers the imputations of stacked multiple imputations, one row per
+#'   patient per imputation. With \code{one_row_per_patient = TRUE} the rows
+#'   are then counted within each imputation, so a patient who appears once in
+#'   every imputation passes, and one who appears twice in the same imputation
+#'   still stops the read. The column must be in the data read, and in
+#'   \code{key} for the rows to be unique. It is matched ignoring case, as
+#'   \code{key} is. The record says how many imputations the rows hold. It is
+#'   not inferred from \code{key}, since a visit column in \code{key} makes a
+#'   long dataset, not an imputation.
 #'
 #' @details Columns named \code{MRN} or \code{eMRN} (ignoring case) are
 #'   dropped unless one is the identifier, from a joined dataset too. An explicit \code{id} or \code{key}
@@ -662,8 +672,9 @@
 #' @export
 read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = NULL,
                           id = "ccfid", key = NULL, join = NULL, join_vars = NULL, reduce = NULL,
-                          join_key = NULL, one_row_per_patient = FALSE) {
-  .check_job_settings(dataset, analysis_set, where, id, key, join, join_vars, reduce, join_key, one_row_per_patient)
+                          join_key = NULL, one_row_per_patient = FALSE, imputation = NULL) {
+  .check_job_settings(dataset, analysis_set, where, id, key, join, join_vars, reduce, join_key, one_row_per_patient,
+                      imputation)
   # The registration JOIN needs is checked before either dataset is read.
   join_shape <- if (!is.null(join)) .join_shape(cfg, join, join_key)
   read <- .read_job_source(cfg, dataset, analysis_set)
@@ -730,17 +741,23 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                        cols = c(who$id, key), identifiers = identifiers,
                        id_values = if (is.null(id_values)) list() else id_values)
   counts <- .check_job_key(kept$data, key, who$id)
+  imputation_col <- if (!is.null(imputation)) .match_imputation(imputation, names(kept$data))
+  if (!is.null(imputation_col)) {
+    counts$imputations <- length(unique(kept$data[[imputation_col]][!is.na(kept$data[[imputation_col]])]))
+  }
   # A long DATASET, such as an ancillary one read whole, would count every
   # record as a patient as a long JOIN would. Checked on the rows kept, the
   # one test that holds for every route: a registered kind or key cannot see an
   # analysis set or dataset with repeated patients under a key of the ID alone.
-  if (one_row_per_patient && counts$rows > counts$patients) {
-    ids_kept <- .id_text(kept$data[[who$id]])
-    repeats <- length(unique(ids_kept[duplicated(ids_kept)]))
-    stop("This job models one row per patient, but ", repeats, if (repeats == 1L) " patient has" else " patients have",
-         " more than one row in the data read (", counts$rows, " rows on ", counts$patients, " patients). Read a ",
-         "dataset of one row per patient, and JOIN the repeated records with REDUCE to keep one per patient, or use a ",
-         "template that takes repeated records", .such_as(.long_join_templates()), ".", call. = FALSE)
+  # Stacked imputations repeat every patient once per imputation, so with
+  # IMPUTATION a patient is counted within each one.
+  if (one_row_per_patient) {
+    repeated <- if (is.null(imputation_col)) {
+      counts$rows > counts$patients
+    } else {
+      anyDuplicated(paste(.id_text(kept$data[[who$id]]), .id_text(kept$data[[imputation_col]]), sep = "\r")) > 0L
+    }
+    if (repeated) .stop_repeated_patients(kept$data, who$id, counts, imputation_col)
   }
   record <- .job_record(read$source, rows_read, who, ids$dropped, kept$steps, counts, notes = unique(notes),
                         join = joined$summary)
@@ -766,6 +783,29 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   .note_job_read(read$record, attr(record, "selection"), read$notes, joined)
   list(data = kept$data, record = record, provenance = read$record,
        provenance_join = joined$provenance, attrition = attrition)
+}
+
+# The IMPUTATION column in the data read, matched ignoring case as KEY is.
+.match_imputation <- function(imputation, cols) {
+  absent <- setdiff(tolower(imputation), tolower(cols))
+  if (length(absent)) {
+    stop("imputation names a column this dataset does not have: ", imputation, ". Change IMPUTATION in ",
+         "edit-study-choices.", call. = FALSE)
+  }
+  .match_columns(imputation, cols)
+}
+
+# The refusal for a repeated patient. With IMPUTATION the patient is repeated
+# within an imputation, which the message says; the counts are those of the read.
+.stop_repeated_patients <- function(d, id, counts, imputation = NULL) {
+  ids_kept <- .id_text(d[[id]])
+  within <- if (is.null(imputation)) ids_kept else paste(ids_kept, .id_text(d[[imputation]]), sep = "\r")
+  repeats <- length(unique(ids_kept[duplicated(within)]))
+  stop("This job models one row per patient, but ", repeats, if (repeats == 1L) " patient has" else " patients have",
+       " more than one row ", if (is.null(imputation)) "in the data read" else "within an imputation of the data read",
+       " (", counts$rows, " rows on ", counts$patients, " patients). Read a ",
+       "dataset of one row per patient, and JOIN the repeated records with REDUCE to keep one per patient, or use a ",
+       "template that takes repeated records", .such_as(.long_join_templates()), ".", call. = FALSE)
 }
 
 # The key a dataset was registered with, and its kind. The study dataset's
@@ -859,7 +899,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 
 # Every setting is checked before the read, so a typo fails fast and is named.
 .check_job_settings <- function(dataset, analysis_set, where, id, key, join = NULL, join_vars = NULL, reduce = NULL,
-                                join_key = NULL, one_row_per_patient = FALSE) {
+                                join_key = NULL, one_row_per_patient = FALSE, imputation = NULL) {
   if (!is.character(dataset) || length(dataset) != 1L || is.na(dataset) || !nzchar(dataset)) {
     stop("DATASET must name one dataset registered in _study.yml, such as \"built\".", call. = FALSE)
   }
@@ -898,6 +938,10 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   }
   if (!is.logical(one_row_per_patient) || length(one_row_per_patient) != 1L || is.na(one_row_per_patient)) {
     stop("one_row_per_patient must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (!is.null(imputation) && (!is.character(imputation) || length(imputation) != 1L || is.na(imputation) ||
+                                 !nzchar(imputation))) {
+    stop("imputation must be NULL or name one column, such as \"imp\".", call. = FALSE)
   }
   if (one_row_per_patient && !is.null(join) && is.null(reduce)) {
     stop("JOIN names `", join, "`, but this job models one row per patient, so a long join would count every ",
@@ -1028,7 +1072,11 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   }
   rows <- c(rows, .where_rows(steps))
   rows[[length(rows) + 1L]] <- c("Rows kept", paste0(format(counts$rows, big.mark = ","), " rows on ",
-                                                     format(counts$patients, big.mark = ","), " patients"))
+                                                     format(counts$patients, big.mark = ","), " patients",
+                                                     if (!is.null(counts$imputations)) {
+                                                       paste0(", in ", counts$imputations, " imputation",
+                                                              if (counts$imputations != 1L) "s")
+                                                     }))
   for (note in notes) rows[[length(rows) + 1L]] <- c("Note", note)
   data.frame(step = vapply(rows, `[[`, "", 1L), value = vapply(rows, `[[`, "", 2L))
 }

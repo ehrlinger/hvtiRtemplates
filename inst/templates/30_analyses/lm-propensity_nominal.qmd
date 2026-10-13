@@ -104,7 +104,8 @@ hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE,
+                                          imputation = IMPUTATION)
 # This job's data are the model's training data, which lm-checkpred tells from its validation data.
 job_data$provenance$role <- "training"
 if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"

@@ -1239,3 +1239,56 @@ test_that("a KEY naming a joined column is checked on the joined rows, so a visi
   expect_error(read_job_data(cfg, key = c("dt_surg", "echo_date"), join = "echo"), "values? of KEY repeat")
   expect_error(read_job_data(cfg, key = c("ccfid", "nope"), join = "echo"), "KEY names a column this dataset does not have")
 })
+
+# A study whose built dataset is `data`, registered on `key`.
+stacked_study <- function(data, key, env = parent.frame()) {
+  testthat::skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(.local_envir = env), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, "Stacked", 42L))
+  utils::write.csv(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = key))
+  hvtiRutilities::study_config(root)
+}
+
+test_that("stacked imputations are one row per patient within each imputation", {
+  d <- data.frame(ccfid = rep(1:4, 2L), imp = rep(1:2, each = 4L), age = c(50, 60, 70, 80, 51, 61, 71, 81))
+  cfg <- stacked_study(d, key = c("ccfid", "imp"))
+  out <- read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "imp")
+  expect_identical(nrow(out$data), 8L)
+  # The record counts patients once and says how many imputations the rows are.
+  rec <- stats::setNames(out$record$value, out$record$step)
+  expect_identical(rec[["Rows kept"]], "8 rows on 4 patients, in 2 imputations")
+  # The column is matched as KEY is, ignoring case.
+  expect_identical(nrow(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "IMP")$data), 8L)
+  # Stacked rows without the setting are still a long dataset.
+  expect_error(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE), "more than one row")
+  # And the default read says nothing about imputations.
+  plain <- read_job_data(cfg, key = c("ccfid", "imp"))$record
+  expect_identical(plain$value[plain$step == "Rows kept"], "8 rows on 4 patients")
+})
+
+test_that("a patient repeated within one imputation, or with no imputation, is still refused", {
+  # Patient 1 is twice in imputation 1: the visit column makes the rows unique.
+  d <- data.frame(ccfid = c(1L, 1L, 2L, 1L, 2L), imp = c(1L, 1L, 1L, 2L, 2L), visit = c(1L, 2L, 1L, 1L, 1L), age = 50:54)
+  cfg <- stacked_study(d, key = c("ccfid", "imp", "visit"))
+  err <- tryCatch(read_job_data(cfg, key = c("ccfid", "imp", "visit"), one_row_per_patient = TRUE, imputation = "imp"),
+                  error = conditionMessage)
+  expect_match(err, "This job models one row per patient", fixed = TRUE)
+  expect_match(err, "1 patient has more than one row", fixed = TRUE)
+  expect_match(err, "within an imputation", fixed = TRUE)
+  # A KEY of the ID and a visit, and no imputation, is a long dataset.
+  long <- data.frame(ccfid = c(1L, 1L, 2L), visit = c(1L, 2L, 1L), age = 50:52)
+  cfg <- stacked_study(long, key = c("ccfid", "visit"))
+  err <- tryCatch(read_job_data(cfg, key = c("ccfid", "visit"), one_row_per_patient = TRUE), error = conditionMessage)
+  expect_match(err, "1 patient has more than one row in the data read (3 rows on 2 patients)", fixed = TRUE)
+})
+
+test_that("the imputation setting is checked", {
+  d <- data.frame(ccfid = rep(1:2, 2L), imp = rep(1:2, each = 2L), age = 50:53)
+  cfg <- stacked_study(d, key = c("ccfid", "imp"))
+  for (bad in list(1, NA_character_, "", c("imp", "age"), character())) {
+    expect_error(read_job_data(cfg, imputation = bad), "imputation must be NULL or name one column")
+  }
+  expect_error(read_job_data(cfg, key = c("ccfid", "imp"), imputation = "nope"),
+               "imputation names a column this dataset does not have: nope")
+})

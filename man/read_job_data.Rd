@@ -15,7 +15,8 @@ read_job_data(
   join_vars = NULL,
   reduce = NULL,
   join_key = NULL,
-  one_row_per_patient = FALSE
+  one_row_per_patient = FALSE,
+  imputation = NULL
 )
 }
 \arguments{
@@ -113,6 +114,17 @@ kept that repeat a patient, as a dataset of repeated records read whole
 would, after the rows are selected. \code{FALSE},
 the default, accepts the long form, as descriptive jobs and jobs that model
 repeated measures need.}
+
+\item{imputation}{\code{NULL}, the default, or the name of the column that
+numbers the imputations of stacked multiple imputations, one row per
+patient per imputation. With \code{one_row_per_patient = TRUE} the rows
+are then counted within each imputation, so a patient who appears once in
+every imputation passes, and one who appears twice in the same imputation
+still stops the read. The column must be in the data read, and in
+\code{key} for the rows to be unique. It is matched ignoring case, as
+\code{key} is. The record says how many imputations the rows hold. It is
+not inferred from \code{key}, since a visit column in \code{key} makes a
+long dataset, not an imputation.}
 }
 \value{
 A list:
