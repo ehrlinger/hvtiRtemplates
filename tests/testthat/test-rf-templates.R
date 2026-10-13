@@ -676,3 +676,12 @@ test_that("rfs-fit says who na.omit drops, and that na.impute keeps them (#174)"
   expect_identical(env$.missing_values$Missing[[3L]],
                    paste(nrow(d), "of", nrow(d), "rows analyzed; 2 with a missing value imputed"))
 })
+
+test_that("rfs-fit stops on a predictor with no values, which the forest would discard (#318 review)", {
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
+  d <- rfs_data()
+  d$prior <- NA
+  env <- rf_env(d)
+  expect_error(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "tbl-missing"), env, rfs_choices),
+               "^PREDICTORS names a column with no values: prior[.]")
+})

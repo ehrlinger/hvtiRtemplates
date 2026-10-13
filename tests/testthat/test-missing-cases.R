@@ -8,10 +8,10 @@ test_that("the missing-values table names each variable and the cohort the fit w
   expect_identical(tab$Missing, c("2", "1", "1 of 4 rows analyzed; 3 dropped"))
 })
 
-test_that("a variable used inside a model term is counted, and `.` means every column", {
+test_that("a model term is counted as the fit evaluates it, and `.` means every column", {
   d <- data.frame(y = c(1, 0, 1), x = c(1, NA, 3), z = c(NA, 1, 1))
   tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = "I(x^2)")
-  expect_identical(tab$Variable, c("x", "Complete cases"))
+  expect_identical(tab$Variable, c("I(x^2)", "Complete cases"))
   tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = ".")
   expect_setequal(tab$Variable, c("x", "z", "Complete cases"))
   expect_identical(tab$Missing[[3L]], "1 of 3 rows analyzed; 2 dropped")
@@ -45,4 +45,22 @@ test_that("stacked imputations are counted per imputation, not summed across the
   d <- rbind(cbind(one, imp = 1L), cbind(one, imp = 2L), cbind(one, imp = 3L))
   tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = "x", imputation = "imp")
   expect_identical(tab$Missing, c("1", "3 of 4 rows analyzed in each of 3 imputations; 1 dropped"))
+})
+
+test_that("a term's own missing values count, not only its column's (#318 review)", {
+  # log() of a negative value is NaN, which the fit drops though x is complete.
+  d <- data.frame(y = c(1, 0, 1, 0), x = c(1, -1, 3, 4))
+  tab <- suppressWarnings(hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = "log(x)"))
+  expect_identical(tab$Variable, c("log(x)", "Complete cases"))
+  expect_identical(tab$Missing[[2L]], "3 of 4 rows analyzed; 1 dropped")
+  # A term that fills in a missing value leaves the row in the fit.
+  d$x[[2L]] <- NA
+  tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = "ifelse(is.na(x), 0, x)")
+  expect_identical(tab$Missing, "4 of 4 rows analyzed; none dropped")
+})
+
+test_that("imputations that analyze different numbers of rows are shown as a labelled range", {
+  d <- data.frame(y = 1, x = c(1, 2, 3, 4, 1, NA, NA, 4), imp = rep(1:2, each = 4L))
+  tab <- hvtiRtemplates:::.missing_cases(d, OUTCOME = "y", PREDICTORS = "x", imputation = "imp")
+  expect_identical(tab$Missing, c("0 to 2", "2 to 4 of 4 rows analyzed per imputation, across 2 imputations; 0 to 2 dropped"))
 })

@@ -294,6 +294,14 @@ if (!is.null(job_data$attrition)) {
 #| tbl-cap: "Missing values in the model's variables"
 # na.omit drops a patient missing any predictor and na.impute keeps them, so the
 # cohort the forest is grown on is said here, before it is.
+# randomForestSRC discards a predictor with no values at all and keeps every
+# row, so such a column would leave the forest without a word and the table
+# below would count every row as dropped. Stop on it instead.
+.empty <- PREDICTORS[vapply(d[PREDICTORS], function(x) all(is.na(x)), logical(1L))]
+if (length(.empty)) {
+  stop("PREDICTORS names a column with no values: ", paste(.empty, collapse = ", "),
+       ". Remove it from PREDICTORS.", call. = FALSE)
+}
 .na_handling <- if (NA_ACTION == "na.impute") "impute" else "drop"
 .missing_values <- hvtiRtemplates:::.missing_cases(d, RESPONSE = RESPONSE, PREDICTORS = PREDICTORS, action = .na_handling)
 knitr::kable(.missing_values)
