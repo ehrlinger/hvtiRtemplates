@@ -20,8 +20,9 @@ test_that("every lm template's hvtiRpropensity guard asks for the version DESCRI
   minimum <- sub(".*hvtiRpropensity \\(>= ([0-9.]+)\\).*", "\\1", gsub("\\s+", " ", suggests))
   # 0.1.10 is the release whose ps_ordinal() and ps_nominal() return the balance
   # table the propensity templates print (#191), and whose count and group
-  # tables name rate ratios and treatment levels correctly (#206).
-  expect_true(package_version(minimum) >= "0.1.10")
+  # tables name rate ratios and treatment levels correctly (#206). 0.1.12 adds
+  # fit_linear() and gives bs_continuous() the same bundle, which the rm templates print.
+  expect_true(package_version(minimum) >= "0.1.12")
   for (qualifier in names(lm_qualifiers)) {
     src <- readLines(template_path("lm", qualifier), warn = FALSE)
     guard <- regmatches(src, regexpr("packageVersion[(]\"hvtiRpropensity\"[)] < \"[0-9.]+\"", src))
@@ -32,7 +33,7 @@ test_that("every lm template's hvtiRpropensity guard asks for the version DESCRI
 })
 
 test_that("every lm template stops on a column its study choices name and the data lack, naming the setting", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   root <- lm_study()
   # The response setting of each template, and a column of lm_data() it can name.
   responses <- list(
@@ -101,7 +102,7 @@ test_that("LM set markers must agree with the rendered job filename", {
 })
 
 test_that("lm-binary fits and saves a model bundle", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   env <- new.env(parent = globalenv())
   env$d <- lm_data()
   env$set_path <- function(kind, file) tempfile(fileext = file)
@@ -116,7 +117,7 @@ test_that("lm-binary fits and saves a model bundle", {
 })
 
 test_that("lm-binary validates variables inside model terms", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   env <- new.env(parent = globalenv())
   env$.root <- lm_study()
   env$read_built <- hvtiRutilities::read_built
@@ -130,7 +131,7 @@ test_that("lm-binary validates variables inside model terms", {
 })
 
 test_that("lm outcome templates fit every declared family", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   d <- lm_mi_data()
   cases <- list(
     ordinal = list(OUTCOME = "ordinal", PREDICTORS = c("age", "female"),
@@ -157,7 +158,7 @@ test_that("lm outcome templates fit every declared family", {
 })
 
 test_that("lm propensity and count templates expose pooled inference", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   d <- lm_mi_data()
   cases <- list(
     propensity_binary = list(TREATMENT = "treatment", PREDICTORS = c("age", "female"),
@@ -193,7 +194,7 @@ test_that("lm propensity and count templates expose pooled inference", {
 })
 
 test_that("lm-checkpred applies the saved bundle without fitting", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   d <- lm_data()
   model <- hvtiRpropensity::fit_logistic(
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
@@ -230,7 +231,7 @@ test_that("lm-checkpred applies the saved bundle without fitting", {
 })
 
 test_that("lm-checkpred refuses to overwrite its source bundle", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   d <- lm_data()
   model <- hvtiRpropensity::fit_logistic(
     outcome ~ age + female, d, family = "binary", outcome_col = "outcome",
@@ -260,7 +261,7 @@ test_that("lm-checkpred refuses to overwrite its source bundle", {
 })
 
 test_that("lm-checkpred stops when its validation patients were in the training data", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   # WHERE may not name the patient identifier, so the cohorts are chosen on an
   # ordinary column, an enrollment sequence that follows ccfid.
   built <- lm_data()
@@ -333,7 +334,7 @@ test_that("lm-checkpred stops when its validation patients were in the training 
 })
 
 test_that("lm-checkpred reads a model in another set and validates on a registered validation dataset", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   d <- lm_data()
   root <- lm_study(data = d)
   datasets <- hvtiRutilities::study_dir("datasets", root)
@@ -389,7 +390,7 @@ test_that("lm-checkpred reads a model in another set and validates on a register
 })
 
 test_that("each propensity template prints its balance table where the binary job does", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   cases <- list(
     propensity_binary = list(TREATMENT = "treatment", TREATMENT_LEVELS = c("control", "treated"),
                              TREATED_LEVEL = "treated"),
@@ -424,7 +425,7 @@ test_that("each propensity template prints its balance table where the binary jo
 
 test_that("every lm template scaffolds and runs end to end, and one renders through Quarto", {
   skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   # One job goes through Quarto end to end, hooks, provenance and all: checkpred,

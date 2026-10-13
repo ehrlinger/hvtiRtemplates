@@ -31,7 +31,7 @@ test_that("the job's package guards ask for the versions DESCRIPTION suggests", 
 })
 
 test_that("the job reads the bundle from its own set, or another through MODEL_SET, and never refits", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- lp_fixture()
   testthat::local_mocked_bindings(
@@ -65,7 +65,7 @@ test_that("the job reads the bundle from its own set, or another through MODEL_S
 })
 
 test_that("a bundle without lineage, or built from data that changed since, stops with the job to rerun", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- lp_fixture()
   bundle <- readRDS(s$bundle)
@@ -105,7 +105,7 @@ test_that("the groups are labeled by the bundle's declared levels, treated first
   expect_error(h$mirror_groups(list(treatment_levels = NULL, treated_level = NULL)),
                "does not declare two treatment levels")
   # The job reads them from the saved bundle.
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- lp_fixture("GROUP_LABELS <- c(control = \"Surgical\", treated = \"Transcatheter\")")
   env <- lm_eval_job(s$job)
@@ -164,7 +164,7 @@ test_that("the weighted bars are the sum of the matching weights in each group a
 })
 
 test_that("the job saves the unmatched and weighted figures, with a count table under each", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- lp_fixture()
   env <- lm_eval_job(s$job)
@@ -218,7 +218,7 @@ test_that("an NA identifier on both sides of the join is not a pair", {
 
 test_that("MATCH must name a column of the dataset, not a formula term", {
   local_child_chunks()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   for (bad in c(".", "nope")) {
     s <- lp_fixture(sprintf("MATCH <- \"%s\"", bad))
@@ -229,7 +229,7 @@ test_that("MATCH must name a column of the dataset, not a formula term", {
 
 test_that("a score, weight or group the figures cannot draw stops the job, with counts only", {
   local_child_chunks()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- lp_fixture()
   bundle <- readRDS(s$bundle)
@@ -263,7 +263,7 @@ test_that("a mirrored histogram whose hvtiPlotR draws the groups the other way u
 
 test_that("with MATCH the job joins the flag through the study key and keeps no identifier", {
   local_child_chunks()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- lp_fixture("MATCH <- \"match\"")
   env <- lm_eval_job(s$job)
@@ -283,7 +283,7 @@ test_that("with MATCH the job joins the flag through the study key and keeps no 
 })
 
 test_that("without MATCH the job draws no matched figure and joins nothing", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- lp_fixture()
   env <- lm_eval_job(s$job)
@@ -298,7 +298,7 @@ test_that("without MATCH the job draws no matched figure and joins nothing", {
 
 test_that("a scored patient with no flag is drawn as unmatched and counted, never dropped", {
   local_child_chunks()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- lp_fixture(c("MATCH <- \"match\"", "DATASET <- \"match_file\""))
   d <- lp_data()
@@ -320,7 +320,7 @@ test_that("a scored patient with no flag is drawn as unmatched and counted, neve
 
 test_that("the job stops, saying why, when fewer than half the scored patients are in the MATCH dataset", {
   local_child_chunks()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- lp_fixture(c("MATCH <- \"match\"", "DATASET <- \"match_file\""))
   lp_register_match(s$root, 1:59, foreign = 61L)
@@ -334,7 +334,7 @@ test_that("the job stops, saying why, when fewer than half the scored patients a
 
 test_that("the join reports counts only: no identifier, raw or digested, is printed or kept in an output", {
   local_child_chunks()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   s <- lp_fixture(c("MATCH <- \"match\"", "DATASET <- \"match_file\""))
   lp_register_match(s$root, 1:100, foreign = 7L)
@@ -374,7 +374,7 @@ test_that("the join reports counts only: no identifier, raw or digested, is prin
 
 test_that("the job renders two figures without MATCH and three with it, naming no patient", {
   skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())

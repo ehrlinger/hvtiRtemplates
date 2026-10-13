@@ -501,7 +501,7 @@ test_that("the facts serialize to JSON with their names intact", {
 
 skip_unless_quarto <- function() {
   testthat::skip_on_cran()
-  testthat::skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  testthat::skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
   testthat::skip_if_not_installed("quarto")
   testthat::skip_if_not(quarto::quarto_available())
 }

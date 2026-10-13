@@ -57,7 +57,7 @@ Suggests:
     hvtiRdatabuild (>= 0.3.0),
     hvtiRbootstrap (>= 0.9.3),
     hvtiRlifetables (>= 0.1.2),
-    hvtiRpropensity (>= 0.1.10),
+    hvtiRpropensity (>= 0.1.12),
     knitr,
     MASS,
     nnet,
