@@ -200,6 +200,12 @@ test_that("hm offers each covariate only to the phases whose block names it (#17
   # A block for a phase the hz fit does not have stops rather than vanishing.
   env$COVARIATES <- list(early = "x1", middle = "age")
   expect_error(hazard_run("hm", "edit-fit", env), "phases the hz fit does not have: middle")
+
+  # Two entries for one phase, or entries with no phase, would lose covariates.
+  for (bad in list(list(early = "x1", early = "age"), list("x1", "age"), list(early = "x1", "age"))) {
+    env$COVARIATES <- bad
+    expect_error(hazard_run("hm", "edit-fit", env), "Name every COVARIATES entry by its phase, once each")
+  }
 })
 
 test_that("hm with no SAS job asks for its covariate lists rather than reading a missing file (#178)", {

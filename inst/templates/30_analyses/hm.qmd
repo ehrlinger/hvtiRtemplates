@@ -393,7 +393,15 @@ set.seed(20260827)   # any fixed value; it must not change between renders
 # estimates would then not be comparable with the SAS model this replaces. A
 # phase with no entry in COVARIATES is offered none.
 form <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ 1"))
-.unknown <- setdiff(names(COVARIATES), names(hz_art$phases))
+# Each entry names one phase, once: [[ ]] takes the first of two entries with
+# one name and finds nothing in an unnamed list, so either would drop
+# covariates without a word.
+.names <- names(COVARIATES)
+if (is.null(.names) || anyNA(.names) || !all(nzchar(.names)) || anyDuplicated(.names)) {
+  stop("Name every COVARIATES entry by its phase, once each, e.g. list(early = c(\"age\"), late = c(\"age\")).",
+       call. = FALSE)
+}
+.unknown <- setdiff(.names, names(hz_art$phases))
 if (length(.unknown)) {
   stop("COVARIATES names phases the hz fit does not have: ", paste(.unknown, collapse = ", "),
        ". Its phases are ", paste(names(hz_art$phases), collapse = ", "), ".", call. = FALSE)
