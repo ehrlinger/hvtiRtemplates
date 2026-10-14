@@ -146,7 +146,7 @@ test_that("dc-eda colors every point of an event panel, by the house rule or fro
 })
 
 test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps", {
-  # read_job_data() drops MRN and eMRN but keeps the ID, so the ID reaches d and
+  # read_job_data() drops MRN, eMRN and other direct identifiers but keeps the ID, so the ID reaches d and
   # the spec chunk must leave it out. Run through a real study: the data chunk
   # and then the spec chunk, as a render would.
   root <- file.path(withr::local_tempdir(), "study")
@@ -155,7 +155,10 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
   built <- data.frame(year = 2000L + seq_len(n), ccfid = 1000L + seq_len(n), randid = 3000L + seq_len(n),
                       MRN = 5000L + seq_len(n), study_id = 7000L + seq_len(n), hosp_id = 9000L + seq_len(n),
                       pt_mrn_num = rep(0:1, 6), visit_mo = 3L * seq_len(n),
-                      age = 40 + seq_len(n))
+                      age = 40 + seq_len(n),
+                      # Identifiers from an SSDI join: by name, and an SSN under a name nobody listed.
+                      ssn = 100000000 + 7919 * seq_len(n), ssdi_ref = 100000000 + 7919 * seq_len(n),
+                      last_name = "x")
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
   lines <- readLines(template_path("dc", "eda"), warn = FALSE)
@@ -180,6 +183,8 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
   env <- run()
   expect_true("ccfid" %in% names(env$d))
   expect_false("mrn" %in% tolower(names(env$d)))
+  # An SSN never reaches the report, whether its name or its values give it away.
+  expect_false(any(c("ssn", "ssdi_ref", "last_name") %in% names(env$d)))
   expect_false("ccfid" %in% env$VARIABLES)
   expect_false("study_id" %in% env$VARIABLES)
   # An id token after a separator is an identifier too, by the generic name rule.
@@ -191,8 +196,8 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
   env <- run(id = "randid")
   expect_true("randid" %in% names(env$d))
   expect_false("randid" %in% env$VARIABLES)
-  expect_true("ccfid" %in% names(env$d))
-  expect_false("ccfid" %in% env$VARIABLES)
+  # ccfid is dropped at read when it is not the ID.
+  expect_false("ccfid" %in% names(env$d))
 
   # Named in VARIABLES, the ID is still not drawn, and the report says so.
   expect_warning(env <- run(id = "randid", variables = c("age", "randid")), "Not drawn, as the job's ID: randid")

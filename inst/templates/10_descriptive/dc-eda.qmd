@@ -305,7 +305,7 @@ if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = "
 # The job's ID and KEY columns are left out by default, and the ID is never
 # drawn: they are the columns the data step used, so a ccfid, or the MRN it fell
 # back to, is caught whatever its case. A KEY column named in VARIABLES is drawn.
-# MRN and eMRN are already dropped at read, unless one is the ID. The name rules
+# Direct identifiers (MRN, SSNs, names, contact details) are dropped at read, unless one is the ID. The name rules
 # catch other identifier columns and dates: an id or identifier token, such as
 # hosp_id, a date token or a _dt suffix, and the names ccfid and patientid,
 # which have no "_" before "id"; a bare "id$" would also take carotid and

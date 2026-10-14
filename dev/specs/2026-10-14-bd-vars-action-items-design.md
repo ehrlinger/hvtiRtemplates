@@ -217,6 +217,13 @@ provenance records `vars applied by SAS` and the `keep` list as the study's firs
    transforms written through XPORT.
 5. **Whether `si` (single imputation) survives** once screening fill (V7) is a function and
    multiple imputation (J1) a job.
+6. **How a job skips vars actions it does not need,** as `%vars` switches do today. Three shapes
+   are on the table: named sub-composites a job pipes together (`vars_base()`,
+   `vars_transforms()` and so on), a `skip` argument on the composite (`vars(d, skip =
+   "transforms")`), or all or nothing (`vars = NULL`). Whatever runs still runs before `WHERE`, so a
+   skip changes which columns a job sees and never how the remaining aggregates are computed.
+   Deferred by John Ehrlinger on 2026-10-14 until he has read the guide for `vars.sas` users,
+   `vignettes/articles/vars-sas-to-r.qmd`, which sets the three out with examples.
 
 ## 9. Out of scope
 

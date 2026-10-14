@@ -19,3 +19,4 @@
 ^pkgdown$
 ^news$
 ^Rplots\.pdf$
+^vignettes/articles$

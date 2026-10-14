@@ -184,8 +184,16 @@ The shared data step of every analysis template. It reads a
   \code{where} selects and checks that rows are unique on \code{key}.
 }
 \details{
-Columns named \code{MRN} or \code{eMRN} (ignoring case) are
-  dropped unless one is the identifier, from a joined dataset too. An explicit \code{id} or \code{key}
+Direct identifiers are dropped unless one is the identifier, from a
+  joined dataset too: columns named, ignoring case, \code{ccfid}, \code{MRN},
+  \code{eMRN}, a Social Security number (\code{ssn}, \code{soc_sec},
+  \code{social_security}, \code{pt_ssn}), and, held as text, a patient name
+  (\code{name}, \code{first_name}, \code{pt_name}, \code{surname}) or contact
+  details (\code{address}, \code{street}, \code{phone}, \code{email}). Any
+  other column whose values are shaped like Social Security numbers is dropped
+  too, and the record notes it by name; a column named as a date or time is
+  not read for that shape. A KEY column is never dropped. The
+  record lists every column dropped. An explicit \code{id} or \code{key}
   matches its column ignoring case, because
   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
   key and date values are not printed: the record holds counts, and a
