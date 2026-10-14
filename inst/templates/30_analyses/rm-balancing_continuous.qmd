@@ -90,12 +90,12 @@ JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
 
-# EDIT: the continuous exposure. To score a transformed exposure, write the
-# transformation into the model formula in the `fit` chunk, e.g.
-# stats::reformulate(PREDICTORS, response = sprintf("log(%s)", OUTCOME)), and leave
-# OUTCOME naming the column. The report does not print the
-# formula, so say the scale wherever the score is described.
+# EDIT: the continuous exposure, named as the column.
 OUTCOME <- "continuous_exposure"
+# EDIT: the scale the exposure is modeled on. "identity" models it as measured;
+# "log" models log(OUTCOME), for a skewed exposure such as a dose. The score is
+# then an expected log exposure; the report's reading follows this choice.
+RESPONSE_SCALE <- "identity"
 PREDICTORS <- c("age", "female")           # EDIT: pre-exposure covariates only.
 N_STRATA <- 10L                            # EDIT: balancing-score stratum count.
 IMPUTATION <- NULL                          # EDIT: imputation column, or NULL.
@@ -127,6 +127,8 @@ IMPUTATION <- attr(job_data$record, "selection")$imputation
 knitr::kable(job_data$record, col.names = c("Data", ""))
 # A column the study choices name that the data lack stops here, naming the setting to change.
 hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS)
+# The model's response on the RESPONSE_SCALE chosen: OUTCOME, or log(OUTCOME).
+.response <- hvtiRtemplates:::.response_term(d, OUTCOME, RESPONSE_SCALE)
 ```
 
 ```{r}
@@ -148,18 +150,24 @@ if (!is.null(job_data$attrition)) {
 #| tbl-cap: "Missing values in the model's variables"
 # The fit drops a row missing any model variable, so the cohort it uses is said here,
 # counted within one imputation when the data are multiply imputed.
-.missing_values <- hvtiRtemplates:::.missing_cases(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS,
+.missing_values <- hvtiRtemplates:::.missing_cases(d, OUTCOME = .response, PREDICTORS = PREDICTORS,
                                                    imputation = IMPUTATION)
 knitr::kable(.missing_values)
 ```
 
 ```{r}
 #| label: fit
-model_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
+model_formula <- stats::reformulate(PREDICTORS, response = .response)
 fit <- hvtiRpropensity::bs_continuous(
   model_formula, d, outcome_col = OUTCOME, id_col = .id,
   imputation_col = IMPUTATION, n_strata = N_STRATA, covariates = PREDICTORS
 )
+```
+
+```{r}
+#| label: model-scale
+#| results: asis
+cat(hvtiRtemplates:::.response_note(model_formula, RESPONSE_SCALE, "exposure"))
 ```
 
 ```{r}
@@ -171,8 +179,7 @@ knitr::kable(fit$tables$fit_status)
 ```{r}
 #| label: tbl-estimates
 #| tbl-cap: "Coefficient estimates of the fitted model"
-# Coefficients are on the exposure's own scale: the expected change in the
-# exposure for a unit change in the covariate.
+# The paragraph above says the scale these coefficients are on.
 knitr::kable(fit$tables$estimates)
 ```
 

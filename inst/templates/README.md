@@ -126,6 +126,9 @@ or a continuous exposure:
 | `linear` | continuous outcome model | `fit_linear()` |
 
 Both keep their fitted models and pool stacked imputations with Rubin's rules.
+`RESPONSE_SCALE` models the response untransformed or on the log scale, and
+the report states the formula it fitted and how to read the coefficients on that
+scale.
 `rm-linear` withholds R-squared for imputed data, where the pooling rules define
 none. Its figures are `rm-linear-residuals` and `rm-linear-qq`. Mixed,
 generalized and non-linear models belong to `mm`, `gm` and `nm`. Scaffold one

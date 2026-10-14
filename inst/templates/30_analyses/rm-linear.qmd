@@ -18,10 +18,10 @@ format:
     embed-resources: true
 ---
 
-Fits an ordinary least-squares model of a continuous outcome, on one dataset or
-on stacked multiple imputations pooled with Rubin's rules. Coefficients are on
-the outcome's own scale: the expected change in the outcome for a unit change
-in the predictor, with the others held fixed.
+Fits an ordinary least-squares model of a continuous outcome, untransformed or on
+the log scale, on one dataset or on stacked multiple imputations pooled with
+Rubin's rules. The report states the formula it fitted and how to read its
+coefficients on that scale.
 
 ```{r}
 #| label: setup
@@ -95,12 +95,13 @@ JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
 
-# EDIT: the continuous outcome. A skewed outcome such as length of stay is often
-# modeled on the log scale: in the `fit` chunk, use
-# stats::reformulate(PREDICTORS, response = sprintf("log(%s)", OUTCOME)) and leave
-# OUTCOME naming the column. The coefficients are then on the log scale,
-# and exp() of one is a ratio of geometric means, not a difference.
+# EDIT: the continuous outcome, named as the column.
 OUTCOME <- "continuous_outcome"
+# EDIT: the scale the outcome is modeled on. "identity" models it as measured;
+# "log" models log(OUTCOME), the usual choice for a skewed outcome such as length
+# of stay. A coefficient is then a change in the log, and exp() of it a ratio of
+# geometric means, not a difference; the report's reading follows this choice.
+RESPONSE_SCALE <- "identity"
 PREDICTORS <- c("age", "female")           # EDIT: the declared model; this job does not select variables.
 IMPUTATION <- NULL                          # EDIT: imputation column, or NULL.
 # Stacked imputations repeat each patient once per imputation.
@@ -136,6 +137,8 @@ IMPUTATION <- attr(job_data$record, "selection")$imputation
 knitr::kable(job_data$record, col.names = c("Data", ""))
 # A column the study choices name that the data lack stops here, naming the setting to change.
 hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS)
+# The model's response on the RESPONSE_SCALE chosen: OUTCOME, or log(OUTCOME).
+.response <- hvtiRtemplates:::.response_term(d, OUTCOME, RESPONSE_SCALE)
 ```
 
 ```{r}
@@ -157,20 +160,28 @@ if (!is.null(job_data$attrition)) {
 #| tbl-cap: "Missing values in the model's variables"
 # The fit drops a row missing any model variable, so the cohort it uses is said here,
 # counted within one imputation when the data are multiply imputed.
-.missing_values <- hvtiRtemplates:::.missing_cases(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS,
+.missing_values <- hvtiRtemplates:::.missing_cases(d, OUTCOME = .response, PREDICTORS = PREDICTORS,
                                                    imputation = IMPUTATION)
 knitr::kable(.missing_values)
 ```
 
 ```{r}
 #| label: fit
-model_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
+model_formula <- stats::reformulate(PREDICTORS, response = .response)
 fit <- hvtiRpropensity::fit_linear(
   model_formula, d, outcome_col = OUTCOME, id_col = .id, imputation_col = IMPUTATION
 )
 # The residuals both figures draw, from the first imputation's fit under multiple imputation.
 .model <- fit$models[[1L]]
 .resid <- stats::na.omit(data.frame(fitted = stats::fitted(.model), residual = stats::residuals(.model)))
+# The figures' axes name the scale fitted, so a log-scale residual is not read in the outcome's units.
+.scale_label <- if (identical(RESPONSE_SCALE, "log")) " (log scale)" else ""
+```
+
+```{r}
+#| label: model-scale
+#| results: asis
+cat(hvtiRtemplates:::.response_note(model_formula, RESPONSE_SCALE, "outcome"))
 ```
 
 ```{r}
@@ -212,7 +223,7 @@ knitr::kable(fit$tables$covariance)
 .fig <- ggplot(.resid, aes(x = fitted, y = residual)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_point(alpha = 0.6) +
-  labs(x = "Fitted value", y = "Residual") +
+  labs(x = paste0("Fitted value", .scale_label), y = paste0("Residual", .scale_label)) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rm-linear-residuals")
 .fig
@@ -226,7 +237,7 @@ save_figure(.fig, "rm-linear-residuals")
 .fig <- ggplot(.resid, aes(sample = residual)) +
   stat_qq(alpha = 0.6) +
   stat_qq_line(linetype = "dashed") +
-  labs(x = "Theoretical quantile", y = "Residual quantile") +
+  labs(x = "Theoretical quantile", y = paste0("Residual quantile", .scale_label)) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rm-linear-qq")
 .fig

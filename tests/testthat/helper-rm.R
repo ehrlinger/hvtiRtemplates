@@ -30,6 +30,9 @@ rm_run <- function(qualifier, labels, env, choices = list()) {
       list2env(choices, envir = env)
       if (!"tbl-data" %in% labels) {
         if (!exists(".id", envir = env, inherits = FALSE)) env$.id <- env$ID
+        if (!exists(".response", envir = env, inherits = FALSE)) {
+          env$.response <- hvtiRtemplates:::.response_term(env$d, env$OUTCOME, env$RESPONSE_SCALE)
+        }
         if (!exists("job_data", envir = env, inherits = FALSE)) env$job_data <- list()
       }
     }
@@ -63,4 +66,11 @@ rm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = c
   if (!render) return(list(root = root, job = job, env = lm_eval_job(job)))  # nolint: object_usage_linter.
   quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
   list(root = root, job = job, output = sub("[.]qmd$", ".html", job))
+}
+
+# A rendered report's text outside its code blocks, so a test reads what the report
+# says rather than the template source folded under "Code".
+rm_report_prose <- function(html) {
+  text <- paste(readLines(html, warn = FALSE), collapse = "\n")
+  gsub("(?s)<pre[^>]*>.*?</pre>", "", text, perl = TRUE)
 }

@@ -31,7 +31,7 @@ test_that("rm-balancing_continuous scores, pools and saves a bundle", {
   env$.root <- withr::local_tempdir("rm-root-")
   choices <- list(OUTCOME = "exposure", PREDICTORS = c("age", "female"), ID = "id",
                   IMPUTATION = "imp", N_STRATA = 5L)
-  labels <- c("edit-study-choices", "fit", "tbl-fit-status", "tbl-estimates", "tbl-covariance",
+  labels <- c("edit-study-choices", "fit", "model-scale", "tbl-fit-status", "tbl-estimates", "tbl-covariance",
               "tbl-strata-counts", "save")
   rm_run("balancing_continuous", labels, env, choices)
   expect_s3_class(env$fit, "bs_continuous")
@@ -62,10 +62,10 @@ test_that("rm-balancing_continuous renders end to end", {
   expect_true(file.exists(bundle))
 })
 
-rm_linear_labels <- c("setup", "edit-study-choices", "fit", "tbl-fit-status", "tbl-fit-quality", "tbl-estimates",
+rm_linear_labels <- c("setup", "edit-study-choices", "fit", "model-scale", "tbl-fit-status", "tbl-fit-quality", "tbl-estimates",
                       "tbl-covariance", "fig-residuals", "fig-qq", "save")
 
-rm_linear_env <- function(d, imputation, .local_envir = parent.frame()) {
+rm_linear_env <- function(d, imputation, scale = "identity", .local_envir = parent.frame()) {
   # eval_setup_chunk() drops the chunk's library() calls, so the figure chunks need ggplot2 attached here.
   withr::local_package("ggplot2", .local_envir = .local_envir)
   root <- lm_study(.local_envir = .local_envir)  # nolint: object_usage_linter.
@@ -76,7 +76,8 @@ rm_linear_env <- function(d, imputation, .local_envir = parent.frame()) {
   env$d <- d
   env$.root <- root
   rm_run("linear", rm_linear_labels, env, list(  # nolint: object_usage_linter.
-    OUTCOME = "outcome", PREDICTORS = c("age", "female"), ID = "id", IMPUTATION = imputation, SAVE_FIGURES = FALSE
+    OUTCOME = "outcome", PREDICTORS = c("age", "female"), ID = "id", IMPUTATION = imputation, SAVE_FIGURES = FALSE,
+    RESPONSE_SCALE = scale
   ))
   env
 }
@@ -99,6 +100,37 @@ test_that("rm-linear on imputations pools and withholds R-squared", {
   expect_true(all(is.na(env$fit$tables$fit_quality$r_squared)))
 })
 
+test_that("rm-linear on the log scale fits log(outcome)", {
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
+  env <- rm_linear_env(rm_data(), NULL, scale = "log")
+  expect_identical(deparse(env$fit$meta$formula), "log(outcome) ~ age + female")
+  expect_identical(env$fit$meta$outcome_col, "outcome")
+  expect_identical(env$.scale_label, " (log scale)")
+})
+
+test_that("the response term follows RESPONSE_SCALE and refuses what it cannot fit", {
+  d <- data.frame(y = c(1, 2, NA), x = 1:3)
+  expect_identical(hvtiRtemplates:::.response_term(d, "y", "identity"), "y")
+  expect_identical(hvtiRtemplates:::.response_term(d, "y", "log"), "log(y)")
+  expect_error(hvtiRtemplates:::.response_term(d, "y", "sqrt"), "RESPONSE_SCALE must be")
+  expect_error(hvtiRtemplates:::.response_term(d, "y", c("log", "identity")), "RESPONSE_SCALE must be")
+  expect_error(hvtiRtemplates:::.response_term(data.frame(y = c("12", "3")), "y", "log"), "y is not numeric")
+  d$y[[1L]] <- 0
+  expect_identical(hvtiRtemplates:::.response_term(d, "y", "identity"), "y")
+  expect_error(hvtiRtemplates:::.response_term(d, "y", "log"), "1 value at or below zero")
+})
+
+test_that("the response note states the formula and reads the coefficients on its scale", {
+  identity <- hvtiRtemplates:::.response_note(y ~ x, "identity", "outcome")
+  expect_match(identity, "`y ~ x`", fixed = TRUE)
+  expect_match(identity, "as measured", fixed = TRUE)
+  expect_no_match(identity, "geometric", fixed = TRUE)
+  logged <- hvtiRtemplates:::.response_note(log(y) ~ x, "log", "outcome")
+  expect_match(logged, "`log(y) ~ x`", fixed = TRUE)
+  expect_match(logged, "ratio of geometric means", fixed = TRUE)
+  expect_no_match(logged, "as measured", fixed = TRUE)
+})
+
 test_that("rm set markers must agree with the rendered job filename", {
   root <- lm_study()  # nolint: object_usage_linter.
   job <- file.path(root, "other-eda-rm.qmd")
@@ -118,6 +150,10 @@ test_that("rm-linear renders end to end and saves both figures", {
   skip_if_not(quarto::quarto_available())
   out <- rm_render_fixture("linear")
   expect_true(file.exists(out$output))
+  prose <- rm_report_prose(out$output)
+  expect_match(prose, "outcome ~ age + female", fixed = TRUE)
+  expect_match(prose, "as measured", fixed = TRUE)
+  expect_no_match(prose, "geometric means", fixed = TRUE)
   graphs <- file.path(hvtiRutilities::study_dir("graphs", out$root), "outcome-analysis")
   expect_true(all(file.exists(file.path(graphs, c("rm-linear-residuals.png", "rm-linear-qq.png")))))
 })
@@ -155,4 +191,25 @@ test_that("a rendered rm-linear job fits when IMPUTATION is spelled differently 
   bundle <- file.path(hvtiRutilities::study_dir("estimates", out$root), "outcome-analysis", "rm-linear.rds")
   expect_true(file.exists(bundle))
   expect_identical(readRDS(bundle)$meta$n_imputations, 2L)
+})
+
+test_that("a rendered rm job on the log scale fits log() and reads its coefficients that way", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  subjects <- c(balancing_continuous = "exposure", linear = "outcome")
+  for (qualifier in names(subjects)) {
+    what <- subjects[[qualifier]]
+    out <- rm_render_fixture(qualifier, choices = 'RESPONSE_SCALE <- "log"')
+    expect_true(file.exists(out$output), info = qualifier)
+    bundle <- file.path(hvtiRutilities::study_dir("estimates", out$root), paste0(what, "-analysis"),
+                        paste0("rm-", qualifier, ".rds"))
+    expect_identical(deparse(readRDS(bundle)$meta$formula), sprintf("log(%s) ~ age + female", what), info = qualifier)
+    # The report's own prose, not its folded code, must read the coefficients on the log scale.
+    prose <- rm_report_prose(out$output)
+    expect_match(prose, sprintf("log(%s) ~ age + female", what), fixed = TRUE, info = qualifier)
+    expect_match(prose, "ratio of geometric means", fixed = TRUE, info = qualifier)
+    expect_no_match(prose, "as measured", fixed = TRUE, info = qualifier)
+  }
 })
