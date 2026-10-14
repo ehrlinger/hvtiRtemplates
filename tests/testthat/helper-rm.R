@@ -39,7 +39,8 @@ rm_run <- function(qualifier, labels, env, choices = list()) {
 
 # Scaffold the `qualifier` job in a fresh study, work its EDIT: markers, and render it,
 # or with `render = FALSE` evaluate its chunks in this session (lm_eval_job).
-rm_render_fixture <- function(qualifier, data = NULL, render = TRUE, .local_envir = parent.frame()) {
+# `choices` sets study choices beyond the qualifier's own, such as `IMPUTATION <- "imp"`.
+rm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = character(), .local_envir = parent.frame()) {
   root <- tempfile("rm-study-")
   withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
   d <- if (is.null(data)) rm_data() else data
@@ -53,6 +54,11 @@ rm_render_fixture <- function(qualifier, data = NULL, render = TRUE, .local_envi
   lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
   response <- if (identical(qualifier, "balancing_continuous")) "exposure" else "outcome"
   lines[grepl("^OUTCOME <- ", lines)] <- sprintf('OUTCOME <- "%s"', response)
+  for (replacement in choices) {
+    key <- sub(" .*", "", replacement)
+    # The first line only: the study choice, not a later `IMPUTATION <- attr(...)` that reads a resolved value back.
+    lines[which(grepl(paste0("^", key, " <- "), lines))[1L]] <- replacement
+  }
   writeLines(lines, job)
   if (!render) return(list(root = root, job = job, env = lm_eval_job(job)))  # nolint: object_usage_linter.
   quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)

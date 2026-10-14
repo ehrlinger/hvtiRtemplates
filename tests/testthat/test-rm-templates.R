@@ -121,3 +121,38 @@ test_that("rm-linear renders end to end and saves both figures", {
   graphs <- file.path(hvtiRutilities::study_dir("graphs", out$root), "outcome-analysis")
   expect_true(all(file.exists(file.path(graphs, c("rm-linear-residuals.png", "rm-linear-qq.png")))))
 })
+
+test_that("a rendered rm job reads stacked imputations and saves a bundle of both", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  # The data table's one-row-per-patient guard counts a patient within an imputation:
+  # 240 rows on 120 patients must read, and the model must be fit on both imputations.
+  subjects <- c(balancing_continuous = "exposure", linear = "outcome")
+  classes <- c(balancing_continuous = "bs_continuous", linear = "rm_fit")
+  for (qualifier in names(subjects)) {
+    out <- rm_render_fixture(qualifier, data = rm_mi_data(), choices = 'IMPUTATION <- "imp"')
+    expect_true(file.exists(out$output), info = qualifier)
+    bundle <- file.path(hvtiRutilities::study_dir("estimates", out$root), paste0(subjects[[qualifier]], "-analysis"),
+                        paste0("rm-", qualifier, ".rds"))
+    expect_true(file.exists(bundle), info = qualifier)
+    fit <- readRDS(bundle)
+    expect_s3_class(fit, classes[[qualifier]])
+    expect_identical(fit$meta$n_imputations, 2L, info = qualifier)
+    expect_true(all(fit$tables$estimates$pooled), info = qualifier)
+  }
+})
+
+test_that("a rendered rm-linear job fits when IMPUTATION is spelled differently from the column", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  # read_job_data() matches the name ignoring case; the fit needs the data's own spelling.
+  out <- rm_render_fixture("linear", data = rm_mi_data(), choices = 'IMPUTATION <- "IMP"')
+  expect_true(file.exists(out$output))
+  bundle <- file.path(hvtiRutilities::study_dir("estimates", out$root), "outcome-analysis", "rm-linear.rds")
+  expect_true(file.exists(bundle))
+  expect_identical(readRDS(bundle)$meta$n_imputations, 2L)
+})

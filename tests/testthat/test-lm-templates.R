@@ -455,3 +455,44 @@ test_that("an imputation column adds to KEY rather than replacing it", {
     expect_identical(env$KEY, c("ccfid", "visit", "imp"), info = qualifier)
   }
 })
+
+test_that("a rendered lm job reads stacked imputations and saves a bundle of both", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  # The data table's one-row-per-patient guard counts a patient within an imputation:
+  # 240 rows on 120 patients must read, and the model must be fit on both imputations.
+  out <- lm_render_fixture("binary", data = lm_mi_data(), choices = 'IMPUTATION <- "imp"')
+  expect_true(file.exists(out$output))
+  bundle <- list.files(out$root, pattern = "[.]rds$", recursive = TRUE, full.names = TRUE)
+  expect_length(bundle, 1L)
+  fit <- readRDS(bundle)
+  expect_s3_class(fit, "lm_fit")
+  expect_identical(fit$meta$n_imputations, 2L)
+  html <- paste(readLines(out$output, warn = FALSE), collapse = "\n")
+  expect_match(html, "240 rows on 120 patients, in 2 imputations", fixed = TRUE)
+})
+
+test_that("every lm template that takes IMPUTATION reads stacked imputations past its data table", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  for (qualifier in setdiff(names(lm_qualifiers), "checkpred")) {
+    out <- lm_render_fixture(qualifier, data = lm_mi_data(), render = FALSE, choices = 'IMPUTATION <- "imp"')
+    expect_identical(nrow(out$env$job_data$data), 240L, info = qualifier)
+    rows <- out$env$job_data$record
+    expect_identical(rows$value[rows$step == "Rows kept"], "240 rows on 120 patients, in 2 imputations", info = qualifier)
+    expect_identical(out$env$fit$meta$n_imputations, 2L, info = qualifier)
+  }
+})
+
+test_that("every lm template that takes IMPUTATION fits when the choice is spelled differently from the column", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  # read_job_data() matches the name ignoring case; the fit and the missing-case table need the data's own spelling.
+  for (qualifier in setdiff(names(lm_qualifiers), "checkpred")) {
+    out <- lm_render_fixture(qualifier, data = lm_mi_data(), render = FALSE, choices = 'IMPUTATION <- "IMP"')
+    expect_identical(out$env$IMPUTATION, "imp", info = qualifier)
+    expect_identical(out$env$fit$meta$n_imputations, 2L, info = qualifier)
+  }
+})

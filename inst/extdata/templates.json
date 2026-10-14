@@ -76,7 +76,7 @@
       "prefix": "bd",
       "qualifier": null,
       "name": "Build",
-      "description": "Cuts a study's dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then a dated release registered as the study dataset.",
+      "description": "Cuts a study's dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then the working file and its build record, registered as a dated version of the study dataset.",
       "folder": "datasets",
       "family": "datasets",
       "kind": "job",
@@ -96,9 +96,8 @@
       "sas_breadth_jobs": 1094,
       "disposition": "scaffold",
       "uses": [
-        "hvtiRdatabuild::publish_dataset",
         "hvtiRutilities::register_data",
-        "hvtiRutilities::adopt_data_update"
+        "hvtiRutilities::update_manifest"
       ]
     },
     {
