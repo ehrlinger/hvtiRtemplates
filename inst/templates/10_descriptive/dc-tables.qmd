@@ -49,8 +49,9 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.1") {
-  stop("This job needs hvtiRtables >= 1.0.1 for hv_correlation_table(); ",
+if (utils::packageVersion("hvtiRtables") < "1.0.5") {
+  stop("This job needs hvtiRtables >= 1.0.5 for hv_correlation_table() and the %summarytable layout of ",
+       "hv_man_table_save(); ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
