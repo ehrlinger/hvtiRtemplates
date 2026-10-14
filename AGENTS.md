@@ -566,3 +566,14 @@ substituting a guess.
 Documentation prose — README, roxygen `@description` and `@details`, template narration —
 follows the house voice. Template prose has a second audience: a study author reading it while
 adapting the file, so it must explain the reasoning, not only the mechanics.
+
+## Release ordering
+
+This package is **tier 4, released last** in the hvtiR release order. It imports `hvtiRutilities` and suggests `hvtiPlotR`, `hvtiRtables`, `hvtiRdatabuild`, `hvtiRbootstrap`, `hvtiRlifetables` and `hvtiRpropensity`. Nothing in the family depends on it; its feature-branch clones rebase after it bumps.
+
+- **Order follows hard dependencies (`Imports`) only.** `Suggests` never forces an order; it matters only when a version floor moves.
+- **A floor on another hvtiR package moves only in this package's own bump**, to the version it was tested against, and only when it relies on something new there.
+- **Before a bump merges, run each dependent's tests against this package's branch**: install it into a scratch library and run `R_LIBS=<lib> Rscript -e 'devtools::test()'` in the dependent.
+- **Tag every bump** `vX.Y.Z`. `Remotes` are unpinned, so a floor is checked against the dependency's `main`, not a tag.
+
+The full policy and dependency graph are in the maintainer's Obsidian vault at `Projects/hvtiR release ordering.md`.
