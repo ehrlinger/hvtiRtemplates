@@ -28,8 +28,8 @@ existing file, because a job accumulates a study’s edits.
 
 Each template carries a light.
 
-- 🟢 **Shipped** (32): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (20): on disk but being reworked, or scheduled into
+- 🟢 **Shipped** (34): on disk and supported. Scaffold it and use it.
+- 🟡 **In progress** (19): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
 - 🔴 **Not yet on the way** (13): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
@@ -91,6 +91,8 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `rfr-fit` | Grows a regression forest and checks it: out-of-bag error and predicted against observed. | `add_job("rfr", subject, type, qualifier = "fit")` |
 | 🟢 Shipped | `rfs-explain` | Explains a saved survival forest: variable importance, VarPro and dependence plots. It never grows a forest. | `add_job("rfs", subject, type, qualifier = "explain")` |
 | 🟢 Shipped | `rfs-fit` | Grows a random survival forest and checks it learned something: out-of-bag error, predicted survival and the Brier score. | `add_job("rfs", subject, type, qualifier = "fit")` |
+| 🟢 Shipped | `rm-balancing_continuous` | Least-squares balancing score for a continuous exposure: the averaged fitted value and its strata. | `add_job("rm", subject, type, qualifier = "balancing_continuous")` |
+| 🟢 Shipped | `rm-linear` | Ordinary least-squares outcome model with Rubin-pooled inference. | `add_job("rm", subject, type, qualifier = "linear")` |
 
 ### graphs
 
@@ -117,7 +119,6 @@ as zero.
 | 🟡 In progress | `dc-variable` | Distribution of a variable | 237 |  |
 | 🟡 In progress | `cd` | Cumulative distribution | 190 |  |
 | 🟡 In progress | `dc-dead` | Descriptive: mortality | 171 |  |
-| 🟡 In progress | `rm` | Regression model | 170 |  |
 | 🟡 In progress | `nm` | Non-linear model | 121 |  |
 | 🟡 In progress | `gm` | Generalized model | 73 |  |
 | 🟡 In progress | `rp` | Regression plot | 68 |  |
