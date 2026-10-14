@@ -42,6 +42,9 @@ articles:
   - title: Reference
     contents:
       - template-catalog
+  - title: Designs in progress
+    contents:
+      - articles/vars-sas-to-r
 
 footer:
   structure:

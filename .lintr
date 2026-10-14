@@ -236,6 +236,14 @@ exclusions: list(
     "inst/runners/br-runner.R" = list(object_name_linter = Inf),
     "inst/runners/bc-runner.R" = list(object_name_linter = Inf),
     "inst/runners/bh-runner.R" = list(object_name_linter = Inf),
+    # A design article whose chunks are not run. Its study choices are
+    # SCREAMING_CASE as a template's are, and it calls functions that are not
+    # built yet (hvtiRdatabuild's vars primitives, join_artifact()), so
+    # object_usage_linter cannot pass on it until they exist.
+    "vignettes/articles/vars-sas-to-r.qmd" = list(
+      object_name_linter = Inf,
+      object_usage_linter = Inf
+    ),
     # A frozen copy of rfs-fit as released in v1.3.0, the job upgrade_job() is
     # tested against. It must stay byte for byte what that release shipped, so
     # it is excluded whole: its findings belong to the release, not this tree.
