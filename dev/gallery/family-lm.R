@@ -10,7 +10,9 @@
 # onward: one registered dataset, split by each job's WHERE.
 lm_era <- function(where) list("^WHERE <- NULL$" = paste0("WHERE <- quote(", where, ")"))
 lm_patient <- list("^ID <- " = "ID <- \"patient_id\"")
-lm_id <- c(lm_patient, list("^IMPUTATION <- " = "IMPUTATION <- NULL"))
+# Anchored on NULL: the templates' second IMPUTATION line takes the column
+# read_job_data() matched, and must stay as it is.
+lm_id <- c(lm_patient, list("^IMPUTATION <- NULL" = "IMPUTATION <- NULL"))
 lm_covariates <- "c(\"age\", \"female\", \"hx_chf\", \"hx_dm\", \"lvef\", \"bmi\")"
 
 gallery_family(
