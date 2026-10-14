@@ -120,6 +120,33 @@ test_that("the response term follows RESPONSE_SCALE and refuses what it cannot f
   expect_error(hvtiRtemplates:::.response_term(d, "y", "log"), "1 value at or below zero")
 })
 
+test_that("a named RESPONSE_SCALE reads as its value in the formula and the note alike", {
+  # A scale looked up from a named vector keeps its name; c(outcome = "identity") once fitted log().
+  d <- data.frame(y = c(1, 2), x = 1:2)
+  for (scale in c("identity", "log")) {
+    named <- stats::setNames(scale, "y")
+    expect_identical(hvtiRtemplates:::.response_scale(named), scale)
+    expect_identical(hvtiRtemplates:::.response_term(d, "y", named), hvtiRtemplates:::.response_term(d, "y", scale))
+    expect_identical(hvtiRtemplates:::.response_note(y ~ x, named, "outcome"),
+                     hvtiRtemplates:::.response_note(y ~ x, scale, "outcome"))
+  }
+  expect_error(hvtiRtemplates:::.response_scale(NA_character_), "RESPONSE_SCALE must be")
+  expect_error(hvtiRtemplates:::.response_scale(factor("log")), "RESPONSE_SCALE must be")
+})
+
+test_that("every rm template settles RESPONSE_SCALE before any code reads it", {
+  # The figures branch on the setting in the template itself, where no rendered text can show a wrong scale.
+  for (qualifier in names(rm_qualifiers)) {
+    src <- readLines(template_path("rm", qualifier), warn = FALSE)
+    code <- !grepl("^\\s*#", src)
+    settle <- which(src == "RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)")
+    expect_length(settle, 1L)
+    reads <- setdiff(which(code & grepl("RESPONSE_SCALE", src, fixed = TRUE) & !grepl("^RESPONSE_SCALE <- ", src)),
+                     settle)
+    expect_true(length(reads) > 0L && all(reads > settle), info = qualifier)
+  }
+})
+
 test_that("the response note states the formula and reads the coefficients on its scale", {
   identity <- hvtiRtemplates:::.response_note(y ~ x, "identity", "outcome")
   expect_match(identity, "`y ~ x`", fixed = TRUE)
@@ -211,5 +238,23 @@ test_that("a rendered rm job on the log scale fits log() and reads its coefficie
     expect_match(prose, sprintf("log(%s) ~ age + female", what), fixed = TRUE, info = qualifier)
     expect_match(prose, "ratio of geometric means", fixed = TRUE, info = qualifier)
     expect_no_match(prose, "as measured", fixed = TRUE, info = qualifier)
+  }
+})
+
+test_that("a rendered rm-linear with a named RESPONSE_SCALE fits, says and draws one scale", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  cases <- list(identity = list(formula = "outcome ~ age + female", says = "as measured", not = "geometric means"),
+                log = list(formula = "log(outcome) ~ age + female", says = "ratio of geometric means", not = "as measured"))
+  for (scale in names(cases)) {
+    case <- cases[[scale]]
+    out <- rm_render_fixture("linear", choices = sprintf('RESPONSE_SCALE <- c(outcome = "%s")', scale))
+    bundle <- file.path(hvtiRutilities::study_dir("estimates", out$root), "outcome-analysis", "rm-linear.rds")
+    expect_identical(deparse(readRDS(bundle)$meta$formula), case$formula, info = scale)
+    prose <- rm_report_prose(out$output)
+    expect_match(prose, case$says, fixed = TRUE, info = scale)
+    expect_no_match(prose, case$not, fixed = TRUE, info = scale)
   }
 })
