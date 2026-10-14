@@ -67,7 +67,8 @@
 <span>  join_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  reduce <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  join_key <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  one_row_per_patient <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  one_row_per_patient <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  imputation <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -191,6 +192,20 @@ would, after the rows are selected. <code>FALSE</code>,
 the default, accepts the long form, as descriptive jobs and jobs that model
 repeated measures need.</p></dd>
 
+
+<dt id="arg-imputation">imputation<a class="anchor" aria-label="anchor" href="#arg-imputation"></a></dt>
+<dd><p><code>NULL</code>, the default, or the name of the column that
+numbers the imputations of stacked multiple imputations, one row per
+patient per imputation. With <code>one_row_per_patient = TRUE</code> the rows
+are then counted within each imputation, so a patient who appears once in
+every imputation passes, and one who appears twice in the same imputation
+still stops the read. The column must be in the data read, and in
+<code>key</code> for the rows to be unique. It is matched ignoring case, as
+<code>key</code> is. It must hold no missing value and must not be the patient
+identifier. The record says how many imputations the rows hold. It is
+not inferred from <code>key</code>, since a visit column in <code>key</code> makes a
+long dataset, not an imputation.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -222,6 +237,9 @@ repeated measures need.</p></dd>
       <code>.data</code> or a string lookup, replaced;</p></li>
 <li><p><code>id</code> and <code>key</code>, the resolved column names, the
       key being the joined result's when there is a join;</p></li>
+<li><p><code>imputation</code>, the resolved name of the imputation column in
+      the data's own spelling, present only when <code>imputation</code> was
+      given, so a job can pass it on to a fit;</p></li>
 <li><p><code>join</code>, <code>join_vars</code>, <code>reduce</code> and
       <code>join_key</code>, the join as read, with <code>join_vars</code>,
       <code>join_key</code> and <code>reduce</code>'s columns spelled as the data
@@ -265,7 +283,7 @@ repeated measures need.</p></dd>
 <span class="r-in"><span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"job-data-example"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"Example"</span>, <span class="fl">1L</span>, adopt <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpI47Nlo/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/Rtmp6pGkas/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
@@ -278,12 +296,12 @@ repeated measures need.</p></dd>
 <span class="r-in"><span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"built.csv"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpI47Nlo/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/Rtmp6pGkas/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] manifest.yaml — 1 dataset entry verified by checksum</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [x] dataset — built.csv, registered as built_20261013.parquet</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [x] dataset — built.csv, registered as built_20261014.parquet</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars</span>
@@ -291,7 +309,7 @@ repeated measures need.</p></dd>
 <span class="r-in"><span><span class="va">job</span> <span class="op">&lt;-</span> <span class="fu">read_job_data</span><span class="op">(</span><span class="va">cfg</span>, where <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substitute.html" class="external-link">quote</a></span><span class="op">(</span><span class="va">age</span> <span class="op">&gt;=</span> <span class="fl">18</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">job</span><span class="op">$</span><span class="va">record</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                  step                                    value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1              Source dataset `study` (built_20261013.parquet)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1              Source dataset `study` (built_20261014.parquet)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2           Rows read                                        4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3                  ID                                  `ccfid`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4 Identifiers dropped                                     none</span>

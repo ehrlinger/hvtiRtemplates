@@ -19,7 +19,8 @@ read_job_data(
   join_vars = NULL,
   reduce = NULL,
   join_key = NULL,
-  one_row_per_patient = FALSE
+  one_row_per_patient = FALSE,
+  imputation = NULL
 )
 ```
 
@@ -146,6 +147,20 @@ read_job_data(
   rows are selected. `FALSE`, the default, accepts the long form, as
   descriptive jobs and jobs that model repeated measures need.
 
+- imputation:
+
+  `NULL`, the default, or the name of the column that numbers the
+  imputations of stacked multiple imputations, one row per patient per
+  imputation. With `one_row_per_patient = TRUE` the rows are then
+  counted within each imputation, so a patient who appears once in every
+  imputation passes, and one who appears twice in the same imputation
+  still stops the read. The column must be in the data read, and in
+  `key` for the rows to be unique. It is matched ignoring case, as `key`
+  is. It must hold no missing value and must not be the patient
+  identifier. The record says how many imputations the rows hold. It is
+  not inferred from `key`, since a visit column in `key` makes a long
+  dataset, not an imputation.
+
 ## Value
 
 A list:
@@ -187,6 +202,10 @@ so a downstream job can rebuild the same rows:
 
 - `id` and `key`, the resolved column names, the key being the joined
   result's when there is a join;
+
+- `imputation`, the resolved name of the imputation column in the data's
+  own spelling, present only when `imputation` was given, so a job can
+  pass it on to a fit;
 
 - `join`, `join_vars`, `reduce` and `join_key`, the join as read, with
   `join_vars`, `join_key` and `reduce`'s columns spelled as the data
@@ -233,7 +252,7 @@ written.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
-#> Study: /tmp/RtmpI47Nlo/job-data-example
+#> Study: /tmp/Rtmp6pGkas/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -246,12 +265,12 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/RtmpI47Nlo/job-data-example
+#> Study: /tmp/Rtmp6pGkas/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
-#> [x] dataset — built.csv, registered as built_20261013.parquet
+#> [x] dataset — built.csv, registered as built_20261014.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
@@ -259,7 +278,7 @@ cfg <- hvtiRutilities::study_config(start = root)
 job <- read_job_data(cfg, where = quote(age >= 18))
 job$record
 #>                  step                                    value
-#> 1              Source dataset `study` (built_20261013.parquet)
+#> 1              Source dataset `study` (built_20261014.parquet)
 #> 2           Rows read                                        4
 #> 3                  ID                                  `ccfid`
 #> 4 Identifiers dropped                                     none
