@@ -31,6 +31,8 @@ rm_run <- function(qualifier, labels, env, choices = list()) {
       if (!"tbl-data" %in% labels) {
         if (!exists(".id", envir = env, inherits = FALSE)) env$.id <- env$ID
         if (!exists(".response", envir = env, inherits = FALSE)) {
+          # What tbl-data does: settle the scale, then build the response from it.
+          env$RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(env$RESPONSE_SCALE)
           env$.response <- hvtiRtemplates:::.response_term(env$d, env$OUTCOME, env$RESPONSE_SCALE)
         }
         if (!exists("job_data", envir = env, inherits = FALSE)) env$job_data <- list()

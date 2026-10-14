@@ -127,6 +127,9 @@ IMPUTATION <- attr(job_data$record, "selection")$imputation
 knitr::kable(job_data$record, col.names = c("Data", ""))
 # A column the study choices name that the data lack stops here, naming the setting to change.
 hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS)
+# RESPONSE_SCALE as a plain "identity" or "log", so the fit, the paragraph on
+# reading it and the figures all branch on one value.
+RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 # The model's response on the RESPONSE_SCALE chosen: OUTCOME, or log(OUTCOME).
 .response <- hvtiRtemplates:::.response_term(d, OUTCOME, RESPONSE_SCALE)
 ```
