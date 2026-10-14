@@ -39,7 +39,7 @@ hazard_rows <- list(
 # The counts that selection holds. In a real job these come from the SAS
 # reference; here they are the counts family-00-survival.R's outcome produces.
 hazard_counts <- list(
-  "^EXPECTED <- list\\(n = NA_integer_" = "EXPECTED <- list(n = 725L, n_events = 402L, n_censored = 323L)"
+  "^EXPECTED <- list\\(n = NA_integer_" = "EXPECTED <- list(n = 725L, n_events = 406L, n_censored = 319L)"
 )
 # hz's starting values, shared by the chain's hz and by each treatment group's
 # hz that hs-concordance reads. The probes need no override: since #169 the

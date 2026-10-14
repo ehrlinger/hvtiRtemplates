@@ -93,7 +93,7 @@ Every number in the study is simulated; no real patient appears. `demo_study()` 
 - **Heart failure falls** from about 45% of operations to about 14%.
 - **LV mass drifts down** over the years.
 - **Creatinine is missing** for about 8%.
-- **One patient in ten is lost to follow-up early.**
+- **Follow-up lags the close date**, more for older operations, in bands left by three follow-up sweeps, and one patient in twenty is lost early.
 - There is a **patient identifier** and an **operation date**, which the EDA should leave out.
 
 ## One loop runs every job: open, edit, render
@@ -208,9 +208,9 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 
 `ORIGIN_YEAR` stays 1990, and `PANELS` already names `dead` and `iv_dead`.
 
-## `dc-gfup`: blue circles below the diagonal are patients lost to follow-up early
+## `dc-gfup`: blue circles below the diagonal are follow-up falling short of the close date
 
-Each point is a patient. The dashed diagonal is the most follow-up the close date allows; vermillion crosses (deaths) belong below it.
+Each point is a patient. The dashed diagonal is the most follow-up the close date allows; vermillion crosses (deaths) belong below it. Living patients drift below it as their last contact ages, and a follow-up sweep, on one calendar date, leaves a band parallel to the diagonal and below it, and the few far below were lost early.
 
 :::: {.columns}
 ::: {.column width="50%"}

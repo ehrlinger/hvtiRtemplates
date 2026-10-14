@@ -7,8 +7,9 @@
 # Two phases, the shape the hazard templates look for: an early phase in the
 # first months after operation, carried by age, creatinine and heart failure,
 # and a constant late phase carried by age, heart failure, ejection fraction
-# and diabetes. Follow-up is censored at the close date, with one patient in
-# ten lost early, as in the demo.
+# and diabetes. Follow-up comes from the demo's demo_followup(): living
+# patients censored at a last contact that lags the close date, in sweep bands,
+# and deaths from a national death search.
 #
 # Six patients die on the day of operation, and iv_dead, rounded to 0.001
 # years, would record them at 0. The hazard likelihood is not defined at
@@ -35,11 +36,9 @@ gallery_family(
       late_rate <- 0.035 * exp(0.045 * (d$age - 60) + 0.6 * d$hx_chf - 0.025 * (d$lvef - 55) + 0.4 * d$hx_dm)
       t_late <- stats::rexp(n, late_rate)
       t_death <- ifelse(early, t_early, t_late)
-      potential <- as.numeric(as.Date("2025-12-31") - d$op_date) / 365.25
-      lost <- stats::runif(n) < 0.10
-      t_censor <- ifelse(lost, stats::runif(n, 0, potential), potential)
-      d$dead <- as.integer(t_death <= t_censor)
-      d$iv_dead <- round(pmin(t_death, t_censor), 3)
+      fup <- demo_followup(t_death, d$op_date, as.Date("2025-12-31"))
+      d$dead <- fup$dead
+      d$iv_dead <- fup$iv_dead
       d$iv_dead[d$iv_dead == 0] <- 0.00025
       t_reop <- stats::rexp(n, 1 / 30)
       d$reop <- as.integer(t_reop < d$iv_dead)
