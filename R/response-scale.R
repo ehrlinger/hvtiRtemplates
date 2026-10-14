@@ -1,13 +1,14 @@
 # An rm job's RESPONSE_SCALE study choice as one plain string, "identity" or
-# "log". Every reader of the setting branches on this value, never on the raw
-# one: a name, as a lookup such as scales["outcome"] keeps, passes %in% but fails
+# "log", with no name, class or other attribute. Every reader of the setting
+# branches on this value, never on the raw one: a name, as a lookup such as
+# scales["outcome"] keeps, or a class, as glue() gives, passes %in% but fails
 # identical(), and c(outcome = "identity") once fitted log() under prose that
 # read the coefficients as measured.
 .response_scale <- function(scale) {
   if (!is.character(scale) || length(scale) != 1L || is.na(scale) || !scale %in% c("identity", "log")) {
     stop('RESPONSE_SCALE must be "identity" or "log". Change it in edit-study-choices.', call. = FALSE)
   }
-  unname(scale)
+  as.vector(scale, "character")
 }
 
 # The response term of an rm job's formula, from its RESPONSE_SCALE study choice:

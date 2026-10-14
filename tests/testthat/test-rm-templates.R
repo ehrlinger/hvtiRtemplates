@@ -130,6 +130,10 @@ test_that("a named RESPONSE_SCALE reads as its value in the formula and the note
     expect_identical(hvtiRtemplates:::.response_note(y ~ x, named, "outcome"),
                      hvtiRtemplates:::.response_note(y ~ x, scale, "outcome"))
   }
+  classed <- structure(c(y = "log"), class = c("glue", "character"))
+  expect_identical(hvtiRtemplates:::.response_scale(classed), "log")
+  expect_identical(hvtiRtemplates:::.response_term(d, "y", classed), "log(y)")
+  expect_match(hvtiRtemplates:::.response_note(y ~ x, classed, "outcome"), "geometric means", fixed = TRUE)
   expect_error(hvtiRtemplates:::.response_scale(NA_character_), "RESPONSE_SCALE must be")
   expect_error(hvtiRtemplates:::.response_scale(factor("log")), "RESPONSE_SCALE must be")
 })
@@ -141,9 +145,13 @@ test_that("every rm template settles RESPONSE_SCALE before any code reads it", {
     code <- !grepl("^\\s*#", src)
     settle <- which(src == "RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)")
     expect_length(settle, 1L)
-    reads <- setdiff(which(code & grepl("RESPONSE_SCALE", src, fixed = TRUE) & !grepl("^RESPONSE_SCALE <- ", src)),
-                     settle)
+    # The study choice itself is the one line allowed ahead of the settle; any other assignment or read must follow it,
+    # and none may follow it that assigns the setting again.
+    choice <- which(grepl("^RESPONSE_SCALE <- \"", src))
+    expect_length(choice, 1L)
+    reads <- setdiff(which(code & grepl("RESPONSE_SCALE", src, fixed = TRUE)), c(choice, settle))
     expect_true(length(reads) > 0L && all(reads > settle), info = qualifier)
+    expect_false(any(grepl("RESPONSE_SCALE\\s*(<-|=)[^=]", src[reads])), info = qualifier)
   }
 })
 
