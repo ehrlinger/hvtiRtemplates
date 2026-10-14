@@ -222,9 +222,16 @@ so a downstream job can rebuild the same rows:
 
 ## Details
 
-Columns named `MRN` or `eMRN` (ignoring case) are dropped unless one is
-the identifier, from a joined dataset too. An explicit `id` or `key`
-matches its column ignoring case, because
+Direct identifiers are dropped unless one is the identifier, from a
+joined dataset too: columns named, ignoring case, `ccfid`, `MRN`,
+`eMRN`, a Social Security number (`ssn`, `soc_sec`, `social_security`,
+`pt_ssn`), and, held as text, a patient name (`name`, `first_name`,
+`pt_name`, `surname`) or contact details (`address`, `street`, `phone`,
+`email`). Any other column whose values are shaped like Social Security
+numbers is dropped too, and the record notes it by name; a column named
+as a date or time is not read for that shape. A KEY column is never
+dropped. The record lists every column dropped. An explicit `id` or
+`key` matches its column ignoring case, because
 [`hvtiRutilities::read_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html)
 lowercases column names. Identifier, key and date values are not
 printed: the record holds counts, and a `where` condition that mentions
@@ -252,7 +259,7 @@ written.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
-#> Study: /tmp/RtmpTQfFHC/job-data-example
+#> Study: /tmp/Rtmpf3XYK4/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -265,7 +272,7 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/RtmpTQfFHC/job-data-example
+#> Study: /tmp/Rtmpf3XYK4/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project

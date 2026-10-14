@@ -254,8 +254,16 @@ long dataset, not an imputation.</p></dd>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Columns named <code>MRN</code> or <code>eMRN</code> (ignoring case) are
-  dropped unless one is the identifier, from a joined dataset too. An explicit <code>id</code> or <code>key</code>
+    <p>Direct identifiers are dropped unless one is the identifier, from a
+  joined dataset too: columns named, ignoring case, <code>ccfid</code>, <code>MRN</code>,
+  <code>eMRN</code>, a Social Security number (<code>ssn</code>, <code>soc_sec</code>,
+  <code>social_security</code>, <code>pt_ssn</code>), and, held as text, a patient name
+  (<code>name</code>, <code>first_name</code>, <code>pt_name</code>, <code>surname</code>) or contact
+  details (<code>address</code>, <code>street</code>, <code>phone</code>, <code>email</code>). Any
+  other column whose values are shaped like Social Security numbers is dropped
+  too, and the record notes it by name; a column named as a date or time is
+  not read for that shape. A KEY column is never dropped. The
+  record lists every column dropped. An explicit <code>id</code> or <code>key</code>
   matches its column ignoring case, because
   <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html" class="external-link">hvtiRutilities::read_built()</a></code> lowercases column names. Identifier,
   key and date values are not printed: the record holds counts, and a
@@ -283,7 +291,7 @@ long dataset, not an imputation.</p></dd>
 <span class="r-in"><span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"job-data-example"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"Example"</span>, <span class="fl">1L</span>, adopt <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpTQfFHC/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/Rtmpf3XYK4/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
@@ -296,7 +304,7 @@ long dataset, not an imputation.</p></dd>
 <span class="r-in"><span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                 row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"built.csv"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/RtmpTQfFHC/job-data-example</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Study: /tmp/Rtmpf3XYK4/job-data-example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [x] _study.yml — study: Example</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [ ] renv.lock — no renv.lock; run renv::init() in the study project</span>
