@@ -33,12 +33,13 @@
 # Direct identifiers no analysis job needs, matched on the whole column name
 # ignoring case. ccfid, MRN, eMRN and a Social Security number are dropped
 # whatever the column holds. A patient name or contact detail is dropped only as
-# text, so a 0/1 phone or email indicator, contact by that route, stays. Whole
+# text, so a 0/1 phone or email indicator, contact by that route, stays, whether
+# it is held as numbers, text or a factor. Whole
 # names only, so pt_mrn, surgeon_name_code and phone_followup stay. Dates and
 # zip codes are not here: the EDA reads dates, and a build may need either.
 .identifier_name_pattern <- paste0(
   "^(ccfid|e?mrn|((pt|pat|patient)_?)?",
-  "(ssn|soc_?sec(urity)?(_?(no|num|number))?|social_?security(_?(no|num|number))?))$"
+  "(ssn|soc_?sec(urity)?|social_?security)(_?(no|num|number))?)$"
 )
 .identifier_text_pattern <- paste0(
   "^(((pt|pat|patient)_?)?((first|last|middle|full|f|l|m)_?)?name|surname",
@@ -66,11 +67,19 @@
   is.numeric(seen) && all(seen == floor(seen) & seen > 0 & seen < 1e9) && mean(seen >= 1e8) >= 0.5
 }
 
+# A name or contact column counts as text unless every value it holds is an
+# indicator's: 0/1, Y/N, yes/no or true/false, as text or as factor levels.
+.is_identifier_text <- function(x) {
+  if (!is.character(x) && !is.factor(x)) return(FALSE)
+  seen <- unique(tolower(trimws(as.character(x[!is.na(x)]))))
+  !all(seen %in% c("0", "1", "y", "n", "yes", "no", "true", "false", "t", "f", ""))
+}
+
 # The ID and any KEY column are kept whatever their name: a job keyed on ccfid
 # under another ID still needs it.
 .drop_identifiers <- function(d, id, key = character()) {
   others <- setdiff(names(d), c(id, key))
-  is_text <- vapply(d[others], function(x) is.character(x) || is.factor(x), logical(1L))
+  is_text <- vapply(d[others], .is_identifier_text, logical(1L))
   by_name <- others[grepl(.identifier_name_pattern, others, ignore.case = TRUE) |
                       (is_text & grepl(.identifier_text_pattern, others, ignore.case = TRUE))]
   rest <- setdiff(others, by_name)
@@ -794,7 +803,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     cohort_key <- key
     cohort_cols <- ids$data[0L, , drop = FALSE]
     joined <- .read_join(cfg, join, join_shape, ids$data, who$id, join_vars, reduce, values = !is.null(where),
-                         filter = record_filter)
+                         filter = record_filter, key = if (is.null(key)) character() else key)
     .check_where_join_vars(where, setdiff(names(ids$data), names(joined$data)))
     ids$data <- joined$data
     ids$dropped <- unique(c(ids$dropped, joined$dropped))
@@ -939,7 +948,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   invisible(TRUE)
 }
 
-.read_join <- function(cfg, join, resolved, cohort, cohort_id, join_vars, reduce, values = FALSE, filter = NULL) {
+.read_join <- function(cfg, join, resolved, cohort, cohort_id, join_vars, reduce, values = FALSE, filter = NULL,
+                       key = character()) {
   jr <- .read_job_source(cfg, join, NULL)
   a <- jr$value
   a_id <- names(a)[tolower(names(a)) == tolower(cohort_id)]
@@ -964,7 +974,10 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     held <- names(a)[tolower(names(a)) %in% c(tolower(cohort_id), .job_identifier_names)]
     stats::setNames(lapply(a[held], function(x) unique(.id_text(x[!is.na(x)]))), replace(held, held == a_id, cohort_id))
   }
-  a_ids <- .drop_identifiers(a, a_id, jkey)
+  # The job's KEY is kept as the join key is: it may name a joined column whose
+  # values the SSN rule would otherwise read as identifiers.
+  job_key <- .match_columns(replace(key, tolower(key) == tolower(cohort_id), a_id), names(a))
+  a_ids <- .drop_identifiers(a, a_id, union(jkey, intersect(job_key, names(a))))
   j <- .join_ancillary(cohort, a_ids$data, cohort_id, a_id, jkey, join_vars, reduce,
                        filter = if (!is.null(filter)) function(records, cols) filter(records, cols, id_values))
   list(

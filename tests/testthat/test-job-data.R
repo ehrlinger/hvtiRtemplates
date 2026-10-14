@@ -59,6 +59,20 @@ test_that("a name or contact rule drops text only; ccfid, MRN and SSN names drop
   expect_setequal(out$dropped, c("name", "address", "pt_ssn", "patient_social_security_no", "mrn"))
 })
 
+test_that("an SSN name with a number suffix is dropped however few values it holds", {
+  d <- data.frame(ccfid = 1:3, ssn_num = 1:3, ssn_no = 1:3, SSNnumber = 1:3, pt_ssn_num = 1:3, ssn_numeric_flag = 1:3)
+  out <- hvtiRtemplates:::.drop_identifiers(d, "ccfid")
+  expect_setequal(out$dropped, c("ssn_num", "ssn_no", "SSNnumber", "pt_ssn_num"))
+})
+
+test_that("a contact indicator held as a factor or as 0/1 text stays; contact text does not", {
+  d <- data.frame(ccfid = 1:3, phone = factor(c(0, 1, 1)), email = c("1", "0", NA), cell_phone = factor(c("Y", "N", "Y")),
+                  home_phone = factor(c("216-555-0100", "216-555-0101", NA)), name = factor(c("a", "b", "c")))
+  out <- hvtiRtemplates:::.drop_identifiers(d, "ccfid")
+  expect_setequal(names(out$data), c("ccfid", "phone", "email", "cell_phone"))
+  expect_setequal(out$dropped, c("home_phone", "name"))
+})
+
 test_that("the SSN value rule reads past blanks and unknowns, and leaves dates and zip codes alone", {
   set.seed(2)
   ssn <- sample(1e8:999999999, 12)
@@ -980,6 +994,26 @@ test_that("an unregistered key with no JOIN_KEY stops with both fixes", {
   out <- read_job_data(cfg, join = "echo", join_key = c("ccfid", "echo_date"))
   expect_identical(nrow(out$data), 3L)
   expect_false("Note" %in% out$record$step)
+})
+
+test_that("a job KEY naming a joined column is kept though its values look like SSNs", {
+  testthat::skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, "Join", 42L))
+  dd <- hvtiRutilities::study_dir("datasets", root)
+  utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70)), file.path(dd, "built.csv"), row.names = FALSE)
+  # Twelve nine-digit record keys: enough distinct values for the SSN value rule.
+  utils::write.csv(data.frame(ccfid = rep(1:3, 4), visit = rep(1:4, each = 3), record_key = 123456700L + 1:12,
+                              ef = 40 + 1:12), file.path(dd, "echo.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key = c("ccfid", "visit")))
+  cfg <- hvtiRutilities::study_config(root)
+  out <- read_job_data(cfg, join = "echo", key = c("ccfid", "record_key"))
+  expect_true("record_key" %in% names(out$data))
+  expect_identical(attr(out$record, "selection")$key, c("ccfid", "record_key"))
+  # Not named in KEY, the same column is dropped by its values.
+  expect_false("record_key" %in% names(read_job_data(cfg, join = "echo")$data))
 })
 
 test_that("a JOIN_KEY that differs from the registered key is used and noted", {
