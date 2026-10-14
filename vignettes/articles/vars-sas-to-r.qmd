@@ -135,21 +135,23 @@ the primitives that hvtiRdatabuild will provide.
 # EDIT: the umbrellas whose rules this study uses. Each name is a set of rule rows in the
 # private rules repository, the R home of what tp.vars.<umbrella> holds today.
 UMBRELLAS <- c("valve")
+RULES     <- read_rules(UMBRELLAS)                    # V4, read once per job; see the next section
 
 vars <- function(d) {
-  rules <- read_rules(UMBRELLAS)                      # V4, see the next section
   d |>
     hvtiRdatabuild::recode("nyha", c("1" = "I-II", "2" = "I-II", "3" = "III-IV", "4" = "III-IV"),
                            into = "nyha_grp") |>      # V1
     hvtiRdatabuild::dichotomize("age", at = 70, into = "age_ge70") |>  # V2
     hvtiRdatabuild::dummies("nyha") |>                # V3
-    apply_rules(rules) |>                             # V4
+    apply_rules(RULES) |>                             # V4
     hvtiRdatabuild::transform_ln("age") |>            # V5, writes age_ln
     hvtiRdatabuild::transform_inv("creat") |>         # V5
     hvtiRdatabuild::missing_flags(c("lvef", "creat"), rule = c(0.05, 0.30)) |>  # V6
-    hvtiRdatabuild::screening_fill(c("lvef", "creat")) |>                      # V7
-    hvtiRdatabuild::informative_fill("hx_smoke", value = 0)                    # V9, name not yet chosen
+    hvtiRdatabuild::informative_fill("hx_smoke", value = 0)                    # V9; the spec names no primitive yet
 }
+
+# V7 is for screening only, so it is not in vars(), which every job runs. A screening job
+# adds it to its own call: vars = function(d) d |> vars() |> hvtiRdatabuild::screening_fill(...)
 
 # V8: named variable sets, data rather than a function. The adoption job records the
 # SAStoR keep list as a legacy study's first set.
@@ -158,6 +160,11 @@ VARIABLE_SETS <- list(
   screen   = c("age_ln", "creat_inv", "lvef", "lvef_miss")
 )
 ```
+
+The `EDIT:` marker above differs from one in a job in one respect. Today's marker guard reads
+the job file only, so a marker left in the study's `R/` does not stop a final render. Whether
+study-level choices get a guard of their own is for the sub-project that builds the `vars`
+hook to settle.
 
 Each line is one action you can read on its own, and each primitive attaches an **action
 record**: what it did, its inputs and outputs, how many values it set and, for the aggregate
@@ -254,7 +261,7 @@ and a job pipes together the ones it wants.
 
 ```{r}
 #| label: skip-pieces
-vars_base       <- function(d) d |> hvtiRdatabuild::recode(...) |> apply_rules(read_rules(UMBRELLAS))
+vars_base       <- function(d) d |> hvtiRdatabuild::recode(...) |> apply_rules(RULES)
 vars_transforms <- function(d) d |> hvtiRdatabuild::transform_ln("age")
 vars_missing    <- function(d) d |> hvtiRdatabuild::missing_flags(c("lvef", "creat"))
 vars            <- function(d) d |> vars_base() |> vars_transforms() |> vars_missing()
@@ -279,7 +286,7 @@ become an interface every job depends on.
 **3. All or nothing.** A job runs the study's whole `vars()`, or passes `vars = NULL` and runs
 none of it. Anything finer is written into the job.
 
-Two things hold whichever shape is chosen. Every piece still runs before `WHERE`, so a
+Two things hold whichever shape is chosen. Whatever runs still runs before `WHERE`, so a
 skipped action changes which columns a job sees and never how the remaining aggregates are
 computed. And skipping does not remove a column that is already in the data, which matters for
 the adopted studies below.
