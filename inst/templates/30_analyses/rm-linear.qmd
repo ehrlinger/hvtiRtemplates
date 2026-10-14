@@ -96,8 +96,8 @@ REDUCE <- NULL
 JOIN_KEY <- NULL
 
 # EDIT: the continuous outcome. A skewed outcome such as length of stay is often
-# modeled on the log scale: write log() into the formula in the `fit` chunk and
-# leave OUTCOME naming the column. The coefficients are then on the log scale,
+# modeled on the log scale: write log() into the formula at the EDIT: marker in
+# the `fit` chunk and leave OUTCOME naming the column. The coefficients are then on the log scale,
 # and exp() of one is a ratio of geometric means, not a difference.
 OUTCOME <- "continuous_outcome"
 PREDICTORS <- c("age", "female")           # EDIT: the declared model; this job does not select variables.
@@ -163,10 +163,15 @@ knitr::kable(.missing_values)
 
 ```{r}
 #| label: fit
+# EDIT: the response's scale. As written it is OUTCOME itself; for a skewed outcome use
+# stats::reformulate(PREDICTORS, response = sprintf("log(%s)", OUTCOME)).
 model_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
 fit <- hvtiRpropensity::fit_linear(
   model_formula, d, outcome_col = OUTCOME, id_col = .id, imputation_col = IMPUTATION
 )
+# The residuals both figures draw, from the first imputation's fit under multiple imputation.
+.model <- fit$models[[1L]]
+.resid <- stats::na.omit(data.frame(fitted = stats::fitted(.model), residual = stats::residuals(.model)))
 ```
 
 ```{r}
@@ -205,8 +210,6 @@ knitr::kable(fit$tables$covariance)
 #| fig-cap: "Residuals against fitted values. Under multiple imputation, the first imputation's fit."
 # A funnel or a curve here means the constant-variance or the linearity
 # assumption fails, and the standard errors above cannot be trusted as printed.
-.model <- fit$models[[1L]]
-.resid <- stats::na.omit(data.frame(fitted = stats::fitted(.model), residual = stats::residuals(.model)))
 .fig <- ggplot(.resid, aes(x = fitted, y = residual)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_point(alpha = 0.6) +
