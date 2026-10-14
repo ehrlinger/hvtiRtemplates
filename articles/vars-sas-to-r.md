@@ -1,0 +1,405 @@
+# From vars.sas to R: study-build and variable actions
+
+## Who this is for
+
+This guide is for a biostatistician or statistical programmer who has
+worked inside a SAS study’s `vars.sas`. You know the two lines every
+analysis job opens with,
+
+``` sas
+%inc vars;
+%vars(impute=0, missing=1, propen=0, match=0, transf=1);
+```
+
+and you have probably edited a `vars.sas` that someone copied from the
+last study. The R side takes the work that program does apart into
+single-purpose actions. This guide shows where each piece of `vars.sas`
+(and of `bd.*.sas`) now lives, what a study’s R code looks like, and why
+some of the choices that will feel strange were made on purpose.
+
+> **A design, not yet a package**
+>
+> This article describes the design in
+> `dev/specs/2026-10-14-bd-vars-action-items-design.md`. **None of the
+> new functions exist yet.** Their names (`recode()`, `missing_flags()`,
+> `join_artifact()` and the rest) are working names that will settle
+> when the pieces are built, and every code chunk below is illustrative
+> and is not run.
+> [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+> exists today; its `vars` argument does not. Where this article and the
+> spec disagree, the spec wins.
+
+## What `vars.sas` does today
+
+It helps to say plainly what the program is before taking it apart.
+
+`vars.sas` is not a build step. Its header calls it the “macro to bring
+in variables for analysis”, and that is what it does: each analysis job
+runs `%vars(...)`, the macro recomputes everything, and nothing is
+saved. Its arguments are already a switchboard of modules. `IMPUTE=`
+turns on informative imputing (a missing value set to a stated
+constant), `MISSING=` the mean fill, `PROPEN=` and `MATCH=` merge a
+score or a match indicator that another job wrote, and `TRANSF=` the
+log, inverse and square transforms. Around those switches sit the
+recodes, the age dichotomies, the dummy columns, the missing-value
+indicators, the `%let` variable lists and, in many studies, value fixes
+and patient deletions that do not belong there.
+
+So the modules exist in spirit. They are knotted into one macro of about
+900 lines that each study copies and edits, and the copies drift. In one
+sampled study, a coronary indicator is set to `10` where its three
+siblings are set to `1`, and the mitral and tricuspid stenosis-severity
+fills test the *aortic* severity’s missingness, a copy-paste of the
+aortic line. Neither defect would survive a test of a single action.
+Both survived a 900-line file.
+
+There is one more place `%vars` runs that is easy to forget.
+`bd.SAStoR.sas`, the bridge that writes the XPORT file R reads, runs
+`%vars` with its defaults and then `keep`s a hand-picked column list.
+**Every legacy study already in R therefore carries SAS `vars` output
+inside its dataset,** and that `keep` list is the study’s de facto
+variable list. We come back to this under [adopted studies](#adopted).
+
+## The one rule the new design keeps
+
+Everything below follows from a boundary that was set at the 2026-10-14
+training:
+
+- **The study build (`bd`) queries, joins, corrects, sets the cohort and
+  computes the standard derivations.** It writes `built`.
+- **A job may filter rows and drop columns. It never corrects a value.**
+- **Multiple imputation, balancing scores and matching are their own
+  jobs,** not switches.
+
+The design then gives every verb a home, in one of three places. `B`
+actions are sections of the one `bd` job. `V` actions are small
+functions your study’s `vars()` calls. `J` actions are jobs of their own
+that save a small artifact keyed by patient.
+
+## Where everything went
+
+Read this table from the left: find the SAS piece you know, and the
+right-hand columns say where it lives now.
+
+| In SAS today | Action | Lives in | What it does |
+|----|----|----|----|
+| recode blocks in `vars.sas` | V1 recode | a vars function | a categorical recode |
+| age and other cut-points | V2 dichotomize | a vars function | cut-points or groupings into a new column |
+| dummy NYHA and the like | V3 dummies | a vars function | indicator columns from a categorical |
+| `%inc tp.vars.<umbrella>` | V4 rule | a vars function, driven by rule rows in a private repository | a derivation that differs by study or umbrella |
+| `TRANSF=`, `%ln`, `%inv` | V5 transform | a vars function | log, inverse and square, with their scale constants |
+| the flag block | V6 missing flags | a vars function, on the whole `built` | indicators by the 5 to 30% rule |
+| `MISSING=`, `proc standard replace` | V7 screening fill | a vars function, on the whole `built` | mean fill for screening only, with the means recorded |
+| `%let` lists, SAStoR’s `keep` | V8 variable sets | data in the study’s `R/` | named variable lists for analyses |
+| `IMPUTE=`, `if x = . then x = <constant>` | V9 informative fill | a vars function | a missing value set to a stated constant, recorded per column |
+| `proc mi`, `tp.bd.mult.imput` | J1 impute | its own job (`mi`) | `m` completed datasets, keyed and seeded |
+| `PROPEN=` | J2 balancing score | its own job (`lm-propensity_*`, `rm-balancing_continuous`) | `id → score` |
+| `MATCH=`, `tp.bd.*match*` | J3 match | its own job; prefix not yet chosen | `id → match id` |
+| `if ccfid = ... then` inside `vars` | B3 correct | the study overlay, applied by `bd` | one corrected cell, with its evidence |
+| `if ... then delete` inside `vars` | B4 cohort | `bd` for the study population; `WHERE` in a job | removes rows, with a reason and a count |
+| `proc print`, `proc means` | diagnostics | a `dt` job, or `bd`’s report | prints and summaries of intermediate data |
+
+One switch name misleads. **`IMPUTE=` is not multiple imputation.** It
+sets a missing value to a stated constant, which is a vars function
+(V9). Multiple imputation is J1, a job of its own, and in SAS it already
+lived in separate programs.
+
+The `bd.*.sas` program breaks into sections the same way:
+
+| Section | Does | In SAS today |
+|----|----|----|
+| B0 adopt | registers a legacy SAStoR dataset, recording that SAS applied `vars` and the `keep` list | `bd.SAStoR.sas` |
+| B1 cut | reads the corrected base, pinned with `as_of` | `set modules.bd*_&PULLDT` |
+| B2 join | attaches a source by key; a *windowed* join (the latest pre-operative lab before the operation) is a named kind | `merge`, `proc sql`, lab programs |
+| B3 correct | applies the study overlay’s cells | `if ccfid = ... then` |
+| B4 cohort | removes rows, each rule with a reason and a count | `if ... then delete` |
+| B5 derive | intervals, age, BSA, from the master’s own definitions | scattered through `bd` |
+| B6 select | keeps or drops columns | `keep`, `drop` |
+| B7 register | writes `built` and registers a dated version | nothing |
+
+Three checks follow from the tables, and later each becomes a test. `bd`
+never recodes or transforms. `vars` never filters rows and never
+corrects a value. A J job never writes into `built`.
+
+## A study’s `R/vars.R`
+
+In SAS, `vars.sas` sits in the study and every job includes it. The R
+equivalent is a file in the study’s `R/` folder, which `.job_setup()`
+already sources at the top of every job. It defines one function,
+`vars()`, that takes the data and returns it, and it reads as a pipe of
+the primitives that hvtiRdatabuild will provide.
+
+``` r
+
+# R/vars.R: the study's variable actions. Illustrative; the primitives are working names.
+
+# EDIT: the umbrellas whose rules this study uses. Each name is a set of rule rows in the
+# private rules repository, the R home of what tp.vars.<umbrella> holds today.
+UMBRELLAS <- c("valve")
+RULES     <- read_rules(UMBRELLAS)                    # V4, read once per job; see the next section
+
+vars <- function(d) {
+  d |>
+    hvtiRdatabuild::recode("nyha", c("1" = "I-II", "2" = "I-II", "3" = "III-IV", "4" = "III-IV"),
+                           into = "nyha_grp") |>      # V1
+    hvtiRdatabuild::dichotomize("age", at = 70, into = "age_ge70") |>  # V2
+    hvtiRdatabuild::dummies("nyha") |>                # V3
+    apply_rules(RULES) |>                             # V4
+    hvtiRdatabuild::transform_ln("age") |>            # V5, writes age_ln
+    hvtiRdatabuild::transform_inv("creat") |>         # V5
+    hvtiRdatabuild::missing_flags(c("lvef", "creat"), rule = c(0.05, 0.30)) |>  # V6
+    hvtiRdatabuild::informative_fill("hx_smoke", value = 0)                    # V9; the spec names no primitive yet
+}
+
+# V7 is for screening only, so it is not in vars(), which every job runs. A screening job
+# adds it to its own call: vars = function(d) d |> vars() |> hvtiRdatabuild::screening_fill(...)
+
+# V8: named variable sets, data rather than a function. The adoption job records the
+# SAStoR keep list as a legacy study's first set.
+VARIABLE_SETS <- list(
+  baseline = c("age", "sex", "nyha_grp", "lvef", "creat"),
+  screen   = c("age_ln", "creat_inv", "lvef", "lvef_miss")
+)
+```
+
+The `EDIT:` marker above differs from one in a job in one respect.
+Today’s marker guard reads the job file only, so a marker left in the
+study’s `R/` does not stop a final render. Whether study-level choices
+get a guard of their own is for the sub-project that builds the `vars`
+hook to settle.
+
+Each line is one action you can read on its own, and each primitive
+attaches an **action record**: what it did, its inputs and outputs, how
+many values it set and, for the aggregate actions (V6, V7), the
+statistics it used. Those records print in the report’s “About this run”
+table, so the means a screening fill used are on the page rather than in
+a SAS log.
+
+Nothing here is written to disk. That is the same behavior as `%vars`:
+every job recomputes, and the study keeps one definition.
+
+## Umbrella rules from the private repository
+
+`tp.vars.aorta`, `tp.vars.cabg` and their siblings exist because some
+derivations differ by umbrella. Regurgitation across sources may be the
+maximum in one umbrella and taken by echo priority in another.
+Pre-operative atrial fibrillation may blank post-operative atrial
+fibrillation. A mitral cleanup must not run in an aorta study.
+
+The design splits each of those into **mechanism** and **policy**. The
+mechanism is a generic, tested primitive in hvtiRdatabuild:
+`max_across()`, `coalesce_by_priority()`, `set_missing_if()`. The
+policy, which primitive applies to which columns for which umbrella, is
+a *rule row*: the umbrella, the output column, the primitive, its inputs
+and arguments, an owner and a date. The rows are kept in a private Azure
+DevOps repository, checked out read-only under `/programs/development/`
+on the share so jobs read them directly. An umbrella is the set of rows
+that share its name.
+
+``` r
+
+# Illustrative. The spec names neither function, nor the repository's path (it is open).
+read_rules <- function(umbrellas) {
+  rows <- utils::read.csv("/programs/development/<rules-repository>/rules.csv")
+  rows[rows$umbrella %in% umbrellas, ]
+}
+# apply_rules(d, rules) calls the primitive each row names, on that row's columns.
+```
+
+A job records the rules file’s commit and SHA-256 in its provenance, the
+same way it records the overlay’s, so a report can say exactly which
+rules it ran under. Because the rows are data and not code, moving them
+into a database table later changes where they are read from and nothing
+about what they say.
+
+## A job that uses `vars`
+
+[`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+will gain a `vars` argument. You pass it the function, and the shared
+data step runs it **after the read and before `WHERE`**:
+
+``` r
+
+# In a job's edit-study-choices chunk, as today:
+DATASET      <- "study"
+ANALYSIS_SET <- NULL
+WHERE        <- quote(age >= 18)
+ID           <- "ccfid"
+
+# The data step, with the new argument. vars() came from the study's R/vars.R.
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, vars = vars)
+d <- job_data$data
+```
+
+The order matters, and it is the SAS order: `%vars`, then the job’s
+subset. A row-wise action such as a recode gives the same value
+whichever way round you run it. An aggregate does not. The
+missing-indicator rule and the screening means are computed on the
+**whole `built`**, and the job then keeps its rows. That is what makes
+the R numbers reconcile with the SAS jobs being ported (see [why the
+whole built](#whole-built)).
+
+## Joining a balancing score or a match
+
+In SAS, `PROPEN=1` merges a score that another job left in a dataset. In
+R, the balancing score job (`lm-propensity_binary` and its siblings, or
+`rm-balancing_continuous`) writes a small parquet keyed by patient,
+`id → score`, registered with the `built` version it was fitted on. A
+match job writes `id → match id` the same way. An analysis job joins one
+after the read:
+
+``` r
+
+# Illustrative: join_artifact() is a working name.
+d <- job_data$data |>
+  join_artifact("propen")      # adds the score column, by ID
+```
+
+`join_artifact()` **stops if the artifact was fitted on a different
+`built` version** than the one the job read. A score fitted to last
+month’s cohort is wrong for this month’s, and nothing in the joined data
+would look wrong. In SAS nothing checks for that mismatch; here it is a
+stop with a message naming both versions.
+
+## Skipping actions a job does not need
+
+`%vars` lets a job turn modules off through its switches. A job that
+fits on raw scale has no use for the transforms, and a descriptive table
+may want no missing flags at all.
+
+**How an R job does this is not decided yet.** The spec does not define
+per-job skipping. Three shapes are on the table, and the choice will be
+recorded in the spec once it is made.
+
+**1. Named pieces the job composes.** The study’s `R/vars.R` defines the
+pieces separately, and a job pipes together the ones it wants.
+
+``` r
+
+vars_base       <- function(d) d |> hvtiRdatabuild::recode(...) |> apply_rules(RULES)
+vars_transforms <- function(d) d |> hvtiRdatabuild::transform_ln("age")
+vars_missing    <- function(d) d |> hvtiRdatabuild::missing_flags(c("lvef", "creat"))
+vars            <- function(d) d |> vars_base() |> vars_transforms() |> vars_missing()
+
+# A job that skips the transforms:
+read_job_data(.cfg, where = WHERE, vars = function(d) d |> vars_base() |> vars_missing())
+```
+
+Each piece can be read and tested on its own, and `vars()` holds no
+switches. A job’s call names what runs, rather than what doesn’t.
+
+**2. A `skip` argument on the composite.** Closest to the `%vars`
+switches you know.
+
+``` r
+
+read_job_data(.cfg, where = WHERE, vars = function(d) vars(d, skip = "transforms"))
+```
+
+`vars()` then carries the branching itself, and the step names
+(`"transforms"`, `"missing"`) become an interface every job depends on.
+
+**3. All or nothing.** A job runs the study’s whole `vars()`, or passes
+`vars = NULL` and runs none of it. Anything finer is written into the
+job.
+
+Two things hold whichever shape is chosen. Whatever runs still runs
+before `WHERE`, so a skipped action changes which columns a job sees and
+never how the remaining aggregates are computed. And skipping does not
+remove a column that is already in the data, which matters for the
+adopted studies below.
+
+## The conversations
+
+These are the objections we expect from people who have spent years in
+`vars.sas`. Each one has a reason behind it.
+
+### Why are the aggregates computed on the whole `built`?
+
+Because that is what SAS does today, and the first job of the R port is
+to give the same numbers. `%vars` runs before the job subsets, so the 5
+to 30% missing-indicator rule and the screening means see every row in
+`built`. Computing them on each job’s cohort was considered and not
+chosen: it would move numbers relative to the SAS jobs being ported, and
+it would let one study define `lvef_miss` one way in one job and another
+way in the next, since each job keeps different rows. On the whole
+`built`, a study has one definition per variable.
+
+### Why can’t I fix a value in `vars`?
+
+You can still fix it, just not there. A value fix inside `vars.sas` is
+invisible: nobody outside the study learns of it, every job silently
+re-applies it, and a copy of `vars.sas` carries it into the next study
+whether it applies or not. In the new design a correction is one cell in
+the study’s **overlay**: the key, the variable, the value expected
+before, the new value, and the evidence. `bd` applies it, checks that
+the prior value still holds, recomputes the derivations from the
+corrected cell, and proposes it upstream, so another study receives it
+on its next cut once it is accepted. The same goes for patient removals,
+which become cohort rules in `bd` (each with a reason and a count) or a
+`WHERE` in the one job that needs it.
+
+### Why are imputation, balancing scores and matching their own jobs?
+
+Because each is a fitted model with a seed, and its output should be
+produced once, looked at, and then reused. SAS already keeps them apart
+in part. Multiple imputation lives in its own programs (`proc mi`,
+`tp.bd.mult.imput`), and `PROPEN=` and `MATCH=` merge a dataset another
+job wrote. That is the right idea, but nothing ties that dataset to the
+version of `built` it was fitted on. (Despite its name, `IMPUTE=` is not
+multiple imputation. It sets a missing value to a stated constant, and
+stays a vars function, V9.) As a job, each is seeded once and reviewable
+as a report of its own, and every analysis that uses it joins the same
+values. It is also never written back into `built`, so `built` stays the
+data and the score stays a result computed from a named version of it,
+which is what lets `join_artifact()` refuse a stale one.
+
+### Is `vars` going away?
+
+No. The function stays, and it is still the one place a study defines
+its analysis variables. What goes is the 900-line copy: the corrections
+move to the overlay, the deletions to the cohort, the models to their
+own jobs, and the umbrella blocks to rule rows. What is left is short
+enough to read, and each line is an action that can be tested.
+
+### My study came from SAS, and its data already has `age_ln`
+
+This is the case to think about first, because every legacy study
+already in R is in it. `bd.SAStoR.sas` ran `%vars` before writing the
+XPORT file, so the dataset already carries the SAS transforms, flags and
+recodes. When the study is adopted (B0), the adoption job records that
+**SAS applied `vars`**, and records the SAStoR `keep` list as the
+study’s first variable set.
+
+Then every primitive is **idempotent, or refuses**. If the column it
+would write already exists, it compares its own values with the ones
+there. If they agree, it does nothing more. If they do not, it stops and
+names the column. So running the R `vars()` over an adopted dataset can
+never silently transform twice, or quietly replace SAS’s definition of
+`age_ln` with a different one. A disagreement is a finding to look at,
+and it often turns out to be exactly the kind of copy-paste defect
+described at the top of this article.
+
+How close is “agree” is still open: exact equality, or a tolerance for
+floating-point transforms that went through XPORT.
+
+## What is still open
+
+These are decided later, and this article will follow the spec when they
+are:
+
+- how a job skips actions it does not need (above);
+- the match job’s prefix, since `cm` is already Cox matching in the
+  taxonomy;
+- the rules repository’s name, its path under `/programs/development/`,
+  and who reviews rule rows;
+- whether a `dt` job takes over `bd`’s diagnostic output, or `bd`’s
+  report keeps it;
+- the idempotence tolerance for adopted data;
+- whether `si`, single imputation, survives once screening fill is a
+  function and multiple imputation a job.
+
+A census of the `bd`, `vars` and SAStoR programs across the corpus is
+staged and not yet run. Its counts may move an action from one row of
+the tables above to another.

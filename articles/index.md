@@ -17,3 +17,8 @@
 
 - [The template
   catalog](https://ehrlinger.github.io/hvtiRtemplates/articles/template-catalog.md):
+
+### Designs in progress
+
+- [From vars.sas to R: study-build and variable
+  actions](https://ehrlinger.github.io/hvtiRtemplates/articles/vars-sas-to-r.md):
