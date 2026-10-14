@@ -16,12 +16,33 @@ call that adds it to your study, and the report it produces on a
 synthetic study. The full reference is at
 <https://ehrlinger.github.io/hvtiRtemplates/>.
 
-## Install
+## Installation
+
+hvtiRtemplates is part of the HVTI R family. Install it with the rest of
+the family through [hvtiR](https://github.com/ehrlinger/hvtiR):
 
 ``` r
 
-renv::install("ehrlinger/hvtiRtemplates")
+# install.packages("pak")
+pak::pak("ehrlinger/hvtiR")
+hvtiR::install()
 ```
+
+`hvtiR::install()` installs every member in one call, so the versions
+the members require of one another resolve together. Update later with
+`hvtiR::update()`, from a fresh R session: it will not overwrite a
+package that is already loaded.
+
+To install hvtiRtemplates on its own:
+
+``` r
+
+pak::pak("ehrlinger/hvtiRtemplates")
+```
+
+In a project that uses renv, install with
+`renv::install("ehrlinger/hvtiRtemplates")` instead, so the package
+lands in the project library.
 
 ## What is here
 

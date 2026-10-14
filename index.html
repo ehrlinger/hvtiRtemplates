@@ -69,10 +69,18 @@
 <p>Versioned analysis job templates for the HVTI CORR group at the Cleveland Clinic.</p>
 <p><strong>Start at the <a href="https://ehrlinger.github.io/hvtiRtemplates/gallery/">template gallery</a>:</strong> every template, what it is for, the <code><a href="reference/add_job.html">add_job()</a></code> call that adds it to your study, and the report it produces on a synthetic study. The full reference is at <a href="https://ehrlinger.github.io/hvtiRtemplates/" class="uri">https://ehrlinger.github.io/hvtiRtemplates/</a>.</p>
 <div class="section level2">
-<h2 id="install">Install<a class="anchor" aria-label="anchor" href="#install"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
+<p>hvtiRtemplates is part of the HVTI R family. Install it with the rest of the family through <a href="https://github.com/ehrlinger/hvtiR" class="external-link">hvtiR</a>:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="st">"ehrlinger/hvtiRtemplates"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span>
+<span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><code>hvtiR::install()</code> installs every member in one call, so the versions the members require of one another resolve together. Update later with <code>hvtiR::update()</code>, from a fresh R session: it will not overwrite a package that is already loaded.</p>
+<p>To install hvtiRtemplates on its own:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiRtemplates"</span><span class="op">)</span></span></code></pre></div>
+<p>In a project that uses renv, install with <code>renv::install("ehrlinger/hvtiRtemplates")</code> instead, so the package lands in the project library.</p>
 </div>
 <div class="section level2">
 <h2 id="what-is-here">What is here<a class="anchor" aria-label="anchor" href="#what-is-here"></a>
@@ -171,7 +179,7 @@
 </h2>
 <p>For a study with SAS programs already in <code>descriptive/</code> and <code>graphs/</code>, first adopt its directory with <code>hvtiRutilities::study_setup(..., adopt = TRUE)</code> and register its built datasets with <code>register_data()</code>. The tutorial <a href="articles/study-setup.html">Set up an hvtiR study for descriptive and EDA work</a> walks through new-study creation, recoverable legacy cleanup and adoption, data registration, the EDA analysis set, all five pre-analysis jobs, and output review using synthetic data.</p>
 <p>From that study’s root, migrate a descriptive-table job with:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">job</span> <span class="op">&lt;-</span> <span class="fu">hvtiRtemplates</span><span class="fu">::</span><span class="fu"><a href="reference/migrate_job.html">migrate_job</a></span><span class="op">(</span></span>
 <span>  source <span class="op">=</span> <span class="st">"descriptive/dc.tables.sas"</span>,</span>
 <span>  subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span>, prefix <span class="op">=</span> <span class="st">"dc"</span>, qualifier <span class="op">=</span> <span class="st">"tables"</span>,</span>
