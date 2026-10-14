@@ -93,10 +93,11 @@ job calls through `vars`; `J` actions are their own jobs.
 | V3 | **dummies** | indicator columns from a categorical | vars function | `vars.sas` |
 | V4 | **rule** | a study- or umbrella-differing derivation, from a rule row | vars function | `tp.vars.<umbrella>` |
 | V5 | **transform** | log, inverse, square, with their scale constants | vars function | `%ln`, `%inv` |
-| V6 | **missing flags** | indicators by the 5 to 30% rule, on the whole `built` | vars function | `MISSING=`, the flag block |
-| V7 | **screening fill** | mean fill for screening only, on the whole `built`, with the means recorded | vars function | `proc standard replace` |
+| V6 | **missing flags** | indicators by the 5 to 30% rule, on the whole `built` | vars function | the flag block |
+| V7 | **screening fill** | mean fill for screening only, on the whole `built`, with the means recorded | vars function | `MISSING=` (`proc standard replace`) |
+| V9 | **informative fill** | a missing value set to a stated constant (`if x = . then x = <constant>`), recorded per column | vars function | `IMPUTE=` |
 | V8 | **variable sets** | named variable lists for analyses | data in the study's `R/`, not a function | `%let` lists, SAStoR's `keep` |
-| J1 | **impute** | `m` completed datasets, keyed and seeded | own job (`mi`) | `IMPUTE=`, `tp.bd.mult.imput` |
+| J1 | **impute** | `m` completed datasets, keyed and seeded | own job (`mi`) | `proc mi`, `tp.bd.mult.imput` |
 | J2 | **balancing score** | `id → score` | own job (`lm-propensity_*`, `rm-balancing_continuous`) | `PROPEN=` |
 | J3 | **match** | `id → match id` | own job; prefix open (section 8) | `MATCH=`, `tp.bd.*match*` |
 | | **diagnostics** | prints and summaries of intermediate data | `dt` job, or `bd`'s report | `proc print`, `proc means` in `bd` |
@@ -165,17 +166,26 @@ over `/studies`. Tests: `dev/specs/artifacts/test_bd_vars_census.py`.
 - **Classifier.** Comments stripped, split into statements, one category per statement:
   query, join, correction, patient removal, row filter, column drop, standard derivation,
   recode, dichotomize, missing flag, missing fill, transform, mean impute, MI,
-  balancing and match, variable list, diagnostic, other. Patient removal and missing fill are
+  balancing and match, variable list, diagnostic, other. `%*` macro comments are stripped with
+  the other comment forms. Patient removal and missing fill are
   added to the categories asked for, because the training showed both and neither fits another
   category. It also counts the `tp.vars.*` modules each program includes and whether a SAStoR
   program calls `%vars`.
 - **What it answers.** How many studies' build and vars programs contain each category (the
-  latest copy per study, so dated copies do not inflate the count), and which `%vars`
-  switches jobs actually turn on. That second count says which J actions studies use in
-  practice.
+  latest copy of each program in each study, so dated copies such as `bd.data050415` do not
+  inflate the count while distinct programs such as `bd.mult.imput` are all kept), and which
+  `%vars` switches jobs actually turn on. The switches map to actions as `IMPUTE` to V9,
+  `MISSING` to V7, `PROPEN` to J2, `MATCH` to J3 and `TRANSF` to V5, so only `PROPEN` and
+  `MATCH` are evidence of J-action use; multiple imputation (J1) is counted from the
+  programs' own `proc mi` and imputation-macro statements.
 - **Privacy.** A correction is recognised by its shape, a patient key compared with a literal,
   and the literal is never written. The private CSV (paths, hashes, counts) stays on the
-  share; the public JSON holds aggregate counts only and is the file to commit.
+  share; the public JSON holds aggregate counts only and is the file to commit. `tp.vars.*`
+  module names stay in the private CSV, because a module can be named for a study; the public
+  JSON gives only how many programs include one.
+- **Coverage.** A file or folder the scan cannot read is listed in a private
+  `-unreadable.txt`, the public JSON is marked `"coverage": "incomplete"`, and the run exits 2,
+  so a partial census cannot pass as a complete one.
 - **Blind spots.** Macro-generated code is not expanded; a `proc sql` step is classified by
   keyword, not parsed; precedence between categories is the order of the tests in
   `classify()`.

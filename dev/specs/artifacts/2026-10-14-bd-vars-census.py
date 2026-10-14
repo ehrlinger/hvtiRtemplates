@@ -25,6 +25,7 @@ import json
 import os
 import re
 import statistics
+import sys
 from collections import Counter, defaultdict
 from datetime import date
 from pathlib import Path
@@ -98,8 +99,9 @@ SKIP_DIRS = {".git", ".rproj.user", "node_modules", "packrat", "renv", "__pycach
 
 
 def strip_comments(text):
-    """Drop /* */ and statement comments so commented-out code does not count."""
+    """Drop /* */, %* macro comments and * statement comments, so commented-out code does not count."""
     text = re.sub(r"/\*.*?\*/", " ", text, flags=re.DOTALL)
+    text = re.sub(r"%\*[^;]*;", " ", text)   # %* ...; is a comment wherever it stands
     while True:
         stripped = re.sub(r"(^|;)(\s*)\*[^;]*;", r"\1\2", text)
         if stripped == text:
@@ -258,14 +260,28 @@ def vars_calls(lower):
         yield args
 
 
+def logical_program(name):
+    """The program a file is a copy of: bd.data050415.sas and bd.data_12815.sas are both bd.data.
+
+    Dated copies of one program are versions of it; differently named programs
+    (bd.data, bd.mult.imput) are distinct and are all kept.
+    """
+    stem = re.sub(r"\.sas$", "", name.lower())
+    stem = re.sub(r"[._-]?\d{4,8}(?=$|[._-])", "", stem)
+    stem = re.sub(r"[._-]?(?:old|new|bak|copy|orig|v\d+)$", "", stem)
+    return stem.rstrip("._-")
+
+
 def study_key(path, marker_dirs):
     parts = path.parts
     at = max(i for i, p in enumerate(parts) if p.lower() in marker_dirs)
     return str(Path(*parts[:at]))
 
 
-def walk(root):
-    for dirpath, dirnames, filenames in os.walk(root):
+def walk(root, unreadable):
+    def record(err):
+        unreadable.append(getattr(err, "filename", None) or str(err))
+    for dirpath, dirnames, filenames in os.walk(root, onerror=record):
         dirnames[:] = [d for d in dirnames if d.lower() not in SKIP_DIRS and not d.startswith(".")]
         here = Path(dirpath)
         parts = {p.lower() for p in here.parts}
@@ -283,10 +299,12 @@ def main():
 
     rows = []
     calls = []
-    for path, parts in walk(args.root):
+    unreadable = []
+    for path, parts in walk(args.root, unreadable):
         try:
             data = path.read_bytes()
         except OSError:
+            unreadable.append(str(path))
             continue
         text = data.decode("latin-1")
         if parts & DATASET_DIRS:
@@ -295,6 +313,7 @@ def main():
                 counts, lower = scan_program(text)
                 rows.append({
                     "study": study_key(path, DATASET_DIRS),
+                    "program": logical_program(path.name),
                     "path": str(path),
                     "kind": kind,
                     "template": path.name.lower().startswith("tp."),
@@ -311,7 +330,7 @@ def main():
                 calls.append({"study": study_key(path, JOB_DIRS), "path": str(path), **call})
 
     with open(args.private_csv, "w", newline="") as fh:
-        fields = ["study", "path", "kind", "template", "sha256", "mtime", "lines", "calls_vars", "tp_vars", *CATEGORIES]
+        fields = ["study", "program", "path", "kind", "template", "sha256", "mtime", "lines", "calls_vars", "tp_vars", *CATEGORIES]
         writer = csv.DictWriter(fh, fieldnames=fields)
         writer.writeheader()
         for row in rows:
@@ -321,37 +340,56 @@ def main():
         writer.writeheader()
         writer.writerows(calls)
 
+    with open(Path(args.private_csv).with_name(Path(args.private_csv).stem + "-unreadable.txt"), "w") as fh:
+        fh.writelines(f"{u}\n" for u in unreadable)
     with open(args.public_json, "w") as fh:
-        json.dump(summarise(rows, calls), fh, indent=2)
+        json.dump(summarise(rows, calls, len(unreadable)), fh, indent=2)
+    if unreadable:
+        print(f"INCOMPLETE: {len(unreadable)} files or folders could not be read; "
+              "see the -unreadable.txt file. The counts are a lower bound.", file=sys.stderr)
+        sys.exit(2)
 
 
-def summarise(rows, calls):
-    """Aggregate counts only: no path, study name, hash or value."""
-    out = {"generated": date.today().isoformat(), "categories": list(CATEGORIES), "programs": {}}
+def summarise(rows, calls, unreadable=0):
+    """Aggregate counts only: no path, study name, program or module name, hash or value."""
+    out = {
+        "generated": date.today().isoformat(),
+        "coverage": "complete" if not unreadable else "incomplete",
+        "unreadable": unreadable,
+        "categories": list(CATEGORIES),
+        "programs": {},
+    }
     for kind in ("bd", "vars", "sastor"):
         for template in (False, True):
             sel = [r for r in rows if r["kind"] == kind and r["template"] == template]
             if not sel:
                 continue
             latest = {}
-            for r in sel:                   # the most recently modified copy per study
-                if r["study"] not in latest or r["mtime"] > latest[r["study"]]["mtime"]:
-                    latest[r["study"]] = r
+            for r in sel:                   # the most recent copy of each program in each study
+                k = (r["study"], r["program"])
+                if k not in latest or r["mtime"] > latest[k]["mtime"]:
+                    latest[k] = r
             cur = list(latest.values())
+            by_study = defaultdict(Counter)  # a study's programs of this kind, summed
+            for r in cur:
+                by_study[r["study"]].update({c: r[c] for c in CATEGORIES})
             entry = {
                 "files": len(sel),
-                "studies": len(latest),
+                "programs_latest": len(cur),
+                "studies": len(by_study),
                 "median_lines_latest": statistics.median(r["lines"] for r in cur),
                 "calls_vars_latest": sum(r["calls_vars"] for r in cur),
                 "per_category_latest": {
                     c: {
-                        "studies_with": sum(1 for r in cur if r[c] > 0),
-                        "statements": sum(r[c] for r in cur),
-                        "median_when_present": statistics.median([r[c] for r in cur if r[c] > 0] or [0]),
+                        "studies_with": sum(1 for t in by_study.values() if t[c] > 0),
+                        "statements": sum(t[c] for t in by_study.values()),
+                        "median_when_present": statistics.median([t[c] for t in by_study.values() if t[c] > 0] or [0]),
                     }
                     for c in CATEGORIES
                 },
-                "tp_vars_modules_latest": dict(Counter(m for r in cur for m in r["tp_vars"]).most_common()),
+                # Module names stay in the private CSV: a tp.vars file can be named for a study.
+                "including_tp_vars_latest": sum(1 for r in cur if r["tp_vars"]),
+                "distinct_tp_vars_modules_latest": len({m for r in cur for m in r["tp_vars"]}),
             }
             out["programs"][f"{kind}{'_template' if template else ''}"] = entry
     switch_on = {s: sum(1 for c in calls if c.get(s, "").strip() not in {"", "0"}) for s in SWITCHES}
