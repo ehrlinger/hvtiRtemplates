@@ -229,8 +229,13 @@ if (nrow(d) != .rows_before_derive) {
 .derived <- setdiff(names(d), .columns_before_derive)
 .carry <- unique(c(ID, KEY, JOIN_BY, KEEP, .derived))
 d <- d[, intersect(.carry, names(d)), drop = FALSE]
-# MRN and eMRN are dropped unless one is the ID, as read_job_data() drops them.
-d <- d[, !(names(d) %in% setdiff(c("mrn", "emrn"), ID)), drop = FALSE]
+# Direct identifiers are dropped unless one is the ID or KEY, as read_job_data() drops them: ccfid, MRN,
+# eMRN, Social Security numbers, patient names and contact details, by name, and a column whose
+# values are shaped like SSNs whatever its name. A lookup by identifier belongs in the query above,
+# never in the built a statistician reads.
+.dropped <- hvtiRtemplates:::.drop_identifiers(d, ID, KEY)
+d <- .dropped$data
+if (length(.dropped$dropped)) message("Identifiers dropped from the built: ", toString(.dropped$dropped))
 .repeats <- sum(duplicated(d[KEY]))
 if (.repeats) {
   .bd_stop("write-built", .repeats, " row(s) repeat a value of KEY (", toString(KEY), "). Exclude the extra rows in ",

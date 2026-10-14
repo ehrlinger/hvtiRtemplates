@@ -50,7 +50,9 @@ test_that("the default predictors leave out a ccfid the job is not keyed on, and
   out <- utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit", "save"), env, nb_randid_choices()))
   expect_identical(env$.id, "randid")
   expect_identical(sort(env$.predictors), sort(c("age", "female", "grp")))
-  expect_true(any(grepl("Identifier columns left out of the predictors: ccfid", out, fixed = TRUE)))
+  # read_job_data() drops a ccfid that is neither the ID nor a KEY column, and the data table says so.
+  expect_false("ccfid" %in% names(env$d))
+  expect_match(env$job_data$record$value[env$job_data$record$step == "Identifiers dropped"], "`ccfid`", fixed = TRUE)
   # By name only: no ccfid value is printed.
   expect_false(any(vapply(unique(data$ccfid), function(v) any(grepl(v, out, fixed = TRUE)), logical(1L))))
   expect_true(file.exists(file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree.rds")))

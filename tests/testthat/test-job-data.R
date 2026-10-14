@@ -32,6 +32,77 @@ test_that("MRN and eMRN are dropped unless one is the ID; no other name is", {
   expect_true("mrn" %in% hvtiRtemplates:::.drop_identifiers(lower, "ccfid")$dropped)
 })
 
+test_that("SSNs, names, contact details and a ccfid that is not the ID are dropped by name", {
+  people <- data.frame(
+    randid = 1:3, ccfid = 11:13, SSN = 1:3, soc_sec_no = 1:3, social_security = 1:3,
+    name = "x", first_name = "x", LName = "x", patient_name = "x", surname = "x",
+    address = "x", street = "x", phone = "x", cell_phone = "x", email = "x",
+    # Ordinary columns whose names only contain an identifier's.
+    surgeon_name_code = 1:3, rename_flag = 1:3, phone_followup = 1:3, zip = 1:3, dob = 1:3
+  )
+  out <- hvtiRtemplates:::.drop_identifiers(people, "randid")
+  expect_setequal(out$dropped, c("ccfid", "SSN", "soc_sec_no", "social_security", "name", "first_name", "LName",
+                                 "patient_name", "surname", "address", "street", "phone", "cell_phone", "email"))
+  expect_setequal(names(out$data), c("randid", "surgeon_name_code", "rename_flag", "phone_followup", "zip", "dob"))
+  # The ID is kept whatever its name.
+  expect_true("ccfid" %in% names(hvtiRtemplates:::.drop_identifiers(people[-1], "ccfid")$data))
+  # So is a KEY column: a job keyed on ccfid under another ID still needs it.
+  expect_true("ccfid" %in% names(hvtiRtemplates:::.drop_identifiers(people, "randid", key = "ccfid")$data))
+})
+
+test_that("a name or contact rule drops text only; ccfid, MRN and SSN names drop whatever they hold", {
+  d <- data.frame(ccfid = 1:3, phone = c(0L, 1L, 1L), email = c(1, 0, 1), name = factor(c("a", "b", "c")),
+                  address = "x", pt_ssn = 1:3, patient_social_security_no = 1:3, mrn = 1:3)
+  out <- hvtiRtemplates:::.drop_identifiers(d, "ccfid")
+  # A 0/1 contact-route indicator is not a phone number.
+  expect_setequal(names(out$data), c("ccfid", "phone", "email"))
+  expect_setequal(out$dropped, c("name", "address", "pt_ssn", "patient_social_security_no", "mrn"))
+})
+
+test_that("the SSN value rule reads past blanks and unknowns, and leaves dates and zip codes alone", {
+  set.seed(2)
+  ssn <- sample(1e8:999999999, 12)
+  hyphen <- sprintf("%03d-%02d-%04d", ssn %/% 1e6, (ssn %/% 1e4) %% 100, ssn %% 1e4)
+  d <- data.frame(
+    ccfid = 1:12,
+    with_unknowns = c(hyphen[1:10], "", "UNK"),
+    spaced = gsub("-", " ", hyphen),
+    # Raw SAS datetimes, seconds since 1960, are nine-digit numbers for 1963 to 1991.
+    surg_dttm = ssn, or_time = ssn, dt_adm = ssn,
+    # Zip+4 is five digits then four, never three, two and four.
+    zip4 = sprintf("%05d-%04d", 44100 + 1:12, 1:12),
+    mixed_sep = sub("-", " ", hyphen),
+    stringsAsFactors = FALSE
+  )
+  out <- hvtiRtemplates:::.drop_identifiers(d, "ccfid")
+  expect_setequal(out$by_value, c("with_unknowns", "spaced"))
+  expect_setequal(names(out$data), c("ccfid", "surg_dttm", "or_time", "dt_adm", "zip4", "mixed_sep"))
+})
+
+test_that("a column holding SSN-shaped values is dropped whatever its name", {
+  set.seed(1)
+  ssn <- sample(1e8:999999999, 12)
+  shaped <- data.frame(
+    ccfid = 1:12,
+    hyphen = sprintf("%03d-%02d-%04d", 1:12 * 7, 1:12, 1:12 * 3),
+    digits = sprintf("%09d", ssn),
+    number = ssn,
+    # An SSN held as a number loses its leading zeros, so some print with eight digits.
+    leading_zero = c(ssn[1:9], 12345678, 23456789, 34567890),
+    with_na = c(ssn[1:11], NA),
+    # Not SSNs: too few values, eight-digit numbers, a measure, and text of another shape.
+    code = rep(c(123456789, 234567891), 6),
+    eight = 10000000 + 1:12,
+    charge = ssn + 0.5,
+    zip5 = sprintf("%05d", 44100 + 1:12),
+    stringsAsFactors = FALSE
+  )
+  out <- hvtiRtemplates:::.drop_identifiers(shaped, "ccfid")
+  expect_setequal(out$dropped, c("hyphen", "digits", "number", "leading_zero", "with_na"))
+  expect_setequal(out$by_value, out$dropped)
+  expect_setequal(names(out$data), c("ccfid", "code", "eight", "charge", "zip5"))
+})
+
 test_that("WHERE follows filter(): NA rows are dropped and counted, conditions apply in order", {
   none <- hvtiRtemplates:::.apply_where(d0, NULL)
   expect_identical(nrow(none$data), 6L)
@@ -1352,4 +1423,18 @@ test_that("a missing imputation index, or an imputation column that is the ID, i
   cfg <- stacked_study(d, key = c("ccfid", "imp"))
   expect_error(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "ccfid"),
                "IMPUTATION names the patient ID column")
+})
+
+test_that("read_job_data() records the identifiers it dropped, and why a column was dropped by its values", {
+  # Twelve patients: the value rule needs ten distinct values before it reads a shape.
+  ssn <- 100000000 + 7919 * 1:12
+  cfg <- job_study(data.frame(ccfid = 1:12, age = 50 + 1:12, ssn = ssn, tax_ref = ssn, pt_name = "x"))
+  out <- read_job_data(cfg)
+  expect_false(any(c("ssn", "tax_ref", "pt_name") %in% names(out$data)))
+  dropped <- out$record$value[out$record$step == "Identifiers dropped"]
+  for (col in c("ssn", "tax_ref", "pt_name")) expect_match(dropped, paste0("`", col, "`"), fixed = TRUE)
+  notes <- out$record$value[out$record$step == "Note"]
+  expect_true(any(grepl("`tax_ref`", notes, fixed = TRUE) & grepl("Social Security", notes, fixed = TRUE)))
+  # A column dropped by its name needs no note: the name says why.
+  expect_false(any(grepl("`ssn`", notes, fixed = TRUE)))
 })

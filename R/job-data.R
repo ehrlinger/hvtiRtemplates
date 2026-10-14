@@ -30,9 +30,62 @@
   ifelse(cols %in% present | is.na(hit), cols, present[hit])
 }
 
-.drop_identifiers <- function(d, id) {
-  drop <- names(d)[tolower(names(d)) %in% .job_identifier_names & names(d) != id]
-  list(data = d[setdiff(names(d), drop)], dropped = drop)
+# Direct identifiers no analysis job needs, matched on the whole column name
+# ignoring case. ccfid, MRN, eMRN and a Social Security number are dropped
+# whatever the column holds. A patient name or contact detail is dropped only as
+# text, so a 0/1 phone or email indicator, contact by that route, stays. Whole
+# names only, so pt_mrn, surgeon_name_code and phone_followup stay. Dates and
+# zip codes are not here: the EDA reads dates, and a build may need either.
+.identifier_name_pattern <- paste0(
+  "^(ccfid|e?mrn|((pt|pat|patient)_?)?",
+  "(ssn|soc_?sec(urity)?(_?(no|num|number))?|social_?security(_?(no|num|number))?))$"
+)
+.identifier_text_pattern <- paste0(
+  "^(((pt|pat|patient)_?)?((first|last|middle|full|f|l|m)_?)?name|surname",
+  "|addr(ess)?[0-9]?|street(_?address)?|((home|cell|work)_?)?phone(_?(no|num|number))?|telephone",
+  "|e_?mail(_?address)?)$"
+)
+# Columns the value rule leaves alone: a raw SAS datetime counts seconds from
+# 1960, so 1963 to 1991 falls among nine-digit numbers.
+.date_name_pattern <- "(^|_)(dt|dttm|date|datetime|time|tm)($|_)|_dt$"
+
+# A column of Social Security numbers under a name the patterns do not know:
+# text written ###-##-####, with spaces or dots in place of the hyphens, or as
+# nine digits, or whole numbers below 1e9 most of which have nine digits, since
+# an SSN held as a number loses its leading zeros. Text with no digit, a blank or
+# an UNK, is read as missing. It needs ten distinct values, so a short code
+# column is not read as one.
+.looks_like_ssn <- function(x) {
+  if (is.factor(x)) x <- as.character(x)
+  if (is.character(x)) x <- x[grepl("[0-9]", x)]
+  seen <- unique(x[!is.na(x)])
+  if (length(seen) < 10L) return(FALSE)
+  if (is.character(seen)) {
+    return(all(grepl("^([0-9]{3}([- .])[0-9]{2}\\2[0-9]{4}|[0-9]{9})$", trimws(seen), perl = TRUE)))
+  }
+  is.numeric(seen) && all(seen == floor(seen) & seen > 0 & seen < 1e9) && mean(seen >= 1e8) >= 0.5
+}
+
+# The ID and any KEY column are kept whatever their name: a job keyed on ccfid
+# under another ID still needs it.
+.drop_identifiers <- function(d, id, key = character()) {
+  others <- setdiff(names(d), c(id, key))
+  is_text <- vapply(d[others], function(x) is.character(x) || is.factor(x), logical(1L))
+  by_name <- others[grepl(.identifier_name_pattern, others, ignore.case = TRUE) |
+                      (is_text & grepl(.identifier_text_pattern, others, ignore.case = TRUE))]
+  rest <- setdiff(others, by_name)
+  rest <- rest[!grepl(.date_name_pattern, rest, ignore.case = TRUE)]
+  by_value <- rest[vapply(d[rest], .looks_like_ssn, logical(1L))]
+  drop <- names(d)[names(d) %in% c(by_name, by_value)]
+  list(data = d[setdiff(names(d), drop)], dropped = drop, by_value = by_value)
+}
+
+# The record's note for a column dropped by its values: its name alone gives no reason.
+.ssn_notes <- function(by_value) {
+  if (length(by_value)) {
+    paste0("`", by_value, "` dropped: its values are shaped like Social Security numbers. ",
+           "Drop the column in the build.")
+  }
 }
 
 .where_conditions <- function(where) {
@@ -588,8 +641,16 @@
 #'   not inferred from \code{key}, since a visit column in \code{key} makes a
 #'   long dataset, not an imputation.
 #'
-#' @details Columns named \code{MRN} or \code{eMRN} (ignoring case) are
-#'   dropped unless one is the identifier, from a joined dataset too. An explicit \code{id} or \code{key}
+#' @details Direct identifiers are dropped unless one is the identifier, from a
+#'   joined dataset too: columns named, ignoring case, \code{ccfid}, \code{MRN},
+#'   \code{eMRN}, a Social Security number (\code{ssn}, \code{soc_sec},
+#'   \code{social_security}, \code{pt_ssn}), and, held as text, a patient name
+#'   (\code{name}, \code{first_name}, \code{pt_name}, \code{surname}) or contact
+#'   details (\code{address}, \code{street}, \code{phone}, \code{email}). Any
+#'   other column whose values are shaped like Social Security numbers is dropped
+#'   too, and the record notes it by name; a column named as a date or time is
+#'   not read for that shape. A KEY column is never dropped. The
+#'   record lists every column dropped. An explicit \code{id} or \code{key}
 #'   matches its column ignoring case, because
 #'   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
 #'   key and date values are not printed: the record holds counts, and a
@@ -693,8 +754,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                                if (is.null(analysis_set)) .registered_shape(cfg, dataset)$key, who$id, "KEY",
                                "the registered key")
   key <- .match_columns(replace(resolved$key, resolved$key == id, who$id), names(d))
-  ids <- .drop_identifiers(d, who$id)
-  notes <- c(read$notes, resolved$note)
+  ids <- .drop_identifiers(d, who$id, key)
+  notes <- c(read$notes, resolved$note, .ssn_notes(ids$by_value))
   # MRN and eMRN are refused even when dropped: the condition would be saved.
   identifiers <- unique(c(who$id, names(d)[tolower(names(d)) %in% .job_identifier_names], .job_identifier_names))
   # Their values too, read from `d` before MRN and eMRN are dropped.
@@ -903,11 +964,11 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     held <- names(a)[tolower(names(a)) %in% c(tolower(cohort_id), .job_identifier_names)]
     stats::setNames(lapply(a[held], function(x) unique(.id_text(x[!is.na(x)]))), replace(held, held == a_id, cohort_id))
   }
-  a_ids <- .drop_identifiers(a, a_id)
+  a_ids <- .drop_identifiers(a, a_id, jkey)
   j <- .join_ancillary(cohort, a_ids$data, cohort_id, a_id, jkey, join_vars, reduce,
                        filter = if (!is.null(filter)) function(records, cols) filter(records, cols, id_values))
   list(
-    data = j$data, key = j$key, dropped = a_ids$dropped, notes = c(jr$notes, resolved$note),
+    data = j$data, key = j$key, dropped = a_ids$dropped, notes = c(jr$notes, resolved$note, .ssn_notes(a_ids$by_value)),
     provenance = jr$record, join_key = replace(jkey, jkey == a_id, cohort_id), id_values = id_values, reduce = j$reduce,
     summary = list(source = jr$source, rows = nrow(a), outside = j$outside, without = j$without,
                    ignored = j$ignored, unvalued = j$unvalued, rule = j$rule, steps = j$steps)
