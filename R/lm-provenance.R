@@ -51,7 +51,8 @@
     ))
   }
 
-  name <- if (identical(meta$model_family, "count")) "exposure" else "outcome"
+  # A balancing score models an exposure, whether a count or continuous.
+  name <- if (isTRUE(meta$model_family %in% c("count", "continuous"))) "exposure" else "outcome"
   list(
     name = name,
     value = .lm_compact(list(

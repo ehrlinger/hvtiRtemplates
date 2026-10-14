@@ -169,7 +169,7 @@ analysis_templates <- function() {
 
 test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- analysis_templates()
-  expect_equal(nrow(templates), 33L)
+  expect_equal(nrow(templates), 35L)
 
   for (path in templates$file) {
     source <- readLines(path, warn = FALSE)
@@ -246,7 +246,7 @@ test_that("only templates with a local dataset choice override the dataset", {
     "dc-general", "dc-gfup", "dc-stddiff", "dc-tables", "dc-eda", "dc-trends",
     "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
     "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal", "lp-mirror", "lg",
-    "rfs-fit", "rfc-fit", "rfr-fit", "nb-boostmtree"
+    "rfs-fit", "rfc-fit", "rfr-fit", "rm-balancing_continuous", "rm-linear", "nb-boostmtree"
   )
   templates <- template_list()
   observed <- sub(".", "-", templates$name, fixed = TRUE)[vapply(templates$file, function(path) {
@@ -280,7 +280,7 @@ test_that("all logistic templates publish runtime analysis and cohort metadata",
 })
 
 test_that("logistic fit provenance is derived from runtime metadata and status tables", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   d <- lm_mi_data()
   cases <- list(
     binary = list(
@@ -398,7 +398,7 @@ test_that("logistic fit provenance is derived from runtime metadata and status t
 })
 
 test_that("single-dataset logistic provenance reports rows without claiming unique people", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   env <- new.env(parent = globalenv())
   env$d <- lm_data()
   env$SUBJECT <- "runtime"
@@ -423,7 +423,7 @@ test_that("single-dataset logistic provenance reports rows without claiming uniq
 })
 
 test_that("lm-checkpred separates carried training metadata from runtime validation metadata", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   root <- lm_study()
   cfg <- hvtiRutilities::study_config(root)
   d <- lm_data()

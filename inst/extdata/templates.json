@@ -1164,27 +1164,57 @@
     },
     {
       "prefix": "rm",
-      "qualifier": null,
-      "name": "Regression model",
+      "qualifier": "balancing_continuous",
+      "name": "Regression model: continuous balancing score",
+      "description": "Least-squares balancing score for a continuous exposure: the averaged fitted value and its strata.",
       "folder": "analyses",
       "family": "models",
       "kind": "job",
-      "status": "queued",
+      "status": "shipped",
       "batch": 6,
-      "sas_breadth": 174,
-      "r_exemplars": 8,
-      "r_jobs": 94,
+      "sas_breadth": null,
+      "r_exemplars": 0,
+      "r_jobs": 0,
       "upstream": [],
       "downstream": [],
       "workflows": [
         "propensity-matching"
       ],
       "blocked_on": null,
-      "spec": null,
-      "note": null,
-      "sas_breadth_jobs": 170,
-      "disposition": "scaffold",
-      "uses": []
+      "spec": "dev/specs/2026-10-13-rm-template-family-design.md",
+      "note": "Measured by the 2026-10-13 content census over rm jobs, excluding legacy tp.* template copies: 39 SAS programs in 9 studies, including 15 multiply-imputed programs.",
+      "sas_breadth_jobs": 9,
+      "disposition": "thin",
+      "uses": [
+        "hvtiRpropensity::bs_continuous"
+      ]
+    },
+    {
+      "prefix": "rm",
+      "qualifier": "linear",
+      "name": "Regression model: continuous outcome",
+      "description": "Ordinary least-squares outcome model with Rubin-pooled inference.",
+      "folder": "analyses",
+      "family": "models",
+      "kind": "job",
+      "status": "shipped",
+      "batch": 6,
+      "sas_breadth": null,
+      "r_exemplars": 0,
+      "r_jobs": 0,
+      "upstream": [],
+      "downstream": [],
+      "workflows": [
+        "propensity-matching"
+      ],
+      "blocked_on": null,
+      "spec": "dev/specs/2026-10-13-rm-template-family-design.md",
+      "note": "Measured by the 2026-10-13 content census over rm jobs, excluding legacy tp.* template copies: 524 SAS programs in 160 studies, including 238 multiply-imputed programs.",
+      "sas_breadth_jobs": 160,
+      "disposition": "thin",
+      "uses": [
+        "hvtiRpropensity::fit_linear"
+      ]
     },
     {
       "prefix": "rp",

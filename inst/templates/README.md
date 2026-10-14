@@ -115,6 +115,26 @@ stacked-imputation jobs also display Rubin-pooled inference. Scaffold one with
 its qualifier, for example
 `add_job("lm", "mortality", "analysis", qualifier = "binary")`.
 
+### Regression-model jobs
+
+The `rm` family fits ordinary least-squares models, for a continuous outcome
+or a continuous exposure:
+
+| qualifier | purpose | engine |
+|---|---|---|
+| `balancing_continuous` | balancing score for a continuous exposure | `bs_continuous()` |
+| `linear` | continuous outcome model | `fit_linear()` |
+
+Both keep their fitted models and pool stacked imputations with Rubin's rules.
+`RESPONSE_SCALE` models the response untransformed or on the log scale, and
+the report states the formula it fitted and how to read the coefficients on that
+scale.
+`rm-linear` withholds R-squared for imputed data, where the pooling rules define
+none. Its figures are `rm-linear-residuals` and `rm-linear-qq`. Mixed,
+generalized and non-linear models belong to `mm`, `gm` and `nm`. Scaffold one
+with its qualifier, for example
+`add_job("rm", "los", "analysis", qualifier = "linear")`.
+
 ### Random forest jobs
 
 The random forest templates come in pairs. The `fit` job grows the forest and
@@ -363,6 +383,7 @@ where it does not, as on a Mac without XQuartz.
 | rfc-fit | `rfc-fit-diagnostics-error`, `-roc` |
 | rfr-fit | `rfr-fit-diagnostics-error`, `-predicted` |
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |
+| rm-linear | `rm-linear-residuals`, `rm-linear-qq` |
 
 A plot method that returns several plots saves them as `<name>-1`, `<name>-2`
 and so on. Sizes are the template's own, or 6 x 4 in where a figure was not

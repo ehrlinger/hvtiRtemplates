@@ -52,7 +52,7 @@ test_that("the same ID gives the same digest, and a missing ID stays missing", {
 })
 
 test_that("every lm fit template saves digested IDs and a model that still scores", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   d <- lm_mi_data()
   common <- list(PREDICTORS = c("age", "female"), ID = "id", IMPUTATION = "imp")
   cases <- list(
@@ -97,7 +97,7 @@ test_that("every lm fit template saves digested IDs and a model that still score
 
 test_that("a rendered lm-binary keyed on MRN saves no MRN anywhere in the file", {
   skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.10")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   d <- lm_data()
@@ -121,6 +121,27 @@ test_that("a rendered lm-binary keyed on MRN saves no MRN anywhere in the file",
   expect_true(bytes_hold(serialize(as.character(d$MRN), NULL), d$MRN[[1L]]))
   # The key stays in the study, never beside the package.
   expect_true(file.exists(file.path(out$root, ".hvti", "id_key")))
+})
+
+test_that("a rendered rm-linear keyed on MRN saves no MRN anywhere in the file", {
+  skip_on_cran()
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  d <- rm_data()  # nolint: object_usage_linter.
+  d$MRN <- 73500000L + d$ccfid
+  d$ccfid <- NULL
+  d$id <- NULL
+  out <- rm_render_fixture("linear", data = d)  # nolint: object_usage_linter.
+  path <- file.path(hvtiRutilities::study_dir("estimates", out$root), "outcome-analysis", "rm-linear.rds")
+  expect_true(file.exists(path))
+  saved <- readRDS(path)
+  expect_identical(saved$meta$id_col, "mrn")
+  expect_true(isTRUE(saved$meta$id_digest))
+  bytes <- rds_bytes(path)
+  expect_false(any(vapply(d$MRN, function(v) bytes_hold(bytes, v), logical(1L))))
+  key <- hvtiRtemplates:::.study_id_key(out$root)
+  expect_true(bytes_hold(bytes, hvtiRtemplates:::.id_digest(d$MRN[[1L]], key)))
 })
 
 test_that("a reader of saved digests never makes a key, and notices a replaced one", {
