@@ -96,8 +96,9 @@ REDUCE <- NULL
 JOIN_KEY <- NULL
 
 # EDIT: the continuous outcome. A skewed outcome such as length of stay is often
-# modeled on the log scale: write log() into the formula at the EDIT: marker in
-# the `fit` chunk and leave OUTCOME naming the column. The coefficients are then on the log scale,
+# modeled on the log scale: in the `fit` chunk, use
+# stats::reformulate(PREDICTORS, response = sprintf("log(%s)", OUTCOME)) and leave
+# OUTCOME naming the column. The coefficients are then on the log scale,
 # and exp() of one is a ratio of geometric means, not a difference.
 OUTCOME <- "continuous_outcome"
 PREDICTORS <- c("age", "female")           # EDIT: the declared model; this job does not select variables.
@@ -163,8 +164,6 @@ knitr::kable(.missing_values)
 
 ```{r}
 #| label: fit
-# EDIT: the response's scale. As written it is OUTCOME itself; for a skewed outcome use
-# stats::reformulate(PREDICTORS, response = sprintf("log(%s)", OUTCOME)).
 model_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
 fit <- hvtiRpropensity::fit_linear(
   model_formula, d, outcome_col = OUTCOME, id_col = .id, imputation_col = IMPUTATION

@@ -91,8 +91,9 @@ REDUCE <- NULL
 JOIN_KEY <- NULL
 
 # EDIT: the continuous exposure. To score a transformed exposure, write the
-# transformation into the model formula at the EDIT: marker in the `fit` chunk,
-# e.g. log(), and leave OUTCOME naming the column. The report does not print the
+# transformation into the model formula in the `fit` chunk, e.g.
+# stats::reformulate(PREDICTORS, response = sprintf("log(%s)", OUTCOME)), and leave
+# OUTCOME naming the column. The report does not print the
 # formula, so say the scale wherever the score is described.
 OUTCOME <- "continuous_exposure"
 PREDICTORS <- c("age", "female")           # EDIT: pre-exposure covariates only.
@@ -154,8 +155,6 @@ knitr::kable(.missing_values)
 
 ```{r}
 #| label: fit
-# EDIT: the exposure's scale. As written it is OUTCOME itself; for a skewed exposure use
-# stats::reformulate(PREDICTORS, response = sprintf("log(%s)", OUTCOME)).
 model_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
 fit <- hvtiRpropensity::bs_continuous(
   model_formula, d, outcome_col = OUTCOME, id_col = .id,
