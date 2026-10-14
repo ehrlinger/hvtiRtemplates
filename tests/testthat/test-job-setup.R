@@ -220,7 +220,7 @@ test_that("every template's header carries the render date", {
 
 test_that("a job with the old four-chunk header still renders", {
   skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   fx <- lm_render_fixture("binary", render = FALSE)

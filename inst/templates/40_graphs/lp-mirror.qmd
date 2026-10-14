@@ -42,8 +42,8 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 # The bundle records its declared treatment levels from hvtiRpropensity 0.1.10.
-if (utils::packageVersion("hvtiRpropensity") < "0.1.12") {
-  stop("This job needs hvtiRpropensity >= 0.1.12, the package's floor (bundles record their treatment levels from 0.1.10); ",
+if (utils::packageVersion("hvtiRpropensity") < "0.2.0") {
+  stop("This job needs hvtiRpropensity >= 0.2.0, the package's floor (bundles record their treatment levels from 0.1.10); ",
        utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.9") {

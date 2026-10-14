@@ -24,7 +24,7 @@ test_that("every rm template's hvtiRpropensity guard asks for the version DESCRI
 })
 
 test_that("rm-balancing_continuous scores, pools and saves a bundle", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   env <- new.env(parent = globalenv())
   env$d <- rm_mi_data()
   env$set_path <- function(kind, file) tempfile(fileext = file)
@@ -43,7 +43,7 @@ test_that("rm-balancing_continuous scores, pools and saves a bundle", {
 })
 
 test_that("rm-balancing_continuous names the exposure in its provenance", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   fit <- hvtiRpropensity::bs_continuous(exposure ~ age + female, rm_data(), id_col = "id")
   prov <- hvtiRtemplates:::.lm_fit_provenance(fit)
   expect_identical(names(prov$analysis)[[1L]], "exposure")
@@ -52,7 +52,7 @@ test_that("rm-balancing_continuous names the exposure in its provenance", {
 
 test_that("rm-balancing_continuous renders end to end", {
   skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   out <- rm_render_fixture("balancing_continuous")
@@ -82,7 +82,7 @@ rm_linear_env <- function(d, imputation, .local_envir = parent.frame()) {
 }
 
 test_that("rm-linear on one dataset reports R-squared and t inference", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   env <- rm_linear_env(rm_data(), NULL)
   expect_s3_class(env$fit, "rm_fit")
   expect_false(any(env$fit$tables$estimates$pooled))
@@ -92,7 +92,7 @@ test_that("rm-linear on one dataset reports R-squared and t inference", {
 })
 
 test_that("rm-linear on imputations pools and withholds R-squared", {
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   env <- rm_linear_env(rm_mi_data(), "imp")
   expect_identical(env$fit$meta$n_imputations, 2L)
   expect_true(all(env$fit$tables$estimates$pooled))
@@ -113,7 +113,7 @@ test_that("rm set markers must agree with the rendered job filename", {
 
 test_that("rm-linear renders end to end and saves both figures", {
   skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   out <- rm_render_fixture("linear")
@@ -124,7 +124,7 @@ test_that("rm-linear renders end to end and saves both figures", {
 
 test_that("a rendered rm job reads stacked imputations and saves a bundle of both", {
   skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   # The data table's one-row-per-patient guard counts a patient within an imputation:
@@ -146,7 +146,7 @@ test_that("a rendered rm job reads stacked imputations and saves a bundle of bot
 
 test_that("a rendered rm-linear job fits when IMPUTATION is spelled differently from the column", {
   skip_on_cran()
-  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.1.12")
+  skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
   # read_job_data() matches the name ignoring case; the fit needs the data's own spelling.
