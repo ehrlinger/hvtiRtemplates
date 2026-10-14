@@ -242,7 +242,9 @@
 # its only aid. `table` is .lg_table()'s result and `scales` .lg_scales()'s.
 .lg_plot <- function(table, scales, link = c("logit", "hazard"), title = NULL) {
   link <- match.arg(link)
-  if (!requireNamespace("ggplot2", quietly = TRUE)) stop("The ggplot2 package is needed to draw the figure.", call. = FALSE)
+  for (pkg in c("ggplot2", "hvtiPlotR")) {
+    if (!requireNamespace(pkg, quietly = TRUE)) stop("The ", pkg, " package is needed to draw the figure.", call. = FALSE)
+  }
   if (nrow(table) != nrow(scales)) stop("table and scales must have one row for each group.", call. = FALSE)
   ids <- .lg_scale_ids
   panel <- function(id) factor(rep(.lg_panel_labels[[id]], nrow(table)), levels = .lg_panel_labels)
