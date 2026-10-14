@@ -136,8 +136,8 @@ row has no template on disk.
 | `ls` | queued | 34 | 32 | 0 | — |
 | `mm` | queued | 59 | 56 | 1 | — |
 | `nm` | queued | 122 | 121 | 1 | — |
-| `rm-balancing_continuous` | shipped | — | — | — | — |
-| `rm-linear` | shipped | — | — | — | — |
+| `rm-balancing_continuous` | shipped | — | 9 | 0 | — |
+| `rm-linear` | shipped | — | 160 | 0 | — |
 
 ### distributions (batch 7)
 

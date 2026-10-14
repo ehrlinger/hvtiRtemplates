@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-13",
+  "corpus_programs": 577,
+  "sas_breadth": 166,
+  "sas_breadth_jobs": 164,
+  "manual_review_programs": 5,
+  "misfiled_programs": 6,
+  "template_copies_skipped": 2983,
+  "traversal_errors": 0,
+  "unreadable_candidates": 0,
+  "shapes": {
+    "balancing_continuous": {
+      "sas_programs": 39,
+      "sas_studies": 9,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 15,
+      "transformed_programs": 4,
+      "transformed_studies": 3,
+      "two_study_gate": true
+    },
+    "linear": {
+      "sas_programs": 524,
+      "sas_studies": 160,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 238,
+      "transformed_programs": 190,
+      "transformed_studies": 74,
+      "two_study_gate": true
+    }
+  },
+  "migrations": {
+    "migration_mm": 2,
+    "migration_gm": 1,
+    "migration_nm": 0
+  }
+}

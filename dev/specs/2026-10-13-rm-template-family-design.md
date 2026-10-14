@@ -1,7 +1,7 @@
 # Regression-model template family: `rm`
 
 **Date:** 2026-10-13
-**Status:** Design approved by John Ehrlinger on 2026-10-13; §2 awaits the shape census
+**Status:** Approved by John Ehrlinger on 2026-10-13; census run on the server 2026-10-13
 **Parent:** `2026-08-29-template-conversion-roadmap-design.md`; implements the
 `rm` member of the models family and the continuous step of the
 propensity-matching workflow overlay. Follows the precedent set by
@@ -48,9 +48,33 @@ exposure" in the implementation PR that ships `rm-balancing_continuous`.
 
 ## 2. Evidence and scope
 
-**Pending: the shape census has not yet run.** This section is filled from
-`dev/specs/artifacts/2026-10-13-rm-shape-census.json` before any template
-ships, and the qualifier list in §1 is revised to match it.
+The 2026-10-13 content census scanned 577 candidate SAS programs under the
+`rm` prefix. Legacy `tp.*` template copies were skipped (see below). The scan
+completed with no traversal errors and no unreadable candidates. It classified
+two admitted shapes:
+
+- **Linear outcome** (`rm-linear`): 524 SAS programs in 160 studies, of which
+  238 use multiple imputation.
+- **Continuous balancing score** (`rm-balancing_continuous`): 39 SAS programs
+  in 9 studies, of which 15 use multiple imputation.
+
+Both shapes pass the two-study gate. Five programs were syntax-ambiguous and
+went to manual review, and 6 were semantically misfiled and are excluded. The
+migration findings are 2 programs for `mm`, 1 for `gm` and 0 for `nm`. No R job
+fits an ordinary least-squares model: the 85 R files under `rm` names are
+plotting jobs filed under the wrong prefix, so neither shape has an R precedent.
+
+A transformed response is common but not the majority. 190 linear programs in
+74 studies (46%) model a transformed response, below the majority stop gate, so
+no `linear_log` qualifier ships and the log option stays an `EDIT:` choice in
+`rm-linear`'s formula. Among the continuous balancing programs, 4 in 3 studies
+are transformed.
+
+The first run of the census did not skip legacy templates and reported 1,142
+studies. Those were `tp.*` template files copied into study folders, not jobs:
+2,983 copies in all. The script now skips them and reports the count. The
+2026-09-21 `lm` census used the same file filter, so its published breadths
+likely include such copies. That is a follow-up and is not settled here.
 
 The census is `dev/specs/artifacts/2026-10-13-rm-shape-census.py`, a sibling
 of `2026-09-21-lm-shape-census.py`, and inherits its rules:
@@ -71,9 +95,8 @@ The share's mount name changes across remounts, so the script resolves it at
 run time rather than hard-coding it, and it walks study roots it is given
 rather than running `find` over the share.
 
-The catalog records `rm` today at a SAS breadth of 174 studies and 8 R
-exemplars over 94 R jobs. Those are filename counts, which is exactly what the
-census exists to replace.
+The catalog previously recorded `rm` at a SAS breadth of 174 studies and 8 R
+exemplars over 94 R jobs. Those were filename counts, which the census replaces.
 
 ## 3. Package ownership
 

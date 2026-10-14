@@ -1173,8 +1173,8 @@
       "status": "shipped",
       "batch": 6,
       "sas_breadth": null,
-      "r_exemplars": null,
-      "r_jobs": null,
+      "r_exemplars": 0,
+      "r_jobs": 0,
       "upstream": [],
       "downstream": [],
       "workflows": [
@@ -1182,8 +1182,8 @@
       ],
       "blocked_on": null,
       "spec": "dev/specs/2026-10-13-rm-template-family-design.md",
-      "note": "Counts pending the 2026-10-13 rm shape census.",
-      "sas_breadth_jobs": null,
+      "note": "Measured by the 2026-10-13 content census over rm jobs, excluding legacy tp.* template copies: 39 SAS programs in 9 studies, including 15 multiply-imputed programs.",
+      "sas_breadth_jobs": 9,
       "disposition": "thin",
       "uses": [
         "hvtiRpropensity::bs_continuous"
@@ -1200,8 +1200,8 @@
       "status": "shipped",
       "batch": 6,
       "sas_breadth": null,
-      "r_exemplars": null,
-      "r_jobs": null,
+      "r_exemplars": 0,
+      "r_jobs": 0,
       "upstream": [],
       "downstream": [],
       "workflows": [
@@ -1209,8 +1209,8 @@
       ],
       "blocked_on": null,
       "spec": "dev/specs/2026-10-13-rm-template-family-design.md",
-      "note": "Counts pending the 2026-10-13 rm shape census.",
-      "sas_breadth_jobs": null,
+      "note": "Measured by the 2026-10-13 content census over rm jobs, excluding legacy tp.* template copies: 524 SAS programs in 160 studies, including 238 multiply-imputed programs.",
+      "sas_breadth_jobs": 160,
       "disposition": "thin",
       "uses": [
         "hvtiRpropensity::fit_linear"
