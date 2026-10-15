@@ -174,8 +174,8 @@ EVENTS <- list()
 # A named column that is not in the data stops the render, and the error
 # lists every missing name at once.
 # GRID_NCOL by GRID_NROW panels make a page, and a page is drawn on the printed
-# page, 6.5 by 9 in: two panels across leave each one room for its categories
-# named beside it at 8 pt, and more than two crowd those names.
+# page, 6.5 by 9 in: two panels across keep each one's title and year axis
+# readable at 8 pt, and more than two crowd them.
 # SECTIONS is any of "followup", "continuous", "percent" and "count". The
 # report keeps this order whatever order they are named in, so the report
 # reads the same across studies.
@@ -552,10 +552,12 @@ titles <- c(continuous = "Continuous variables", percent = "Categorical variable
 # What each panel draws, for the caption: a continuous page has no legend to read it from.
 .eda_key <- c(continuous = paste0("Black filled circles mark patients, the solid blue line a LOESS smooth where a variable has ",
                                   "enough distinct values, and gray ticks along the bottom the patients missing the variable."),
-              percent = paste("Stacked bars give the share of patients at each reference value, one color per category",
-                              "named in that color beside the panel."),
-              count = paste("Stacked bars give the number of patients at each reference value, one color per category",
-                            "named in that color beside the panel."))
+              percent = paste("Stacked bars give the share of patients at each reference value, one house color per",
+                              "category. The categories are told apart by color alone; the categorical frequency",
+                              "table above names them."),
+              count = paste("Stacked bars give the number of patients at each reference value, one house color per",
+                            "category. The categories are told apart by color alone; the categorical frequency",
+                            "table above names them."))
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
 draw_section <- function(section) {
   sec <- hvtiPlotR::hv_eda_pages(d, x_col = X_VAR, section = section, vars = VARIABLES,
@@ -585,9 +587,10 @@ draw_section <- function(section) {
   files <- character(0)
   for (i in seq_along(pages)) {
     # A page of its own, the printed page, 6.5 by 9 in: a grid of GRID_NCOL by GRID_NROW panels.
-    # 8 pt, not 12, because panels share a row. Categories are named beside each panel in
-    # their own color rather than in a legend, which runs past the page edge at this width.
-    .page <- hvtiRtemplates:::.eda_direct_labels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
+    # 8 pt, not 12, because panels share a row: at 12 a long title and the year labels run
+    # past a 3.25 in panel. No legend and no category names, so the bars fill the panel
+    # (John, 2026-10-15); the frequency table above names the categories.
+    .page <- hvtiRtemplates:::.eda_page_panels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
     file <- save_figure(.page,
                         sprintf("dc-eda-%s-page-%02d", section, i), width = 6.5, height = 9, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")

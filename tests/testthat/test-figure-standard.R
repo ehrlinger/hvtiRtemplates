@@ -1,6 +1,6 @@
 # The figure standard, dev/specs/2026-10-13-figure-standard-design.md: a single
 # panel is 6 by 4 in, type is 12 pt in the hvtiPlotR theme (8 pt on a page of small
-# panels labeled directly, dc-eda's), and every figure has a numbered caption.
+# panels, dc-eda's), and every figure has a numbered caption.
 # Captions built by .child() at render time are not visible here; the static ones
 # are, and they are most of them.
 
@@ -32,7 +32,7 @@ figure_standard_scan <- function(templates) {
     }
     for (i in grep("theme_hv_manuscript\\(", code)) {
       facet_page <- grepl("theme_hv_manuscript\\(base_size = 8[,)]", code[[i]]) &&
-        grepl(".eda_direct_labels(", code[[i]], fixed = TRUE)
+        grepl(".eda_page_panels(", code[[i]], fixed = TRUE)
       if (!grepl("theme_hv_manuscript\\(base_size = 12[,)]", code[[i]]) && !facet_page) {
         out <- c(out, paste0(label, ":", i, ": theme_hv_manuscript() without base_size = 12"))
       }
@@ -75,10 +75,10 @@ test_that("the scan catches each kind of violation", {
   expect_match(found, "format block|ggplot2 theme|without base_size|no fig-cap", all = TRUE)
 })
 
-test_that("8 pt is allowed only on a page of small panels labeled directly", {
+test_that("8 pt is allowed only on a page of small panels", {
   dir <- withr::local_tempdir()
   writeLines(c("---", "format:", "  html:", "    fig-width: 6", "    fig-height: 4", "---", "```{r}",
-               "page <- hvtiRtemplates:::.eda_direct_labels(p & theme_hv_manuscript(base_size = 8))",
+               "page <- hvtiRtemplates:::.eda_page_panels(p & theme_hv_manuscript(base_size = 8))",
                "q <- p + theme_hv_manuscript(base_size = 8)", "```"),
              file.path(dir, "eight.qmd"))
   found <- figure_standard_scan(dir)
