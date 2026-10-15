@@ -38,15 +38,20 @@ fp <- hvtiPlotR::hv_followup_panels(
   events = list(reop = list(event = "reop", time = "iv_reop", death = "dead",
                             death_time = "iv_dead", label = "Reoperation"))
 )
-# dc-eda draws against the year of dt_surg; its default VARIABLES are every
-# column but that and the columns that look like an identifier or a date.
-d$year <- as.integer(format(d$dt_surg, "%Y"))
-vars <- setdiff(names(d), c("year", "patient_id", "dt_surg"))
+# dc-eda draws against the year of dt_surg, its X_VAR, which is never a
+# candidate; its default VARIABLES are every other column but those that look
+# like an identifier or a date, here patient_id. The
+# year goes in a plotting copy, so `d` keeps the dataset's own columns.
+dx <- d
+dx$year <- as.integer(format(dx$dt_surg, "%Y"))
+vars <- setdiff(names(d), c("patient_id", "dt_surg"))
 n_vars <- vapply(c("continuous", "percent", "count"), function(s) {
-  hvtiPlotR::hv_eda_pages(d, x_col = "year", section = s, vars = vars)$meta$n_vars
+  hvtiPlotR::hv_eda_pages(dx, x_col = "year", section = s, vars = vars)$meta$n_vars
 }, integer(1L))
-pct <- function(x) sprintf("%d (%.0f%%)", sum(x), 100 * mean(x))
-chf <- function(years) sprintf("%.0f%%", 100 * mean(d$hx_chf[d$year %in% years]))
+# n (%) as dc-tables prints it: hvtiRtables 1.0.5 writes the cell without a
+# % sign, which the quantity's own "n (%)" states once.
+pct <- function(x) sprintf("%d (%.0f)", sum(x), 100 * mean(x))
+chf <- function(years) sprintf("%.0f%%", 100 * mean(dx$hx_chf[dx$year %in% years]))
 
 numbers <- data.frame(
   report = c(rep("all", 2L), rep("dc-tables", 4L), rep("dc-trends", 2L),
@@ -67,7 +72,7 @@ numbers <- data.frame(
     fc$cohort$event, fc$cohort$censored, fc$intervals$zero,
     format(fp$meta$close_date), fp$data$n_drawn[fp$data$panel == "all"],
     fp$data$n_drawn[fp$data$panel == "reop"],
-    "patient_id, dt_surg", n_vars[["continuous"]], n_vars[["percent"]], n_vars[["count"]]
+    "patient_id", n_vars[["continuous"]], n_vars[["percent"]], n_vars[["count"]]
   )
 )
 # The reports must print what the reference says, or the reference is wrong.
@@ -81,7 +86,7 @@ must_show <- list(
   "dc-eda" = c(sprintf("Continuous variables (%d)", n_vars[["continuous"]]),
                sprintf("Categorical variables, percent (%d)", n_vars[["percent"]]),
                sprintf("Categorical variables, counts (%d)", n_vars[["count"]]),
-               "patient_id, dt_surg")
+               "patient_id")
 )
 for (name in names(must_show)) {
   text <- report_text(name)

@@ -261,7 +261,7 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 
 Each section calls the same function as its standalone job, with the same arguments, so a section *is* that job's figure.
 
-## `dc-eda` draws 8 continuous and 7 categorical variables, leaving out patient_id and dt_surg
+## `dc-eda` draws 8 continuous and 7 categorical variables, leaving out patient_id
 
 Each panel is one variable by year of operation. Percent panels stack each level's share in blue, vermillion, green and on; missing is light gray.
 
