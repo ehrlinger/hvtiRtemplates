@@ -46,3 +46,16 @@ test_that(".eda_x_breaks keeps the first level and about n in all", {
   expect_identical(hvtiRtemplates:::.eda_x_breaks(letters[1:4]), letters[1:4])
   expect_identical(hvtiRtemplates:::.eda_x_breaks(as.character(1:16)), c("1", "5", "9", "13"))
 })
+
+test_that("a job scaffolded before 2026-10-15 still draws its pages through .eda_direct_labels()", {
+  testthat::skip_if_not_installed("hvtiPlotR")
+  d <- eda_data()
+  sec <- hvtiPlotR::hv_eda_pages(d, x_col = "year", section = "percent", vars = "valve")
+  env <- list2env(list(pages = plot(sec, ncol = 2L, nrow = 4L), i = 1L, scale_fill_hv = hvtiPlotR::scale_fill_hv,
+                       theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript))
+  # dc-eda's page line until 2026-10-15, word for word, as copied jobs still carry it.
+  old <- "hvtiRtemplates:::.eda_direct_labels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))"
+  p <- eval(parse(text = old), env)[[1L]]
+  expect_false(has_text(p))
+  expect_identical(ggplot2::ggplot_build(p)$plot$theme$legend.position, "none")
+})

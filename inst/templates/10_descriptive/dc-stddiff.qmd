@@ -426,7 +426,10 @@ long <- long[!is.na(long$std_diff), , drop = FALSE]
 # One row per variable, 0.25 in each under 1.5 in of axis and legend, on the
 # printed page: 6.5 by 9 in holds 30 rows, and more variables go on further
 # pages, each a numbered figure of its own.
-.vars <- unique(balance$label)
+# Only variables with a difference to draw: one whose difference is undefined,
+# a constant say, was dropped from `long` above, and a page of nothing but
+# those would hand hv_balance() no data.
+.vars <- unique(balance$label[balance$label %in% long$variable])
 .pages <- split(.vars, ceiling(seq_along(.vars) / 30L))
 .fence <- strrep("`", 3)
 for (.i in seq_along(.pages)) {

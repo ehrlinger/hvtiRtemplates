@@ -29,3 +29,12 @@
   }
   page
 }
+
+# Jobs scaffolded before 2026-10-15 call .eda_direct_labels(), which drew the
+# category names beside each panel. Those names are no longer drawn, so it now
+# draws the page as .eda_page_panels() does; it stays so those copied jobs
+# still render. upgrade_job() rewrites a job from the current template, whose
+# pages call .eda_page_panels(). `size_pt` is accepted and unused.
+.eda_direct_labels <- function(page, size_pt = 8) {
+  .eda_page_panels(page)
+}
