@@ -1,5 +1,8 @@
 # Rewrite a job from the current version of its template
 
+Upgrades **one job**: the file you name in `path`. It does not look for
+other jobs, so to upgrade several, call it once for each.
+
 A job is a copy of its template as it stood on the day
 [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 wrote it. `upgrade_job()` writes the job again from the template as it
@@ -16,12 +19,15 @@ upgrade_job(path, dir = NULL)
 
 - path:
 
-  Path to the job, relative to the working directory or absolute.
+  The one job to upgrade: its `.qmd` file, relative to the working
+  directory or absolute, such as
+  `"10_descriptive/dc.general.cohort.eda.qmd"`.
 
 - dir:
 
   Any directory in the study, used only to locate the study root.
-  Defaults to the directory of `path`.
+  Defaults to the directory of `path`, which is right for any job inside
+  its study.
 
 ## Value
 
@@ -58,6 +64,29 @@ package version, the old job's checksum, and the choices carried, not
 placed and new, with the chunks to review. It names choices and lines
 but never quotes their values, since a value can identify a patient. The
 upgrade refuses to overwrite any existing file.
+
+## Upgrading a job
+
+Name the job's `.qmd` file. From the study root, a cohort EDA job is
+
+    upgrade_job("10_descriptive/dc.general.cohort.eda.qmd")
+
+and several jobs are upgraded one call each:
+
+    for (job in c("10_descriptive/dc.general.cohort.eda.qmd",
+                  "10_descriptive/dc.general.cohort.gfup.qmd")) {
+      upgrade_job(job)
+    }
+
+You never name the template: the job's file name says which one it is.
+The job must sit inside its study; leave `dir` out unless you want to
+name a different directory of the same study.
+
+Afterwards, render the job and read its report, `<job>-upgrade.md`, for
+the chunks to check. The old job is kept as `<job>.pre-upgrade`. Before
+upgrading the same job again, move both of those files aside:
+`upgrade_job()` never overwrites a file, so a second upgrade stops while
+either one is there.
 
 ## See also
 
