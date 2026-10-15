@@ -72,7 +72,7 @@ if (!requireNamespace("patchwork", quietly = TRUE)) {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -210,8 +210,8 @@ LABEL_MAX <- 40
 # _study.yml, over the group default shipped in hvtiRutilities.
 ABBREVIATIONS <- NULL
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
