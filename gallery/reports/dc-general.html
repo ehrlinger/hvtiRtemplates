@@ -2243,7 +2243,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-12 16:16</p>
+      <p class="date">2026-10-15 09:25</p>
     </div>
   </div>
   
@@ -2255,9 +2255,11 @@ vertical-align: -.125em;
 </header>
 
 
+<!-- hvtiRtemplates: dc.general 1.4.0 -->
 <!-- Demo: name the job this replaces (descriptive/dc.general). -->
 <p>Replaces <code>descriptive/dc.general</code>.</p>
-<p>A <code>dc-general</code> job is the first look at a built cohort, before any table or model: what the data contain, how each categorical variable breaks down, how each continuous variable is distributed, and which variables move together. It uses base procedures only. The formatted manuscript table is a <code>dc-tables</code> job.</p>
+<p>A <code>dc-general</code> job is the first look at a built cohort, before any table or model: what the data contain, how each categorical variable breaks down, how each continuous variable is distributed, and which variables move together. It uses base procedures only.</p>
+<p>The tables below are checks on the data, not tables for a paper. For a manuscript table, run a <code>dc-tables</code> job alongside this one: <code>add_job(&quot;dc&quot;, SUBJECT, TYPE, qualifier = &quot;tables&quot;)</code>. It takes the same grouped variable lists, renders them in the CORR house format, and saves the table to Word.</p>
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>SUBJECT <span class="ot">&lt;-</span> <span class="st">&quot;cohort&quot;</span></span>
@@ -2285,7 +2287,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261012.parquet</code>, registered 2026-10-12 · rendered by gallery on gallery · hvtiRtemplates 1.3.1</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
 </div>
 </div>
 </div>
@@ -2414,7 +2416,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261012.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261015.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2617,7 +2619,7 @@ Variables:    33
 9    integer        2         0.0
 10   integer        2         0.0
 11   numeric       82         0.0
-12   numeric      779         0.0
+12   numeric      777         0.0
 13   numeric      787         0.0
 14   numeric      774         0.0
 15   numeric       19         0.0
@@ -2679,10 +2681,10 @@ Table 3: Summary statistics of the overall variables
 9          lvef                LV ejection fraction (%) 800     0   51.777500
 10     plvmassi                    LV mass index (g/m2) 800     0  121.031250
 11     creat_pr                      Creatinine (mg/dL) 725    75    1.086152
-12         dead                                   Death 800     0    0.553750
-13      iv_dead Follow-up to death or censoring (years) 800     0    9.964107
-14         reop                             Reoperation 800     0    0.260000
-15      iv_reop        Follow-up to reoperation (years) 800     0    7.570521
+12         dead                                   Death 800     0    0.556250
+13      iv_dead Follow-up to death or censoring (years) 800     0    9.479378
+14         reop                             Reoperation 800     0    0.250000
+15      iv_reop        Follow-up to reoperation (years) 800     0    7.319961
 16         vent                   Prolonged ventilation 800     0    0.315000
 17    icu_hours                 Hours in intensive care 800     0   33.922500
 18         male                                    Male 800     0    0.626250
@@ -2704,10 +2706,10 @@ Table 3: Summary statistics of the overall variables
 9   9.7894221 2.00e+01   75.0000   41422.000
 10 29.4092912 2.80e+01  207.0000   96825.000
 11  0.3555899 4.30e-01    2.7600     787.460
-12  0.4974135 0.00e+00    1.0000     443.000
-13  8.5101358 2.50e-04   35.6960    7971.285
-14  0.4389086 0.00e+00    1.0000     208.000
-15  7.0693300 0.00e+00   35.6110    6056.417
+12  0.4971367 0.00e+00    1.0000     445.000
+13  8.0874926 2.50e-04   34.6040    7583.503
+14  0.4332836 0.00e+00    1.0000     200.000
+15  6.6628164 0.00e+00   33.9340    5855.969
 16  0.4648065 0.00e+00    1.0000     252.000
 17 20.1484849 4.00e+00  108.0000   27138.000
 18  0.4841011 0.00e+00    1.0000     501.000
@@ -3640,12 +3642,12 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-12 16:16:56 EDT</td>
+<td style="text-align: left;">2026-10-15 09:25:47 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-12 16:16:57 EDT</td>
+<td style="text-align: left;">2026-10-15 09:25:48 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3690,17 +3692,17 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.3.1</td>
+<td style="text-align: left;">1.4.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261012.parquet</td>
+<td style="text-align: left;">built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-12</td>
+<td style="text-align: left;">2026-10-15</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3720,7 +3722,7 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">27b97c1d78ec</td>
+<td style="text-align: left;">f632480029c1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3735,7 +3737,7 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dc.general.cohort.eda","rendered":"2026-10-12T20:16:57Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.3.1","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-10-12T16:16:56-0400","end":"2026-10-12T16:16:57-0400","time_zone":"EDT","duration_seconds":0.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.general.cohort.eda.qmd","template":"dc.general","prefix":"dc","qualifier":"general","subject":"cohort","type":"eda","hvtiRtemplates":"1.3.1"},"datasets":[{"name":"built","version_file":"built_20261012.parquet","registered":"2026-10-12","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"27b97c1d78ec","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"10_descriptive/dc.general.cohort.eda.qmd",".hvti_render_id":"002287538cdc91a20365fb60444fa98aa4d64aa1996973e3f38451dd3c648beb",".hvti_source_sha256":"0a793171d808053455c0bb03230f7e0e56eaae8f19eef3b836b05c07515e3af0"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"dc.general.cohort.eda","rendered":"2026-10-15T13:25:48Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-10-15T09:25:47-0400","end":"2026-10-15T09:25:48-0400","time_zone":"EDT","duration_seconds":0.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.general.cohort.eda.qmd","template":"dc.general","prefix":"dc","qualifier":"general","subject":"cohort","type":"eda","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"f632480029c1","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"10_descriptive/dc.general.cohort.eda.qmd",".hvti_render_id":"98ed1a7a0ca06d48a1a0e2dc44bb042a964c418d5a93504b719c8b29c981f778",".hvti_source_sha256":"5a307c2a1b1b38761cfb3ec1a5843feb4fe70b88f057857bebf1d4d4c255cb2a"}</script>
 </section>
 
 </main>

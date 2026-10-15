@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:18
+2026-10-15 09:27
 
 Fits a proportional-odds propensity model for an explicitly ordered
 treatment.
@@ -19,7 +19,7 @@ suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.1.10") stop("This template needs hvtiRpropensity >= 0.1.10.", call. = FALSE)
+if (utils::packageVersion("hvtiRpropensity") < "0.2.0") stop("This template needs hvtiRpropensity >= 0.2.0.", call. = FALSE)
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -33,8 +33,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 Code
 
@@ -95,7 +95,8 @@ hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE,
+                                          imputation = IMPUTATION)
 # This job's data are the model's training data, which lm-checkpred tells from its validation data.
 job_data$provenance$role <- "training"
 if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"
@@ -104,6 +105,8 @@ d <- job_data$data
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 # The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
 .id <- attr(job_data$record, "selection")$id
+# The imputation column read_job_data() matched, in the data's own spelling.
+IMPUTATION <- attr(job_data$record, "selection")$imputation
 knitr::kable(job_data$record, col.names = c("Data", ""))
 # A column the study choices name that the data lack stops here, naming the setting to change.
 hvtiRtemplates:::.check_job_columns(d, TREATMENT = TREATMENT, PREDICTORS = PREDICTORS)
@@ -111,7 +114,7 @@ hvtiRtemplates:::.check_job_columns(d, TREATMENT = TREATMENT, PREDICTORS = PREDI
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -132,6 +135,22 @@ if (!is.null(job_data$attrition)) {
   ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
+
+Code
+
+``` r
+# The fit drops a row missing any model variable, so the cohort it uses is said here,
+# counted within one imputation when the data are multiply imputed.
+.missing_values <- hvtiRtemplates:::.missing_cases(d, TREATMENT = TREATMENT, PREDICTORS = PREDICTORS,
+                                                   imputation = IMPUTATION)
+knitr::kable(.missing_values)
+```
+
+| Variable       | Setting | Missing                                |
+|:---------------|:--------|:---------------------------------------|
+| Complete cases |         | 800 of 800 rows analyzed; none dropped |
+
+Table 2: Missing values in the model’s variables
 
 Code
 
@@ -164,7 +183,7 @@ knitr::kable(fit$tables$fit_status)
 |-----------:|:----------|--------:|-----------:|-----------:|
 |          1 | TRUE      |     800 |        800 |          0 |
 
-Table 2: Fit status of the model
+Table 3: Fit status of the model
 
 Code
 
@@ -174,16 +193,16 @@ knitr::kable(fit$tables$estimates)
 
 | term | estimate | std.error | statistic | df | p.value | conf.low | conf.high | odds_ratio | pooled |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|:---|
-| age | -0.0075169 | 0.0055295 | -1.3594215 | Inf | 0.1740131 | -0.0183546 | 0.0033207 | 0.9925112 | FALSE |
-| female | -1.3321228 | 0.1466485 | -9.0837785 | Inf | 0.0000000 | -1.6195486 | -1.0446969 | 0.2639164 | FALSE |
-| hx_chf | 0.2926523 | 0.1615654 | 1.8113554 | Inf | 0.0700859 | -0.0240100 | 0.6093146 | 1.3399768 | FALSE |
-| hx_dm | 0.0230820 | 0.1637746 | 0.1409376 | Inf | 0.8879192 | -0.2979102 | 0.3440742 | 1.0233504 | FALSE |
-| lvef | -0.0024774 | 0.0076051 | -0.3257515 | Inf | 0.7446124 | -0.0173830 | 0.0124283 | 0.9975257 | FALSE |
-| bmi | 0.1249699 | 0.0160443 | 7.7890614 | Inf | 0.0000000 | 0.0935237 | 0.1564161 | 1.1331143 | FALSE |
-| threshold:small\|medium | 1.6504835 | 0.6906183 | 2.3898635 | Inf | 0.0168546 | 0.2968965 | 3.0040704 | NA | FALSE |
-| threshold:medium\|large | 3.6503472 | 0.7007987 | 5.2088382 | Inf | 0.0000002 | 2.2768069 | 5.0238875 | NA | FALSE |
+| age | -0.0075171 | 0.0055738 | -1.3486590 | Inf | 0.1774465 | -0.0184416 | 0.0034073 | 0.9925110 | FALSE |
+| female | -1.3321217 | 0.1462178 | -9.1105289 | Inf | 0.0000000 | -1.6187034 | -1.0455400 | 0.2639167 | FALSE |
+| hx_chf | 0.2926474 | 0.1615459 | 1.8115434 | Inf | 0.0700568 | -0.0239767 | 0.6092716 | 1.3399703 | FALSE |
+| hx_dm | 0.0230920 | 0.1636286 | 0.1411246 | Inf | 0.8877715 | -0.2976142 | 0.3437982 | 1.0233607 | FALSE |
+| lvef | -0.0024776 | 0.0075827 | -0.3267455 | Inf | 0.7438603 | -0.0173394 | 0.0123842 | 0.9975255 | FALSE |
+| bmi | 0.1249687 | 0.0160140 | 7.8037054 | Inf | 0.0000000 | 0.0935818 | 0.1563556 | 1.1331130 | FALSE |
+| threshold:small\|medium | 1.6504353 | 0.6979309 | 2.3647545 | Inf | 0.0180420 | 0.2825158 | 3.0183547 | NA | FALSE |
+| threshold:medium\|large | 3.6502805 | 0.7081205 | 5.1548859 | Inf | 0.0000003 | 2.2623898 | 5.0381712 | NA | FALSE |
 
-Table 3: Coefficient estimates of the fitted model
+Table 4: Coefficient estimates of the fitted model
 
 Code
 
@@ -193,16 +212,16 @@ knitr::kable(fit$tables$covariance)
 
 |  | age | female | hx_chf | hx_dm | lvef | bmi | threshold:small\|medium | threshold:medium\|large |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|
-| age | 0.0000306 | 0.0000018 | 0.0000437 | -0.0000273 | -0.0000010 | 0.0000009 | 0.0018944 | 0.0018738 |
-| female | 0.0000018 | 0.0215058 | -0.0010081 | 0.0004882 | -0.0000298 | -0.0002061 | 0.0019821 | -0.0017919 |
-| hx_chf | 0.0000437 | -0.0010081 | 0.0261034 | 0.0004604 | 0.0004755 | 0.0000635 | 0.0361898 | 0.0369932 |
-| hx_dm | -0.0000273 | 0.0004882 | 0.0004604 | 0.0268221 | 0.0000049 | -0.0000434 | 0.0035119 | 0.0035146 |
-| lvef | -0.0000010 | -0.0000298 | 0.0004755 | 0.0000049 | 0.0000578 | -0.0000041 | 0.0029529 | 0.0029467 |
-| bmi | 0.0000009 | -0.0002061 | 0.0000635 | -0.0000434 | -0.0000041 | 0.0002574 | 0.0068126 | 0.0071511 |
-| threshold:small\|medium | 0.0018944 | 0.0019821 | 0.0361898 | 0.0035119 | 0.0029529 | 0.0068126 | 0.4769536 | 0.4790811 |
-| threshold:medium\|large | 0.0018738 | -0.0017919 | 0.0369932 | 0.0035146 | 0.0029467 | 0.0071511 | 0.4790811 | 0.4911189 |
+| age | 0.0000311 | -0.0000094 | 0.0000547 | -0.0000245 | 0.0000000 | -0.0000007 | 0.0019349 | 0.0019134 |
+| female | -0.0000094 | 0.0213797 | -0.0010061 | 0.0002912 | -0.0000115 | -0.0002001 | 0.0024395 | -0.0013769 |
+| hx_chf | 0.0000547 | -0.0010061 | 0.0260971 | 0.0005607 | 0.0004953 | 0.0000789 | 0.0385580 | 0.0393679 |
+| hx_dm | -0.0000245 | 0.0002912 | 0.0005607 | 0.0267743 | 0.0000045 | -0.0000590 | 0.0031618 | 0.0032375 |
+| lvef | 0.0000000 | -0.0000115 | 0.0004953 | 0.0000045 | 0.0000575 | -0.0000017 | 0.0030776 | 0.0030729 |
+| bmi | -0.0000007 | -0.0002001 | 0.0000789 | -0.0000590 | -0.0000017 | 0.0002564 | 0.0068146 | 0.0071549 |
+| threshold:small\|medium | 0.0019349 | 0.0024395 | 0.0385580 | 0.0031618 | 0.0030776 | 0.0068146 | 0.4871075 | 0.4892972 |
+| threshold:medium\|large | 0.0019134 | -0.0013769 | 0.0393679 | 0.0032375 | 0.0030729 | 0.0071549 | 0.4892972 | 0.5014347 |
 
-Table 4: Covariance matrix of the coefficient estimates
+Table 5: Covariance matrix of the coefficient estimates
 
 Code
 
@@ -226,7 +245,7 @@ knitr::kable(fit$tables$smd)
 | lvef     | large  | small  | -0.1026 |
 | bmi      | large  | small  |  0.7105 |
 
-Table 5: Standardized mean differences, each treatment level against the
+Table 6: Standardized mean differences, each treatment level against the
 reference level
 
 Code
@@ -241,7 +260,7 @@ knitr::kable(fit$tables$group_counts)
 | medium | 323 |
 | large  | 216 |
 
-Table 6: Patients in each group
+Table 7: Patients in each group
 
 Code
 
@@ -257,7 +276,7 @@ knitr::kable(as.data.frame(table(quintile = fit$data$quintile)))
 | 4        |  160 |
 | 5        |  160 |
 
-Table 7: Patients in each propensity quintile
+Table 8: Patients in each propensity quintile
 
 Code
 
@@ -278,7 +297,7 @@ knitr::kable(as.data.frame(table(decile = fit$data$decile)))
 | 9      |   80 |
 | 10     |   80 |
 
-Table 8: Patients in each propensity decile
+Table 9: Patients in each propensity decile
 
 Code
 
@@ -299,8 +318,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:18:55 EDT |
-|  | Ended | 2026-10-12 16:18:55 EDT |
+| Run | Started | 2026-10-15 09:27:40 EDT |
+|  | Ended | 2026-10-15 09:27:40 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -309,12 +328,12 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |  | Template | lm.propensity_ordinal |
 |  | Subject | valvesize |
 |  | Type | propensity |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
 | Reproducibility | renv | not active |

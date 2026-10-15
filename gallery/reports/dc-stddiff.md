@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:17
+2026-10-15 09:25
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -36,8 +36,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.1.10") {
-  stop("This job needs hvtiRpropensity >= 0.1.10 for ps_stddiff() and ps_stddiff_perm(); ",
+if (utils::packageVersion("hvtiRpropensity") < "0.2.0") {
+  stop("This job needs hvtiRpropensity >= 0.2.0, the package's floor (ps_stddiff() and ps_stddiff_perm() date from 0.1.10); ",
        utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -181,7 +181,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -428,10 +428,11 @@ p <- plot(bal) +
   scale_color_manual(values = stats::setNames(hv_palette(length(.levels)), .levels)) +
   scale_shape_manual(values = stats::setNames(c(16, 17, 15)[seq_along(.levels)], .levels)) +
   labs(x = "Standardized difference (group 1 minus group 0)", y = NULL, color = NULL, shape = NULL) +
-  theme_hv_manuscript() +
+  theme_hv_manuscript(base_size = 12) +
   # The manuscript theme drops the legend; this figure needs it to say which
   # comparison each point is.
   theme(legend.position = "top")
+# Free size: one row per variable, so the height grows with the list.
 file <- save_figure(p, "dc-stddiff-balance", width = 7, height = max(3, 1.5 + 0.25 * nrow(balance)), linked = TRUE)
 # This document sits in descriptive/ and the figure is written to graphs/, so
 # the image link is the figure's path relative to this document.
@@ -441,7 +442,11 @@ knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in
 
 ![](assets/ceec02ab0f4e85094eb10698bf8e9446.png)
 
-Figure 1: Standardized differences, with the imbalance threshold dotted
+Figure 1: Standardized difference of each variable, one row per
+variable, for each comparison. A blue circle, vermillion triangle and
+green square mark the first, second and third comparison in turn, the
+solid vertical line zero difference, the dotted vertical lines the
+imbalance threshold, and the dashed horizontal lines the variable rows.
 
 ## Permutation reference
 
@@ -504,8 +509,8 @@ rather than balance, so it is not part of this job.
 
 | Group           | Item           | Value                           |
 |:----------------|:---------------|:--------------------------------|
-| Run             | Started        | 2026-10-12 16:17:03 EDT         |
-|                 | Ended          | 2026-10-12 16:17:04 EDT         |
+| Run             | Started        | 2026-10-15 09:25:52 EDT         |
+|                 | Ended          | 2026-10-15 09:25:53 EDT         |
 |                 | Duration       | 1 s                             |
 |                 | Status         | final                           |
 |                 | Rendered by    | gallery                         |
@@ -514,13 +519,13 @@ rather than balance, so it is not part of this job.
 |                 | Template       | dc.stddiff                      |
 |                 | Subject        | approach                        |
 |                 | Type           | balance                         |
-|                 | hvtiRtemplates | 1.3.1                           |
-| Dataset `built` | Version file   | built_20261012.parquet          |
-|                 | Registered     | 2026-10-12                      |
+|                 | hvtiRtemplates | 1.4.0                           |
+| Dataset `built` | Version file   | built_20261015.parquet          |
+|                 | Registered     | 2026-10-15                      |
 |                 | Source file    | built.rds                       |
 |                 | Rows kept      | 800 rows on 800 patients        |
 |                 | WHERE          | none                            |
-|                 | sha256         | 27b97c1d78ec                    |
+|                 | sha256         | f632480029c1                    |
 |                 | Manifest       | current                         |
 | Reproducibility | Seed           | 20261006                        |
 |                 | renv           | not active                      |

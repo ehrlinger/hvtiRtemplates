@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:14
+2026-10-15 09:23
 
 This job reports a bootstrap variable selection screen over a **Cox
 proportional hazards** model: how often each candidate survived stepwise
@@ -103,7 +103,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.3.1
+hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -121,9 +121,11 @@ Code
 # is honestly computed, and only the denominator is not the intended one.
 EXPECT_BOOT <- 100L   # Demo: boot_select(n_rep = 100)
 
-# Demo: the file your runner wrote its screen to, under this set's estimates
-# directory. It must match the runner exactly.
-BOOT_FILE <- "bagging.rds"
+# Demo: the file-name prefix your runner wrote its screen under. This report
+# reads <BOOT_PREFIX>.rds in this set's estimates directory, the name bh reads
+# for an unchunked run, and bc-runner.R writes bc.rds. It must match the runner
+# exactly.
+BOOT_PREFIX <- "bc"
 
 # Demo: the bag's recorded selection is used; set any of these only to confirm
 # it. NULL takes the value the bootstrap runner used.
@@ -200,11 +202,11 @@ Code
 # leaves nothing at all. Keeping the run in a companion file means a failed
 # render costs a re-render rather than a re-run, and it is what lets this
 # report be re-read months later against the screen it actually described.
-.single_file <- set_path("estimates", BOOT_FILE)
+.single_file <- set_path("estimates", paste0(BOOT_PREFIX, ".rds"))
 if (!file.exists(.single_file)) {
   stop("No screen found at ", .single_file, ". This report reads a bag your ",
        "runner wrote with boot_bag(); it does not run the screen.\nRun the ",
-       "companion runner first, or correct BOOT_FILE.", call. = FALSE)
+       "companion runner first, or correct BOOT_PREFIX.", call. = FALSE)
 }
 .cfg <- study_config(start = .root)
 .bag_read <- hvtiRtemplates:::.read_bootstrap_artifact(
@@ -256,7 +258,7 @@ if (is.null(.engine_v) || .engine_v < "0.9.3") {
 
 # A run split across chunks is still supported, and belongs upstream: pool with
 # hvtiRbootstrap::boot_pool_chunks() in your runner and write the pooled bag to
-# BOOT_FILE. Only the runner knows how many chunks it launched, and
+# <BOOT_PREFIX>.rds. Only the runner knows how many chunks it launched, and
 # boot_pool_chunks() refuses chunks that disagree on the dataset checksum, the
 # entry and stay levels, the base parameters or the engine version -- every one
 # of which is silent on its own, showing up as a slightly different frequency
@@ -391,8 +393,8 @@ provenance
     8                                                                      100
     9                                                                        0
     10                                                                     0.0
-    11                                                           version:0.9.4
-    12 sha256:27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6
+    11                                                           version:0.9.5
+    12 sha256:f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264
     13                                               1 distinct (listed below)
 
 Code
@@ -501,11 +503,11 @@ health <- boot_health(bag)
 health
 ```
 
-                                    check      value   ok note
-    1              Replicates that fitted        100 TRUE <NA>
-    2              Replicates that failed          0   NA <NA>
-    3   Distinct candidates ever selected          7 TRUE <NA>
-    4 SD of the first free base parameter 0.00427566 TRUE <NA>
+                                    check       value   ok note
+    1              Replicates that fitted         100 TRUE <NA>
+    2              Replicates that failed           0   NA <NA>
+    3   Distinct candidates ever selected           7 TRUE <NA>
+    4 SD of the first free base parameter 0.004289426 TRUE <NA>
 
 Code
 
@@ -580,14 +582,14 @@ freq <- boot_frequencies(bag, phase = PHASE_OF, threshold = RETAIN_PCT)
 freq[, c("variable", "n", "pct", "mc_error", "near_threshold")]
 ```
 
-      variable   n pct mc_error near_threshold
-    1   hx_chf 100 100 0.000000          FALSE
-    2     lvef  95  95 2.179449          FALSE
-    3    hx_dm  89  89 3.128898          FALSE
-    4 plvmassi  28  28 4.489989          FALSE
-    5 creat_pr  23  23 4.208325          FALSE
-    6   female  16  16 3.666061          FALSE
-    7      bmi   6   6 2.374868          FALSE
+      variable   n pct  mc_error near_threshold
+    1   hx_chf 100 100 0.0000000          FALSE
+    2     lvef  99  99 0.9949874          FALSE
+    3    hx_dm  92  92 2.7129320          FALSE
+    4 creat_pr  45  45 4.9749372           TRUE
+    5 plvmassi  23  23 4.2083251          FALSE
+    6   female  13  13 3.3630343          FALSE
+    7      bmi   5   5 2.1794495          FALSE
 
 Code
 
@@ -600,10 +602,10 @@ retained <- freq[freq$retained, , drop = FALSE]
 retained[, c("variable", "n", "pct", "mc_error", "near_threshold")]
 ```
 
-      variable   n pct mc_error near_threshold
-    1   hx_chf 100 100 0.000000          FALSE
-    2     lvef  95  95 2.179449          FALSE
-    3    hx_dm  89  89 3.128898          FALSE
+      variable   n pct  mc_error near_threshold
+    1   hx_chf 100 100 0.0000000          FALSE
+    2     lvef  99  99 0.9949874          FALSE
+    3    hx_dm  92  92 2.7129320          FALSE
 
 ## Concepts
 
@@ -644,12 +646,12 @@ concept
 
       variable  concept representative
     7      bmi      bmi           TRUE
-    5 creat_pr creat_pr           TRUE
+    4 creat_pr creat_pr           TRUE
     6   female   female           TRUE
     1   hx_chf   hx_chf           TRUE
     3    hx_dm    hx_dm           TRUE
     2     lvef     lvef           TRUE
-    4 plvmassi plvmassi           TRUE
+    5 plvmassi plvmassi           TRUE
 
 Code
 
@@ -666,14 +668,14 @@ rownames(by_concept) <- NULL
 by_concept[, c("concept", "variable", "representative", "pct", "mc_error")]
 ```
 
-       concept variable representative pct mc_error
-    1      bmi      bmi           TRUE   6 2.374868
-    2 creat_pr creat_pr           TRUE  23 4.208325
-    3   female   female           TRUE  16 3.666061
-    4   hx_chf   hx_chf           TRUE 100 0.000000
-    5    hx_dm    hx_dm           TRUE  89 3.128898
-    6     lvef     lvef           TRUE  95 2.179449
-    7 plvmassi plvmassi           TRUE  28 4.489989
+       concept variable representative pct  mc_error
+    1      bmi      bmi           TRUE   5 2.1794495
+    2 creat_pr creat_pr           TRUE  45 4.9749372
+    3   female   female           TRUE  13 3.3630343
+    4   hx_chf   hx_chf           TRUE 100 0.0000000
+    5    hx_dm    hx_dm           TRUE  92 2.7129320
+    6     lvef     lvef           TRUE  99 0.9949874
+    7 plvmassi plvmassi           TRUE  23 4.2083251
 
 A per-form row answers “how often was *this form* selected”. It cannot
 answer “how often was *this concept* selected”, and that is the number a
@@ -708,12 +710,12 @@ concept_union[, c("concept", "n_forms", "pct_any", "best_form_pct",
 
        concept n_forms pct_any best_form_pct spread retained
     1   hx_chf       1     100           100      0     TRUE
-    2     lvef       1      95            95      0     TRUE
-    3    hx_dm       1      89            89      0     TRUE
-    4 plvmassi       1      28            28      0    FALSE
-    5 creat_pr       1      23            23      0    FALSE
-    6   female       1      16            16      0    FALSE
-    7      bmi       1       6             6      0    FALSE
+    2     lvef       1      99            99      0     TRUE
+    3    hx_dm       1      92            92      0     TRUE
+    4 creat_pr       1      45            45      0    FALSE
+    5 plvmassi       1      23            23      0    FALSE
+    6   female       1      13            13      0    FALSE
+    7      bmi       1       5             5      0    FALSE
 
 ⚠️ **A selection frequency is conditional on the candidate pool**, and
 no column here removes that. On the study this template came from,
@@ -854,6 +856,7 @@ an empty result as an absence of collinearity.
 Code
 
 ``` r
+# Free size: one row per variable, so the height grows with the list.
 # The error bar is the point of the figure, not decoration. A bare dot plot
 # invites the reader to rank variables by a difference of two points, which is
 # inside the noise at every frequency near the middle of the range.
@@ -863,15 +866,17 @@ Code
   geom_point() +
   coord_flip() +
   labs(x = NULL, y = "Replicates selecting the variable (%)") +
-  theme_minimal()
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "bc-frequencies", height = 7)
 .fig
 ```
 
-![](assets/e7f047010bd755b25e5fa1f789f72bc4.png)
+![](assets/59fa6511bf298bbf61ed26ef4b52ba71.png)
 
-Figure 1: Selection frequency, with Monte-Carlo error and the retention
-threshold
+Figure 1: Bootstrap selection frequency of each candidate variable.
+Black filled circles mark the percent of replicates selecting the
+variable, horizontal black bars ±1 Monte Carlo error, and the dashed
+vertical line the retention threshold.
 
 ## Save
 
@@ -887,8 +892,8 @@ Code
 # retained. Nothing read the file, and the claim was not true. A file whose existence implies a dependency that does not exist
 # is worse than no file.
 
-# NOT BOOT_FILE. The run's INPUT is that name, so writing the report there
-# overwrites the screen it just read. BOOT_FILE is an edit point, so a study
+# NOT <BOOT_PREFIX>.rds. The run's INPUT is that name, so writing the report there
+# overwrites the screen it just read. BOOT_PREFIX is an edit point, so a study
 # can set it to anything, including this name -- checked rather than assumed,
 # because the failure destroys the run instead of erroring, and a screen is
 # hours of compute that boot_select() produces only on return.
@@ -897,7 +902,7 @@ inputs <- normalizePath(c(.single_file, .chunk_files), mustWork = FALSE)
 if (normalizePath(report_file, mustWork = FALSE) %in% inputs) {
   stop("This report would be written to ", basename(report_file), ", which is ",
        "the bootstrap output it just read. That file is the screen itself, and ",
-       "overwriting it cannot be undone.\nChange BOOT_FILE so the runner's ",
+       "overwriting it cannot be undone.\nChange BOOT_PREFIX so the runner's ",
        "output and this report do not collide.", call. = FALSE)
 }
 
@@ -916,8 +921,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:14:18 EDT |
-|  | Ended | 2026-10-12 16:14:19 EDT |
+| Run | Started | 2026-10-15 09:23:04 EDT |
+|  | Ended | 2026-10-15 09:23:05 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -926,13 +931,13 @@ saveRDS(report, report_file)
 |  | Template | bc |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bagging.rds` (bootstrap-bag), rendered not recorded, data built_20261012.parquet |
+| Upstream | Handoff | `dead-boot/bc.rds` (bootstrap-bag), rendered not recorded, data built_20261015.parquet |
 | Reproducibility | renv | not active |

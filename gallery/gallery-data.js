@@ -4,7 +4,7 @@ window.GALLERY = [
   "name": "bd",
   "folder": "00_datasets",
   "title": "Build",
-  "use": "Cuts a study's dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then a dated release registered as the study dataset.",
+  "use": "Cuts a study's dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then the working file and its build record, registered as a dated version of the study dataset.",
   "deprecated_by": null,
   "call": "add_job(\"bd\", subject = \"study\", type = \"build\")",
   "tables": 0,
@@ -23,7 +23,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.eda\", subject = \"cohort\", type = \"eda\")",
   "tables": 6,
   "figures": 7,
-  "seconds": 14.4,
+  "seconds": 14.2,
   "report": true,
   "issues": [],
   "note": "No grouping variable, which the legacy EDA report had."
@@ -37,7 +37,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.general\", subject = \"cohort\", type = \"eda\")",
   "tables": 14,
   "figures": 0,
-  "seconds": 6.2,
+  "seconds": 4.7,
   "report": true,
   "issues": [],
   "note": ""
@@ -51,7 +51,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.gfup\", subject = \"cohort\", type = \"eda\")",
   "tables": 4,
   "figures": 2,
-  "seconds": 6.8,
+  "seconds": 5.4,
   "report": true,
   "issues": [],
   "note": ""
@@ -65,7 +65,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.stddiff\", subject = \"cohort\", type = \"balance\")",
   "tables": 5,
   "figures": 1,
-  "seconds": 6.3,
+  "seconds": 5.6,
   "report": true,
   "issues": [],
   "note": ""
@@ -79,7 +79,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.tables\", subject = \"cohort\", type = \"eda\")",
   "tables": 2,
   "figures": 0,
-  "seconds": 10.2,
+  "seconds": 5.9,
   "report": true,
   "issues": [],
   "note": "The session asked whether this should become a named Table 1 job."
@@ -93,7 +93,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.trends\", subject = \"cohort\", type = \"eda\")",
   "tables": 2,
   "figures": 4,
-  "seconds": 6.8,
+  "seconds": 5.6,
   "report": true,
   "issues": [],
   "note": ""
@@ -107,7 +107,7 @@ window.GALLERY = [
   "call": "add_job(\"lg\", subject = \"dead\", type = \"calibration\")",
   "tables": 5,
   "figures": 2,
-  "seconds": 6.8,
+  "seconds": 6.7,
   "report": true,
   "issues": [],
   "note": "Death against age and NYHA class on the constant-hazard link, with the scale chosen for each. A real study reads the figures before it fills chosen in."
@@ -121,7 +121,7 @@ window.GALLERY = [
   "call": "add_job(\"ac\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 8,
   "figures": 0,
-  "seconds": 5.4,
+  "seconds": 4.8,
   "report": true,
   "issues": [
    177,
@@ -138,7 +138,7 @@ window.GALLERY = [
   "call": "add_job(\"hz\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 8,
   "figures": 0,
-  "seconds": 7.9,
+  "seconds": 7.6,
   "report": true,
   "issues": [
    169,
@@ -156,7 +156,7 @@ window.GALLERY = [
   "call": "add_job(\"bc\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 15.7,
+  "seconds": 12.0,
   "report": true,
   "issues": [
    185,
@@ -175,7 +175,7 @@ window.GALLERY = [
   "call": "add_job(\"bh\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 113.3,
+  "seconds": 127.0,
   "report": true,
   "issues": [
    185,
@@ -195,7 +195,7 @@ window.GALLERY = [
   "call": "add_job(\"bl\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 20.9,
+  "seconds": 19.7,
   "report": true,
   "issues": [
    185,
@@ -213,7 +213,7 @@ window.GALLERY = [
   "call": "add_job(\"br\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 9.5,
+  "seconds": 8.1,
   "report": true,
   "issues": [
    185,
@@ -231,7 +231,7 @@ window.GALLERY = [
   "call": "add_job(\"hm\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 12,
   "figures": 0,
-  "seconds": 7.8,
+  "seconds": 9.6,
   "report": true,
   "issues": [
    228,
@@ -250,9 +250,9 @@ window.GALLERY = [
   "use": "Poisson or negative-binomial balancing score for a count exposure, with the distribution as a reviewed study choice.",
   "deprecated_by": null,
   "call": "add_job(\"lm.balancing_count\", subject = \"exposure\", type = \"balancing\")",
-  "tables": 5,
+  "tables": 6,
   "figures": 0,
-  "seconds": 4.9,
+  "seconds": 4.7,
   "report": true,
   "issues": [
    174
@@ -266,9 +266,9 @@ window.GALLERY = [
   "use": "Binary outcome logistic model, saving the fitted model, predictions and pooled inference across imputations.",
   "deprecated_by": null,
   "call": "add_job(\"lm.binary\", subject = \"outcome\", type = \"analysis\")",
-  "tables": 4,
+  "tables": 5,
   "figures": 0,
-  "seconds": 4.4,
+  "seconds": 4.3,
   "report": true,
   "issues": [
    174
@@ -284,7 +284,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.checkpred\", subject = \"outcome\", type = \"analysis\")",
   "tables": 3,
   "figures": 0,
-  "seconds": 4.5,
+  "seconds": 4.3,
   "report": true,
   "issues": [],
   "note": "AUC 0.75 and observed/expected 1.16 on the 2015-onward cohort."
@@ -296,9 +296,9 @@ window.GALLERY = [
   "use": "Generalized-logit model for a nominal outcome with a declared level set and reference.",
   "deprecated_by": null,
   "call": "add_job(\"lm.nominal\", subject = \"outcome\", type = \"analysis\")",
-  "tables": 4,
+  "tables": 5,
   "figures": 0,
-  "seconds": 4.7,
+  "seconds": 4.4,
   "report": true,
   "issues": [
    174
@@ -312,9 +312,9 @@ window.GALLERY = [
   "use": "Proportional-odds model for an ordered outcome whose full order is declared, not inferred.",
   "deprecated_by": null,
   "call": "add_job(\"lm.ordinal\", subject = \"outcome\", type = \"analysis\")",
-  "tables": 4,
+  "tables": 5,
   "figures": 0,
-  "seconds": 4.7,
+  "seconds": 4.4,
   "report": true,
   "issues": [
    174
@@ -328,9 +328,9 @@ window.GALLERY = [
   "use": "Propensity model for a binary treatment, scoring the columns that matching and weighting jobs use.",
   "deprecated_by": null,
   "call": "add_job(\"lm.propensity_binary\", subject = \"treatment\", type = \"propensity\")",
-  "tables": 6,
+  "tables": 7,
   "figures": 0,
-  "seconds": 4.9,
+  "seconds": 4.4,
   "report": true,
   "issues": [
    174
@@ -344,9 +344,9 @@ window.GALLERY = [
   "use": "Generalized-logit propensity model for a nominal treatment with an explicit reference level.",
   "deprecated_by": null,
   "call": "add_job(\"lm.propensity_nominal\", subject = \"treatment\", type = \"propensity\")",
-  "tables": 6,
+  "tables": 7,
   "figures": 0,
-  "seconds": 4.8,
+  "seconds": 4.6,
   "report": true,
   "issues": [
    174
@@ -360,9 +360,9 @@ window.GALLERY = [
   "use": "Proportional-odds propensity model for an ordered treatment.",
   "deprecated_by": null,
   "call": "add_job(\"lm.propensity_ordinal\", subject = \"treatment\", type = \"propensity\")",
-  "tables": 8,
+  "tables": 9,
   "figures": 0,
-  "seconds": 4.8,
+  "seconds": 5.2,
   "report": true,
   "issues": [
    174
@@ -378,7 +378,7 @@ window.GALLERY = [
   "call": "add_job(\"nb.boostmtree\", subject = \"lvef\", type = \"boost\")",
   "tables": 3,
   "figures": 6,
-  "seconds": 305.6,
+  "seconds": 288.6,
   "report": true,
   "issues": [],
   "note": "Reads a synthetic echo series, 300 patients with 2 to 6 visits; M = 200, so it is the slowest job here."
@@ -392,7 +392,7 @@ window.GALLERY = [
   "call": "add_job(\"rfc.explain\", subject = \"dead\", type = \"rfc\")",
   "tables": 2,
   "figures": 5,
-  "seconds": 22.7,
+  "seconds": 22.0,
   "report": true,
   "issues": [
    166,
@@ -407,9 +407,9 @@ window.GALLERY = [
   "use": "Grows a classification forest and checks it: out-of-bag error and the ROC curve with its AUC.",
   "deprecated_by": null,
   "call": "add_job(\"rfc.fit\", subject = \"dead\", type = \"rfc\")",
-  "tables": 1,
+  "tables": 2,
   "figures": 2,
-  "seconds": 9.9,
+  "seconds": 8.8,
   "report": true,
   "issues": [
    165,
@@ -427,7 +427,7 @@ window.GALLERY = [
   "call": "add_job(\"rfr.explain\", subject = \"los\", type = \"rfr\")",
   "tables": 2,
   "figures": 5,
-  "seconds": 22.0,
+  "seconds": 22.2,
   "report": true,
   "issues": [
    166,
@@ -442,9 +442,9 @@ window.GALLERY = [
   "use": "Grows a regression forest and checks it: out-of-bag error and predicted against observed.",
   "deprecated_by": null,
   "call": "add_job(\"rfr.fit\", subject = \"los\", type = \"rfr\")",
-  "tables": 1,
+  "tables": 2,
   "figures": 2,
-  "seconds": 8.9,
+  "seconds": 9.3,
   "report": true,
   "issues": [
    165,
@@ -462,7 +462,7 @@ window.GALLERY = [
   "call": "add_job(\"rfs.explain\", subject = \"dead\", type = \"rfs\")",
   "tables": 2,
   "figures": 5,
-  "seconds": 104.4,
+  "seconds": 106.9,
   "report": true,
   "issues": [
    166,
@@ -477,15 +477,43 @@ window.GALLERY = [
   "use": "Grows a random survival forest and checks it learned something: out-of-bag error, predicted survival and the Brier score.",
   "deprecated_by": null,
   "call": "add_job(\"rfs.fit\", subject = \"dead\", type = \"rfs\")",
-  "tables": 1,
+  "tables": 2,
   "figures": 3,
-  "seconds": 12.9,
+  "seconds": 11.9,
   "report": true,
   "issues": [
    165,
    181,
    182
   ],
+  "note": ""
+ },
+ {
+  "name": "rm-balancing_continuous",
+  "folder": "30_analyses",
+  "title": "Regression model: continuous balancing score",
+  "use": "Least-squares balancing score for a continuous exposure: the averaged fitted value and its strata.",
+  "deprecated_by": null,
+  "call": "add_job(\"rm.balancing_continuous\", subject = \"exposure\", type = \"balancing\")",
+  "tables": 0,
+  "figures": 0,
+  "seconds": null,
+  "report": false,
+  "issues": [],
+  "note": ""
+ },
+ {
+  "name": "rm-linear",
+  "folder": "30_analyses",
+  "title": "Regression model: continuous outcome",
+  "use": "Ordinary least-squares outcome model with Rubin-pooled inference.",
+  "deprecated_by": null,
+  "call": "add_job(\"rm.linear\", subject = \"outcome\", type = \"linear\")",
+  "tables": 0,
+  "figures": 0,
+  "seconds": null,
+  "report": false,
+  "issues": [],
   "note": ""
  },
  {
@@ -497,7 +525,7 @@ window.GALLERY = [
   "call": "add_job(\"hp\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 4,
   "figures": 3,
-  "seconds": 5.3,
+  "seconds": 4.8,
   "report": true,
   "issues": [
    177,
@@ -514,7 +542,7 @@ window.GALLERY = [
   "call": "add_job(\"hs.concordance\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 7,
   "figures": 0,
-  "seconds": 31.7,
+  "seconds": 30.4,
   "report": true,
   "issues": [
    227,
@@ -529,9 +557,9 @@ window.GALLERY = [
   "use": "Patient-level predictions from the hm model, set against the survival of a matched general population.",
   "deprecated_by": null,
   "call": "add_job(\"hs.setup\", subject = \"dead_pa\", type = \"hz\")",
-  "tables": 4,
+  "tables": 5,
   "figures": 0,
-  "seconds": 5.8,
+  "seconds": 4.9,
   "report": true,
   "issues": [
    183,
@@ -548,10 +576,10 @@ window.GALLERY = [
   "call": "add_job(\"lp.mirror\", subject = \"treatment\", type = \"propensity\")",
   "tables": 3,
   "figures": 2,
-  "seconds": 6.1,
+  "seconds": 5.4,
   "report": true,
   "issues": [],
   "note": "Two figures, all patients and under the matching weights. A second gallery job, lp-mirror-matched, sets MATCH to a simulated flag and adds the matched figure."
  }
 ];
-window.GALLERY_BUILT = "1.3.1 \u00b7 built 2026-10-12";
+window.GALLERY_BUILT = "1.4.0 \u00b7 built 2026-10-15";

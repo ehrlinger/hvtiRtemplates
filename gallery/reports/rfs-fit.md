@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:24
+2026-10-15 09:32
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
@@ -81,8 +81,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -239,7 +239,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -260,6 +260,31 @@ if (!is.null(job_data$attrition)) {
   ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
+
+Code
+
+``` r
+# na.omit drops a patient missing any predictor and na.impute keeps them, so the
+# cohort the forest is grown on is said here, before it is.
+# randomForestSRC discards a predictor with no values at all and keeps every
+# row, so such a column would leave the forest without a word and the table
+# below would count every row as dropped. Stop on it instead.
+.empty <- PREDICTORS[vapply(d[PREDICTORS], function(x) all(is.na(x)), logical(1L))]
+if (length(.empty)) {
+  stop("PREDICTORS names a column with no values: ", paste(.empty, collapse = ", "),
+       ". Remove it from PREDICTORS.", call. = FALSE)
+}
+.na_handling <- if (NA_ACTION == "na.impute") "impute" else "drop"
+.missing_values <- hvtiRtemplates:::.missing_cases(d, TIME = TIME, EVENT = EVENT, PREDICTORS = PREDICTORS, action = .na_handling)
+knitr::kable(.missing_values)
+```
+
+| Variable       | Setting    | Missing                              |
+|:---------------|:-----------|:-------------------------------------|
+| creat_pr       | PREDICTORS | 75                                   |
+| Complete cases |            | 725 of 800 rows analyzed; 75 dropped |
+
+Table 2: Missing values in the model’s variables
 
 ## Forest
 
@@ -285,10 +310,10 @@ forest
 ```
 
                              Sample size: 725
-                        Number of deaths: 402
+                        Number of deaths: 406
                          Number of trees: 300
                Forest terminal node size: 15
-           Average no. of terminal nodes: 35.56
+           Average no. of terminal nodes: 35.51
     No. of variables tried at each split: 3
                   Total no. of variables: 9
            Resampling used to grow trees: swor
@@ -297,9 +322,9 @@ forest
                                   Family: surv
                           Splitting rule: logrank *random*
            Number of random split points: 10
-                              (OOB) CRPS: 4.67618135
-                 (OOB) standardized CRPS: 0.17637315
-       (OOB) Requested performance error: 0.32139005
+                              (OOB) CRPS: 4.65700775
+                 (OOB) standardized CRPS: 0.17564997
+       (OOB) Requested performance error: 0.3259022
 
 `importance = "none"` is deliberate. Importance is the explain job’s
 work, and cached there on its own, so it can be recomputed without
@@ -317,28 +342,34 @@ Code
 ``` r
 # Out-of-bag error by number of trees.
 err <- gg_error(forest)
-.fig <- plot(err)
+.fig <- plot(err) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rfs-fit-diagnostics-error")
 .fig
 ```
 
-![](assets/cf01422dc73392fbd04a0caead530586.png)
+![](assets/b08096b1a729e8807fa121bc4ab853c0.png)
 
-Figure 1: Out-of-bag error by number of trees
+Figure 1: Out-of-bag error by number of trees. The black solid line is
+the out-of-bag error after each additional tree.
 
 Code
 
 ``` r
 # Out-of-bag predicted survival, one curve per patient.
 surv <- gg_rfsrc(forest)
-.fig <- plot(surv)
+# The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.
+.fig <- plot(surv) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(.fig, "rfs-fit-diagnostics-survival")
 .fig
 ```
 
-![](assets/819d97a8c78b84e7cc8c3f1903608593.png)
+![](assets/74c4498cc0949d58a3683347175a35b0.png)
 
-Figure 2: Out-of-bag predicted survival, one curve per patient
+Figure 2: Out-of-bag predicted survival, one curve per patient. Each
+step line is one patient’s predicted survival over follow-up, one color
+for patients who had the event and another for those who did not, as in
+the legend.
 
 Code
 
@@ -346,14 +377,15 @@ Code
 # Brier score over follow-up. Lower is better, and 0.25 is what a coin flip
 # scores.
 brier <- gg_brier(forest)
-.fig <- plot(brier)
+.fig <- plot(brier) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rfs-fit-diagnostics-brier")
 .fig
 ```
 
-![](assets/da484ebc56ddf0647c915887ecfc3a61.png)
+![](assets/1a7563b3b412828d00295625dbc9b004.png)
 
-Figure 3: Brier score over follow-up
+Figure 3: Brier score over follow-up. The black solid line is the
+out-of-bag Brier score at each time, lower being better.
 
 Code
 
@@ -386,8 +418,8 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-12 16:24:16 EDT  |
-|                 | Ended          | 2026-10-12 16:24:23 EDT  |
+| Run             | Started        | 2026-10-15 09:32:43 EDT  |
+|                 | Ended          | 2026-10-15 09:32:50 EDT  |
 |                 | Duration       | 7 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -396,13 +428,13 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 |                 | Template       | rfs.fit                  |
 |                 | Subject        | dead                     |
 |                 | Type           | rf                       |
-|                 | hvtiRtemplates | 1.3.1                    |
-| Dataset `built` | Version file   | built_20261012.parquet   |
-|                 | Registered     | 2026-10-12               |
+|                 | hvtiRtemplates | 1.4.0                    |
+| Dataset `built` | Version file   | built_20261015.parquet   |
+|                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | 27b97c1d78ec             |
+|                 | sha256         | f632480029c1             |
 |                 | Manifest       | current                  |
 | Reproducibility | Seed           | 2026                     |
 |                 | renv           | not active               |

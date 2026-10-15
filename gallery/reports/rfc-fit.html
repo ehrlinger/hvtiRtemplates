@@ -2235,7 +2235,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-12 16:26</p>
+      <p class="date">2026-10-15 09:34</p>
     </div>
   </div>
   
@@ -2247,6 +2247,7 @@ vertical-align: -.125em;
 </header>
 
 
+<!-- hvtiRtemplates: rfc.fit 1.4.0 -->
 <p>Gallery job on the synthetic cohort: major postoperative complication (complication, 0/1).</p>
 <!--
      classification or binary outcome), and say which outcome and candidate
@@ -2332,7 +2333,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261012.parquet</code>, registered 2026-10-12 · rendered by gallery on gallery · hvtiRtemplates 1.3.1</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
 </div>
 </div>
 </div>
@@ -2512,7 +2513,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261012.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261015.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2549,28 +2550,83 @@ Table 1: The data this job read
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># na.omit drops a patient missing any predictor and na.impute keeps them, so the</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># cohort the forest is grown on is said here, before it is.</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC discards a predictor with no values at all and keeps every</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># row, so such a column would leave the forest without a word and the table</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># below would count every row as dropped. Stop on it instead.</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>.empty <span class="ot">&lt;-</span> PREDICTORS[<span class="fu">vapply</span>(d[PREDICTORS], <span class="cf">function</span>(x) <span class="fu">all</span>(<span class="fu">is.na</span>(x)), <span class="fu">logical</span>(<span class="dv">1</span>L))]</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.empty)) {</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;PREDICTORS names a column with no values: &quot;</span>, <span class="fu">paste</span>(.empty, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;. Remove it from PREDICTORS.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>.na_handling <span class="ot">&lt;-</span> <span class="cf">if</span> (NA_ACTION <span class="sc">==</span> <span class="st">&quot;na.impute&quot;</span>) <span class="st">&quot;impute&quot;</span> <span class="cf">else</span> <span class="st">&quot;drop&quot;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>.missing_values <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.missing_cases</span>(d, <span class="at">RESPONSE =</span> RESPONSE, <span class="at">PREDICTORS =</span> PREDICTORS, <span class="at">action =</span> .na_handling)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.missing_values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div id="tbl-missing" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-missing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 2: Missing values in the model’s variables
+</figcaption>
+<div aria-describedby="tbl-missing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 17%">
+<col style="width: 13%">
+<col style="width: 69%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Variable</th>
+<th style="text-align: left;">Setting</th>
+<th style="text-align: left;">Missing</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">creat_pr</td>
+<td style="text-align: left;">PREDICTORS</td>
+<td style="text-align: left;">75</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Complete cases</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">800 of 800 rows analyzed; 75 with a missing value imputed</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
 </section>
 <section id="forest" class="level2">
 <h2 class="anchored" data-anchor-id="forest">Forest</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cache_fit() writes &lt;dir&gt;/&lt;name&gt;.rds and its default dir is the study&#39;s</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># estimates folder, not this set&#39;s, so every call here names the set&#39;s.</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="fu">dirname</span>(<span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;rfc.rds&quot;</span>))</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">reformulate</span>(<span class="st">&quot;.&quot;</span>, <span class="at">response =</span> RESPONSE)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved forest keeps this formula, and a formula keeps the environment it</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># was made in. That is the global environment in a render, which a saved file</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># only refers to; set it, so a job run anywhere else does not write every</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># object beside the formula, `job_data` and its patient IDs included, into</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># the forest.</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="fu">environment</span>(model) <span class="ot">&lt;-</span> <span class="fu">globalenv</span>()</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>forest <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;rfc-forest&quot;</span>,</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rfsrc</span>(model, <span class="at">data =</span> d, <span class="at">ntree =</span> NTREE, <span class="at">na.action =</span> NA_ACTION, <span class="at">importance =</span> <span class="st">&quot;none&quot;</span>, <span class="at">block.size =</span> <span class="dv">1</span>, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED)),</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>forest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cache_fit() writes &lt;dir&gt;/&lt;name&gt;.rds and its default dir is the study&#39;s</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># estimates folder, not this set&#39;s, so every call here names the set&#39;s.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="fu">dirname</span>(<span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;rfc.rds&quot;</span>))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">reformulate</span>(<span class="st">&quot;.&quot;</span>, <span class="at">response =</span> RESPONSE)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved forest keeps this formula, and a formula keeps the environment it</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># was made in. That is the global environment in a render, which a saved file</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># only refers to; set it, so a job run anywhere else does not write every</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># object beside the formula, `job_data` and its patient IDs included, into</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># the forest.</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="fu">environment</span>(model) <span class="ot">&lt;-</span> <span class="fu">globalenv</span>()</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>forest <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;rfc-forest&quot;</span>,</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rfsrc</span>(model, <span class="at">data =</span> d, <span class="at">ntree =</span> NTREE, <span class="at">na.action =</span> NA_ACTION, <span class="at">importance =</span> <span class="st">&quot;none&quot;</span>, <span class="at">block.size =</span> <span class="dv">1</span>, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED)),</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>forest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>                         Sample size: 800
@@ -2617,20 +2673,22 @@ Random-classifier baselines (uniform):
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Out-of-bag error by number of trees, overall and per class.</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>err <span class="ot">&lt;-</span> <span class="fu">gg_error</span>(forest)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(err)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfc-fit-diagnostics-error&quot;</span>)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Out-of-bag error by number of trees, overall and per class.</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>err <span class="ot">&lt;-</span> <span class="fu">gg_error</span>(forest)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(err) <span class="sc">+</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfc-fit-diagnostics-error&quot;</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-diagnostics-error" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-diagnostics-error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/ec1e98fcb58012e650a173f825662444.png" class="img-fluid figure-img" width="672">
+<img role="img" src="assets/c093122dbc6a39036c441f48a38a0a71.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diagnostics-error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 1: Out-of-bag error by number of trees, overall and per class
+Figure 1: Out-of-bag error by number of trees, overall and per class. Each solid line traces the error rate of one outcome after each additional tree, the line labeled all being the overall error, one color per line as in the legend.
 </figcaption>
 </figure>
 </div>
@@ -2639,23 +2697,23 @@ Figure 1: Out-of-bag error by number of trees, overall and per class
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Out-of-bag one-versus-rest ROC curve, and the area under it, for the class</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># named explicitly above. ggRandomForests selects by factor-level position,</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># so ROC_OUTCOME maps the study&#39;s label to its position instead of letting</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># factor ordering decide what this report means.</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>roc <span class="ot">&lt;-</span> <span class="fu">gg_roc</span>(forest, <span class="at">which_outcome =</span> ROC_OUTCOME)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(roc)</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfc-fit-diagnostics-roc&quot;</span>)</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Out-of-bag one-versus-rest ROC curve, and the area under it, for the class</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># named explicitly above. ggRandomForests selects by factor-level position,</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># so ROC_OUTCOME maps the study&#39;s label to its position instead of letting</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># factor ordering decide what this report means.</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>roc <span class="ot">&lt;-</span> <span class="fu">gg_roc</span>(forest, <span class="at">which_outcome =</span> ROC_OUTCOME)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(roc) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfc-fit-diagnostics-roc&quot;</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-diagnostics-roc" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-diagnostics-roc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/44782a801ce10e2318e79d23e48d6695.png" class="img-fluid figure-img" width="672">
+<img role="img" src="assets/6b063df63f45ccdb3632e8e3720f12ce.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-diagnostics-roc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 2: Out-of-bag ROC curve for the chosen class against the rest
+Figure 2: Out-of-bag ROC curve for the chosen class against the rest. The black solid line is the curve, the red dashed diagonal the line of no discrimination, and the text in the lower right the area under the curve.
 </figcaption>
 </figure>
 </div>
@@ -2664,8 +2722,8 @@ Figure 2: Out-of-bag ROC curve for the chosen class against the rest
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>auc <span class="ot">&lt;-</span> <span class="fu">calc_auc</span>(roc)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>auc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>auc <span class="ot">&lt;-</span> <span class="fu">calc_auc</span>(roc)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>auc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.656356</code></pre>
@@ -2675,26 +2733,26 @@ Figure 2: Out-of-bag ROC curve for the chosen class against the rest
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job, and what rfc-explain reads. It is separate from the</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># cache on purpose: cache_fit() stores a keyed record rather than the bare</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># forest, so the cache is this job&#39;s internals and this file is its interface.</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The price is the forest on disk twice.</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>forest <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  forest,</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">outcome =</span> <span class="fu">list</span>(</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">variable =</span> RESPONSE,</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">kind =</span> <span class="st">&quot;classification&quot;</span>,</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">observed_levels =</span> <span class="fu">levels</span>(forest<span class="sc">$</span>yvar),</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">target_level =</span> ROC_CLASS</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> <span class="fu">list</span>(<span class="at">n =</span> <span class="fu">as.integer</span>(<span class="fu">length</span>(forest<span class="sc">$</span>yvar))),</span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># rfc-explain takes the rows, ID and KEY of this fit from this record.</span></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(forest, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;rfc.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job, and what rfc-explain reads. It is separate from the</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># cache on purpose: cache_fit() stores a keyed record rather than the bare</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># forest, so the cache is this job&#39;s internals and this file is its interface.</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The price is the forest on disk twice.</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>forest <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  forest,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">outcome =</span> <span class="fu">list</span>(</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">variable =</span> RESPONSE,</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">kind =</span> <span class="st">&quot;classification&quot;</span>,</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">observed_levels =</span> <span class="fu">levels</span>(forest<span class="sc">$</span>yvar),</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">target_level =</span> ROC_CLASS</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> <span class="fu">list</span>(<span class="at">n =</span> <span class="fu">as.integer</span>(<span class="fu">length</span>(forest<span class="sc">$</span>yvar))),</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># rfc-explain takes the rows, ID and KEY of this fit from this record.</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(forest, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;rfc.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2712,12 +2770,12 @@ Figure 2: Out-of-bag ROC curve for the chosen class against the rest
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-12 16:26:13 EDT</td>
+<td style="text-align: left;">2026-10-15 09:34:42 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-12 16:26:17 EDT</td>
+<td style="text-align: left;">2026-10-15 09:34:46 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -2762,17 +2820,17 @@ Figure 2: Out-of-bag ROC curve for the chosen class against the rest
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.3.1</td>
+<td style="text-align: left;">1.4.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261012.parquet</td>
+<td style="text-align: left;">built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-12</td>
+<td style="text-align: left;">2026-10-15</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2792,7 +2850,7 @@ Figure 2: Out-of-bag ROC curve for the chosen class against the rest
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">27b97c1d78ec</td>
+<td style="text-align: left;">f632480029c1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2812,7 +2870,7 @@ Figure 2: Out-of-bag ROC curve for the chosen class against the rest
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"rfc.fit.complication.rf","rendered":"2026-10-12T20:26:17Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"d217eb0040b18e2ec96ed0753c6bb7ca9672068b"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.3.1","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"}],"artifacts":[],"subject":"complication","type":"rf","analysis":{"outcome":{"variable":"complication","kind":"classification","observed_levels":["0","1"],"target_level":"1"}},"cohort":{"n":800},"run":{"start":"2026-10-12T16:26:13-0400","end":"2026-10-12T16:26:17-0400","time_zone":"EDT","duration_seconds":4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rfc.fit.complication.rf.qmd","template":"rfc.fit","prefix":"rfc","qualifier":"fit","subject":"complication","type":"rf","hvtiRtemplates":"1.3.1"},"datasets":[{"name":"built","version_file":"built_20261012.parquet","registered":"2026-10-12","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"27b97c1d78ec","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}}},"source":"30_analyses/rfc.fit.complication.rf.qmd",".hvti_render_id":"e23e24264f84fed28797d83d42b7d9781f5df75e762bfefcdb0978e5016cbbff",".hvti_source_sha256":"7f5112d05d4e3701da6f7947bbfcd1407eb02cb0ed57e7bfc599e6199a7ed802"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"rfc.fit.complication.rf","rendered":"2026-10-15T13:34:46Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"99acd373f728208afb08f70c99abd6777ecb6219"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.10","source":"github","sha":"6f50cde76651e0f41b57c145f21cbd5915cfba85"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[],"subject":"complication","type":"rf","analysis":{"outcome":{"variable":"complication","kind":"classification","observed_levels":["0","1"],"target_level":"1"}},"cohort":{"n":800},"run":{"start":"2026-10-15T09:34:42-0400","end":"2026-10-15T09:34:46-0400","time_zone":"EDT","duration_seconds":3.9,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rfc.fit.complication.rf.qmd","template":"rfc.fit","prefix":"rfc","qualifier":"fit","subject":"complication","type":"rf","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"f632480029c1","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}}},"source":"30_analyses/rfc.fit.complication.rf.qmd",".hvti_render_id":"4a4a6302fe2238f4d2779b22e3fe5dde2134b8eefdfc61fb257b9edd83a7f935",".hvti_source_sha256":"8e1366b483bb3f6bc665769d681e9b237f6e5eec76817194ee077c0bf350ce66"}</script>
 </section>
 
 </main>

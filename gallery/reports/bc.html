@@ -2244,7 +2244,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-12 16:14</p>
+      <p class="date">2026-10-15 09:23</p>
     </div>
   </div>
   
@@ -2256,6 +2256,7 @@ vertical-align: -.125em;
 </header>
 
 
+<!-- hvtiRtemplates: bc 1.4.0 -->
 <!-- Demo: name the SAS job this replaces, and paste its `%bootreg` call
      verbatim. The call is the specification: it names the candidate pool, the
      entry and stay levels, the replicate count and `proc=`. Prose describing
@@ -2358,7 +2359,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.3.1</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
 </div>
 </div>
 </div>
@@ -2377,57 +2378,59 @@ vertical-align: -.125em;
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># is honestly computed, and only the denominator is not the intended one.</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>EXPECT_BOOT <span class="ot">&lt;-</span> <span class="dv">100</span>L   <span class="co"># Demo: boot_select(n_rep = 100)</span></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the file your runner wrote its screen to, under this set&#39;s estimates</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># directory. It must match the runner exactly.</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>BOOT_FILE <span class="ot">&lt;-</span> <span class="st">&quot;bagging.rds&quot;</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the bag&#39;s recorded selection is used; set any of these only to confirm</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># it. NULL takes the value the bootstrap runner used.</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: from YOUR .sas %bootreg call. Its documented defaults are</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># resampl=1000, sle=0.10, sls=0.05, but real jobs override them -- and the</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># entry and stay levels decide what each replicate selected, so a report</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># quoting the defaults when the run used something else is describing a</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># different screen. Read them off the call and paste it above.</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"># RETAIN_PCT is the reliability cutoff this report calls &quot;retained&quot;. It is a</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"># reporting decision, not something the run recorded: the entry and stay levels</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># above governed each replicate&#39;s stepwise fit, and neither of them says how</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co"># often a variable must survive to be worth carrying forward.</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>RETAIN_PCT <span class="ot">&lt;-</span> <span class="dv">50</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co"># A Cox screen has no phases: a candidate is offered once, so one term is one</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># screening decision and there is nothing to split a term name on. A</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co"># multiphase hazard screen is a different job -- that is `bh`, which passes a</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="co"># term-splitting rule to the same functions.</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># boot_frequencies() and boot_concepts() take phase = NULL for exactly this</span></span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="co"># case, and it is the same code path bh drives with a term-splitting rule. One</span></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co"># implementation serves both, which is the whole reason this file is thin.</span></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Do NOT supply a rule here to &quot;be safe&quot;. A rule that matches nothing still</span></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co"># adds a phase column of empty strings, and every grouped table below would</span></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co"># then group by a column that says nothing -- silently, since no count changes</span></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># and no error is raised.</span></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>PHASE_OF <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Concept groups to report.</span></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>CLUSTERS <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>  <span class="at">Heart =</span> <span class="fu">c</span>(<span class="st">&quot;hx_chf&quot;</span>, <span class="st">&quot;lvef&quot;</span>)</span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Correlation cutoff for near-duplicate candidates.</span></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>COLLINEAR_R <span class="ot">&lt;-</span> <span class="fl">0.99</span></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).</span></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves neither; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the file-name prefix your runner wrote its screen under. This report</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># reads &lt;BOOT_PREFIX&gt;.rds in this set&#39;s estimates directory, the name bh reads</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># for an unchunked run, and bc-runner.R writes bc.rds. It must match the runner</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># exactly.</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>BOOT_PREFIX <span class="ot">&lt;-</span> <span class="st">&quot;bc&quot;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the bag&#39;s recorded selection is used; set any of these only to confirm</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># it. NULL takes the value the bootstrap runner used.</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: from YOUR .sas %bootreg call. Its documented defaults are</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># resampl=1000, sle=0.10, sls=0.05, but real jobs override them -- and the</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># entry and stay levels decide what each replicate selected, so a report</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co"># quoting the defaults when the run used something else is describing a</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"># different screen. Read them off the call and paste it above.</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># RETAIN_PCT is the reliability cutoff this report calls &quot;retained&quot;. It is a</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co"># reporting decision, not something the run recorded: the entry and stay levels</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co"># above governed each replicate&#39;s stepwise fit, and neither of them says how</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co"># often a variable must survive to be worth carrying forward.</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>RETAIN_PCT <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co"># A Cox screen has no phases: a candidate is offered once, so one term is one</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="co"># screening decision and there is nothing to split a term name on. A</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co"># multiphase hazard screen is a different job -- that is `bh`, which passes a</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># term-splitting rule to the same functions.</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co"># boot_frequencies() and boot_concepts() take phase = NULL for exactly this</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># case, and it is the same code path bh drives with a term-splitting rule. One</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co"># implementation serves both, which is the whole reason this file is thin.</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Do NOT supply a rule here to &quot;be safe&quot;. A rule that matches nothing still</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># adds a phase column of empty strings, and every grouped table below would</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co"># then group by a column that says nothing -- silently, since no count changes</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co"># and no error is raised.</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>PHASE_OF <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Concept groups to report.</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>CLUSTERS <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>  <span class="at">Heart =</span> <span class="fu">c</span>(<span class="st">&quot;hx_chf&quot;</span>, <span class="st">&quot;lvef&quot;</span>)</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Correlation cutoff for near-duplicate candidates.</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>COLLINEAR_R <span class="ot">&lt;-</span> <span class="fl">0.99</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves neither; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2451,11 +2454,11 @@ vertical-align: -.125em;
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># leaves nothing at all. Keeping the run in a companion file means a failed</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># render costs a re-render rather than a re-run, and it is what lets this</span></span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># report be re-read months later against the screen it actually described.</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>.single_file <span class="ot">&lt;-</span> <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, BOOT_FILE)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>.single_file <span class="ot">&lt;-</span> <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="fu">paste0</span>(BOOT_PREFIX, <span class="st">&quot;.rds&quot;</span>))</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(.single_file)) {</span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;No screen found at &quot;</span>, .single_file, <span class="st">&quot;. This report reads a bag your &quot;</span>,</span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;runner wrote with boot_bag(); it does not run the screen.</span><span class="sc">\n</span><span class="st">Run the &quot;</span>,</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;companion runner first, or correct BOOT_FILE.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;companion runner first, or correct BOOT_PREFIX.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>.cfg <span class="ot">&lt;-</span> <span class="fu">study_config</span>(<span class="at">start =</span> .root)</span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>.bag_read <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.read_bootstrap_artifact</span>(</span>
@@ -2507,7 +2510,7 @@ vertical-align: -.125em;
 <span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="co"># A run split across chunks is still supported, and belongs upstream: pool with</span></span>
 <span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="co"># hvtiRbootstrap::boot_pool_chunks() in your runner and write the pooled bag to</span></span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="co"># BOOT_FILE. Only the runner knows how many chunks it launched, and</span></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="co"># &lt;BOOT_PREFIX&gt;.rds. Only the runner knows how many chunks it launched, and</span></span>
 <span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="co"># boot_pool_chunks() refuses chunks that disagree on the dataset checksum, the</span></span>
 <span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="co"># entry and stay levels, the base parameters or the engine version -- every one</span></span>
 <span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="co"># of which is silent on its own, showing up as a slightly different frequency</span></span>
@@ -2670,8 +2673,8 @@ Table 1: The data the bootstrap runner read
 8                                                                      100
 9                                                                        0
 10                                                                     0.0
-11                                                           version:0.9.4
-12 sha256:27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6
+11                                                           version:0.9.5
+12 sha256:f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264
 13                                               1 distinct (listed below)</code></pre>
 </div>
 </div>
@@ -2765,11 +2768,11 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 <span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>health</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>                                check      value   ok note
-1              Replicates that fitted        100 TRUE &lt;NA&gt;
-2              Replicates that failed          0   NA &lt;NA&gt;
-3   Distinct candidates ever selected          7 TRUE &lt;NA&gt;
-4 SD of the first free base parameter 0.00427566 TRUE &lt;NA&gt;</code></pre>
+<pre><code>                                check       value   ok note
+1              Replicates that fitted         100 TRUE &lt;NA&gt;
+2              Replicates that failed           0   NA &lt;NA&gt;
+3   Distinct candidates ever selected           7 TRUE &lt;NA&gt;
+4 SD of the first free base parameter 0.004289426 TRUE &lt;NA&gt;</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -2837,14 +2840,14 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 <span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>freq[, <span class="fu">c</span>(<span class="st">&quot;variable&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;pct&quot;</span>, <span class="st">&quot;mc_error&quot;</span>, <span class="st">&quot;near_threshold&quot;</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>  variable   n pct mc_error near_threshold
-1   hx_chf 100 100 0.000000          FALSE
-2     lvef  95  95 2.179449          FALSE
-3    hx_dm  89  89 3.128898          FALSE
-4 plvmassi  28  28 4.489989          FALSE
-5 creat_pr  23  23 4.208325          FALSE
-6   female  16  16 3.666061          FALSE
-7      bmi   6   6 2.374868          FALSE</code></pre>
+<pre><code>  variable   n pct  mc_error near_threshold
+1   hx_chf 100 100 0.0000000          FALSE
+2     lvef  99  99 0.9949874          FALSE
+3    hx_dm  92  92 2.7129320          FALSE
+4 creat_pr  45  45 4.9749372           TRUE
+5 plvmassi  23  23 4.2083251          FALSE
+6   female  13  13 3.3630343          FALSE
+7      bmi   5   5 2.1794495          FALSE</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -2858,10 +2861,10 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 <span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>retained[, <span class="fu">c</span>(<span class="st">&quot;variable&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;pct&quot;</span>, <span class="st">&quot;mc_error&quot;</span>, <span class="st">&quot;near_threshold&quot;</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>  variable   n pct mc_error near_threshold
-1   hx_chf 100 100 0.000000          FALSE
-2     lvef  95  95 2.179449          FALSE
-3    hx_dm  89  89 3.128898          FALSE</code></pre>
+<pre><code>  variable   n pct  mc_error near_threshold
+1   hx_chf 100 100 0.0000000          FALSE
+2     lvef  99  99 0.9949874          FALSE
+3    hx_dm  92  92 2.7129320          FALSE</code></pre>
 </div>
 </div>
 </section>
@@ -2889,12 +2892,12 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 <div class="cell-output cell-output-stdout">
 <pre><code>  variable  concept representative
 7      bmi      bmi           TRUE
-5 creat_pr creat_pr           TRUE
+4 creat_pr creat_pr           TRUE
 6   female   female           TRUE
 1   hx_chf   hx_chf           TRUE
 3    hx_dm    hx_dm           TRUE
 2     lvef     lvef           TRUE
-4 plvmassi plvmassi           TRUE</code></pre>
+5 plvmassi plvmassi           TRUE</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -2912,14 +2915,14 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 <span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>by_concept[, <span class="fu">c</span>(<span class="st">&quot;concept&quot;</span>, <span class="st">&quot;variable&quot;</span>, <span class="st">&quot;representative&quot;</span>, <span class="st">&quot;pct&quot;</span>, <span class="st">&quot;mc_error&quot;</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>   concept variable representative pct mc_error
-1      bmi      bmi           TRUE   6 2.374868
-2 creat_pr creat_pr           TRUE  23 4.208325
-3   female   female           TRUE  16 3.666061
-4   hx_chf   hx_chf           TRUE 100 0.000000
-5    hx_dm    hx_dm           TRUE  89 3.128898
-6     lvef     lvef           TRUE  95 2.179449
-7 plvmassi plvmassi           TRUE  28 4.489989</code></pre>
+<pre><code>   concept variable representative pct  mc_error
+1      bmi      bmi           TRUE   5 2.1794495
+2 creat_pr creat_pr           TRUE  45 4.9749372
+3   female   female           TRUE  13 3.3630343
+4   hx_chf   hx_chf           TRUE 100 0.0000000
+5    hx_dm    hx_dm           TRUE  92 2.7129320
+6     lvef     lvef           TRUE  99 0.9949874
+7 plvmassi plvmassi           TRUE  23 4.2083251</code></pre>
 </div>
 </div>
 <p>A per-form row answers “how often was <em>this form</em> selected”. It cannot answer “how often was <em>this concept</em> selected”, and that is the number a paper quotes. The gap runs both ways: competing forms split replicates between them, so the concept reads weaker than any single figure suggests, or two forms both clear the cutoff and one finding is reported twice.</p>
@@ -2949,12 +2952,12 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 <div class="cell-output cell-output-stdout">
 <pre><code>   concept n_forms pct_any best_form_pct spread retained
 1   hx_chf       1     100           100      0     TRUE
-2     lvef       1      95            95      0     TRUE
-3    hx_dm       1      89            89      0     TRUE
-4 plvmassi       1      28            28      0    FALSE
-5 creat_pr       1      23            23      0    FALSE
-6   female       1      16            16      0    FALSE
-7      bmi       1       6             6      0    FALSE</code></pre>
+2     lvef       1      99            99      0     TRUE
+3    hx_dm       1      92            92      0     TRUE
+4 creat_pr       1      45            45      0    FALSE
+5 plvmassi       1      23            23      0    FALSE
+6   female       1      13            13      0    FALSE
+7      bmi       1       5             5      0    FALSE</code></pre>
 </div>
 </div>
 <p>⚠️ <strong>A selection frequency is conditional on the candidate pool</strong>, and no column here removes that. On the study this template came from, re-running with 226 candidates instead of 189 moved one variable from 26.6% to 95.2% and another from 93.8% to 20.2% — same data, same seeds. Quote a reliability figure with the pool it came from.</p>
@@ -3072,27 +3075,28 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The error bar is the point of the figure, not decoration. A bare dot plot</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="co"># invites the reader to rank variables by a difference of two points, which is</span></span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="co"># inside the noise at every frequency near the middle of the range.</span></span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(freq, <span class="fu">aes</span>(<span class="at">x =</span> stats<span class="sc">::</span><span class="fu">reorder</span>(variable, pct), <span class="at">y =</span> pct)) <span class="sc">+</span></span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> RETAIN_PCT, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> pct <span class="sc">-</span> mc_error, <span class="at">ymax =</span> pct <span class="sc">+</span> mc_error), <span class="at">width =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">&quot;Replicates selecting the variable (%)&quot;</span>) <span class="sc">+</span></span>
-<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;bc-frequencies&quot;</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
-<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one row per variable, so the height grows with the list.</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The error bar is the point of the figure, not decoration. A bare dot plot</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="co"># invites the reader to rank variables by a difference of two points, which is</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="co"># inside the noise at every frequency near the middle of the range.</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(freq, <span class="fu">aes</span>(<span class="at">x =</span> stats<span class="sc">::</span><span class="fu">reorder</span>(variable, pct), <span class="at">y =</span> pct)) <span class="sc">+</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> RETAIN_PCT, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> pct <span class="sc">-</span> mc_error, <span class="at">ymax =</span> pct <span class="sc">+</span> mc_error), <span class="at">width =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">&quot;Replicates selecting the variable (%)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;bc-frequencies&quot;</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-frequencies" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-frequencies-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/e7f047010bd755b25e5fa1f789f72bc4.png" class="img-fluid figure-img" width="672">
+<img role="img" src="assets/59fa6511bf298bbf61ed26ef4b52ba71.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-frequencies-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 1: Selection frequency, with Monte-Carlo error and the retention threshold
+Figure 1: Bootstrap selection frequency of each candidate variable. Black filled circles mark the percent of replicates selecting the variable, horizontal black bars ±1 Monte Carlo error, and the dashed vertical line the retention threshold.
 </figcaption>
 </figure>
 </div>
@@ -3113,8 +3117,8 @@ Figure 1: Selection frequency, with Monte-Carlo error and the retention thresho
 <span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a><span class="co"># retained. Nothing read the file, and the claim was not true. A file whose existence implies a dependency that does not exist</span></span>
 <span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a><span class="co"># is worse than no file.</span></span>
 <span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="co"># NOT BOOT_FILE. The run&#39;s INPUT is that name, so writing the report there</span></span>
-<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a><span class="co"># overwrites the screen it just read. BOOT_FILE is an edit point, so a study</span></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="co"># NOT &lt;BOOT_PREFIX&gt;.rds. The run&#39;s INPUT is that name, so writing the report there</span></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a><span class="co"># overwrites the screen it just read. BOOT_PREFIX is an edit point, so a study</span></span>
 <span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a><span class="co"># can set it to anything, including this name -- checked rather than assumed,</span></span>
 <span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a><span class="co"># because the failure destroys the run instead of erroring, and a screen is</span></span>
 <span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a><span class="co"># hours of compute that boot_select() produces only on return.</span></span>
@@ -3123,7 +3127,7 @@ Figure 1: Selection frequency, with Monte-Carlo error and the retention thresho
 <span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">normalizePath</span>(report_file, <span class="at">mustWork =</span> <span class="cn">FALSE</span>) <span class="sc">%in%</span> inputs) {</span>
 <span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This report would be written to &quot;</span>, <span class="fu">basename</span>(report_file), <span class="st">&quot;, which is &quot;</span>,</span>
 <span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;the bootstrap output it just read. That file is the screen itself, and &quot;</span>,</span>
-<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;overwriting it cannot be undone.</span><span class="sc">\n</span><span class="st">Change BOOT_FILE so the runner&#39;s &quot;</span>,</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;overwriting it cannot be undone.</span><span class="sc">\n</span><span class="st">Change BOOT_PREFIX so the runner&#39;s &quot;</span>,</span>
 <span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;output and this report do not collide.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a></span>
@@ -3158,12 +3162,12 @@ Figure 1: Selection frequency, with Monte-Carlo error and the retention thresho
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-12 16:14:18 EDT</td>
+<td style="text-align: left;">2026-10-15 09:23:04 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-12 16:14:19 EDT</td>
+<td style="text-align: left;">2026-10-15 09:23:05 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3208,17 +3212,17 @@ Figure 1: Selection frequency, with Monte-Carlo error and the retention thresho
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.3.1</td>
+<td style="text-align: left;">1.4.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261012.parquet</td>
+<td style="text-align: left;">built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-12</td>
+<td style="text-align: left;">2026-10-15</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3238,7 +3242,7 @@ Figure 1: Selection frequency, with Monte-Carlo error and the retention thresho
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">27b97c1d78ec</td>
+<td style="text-align: left;">f632480029c1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3248,7 +3252,7 @@ Figure 1: Selection frequency, with Monte-Carlo error and the retention thresho
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-boot/bagging.rds</code> (bootstrap-bag), rendered not recorded, data built_20261012.parquet</td>
+<td style="text-align: left;"><code>dead-boot/bc.rds</code> (bootstrap-bag), rendered not recorded, data built_20261015.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -3258,7 +3262,7 @@ Figure 1: Selection frequency, with Monte-Carlo error and the retention thresho
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"bc.dead.boot","rendered":"2026-10-12T20:14:19Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRbootstrap","version":"0.9.4","source":"github","sha":"a1c37e3052b89ce2d98f9f04bfa15515a4e71499"},{"package":"hvtiRtemplates","version":"1.3.1","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"},{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"}],"artifacts":[{"path":"90_estimates/dead-boot/bagging.rds","role":"bootstrap-bag","bytes":5318,"mtime":"2026-10-12T20:14:15Z","sha256":"b817af23a0eece69a1dcf675a57abc095a31ebcb2864c127f974a61a8bd01ce5"}],"subject":"dead","type":"boot","run":{"start":"2026-10-12T16:14:18-0400","end":"2026-10-12T16:14:19-0400","time_zone":"EDT","duration_seconds":0.9,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"bc.dead.boot.qmd","template":"bc","prefix":"bc","subject":"dead","type":"boot","hvtiRtemplates":"1.3.1"},"datasets":[{"name":"built","version_file":"built_20261012.parquet","registered":"2026-10-12","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"27b97c1d78ec","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-boot/bagging.rds","set":"dead-boot","role":"bootstrap-bag","dataset_version":"built_20261012.parquet"}],"reproducibility":{"renv":{"active":false}}},"source":"30_analyses/bc.dead.boot.qmd",".hvti_render_id":"68a8102ed277b022aaaeb113ec95c764c03d61a04cad0d518649b7b7a67a74b3",".hvti_source_sha256":"8dbae8d307138bd274cc8bbcbd551e4a9dab74130bd824566b1d24a6713d60cb"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"bc.dead.boot","rendered":"2026-10-15T13:23:05Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.10","source":"github","sha":"6f50cde76651e0f41b57c145f21cbd5915cfba85"},{"package":"hvtiRbootstrap","version":"0.9.5","source":"github","sha":"d84c98ed9b6a92457c0ad7af28d830dc5c04e8b8"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[{"path":"90_estimates/dead-boot/bc.rds","role":"bootstrap-bag","bytes":5494,"mtime":"2026-10-15T13:23:02Z","sha256":"3f7d67a451fdfb98af96e5f86e0f41b40adbfc35a5eca0b6f9b89e877495581f"}],"subject":"dead","type":"boot","run":{"start":"2026-10-15T09:23:04-0400","end":"2026-10-15T09:23:05-0400","time_zone":"EDT","duration_seconds":1.2,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"bc.dead.boot.qmd","template":"bc","prefix":"bc","subject":"dead","type":"boot","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"f632480029c1","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-boot/bc.rds","set":"dead-boot","role":"bootstrap-bag","dataset_version":"built_20261015.parquet"}],"reproducibility":{"renv":{"active":false}}},"source":"30_analyses/bc.dead.boot.qmd",".hvti_render_id":"ac669ba664740669851a6f3cb307780a294a8b54ebeb81d502cb43b42f5fa859",".hvti_source_sha256":"e2383a5eff11ed35347af459845ae1e83d57f5ced4b22b2bb01b40b2368f4c3e"}</script>
 </section>
 
 </main>

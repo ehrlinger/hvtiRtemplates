@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:16
+2026-10-15 09:25
 
 Replaces an older EDA report.
 
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -185,6 +185,8 @@ ALPHA <- 0.5
 # vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
 # all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
 # event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
+# Each figure caption names these colors, so choosing your own means naming them
+# in the caption key too, where the figures are drawn.
 COLORS <- NULL
 
 # Demo: the longest label the figure pages and their captions show, in
@@ -226,7 +228,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -283,7 +285,7 @@ if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = "
 # The job's ID and KEY columns are left out by default, and the ID is never
 # drawn: they are the columns the data step used, so a ccfid, or the MRN it fell
 # back to, is caught whatever its case. A KEY column named in VARIABLES is drawn.
-# MRN and eMRN are already dropped at read, unless one is the ID. The name rules
+# Direct identifiers (MRN, SSNs, names, contact details) are dropped at read, unless one is the ID. The name rules
 # catch other identifier columns and dates: an id or identifier token, such as
 # hosp_id, a date token or a _dt suffix, and the names ccfid and patientid,
 # which have no "_" before "id"; a bare "id$" would also take carotid and
@@ -424,7 +426,7 @@ knitr::kable(.shown, row.names = FALSE)
 | plvmassi | Num | LV mass index (g/m2) | 141 | 0.0 |
 | creat_pr | Num | Creatinine (mg/dL) | 147 | 9.4 |
 | dead | Num | Death | 2 | 0.0 |
-| iv_dead | Num | Follow-up to death or censoring (years) | 779 | 0.0 |
+| iv_dead | Num | Follow-up to death or censoring (years) | 777 | 0.0 |
 | reop | Num | Reoperation | 2 | 0.0 |
 | iv_reop | Num | Follow-up to reoperation (years) | 774 | 0.0 |
 | vent | Num | Prolonged ventilation | 2 | 0.0 |
@@ -507,14 +509,15 @@ Code
 knitr::kable(.window, row.names = FALSE)
 ```
 
-| quantity               | value             |
-|:-----------------------|:------------------|
-| patients               | 800               |
-| operation year missing | 0                 |
-| first operation        | 1990-01-25        |
-| last operation         | 2024-12-10        |
-| close date             | 2025-12-31        |
-| close date is          | set in CLOSE_DATE |
+| quantity                | value             |
+|:------------------------|:------------------|
+| patients                | 800               |
+| operation year missing  | 0                 |
+| operation before origin | 0                 |
+| first operation         | 1990-01-25        |
+| last operation          | 2024-12-10        |
+| close date              | 2025-12-31        |
+| close date is           | set in CLOSE_DATE |
 
 Table 3: Operation years and the close date
 
@@ -564,6 +567,8 @@ for (i in seq_len(nrow(fp$data))) {
   panel_counts[[nm]] <- list(drawn = row$n_drawn, excluded = row$n_excluded)
   cat("\n### ", row$title, "\n\n", row$n_drawn, " patients drawn; ", row$n_excluded,
       " missing a column this panel needs.\n\n", sep = "")
+  # The caption key names the house colors that COLORS <- NULL draws and the
+  # shapes set here, so a study that sets COLORS renames them in .key below.
   if (row$type == "followup") {
     fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time)
     .followup <- .followup_table(fc, d, PANELS[[nm]]$status)
@@ -574,17 +579,22 @@ for (i in seq_len(nrow(fp$data))) {
     p <- plots[[nm]] +
       status_colors(c("Alive", "Dead")) +
       scale_shape_manual(values = c(Alive = 1, Dead = 4))
+    .key <- "Blue open circles mark patients alive and vermillion crosses patients who died"
   } else {
     levels <- c("No event", row$title, "Death")
     p <- plots[[nm]] +
       status_colors(levels) +
       scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
+    .key <- paste0("Blue open circles mark patients without the event, green open triangles patients with the event, ",
+                   "and vermillion crosses patients who died")
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
-    theme_hv_manuscript()
-  file <- save_figure(p, paste0("dc-eda-gfup-", nm), width = 7, height = 6, linked = TRUE)
+    theme_hv_manuscript(base_size = 12)
+  file <- save_figure(p, paste0("dc-eda-gfup-", nm), linked = TRUE)
   .link <- figure_link(file)
-  .child(paste("fig gfup", nm), paste0("Follow-up against year of operation, ", row$title),
+  .child(paste("fig gfup", nm),
+         paste0("Follow-up against year of operation, ", row$title, ". ", .key, " and the dashed orange diagonal ",
+                "the longest follow-up possible for each year of operation."),
          "knitr::include_graphics(.link, error = FALSE)")
   figure_files <- c(figure_files, file)
 }
@@ -602,9 +612,9 @@ knitr::kable(.followup, row.names = FALSE, digits = 3)
 
 | interval | patients | n | missing | negative | zero | mean | sd | min | p15 | median | p85 | max |
 |:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| iv_dead | All patients | 800 | 0 | 0 | 0 | 9.964 | 8.510 | 0.000 | 1.744 | 7.614 | 19.702 | 35.696 |
-| iv_dead | Event | 443 | 0 | 0 | 0 | 7.056 | 6.465 | 0.000 | 0.957 | 5.012 | 14.079 | 27.287 |
-| iv_dead | Censored | 357 | 0 | 0 | 0 | 13.573 | 9.331 | 0.021 | 3.918 | 11.190 | 25.845 | 35.696 |
+| iv_dead | All patients | 800 | 0 | 0 | 0 | 9.479 | 8.087 | 0 | 1.538 | 7.137 | 18.964 | 34.604 |
+| iv_dead | Event | 445 | 0 | 0 | 0 | 7.064 | 6.403 | 0 | 0.957 | 5.022 | 14.135 | 26.513 |
+| iv_dead | Censored | 355 | 0 | 0 | 0 | 12.508 | 8.926 | 0 | 2.987 | 10.221 | 24.694 | 34.604 |
 
 Table 4: Follow-up, All deaths, by patient group: missing, negative and
 zero values, and the distribution (years)
@@ -615,9 +625,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/fdb447a47788fbaffef2a931e326ee22.png)
+![](assets/933604766f2cc62ffb78a4a93ac6713e.png)
 
-Figure 1: Follow-up against year of operation, All deaths
+Figure 1: Follow-up against year of operation, All deaths. Blue open
+circles mark patients alive and vermillion crosses patients who died and
+the dashed orange diagonal the longest follow-up possible for each year
+of operation.
 
 ### Reoperation
 
@@ -629,9 +642,13 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/799f059b3f4cd93edab363e90e7aef5b.png)
+![](assets/f1dc7a57c7ff21ca26fae9678b5ca3dc.png)
 
-Figure 2: Follow-up against year of operation, Reoperation
+Figure 2: Follow-up against year of operation, Reoperation. Blue open
+circles mark patients without the event, green open triangles patients
+with the event, and vermillion crosses patients who died and the dashed
+orange diagonal the longest follow-up possible for each year of
+operation.
 
 Code
 
@@ -644,6 +661,13 @@ Code
 # patient, not only those with a value.
 titles <- c(continuous = "Continuous variables", percent = "Categorical variables, percent",
             count = "Categorical variables, counts")
+# What each panel draws, for the caption: a continuous page has no legend to read it from.
+.eda_key <- c(continuous = paste0("Black filled circles mark patients, the solid blue line a LOESS smooth where a variable has ",
+                                  "enough distinct values, and gray ticks along the bottom the patients missing the variable."),
+              percent = paste("Stacked bars give the share of patients at each reference value, one color per category",
+                              "named in that color beside the panel."),
+              count = paste("Stacked bars give the number of patients at each reference value, one color per category",
+                            "named in that color beside the panel."))
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
 draw_section <- function(section) {
   sec <- hvtiPlotR::hv_eda_pages(d, x_col = X_VAR, section = section, vars = VARIABLES,
@@ -672,13 +696,17 @@ draw_section <- function(section) {
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
   files <- character(0)
   for (i in seq_along(pages)) {
-    file <- save_figure(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8),
+    # Free size: a page is a grid of panels, so it keeps a page of its own to leave each readable.
+    # 8 pt, not 12, because four panels share a row. Categories are named beside each panel in
+    # their own color rather than in a legend, which runs past the page edge at this width.
+    .page <- hvtiRtemplates:::.eda_direct_labels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
+    file <- save_figure(.page,
                         sprintf("dc-eda-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
     cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")
     .link <- figure_link(file)
     .child(paste("fig eda", section, "page", i),
-           paste0(titles[[section]], ", page ", i, ": ", paste(labels[on_page], collapse = ", ")),
+           paste0(titles[[section]], ", page ", i, ": ", paste(labels[on_page], collapse = ", "), ". ", .eda_key[[section]]),
            "knitr::include_graphics(.link, error = FALSE)")
     files <- c(files, file)
   }
@@ -709,8 +737,8 @@ knitr::kable(stats, digits = 2, row.names = FALSE)
 | lvef | LV ejection fraction (%) | 800 | 0 | 51.78 | 9.79 | 20.00 | 42.00 | 52.00 | 62.00 | 75.00 |
 | plvmassi | LV mass index (g/m2) | 800 | 0 | 121.03 | 29.41 | 28.00 | 91.00 | 121.00 | 152.00 | 207.00 |
 | creat_pr | Creatinine (mg/dL) | 725 | 75 | 1.09 | 0.36 | 0.43 | 0.75 | 1.02 | 1.43 | 2.76 |
-| iv_dead | Follow-up to death or censoring (years) | 800 | 0 | 9.96 | 8.51 | 0.00 | 1.74 | 7.61 | 19.70 | 35.70 |
-| iv_reop | Follow-up to reoperation (years) | 800 | 0 | 7.57 | 7.07 | 0.00 | 1.32 | 5.25 | 14.96 | 35.61 |
+| iv_dead | Follow-up to death or censoring (years) | 800 | 0 | 9.48 | 8.09 | 0.00 | 1.54 | 7.14 | 18.96 | 34.60 |
+| iv_reop | Follow-up to reoperation (years) | 800 | 0 | 7.32 | 6.66 | 0.00 | 1.17 | 5.40 | 13.80 | 33.93 |
 | icu_hours | Hours in intensive care | 800 | 0 | 33.92 | 20.15 | 4.00 | 10.00 | 34.00 | 56.00 | 108.00 |
 | los | Postoperative length of stay (days) | 800 | 0 | 6.32 | 2.62 | 1.00 | 4.00 | 6.00 | 9.00 | 19.00 |
 | log_los | Postoperative length of stay (log days) | 800 | 0 | 1.76 | 0.40 | 0.00 | 1.39 | 1.79 | 2.20 | 2.94 |
@@ -725,14 +753,17 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/09ebc339dc14e86cbd694fbbd789b07d.png)
+![](assets/5a816dbe9ef963e18a3964259f7ff5f2.png)
 
 Figure 3: Continuous variables, page 1: Years from 1 January 1990 to
 operation, Age at operation (years), Body mass index (kg/m2), LV
 ejection fraction (%), LV mass index (g/m2), Creatinine (mg/dL),
 Follow-up to death or censoring (years), Follow-up to reoperation
 (years), Hours in intensive care, Postoperative length of stay (days),
-Postoperative length of stay (log days)
+Postoperative length of stay (log days). Black filled circles mark
+patients, the solid blue line a LOESS smooth where a variable has enough
+distinct values, and gray ticks along the bottom the patients missing
+the variable.
 
 Code
 
@@ -763,10 +794,10 @@ knitr::kable(freq, row.names = FALSE)
 | nyha_pr      | 2             | 360 |    45.0 |
 | nyha_pr      | 3             | 275 |    34.4 |
 | nyha_pr      | 4             |  36 |     4.5 |
-| dead         | 0             | 357 |    44.6 |
-| dead         | 1             | 443 |    55.4 |
-| reop         | 0             | 592 |    74.0 |
-| reop         | 1             | 208 |    26.0 |
+| dead         | 0             | 355 |    44.4 |
+| dead         | 1             | 445 |    55.6 |
+| reop         | 0             | 600 |    75.0 |
+| reop         | 1             | 200 |    25.0 |
 | vent         | 0             | 548 |    68.5 |
 | vent         | 1             | 252 |    31.5 |
 | male         | 0             | 299 |    37.4 |
@@ -809,13 +840,15 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/d3c65ed44594d7c283f2d9329bce51bb.png)
+![](assets/0db069748071ce1d3f31f2cf7ee578cf.png)
 
 Figure 4: Categorical variables, percent, page 1: Female, Race, History
 of heart failure, Diabetes, NYHA functional class, Death, Reoperation,
 Prolonged ventilation, Male, Non-white race, Postoperative stroke,
 Postoperative mitral regurgitation grade, Discharge destination,
-Surgical or transcatheter replacement, Prosthesis size, Prosthesis type
+Surgical or transcatheter replacement, Prosthesis size, Prosthesis type.
+Stacked bars give the share of patients at each reference value, one
+color per category named in that color beside the panel.
 
 ### Categorical variables, percent, page 2
 
@@ -825,11 +858,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/7daa7bec74ed9a3d4ebcd6f27d797a51.png)
+![](assets/0e671e70a7e5d19d19ef4429b1cdd041.png)
 
 Figure 5: Categorical variables, percent, page 2: Number of prior
 cardiac operations, In a matched pair (simulated), Major postoperative
-complication
+complication. Stacked bars give the share of patients at each reference
+value, one color per category named in that color beside the panel.
 
 Code
 
@@ -847,13 +881,15 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/4db9761dfe6ce1077e0b9089ef84ba40.png)
+![](assets/7e0004aa10f657b85cf66080a72f54df.png)
 
 Figure 6: Categorical variables, counts, page 1: Female, Race, History
 of heart failure, Diabetes, NYHA functional class, Death, Reoperation,
 Prolonged ventilation, Male, Non-white race, Postoperative stroke,
 Postoperative mitral regurgitation grade, Discharge destination,
-Surgical or transcatheter replacement, Prosthesis size, Prosthesis type
+Surgical or transcatheter replacement, Prosthesis size, Prosthesis type.
+Stacked bars give the number of patients at each reference value, one
+color per category named in that color beside the panel.
 
 ### Categorical variables, counts, page 2
 
@@ -863,19 +899,20 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/296c9a810db1c332c9984407ea8465d7.png)
+![](assets/003f85635724654aeb2e09a7434cfe34.png)
 
 Figure 7: Categorical variables, counts, page 2: Number of prior cardiac
 operations, In a matched pair (simulated), Major postoperative
-complication
+complication. Stacked bars give the number of patients at each reference
+value, one color per category named in that color beside the panel.
 
 ## About this run
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-12 16:16:42 EDT  |
-|                 | Ended          | 2026-10-12 16:16:49 EDT  |
-|                 | Duration       | 8 s                      |
+| Run             | Started        | 2026-10-15 09:25:34 EDT  |
+|                 | Ended          | 2026-10-15 09:25:42 EDT  |
+|                 | Duration       | 9 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -883,12 +920,12 @@ complication
 |                 | Template       | dc.eda                   |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.3.1                    |
-| Dataset `built` | Version file   | built_20261012.parquet   |
-|                 | Registered     | 2026-10-12               |
+|                 | hvtiRtemplates | 1.4.0                    |
+| Dataset `built` | Version file   | built_20261015.parquet   |
+|                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | 27b97c1d78ec             |
+|                 | sha256         | f632480029c1             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

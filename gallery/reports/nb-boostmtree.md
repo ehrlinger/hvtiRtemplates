@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:24
+2026-10-15 09:32
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -68,8 +68,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `echo` `echo_20261012.parquet`, registered 2026-10-12 ·
-rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `echo` `echo_20261015.parquet`, registered 2026-10-15 ·
+rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -247,11 +247,11 @@ if (length(.chr)) {
 
 | Data                |                                        |
 |:--------------------|:---------------------------------------|
-| Source              | dataset `echo` (echo_20261012.parquet) |
-| Rows read           | 1,177                                  |
+| Source              | dataset `echo` (echo_20261015.parquet) |
+| Rows read           | 1,180                                  |
 | ID                  | `patient_id`                           |
 | Identifiers dropped | none                                   |
-| Rows kept           | 1,177 rows on 300 patients             |
+| Rows kept           | 1,180 rows on 300 patients             |
 
 Table 1: The data this job read
 
@@ -309,7 +309,7 @@ knitr::kable(data.frame(
 | Iterations (M)     | 200        |
 | Learning rate (nu) | 0.05       |
 | Patients           | 300        |
-| Visits             | 1177       |
+| Visits             | 1180       |
 
 Table 2: The fit
 
@@ -348,7 +348,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 176 | 0.8592758 |
+| l2 | lvef | 171 | 0.8824838 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -357,39 +357,50 @@ Code
 ``` r
 # The cross-validated error by iteration, and the fitted rho, phi and lambda.
 # Best M at the right edge means M was too small.
-p_error <- plot(gg_boost_error(fit))
+p_error <- plot(gg_boost_error(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/fba1475188a348a6f85184002803ee6a.png)
+![](assets/d42c5211f418991344db03033e4d3e53.png)
 
-Figure 1: Cross-validated error by boosting iteration
+Figure 1: Cross-validated error by boosting iteration. The black solid
+line is the error after each iteration, and the black dashed vertical
+line marks the iteration with the lowest error, Best M.
 
 Code
 
 ``` r
-p_path <- plot(gg_boost_path(fit))
-save_figure(p_path, "nb-boostmtree-path")
+# Free size: three stacked panels, one per parameter.
+p_path <- plot(gg_boost_path(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/fa5b78f93e33f25f02d5c8378f082be9.png)
+![](assets/99635b2cfb282a8a671874262446beea.png)
 
-Figure 2: Fitted rho, phi and lambda by boosting iteration
+Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
+per parameter. Each black solid line is the parameter’s fitted value
+after each iteration.
 
 Code
 
 ``` r
 # Observed against fitted values over follow-up, in time bins.
-p_calibration <- plot(gg_boost_calibration(fit))
+# The manuscript theme hides the legend and its title, and the caption reads the shapes from the legend.
+p_calibration <- plot(gg_boost_calibration(fit)) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/b25dc7d17fa79612e4e261ae628d3a10.png)
+![](assets/afa4a52612c1989a6b7d7ade6c44c85c.png)
 
-Figure 3: Observed against fitted values over follow-up, in time bins
+Figure 3: Observed against fitted values over follow-up, in time bins.
+Each gray horizontal segment spans a time bin at its observed mean, with
+a vertical black bar for the interval around it; black circles mark the
+observed means, black triangles the fitted means, and the black dashed
+line joins the fitted means over time.
 
 Code
 
@@ -397,15 +408,17 @@ Code
 # Importance of each predictor's main effect and its interaction with time; the
 # interaction is where a predictor whose effect changes over follow-up shows.
 vimp <- vimp.boostmtree(fit)
-p_vimp <- plot(gg_boost_vimp(vimp))
-save_figure(p_vimp, "nb-boostmtree-importance")
+# Free size: one row per predictor, and one panel per effect.
+p_vimp <- plot(gg_boost_vimp(vimp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(p_vimp, "nb-boostmtree-importance", width = 9, height = 7)
 p_vimp
 ```
 
-![](assets/cd832d9a83697c42df8a1d10a1a1dd5d.png)
+![](assets/5e9f713a2f0cdb17125004cfcd045f94.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
-interaction with time
+interaction with time, one panel for each. Horizontal dark gray bars
+give the importance of each predictor.
 
 Code
 
@@ -424,12 +437,12 @@ if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unkno
 # Each component is renamed as the fit summary names it, not by its bare level.
 .fence <- strrep("`", 3)
 .seen <- new.env()
-.child <- function(label, caption, code) {
+.child <- function(label, caption, code, opts = NULL) {
   label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
   if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
   .seen[[label]] <- TRUE
   .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
-  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, opts, code, .fence),
                         envir = parent.frame(), quiet = TRUE), sep = "\n")
   cat("\n")
 }
@@ -453,12 +466,20 @@ levels(.effect$response) <- .relabel
 p_effects <- lapply(unname(.parts), function(v) {
   part <- .effect[.effect$variable %in% v, , drop = FALSE]
   part$variable <- droplevels(part$variable)
-  plot(part)
+  # The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.
+  plot(part) + hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 })
+# Free size: one panel per predictor, and per response component when there are several.
+.key <- c(continuous = paste("Each solid line is the effect at one follow-up time, colored from dark to light blue by",
+                             "time as in the color bar."),
+          categorical = paste("Each point is the effect at one level and follow-up time, colored from dark to light blue by",
+                              "time as in the color bar."))
 for (.i in seq_along(p_effects)) {
   .p <- p_effects[[.i]]
-  save_figure(.p, paste0("nb-boostmtree-effects-", .kinds[[.i]]))
-  .child(paste("fig effects", .kinds[[.i]]), paste0("Partial effects over follow-up, ", .kinds[[.i]], " predictors"), ".p")
+  save_figure(.p, paste0("nb-boostmtree-effects-", .kinds[[.i]]), width = 9, height = 7)
+  .child(paste("fig effects", .kinds[[.i]]),
+         paste0("Partial effects over follow-up, ", .kinds[[.i]], " predictors, one panel per predictor. ", .key[[.kinds[[.i]]]]),
+         ".p", opts = c("#| fig-width: 9", "#| fig-height: 7"))
 }
 ```
 
@@ -468,9 +489,11 @@ Code
 .p
 ```
 
-![](assets/475d0aaf5d026ad965fc913b670de9ea.png)
+![](assets/8f9f28546bda711050873213daadee19.png)
 
-Figure 5: Partial effects over follow-up, continuous predictors
+Figure 5: Partial effects over follow-up, continuous predictors, one
+panel per predictor. Each solid line is the effect at one follow-up
+time, colored from dark to light blue by time as in the color bar.
 
 Code
 
@@ -487,7 +510,8 @@ traces <- gg_boost_trajectory(fit)
 .edges <- unique(stats::quantile(traces$time, seq(0, 1, length.out = 11L), names = FALSE))
 # plot() reports that it chose the patients at random; SEED makes the choice
 # the same on every render.
-p_traces <- withr::with_seed(SEED, plot(traces, n_max = N_TRACES)) + ggplot2::labs(x = .time, y = .response)
+p_traces <- withr::with_seed(SEED, plot(traces, n_max = N_TRACES)) + ggplot2::labs(x = .time, y = .response) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
 ```
 
     Drawing 100 of 300 subjects, chosen at random. Pass n_max = Inf to draw all, or subset to choose; call set.seed() first for a reproducible sample.
@@ -514,10 +538,13 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/f5a077aeac3b8cc940cc08ad402c4d13.png)
+![](assets/0e1238e4b076e517bb5871ddca91e057.png)
 
 Figure 6: Fitted trajectories for a sample of patients, with the
-cohort’s mean fitted value over time
+cohort’s mean fitted value over time. Thin translucent black lines trace
+each sampled patient’s fitted values, translucent black circles their
+observed values, and the thick black line the cohort’s mean fitted value
+within ten time bins.
 
 Code
 
@@ -539,9 +566,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 | Group           | Item           | Value                        |
 |:----------------|:---------------|:-----------------------------|
-| Run             | Started        | 2026-10-12 16:19:10 EDT      |
-|                 | Ended          | 2026-10-12 16:24:09 EDT      |
-|                 | Duration       | 5 min 0 s                    |
+| Run             | Started        | 2026-10-15 09:27:54 EDT      |
+|                 | Ended          | 2026-10-15 09:32:37 EDT      |
+|                 | Duration       | 4 min 43 s                   |
 |                 | Status         | final                        |
 |                 | Rendered by    | gallery                      |
 |                 | Host           | gallery                      |
@@ -549,13 +576,13 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 |                 | Template       | nb.boostmtree                |
 |                 | Subject        | lvef                         |
 |                 | Type           | boost                        |
-|                 | hvtiRtemplates | 1.3.1                        |
-| Dataset `echo`  | Version file   | echo_20261012.parquet        |
-|                 | Registered     | 2026-10-12                   |
+|                 | hvtiRtemplates | 1.4.0                        |
+| Dataset `echo`  | Version file   | echo_20261015.parquet        |
+|                 | Registered     | 2026-10-15                   |
 |                 | Source file    | echo.rds                     |
-|                 | Rows kept      | 1,177 rows on 300 patients   |
+|                 | Rows kept      | 1,180 rows on 300 patients   |
 |                 | WHERE          | none                         |
-|                 | sha256         | 11f499d1f236                 |
+|                 | sha256         | 94bd116a865f                 |
 |                 | Manifest       | current                      |
 | Reproducibility | Seed           | 2026                         |
 |                 | renv           | not active                   |

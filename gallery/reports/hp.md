@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:17
+2026-10-15 09:26
 
 An `hp` job **reads** its inputs and does not recompute them: the
 actuarial life table from the `ac` job and the parametric fit from the
@@ -60,7 +60,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.3.1
+hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -191,7 +191,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261012.parquet) |
+| Source              | dataset `study` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -248,8 +248,8 @@ for (i in which(horizons$extrapolating)) {
 
 | grid              | max_horizon | end_of_follow_up | extrapolating |
 |:------------------|------------:|-----------------:|:--------------|
-| reporting (table) |          10 |           35.696 | FALSE         |
-| plotting (curves) |          10 |           35.696 | FALSE         |
+| reporting (table) |          10 |           34.604 | FALSE         |
+| plotting (curves) |          10 |           34.604 | FALSE         |
 
 Table 2: End of follow-up against the longest horizon on each grid
 
@@ -318,19 +318,19 @@ knitr::kable(nomogram, digits = 6)
 
 |     years | survival |  surv_lo |  surv_hi |   hazard |   haz_lo |   haz_hi |
 |----------:|---------:|---------:|---------:|---------:|---------:|---------:|
-|  0.082137 | 0.970148 | 0.962017 | 0.976581 | 0.117972 | 0.101054 | 0.137722 |
-|  0.250000 | 0.953932 | 0.945810 | 0.960887 | 0.090612 | 0.078961 | 0.103981 |
-|  0.500000 | 0.934077 | 0.925730 | 0.941545 | 0.079362 | 0.070017 | 0.089954 |
-|  1.000000 | 0.900121 | 0.890312 | 0.909141 | 0.070072 | 0.063321 | 0.077543 |
-|  2.000000 | 0.843034 | 0.830398 | 0.854893 | 0.062069 | 0.057641 | 0.066838 |
-|  3.000000 | 0.794102 | 0.779665 | 0.807826 | 0.057857 | 0.054456 | 0.061470 |
-|  4.000000 | 0.750574 | 0.735058 | 0.765470 | 0.055051 | 0.052138 | 0.058126 |
-|  5.000000 | 0.711142 | 0.694991 | 0.726775 | 0.052971 | 0.050264 | 0.055824 |
-|  6.000000 | 0.675025 | 0.658501 | 0.691125 | 0.051332 | 0.048676 | 0.054133 |
-|  7.000000 | 0.641694 | 0.624947 | 0.658102 | 0.049986 | 0.047300 | 0.052825 |
-|  8.000000 | 0.610762 | 0.593869 | 0.627394 | 0.048850 | 0.046092 | 0.051772 |
-|  9.000000 | 0.581936 | 0.564926 | 0.598753 | 0.047869 | 0.045021 | 0.050897 |
-| 10.000000 | 0.554979 | 0.537854 | 0.571974 | 0.047008 | 0.044064 | 0.050150 |
+|  0.082137 | 0.968953 | 0.961692 | 0.974873 | 0.115089 | 0.095818 | 0.138234 |
+|  0.250000 | 0.953569 | 0.945634 | 0.960394 | 0.085335 | 0.075419 | 0.096554 |
+|  0.500000 | 0.934770 | 0.926306 | 0.942322 | 0.075643 | 0.067615 | 0.084624 |
+|  1.000000 | 0.901943 | 0.892149 | 0.910936 | 0.068457 | 0.062308 | 0.075213 |
+|  2.000000 | 0.845112 | 0.832821 | 0.856654 | 0.062539 | 0.058215 | 0.067184 |
+|  3.000000 | 0.795206 | 0.781201 | 0.808534 | 0.059442 | 0.055980 | 0.063119 |
+|  4.000000 | 0.750135 | 0.735027 | 0.764657 | 0.057369 | 0.054329 | 0.060578 |
+|  5.000000 | 0.708883 | 0.693072 | 0.724204 | 0.055822 | 0.052964 | 0.058835 |
+|  6.000000 | 0.670822 | 0.654557 | 0.686687 | 0.054595 | 0.051779 | 0.057563 |
+|  7.000000 | 0.635512 | 0.618943 | 0.651765 | 0.053581 | 0.050731 | 0.056592 |
+|  8.000000 | 0.602622 | 0.585833 | 0.619173 | 0.052720 | 0.049793 | 0.055819 |
+|  9.000000 | 0.571893 | 0.554923 | 0.588696 | 0.051973 | 0.048950 | 0.055184 |
+| 10.000000 | 0.543112 | 0.525973 | 0.560149 | 0.051315 | 0.048185 | 0.054648 |
 
 Table 3: Survival, hazard and their confidence limits at each horizon
 
@@ -348,19 +348,19 @@ knitr::kable(nomogram_pct)
 
 |      years | survival_pct | cl_lower_pct | cl_upper_pct |
 |-----------:|-------------:|-------------:|-------------:|
-|  0.0821372 |         97.0 |         96.2 |         97.7 |
-|  0.2500000 |         95.4 |         94.6 |         96.1 |
-|  0.5000000 |         93.4 |         92.6 |         94.2 |
-|  1.0000000 |         90.0 |         89.0 |         90.9 |
-|  2.0000000 |         84.3 |         83.0 |         85.5 |
-|  3.0000000 |         79.4 |         78.0 |         80.8 |
-|  4.0000000 |         75.1 |         73.5 |         76.5 |
-|  5.0000000 |         71.1 |         69.5 |         72.7 |
-|  6.0000000 |         67.5 |         65.9 |         69.1 |
-|  7.0000000 |         64.2 |         62.5 |         65.8 |
-|  8.0000000 |         61.1 |         59.4 |         62.7 |
-|  9.0000000 |         58.2 |         56.5 |         59.9 |
-| 10.0000000 |         55.5 |         53.8 |         57.2 |
+|  0.0821372 |         96.9 |         96.2 |         97.5 |
+|  0.2500000 |         95.4 |         94.6 |         96.0 |
+|  0.5000000 |         93.5 |         92.6 |         94.2 |
+|  1.0000000 |         90.2 |         89.2 |         91.1 |
+|  2.0000000 |         84.5 |         83.3 |         85.7 |
+|  3.0000000 |         79.5 |         78.1 |         80.9 |
+|  4.0000000 |         75.0 |         73.5 |         76.5 |
+|  5.0000000 |         70.9 |         69.3 |         72.4 |
+|  6.0000000 |         67.1 |         65.5 |         68.7 |
+|  7.0000000 |         63.6 |         61.9 |         65.2 |
+|  8.0000000 |         60.3 |         58.6 |         61.9 |
+|  9.0000000 |         57.2 |         55.5 |         58.9 |
+| 10.0000000 |         54.3 |         52.6 |         56.0 |
 
 Table 4: Survival (%) with 68% confidence limits (plus or minus 1 SD),
 not 95%
@@ -406,12 +406,14 @@ draw <- function() {
   legend("bottomleft", c("parametric (hz)", "actuarial (ac)"),
          lty = c(1, 2), bty = "n")
 }
-knitr::include_graphics(save_figure(draw, "hp-survival", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
+knitr::include_graphics(save_figure(draw, "hp-survival", linked = TRUE))
 ```
 
-![](assets/fefcc2ab3668641bd0792bd2c629d374.png)
+![](assets/296db78f8a69293121abc1585876f8dc.png)
 
-Figure 1: Actuarial and parametric survival after the operation
+Figure 1: Actuarial and parametric survival after the operation. The
+solid black line is the parametric (hz) estimate and the dashed black
+step line the actuarial (ac) estimate.
 
 Code
 
@@ -424,12 +426,14 @@ draw <- function() {
        xlab = "Months after operation", ylab = "Hazard (% per month)",
        main = "Hazard function")
 }
-knitr::include_graphics(save_figure(draw, "hp-hazard", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
+knitr::include_graphics(save_figure(draw, "hp-hazard", linked = TRUE))
 ```
 
-![](assets/ee19bd28dda2a35cc8a6fd1c7d72a287.png)
+![](assets/91850fa5471324581ea620be3a394278.png)
 
-Figure 2: Hazard of the parametric model after the operation
+Figure 2: Hazard of the parametric model after the operation. The solid
+black line is the parametric hazard, in percent per month on a
+logarithmic axis.
 
 ### Phase decomposition
 
@@ -473,12 +477,14 @@ draw <- function() {
   legend("topleft", comp, col = seq_along(comp),
          lty = ifelse(comp == "total", 1, 2), bty = "n")
 }
-knitr::include_graphics(save_figure(draw, "hp-phases", width = 1400 / 150, height = 1000 / 150, linked = TRUE))
+knitr::include_graphics(save_figure(draw, "hp-phases", linked = TRUE))
 ```
 
-![](assets/62bef4d670b57e24f1e6bb6e091c7bdb.png)
+![](assets/034d88e00981c5bd091c48f6c130acf0.png)
 
-Figure 3: Phase decomposition of the cumulative hazard
+Figure 3: Phase decomposition of the cumulative hazard. The solid line
+is the total and each dashed line one phase, one color per curve, as in
+the legend.
 
 ## Save
 
@@ -494,9 +500,9 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:17:36 EDT |
-|  | Ended | 2026-10-12 16:17:37 EDT |
-|  | Duration | 1 s |
+| Run | Started | 2026-10-15 09:26:26 EDT |
+|  | Ended | 2026-10-15 09:26:27 EDT |
+|  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -504,14 +510,14 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 |  | Template | hp |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-12 16:17:15 -0400, data built_20261012.parquet |
-|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-12 16:17:21 -0400, data built_20261012.parquet |
+| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-15 09:26:04 -0400, data built_20261015.parquet |
+|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-15 09:26:09 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

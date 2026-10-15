@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:18
+2026-10-15 09:27
 
 Applies a saved `lm-binary` bundle to a declared validation cohort. This
 job never refits, updates, or overwrites the source model.
@@ -19,7 +19,7 @@ suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.1.10") stop("This template needs hvtiRpropensity >= 0.1.10.", call. = FALSE)
+if (utils::packageVersion("hvtiRpropensity") < "0.2.0") stop("This template needs hvtiRpropensity >= 0.2.0.", call. = FALSE)
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -33,8 +33,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 Code
 
@@ -122,7 +122,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -272,8 +272,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:18:23 EDT |
-|  | Ended | 2026-10-12 16:18:24 EDT |
+| Run | Started | 2026-10-15 09:27:11 EDT |
+|  | Ended | 2026-10-15 09:27:11 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -282,13 +282,13 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 |  | Template | lm.checkpred |
 |  | Subject | stroke |
 |  | Type | model |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 228 rows on 228 patients |
 |  | WHERE | `year >= 2015` |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-12 16:18:19 -0400, data built_20261012.parquet |
+| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-15 09:27:06 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

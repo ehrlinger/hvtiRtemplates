@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:26
+2026-10-15 09:34
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -82,7 +82,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.3.1
+hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -198,14 +198,19 @@ Code
 
 ``` r
 vi <- cache_fit("rfs-vimp", vimp(forest, seed = -abs(SEED)), seed = SEED, dir = CACHE_DIR, refit = REFIT)
-.fig <- plot(gg_vimp(vi))
-save_figure(.fig, "rfs-explain-importance")
+# Free size: one row per predictor, so the height grows with the list.
+# The manuscript theme hides the legend and its title, and the caption reads the colors from the legend.
+.fig <- plot(gg_vimp(vi)) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+save_figure(.fig, "rfs-explain-importance", height = 7)
 .fig
 ```
 
-![](assets/129c97b3fd9bba8e24d483c0110b5806.png)
+![](assets/72f49682ec83470894d37984b51352db.png)
 
-Figure 1: Permutation importance of each predictor
+Figure 1: Permutation importance of each predictor. Horizontal bars give
+the importance of each predictor, in one color where the importance is
+positive and another where it is not, as in the legend.
 
 Code
 
@@ -221,15 +226,15 @@ data.frame(variable = ranked,
 ```
 
       variable    vimp min_depth
-    1      age  0.1897      1.13
-    2   hx_chf  0.1258      1.44
-    3     lvef  0.0671      1.88
-    4 plvmassi  0.0306      2.58
-    5 creat_pr  0.0223      3.06
-    6      bmi  0.0193      3.34
-    7    hx_dm  0.0190      3.44
-    8  nyha_pr  0.0087      4.37
-    9   female -0.0013      7.63
+    1      age  0.1814      1.19
+    2   hx_chf  0.1176      1.50
+    3     lvef  0.0806      1.76
+    4      bmi  0.0244      3.24
+    5 plvmassi  0.0232      2.72
+    6    hx_dm  0.0206      3.35
+    7 creat_pr  0.0133      2.97
+    8  nyha_pr  0.0053      4.41
+    9   female -0.0004      6.96
 
 Table 2: Permutation importance and minimal depth of each predictor, in
 order of importance
@@ -262,14 +267,19 @@ Code
 ``` r
 vp <- cache_fit("rfs-varpro", varpro(model, frame, verbose = FALSE, seed = -abs(SEED)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-.fig <- plot(gg_varpro(vp))
-save_figure(.fig, "rfs-explain-varpro")
+# Free size: one row per predictor, so the height grows with the list.
+.fig <- plot(gg_varpro(vp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "rfs-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/c29dd3e5ac81880ab1eecb8ddeea7126.png)
+![](assets/8e268880512f9646bf9eae1f097af3e7.png)
 
-Figure 2: VarPro importance of each predictor
+Figure 2: VarPro importance of each predictor. Each box spans the 15th
+to the 85th percentile of the predictor’s importance, with a line at the
+median and whiskers to the 5th and 95th percentiles; blue boxes mark the
+predictors VarPro selected, gray boxes the rest, and the dashed red
+vertical line the selection cutoff.
 
 ## Dependence
 
@@ -280,9 +290,17 @@ Code
 # A loess smooth needs more than a handful of distinct values, so a predictor
 # with fewer than six, such as a stage or a grade, is drawn as points alone.
 .gv <- gg_variable(forest, time = TIMES)
-.panels <- lapply(sel, function(v) plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5))
-.fig <- patchwork::wrap_plots(.panels, ncol = 1)
-save_figure(.fig, "rfs-explain-dependence-marginal")
+.panels <- lapply(sel, function(v) {
+  plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5) +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+})
+# Free size: one stacked panel per selected predictor, and inside each one facet row
+# per follow-up time in TIMES, 2 in for every row.
+# The manuscript theme hides the legend and its title, and the caption reads the points from the legend.
+# One legend for the stack: every panel shares the same outcome levels.
+.fig <- patchwork::wrap_plots(.panels, ncol = 1) + patchwork::plot_layout(guides = "collect") &
+  ggplot2::theme(legend.position = "top")
+save_figure(.fig, "rfs-explain-dependence-marginal", height = 2 * length(sel) * length(TIMES))
 ```
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
@@ -302,10 +320,15 @@ Code
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/aabd14c89fb1e72e5e31f94e388ab144.png)
+![](assets/c560a5addc52b028e369fb0726b36939.png)
 
 Figure 3: Predicted survival against each selected predictor, as
-observed
+observed, one panel per predictor and follow-up time. Points are
+individual patients, one color and shape for those who had the event and
+another for those who did not, as in the legend; the blue line is a
+loess smooth with its gray band, drawn for predictors with more than
+five distinct values, and for a categorical predictor the points are
+jittered over a gray box plot.
 
 Code
 
@@ -315,15 +338,21 @@ Code
 pd <- cache_fit("rfs-partial", gg_partial_rfsrc(forest, xvar.names = sel, partial.time = TIMES),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT,
                 packages = "randomForestSRC")
-.fig <- plot(pd)
-save_figure(.fig, "rfs-explain-dependence-partial")
+# Free size: one panel per predictor.
+# The manuscript theme hides the legend and its title, and the caption reads the colors from the legend.
+.fig <- plot(pd) &
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+save_figure(.fig, "rfs-explain-dependence-partial", width = 9, height = 8)
 .fig
 ```
 
-![](assets/cd821d02414baf7c3fbb0f8a4d6513e2.png)
+![](assets/af3c6dca29246729b1754f6f5432fcef.png)
 
 Figure 4: Partial dependence of the forest’s prediction on each selected
-predictor
+predictor, one panel per predictor. Solid lines trace the predicted
+survival across a continuous predictor, one color per follow-up time as
+in the legend, and dark gray bars give the partial effect at each level
+of a categorical one.
 
 Code
 
@@ -334,8 +363,11 @@ Code
 # but not a survival curve.
 pv <- cache_fit("rfs-partial-varpro", gg_partial_varpro(object = vp, xvar.names = sel, time = max(TIMES)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-.fig <- plot(pv)
-save_figure(.fig, "rfs-explain-dependence-varpro")
+# Free size: one panel per predictor.
+# The manuscript theme hides the legend and its title, and the caption reads the line types from the legend.
+.fig <- plot(pv) &
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+save_figure(.fig, "rfs-explain-dependence-varpro", width = 9, height = 8)
 ```
 
     Warning: Removed 152 rows containing non-finite outside the scale range
@@ -352,17 +384,21 @@ Code
     Warning: Removed 152 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/3b45787b6e3246488794b0bca03417db.png)
+![](assets/52fea47edfeeda795c89f0412973a210.png)
 
-Figure 5: VarPro partial dependence on each selected predictor
+Figure 5: VarPro partial dependence on each selected predictor, one
+panel per predictor. For a continuous predictor a black solid line marks
+the nonparametric partial effect and a black dashed line the parametric
+one, as in the legend; for a categorical predictor black box plots show
+the spread of the partial effect at each level.
 
 ## About this run
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:24:28 EDT |
-|  | Ended | 2026-10-12 16:26:06 EDT |
-|  | Duration | 1 min 38 s |
+| Run | Started | 2026-10-15 09:32:55 EDT |
+|  | Ended | 2026-10-15 09:34:37 EDT |
+|  | Duration | 1 min 41 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -370,12 +406,12 @@ Figure 5: VarPro partial dependence on each selected predictor
 |  | Template | rfs.explain |
 |  | Subject | dead |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-12 16:24:16 -0400, data built_20261012.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-15 09:32:43 -0400, data built_20261015.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

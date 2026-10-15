@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:17
+2026-10-15 09:26
 
 An `hs` job turns the risk-factor model an `hm` job fitted into
 **predictions for individual patients**, and sets those against the
@@ -84,7 +84,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.3.1
+hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -118,7 +118,16 @@ AGE_COL   <- "age"
 
 MALE_COL  <- "male"
 
+# Demo: the values of MALE_COL that mean male, and of OTHER_COL that mean
+# non-white, as the life tables split race. A 0/1 column takes 1; a `female`
+# column takes MALE_LEVEL <- 0, a sex factor MALE_LEVEL <- "M", and a race
+# factor every non-white level, OTHER_LEVELS <- c("Black", "Asian", "Other").
+# A race level left out counts as white: the cohort chunk shows the mapping.
+MALE_LEVEL <- 1
+
 OTHER_COL <- "nonwhite"
+
+OTHER_LEVELS <- 1
 
 VINTAGE   <- "table2023"
 
@@ -167,7 +176,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261012.parquet) |
+| Source              | dataset `study` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -375,13 +384,43 @@ knitr::kable(summary_tbl, row.names = FALSE, digits = 4)
 
 | horizon |   n | median |    min |    max |
 |--------:|----:|-------:|-------:|-------:|
-|       1 | 725 | 0.9238 | 0.4588 | 0.9895 |
-|       5 | 725 | 0.7502 | 0.1330 | 0.9577 |
-|      10 | 725 | 0.5804 | 0.0288 | 0.9194 |
+|       1 | 725 | 0.9214 | 0.5012 | 0.9886 |
+|       5 | 725 | 0.7417 | 0.1574 | 0.9535 |
+|      10 | 725 | 0.5636 | 0.0269 | 0.9114 |
 
 Table 2: Predicted survival by horizon, across the cohort
 
 ## Expected population survival
+
+Code
+
+``` r
+# Named columns are checked before use, as the model chunk does for covariates.
+# Without this a typo surfaces as "`id` must be the same length as `age`; got
+# N and 0" from inside us_matched(), which never names the column at fault.
+.absent <- setdiff(c(AGE_COL, MALE_COL, OTHER_COL), names(d))
+if (length(.absent)) {
+  stop("Column(s) not in the cohort: ", paste(.absent, collapse = ", "),
+       ". Set AGE_COL, MALE_COL and OTHER_COL to this study's own column names.",
+       call. = FALSE)
+}
+
+# The 0/1 indicators the life tables take, derived from the study's own coding.
+.male <- hvtiRtemplates:::.lifetable_indicator(d[[MALE_COL]], MALE_LEVEL, MALE_COL, "MALE_LEVEL",
+                                               counted = c("female", "male"))
+.other <- hvtiRtemplates:::.lifetable_indicator(d[[OTHER_COL]], OTHER_LEVELS, OTHER_COL, "OTHER_LEVELS",
+                                                counted = c("white", "non-white"))
+knitr::kable(rbind(attr(.male, "mapping"), attr(.other, "mapping")), row.names = FALSE)
+```
+
+| column   | value |   n | counted_as |
+|:---------|:------|----:|:-----------|
+| male     | 0     | 268 | female     |
+| male     | 1     | 457 | male       |
+| nonwhite | 0     | 571 | white      |
+| nonwhite | 1     | 154 | non-white  |
+
+Table 3: How each patient’s sex and race are counted for the life tables
 
 Code
 
@@ -406,20 +445,10 @@ if (!VINTAGE %in% valid_vintages) {
        call. = FALSE)
 }
 
-# Named columns are checked before use, as the model chunk does for covariates.
-# Without this a typo surfaces as "`id` must be the same length as `age`; got
-# N and 0" from inside us_matched(), which never names the column at fault.
-.absent <- setdiff(c(AGE_COL, MALE_COL, OTHER_COL), names(d))
-if (length(.absent)) {
-  stop("Column(s) not in the cohort: ", paste(.absent, collapse = ", "),
-       ". Set AGE_COL, MALE_COL and OTHER_COL to this study's own column names.",
-       call. = FALSE)
-}
-
 # Read this before choosing, and print it in the report:
 knitr::kable(us_lifetable_vintages(), row.names = FALSE)
 expected <- us_matched(
-  age = d[[AGE_COL]], male = d[[MALE_COL]], other = d[[OTHER_COL]],
+  age = d[[AGE_COL]], male = as.vector(.male), other = as.vector(.other),
   times = HORIZONS, id = seq_len(nrow(d)),
   vintage = VINTAGE, table = TABLE, scale = SCALE, individual = TRUE
 )
@@ -431,7 +460,7 @@ expected <- us_matched(
 | table2008 | 9 | b | Black, per the macro’s documentation; not independently verified | NA |
 | table2023 | 9 | b | risk-weighted average of Black, Asian, American Indian and Hispanic death rates, weighted by number at risk. NOT Black, despite the stratum code and despite the macro’s own comment. | 2025-12-23 |
 
-Table 3: Life table vintages, and what each one’s non-white stratum
+Table 4: Life table vintages, and what each one’s non-white stratum
 means
 
 Code
@@ -487,11 +516,11 @@ knitr::kable(obs_vs_exp, row.names = FALSE, digits = 4)
 
 | horizon | observed | expected |  ratio |
 |--------:|---------:|---------:|-------:|
-|       1 |   0.9014 |   0.9812 | 0.9187 |
-|       5 |   0.7104 |   0.8999 | 0.7894 |
-|      10 |   0.5472 |   0.7843 | 0.6977 |
+|       1 |   0.8996 |   0.9812 | 0.9169 |
+|       5 |   0.7035 |   0.8999 | 0.7817 |
+|      10 |   0.5364 |   0.7843 | 0.6840 |
 
-Table 4: Model-predicted against age, sex and race matched population
+Table 5: Model-predicted against age, sex and race matched population
 survival
 
 A ratio below 1 says the cohort does worse than the matched general
@@ -532,8 +561,8 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:17:42 EDT |
-|  | Ended | 2026-10-12 16:17:43 EDT |
+| Run | Started | 2026-10-15 09:26:31 EDT |
+|  | Ended | 2026-10-15 09:26:32 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -542,14 +571,14 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 |  | Template | hs.setup |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-12 16:17:29 -0400, data built_20261012.parquet |
+|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-15 09:26:17 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

@@ -4,15 +4,20 @@
 
 Published
 
-2026-10-12 16:16
+2026-10-15 09:25
 
 Replaces `descriptive/dc.general`.
 
 A `dc-general` job is the first look at a built cohort, before any table
 or model: what the data contain, how each categorical variable breaks
 down, how each continuous variable is distributed, and which variables
-move together. It uses base procedures only. The formatted manuscript
-table is a `dc-tables` job.
+move together. It uses base procedures only.
+
+The tables below are checks on the data, not tables for a paper. For a
+manuscript table, run a `dc-tables` job alongside this one:
+`add_job("dc", SUBJECT, TYPE, qualifier = "tables")`. It takes the same
+grouped variable lists, renders them in the CORR house format, and saves
+the table to Word.
 
 Code
 
@@ -37,8 +42,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -130,7 +135,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -308,7 +313,7 @@ proc_contents(d)
     9    integer        2         0.0
     10   integer        2         0.0
     11   numeric       82         0.0
-    12   numeric      779         0.0
+    12   numeric      777         0.0
     13   numeric      787         0.0
     14   numeric      774         0.0
     15   numeric       19         0.0
@@ -366,10 +371,10 @@ proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min",
     9          lvef                LV ejection fraction (%) 800     0   51.777500
     10     plvmassi                    LV mass index (g/m2) 800     0  121.031250
     11     creat_pr                      Creatinine (mg/dL) 725    75    1.086152
-    12         dead                                   Death 800     0    0.553750
-    13      iv_dead Follow-up to death or censoring (years) 800     0    9.964107
-    14         reop                             Reoperation 800     0    0.260000
-    15      iv_reop        Follow-up to reoperation (years) 800     0    7.570521
+    12         dead                                   Death 800     0    0.556250
+    13      iv_dead Follow-up to death or censoring (years) 800     0    9.479378
+    14         reop                             Reoperation 800     0    0.250000
+    15      iv_reop        Follow-up to reoperation (years) 800     0    7.319961
     16         vent                   Prolonged ventilation 800     0    0.315000
     17    icu_hours                 Hours in intensive care 800     0   33.922500
     18         male                                    Male 800     0    0.626250
@@ -391,10 +396,10 @@ proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min",
     9   9.7894221 2.00e+01   75.0000   41422.000
     10 29.4092912 2.80e+01  207.0000   96825.000
     11  0.3555899 4.30e-01    2.7600     787.460
-    12  0.4974135 0.00e+00    1.0000     443.000
-    13  8.5101358 2.50e-04   35.6960    7971.285
-    14  0.4389086 0.00e+00    1.0000     208.000
-    15  7.0693300 0.00e+00   35.6110    6056.417
+    12  0.4971367 0.00e+00    1.0000     445.000
+    13  8.0874926 2.50e-04   34.6040    7583.503
+    14  0.4332836 0.00e+00    1.0000     200.000
+    15  6.6628164 0.00e+00   33.9340    5855.969
     16  0.4648065 0.00e+00    1.0000     252.000
     17 20.1484849 4.00e+00  108.0000   27138.000
     18  0.4841011 0.00e+00    1.0000     501.000
@@ -719,8 +724,8 @@ unless `ID_COL` is set under Study choices.
 
 | Group           | Item           | Value                     |
 |:----------------|:---------------|:--------------------------|
-| Run             | Started        | 2026-10-12 16:16:56 EDT   |
-|                 | Ended          | 2026-10-12 16:16:57 EDT   |
+| Run             | Started        | 2026-10-15 09:25:47 EDT   |
+|                 | Ended          | 2026-10-15 09:25:48 EDT   |
 |                 | Duration       | 0 s                       |
 |                 | Status         | final                     |
 |                 | Rendered by    | gallery                   |
@@ -729,12 +734,12 @@ unless `ID_COL` is set under Study choices.
 |                 | Template       | dc.general                |
 |                 | Subject        | cohort                    |
 |                 | Type           | eda                       |
-|                 | hvtiRtemplates | 1.3.1                     |
-| Dataset `built` | Version file   | built_20261012.parquet    |
-|                 | Registered     | 2026-10-12                |
+|                 | hvtiRtemplates | 1.4.0                     |
+| Dataset `built` | Version file   | built_20261015.parquet    |
+|                 | Registered     | 2026-10-15                |
 |                 | Source file    | built.rds                 |
 |                 | Rows kept      | 800 rows on 800 patients  |
 |                 | WHERE          | none                      |
-|                 | sha256         | 27b97c1d78ec              |
+|                 | sha256         | f632480029c1              |
 |                 | Manifest       | current                   |
 | Reproducibility | renv           | not active                |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:17
+2026-10-15 09:26
 
 An `hm` job builds the risk-factor model **on top of** the shape
 parameters the `hz` job fitted. The shapes are not re-derived here; they
@@ -50,7 +50,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.3.1
+hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -73,7 +73,8 @@ EVENT <- NULL
 # No expected counts here: they are typed once, in the hz job, and hz.rds
 # carries them. The cohort chunk checks this job's rows against them.
 
-# Demo: SAS job and macro holding covariate blocks.
+# Demo: SAS job and macro holding covariate blocks. NULL for a study with no
+# SAS job, which then lists COVARIATES per phase in the edit-covariates chunk.
 SAS_JOB   <- c("analyses", "hm.dead.sas")
 
 SAS_MACRO <- "^\\s*%macro\\s+model\\s*;"
@@ -137,7 +138,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261012.parquet) |
+| Source              | dataset `study` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -161,8 +162,8 @@ knitr::kable(data.frame(
 | quantity     |   n |
 |:-------------|----:|
 | n_analysable | 725 |
-| n_events     | 402 |
-| n_censored   | 323 |
+| n_events     | 406 |
+| n_censored   | 319 |
 
 Table 2: Analysable patients, events and censored patients
 
@@ -218,16 +219,26 @@ Code
 Code
 
 ``` r
-sas_lines <- readLines(do.call(sas_path, as.list(SAS_JOB)), warn = FALSE)
-
-# Demo: your phase-block markers. A SAS hazard model offers candidates per
-# phase, and the blocks need not be identical.
-COVARIATES <- list(
+# The covariates offered to each phase, one entry per phase of the hz fit and
+# named as it names them. A SAS hazard model offers candidates per phase and the
+# blocks need not be identical, so a covariate is estimated only in the phases
+# whose entry names it.
+#
+# Demo: where the lists come from. With SAS_JOB set they are read from that
+# job's phase blocks, by the markers below. A study with no SAS job sets
+# SAS_JOB <- NULL above and lists them here, in place of the read:
+#   COVARIATES <- list(early = c("age", "hx_chf"), late = c("age", "creat_pr"))
+sas_lines <- if (!is.null(SAS_JOB)) readLines(do.call(sas_path, as.list(SAS_JOB)), warn = FALSE)
+COVARIATES <- if (!is.null(sas_lines)) list(
   early = sas_variable_block(sas_lines, "^\\s*early\\s*$", after = SAS_MACRO,
                              what = "early covariate block"),
   late  = sas_variable_block(sas_lines, "^\\s*late\\s*$",  after = SAS_MACRO,
                              what = "late covariate block")
 )
+if (!is.list(COVARIATES) || !length(COVARIATES)) {
+  stop("No covariates to offer. Set SAS_JOB to the SAS job holding the phase blocks, or list COVARIATES ",
+       "per phase in the edit-covariates chunk.", call. = FALSE)
+}
 ```
 
 Code
@@ -237,16 +248,18 @@ knitr::kable(data.frame(
   phase     = names(COVARIATES),
   n         = vapply(COVARIATES, length, integer(1)),
   variables = vapply(COVARIATES, paste, character(1), collapse = ", "),
+  source    = if (is.null(SAS_JOB)) "listed in this job" else paste0("SAS job ", SAS_JOB[[length(SAS_JOB)]]),
   row.names = NULL
 ))
 ```
 
-| phase |   n | variables                |
-|:------|----:|:-------------------------|
-| early |   3 | age, creat_pr, hx_chf    |
-| late  |   4 | age, hx_chf, lvef, hx_dm |
+| phase |   n | variables                | source              |
+|:------|----:|:-------------------------|:--------------------|
+| early |   3 | age, creat_pr, hx_chf    | SAS job hm.dead.sas |
+| late  |   4 | age, hx_chf, lvef, hx_dm | SAS job hm.dead.sas |
 
-Table 3: Number and names of the covariates in each phase
+Table 3: Number and names of the covariates in each phase, and where the
+lists came from
 
 ### What these columns are, before they become covariates
 
@@ -274,6 +287,11 @@ if (any(grepl("^ERROR", audit$action))) {
        paste(audit$variable[grepl("^ERROR", audit$action)], collapse = ", "),
        ". Resolve these before fitting.", call. = FALSE)
 }
+
+# hazard() cannot take a missing value, and failed on one with "Predictor rows
+# must match the length of 'time'", naming neither the column nor why. Stop
+# here instead, naming each column and how many rows it is missing.
+invisible(hvtiRtemplates:::.missing_cases(d, TIME = TIME, EVENT = EVENT, COVARIATES = unlist(COVARIATES), action = "stop"))
 
 # Only the columns the model uses. A hazard() fit keeps a copy of its data,
 # which is saved in hm.rds, and `d` also holds the patient identifier.
@@ -364,15 +382,15 @@ knitr::kable(data.frame(
 
 | parameter        |   from_hz |
 |:-----------------|----------:|
-| early.log_mu     | -3.847224 |
-| early.log_t_half | -6.396072 |
-| early.nu         |  1.849927 |
-| early.m          | -0.109531 |
-| late.log_mu      | -2.472968 |
+| early.log_mu     | -3.547533 |
+| early.log_t_half | -5.413998 |
+| early.nu         |  2.693648 |
+| early.m          | -0.219787 |
+| late.log_mu      | -2.566396 |
 | late.log_tau     |  0.000000 |
 | late.gamma       |  1.000000 |
 | late.alpha       |  1.000000 |
-| late.eta         |  0.828051 |
+| late.eta         |  0.880007 |
 
 Table 6: Shape parameters inherited from the hz job
 
@@ -399,15 +417,37 @@ Code
 old_seed <- if (exists(".Random.seed", .GlobalEnv)) .GlobalEnv$.Random.seed else NULL
 set.seed(20260827)   # any fixed value; it must not change between renders
 
-# Demo: your covariate formula, and conserve = FALSE if the SAS final model
-# carries `noconserve`.
-rhs <- paste(unique(unlist(COVARIATES)), collapse = " + ")
-form <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ ", rhs))
+# Each phase carries its own covariates, as the SAS phase blocks do. One
+# formula for the model would offer every covariate to every phase, and the
+# estimates would then not be comparable with the SAS model this replaces. A
+# phase with no entry in COVARIATES is offered none.
+form <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ 1"))
+# Each entry names one phase, once: [[ ]] takes the first of two entries with
+# one name and finds nothing in an unnamed list, so either would drop
+# covariates without a word.
+.names <- names(COVARIATES)
+if (is.null(.names) || anyNA(.names) || !all(nzchar(.names)) || anyDuplicated(.names)) {
+  stop("Name every COVARIATES entry by its phase, once each, e.g. list(early = c(\"age\"), late = c(\"age\")).",
+       call. = FALSE)
+}
+.unknown <- setdiff(.names, names(hz_art$phases))
+if (length(.unknown)) {
+  stop("COVARIATES names phases the hz fit does not have: ", paste(.unknown, collapse = ", "),
+       ". Its phases are ", paste(names(hz_art$phases), collapse = ", "), ".", call. = FALSE)
+}
+with_covariates <- function(phases) {
+  for (p in names(phases)) {
+    rhs <- if (length(COVARIATES[[p]])) paste(COVARIATES[[p]], collapse = " + ") else "1"
+    phases[[p]]$formula <- stats::as.formula(paste("~", rhs))
+  }
+  phases
+}
 
+# Demo: conserve = FALSE if the SAS final model carries `noconserve`.
 ctl1 <- list(n_starts = 5, maxit = 2000, conserve = FALSE)
 ctl2 <- list(n_starts = 1, maxit = 5000, conserve = FALSE)
-ph1 <- make_phases(TRUE)
-ph2 <- make_phases(FALSE)
+ph1 <- with_covariates(make_phases(TRUE))
+ph2 <- with_covariates(make_phases(FALSE))
 
 # The fits run in an environment holding only what they use. A saved fit keeps
 # the environment of its formula and of its call, and hm.rds would then carry
@@ -416,6 +456,10 @@ ph2 <- make_phases(FALSE)
 fit_env <- list2env(list(dd = dd, form = form, ph1 = ph1, ph2 = ph2, ctl1 = ctl1, ctl2 = ctl2),
                     parent = globalenv())
 environment(fit_env$form) <- fit_env
+# The phase formulas too: each would otherwise keep this chunk's environment.
+for (.ph in c("ph1", "ph2")) {
+  for (p in names(fit_env[[.ph]])) environment(fit_env[[.ph]][[p]]$formula) <- fit_env
+}
 local({
   stage1 <- suppressWarnings(
     hazard(form,
@@ -480,8 +524,8 @@ knitr::kable(stages, digits = 6)
 
 | stage | converged | objective | rcond | pd | free_params | free_without_se |
 |:---|:---|---:|:---|:---|---:|---:|
-| 1: shapes fixed at hz | TRUE | -1420.774 | 5.37e-08 | TRUE | 12 | 0 |
-| 2: shapes freed from stage 1 | TRUE | -1409.877 | 6.31e-09 | TRUE | 16 | 0 |
+| 1: shapes fixed at hz | TRUE | -1419.555 | 8.65e-08 | TRUE | 9 | 0 |
+| 2: shapes freed from stage 1 | TRUE | -1408.075 | 6.77e-11 | TRUE | 13 | 0 |
 
 Table 7: Convergence and fit of each stage
 
@@ -508,7 +552,7 @@ knitr::kable(data.frame(
 
 | objective_gain_from_freeing_shapes | max_abs_covariate_change | changed_by_more_than_0.01 |
 |---:|---:|---:|
-| 10.89681 | 0.244146 | 5 |
+| 11.48023 | 0.139262 | 4 |
 
 Table 8: Change in the covariate estimates when the shape parameters are
 freed
@@ -606,16 +650,13 @@ knitr::kable(est[order(-abs(est$estimate)), ], digits = 6, row.names = FALSE)
 
 | parameter      |  estimate |       se |   iqr | hr_per_iqr |
 |:---------------|----------:|---------:|------:|-----------:|
-| early.creat_pr |  0.961085 | 0.586133 |  0.45 |   1.541087 |
-| late.hx_chf    |  0.747069 | 0.118993 |  1.00 |   2.110805 |
-| early.hx_chf   |  0.683661 | 0.541436 |  1.00 |   1.981118 |
-| early.hx_dm    | -0.465688 | 0.687614 |  0.00 |         NA |
-| late.hx_dm     |  0.453113 | 0.122488 |  0.00 |         NA |
-| late.creat_pr  |  0.091371 | 0.145576 |  0.45 |   1.041974 |
-| early.age      |  0.076389 | 0.019254 | 17.00 |   3.664187 |
-| late.age       |  0.043786 | 0.004828 | 17.00 |   2.105112 |
-| late.lvef      | -0.018780 | 0.005528 | 14.00 |   0.768804 |
-| early.lvef     | -0.012608 | 0.025462 | 14.00 |   0.838188 |
+| early.creat_pr |  0.951359 | 0.586419 |  0.45 |   1.534357 |
+| early.hx_chf   |  0.825335 | 0.473925 |  1.00 |   2.282644 |
+| late.hx_chf    |  0.704118 | 0.117110 |  1.00 |   2.022063 |
+| late.hx_dm     |  0.464980 | 0.119363 |  0.00 |         NA |
+| early.age      |  0.079479 | 0.019480 | 17.00 |   3.861847 |
+| late.age       |  0.040587 | 0.004770 | 17.00 |   1.993687 |
+| late.lvef      | -0.020351 | 0.005486 | 14.00 |   0.752074 |
 
 Table 9: Covariate estimates with standard errors and hazard ratios per
 interquartile range, largest first
@@ -829,32 +870,32 @@ print(dec)
 
     Decile-of-risk calibration (risk grouped at time = 10 )
     725 subjects, all included.
-    10 groups, 402 observed events, 402 expected
+    10 groups, 406 observed events, 406 expected
 
      group  n events expected observed_rate expected_rate chi_sq p_value
-         1 73     12     20.7         0.164         0.283 3.6200  0.0569
-         2 72     22     24.4         0.306         0.339 0.2340  0.6280
-         3 73     30     28.4         0.411         0.388 0.0957  0.7570
-         4 72     33     36.9         0.458         0.513 0.4190  0.5170
-         5 73     45     36.0         0.616         0.493 2.2500  0.1330
-         6 72     47     38.5         0.653         0.535 1.8700  0.1720
-         7 73     46     41.7         0.630         0.572 0.4330  0.5100
-         8 72     50     47.9         0.694         0.666 0.0896  0.7650
-         9 73     59     61.1         0.808         0.837 0.0720  0.7880
-        10 72     58     66.4         0.806         0.922 1.0600  0.3030
+         1 73     13     20.2         0.178         0.277 2.5700   0.109
+         2 72     25     27.1         0.347         0.377 0.1690   0.681
+         3 73     29     25.9         0.397         0.355 0.3760   0.540
+         4 72     29     38.8         0.403         0.538 2.4600   0.117
+         5 73     44     35.7         0.603         0.489 1.9200   0.166
+         6 72     45     38.2         0.625         0.531 1.2000   0.274
+         7 73     52     41.8         0.712         0.572 2.5100   0.113
+         8 72     48     46.4         0.667         0.644 0.0575   0.810
+         9 73     61     64.7         0.836         0.886 0.2100   0.647
+        10 72     60     67.2         0.833         0.934 0.7790   0.378
      mean_survival mean_cumhaz
-             0.848       0.283
-             0.773       0.339
-             0.709       0.388
-             0.657       0.513
-             0.606       0.493
-             0.546       0.535
-             0.485       0.572
-             0.402       0.666
-             0.295       0.837
-             0.150       0.922
+             0.834       0.277
+             0.757       0.377
+             0.694       0.355
+             0.644       0.538
+             0.592       0.489
+             0.533       0.531
+             0.473       0.572
+             0.395       0.644
+             0.292       0.886
+             0.148       0.934
 
-    Overall: chi-sq = 10.2 on 9 df, p = 0.338 
+    Overall: chi-sq = 12.2 on 9 df, p = 0.2 
 
 Table 11: Observed against expected events in ten groups of predicted
 risk
@@ -880,16 +921,16 @@ knitr::kable(utils::tail(gof[, intersect(c("time", "km_surv", "par_surv",
 
 |   time | km_surv | par_surv | cum_observed | cum_expected | residual |
 |-------:|--------:|---------:|-------------:|-------------:|---------:|
-| 32.742 | 0.25766 |  0.17410 |          402 |     392.8100 | -9.19000 |
-| 32.909 | 0.25766 |  0.17257 |          402 |     393.2364 | -8.76363 |
-| 33.117 | 0.25766 |  0.17069 |          402 |     393.8451 | -8.15488 |
-| 33.328 | 0.25766 |  0.16881 |          402 |     395.1374 | -6.86257 |
-| 33.344 | 0.25766 |  0.16867 |          402 |     396.6103 | -5.38967 |
-| 33.383 | 0.25766 |  0.16832 |          402 |     399.3362 | -2.66377 |
-| 34.784 | 0.25766 |  0.15636 |          402 |     399.7868 | -2.21317 |
-| 35.567 | 0.25766 |  0.15005 |          402 |     400.3300 | -1.66996 |
-| 35.611 | 0.25766 |  0.14970 |          402 |     400.9915 | -1.00853 |
-| 35.696 | 0.25766 |  0.14903 |          402 |     401.9979 | -0.00215 |
+| 30.215 | 0.23065 |  0.18476 |          406 |     397.4673 | -8.53274 |
+| 30.547 | 0.23065 |  0.18141 |          406 |     398.1596 | -7.84040 |
+| 30.669 | 0.23065 |  0.18020 |          406 |     398.7052 | -7.29476 |
+| 30.877 | 0.23065 |  0.17814 |          406 |     401.2335 | -4.76645 |
+| 32.110 | 0.23065 |  0.16645 |          406 |     401.7599 | -4.24009 |
+| 32.279 | 0.23065 |  0.16491 |          406 |     402.2373 | -3.76273 |
+| 32.352 | 0.23065 |  0.16425 |          406 |     403.7163 | -2.28366 |
+| 32.362 | 0.23065 |  0.16416 |          406 |     404.2042 | -1.79585 |
+| 34.426 | 0.23065 |  0.14652 |          406 |     404.8970 | -1.10298 |
+| 34.604 | 0.23065 |  0.14509 |          406 |     406.0000 | -0.00001 |
 
 Table 12: Observed vs parametric, last ten event times
 
@@ -921,9 +962,9 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:17:29 EDT |
-|  | Ended | 2026-10-12 16:17:31 EDT |
-|  | Duration | 2 s |
+| Run | Started | 2026-10-15 09:26:17 EDT |
+|  | Ended | 2026-10-15 09:26:22 EDT |
+|  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -931,13 +972,13 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 |  | Template | hm |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-12 16:17:21 -0400, data built_20261012.parquet |
+| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-15 09:26:09 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

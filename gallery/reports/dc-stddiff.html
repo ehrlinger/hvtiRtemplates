@@ -2237,7 +2237,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-12 16:17</p>
+      <p class="date">2026-10-15 09:25</p>
     </div>
   </div>
   
@@ -2249,6 +2249,7 @@ vertical-align: -.125em;
 </header>
 
 
+<!-- hvtiRtemplates: dc.stddiff 1.4.0 -->
 <!-- Demo: name the job this replaces (descriptive/dc.stddiff, dc.std_dif or
      dc.stddiffci) and say which comparisons it carried: unadjusted, matched,
      matching-weighted. Replace this comment with that text. -->
@@ -2266,8 +2267,8 @@ vertical-align: -.125em;
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(hvtiPlotR)</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;0.1.10&quot;</span>) {</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRpropensity &gt;= 0.1.10 for ps_stddiff() and ps_stddiff_perm(); &quot;</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;0.2.0&quot;</span>) {</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRpropensity &gt;= 0.2.0, the package&#39;s floor (ps_stddiff() and ps_stddiff_perm() date from 0.1.10); &quot;</span>,</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.8.0&quot;</span>) {</span>
@@ -2301,7 +2302,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261012.parquet</code>, registered 2026-10-12 · rendered by gallery on gallery · hvtiRtemplates 1.3.1</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
 </div>
 </div>
 </div>
@@ -2452,7 +2453,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261012.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261015.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2815,15 +2816,16 @@ Table 4: Standardized difference of each variable, group 1 minus group 0
 <span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="fu">hv_palette</span>(<span class="fu">length</span>(.levels)), .levels)) <span class="sc">+</span></span>
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_shape_manual</span>(<span class="at">values =</span> stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="fu">c</span>(<span class="dv">16</span>, <span class="dv">17</span>, <span class="dv">15</span>)[<span class="fu">seq_along</span>(.levels)], .levels)) <span class="sc">+</span></span>
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Standardized difference (group 1 minus group 0)&quot;</span>, <span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">color =</span> <span class="cn">NULL</span>, <span class="at">shape =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_hv_manuscript</span>() <span class="sc">+</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
 <span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The manuscript theme drops the legend; this figure needs it to say which</span></span>
 <span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># comparison each point is.</span></span>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(p, <span class="st">&quot;dc-stddiff-balance&quot;</span>, <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="fu">max</span>(<span class="dv">3</span>, <span class="fl">1.5</span> <span class="sc">+</span> <span class="fl">0.25</span> <span class="sc">*</span> <span class="fu">nrow</span>(balance)), <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co"># This document sits in descriptive/ and the figure is written to graphs/, so</span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="co"># the image link is the figure&#39;s path relative to this document.</span></span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>                        <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one row per variable, so the height grows with the list.</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(p, <span class="st">&quot;dc-stddiff-balance&quot;</span>, <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="fu">max</span>(<span class="dv">3</span>, <span class="fl">1.5</span> <span class="sc">+</span> <span class="fl">0.25</span> <span class="sc">*</span> <span class="fu">nrow</span>(balance)), <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="co"># This document sits in descriptive/ and the figure is written to graphs/, so</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="co"># the image link is the figure&#39;s path relative to this document.</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>                        <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-balance" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2832,7 +2834,7 @@ Table 4: Standardized difference of each variable, group 1 minus group 0
 <img role="img" src="assets/ceec02ab0f4e85094eb10698bf8e9446.png" class="img-fluid figure-img" width="1050">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-balance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 1: Standardized differences, with the imbalance threshold dotted
+Figure 1: Standardized difference of each variable, one row per variable, for each comparison. A blue circle, vermillion triangle and green square mark the first, second and third comparison in turn, the solid vertical line zero difference, the dotted vertical lines the imbalance threshold, and the dashed horizontal lines the variable rows.
 </figcaption>
 </figure>
 </div>
@@ -3014,12 +3016,12 @@ Table 5: Unadjusted: observed difference and the percentiles of 200 permutation
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-12 16:17:03 EDT</td>
+<td style="text-align: left;">2026-10-15 09:25:52 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-12 16:17:04 EDT</td>
+<td style="text-align: left;">2026-10-15 09:25:53 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3064,17 +3066,17 @@ Table 5: Unadjusted: observed difference and the percentiles of 200 permutation
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.3.1</td>
+<td style="text-align: left;">1.4.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261012.parquet</td>
+<td style="text-align: left;">built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-12</td>
+<td style="text-align: left;">2026-10-15</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3094,7 +3096,7 @@ Table 5: Unadjusted: observed difference and the percentiles of 200 permutation
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">27b97c1d78ec</td>
+<td style="text-align: left;">f632480029c1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3114,7 +3116,7 @@ Table 5: Unadjusted: observed difference and the percentiles of 200 permutation
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dc.stddiff.approach.balance","rendered":"2026-10-12T20:17:04Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.3","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.5","source":null},{"package":"hvtiRpropensity","version":"0.1.11","source":null},{"package":"hvtiRtemplates","version":"1.3.1","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"}],"artifacts":[],"subject":"approach","type":"balance","balance":{"group":"approach","group_1":"transcatheter","threshold":0.1,"comparisons":"Unadjusted","n_perm":200,"seed":20261006},"run":{"start":"2026-10-12T16:17:03-0400","end":"2026-10-12T16:17:04-0400","time_zone":"EDT","duration_seconds":1.1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.stddiff.approach.balance.qmd","template":"dc.stddiff","prefix":"dc","qualifier":"stddiff","subject":"approach","type":"balance","hvtiRtemplates":"1.3.1"},"datasets":[{"name":"built","version_file":"built_20261012.parquet","registered":"2026-10-12","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"27b97c1d78ec","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"20261006","renv":{"active":false}}},"source":"10_descriptive/dc.stddiff.approach.balance.qmd",".hvti_render_id":"68222820e179899b6bdb6c5a0657f3dda62c8ec6f6f460c169dc14781dc531f2",".hvti_source_sha256":"8cd1194e16c064546854396de872a231c199f32f345561c6541e04456654b0bd"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"dc.stddiff.approach.balance","rendered":"2026-10-15T13:25:53Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.10","source":"github","sha":"6f50cde76651e0f41b57c145f21cbd5915cfba85"},{"package":"hvtiRpropensity","version":"0.2.1","source":"github","sha":"05f43ccf20f12535da0c6e6c262c9413918a8ccf"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[],"subject":"approach","type":"balance","balance":{"group":"approach","group_1":"transcatheter","threshold":0.1,"comparisons":"Unadjusted","n_perm":200,"seed":20261006},"run":{"start":"2026-10-15T09:25:52-0400","end":"2026-10-15T09:25:53-0400","time_zone":"EDT","duration_seconds":0.9,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.stddiff.approach.balance.qmd","template":"dc.stddiff","prefix":"dc","qualifier":"stddiff","subject":"approach","type":"balance","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"f632480029c1","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"20261006","renv":{"active":false}}},"source":"10_descriptive/dc.stddiff.approach.balance.qmd",".hvti_render_id":"9ff0de4839fd652d568c3276429744748af06e0f313ee7e3c56856cdfc9d99b7",".hvti_source_sha256":"b5eb8a2597f3e97c34ee9c007989ac94e3ea01bd9b3e7fd86469b379c6e15f8b"}</script>
 </section>
 
 </main>

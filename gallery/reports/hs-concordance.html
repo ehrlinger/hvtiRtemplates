@@ -2238,7 +2238,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-12 16:18</p>
+      <p class="date">2026-10-15 09:27</p>
     </div>
   </div>
   
@@ -2250,6 +2250,7 @@ vertical-align: -.125em;
 </header>
 
 
+<!-- hvtiRtemplates: hs.concordance 1.4.0 -->
 <!-- Demo: name the SAS job this replaces, and say which treatments it compared
      and at what horizon. Replace this comment with that text. -->
 <p>An <code>hs-concordance</code> job predicts <strong>every patient through every treatment group’s model</strong>. Each group’s risk-factor model was fitted by its own <code>hm</code> job, on that group’s patients; this job reads them all, and asks of each patient what the model for each treatment predicts at one horizon. The corpus calls the result concordance and discordance: whether the treatment a patient received is the one the models favor.</p>
@@ -2308,7 +2309,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261012.parquet</code>, registered 2026-10-12 · rendered by gallery on gallery · hvtiRtemplates 1.3.1</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
 </div>
 </div>
 </div>
@@ -2357,7 +2358,7 @@ vertical-align: -.125em;
 <span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the counts this cohort must have. The invalid defaults stop an unedited</span></span>
 <span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co">#       job before it predicts for a cohort nobody reconciled.</span></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>EXPECTED <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n =</span> <span class="dv">725</span>L, <span class="at">n_events =</span> <span class="dv">402</span>L, <span class="at">n_censored =</span> <span class="dv">323</span>L)</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>EXPECTED <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n =</span> <span class="dv">725</span>L, <span class="at">n_events =</span> <span class="dv">406</span>L, <span class="at">n_censored =</span> <span class="dv">319</span>L)</span>
 <span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: one entry per treatment group. The NAME is the group&#39;s label and must</span></span>
 <span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co">#       be a value of the GROUP column. The VALUE is the set whose hm job</span></span>
@@ -2426,7 +2427,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261012.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261015.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2895,22 +2896,22 @@ Table 5: Median predicted survival at 5, by model and treatment received
 <tr class="odd">
 <td style="text-align: left;">surgical</td>
 <td style="text-align: left;">surgical</td>
-<td style="text-align: right;">0.8027</td>
+<td style="text-align: right;">0.7917</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">transcatheter</td>
 <td style="text-align: left;">surgical</td>
-<td style="text-align: right;">0.7729</td>
+<td style="text-align: right;">0.7638</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">surgical</td>
 <td style="text-align: left;">transcatheter</td>
-<td style="text-align: right;">0.6280</td>
+<td style="text-align: right;">0.6208</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">transcatheter</td>
 <td style="text-align: left;">transcatheter</td>
-<td style="text-align: right;">0.6255</td>
+<td style="text-align: right;">0.6194</td>
 </tr>
 </tbody>
 </table>
@@ -3017,15 +3018,15 @@ Table 6: Treatment received against best-predicted treatment, every patient
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">surgical</td>
-<td style="text-align: right;">378</td>
-<td style="text-align: right;">82</td>
+<td style="text-align: right;">381</td>
+<td style="text-align: right;">79</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">transcatheter</td>
-<td style="text-align: right;">138</td>
 <td style="text-align: right;">127</td>
+<td style="text-align: right;">138</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: right;">0</td>
 </tr>
@@ -3044,7 +3045,7 @@ Table 6: Treatment received against best-predicted treatment, every patient
 <div id="tbl-decision-optimal" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-decision-optimal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 7: Treatment received against optimal treatment, the 170 patients whose choice is separated at ~68%; 555 are not
+Table 7: Treatment received against optimal treatment, the 28 patients whose choice is separated at ~68%; 697 are not
 </figcaption>
 <div aria-describedby="tbl-decision-optimal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -3059,13 +3060,13 @@ Table 7: Treatment received against optimal treatment, the 170 patients whose c
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">surgical</td>
-<td style="text-align: right;">109</td>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">transcatheter</td>
-<td style="text-align: right;">30</td>
-<td style="text-align: right;">26</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
 </tr>
 </tbody>
 </table>
@@ -3119,12 +3120,12 @@ Table 7: Treatment received against optimal treatment, the 170 patients whose c
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-12 16:18:14 EDT</td>
+<td style="text-align: left;">2026-10-15 09:27:02 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-12 16:18:14 EDT</td>
+<td style="text-align: left;">2026-10-15 09:27:02 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3169,17 +3170,17 @@ Table 7: Treatment received against optimal treatment, the 170 patients whose c
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.3.1</td>
+<td style="text-align: left;">1.4.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261012.parquet</td>
+<td style="text-align: left;">built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-12</td>
+<td style="text-align: left;">2026-10-15</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3199,7 +3200,7 @@ Table 7: Treatment received against optimal treatment, the 170 patients whose c
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">27b97c1d78ec</td>
+<td style="text-align: left;">f632480029c1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3214,7 +3215,7 @@ Table 7: Treatment received against optimal treatment, the 170 patients whose c
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-surgical/hm.rds</code> (hazard-regression-model), rendered 2026-10-12 16:17:53 -0400, data built_20261012.parquet</td>
+<td style="text-align: left;"><code>dead-surgical/hm.rds</code> (hazard-regression-model), rendered 2026-10-15 09:26:41 -0400, data built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3224,7 +3225,7 @@ Table 7: Treatment received against optimal treatment, the 170 patients whose c
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-transcatheter/hm.rds</code> (hazard-regression-model), rendered 2026-10-12 16:18:07 -0400, data built_20261012.parquet</td>
+<td style="text-align: left;"><code>dead-transcatheter/hm.rds</code> (hazard-regression-model), rendered 2026-10-15 09:26:55 -0400, data built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Reproducibility</td>
@@ -3234,7 +3235,7 @@ Table 7: Treatment received against optimal treatment, the 170 patients whose c
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"hs.concordance.dead.approach","rendered":"2026-10-12T20:18:14Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.3.1","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"TemporalHazard","version":"1.2.12","source":"github","sha":"e9ab82728ba4173df78c77286857e1923b22eb90"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"},{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"},{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"},{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"},{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"}],"artifacts":[{"path":"90_estimates/dead-surgical/hm.rds","role":"hazard-regression-model","bytes":51224,"mtime":"2026-10-12T20:17:56Z","sha256":"3e4b422785b779afc1d486aff2d74e1c399dfe381abbe15aee4092dad664d794"},{"path":"90_estimates/dead-surgical/hz.rds","role":"hazard-shape-model","bytes":5679,"mtime":"2026-10-12T20:17:48Z","sha256":"db259463adf44735824405c36b40d196f66267a56e5062d98aa36c182405a162"},{"path":"90_estimates/dead-transcatheter/hm.rds","role":"hazard-regression-model","bytes":28848,"mtime":"2026-10-12T20:18:09Z","sha256":"d067ddb0e6ae48c5a3664461209048ae62ee9127fcf9ce6283204b87b03d8ab6"},{"path":"90_estimates/dead-transcatheter/hz.rds","role":"hazard-shape-model","bytes":4571,"mtime":"2026-10-12T20:18:02Z","sha256":"c58d25161d76577037408096cd2d33d987c69d93662d684c9ad60509ae3a0d1e"}],"subject":"dead","type":"approach","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":402,"n_censored":323},"run":{"start":"2026-10-12T16:18:14-0400","end":"2026-10-12T16:18:14-0400","time_zone":"EDT","duration_seconds":0.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hs.concordance.dead.approach.qmd","template":"hs.concordance","prefix":"hs","qualifier":"concordance","subject":"dead","type":"approach","hvtiRtemplates":"1.3.1"},"datasets":[{"name":"built","version_file":"built_20261012.parquet","registered":"2026-10-12","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"27b97c1d78ec","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-surgical/hz.rds","set":"dead-surgical","role":"hazard-shape-model"},{"file":"90_estimates/dead-surgical/hm.rds","set":"dead-surgical","role":"hazard-regression-model","rendered_at":"2026-10-12T16:17:53-0400","dataset_version":"built_20261012.parquet"},{"file":"90_estimates/dead-transcatheter/hz.rds","set":"dead-transcatheter","role":"hazard-shape-model"},{"file":"90_estimates/dead-transcatheter/hm.rds","set":"dead-transcatheter","role":"hazard-regression-model","rendered_at":"2026-10-12T16:18:07-0400","dataset_version":"built_20261012.parquet"}],"reproducibility":{"renv":{"active":false}}},"source":"40_graphs/hs.concordance.dead.approach.qmd",".hvti_render_id":"fd11c6205fc648b3f77a2814a81e82ac284b8fbc8dc19cd48aef59a495355550",".hvti_source_sha256":"d84cfcea1927a0e5de2ba20c0a4176da13bf5b4df2cffd8ed58e0fc7552b3557"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"hs.concordance.dead.approach","rendered":"2026-10-15T13:27:02Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"TemporalHazard","version":"1.2.16","source":"github","sha":"746ce9e95ef3075afcdb8524306ea053f7306282"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[{"path":"90_estimates/dead-surgical/hm.rds","role":"hazard-regression-model","bytes":45457,"mtime":"2026-10-15T13:26:45Z","sha256":"c5ac95dd150989e107e851e145068e95b89c87f91bdfeeaab0c009be979ac4cf"},{"path":"90_estimates/dead-surgical/hz.rds","role":"hazard-shape-model","bytes":5669,"mtime":"2026-10-15T13:26:37Z","sha256":"bbf0a9f50736589703028dad923f911dea63f83c2862b68e0302a667e2ec6571"},{"path":"90_estimates/dead-transcatheter/hm.rds","role":"hazard-regression-model","bytes":21383,"mtime":"2026-10-15T13:26:57Z","sha256":"c7c79bd08b5df82e0f945325accf668cabdbd443b8e6070d5747b120c3de5421"},{"path":"90_estimates/dead-transcatheter/hz.rds","role":"hazard-shape-model","bytes":4493,"mtime":"2026-10-15T13:26:50Z","sha256":"f7871e13cde2539e7a43f0f9fbab42626d73c281623f7ea2a2d47073ee8c6fd1"}],"subject":"dead","type":"approach","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-15T09:27:02-0400","end":"2026-10-15T09:27:02-0400","time_zone":"EDT","duration_seconds":0.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hs.concordance.dead.approach.qmd","template":"hs.concordance","prefix":"hs","qualifier":"concordance","subject":"dead","type":"approach","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"f632480029c1","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-surgical/hz.rds","set":"dead-surgical","role":"hazard-shape-model"},{"file":"90_estimates/dead-surgical/hm.rds","set":"dead-surgical","role":"hazard-regression-model","rendered_at":"2026-10-15T09:26:41-0400","dataset_version":"built_20261015.parquet"},{"file":"90_estimates/dead-transcatheter/hz.rds","set":"dead-transcatheter","role":"hazard-shape-model"},{"file":"90_estimates/dead-transcatheter/hm.rds","set":"dead-transcatheter","role":"hazard-regression-model","rendered_at":"2026-10-15T09:26:55-0400","dataset_version":"built_20261015.parquet"}],"reproducibility":{"renv":{"active":false}}},"source":"40_graphs/hs.concordance.dead.approach.qmd",".hvti_render_id":"293ed5236a060c5a872ce38dc841fe3d4f1f188edd493553f70cc98cd818cf84",".hvti_source_sha256":"ab3866a19cf499d0e75acc69fa5fb7747353c05c7c473ade36c36a50ac11d68d"}</script>
 </section>
 
 </main>

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:18
+2026-10-15 09:27
 
 An `hs-concordance` job predicts **every patient through every treatment
 group’s model**. Each group’s risk-factor model was fitted by its own
@@ -62,8 +62,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -111,7 +111,7 @@ EVENT <- NULL
 
 # Demo: the counts this cohort must have. The invalid defaults stop an unedited
 #       job before it predicts for a cohort nobody reconciled.
-EXPECTED <- list(n = 725L, n_events = 402L, n_censored = 323L)
+EXPECTED <- list(n = 725L, n_events = 406L, n_censored = 319L)
 
 # Demo: one entry per treatment group. The NAME is the group's label and must
 #       be a value of the GROUP column. The VALUE is the set whose hm job
@@ -165,7 +165,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -494,10 +494,10 @@ knitr::kable(summary_tbl, row.names = FALSE, digits = 4)
 
 | model         | group         | median_survival |
 |:--------------|:--------------|----------------:|
-| surgical      | surgical      |          0.8027 |
-| transcatheter | surgical      |          0.7729 |
-| surgical      | transcatheter |          0.6280 |
-| transcatheter | transcatheter |          0.6255 |
+| surgical      | surgical      |          0.7917 |
+| transcatheter | surgical      |          0.7638 |
+| surgical      | transcatheter |          0.6208 |
+| transcatheter | transcatheter |          0.6194 |
 
 Table 5: Median predicted survival at 5, by model and treatment received
 
@@ -585,8 +585,8 @@ knitr::kable(best_tbl)
 
 |               | surgical | transcatheter | (tie) | (no choice) |
 |:--------------|---------:|--------------:|------:|------------:|
-| surgical      |      378 |            82 |     0 |           0 |
-| transcatheter |      138 |           127 |     0 |           0 |
+| surgical      |      381 |            79 |     0 |           0 |
+| transcatheter |      127 |           138 |     0 |           0 |
 
 Table 6: Treatment received against best-predicted treatment, every
 patient
@@ -599,11 +599,11 @@ knitr::kable(table(received = factor(decision$group[.sep], .levels), optimal = f
 
 |               | surgical | transcatheter |
 |:--------------|---------:|--------------:|
-| surgical      |      109 |             5 |
-| transcatheter |       30 |            26 |
+| surgical      |       23 |             0 |
+| transcatheter |        5 |             0 |
 
-Table 7: Treatment received against optimal treatment, the 170 patients
-whose choice is separated at ~68%; 555 are not
+Table 7: Treatment received against optimal treatment, the 28 patients
+whose choice is separated at ~68%; 697 are not
 
 ## Save
 
@@ -633,8 +633,8 @@ saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:18:14 EDT |
-|  | Ended | 2026-10-12 16:18:14 EDT |
+| Run | Started | 2026-10-15 09:27:02 EDT |
+|  | Ended | 2026-10-15 09:27:02 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -643,16 +643,16 @@ saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 |  | Template | hs.concordance |
 |  | Subject | dead |
 |  | Type | approach |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-surgical/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-10-12 16:17:53 -0400, data built_20261012.parquet |
+|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-10-15 09:26:41 -0400, data built_20261015.parquet |
 |  | Handoff | `dead-transcatheter/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-10-12 16:18:07 -0400, data built_20261012.parquet |
+|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-10-15 09:26:55 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

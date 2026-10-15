@@ -2234,7 +2234,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-12 16:18</p>
+      <p class="date">2026-10-15 09:27</p>
     </div>
   </div>
   
@@ -2246,6 +2246,7 @@ vertical-align: -.125em;
 </header>
 
 
+<!-- hvtiRtemplates: lp.mirror 1.4.0 -->
 <p>Draws the propensity score of the treated patients above the axis and of the controls below it, from the bundle an <code>lm-propensity_binary</code> job saved. This job reads that bundle and never refits the model.</p>
 <!-- Demo: scaffold this job with the subject and type of the
      lm-propensity_binary job it plots, add_job("lp.mirror", subject, type),
@@ -2265,12 +2266,12 @@ vertical-align: -.125em;
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># The bundle records its declared treatment levels from hvtiRpropensity 0.1.10.</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;0.1.10&quot;</span>) {</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRpropensity &gt;= 0.1.10, whose bundles record their treatment levels; &quot;</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;0.2.0&quot;</span>) {</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRpropensity &gt;= 0.2.0, the package&#39;s floor (bundles record their treatment levels from 0.1.10); &quot;</span>,</span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.8.0&quot;</span>) {</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.8.0 for hv_mirror_hist(); &quot;</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.8.9&quot;</span>) {</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.8.9, the version hvtiRtemplates requires; &quot;</span>,</span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># The study root is the nearest directory above this file holding _study.yml,</span></span>
@@ -2300,7 +2301,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261012.parquet</code>, registered 2026-10-12 · rendered by gallery on gallery · hvtiRtemplates 1.3.1</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
 </div>
 </div>
 </div>
@@ -2431,65 +2432,66 @@ vertical-align: -.125em;
 <span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_fill_manual</span>(<span class="at">values =</span> fill, <span class="at">breaks =</span> shown, <span class="at">labels =</span> names_shown, <span class="at">name =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
 <span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Propensity score (%)&quot;</span>,</span>
 <span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>                  <span class="at">y =</span> <span class="cf">if</span> (<span class="fu">identical</span>(kind, <span class="st">&quot;weighted&quot;</span>)) <span class="st">&quot;Patients, or sum of matching weights&quot;</span> <span class="cf">else</span> <span class="st">&quot;Patients&quot;</span>) <span class="sc">+</span></span>
-<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
-<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Patients in each group; the sum of the matching weights for the weighted</span></span>
-<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a><span class="co"># figure, and the matched patients for the matched one. Counts only.</span></span>
-<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>mirror_counts <span class="ot">&lt;-</span> <span class="cf">function</span>(mh, <span class="at">kind =</span> <span class="fu">c</span>(<span class="st">&quot;unmatched&quot;</span>, <span class="st">&quot;weighted&quot;</span>, <span class="st">&quot;matched&quot;</span>)) {</span>
-<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>  kind <span class="ot">&lt;-</span> <span class="fu">match.arg</span>(kind)</span>
-<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>  w <span class="ot">&lt;-</span> mh<span class="sc">$</span>tables<span class="sc">$</span>working</span>
-<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>  levels <span class="ot">&lt;-</span> mh<span class="sc">$</span>meta<span class="sc">$</span>group_levels</span>
-<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">group =</span> mh<span class="sc">$</span>meta<span class="sc">$</span>group_labels,</span>
-<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>                    <span class="at">patients =</span> <span class="fu">vapply</span>(levels, <span class="cf">function</span>(g) <span class="fu">sum</span>(w<span class="sc">$</span>group <span class="sc">==</span> g), <span class="fu">integer</span>(<span class="dv">1</span>L), <span class="at">USE.NAMES =</span> <span class="cn">FALSE</span>))</span>
-<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">identical</span>(kind, <span class="st">&quot;weighted&quot;</span>)) {</span>
-<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>    out<span class="sc">$</span>weighted <span class="ot">&lt;-</span> <span class="fu">vapply</span>(levels, <span class="cf">function</span>(g) <span class="fu">sum</span>(w<span class="sc">$</span>weight[w<span class="sc">$</span>group <span class="sc">==</span> g]), <span class="fu">numeric</span>(<span class="dv">1</span>L), <span class="at">USE.NAMES =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">identical</span>(kind, <span class="st">&quot;matched&quot;</span>)) {</span>
-<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>    out<span class="sc">$</span>matched <span class="ot">&lt;-</span> <span class="fu">vapply</span>(levels, <span class="cf">function</span>(g) <span class="fu">sum</span>(w<span class="sc">$</span>group <span class="sc">==</span> g <span class="sc">&amp;</span> w<span class="sc">$</span>matched <span class="sc">==</span> <span class="dv">1</span>L), <span class="fu">integer</span>(<span class="dv">1</span>L), <span class="at">USE.NAMES =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a>  out</span>
-<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a><span class="co"># The match flag of each bundle patient, joined by ID digest. `ids` are the</span></span>
-<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a><span class="co"># dataset&#39;s identifiers made comparable with the bundle&#39;s by .bundle_ids(),</span></span>
-<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a><span class="co"># and `flag` the MATCH column. Returns the 0/1 flag for each bundle patient</span></span>
-<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a><span class="co"># and the two counts the job reports; stops when fewer than half of the</span></span>
-<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a><span class="co"># bundle&#39;s patients are in the dataset, when the flag is not coded 0 and 1, or</span></span>
-<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a><span class="co"># when no scored patient has a 1.</span></span>
-<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>mirror_join <span class="ot">&lt;-</span> <span class="cf">function</span>(bundle_ids, ids, flag) {</span>
-<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">anyDuplicated</span>(ids[<span class="sc">!</span><span class="fu">is.na</span>(ids)])) {</span>
-<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;The dataset holds a patient more than once, so the match flag cannot be joined one to one: set &quot;</span>,</span>
-<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;DATASET to a dataset with one row per patient.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>  at <span class="ot">&lt;-</span> <span class="fu">match</span>(bundle_ids, ids, <span class="at">incomparables =</span> <span class="cn">NA</span>)</span>
-<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>  joined <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">is.na</span>(at)</span>
-<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">sum</span>(joined) <span class="sc">&lt;</span> <span class="fu">length</span>(bundle_ids) <span class="sc">/</span> <span class="dv">2</span>) {</span>
-<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;Only &quot;</span>, <span class="fu">sum</span>(joined), <span class="st">&quot; of the &quot;</span>, <span class="fu">length</span>(bundle_ids), <span class="st">&quot; patients the scores were computed for are in &quot;</span>,</span>
-<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;the dataset read for MATCH. The dataset is not the cohort the scores came from, or its ID does not &quot;</span>,</span>
-<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;identify patients as the propensity job&#39;s did: check DATASET and ID.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a>  value <span class="ot">&lt;-</span> flag[at]</span>
-<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.logical</span>(value)) value <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(value)</span>
-<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a>  seen <span class="ot">&lt;-</span> <span class="fu">unique</span>(value[<span class="sc">!</span><span class="fu">is.na</span>(value)])</span>
-<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">all</span>(seen <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))) {</span>
-<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;MATCH must be coded 0 and 1 (or TRUE and FALSE), 1 for a matched patient: the column holds &quot;</span>,</span>
-<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a>         <span class="fu">length</span>(seen), <span class="st">&quot; distinct values for the scored patients, not all 0 or 1. Recode it, or change MATCH &quot;</span>,</span>
-<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;in edit-study-choices.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">any</span>(value <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) {</span>
-<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;MATCH flags no scored patient as matched (none has a 1): check that MATCH names the pair-match &quot;</span>,</span>
-<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;flag, with 1 for a matched patient, and that DATASET and ID read the right file.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A dataset row with no flag is not a flagged patient, so it is left out of the second count.</span></span>
-<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
-<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a>    <span class="at">matched =</span> <span class="fu">as.integer</span>(<span class="sc">!</span><span class="fu">is.na</span>(value) <span class="sc">&amp;</span> value <span class="sc">==</span> <span class="dv">1</span>),</span>
-<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a>    <span class="at">counts =</span> <span class="fu">data.frame</span>(</span>
-<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>      <span class="at">count =</span> <span class="fu">c</span>(<span class="st">&quot;Patients with a score and no match flag&quot;</span>, <span class="st">&quot;Patients with a match flag and no score&quot;</span>),</span>
-<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a>      <span class="at">patients =</span> <span class="fu">c</span>(<span class="fu">sum</span>(<span class="fu">is.na</span>(value)), <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(ids) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(flag) <span class="sc">&amp;</span> <span class="sc">!</span>ids <span class="sc">%in%</span> bundle_ids))</span>
-<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a><span class="co"># Patients in each group; the sum of the matching weights for the weighted</span></span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a><span class="co"># figure, and the matched patients for the matched one. Counts only.</span></span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>mirror_counts <span class="ot">&lt;-</span> <span class="cf">function</span>(mh, <span class="at">kind =</span> <span class="fu">c</span>(<span class="st">&quot;unmatched&quot;</span>, <span class="st">&quot;weighted&quot;</span>, <span class="st">&quot;matched&quot;</span>)) {</span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>  kind <span class="ot">&lt;-</span> <span class="fu">match.arg</span>(kind)</span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>  w <span class="ot">&lt;-</span> mh<span class="sc">$</span>tables<span class="sc">$</span>working</span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>  levels <span class="ot">&lt;-</span> mh<span class="sc">$</span>meta<span class="sc">$</span>group_levels</span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">group =</span> mh<span class="sc">$</span>meta<span class="sc">$</span>group_labels,</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>                    <span class="at">patients =</span> <span class="fu">vapply</span>(levels, <span class="cf">function</span>(g) <span class="fu">sum</span>(w<span class="sc">$</span>group <span class="sc">==</span> g), <span class="fu">integer</span>(<span class="dv">1</span>L), <span class="at">USE.NAMES =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">identical</span>(kind, <span class="st">&quot;weighted&quot;</span>)) {</span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>    out<span class="sc">$</span>weighted <span class="ot">&lt;-</span> <span class="fu">vapply</span>(levels, <span class="cf">function</span>(g) <span class="fu">sum</span>(w<span class="sc">$</span>weight[w<span class="sc">$</span>group <span class="sc">==</span> g]), <span class="fu">numeric</span>(<span class="dv">1</span>L), <span class="at">USE.NAMES =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">identical</span>(kind, <span class="st">&quot;matched&quot;</span>)) {</span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>    out<span class="sc">$</span>matched <span class="ot">&lt;-</span> <span class="fu">vapply</span>(levels, <span class="cf">function</span>(g) <span class="fu">sum</span>(w<span class="sc">$</span>group <span class="sc">==</span> g <span class="sc">&amp;</span> w<span class="sc">$</span>matched <span class="sc">==</span> <span class="dv">1</span>L), <span class="fu">integer</span>(<span class="dv">1</span>L), <span class="at">USE.NAMES =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a>  out</span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a><span class="co"># The match flag of each bundle patient, joined by ID digest. `ids` are the</span></span>
+<span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a><span class="co"># dataset&#39;s identifiers made comparable with the bundle&#39;s by .bundle_ids(),</span></span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a><span class="co"># and `flag` the MATCH column. Returns the 0/1 flag for each bundle patient</span></span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a><span class="co"># and the two counts the job reports; stops when fewer than half of the</span></span>
+<span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a><span class="co"># bundle&#39;s patients are in the dataset, when the flag is not coded 0 and 1, or</span></span>
+<span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a><span class="co"># when no scored patient has a 1.</span></span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>mirror_join <span class="ot">&lt;-</span> <span class="cf">function</span>(bundle_ids, ids, flag) {</span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">anyDuplicated</span>(ids[<span class="sc">!</span><span class="fu">is.na</span>(ids)])) {</span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;The dataset holds a patient more than once, so the match flag cannot be joined one to one: set &quot;</span>,</span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;DATASET to a dataset with one row per patient.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>  at <span class="ot">&lt;-</span> <span class="fu">match</span>(bundle_ids, ids, <span class="at">incomparables =</span> <span class="cn">NA</span>)</span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>  joined <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">is.na</span>(at)</span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">sum</span>(joined) <span class="sc">&lt;</span> <span class="fu">length</span>(bundle_ids) <span class="sc">/</span> <span class="dv">2</span>) {</span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;Only &quot;</span>, <span class="fu">sum</span>(joined), <span class="st">&quot; of the &quot;</span>, <span class="fu">length</span>(bundle_ids), <span class="st">&quot; patients the scores were computed for are in &quot;</span>,</span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;the dataset read for MATCH. The dataset is not the cohort the scores came from, or its ID does not &quot;</span>,</span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;identify patients as the propensity job&#39;s did: check DATASET and ID.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-125"><a href="#cb3-125" aria-hidden="true" tabindex="-1"></a>  value <span class="ot">&lt;-</span> flag[at]</span>
+<span id="cb3-126"><a href="#cb3-126" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.logical</span>(value)) value <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(value)</span>
+<span id="cb3-127"><a href="#cb3-127" aria-hidden="true" tabindex="-1"></a>  seen <span class="ot">&lt;-</span> <span class="fu">unique</span>(value[<span class="sc">!</span><span class="fu">is.na</span>(value)])</span>
+<span id="cb3-128"><a href="#cb3-128" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">all</span>(seen <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))) {</span>
+<span id="cb3-129"><a href="#cb3-129" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;MATCH must be coded 0 and 1 (or TRUE and FALSE), 1 for a matched patient: the column holds &quot;</span>,</span>
+<span id="cb3-130"><a href="#cb3-130" aria-hidden="true" tabindex="-1"></a>         <span class="fu">length</span>(seen), <span class="st">&quot; distinct values for the scored patients, not all 0 or 1. Recode it, or change MATCH &quot;</span>,</span>
+<span id="cb3-131"><a href="#cb3-131" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;in edit-study-choices.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-132"><a href="#cb3-132" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-133"><a href="#cb3-133" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">any</span>(value <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb3-134"><a href="#cb3-134" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;MATCH flags no scored patient as matched (none has a 1): check that MATCH names the pair-match &quot;</span>,</span>
+<span id="cb3-135"><a href="#cb3-135" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;flag, with 1 for a matched patient, and that DATASET and ID read the right file.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-136"><a href="#cb3-136" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-137"><a href="#cb3-137" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A dataset row with no flag is not a flagged patient, so it is left out of the second count.</span></span>
+<span id="cb3-138"><a href="#cb3-138" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb3-139"><a href="#cb3-139" aria-hidden="true" tabindex="-1"></a>    <span class="at">matched =</span> <span class="fu">as.integer</span>(<span class="sc">!</span><span class="fu">is.na</span>(value) <span class="sc">&amp;</span> value <span class="sc">==</span> <span class="dv">1</span>),</span>
+<span id="cb3-140"><a href="#cb3-140" aria-hidden="true" tabindex="-1"></a>    <span class="at">counts =</span> <span class="fu">data.frame</span>(</span>
+<span id="cb3-141"><a href="#cb3-141" aria-hidden="true" tabindex="-1"></a>      <span class="at">count =</span> <span class="fu">c</span>(<span class="st">&quot;Patients with a score and no match flag&quot;</span>, <span class="st">&quot;Patients with a match flag and no score&quot;</span>),</span>
+<span id="cb3-142"><a href="#cb3-142" aria-hidden="true" tabindex="-1"></a>      <span class="at">patients =</span> <span class="fu">c</span>(<span class="fu">sum</span>(<span class="fu">is.na</span>(value)), <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(ids) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(flag) <span class="sc">&amp;</span> <span class="sc">!</span>ids <span class="sc">%in%</span> bundle_ids))</span>
+<span id="cb3-143"><a href="#cb3-143" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-144"><a href="#cb3-144" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-145"><a href="#cb3-145" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2549,7 +2551,7 @@ Table 1: The data the propensity job read, read again
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>study</code> (built_20261012.parquet)</td>
+<td style="text-align: left;">dataset <code>study</code> (built_20261015.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2682,19 +2684,18 @@ Table 2: The match flag joined onto the scored patients
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>mh_unmatched <span class="ot">&lt;-</span> <span class="fu">mirror_hist</span>(scores, <span class="st">&quot;unmatched&quot;</span>, groups, BINWIDTH)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(<span class="fu">mirror_figure</span>(mh_unmatched, <span class="st">&quot;unmatched&quot;</span>), <span class="st">&quot;lp-mirror-unmatched&quot;</span>, <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="dv">5</span>,</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(<span class="fu">mirror_figure</span>(mh_unmatched, <span class="st">&quot;unmatched&quot;</span>), <span class="st">&quot;lp-mirror-unmatched&quot;</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-mirror-unmatched" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-mirror-unmatched-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/a94dfc9126840c7307af914b16910ddc.png" class="img-fluid figure-img" width="1050">
+<img role="img" src="assets/4fd2a3d91284c55c9136822907ba5a9e.png" class="img-fluid figure-img" width="900">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mirror-unmatched-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 1: Propensity score of each group: treated above the axis, controls below
+Figure 1: Propensity score of each group: treated above the axis, controls below. Blue bars with a black outline mark the treated group above the axis and vermillion bars with a black outline the controls below it.
 </figcaption>
 </figure>
 </div>
@@ -2739,19 +2740,18 @@ Table 3: Patients in each group
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>mh_weighted <span class="ot">&lt;-</span> <span class="fu">mirror_hist</span>(scores, <span class="st">&quot;weighted&quot;</span>, groups, BINWIDTH)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(<span class="fu">mirror_figure</span>(mh_weighted, <span class="st">&quot;weighted&quot;</span>), <span class="st">&quot;lp-mirror-weighted&quot;</span>, <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="dv">5</span>,</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(<span class="fu">mirror_figure</span>(mh_weighted, <span class="st">&quot;weighted&quot;</span>), <span class="st">&quot;lp-mirror-weighted&quot;</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-mirror-weighted" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-mirror-weighted-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/ef943990e5cd2d03d5fc69c120ff8c52.png" class="img-fluid figure-img" width="1050">
+<img role="img" src="assets/6e1cc930e5b0599fd3a789d840056bda.png" class="img-fluid figure-img" width="900">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mirror-weighted-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 2: Propensity score of each group under the matching weights, over all patients in gray
+Figure 2: Propensity score of each group under the matching weights, over all patients in gray. Gray bars with a black outline mark all patients, blue bars the treated group above the axis and vermillion bars the controls below it, both weighted.
 </figcaption>
 </figure>
 </div>
@@ -2801,20 +2801,21 @@ Table 4: Patients in each group, and the sum of their matching weights
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: its child chunks carry their own labels and captions</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(MATCH)) {</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  mh_matched <span class="ot">&lt;-</span> <span class="fu">mirror_hist</span>(scores, <span class="st">&quot;matched&quot;</span>, groups, BINWIDTH)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(<span class="fu">mirror_figure</span>(mh_matched, <span class="st">&quot;matched&quot;</span>), <span class="st">&quot;lp-mirror-matched&quot;</span>, <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="dv">5</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  .link <span class="ot">&lt;-</span> xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: fig-mirror-matched&quot;</span>,</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| fig-cap: </span><span class="sc">\&quot;</span><span class="st">Propensity score of the matched patients in each group, over all patients in gray</span><span class="sc">\&quot;</span><span class="st">&quot;</span>,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>, .fence, <span class="st">&quot;&quot;</span>,</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-mirror-matched&quot;</span>,</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">Patients in each group, and those matched</span><span class="sc">\&quot;</span><span class="st">&quot;</span>,</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;knitr::kable(mirror_counts(mh_matched, </span><span class="sc">\&quot;</span><span class="st">matched</span><span class="sc">\&quot;</span><span class="st">), col.names = c(</span><span class="sc">\&quot;</span><span class="st">Group</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Patients</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Matched</span><span class="sc">\&quot;</span><span class="st">))&quot;</span>,</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    .fence</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(<span class="fu">mirror_figure</span>(mh_matched, <span class="st">&quot;matched&quot;</span>), <span class="st">&quot;lp-mirror-matched&quot;</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  .link <span class="ot">&lt;-</span> xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: fig-mirror-matched&quot;</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| fig-cap: </span><span class="sc">\&quot;</span><span class="st">Propensity score of the matched patients in each group, over all patients in gray. Gray bars with a&quot;</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#|   black outline mark all patients, blue bars the matched treated patients above the axis and orange&quot;</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#|   bars the matched controls below it.</span><span class="sc">\&quot;</span><span class="st">&quot;</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>, .fence, <span class="st">&quot;&quot;</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-mirror-matched&quot;</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">Patients in each group, and those matched</span><span class="sc">\&quot;</span><span class="st">&quot;</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;knitr::kable(mirror_counts(mh_matched, </span><span class="sc">\&quot;</span><span class="st">matched</span><span class="sc">\&quot;</span><span class="st">), col.names = c(</span><span class="sc">\&quot;</span><span class="st">Group</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Patients</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Matched</span><span class="sc">\&quot;</span><span class="st">))&quot;</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    .fence</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell">
 <details class="code-fold">
@@ -2825,10 +2826,10 @@ Table 4: Patients in each group, and the sum of their matching weights
 <div id="fig-mirror-matched" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-mirror-matched-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/c740375ade55b2169748aa209fd62ee4.png" class="img-fluid figure-img" width="1050">
+<img role="img" src="assets/fef73e05cd5840cbf6878b7aed33f444.png" class="img-fluid figure-img" width="900">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mirror-matched-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 3: Propensity score of the matched patients in each group, over all patients in gray
+Figure 3: Propensity score of the matched patients in each group, over all patients in gray. Gray bars with a black outline mark all patients, blue bars the matched treated patients above the axis and orange bars the matched controls below it.
 </figcaption>
 </figure>
 </div>
@@ -2892,12 +2893,12 @@ Table 5: Patients in each group, and those matched
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-12 16:18:49 EDT</td>
+<td style="text-align: left;">2026-10-15 09:27:34 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-12 16:18:50 EDT</td>
+<td style="text-align: left;">2026-10-15 09:27:35 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -2942,17 +2943,17 @@ Table 5: Patients in each group, and those matched
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.3.1</td>
+<td style="text-align: left;">1.4.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261012.parquet</td>
+<td style="text-align: left;">built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-12</td>
+<td style="text-align: left;">2026-10-15</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2972,7 +2973,7 @@ Table 5: Patients in each group, and those matched
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">27b97c1d78ec</td>
+<td style="text-align: left;">f632480029c1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2982,7 +2983,7 @@ Table 5: Patients in each group, and those matched
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>approach-propensity/lm-propensity_binary.rds</code> (propensity-model), rendered 2026-10-12 16:18:37 -0400, data built_20261012.parquet</td>
+<td style="text-align: left;"><code>approach-propensity/lm-propensity_binary.rds</code> (propensity-model), rendered 2026-10-15 09:27:24 -0400, data built_20261015.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -2992,7 +2993,7 @@ Table 5: Patients in each group, and those matched
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"lp.mirror.approach.matched","rendered":"2026-10-12T20:18:50Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.3","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.5","source":null},{"package":"hvtiRtemplates","version":"1.3.1","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"},{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"match","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"},{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"training","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"}],"artifacts":[{"path":"90_estimates/approach-propensity/lm-propensity_binary.rds","role":"propensity-model","bytes":235151,"mtime":"2026-10-12T20:18:38Z","sha256":"59ee33f1e296f7ed58c7930995f9db4adfb49720def5c0f36bfb33ed6fa74546"}],"subject":"approach","type":"matched","analysis":{"treatment":{"variable":"approach","accepted_levels":["surgical","transcatheter"],"observed_levels":["surgical","transcatheter"],"treated_level":"transcatheter"},"model":{"formula":"approach ~ age + female + hx_chf + hx_dm + lvef + bmi","family":"binary","method":"logistic","predictors":["age","female","hx_chf","hx_dm","lvef","bmi"],"imputation":{"variable":null,"n":1,"stacked":false}}},"cohort":{"count_unit":"rows","n_input":800,"n_analyzed":800,"n_excluded":0,"by_imputation":[{"imputation":1,"n_input":800,"n_analyzed":800,"n_excluded":0}]},"mirror":{"model_set":"approach-propensity","model_file":"lm-propensity_binary.rds","binwidth":5,"match":"match_pair","join":{"no_flag":0,"no_score":0}},"run":{"start":"2026-10-12T16:18:49-0400","end":"2026-10-12T16:18:50-0400","time_zone":"EDT","duration_seconds":1.2,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"lp.mirror.approach.matched.qmd","template":"lp.mirror","prefix":"lp","qualifier":"mirror","subject":"approach","type":"matched","hvtiRtemplates":"1.3.1"},"datasets":[{"name":"built","version_file":"built_20261012.parquet","registered":"2026-10-12","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"27b97c1d78ec","manifest":"current"}],"upstream":[{"file":"90_estimates/approach-propensity/lm-propensity_binary.rds","set":"approach-propensity","role":"propensity-model","rendered_at":"2026-10-12T16:18:37-0400","dataset_version":"built_20261012.parquet"}],"reproducibility":{"renv":{"active":false}}},"source":"40_graphs/lp.mirror.approach.matched.qmd",".hvti_render_id":"2ebae14ff8c0b5dbb9c0c84da4e5b3fb815100709eca1db309f265941f15324d",".hvti_source_sha256":"13ff7b69d04084fafbc0ab83354aed592588c460192e1613579eb92dac7ee05b"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"lp.mirror.approach.matched","rendered":"2026-10-15T13:27:35Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.10","source":"github","sha":"6f50cde76651e0f41b57c145f21cbd5915cfba85"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"match","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"training","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[{"path":"90_estimates/approach-propensity/lm-propensity_binary.rds","role":"propensity-model","bytes":235202,"mtime":"2026-10-15T13:27:24Z","sha256":"1092dcf864f9cdf84c561b2276626be5c03955e09afbf7c505099f2e751f13e3"}],"subject":"approach","type":"matched","analysis":{"treatment":{"variable":"approach","accepted_levels":["surgical","transcatheter"],"observed_levels":["surgical","transcatheter"],"treated_level":"transcatheter"},"model":{"formula":"approach ~ age + female + hx_chf + hx_dm + lvef + bmi","family":"binary","method":"logistic","predictors":["age","female","hx_chf","hx_dm","lvef","bmi"],"imputation":{"variable":null,"n":1,"stacked":false}}},"cohort":{"count_unit":"rows","n_input":800,"n_analyzed":800,"n_excluded":0,"by_imputation":[{"imputation":1,"n_input":800,"n_analyzed":800,"n_excluded":0}]},"mirror":{"model_set":"approach-propensity","model_file":"lm-propensity_binary.rds","binwidth":5,"match":"match_pair","join":{"no_flag":0,"no_score":0}},"run":{"start":"2026-10-15T09:27:34-0400","end":"2026-10-15T09:27:35-0400","time_zone":"EDT","duration_seconds":1.1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"lp.mirror.approach.matched.qmd","template":"lp.mirror","prefix":"lp","qualifier":"mirror","subject":"approach","type":"matched","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"f632480029c1","manifest":"current"}],"upstream":[{"file":"90_estimates/approach-propensity/lm-propensity_binary.rds","set":"approach-propensity","role":"propensity-model","rendered_at":"2026-10-15T09:27:24-0400","dataset_version":"built_20261015.parquet"}],"reproducibility":{"renv":{"active":false}}},"source":"40_graphs/lp.mirror.approach.matched.qmd",".hvti_render_id":"cc98781a1865cff9ce3f27119741d71af623d4a55a312269ff5e7d2b0697bab8",".hvti_source_sha256":"b2b1ee320c07a9c9e2de89988bd07dcde367c19500f9ff5e1af20ce43e3c2fed"}</script>
 </section>
 
 </main>

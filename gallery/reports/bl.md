@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:13
+2026-10-15 09:22
 
 This job reports a bootstrap variable selection screen over a
 **logistic** model: how often each candidate survived stepwise selection
@@ -100,7 +100,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.3.1
+hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -118,9 +118,11 @@ Code
 # is honestly computed, and only the denominator is not the intended one.
 EXPECT_BOOT <- 100L   # Demo: boot_select(n_rep = 100)
 
-# Demo: the file your runner wrote its screen to, under this set's estimates
-# directory. It must match the runner exactly.
-BOOT_FILE <- "bagging.rds"
+# Demo: the file-name prefix your runner wrote its screen under. This report
+# reads <BOOT_PREFIX>.rds in this set's estimates directory, the name bh reads
+# for an unchunked run, and bl-runner.R writes bl.rds. It must match the runner
+# exactly.
+BOOT_PREFIX <- "bl"
 
 # Demo: the bag's recorded selection is used; set any of these only to confirm
 # it. NULL takes the value the bootstrap runner used.
@@ -195,11 +197,11 @@ Code
 # leaves nothing at all. Keeping the run in a companion file means a failed
 # render costs a re-render rather than a re-run, and it is what lets this
 # report be re-read months later against the screen it actually described.
-.single_file <- set_path("estimates", BOOT_FILE)
+.single_file <- set_path("estimates", paste0(BOOT_PREFIX, ".rds"))
 if (!file.exists(.single_file)) {
   stop("No screen found at ", .single_file, ". This report reads a bag your ",
        "runner wrote with boot_bag(); it does not run the screen.\nRun the ",
-       "companion runner first, or correct BOOT_FILE.", call. = FALSE)
+       "companion runner first, or correct BOOT_PREFIX.", call. = FALSE)
 }
 .cfg <- study_config(start = .root)
 .bag_read <- hvtiRtemplates:::.read_bootstrap_artifact(
@@ -251,7 +253,7 @@ if (is.null(.engine_v) || .engine_v < "0.9.3") {
 
 # A run split across chunks is still supported, and belongs upstream: pool with
 # hvtiRbootstrap::boot_pool_chunks() in your runner and write the pooled bag to
-# BOOT_FILE. Only the runner knows how many chunks it launched, and
+# <BOOT_PREFIX>.rds. Only the runner knows how many chunks it launched, and
 # boot_pool_chunks() refuses chunks that disagree on the dataset checksum, the
 # entry and stay levels, the base parameters or the engine version -- every one
 # of which is silent on its own, showing up as a slightly different frequency
@@ -386,8 +388,8 @@ provenance
     8                                                                      100
     9                                                                        0
     10                                                                     0.0
-    11                                                           version:0.9.4
-    12 sha256:27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6
+    11                                                           version:0.9.5
+    12 sha256:f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264
     13                                               1 distinct (listed below)
 
 Code
@@ -829,6 +831,7 @@ an empty result as an absence of collinearity.
 Code
 
 ``` r
+# Free size: one row per variable, so the height grows with the list.
 # The error bar is the point of the figure, not decoration. A bare dot plot
 # invites the reader to rank variables by a difference of two points, which is
 # inside the noise at every frequency near the middle of the range.
@@ -838,15 +841,17 @@ Code
   geom_point() +
   coord_flip() +
   labs(x = NULL, y = "Replicates selecting the variable (%)") +
-  theme_minimal()
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "bl-frequencies", height = 7)
 .fig
 ```
 
-![](assets/3fcba65bcc6e3fc1d96ec7ceeb56a224.png)
+![](assets/6f58fd2ff208e4dc8d9c92ec1aec4205.png)
 
-Figure 1: Selection frequency, with Monte-Carlo error and the retention
-threshold
+Figure 1: Bootstrap selection frequency of each candidate variable.
+Black filled circles mark the percent of replicates selecting the
+variable, horizontal black bars ±1 Monte Carlo error, and the dashed
+vertical line the retention threshold.
 
 ## Save
 
@@ -863,8 +868,8 @@ Code
 # was not true. A file whose existence implies a dependency that does not exist
 # is worse than no file.
 
-# NOT BOOT_FILE. The run's INPUT is that name, so writing the report there
-# overwrites the screen it just read. BOOT_FILE is an edit point, so a study
+# NOT <BOOT_PREFIX>.rds. The run's INPUT is that name, so writing the report there
+# overwrites the screen it just read. BOOT_PREFIX is an edit point, so a study
 # can set it to anything, including this name -- checked rather than assumed,
 # because the failure destroys the run instead of erroring, and a screen is
 # hours of compute that boot_select() produces only on return.
@@ -873,7 +878,7 @@ inputs <- normalizePath(c(.single_file, .chunk_files), mustWork = FALSE)
 if (normalizePath(report_file, mustWork = FALSE) %in% inputs) {
   stop("This report would be written to ", basename(report_file), ", which is ",
        "the bootstrap output it just read. That file is the screen itself, and ",
-       "overwriting it cannot be undone.\nChange BOOT_FILE so the runner's ",
+       "overwriting it cannot be undone.\nChange BOOT_PREFIX so the runner's ",
        "output and this report do not collide.", call. = FALSE)
 }
 
@@ -892,8 +897,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:13:49 EDT |
-|  | Ended | 2026-10-12 16:13:51 EDT |
+| Run | Started | 2026-10-15 09:22:40 EDT |
+|  | Ended | 2026-10-15 09:22:41 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -902,13 +907,13 @@ saveRDS(report, report_file)
 |  | Template | bl |
 |  | Subject | vent |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `vent-boot/bagging.rds` (bootstrap-bag), rendered not recorded, data built_20261012.parquet |
+| Upstream | Handoff | `vent-boot/bl.rds` (bootstrap-bag), rendered not recorded, data built_20261015.parquet |
 | Reproducibility | renv | not active |

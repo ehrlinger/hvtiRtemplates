@@ -2244,7 +2244,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-12 16:17</p>
+      <p class="date">2026-10-15 09:26</p>
     </div>
   </div>
   
@@ -2256,6 +2256,7 @@ vertical-align: -.125em;
 </header>
 
 
+<!-- hvtiRtemplates: hz 1.4.0 -->
 <!-- Demo: name the SAS job this replaces, and say what its PROC HAZARD call
      fits: which phases, which parameters are free, and which are fixed.
      Replace this comment with that text. -->
@@ -2314,7 +2315,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261012.parquet</code>, registered 2026-10-12 · rendered by gallery on gallery · hvtiRtemplates 1.3.1</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
 </div>
 </div>
 </div>
@@ -2382,7 +2383,7 @@ vertical-align: -.125em;
 <span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>EVENT  <span class="ot">&lt;-</span> <span class="st">&quot;dead&quot;</span></span>
 <span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>EXPECTED <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n =</span> <span class="dv">725</span>L, <span class="at">n_events =</span> <span class="dv">402</span>L, <span class="at">n_censored =</span> <span class="dv">323</span>L)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>EXPECTED <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n =</span> <span class="dv">725</span>L, <span class="at">n_events =</span> <span class="dv">406</span>L, <span class="at">n_censored =</span> <span class="dv">319</span>L)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2420,7 +2421,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261012.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261015.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2514,11 +2515,11 @@ Table 2: Analysable patients, events and censored patients
 </tr>
 <tr class="even">
 <td style="text-align: left;">n_events</td>
-<td style="text-align: right;">402</td>
+<td style="text-align: right;">406</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">n_censored</td>
-<td style="text-align: right;">323</td>
+<td style="text-align: right;">319</td>
 </tr>
 </tbody>
 </table>
@@ -2772,11 +2773,11 @@ Table 4: Events in the cohort gate against events in the response as built
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">cohort gate</td>
-<td style="text-align: right;">402</td>
+<td style="text-align: right;">406</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">response as built</td>
-<td style="text-align: right;">402</td>
+<td style="text-align: right;">406</td>
 </tr>
 </tbody>
 </table>
@@ -2829,8 +2830,8 @@ Table 4: Events in the cohort gate against events in the response as built
   phase 2:      late - g3 (late risk)
   engine:       native-r-m2 
   converged:    TRUE 
-  gradient:     relative 3.93e-06 (SAS/C requires &lt;= 6.06e-06; met)
-  log-lik:      -1506.93 
+  gradient:     relative 3.33e-06 (SAS/C requires &lt;= 6.06e-06; met)
+  log-lik:      -1503.29 
   Not done in this run: none
   evaluations: fn=6, gr=1
 
@@ -2838,18 +2839,18 @@ Coefficients (internal scale):
 
   Phase: early (cdf)
                estimate std_error     z_stat      p_value
-  log_mu     -3.8472243 0.6808191 -5.6508763 1.596320e-08
-  log_t_half -6.3960721 2.0652308 -3.0970254 1.954732e-03
-  nu          1.8499270 1.8044470  1.0252044 3.052668e-01
-  m          -0.1095311 0.4366474 -0.2508457 8.019334e-01
+  log_mu     -3.5475335 0.6503541 -5.4547723 4.903564e-08
+  log_t_half -5.4139983 2.4642214 -2.1970421 2.801744e-02
+  nu          2.6936482 2.3449537  1.1486999 2.506797e-01
+  m          -0.2197872 0.4695841 -0.4680465 6.397513e-01
 
   Phase: late (g3)
             estimate  std_error    z_stat      p_value
-  log_mu  -2.4729679 0.17647206 -14.01337 1.291332e-44
+  log_mu  -2.5663963 0.17126255 -14.98516 9.180758e-51
   log_tau  0.0000000         NA        NA           NA
   gamma    1.0000000         NA        NA           NA
   alpha    1.0000000         NA        NA           NA
-  eta      0.8280507 0.05854893  14.14288 2.066408e-45</code></pre>
+  eta      0.8800072 0.05681755  15.48830 4.161509e-54</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -2892,7 +2893,7 @@ Table 5: Convergence quantities of the reported fit
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">log-likelihood</td>
-<td style="text-align: left;">-1506.931573</td>
+<td style="text-align: left;">-1503.288163</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">converged</td>
@@ -2908,7 +2909,7 @@ Table 5: Convergence quantities of the reported fit
 </tr>
 <tr class="odd">
 <td style="text-align: left;">rcond</td>
-<td style="text-align: left;">2.30178e-05</td>
+<td style="text-align: left;">1.70358e-05</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">pd</td>
@@ -2981,14 +2982,22 @@ the optimum; standard errors may be unreliable</code></pre>
 <pre><code>Warning in .hzr_safe_solve(hess_result): Non-positive variance estimates; the
 optimum may not be a proper maximum</code></pre>
 </div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in .hzr_safe_solve(hess_result): Hessian is not positive-definite at
+the optimum; standard errors may be unreliable</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in .hzr_safe_solve(hess_result): Non-positive variance estimates; the
+optimum may not be a proper maximum</code></pre>
+</div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>probe_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">probe       =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(probes)),</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">logLik      =</span> probe_ll,</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">vs_reported =</span> probe_ll <span class="sc">-</span> fit_det<span class="sc">$</span>fit<span class="sc">$</span>objective</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(probe_table, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>probe_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">probe       =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(probes)),</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">logLik      =</span> probe_ll,</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">vs_reported =</span> probe_ll <span class="sc">-</span> fit_det<span class="sc">$</span>fit<span class="sc">$</span>objective</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(probe_table, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-multistart" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -3008,18 +3017,18 @@ Table 6: Log-likelihood of each single-start probe fit against the reported fit
 <tbody>
 <tr class="odd">
 <td style="text-align: right;">1</td>
-<td style="text-align: right;">-1506.932</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">-1503.288</td>
+<td style="text-align: right;">0e+00</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">2</td>
-<td style="text-align: right;">-1506.932</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">-1503.288</td>
+<td style="text-align: right;">-1e-06</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">3</td>
-<td style="text-align: right;">-1506.932</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">-1503.288</td>
+<td style="text-align: right;">0e+00</td>
 </tr>
 </tbody>
 </table>
@@ -3036,31 +3045,31 @@ Table 6: Log-likelihood of each single-start probe fit against the reported fit
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>fit_nc <span class="ot">&lt;-</span> <span class="fu">hazard</span>(surv_formula, <span class="at">data =</span> resp, <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">phases =</span> phases, <span class="at">theta =</span> theta0, <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">control =</span> <span class="fu">list</span>(<span class="at">conserve =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                                <span class="at">n_starts =</span> <span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">2000</span>))</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="fu">check_fit</span>(fit_nc, <span class="st">&quot;noconserve&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>fit_nc <span class="ot">&lt;-</span> <span class="fu">hazard</span>(surv_formula, <span class="at">data =</span> resp, <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">phases =</span> phases, <span class="at">theta =</span> theta0, <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">control =</span> <span class="fu">list</span>(<span class="at">conserve =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>                                <span class="at">n_starts =</span> <span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">2000</span>))</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="fu">check_fit</span>(fit_nc, <span class="st">&quot;noconserve&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sum_i Lambda(t_i) is what `conserve` pins to the event count. Reporting it</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co"># under BOTH settings is the only way a reader can tell &quot;the control did</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co"># nothing&quot; from &quot;the control had almost nothing to do&quot; -- the two are identical</span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># in the likelihood column and mean opposite things.</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>sum_lambda <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="fu">predict</span>(fit_det, <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>)),</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="fu">predict</span>(fit_nc, <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>))</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>conservation <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">conserve   =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>),</span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">sum_lambda =</span> sum_lambda,</span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">events     =</span> cc<span class="sc">$</span>n_events</span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>conservation<span class="sc">$</span>excess <span class="ot">&lt;-</span> conservation<span class="sc">$</span>sum_lambda <span class="sc">-</span> conservation<span class="sc">$</span>events</span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(conservation, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sum_i Lambda(t_i) is what `conserve` pins to the event count. Reporting it</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># under BOTH settings is the only way a reader can tell &quot;the control did</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># nothing&quot; from &quot;the control had almost nothing to do&quot; -- the two are identical</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co"># in the likelihood column and mean opposite things.</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>sum_lambda <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="fu">predict</span>(fit_det, <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>)),</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="fu">predict</span>(fit_nc, <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>))</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>conservation <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">conserve   =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>),</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">sum_lambda =</span> sum_lambda,</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">events     =</span> cc<span class="sc">$</span>n_events</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>conservation<span class="sc">$</span>excess <span class="ot">&lt;-</span> conservation<span class="sc">$</span>sum_lambda <span class="sc">-</span> conservation<span class="sc">$</span>events</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(conservation, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-conservation-binding" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -3081,15 +3090,15 @@ Table 7: Sum of the cumulative hazard against the event count, with and without
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">402.0000</td>
-<td style="text-align: right;">402</td>
-<td style="text-align: right;">0.00000</td>
+<td style="text-align: right;">406.000</td>
+<td style="text-align: right;">406</td>
+<td style="text-align: right;">0.000000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">FALSE</td>
-<td style="text-align: right;">402.0027</td>
-<td style="text-align: right;">402</td>
-<td style="text-align: right;">0.00275</td>
+<td style="text-align: right;">405.996</td>
+<td style="text-align: right;">406</td>
+<td style="text-align: right;">-0.004028</td>
 </tr>
 </tbody>
 </table>
@@ -3105,43 +3114,43 @@ Table 7: Sum of the cumulative hazard against the event count, with and without
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>cf <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_det)</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co"># vcov() returns a scalar NA rather than a matrix when the Hessian could not be</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co"># inverted, so diag() on it errors. That is a result ABOUT the fit, not a bug</span></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="co"># to route around: report it and carry on with what does not need curvature.</span></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>V <span class="ot">&lt;-</span> <span class="fu">vcov</span>(fit_det)</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>se_available <span class="ot">&lt;-</span> <span class="fu">is.matrix</span>(V) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(V) <span class="sc">==</span> <span class="fu">length</span>(cf) <span class="sc">&amp;&amp;</span> <span class="fu">any</span>(<span class="fu">is.finite</span>(<span class="fu">diag</span>(V)))</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">NOTE</span><span class="co"> the brace. At top level `if (a) x` &lt;newline&gt; `else y` is a PARSE ERROR:</span></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="co"># `else` must not start a line outside a block. knitr captures that error into</span></span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="co"># the document and carries on, so the chunk &quot;runs&quot; and silently emits nothing.</span></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>se <span class="ot">&lt;-</span> <span class="cf">if</span> (se_available) {</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(<span class="fu">sqrt</span>(<span class="fu">diag</span>(V)), <span class="fu">names</span>(cf))</span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(<span class="fu">rep</span>(<span class="cn">NA_real_</span>, <span class="fu">length</span>(cf)), <span class="fu">names</span>(cf))</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: map your coefficients to their natural scale, and to the SAS names a</span></span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a><span class="co"># reader will be comparing against. exp() where R reports a log, identity where</span></span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a><span class="co"># it already reports the natural value.</span></span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>est <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">parameter     =</span> <span class="fu">c</span>(<span class="st">&quot;MUE&quot;</span>, <span class="st">&quot;THALF&quot;</span>, <span class="st">&quot;NU&quot;</span>, <span class="st">&quot;M&quot;</span>, <span class="st">&quot;MUL&quot;</span>, <span class="st">&quot;ETA&quot;</span>),</span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">estimate      =</span> <span class="fu">c</span>(<span class="fu">exp</span>(cf[[<span class="st">&quot;early.log_mu&quot;</span>]]), <span class="fu">exp</span>(cf[[<span class="st">&quot;early.log_t_half&quot;</span>]]),</span>
-<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>                    cf[[<span class="st">&quot;early.nu&quot;</span>]], cf[[<span class="st">&quot;early.m&quot;</span>]],</span>
-<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">exp</span>(cf[[<span class="st">&quot;late.log_mu&quot;</span>]]), cf[[<span class="st">&quot;late.eta&quot;</span>]]),</span>
-<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">se_on_r_scale =</span> <span class="fu">c</span>(se[[<span class="st">&quot;early.log_mu&quot;</span>]], se[[<span class="st">&quot;early.log_t_half&quot;</span>]],</span>
-<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>                    se[[<span class="st">&quot;early.nu&quot;</span>]], se[[<span class="st">&quot;early.m&quot;</span>]],</span>
-<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>                    se[[<span class="st">&quot;late.log_mu&quot;</span>]], se[[<span class="st">&quot;late.eta&quot;</span>]]),</span>
-<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">r_scale       =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;log&quot;</span>, <span class="st">&quot;natural&quot;</span>, <span class="st">&quot;natural&quot;</span>, <span class="st">&quot;log&quot;</span>, <span class="st">&quot;natural&quot;</span>),</span>
-<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names     =</span> <span class="cn">NULL</span></span>
-<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>cf <span class="ot">&lt;-</span> <span class="fu">coef</span>(fit_det)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co"># vcov() returns a scalar NA rather than a matrix when the Hessian could not be</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="co"># inverted, so diag() on it errors. That is a result ABOUT the fit, not a bug</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="co"># to route around: report it and carry on with what does not need curvature.</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>V <span class="ot">&lt;-</span> <span class="fu">vcov</span>(fit_det)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>se_available <span class="ot">&lt;-</span> <span class="fu">is.matrix</span>(V) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(V) <span class="sc">==</span> <span class="fu">length</span>(cf) <span class="sc">&amp;&amp;</span> <span class="fu">any</span>(<span class="fu">is.finite</span>(<span class="fu">diag</span>(V)))</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">NOTE</span><span class="co"> the brace. At top level `if (a) x` &lt;newline&gt; `else y` is a PARSE ERROR:</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="co"># `else` must not start a line outside a block. knitr captures that error into</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="co"># the document and carries on, so the chunk &quot;runs&quot; and silently emits nothing.</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>se <span class="ot">&lt;-</span> <span class="cf">if</span> (se_available) {</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(<span class="fu">sqrt</span>(<span class="fu">diag</span>(V)), <span class="fu">names</span>(cf))</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(<span class="fu">rep</span>(<span class="cn">NA_real_</span>, <span class="fu">length</span>(cf)), <span class="fu">names</span>(cf))</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: map your coefficients to their natural scale, and to the SAS names a</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a><span class="co"># reader will be comparing against. exp() where R reports a log, identity where</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a><span class="co"># it already reports the natural value.</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>est <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">parameter     =</span> <span class="fu">c</span>(<span class="st">&quot;MUE&quot;</span>, <span class="st">&quot;THALF&quot;</span>, <span class="st">&quot;NU&quot;</span>, <span class="st">&quot;M&quot;</span>, <span class="st">&quot;MUL&quot;</span>, <span class="st">&quot;ETA&quot;</span>),</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">estimate      =</span> <span class="fu">c</span>(<span class="fu">exp</span>(cf[[<span class="st">&quot;early.log_mu&quot;</span>]]), <span class="fu">exp</span>(cf[[<span class="st">&quot;early.log_t_half&quot;</span>]]),</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>                    cf[[<span class="st">&quot;early.nu&quot;</span>]], cf[[<span class="st">&quot;early.m&quot;</span>]],</span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">exp</span>(cf[[<span class="st">&quot;late.log_mu&quot;</span>]]), cf[[<span class="st">&quot;late.eta&quot;</span>]]),</span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">se_on_r_scale =</span> <span class="fu">c</span>(se[[<span class="st">&quot;early.log_mu&quot;</span>]], se[[<span class="st">&quot;early.log_t_half&quot;</span>]],</span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>                    se[[<span class="st">&quot;early.nu&quot;</span>]], se[[<span class="st">&quot;early.m&quot;</span>]],</span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>                    se[[<span class="st">&quot;late.log_mu&quot;</span>]], se[[<span class="st">&quot;late.eta&quot;</span>]]),</span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">r_scale       =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;log&quot;</span>, <span class="st">&quot;natural&quot;</span>, <span class="st">&quot;natural&quot;</span>, <span class="st">&quot;log&quot;</span>, <span class="st">&quot;natural&quot;</span>),</span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names     =</span> <span class="cn">NULL</span></span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(est, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(est, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-estimates" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -3162,38 +3171,38 @@ Table 8: Parameter estimates on the natural scale, with standard errors on the 
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">MUE</td>
-<td style="text-align: right;">0.021339</td>
-<td style="text-align: right;">0.680819</td>
+<td style="text-align: right;">0.028796</td>
+<td style="text-align: right;">0.650354</td>
 <td style="text-align: left;">log</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">THALF</td>
-<td style="text-align: right;">0.001668</td>
-<td style="text-align: right;">2.065231</td>
+<td style="text-align: right;">0.004454</td>
+<td style="text-align: right;">2.464221</td>
 <td style="text-align: left;">log</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">NU</td>
-<td style="text-align: right;">1.849927</td>
-<td style="text-align: right;">1.804447</td>
+<td style="text-align: right;">2.693648</td>
+<td style="text-align: right;">2.344954</td>
 <td style="text-align: left;">natural</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">M</td>
-<td style="text-align: right;">-0.109531</td>
-<td style="text-align: right;">0.436647</td>
+<td style="text-align: right;">-0.219787</td>
+<td style="text-align: right;">0.469584</td>
 <td style="text-align: left;">natural</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">MUL</td>
-<td style="text-align: right;">0.084334</td>
-<td style="text-align: right;">0.176472</td>
+<td style="text-align: right;">0.076812</td>
+<td style="text-align: right;">0.171263</td>
 <td style="text-align: left;">log</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ETA</td>
-<td style="text-align: right;">0.828051</td>
-<td style="text-align: right;">0.058549</td>
+<td style="text-align: right;">0.880007</td>
+<td style="text-align: right;">0.056818</td>
 <td style="text-align: left;">natural</td>
 </tr>
 </tbody>
@@ -3205,17 +3214,17 @@ Table 8: Parameter estimates on the natural scale, with standard errors on the 
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: its child chunk carries its own label and caption</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>se_available) {</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  no_se <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">warning =</span> <span class="st">&quot;The Hessian could not be inverted: NO standard errors are available.&quot;</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-estimates-no-se&quot;</span>,</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">Standard errors could not be computed</span><span class="sc">\&quot;</span><span class="st">&quot;</span>, <span class="st">&quot;knitr::kable(no_se)&quot;</span>, .fence</span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: its child chunk carries its own label and caption</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>se_available) {</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  no_se <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">warning =</span> <span class="st">&quot;The Hessian could not be inverted: NO standard errors are available.&quot;</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-estimates-no-se&quot;</span>,</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">Standard errors could not be computed</span><span class="sc">\&quot;</span><span class="st">&quot;</span>, <span class="st">&quot;knitr::kable(no_se)&quot;</span>, .fence</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <p><strong>A caveat that must travel with these standard errors.</strong> Under a near-singular Hessian — check <code>rcond</code> above — the marginal standard errors on weakly identified shape parameters are unstable while the fitted curve is not. The data can pin the survival function tightly and still leave individual shape parameters loose, because <code>se(S(t))² = gᵀVg</code> can be well determined when the diagonal of <code>V</code> is not.</p>
 <p>So report per-parameter standard errors with that caveat attached, and treat the survival curve and its band — computed in the companion <code>hp</code> job — as the quantity that actually reaches a clinician.</p>
@@ -3225,23 +3234,23 @@ Table 8: Parameter estimates on the natural scale, with standard errors on the 
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># `hp` plots what this writes and `hm` fixes its shape parameters at these</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co"># values, both by set. A job that persists nothing cannot be chained from.</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>hz_art <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">deterministic =</span> fit_det, <span class="at">noconserve =</span> fit_nc,</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">phases =</span> phases, <span class="at">theta0 =</span> theta0)</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>hz_art <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  hz_art,</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> cc,</span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hm, hp and hs rebuild exactly these rows from this record, and take TIME</span></span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># and EVENT from it, so the chain cannot drift from the fit it builds on.</span></span>
-<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">c</span>(<span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>), <span class="fu">list</span>(<span class="at">time =</span> TIME, <span class="at">event =</span> EVENT))</span>
-<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hz_art, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;hz.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># `hp` plots what this writes and `hm` fixes its shape parameters at these</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co"># values, both by set. A job that persists nothing cannot be chained from.</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>hz_art <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">deterministic =</span> fit_det, <span class="at">noconserve =</span> fit_nc,</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">phases =</span> phases, <span class="at">theta0 =</span> theta0)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>hz_art <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  hz_art,</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> cc,</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hm, hp and hs rebuild exactly these rows from this record, and take TIME</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># and EVENT from it, so the chain cannot drift from the fit it builds on.</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">c</span>(<span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>), <span class="fu">list</span>(<span class="at">time =</span> TIME, <span class="at">event =</span> EVENT))</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hz_art, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;hz.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -3259,12 +3268,12 @@ Table 8: Parameter estimates on the natural scale, with standard errors on the 
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-12 16:17:21 EDT</td>
+<td style="text-align: left;">2026-10-15 09:26:09 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-12 16:17:24 EDT</td>
+<td style="text-align: left;">2026-10-15 09:26:12 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3309,17 +3318,17 @@ Table 8: Parameter estimates on the natural scale, with standard errors on the 
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.3.1</td>
+<td style="text-align: left;">1.4.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261012.parquet</td>
+<td style="text-align: left;">built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-12</td>
+<td style="text-align: left;">2026-10-15</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3339,7 +3348,7 @@ Table 8: Parameter estimates on the natural scale, with standard errors on the 
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">27b97c1d78ec</td>
+<td style="text-align: left;">f632480029c1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3354,7 +3363,7 @@ Table 8: Parameter estimates on the natural scale, with standard errors on the 
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"hz.dead.hz","rendered":"2026-10-12T20:17:24Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.3.1","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"numDeriv","version":"2016.8.1.1","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"TemporalHazard","version":"1.2.12","source":"github","sha":"e9ab82728ba4173df78c77286857e1923b22eb90"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"}],"artifacts":[],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":402,"n_censored":323},"run":{"start":"2026-10-12T16:17:21-0400","end":"2026-10-12T16:17:24-0400","time_zone":"EDT","duration_seconds":3.1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hz.dead.hz.qmd","template":"hz","prefix":"hz","subject":"dead","type":"hz","hvtiRtemplates":"1.3.1"},"datasets":[{"name":"built","version_file":"built_20261012.parquet","registered":"2026-10-12","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"27b97c1d78ec","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"20_distributions/hz.dead.hz.qmd",".hvti_render_id":"cc6cd20a03ff3063c6a5a28defd97b1a66e9d76983decb54c222537160e79a46",".hvti_source_sha256":"f84d5f3336e54065a309ac6aad55349d0c2cbd45ebb04da3a6e9ef70b169fe3f"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"hz.dead.hz","rendered":"2026-10-15T13:26:12Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"numDeriv","version":"2016.8.1.1","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"TemporalHazard","version":"1.2.16","source":"github","sha":"746ce9e95ef3075afcdb8524306ea053f7306282"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-15T09:26:09-0400","end":"2026-10-15T09:26:12-0400","time_zone":"EDT","duration_seconds":3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hz.dead.hz.qmd","template":"hz","prefix":"hz","subject":"dead","type":"hz","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"f632480029c1","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"20_distributions/hz.dead.hz.qmd",".hvti_render_id":"038798a7dc28350ecebd78f2d9a6c066e165a04a9ce70108c5fac5ab152b786f",".hvti_source_sha256":"9ac76e740fc3d060ac292d1807504afe377413f171ead2a6c15bddd520bb0deb"}</script>
 </section>
 
 </main>

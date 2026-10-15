@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:17
+2026-10-15 09:26
 
 An `lg` job decides which scale a covariate should enter a model on,
 before it goes into `PREDICTORS` in an `lm` job. A model of an event
@@ -34,6 +34,10 @@ SUBJECT <- "dead"
 TYPE    <- "calibration"
 .in <- knitr::current_input(dir = TRUE)
 suppressPackageStartupMessages(library(hvtiRutilities))
+if (utils::packageVersion("hvtiPlotR") < "2.8.8") {
+  stop("This job needs hvtiPlotR >= 2.8.8 for hv_panel_size()'s 6.5 inch page; ",
+       utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -56,8 +60,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -182,7 +186,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -306,7 +310,10 @@ for (i in seq_len(nrow(variables))) {
   .scales <- hvtiRtemplates:::.lg_scales(.tab$mean, .v$constant, .v$shift)
   calibration[[.v$name]] <- list(table = .tab, scales = .scales)
   .plot <- hvtiRtemplates:::.lg_plot(.tab, .scales, LINK, title = .v$label)
-  .file <- save_figure(.plot, paste0("lg-", .v$name), width = 9, height = 6, linked = TRUE)
+  # Six facets, one per scale, in two rows of three: hv_panel_size() gives each a 3 by 2
+  # inch panel, shrunk together to fit a 6.5 inch page, so the figure is no wider than a page.
+  .dims <- hvtiPlotR::hv_panel_size(.plot)
+  .file <- save_figure(.plot, paste0("lg-", .v$name), width = .dims$width, height = .dims$height, linked = TRUE)
   # This document sits in descriptive/ and the figure is written to graphs/, so
   # the image link is the figure's path relative to this document.
   .link <- xfun::relative_path(.file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE)
@@ -318,7 +325,8 @@ for (i in seq_len(nrow(variables))) {
               if (identical(LINK, "hazard")) "Log hazard rate" else "Logit")
   .cap_tbl <- paste0("Groups of ", .v$label, ", with the event rate and its link value")
   .cap_fig <- paste0(.v$label, ": the link value of each group against the covariate on six scales, ",
-                     "with the R-squared of a weighted straight line")
+                     "with the R-squared of a weighted straight line. Black filled circles mark the groups, joined by a ",
+                     "gray line, and the text in each panel corner gives the R-squared")
   cat("\n### ", .v$label, "\n\n", sep = "")
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), paste0("#| label: tbl-lg-", .slug),
@@ -354,11 +362,11 @@ knitr::kable(.tab, col.names = .heads, digits = 3, row.names = FALSE)
 
 | Group | Mean | Minimum | Maximum | Patients | Events | Events per unit of follow-up | Log hazard rate |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 44.904 | 32 | 52 | 156 | 58 | 0.026 | -3.657 |
-| 2 | 55.881 | 53 | 59 | 159 | 82 | 0.045 | -3.094 |
-| 3 | 62.482 | 60 | 65 | 170 | 93 | 0.058 | -2.846 |
-| 4 | 68.968 | 66 | 72 | 157 | 97 | 0.069 | -2.672 |
-| 5 | 79.500 | 73 | 100 | 158 | 113 | 0.124 | -2.086 |
+| 1 | 44.904 | 32 | 52 | 156 | 60 | 0.028 | -3.559 |
+| 2 | 55.881 | 53 | 59 | 159 | 83 | 0.048 | -3.041 |
+| 3 | 62.482 | 60 | 65 | 170 | 94 | 0.062 | -2.776 |
+| 4 | 68.968 | 66 | 72 | 157 | 95 | 0.071 | -2.639 |
+| 5 | 79.500 | 73 | 100 | 158 | 113 | 0.126 | -2.074 |
 
 Table 3: Groups of age, with the event rate and its link value
 
@@ -368,10 +376,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/e958391c32456cf7b5cb9d2d4210cd35.png)
+![](assets/d34862ed185fb0dbd2dda252049a1537.png)
 
 Figure 1: age: the link value of each group against the covariate on six
-scales, with the R-squared of a weighted straight line
+scales, with the R-squared of a weighted straight line. Black filled
+circles mark the groups, joined by a gray line, and the text in each
+panel corner gives the R-squared
 
 ### nyha_pr
 
@@ -383,10 +393,10 @@ knitr::kable(.tab, col.names = .heads, digits = 3, row.names = FALSE)
 
 | Group | Mean | Minimum | Maximum | Patients | Events | Events per unit of follow-up | Log hazard rate |
 |---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 1 | 1 | 1 | 129 | 64 | 0.061 | -2.795 |
-| 2 | 2 | 2 | 2 | 360 | 206 | 0.060 | -2.807 |
-| 3 | 3 | 3 | 3 | 275 | 146 | 0.046 | -3.075 |
-| 4 | 4 | 4 | 4 | 36 | 27 | 0.077 | -2.569 |
+| 1 | 1 | 1 | 1 | 129 | 64 | 0.063 | -2.762 |
+| 2 | 2 | 2 | 2 | 360 | 208 | 0.066 | -2.725 |
+| 3 | 3 | 3 | 3 | 275 | 146 | 0.048 | -3.035 |
+| 4 | 4 | 4 | 4 | 36 | 27 | 0.075 | -2.586 |
 
 Table 4: Groups of nyha_pr, with the event rate and its link value
 
@@ -396,10 +406,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/297264425c0c55bc8f858704aa6b0063.png)
+![](assets/38410c083c8c548267f58f99defdc2c8.png)
 
 Figure 2: nyha_pr: the link value of each group against the covariate on
-six scales, with the R-squared of a weighted straight line
+six scales, with the R-squared of a weighted straight line. Black filled
+circles mark the groups, joined by a gray line, and the text in each
+panel corner gives the R-squared
 
 Code
 
@@ -500,8 +512,8 @@ PREDICTORS <- c("age", "nyha_pr")
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-12 16:17:08 EDT  |
-|                 | Ended          | 2026-10-12 16:17:10 EDT  |
+| Run             | Started        | 2026-10-15 09:25:57 EDT  |
+|                 | Ended          | 2026-10-15 09:26:00 EDT  |
 |                 | Duration       | 2 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -510,12 +522,12 @@ PREDICTORS <- c("age", "nyha_pr")
 |                 | Template       | lg                       |
 |                 | Subject        | dead                     |
 |                 | Type           | calibration              |
-|                 | hvtiRtemplates | 1.3.1                    |
-| Dataset `built` | Version file   | built_20261012.parquet   |
-|                 | Registered     | 2026-10-12               |
+|                 | hvtiRtemplates | 1.4.0                    |
+| Dataset `built` | Version file   | built_20261015.parquet   |
+|                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | 27b97c1d78ec             |
+|                 | sha256         | f632480029c1             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:17
+2026-10-15 09:26
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -47,8 +47,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -115,7 +115,7 @@ TIME   <- "iv_dead"
 
 EVENT  <- "dead"
 
-EXPECTED <- list(n = 725L, n_events = 402L, n_censored = 323L)
+EXPECTED <- list(n = 725L, n_events = 406L, n_censored = 319L)
 ```
 
 ## Cohort
@@ -138,7 +138,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -193,8 +193,8 @@ knitr::kable(data.frame(
 | quantity     |   n |
 |:-------------|----:|
 | n_analysable | 725 |
-| n_events     | 402 |
-| n_censored   | 323 |
+| n_events     | 406 |
+| n_censored   | 319 |
 
 Table 2: Analysable patients, events and censored patients
 
@@ -379,8 +379,8 @@ if (!identical(as.integer(n_fitted), as.integer(cc$n_events))) {
 
 | source            | n_events |
 |:------------------|---------:|
-| cohort gate       |      402 |
-| response as built |      402 |
+| cohort gate       |      406 |
+| response as built |      406 |
 
 Table 4: Events in the cohort gate against events in the response as
 built
@@ -430,8 +430,8 @@ summary(fit_det)
       phase 2:      late - g3 (late risk)
       engine:       native-r-m2 
       converged:    TRUE 
-      gradient:     relative 3.93e-06 (SAS/C requires <= 6.06e-06; met)
-      log-lik:      -1506.93 
+      gradient:     relative 3.33e-06 (SAS/C requires <= 6.06e-06; met)
+      log-lik:      -1503.29 
       Not done in this run: none
       evaluations: fn=6, gr=1
 
@@ -439,18 +439,18 @@ summary(fit_det)
 
       Phase: early (cdf)
                    estimate std_error     z_stat      p_value
-      log_mu     -3.8472243 0.6808191 -5.6508763 1.596320e-08
-      log_t_half -6.3960721 2.0652308 -3.0970254 1.954732e-03
-      nu          1.8499270 1.8044470  1.0252044 3.052668e-01
-      m          -0.1095311 0.4366474 -0.2508457 8.019334e-01
+      log_mu     -3.5475335 0.6503541 -5.4547723 4.903564e-08
+      log_t_half -5.4139983 2.4642214 -2.1970421 2.801744e-02
+      nu          2.6936482 2.3449537  1.1486999 2.506797e-01
+      m          -0.2197872 0.4695841 -0.4680465 6.397513e-01
 
       Phase: late (g3)
                 estimate  std_error    z_stat      p_value
-      log_mu  -2.4729679 0.17647206 -14.01337 1.291332e-44
+      log_mu  -2.5663963 0.17126255 -14.98516 9.180758e-51
       log_tau  0.0000000         NA        NA           NA
       gamma    1.0000000         NA        NA           NA
       alpha    1.0000000         NA        NA           NA
-      eta      0.8280507 0.05854893  14.14288 2.066408e-45
+      eta      0.8800072 0.05681755  15.48830 4.161509e-54
 
 Code
 
@@ -478,11 +478,11 @@ knitr::kable(data.frame(
 
 | quantity             | value        |
 |:---------------------|:-------------|
-| log-likelihood       | -1506.931573 |
+| log-likelihood       | -1503.288163 |
 | converged            | TRUE         |
 | function evaluations | 6            |
 | gradient evaluations | 1            |
-| rcond                | 2.30178e-05  |
+| rcond                | 1.70358e-05  |
 | pd                   | TRUE         |
 
 Table 5: Convergence quantities of the reported fit
@@ -545,6 +545,12 @@ probe_ll <- vapply(seq_len(nrow(probes)), function(i) {
     Warning in .hzr_safe_solve(hess_result): Non-positive variance estimates; the
     optimum may not be a proper maximum
 
+    Warning in .hzr_safe_solve(hess_result): Hessian is not positive-definite at
+    the optimum; standard errors may be unreliable
+
+    Warning in .hzr_safe_solve(hess_result): Non-positive variance estimates; the
+    optimum may not be a proper maximum
+
 Code
 
 ``` r
@@ -558,9 +564,9 @@ knitr::kable(probe_table, digits = 6)
 
 | probe |    logLik | vs_reported |
 |------:|----------:|------------:|
-|     1 | -1506.932 |           0 |
-|     2 | -1506.932 |           0 |
-|     3 | -1506.932 |           0 |
+|     1 | -1503.288 |       0e+00 |
+|     2 | -1503.288 |      -1e-06 |
+|     3 | -1503.288 |       0e+00 |
 
 Table 6: Log-likelihood of each single-start probe fit against the
 reported fit
@@ -606,10 +612,10 @@ conservation$excess <- conservation$sum_lambda - conservation$events
 knitr::kable(conservation, digits = 6)
 ```
 
-| conserve | sum_lambda | events |  excess |
-|:---------|-----------:|-------:|--------:|
-| TRUE     |   402.0000 |    402 | 0.00000 |
-| FALSE    |   402.0027 |    402 | 0.00275 |
+| conserve | sum_lambda | events |    excess |
+|:---------|-----------:|-------:|----------:|
+| TRUE     |    406.000 |    406 |  0.000000 |
+| FALSE    |    405.996 |    406 | -0.004028 |
 
 Table 7: Sum of the cumulative hazard against the event count, with and
 without conservation
@@ -660,12 +666,12 @@ knitr::kable(est, digits = 6)
 
 | parameter |  estimate | se_on_r_scale | r_scale |
 |:----------|----------:|--------------:|:--------|
-| MUE       |  0.021339 |      0.680819 | log     |
-| THALF     |  0.001668 |      2.065231 | log     |
-| NU        |  1.849927 |      1.804447 | natural |
-| M         | -0.109531 |      0.436647 | natural |
-| MUL       |  0.084334 |      0.176472 | log     |
-| ETA       |  0.828051 |      0.058549 | natural |
+| MUE       |  0.028796 |      0.650354 | log     |
+| THALF     |  0.004454 |      2.464221 | log     |
+| NU        |  2.693648 |      2.344954 | natural |
+| M         | -0.219787 |      0.469584 | natural |
+| MUL       |  0.076812 |      0.171263 | log     |
+| ETA       |  0.880007 |      0.056818 | natural |
 
 Table 8: Parameter estimates on the natural scale, with standard errors
 on the fitting scale
@@ -726,8 +732,8 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-12 16:17:21 EDT  |
-|                 | Ended          | 2026-10-12 16:17:24 EDT  |
+| Run             | Started        | 2026-10-15 09:26:09 EDT  |
+|                 | Ended          | 2026-10-15 09:26:12 EDT  |
 |                 | Duration       | 3 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -736,12 +742,12 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 |                 | Template       | hz                       |
 |                 | Subject        | dead                     |
 |                 | Type           | hz                       |
-|                 | hvtiRtemplates | 1.3.1                    |
-| Dataset `built` | Version file   | built_20261012.parquet   |
-|                 | Registered     | 2026-10-12               |
+|                 | hvtiRtemplates | 1.4.0                    |
+| Dataset `built` | Version file   | built_20261015.parquet   |
+|                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 725 rows on 725 patients |
 |                 | WHERE          | `!is.na(creat_pr)`       |
-|                 | sha256         | 27b97c1d78ec             |
+|                 | sha256         | f632480029c1             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:26
+2026-10-15 09:34
 
 Gallery job on the synthetic cohort: major postoperative complication
 (complication, 0/1).
@@ -81,8 +81,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -246,7 +246,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -267,6 +267,31 @@ if (!is.null(job_data$attrition)) {
   ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
+
+Code
+
+``` r
+# na.omit drops a patient missing any predictor and na.impute keeps them, so the
+# cohort the forest is grown on is said here, before it is.
+# randomForestSRC discards a predictor with no values at all and keeps every
+# row, so such a column would leave the forest without a word and the table
+# below would count every row as dropped. Stop on it instead.
+.empty <- PREDICTORS[vapply(d[PREDICTORS], function(x) all(is.na(x)), logical(1L))]
+if (length(.empty)) {
+  stop("PREDICTORS names a column with no values: ", paste(.empty, collapse = ", "),
+       ". Remove it from PREDICTORS.", call. = FALSE)
+}
+.na_handling <- if (NA_ACTION == "na.impute") "impute" else "drop"
+.missing_values <- hvtiRtemplates:::.missing_cases(d, RESPONSE = RESPONSE, PREDICTORS = PREDICTORS, action = .na_handling)
+knitr::kable(.missing_values)
+```
+
+| Variable | Setting | Missing |
+|:---|:---|:---|
+| creat_pr | PREDICTORS | 75 |
+| Complete cases |  | 800 of 800 rows analyzed; 75 with a missing value imputed |
+
+Table 2: Missing values in the model’s variables
 
 ## Forest
 
@@ -342,14 +367,19 @@ Code
 ``` r
 # Out-of-bag error by number of trees, overall and per class.
 err <- gg_error(forest)
-.fig <- plot(err)
+# The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.
+.fig <- plot(err) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(.fig, "rfc-fit-diagnostics-error")
 .fig
 ```
 
-![](assets/ec1e98fcb58012e650a173f825662444.png)
+![](assets/c093122dbc6a39036c441f48a38a0a71.png)
 
-Figure 1: Out-of-bag error by number of trees, overall and per class
+Figure 1: Out-of-bag error by number of trees, overall and per class.
+Each solid line traces the error rate of one outcome after each
+additional tree, the line labeled all being the overall error, one color
+per line as in the legend.
 
 Code
 
@@ -359,14 +389,17 @@ Code
 # so ROC_OUTCOME maps the study's label to its position instead of letting
 # factor ordering decide what this report means.
 roc <- gg_roc(forest, which_outcome = ROC_OUTCOME)
-.fig <- plot(roc)
+.fig <- plot(roc) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rfc-fit-diagnostics-roc")
 .fig
 ```
 
-![](assets/44782a801ce10e2318e79d23e48d6695.png)
+![](assets/6b063df63f45ccdb3632e8e3720f12ce.png)
 
-Figure 2: Out-of-bag ROC curve for the chosen class against the rest
+Figure 2: Out-of-bag ROC curve for the chosen class against the rest.
+The black solid line is the curve, the red dashed diagonal the line of
+no discrimination, and the text in the lower right the area under the
+curve.
 
 Code
 
@@ -408,8 +441,8 @@ saveRDS(forest, set_path("estimates", "rfc.rds"))
 
 | Group           | Item           | Value                       |
 |:----------------|:---------------|:----------------------------|
-| Run             | Started        | 2026-10-12 16:26:13 EDT     |
-|                 | Ended          | 2026-10-12 16:26:17 EDT     |
+| Run             | Started        | 2026-10-15 09:34:42 EDT     |
+|                 | Ended          | 2026-10-15 09:34:46 EDT     |
 |                 | Duration       | 4 s                         |
 |                 | Status         | final                       |
 |                 | Rendered by    | gallery                     |
@@ -418,13 +451,13 @@ saveRDS(forest, set_path("estimates", "rfc.rds"))
 |                 | Template       | rfc.fit                     |
 |                 | Subject        | complication                |
 |                 | Type           | rf                          |
-|                 | hvtiRtemplates | 1.3.1                       |
-| Dataset `built` | Version file   | built_20261012.parquet      |
-|                 | Registered     | 2026-10-12                  |
+|                 | hvtiRtemplates | 1.4.0                       |
+| Dataset `built` | Version file   | built_20261015.parquet      |
+|                 | Registered     | 2026-10-15                  |
 |                 | Source file    | built.rds                   |
 |                 | Rows kept      | 800 rows on 800 patients    |
 |                 | WHERE          | none                        |
-|                 | sha256         | 27b97c1d78ec                |
+|                 | sha256         | f632480029c1                |
 |                 | Manifest       | current                     |
 | Reproducibility | Seed           | 2026                        |
 |                 | renv           | not active                  |

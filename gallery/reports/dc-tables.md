@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:16
+2026-10-15 09:25
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -28,8 +28,9 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.1") {
-  stop("This job needs hvtiRtables >= 1.0.1 for hv_correlation_table(); ",
+if (utils::packageVersion("hvtiRtables") < "1.0.5") {
+  stop("This job needs hvtiRtables >= 1.0.5 for hv_correlation_table() and the %summarytable layout of ",
+       "hv_man_table_save(); ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
@@ -58,8 +59,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -172,7 +173,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -315,7 +316,8 @@ if (is.null(CORR)) {
   }
   cm <- hv_correlation_matrix(d, vars = unique(c(CORR$with, CORR$vars)))
   fname <- "dc-tables-correlation-matrix.png"
-  save_figure(plot(cm) + theme_hv_manuscript(), sub("[.]png$", "", fname), width = 10, height = 10,
+  # Free size: a scatter-plot matrix, so a single 6 by 4 panel would leave each cell too small to read.
+  save_figure(plot(cm) + theme_hv_manuscript(base_size = 12), sub("[.]png$", "", fname), width = 10, height = 10,
               kind = "descriptive", linked = TRUE)
   .fence <- strrep("`", 3)
   .caption <- sprintf("Spearman and Pearson, %d%% Fisher interval", round(100 * conf_level))
@@ -323,7 +325,8 @@ if (is.null(CORR)) {
     paste0(.fence, "{r}"), "#| label: tbl-correlation", paste0("#| tbl-cap: ", encodeString(.caption, quote = "\"")),
     "knitr::kable(ct)", .fence, "",
     paste0(.fence, "{r}"), "#| label: fig-correlation-matrix",
-    "#| fig-cap: \"Scatter-plot matrix of the correlated variables.\"",
+    paste0("#| fig-cap: \"Scatter-plot matrix of the correlated variables. Each cell plots one variable against another, ",
+           "each patient a small translucent black filled circle.\""),
     "knitr::include_graphics(file.path(paste0(SUBJECT, \"-\", TYPE), fname), error = FALSE)", .fence
   ), envir = environment(), quiet = TRUE), sep = "\n")
 }
@@ -335,9 +338,9 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-12 16:16:19 EDT  |
-|                 | Ended          | 2026-10-12 16:16:20 EDT  |
-|                 | Duration       | 2 s                      |
+| Run             | Started        | 2026-10-15 09:25:17 EDT  |
+|                 | Ended          | 2026-10-15 09:25:18 EDT  |
+|                 | Duration       | 1 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -345,12 +348,12 @@ Correlation variant not requested (`CORR <- NULL`).
 |                 | Template       | dc.tables                |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.3.1                    |
-| Dataset `built` | Version file   | built_20261012.parquet   |
-|                 | Registered     | 2026-10-12               |
+|                 | hvtiRtemplates | 1.4.0                    |
+| Dataset `built` | Version file   | built_20261015.parquet   |
+|                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | 27b97c1d78ec             |
+|                 | sha256         | f632480029c1             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

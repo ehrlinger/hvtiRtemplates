@@ -2236,7 +2236,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-12 16:26</p>
+      <p class="date">2026-10-15 09:34</p>
     </div>
   </div>
   
@@ -2248,6 +2248,7 @@ vertical-align: -.125em;
 </header>
 
 
+<!-- hvtiRtemplates: rfs.explain 1.4.0 -->
 <!-- Demo: say which rfs-fit job in this set this explains, and what question
      the importance and dependence plots are meant to answer. -->
 <p>Explains the forest the <code>rfs-fit</code> job in this set saved: which predictors drive it, and how.</p>
@@ -2334,7 +2335,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.3.1</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
 </div>
 </div>
 </div>
@@ -2480,18 +2481,21 @@ Table 1: The data the fit job read
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>vi <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;rfs-vimp&quot;</span>, <span class="fu">vimp</span>(forest, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED)), <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_vimp</span>(vi))</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-explain-importance&quot;</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one row per predictor, so the height grows with the list.</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript theme hides the legend and its title, and the caption reads the colors from the legend.</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_vimp</span>(vi)) <span class="sc">+</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-explain-importance&quot;</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-importance" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/129c97b3fd9bba8e24d483c0110b5806.png" class="img-fluid figure-img" width="672">
+<img role="img" src="assets/72f49682ec83470894d37984b51352db.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 1: Permutation importance of each predictor
+Figure 1: Permutation importance of each predictor. Horizontal bars give the importance of each predictor, in one color where the importance is positive and another where it is not, as in the legend.
 </figcaption>
 </figure>
 </div>
@@ -2516,15 +2520,15 @@ Table 2: Permutation importance and minimal depth of each predictor, in order o
 <div aria-describedby="tbl-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output cell-output-stdout">
 <pre><code>  variable    vimp min_depth
-1      age  0.1897      1.13
-2   hx_chf  0.1258      1.44
-3     lvef  0.0671      1.88
-4 plvmassi  0.0306      2.58
-5 creat_pr  0.0223      3.06
-6      bmi  0.0193      3.34
-7    hx_dm  0.0190      3.44
-8  nyha_pr  0.0087      4.37
-9   female -0.0013      7.63</code></pre>
+1      age  0.1814      1.19
+2   hx_chf  0.1176      1.50
+3     lvef  0.0806      1.76
+4      bmi  0.0244      3.24
+5 plvmassi  0.0232      2.72
+6    hx_dm  0.0206      3.35
+7 creat_pr  0.0133      2.97
+8  nyha_pr  0.0053      4.41
+9   female -0.0004      6.96</code></pre>
 </div>
 </div>
 </figure>
@@ -2555,18 +2559,19 @@ Table 2: Permutation importance and minimal depth of each predictor, in order o
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>vp <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;rfs-varpro&quot;</span>, <span class="fu">varpro</span>(model, frame, <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED)),</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_varpro</span>(vp))</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-explain-varpro&quot;</span>)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one row per predictor, so the height grows with the list.</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_varpro</span>(vp)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-explain-varpro&quot;</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-varpro" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-varpro-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/c29dd3e5ac81880ab1eecb8ddeea7126.png" class="img-fluid figure-img" width="672">
+<img role="img" src="assets/8e268880512f9646bf9eae1f097af3e7.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-varpro-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 2: VarPro importance of each predictor
+Figure 2: VarPro importance of each predictor. Each box spans the 15th to the 85th percentile of the predictor’s importance, with a line at the median and whiskers to the 5th and 95th percentiles; blue boxes mark the predictors VarPro selected, gray boxes the rest, and the dashed red vertical line the selection cutoff.
 </figcaption>
 </figure>
 </div>
@@ -2582,9 +2587,17 @@ Figure 2: VarPro importance of each predictor
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># A loess smooth needs more than a handful of distinct values, so a predictor</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># with fewer than six, such as a stage or a grade, is drawn as points alone.</span></span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>.gv <span class="ot">&lt;-</span> <span class="fu">gg_variable</span>(forest, <span class="at">time =</span> TIMES)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>.panels <span class="ot">&lt;-</span> <span class="fu">lapply</span>(sel, <span class="cf">function</span>(v) <span class="fu">plot</span>(.gv, <span class="at">xvar =</span> v, <span class="at">smooth =</span> <span class="fu">length</span>(<span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">na.omit</span>(.gv[[v]]))) <span class="sc">&gt;</span> <span class="dv">5</span>))</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(.panels, <span class="at">ncol =</span> <span class="dv">1</span>)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-explain-dependence-marginal&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>.panels <span class="ot">&lt;-</span> <span class="fu">lapply</span>(sel, <span class="cf">function</span>(v) {</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(.gv, <span class="at">xvar =</span> v, <span class="at">smooth =</span> <span class="fu">length</span>(<span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">na.omit</span>(.gv[[v]]))) <span class="sc">&gt;</span> <span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one stacked panel per selected predictor, and inside each one facet row</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co"># per follow-up time in TIMES, 2 in for every row.</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript theme hides the legend and its title, and the caption reads the points from the legend.</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co"># One legend for the stack: every panel shares the same outcome levels.</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(.panels, <span class="at">ncol =</span> <span class="dv">1</span>) <span class="sc">+</span> patchwork<span class="sc">::</span><span class="fu">plot_layout</span>(<span class="at">guides =</span> <span class="st">&quot;collect&quot;</span>) <span class="sc">&amp;</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-explain-dependence-marginal&quot;</span>, <span class="at">height =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">length</span>(sel) <span class="sc">*</span> <span class="fu">length</span>(TIMES))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
 <pre><code>`geom_smooth()` using method = &#39;loess&#39; and formula = &#39;y ~ x&#39;
@@ -2607,10 +2620,10 @@ Figure 2: VarPro importance of each predictor
 <div id="fig-dependence-marginal" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-dependence-marginal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/aabd14c89fb1e72e5e31f94e388ab144.png" class="img-fluid figure-img" width="672">
+<img role="img" src="assets/c560a5addc52b028e369fb0726b36939.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dependence-marginal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 3: Predicted survival against each selected predictor, as observed
+Figure 3: Predicted survival against each selected predictor, as observed, one panel per predictor and follow-up time. Points are individual patients, one color and shape for those who had the event and another for those who did not, as in the legend; the blue line is a loess smooth with its gray band, drawn for predictors with more than five distinct values, and for a categorical predictor the points are jittered over a gray box plot.
 </figcaption>
 </figure>
 </div>
@@ -2624,18 +2637,21 @@ Figure 3: Predicted survival against each selected predictor, as observed
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>pd <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;rfs-partial&quot;</span>, <span class="fu">gg_partial_rfsrc</span>(forest, <span class="at">xvar.names =</span> sel, <span class="at">partial.time =</span> TIMES),</span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT,</span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">packages =</span> <span class="st">&quot;randomForestSRC&quot;</span>)</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(pd)</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-explain-dependence-partial&quot;</span>)</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one panel per predictor.</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript theme hides the legend and its title, and the caption reads the colors from the legend.</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(pd) <span class="sc">&amp;</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-explain-dependence-partial&quot;</span>, <span class="at">width =</span> <span class="dv">9</span>, <span class="at">height =</span> <span class="dv">8</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-dependence-partial" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-dependence-partial-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/cd821d02414baf7c3fbb0f8a4d6513e2.png" class="img-fluid figure-img" width="672">
+<img role="img" src="assets/af3c6dca29246729b1754f6f5432fcef.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dependence-partial-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 4: Partial dependence of the forest’s prediction on each selected predictor
+Figure 4: Partial dependence of the forest’s prediction on each selected predictor, one panel per predictor. Solid lines trace the predicted survival across a continuous predictor, one color per follow-up time as in the legend, and dark gray bars give the partial effect at each level of a categorical one.
 </figcaption>
 </figure>
 </div>
@@ -2650,8 +2666,11 @@ Figure 4: Partial dependence of the forest’s prediction on each selected pred
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># but not a survival curve.</span></span>
 <span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>pv <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;rfs-partial-varpro&quot;</span>, <span class="fu">gg_partial_varpro</span>(<span class="at">object =</span> vp, <span class="at">xvar.names =</span> sel, <span class="at">time =</span> <span class="fu">max</span>(TIMES)),</span>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(pv)</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-explain-dependence-varpro&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one panel per predictor.</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript theme hides the legend and its title, and the caption reads the line types from the legend.</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(pv) <span class="sc">&amp;</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-explain-dependence-varpro&quot;</span>, <span class="at">width =</span> <span class="dv">9</span>, <span class="at">height =</span> <span class="dv">8</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: Removed 152 rows containing non-finite outside the scale range
@@ -2671,10 +2690,10 @@ Removed 152 rows containing non-finite outside the scale range
 <div id="fig-dependence-varpro" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-dependence-varpro-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/3b45787b6e3246488794b0bca03417db.png" class="img-fluid figure-img" width="672">
+<img role="img" src="assets/52fea47edfeeda795c89f0412973a210.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dependence-varpro-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 5: VarPro partial dependence on each selected predictor
+Figure 5: VarPro partial dependence on each selected predictor, one panel per predictor. For a continuous predictor a black solid line marks the nonparametric partial effect and a black dashed line the parametric one, as in the legend; for a categorical predictor black box plots show the spread of the partial effect at each level.
 </figcaption>
 </figure>
 </div>
@@ -2700,17 +2719,17 @@ Figure 5: VarPro partial dependence on each selected predictor
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-12 16:24:28 EDT</td>
+<td style="text-align: left;">2026-10-15 09:32:55 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-12 16:26:06 EDT</td>
+<td style="text-align: left;">2026-10-15 09:34:37 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">1 min 38 s</td>
+<td style="text-align: left;">1 min 41 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2750,17 +2769,17 @@ Figure 5: VarPro partial dependence on each selected predictor
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.3.1</td>
+<td style="text-align: left;">1.4.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261012.parquet</td>
+<td style="text-align: left;">built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-12</td>
+<td style="text-align: left;">2026-10-15</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2770,7 +2789,7 @@ Figure 5: VarPro partial dependence on each selected predictor
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">27b97c1d78ec</td>
+<td style="text-align: left;">f632480029c1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2780,7 +2799,7 @@ Figure 5: VarPro partial dependence on each selected predictor
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-rf/rfs.rds</code> (forest), rendered 2026-10-12 16:24:16 -0400, data built_20261012.parquet</td>
+<td style="text-align: left;"><code>dead-rf/rfs.rds</code> (forest), rendered 2026-10-15 09:32:43 -0400, data built_20261015.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -2795,7 +2814,7 @@ Figure 5: VarPro partial dependence on each selected predictor
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"rfs.explain.dead.rf","rendered":"2026-10-12T20:26:06Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"d217eb0040b18e2ec96ed0753c6bb7ca9672068b"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.3.1","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.4","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"analysis","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"}],"artifacts":[{"path":"90_estimates/dead-rf/rfs.rds","role":"forest","bytes":17292449,"mtime":"2026-10-12T20:24:23Z","sha256":"e1e8bd2295ff4a39abed8b39d5786b672a7af14f96c8cb78794893f92d4dac02"}],"subject":"dead","type":"rf","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":402,"n_censored":323},"run":{"start":"2026-10-12T16:24:28-0400","end":"2026-10-12T16:26:06-0400","time_zone":"EDT","duration_seconds":98.1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rfs.explain.dead.rf.qmd","template":"rfs.explain","prefix":"rfs","qualifier":"explain","subject":"dead","type":"rf","hvtiRtemplates":"1.3.1"},"datasets":[{"name":"built","version_file":"built_20261012.parquet","registered":"2026-10-12","source_file":"built.rds","sha256":"27b97c1d78ec","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-rf/rfs.rds","set":"dead-rf","role":"forest","rendered_at":"2026-10-12T16:24:16-0400","dataset_version":"built_20261012.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false}}},"source":"30_analyses/rfs.explain.dead.rf.qmd",".hvti_render_id":"b201f55a7ce8412a8b08a6869bbaf38d1c4c830bc1f0c06b5ddba59c7bb07359",".hvti_source_sha256":"0335bcd79bebec6dace98aaadbf94549812f38627b2c23d2b3f5b721965bfc98"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"rfs.explain.dead.rf","rendered":"2026-10-15T13:34:37Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"99acd373f728208afb08f70c99abd6777ecb6219"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.10","source":"github","sha":"6f50cde76651e0f41b57c145f21cbd5915cfba85"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.4","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[{"path":"90_estimates/dead-rf/rfs.rds","role":"forest","bytes":17355061,"mtime":"2026-10-15T13:32:50Z","sha256":"a19958f4ef8b2e8547c4092e521985534b07de53b8b9d0581530c3b2562f9933"}],"subject":"dead","type":"rf","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-15T09:32:55-0400","end":"2026-10-15T09:34:37-0400","time_zone":"EDT","duration_seconds":101.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rfs.explain.dead.rf.qmd","template":"rfs.explain","prefix":"rfs","qualifier":"explain","subject":"dead","type":"rf","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","sha256":"f632480029c1","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-rf/rfs.rds","set":"dead-rf","role":"forest","rendered_at":"2026-10-15T09:32:43-0400","dataset_version":"built_20261015.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false}}},"source":"30_analyses/rfs.explain.dead.rf.qmd",".hvti_render_id":"5faff41d46407557da498041640aa039529126e9d35e4c0043c2aab6a0df1d76",".hvti_source_sha256":"92114f02bf67ba4f22547f649e4f00cb60bfad9f3049e5bc7b56250dd6e0f147"}</script>
 </section>
 
 </main>

@@ -2233,7 +2233,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-12 16:18</p>
+      <p class="date">2026-10-15 09:27</p>
     </div>
   </div>
   
@@ -2245,6 +2245,7 @@ vertical-align: -.125em;
 </header>
 
 
+<!-- hvtiRtemplates: lm.binary 1.4.0 -->
 <p>Fits a binary outcome model and preserves the fitted model, predictions, and pooled inference. For stacked imputations, coefficients and covariance use Rubin pooling while patient predictions are averaged across imputations.</p>
 <details class="code-fold">
 <summary>Code</summary>
@@ -2255,8 +2256,8 @@ vertical-align: -.125em;
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(hvtiRpropensity)</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(hvtiRutilities)</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;0.1.10&quot;</span>) {</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This template needs hvtiRpropensity &gt;= 0.1.10.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;0.2.0&quot;</span>) {</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This template needs hvtiRpropensity &gt;= 0.2.0.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># To render a job you have not finished, leave a chunk out with the chunk</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()</span></span>
@@ -2276,7 +2277,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261012.parquet</code>, registered 2026-10-12 · rendered by gallery on gallery · hvtiRtemplates 1.3.1</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
 </div>
 </div>
 </div>
@@ -2342,18 +2343,21 @@ vertical-align: -.125em;
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>.cfg <span class="ot">&lt;-</span> <span class="fu">study_config</span>(<span class="at">start =</span> .root)</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>job_data <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">read_job_data</span>(.cfg, <span class="at">dataset =</span> DATASET, <span class="at">analysis_set =</span> ANALYSIS_SET,</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id =</span> ID, <span class="at">key =</span> KEY, <span class="at">join =</span> JOIN, <span class="at">join_vars =</span> JOIN_VARS,</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY, <span class="at">one_row_per_patient =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># This job&#39;s data are the model&#39;s training data, which lm-checkpred tells from its validation data.</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>job_data<span class="sc">$</span>provenance<span class="sc">$</span>role <span class="ot">&lt;-</span> <span class="st">&quot;training&quot;</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) job_data<span class="sc">$</span>provenance_join<span class="sc">$</span>role <span class="ot">&lt;-</span> <span class="st">&quot;training&quot;</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co"># The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>.id <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)<span class="sc">$</span>id</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># A column the study choices name that the data lack stops here, naming the setting to change.</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">:::</span><span class="fu">.check_job_columns</span>(d, <span class="at">OUTCOME =</span> OUTCOME, <span class="at">PREDICTORS =</span> PREDICTORS)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY, <span class="at">one_row_per_patient =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">imputation =</span> IMPUTATION)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># This job&#39;s data are the model&#39;s training data, which lm-checkpred tells from its validation data.</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>job_data<span class="sc">$</span>provenance<span class="sc">$</span>role <span class="ot">&lt;-</span> <span class="st">&quot;training&quot;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) job_data<span class="sc">$</span>provenance_join<span class="sc">$</span>role <span class="ot">&lt;-</span> <span class="st">&quot;training&quot;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co"># The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>.id <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)<span class="sc">$</span>id</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># The imputation column read_job_data() matched, in the data&#39;s own spelling.</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>IMPUTATION <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)<span class="sc">$</span>imputation</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="co"># A column the study choices name that the data lack stops here, naming the setting to change.</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">:::</span><span class="fu">.check_job_columns</span>(d, <span class="at">OUTCOME =</span> OUTCOME, <span class="at">PREDICTORS =</span> PREDICTORS)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-data" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2372,7 +2376,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261012.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261015.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2416,12 +2420,49 @@ Table 1: The data this job read
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>model_formula <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">reformulate</span>(PREDICTORS, <span class="at">response =</span> OUTCOME)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRpropensity<span class="sc">::</span><span class="fu">fit_logistic</span>(</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  model_formula, d, <span class="at">family =</span> <span class="st">&quot;binary&quot;</span>, <span class="at">outcome_col =</span> OUTCOME, <span class="at">id_col =</span> .id,</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">imputation_col =</span> IMPUTATION, <span class="at">outcome_levels =</span> OUTCOME_LEVELS,</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">event_level =</span> EVENT_LEVEL, <span class="at">prediction_prefix =</span> <span class="st">&quot;predicted&quot;</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The fit drops a row missing any model variable, so the cohort it uses is said here,</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># counted within one imputation when the data are multiply imputed.</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>.missing_values <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.missing_cases</span>(d, <span class="at">OUTCOME =</span> OUTCOME, <span class="at">PREDICTORS =</span> PREDICTORS,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">imputation =</span> IMPUTATION)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.missing_values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div id="tbl-missing" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-missing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 2: Missing values in the model’s variables
+</figcaption>
+<div aria-describedby="tbl-missing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Variable</th>
+<th style="text-align: left;">Setting</th>
+<th style="text-align: left;">Missing</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Complete cases</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">572 of 572 rows analyzed; none dropped</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>model_formula <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">reformulate</span>(PREDICTORS, <span class="at">response =</span> OUTCOME)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRpropensity<span class="sc">::</span><span class="fu">fit_logistic</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  model_formula, d, <span class="at">family =</span> <span class="st">&quot;binary&quot;</span>, <span class="at">outcome_col =</span> OUTCOME, <span class="at">id_col =</span> .id,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">imputation_col =</span> IMPUTATION, <span class="at">outcome_levels =</span> OUTCOME_LEVELS,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">event_level =</span> EVENT_LEVEL, <span class="at">prediction_prefix =</span> <span class="st">&quot;predicted&quot;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2430,12 +2471,12 @@ Table 1: The data this job read
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>fit_status)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>fit_status)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-fit-status" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-fit-status-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 2: Fit status of the model
+Table 3: Fit status of the model
 </figcaption>
 <div aria-describedby="tbl-fit-status-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2467,12 +2508,12 @@ Table 2: Fit status of the model
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>estimates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>estimates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-estimates" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-estimates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 3: Coefficient estimates of the fitted model
+Table 4: Coefficient estimates of the fitted model
 </figcaption>
 <div aria-describedby="tbl-estimates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2598,12 +2639,12 @@ Table 3: Coefficient estimates of the fitted model
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>covariance)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>covariance)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-covariance" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-covariance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 4: Covariance matrix of the coefficient estimates
+Table 5: Covariance matrix of the coefficient estimates
 </figcaption>
 <div aria-describedby="tbl-covariance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2711,16 +2752,16 @@ Table 4: Covariance matrix of the coefficient estimates
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>MODEL_PATH <span class="ot">&lt;-</span> <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;lm-binary.rds&quot;</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>.fit_provenance <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lm_fit_provenance</span>(fit)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  fit, <span class="at">data =</span> <span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(),</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> .fit_provenance<span class="sc">$</span>analysis, <span class="at">cohort =</span> .fit_provenance<span class="sc">$</span>cohort,</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved copy holds a study-keyed digest of each patient ID, never the ID, so the file names no</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co"># patient. A later job reattaches its own data by digesting its IDs with the same key: see lm-checkpred.</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.digest_bundle_ids</span>(fit, .root), MODEL_PATH)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>MODEL_PATH <span class="ot">&lt;-</span> <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;lm-binary.rds&quot;</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>.fit_provenance <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lm_fit_provenance</span>(fit)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  fit, <span class="at">data =</span> <span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> .fit_provenance<span class="sc">$</span>analysis, <span class="at">cohort =</span> .fit_provenance<span class="sc">$</span>cohort,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved copy holds a study-keyed digest of each patient ID, never the ID, so the file names no</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># patient. A later job reattaches its own data by digesting its IDs with the same key: see lm-checkpred.</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.digest_bundle_ids</span>(fit, .root), MODEL_PATH)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2738,12 +2779,12 @@ Table 4: Covariance matrix of the coefficient estimates
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-12 16:18:19 EDT</td>
+<td style="text-align: left;">2026-10-15 09:27:06 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-12 16:18:19 EDT</td>
+<td style="text-align: left;">2026-10-15 09:27:07 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -2788,17 +2829,17 @@ Table 4: Covariance matrix of the coefficient estimates
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.3.1</td>
+<td style="text-align: left;">1.4.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261012.parquet</td>
+<td style="text-align: left;">built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-12</td>
+<td style="text-align: left;">2026-10-15</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2818,7 +2859,7 @@ Table 4: Covariance matrix of the coefficient estimates
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">27b97c1d78ec</td>
+<td style="text-align: left;">f632480029c1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2833,7 +2874,7 @@ Table 4: Covariance matrix of the coefficient estimates
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"lm.binary.stroke.model","rendered":"2026-10-12T20:18:19Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRpropensity","version":"0.1.11","source":null},{"package":"hvtiRtemplates","version":"1.3.1","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"training","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"}],"artifacts":[],"subject":"stroke","type":"model","analysis":{"outcome":{"variable":"stroke","accepted_levels":["no","yes"],"observed_levels":["no","yes"],"event_level":"yes"},"model":{"formula":"stroke ~ age + female + hx_chf + hx_dm + lvef + bmi","family":"binary","method":"glm.fit:binomial(logit)","predictors":["age","female","hx_chf","hx_dm","lvef","bmi"],"imputation":{"variable":null,"n":1,"stacked":false}}},"cohort":{"count_unit":"rows","n_input":572,"n_analyzed":572,"n_excluded":0,"by_imputation":[{"imputation":1,"n_input":572,"n_analyzed":572,"n_excluded":0}]},"run":{"start":"2026-10-12T16:18:19-0400","end":"2026-10-12T16:18:19-0400","time_zone":"EDT","duration_seconds":0.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"lm.binary.stroke.model.qmd","template":"lm.binary","prefix":"lm","qualifier":"binary","subject":"stroke","type":"model","hvtiRtemplates":"1.3.1"},"datasets":[{"name":"built","version_file":"built_20261012.parquet","registered":"2026-10-12","source_file":"built.rds","rows":572,"patients":572,"where":"year \u003c 2015","sha256":"27b97c1d78ec","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"30_analyses/lm.binary.stroke.model.qmd",".hvti_render_id":"2d7c18a0bae3b13b5fe8f464ad2e585db0a394e85929993212404cac7a613067",".hvti_source_sha256":"414c38e51ce6fd1747772448b33927bd0264d6c34bda534c70c7f1492d155e5c"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"lm.binary.stroke.model","rendered":"2026-10-15T13:27:07Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRpropensity","version":"0.2.1","source":"github","sha":"05f43ccf20f12535da0c6e6c262c9413918a8ccf"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"training","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[],"subject":"stroke","type":"model","analysis":{"outcome":{"variable":"stroke","accepted_levels":["no","yes"],"observed_levels":["no","yes"],"event_level":"yes"},"model":{"formula":"stroke ~ age + female + hx_chf + hx_dm + lvef + bmi","family":"binary","method":"glm.fit:binomial(logit)","predictors":["age","female","hx_chf","hx_dm","lvef","bmi"],"imputation":{"variable":null,"n":1,"stacked":false}}},"cohort":{"count_unit":"rows","n_input":572,"n_analyzed":572,"n_excluded":0,"by_imputation":[{"imputation":1,"n_input":572,"n_analyzed":572,"n_excluded":0}]},"run":{"start":"2026-10-15T09:27:06-0400","end":"2026-10-15T09:27:07-0400","time_zone":"EDT","duration_seconds":0.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"lm.binary.stroke.model.qmd","template":"lm.binary","prefix":"lm","qualifier":"binary","subject":"stroke","type":"model","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":572,"patients":572,"where":"year \u003c 2015","sha256":"f632480029c1","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"30_analyses/lm.binary.stroke.model.qmd",".hvti_render_id":"b3cb2e1abc637af682d44903cef9dc6bbf5afe9dee46dedb7e9a520f63bfcb20",".hvti_source_sha256":"eb9f6536a857fb4938a8bc5a164607601fc7a52da4daa68dc671be679f176920"}</script>
 </section>
 
 </main>

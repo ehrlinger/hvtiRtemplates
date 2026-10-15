@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:27
+2026-10-15 09:35
 
 Explains the forest the `rfr-fit` job in this set saved: which
 predictors drive it, and how.
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.3.1
+hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -192,14 +192,19 @@ Code
 
 ``` r
 vi <- cache_fit("rfr-vimp", vimp(forest, seed = -abs(SEED)), seed = SEED, dir = CACHE_DIR, refit = REFIT)
-.fig <- plot(gg_vimp(vi))
-save_figure(.fig, "rfr-explain-importance")
+# Free size: one row per predictor, so the height grows with the list.
+# The manuscript theme hides the legend and its title, and the caption reads the colors from the legend.
+.fig <- plot(gg_vimp(vi)) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+save_figure(.fig, "rfr-explain-importance", height = 7)
 .fig
 ```
 
-![](assets/c502700b7dd7e28b246536e3b1c8b55c.png)
+![](assets/8948d9cafe7f8ff1a10628b01ef745d5.png)
 
-Figure 1: Permutation importance of each predictor
+Figure 1: Permutation importance of each predictor. Horizontal bars give
+the importance of each predictor, in one color where the importance is
+positive and another where it is not, as in the legend.
 
 Code
 
@@ -256,14 +261,19 @@ Code
 ``` r
 vp <- cache_fit("rfr-varpro", varpro(model, frame, verbose = FALSE, seed = -abs(SEED)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-.fig <- plot(gg_varpro(vp))
-save_figure(.fig, "rfr-explain-varpro")
+# Free size: one row per predictor, so the height grows with the list.
+.fig <- plot(gg_varpro(vp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "rfr-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/978776888060e353880fd4a12e47fa07.png)
+![](assets/36d7b8be0d23154d2bf016481a957f54.png)
 
-Figure 2: VarPro importance of each predictor
+Figure 2: VarPro importance of each predictor. Each box spans the 15th
+to the 85th percentile of the predictor’s importance, with a line at the
+median and whiskers to the 5th and 95th percentiles; blue boxes mark the
+predictors VarPro selected, gray boxes the rest, and the dashed red
+vertical line the selection cutoff.
 
 ## Dependence
 
@@ -274,9 +284,13 @@ Code
 # A loess smooth needs more than a handful of distinct values, so a predictor
 # with fewer than six, such as a stage or a grade, is drawn as points alone.
 .gv <- gg_variable(forest)
-.panels <- lapply(sel, function(v) plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5))
+.panels <- lapply(sel, function(v) {
+  plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5) +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12)
+})
+# Free size: one stacked panel per selected predictor, 2.5 in each.
 .fig <- patchwork::wrap_plots(.panels, ncol = 1)
-save_figure(.fig, "rfr-explain-dependence-marginal")
+save_figure(.fig, "rfr-explain-dependence-marginal", height = 2.5 * length(sel))
 ```
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
@@ -296,9 +310,13 @@ Code
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/a3e1e4be39ebe7378c85b52dfa155773.png)
+![](assets/78b41addb53f91d1842337d4f546beef.png)
 
-Figure 3: Predicted outcome against each selected predictor, as observed
+Figure 3: Predicted outcome against each selected predictor, as
+observed, one panel per predictor. Black filled circles are individual
+patients and the blue line a loess smooth with its gray band, drawn for
+predictors with more than five distinct values; for a categorical
+predictor the points are jittered over a gray box plot.
 
 Code
 
@@ -308,15 +326,19 @@ Code
 pd <- cache_fit("rfr-partial", gg_partial_rfsrc(forest, xvar.names = sel),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT,
                 packages = "randomForestSRC")
-.fig <- plot(pd)
-save_figure(.fig, "rfr-explain-dependence-partial")
+# Free size: one panel per predictor.
+.fig <- plot(pd) &
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "rfr-explain-dependence-partial", width = 9, height = 8)
 .fig
 ```
 
-![](assets/1cbf8142a6ff0a2d9d8423f1ac70d4f7.png)
+![](assets/c7c2a54b8b15d9ee759485bae239e54a.png)
 
 Figure 4: Partial dependence of the forest’s prediction on each selected
-predictor
+predictor, one panel per predictor. Black solid lines trace the partial
+effect across a continuous predictor, and dark gray bars give it at each
+level of a categorical one.
 
 Code
 
@@ -324,8 +346,11 @@ Code
 # The VarPro partial, computed from the varpro fit.
 pv <- cache_fit("rfr-partial-varpro", gg_partial_varpro(object = vp, xvar.names = sel),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-.fig <- plot(pv)
-save_figure(.fig, "rfr-explain-dependence-varpro")
+# Free size: one panel per predictor.
+# The manuscript theme hides the legend and its title, and the caption reads the line types from the legend.
+.fig <- plot(pv) &
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+save_figure(.fig, "rfr-explain-dependence-varpro", width = 9, height = 8)
 ```
 
     Warning: Removed 28 rows containing non-finite outside the scale range
@@ -342,16 +367,20 @@ Code
     Warning: Removed 28 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/78fe5fa33679ac2b691a94c0483e42d0.png)
+![](assets/9d2be0e466781ea5c4a23f58a84ec290.png)
 
-Figure 5: VarPro partial dependence on each selected predictor
+Figure 5: VarPro partial dependence on each selected predictor, one
+panel per predictor. For a continuous predictor a black solid line marks
+the nonparametric partial effect and a black dashed line the parametric
+one, as in the legend; for a categorical predictor black box plots show
+the spread of the partial effect at each level.
 
 ## About this run
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:26:54 EDT |
-|  | Ended | 2026-10-12 16:27:11 EDT |
+| Run | Started | 2026-10-15 09:35:22 EDT |
+|  | Ended | 2026-10-15 09:35:39 EDT |
 |  | Duration | 17 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -360,12 +389,12 @@ Figure 5: VarPro partial dependence on each selected predictor
 |  | Template | rfr.explain |
 |  | Subject | los |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-12 16:26:45 -0400, data built_20261012.parquet |
+| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-15 09:35:13 -0400, data built_20261015.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

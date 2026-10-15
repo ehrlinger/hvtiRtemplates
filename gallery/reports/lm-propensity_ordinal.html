@@ -2231,7 +2231,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-12 16:18</p>
+      <p class="date">2026-10-15 09:27</p>
     </div>
   </div>
   
@@ -2243,6 +2243,7 @@ vertical-align: -.125em;
 </header>
 
 
+<!-- hvtiRtemplates: lm.propensity_ordinal 1.4.0 -->
 <p>Fits a proportional-odds propensity model for an explicitly ordered treatment.</p>
 <details class="code-fold">
 <summary>Code</summary>
@@ -2253,7 +2254,7 @@ vertical-align: -.125em;
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(hvtiRpropensity)</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(hvtiRutilities)</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;0.1.10&quot;</span>) <span class="fu">stop</span>(<span class="st">&quot;This template needs hvtiRpropensity &gt;= 0.1.10.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;0.2.0&quot;</span>) <span class="fu">stop</span>(<span class="st">&quot;This template needs hvtiRpropensity &gt;= 0.2.0.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># To render a job you have not finished, leave a chunk out with the chunk</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># in a chunk to leave out everything below it. A draft lists each one in a</span></span>
@@ -2272,7 +2273,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261012.parquet</code>, registered 2026-10-12 · rendered by gallery on gallery · hvtiRtemplates 1.3.1</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
 </div>
 </div>
 </div>
@@ -2335,18 +2336,21 @@ vertical-align: -.125em;
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>.cfg <span class="ot">&lt;-</span> <span class="fu">study_config</span>(<span class="at">start =</span> .root)</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>job_data <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">read_job_data</span>(.cfg, <span class="at">dataset =</span> DATASET, <span class="at">analysis_set =</span> ANALYSIS_SET,</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id =</span> ID, <span class="at">key =</span> KEY, <span class="at">join =</span> JOIN, <span class="at">join_vars =</span> JOIN_VARS,</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY, <span class="at">one_row_per_patient =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># This job&#39;s data are the model&#39;s training data, which lm-checkpred tells from its validation data.</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>job_data<span class="sc">$</span>provenance<span class="sc">$</span>role <span class="ot">&lt;-</span> <span class="st">&quot;training&quot;</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) job_data<span class="sc">$</span>provenance_join<span class="sc">$</span>role <span class="ot">&lt;-</span> <span class="st">&quot;training&quot;</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co"># The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>.id <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)<span class="sc">$</span>id</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># A column the study choices name that the data lack stops here, naming the setting to change.</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">:::</span><span class="fu">.check_job_columns</span>(d, <span class="at">TREATMENT =</span> TREATMENT, <span class="at">PREDICTORS =</span> PREDICTORS)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY, <span class="at">one_row_per_patient =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">imputation =</span> IMPUTATION)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># This job&#39;s data are the model&#39;s training data, which lm-checkpred tells from its validation data.</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>job_data<span class="sc">$</span>provenance<span class="sc">$</span>role <span class="ot">&lt;-</span> <span class="st">&quot;training&quot;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) job_data<span class="sc">$</span>provenance_join<span class="sc">$</span>role <span class="ot">&lt;-</span> <span class="st">&quot;training&quot;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co"># The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>.id <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)<span class="sc">$</span>id</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># The imputation column read_job_data() matched, in the data&#39;s own spelling.</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>IMPUTATION <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)<span class="sc">$</span>imputation</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="co"># A column the study choices name that the data lack stops here, naming the setting to change.</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">:::</span><span class="fu">.check_job_columns</span>(d, <span class="at">TREATMENT =</span> TREATMENT, <span class="at">PREDICTORS =</span> PREDICTORS)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-data" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2365,7 +2369,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261012.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261015.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2405,20 +2409,57 @@ Table 1: The data this job read
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>model_formula <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">reformulate</span>(PREDICTORS, <span class="at">response =</span> TREATMENT)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRpropensity<span class="sc">::</span><span class="fu">ps_ordinal</span>(</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  model_formula, d, <span class="at">treatment_col =</span> TREATMENT, <span class="at">id_col =</span> .id,</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">imputation_col =</span> IMPUTATION, <span class="at">covariates =</span> PREDICTORS,</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">treatment_levels =</span> TREATMENT_LEVELS</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The fit drops a row missing any model variable, so the cohort it uses is said here,</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># counted within one imputation when the data are multiply imputed.</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>.missing_values <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.missing_cases</span>(d, <span class="at">TREATMENT =</span> TREATMENT, <span class="at">PREDICTORS =</span> PREDICTORS,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">imputation =</span> IMPUTATION)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.missing_values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div id="tbl-missing" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-missing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 2: Missing values in the model’s variables
+</figcaption>
+<div aria-describedby="tbl-missing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Variable</th>
+<th style="text-align: left;">Setting</th>
+<th style="text-align: left;">Missing</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Complete cases</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">800 of 800 rows analyzed; none dropped</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>model_formula <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">reformulate</span>(PREDICTORS, <span class="at">response =</span> TREATMENT)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRpropensity<span class="sc">::</span><span class="fu">ps_ordinal</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  model_formula, d, <span class="at">treatment_col =</span> TREATMENT, <span class="at">id_col =</span> .id,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">imputation_col =</span> IMPUTATION, <span class="at">covariates =</span> PREDICTORS,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">treatment_levels =</span> TREATMENT_LEVELS</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A proportional-odds model&#39;s signs depend on which way it accumulates; this</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># line says which, as lm-ordinal&#39;s does.</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Cumulative direction:&quot;</span>, fit<span class="sc">$</span>meta<span class="sc">$</span>cumulative_direction, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A proportional-odds model&#39;s signs depend on which way it accumulates; this</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># line says which, as lm-ordinal&#39;s does.</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Cumulative direction:&quot;</span>, fit<span class="sc">$</span>meta<span class="sc">$</span>cumulative_direction, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Cumulative direction: P(Y &lt;= level) = logistic(threshold - linear predictor) </code></pre>
@@ -2427,12 +2468,12 @@ Table 1: The data this job read
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>fit_status)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>fit_status)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-fit-status" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-fit-status-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 2: Fit status of the model
+Table 3: Fit status of the model
 </figcaption>
 <div aria-describedby="tbl-fit-status-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2464,12 +2505,12 @@ Table 2: Fit status of the model
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>estimates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>estimates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-estimates" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-estimates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 3: Coefficient estimates of the fitted model
+Table 4: Coefficient estimates of the fitted model
 </figcaption>
 <div aria-describedby="tbl-estimates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2503,97 +2544,97 @@ Table 3: Coefficient estimates of the fitted model
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">age</td>
-<td style="text-align: right;">-0.0075169</td>
-<td style="text-align: right;">0.0055295</td>
-<td style="text-align: right;">-1.3594215</td>
+<td style="text-align: right;">-0.0075171</td>
+<td style="text-align: right;">0.0055738</td>
+<td style="text-align: right;">-1.3486590</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">0.1740131</td>
-<td style="text-align: right;">-0.0183546</td>
-<td style="text-align: right;">0.0033207</td>
-<td style="text-align: right;">0.9925112</td>
+<td style="text-align: right;">0.1774465</td>
+<td style="text-align: right;">-0.0184416</td>
+<td style="text-align: right;">0.0034073</td>
+<td style="text-align: right;">0.9925110</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">female</td>
-<td style="text-align: right;">-1.3321228</td>
-<td style="text-align: right;">0.1466485</td>
-<td style="text-align: right;">-9.0837785</td>
+<td style="text-align: right;">-1.3321217</td>
+<td style="text-align: right;">0.1462178</td>
+<td style="text-align: right;">-9.1105289</td>
 <td style="text-align: right;">Inf</td>
 <td style="text-align: right;">0.0000000</td>
-<td style="text-align: right;">-1.6195486</td>
-<td style="text-align: right;">-1.0446969</td>
-<td style="text-align: right;">0.2639164</td>
+<td style="text-align: right;">-1.6187034</td>
+<td style="text-align: right;">-1.0455400</td>
+<td style="text-align: right;">0.2639167</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">hx_chf</td>
-<td style="text-align: right;">0.2926523</td>
-<td style="text-align: right;">0.1615654</td>
-<td style="text-align: right;">1.8113554</td>
+<td style="text-align: right;">0.2926474</td>
+<td style="text-align: right;">0.1615459</td>
+<td style="text-align: right;">1.8115434</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">0.0700859</td>
-<td style="text-align: right;">-0.0240100</td>
-<td style="text-align: right;">0.6093146</td>
-<td style="text-align: right;">1.3399768</td>
+<td style="text-align: right;">0.0700568</td>
+<td style="text-align: right;">-0.0239767</td>
+<td style="text-align: right;">0.6092716</td>
+<td style="text-align: right;">1.3399703</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">hx_dm</td>
-<td style="text-align: right;">0.0230820</td>
-<td style="text-align: right;">0.1637746</td>
-<td style="text-align: right;">0.1409376</td>
+<td style="text-align: right;">0.0230920</td>
+<td style="text-align: right;">0.1636286</td>
+<td style="text-align: right;">0.1411246</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">0.8879192</td>
-<td style="text-align: right;">-0.2979102</td>
-<td style="text-align: right;">0.3440742</td>
-<td style="text-align: right;">1.0233504</td>
+<td style="text-align: right;">0.8877715</td>
+<td style="text-align: right;">-0.2976142</td>
+<td style="text-align: right;">0.3437982</td>
+<td style="text-align: right;">1.0233607</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lvef</td>
-<td style="text-align: right;">-0.0024774</td>
-<td style="text-align: right;">0.0076051</td>
-<td style="text-align: right;">-0.3257515</td>
+<td style="text-align: right;">-0.0024776</td>
+<td style="text-align: right;">0.0075827</td>
+<td style="text-align: right;">-0.3267455</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">0.7446124</td>
-<td style="text-align: right;">-0.0173830</td>
-<td style="text-align: right;">0.0124283</td>
-<td style="text-align: right;">0.9975257</td>
+<td style="text-align: right;">0.7438603</td>
+<td style="text-align: right;">-0.0173394</td>
+<td style="text-align: right;">0.0123842</td>
+<td style="text-align: right;">0.9975255</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">bmi</td>
-<td style="text-align: right;">0.1249699</td>
-<td style="text-align: right;">0.0160443</td>
-<td style="text-align: right;">7.7890614</td>
+<td style="text-align: right;">0.1249687</td>
+<td style="text-align: right;">0.0160140</td>
+<td style="text-align: right;">7.8037054</td>
 <td style="text-align: right;">Inf</td>
 <td style="text-align: right;">0.0000000</td>
-<td style="text-align: right;">0.0935237</td>
-<td style="text-align: right;">0.1564161</td>
-<td style="text-align: right;">1.1331143</td>
+<td style="text-align: right;">0.0935818</td>
+<td style="text-align: right;">0.1563556</td>
+<td style="text-align: right;">1.1331130</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">threshold:small|medium</td>
-<td style="text-align: right;">1.6504835</td>
-<td style="text-align: right;">0.6906183</td>
-<td style="text-align: right;">2.3898635</td>
+<td style="text-align: right;">1.6504353</td>
+<td style="text-align: right;">0.6979309</td>
+<td style="text-align: right;">2.3647545</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">0.0168546</td>
-<td style="text-align: right;">0.2968965</td>
-<td style="text-align: right;">3.0040704</td>
+<td style="text-align: right;">0.0180420</td>
+<td style="text-align: right;">0.2825158</td>
+<td style="text-align: right;">3.0183547</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">threshold:medium|large</td>
-<td style="text-align: right;">3.6503472</td>
-<td style="text-align: right;">0.7007987</td>
-<td style="text-align: right;">5.2088382</td>
+<td style="text-align: right;">3.6502805</td>
+<td style="text-align: right;">0.7081205</td>
+<td style="text-align: right;">5.1548859</td>
 <td style="text-align: right;">Inf</td>
-<td style="text-align: right;">0.0000002</td>
-<td style="text-align: right;">2.2768069</td>
-<td style="text-align: right;">5.0238875</td>
+<td style="text-align: right;">0.0000003</td>
+<td style="text-align: right;">2.2623898</td>
+<td style="text-align: right;">5.0381712</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
@@ -2607,12 +2648,12 @@ Table 3: Coefficient estimates of the fitted model
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>covariance)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>covariance)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-covariance" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-covariance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 4: Covariance matrix of the coefficient estimates
+Table 5: Covariance matrix of the coefficient estimates
 </figcaption>
 <div aria-describedby="tbl-covariance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2644,91 +2685,91 @@ Table 4: Covariance matrix of the coefficient estimates
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">age</td>
-<td style="text-align: right;">0.0000306</td>
-<td style="text-align: right;">0.0000018</td>
-<td style="text-align: right;">0.0000437</td>
-<td style="text-align: right;">-0.0000273</td>
-<td style="text-align: right;">-0.0000010</td>
-<td style="text-align: right;">0.0000009</td>
-<td style="text-align: right;">0.0018944</td>
-<td style="text-align: right;">0.0018738</td>
+<td style="text-align: right;">0.0000311</td>
+<td style="text-align: right;">-0.0000094</td>
+<td style="text-align: right;">0.0000547</td>
+<td style="text-align: right;">-0.0000245</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">-0.0000007</td>
+<td style="text-align: right;">0.0019349</td>
+<td style="text-align: right;">0.0019134</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">female</td>
-<td style="text-align: right;">0.0000018</td>
-<td style="text-align: right;">0.0215058</td>
-<td style="text-align: right;">-0.0010081</td>
-<td style="text-align: right;">0.0004882</td>
-<td style="text-align: right;">-0.0000298</td>
-<td style="text-align: right;">-0.0002061</td>
-<td style="text-align: right;">0.0019821</td>
-<td style="text-align: right;">-0.0017919</td>
+<td style="text-align: right;">-0.0000094</td>
+<td style="text-align: right;">0.0213797</td>
+<td style="text-align: right;">-0.0010061</td>
+<td style="text-align: right;">0.0002912</td>
+<td style="text-align: right;">-0.0000115</td>
+<td style="text-align: right;">-0.0002001</td>
+<td style="text-align: right;">0.0024395</td>
+<td style="text-align: right;">-0.0013769</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">hx_chf</td>
-<td style="text-align: right;">0.0000437</td>
-<td style="text-align: right;">-0.0010081</td>
-<td style="text-align: right;">0.0261034</td>
-<td style="text-align: right;">0.0004604</td>
-<td style="text-align: right;">0.0004755</td>
-<td style="text-align: right;">0.0000635</td>
-<td style="text-align: right;">0.0361898</td>
-<td style="text-align: right;">0.0369932</td>
+<td style="text-align: right;">0.0000547</td>
+<td style="text-align: right;">-0.0010061</td>
+<td style="text-align: right;">0.0260971</td>
+<td style="text-align: right;">0.0005607</td>
+<td style="text-align: right;">0.0004953</td>
+<td style="text-align: right;">0.0000789</td>
+<td style="text-align: right;">0.0385580</td>
+<td style="text-align: right;">0.0393679</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">hx_dm</td>
-<td style="text-align: right;">-0.0000273</td>
-<td style="text-align: right;">0.0004882</td>
-<td style="text-align: right;">0.0004604</td>
-<td style="text-align: right;">0.0268221</td>
-<td style="text-align: right;">0.0000049</td>
-<td style="text-align: right;">-0.0000434</td>
-<td style="text-align: right;">0.0035119</td>
-<td style="text-align: right;">0.0035146</td>
+<td style="text-align: right;">-0.0000245</td>
+<td style="text-align: right;">0.0002912</td>
+<td style="text-align: right;">0.0005607</td>
+<td style="text-align: right;">0.0267743</td>
+<td style="text-align: right;">0.0000045</td>
+<td style="text-align: right;">-0.0000590</td>
+<td style="text-align: right;">0.0031618</td>
+<td style="text-align: right;">0.0032375</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lvef</td>
-<td style="text-align: right;">-0.0000010</td>
-<td style="text-align: right;">-0.0000298</td>
-<td style="text-align: right;">0.0004755</td>
-<td style="text-align: right;">0.0000049</td>
-<td style="text-align: right;">0.0000578</td>
-<td style="text-align: right;">-0.0000041</td>
-<td style="text-align: right;">0.0029529</td>
-<td style="text-align: right;">0.0029467</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">-0.0000115</td>
+<td style="text-align: right;">0.0004953</td>
+<td style="text-align: right;">0.0000045</td>
+<td style="text-align: right;">0.0000575</td>
+<td style="text-align: right;">-0.0000017</td>
+<td style="text-align: right;">0.0030776</td>
+<td style="text-align: right;">0.0030729</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">bmi</td>
-<td style="text-align: right;">0.0000009</td>
-<td style="text-align: right;">-0.0002061</td>
-<td style="text-align: right;">0.0000635</td>
-<td style="text-align: right;">-0.0000434</td>
-<td style="text-align: right;">-0.0000041</td>
-<td style="text-align: right;">0.0002574</td>
-<td style="text-align: right;">0.0068126</td>
-<td style="text-align: right;">0.0071511</td>
+<td style="text-align: right;">-0.0000007</td>
+<td style="text-align: right;">-0.0002001</td>
+<td style="text-align: right;">0.0000789</td>
+<td style="text-align: right;">-0.0000590</td>
+<td style="text-align: right;">-0.0000017</td>
+<td style="text-align: right;">0.0002564</td>
+<td style="text-align: right;">0.0068146</td>
+<td style="text-align: right;">0.0071549</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">threshold:small|medium</td>
-<td style="text-align: right;">0.0018944</td>
-<td style="text-align: right;">0.0019821</td>
-<td style="text-align: right;">0.0361898</td>
-<td style="text-align: right;">0.0035119</td>
-<td style="text-align: right;">0.0029529</td>
-<td style="text-align: right;">0.0068126</td>
-<td style="text-align: right;">0.4769536</td>
-<td style="text-align: right;">0.4790811</td>
+<td style="text-align: right;">0.0019349</td>
+<td style="text-align: right;">0.0024395</td>
+<td style="text-align: right;">0.0385580</td>
+<td style="text-align: right;">0.0031618</td>
+<td style="text-align: right;">0.0030776</td>
+<td style="text-align: right;">0.0068146</td>
+<td style="text-align: right;">0.4871075</td>
+<td style="text-align: right;">0.4892972</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">threshold:medium|large</td>
-<td style="text-align: right;">0.0018738</td>
-<td style="text-align: right;">-0.0017919</td>
-<td style="text-align: right;">0.0369932</td>
-<td style="text-align: right;">0.0035146</td>
-<td style="text-align: right;">0.0029467</td>
-<td style="text-align: right;">0.0071511</td>
-<td style="text-align: right;">0.4790811</td>
-<td style="text-align: right;">0.4911189</td>
+<td style="text-align: right;">0.0019134</td>
+<td style="text-align: right;">-0.0013769</td>
+<td style="text-align: right;">0.0393679</td>
+<td style="text-align: right;">0.0032375</td>
+<td style="text-align: right;">0.0030729</td>
+<td style="text-align: right;">0.0071549</td>
+<td style="text-align: right;">0.4892972</td>
+<td style="text-align: right;">0.5014347</td>
 </tr>
 </tbody>
 </table>
@@ -2740,13 +2781,13 @@ Table 4: Covariance matrix of the coefficient estimates
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># One row per covariate and level: `level` is compared with `versus`.</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>smd)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># One row per covariate and level: `level` is compared with `versus`.</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>smd)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-smd" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-smd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 5: Standardized mean differences, each treatment level against the reference level
+Table 6: Standardized mean differences, each treatment level against the reference level
 </figcaption>
 <div aria-describedby="tbl-smd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2842,12 +2883,12 @@ Table 5: Standardized mean differences, each treatment level against the refere
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>group_counts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(fit<span class="sc">$</span>tables<span class="sc">$</span>group_counts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-group-counts" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-group-counts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 6: Patients in each group
+Table 7: Patients in each group
 </figcaption>
 <div aria-describedby="tbl-group-counts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2881,12 +2922,12 @@ Table 6: Patients in each group
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as.data.frame</span>(<span class="fu">table</span>(<span class="at">quintile =</span> fit<span class="sc">$</span>data<span class="sc">$</span>quintile)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as.data.frame</span>(<span class="fu">table</span>(<span class="at">quintile =</span> fit<span class="sc">$</span>data<span class="sc">$</span>quintile)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-quintile" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-quintile-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 7: Patients in each propensity quintile
+Table 8: Patients in each propensity quintile
 </figcaption>
 <div aria-describedby="tbl-quintile-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2928,12 +2969,12 @@ Table 7: Patients in each propensity quintile
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as.data.frame</span>(<span class="fu">table</span>(<span class="at">decile =</span> fit<span class="sc">$</span>data<span class="sc">$</span>decile)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as.data.frame</span>(<span class="fu">table</span>(<span class="at">decile =</span> fit<span class="sc">$</span>data<span class="sc">$</span>decile)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-decile" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-decile-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 8: Patients in each propensity decile
+Table 9: Patients in each propensity decile
 </figcaption>
 <div aria-describedby="tbl-decile-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2995,16 +3036,16 @@ Table 8: Patients in each propensity decile
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>MODEL_PATH <span class="ot">&lt;-</span> <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;lm-propensity_ordinal.rds&quot;</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>.fit_provenance <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lm_fit_provenance</span>(fit)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  fit, <span class="at">data =</span> <span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(),</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> .fit_provenance<span class="sc">$</span>analysis, <span class="at">cohort =</span> .fit_provenance<span class="sc">$</span>cohort,</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved copy holds a study-keyed digest of each patient ID, never the ID, so the file names no</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co"># patient. A later job reattaches its own data by digesting its IDs with the same key: see lm-checkpred.</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.digest_bundle_ids</span>(fit, .root), MODEL_PATH)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>MODEL_PATH <span class="ot">&lt;-</span> <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;lm-propensity_ordinal.rds&quot;</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>.fit_provenance <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lm_fit_provenance</span>(fit)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  fit, <span class="at">data =</span> <span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> .fit_provenance<span class="sc">$</span>analysis, <span class="at">cohort =</span> .fit_provenance<span class="sc">$</span>cohort,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved copy holds a study-keyed digest of each patient ID, never the ID, so the file names no</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co"># patient. A later job reattaches its own data by digesting its IDs with the same key: see lm-checkpred.</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.digest_bundle_ids</span>(fit, .root), MODEL_PATH)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <section id="about-this-run" class="level2 unnumbered">
@@ -3021,12 +3062,12 @@ Table 8: Patients in each propensity decile
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-12 16:18:55 EDT</td>
+<td style="text-align: left;">2026-10-15 09:27:40 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-12 16:18:55 EDT</td>
+<td style="text-align: left;">2026-10-15 09:27:40 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3071,17 +3112,17 @@ Table 8: Patients in each propensity decile
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.3.1</td>
+<td style="text-align: left;">1.4.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261012.parquet</td>
+<td style="text-align: left;">built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-12</td>
+<td style="text-align: left;">2026-10-15</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3101,7 +3142,7 @@ Table 8: Patients in each propensity decile
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">27b97c1d78ec</td>
+<td style="text-align: left;">f632480029c1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3116,7 +3157,7 @@ Table 8: Patients in each propensity decile
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"lm.propensity_ordinal.valvesize.propensity","rendered":"2026-10-12T20:18:55Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRpropensity","version":"0.1.11","source":null},{"package":"hvtiRtemplates","version":"1.3.1","source":null},{"package":"hvtiRutilities","version":"1.5.1","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"MASS","version":"7.3.65","source":"CRAN"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261012.parquet","role":"training","bytes":58768,"mtime":"2026-10-12T20:13:36Z","sha256":"27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6"}],"artifacts":[],"subject":"valvesize","type":"propensity","analysis":{"treatment":{"variable":"valve_size","accepted_levels":["small","medium","large"],"observed_levels":["small","medium","large"],"cumulative_direction":"P(Y \u003c= level) = logistic(threshold - linear predictor)"},"model":{"formula":"valve_size ~ age + female + hx_chf + hx_dm + lvef + bmi","family":"ordinal","method":"ordinal-logistic","predictors":["age","female","hx_chf","hx_dm","lvef","bmi"],"imputation":{"variable":null,"n":1,"stacked":false}}},"cohort":{"count_unit":"rows","n_input":800,"n_analyzed":800,"n_excluded":0,"by_imputation":[{"imputation":1,"n_input":800,"n_analyzed":800,"n_excluded":0}]},"run":{"start":"2026-10-12T16:18:55-0400","end":"2026-10-12T16:18:55-0400","time_zone":"EDT","duration_seconds":0.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"lm.propensity_ordinal.valvesize.propensity.qmd","template":"lm.propensity_ordinal","prefix":"lm","qualifier":"propensity_ordinal","subject":"valvesize","type":"propensity","hvtiRtemplates":"1.3.1"},"datasets":[{"name":"built","version_file":"built_20261012.parquet","registered":"2026-10-12","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"27b97c1d78ec","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"30_analyses/lm.propensity_ordinal.valvesize.propensity.qmd",".hvti_render_id":"af345efdf3a0a43f22e3529dd37d53737b755d394a09b9c0dde2f1c051e6a272",".hvti_source_sha256":"db0c0eeb31d08462f7501f23c95f31bb873719f454a563b171ed2b12c0824bec"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"lm.propensity_ordinal.valvesize.propensity","rendered":"2026-10-15T13:27:40Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRpropensity","version":"0.2.1","source":"github","sha":"05f43ccf20f12535da0c6e6c262c9413918a8ccf"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"MASS","version":"7.3.65","source":"CRAN"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"training","bytes":58804,"mtime":"2026-10-15T13:22:28Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[],"subject":"valvesize","type":"propensity","analysis":{"treatment":{"variable":"valve_size","accepted_levels":["small","medium","large"],"observed_levels":["small","medium","large"],"cumulative_direction":"P(Y \u003c= level) = logistic(threshold - linear predictor)"},"model":{"formula":"valve_size ~ age + female + hx_chf + hx_dm + lvef + bmi","family":"ordinal","method":"ordinal-logistic","predictors":["age","female","hx_chf","hx_dm","lvef","bmi"],"imputation":{"variable":null,"n":1,"stacked":false}}},"cohort":{"count_unit":"rows","n_input":800,"n_analyzed":800,"n_excluded":0,"by_imputation":[{"imputation":1,"n_input":800,"n_analyzed":800,"n_excluded":0}]},"run":{"start":"2026-10-15T09:27:40-0400","end":"2026-10-15T09:27:40-0400","time_zone":"EDT","duration_seconds":0.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"lm.propensity_ordinal.valvesize.propensity.qmd","template":"lm.propensity_ordinal","prefix":"lm","qualifier":"propensity_ordinal","subject":"valvesize","type":"propensity","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"f632480029c1","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"30_analyses/lm.propensity_ordinal.valvesize.propensity.qmd",".hvti_render_id":"aaadb33fb1331dd9774d70cb98338483f45285ce822a0fc1e53d99f240048bd7",".hvti_source_sha256":"6db851113f9b48978fdd7bfb26e71bc8b6a1f67c9cc2739f364a4cc28adc2dfd"}</script>
 </section>
 
 </main>

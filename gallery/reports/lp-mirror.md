@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:18
+2026-10-15 09:27
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -24,12 +24,12 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 # The bundle records its declared treatment levels from hvtiRpropensity 0.1.10.
-if (utils::packageVersion("hvtiRpropensity") < "0.1.10") {
-  stop("This job needs hvtiRpropensity >= 0.1.10, whose bundles record their treatment levels; ",
+if (utils::packageVersion("hvtiRpropensity") < "0.2.0") {
+  stop("This job needs hvtiRpropensity >= 0.2.0, the package's floor (bundles record their treatment levels from 0.1.10); ",
        utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
-  stop("This job needs hvtiPlotR >= 2.8.0 for hv_mirror_hist(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.9") {
+  stop("This job needs hvtiPlotR >= 2.8.9, the version hvtiRtemplates requires; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -54,8 +54,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -184,6 +184,7 @@ mirror_figure <- function(mh, kind = c("unmatched", "weighted", "matched")) {
     ggplot2::scale_fill_manual(values = fill, breaks = shown, labels = names_shown, name = NULL) +
     ggplot2::labs(x = "Propensity score (%)",
                   y = if (identical(kind, "weighted")) "Patients, or sum of matching weights" else "Patients") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12) +
     ggplot2::theme(legend.position = "top")
 }
 
@@ -287,7 +288,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261012.parquet) |
+| Source              | dataset `study` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -369,16 +370,17 @@ Code
 
 ``` r
 mh_unmatched <- mirror_hist(scores, "unmatched", groups, BINWIDTH)
-file <- save_figure(mirror_figure(mh_unmatched, "unmatched"), "lp-mirror-unmatched", width = 7, height = 5,
-                    linked = TRUE)
+file <- save_figure(mirror_figure(mh_unmatched, "unmatched"), "lp-mirror-unmatched", linked = TRUE)
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
                         error = FALSE)
 ```
 
-![](assets/a94dfc9126840c7307af914b16910ddc.png)
+![](assets/4fd2a3d91284c55c9136822907ba5a9e.png)
 
 Figure 1: Propensity score of each group: treated above the axis,
-controls below
+controls below. Blue bars with a black outline mark the treated group
+above the axis and vermillion bars with a black outline the controls
+below it.
 
 Code
 
@@ -397,16 +399,17 @@ Code
 
 ``` r
 mh_weighted <- mirror_hist(scores, "weighted", groups, BINWIDTH)
-file <- save_figure(mirror_figure(mh_weighted, "weighted"), "lp-mirror-weighted", width = 7, height = 5,
-                    linked = TRUE)
+file <- save_figure(mirror_figure(mh_weighted, "weighted"), "lp-mirror-weighted", linked = TRUE)
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
                         error = FALSE)
 ```
 
-![](assets/ef943990e5cd2d03d5fc69c120ff8c52.png)
+![](assets/6e1cc930e5b0599fd3a789d840056bda.png)
 
 Figure 2: Propensity score of each group under the matching weights,
-over all patients in gray
+over all patients in gray. Gray bars with a black outline mark all
+patients, blue bars the treated group above the axis and vermillion bars
+the controls below it, both weighted.
 
 Code
 
@@ -428,13 +431,14 @@ Code
 # unnumbered: its child chunks carry their own labels and captions
 if (!is.null(MATCH)) {
   mh_matched <- mirror_hist(scores, "matched", groups, BINWIDTH)
-  file <- save_figure(mirror_figure(mh_matched, "matched"), "lp-mirror-matched", width = 7, height = 5,
-                      linked = TRUE)
+  file <- save_figure(mirror_figure(mh_matched, "matched"), "lp-mirror-matched", linked = TRUE)
   .link <- xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE)
   .fence <- strrep("`", 3)
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), "#| label: fig-mirror-matched",
-    "#| fig-cap: \"Propensity score of the matched patients in each group, over all patients in gray\"",
+    "#| fig-cap: \"Propensity score of the matched patients in each group, over all patients in gray. Gray bars with a",
+    "#|   black outline mark all patients, blue bars the matched treated patients above the axis and orange",
+    "#|   bars the matched controls below it.\"",
     "knitr::include_graphics(.link, error = FALSE)", .fence, "",
     paste0(.fence, "{r}"), "#| label: tbl-mirror-matched",
     "#| tbl-cap: \"Patients in each group, and those matched\"",
@@ -448,8 +452,8 @@ if (!is.null(MATCH)) {
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:18:43 EDT |
-|  | Ended | 2026-10-12 16:18:44 EDT |
+| Run | Started | 2026-10-15 09:27:29 EDT |
+|  | Ended | 2026-10-15 09:27:29 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -458,13 +462,13 @@ if (!is.null(MATCH)) {
 |  | Template | lp.mirror |
 |  | Subject | approach |
 |  | Type | propensity |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-12 16:18:37 -0400, data built_20261012.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-15 09:27:24 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

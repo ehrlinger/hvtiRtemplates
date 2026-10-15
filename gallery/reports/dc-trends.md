@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:16
+2026-10-15 09:25
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -179,7 +179,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -369,7 +369,8 @@ for (sg in names(SUBGROUPS)) {
         " missing the year or the value.\n\n", sep = "")
     p <- plot(tr) +
       labs(x = "Year of operation", y = spec$ylab, color = NULL, shape = NULL) +
-      theme_hv_manuscript()
+      # The manuscript theme hides the legend; several series need it to be told apart.
+      theme_hv_manuscript(base_size = 12, legend.position = "top")
     # Limits through coord_cartesian(), not scale limits. A scale limit DROPS
     # the patients outside it before the smooth is fitted, so the curve would
     # stop passing through the yearly points hv_trends() computed from all of
@@ -379,9 +380,12 @@ for (sg in names(SUBGROUPS)) {
     if (!is.null(spec$ylim)) p <- p + coord_cartesian(ylim = spec$ylim)
     if (!is.null(XBREAKS)) p <- p + scale_x_continuous(breaks = XBREAKS)
     fname <- paste0("dc-trends-", nm, "-", sg, ".png")
-    file <- save_figure(p, sub("[.]png$", "", fname), width = 8, height = 6, linked = TRUE)
+    file <- save_figure(p, sub("[.]png$", "", fname), linked = TRUE)
     .link <- figure_link(file)
-    .child(paste("fig trends", nm, sg), paste0("Trend in ", nm, " by year of operation, ", sg),
+    .child(paste("fig trends", nm, sg),
+           paste0("Trend in ", nm, " by year of operation, ", sg, ". Filled circles mark the yearly summary and the ",
+                  "solid line a LOESS smooth of the patients; a single series is black circles on a blue line, ",
+                  "several get one color and point shape each, as in the legend."),
            "knitr::include_graphics(.link, error = FALSE)")
   }
 }
@@ -397,9 +401,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/b605c2e0573cab7fda9a3646c45cb727.png)
+![](assets/521ddb55e9b3442fb4681b3a205bf1f9.png)
 
-Figure 1: Trend in chf by year of operation, all
+Figure 1: Trend in chf by year of operation, all. Filled circles mark
+the yearly summary and the solid line a LOESS smooth of the patients; a
+single series is black circles on a blue line, several get one color and
+point shape each, as in the legend.
 
 **lvmass**: 800 of 800 rows drawn; 0 missing the year or the value.
 
@@ -409,9 +416,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/8626a45ddbd227d76eade9084e8bf565.png)
+![](assets/d03a93bdd0dc8dbaf76e879dfd34351f.png)
 
-Figure 2: Trend in lvmass by year of operation, all
+Figure 2: Trend in lvmass by year of operation, all. Filled circles mark
+the yearly summary and the solid line a LOESS smooth of the patients; a
+single series is black circles on a blue line, several get one color and
+point shape each, as in the legend.
 
 ### diabetic (n = 175)
 
@@ -423,9 +433,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/99075792f08a8c052ebac5220ad1a21f.png)
+![](assets/93f1840446e2638fa2462f7acc5c346b.png)
 
-Figure 3: Trend in chf by year of operation, diabetic
+Figure 3: Trend in chf by year of operation, diabetic. Filled circles
+mark the yearly summary and the solid line a LOESS smooth of the
+patients; a single series is black circles on a blue line, several get
+one color and point shape each, as in the legend.
 
 **lvmass**: 175 of 175 rows drawn; 0 missing the year or the value.
 
@@ -435,9 +448,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/f0954779617469540faab4ab4911109e.png)
+![](assets/9f8ff0bb65dd4dfda0654c35255ef449.png)
 
-Figure 4: Trend in lvmass by year of operation, diabetic
+Figure 4: Trend in lvmass by year of operation, diabetic. Filled circles
+mark the yearly summary and the solid line a LOESS smooth of the
+patients; a single series is black circles on a blue line, several get
+one color and point shape each, as in the legend.
 
 The smooth is LOESS, `hv_trends()`’s default, with `span = 0.75`. Older
 jobs used `smooth.spline(df = 6)`, which is not reproduced: the two
@@ -449,8 +465,8 @@ against an older figure by its shape and not point by point.
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-12 16:16:28 EDT  |
-|                 | Ended          | 2026-10-12 16:16:30 EDT  |
+| Run             | Started        | 2026-10-15 09:25:23 EDT  |
+|                 | Ended          | 2026-10-15 09:25:24 EDT  |
 |                 | Duration       | 1 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -459,12 +475,12 @@ against an older figure by its shape and not point by point.
 |                 | Template       | dc.trends                |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.3.1                    |
-| Dataset `built` | Version file   | built_20261012.parquet   |
-|                 | Registered     | 2026-10-12               |
+|                 | hvtiRtemplates | 1.4.0                    |
+| Dataset `built` | Version file   | built_20261015.parquet   |
+|                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | 27b97c1d78ec             |
+|                 | sha256         | f632480029c1             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

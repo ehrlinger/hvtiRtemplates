@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:16
+2026-10-15 09:25
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.3.1
+hvtiRtemplates 1.4.0
 
 ## Study choices
 
@@ -370,8 +370,8 @@ provenance
     8                                                                        8
     9                                                                        0
     10                                                                     0.1
-    11                                                          version:1.2.12
-    12 sha256:27b97c1d78ecdcc3ed4a3e8fe4cc59dd890bf74a59d856831f1557b0304cfba6
+    11                                                          version:1.2.16
+    12 sha256:f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264
     13                                               4 distinct (listed below)
 
 Code
@@ -453,11 +453,11 @@ health <- boot_health(bag)
 health
 ```
 
-                                    check   value   ok note
-    1              Replicates that fitted       8 TRUE <NA>
-    2              Replicates that failed       0   NA <NA>
-    3   Distinct candidates ever selected      15 TRUE <NA>
-    4 SD of the first free base parameter 3.37873 TRUE <NA>
+                                    check    value   ok note
+    1              Replicates that fitted        8 TRUE <NA>
+    2              Replicates that failed        0   NA <NA>
+    3   Distinct candidates ever selected       14 TRUE <NA>
+    4 SD of the first free base parameter 3.248388 TRUE <NA>
 
 Code
 
@@ -531,19 +531,18 @@ freq[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
           phase   variable n   pct mc_error near_threshold
     1  constant        age 8 100.0  0.00000          FALSE
     2  constant     hx_chf 8 100.0  0.00000          FALSE
-    3  constant      hx_dm 7  87.5 11.69268          FALSE
-    4  constant       lvef 7  87.5 11.69268          FALSE
-    5  constant   creat_pr 2  25.0 15.30931           TRUE
-    6  constant     female 2  25.0 15.30931           TRUE
+    3  constant       lvef 8 100.0  0.00000          FALSE
+    4  constant      hx_dm 7  87.5 11.69268          FALSE
+    5  constant   creat_pr 3  37.5 17.11633           TRUE
+    6  constant     female 1  12.5 11.69268          FALSE
     7     early        age 8 100.0  0.00000          FALSE
     8     early log_t_half 8 100.0  0.00000          FALSE
     9     early          m 8 100.0  0.00000          FALSE
     10    early         nu 8 100.0  0.00000          FALSE
     11    early     hx_chf 3  37.5 17.11633           TRUE
-    12    early   creat_pr 2  25.0 15.30931           TRUE
-    13    early       lvef 2  25.0 15.30931           TRUE
-    14    early        bmi 1  12.5 11.69268          FALSE
-    15    early     female 1  12.5 11.69268          FALSE
+    12    early        bmi 2  25.0 15.30931           TRUE
+    13    early   creat_pr 2  25.0 15.30931           TRUE
+    14    early     female 1  12.5 11.69268          FALSE
 
 Code
 
@@ -559,8 +558,8 @@ retained[, c("phase", "variable", "n", "pct", "mc_error", "near_threshold")]
           phase   variable n   pct mc_error near_threshold
     1  constant        age 8 100.0  0.00000          FALSE
     2  constant     hx_chf 8 100.0  0.00000          FALSE
-    3  constant      hx_dm 7  87.5 11.69268          FALSE
-    4  constant       lvef 7  87.5 11.69268          FALSE
+    3  constant       lvef 8 100.0  0.00000          FALSE
+    4  constant      hx_dm 7  87.5 11.69268          FALSE
     7     early        age 8 100.0  0.00000          FALSE
     8     early log_t_half 8 100.0  0.00000          FALSE
     9     early          m 8 100.0  0.00000          FALSE
@@ -607,9 +606,9 @@ concept
     5    creat_pr   creat_pr           TRUE
     6      female     female           TRUE
     2      hx_chf     hx_chf           TRUE
-    3       hx_dm      hx_dm           TRUE
+    4       hx_dm      hx_dm           TRUE
     7  log_t_half log_t_half           TRUE
-    4        lvef       lvef           TRUE
+    3        lvef       lvef           TRUE
     8           m          m           TRUE
     9          nu         nu           TRUE
 
@@ -631,20 +630,19 @@ by_concept[, c("phase", "concept", "variable", "representative", "pct",
 
           phase    concept   variable representative   pct mc_error
     1  constant        age        age           TRUE 100.0  0.00000
-    2  constant   creat_pr   creat_pr           TRUE  25.0 15.30931
-    3  constant     female     female           TRUE  25.0 15.30931
+    2  constant   creat_pr   creat_pr           TRUE  37.5 17.11633
+    3  constant     female     female           TRUE  12.5 11.69268
     4  constant     hx_chf     hx_chf           TRUE 100.0  0.00000
     5  constant      hx_dm      hx_dm           TRUE  87.5 11.69268
-    6  constant       lvef       lvef           TRUE  87.5 11.69268
+    6  constant       lvef       lvef           TRUE 100.0  0.00000
     7     early        age        age           TRUE 100.0  0.00000
-    8     early        bmi        bmi           TRUE  12.5 11.69268
+    8     early        bmi        bmi           TRUE  25.0 15.30931
     9     early   creat_pr   creat_pr           TRUE  25.0 15.30931
     10    early     female     female           TRUE  12.5 11.69268
     11    early     hx_chf     hx_chf           TRUE  37.5 17.11633
     12    early log_t_half log_t_half           TRUE 100.0  0.00000
-    13    early       lvef       lvef           TRUE  25.0 15.30931
-    14    early          m          m           TRUE 100.0  0.00000
-    15    early         nu         nu           TRUE 100.0  0.00000
+    13    early          m          m           TRUE 100.0  0.00000
+    14    early         nu         nu           TRUE 100.0  0.00000
 
 A per-form row answers “how often was *this form* selected”. It cannot
 answer “how often was *this concept* selected”, and that is the number a
@@ -680,19 +678,18 @@ concept_union[, c("phase", "concept", "n_forms", "pct_any", "best_form_pct",
           phase    concept n_forms pct_any best_form_pct spread retained
     1  constant        age       1   100.0         100.0      0     TRUE
     2  constant     hx_chf       1   100.0         100.0      0     TRUE
-    3  constant      hx_dm       1    87.5          87.5      0     TRUE
-    4  constant       lvef       1    87.5          87.5      0     TRUE
-    5  constant   creat_pr       1    25.0          25.0      0    FALSE
-    6  constant     female       1    25.0          25.0      0    FALSE
+    3  constant       lvef       1   100.0         100.0      0     TRUE
+    4  constant      hx_dm       1    87.5          87.5      0     TRUE
+    5  constant   creat_pr       1    37.5          37.5      0    FALSE
+    6  constant     female       1    12.5          12.5      0    FALSE
     7     early        age       1   100.0         100.0      0     TRUE
     8     early log_t_half       1   100.0         100.0      0     TRUE
     9     early          m       1   100.0         100.0      0     TRUE
     10    early         nu       1   100.0         100.0      0     TRUE
     11    early     hx_chf       1    37.5          37.5      0    FALSE
-    12    early   creat_pr       1    25.0          25.0      0    FALSE
-    13    early       lvef       1    25.0          25.0      0    FALSE
-    14    early        bmi       1    12.5          12.5      0    FALSE
-    15    early     female       1    12.5          12.5      0    FALSE
+    12    early        bmi       1    25.0          25.0      0    FALSE
+    13    early   creat_pr       1    25.0          25.0      0    FALSE
+    14    early     female       1    12.5          12.5      0    FALSE
 
 ⚠️ **A selection frequency is conditional on the candidate pool**, and
 no column here removes that. On the study this template came from,
@@ -841,6 +838,7 @@ an empty result as an absence of collinearity.
 Code
 
 ``` r
+# Free size: faceted by phase, with one row per variable, so the height grows with the list.
 # The error bar is the point of the figure, not decoration. A bare dot plot
 # invites the reader to rank variables by a difference of two points, which is
 # inside the noise at every frequency near the middle of the range.
@@ -860,15 +858,17 @@ Code
   coord_flip() +
   facet_wrap(~phase, scales = "free_y") +
   labs(x = NULL, y = "Replicates selecting the variable (%)") +
-  theme_minimal()
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "bh-frequencies", height = 7)
 .fig
 ```
 
-![](assets/61a64a17a377298475121ff02101c679.png)
+![](assets/4cfbc421debff549c5d02a0e44d85454.png)
 
-Figure 1: Selection frequency by phase, with Monte-Carlo error and the
-retention threshold
+Figure 1: Bootstrap selection frequency of each candidate variable, one
+panel per phase. Black filled circles mark the percent of replicates
+selecting the variable, horizontal black bars ±1 Monte Carlo error, and
+the dashed vertical line the retention threshold.
 
 ## Save
 
@@ -917,8 +917,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-12 16:16:11 EDT |
-|  | Ended | 2026-10-12 16:16:12 EDT |
+| Run | Started | 2026-10-15 09:25:11 EDT |
+|  | Ended | 2026-10-15 09:25:12 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -927,16 +927,16 @@ saveRDS(report, report_file)
 |  | Template | bh |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.3.1 |
-| Dataset `built` | Version file | built_20261012.parquet |
-|  | Registered | 2026-10-12 |
+|  | hvtiRtemplates | 1.4.0 |
+| Dataset `built` | Version file | built_20261015.parquet |
+|  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | 27b97c1d78ec |
+|  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261012.parquet |
-|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261012.parquet |
-|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261012.parquet |
-|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261012.parquet |
+| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261015.parquet |
+|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261015.parquet |
+|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261015.parquet |
+|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261015.parquet |
 | Reproducibility | renv | not active |

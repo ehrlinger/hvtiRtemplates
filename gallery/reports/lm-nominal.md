@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-12 16:18
+2026-10-15 09:27
 
 Fits a generalized-logit outcome model with a declared level set and
 reference.
@@ -19,7 +19,7 @@ suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.1.10") stop("This template needs hvtiRpropensity >= 0.1.10.", call. = FALSE)
+if (utils::packageVersion("hvtiRpropensity") < "0.2.0") stop("This template needs hvtiRpropensity >= 0.2.0.", call. = FALSE)
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -33,8 +33,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261012.parquet`, registered 2026-10-12
-· rendered by gallery on gallery · hvtiRtemplates 1.3.1
+**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+· rendered by gallery on gallery · hvtiRtemplates 1.4.0
 
 Code
 
@@ -96,7 +96,8 @@ hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE,
+                                          imputation = IMPUTATION)
 # This job's data are the model's training data, which lm-checkpred tells from its validation data.
 job_data$provenance$role <- "training"
 if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"
@@ -105,6 +106,8 @@ d <- job_data$data
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 # The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
 .id <- attr(job_data$record, "selection")$id
+# The imputation column read_job_data() matched, in the data's own spelling.
+IMPUTATION <- attr(job_data$record, "selection")$imputation
 knitr::kable(job_data$record, col.names = c("Data", ""))
 # A column the study choices name that the data lack stops here, naming the setting to change.
 hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS)
@@ -112,7 +115,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTOR
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261012.parquet) |
+| Source              | dataset `built` (built_20261015.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -137,6 +140,22 @@ if (!is.null(job_data$attrition)) {
 Code
 
 ``` r
+# The fit drops a row missing any model variable, so the cohort it uses is said here,
+# counted within one imputation when the data are multiply imputed.
+.missing_values <- hvtiRtemplates:::.missing_cases(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS,
+                                                   imputation = IMPUTATION)
+knitr::kable(.missing_values)
+```
+
+| Variable       | Setting | Missing                                |
+|:---------------|:--------|:---------------------------------------|
+| Complete cases |         | 800 of 800 rows analyzed; none dropped |
+
+Table 2: Missing values in the model’s variables
+
+Code
+
+``` r
 model_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
 fit <- hvtiRpropensity::fit_logistic(
   model_formula, d, family = "nominal", outcome_col = OUTCOME, id_col = .id,
@@ -155,7 +174,7 @@ knitr::kable(fit$tables$fit_status)
 |-----------:|:----------|--------:|-----------:|-----------:|
 |          1 | TRUE      |     800 |        800 |          0 |
 
-Table 2: Fit status of the model
+Table 3: Fit status of the model
 
 Code
 
@@ -180,7 +199,7 @@ knitr::kable(fit$tables$estimates)
 | nursing:lvef | -0.0120947 | 0.0142546 | -0.8484774 | Inf | 0.3961722 | -0.0400331 | 0.0158437 | 0.9879782 | FALSE |
 | nursing:bmi | -0.0098824 | 0.0285192 | -0.3465164 | Inf | 0.7289547 | -0.0657789 | 0.0460142 | 0.9901663 | FALSE |
 
-Table 3: Coefficient estimates of the fitted model
+Table 4: Coefficient estimates of the fitted model
 
 Code
 
@@ -205,7 +224,7 @@ knitr::kable(fit$tables$covariance)
 | nursing:lvef | -0.0020092 | -0.0000029 | -0.0000049 | 0.0003364 | -0.0000023 | 0.0000393 | 0.0000020 | -0.0103279 | -0.0000071 | -0.0000082 | 0.0018399 | -0.0001711 | 0.0002032 | -0.0000059 |
 | nursing:bmi | -0.0044412 | -0.0000015 | 0.0000245 | 0.0000895 | -0.0000837 | 0.0000019 | 0.0001585 | -0.0211917 | -0.0000157 | 0.0000648 | -0.0000416 | -0.0001956 | -0.0000059 | 0.0008133 |
 
-Table 4: Covariance matrix of the coefficient estimates
+Table 5: Covariance matrix of the coefficient estimates
 
 Code
 
@@ -226,8 +245,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item           | Value                          |
 |:----------------|:---------------|:-------------------------------|
-| Run             | Started        | 2026-10-12 16:18:33 EDT        |
-|                 | Ended          | 2026-10-12 16:18:33 EDT        |
+| Run             | Started        | 2026-10-15 09:27:19 EDT        |
+|                 | Ended          | 2026-10-15 09:27:20 EDT        |
 |                 | Duration       | 0 s                            |
 |                 | Status         | final                          |
 |                 | Rendered by    | gallery                        |
@@ -236,12 +255,12 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |                 | Template       | lm.nominal                     |
 |                 | Subject        | discharge                      |
 |                 | Type           | model                          |
-|                 | hvtiRtemplates | 1.3.1                          |
-| Dataset `built` | Version file   | built_20261012.parquet         |
-|                 | Registered     | 2026-10-12                     |
+|                 | hvtiRtemplates | 1.4.0                          |
+| Dataset `built` | Version file   | built_20261015.parquet         |
+|                 | Registered     | 2026-10-15                     |
 |                 | Source file    | built.rds                      |
 |                 | Rows kept      | 800 rows on 800 patients       |
 |                 | WHERE          | none                           |
-|                 | sha256         | 27b97c1d78ec                   |
+|                 | sha256         | f632480029c1                   |
 |                 | Manifest       | current                        |
 | Reproducibility | renv           | not active                     |
