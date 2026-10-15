@@ -106,8 +106,9 @@ test_that("a migrated legacy EDA report renders real eighteen-panel pages under 
   expect_true(file.exists(html))
   # The PNGs existing is not the report showing them: an absolute image path
   # rendered with every file saved and nothing embedded.
-  embedded <- regmatches(paste(readLines(html, warn = FALSE), collapse = "\n"),
-                         gregexpr("src=\"data:image/png", paste(readLines(html, warn = FALSE), collapse = "\n")))[[1L]]
+  # A categorical page with hover labels is embedded as a widget instead.
+  text <- paste(readLines(html, warn = FALSE), collapse = "\n")
+  embedded <- regmatches(text, gregexpr("src=\"data:image/png|class=\"girafe html-widget", text))[[1L]]
   expect_gte(length(embedded), length(expected))
 })
 
