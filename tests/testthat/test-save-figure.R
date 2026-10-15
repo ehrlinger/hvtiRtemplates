@@ -41,6 +41,34 @@ test_that("the TIFF is LZW-compressed at 300 dpi", {
   expect_equal(c(tiff_tag(tiff, 256L), tiff_tag(tiff, 257L)), c(600, 300))
 })
 
+test_that("a transparent plot keeps its transparency in the TIFF", {
+  testthat::skip_if_not_installed("ragg", minimum_version = "1.2.1")
+  dir <- withr::local_tempdir()
+  save_figure_(gg() + ggplot2::theme_void(), file.path(dir, "clear.png"))
+  save_figure_(gg(), file.path(dir, "white.png"))
+  # SamplesPerPixel: 4 carries an alpha channel, 3 is opaque RGB.
+  expect_equal(tiff_tag(file.path(dir, "clear.tiff"), 277L), 4)
+  expect_equal(tiff_tag(file.path(dir, "white.tiff"), 277L), 3)
+})
+
+test_that("saving leaves the device that was active before still active", {
+  testthat::skip_if_not_installed("ragg")
+  dir <- withr::local_tempdir()
+  grDevices::pdf(file.path(dir, "first.pdf"))
+  first <- grDevices::dev.cur()
+  grDevices::pdf(file.path(dir, "second.pdf"))
+  second <- grDevices::dev.cur()
+  withr::defer({
+    grDevices::dev.off(second)
+    grDevices::dev.off(first)
+  })
+  save_figure_(gg(), file.path(dir, "g.png"))
+  expect_identical(grDevices::dev.cur(), second)
+  save_figure_(function() plot(1:3), file.path(dir, "f.png"))
+  expect_identical(grDevices::dev.cur(), second)
+  expect_setequal(list.files(dir, pattern = "^[fg][.]"), c("f.png", "f.pdf", "f.tiff", "g.png", "g.pdf", "g.tiff"))
+})
+
 test_that("without ragg the TIFF is skipped, and the user is told once a session", {
   old <- hvtiRtemplates:::.figure_state$ragg_told
   withr::defer(assign("ragg_told", old, envir = hvtiRtemplates:::.figure_state))

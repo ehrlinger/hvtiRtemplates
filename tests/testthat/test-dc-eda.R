@@ -414,7 +414,8 @@ test_that("dc-eda draws its categorical pages in the role colors", {
   }, .package = "ggplot2")
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   suppressWarnings(eda_draw(root, d, VARIABLES = c("female", "hx_chf"), SECTIONS = "percent"))
-  expect_identical(names(saved), c("dc-eda-percent-page-01.png", "dc-eda-percent-page-01.pdf"))
+  kept <- c("png", "pdf", if (requireNamespace("ragg", quietly = TRUE)) "tiff")
+  expect_identical(names(saved), paste0("dc-eda-percent-page-01.", kept))
   page <- saved[[1L]]
   fills <- unique(unlist(lapply(seq_along(page), function(k) ggplot2::ggplot_build(page[[k]])$data[[1L]]$fill)))
   expect_true(all(fills %in% c(hvtiPlotR::hv_ppt_palette("light"), "#CCCCCC")), info = paste(fills, collapse = ", "))

@@ -6,3 +6,5 @@
   suggested: without it the TIFF is skipped, with a message once a session.
   ragg's floor is 1.2.1, which fixed a crash writing a TIFF with a
   transparent background.
+  A transparent plot stays transparent in its TIFF, and saving a figure leaves
+  the graphics device that was active before it active afterwards.

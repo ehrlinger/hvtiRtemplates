@@ -74,11 +74,16 @@
 }
 
 .write_figure <- function(plot, file, width, height, format) {
-  if (inherits(plot, "ggplot") && !identical(format, "tiff")) {
-    device <- if (identical(format, "pdf")) .pdf_device() else "png"
-    ggplot2::ggsave(file, plot, device = device, width = width, height = height, units = "in", dpi = 300)
+  # ggsave() fills the background from the plot's theme, so a transparent plot
+  # stays transparent, and it leaves the active device as it found it.
+  if (inherits(plot, "ggplot")) {
+    device <- switch(format, pdf = .pdf_device(), tiff = ragg::agg_tiff, "png")
+    extra <- if (identical(format, "tiff")) list(compression = "lzw") else list()
+    do.call(ggplot2::ggsave, c(list(file, plot, device = device, width = width, height = height,
+                                    units = "in", dpi = 300), extra))
     return(invisible(file))
   }
+  before <- grDevices::dev.cur()
   if (identical(format, "pdf")) {
     .pdf_device()(file, width = width, height = height)
   } else if (identical(format, "tiff")) {
@@ -86,7 +91,12 @@
   } else {
     grDevices::png(file, width = width, height = height, units = "in", res = 300)
   }
-  on.exit(grDevices::dev.off(), add = TRUE)
-  if (is.function(plot)) plot() else print(plot)
+  # dev.off() makes the next open device current, not the one that was; put
+  # back the caller's, so later plotting does not land in another file.
+  on.exit({
+    grDevices::dev.off()
+    if (before > 1L) grDevices::dev.set(before)
+  }, add = TRUE)
+  plot()
   invisible(file)
 }
