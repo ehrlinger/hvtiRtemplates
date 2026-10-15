@@ -311,6 +311,7 @@ lg_panel_text <- function(p) {
 
 test_that(".lg_plot() draws one panel per scale and reports 1 for points exactly linear on one", {
   skip_if_not_installed("ggplot2")
+  skip_if_not_installed("hvtiPlotR")
   means <- c(1, 2, 4, 8, 16)
   tab <- data.frame(group = 1:5, mean = means, n = c(20L, 30L, 25L, 18L, 22L), link = 2 + 3 * log(means))
   scales <- hvtiRtemplates:::.lg_scales(means, constant = 8)
@@ -329,6 +330,7 @@ test_that(".lg_plot() draws one panel per scale and reports 1 for points exactly
 
 test_that(".lg_plot() draws a scale that cannot be computed as an empty panel that says so", {
   skip_if_not_installed("ggplot2")
+  skip_if_not_installed("hvtiPlotR")
   means <- c(0, 1, 2, 3)
   tab <- data.frame(group = 1:4, mean = means, n = c(10L, 10L, 10L, 10L), link = c(-1, -0.5, 0, 0.4))
   scales <- hvtiRtemplates:::.lg_scales(means, constant = 1)
@@ -346,6 +348,7 @@ test_that(".lg_plot() draws a scale that cannot be computed as an empty panel th
 
 test_that(".lg_plot() leaves a blank link value as a gap and says when no R-squared is available", {
   skip_if_not_installed("ggplot2")
+  skip_if_not_installed("hvtiPlotR")
   means <- c(10, 20, 30)
   tab <- data.frame(group = 1:3, mean = means, n = c(5L, 5L, 5L), link = c(-1, NA, 1))
   p <- hvtiRtemplates:::.lg_plot(tab, hvtiRtemplates:::.lg_scales(means, constant = 20), link = "logit")
