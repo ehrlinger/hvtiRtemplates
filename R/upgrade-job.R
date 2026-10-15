@@ -18,14 +18,14 @@
 #'   upgrade_job(job)
 #' }}
 #' You never name the template: the job's file name says which one it is.
-#' \code{dir} is needed only when the job sits outside the study it belongs
-#' to.
+#' The job must sit inside its study; leave \code{dir} out unless you want to
+#' name a different directory of the same study.
 #'
 #' Afterwards, render the job and read its report,
 #' \code{<job>-upgrade.md}, for the chunks to check. The old job is kept as
-#' \code{<job>.pre-upgrade}. Move that aside before upgrading the same job
-#' again: \code{upgrade_job()} never overwrites a file, so a second upgrade
-#' stops.
+#' \code{<job>.pre-upgrade}. Before upgrading the same job again, move both
+#' of those files aside: \code{upgrade_job()} never overwrites a file, so a
+#' second upgrade stops while either one is there.
 #'
 #' @details
 #' The template is read from the job's file name, in either spelling
