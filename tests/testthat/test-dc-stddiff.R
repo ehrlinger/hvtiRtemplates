@@ -124,8 +124,31 @@ test_that("dc-stddiff renders, figure and all", {
   expect_match(out, "Standardized difference of each variable", fixed = TRUE)
   expect_match(out, "Unadjusted: observed difference", fixed = TRUE)
   expect_match(out, "The weighted comparison has no reference", fixed = TRUE)
-  png <- list.files(file.path(s$root, "graphs"), pattern = "^dc-stddiff-balance[.]png$",
+  png <- list.files(file.path(s$root, "graphs"), pattern = "^dc-stddiff-balance-page-01[.]png$",
                     recursive = TRUE, full.names = TRUE)
   expect_length(png, 1L)
   expect_gt(file.info(png)$size, 1000)
+})
+
+test_that("variables with no difference to draw make no balance page of their own", {
+  # 60 that vary, then 5 constants whose difference is undefined: 30 rows a
+  # page, so a third page would hold only the constants and hand hv_balance()
+  # no data. The balance chunk runs alone, on the shape the summary table has.
+  withr::local_package("ggplot2")
+  withr::local_package("hvtiPlotR")
+  local_child_chunks()  # nolint: object_usage_linter.
+  out <- withr::local_tempdir()
+  labels <- sprintf("Covariate %02d", 1:65)
+  env <- list2env(list(
+    balance = data.frame(variable = labels, label = labels, Unadjusted = c(seq(-0.3, 0.3, length.out = 60), rep(NA, 5))),
+    results = list(Unadjusted = NULL), THRESHOLD = 0.1, .in = NULL,
+    save_figure = function(plot, name, width, height, kind = "graphs", linked = FALSE) {
+      file <- file.path(out, paste0(name, ".png"))
+      ggplot2::ggsave(file, plot, width = width, height = height, dpi = 72)
+      file
+    }
+  ), parent = globalenv())
+  expect_no_error(utils::capture.output(eval(stddiff_chunk("balance"), envir = env)))
+  expect_identical(list.files(out, "[.]png$"), sprintf("dc-stddiff-balance-page-%02d.png", 1:2))
+  expect_identical(lengths(env$.pages), c(`1` = 30L, `2` = 30L))
 })

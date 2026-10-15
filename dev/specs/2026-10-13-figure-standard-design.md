@@ -11,16 +11,26 @@ hvtiGraphics book, which gets a pull request of its own.
    scatter-plot matrix and a correlation matrix are the cases where 6 by 4 leaves each panel too
    small to read. Each exception carries a comment saying why it is one.
 3. **Type is 12 pt**, meaning a ggplot2 `base_size` of 12, in every figure but one kind: a
-   **page of small panels**, `dc-eda`'s grids of four to a row, is **8 pt**. At 12 pt a
-   legend over each panel ran past the page edge and the year labels printed over one
-   another, so those pages drop the legend and name each category beside its panel in its
-   own color, with about five labels on the year axis (`.eda_direct_labels()`). Decided
-   2026-10-13. The test accepts 8 pt only on a line that also applies the direct labels. `theme_hv_manuscript()` already defaults to 12. ggplot2's own themes
+   **page of small panels**, `dc-eda`'s grids of two to a row, is **8 pt**. At 12 pt a
+   long panel title and the year labels run past a 3.25 in panel. Those pages draw no legend
+   and no category names: either took width the bars needed, and an EDA page is for seeing
+   the data, so the house colors tell the categories apart and the report's frequency table
+   names them (John, 2026-10-15; the names were drawn beside each panel from 2026-10-13).
+   The year axis keeps about five labels (`.eda_page_panels()`). The test accepts 8 pt only
+   on a line that also applies `.eda_page_panels()`. `theme_hv_manuscript()` already defaults to 12. ggplot2's own themes
    (`theme_minimal()`, `theme_bw()`, the default `theme_grey()`) default to 11, so a template
    using one of them must say `base_size = 12`.
 4. **Every figure has a numbered caption**, meaning a chunk label starting `fig-` with a
    `fig-cap`. The caption says what is plotted, and names the point type and color of each
    mark, so a reader can decode the figure from its legend alone.
+5. **No figure is larger than the printed page, 6.5 in wide by 9 in tall**, single panel or
+   free-size alike. A figure whose panel count follows the study is paged instead: the RF and
+   nb figures through `.figure_pages()`, `dc-eda`'s grid pages, `dc-stddiff`'s balance plot at
+   30 rows a page. **The one exception is `dc-tables`' scatter-plot matrix**, saved at 10 by
+   10 in: every cell pairs two variables, so it cannot be split across pages, and shrinking
+   it to the page would shrink every cell with it. John decided this on 2026-10-15.
+   `test-figure-standard.R` enforces the limit on chunk options and `save_figure()` sizes,
+   and exempts that one `save_figure()` line and nothing else.
 
 ## Where the sizes come from
 
