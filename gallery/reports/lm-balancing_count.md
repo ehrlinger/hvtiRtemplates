@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:27
+2026-10-15 11:15
 
 Fits a Poisson or negative-binomial balancing score for a count
 exposure. The distribution is a reviewed study choice; the template
@@ -248,8 +248,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item           | Value                                     |
 |:----------------|:---------------|:------------------------------------------|
-| Run             | Started        | 2026-10-15 09:27:49 EDT                   |
-|                 | Ended          | 2026-10-15 09:27:50 EDT                   |
+| Run             | Started        | 2026-10-15 11:15:43 EDT                   |
+|                 | Ended          | 2026-10-15 11:15:44 EDT                   |
 |                 | Duration       | 0 s                                       |
 |                 | Status         | final                                     |
 |                 | Rendered by    | gallery                                   |

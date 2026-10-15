@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:25
+2026-10-15 11:13
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -509,8 +509,8 @@ rather than balance, so it is not part of this job.
 
 | Group           | Item           | Value                           |
 |:----------------|:---------------|:--------------------------------|
-| Run             | Started        | 2026-10-15 09:25:52 EDT         |
-|                 | Ended          | 2026-10-15 09:25:53 EDT         |
+| Run             | Started        | 2026-10-15 11:13:31 EDT         |
+|                 | Ended          | 2026-10-15 11:13:32 EDT         |
 |                 | Duration       | 1 s                             |
 |                 | Status         | final                           |
 |                 | Rendered by    | gallery                         |

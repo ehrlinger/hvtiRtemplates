@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:35
+2026-10-15 11:23
 
 Gallery job on the synthetic cohort: postoperative length of stay,
 logged (log_los).
@@ -364,7 +364,7 @@ save_figure(.fig, "rfr-fit-diagnostics-predicted")
 .fig
 ```
 
-![](assets/07edbd83933456ab964fbe6440601213.png)
+![](assets/e50ae0d8c1e3db668d8d61d11977a99f.png)
 
 Figure 2: Out-of-bag predicted values. Black circles, jittered sideways,
 mark the individual predictions, and the unfilled notched box plot marks
@@ -394,8 +394,8 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 09:35:13 EDT  |
-|                 | Ended          | 2026-10-15 09:35:16 EDT  |
+| Run             | Started        | 2026-10-15 11:23:32 EDT  |
+|                 | Ended          | 2026-10-15 11:23:35 EDT  |
 |                 | Duration       | 4 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |

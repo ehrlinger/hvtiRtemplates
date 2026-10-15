@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:26
+2026-10-15 11:13
 
 An `ac` job produces life tables. Figures over the same estimates are an
 `hp` job, and the parametric fit is `hz`; neither belongs here.
@@ -632,8 +632,8 @@ for (outer in sort(unique(d$cat_b))) {
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 09:26:04 EDT  |
-|                 | Ended          | 2026-10-15 09:26:05 EDT  |
+| Run             | Started        | 2026-10-15 11:13:44 EDT  |
+|                 | Ended          | 2026-10-15 11:13:45 EDT  |
 |                 | Duration       | 0 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |

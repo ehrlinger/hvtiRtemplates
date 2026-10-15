@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:25
+2026-10-15 11:12
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -917,8 +917,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 09:25:11 EDT |
-|  | Ended | 2026-10-15 09:25:12 EDT |
+| Run | Started | 2026-10-15 11:12:38 EDT |
+|  | Ended | 2026-10-15 11:12:39 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:27
+2026-10-15 11:15
 
 Fits a generalized-logit propensity model for a nominal treatment with
 an explicit reference level.
@@ -284,8 +284,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 09:27:45 EDT |
-|  | Ended | 2026-10-15 09:27:45 EDT |
+| Run | Started | 2026-10-15 11:15:38 EDT |
+|  | Ended | 2026-10-15 11:15:39 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |

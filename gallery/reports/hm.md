@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:26
+2026-10-15 11:14
 
 An `hm` job builds the risk-factor model **on top of** the shape
 parameters the `hz` job fitted. The shapes are not re-derived here; they
@@ -962,8 +962,8 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 09:26:17 EDT |
-|  | Ended | 2026-10-15 09:26:22 EDT |
+| Run | Started | 2026-10-15 11:13:58 EDT |
+|  | Ended | 2026-10-15 11:14:04 EDT |
 |  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -980,5 +980,5 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-15 09:26:09 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-15 11:13:50 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

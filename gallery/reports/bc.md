@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:23
+2026-10-15 11:10
 
 This job reports a bootstrap variable selection screen over a **Cox
 proportional hazards** model: how often each candidate survived stepwise
@@ -921,8 +921,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 09:23:04 EDT |
-|  | Ended | 2026-10-15 09:23:05 EDT |
+| Run | Started | 2026-10-15 11:10:26 EDT |
+|  | Ended | 2026-10-15 11:10:27 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |

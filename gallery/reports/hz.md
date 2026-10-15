@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:26
+2026-10-15 11:13
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -732,8 +732,8 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 09:26:09 EDT  |
-|                 | Ended          | 2026-10-15 09:26:12 EDT  |
+| Run             | Started        | 2026-10-15 11:13:50 EDT  |
+|                 | Ended          | 2026-10-15 11:13:53 EDT  |
 |                 | Duration       | 3 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |

@@ -2235,7 +2235,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-15 09:32</p>
+      <p class="date">2026-10-15 11:20</p>
     </div>
   </div>
   
@@ -2682,8 +2682,8 @@ Table 3: Cross-validated fit, by response component
 <tr class="odd">
 <td style="text-align: left;">l2</td>
 <td style="text-align: left;">lvef</td>
-<td style="text-align: right;">171</td>
-<td style="text-align: right;">0.8824838</td>
+<td style="text-align: right;">189</td>
+<td style="text-align: right;">0.8815981</td>
 </tr>
 </tbody>
 </table>
@@ -2705,7 +2705,7 @@ Table 3: Cross-validated fit, by response component
 <div id="fig-error" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/d42c5211f418991344db03033e4d3e53.png" class="img-fluid figure-img" width="576">
+<img role="img" src="assets/92ae790e7cc3193f3a7c6ea23d437a62.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 1: Cross-validated error by boosting iteration. The black solid line is the error after each iteration, and the black dashed vertical line marks the iteration with the lowest error, Best M.
@@ -2726,7 +2726,7 @@ Figure 1: Cross-validated error by boosting iteration. The black solid line is 
 <div id="fig-path" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/99635b2cfb282a8a671874262446beea.png" class="img-fluid figure-img" width="576">
+<img role="img" src="assets/272d3dc6afb9251ca917631d9181db92.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel per parameter. Each black solid line is the parameter’s fitted value after each iteration.
@@ -2749,7 +2749,7 @@ Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel per param
 <div id="fig-calibration" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-calibration-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/afa4a52612c1989a6b7d7ade6c44c85c.png" class="img-fluid figure-img" width="576">
+<img role="img" src="assets/5a6488daa087b197e1c57639ffea96b6.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-calibration-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 3: Observed against fitted values over follow-up, in time bins. Each gray horizontal segment spans a time bin at its observed mean, with a vertical black bar for the interval around it; black circles mark the observed means, black triangles the fitted means, and the black dashed line joins the fitted means over time.
@@ -2764,16 +2764,16 @@ Figure 3: Observed against fitted values over follow-up, in time bins. Each gra
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Importance of each predictor&#39;s main effect and its interaction with time; the</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># interaction is where a predictor whose effect changes over follow-up shows.</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>vimp <span class="ot">&lt;-</span> <span class="fu">vimp.boostmtree</span>(fit)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one row per predictor, and one panel per effect.</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one row per predictor, and one panel per effect, at the 6.5 in page width.</span></span>
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>p_vimp <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_boost_vimp</span>(vimp)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_vimp, <span class="st">&quot;nb-boostmtree-importance&quot;</span>, <span class="at">width =</span> <span class="dv">9</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_vimp, <span class="st">&quot;nb-boostmtree-importance&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>p_vimp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-importance" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/5e9f713a2f0cdb17125004cfcd045f94.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/f38d3740a6f4a832fcb6bce089b8362b.png" class="img-fluid figure-img" width="624">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 4: Importance of each predictor’s main effect and of its interaction with time, one panel for each. Horizontal dark gray bars give the importance of each predictor.
@@ -2824,38 +2824,82 @@ Figure 4: Importance of each predictor’s main effect and of its interaction w
 <span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>.discrete <span class="ot">&lt;-</span> .discrete[<span class="sc">!</span><span class="fu">is.na</span>(.discrete)]</span>
 <span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>.parts <span class="ot">&lt;-</span> <span class="fu">split</span>(<span class="fu">names</span>(.discrete), .discrete)</span>
 <span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a>.kinds <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">names</span>(.parts) <span class="sc">==</span> <span class="st">&quot;TRUE&quot;</span>, <span class="st">&quot;categorical&quot;</span>, <span class="st">&quot;continuous&quot;</span>)</span>
-<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>p_effects <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">unname</span>(.parts), <span class="cf">function</span>(v) {</span>
-<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>  part <span class="ot">&lt;-</span> .effect[.effect<span class="sc">$</span>variable <span class="sc">%in%</span> v, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>  part<span class="sc">$</span>variable <span class="ot">&lt;-</span> <span class="fu">droplevels</span>(part<span class="sc">$</span>variable)</span>
-<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.</span></span>
-<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(part) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
-<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one panel per predictor, and per response component when there are several.</span></span>
-<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>.key <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">continuous =</span> <span class="fu">paste</span>(<span class="st">&quot;Each solid line is the effect at one follow-up time, colored from dark to light blue by&quot;</span>,</span>
-<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&quot;time as in the color bar.&quot;</span>),</span>
-<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>          <span class="at">categorical =</span> <span class="fu">paste</span>(<span class="st">&quot;Each point is the effect at one level and follow-up time, colored from dark to light blue by&quot;</span>,</span>
-<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;time as in the color bar.&quot;</span>))</span>
-<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.i <span class="cf">in</span> <span class="fu">seq_along</span>(p_effects)) {</span>
-<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>  .p <span class="ot">&lt;-</span> p_effects[[.i]]</span>
-<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.p, <span class="fu">paste0</span>(<span class="st">&quot;nb-boostmtree-effects-&quot;</span>, .kinds[[.i]]), <span class="at">width =</span> <span class="dv">9</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
-<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig effects&quot;</span>, .kinds[[.i]]),</span>
-<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste0</span>(<span class="st">&quot;Partial effects over follow-up, &quot;</span>, .kinds[[.i]], <span class="st">&quot; predictors, one panel per predictor. &quot;</span>, .key[[.kinds[[.i]]]]),</span>
-<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;.p&quot;</span>, <span class="at">opts =</span> <span class="fu">c</span>(<span class="st">&quot;#| fig-width: 9&quot;</span>, <span class="st">&quot;#| fig-height: 7&quot;</span>))</span>
-<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size, paged: one facet per predictor, two by two on a page no larger than</span></span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a><span class="co"># 6.5 by 9 in. With several response components ggBoostedTrees draws one column</span></span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a><span class="co"># per predictor and one row per component, so a page holds two predictors.</span></span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>.n_components <span class="ot">&lt;-</span> <span class="fu">nlevels</span>(.effect<span class="sc">$</span>response)</span>
+<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>.pages <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">unname</span>(.parts), <span class="cf">function</span>(v) {</span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (.n_components <span class="sc">&gt;</span> <span class="dv">1</span>L) {</span>
+<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.figure_pages</span>(<span class="fu">length</span>(v), <span class="at">panel_height =</span> <span class="dv">3</span> <span class="sc">*</span> .n_components, <span class="at">page_height =</span> <span class="dv">3</span> <span class="sc">*</span> .n_components)</span>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.figure_pages</span>(<span class="fu">length</span>(v), <span class="at">page_height =</span> <span class="dv">6</span>)</span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a><span class="co"># One plot per page, kind by kind: p_effects holds every page, and .effect_page says which kind and page each is.</span></span>
+<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>p_effects <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>.effect_page <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.k <span class="cf">in</span> <span class="fu">seq_along</span>(.parts)) {</span>
+<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (.j <span class="cf">in</span> <span class="fu">seq_along</span>(.pages[[.k]])) {</span>
+<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>    part <span class="ot">&lt;-</span> .effect[.effect<span class="sc">$</span>variable <span class="sc">%in%</span> .parts[[.k]][.pages[[.k]][[.j]]<span class="sc">$</span>index], , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>    part<span class="sc">$</span>variable <span class="ot">&lt;-</span> <span class="fu">droplevels</span>(part<span class="sc">$</span>variable)</span>
+<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.</span></span>
+<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a>    p_effects[[<span class="fu">length</span>(p_effects) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">plot</span>(part) <span class="sc">+</span></span>
+<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>      hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>    .effect_page[[<span class="fu">length</span>(.effect_page) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">kind =</span> .kinds[[.k]], <span class="at">page =</span> .j, <span class="at">of =</span> <span class="fu">length</span>(.pages[[.k]]),</span>
+<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>                                                      <span class="at">size =</span> .pages[[.k]][[.j]], <span class="at">vars =</span> <span class="fu">levels</span>(part<span class="sc">$</span>variable))</span>
+<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>.key <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">continuous =</span> <span class="fu">paste</span>(<span class="st">&quot;Each solid line is the effect at one follow-up time, colored from dark to light blue by&quot;</span>,</span>
+<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&quot;time as in the color bar.&quot;</span>),</span>
+<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a>          <span class="at">categorical =</span> <span class="fu">paste</span>(<span class="st">&quot;Each point is the effect at one level and follow-up time, colored from dark to light blue by&quot;</span>,</span>
+<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;time as in the color bar.&quot;</span>))</span>
+<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.i <span class="cf">in</span> <span class="fu">seq_along</span>(p_effects)) {</span>
+<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a>  .p <span class="ot">&lt;-</span> p_effects[[.i]]</span>
+<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a>  .pg <span class="ot">&lt;-</span> .effect_page[[.i]]</span>
+<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.p, <span class="fu">sprintf</span>(<span class="st">&quot;nb-boostmtree-effects-%s-page-%02d&quot;</span>, .pg<span class="sc">$</span>kind, .pg<span class="sc">$</span>page),</span>
+<span id="cb12-74"><a href="#cb12-74" aria-hidden="true" tabindex="-1"></a>              <span class="at">width =</span> .pg<span class="sc">$</span>size<span class="sc">$</span>width, <span class="at">height =</span> .pg<span class="sc">$</span>size<span class="sc">$</span>height)</span>
+<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a>  .on_page <span class="ot">&lt;-</span> <span class="cf">if</span> (.pg<span class="sc">$</span>of <span class="sc">&gt;</span> <span class="dv">1</span>L) <span class="fu">paste0</span>(<span class="st">&quot; Page &quot;</span>, .pg<span class="sc">$</span>page, <span class="st">&quot; of &quot;</span>, .pg<span class="sc">$</span>of, <span class="st">&quot;: &quot;</span>, <span class="fu">paste</span>(.pg<span class="sc">$</span>vars, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>) <span class="cf">else</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig effects&quot;</span>, .pg<span class="sc">$</span>kind, .pg<span class="sc">$</span>page),</span>
+<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste0</span>(<span class="st">&quot;Partial effects over follow-up, &quot;</span>, .pg<span class="sc">$</span>kind, <span class="st">&quot; predictors, one panel per predictor. &quot;</span>, .key[[.pg<span class="sc">$</span>kind]],</span>
+<span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a>                .on_page),</span>
+<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;.p&quot;</span>, <span class="at">opts =</span> <span class="fu">sprintf</span>(<span class="fu">c</span>(<span class="st">&quot;#| fig-width: %g&quot;</span>, <span class="st">&quot;#| fig-height: %g&quot;</span>), .pg<span class="sc">$</span>size<span class="sc">$</span>width, .pg<span class="sc">$</span>size<span class="sc">$</span>height))</span>
+<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
+<pre><code>Warning in sprintf(c(&quot;#| fig-width: %g&quot;, &quot;#| fig-height: %g&quot;), .pg$size$width,
+: one argument not used by format</code></pre>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>.p</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>.p</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="fig-effects-continuous" class="quarto-float quarto-figure quarto-figure-center anchored">
+<div id="fig-effects-continuous-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-effects-continuous-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/8f9f28546bda711050873213daadee19.png" class="img-fluid figure-img" width="864">
+<div aria-describedby="fig-effects-continuous-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img role="img" src="assets/c3c22e0d7a2e9304c1eaeef7f8aaf7c9.png" class="img-fluid figure-img" width="624">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-effects-continuous-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 5: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar.
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-effects-continuous-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 5: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar. Page 1 of 2: nyha_pr, hx_chf, age, bmi.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<pre><code>Warning in sprintf(c(&quot;#| fig-width: %g&quot;, &quot;#| fig-height: %g&quot;), .pg$size$width,
+: one argument not used by format</code></pre>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>.p</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-effects-continuous-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-effects-continuous-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img role="img" src="assets/800cdc0d3605c5950b94aa61b16156f2.png" class="img-fluid figure-img" width="624">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-effects-continuous-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 6: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar. Page 2 of 2: hx_dm, female.
 </figcaption>
 </figure>
 </div>
@@ -2864,52 +2908,52 @@ Figure 5: Partial effects over follow-up, continuous predictors, one panel per 
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fitted trajectories for a sample of patients, with their observed values as</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># points, and the cohort&#39;s mean fitted value over time drawn across them. The</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are labeled by digest, so none is identified.</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>traces <span class="ot">&lt;-</span> <span class="fu">gg_boost_trajectory</span>(fit)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Visit times are irregular, so most exact times belong to one patient, and a</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># mean taken at each time would join single values. The mean is taken instead</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co"># within ten equal-count time bins, over every patient&#39;s fitted values, and</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn at each bin&#39;s mean time. A bin is per response component when there</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># are several.</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>.edges <span class="ot">&lt;-</span> <span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">quantile</span>(traces<span class="sc">$</span>time, <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">11</span>L), <span class="at">names =</span> <span class="cn">FALSE</span>))</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co"># plot() reports that it chose the patients at random; SEED makes the choice</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the same on every render.</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>p_traces <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(SEED, <span class="fu">plot</span>(traces, <span class="at">n_max =</span> N_TRACES)) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> .time, <span class="at">y =</span> .response) <span class="sc">+</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fitted trajectories for a sample of patients, with their observed values as</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># points, and the cohort&#39;s mean fitted value over time drawn across them. The</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are labeled by digest, so none is identified.</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>traces <span class="ot">&lt;-</span> <span class="fu">gg_boost_trajectory</span>(fit)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Visit times are irregular, so most exact times belong to one patient, and a</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="co"># mean taken at each time would join single values. The mean is taken instead</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co"># within ten equal-count time bins, over every patient&#39;s fitted values, and</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn at each bin&#39;s mean time. A bin is per response component when there</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co"># are several.</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>.edges <span class="ot">&lt;-</span> <span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">quantile</span>(traces<span class="sc">$</span>time, <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">11</span>L), <span class="at">names =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co"># plot() reports that it chose the patients at random; SEED makes the choice</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the same on every render.</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>p_traces <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(SEED, <span class="fu">plot</span>(traces, <span class="at">n_max =</span> N_TRACES)) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> .time, <span class="at">y =</span> .response) <span class="sc">+</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
 <pre><code>Drawing 100 of 300 subjects, chosen at random. Pass n_max = Inf to draw all, or subset to choose; call set.seed() first for a reproducible sample.</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.edges) <span class="sc">&lt;</span> <span class="dv">2</span>L) {</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Every visit at one time leaves no span to bin, and no line to draw.</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  trace_means <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Every visit is at one time, so no mean line is drawn.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  traces<span class="sc">$</span>.bin <span class="ot">&lt;-</span> <span class="fu">cut</span>(traces<span class="sc">$</span>time, .edges, <span class="at">include.lowest =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  .by <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">c</span>(<span class="st">&quot;response&quot;</span>, <span class="st">&quot;.bin&quot;</span>), <span class="fu">names</span>(traces))</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  trace_means <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">split</span>(traces, traces[.by], <span class="at">drop =</span> <span class="cn">TRUE</span>), <span class="cf">function</span>(b) {</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(b[<span class="dv">1</span>L, <span class="fu">setdiff</span>(.by, <span class="st">&quot;.bin&quot;</span>), <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">time =</span> <span class="fu">mean</span>(b<span class="sc">$</span>time), <span class="at">fitted =</span> <span class="fu">mean</span>(b<span class="sc">$</span>fitted),</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">n_patients =</span> <span class="fu">length</span>(<span class="fu">unique</span>(b<span class="sc">$</span>id)))</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  }))</span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  p_traces <span class="ot">&lt;-</span> p_traces <span class="sc">+</span></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_line</span>(<span class="at">data =</span> trace_means, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data[[<span class="st">&quot;time&quot;</span>]], <span class="at">y =</span> .data[[<span class="st">&quot;fitted&quot;</span>]]),</span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>                       <span class="at">linewidth =</span> <span class="fl">1.2</span>, <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_traces, <span class="st">&quot;nb-boostmtree-traces&quot;</span>)</span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>p_traces</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.edges) <span class="sc">&lt;</span> <span class="dv">2</span>L) {</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Every visit at one time leaves no span to bin, and no line to draw.</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  trace_means <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Every visit is at one time, so no mean line is drawn.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  traces<span class="sc">$</span>.bin <span class="ot">&lt;-</span> <span class="fu">cut</span>(traces<span class="sc">$</span>time, .edges, <span class="at">include.lowest =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  .by <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">c</span>(<span class="st">&quot;response&quot;</span>, <span class="st">&quot;.bin&quot;</span>), <span class="fu">names</span>(traces))</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  trace_means <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">split</span>(traces, traces[.by], <span class="at">drop =</span> <span class="cn">TRUE</span>), <span class="cf">function</span>(b) {</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(b[<span class="dv">1</span>L, <span class="fu">setdiff</span>(.by, <span class="st">&quot;.bin&quot;</span>), <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">time =</span> <span class="fu">mean</span>(b<span class="sc">$</span>time), <span class="at">fitted =</span> <span class="fu">mean</span>(b<span class="sc">$</span>fitted),</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">n_patients =</span> <span class="fu">length</span>(<span class="fu">unique</span>(b<span class="sc">$</span>id)))</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  }))</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  p_traces <span class="ot">&lt;-</span> p_traces <span class="sc">+</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_line</span>(<span class="at">data =</span> trace_means, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data[[<span class="st">&quot;time&quot;</span>]], <span class="at">y =</span> .data[[<span class="st">&quot;fitted&quot;</span>]]),</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>                       <span class="at">linewidth =</span> <span class="fl">1.2</span>, <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_traces, <span class="st">&quot;nb-boostmtree-traces&quot;</span>)</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>p_traces</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-traces" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-traces-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/0e1238e4b076e517bb5871ddca91e057.png" class="img-fluid figure-img" width="576">
+<img role="img" src="assets/1275e7b79a468c4ec2f32d926d4d6be0.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-traces-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 6: Fitted trajectories for a sample of patients, with the cohort’s mean fitted value over time. Thin translucent black lines trace each sampled patient’s fitted values, translucent black circles their observed values, and the thick black line the cohort’s mean fitted value within ten time bins.
+Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mean fitted value over time. Thin translucent black lines trace each sampled patient’s fitted values, translucent black circles their observed values, and the thick black line the cohort’s mean fitted value within ten time bins.
 </figcaption>
 </figure>
 </div>
@@ -2918,17 +2962,17 @@ Figure 6: Fitted trajectories for a sample of patients, with the cohort’s mea
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job. It is separate from the cache on purpose: the cache</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># is this job&#39;s internals and this file its interface, which carries the</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co"># selection a later job would rebuild the rows from.</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  fit,</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(<span class="at">response =</span> .response, <span class="at">time =</span> .time, <span class="at">family =</span> FAMILY, <span class="at">M =</span> M, <span class="at">nu =</span> NU),</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> <span class="fu">list</span>(<span class="at">n_patients =</span> <span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="at">n_visits =</span> <span class="fu">nrow</span>(d)),</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(fit, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;nb-boostmtree.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job. It is separate from the cache on purpose: the cache</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># is this job&#39;s internals and this file its interface, which carries the</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co"># selection a later job would rebuild the rows from.</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  fit,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(<span class="at">response =</span> .response, <span class="at">time =</span> .time, <span class="at">family =</span> FAMILY, <span class="at">M =</span> M, <span class="at">nu =</span> NU),</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> <span class="fu">list</span>(<span class="at">n_patients =</span> <span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="at">n_visits =</span> <span class="fu">nrow</span>(d)),</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(fit, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;nb-boostmtree.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2946,17 +2990,17 @@ Figure 6: Fitted trajectories for a sample of patients, with the cohort’s mea
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-15 09:27:54 EDT</td>
+<td style="text-align: left;">2026-10-15 11:15:49 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-15 09:32:37 EDT</td>
+<td style="text-align: left;">2026-10-15 11:20:50 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">4 min 43 s</td>
+<td style="text-align: left;">5 min 2 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3046,7 +3090,7 @@ Figure 6: Fitted trajectories for a sample of patients, with the cohort’s mea
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"nb.boostmtree.lvef.boost","rendered":"2026-10-15T13:32:37Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"boostmtree","version":"2.0.3","source":"github","sha":"d55b6677a53596cd3915805dfc71d6fe5b4801b8"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggBoostedTrees","version":"0.9.2","source":"github","sha":"c8ec37375b663c96bfa9ab709c5f82af9021a946"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.10","source":"github","sha":"6f50cde76651e0f41b57c145f21cbd5915cfba85"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"a21b3efc1595c4d954fc05fdfe61e7a95510d5c5"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"55ae34c8318d787677c16e8cc5668a3099f0bf09"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"echo","path":"00_datasets/echo_20261015.parquet","role":"analysis","bytes":20990,"mtime":"2026-10-15T13:27:52Z","sha256":"94bd116a865f879259748f1d7e1f8a402875e06aa612cdab86350f7b34d75e09"}],"artifacts":[],"subject":"lvef","type":"boost","analysis":{"response":"lvef","time":"iv_echo","family":"continuous","M":200,"nu":0.05},"cohort":{"n_patients":300,"n_visits":1180},"run":{"start":"2026-10-15T09:27:54-0400","end":"2026-10-15T09:32:37-0400","time_zone":"EDT","duration_seconds":283.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"nb.boostmtree.lvef.boost.qmd","template":"nb.boostmtree","prefix":"nb","qualifier":"boostmtree","subject":"lvef","type":"boost","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"echo","version_file":"echo_20261015.parquet","registered":"2026-10-15","source_file":"echo.rds","rows":1180,"patients":300,"where":[],"sha256":"94bd116a865f","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}}},"source":"30_analyses/nb.boostmtree.lvef.boost.qmd",".hvti_render_id":"461563c36b6369d077333fe6fb69c44ca66d930bf187471b0aa2abe16d2b1bac",".hvti_source_sha256":"15d8e175ea75c87e6c58a4666df3185077ba7b20b8aa249f2a7767ebd0dcd25d"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"nb.boostmtree.lvef.boost","rendered":"2026-10-15T15:20:50Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"boostmtree","version":"2.0.3","source":"github","sha":"d55b6677a53596cd3915805dfc71d6fe5b4801b8"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggBoostedTrees","version":"0.9.2","source":"github","sha":"c8ec37375b663c96bfa9ab709c5f82af9021a946"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.10","source":"github","sha":"43bbfa04e58fc2eb05406a9e7b2826e4485c75e7"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"8609103430acb25c872fc68ac7253961bc4f48ba"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"9d5212666e18caff078c54262fb4c1ad04946c19"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"echo","path":"00_datasets/echo_20261015.parquet","role":"analysis","bytes":20990,"mtime":"2026-10-15T15:15:47Z","sha256":"94bd116a865f879259748f1d7e1f8a402875e06aa612cdab86350f7b34d75e09"}],"artifacts":[],"subject":"lvef","type":"boost","analysis":{"response":"lvef","time":"iv_echo","family":"continuous","M":200,"nu":0.05},"cohort":{"n_patients":300,"n_visits":1180},"run":{"start":"2026-10-15T11:15:49-0400","end":"2026-10-15T11:20:50-0400","time_zone":"EDT","duration_seconds":301.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"nb.boostmtree.lvef.boost.qmd","template":"nb.boostmtree","prefix":"nb","qualifier":"boostmtree","subject":"lvef","type":"boost","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"echo","version_file":"echo_20261015.parquet","registered":"2026-10-15","source_file":"echo.rds","rows":1180,"patients":300,"where":[],"sha256":"94bd116a865f","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}}},"source":"30_analyses/nb.boostmtree.lvef.boost.qmd",".hvti_render_id":"d8e2c4fc10bfcb4c23dce785d323debd2a4db1ec0f7c55dffbbdc84e52853eb3",".hvti_source_sha256":"e509a539f6f12d68cee142eceaeab0db30733daa1f82f6799fdbd86ae1595164"}</script>
 </section>
 
 </main>

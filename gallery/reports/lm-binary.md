@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:27
+2026-10-15 11:14
 
 Fits a binary outcome model and preserves the fitted model, predictions,
 and pooled inference. For stacked imputations, coefficients and
@@ -240,8 +240,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item           | Value                      |
 |:----------------|:---------------|:---------------------------|
-| Run             | Started        | 2026-10-15 09:27:06 EDT    |
-|                 | Ended          | 2026-10-15 09:27:07 EDT    |
+| Run             | Started        | 2026-10-15 11:14:55 EDT    |
+|                 | Ended          | 2026-10-15 11:14:55 EDT    |
 |                 | Duration       | 0 s                        |
 |                 | Status         | final                      |
 |                 | Rendered by    | gallery                    |

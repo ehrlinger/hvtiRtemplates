@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:34
+2026-10-15 11:22
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -254,6 +254,23 @@ if (is.null(PARTIAL_VARS)) {
   }
   sel <- PARTIAL_VARS
 }
+# Each dependence figure is drawn a page at a time, panels in a grid no larger
+# than the printed page (6.5 by 9 in), and each page is a child chunk of its
+# own so Quarto numbers it, as dc-eda's pages are. A study's TOP_K or
+# PARTIAL_VARS sets how many pages there are; nothing here refuses a count.
+.fence <- strrep("`", 3)
+.page_child <- function(kind, i, pages, vars, caption) {
+  page <- pages[[i]]
+  if (length(pages) > 1L) {
+    caption <- paste0(caption, " Page ", i, " of ", length(pages), ": ",
+                      paste(vars[page$index], collapse = ", "), ".")
+  }
+  code <- c(paste0(.fence, "{r}"), paste0("#| label: fig-", kind, "-", i),
+            paste0("#| fig-cap: ", encodeString(caption, quote = "\"")),
+            sprintf("#| fig-width: %g", page$width), sprintf("#| fig-height: %g", page$height), ".fig", .fence)
+  cat(knitr::knit_child(text = code, envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 ```
 
 ## VarPro
@@ -273,7 +290,7 @@ save_figure(.fig, "rfs-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/8e268880512f9646bf9eae1f097af3e7.png)
+![](assets/a9ef2b81ff6a1b7f9a01080c534607aa.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -286,6 +303,7 @@ vertical line the selection cutoff.
 Code
 
 ``` r
+# unnumbered: each page below is a child chunk with its own label and caption
 # Marginal: predicted survival against each variable, as observed. Cheap.
 # A loess smooth needs more than a handful of distinct values, so a predictor
 # with fewer than six, such as a stage or a grade, is drawn as points alone.
@@ -294,19 +312,25 @@ Code
   plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5) +
     hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 })
-# Free size: one stacked panel per selected predictor, and inside each one facet row
-# per follow-up time in TIMES, 2 in for every row.
 # The manuscript theme hides the legend and its title, and the caption reads the points from the legend.
 # One legend for the stack: every panel shares the same outcome levels.
-.fig <- patchwork::wrap_plots(.panels, ncol = 1) + patchwork::plot_layout(guides = "collect") &
-  ggplot2::theme(legend.position = "top")
-save_figure(.fig, "rfs-explain-dependence-marginal", height = 2 * length(sel) * length(TIMES))
+.cap <- paste("Predicted survival against each selected predictor, as observed, one panel per predictor and",
+              "follow-up time. Points are individual patients, one color and shape for those who had the",
+              "event and another for those who did not, as in the legend; the blue line is a loess smooth",
+              "with its gray band, drawn for predictors with more than five distinct values, and for a",
+              "categorical predictor the points are jittered over a gray box plot.")
+# Free size, paged: one panel per predictor.
+.pages <- hvtiRtemplates:::.figure_pages(length(sel), panel_width = 3.25, panel_height = 2 * length(TIMES))
+for (.i in seq_along(.pages)) {
+  .fig <- patchwork::wrap_plots(.panels[.pages[[.i]]$index], ncol = .pages[[.i]]$ncol) +
+    patchwork::plot_layout(guides = "collect") &
+    ggplot2::theme(legend.position = "top")
+  save_figure(.fig, sprintf("rfs-explain-dependence-marginal-page-%02d", .i),
+              width = .pages[[.i]]$width, height = .pages[[.i]]$height)
+  .page_child("dependence-marginal", .i, .pages, sel, .cap)
+}
 ```
 
-    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
@@ -317,10 +341,8 @@ Code
 ```
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/c560a5addc52b028e369fb0726b36939.png)
+![](assets/b47807de08e82a5ad2a76b12db27f9a3.png)
 
 Figure 3: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -328,27 +350,67 @@ individual patients, one color and shape for those who had the event and
 another for those who did not, as in the legend; the blue line is a
 loess smooth with its gray band, drawn for predictors with more than
 five distinct values, and for a categorical predictor the points are
-jittered over a gray box plot.
+jittered over a gray box plot. Page 1 of 2: age, hx_chf.
+
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
 Code
 
 ``` r
+.fig
+```
+
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+![](assets/5f721fe65b10e8cfa0bd783e727bb2df.png)
+
+Figure 4: Predicted survival against each selected predictor, as
+observed, one panel per predictor and follow-up time. Points are
+individual patients, one color and shape for those who had the event and
+another for those who did not, as in the legend; the blue line is a
+loess smooth with its gray band, drawn for predictors with more than
+five distinct values, and for a categorical predictor the points are
+jittered over a gray box plot. Page 2 of 2: lvef, bmi.
+
+Code
+
+``` r
+# unnumbered: each page below is a child chunk with its own label and caption
 # Partial: the forest's prediction with every other variable held at its
 # observed values.
 pd <- cache_fit("rfs-partial", gg_partial_rfsrc(forest, xvar.names = sel, partial.time = TIMES),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT,
                 packages = "randomForestSRC")
-# Free size: one panel per predictor.
 # The manuscript theme hides the legend and its title, and the caption reads the colors from the legend.
-.fig <- plot(pd) &
-  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
-save_figure(.fig, "rfs-explain-dependence-partial", width = 9, height = 8)
+.cap <- paste("Partial dependence of the forest's prediction on each selected predictor, one panel per",
+              "predictor. Solid lines trace the predicted survival across a continuous predictor, one color",
+              "per follow-up time as in the legend, and dark gray bars give the partial effect at each",
+              "level of a categorical one.")
+# Free size, paged: one facet per predictor, two by two.
+.pages <- hvtiRtemplates:::.figure_pages(length(sel), panel_width = 3.25, panel_height = 3, page_height = 6)
+for (.i in seq_along(.pages)) {
+  .vars <- sel[.pages[[.i]]$index]
+  .fig <- plot(hvtiRtemplates:::.partial_subset(pd, .vars)) &
+    hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+  save_figure(.fig, sprintf("rfs-explain-dependence-partial-page-%02d", .i),
+              width = .pages[[.i]]$width, height = .pages[[.i]]$height)
+  .page_child("dependence-partial", .i, .pages, sel, .cap)
+}
+```
+
+Code
+
+``` r
 .fig
 ```
 
-![](assets/af3c6dca29246729b1754f6f5432fcef.png)
+![](assets/5241a4ccf7c443e4b0d0bfb05e2c20db.png)
 
-Figure 4: Partial dependence of the forest’s prediction on each selected
+Figure 5: Partial dependence of the forest’s prediction on each selected
 predictor, one panel per predictor. Solid lines trace the predicted
 survival across a continuous predictor, one color per follow-up time as
 in the legend, and dark gray bars give the partial effect at each level
@@ -357,17 +419,28 @@ of a categorical one.
 Code
 
 ``` r
+# unnumbered: each page below is a child chunk with its own label and caption
 # The VarPro partial, computed from the varpro fit at the last horizon. Not
 # partialpro() then gg_partialpro(): the latter is deprecated, and for a
 # survival forest a precomputed partialpro() result carries a survival label
 # but not a survival curve.
 pv <- cache_fit("rfs-partial-varpro", gg_partial_varpro(object = vp, xvar.names = sel, time = max(TIMES)),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-# Free size: one panel per predictor.
 # The manuscript theme hides the legend and its title, and the caption reads the line types from the legend.
-.fig <- plot(pv) &
-  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
-save_figure(.fig, "rfs-explain-dependence-varpro", width = 9, height = 8)
+.cap <- paste("VarPro partial dependence on each selected predictor, one panel per predictor. For a",
+              "continuous predictor a black solid line marks the nonparametric partial effect and a black",
+              "dashed line the parametric one, as in the legend; for a categorical predictor black box",
+              "plots show the spread of the partial effect at each level.")
+# Free size, paged: one facet per predictor, two by two.
+.pages <- hvtiRtemplates:::.figure_pages(length(sel), panel_width = 3.25, panel_height = 3, page_height = 6)
+for (.i in seq_along(.pages)) {
+  .vars <- sel[.pages[[.i]]$index]
+  .fig <- plot(hvtiRtemplates:::.partial_subset(pv, .vars)) &
+    hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+  save_figure(.fig, sprintf("rfs-explain-dependence-varpro-page-%02d", .i),
+              width = .pages[[.i]]$width, height = .pages[[.i]]$height)
+  .page_child("dependence-varpro", .i, .pages, sel, .cap)
+}
 ```
 
     Warning: Removed 152 rows containing non-finite outside the scale range
@@ -384,9 +457,9 @@ Code
     Warning: Removed 152 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/52fea47edfeeda795c89f0412973a210.png)
+![](assets/06b17d74175f0d0f6abf62205c3a0689.png)
 
-Figure 5: VarPro partial dependence on each selected predictor, one
+Figure 6: VarPro partial dependence on each selected predictor, one
 panel per predictor. For a continuous predictor a black solid line marks
 the nonparametric partial effect and a black dashed line the parametric
 one, as in the legend; for a categorical predictor black box plots show
@@ -396,9 +469,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 09:32:55 EDT |
-|  | Ended | 2026-10-15 09:34:37 EDT |
-|  | Duration | 1 min 41 s |
+| Run | Started | 2026-10-15 11:21:10 EDT |
+|  | Ended | 2026-10-15 11:22:49 EDT |
+|  | Duration | 1 min 39 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -412,6 +485,6 @@ the spread of the partial effect at each level.
 |  | Source file | built.rds |
 |  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-15 09:32:43 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-15 11:20:58 -0400, data built_20261015.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

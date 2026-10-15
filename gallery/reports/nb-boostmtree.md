@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:32
+2026-10-15 11:20
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -348,7 +348,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 171 | 0.8824838 |
+| l2 | lvef | 189 | 0.8815981 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -362,7 +362,7 @@ save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/d42c5211f418991344db03033e4d3e53.png)
+![](assets/92ae790e7cc3193f3a7c6ea23d437a62.png)
 
 Figure 1: Cross-validated error by boosting iteration. The black solid
 line is the error after each iteration, and the black dashed vertical
@@ -377,7 +377,7 @@ save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/99635b2cfb282a8a671874262446beea.png)
+![](assets/272d3dc6afb9251ca917631d9181db92.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
 per parameter. Each black solid line is the parameter’s fitted value
@@ -394,7 +394,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/afa4a52612c1989a6b7d7ade6c44c85c.png)
+![](assets/5a6488daa087b197e1c57639ffea96b6.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins.
 Each gray horizontal segment spans a time bin at its observed mean, with
@@ -408,13 +408,13 @@ Code
 # Importance of each predictor's main effect and its interaction with time; the
 # interaction is where a predictor whose effect changes over follow-up shows.
 vimp <- vimp.boostmtree(fit)
-# Free size: one row per predictor, and one panel per effect.
+# Free size: one row per predictor, and one panel per effect, at the 6.5 in page width.
 p_vimp <- plot(gg_boost_vimp(vimp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
-save_figure(p_vimp, "nb-boostmtree-importance", width = 9, height = 7)
+save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
-![](assets/5e9f713a2f0cdb17125004cfcd045f94.png)
+![](assets/f38d3740a6f4a832fcb6bce089b8362b.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time, one panel for each. Horizontal dark gray bars
@@ -463,25 +463,50 @@ levels(.effect$response) <- .relabel
 .discrete <- .discrete[!is.na(.discrete)]
 .parts <- split(names(.discrete), .discrete)
 .kinds <- ifelse(names(.parts) == "TRUE", "categorical", "continuous")
-p_effects <- lapply(unname(.parts), function(v) {
-  part <- .effect[.effect$variable %in% v, , drop = FALSE]
-  part$variable <- droplevels(part$variable)
-  # The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.
-  plot(part) + hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+# Free size, paged: one facet per predictor, two by two on a page no larger than
+# 6.5 by 9 in. With several response components ggBoostedTrees draws one column
+# per predictor and one row per component, so a page holds two predictors.
+.n_components <- nlevels(.effect$response)
+.pages <- lapply(unname(.parts), function(v) {
+  if (.n_components > 1L) {
+    hvtiRtemplates:::.figure_pages(length(v), panel_height = 3 * .n_components, page_height = 3 * .n_components)
+  } else {
+    hvtiRtemplates:::.figure_pages(length(v), page_height = 6)
+  }
 })
-# Free size: one panel per predictor, and per response component when there are several.
+# One plot per page, kind by kind: p_effects holds every page, and .effect_page says which kind and page each is.
+p_effects <- list()
+.effect_page <- list()
+for (.k in seq_along(.parts)) {
+  for (.j in seq_along(.pages[[.k]])) {
+    part <- .effect[.effect$variable %in% .parts[[.k]][.pages[[.k]][[.j]]$index], , drop = FALSE]
+    part$variable <- droplevels(part$variable)
+    # The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.
+    p_effects[[length(p_effects) + 1L]] <- plot(part) +
+      hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+    .effect_page[[length(.effect_page) + 1L]] <- list(kind = .kinds[[.k]], page = .j, of = length(.pages[[.k]]),
+                                                      size = .pages[[.k]][[.j]], vars = levels(part$variable))
+  }
+}
 .key <- c(continuous = paste("Each solid line is the effect at one follow-up time, colored from dark to light blue by",
                              "time as in the color bar."),
           categorical = paste("Each point is the effect at one level and follow-up time, colored from dark to light blue by",
                               "time as in the color bar."))
 for (.i in seq_along(p_effects)) {
   .p <- p_effects[[.i]]
-  save_figure(.p, paste0("nb-boostmtree-effects-", .kinds[[.i]]), width = 9, height = 7)
-  .child(paste("fig effects", .kinds[[.i]]),
-         paste0("Partial effects over follow-up, ", .kinds[[.i]], " predictors, one panel per predictor. ", .key[[.kinds[[.i]]]]),
-         ".p", opts = c("#| fig-width: 9", "#| fig-height: 7"))
+  .pg <- .effect_page[[.i]]
+  save_figure(.p, sprintf("nb-boostmtree-effects-%s-page-%02d", .pg$kind, .pg$page),
+              width = .pg$size$width, height = .pg$size$height)
+  .on_page <- if (.pg$of > 1L) paste0(" Page ", .pg$page, " of ", .pg$of, ": ", paste(.pg$vars, collapse = ", "), ".") else ""
+  .child(paste("fig effects", .pg$kind, .pg$page),
+         paste0("Partial effects over follow-up, ", .pg$kind, " predictors, one panel per predictor. ", .key[[.pg$kind]],
+                .on_page),
+         ".p", opts = sprintf(c("#| fig-width: %g", "#| fig-height: %g"), .pg$size$width, .pg$size$height))
 }
 ```
+
+    Warning in sprintf(c("#| fig-width: %g", "#| fig-height: %g"), .pg$size$width,
+    : one argument not used by format
 
 Code
 
@@ -489,11 +514,28 @@ Code
 .p
 ```
 
-![](assets/8f9f28546bda711050873213daadee19.png)
+![](assets/c3c22e0d7a2e9304c1eaeef7f8aaf7c9.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
-time, colored from dark to light blue by time as in the color bar.
+time, colored from dark to light blue by time as in the color bar. Page
+1 of 2: nyha_pr, hx_chf, age, bmi.
+
+    Warning in sprintf(c("#| fig-width: %g", "#| fig-height: %g"), .pg$size$width,
+    : one argument not used by format
+
+Code
+
+``` r
+.p
+```
+
+![](assets/800cdc0d3605c5950b94aa61b16156f2.png)
+
+Figure 6: Partial effects over follow-up, continuous predictors, one
+panel per predictor. Each solid line is the effect at one follow-up
+time, colored from dark to light blue by time as in the color bar. Page
+2 of 2: hx_dm, female.
 
 Code
 
@@ -538,9 +580,9 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/0e1238e4b076e517bb5871ddca91e057.png)
+![](assets/1275e7b79a468c4ec2f32d926d4d6be0.png)
 
-Figure 6: Fitted trajectories for a sample of patients, with the
+Figure 7: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time. Thin translucent black lines trace
 each sampled patient’s fitted values, translucent black circles their
 observed values, and the thick black line the cohort’s mean fitted value
@@ -566,9 +608,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 | Group           | Item           | Value                        |
 |:----------------|:---------------|:-----------------------------|
-| Run             | Started        | 2026-10-15 09:27:54 EDT      |
-|                 | Ended          | 2026-10-15 09:32:37 EDT      |
-|                 | Duration       | 4 min 43 s                   |
+| Run             | Started        | 2026-10-15 11:15:49 EDT      |
+|                 | Ended          | 2026-10-15 11:20:50 EDT      |
+|                 | Duration       | 5 min 2 s                    |
 |                 | Status         | final                        |
 |                 | Rendered by    | gallery                      |
 |                 | Host           | gallery                      |

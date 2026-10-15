@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:35
+2026-10-15 11:23
 
 Explains the forest the `rfc-fit` job in this set saved: which
 predictors drive it, and how.
@@ -192,15 +192,15 @@ Code
 
 ``` r
 vi <- cache_fit("rfc-vimp", vimp(forest, seed = -abs(SEED)), seed = SEED, dir = CACHE_DIR, refit = REFIT)
-# Free size: one row per predictor, and one panel per class.
+# Free size: one row per predictor, and one panel per class, at the 6.5 in page width.
 # The manuscript theme hides the legend and its title, and the caption reads the colors from the legend.
 .fig <- plot(gg_vimp(vi)) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
-save_figure(.fig, "rfc-explain-importance", width = 9, height = 7)
+save_figure(.fig, "rfc-explain-importance", width = 6.5, height = 7)
 .fig
 ```
 
-![](assets/b3c1d9470de3ad8b1cb3d58ebb0bbb96.png)
+![](assets/e8c619e99d18f3769b38aebcaafd6f00.png)
 
 Figure 1: Permutation importance of each predictor, overall and for each
 class. Horizontal bars give the importance of each predictor, one panel
@@ -253,6 +253,23 @@ if (is.null(PARTIAL_VARS)) {
   }
   sel <- PARTIAL_VARS
 }
+# Each dependence figure is drawn a page at a time, panels in a grid no larger
+# than the printed page (6.5 by 9 in), and each page is a child chunk of its
+# own so Quarto numbers it, as dc-eda's pages are. A study's TOP_K or
+# PARTIAL_VARS sets how many pages there are; nothing here refuses a count.
+.fence <- strrep("`", 3)
+.page_child <- function(kind, i, pages, vars, caption) {
+  page <- pages[[i]]
+  if (length(pages) > 1L) {
+    caption <- paste0(caption, " Page ", i, " of ", length(pages), ": ",
+                      paste(vars[page$index], collapse = ", "), ".")
+  }
+  code <- c(paste0(.fence, "{r}"), paste0("#| label: fig-", kind, "-", i),
+            paste0("#| fig-cap: ", encodeString(caption, quote = "\"")),
+            sprintf("#| fig-width: %g", page$width), sprintf("#| fig-height: %g", page$height), ".fig", .fence)
+  cat(knitr::knit_child(text = code, envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 ```
 
 ## VarPro
@@ -272,7 +289,7 @@ save_figure(.fig, "rfc-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/c9282dc2e7f4e73d882998d25bdd0cc3.png)
+![](assets/5b01cdc663d98a6de73a95ba3b120f9c.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -285,6 +302,7 @@ vertical line the selection cutoff.
 Code
 
 ``` r
+# unnumbered: each page below is a child chunk with its own label and caption
 # Marginal: predicted class probability against each variable, as observed.
 .gv <- gg_variable(forest)
 # plot() reads a factor outcome whose levels are "0" and "1" as TRUE and FALSE
@@ -297,12 +315,23 @@ Code
   plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5) +
     hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 })
-# Free size: one stacked panel per selected predictor, 2.5 in each.
 # The manuscript theme hides the legend and its title, and the caption reads the points from the legend.
 # One legend for the stack: every panel shares the same outcome levels.
-.fig <- patchwork::wrap_plots(.panels, ncol = 1) + patchwork::plot_layout(guides = "collect") &
-  ggplot2::theme(legend.position = "top")
-save_figure(.fig, "rfc-explain-dependence-marginal", height = 2.5 * length(sel))
+.cap <- paste("Predicted class probability against each selected predictor, as observed, one panel per",
+              "predictor. Points are individual patients, one color and shape per observed outcome level as",
+              "in the legend; the blue line is a loess smooth with its gray band, drawn for predictors with",
+              "more than five distinct values, and for a categorical predictor the points are jittered over",
+              "a gray box plot.")
+# Free size, paged: one panel per predictor.
+.pages <- hvtiRtemplates:::.figure_pages(length(sel), panel_width = 3.25, panel_height = 2.5)
+for (.i in seq_along(.pages)) {
+  .fig <- patchwork::wrap_plots(.panels[.pages[[.i]]$index], ncol = .pages[[.i]]$ncol) +
+    patchwork::plot_layout(guides = "collect") &
+    ggplot2::theme(legend.position = "top")
+  save_figure(.fig, sprintf("rfc-explain-dependence-marginal-page-%02d", .i),
+              width = .pages[[.i]]$width, height = .pages[[.i]]$height)
+  .page_child("dependence-marginal", .i, .pages, sel, .cap)
+}
 ```
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
@@ -335,13 +364,14 @@ Code
 
     Warning: Removed 75 rows containing non-finite outside the scale range
     (`stat_smooth()`).
-    Removed 75 rows containing missing values or values outside the scale range
+
+    Warning: Removed 75 rows containing missing values or values outside the scale range
     (`geom_point()`).
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/a01074bfdd80eb62bbe48b14e850af0b.png)
+![](assets/240d8389b7a0b60a5038b3f7e7363575.png)
 
 Figure 3: Predicted class probability against each selected predictor,
 as observed, one panel per predictor. Points are individual patients,
@@ -353,19 +383,34 @@ points are jittered over a gray box plot.
 Code
 
 ``` r
+# unnumbered: each page below is a child chunk with its own label and caption
 # Partial: the forest's prediction with every other variable held at its
 # observed values.
 pd <- cache_fit("rfc-partial", gg_partial_rfsrc(forest, xvar.names = sel),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT,
                 packages = "randomForestSRC")
-# Free size: one panel per predictor.
-.fig <- plot(pd) &
-  hvtiPlotR::theme_hv_manuscript(base_size = 12)
-save_figure(.fig, "rfc-explain-dependence-partial", width = 9, height = 8)
+.cap <- paste("Partial dependence of the forest's prediction on each selected predictor, one panel per",
+              "predictor. Black solid lines trace the partial effect across a continuous predictor, and",
+              "dark gray bars give it at each level of a categorical one.")
+# Free size, paged: one facet per predictor, two by two.
+.pages <- hvtiRtemplates:::.figure_pages(length(sel), panel_width = 3.25, panel_height = 3, page_height = 6)
+for (.i in seq_along(.pages)) {
+  .vars <- sel[.pages[[.i]]$index]
+  .fig <- plot(hvtiRtemplates:::.partial_subset(pd, .vars)) &
+    hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  save_figure(.fig, sprintf("rfc-explain-dependence-partial-page-%02d", .i),
+              width = .pages[[.i]]$width, height = .pages[[.i]]$height)
+  .page_child("dependence-partial", .i, .pages, sel, .cap)
+}
+```
+
+Code
+
+``` r
 .fig
 ```
 
-![](assets/1c6086f51e890260e928ad2706845aef.png)
+![](assets/e9ec30f24e8d52be7b4f5354d4562fee.png)
 
 Figure 4: Partial dependence of the forest’s prediction on each selected
 predictor, one panel per predictor. Black solid lines trace the partial
@@ -375,14 +420,25 @@ level of a categorical one.
 Code
 
 ``` r
+# unnumbered: each page below is a child chunk with its own label and caption
 # The VarPro partial, computed from the varpro fit.
 pv <- cache_fit("rfc-partial-varpro", gg_partial_varpro(object = vp, xvar.names = sel),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-# Free size: one panel per predictor.
 # The manuscript theme hides the legend and its title, and the caption reads the line types from the legend.
-.fig <- plot(pv) &
-  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
-save_figure(.fig, "rfc-explain-dependence-varpro", width = 9, height = 8)
+.cap <- paste("VarPro partial dependence on each selected predictor, one panel per predictor. For a",
+              "continuous predictor a black solid line marks the nonparametric partial effect and a black",
+              "dashed line the parametric one, as in the legend; for a categorical predictor black box",
+              "plots show the spread of the partial effect at each level.")
+# Free size, paged: one facet per predictor, two by two.
+.pages <- hvtiRtemplates:::.figure_pages(length(sel), panel_width = 3.25, panel_height = 3, page_height = 6)
+for (.i in seq_along(.pages)) {
+  .vars <- sel[.pages[[.i]]$index]
+  .fig <- plot(hvtiRtemplates:::.partial_subset(pv, .vars)) &
+    hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+  save_figure(.fig, sprintf("rfc-explain-dependence-varpro-page-%02d", .i),
+              width = .pages[[.i]]$width, height = .pages[[.i]]$height)
+  .page_child("dependence-varpro", .i, .pages, sel, .cap)
+}
 ```
 
     Warning: Removed 252 rows containing non-finite outside the scale range
@@ -399,7 +455,7 @@ Code
     Warning: Removed 252 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/b59f6fbe2fc831ca8a84b92b305ccaf4.png)
+![](assets/7f90c8c09b8048581652698dbf105c00.png)
 
 Figure 5: VarPro partial dependence on each selected predictor, one
 panel per predictor. For a continuous predictor a black solid line marks
@@ -411,9 +467,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 09:34:51 EDT |
-|  | Ended | 2026-10-15 09:35:08 EDT |
-|  | Duration | 17 s |
+| Run | Started | 2026-10-15 11:23:06 EDT |
+|  | Ended | 2026-10-15 11:23:25 EDT |
+|  | Duration | 20 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -427,6 +483,6 @@ the spread of the partial effect at each level.
 |  | Source file | built.rds |
 |  | sha256 | f632480029c1 |
 |  | Manifest | current |
-| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-15 09:34:42 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-15 11:22:55 -0400, data built_20261015.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

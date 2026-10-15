@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 09:27
+2026-10-15 11:15
 
 Fits a binary-treatment propensity model, including pooled inference for
 stacked imputations and the scored columns used by matching and
@@ -264,8 +264,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 09:27:24 EDT |
-|  | Ended | 2026-10-15 09:27:24 EDT |
+| Run | Started | 2026-10-15 11:15:15 EDT |
+|  | Ended | 2026-10-15 11:15:15 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
