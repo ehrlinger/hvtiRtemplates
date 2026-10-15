@@ -166,11 +166,12 @@ test_that("the weighted bars are the sum of the matching weights in each group a
 test_that("the job saves the unmatched and weighted figures, with a count table under each", {
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   skip_if_not_installed("hvtiPlotR", minimum_version = "2.8.0")
+  skip_if_not_installed("ragg")
   s <- lp_fixture()
   env <- lm_eval_job(s$job)
   graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "outcome-analysis")
-  expect_setequal(list.files(graphs), c("lp-mirror-unmatched.png", "lp-mirror-unmatched.pdf",
-                                        "lp-mirror-weighted.png", "lp-mirror-weighted.pdf"))
+  expect_setequal(list.files(graphs), paste0(rep(c("lp-mirror-unmatched", "lp-mirror-weighted"), each = 3L),
+                                             c(".png", ".pdf", ".tiff")))
   d <- lp_data()
   n <- c(sum(d$treatment == "treated"), sum(d$treatment == "control"))
   expect_identical(env$mirror_counts(env$mh_unmatched, "unmatched")$patients, n)

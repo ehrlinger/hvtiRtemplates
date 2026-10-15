@@ -332,8 +332,9 @@ test_that("hm's stage 1 holds every shape of each phase (rollup review, 1.2.6)",
 
 # ---- hp saves its three figures as PNG and PDF (design 5, 2026-10-07) ---------
 
-test_that("hp saves each figure as a PNG and a PDF, and FIGURES keeps only the PDFs it names", {
+test_that("hp saves each figure as a PNG, a PDF and a TIFF, and FIGURES keeps only the publication copies it names", {
   skip_on_cran()
+  skip_if_not_installed("ragg")
   skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
@@ -348,9 +349,9 @@ test_that("hp saves each figure as a PNG and a PDF, and FIGURES keeps only the P
     list.files(dirname(env$set_path("graphs", "x")))
   }
   figures <- c("hp-survival", "hp-hazard", "hp-phases")
-  expect_setequal(run_figures(list()), c(paste0(figures, ".png"), paste0(figures, ".pdf")))
-  # The report embeds every PNG, so each is written; only the named figure gets its PDF.
-  expect_setequal(run_figures(list(FIGURES = "hp-survival")), c(paste0(figures, ".png"), "hp-survival.pdf"))
+  expect_setequal(run_figures(list()), c(paste0(figures, ".png"), paste0(figures, ".pdf"), paste0(figures, ".tiff")))
+  # The report embeds every PNG, so each is written; only the named figure gets its PDF and TIFF.
+  expect_setequal(run_figures(list(FIGURES = "hp-survival")), c(paste0(figures, ".png"), "hp-survival.pdf", "hp-survival.tiff"))
   expect_setequal(run_figures(list(SAVE_FIGURES = FALSE)), paste0(figures, ".png"))
   expect_identical(grDevices::dev.cur(), c("null device" = 1L))
 })

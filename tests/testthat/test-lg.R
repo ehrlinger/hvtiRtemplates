@@ -95,7 +95,8 @@ lg_two_variables <- c(
   ")"
 )
 
-test_that("the job tabulates each covariate's groups and draws its six-panel figure, saved as PNG and PDF", {
+test_that("the job tabulates each covariate's groups and draws its six-panel figure, saved as PNG, PDF and TIFF", {
+  skip_if_not_installed("ragg")
   local_child_chunks()
   s <- lg_fixture(variables = lg_two_variables)
   # What the job's asis chunks would print: the child chunks they knit.
@@ -121,10 +122,11 @@ test_that("the job tabulates each covariate's groups and draws its six-panel fig
   labels <- sub("^#\\| label: ", "", grep("^#\\| label: (tbl|fig)-lg-(age|nyha)$", printed, value = TRUE))
   expect_identical(labels, c("tbl-lg-age", "fig-lg-age", "tbl-lg-nyha", "fig-lg-nyha"))
   graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "dead-calibration")
-  expect_setequal(list.files(graphs), c("lg-age.png", "lg-age.pdf", "lg-nyha.png", "lg-nyha.pdf"))
+  expect_setequal(list.files(graphs), paste0(rep(c("lg-age", "lg-nyha"), each = 3L), c(".png", ".pdf", ".tiff")))
 })
 
-test_that("the logit link calibrates a binary event with no follow-up, and FIGURES keeps only the PDFs it names", {
+test_that("the logit link calibrates a binary event with no follow-up, and FIGURES keeps only the PDFs and TIFFs it names", {
+  skip_if_not_installed("ragg")
   local_child_chunks()
   s <- lg_fixture(c("LINK <- \"logit\"", "EVENT <- \"hdead\"", "TIME <- \"later\"", "FIGURES <- c(\"lg-age\")"),
                   variables = lg_two_variables)
@@ -132,8 +134,8 @@ test_that("the logit link calibrates a binary event with no follow-up, and FIGUR
   d <- lg_data()
   expect_equal(env$calibration$age$table, hvtiRtemplates:::.lg_table(d$age, d$hdead, groups = 5L, link = "logit"))
   graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "dead-calibration")
-  # The PNG a report shows is always written; the PDF only for a figure FIGURES keeps.
-  expect_setequal(list.files(graphs), c("lg-age.png", "lg-age.pdf", "lg-nyha.png"))
+  # The PNG a report shows is always written; the PDF and TIFF only for a figure FIGURES keeps.
+  expect_setequal(list.files(graphs), c("lg-age.png", "lg-age.pdf", "lg-age.tiff", "lg-nyha.png"))
 })
 
 test_that("a group or scale that cannot be computed is named under its table, and a label never holds an underscore", {
@@ -333,6 +335,7 @@ test_that("the job stops on a covariate with a group of fewer than 5 patients or
 })
 
 test_that("the job renders two figures and two tables for two covariates, naming no patient", {
+  skip_if_not_installed("ragg")
   skip_on_cran()
   skip_if_not_installed("ggplot2")
   skip_if_not_installed("quarto")
@@ -358,7 +361,7 @@ test_that("the job renders two figures and two tables for two covariates, naming
     expect_identical(ids("tbl"), sort(c("tbl-lg-age", "tbl-lg-nyha", "tbl-lg-scales", "tbl-lg-variables",
                                         if (window == "window") "tbl-lg-interval")), info = window)
     graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "dead-calibration")
-    expect_setequal(list.files(graphs), c("lg-age.png", "lg-age.pdf", "lg-nyha.png", "lg-nyha.pdf"))
+    expect_setequal(list.files(graphs), paste0(rep(c("lg-age", "lg-nyha"), each = 3L), c(".png", ".pdf", ".tiff")))
     # The choices are saved with the right terms, and the report prints the line to copy.
     saved <- readRDS(file.path(hvtiRutilities::study_dir("estimates", s$root), "dead-calibration", "lg-scales.rds"))
     expect_identical(saved$term, c("log(age)", "nyha"), info = window)
