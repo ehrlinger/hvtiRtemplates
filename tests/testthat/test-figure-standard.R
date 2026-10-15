@@ -6,11 +6,14 @@
 
 # Nothing is drawn larger than the printed page, 6.5 by 9 in: a figure whose panel
 # count follows the study is paged instead: .figure_pages() for the RF and nb
-# figures, dc-eda's grid pages, dc-stddiff's 30 rows a page. The one exception,
-# matched by the size it is saved at, is dc-tables' scatter-plot matrix: every
-# cell pairs two variables, so it cannot be split across pages.
+# figures, dc-eda's grid pages, dc-stddiff's 30 rows a page. The one exception
+# is dc-tables' scatter-plot matrix, decided 2026-10-15 (the spec's rule 5):
+# every cell pairs two variables, so it cannot be split across pages. It is
+# matched by its whole save_figure() line, so no other figure in dc-tables, at
+# any size, passes under it.
 page_exceptions <- c(
-  "10_descriptive/dc-tables.qmd" = "width = 10, height = 10"
+  "10_descriptive/dc-tables.qmd" = paste0("save_figure(plot(cm) + theme_hv_manuscript(base_size = 12), ",
+                                          "sub(\"[.]png$\", \"\", fname), width = 10, height = 10,")
 )
 
 figure_standard_scan <- function(templates) {
@@ -35,7 +38,7 @@ figure_standard_scan <- function(templates) {
       }
     }
     for (i in grep("^#\\| fig-(width|height): [0-9]|(width|height) = [0-9]", src)) {
-      if (!is.na(page_exceptions[label]) && grepl(page_exceptions[[label]], src[[i]], fixed = TRUE)) next
+      if (!is.na(page_exceptions[label]) && identical(trimws(src[[i]]), page_exceptions[[label]])) next
       sizes <- regmatches(src[[i]], gregexpr("(width|height)(: | = )[0-9.]+", src[[i]]))[[1]]
       for (size in sizes) {
         inches <- as.numeric(sub("^.*(: | = )", "", size))
@@ -102,4 +105,16 @@ test_that("a save_figure() call is held to the page, as dc-eda's landscape pages
                "```"),
              file.path(dir, "eda.qmd"))
   expect_identical(figure_standard_scan(dir), c("eda.qmd:9: width = 11 in is larger than the 6.5 by 9 in page"))
+})
+
+test_that("the page exception covers dc-tables' scatter-plot matrix line and nothing else", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "10_descriptive"))
+  writeLines(c("---", "format:", "  html:", "    fig-width: 6", "    fig-height: 4", "---", "```{r}",
+               paste0("  ", page_exceptions[["10_descriptive/dc-tables.qmd"]]),
+               "  save_figure(p, \"dc-tables-other\", width = 10, height = 10, linked = TRUE)", "```"),
+             file.path(dir, "10_descriptive", "dc-tables.qmd"))
+  expect_identical(figure_standard_scan(dir),
+                   c("10_descriptive/dc-tables.qmd:9: width = 10 in is larger than the 6.5 by 9 in page",
+                     "10_descriptive/dc-tables.qmd:9: height = 10 in is larger than the 6.5 by 9 in page"))
 })

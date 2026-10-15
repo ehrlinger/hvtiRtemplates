@@ -21,6 +21,14 @@ hvtiGraphics book, which gets a pull request of its own.
 4. **Every figure has a numbered caption**, meaning a chunk label starting `fig-` with a
    `fig-cap`. The caption says what is plotted, and names the point type and color of each
    mark, so a reader can decode the figure from its legend alone.
+5. **No figure is larger than the printed page, 6.5 in wide by 9 in tall**, single panel or
+   free-size alike. A figure whose panel count follows the study is paged instead: the RF and
+   nb figures through `.figure_pages()`, `dc-eda`'s grid pages, `dc-stddiff`'s balance plot at
+   30 rows a page. **The one exception is `dc-tables`' scatter-plot matrix**, saved at 10 by
+   10 in: every cell pairs two variables, so it cannot be split across pages, and shrinking
+   it to the page would shrink every cell with it. John decided this on 2026-10-15.
+   `test-figure-standard.R` enforces the limit on chunk options and `save_figure()` sizes,
+   and exempts that one `save_figure()` line and nothing else.
 
 ## Where the sizes come from
 
