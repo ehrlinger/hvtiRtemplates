@@ -241,6 +241,8 @@
 <strong>Before a bump merges, run each dependent’s tests against this package’s branch</strong>: install it into a scratch library and run <code>R_LIBS=&lt;lib&gt; Rscript -e 'devtools::test()'</code> in the dependent.</li>
 <li>
 <strong>Tag every bump</strong> <code>vX.Y.Z</code>. <code>Remotes</code> are unpinned, so a floor is checked against the dependency’s <code>main</code>, not a tag.</li>
+<li>
+<strong>Rebuild the template gallery on every family release day</strong> that moves this package or any package its templates draw with, right after this tier is tagged: <code>Rscript dev/gallery/gallery.R &lt;study&gt;</code>, <code>python3 dev/gallery/package.py &lt;study&gt; pkgdown/assets/gallery</code>, <code>bash dev/gallery/publish.sh</code>, then rerun <code>pkgdown.yaml</code>. Install the released family first (<code>hvtiR::install()</code>): the gallery renders against the installed packages, and a release of <code>hvtiPlotR</code> alone changes its figures. Rebuild by hand too before a prerelease or demo, or after any change to template output. Nothing does this for you: the 2026-10-12 build still showed 7 x 5 figures two days after the 6 x 4 standard shipped. <code>pkgdown.yaml</code> warns when the gallery predates the latest release, but it cannot see a release of a package the templates only draw with.</li>
 </ul><p>The full policy and dependency graph are in the maintainer’s Obsidian vault at <code>Projects/hvtiR release ordering.md</code>.</p>
 </div>
 </div>
