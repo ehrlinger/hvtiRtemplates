@@ -18,6 +18,14 @@ eda_job_data <- function(id, key = id) {
   list(record = structure(data.frame(step = character(), value = character()), selection = list(id = id, key = key)))
 }
 
+# Figures embedded in a rendered report: images, plus the ggiraph widgets that
+# carry a categorical page when ggiraph is installed. regmatches(), not
+# length(gregexpr()): no match returns -1, whose length is 1.
+n_embedded <- function(text) {
+  count <- function(pattern) length(regmatches(text, gregexpr(pattern, text))[[1L]])
+  count("src=\"data:image/png") + count("class=\"girafe html-widget")
+}
+
 test_that("dc-eda renders every section into one self-contained report", {
   skip_on_cran()
   skip_if_not_installed("quarto")
@@ -47,11 +55,11 @@ test_that("dc-eda renders every section into one self-contained report", {
     expect_match(text, paste0("<h2[^>]*>[^<]*", heading), info = heading)
   }
   expect_match(text, "<h3[^>]*>[^<]*Repair")
-  # embed-resources: every saved figure is inside the report. An image Quarto
+  # embed-resources: every saved figure is inside the report, as an image or,
+  # for a categorical page with hover labels, as a widget. An image Quarto
   # could not find is left as a file link and would not be counted here.
-  # regmatches(), not length(gregexpr()): no match returns -1, whose length is 1.
   n_png <- length(list.files(graphs, "^dc-eda-.*[.]png$"))
-  expect_identical(length(regmatches(text, gregexpr("src=\"data:image/png", text))[[1L]]), n_png)
+  expect_identical(n_embedded(text), n_png)
   # The label cap and the merged abbreviation list are recorded in provenance,
   # so the report can say which list shaped its labels.
   payload <- unlist(hvtiRtemplates:::.extract_provenance(text, managed = TRUE))
@@ -79,7 +87,7 @@ test_that("dc-eda leaves out a section not named in SECTIONS", {
   # A job kept in a subfolder still embeds its pages.
   text <- paste(readLines(sub("[.]qmd$", ".html", s$job), warn = FALSE), collapse = "\n")
   n_png <- length(list.files(graphs, "^dc-eda-.*[.]png$"))
-  expect_identical(length(regmatches(text, gregexpr("src=\"data:image/png", text))[[1L]]), n_png)
+  expect_identical(n_embedded(text), n_png)
   # The heading, not the folded source that prints it.
   expect_false(grepl("<h2[^>]*>[^<]*Goodness of follow-up", text))
 })

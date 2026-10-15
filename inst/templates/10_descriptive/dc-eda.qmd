@@ -616,7 +616,11 @@ draw_section <- function(section) {
     .child(paste("tbl eda", section, "frequencies"), "Categorical variables, missing counted",
            "knitr::kable(freq, row.names = FALSE)")
   }
-  pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
+  # The bars carry hover labels in HTML: a page names no categories, so a reader hovers a bar
+  # for its category, year and count (John, 2026-10-15). The saved figure is the same either way.
+  hover <- section != "continuous" && knitr::is_html_output() && requireNamespace("ggiraph", quietly = TRUE) &&
+    "hv_girafe" %in% getNamespaceExports("hvtiPlotR")
+  pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA, interactive = hover)
   files <- character(0)
   for (i in seq_along(pages)) {
     # A page of its own, the printed page, 6.5 by 9 in: a grid of GRID_NCOL by GRID_NROW panels.
@@ -631,7 +635,8 @@ draw_section <- function(section) {
     .link <- figure_link(file)
     .child(paste("fig eda", section, "page", i),
            paste0(titles[[section]], ", page ", i, ": ", paste(labels[on_page], collapse = ", "), ". ", .eda_key[[section]]),
-           "knitr::include_graphics(.link, error = FALSE)")
+           if (hover) "hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)" else
+             "knitr::include_graphics(.link, error = FALSE)")
     files <- c(files, file)
   }
   abbreviation_key(vars)
