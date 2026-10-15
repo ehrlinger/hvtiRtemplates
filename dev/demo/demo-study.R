@@ -53,14 +53,14 @@ demo_data <- function() {
   iv_reop <- round(pmin(t_reop, iv_dead), 3)
 
   built <- data.frame(
-    patient_id = sprintf("DEMO%04d", seq_len(n)), op_date,
-    iv_opyrs = round(iv_opyrs, 3), year, age, female, race_grp, bmi,
+    patient_id = sprintf("DEMO%04d", seq_len(n)), dt_surg = op_date,
+    iv_opyrs = round(iv_opyrs, 3), age, female, race_grp, bmi,
     hx_chf, hx_dm, nyha_pr, lvef, plvmassi, creat_pr,
     dead, iv_dead, reop, iv_reop
   )
   labels <- c(
-    patient_id = "Patient identifier (synthetic)", op_date = "Date of operation",
-    iv_opyrs = "Years from 1 January 1990 to operation", year = "Year of operation",
+    patient_id = "Patient identifier (synthetic)", dt_surg = "Date of operation",
+    iv_opyrs = "Years from 1 January 1990 to operation",
     age = "Age at operation (years)", female = "Female", race_grp = "Race",
     bmi = "Body mass index (kg/m2)", hx_chf = "History of heart failure",
     hx_dm = "Diabetes", nyha_pr = "NYHA functional class", lvef = "LV ejection fraction (%)",

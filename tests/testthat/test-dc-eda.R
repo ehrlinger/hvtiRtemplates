@@ -7,7 +7,9 @@
 # operations in 2030; the job refuses that, and these tests use 1980.
 eda_edits <- list(
   "^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL",
-  "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980"
+  "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980",
+  # The fixture's reference column is a whole year, not the template's dt_surg.
+  "^X_VAR <- " = "X_VAR <- \"year\""
 )
 
 # The spec chunk reads the ID and KEY the data step resolved from
@@ -109,6 +111,8 @@ test_that("dc-eda colors every point of an event panel, by the house rule or fro
     env$.cfg <- hvtiRutilities::study_config(root)
     env$job_data <- eda_job_data("ccfid")
     for (label in c("set", "edit-study-choices")) eval(chunk(label), env)
+    # The fixture's reference column, as a study sets X_VAR to its own.
+    env$X_VAR <- "year"
     env$ORIGIN_YEAR <- 1980
     if (old) {
       rm("COLORS", envir = env)
@@ -173,6 +177,8 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
     env$study_config <- hvtiRutilities::study_config
     env$label_map <- function(d, ...) data.frame(key = names(d), label = names(d))
     eval(chunk("edit-study-choices"), env)
+    # The study's reference column, as a study sets X_VAR to its own.
+    env$X_VAR <- "year"
     env$ID <- id
     env$KEY <- key
     env$VARIABLES <- variables
@@ -229,7 +235,7 @@ eda_chunk <- function(label) {
 # The choices the spec chunk reads, with a stand-in label_map(); `...` replaces
 # any of them, NULL included.
 eda_spec_env <- function(d, ...) {
-  env <- list2env(list(d = d, X_VAR = "year", VARIABLES = NULL, EXCLUDE = character(),
+  env <- list2env(list(d = d, X_VAR = "year", X_LABEL = "Year of operation", VARIABLES = NULL, EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
                        .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL, job_data = eda_job_data("ccfid"),
@@ -244,8 +250,8 @@ test_that("dc-eda's spec chunk checks every variable and plotting choice", {
   env <- eda_spec_env(data.frame(year = 1:10, age = 41:50, patient_id = 11:20, visit_date = 21:30),
                       VARIABLES = "age")
   expect_no_error(eval(spec, env))
-  for (field in c("X_VAR", "VARIABLES", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SECTIONS", "ALPHA",
-                  "LABEL_MAX", "ABBREVIATIONS")) {
+  for (field in c("X_VAR", "X_LABEL", "VARIABLES", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SECTIONS",
+                  "ALPHA", "LABEL_MAX", "ABBREVIATIONS")) {
     original <- env[[field]]
     env[[field]] <- NA
     expect_error(eval(spec, env), info = field)
@@ -270,6 +276,47 @@ test_that("dc-eda's spec chunk checks every variable and plotting choice", {
   expect_identical(env$VARIABLES, "age")
   env$EXCLUDE <- "age"
   expect_error(eval(spec, env), "No EDA variables")
+})
+
+# The first panel of a section's first page, drawn from the spec chunk's data.
+eda_first_panel <- function(env, section, vars) {
+  sec <- hvtiPlotR::hv_eda_pages(env$.d_eda, x_col = env$X_LABEL, section = section, vars = vars)
+  plot(sec, ncol = 2L, nrow = 4L)[[1L]][[1L]]
+}
+
+test_that("a date X_VAR is drawn as a decimal year under X_LABEL: whole-year bars, decimal points", {
+  skip_if_not_installed("hvtiPlotR")
+  # 2004 is a leap year, so its 1 July is day 183 of 366.
+  dates <- as.Date(c("2001-01-01", "2001-07-02", "2002-01-01", "2003-01-01", "2004-01-01", "2004-07-01",
+                     "2005-01-01", "2005-06-01", "2006-01-01", "2006-12-31"))
+  d <- data.frame(dt_surg = dates, age = 41:50, valve = factor(rep(c("A", "B"), 5L)))
+  env <- eda_spec_env(d, X_VAR = "dt_surg", VARIABLES = c("age", "valve", "dt_surg"))
+  suppressWarnings(eval(eda_chunk("spec"), env))
+  x <- env$.d_eda[["Year of operation"]]
+  expect_equal(x[c(1L, 2L, 6L)], c(2001, 2001 + 182 / 365, 2004 + 182 / 366))
+  # The date itself is never drawn as a variable, and the data as read are left alone.
+  expect_identical(env$VARIABLES, c("age", "valve"))
+  expect_false("Year of operation" %in% names(env$d))
+  bars <- eda_first_panel(env, "percent", "valve")
+  expect_identical(bars$labels$x, "Year of operation")
+  expect_identical(ggplot2::ggplot_build(bars)$layout$panel_params[[1L]]$x$get_labels(), as.character(2001:2006))
+  points <- eda_first_panel(env, "continuous", "age")
+  expect_identical(points$labels$x, "Year of operation")
+  expect_true(any(ggplot2::ggplot_build(points)$data[[1L]]$x %% 1 != 0))
+})
+
+test_that("a numeric X_VAR is drawn as it is, under X_LABEL", {
+  d <- data.frame(year = 2001:2010, age = 41:50)
+  env <- eda_spec_env(d, VARIABLES = "age")
+  eval(eda_chunk("spec"), env)
+  expect_identical(env$.d_eda[["Year of operation"]], d$year)
+})
+
+test_that("a missing X_VAR stops and says where to set it", {
+  env <- eda_spec_env(data.frame(year = 2001:2010, age = 41:50), X_VAR = "dt_surg", VARIABLES = "age")
+  expect_error(eval(eda_chunk("spec"), env),
+               "Unknown EDA column(s): dt_surg. Set X_VAR in the study choices to the study's reference date or year column.",
+               fixed = TRUE)
 })
 
 test_that("dc-eda VARIABLES = NULL draws every column but ids, dates and exclusions, and says so", {
@@ -332,7 +379,7 @@ test_that("dc-eda's overview leaves out identifiers but keeps dates", {
                                       patientid = sprintf("P%03d", seq_len(n)), carotid = rep(0:1, 6), eMRN = 5000L + seq_len(n),
                                       mrn_num = rep(0:1, 6),
                                       bnp_mrna = 0.5 * seq_len(n), dt_surg = as.Date("2020-01-01") + seq_len(n)),
-                       X_VAR = "year", VARIABLES = c("age", "ccfid"), EXCLUDE = character(),
+                       X_VAR = "year", X_LABEL = "Year of operation", VARIABLES = c("age", "ccfid"), EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
                        .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL, job_data = eda_job_data("ccfid"),

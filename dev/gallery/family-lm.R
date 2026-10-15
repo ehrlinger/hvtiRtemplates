@@ -7,7 +7,8 @@
 # as lp-mirror-matched, from a set of its own with a simulated match flag.
 
 # lm-binary fits on operations before 2015 and lm-checkpred validates on 2015
-# onward: one registered dataset, split by each job's WHERE.
+# onward: one registered dataset, split by each job's WHERE on the year of
+# dt_surg, the operation date, as a study's own data carry it.
 lm_era <- function(where) list("^WHERE <- NULL$" = paste0("WHERE <- quote(", where, ")"))
 lm_patient <- list("^ID <- " = "ID <- \"patient_id\"")
 # Anchored on NULL: the templates' second IMPUTATION line takes the column
@@ -59,14 +60,14 @@ gallery_family(
     d
   },
   jobs = list(
-    "lm-binary" = list(subject = "stroke", type = "model", choices = c(lm_id, lm_era("year < 2015"), list(
+    "lm-binary" = list(subject = "stroke", type = "model", choices = c(lm_id, lm_era("as.integer(format(dt_surg, \"%Y\")) < 2015"), list(
       "^DATASET <- " = "DATASET <- \"built\"",
       "^OUTCOME <- " = "OUTCOME <- \"stroke\"",
       "^PREDICTORS <- " = paste("PREDICTORS <-", lm_covariates),
       "^OUTCOME_LEVELS <- " = "OUTCOME_LEVELS <- c(\"no\", \"yes\")",
       "^EVENT_LEVEL <- " = "EVENT_LEVEL <- \"yes\""
     ))),
-    "lm-checkpred" = list(subject = "stroke", type = "model", choices = c(lm_patient, lm_era("year >= 2015"), list(
+    "lm-checkpred" = list(subject = "stroke", type = "model", choices = c(lm_patient, lm_era("as.integer(format(dt_surg, \"%Y\")) >= 2015"), list(
       "^DATASET <- " = "DATASET <- \"built\"",
       "^OUTCOME <- " = "OUTCOME <- \"stroke\"",
       "^GROUPS <- " = "GROUPS <- 5L"

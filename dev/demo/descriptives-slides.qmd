@@ -227,7 +227,7 @@ Each point is a patient. The dashed diagonal is the most follow-up the close dat
 
 `VARIABLES <- NULL` draws every column except:
 
-- `X_VAR`, here `year`;
+- `X_VAR`, here `dt_surg`, drawn as the year of operation;
 - anything in `EXCLUDE`;
 - anything that looks like an **identifier or a date**. The report lists those.
 
@@ -261,7 +261,7 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 
 Each section calls the same function as its standalone job, with the same arguments, so a section *is* that job's figure.
 
-## `dc-eda` draws 8 continuous and 7 categorical variables, leaving out patient_id and op_date
+## `dc-eda` draws 8 continuous and 7 categorical variables, leaving out patient_id
 
 Each panel is one variable by year of operation. Percent panels stack each level's share in blue, vermillion, green and on; missing is light gray.
 
