@@ -74,7 +74,7 @@ test_that("rf_skip_unless_stack does not error on a package with no floor", {
 })
 
 # Each figure and table is a chunk of its own, so the report's outputs are listed one by one.
-dependence_labels <- c("fig-dependence-marginal", "fig-dependence-partial", "fig-dependence-varpro")
+dependence_labels <- c("dependence-marginal", "dependence-partial", "dependence-varpro")
 explain_labels <- c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select", "fig-varpro",
                     dependence_labels)
 
@@ -624,7 +624,7 @@ test_that("rfc-explain draws a marginal plot for a 0/1 outcome (#167)", {
   env$.root <- fit_env$.root
   # age is continuous and grp a factor, so both kinds of panel are drawn.
   rf_run("rfc", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select",
-                             "fig-dependence-marginal"), env, list(PARTIAL_VARS = c("age", "grp"), SEED = 1))
+                             "dependence-marginal"), env, list(PARTIAL_VARS = c("age", "grp"), SEED = 1))
   # gg_variable() turns a 0/1 outcome into TRUE/FALSE with as.logical(), which
   # reads the factor's "0" and "1" as missing, and ggplot2 then removes every point.
   expect_identical(rf_draw_warnings(env$.fig), character())
@@ -637,7 +637,7 @@ test_that("rfs-explain draws no smooth through a predictor with few values (#167
   env$.root <- rfs_explained_copy()
   # celltype has four values, and loess cannot fit a smooth through four.
   rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select",
-                             "fig-dependence-marginal"), env, list(PARTIAL_VARS = c("celltype", "age"), TIMES = c(30, 90), SEED = 1))
+                             "dependence-marginal"), env, list(PARTIAL_VARS = c("celltype", "age"), TIMES = c(30, 90), SEED = 1))
   expect_identical(rf_draw_warnings(env$.fig), character())
   has_smooth <- function(p) any(vapply(p$layers, function(l) inherits(l$geom, "GeomSmooth"), logical(1L)))
   smooths <- vapply(rf_panels(env$.fig), has_smooth, logical(1L))
