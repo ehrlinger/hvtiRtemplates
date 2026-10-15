@@ -5,12 +5,12 @@
 # are, and they are most of them.
 
 # Nothing is drawn larger than the printed page, 6.5 by 9 in: a figure whose panel
-# count follows the study is paged by .figure_pages() instead. These figures are
-# the spec's named exceptions, each matched by the size it is saved at.
+# count follows the study is paged instead: .figure_pages() for the RF and nb
+# figures, dc-eda's grid pages, dc-stddiff's 30 rows a page. The one exception,
+# matched by the size it is saved at, is dc-tables' scatter-plot matrix: every
+# cell pairs two variables, so it cannot be split across pages.
 page_exceptions <- c(
-  "10_descriptive/dc-eda.qmd" = "width = 11, height = 8.5",  # a landscape page of small panels
-  "10_descriptive/dc-tables.qmd" = "width = 10, height = 10", # the correlation matrix
-  "10_descriptive/dc-stddiff.qmd" = "width = 7, height = max("  # one row per variable
+  "10_descriptive/dc-tables.qmd" = "width = 10, height = 10"
 )
 
 figure_standard_scan <- function(templates) {
@@ -91,4 +91,15 @@ test_that("the scan catches a figure larger than the page, chunk option or saved
   expect_identical(figure_standard_scan(dir),
                    c("big.qmd:10: width: 9 in is larger than the 6.5 by 9 in page",
                      "big.qmd:12: height = 24 in is larger than the 6.5 by 9 in page"))
+})
+
+test_that("a save_figure() call is held to the page, as dc-eda's landscape pages were not", {
+  dir <- withr::local_tempdir()
+  # dc-eda's page save until 2026-10-15, word for word.
+  writeLines(c("---", "format:", "  html:", "    fig-width: 6", "    fig-height: 4", "---", "```{r}",
+               "    file <- save_figure(.page,",
+               "                        sprintf(\"dc-eda-%s-page-%02d\", section, i), width = 11, height = 8.5, linked = TRUE)",
+               "```"),
+             file.path(dir, "eda.qmd"))
+  expect_identical(figure_standard_scan(dir), c("eda.qmd:9: width = 11 in is larger than the 6.5 by 9 in page"))
 })

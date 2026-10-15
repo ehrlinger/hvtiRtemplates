@@ -407,38 +407,58 @@ with no values. `ps_stddiff()`'s help page gives every formula.
 ## Balance figure
 
 ```{r}
-#| label: fig-balance
-#| fig-cap: >-
-#|   Standardized difference of each variable, one row per variable, for each comparison. A blue circle,
-#|   vermillion triangle and green square mark the first, second and third comparison in turn, the solid
-#|   vertical line zero difference, the dotted vertical lines the imbalance threshold, and the dashed
-#|   horizontal lines the variable rows.
+#| label: balance
+#| results: asis
+# unnumbered: each page below is a child chunk with its own label and caption
 # The figure keeps the table's units, proportions of a standard deviation, so
 # the threshold lines sit at the THRESHOLD the summary table counts against.
 long <- do.call(rbind, lapply(names(results), function(nm) {
   data.frame(variable = balance$label, comparison = nm, std_diff = balance[[nm]])
 }))
 long <- long[!is.na(long$std_diff), , drop = FALSE]
-bal <- hvtiPlotR::hv_balance(long, variable_col = "variable", group_col = "comparison",
-                             std_diff_col = "std_diff", var_levels = rev(unique(balance$label)),
-                             threshold = THRESHOLD)
 # The house palette for the comparisons, and a shape each, so the figure still
 # reads in grayscale.
 .levels <- names(results)
-p <- plot(bal) +
-  scale_color_manual(values = stats::setNames(hv_palette(length(.levels)), .levels)) +
-  scale_shape_manual(values = stats::setNames(c(16, 17, 15)[seq_along(.levels)], .levels)) +
-  labs(x = "Standardized difference (group 1 minus group 0)", y = NULL, color = NULL, shape = NULL) +
-  theme_hv_manuscript(base_size = 12) +
-  # The manuscript theme drops the legend; this figure needs it to say which
-  # comparison each point is.
-  theme(legend.position = "top")
-# Free size: one row per variable, so the height grows with the list.
-file <- save_figure(p, "dc-stddiff-balance", width = 7, height = max(3, 1.5 + 0.25 * nrow(balance)), linked = TRUE)
-# This document sits in descriptive/ and the figure is written to graphs/, so
-# the image link is the figure's path relative to this document.
-knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
-                        error = FALSE)
+.cap <- paste("Standardized difference of each variable, one row per variable, for each comparison. A blue",
+              "circle, vermillion triangle and green square mark the first, second and third comparison in",
+              "turn, the solid vertical line zero difference, the dotted vertical lines the imbalance",
+              "threshold, and the dashed horizontal lines the variable rows.")
+# One row per variable, 0.25 in each under 1.5 in of axis and legend, on the
+# printed page: 6.5 by 9 in holds 30 rows, and more variables go on further
+# pages, each a numbered figure of its own.
+.vars <- unique(balance$label)
+.pages <- split(.vars, ceiling(seq_along(.vars) / 30L))
+.fence <- strrep("`", 3)
+for (.i in seq_along(.pages)) {
+  .on <- .pages[[.i]]
+  bal <- hvtiPlotR::hv_balance(long[long$variable %in% .on, , drop = FALSE], variable_col = "variable",
+                               group_col = "comparison", std_diff_col = "std_diff", var_levels = rev(.on),
+                               threshold = THRESHOLD)
+  p <- plot(bal) +
+    scale_color_manual(values = stats::setNames(hv_palette(length(.levels)), .levels)) +
+    scale_shape_manual(values = stats::setNames(c(16, 17, 15)[seq_along(.levels)], .levels)) +
+    labs(x = "Standardized difference (group 1 minus group 0)", y = NULL, color = NULL, shape = NULL) +
+    theme_hv_manuscript(base_size = 12) +
+    # The manuscript theme drops the legend; this figure needs it to say which
+    # comparison each point is.
+    theme(legend.position = "top")
+  file <- save_figure(p, sprintf("dc-stddiff-balance-page-%02d", .i), width = 6.5,
+                      height = max(3, 1.5 + 0.25 * length(.on)), linked = TRUE)
+  # This document sits in descriptive/ and the figure is written to graphs/, so
+  # the image link is the figure's path relative to this document.
+  .link <- xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE)
+  .caption <- if (length(.pages) > 1L) {
+    paste0(.cap, " Page ", .i, " of ", length(.pages), ": ", .on[[1L]], " to ", .on[[length(.on)]], ".")
+  } else {
+    .cap
+  }
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), paste0("#| label: fig-balance-", .i),
+    paste0("#| fig-cap: ", encodeString(.caption, quote = "\"")),
+    "knitr::include_graphics(.link, error = FALSE)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 ```
 
 ## Permutation reference

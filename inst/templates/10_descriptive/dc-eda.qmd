@@ -173,6 +173,9 @@ EVENTS <- list()
 # The follow-up columns are drawn too, like any other column.
 # A named column that is not in the data stops the render, and the error
 # lists every missing name at once.
+# GRID_NCOL by GRID_NROW panels make a page, and a page is drawn on the printed
+# page, 6.5 by 9 in: two panels across leave each one room for its categories
+# named beside it at 8 pt, and more than two crowd those names.
 # SECTIONS is any of "followup", "continuous", "percent" and "count". The
 # report keeps this order whatever order they are named in, so the report
 # reads the same across studies.
@@ -182,7 +185,7 @@ EVENTS <- list()
 X_VAR <- "year"                    # EDIT: reference time or year
 VARIABLES <- NULL                  # EDIT: NULL draws every column, or name them
 EXCLUDE <- character(0)
-GRID_NCOL <- 4L
+GRID_NCOL <- 2L
 GRID_NROW <- 4L
 UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
@@ -581,12 +584,12 @@ draw_section <- function(section) {
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
   files <- character(0)
   for (i in seq_along(pages)) {
-    # Free size: a page is a grid of panels, so it keeps a page of its own to leave each readable.
-    # 8 pt, not 12, because four panels share a row. Categories are named beside each panel in
+    # A page of its own, the printed page, 6.5 by 9 in: a grid of GRID_NCOL by GRID_NROW panels.
+    # 8 pt, not 12, because panels share a row. Categories are named beside each panel in
     # their own color rather than in a legend, which runs past the page edge at this width.
     .page <- hvtiRtemplates:::.eda_direct_labels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
     file <- save_figure(.page,
-                        sprintf("dc-eda-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)
+                        sprintf("dc-eda-%s-page-%02d", section, i), width = 6.5, height = 9, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
     cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")
     .link <- figure_link(file)

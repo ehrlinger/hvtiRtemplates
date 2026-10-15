@@ -124,7 +124,7 @@ test_that("dc-stddiff renders, figure and all", {
   expect_match(out, "Standardized difference of each variable", fixed = TRUE)
   expect_match(out, "Unadjusted: observed difference", fixed = TRUE)
   expect_match(out, "The weighted comparison has no reference", fixed = TRUE)
-  png <- list.files(file.path(s$root, "graphs"), pattern = "^dc-stddiff-balance[.]png$",
+  png <- list.files(file.path(s$root, "graphs"), pattern = "^dc-stddiff-balance-page-01[.]png$",
                     recursive = TRUE, full.names = TRUE)
   expect_length(png, 1L)
   expect_gt(file.info(png)$size, 1000)

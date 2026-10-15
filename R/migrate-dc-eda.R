@@ -21,7 +21,7 @@
   # its default draws both the percent and the count pages, so a migrated job
   # keeps the categorical view its legacy job drew.
   config <- list(DATASET = NA_character_, X_VAR = NA_character_, VARIABLES = NULL,
-                 EXCLUDE = character(), GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
+                 EXCLUDE = character(), GRID_NCOL = 2L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                  SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5)
   decisions <- list(translated = list(), unresolved = list(), ignored = list())
   for (statement in statements) {
