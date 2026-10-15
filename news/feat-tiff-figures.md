@@ -4,3 +4,5 @@
   TIFF is the raster format the family delivers by default, as hvtiPlotR's
   `save_manuscript()` does. The PNG stays the image a report embeds. ragg is
   suggested: without it the TIFF is skipped, with a message once a session.
+  ragg's floor is 1.2.1, which fixed a crash writing a TIFF with a
+  transparent background.
