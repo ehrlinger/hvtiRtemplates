@@ -1,10 +1,31 @@
 #' Rewrite a job from the current version of its template
 #'
 #' @description
+#' Upgrades \strong{one job}: the file you name in \code{path}. It does not
+#' look for other jobs, so to upgrade several, call it once for each.
+#'
 #' A job is a copy of its template as it stood on the day \code{\link{add_job}}
 #' wrote it. \code{upgrade_job()} writes the job again from the template as it
 #' stands now and carries the study's choices across, so a job keeps up with
 #' its template without re-entering every choice by hand.
+#'
+#' @section Upgrading a job:
+#' Name the job's \code{.qmd} file. From the study root, a cohort EDA job is
+#' \preformatted{upgrade_job("10_descriptive/dc.general.cohort.eda.qmd")}
+#' and several jobs are upgraded one call each:
+#' \preformatted{for (job in c("10_descriptive/dc.general.cohort.eda.qmd",
+#'               "10_descriptive/dc.general.cohort.gfup.qmd")) {
+#'   upgrade_job(job)
+#' }}
+#' You never name the template: the job's file name says which one it is.
+#' \code{dir} is needed only when the job sits outside the study it belongs
+#' to.
+#'
+#' Afterwards, render the job and read its report,
+#' \code{<job>-upgrade.md}, for the chunks to check. The old job is kept as
+#' \code{<job>.pre-upgrade}. Move that aside before upgrading the same job
+#' again: \code{upgrade_job()} never overwrites a file, so a second upgrade
+#' stops.
 #'
 #' @details
 #' The template is read from the job's file name, in either spelling
@@ -34,9 +55,12 @@
 #' and lines but never quotes their values, since a value can identify a
 #' patient. The upgrade refuses to overwrite any existing file.
 #'
-#' @param path Path to the job, relative to the working directory or absolute.
+#' @param path The one job to upgrade: its \code{.qmd} file, relative to the
+#'   working directory or absolute, such as
+#'   \code{"10_descriptive/dc.general.cohort.eda.qmd"}.
 #' @param dir Any directory in the study, used only to locate the study root.
-#'   Defaults to the directory of \code{path}.
+#'   Defaults to the directory of \code{path}, which is right for any job
+#'   inside its study.
 #'
 #' @return The upgraded job's path, invisibly. The report is written beside it.
 #' @seealso \code{\link{add_job}}, \code{\link{migrate_job}}
