@@ -399,14 +399,14 @@ p_calibration
 #| label: fig-importance
 #| fig-cap: "Importance of each predictor's main effect and of its interaction with time, one panel for each. Horizontal
 #|   dark gray bars give the importance of each predictor."
-#| fig-width: 9
+#| fig-width: 6.5
 #| fig-height: 7
 # Importance of each predictor's main effect and its interaction with time; the
 # interaction is where a predictor whose effect changes over follow-up shows.
 vimp <- vimp.boostmtree(fit)
-# Free size: one row per predictor, and one panel per effect.
+# Free size: one row per predictor, and one panel per effect, at the 6.5 in page width.
 p_vimp <- plot(gg_boost_vimp(vimp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
-save_figure(p_vimp, "nb-boostmtree-importance", width = 9, height = 7)
+save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
@@ -453,23 +453,45 @@ levels(.effect$response) <- .relabel
 .discrete <- .discrete[!is.na(.discrete)]
 .parts <- split(names(.discrete), .discrete)
 .kinds <- ifelse(names(.parts) == "TRUE", "categorical", "continuous")
-p_effects <- lapply(unname(.parts), function(v) {
-  part <- .effect[.effect$variable %in% v, , drop = FALSE]
-  part$variable <- droplevels(part$variable)
-  # The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.
-  plot(part) + hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+# Free size, paged: one facet per predictor, two by two on a page no larger than
+# 6.5 by 9 in. With several response components ggBoostedTrees draws one column
+# per predictor and one row per component, so a page holds two predictors.
+.n_components <- nlevels(.effect$response)
+.pages <- lapply(unname(.parts), function(v) {
+  if (.n_components > 1L) {
+    hvtiRtemplates:::.figure_pages(length(v), panel_height = 3 * .n_components, page_height = 3 * .n_components)
+  } else {
+    hvtiRtemplates:::.figure_pages(length(v), page_height = 6)
+  }
 })
-# Free size: one panel per predictor, and per response component when there are several.
+# One plot per page, kind by kind: p_effects holds every page, and .effect_page says which kind and page each is.
+p_effects <- list()
+.effect_page <- list()
+for (.k in seq_along(.parts)) {
+  for (.j in seq_along(.pages[[.k]])) {
+    part <- .effect[.effect$variable %in% .parts[[.k]][.pages[[.k]][[.j]]$index], , drop = FALSE]
+    part$variable <- droplevels(part$variable)
+    # The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.
+    p_effects[[length(p_effects) + 1L]] <- plot(part) +
+      hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+    .effect_page[[length(.effect_page) + 1L]] <- list(kind = .kinds[[.k]], page = .j, of = length(.pages[[.k]]),
+                                                       size = .pages[[.k]][[.j]], vars = levels(part$variable))
+  }
+}
 .key <- c(continuous = paste("Each solid line is the effect at one follow-up time, colored from dark to light blue by",
                              "time as in the color bar."),
           categorical = paste("Each point is the effect at one level and follow-up time, colored from dark to light blue by",
                               "time as in the color bar."))
 for (.i in seq_along(p_effects)) {
   .p <- p_effects[[.i]]
-  save_figure(.p, paste0("nb-boostmtree-effects-", .kinds[[.i]]), width = 9, height = 7)
-  .child(paste("fig effects", .kinds[[.i]]),
-         paste0("Partial effects over follow-up, ", .kinds[[.i]], " predictors, one panel per predictor. ", .key[[.kinds[[.i]]]]),
-         ".p", opts = c("#| fig-width: 9", "#| fig-height: 7"))
+  .pg <- .effect_page[[.i]]
+  save_figure(.p, sprintf("nb-boostmtree-effects-%s-page-%02d", .pg$kind, .pg$page),
+              width = .pg$size$width, height = .pg$size$height)
+  .on_page <- if (.pg$of > 1L) paste0(" Page ", .pg$page, " of ", .pg$of, ": ", paste(.pg$vars, collapse = ", "), ".") else ""
+  .child(paste("fig effects", .pg$kind, .pg$page),
+         paste0("Partial effects over follow-up, ", .pg$kind, " predictors, one panel per predictor. ", .key[[.pg$kind]],
+                .on_page),
+         ".p", opts = sprintf(c("#| fig-width: %g", "#| fig-height: %g"), .pg$size$width, .pg$size$height))
 }
 ```
 

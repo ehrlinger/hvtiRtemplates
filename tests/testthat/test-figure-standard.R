@@ -4,6 +4,15 @@
 # Captions built by .child() at render time are not visible here; the static ones
 # are, and they are most of them.
 
+# Nothing is drawn larger than the printed page, 6.5 by 9 in: a figure whose panel
+# count follows the study is paged by .figure_pages() instead. These figures are
+# the spec's named exceptions, each matched by the size it is saved at.
+page_exceptions <- c(
+  "10_descriptive/dc-eda.qmd" = "width = 11, height = 8.5",  # a landscape page of small panels
+  "10_descriptive/dc-tables.qmd" = "width = 10, height = 10", # the correlation matrix
+  "10_descriptive/dc-stddiff.qmd" = "width = 7, height = max("  # one row per variable
+)
+
 figure_standard_scan <- function(templates) {
   out <- character(0)
   for (f in list.files(templates, pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)) {
@@ -23,6 +32,16 @@ figure_standard_scan <- function(templates) {
         grepl(".eda_direct_labels(", code[[i]], fixed = TRUE)
       if (!grepl("theme_hv_manuscript\\(base_size = 12[,)]", code[[i]]) && !facet_page) {
         out <- c(out, paste0(label, ":", i, ": theme_hv_manuscript() without base_size = 12"))
+      }
+    }
+    for (i in grep("^#\\| fig-(width|height): [0-9]|(width|height) = [0-9]", src)) {
+      if (!is.na(page_exceptions[label]) && grepl(page_exceptions[[label]], src[[i]], fixed = TRUE)) next
+      sizes <- regmatches(src[[i]], gregexpr("(width|height)(: | = )[0-9.]+", src[[i]]))[[1]]
+      for (size in sizes) {
+        inches <- as.numeric(sub("^.*(: | = )", "", size))
+        if (inches > if (startsWith(size, "width")) 6.5 else 9) {
+          out <- c(out, paste0(label, ":", i, ": ", size, " in is larger than the 6.5 by 9 in page"))
+        }
       }
     }
     for (i in grep("^#\\| label: fig-", src)) {
@@ -61,4 +80,15 @@ test_that("8 pt is allowed only on a page of small panels labeled directly", {
              file.path(dir, "eight.qmd"))
   found <- figure_standard_scan(dir)
   expect_identical(found, "eight.qmd:9: theme_hv_manuscript() without base_size = 12")
+})
+
+test_that("the scan catches a figure larger than the page, chunk option or saved size", {
+  dir <- withr::local_tempdir()
+  writeLines(c("---", "format:", "  html:", "    fig-width: 6", "    fig-height: 4", "---", "```{r}",
+               "#| label: fig-wide", "#| fig-cap: \"Wide.\"", "#| fig-width: 9", "p + theme_hv_manuscript(base_size = 12)",
+               "save_figure(p, \"tall\", width = 6, height = 24)", "```"),
+             file.path(dir, "big.qmd"))
+  expect_identical(figure_standard_scan(dir),
+                   c("big.qmd:10: width: 9 in is larger than the 6.5 by 9 in page",
+                     "big.qmd:12: height = 24 in is larger than the 6.5 by 9 in page"))
 })

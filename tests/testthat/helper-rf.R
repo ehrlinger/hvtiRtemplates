@@ -53,14 +53,16 @@ rf_study <- function(data = data.frame(ccfid = 1:2, time = c(1, 2), event = c(1,
 # study root, which the caller sets as env$.root, with its library() calls left
 # out: the caller attaches the packages instead.
 #
-# Before the `fig-dependence-varpro` chunk, a gg_partial_varpro() on a coarser
+# Before the `dependence-varpro` chunk, a gg_partial_varpro() on a coarser
 # grid is put in `env`, where the chunk finds it ahead of ggRandomForests' own:
 # see rf_gg_partial_varpro.
 rf_run <- function(prefix, qualifier, labels, env, choices = list()) {
   src <- readLines(template_path(prefix, qualifier), warn = FALSE)
+  # The dependence chunks emit each page as a child chunk.
+  if (any(startsWith(labels, "dependence-"))) local_child_chunks()  # nolint: object_usage_linter.
   # "set" is the old name of the setup chunk, and a list that names both runs it once.
   for (label in unique(vapply(labels, setup_label, ""))) {  # nolint: object_usage_linter.
-    if (identical(label, "fig-dependence-varpro")) assign("gg_partial_varpro", rf_gg_partial_varpro, envir = env)
+    if (identical(label, "dependence-varpro")) assign("gg_partial_varpro", rf_gg_partial_varpro, envir = env)
     if (identical(label, "setup")) {
       eval_setup_chunk(rf_chunk(src, label), env)  # nolint: object_usage_linter.
     } else {
@@ -80,7 +82,7 @@ rf_run <- function(prefix, qualifier, labels, env, choices = list()) {
 # the test data's size, not the files; they are muffled by their message, in
 # figure chunks only, and any other warning still reaches the summary.
 rf_drawing_notice <- function(label, w) {
-  startsWith(label, "fig-") && grepl(paste(c(
+  (startsWith(label, "fig-") || startsWith(label, "dependence-")) && grepl(paste(c(
     "^pseudoinverse used at", "^neighborhood radius", "^reciprocal condition number",
     "^There are other near singularities as well", "^Removed [0-9]+ rows containing"
   ), collapse = "|"), conditionMessage(w))
@@ -231,7 +233,7 @@ rf_explain_in <- function(prefix, root, env, .local_envir = parent.frame()) {
   env$.root <- root
   choices <- c(list(TOP_K = 2, SEED = 1), if (identical(prefix, "rfs")) list(TIMES = c(1, 3)))
   labels <- c("set", "edit-study-choices", "forest", "tbl-data", "fig-importance", "tbl-importance", "select", "fig-varpro",
-              "fig-dependence-marginal", "fig-dependence-partial", "fig-dependence-varpro")
+              "dependence-marginal", "dependence-partial", "dependence-varpro")
   # VarPro keeps only the variables it selects, so a top variable by VIMP can be
   # absent from its partial, and it says so. That one notice is about the
   # explanation, not the files; any other warning still reaches the summary.
