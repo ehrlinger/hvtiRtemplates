@@ -18,9 +18,10 @@ suppressPackageStartupMessages({
 # ---- The cohort --------------------------------------------------------------
 # 800 operations from 1990 to 2024, followed to a close date of 2025-12-31.
 # The shapes give the reports something to find: heart failure falls over the
-# years, LV mass drifts down, creatinine is missing for about 8%, and one
-# patient in ten is lost to follow-up early, which the goodness-of-follow-up
-# figure shows as blue points well below the diagonal. The seed is fixed, and
+# years, LV mass drifts down, creatinine is missing for about 8%, and follow-up
+# behaves as a real study's does (demo_followup() below), so the
+# goodness-of-follow-up figure has living patients drifting below the diagonal
+# in bands, and a few lost early. The seed is fixed, and
 # R's generators give the same draws on every platform, so the reference
 # numbers in reference/key-numbers.csv hold on any machine.
 demo_data <- function() {
@@ -31,7 +32,6 @@ demo_data <- function() {
   iv_opyrs <- sort(stats::runif(n, 0, 35))
   year <- origin + floor(iv_opyrs)
   op_date <- as.Date(paste0(origin, "-01-01")) + round(iv_opyrs * 365.25)
-  potential <- as.numeric(close_date - op_date) / 365.25
   era <- (year - origin) / 35
   age <- round(stats::rnorm(n, 58 + 8 * era, 12))
   female <- stats::rbinom(n, 1L, 0.35)
@@ -45,10 +45,9 @@ demo_data <- function() {
   creat_pr <- round(stats::rlnorm(n, log(1.0) + 0.1 * hx_dm, 0.3), 2)
   creat_pr[stats::runif(n) < 0.08] <- NA
   t_death <- stats::rexp(n, 1 / (25 - 0.2 * (age - 58)))
-  lost <- stats::runif(n) < 0.10
-  t_censor <- ifelse(lost, stats::runif(n, 0, potential), potential)
-  dead <- as.integer(t_death <= t_censor)
-  iv_dead <- round(pmin(t_death, t_censor), 3)
+  fup <- demo_followup(t_death, op_date, close_date)
+  dead <- fup$dead
+  iv_dead <- fup$iv_dead
   t_reop <- stats::rexp(n, 1 / 30)
   reop <- as.integer(t_reop < iv_dead)
   iv_reop <- round(pmin(t_reop, iv_dead), 3)
@@ -71,6 +70,46 @@ demo_data <- function() {
   )
   for (v in names(labels)) attr(built[[v]], "label") <- labels[[v]]
   built
+}
+
+# ---- Follow-up ---------------------------------------------------------------
+# Follow-up as a real study has it, rather than every survivor seen on the close
+# date. The goodness-of-follow-up figure exists to show these patterns, so a
+# demo without them shows a figure with nothing to find.
+#
+# - A living patient's last contact is their last clinic contact or the latest
+#   follow-up sweep they answered, whichever is later. The clinic contact lags
+#   the close date, more the longer ago the operation was: patients move away
+#   and stop coming back. Three sweeps, mid-2008, mid-2016 and mid-2023, each
+#   answered by about two patients in three, leave bands of last-contact dates.
+# - One patient in twenty is lost within two years of operation and never heard
+#   from again.
+# - Deaths come from a national death search, complete up to nine months before
+#   the close date, its indexing lag. A death in those last nine months is known
+#   only when it comes before the patient's last contact. So deaths are complete
+#   while the living drift below the diagonal, which is the pattern the figure's
+#   caption tells a reader to look for.
+#
+# t_death is in years from operation. Returns dead (1/0) and iv_dead in years,
+# rounded to 0.001: to death when it is known, otherwise to last contact.
+demo_followup <- function(t_death, op_date, close_date) {
+  n <- length(t_death)
+  potential <- as.numeric(close_date - op_date) / 365.25
+  lag <- stats::rexp(n, 1 / (0.3 + 0.12 * potential))
+  clinic <- pmax(0, potential - lag)
+  sweeps <- as.Date(c("2008-06-30", "2016-06-30", "2023-06-30"))
+  sweep <- rep(0, n)
+  for (s in seq_along(sweeps)) {
+    at <- as.numeric(sweeps[[s]] - op_date) / 365.25
+    answered <- at > 0 & stats::runif(n) < 0.65
+    sweep <- ifelse(answered, pmax(sweep, at), sweep)
+  }
+  contact <- pmax(clinic, sweep)
+  lost <- stats::runif(n) < 0.05
+  contact[lost] <- stats::runif(sum(lost), 0, pmin(2, potential[lost]))
+  searched <- potential - 0.75
+  known <- t_death <= searched | t_death <= contact
+  list(dead = as.integer(known), iv_dead = round(ifelse(known, t_death, contact), 3))
 }
 
 # ---- The study ---------------------------------------------------------------
