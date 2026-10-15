@@ -475,7 +475,7 @@ for (.k in seq_along(.parts)) {
     p_effects[[length(p_effects) + 1L]] <- plot(part) +
       hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
     .effect_page[[length(.effect_page) + 1L]] <- list(kind = .kinds[[.k]], page = .j, of = length(.pages[[.k]]),
-                                                       size = .pages[[.k]][[.j]], vars = levels(part$variable))
+                                                      size = .pages[[.k]][[.j]], vars = levels(part$variable))
   }
 }
 .key <- c(continuous = paste("Each solid line is the effect at one follow-up time, colored from dark to light blue by",
