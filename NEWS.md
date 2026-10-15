@@ -1,3 +1,156 @@
+# hvtiRtemplates 1.4.0
+
+* `dc-general` now says plainly that its tables are checks on the data, and
+  points to `dc-tables` for a manuscript table saved to Word, with the
+  `add_job()` call that scaffolds one (#308).
+
+* New `upgrade_job()` rewrites a job from the current version of its template
+  and carries the study's choices across: the upper-case assignments in its
+  `edit-*` chunks, multi-line values included. A choice the current template
+  no longer has is kept in the job, commented out under an `EDIT:` marker, and
+  the `-upgrade.md` report beside the job lists what was carried, not placed and
+  new, and which chunks to review, by name and never by value. The old job is
+  kept as `<file>.pre-upgrade` (#307).
+* `add_job()` now stamps each job with the template and package version it was
+  copied from, as one HTML comment after the front matter, which
+  `upgrade_job()` reads.
+
+* `hm` offers each covariate only to the phases whose block names it. It built
+  one formula from every block, so every covariate entered every phase and the
+  estimates were not comparable with the SAS model it replaces (#171). A block
+  naming a phase the `hz` fit does not have now stops the job.
+* `hm` no longer needs a companion SAS job: with `SAS_JOB <- NULL` the
+  covariates are listed per phase in R, and the covariate table says which
+  source was used (#178).
+
+* The `lm-*` and `rf*-fit` templates now show a table of missing values right
+  after the data are read: each model variable that has any, with its count, and
+  the cohort the fit will use ("725 of 800 rows analyzed; 75 dropped", or under
+  `na.impute`, how many rows are imputed). Until now the drop showed only as a
+  smaller sample size in the fit's own output. `hm` stops at that point instead,
+  naming each column and its count, where `hazard()` had failed with "Predictor
+  rows must match the length of 'time'" (#174).
+
+* `hs-setup` derives the life tables' 0/1 male and non-white indicators from
+  the study's own coding. New settings `MALE_LEVEL` and `OTHER_LEVELS` name the
+  values that count as male and as non-white, so a `female` column
+  (`MALE_LEVEL <- 0`), a sex factor or a race factor is used as it is, without
+  first deriving the indicators by hand. Both default to 1, which leaves a job
+  with 0/1 `male` and `other` columns unchanged. A level the column never takes
+  stops the job, and a new table shows how each value was counted, so a race
+  level left out of `OTHER_LEVELS`, and therefore counted as white, is visible
+  (#183).
+
+* `bl`, `br` and `bc` name the bag they read with `BOOT_PREFIX`, as `bh` does,
+  in place of `BOOT_FILE`: each reads `<BOOT_PREFIX>.rds`, defaulting to its own
+  prefix, and its runner in `inst/runners/` now writes `bl.rds`, `br.rds` or
+  `bc.rds` rather than `bagging.rds`. One setting across the family lets a runner
+  write where every report looks, and the three no longer overwrite one another
+  when they share a subject and type. A job scaffolded earlier keeps its own
+  `BOOT_FILE`; a runner still writing `bagging.rds` is read by setting
+  `BOOT_PREFIX <- "bagging"` (#189).
+
+* Every template now follows one figure standard. A single-panel figure is 6 in wide by 4 in
+  tall, in the report through `fig-width` and `fig-height` in each template's `format:` block
+  and in the saved PNG and PDF through `save_figure()`'s default. Faceted figures and plots
+  with one row per variable keep a size of their own, and say why. Type is 12 pt in
+  hvtiPlotR's theme, `theme_hv_manuscript(base_size = 12)`, on every ggplot, including those
+  returned by a package's `plot()` method, and `theme_minimal()` is gone. The one exception is
+  `dc-eda`'s pages of small panels, four to a row, which use 8 pt and name each category beside
+  its panel in its own color instead of a legend, with about five labels on the year axis.
+  Every figure's numbered caption now names the shape or line and the color of each mark, so
+  the figure can be read from its legend alone. `test-figure-standard.R` guards the size, the
+  theme and the captions (`dev/specs/2026-10-13-figure-standard-design.md`).
+* `lg` sizes its figure with hvtiPlotR's `hv_panel_size()`, so it now needs
+  hvtiPlotR 2.8.8, whose 6.5 inch page fits three columns, and the package
+  requires 2.8.9, which stops that function leaving a graphics device open. Its six scales keep
+  their two rows of three, each panel shrunk together to fit the page, with about
+  three ticks on each x axis so the labels of panels under 2 inches wide do not
+  run together.
+
+* `hs-setup` accepts a cohort with no one in a life-table stratum, all female or
+  all white, as `us_matched()` does. Under the default `MALE_LEVEL <- 1`, an
+  all-zero `male` column stopped, because the level never appeared in it. A
+  level the column could take is now accepted: 0 or 1 in a 0/1 column, or a
+  level a factor declares. An empty `OTHER_LEVELS` counts no one as non-white. A
+  level the column could not take still stops, because it is a typo (#183).
+
+* `bd` no longer publishes catalog releases, which hvtiRutilities 1.5.3 retired.
+  It writes the study's working file, `datasets/<DATASET_ID>.rds`, with a schema 1
+  build record beside it, `<DATASET_ID>.build.yml`, and with `REGISTER <- TRUE`
+  registers that file as a dated version with `register_data()` the first time
+  and `update_manifest()` after that. The version's manifest provenance then reads
+  `origin: bd`. The study choice `PUBLISH` is now `REGISTER`, and the `write-draft`
+  and `publish` chunks are now `write-built` and `register`. The build record
+  keeps a hash of the cohort rules, never their text, so an `EXCLUDE` rule that
+  names a patient stays in the job file. A study registered under a file this job
+  does not write still stops, now in `register`. A `DATASET_ID` ending in a date,
+  or naming a file `dataset-catalog.yml` lists as a published release, stops before
+  anything is written, so a working file never overwrites a release. `bd` needs hvtiRutilities 1.5.3
+  and checks for it in its setup chunk. Its tests no longer call
+  `publish_dataset()`, `register_data(release_id =)` or `adopt_data_update()`, so
+  they run with no deprecation warning.
+
+* Two regression-model templates: `rm-balancing_continuous`, a least-squares
+  balancing score for a continuous exposure, and `rm-linear`, an ordinary
+  least-squares outcome model. Both pool stacked imputations with Rubin's rules,
+  and both model the response untransformed or on the log scale through the
+  `RESPONSE_SCALE` study choice; the report states the formula it fitted and
+  reads the coefficients on that scale. They need `hvtiRpropensity` 0.2.0, and
+  the `lm` templates, `dc-stddiff` and `lp-mirror` now ask for it too.
+
+* The study-setup vignette's "When registered data change" passage now reviews a rebuilt
+  dataset with `hvtiRutilities::review_built()` and registers it with
+  `hvtiRutilities::update_manifest(dataset = "study")`, replacing the retired catalog-release
+  pair `review_data_update()` and `adopt_data_update()`.
+
+* The `lm` templates read stacked multiple imputations again. Since 1.3.0 their data table stopped with "This job models
+  one row per patient" on any `IMPUTATION`, because `read_job_data()` counted a patient once per row rather than once per
+  imputation. It takes a new `imputation` argument, which each `lm` template passes as `IMPUTATION`, and counts a patient
+  within each imputation: a patient once in each passes, a patient twice in one imputation, or in a long dataset with no
+  imputation, still stops. The data table now says how many imputations the rows hold, for example
+  "240 rows on 120 patients, in 2 imputations".
+* `read_job_data()` pairs an ID with its imputation by value, so a `bit64` `integer64` ID is no longer taken for one repeated
+  patient, and records the imputation column as the data spell it (`selection$imputation`). The `lm` templates read it
+  back, so `IMPUTATION <- "IMP"` works for a column `imp`, as `KEY` does.
+
+* `rm-linear` and `rm-balancing_continuous` read a named `RESPONSE_SCALE`, such
+  as one looked up with `scales["outcome"]`, as its value. Before, a named
+  `"identity"` fitted `log()` while the report read the coefficients as
+  measured, and a named `"log"` was read as measured and left the residual
+  axes unlabeled.
+
+* `read_job_data()`, so every template, now drops direct identifiers beyond MRN
+  and eMRN, unless one is the job's ID or a KEY column, including a KEY that names a joined column: `ccfid`, Social Security numbers
+  (`ssn`, `soc_sec`, `social_security`, each with or without a `_no`, `_num` or `_number`
+  suffix), and patient names and contact details held as text, by name (a 0/1 or Y/N
+  contact indicator stays, however it is stored), and any column whose values are shaped like Social Security numbers,
+  whatever its name. The data table lists every column dropped and notes the
+  ones dropped by their values. `bd` drops the same columns from the built it
+  writes, so `dc-eda` can no longer draw an SSN carried in from an SSDI join.
+
+* A website article, "From vars.sas to R: study-build and variable actions",
+  explains the design in `dev/specs/2026-10-14-bd-vars-action-items-design.md`
+  for analysts who know SAS `vars.sas`: where each `%vars` switch,
+  `tp.vars.<umbrella>` module, correction and deletion now lives, with
+  illustrative R. The functions it describes are not built yet. Articles under
+  `vignettes/articles/` are now left out of the package tarball.
+
+* The README's Installation section now leads with `hvtiR::install()`, which
+  installs the whole HVTI R family in one call, and then gives
+  `pak::pak("ehrlinger/hvtiRtemplates")` for this package alone.
+
+* `dc-tables` and `DESCRIPTION` now require hvtiRtables 1.0.5, whose Word
+  tables follow the SAS `%summarytable` layout: section rows in the
+  Characteristic column instead of a `groupname_col` column, no `%` sign in
+  the cells, a dagger and sub-header that name the statistic each row shows,
+  and a superscript `a` on each `n` with its footnote.
+
+* `lg`'s calibration figure says it needs hvtiPlotR when hvtiPlotR is not
+  installed, as it already did for ggplot2, instead of stopping on R's
+  "there is no package called" error. The figure has used
+  `hvtiPlotR::theme_hv_manuscript()` since the figure standard.
+
 # hvtiRtemplates 1.3.1
 
 * `lm-binary` no longer prints the saved model's full path in its report. A
