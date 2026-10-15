@@ -162,7 +162,11 @@ PANELS <- list(
 EVENTS <- list()
 
 # Variables.
-# X_VAR is the reference time every panel is drawn against.
+# X_VAR is the reference date or year every panel is drawn against, and
+# X_LABEL titles that axis. A date column, such as dt_surg, is drawn as a
+# decimal calendar year: whole years for the percent and count bars, the point
+# in the year for the continuous panels. Any other column is drawn as it is.
+# Set both when time 0 is not an operation, such as an enrollment date.
 # VARIABLES is NULL to draw every column, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
@@ -182,7 +186,7 @@ EVENTS <- list()
 # ALPHA is point transparency, for the follow-up figures and the continuous
 # panels: 0.5 lets a dense cohort read as a distribution rather than a blob.
 # MIGRATE-BEGIN: dc-eda-variables
-X_VAR <- "year"                    # EDIT: reference time or year
+X_VAR <- "dt_surg"                 # EDIT: the reference date or year column
 VARIABLES <- NULL                  # EDIT: NULL draws every column, or name them
 EXCLUDE <- character(0)
 GRID_NCOL <- 2L
@@ -191,6 +195,7 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dc-eda-variables
+X_LABEL <- "Year of operation"     # EDIT: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 
 # EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
 # vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
@@ -281,6 +286,9 @@ if (!is.null(job_data$attrition)) {
 # check the variable choices.
 column_names <- function(x) is.character(x) && !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
 if (!column_names(X_VAR) || length(X_VAR) != 1L) stop("X_VAR must name one column.", call. = FALSE)
+if (!is.character(X_LABEL) || length(X_LABEL) != 1L || is.na(X_LABEL) || !nzchar(X_LABEL)) {
+  stop("X_LABEL must be one piece of text, the x-axis label.", call. = FALSE)
+}
 if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
   stop("VARIABLES must be NULL or name distinct columns.", call. = FALSE)
 }
@@ -304,7 +312,11 @@ if (!is.null(ABBREVIATIONS) && (!(is.character(ABBREVIATIONS) || is.list(ABBREVI
   stop('ABBREVIATIONS must be NULL or name each abbreviation by its phrase, c("Phrase" = "Abbrev").', call. = FALSE)
 }
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
-if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
+if (length(unknown)) {
+  stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), ".",
+       if (X_VAR %in% unknown) " Set X_VAR in the study choices to the study's reference date or year column.",
+       call. = FALSE)
+}
 # The job's ID and KEY columns are left out by default, and the ID is never
 # drawn: they are the columns the data step used, so a ccfid, or the MRN it fell
 # back to, is caught whatever its case. A KEY column named in VARIABLES is drawn.
@@ -351,6 +363,27 @@ if (is.null(VARIABLES)) {
   }
 }
 if (!length(VARIABLES)) stop("No EDA variables remain after exclusions.", call. = FALSE)
+
+# The column the pages draw against, named X_LABEL so the axis reads in the
+# study's words, in a copy of the data the pages draw from (`d` is left as it
+# was read); X_VAR itself is never drawn as a variable. A date becomes a
+# decimal calendar year, the year plus the share of it gone by:
+# hv_eda_pages() floors a number to whole years for the percent and count
+# bars, and the continuous panels keep the decimal. Any other column is drawn
+# as it is.
+if (X_LABEL %in% setdiff(names(d), X_VAR)) {
+  stop("X_LABEL, \"", X_LABEL, "\", is already a column of the data; choose another label.", call. = FALSE)
+}
+.x <- d[[X_VAR]]
+if (inherits(.x, c("Date", "POSIXt"))) {
+  .lt <- as.POSIXlt(.x)
+  .year <- .lt$year + 1900
+  .days <- ifelse((.year %% 4 == 0 & .year %% 100 != 0) | .year %% 400 == 0, 366, 365)
+  .x <- .year + .lt$yday / .days
+}
+VARIABLES <- setdiff(VARIABLES, X_VAR)
+.d_eda <- d
+.d_eda[[X_LABEL]] <- .x
 
 # Labels come from the dataset; a variable without one is shown by its name.
 # Shortened labels stay distinct, using the job's, the study's and the group's
@@ -560,7 +593,7 @@ titles <- c(continuous = "Continuous variables", percent = "Categorical variable
                             "table above names them."))
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
 draw_section <- function(section) {
-  sec <- hvtiPlotR::hv_eda_pages(d, x_col = X_VAR, section = section, vars = VARIABLES,
+  sec <- hvtiPlotR::hv_eda_pages(.d_eda, x_col = X_LABEL, section = section, vars = VARIABLES,
                                  labels = labels, unique_limit = UNIQUE_LIMIT)
   cat("\n## ", titles[[section]], " (", sec$meta$n_vars, ")\n\n", sep = "")
   if (!sec$meta$n_vars) {

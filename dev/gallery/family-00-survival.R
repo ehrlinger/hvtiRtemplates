@@ -36,7 +36,7 @@ gallery_family(
       late_rate <- 0.035 * exp(0.045 * (d$age - 60) + 0.6 * d$hx_chf - 0.025 * (d$lvef - 55) + 0.4 * d$hx_dm)
       t_late <- stats::rexp(n, late_rate)
       t_death <- ifelse(early, t_early, t_late)
-      fup <- demo_followup(t_death, d$op_date, as.Date("2025-12-31"))
+      fup <- demo_followup(t_death, d$dt_surg, as.Date("2025-12-31"))
       d$dead <- fup$dead
       d$iv_dead <- fup$iv_dead
       d$iv_dead[d$iv_dead == 0] <- 0.00025

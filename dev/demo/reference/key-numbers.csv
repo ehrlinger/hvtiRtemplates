@@ -13,7 +13,7 @@
 "dc-gfup","Close date","2025-12-31"
 "dc-gfup","All deaths, patients drawn","800"
 "dc-gfup","Reoperation, patients drawn","800"
-"dc-eda","Left out as identifier or date","patient_id, op_date"
+"dc-eda","Left out as identifier or date","patient_id, dt_surg"
 "dc-eda","Continuous variables","8"
 "dc-eda","Categorical variables, percent","7"
 "dc-eda","Categorical variables, counts","7"
