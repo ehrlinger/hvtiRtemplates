@@ -51,6 +51,18 @@ jobs:
             mkdir -p pkgdown/assets
             tar -xzf "$RUNNER_TEMP/gallery.tar.gz" -C pkgdown/assets
             echo "Template gallery: $(ls pkgdown/assets/gallery/reports/*.html | wc -l) reports."
+            # A gallery built before the latest release shows templates that
+            # release may have changed: the 2026-10-12 build still drew 7 x 5
+            # figures after the 6 x 4 standard shipped. Warn, never fail; the
+            # site is still worth building. ISO timestamps compare as strings.
+            built=$(gh release view gallery --json assets \
+              --jq '.assets[] | select(.name == "gallery.tar.gz") | .updatedAt')
+            latest=$(gh release view --json tagName,publishedAt \
+              --jq '"\(.tagName) \(.publishedAt)"' 2>/dev/null || true)
+            tag=${latest%% *}; released=${latest#* }
+            if [ -n "$latest" ] && [[ "$built" < "$released" ]]; then
+              echo "::warning::The template gallery was built ${built%%T*}, before $tag was released ${released%%T*}. Rebuild it with dev/gallery/ (gallery.R, package.py, publish.sh)."
+            fi
           else
             echo "::warning::No gallery.tar.gz on the 'gallery' release; the site builds without its template gallery."
           fi
@@ -76,6 +88,11 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@v4.5.0
         with:
-          clean: false
+          # Every run rebuilds the whole site, so nothing on gh-pages should
+          # outlive a build. With clean: false, renamed and rebuilt gallery
+          # reports piled up: on 2026-10-15 four dp-* reports from before the
+          # dc- rename and 97 unreferenced gallery images were still served.
+          # build_site_github_pages() writes .nojekyll itself.
+          clean: true
           branch: gh-pages
           folder: docs
