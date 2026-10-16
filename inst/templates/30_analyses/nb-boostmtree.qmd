@@ -491,7 +491,7 @@ for (.i in seq_along(p_effects)) {
   .child(paste("fig effects", .pg$kind, .pg$page),
          paste0("Partial effects over follow-up, ", .pg$kind, " predictors, one panel per predictor. ", .key[[.pg$kind]],
                 .on_page),
-         ".p", opts = sprintf(c("#| fig-width: %g", "#| fig-height: %g"), .pg$size$width, .pg$size$height))
+         ".p", opts = c(sprintf("#| fig-width: %g", .pg$size$width), sprintf("#| fig-height: %g", .pg$size$height)))
 }
 ```
 
