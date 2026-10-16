@@ -1,5 +1,81 @@
 # Changelog
 
+## hvtiRtemplates 1.4.1
+
+- The `rfs-explain`, `rfc-explain` and `rfr-explain` dependence figures,
+  and `nb-boostmtree`’s partial effects, are drawn on pages no larger
+  than the printed page, 6.5 by 9 in, rather than as one figure that
+  grew with the number of predictors: `rfs-explain`’s marginal
+  dependence was 24 in tall in the template gallery and 48 in at the
+  default `TOP_K = 8`, and the partial and VarPro dependence figures
+  were 9 in wide. Panels sit two across; more than fit go on further
+  pages, each a numbered figure whose caption names its predictors.
+  Saved files gain a `-page-01` suffix. The `rfc-explain` and
+  `nb-boostmtree` importance figures are 6.5 in wide rather than 9.
+
+- `dc-eda` draws its pages on the printed page, 6.5 by 9 in portrait,
+  rather than 11 by 8.5 in landscape, and its grid defaults to two
+  panels across (`GRID_NCOL <- 2L`), so each 8 pt panel’s title and year
+  axis stay readable. A section takes more pages than before. A job that
+  sets `GRID_NCOL` keeps its choice; more than two columns crowd the
+  panels. Migrating a legacy EDA job that sets no grid now gives two
+  columns.
+
+- `dc-eda`’s categorical panels, percent and count, no longer name their
+  categories, in a legend or beside the panel: the names took width the
+  bars needed, so the bars now fill the panel. The house colors tell the
+  categories apart, each panel’s title still names its variable, and the
+  section’s frequency table names the categories.
+
+- `dc-stddiff` draws its balance figure 6.5 in wide, not 7, and puts at
+  most 30 variables on a page of at most 9 in; more variables go on
+  further pages, each a numbered figure (`fig-balance-1`, …) whose
+  caption names its first and last variable. The saved file is
+  `dc-stddiff-balance-page-01.png` and so on, not
+  `dc-stddiff-balance.png`.
+
+- [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)’s
+  help page now says first that it upgrades the one job named in `path`,
+  shows a real job path and how to upgrade several jobs one call each,
+  and says what to check afterwards.
+
+- `dc-eda` draws against the surgery date by default,
+  `X_VAR <- "dt_surg"`, rather than a `year` column no study dataset
+  carries, which stopped a fresh job with “Unknown EDA column(s): year”.
+  A date column is drawn as a decimal calendar year: whole years for the
+  percent and count bars, the point in the year for the continuous
+  panels. Any other column is drawn as it is. The new `X_LABEL` choice
+  titles the axis, “Year of operation” by default; set it and `X_VAR`
+  when time 0 is not an operation, such as an enrollment date. A missing
+  `X_VAR` column now stops with “Set X_VAR in the study choices to the
+  study’s reference date or year column.”
+
+- In the HTML report, `dc-eda`’s percent and count pages carry hover
+  labels. The pages name no categories, so a reader hovers a bar to see
+  its category, year and count and percent. Each page is a ggiraph
+  widget of about 120 KB, with no embedded fonts. The saved PNG and PDF
+  figures are unchanged. The hover labels need ggiraph, now in Suggests,
+  and a hvtiPlotR that has `hv_girafe()`. Without either, the pages are
+  images as before.
+
+- A selected figure is saved as a TIFF too, beside its PNG and PDF: 300
+  dpi and LZW-compressed, through
+  [`ragg::agg_tiff()`](https://ragg.r-lib.org/reference/agg_tiff.html),
+  since [`grDevices::tiff()`](https://rdrr.io/r/grDevices/png.html)
+  cannot compress on a Mac without XQuartz. Journals ask for a PDF or a
+  TIFF, and the TIFF is the raster format the family delivers by
+  default, as hvtiPlotR’s `save_manuscript()` does. The PNG stays the
+  image a report embeds. ragg is suggested: without it the TIFF is
+  skipped, with a message once a session. ragg’s floor is 1.2.1, which
+  fixed a crash writing a TIFF with a transparent background. A
+  transparent plot stays transparent in its TIFF, and saving a figure
+  leaves the graphics device that was active before it active
+  afterwards.
+
+- The `hm` template’s note on `vars.sas` columns (mean imputation, the
+  `ms_*` flags, and why R reading a column as a factor would quietly
+  change the model) is rewritten in plainer terms for readers new to R.
+
 ## hvtiRtemplates 1.4.0
 
 - `dc-general` now says plainly that its tables are checks on the data,
