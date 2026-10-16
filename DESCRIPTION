@@ -48,6 +48,7 @@ Suggests:
     arrow,
     bit64,
     boostmtree (>= 2.0.3),
+    broom,
     fs,
     ggBoostedTrees (>= 0.9.1),
     ggRandomForests (>= 4.0.0),

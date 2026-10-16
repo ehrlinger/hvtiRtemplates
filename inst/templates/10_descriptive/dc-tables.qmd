@@ -312,6 +312,9 @@ stddiff_values <- function(d, by, buckets, mean_sd = character(0), ordinal = cha
     stop("STDDIFF needs GROUP_1 to name the treated value of ", by, ", one of: ",
          paste(sort(as.character(seen)), collapse = ", "), ".", call. = FALSE)
   }
+  # A 0/1 group stored as text or a factor is the same group: 1 is treated,
+  # as it is for a numeric one, which ps_stddiff() needs to be told.
+  if (is.null(group_1) && !is.numeric(seen) && !is.logical(seen)) group_1 <- "1"
   if (!is.null(group_1) && !(as.character(group_1) %in% as.character(seen))) {
     stop("GROUP_1 must be one of the values of ", by, ": ",
          paste(sort(as.character(seen)), collapse = ", "), ".", call. = FALSE)
@@ -396,8 +399,13 @@ if (STDDIFF) {
                                      label = "Std. Diff. (%)")
 }
 # The table as it is saved to Word, so the report and the .docx are one table.
+# The saver writes its notes under the table; the report shows the same notes
+# as footer lines on a copy, so a mark such as a Fisher row's double dagger is
+# explained here too. ft itself is saved unchanged.
 ft <- hvtiRtables::hv_man_table(tbl)
-ft
+notes <- attr(ft, "hv_footnotes", exact = TRUE)
+if (is.null(notes)) notes <- hvtiRtables::hv_man_footnotes()
+flextable::add_footer_lines(ft, paste(names(notes), unlist(notes, use.names = FALSE)))
 if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
       !grepl("^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$", WORD_FILE)) {
   stop("WORD_FILE must be a plain .docx filename within this set.", call. = FALSE)

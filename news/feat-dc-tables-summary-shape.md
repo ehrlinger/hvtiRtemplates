@@ -8,4 +8,5 @@
   which `%stddiff` ranks rather than treats as nominal. `GROUP_1` names the
   treated group when `BY` is not 0/1. `SHOW_VARIABLE <- FALSE` drops the new
   Variable column for a manuscript. The report now shows the table exactly as
-  it is saved to Word, not gtsummary's working copy. Needs hvtiRtables 1.0.6.
+  it is saved to Word, with its notes, not gtsummary's working copy. Needs
+  hvtiRtables 1.0.6, and broom for `COMPARE <- "pvalue"`.
