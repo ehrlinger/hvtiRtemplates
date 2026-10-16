@@ -32,7 +32,6 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   skip_if_not_installed("quarto")
   skip_if_not_installed("hvtiRpropensity")
   skip_if(utils::packageVersion("hvtiRtables") < "1.0.6", "needs hvtiRtables >= 1.0.6")
-  # A draft render: the job keeps its EDIT: markers, which a final render refuses.
   withr::local_envvar(HVTI_TEMPLATE_STRICT = NA)
   root <- dc_tables_study()
   job <- add_job("dc", "cohort", "tables", qualifier = "tables", dir = root)
@@ -48,9 +47,14 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   groups <- grep("^GROUPS <- list\\($", lines)
   lines <- c(lines[seq_len(groups)], '  Demography = c("age", "female", "race"),',
              '  Clinical = c("creat", "nyha")', ")", lines[-seq_len(groups + 3L)])
-  writeLines(lines, job)
+  # Worked markers, as helper-rm.R does, so the render is the same draft or final.
+  writeLines(gsub("EDIT:", "REVIEWED:", lines, fixed = TRUE), job)
 
-  quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
+  rendered <- tryCatch(quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE),
+                       error = function(e) e)
+  # A quiet render's error says only that quarto failed; render again aloud so
+  # the log names the chunk and the cause.
+  if (inherits(rendered, "error")) quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE)
 
   html <- paste(readLines(sub("[.]qmd$", ".html", job), warn = FALSE), collapse = "\n")
   expect_match(html, "Std. Diff. (%)", fixed = TRUE)
