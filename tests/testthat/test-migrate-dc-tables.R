@@ -160,6 +160,11 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   env$SUBJECT <- "cohort"
   env$TYPE <- "eda"
   env$OVERRIDES <- list()
+  # The choices after the migrated block, at their template defaults.
+  env$MEAN_SD <- env$ORDINAL <- character(0)
+  env$STDDIFF <- FALSE
+  env$GROUP_1 <- NULL
+  env$SHOW_VARIABLE <- TRUE
   env$study_dir <- hvtiRutilities::study_dir
   env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   eval(parse(text = tables_region(out, "dc-tables-config")), env)

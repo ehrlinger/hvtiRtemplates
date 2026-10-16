@@ -1464,6 +1464,8 @@
         "hvtiRtables::hv_tbl_summary",
         "hvtiRtables::hv_man_table",
         "hvtiRtables::hv_man_table_save",
+        "hvtiRtables::hv_tbl_compare",
+        "hvtiRpropensity::ps_stddiff",
         "hvtiRtables::hv_correlation_table",
         "hvtiPlotR::hv_correlation_matrix"
       ]

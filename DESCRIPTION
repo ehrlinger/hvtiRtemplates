@@ -55,7 +55,7 @@ Suggests:
     ggplot2,
     haven,
     hvtiPlotR (>= 2.8.9),
-    hvtiRtables (>= 1.0.5),
+    hvtiRtables (>= 1.0.6),
     hvtiRdatabuild (>= 0.3.0),
     hvtiRbootstrap (>= 0.9.3),
     hvtiRlifetables (>= 0.1.2),
