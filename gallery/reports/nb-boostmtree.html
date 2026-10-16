@@ -2235,7 +2235,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-15 11:20</p>
+      <p class="date">2026-10-15 21:21</p>
     </div>
   </div>
   
@@ -2247,7 +2247,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: nb.boostmtree 1.4.0 -->
+<!-- hvtiRtemplates: nb.boostmtree 1.4.1 -->
 <p>Gallery job on the synthetic echo series: LV ejection fraction over follow-up (iv_echo), six baseline predictors.</p>
 <!--
      say which response, visit time and predictors it used.
@@ -2308,7 +2308,7 @@ vertical-align: -.125em;
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png and &lt;name&gt;.pdf in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
 <span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
@@ -2325,7 +2325,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>echo</code> <code>echo_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
+<p><strong>final</strong> · data <code>echo</code> <code>echo_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.1</p>
 </div>
 </div>
 </div>
@@ -2412,8 +2412,8 @@ vertical-align: -.125em;
 <span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old fit; TRUE recomputes it.</span></span>
 <span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
 <span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).</span></span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves neither; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
 <span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
 <span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
 <span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
@@ -2682,8 +2682,8 @@ Table 3: Cross-validated fit, by response component
 <tr class="odd">
 <td style="text-align: left;">l2</td>
 <td style="text-align: left;">lvef</td>
-<td style="text-align: right;">189</td>
-<td style="text-align: right;">0.8815981</td>
+<td style="text-align: right;">174</td>
+<td style="text-align: right;">0.8861579</td>
 </tr>
 </tbody>
 </table>
@@ -2705,7 +2705,7 @@ Table 3: Cross-validated fit, by response component
 <div id="fig-error" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/92ae790e7cc3193f3a7c6ea23d437a62.png" class="img-fluid figure-img" width="576">
+<img role="img" src="assets/022376ded1d42b4ff0dce602948b97be.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 1: Cross-validated error by boosting iteration. The black solid line is the error after each iteration, and the black dashed vertical line marks the iteration with the lowest error, Best M.
@@ -2726,7 +2726,7 @@ Figure 1: Cross-validated error by boosting iteration. The black solid line is 
 <div id="fig-path" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/272d3dc6afb9251ca917631d9181db92.png" class="img-fluid figure-img" width="576">
+<img role="img" src="assets/70a1249ff3543068db49dec06f5e8b44.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel per parameter. Each black solid line is the parameter’s fitted value after each iteration.
@@ -2749,7 +2749,7 @@ Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel per param
 <div id="fig-calibration" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-calibration-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/5a6488daa087b197e1c57639ffea96b6.png" class="img-fluid figure-img" width="576">
+<img role="img" src="assets/87ee9ad66f0edce22abba667965c0403.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-calibration-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 3: Observed against fitted values over follow-up, in time bins. Each gray horizontal segment spans a time bin at its observed mean, with a vertical black bar for the interval around it; black circles mark the observed means, black triangles the fitted means, and the black dashed line joins the fitted means over time.
@@ -2773,7 +2773,7 @@ Figure 3: Observed against fitted values over follow-up, in time bins. Each gra
 <div id="fig-importance" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/f38d3740a6f4a832fcb6bce089b8362b.png" class="img-fluid figure-img" width="624">
+<img role="img" src="assets/f0842c6d24d178201a94e8109d3da487.png" class="img-fluid figure-img" width="624">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 4: Importance of each predictor’s main effect and of its interaction with time, one panel for each. Horizontal dark gray bars give the importance of each predictor.
@@ -2876,10 +2876,10 @@ Figure 4: Importance of each predictor’s main effect and of its interaction w
 <div id="fig-effects-continuous-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-effects-continuous-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/c3c22e0d7a2e9304c1eaeef7f8aaf7c9.png" class="img-fluid figure-img" width="624">
+<img role="img" src="assets/d76ad1406cf222023bab4b4288ff5f70.png" class="img-fluid figure-img" width="624">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-effects-continuous-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 5: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar. Page 1 of 2: nyha_pr, hx_chf, age, bmi.
+Figure 5: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar. Page 1 of 2: nyha_pr, hx_chf, bmi, age.
 </figcaption>
 </figure>
 </div>
@@ -2896,10 +2896,10 @@ Figure 5: Partial effects over follow-up, continuous predictors, one panel per 
 <div id="fig-effects-continuous-2" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-effects-continuous-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/800cdc0d3605c5950b94aa61b16156f2.png" class="img-fluid figure-img" width="624">
+<img role="img" src="assets/4b5d44ca8630209ce17c33a6d0d19378.png" class="img-fluid figure-img" width="624">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-effects-continuous-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 6: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar. Page 2 of 2: hx_dm, female.
+Figure 6: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar. Page 2 of 2: female, hx_dm.
 </figcaption>
 </figure>
 </div>
@@ -2950,7 +2950,7 @@ Figure 6: Partial effects over follow-up, continuous predictors, one panel per 
 <div id="fig-traces" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-traces-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/1275e7b79a468c4ec2f32d926d4d6be0.png" class="img-fluid figure-img" width="576">
+<img role="img" src="assets/6dae06b1faff665e2c1df45614d73ded.png" class="img-fluid figure-img" width="576">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-traces-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mean fitted value over time. Thin translucent black lines trace each sampled patient’s fitted values, translucent black circles their observed values, and the thick black line the cohort’s mean fitted value within ten time bins.
@@ -2990,17 +2990,17 @@ Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mea
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-15 11:15:49 EDT</td>
+<td style="text-align: left;">2026-10-15 21:17:13 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-15 11:20:50 EDT</td>
+<td style="text-align: left;">2026-10-15 21:21:55 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">5 min 2 s</td>
+<td style="text-align: left;">4 min 42 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3040,7 +3040,7 @@ Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mea
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.4.0</td>
+<td style="text-align: left;">1.4.1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>echo</code></td>
@@ -3090,7 +3090,7 @@ Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mea
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"nb.boostmtree.lvef.boost","rendered":"2026-10-15T15:20:50Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"boostmtree","version":"2.0.3","source":"github","sha":"d55b6677a53596cd3915805dfc71d6fe5b4801b8"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggBoostedTrees","version":"0.9.2","source":"github","sha":"c8ec37375b663c96bfa9ab709c5f82af9021a946"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.10","source":"github","sha":"43bbfa04e58fc2eb05406a9e7b2826e4485c75e7"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"8609103430acb25c872fc68ac7253961bc4f48ba"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"9d5212666e18caff078c54262fb4c1ad04946c19"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"echo","path":"00_datasets/echo_20261015.parquet","role":"analysis","bytes":20990,"mtime":"2026-10-15T15:15:47Z","sha256":"94bd116a865f879259748f1d7e1f8a402875e06aa612cdab86350f7b34d75e09"}],"artifacts":[],"subject":"lvef","type":"boost","analysis":{"response":"lvef","time":"iv_echo","family":"continuous","M":200,"nu":0.05},"cohort":{"n_patients":300,"n_visits":1180},"run":{"start":"2026-10-15T11:15:49-0400","end":"2026-10-15T11:20:50-0400","time_zone":"EDT","duration_seconds":301.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"nb.boostmtree.lvef.boost.qmd","template":"nb.boostmtree","prefix":"nb","qualifier":"boostmtree","subject":"lvef","type":"boost","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"echo","version_file":"echo_20261015.parquet","registered":"2026-10-15","source_file":"echo.rds","rows":1180,"patients":300,"where":[],"sha256":"94bd116a865f","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}}},"source":"30_analyses/nb.boostmtree.lvef.boost.qmd",".hvti_render_id":"d8e2c4fc10bfcb4c23dce785d323debd2a4db1ec0f7c55dffbbdc84e52853eb3",".hvti_source_sha256":"e509a539f6f12d68cee142eceaeab0db30733daa1f82f6799fdbd86ae1595164"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"nb.boostmtree.lvef.boost","rendered":"2026-10-16T01:21:55Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"boostmtree","version":"2.0.3","source":"github","sha":"d55b6677a53596cd3915805dfc71d6fe5b4801b8"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggBoostedTrees","version":"0.9.2","source":"github","sha":"c8ec37375b663c96bfa9ab709c5f82af9021a946"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.11","source":"github","sha":"8a09f713748050f3b9a35b7c95ed95a92f14b1a1"},{"package":"hvtiRtemplates","version":"1.4.1","source":"github","sha":"d61ba9ae349c0988d5988b50b3e1f4f2ea972191"},{"package":"hvtiRutilities","version":"1.5.5","source":"github","sha":"226e6687538659b816198b6d285c7eb3bf872869"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"echo","path":"00_datasets/echo_20261015.parquet","role":"analysis","bytes":20990,"mtime":"2026-10-16T01:17:11Z","sha256":"94bd116a865f879259748f1d7e1f8a402875e06aa612cdab86350f7b34d75e09"}],"artifacts":[],"subject":"lvef","type":"boost","analysis":{"response":"lvef","time":"iv_echo","family":"continuous","M":200,"nu":0.05},"cohort":{"n_patients":300,"n_visits":1180},"run":{"start":"2026-10-15T21:17:13-0400","end":"2026-10-15T21:21:55-0400","time_zone":"EDT","duration_seconds":282.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"nb.boostmtree.lvef.boost.qmd","template":"nb.boostmtree","prefix":"nb","qualifier":"boostmtree","subject":"lvef","type":"boost","hvtiRtemplates":"1.4.1"},"datasets":[{"name":"echo","version_file":"echo_20261015.parquet","registered":"2026-10-15","source_file":"echo.rds","rows":1180,"patients":300,"where":[],"sha256":"94bd116a865f","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}}},"source":"30_analyses/nb.boostmtree.lvef.boost.qmd",".hvti_render_id":"6304f4c6710608475a80b580d87f1159c2eb25f3b5e6c6d3e9242789606af9dd",".hvti_source_sha256":"a8c1fede19fdc5c9cd7551a9140ca6937dbcfea2fa310f8b28ccb45944dd19fd"}</script>
 </section>
 
 </main>

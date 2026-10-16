@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:15
+2026-10-15 21:17
 
 Fits a Poisson or negative-binomial balancing score for a count
 exposure. The distribution is a reviewed study choice; the template
@@ -35,7 +35,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data `built` `built_20261015.parquet`, registered 2026-10-15
-· rendered by gallery on gallery · hvtiRtemplates 1.4.0
+· rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 Code
 
@@ -248,8 +248,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item           | Value                                     |
 |:----------------|:---------------|:------------------------------------------|
-| Run             | Started        | 2026-10-15 11:15:43 EDT                   |
-|                 | Ended          | 2026-10-15 11:15:44 EDT                   |
+| Run             | Started        | 2026-10-15 21:17:08 EDT                   |
+|                 | Ended          | 2026-10-15 21:17:08 EDT                   |
 |                 | Duration       | 0 s                                       |
 |                 | Status         | final                                     |
 |                 | Rendered by    | gallery                                   |
@@ -258,12 +258,12 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |                 | Template       | lm.balancing_count                        |
 |                 | Subject        | priorops                                  |
 |                 | Type           | balancing                                 |
-|                 | hvtiRtemplates | 1.4.0                                     |
+|                 | hvtiRtemplates | 1.4.1                                     |
 | Dataset `built` | Version file   | built_20261015.parquet                    |
 |                 | Registered     | 2026-10-15                                |
 |                 | Source file    | built.rds                                 |
 |                 | Rows kept      | 800 rows on 800 patients                  |
 |                 | WHERE          | none                                      |
-|                 | sha256         | f632480029c1                              |
+|                 | sha256         | b55bc29fc6a4                              |
 |                 | Manifest       | current                                   |
 | Reproducibility | renv           | not active                                |

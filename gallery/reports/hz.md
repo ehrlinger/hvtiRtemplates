@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:13
+2026-10-15 21:15
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -48,7 +48,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data `built` `built_20261015.parquet`, registered 2026-10-15
-· rendered by gallery on gallery · hvtiRtemplates 1.4.0
+· rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -732,8 +732,8 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 11:13:50 EDT  |
-|                 | Ended          | 2026-10-15 11:13:53 EDT  |
+| Run             | Started        | 2026-10-15 21:15:24 EDT  |
+|                 | Ended          | 2026-10-15 21:15:27 EDT  |
 |                 | Duration       | 3 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -742,12 +742,12 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 |                 | Template       | hz                       |
 |                 | Subject        | dead                     |
 |                 | Type           | hz                       |
-|                 | hvtiRtemplates | 1.4.0                    |
+|                 | hvtiRtemplates | 1.4.1                    |
 | Dataset `built` | Version file   | built_20261015.parquet   |
 |                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 725 rows on 725 patients |
 |                 | WHERE          | `!is.na(creat_pr)`       |
-|                 | sha256         | f632480029c1             |
+|                 | sha256         | b55bc29fc6a4             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

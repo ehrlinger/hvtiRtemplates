@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:21
+2026-10-15 21:22
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
@@ -66,7 +66,7 @@ if (utils::packageVersion("ggRandomForests") < "4.0.0") {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -82,7 +82,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data `built` `built_20261015.parquet`, registered 2026-10-15
-· rendered by gallery on gallery · hvtiRtemplates 1.4.0
+· rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -159,8 +159,8 @@ NA_ACTION <- "na.omit"
 # that are out of date, so it is safe to leave on while iterating.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -418,9 +418,9 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 11:20:58 EDT  |
-|                 | Ended          | 2026-10-15 11:21:05 EDT  |
-|                 | Duration       | 7 s                      |
+| Run             | Started        | 2026-10-15 21:22:01 EDT  |
+|                 | Ended          | 2026-10-15 21:22:09 EDT  |
+|                 | Duration       | 8 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -428,13 +428,13 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 |                 | Template       | rfs.fit                  |
 |                 | Subject        | dead                     |
 |                 | Type           | rf                       |
-|                 | hvtiRtemplates | 1.4.0                    |
+|                 | hvtiRtemplates | 1.4.1                    |
 | Dataset `built` | Version file   | built_20261015.parquet   |
 |                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | f632480029c1             |
+|                 | sha256         | b55bc29fc6a4             |
 |                 | Manifest       | current                  |
 | Reproducibility | Seed           | 2026                     |
 |                 | renv           | not active               |

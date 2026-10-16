@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:14
+2026-10-15 21:15
 
 An `hs` job turns the risk-factor model an `hm` job fitted into
 **predictions for individual patients**, and sets those against the
@@ -84,7 +84,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.0
+hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -561,8 +561,8 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 11:14:15 EDT |
-|  | Ended | 2026-10-15 11:14:15 EDT |
+| Run | Started | 2026-10-15 21:15:46 EDT |
+|  | Ended | 2026-10-15 21:15:46 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -571,14 +571,14 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 |  | Template | hs.setup |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.4.0 |
+|  | hvtiRtemplates | 1.4.1 |
 | Dataset `built` | Version file | built_20261015.parquet |
 |  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | f632480029c1 |
+|  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-15 11:13:58 -0400, data built_20261015.parquet |
+|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-15 21:15:32 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:14
+2026-10-15 21:16
 
 Fits a binary outcome model and preserves the fitted model, predictions,
 and pooled inference. For stacked imputations, coefficients and
@@ -38,7 +38,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data `built` `built_20261015.parquet`, registered 2026-10-15
-· rendered by gallery on gallery · hvtiRtemplates 1.4.0
+· rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -54,7 +54,7 @@ ANALYSIS_SET <- NULL
 # Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:
 #   WHERE <- quote(age >= 18)
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
-WHERE <- quote(year < 2015)
+WHERE <- quote(as.integer(format(dt_surg, "%Y")) < 2015)
 
 # Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
@@ -119,14 +119,14 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTORS)
 ```
 
-| Data                |                                          |
-|:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
-| Rows read           | 800                                      |
-| ID                  | `patient_id`                             |
-| Identifiers dropped | none                                     |
-| `year < 2015`       | removed 228                              |
-| Rows kept           | 572 rows on 572 patients                 |
+| Data |  |
+|:---|:---|
+| Source | dataset `built` (built_20261015.parquet) |
+| Rows read | 800 |
+| ID | `patient_id` |
+| Identifiers dropped | none |
+| `as.integer(format(dt_surg, "%Y")) < 2015` | removed 228 |
+| Rows kept | 572 rows on 572 patients |
 
 Table 1: The data this job read
 
@@ -238,24 +238,24 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 ## About this run
 
-| Group           | Item           | Value                      |
-|:----------------|:---------------|:---------------------------|
-| Run             | Started        | 2026-10-15 11:14:55 EDT    |
-|                 | Ended          | 2026-10-15 11:14:55 EDT    |
-|                 | Duration       | 0 s                        |
-|                 | Status         | final                      |
-|                 | Rendered by    | gallery                    |
-|                 | Host           | gallery                    |
-| Job             | File           | lm.binary.stroke.model.qmd |
-|                 | Template       | lm.binary                  |
-|                 | Subject        | stroke                     |
-|                 | Type           | model                      |
-|                 | hvtiRtemplates | 1.4.0                      |
-| Dataset `built` | Version file   | built_20261015.parquet     |
-|                 | Registered     | 2026-10-15                 |
-|                 | Source file    | built.rds                  |
-|                 | Rows kept      | 572 rows on 572 patients   |
-|                 | WHERE          | `year < 2015`              |
-|                 | sha256         | f632480029c1               |
-|                 | Manifest       | current                    |
-| Reproducibility | renv           | not active                 |
+| Group           | Item           | Value                                      |
+|:----------------|:---------------|:-------------------------------------------|
+| Run             | Started        | 2026-10-15 21:16:22 EDT                    |
+|                 | Ended          | 2026-10-15 21:16:22 EDT                    |
+|                 | Duration       | 0 s                                        |
+|                 | Status         | final                                      |
+|                 | Rendered by    | gallery                                    |
+|                 | Host           | gallery                                    |
+| Job             | File           | lm.binary.stroke.model.qmd                 |
+|                 | Template       | lm.binary                                  |
+|                 | Subject        | stroke                                     |
+|                 | Type           | model                                      |
+|                 | hvtiRtemplates | 1.4.1                                      |
+| Dataset `built` | Version file   | built_20261015.parquet                     |
+|                 | Registered     | 2026-10-15                                 |
+|                 | Source file    | built.rds                                  |
+|                 | Rows kept      | 572 rows on 572 patients                   |
+|                 | WHERE          | `as.integer(format(dt_surg, "%Y")) < 2015` |
+|                 | sha256         | b55bc29fc6a4                               |
+|                 | Manifest       | current                                    |
+| Reproducibility | renv           | not active                                 |

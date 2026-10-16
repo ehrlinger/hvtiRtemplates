@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:13
+2026-10-15 21:15
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -56,7 +56,7 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -67,7 +67,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data `built` `built_20261015.parquet`, registered 2026-10-15
-· rendered by gallery on gallery · hvtiRtemplates 1.4.0
+· rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -155,8 +155,8 @@ THRESHOLD <- 0.10
 N_PERM <- 200L
 SEED   <- 20261006L
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -412,35 +412,68 @@ variable with no spread in either group, or with no values.
 Code
 
 ``` r
+# unnumbered: each page below is a child chunk with its own label and caption
 # The figure keeps the table's units, proportions of a standard deviation, so
 # the threshold lines sit at the THRESHOLD the summary table counts against.
 long <- do.call(rbind, lapply(names(results), function(nm) {
   data.frame(variable = balance$label, comparison = nm, std_diff = balance[[nm]])
 }))
 long <- long[!is.na(long$std_diff), , drop = FALSE]
-bal <- hvtiPlotR::hv_balance(long, variable_col = "variable", group_col = "comparison",
-                             std_diff_col = "std_diff", var_levels = rev(unique(balance$label)),
-                             threshold = THRESHOLD)
 # The house palette for the comparisons, and a shape each, so the figure still
 # reads in grayscale.
 .levels <- names(results)
-p <- plot(bal) +
-  scale_color_manual(values = stats::setNames(hv_palette(length(.levels)), .levels)) +
-  scale_shape_manual(values = stats::setNames(c(16, 17, 15)[seq_along(.levels)], .levels)) +
-  labs(x = "Standardized difference (group 1 minus group 0)", y = NULL, color = NULL, shape = NULL) +
-  theme_hv_manuscript(base_size = 12) +
-  # The manuscript theme drops the legend; this figure needs it to say which
-  # comparison each point is.
-  theme(legend.position = "top")
-# Free size: one row per variable, so the height grows with the list.
-file <- save_figure(p, "dc-stddiff-balance", width = 7, height = max(3, 1.5 + 0.25 * nrow(balance)), linked = TRUE)
-# This document sits in descriptive/ and the figure is written to graphs/, so
-# the image link is the figure's path relative to this document.
-knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
-                        error = FALSE)
+.cap <- paste("Standardized difference of each variable, one row per variable, for each comparison. A blue",
+              "circle, vermillion triangle and green square mark the first, second and third comparison in",
+              "turn, the solid vertical line zero difference, the dotted vertical lines the imbalance",
+              "threshold, and the dashed horizontal lines the variable rows.")
+# One row per variable, 0.25 in each under 1.5 in of axis and legend, on the
+# printed page: 6.5 by 9 in holds 30 rows, and more variables go on further
+# pages, each a numbered figure of its own.
+# Only variables with a difference to draw: one whose difference is undefined,
+# a constant say, was dropped from `long` above, and a page of nothing but
+# those would hand hv_balance() no data.
+.vars <- unique(balance$label[balance$label %in% long$variable])
+.pages <- split(.vars, ceiling(seq_along(.vars) / 30L))
+.fence <- strrep("`", 3)
+for (.i in seq_along(.pages)) {
+  .on <- .pages[[.i]]
+  bal <- hvtiPlotR::hv_balance(long[long$variable %in% .on, , drop = FALSE], variable_col = "variable",
+                               group_col = "comparison", std_diff_col = "std_diff", var_levels = rev(.on),
+                               threshold = THRESHOLD)
+  p <- plot(bal) +
+    scale_color_manual(values = stats::setNames(hv_palette(length(.levels)), .levels)) +
+    scale_shape_manual(values = stats::setNames(c(16, 17, 15)[seq_along(.levels)], .levels)) +
+    labs(x = "Standardized difference (group 1 minus group 0)", y = NULL, color = NULL, shape = NULL) +
+    theme_hv_manuscript(base_size = 12) +
+    # The manuscript theme drops the legend; this figure needs it to say which
+    # comparison each point is.
+    theme(legend.position = "top")
+  file <- save_figure(p, sprintf("dc-stddiff-balance-page-%02d", .i), width = 6.5,
+                      height = max(3, 1.5 + 0.25 * length(.on)), linked = TRUE)
+  # This document sits in descriptive/ and the figure is written to graphs/, so
+  # the image link is the figure's path relative to this document.
+  .link <- xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE)
+  .caption <- if (length(.pages) > 1L) {
+    paste0(.cap, " Page ", .i, " of ", length(.pages), ": ", .on[[1L]], " to ", .on[[length(.on)]], ".")
+  } else {
+    .cap
+  }
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), paste0("#| label: fig-balance-", .i),
+    paste0("#| fig-cap: ", encodeString(.caption, quote = "\"")),
+    "knitr::include_graphics(.link, error = FALSE)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
 ```
 
-![](assets/ceec02ab0f4e85094eb10698bf8e9446.png)
+Code
+
+``` r
+knitr::include_graphics(.link, error = FALSE)
+```
+
+![](assets/eaa569acff405002b4353a255d3bb51f.png)
 
 Figure 1: Standardized difference of each variable, one row per
 variable, for each comparison. A blue circle, vermillion triangle and
@@ -509,8 +542,8 @@ rather than balance, so it is not part of this job.
 
 | Group           | Item           | Value                           |
 |:----------------|:---------------|:--------------------------------|
-| Run             | Started        | 2026-10-15 11:13:31 EDT         |
-|                 | Ended          | 2026-10-15 11:13:32 EDT         |
+| Run             | Started        | 2026-10-15 21:15:07 EDT         |
+|                 | Ended          | 2026-10-15 21:15:08 EDT         |
 |                 | Duration       | 1 s                             |
 |                 | Status         | final                           |
 |                 | Rendered by    | gallery                         |
@@ -519,13 +552,13 @@ rather than balance, so it is not part of this job.
 |                 | Template       | dc.stddiff                      |
 |                 | Subject        | approach                        |
 |                 | Type           | balance                         |
-|                 | hvtiRtemplates | 1.4.0                           |
+|                 | hvtiRtemplates | 1.4.1                           |
 | Dataset `built` | Version file   | built_20261015.parquet          |
 |                 | Registered     | 2026-10-15                      |
 |                 | Source file    | built.rds                       |
 |                 | Rows kept      | 800 rows on 800 patients        |
 |                 | WHERE          | none                            |
-|                 | sha256         | f632480029c1                    |
+|                 | sha256         | b55bc29fc6a4                    |
 |                 | Manifest       | current                         |
 | Reproducibility | Seed           | 20261006                        |
 |                 | renv           | not active                      |

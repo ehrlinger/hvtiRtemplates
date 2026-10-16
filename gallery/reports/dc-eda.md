@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:13
+2026-10-15 21:14
 
 Replaces an older EDA report.
 
@@ -59,7 +59,7 @@ if (!requireNamespace("patchwork", quietly = TRUE)) {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -70,7 +70,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data `built` `built_20261015.parquet`, registered 2026-10-15
-· rendered by gallery on gallery · hvtiRtemplates 1.4.0
+· rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -154,7 +154,11 @@ PANELS <- list(
 EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", death_time = "iv_dead", label = "Reoperation"))
 
 # Variables.
-# X_VAR is the reference time every panel is drawn against.
+# X_VAR is the reference date or year every panel is drawn against, and
+# X_LABEL titles that axis. A date column, such as dt_surg, is drawn as a
+# decimal calendar year: whole years for the percent and count bars, the point
+# in the year for the continuous panels. Any other column is drawn as it is.
+# Set both when time 0 is not an operation, such as an enrollment date.
 # VARIABLES is NULL to draw every column, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
@@ -165,21 +169,25 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", dea
 # The follow-up columns are drawn too, like any other column.
 # A named column that is not in the data stops the render, and the error
 # lists every missing name at once.
+# GRID_NCOL by GRID_NROW panels make a page, and a page is drawn on the printed
+# page, 6.5 by 9 in: two panels across keep each one's title and year axis
+# readable at 8 pt, and more than two crowd them.
 # SECTIONS is any of "followup", "continuous", "percent" and "count". The
 # report keeps this order whatever order they are named in, so the report
 # reads the same across studies.
 # ALPHA is point transparency, for the follow-up figures and the continuous
 # panels: 0.5 lets a dense cohort read as a distribution rather than a blob.
 # MIGRATE-BEGIN: dc-eda-variables
-X_VAR <- "year"                    # Demo: reference time or year
+X_VAR <- "dt_surg"                 # Demo: the reference date or year column
 VARIABLES <- NULL                  # Demo: NULL draws every column, or name them
 EXCLUDE <- character(0)
-GRID_NCOL <- 4L
+GRID_NCOL <- 2L
 GRID_NROW <- 4L
 UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dc-eda-variables
+X_LABEL <- "Year of operation"     # Demo: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 
 # Demo: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
 # vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
@@ -202,8 +210,8 @@ LABEL_MAX <- 40
 # _study.yml, over the group default shipped in hvtiRutilities.
 ABBREVIATIONS <- NULL
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -258,6 +266,9 @@ Code
 # check the variable choices.
 column_names <- function(x) is.character(x) && !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
 if (!column_names(X_VAR) || length(X_VAR) != 1L) stop("X_VAR must name one column.", call. = FALSE)
+if (!is.character(X_LABEL) || length(X_LABEL) != 1L || is.na(X_LABEL) || !nzchar(X_LABEL)) {
+  stop("X_LABEL must be one piece of text, the x-axis label.", call. = FALSE)
+}
 if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
   stop("VARIABLES must be NULL or name distinct columns.", call. = FALSE)
 }
@@ -281,7 +292,11 @@ if (!is.null(ABBREVIATIONS) && (!(is.character(ABBREVIATIONS) || is.list(ABBREVI
   stop('ABBREVIATIONS must be NULL or name each abbreviation by its phrase, c("Phrase" = "Abbrev").', call. = FALSE)
 }
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
-if (length(unknown)) stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), call. = FALSE)
+if (length(unknown)) {
+  stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), ".",
+       if (X_VAR %in% unknown) " Set X_VAR in the study choices to the study's reference date or year column.",
+       call. = FALSE)
+}
 # The job's ID and KEY columns are left out by default, and the ID is never
 # drawn: they are the columns the data step used, so a ccfid, or the MRN it fell
 # back to, is caught whatever its case. A KEY column named in VARIABLES is drawn.
@@ -329,12 +344,33 @@ if (is.null(VARIABLES)) {
 }
 ```
 
-    Left out as identifier or date columns (name them in VARIABLES to draw them; the job's ID is never drawn): patient_id, op_date 
+    Left out as identifier or date columns (name them in VARIABLES to draw them; the job's ID is never drawn): patient_id 
 
 Code
 
 ``` r
 if (!length(VARIABLES)) stop("No EDA variables remain after exclusions.", call. = FALSE)
+
+# The column the pages draw against, named X_LABEL so the axis reads in the
+# study's words, in a copy of the data the pages draw from (`d` is left as it
+# was read); X_VAR itself is never drawn as a variable. A date becomes a
+# decimal calendar year, the year plus the share of it gone by:
+# hv_eda_pages() floors a number to whole years for the percent and count
+# bars, and the continuous panels keep the decimal. Any other column is drawn
+# as it is.
+if (X_LABEL %in% setdiff(names(d), X_VAR)) {
+  stop("X_LABEL, \"", X_LABEL, "\", is already a column of the data; choose another label.", call. = FALSE)
+}
+.x <- d[[X_VAR]]
+if (inherits(.x, c("Date", "POSIXt"))) {
+  .lt <- as.POSIXlt(.x)
+  .year <- .lt$year + 1900
+  .days <- ifelse((.year %% 4 == 0 & .year %% 100 != 0) | .year %% 400 == 0, 366, 365)
+  .x <- .year + .lt$yday / .days
+}
+VARIABLES <- setdiff(VARIABLES, X_VAR)
+.d_eda <- d
+.d_eda[[X_LABEL]] <- .x
 
 # Labels come from the dataset; a variable without one is shown by its name.
 # Shortened labels stay distinct, using the job's, the study's and the group's
@@ -412,9 +448,8 @@ knitr::kable(.shown, row.names = FALSE)
 
 | variable | type | label | n_unique | pct_missing |
 |:---|:---|:---|---:|---:|
-| op_date | Num | Date of operation | 766 | 0.0 |
+| dt_surg | Num | Date of operation | 766 | 0.0 |
 | iv_opyrs | Num | Years from 1 January 1990 to operation | 787 | 0.0 |
-| year | Num | Year of operation | 35 | 0.0 |
 | age | Num | Age at operation (years) | 65 | 0.0 |
 | female | Num | Female | 2 | 0.0 |
 | race_grp | Char | Race | 3 | 0.0 |
@@ -445,7 +480,7 @@ knitr::kable(.shown, row.names = FALSE)
 | los | Num | Postoperative length of stay (days) | 19 | 0.0 |
 | log_los | Num | Postoperative length of stay (log days) | 19 | 0.0 |
 
-Table 2: Contents: 800 rows, 33 columns
+Table 2: Contents: 800 rows, 32 columns
 
 Code
 
@@ -664,13 +699,15 @@ titles <- c(continuous = "Continuous variables", percent = "Categorical variable
 # What each panel draws, for the caption: a continuous page has no legend to read it from.
 .eda_key <- c(continuous = paste0("Black filled circles mark patients, the solid blue line a LOESS smooth where a variable has ",
                                   "enough distinct values, and gray ticks along the bottom the patients missing the variable."),
-              percent = paste("Stacked bars give the share of patients at each reference value, one color per category",
-                              "named in that color beside the panel."),
-              count = paste("Stacked bars give the number of patients at each reference value, one color per category",
-                            "named in that color beside the panel."))
+              percent = paste("Stacked bars give the share of patients at each reference value, one house color per",
+                              "category. The categories are told apart by color alone; the categorical frequency",
+                              "table above names them."),
+              count = paste("Stacked bars give the number of patients at each reference value, one house color per",
+                            "category. The categories are told apart by color alone; the categorical frequency",
+                            "table above names them."))
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
 draw_section <- function(section) {
-  sec <- hvtiPlotR::hv_eda_pages(d, x_col = X_VAR, section = section, vars = VARIABLES,
+  sec <- hvtiPlotR::hv_eda_pages(.d_eda, x_col = X_LABEL, section = section, vars = VARIABLES,
                                  labels = labels, unique_limit = UNIQUE_LIMIT)
   cat("\n## ", titles[[section]], " (", sec$meta$n_vars, ")\n\n", sep = "")
   if (!sec$meta$n_vars) {
@@ -693,21 +730,27 @@ draw_section <- function(section) {
     .child(paste("tbl eda", section, "frequencies"), "Categorical variables, missing counted",
            "knitr::kable(freq, row.names = FALSE)")
   }
-  pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA)
+  # The bars carry hover labels in HTML: a page names no categories, so a reader hovers a bar
+  # for its category, year and count (John, 2026-10-15). The saved figure is the same either way.
+  hover <- section != "continuous" && knitr::is_html_output() && requireNamespace("ggiraph", quietly = TRUE) &&
+    "hv_girafe" %in% getNamespaceExports("hvtiPlotR")
+  pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA, interactive = hover)
   files <- character(0)
   for (i in seq_along(pages)) {
-    # Free size: a page is a grid of panels, so it keeps a page of its own to leave each readable.
-    # 8 pt, not 12, because four panels share a row. Categories are named beside each panel in
-    # their own color rather than in a legend, which runs past the page edge at this width.
-    .page <- hvtiRtemplates:::.eda_direct_labels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
+    # A page of its own, the printed page, 6.5 by 9 in: a grid of GRID_NCOL by GRID_NROW panels.
+    # 8 pt, not 12, because panels share a row: at 12 a long title and the year labels run
+    # past a 3.25 in panel. No legend and no category names, so the bars fill the panel
+    # (John, 2026-10-15); the frequency table above names the categories.
+    .page <- hvtiRtemplates:::.eda_page_panels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
     file <- save_figure(.page,
-                        sprintf("dc-eda-%s-page-%02d", section, i), width = 11, height = 8.5, linked = TRUE)
+                        sprintf("dc-eda-%s-page-%02d", section, i), width = 6.5, height = 9, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
     cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")
     .link <- figure_link(file)
     .child(paste("fig eda", section, "page", i),
            paste0(titles[[section]], ", page ", i, ": ", paste(labels[on_page], collapse = ", "), ". ", .eda_key[[section]]),
-           "knitr::include_graphics(.link, error = FALSE)")
+           if (hover) "hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)" else
+             "knitr::include_graphics(.link, error = FALSE)")
     files <- c(files, file)
   }
   abbreviation_key(vars)
@@ -753,17 +796,31 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/5a816dbe9ef963e18a3964259f7ff5f2.png)
+![](assets/2f56fd055f8255238e9a225ca4b215f9.png)
 
 Figure 3: Continuous variables, page 1: Years from 1 January 1990 to
 operation, Age at operation (years), Body mass index (kg/m2), LV
 ejection fraction (%), LV mass index (g/m2), Creatinine (mg/dL),
 Follow-up to death or censoring (years), Follow-up to reoperation
-(years), Hours in intensive care, Postoperative length of stay (days),
-Postoperative length of stay (log days). Black filled circles mark
-patients, the solid blue line a LOESS smooth where a variable has enough
-distinct values, and gray ticks along the bottom the patients missing
-the variable.
+(years). Black filled circles mark patients, the solid blue line a LOESS
+smooth where a variable has enough distinct values, and gray ticks along
+the bottom the patients missing the variable.
+
+### Continuous variables, page 2
+
+Code
+
+``` r
+knitr::include_graphics(.link, error = FALSE)
+```
+
+![](assets/72f0271574f47c0cdff4a8b43246654d.png)
+
+Figure 4: Continuous variables, page 2: Hours in intensive care,
+Postoperative length of stay (days), Postoperative length of stay (log
+days). Black filled circles mark patients, the solid blue line a LOESS
+smooth where a variable has enough distinct values, and gray ticks along
+the bottom the patients missing the variable.
 
 Code
 
@@ -837,33 +894,43 @@ Table 6: Categorical variables, missing counted
 Code
 
 ``` r
-knitr::include_graphics(.link, error = FALSE)
+hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-![](assets/0db069748071ce1d3f31f2cf7ee578cf.png)
-
-Figure 4: Categorical variables, percent, page 1: Female, Race, History
+Figure 5: Categorical variables, percent, page 1: Female, Race, History
 of heart failure, Diabetes, NYHA functional class, Death, Reoperation,
-Prolonged ventilation, Male, Non-white race, Postoperative stroke,
-Postoperative mitral regurgitation grade, Discharge destination,
-Surgical or transcatheter replacement, Prosthesis size, Prosthesis type.
-Stacked bars give the share of patients at each reference value, one
-color per category named in that color beside the panel.
+Prolonged ventilation. Stacked bars give the share of patients at each
+reference value, one house color per category. The categories are told
+apart by color alone; the categorical frequency table above names them.
 
 ### Categorical variables, percent, page 2
 
 Code
 
 ``` r
-knitr::include_graphics(.link, error = FALSE)
+hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-![](assets/0e671e70a7e5d19d19ef4429b1cdd041.png)
+Figure 6: Categorical variables, percent, page 2: Male, Non-white race,
+Postoperative stroke, Postoperative mitral regurgitation grade,
+Discharge destination, Surgical or transcatheter replacement, Prosthesis
+size, Prosthesis type. Stacked bars give the share of patients at each
+reference value, one house color per category. The categories are told
+apart by color alone; the categorical frequency table above names them.
 
-Figure 5: Categorical variables, percent, page 2: Number of prior
+### Categorical variables, percent, page 3
+
+Code
+
+``` r
+hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
+```
+
+Figure 7: Categorical variables, percent, page 3: Number of prior
 cardiac operations, In a matched pair (simulated), Major postoperative
 complication. Stacked bars give the share of patients at each reference
-value, one color per category named in that color beside the panel.
+value, one house color per category. The categories are told apart by
+color alone; the categorical frequency table above names them.
 
 Code
 
@@ -878,41 +945,51 @@ figure_files <- c(figure_files, draw_section("count"))
 Code
 
 ``` r
-knitr::include_graphics(.link, error = FALSE)
+hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-![](assets/7e0004aa10f657b85cf66080a72f54df.png)
-
-Figure 6: Categorical variables, counts, page 1: Female, Race, History
+Figure 8: Categorical variables, counts, page 1: Female, Race, History
 of heart failure, Diabetes, NYHA functional class, Death, Reoperation,
-Prolonged ventilation, Male, Non-white race, Postoperative stroke,
-Postoperative mitral regurgitation grade, Discharge destination,
-Surgical or transcatheter replacement, Prosthesis size, Prosthesis type.
-Stacked bars give the number of patients at each reference value, one
-color per category named in that color beside the panel.
+Prolonged ventilation. Stacked bars give the number of patients at each
+reference value, one house color per category. The categories are told
+apart by color alone; the categorical frequency table above names them.
 
 ### Categorical variables, counts, page 2
 
 Code
 
 ``` r
-knitr::include_graphics(.link, error = FALSE)
+hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-![](assets/003f85635724654aeb2e09a7434cfe34.png)
+Figure 9: Categorical variables, counts, page 2: Male, Non-white race,
+Postoperative stroke, Postoperative mitral regurgitation grade,
+Discharge destination, Surgical or transcatheter replacement, Prosthesis
+size, Prosthesis type. Stacked bars give the number of patients at each
+reference value, one house color per category. The categories are told
+apart by color alone; the categorical frequency table above names them.
 
-Figure 7: Categorical variables, counts, page 2: Number of prior cardiac
-operations, In a matched pair (simulated), Major postoperative
+### Categorical variables, counts, page 3
+
+Code
+
+``` r
+hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
+```
+
+Figure 10: Categorical variables, counts, page 3: Number of prior
+cardiac operations, In a matched pair (simulated), Major postoperative
 complication. Stacked bars give the number of patients at each reference
-value, one color per category named in that color beside the panel.
+value, one house color per category. The categories are told apart by
+color alone; the categorical frequency table above names them.
 
 ## About this run
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 11:13:11 EDT  |
-|                 | Ended          | 2026-10-15 11:13:20 EDT  |
-|                 | Duration       | 9 s                      |
+| Run             | Started        | 2026-10-15 21:14:35 EDT  |
+|                 | Ended          | 2026-10-15 21:14:54 EDT  |
+|                 | Duration       | 20 s                     |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -920,12 +997,12 @@ value, one color per category named in that color beside the panel.
 |                 | Template       | dc.eda                   |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.4.0                    |
+|                 | hvtiRtemplates | 1.4.1                    |
 | Dataset `built` | Version file   | built_20261015.parquet   |
 |                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | f632480029c1             |
+|                 | sha256         | b55bc29fc6a4             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:20
+2026-10-15 21:21
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -56,7 +56,7 @@ suppressPackageStartupMessages({
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -69,7 +69,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data `echo` `echo_20261015.parquet`, registered 2026-10-15 ·
-rendered by gallery on gallery · hvtiRtemplates 1.4.0
+rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -155,8 +155,8 @@ N_TRACES <- 100
 # render instead of returning the old fit; TRUE recomputes it.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -348,7 +348,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 189 | 0.8815981 |
+| l2 | lvef | 174 | 0.8861579 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -362,7 +362,7 @@ save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/92ae790e7cc3193f3a7c6ea23d437a62.png)
+![](assets/022376ded1d42b4ff0dce602948b97be.png)
 
 Figure 1: Cross-validated error by boosting iteration. The black solid
 line is the error after each iteration, and the black dashed vertical
@@ -377,7 +377,7 @@ save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/272d3dc6afb9251ca917631d9181db92.png)
+![](assets/70a1249ff3543068db49dec06f5e8b44.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
 per parameter. Each black solid line is the parameter’s fitted value
@@ -394,7 +394,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/5a6488daa087b197e1c57639ffea96b6.png)
+![](assets/87ee9ad66f0edce22abba667965c0403.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins.
 Each gray horizontal segment spans a time bin at its observed mean, with
@@ -414,7 +414,7 @@ save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
-![](assets/f38d3740a6f4a832fcb6bce089b8362b.png)
+![](assets/f0842c6d24d178201a94e8109d3da487.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time, one panel for each. Horizontal dark gray bars
@@ -514,12 +514,12 @@ Code
 .p
 ```
 
-![](assets/c3c22e0d7a2e9304c1eaeef7f8aaf7c9.png)
+![](assets/d76ad1406cf222023bab4b4288ff5f70.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-1 of 2: nyha_pr, hx_chf, age, bmi.
+1 of 2: nyha_pr, hx_chf, bmi, age.
 
     Warning in sprintf(c("#| fig-width: %g", "#| fig-height: %g"), .pg$size$width,
     : one argument not used by format
@@ -530,12 +530,12 @@ Code
 .p
 ```
 
-![](assets/800cdc0d3605c5950b94aa61b16156f2.png)
+![](assets/4b5d44ca8630209ce17c33a6d0d19378.png)
 
 Figure 6: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-2 of 2: hx_dm, female.
+2 of 2: female, hx_dm.
 
 Code
 
@@ -580,7 +580,7 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/1275e7b79a468c4ec2f32d926d4d6be0.png)
+![](assets/6dae06b1faff665e2c1df45614d73ded.png)
 
 Figure 7: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time. Thin translucent black lines trace
@@ -608,9 +608,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 | Group           | Item           | Value                        |
 |:----------------|:---------------|:-----------------------------|
-| Run             | Started        | 2026-10-15 11:15:49 EDT      |
-|                 | Ended          | 2026-10-15 11:20:50 EDT      |
-|                 | Duration       | 5 min 2 s                    |
+| Run             | Started        | 2026-10-15 21:17:13 EDT      |
+|                 | Ended          | 2026-10-15 21:21:55 EDT      |
+|                 | Duration       | 4 min 42 s                   |
 |                 | Status         | final                        |
 |                 | Rendered by    | gallery                      |
 |                 | Host           | gallery                      |
@@ -618,7 +618,7 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 |                 | Template       | nb.boostmtree                |
 |                 | Subject        | lvef                         |
 |                 | Type           | boost                        |
-|                 | hvtiRtemplates | 1.4.0                        |
+|                 | hvtiRtemplates | 1.4.1                        |
 | Dataset `echo`  | Version file   | echo_20261015.parquet        |
 |                 | Registered     | 2026-10-15                   |
 |                 | Source file    | echo.rds                     |

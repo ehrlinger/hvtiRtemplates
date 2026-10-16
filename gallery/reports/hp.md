@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:14
+2026-10-15 21:15
 
 An `hp` job **reads** its inputs and does not recompute them: the
 actuarial life table from the `ac` job and the parametric fit from the
@@ -44,7 +44,7 @@ suppressPackageStartupMessages({
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -60,7 +60,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.0
+hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -91,8 +91,8 @@ KEY <- NULL
 TIME <- NULL
 EVENT <- NULL
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -500,8 +500,8 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 11:14:09 EDT |
-|  | Ended | 2026-10-15 11:14:10 EDT |
+| Run | Started | 2026-10-15 21:15:41 EDT |
+|  | Ended | 2026-10-15 21:15:42 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -510,14 +510,14 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 |  | Template | hp |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.4.0 |
+|  | hvtiRtemplates | 1.4.1 |
 | Dataset `built` | Version file | built_20261015.parquet |
 |  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | f632480029c1 |
+|  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-15 11:13:44 -0400, data built_20261015.parquet |
-|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-15 11:13:50 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-15 21:15:19 -0400, data built_20261015.parquet |
+|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-15 21:15:24 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

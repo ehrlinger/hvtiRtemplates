@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:15
+2026-10-15 21:16
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -44,7 +44,7 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.9") {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder,
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder,
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -55,7 +55,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data `built` `built_20261015.parquet`, registered 2026-10-15
-· rendered by gallery on gallery · hvtiRtemplates 1.4.0
+· rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -88,8 +88,8 @@ MATCH <- NULL
 DATASET <- "built"
 ID <- "ccfid"
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("lp-mirror-weighted"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -452,8 +452,8 @@ if (!is.null(MATCH)) {
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 11:15:21 EDT |
-|  | Ended | 2026-10-15 11:15:22 EDT |
+| Run | Started | 2026-10-15 21:16:47 EDT |
+|  | Ended | 2026-10-15 21:16:48 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -462,13 +462,13 @@ if (!is.null(MATCH)) {
 |  | Template | lp.mirror |
 |  | Subject | approach |
 |  | Type | propensity |
-|  | hvtiRtemplates | 1.4.0 |
+|  | hvtiRtemplates | 1.4.1 |
 | Dataset `built` | Version file | built_20261015.parquet |
 |  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | f632480029c1 |
+|  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-15 11:15:15 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-15 21:16:41 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

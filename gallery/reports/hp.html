@@ -2244,7 +2244,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-15 11:14</p>
+      <p class="date">2026-10-15 21:15</p>
     </div>
   </div>
   
@@ -2256,7 +2256,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: hp 1.4.0 -->
+<!-- hvtiRtemplates: hp 1.4.1 -->
 <!-- Demo: name the SAS job this replaces, and say WHICH upstream fits it
      reads. A stratified hp job reads the per-stratum fits and never the
      overall one; getting that backwards produces a plausible figure. Then
@@ -2307,7 +2307,7 @@ vertical-align: -.125em;
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png and &lt;name&gt;.pdf in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
@@ -2327,7 +2327,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.4.1</p>
 </div>
 </div>
 </div>
@@ -2359,8 +2359,8 @@ vertical-align: -.125em;
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>TIME <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>EVENT <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves neither; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
 <span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
@@ -3065,12 +3065,12 @@ Figure 3: Phase decomposition of the cumulative hazard. The solid line is the t
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-15 11:14:09 EDT</td>
+<td style="text-align: left;">2026-10-15 21:15:41 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-15 11:14:10 EDT</td>
+<td style="text-align: left;">2026-10-15 21:15:42 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3115,7 +3115,7 @@ Figure 3: Phase decomposition of the cumulative hazard. The solid line is the t
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.4.0</td>
+<td style="text-align: left;">1.4.1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
@@ -3145,7 +3145,7 @@ Figure 3: Phase decomposition of the cumulative hazard. The solid line is the t
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">f632480029c1</td>
+<td style="text-align: left;">b55bc29fc6a4</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3155,12 +3155,12 @@ Figure 3: Phase decomposition of the cumulative hazard. The solid line is the t
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-hz/ac.rds</code> (actuarial-estimate), rendered 2026-10-15 11:13:44 -0400, data built_20261015.parquet</td>
+<td style="text-align: left;"><code>dead-hz/ac.rds</code> (actuarial-estimate), rendered 2026-10-15 21:15:19 -0400, data built_20261015.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-hz/hz.rds</code> (hazard-model), rendered 2026-10-15 11:13:50 -0400, data built_20261015.parquet</td>
+<td style="text-align: left;"><code>dead-hz/hz.rds</code> (hazard-model), rendered 2026-10-15 21:15:24 -0400, data built_20261015.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Reproducibility</td>
@@ -3170,7 +3170,7 @@ Figure 3: Phase decomposition of the cumulative hazard. The solid line is the t
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"hp.dead.hz","rendered":"2026-10-15T15:14:10Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"8609103430acb25c872fc68ac7253961bc4f48ba"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"9d5212666e18caff078c54262fb4c1ad04946c19"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"numDeriv","version":"2016.8.1.1","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"TemporalHazard","version":"1.2.16","source":"github","sha":"746ce9e95ef3075afcdb8524306ea053f7306282"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T15:09:53Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T15:09:53Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T15:09:53Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[{"path":"90_estimates/dead-hz/ac.rds","role":"actuarial-estimate","bytes":28010,"mtime":"2026-10-15T15:13:45Z","sha256":"40010b7e6b3f4fa153cdfeade328345da3e03a8e137a04d24f83b2aabdb6e665"},{"path":"90_estimates/dead-hz/hz.rds","role":"hazard-model","bytes":7283,"mtime":"2026-10-15T15:13:53Z","sha256":"1910f1015f76463a305d1b443acd38d9961ab228e6c2c23d608b84f5e3f9b1d9"}],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-15T11:14:09-0400","end":"2026-10-15T11:14:10-0400","time_zone":"EDT","duration_seconds":0.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hp.dead.hz.qmd","template":"hp","prefix":"hp","subject":"dead","type":"hz","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"f632480029c1","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-hz/ac.rds","set":"dead-hz","role":"actuarial-estimate","rendered_at":"2026-10-15T11:13:44-0400","dataset_version":"built_20261015.parquet"},{"file":"90_estimates/dead-hz/hz.rds","set":"dead-hz","role":"hazard-model","rendered_at":"2026-10-15T11:13:50-0400","dataset_version":"built_20261015.parquet"}],"reproducibility":{"renv":{"active":false}}},"source":"40_graphs/hp.dead.hz.qmd",".hvti_render_id":"dab0e54b18a28affed97a7bdb1a7dc77bbcb448a4575c9331eda552738a48862",".hvti_source_sha256":"3c44851291f1c974ecd2918e85aead4e567013df0b930cd0a30abb930aa6f265"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"hp.dead.hz","rendered":"2026-10-16T01:15:42Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.4.1","source":"github","sha":"d61ba9ae349c0988d5988b50b3e1f4f2ea972191"},{"package":"hvtiRutilities","version":"1.5.5","source":"github","sha":"226e6687538659b816198b6d285c7eb3bf872869"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"numDeriv","version":"2016.8.1.1","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.2.16","source":"github","sha":"746ce9e95ef3075afcdb8524306ea053f7306282"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":57911,"mtime":"2026-10-16T01:11:44Z","sha256":"b55bc29fc6a44b5614ebcb32583a00f7987fe3365e94c2e4f86ac5aca8f4b708"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":57911,"mtime":"2026-10-16T01:11:44Z","sha256":"b55bc29fc6a44b5614ebcb32583a00f7987fe3365e94c2e4f86ac5aca8f4b708"},{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":57911,"mtime":"2026-10-16T01:11:44Z","sha256":"b55bc29fc6a44b5614ebcb32583a00f7987fe3365e94c2e4f86ac5aca8f4b708"}],"artifacts":[{"path":"90_estimates/dead-hz/ac.rds","role":"actuarial-estimate","bytes":28014,"mtime":"2026-10-16T01:15:19Z","sha256":"108fec863b8da530da32426bbafd55307100f4962c3b4b329f5acf119b8159c0"},{"path":"90_estimates/dead-hz/hz.rds","role":"hazard-model","bytes":7287,"mtime":"2026-10-16T01:15:27Z","sha256":"e5715eef570237f22431b7cecd8db35f7fa6731bcd3c096d68dc855b1c0c6ff0"}],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-15T21:15:41-0400","end":"2026-10-15T21:15:42-0400","time_zone":"EDT","duration_seconds":0.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hp.dead.hz.qmd","template":"hp","prefix":"hp","subject":"dead","type":"hz","hvtiRtemplates":"1.4.1"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"b55bc29fc6a4","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-hz/ac.rds","set":"dead-hz","role":"actuarial-estimate","rendered_at":"2026-10-15T21:15:19-0400","dataset_version":"built_20261015.parquet"},{"file":"90_estimates/dead-hz/hz.rds","set":"dead-hz","role":"hazard-model","rendered_at":"2026-10-15T21:15:24-0400","dataset_version":"built_20261015.parquet"}],"reproducibility":{"renv":{"active":false}}},"source":"40_graphs/hp.dead.hz.qmd",".hvti_render_id":"b20a683acedada26139c58ec81cc40a74c1b582feab988968dfa18b16ccc4db9",".hvti_source_sha256":"c44bcaebbc1fda5db3f6cc25a6dcd036bd72151d341be256e82809d9d8d34a07"}</script>
 </section>
 
 </main>

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:24
+2026-10-15 21:24
 
 Explains the forest the `rfr-fit` job in this set saved: which
 predictors drive it, and how.
@@ -67,7 +67,7 @@ if (utils::packageVersion("varPro") < "3.2.0") {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.0
+hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -117,8 +117,8 @@ SEED <- 2026
 # that are out of date.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -284,7 +284,7 @@ save_figure(.fig, "rfr-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/b3a9426d06edd4439edc89d79f5dc579.png)
+![](assets/265331c5dbf1063148f9a531f05dc301.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -320,6 +320,9 @@ for (.i in seq_along(.pages)) {
 }
 ```
 
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
@@ -410,6 +413,8 @@ for (.i in seq_along(.pages)) {
     (`stat_boxplot()`).
     Removed 28 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
+    Removed 28 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
 
 Code
 
@@ -420,7 +425,7 @@ Code
     Warning: Removed 28 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/65e6e4715f07c5b0357acf4f86bbfedf.png)
+![](assets/27669b808074afc913f92a51c001563b.png)
 
 Figure 5: VarPro partial dependence on each selected predictor, one
 panel per predictor. For a continuous predictor a black solid line marks
@@ -432,9 +437,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 11:23:41 EDT |
-|  | Ended | 2026-10-15 11:24:00 EDT |
-|  | Duration | 19 s |
+| Run | Started | 2026-10-15 21:24:36 EDT |
+|  | Ended | 2026-10-15 21:24:54 EDT |
+|  | Duration | 18 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -442,12 +447,12 @@ the spread of the partial effect at each level.
 |  | Template | rfr.explain |
 |  | Subject | los |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.4.0 |
+|  | hvtiRtemplates | 1.4.1 |
 | Dataset `built` | Version file | built_20261015.parquet |
 |  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
-|  | sha256 | f632480029c1 |
+|  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-15 11:23:32 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-15 21:24:28 -0400, data built_20261015.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

@@ -2243,7 +2243,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-15 11:13</p>
+      <p class="date">2026-10-15 21:15</p>
     </div>
   </div>
   
@@ -2255,7 +2255,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: dc.general 1.4.0 -->
+<!-- hvtiRtemplates: dc.general 1.4.1 -->
 <!-- Demo: name the job this replaces (descriptive/dc.general). -->
 <p>Replaces <code>descriptive/dc.general</code>.</p>
 <p>A <code>dc-general</code> job is the first look at a built cohort, before any table or model: what the data contain, how each categorical variable breaks down, how each continuous variable is distributed, and which variables move together. It uses base procedures only.</p>
@@ -2287,7 +2287,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.1</p>
 </div>
 </div>
 </div>
@@ -2571,42 +2571,41 @@ Table 2: Contents of the data: each column, its type and its label
 <div aria-describedby="tbl-overall-contents-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output cell-output-stdout">
 <pre><code>Observations: 800
-Variables:    33
+Variables:    32
 
    num     variable type format                                    label
-1    5          age  Num   &lt;NA&gt;                 Age at operation (years)
-2   26     approach Char   &lt;NA&gt;    Surgical or transcatheter replacement
-3    8          bmi  Num   &lt;NA&gt;                  Body mass index (kg/m2)
-4   31 complication  Num   &lt;NA&gt;         Major postoperative complication
-5   14     creat_pr  Num   &lt;NA&gt;                       Creatinine (mg/dL)
-6   15         dead  Num   &lt;NA&gt;                                    Death
-7   25    discharge Char   &lt;NA&gt;                    Discharge destination
-8    6       female  Num   &lt;NA&gt;                                   Female
-9    9       hx_chf  Num   &lt;NA&gt;                 History of heart failure
-10  10        hx_dm  Num   &lt;NA&gt;                                 Diabetes
-11  20    icu_hours  Num   &lt;NA&gt;                  Hours in intensive care
-12  16      iv_dead  Num   &lt;NA&gt;  Follow-up to death or censoring (years)
-13   3     iv_opyrs  Num   &lt;NA&gt;   Years from 1 January 1990 to operation
-14  18      iv_reop  Num   &lt;NA&gt;         Follow-up to reoperation (years)
-15  33      log_los  Num   &lt;NA&gt;  Postoperative length of stay (log days)
-16  32          los  Num   &lt;NA&gt;      Postoperative length of stay (days)
-17  12         lvef  Num   &lt;NA&gt;                 LV ejection fraction (%)
-18  21         male  Num   &lt;NA&gt;                                     Male
-19  30   match_pair  Num   &lt;NA&gt;            In a matched pair (simulated)
-20  24     mr_grade Char   &lt;NA&gt; Postoperative mitral regurgitation grade
-21  22     nonwhite  Num   &lt;NA&gt;                           Non-white race
-22  11      nyha_pr  Num   &lt;NA&gt;                    NYHA functional class
-23   2      op_date  Num   &lt;NA&gt;                        Date of operation
+1    4          age  Num   &lt;NA&gt;                 Age at operation (years)
+2   25     approach Char   &lt;NA&gt;    Surgical or transcatheter replacement
+3    7          bmi  Num   &lt;NA&gt;                  Body mass index (kg/m2)
+4   30 complication  Num   &lt;NA&gt;         Major postoperative complication
+5   13     creat_pr  Num   &lt;NA&gt;                       Creatinine (mg/dL)
+6   14         dead  Num   &lt;NA&gt;                                    Death
+7   24    discharge Char   &lt;NA&gt;                    Discharge destination
+8    2      dt_surg  Num   &lt;NA&gt;                        Date of operation
+9    5       female  Num   &lt;NA&gt;                                   Female
+10   8       hx_chf  Num   &lt;NA&gt;                 History of heart failure
+11   9        hx_dm  Num   &lt;NA&gt;                                 Diabetes
+12  19    icu_hours  Num   &lt;NA&gt;                  Hours in intensive care
+13  15      iv_dead  Num   &lt;NA&gt;  Follow-up to death or censoring (years)
+14   3     iv_opyrs  Num   &lt;NA&gt;   Years from 1 January 1990 to operation
+15  17      iv_reop  Num   &lt;NA&gt;         Follow-up to reoperation (years)
+16  32      log_los  Num   &lt;NA&gt;  Postoperative length of stay (log days)
+17  31          los  Num   &lt;NA&gt;      Postoperative length of stay (days)
+18  11         lvef  Num   &lt;NA&gt;                 LV ejection fraction (%)
+19  20         male  Num   &lt;NA&gt;                                     Male
+20  29   match_pair  Num   &lt;NA&gt;            In a matched pair (simulated)
+21  23     mr_grade Char   &lt;NA&gt; Postoperative mitral regurgitation grade
+22  21     nonwhite  Num   &lt;NA&gt;                           Non-white race
+23  10      nyha_pr  Num   &lt;NA&gt;                    NYHA functional class
 24   1   patient_id Char   &lt;NA&gt;           Patient identifier (synthetic)
-25  13     plvmassi  Num   &lt;NA&gt;                     LV mass index (g/m2)
-26  29    prior_ops  Num   &lt;NA&gt;       Number of prior cardiac operations
-27   7     race_grp Char   &lt;NA&gt;                                     Race
-28  17         reop  Num   &lt;NA&gt;                              Reoperation
-29  23       stroke Char   &lt;NA&gt;                     Postoperative stroke
-30  27   valve_size Char   &lt;NA&gt;                          Prosthesis size
-31  28   valve_type Char   &lt;NA&gt;                          Prosthesis type
-32  19         vent  Num   &lt;NA&gt;                    Prolonged ventilation
-33   4         year  Num   &lt;NA&gt;                        Year of operation
+25  12     plvmassi  Num   &lt;NA&gt;                     LV mass index (g/m2)
+26  28    prior_ops  Num   &lt;NA&gt;       Number of prior cardiac operations
+27   6     race_grp Char   &lt;NA&gt;                                     Race
+28  16         reop  Num   &lt;NA&gt;                              Reoperation
+29  22       stroke Char   &lt;NA&gt;                     Postoperative stroke
+30  26   valve_size Char   &lt;NA&gt;                          Prosthesis size
+31  27   valve_type Char   &lt;NA&gt;                          Prosthesis type
+32  18         vent  Num   &lt;NA&gt;                    Prolonged ventilation
        class n_unique pct_missing
 1    numeric       65         0.0
 2  character        2         0.0
@@ -2615,22 +2614,22 @@ Variables:    33
 5    numeric      147         9.4
 6    integer        2         0.0
 7  character        3         0.0
-8    integer        2         0.0
+8       Date      766         0.0
 9    integer        2         0.0
 10   integer        2         0.0
-11   numeric       82         0.0
-12   numeric      777         0.0
-13   numeric      787         0.0
-14   numeric      774         0.0
-15   numeric       19         0.0
-16   integer       19         0.0
-17   numeric       53         0.0
-18   integer        2         0.0
+11   integer        2         0.0
+12   numeric       82         0.0
+13   numeric      777         0.0
+14   numeric      787         0.0
+15   numeric      774         0.0
+16   numeric       19         0.0
+17   integer       19         0.0
+18   numeric       53         0.0
 19   integer        2         0.0
-20 character        4         0.0
-21   integer        2         0.0
-22   numeric        4         0.0
-23      Date      766         0.0
+20   integer        2         0.0
+21 character        4         0.0
+22   integer        2         0.0
+23   numeric        4         0.0
 24 character      800         0.0
 25   numeric      141         0.0
 26   integer        4         0.0
@@ -2639,8 +2638,7 @@ Variables:    33
 29 character        2         0.0
 30 character        3         0.0
 31 character        3         0.0
-32   integer        2         0.0
-33   numeric       35         0.0</code></pre>
+32   integer        2         0.0</code></pre>
 </div>
 </div>
 </figure>
@@ -2669,56 +2667,54 @@ Table 3: Summary statistics of the overall variables
 </figcaption>
 <div aria-describedby="tbl-overall-means-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output cell-output-stdout">
-<pre><code>       variable                                   label   n nmiss        mean
-1      iv_opyrs  Years from 1 January 1990 to operation 800     0   17.432389
-2          year                       Year of operation 800     0 2006.940000
-3           age                Age at operation (years) 800     0   62.376250
-4        female                                  Female 800     0    0.373750
-5           bmi                 Body mass index (kg/m2) 800     0   27.902000
-6        hx_chf                History of heart failure 800     0    0.303750
-7         hx_dm                                Diabetes 800     0    0.218750
-8       nyha_pr                   NYHA functional class 800     0    2.272500
-9          lvef                LV ejection fraction (%) 800     0   51.777500
-10     plvmassi                    LV mass index (g/m2) 800     0  121.031250
-11     creat_pr                      Creatinine (mg/dL) 725    75    1.086152
-12         dead                                   Death 800     0    0.556250
-13      iv_dead Follow-up to death or censoring (years) 800     0    9.479378
-14         reop                             Reoperation 800     0    0.250000
-15      iv_reop        Follow-up to reoperation (years) 800     0    7.319961
-16         vent                   Prolonged ventilation 800     0    0.315000
-17    icu_hours                 Hours in intensive care 800     0   33.922500
-18         male                                    Male 800     0    0.626250
-19     nonwhite                          Non-white race 800     0    0.211250
-20    prior_ops      Number of prior cardiac operations 800     0    0.392500
-21   match_pair           In a matched pair (simulated) 800     0    0.593750
-22 complication        Major postoperative complication 800     0    0.182500
-23          los     Postoperative length of stay (days) 800     0    6.317500
-24      log_los Postoperative length of stay (log days) 800     0    1.763026
-          std      min       max         sum
-1   9.8319268 6.60e-02   34.9400   13945.911
-2   9.8260923 1.99e+03 2024.0000 1605552.000
-3  12.1764123 3.20e+01  100.0000   49901.000
-4   0.4841011 0.00e+00    1.0000     299.000
-5   4.4563207 1.51e+01   44.8000   22321.600
-6   0.4601637 0.00e+00    1.0000     243.000
-7   0.4136573 0.00e+00    1.0000     175.000
-8   0.7819899 1.00e+00    4.0000    1818.000
-9   9.7894221 2.00e+01   75.0000   41422.000
-10 29.4092912 2.80e+01  207.0000   96825.000
-11  0.3555899 4.30e-01    2.7600     787.460
-12  0.4971367 0.00e+00    1.0000     445.000
-13  8.0874926 2.50e-04   34.6040    7583.503
-14  0.4332836 0.00e+00    1.0000     200.000
-15  6.6628164 0.00e+00   33.9340    5855.969
-16  0.4648065 0.00e+00    1.0000     252.000
-17 20.1484849 4.00e+00  108.0000   27138.000
-18  0.4841011 0.00e+00    1.0000     501.000
-19  0.4084507 0.00e+00    1.0000     169.000
-20  0.6663323 0.00e+00    3.0000     314.000
-21  0.4914395 0.00e+00    1.0000     475.000
-22  0.3864977 0.00e+00    1.0000     146.000
-23  2.6249394 1.00e+00   19.0000    5054.000
-24  0.4032844 0.00e+00    2.9444    1410.421</code></pre>
+<pre><code>       variable                                   label   n nmiss       mean
+1      iv_opyrs  Years from 1 January 1990 to operation 800     0  17.432389
+2           age                Age at operation (years) 800     0  62.376250
+3        female                                  Female 800     0   0.373750
+4           bmi                 Body mass index (kg/m2) 800     0  27.902000
+5        hx_chf                History of heart failure 800     0   0.303750
+6         hx_dm                                Diabetes 800     0   0.218750
+7       nyha_pr                   NYHA functional class 800     0   2.272500
+8          lvef                LV ejection fraction (%) 800     0  51.777500
+9      plvmassi                    LV mass index (g/m2) 800     0 121.031250
+10     creat_pr                      Creatinine (mg/dL) 725    75   1.086152
+11         dead                                   Death 800     0   0.556250
+12      iv_dead Follow-up to death or censoring (years) 800     0   9.479378
+13         reop                             Reoperation 800     0   0.250000
+14      iv_reop        Follow-up to reoperation (years) 800     0   7.319961
+15         vent                   Prolonged ventilation 800     0   0.315000
+16    icu_hours                 Hours in intensive care 800     0  33.922500
+17         male                                    Male 800     0   0.626250
+18     nonwhite                          Non-white race 800     0   0.211250
+19    prior_ops      Number of prior cardiac operations 800     0   0.392500
+20   match_pair           In a matched pair (simulated) 800     0   0.593750
+21 complication        Major postoperative complication 800     0   0.182500
+22          los     Postoperative length of stay (days) 800     0   6.317500
+23      log_los Postoperative length of stay (log days) 800     0   1.763026
+          std      min      max       sum
+1   9.8319268  0.06600  34.9400 13945.911
+2  12.1764123 32.00000 100.0000 49901.000
+3   0.4841011  0.00000   1.0000   299.000
+4   4.4563207 15.10000  44.8000 22321.600
+5   0.4601637  0.00000   1.0000   243.000
+6   0.4136573  0.00000   1.0000   175.000
+7   0.7819899  1.00000   4.0000  1818.000
+8   9.7894221 20.00000  75.0000 41422.000
+9  29.4092912 28.00000 207.0000 96825.000
+10  0.3555899  0.43000   2.7600   787.460
+11  0.4971367  0.00000   1.0000   445.000
+12  8.0874926  0.00025  34.6040  7583.503
+13  0.4332836  0.00000   1.0000   200.000
+14  6.6628164  0.00000  33.9340  5855.969
+15  0.4648065  0.00000   1.0000   252.000
+16 20.1484849  4.00000 108.0000 27138.000
+17  0.4841011  0.00000   1.0000   501.000
+18  0.4084507  0.00000   1.0000   169.000
+19  0.6663323  0.00000   3.0000   314.000
+20  0.4914395  0.00000   1.0000   475.000
+21  0.3864977  0.00000   1.0000   146.000
+22  2.6249394  1.00000  19.0000  5054.000
+23  0.4032844  0.00000   2.9444  1410.421</code></pre>
 </div>
 </div>
 </figure>
@@ -3642,12 +3638,12 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-15 11:13:25 EDT</td>
+<td style="text-align: left;">2026-10-15 21:15:01 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-15 11:13:26 EDT</td>
+<td style="text-align: left;">2026-10-15 21:15:02 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3692,7 +3688,7 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.4.0</td>
+<td style="text-align: left;">1.4.1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
@@ -3722,7 +3718,7 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">f632480029c1</td>
+<td style="text-align: left;">b55bc29fc6a4</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3737,7 +3733,7 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dc.general.cohort.eda","rendered":"2026-10-15T15:13:26Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"8609103430acb25c872fc68ac7253961bc4f48ba"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"9d5212666e18caff078c54262fb4c1ad04946c19"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T15:09:53Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-10-15T11:13:25-0400","end":"2026-10-15T11:13:26-0400","time_zone":"EDT","duration_seconds":0.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.general.cohort.eda.qmd","template":"dc.general","prefix":"dc","qualifier":"general","subject":"cohort","type":"eda","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"f632480029c1","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"10_descriptive/dc.general.cohort.eda.qmd",".hvti_render_id":"a2f839c5a33b776e74678f9ebaffc7b41af1c23e89348f3401070bc141a12fb0",".hvti_source_sha256":"5a307c2a1b1b38761cfb3ec1a5843feb4fe70b88f057857bebf1d4d4c255cb2a"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"dc.general.cohort.eda","rendered":"2026-10-16T01:15:02Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.4.1","source":"github","sha":"d61ba9ae349c0988d5988b50b3e1f4f2ea972191"},{"package":"hvtiRutilities","version":"1.5.5","source":"github","sha":"226e6687538659b816198b6d285c7eb3bf872869"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":57911,"mtime":"2026-10-16T01:11:44Z","sha256":"b55bc29fc6a44b5614ebcb32583a00f7987fe3365e94c2e4f86ac5aca8f4b708"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-10-15T21:15:01-0400","end":"2026-10-15T21:15:02-0400","time_zone":"EDT","duration_seconds":0.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.general.cohort.eda.qmd","template":"dc.general","prefix":"dc","qualifier":"general","subject":"cohort","type":"eda","hvtiRtemplates":"1.4.1"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b55bc29fc6a4","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"10_descriptive/dc.general.cohort.eda.qmd",".hvti_render_id":"5eff86150cca006d23bbf496775e12080551d6d98eb375d83d9bf21408482e5a",".hvti_source_sha256":"87fc6b514ce5d2157dbcb9006c8b5a245689b9dbb578006aa2e35561cf82cb0b"}</script>
 </section>
 
 </main>

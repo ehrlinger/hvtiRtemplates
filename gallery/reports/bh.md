@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:12
+2026-10-15 21:14
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -66,7 +66,7 @@ if (utils::packageVersion("hvtiRbootstrap") < "0.9.0") {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.0
+hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -152,8 +152,8 @@ CLUSTERS <- list(
 # Correlation cutoff for near-duplicate candidates.
 COLLINEAR_R <- 0.99
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -371,7 +371,7 @@ provenance
     9                                                                        0
     10                                                                     0.1
     11                                                          version:1.2.16
-    12 sha256:f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264
+    12 sha256:b55bc29fc6a44b5614ebcb32583a00f7987fe3365e94c2e4f86ac5aca8f4b708
     13                                               4 distinct (listed below)
 
 Code
@@ -917,8 +917,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 11:12:38 EDT |
-|  | Ended | 2026-10-15 11:12:39 EDT |
+| Run | Started | 2026-10-15 21:14:12 EDT |
+|  | Ended | 2026-10-15 21:14:13 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -927,13 +927,13 @@ saveRDS(report, report_file)
 |  | Template | bh |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.4.0 |
+|  | hvtiRtemplates | 1.4.1 |
 | Dataset `built` | Version file | built_20261015.parquet |
 |  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | f632480029c1 |
+|  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261015.parquet |
 |  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261015.parquet |

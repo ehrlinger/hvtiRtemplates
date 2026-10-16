@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:15
+2026-10-15 21:16
 
 Applies a saved `lm-binary` bundle to a declared validation cohort. This
 job never refits, updates, or overwrites the source model.
@@ -34,7 +34,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data `built` `built_20261015.parquet`, registered 2026-10-15
-· rendered by gallery on gallery · hvtiRtemplates 1.4.0
+· rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 Code
 
@@ -57,7 +57,7 @@ ANALYSIS_SET <- NULL
 # Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:
 #   WHERE <- quote(age >= 18)
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
-WHERE <- quote(year >= 2015)
+WHERE <- quote(as.integer(format(dt_surg, "%Y")) >= 2015)
 
 # Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
@@ -120,14 +120,14 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME)
 ```
 
-| Data                |                                          |
-|:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
-| Rows read           | 800                                      |
-| ID                  | `patient_id`                             |
-| Identifiers dropped | none                                     |
-| `year >= 2015`      | removed 572                              |
-| Rows kept           | 228 rows on 228 patients                 |
+| Data |  |
+|:---|:---|
+| Source | dataset `built` (built_20261015.parquet) |
+| Rows read | 800 |
+| ID | `patient_id` |
+| Identifiers dropped | none |
+| `as.integer(format(dt_surg, "%Y")) >= 2015` | removed 572 |
+| Rows kept | 228 rows on 228 patients |
 
 Table 1: The data this job read
 
@@ -272,8 +272,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 11:15:00 EDT |
-|  | Ended | 2026-10-15 11:15:00 EDT |
+| Run | Started | 2026-10-15 21:16:27 EDT |
+|  | Ended | 2026-10-15 21:16:27 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -282,13 +282,13 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 |  | Template | lm.checkpred |
 |  | Subject | stroke |
 |  | Type | model |
-|  | hvtiRtemplates | 1.4.0 |
+|  | hvtiRtemplates | 1.4.1 |
 | Dataset `built` | Version file | built_20261015.parquet |
 |  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 228 rows on 228 patients |
-|  | WHERE | `year >= 2015` |
-|  | sha256 | f632480029c1 |
+|  | WHERE | `as.integer(format(dt_surg, "%Y")) >= 2015` |
+|  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-15 11:14:55 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-15 21:16:22 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |

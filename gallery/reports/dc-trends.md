@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:12
+2026-10-15 21:14
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -56,7 +56,7 @@ if (utils::packageVersion("hvtiPlotR") < "2.7.7") {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -67,7 +67,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data `built` `built_20261015.parquet`, registered 2026-10-15
-· rendered by gallery on gallery · hvtiRtemplates 1.4.0
+· rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -153,8 +153,8 @@ XBREAKS <- NULL
 SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)), diabetic = function(d) d$hx_dm == 1)
 # MIGRATE-END: dc-trends-subgroups
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -465,9 +465,9 @@ against an older figure by its shape and not point by point.
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 11:12:53 EDT  |
-|                 | Ended          | 2026-10-15 11:12:55 EDT  |
-|                 | Duration       | 2 s                      |
+| Run             | Started        | 2026-10-15 21:14:23 EDT  |
+|                 | Ended          | 2026-10-15 21:14:24 EDT  |
+|                 | Duration       | 1 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -475,12 +475,12 @@ against an older figure by its shape and not point by point.
 |                 | Template       | dc.trends                |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.4.0                    |
+|                 | hvtiRtemplates | 1.4.1                    |
 | Dataset `built` | Version file   | built_20261015.parquet   |
 |                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | f632480029c1             |
+|                 | sha256         | b55bc29fc6a4             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

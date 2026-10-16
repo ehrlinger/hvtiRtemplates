@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:13
+2026-10-15 21:15
 
 An `ac` job produces life tables. Figures over the same estimates are an
 `hp` job, and the parametric fit is `hz`; neither belongs here.
@@ -44,7 +44,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data `built` `built_20261015.parquet`, registered 2026-10-15
-· rendered by gallery on gallery · hvtiRtemplates 1.4.0
+· rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -632,8 +632,8 @@ for (outer in sort(unique(d$cat_b))) {
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 11:13:44 EDT  |
-|                 | Ended          | 2026-10-15 11:13:45 EDT  |
+| Run             | Started        | 2026-10-15 21:15:19 EDT  |
+|                 | Ended          | 2026-10-15 21:15:19 EDT  |
 |                 | Duration       | 0 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -642,12 +642,12 @@ for (outer in sort(unique(d$cat_b))) {
 |                 | Template       | ac                       |
 |                 | Subject        | dead                     |
 |                 | Type           | hz                       |
-|                 | hvtiRtemplates | 1.4.0                    |
+|                 | hvtiRtemplates | 1.4.1                    |
 | Dataset `built` | Version file   | built_20261015.parquet   |
 |                 | Registered     | 2026-10-15               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 725 rows on 725 patients |
 |                 | WHERE          | `!is.na(creat_pr)`       |
-|                 | sha256         | f632480029c1             |
+|                 | sha256         | b55bc29fc6a4             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

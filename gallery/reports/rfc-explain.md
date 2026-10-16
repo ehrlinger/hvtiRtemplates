@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:23
+2026-10-15 21:24
 
 Explains the forest the `rfc-fit` job in this set saved: which
 predictors drive it, and how.
@@ -67,7 +67,7 @@ if (utils::packageVersion("varPro") < "3.2.0") {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.0
+hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -117,8 +117,8 @@ SEED <- 2026
 # that are out of date.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -289,7 +289,7 @@ save_figure(.fig, "rfc-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/5b01cdc663d98a6de73a95ba3b120f9c.png)
+![](assets/74bd2e97c62c83d9cab1fc398dcdb8c0.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -353,6 +353,15 @@ for (.i in seq_along(.pages)) {
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    Warning: Removed 75 rows containing non-finite outside the scale range
+    (`stat_smooth()`).
+    Removed 75 rows containing missing values or values outside the scale range
+    (`geom_point()`).
+
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
 Code
 
@@ -371,7 +380,7 @@ Code
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/240d8389b7a0b60a5038b3f7e7363575.png)
+![](assets/7930bad67a298a3cef9c8d24bad1d468.png)
 
 Figure 3: Predicted class probability against each selected predictor,
 as observed, one panel per predictor. Points are individual patients,
@@ -445,6 +454,8 @@ for (.i in seq_along(.pages)) {
     (`stat_boxplot()`).
     Removed 252 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
+    Removed 252 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
 
 Code
 
@@ -467,9 +478,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 11:23:06 EDT |
-|  | Ended | 2026-10-15 11:23:25 EDT |
-|  | Duration | 20 s |
+| Run | Started | 2026-10-15 21:24:05 EDT |
+|  | Ended | 2026-10-15 21:24:23 EDT |
+|  | Duration | 18 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -477,12 +488,12 @@ the spread of the partial effect at each level.
 |  | Template | rfc.explain |
 |  | Subject | complication |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.4.0 |
+|  | hvtiRtemplates | 1.4.1 |
 | Dataset `built` | Version file | built_20261015.parquet |
 |  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
-|  | sha256 | f632480029c1 |
+|  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-15 11:22:55 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-15 21:23:56 -0400, data built_20261015.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

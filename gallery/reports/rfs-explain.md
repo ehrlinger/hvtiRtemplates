@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:22
+2026-10-15 21:23
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -68,7 +68,7 @@ if (utils::packageVersion("varPro") < "3.2.0") {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
-# Saves a figure as <name>.png and <name>.pdf in this set's graphs/ folder (or `kind`'s),
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
@@ -82,7 +82,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.0
+hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -122,8 +122,8 @@ SEED <- 2026
 # that are out of date.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
-# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
@@ -290,7 +290,7 @@ save_figure(.fig, "rfs-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/a9ef2b81ff6a1b7f9a01080c534607aa.png)
+![](assets/942fdb2570fc96442c1da09a11585b52.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -333,6 +333,7 @@ for (.i in seq_along(.pages)) {
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
 Code
 
@@ -342,7 +343,7 @@ Code
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/b47807de08e82a5ad2a76b12db27f9a3.png)
+![](assets/e47adbcb916f5ebab43309bf636247bd.png)
 
 Figure 3: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -352,6 +353,8 @@ loess smooth with its gray band, drawn for predictors with more than
 five distinct values, and for a categorical predictor the points are
 jittered over a gray box plot. Page 1 of 2: age, hx_chf.
 
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+    `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
@@ -447,6 +450,8 @@ for (.i in seq_along(.pages)) {
     (`stat_boxplot()`).
     Removed 152 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
+    Removed 152 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
 
 Code
 
@@ -469,9 +474,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 11:21:10 EDT |
-|  | Ended | 2026-10-15 11:22:49 EDT |
-|  | Duration | 1 min 39 s |
+| Run | Started | 2026-10-15 21:22:13 EDT |
+|  | Ended | 2026-10-15 21:23:50 EDT |
+|  | Duration | 1 min 36 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -479,12 +484,12 @@ the spread of the partial effect at each level.
 |  | Template | rfs.explain |
 |  | Subject | dead |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.4.0 |
+|  | hvtiRtemplates | 1.4.1 |
 | Dataset `built` | Version file | built_20261015.parquet |
 |  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
-|  | sha256 | f632480029c1 |
+|  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-15 11:20:58 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-15 21:22:01 -0400, data built_20261015.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

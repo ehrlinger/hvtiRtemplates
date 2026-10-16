@@ -2235,7 +2235,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-15 11:12</p>
+      <p class="date">2026-10-15 21:14</p>
     </div>
   </div>
   
@@ -2247,7 +2247,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: dc.tables 1.4.0 -->
+<!-- hvtiRtemplates: dc.tables 1.4.1 -->
 <!-- Demo: name the job this replaces (descriptive/dc.tables.*) and say whether it
      was the overall tables, the by-group tables, or the correlation variant.
      Replace this comment with that text. -->
@@ -2288,7 +2288,7 @@ vertical-align: -.125em;
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png and &lt;name&gt;.pdf in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
 <span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
@@ -2303,7 +2303,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.0</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.1</p>
 </div>
 </div>
 </div>
@@ -2389,8 +2389,8 @@ vertical-align: -.125em;
 <span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co">#   list(vars = c(&quot;glu_pr&quot;, &quot;creat_pr&quot;), with = &quot;a1c_pr&quot;, by = &quot;a1c_grp&quot;)</span></span>
 <span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>CORR <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to descriptive/ as a PNG (for Word) and a PDF (for the publisher).</span></span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves neither; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to descriptive/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
 <span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
 <span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
 <span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
@@ -2594,20 +2594,20 @@ Table 2: Summary statistics for the study cohort, as written to the Word file
 </figcaption>
 <div aria-describedby="tbl-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<div id="nvhdlwpfaf" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#nvhdlwpfaf table {
+<div id="eqrctdlter" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#eqrctdlter table {
 font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 -webkit-font-smoothing: antialiased;
 -moz-osx-font-smoothing: grayscale;
 }
-#nvhdlwpfaf thead, #nvhdlwpfaf tbody, #nvhdlwpfaf tfoot, #nvhdlwpfaf tr, #nvhdlwpfaf td, #nvhdlwpfaf th {
+#eqrctdlter thead, #eqrctdlter tbody, #eqrctdlter tfoot, #eqrctdlter tr, #eqrctdlter td, #eqrctdlter th {
 border-style: none;
 }
-#nvhdlwpfaf p {
+#eqrctdlter p {
 margin: 0;
 padding: 0;
 }
-#nvhdlwpfaf .gt_table {
+#eqrctdlter .gt_table {
 display: table;
 border-collapse: collapse;
 line-height: normal;
@@ -2632,11 +2632,11 @@ border-left-style: none;
 border-left-width: 2px;
 border-left-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_caption {
+#eqrctdlter .gt_caption {
 padding-top: 4px;
 padding-bottom: 4px;
 }
-#nvhdlwpfaf .gt_title {
+#eqrctdlter .gt_title {
 color: #333333;
 font-size: 125%;
 font-weight: initial;
@@ -2647,7 +2647,7 @@ padding-right: 5px;
 border-bottom-color: #FFFFFF;
 border-bottom-width: 0;
 }
-#nvhdlwpfaf .gt_subtitle {
+#eqrctdlter .gt_subtitle {
 color: #333333;
 font-size: 85%;
 font-weight: initial;
@@ -2658,7 +2658,7 @@ padding-right: 5px;
 border-top-color: #FFFFFF;
 border-top-width: 0;
 }
-#nvhdlwpfaf .gt_heading {
+#eqrctdlter .gt_heading {
 background-color: #FFFFFF;
 text-align: center;
 border-bottom-color: #FFFFFF;
@@ -2669,12 +2669,12 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_bottom_border {
+#eqrctdlter .gt_bottom_border {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_col_headings {
+#eqrctdlter .gt_col_headings {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -2688,7 +2688,7 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_col_heading {
+#eqrctdlter .gt_col_heading {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2707,7 +2707,7 @@ padding-left: 5px;
 padding-right: 5px;
 overflow-x: hidden;
 }
-#nvhdlwpfaf .gt_column_spanner_outer {
+#eqrctdlter .gt_column_spanner_outer {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2718,13 +2718,13 @@ padding-bottom: 0;
 padding-left: 4px;
 padding-right: 4px;
 }
-#nvhdlwpfaf .gt_column_spanner_outer:first-child {
+#eqrctdlter .gt_column_spanner_outer:first-child {
 padding-left: 0;
 }
-#nvhdlwpfaf .gt_column_spanner_outer:last-child {
+#eqrctdlter .gt_column_spanner_outer:last-child {
 padding-right: 0;
 }
-#nvhdlwpfaf .gt_column_spanner {
+#eqrctdlter .gt_column_spanner {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
@@ -2735,10 +2735,10 @@ overflow-x: hidden;
 display: inline-block;
 width: 100%;
 }
-#nvhdlwpfaf .gt_spanner_row {
+#eqrctdlter .gt_spanner_row {
 border-bottom-style: hidden;
 }
-#nvhdlwpfaf .gt_group_heading {
+#eqrctdlter .gt_group_heading {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2763,7 +2763,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 text-align: left;
 }
-#nvhdlwpfaf .gt_empty_group_heading {
+#eqrctdlter .gt_empty_group_heading {
 padding: 0.5px;
 color: #333333;
 background-color: #FFFFFF;
@@ -2777,13 +2777,13 @@ border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 vertical-align: middle;
 }
-#nvhdlwpfaf .gt_from_md > :first-child {
+#eqrctdlter .gt_from_md > :first-child {
 margin-top: 0;
 }
-#nvhdlwpfaf .gt_from_md > :last-child {
+#eqrctdlter .gt_from_md > :last-child {
 margin-bottom: 0;
 }
-#nvhdlwpfaf .gt_row {
+#eqrctdlter .gt_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2801,7 +2801,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 overflow-x: hidden;
 }
-#nvhdlwpfaf .gt_stub {
+#eqrctdlter .gt_stub {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2813,7 +2813,7 @@ border-right-color: #D3D3D3;
 padding-left: 5px;
 padding-right: 5px;
 }
-#nvhdlwpfaf .gt_stub_row_group {
+#eqrctdlter .gt_stub_row_group {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2826,13 +2826,13 @@ padding-left: 5px;
 padding-right: 5px;
 vertical-align: top;
 }
-#nvhdlwpfaf .gt_row_group_first td {
+#eqrctdlter .gt_row_group_first td {
 border-top-width: 2px;
 }
-#nvhdlwpfaf .gt_row_group_first th {
+#eqrctdlter .gt_row_group_first th {
 border-top-width: 2px;
 }
-#nvhdlwpfaf .gt_summary_row {
+#eqrctdlter .gt_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -2841,14 +2841,14 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#nvhdlwpfaf .gt_first_summary_row {
+#eqrctdlter .gt_first_summary_row {
 border-top-style: solid;
 border-top-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_first_summary_row.thick {
+#eqrctdlter .gt_first_summary_row.thick {
 border-top-width: 2px;
 }
-#nvhdlwpfaf .gt_last_summary_row {
+#eqrctdlter .gt_last_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2857,7 +2857,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_grand_summary_row {
+#eqrctdlter .gt_grand_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -2866,7 +2866,7 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#nvhdlwpfaf .gt_first_grand_summary_row {
+#eqrctdlter .gt_first_grand_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2875,7 +2875,7 @@ border-top-style: double;
 border-top-width: 6px;
 border-top-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_last_grand_summary_row_top {
+#eqrctdlter .gt_last_grand_summary_row_top {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2884,10 +2884,10 @@ border-bottom-style: double;
 border-bottom-width: 6px;
 border-bottom-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_striped {
+#eqrctdlter .gt_striped {
 background-color: rgba(128, 128, 128, 0.05);
 }
-#nvhdlwpfaf .gt_table_body {
+#eqrctdlter .gt_table_body {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -2895,7 +2895,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_footnotes {
+#eqrctdlter .gt_footnotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -2908,7 +2908,7 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_footnote {
+#eqrctdlter .gt_footnote {
 margin: 0px;
 font-size: 90%;
 padding-top: 4px;
@@ -2916,7 +2916,7 @@ padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#nvhdlwpfaf .gt_sourcenotes {
+#eqrctdlter .gt_sourcenotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -2929,64 +2929,64 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#nvhdlwpfaf .gt_sourcenote {
+#eqrctdlter .gt_sourcenote {
 font-size: 90%;
 padding-top: 4px;
 padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#nvhdlwpfaf .gt_left {
+#eqrctdlter .gt_left {
 text-align: left;
 }
-#nvhdlwpfaf .gt_center {
+#eqrctdlter .gt_center {
 text-align: center;
 }
-#nvhdlwpfaf .gt_right {
+#eqrctdlter .gt_right {
 text-align: right;
 font-variant-numeric: tabular-nums;
 }
-#nvhdlwpfaf .gt_font_normal {
+#eqrctdlter .gt_font_normal {
 font-weight: normal;
 }
-#nvhdlwpfaf .gt_font_bold {
+#eqrctdlter .gt_font_bold {
 font-weight: bold;
 }
-#nvhdlwpfaf .gt_font_italic {
+#eqrctdlter .gt_font_italic {
 font-style: italic;
 }
-#nvhdlwpfaf .gt_super {
+#eqrctdlter .gt_super {
 font-size: 65%;
 }
-#nvhdlwpfaf .gt_footnote_marks {
+#eqrctdlter .gt_footnote_marks {
 font-size: 75%;
 vertical-align: 0.4em;
 position: initial;
 }
-#nvhdlwpfaf .gt_asterisk {
+#eqrctdlter .gt_asterisk {
 font-size: 100%;
 vertical-align: 0;
 }
-#nvhdlwpfaf .gt_indent_1 {
+#eqrctdlter .gt_indent_1 {
 text-indent: 5px;
 }
-#nvhdlwpfaf .gt_indent_2 {
+#eqrctdlter .gt_indent_2 {
 text-indent: 10px;
 }
-#nvhdlwpfaf .gt_indent_3 {
+#eqrctdlter .gt_indent_3 {
 text-indent: 15px;
 }
-#nvhdlwpfaf .gt_indent_4 {
+#eqrctdlter .gt_indent_4 {
 text-indent: 20px;
 }
-#nvhdlwpfaf .gt_indent_5 {
+#eqrctdlter .gt_indent_5 {
 text-indent: 25px;
 }
-#nvhdlwpfaf .katex-display {
+#eqrctdlter .katex-display {
 display: inline-flex !important;
 margin-bottom: 0.75em !important;
 }
-#nvhdlwpfaf div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#eqrctdlter div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
 height: 0px !important;
 }
 </style>
@@ -3149,17 +3149,17 @@ height: 0px !important;
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-15 11:12:45 EDT</td>
+<td style="text-align: left;">2026-10-15 21:14:18 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-15 11:12:46 EDT</td>
+<td style="text-align: left;">2026-10-15 21:14:19 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">2 s</td>
+<td style="text-align: left;">1 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3199,7 +3199,7 @@ height: 0px !important;
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.4.0</td>
+<td style="text-align: left;">1.4.1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
@@ -3229,7 +3229,7 @@ height: 0px !important;
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">f632480029c1</td>
+<td style="text-align: left;">b55bc29fc6a4</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3244,7 +3244,7 @@ height: 0px !important;
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dc.tables.cohort.eda","rendered":"2026-10-15T15:12:46Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"base64enc","version":"0.1.6","source":"standard"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cards","version":"0.8.1","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"commonmark","version":"2.0.0","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.table","version":"1.18.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"flextable","version":"0.10.0","source":"CRAN"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"fs","version":"2.1.0","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gt","version":"1.3.0","source":"standard"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"gtsummary","version":"2.5.1","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.10","source":"github","sha":"43bbfa04e58fc2eb05406a9e7b2826e4485c75e7"},{"package":"hvtiRtables","version":"1.0.5","source":"github","sha":"6d1aa14de07f3c206bef58ea94ebf0f79eb27515"},{"package":"hvtiRtemplates","version":"1.4.0","source":"github","sha":"8609103430acb25c872fc68ac7253961bc4f48ba"},{"package":"hvtiRutilities","version":"1.5.4","source":"github","sha":"9d5212666e18caff078c54262fb4c1ad04946c19"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"litedown","version":"0.10","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"markdown","version":"2.0","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"sass","version":"0.4.10","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":58804,"mtime":"2026-10-15T15:09:53Z","sha256":"f632480029c18c91ef4aac4db3bf9c4d8755ae413194df5348930a6ebb7b8264"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-10-15T11:12:45-0400","end":"2026-10-15T11:12:46-0400","time_zone":"EDT","duration_seconds":1.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.tables.cohort.eda.qmd","template":"dc.tables","prefix":"dc","qualifier":"tables","subject":"cohort","type":"eda","hvtiRtemplates":"1.4.0"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"f632480029c1","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"10_descriptive/dc.tables.cohort.eda.qmd",".hvti_render_id":"d284aa527c04edfef894d49c6cb670e210343c33d1c9d934b78e4bdeb2d8acad",".hvti_source_sha256":"55d7e774b20309c090d7ab2eea008c42f7835293341ef3676effb016201bb8b5"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"dc.tables.cohort.eda","rendered":"2026-10-16T01:14:19Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"base64enc","version":"0.1.6","source":"standard"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cards","version":"0.8.1","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"commonmark","version":"2.0.0","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.table","version":"1.18.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"flextable","version":"0.10.0","source":"CRAN"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"fs","version":"2.1.0","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gt","version":"1.3.0","source":"standard"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"gtsummary","version":"2.5.1","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.11","source":"github","sha":"8a09f713748050f3b9a35b7c95ed95a92f14b1a1"},{"package":"hvtiRtables","version":"1.0.5","source":"github","sha":"6d1aa14de07f3c206bef58ea94ebf0f79eb27515"},{"package":"hvtiRtemplates","version":"1.4.1","source":"github","sha":"d61ba9ae349c0988d5988b50b3e1f4f2ea972191"},{"package":"hvtiRutilities","version":"1.5.5","source":"github","sha":"226e6687538659b816198b6d285c7eb3bf872869"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"litedown","version":"0.10","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"markdown","version":"2.0","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"sass","version":"0.4.10","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":57911,"mtime":"2026-10-16T01:11:44Z","sha256":"b55bc29fc6a44b5614ebcb32583a00f7987fe3365e94c2e4f86ac5aca8f4b708"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-10-15T21:14:18-0400","end":"2026-10-15T21:14:19-0400","time_zone":"EDT","duration_seconds":1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.tables.cohort.eda.qmd","template":"dc.tables","prefix":"dc","qualifier":"tables","subject":"cohort","type":"eda","hvtiRtemplates":"1.4.1"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b55bc29fc6a4","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"10_descriptive/dc.tables.cohort.eda.qmd",".hvti_render_id":"d48210e16dc930f2926dc946b920051d27a2f1a86b5f6a32704657f7c700f389",".hvti_source_sha256":"56a8fa27e00e4507ae9a074b25200c136d4ce16defa36fd74bdfa41d7de3d6a8"}</script>
 </section>
 
 </main>

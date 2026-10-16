@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 11:14
+2026-10-15 21:15
 
 An `hm` job builds the risk-factor model **on top of** the shape
 parameters the `hz` job fitted. The shapes are not re-derived here; they
@@ -50,7 +50,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.0
+hvtiRtemplates 1.4.1
 
 ## Study choices
 
@@ -263,18 +263,21 @@ lists came from
 
 ### What these columns are, before they become covariates
 
-`vars.sas` is commonly called with `%vars(missing=1, impute=1)`: it
-**mean-imputes** missing values and adds a paired `ms_*` indicator,
-which is why `ms_*` variables are themselves covariates in these models.
-So a 0/1 clinical variable arrives carrying three distinct values — 0,
-1, and the cohort mean. One real column’s third value is `0.714`, the
-prevalence of hypertension, not any patient’s status.
+`vars.sas`, called as `%vars(missing=1, impute=1)`, fills a column’s
+missing values with the column mean and adds a paired `ms_*` flag
+marking the rows it filled. Those `ms_*` flags are themselves covariates
+here. It also means a yes/no variable can show a third value: 0, 1, or
+the mean. One real column reads `0.714`, the share of the cohort with
+hypertension, not any one patient’s status. That is expected, not a data
+error.
 
-In SAS these are numeric and enter **linearly**. Read into R they arrive
-as **factors**, and a factor in a model formula is dummy-coded — which
-makes “this value was imputed” its own category with its own
-coefficient. **That is a different model, with a different parameter
-count, and nothing in the output would say so.**
+What changes in R is how these columns are read. In SAS they are numbers
+and enter the model as numbers. R can read them as factors instead, and
+it treats a factor as a set of categories (R calls this dummy-coding).
+That turns “this value was imputed” into its own category with its own
+coefficient, which is a different model from the SAS one, and nothing in
+the output would say so. The chunk below converts the model’s columns
+back to plain numbers, so the fit matches the SAS job.
 
 Code
 
@@ -308,10 +311,9 @@ dd <- covariates_to_numeric(d[unique(c(TIME, EVENT, unlist(COVARIATES)))], unlis
 
 Table 4: Covariate storage and the conversion applied
 
-**A factor left as a factor is dummy-coded on purpose** — the right
-outcome for a genuinely categorical variable and the wrong one for a
-mean-imputed binary. The `action` column is where that decision is
-visible; check it before reading any coefficient.
+One column can be genuinely categorical, and there a factor is the right
+call. The `action` column records what was done to each one. Read it
+before you read any coefficient.
 
 Code
 
@@ -962,8 +964,8 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 11:13:58 EDT |
-|  | Ended | 2026-10-15 11:14:04 EDT |
+| Run | Started | 2026-10-15 21:15:32 EDT |
+|  | Ended | 2026-10-15 21:15:36 EDT |
 |  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -972,13 +974,13 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 |  | Template | hm |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.4.0 |
+|  | hvtiRtemplates | 1.4.1 |
 | Dataset `built` | Version file | built_20261015.parquet |
 |  | Registered | 2026-10-15 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | f632480029c1 |
+|  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-15 11:13:50 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-15 21:15:24 -0400, data built_20261015.parquet |
 | Reproducibility | renv | not active |
