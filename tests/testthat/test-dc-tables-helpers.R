@@ -114,8 +114,8 @@ test_that("a continuous variable not shown as mean +/- SD is ranked, not treated
 
 test_that("GROUP_1 names the treated value of a two-valued group", {
   skip_if_not_installed("hvtiRpropensity")
-  labelled <- transform(sd_data, grp = ifelse(grp == 1, "tavr", "savr"))
-  got <- stddiff_values(labelled, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha", group_1 = "tavr")
+  labeled <- transform(sd_data, grp = ifelse(grp == 1, "tavr", "savr"))
+  got <- stddiff_values(labeled, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha", group_1 = "tavr")
   want <- stddiff_values(sd_data, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha")
   expect_identical(got, want)
 })
@@ -141,7 +141,7 @@ test_that("an ordered factor in ORDINAL is ranked by its level order", {
 
 test_that("a two-valued BY that is not 0/1 asks for GROUP_1 by name", {
   skip_if_not_installed("hvtiRpropensity")
-  labelled <- transform(sd_data, grp = ifelse(grp == 1, "tavr", "savr"))
-  expect_error(stddiff_values(labelled, "grp", sd_buckets), "GROUP_1")
-  expect_error(stddiff_values(labelled, "grp", sd_buckets, group_1 = "tarv"), "GROUP_1")
+  labeled <- transform(sd_data, grp = ifelse(grp == 1, "tavr", "savr"))
+  expect_error(stddiff_values(labeled, "grp", sd_buckets), "GROUP_1")
+  expect_error(stddiff_values(labeled, "grp", sd_buckets, group_1 = "tarv"), "GROUP_1")
 })
