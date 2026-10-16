@@ -145,3 +145,12 @@ test_that("a two-valued BY that is not 0/1 asks for GROUP_1 by name", {
   expect_error(stddiff_values(labeled, "grp", sd_buckets), "GROUP_1")
   expect_error(stddiff_values(labeled, "grp", sd_buckets, group_1 = "tarv"), "GROUP_1")
 })
+
+test_that("a 0/1 group stored as text or a factor needs no GROUP_1", {
+  skip_if_not_installed("hvtiRpropensity")
+  want <- stddiff_values(sd_data, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha")
+  for (as_type in list(as.character, function(x) factor(x, levels = c(0, 1)))) {
+    coded <- transform(sd_data, grp = as_type(grp))
+    expect_identical(stddiff_values(coded, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha"), want)
+  }
+})

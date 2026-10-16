@@ -12,6 +12,8 @@ dc_tables_study <- function(.local_envir = parent.frame()) {
     age = 50 + (seq_len(n) * 7L) %% 31L,
     creat = round(exp(((seq_len(n) * 3L) %% 17L) / 8), 2),
     female = (seq_len(n) * 5L) %% 3L == 0L,
+    # Two events in sixty: expected cells under 5, so this row is Fisher's.
+    redo = seq_len(n) %in% c(7L, 40L),
     nyha = 1L + (seq_len(n) * 11L) %% 4L,
     race = c("W", "B", "W", "O", "W")[1L + seq_len(n) %% 5L]
   )
@@ -38,14 +40,14 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   lines <- readLines(job, warn = FALSE)
   lines <- set_choice(lines, "BY", '"grp"')
   lines <- set_choice(lines, "CONTINUOUS", 'c("age", "creat")')
-  lines <- set_choice(lines, "BINARY", '"female"')
+  lines <- set_choice(lines, "BINARY", 'c("female", "redo")')
   lines <- set_choice(lines, "CATEGORICAL", 'c("nyha", "race")')
   lines <- set_choice(lines, "COMPARE", '"pvalue"')
   lines <- set_choice(lines, "MEAN_SD", '"age"')
   lines <- set_choice(lines, "ORDINAL", '"nyha"')
   lines <- set_choice(lines, "STDDIFF", "TRUE")
   groups <- grep("^GROUPS <- list\\($", lines)
-  lines <- c(lines[seq_len(groups)], '  Demography = c("age", "female", "race"),',
+  lines <- c(lines[seq_len(groups)], '  Demography = c("age", "female", "race", "redo"),',
              '  Clinical = c("creat", "nyha")', ")", lines[-seq_len(groups + 3L)])
   # Worked markers, as helper-rm.R does, so the render is the same draft or final.
   writeLines(gsub("EDIT:", "REVIEWED:", lines, fixed = TRUE), job)
@@ -61,6 +63,9 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   # The report prints the flextable that is saved, not gtsummary's working
   # object, whose cells carry the internal "N ||| stat" sentinel.
   expect_false(grepl("|||", html, fixed = TRUE))
+  # A Fisher row's double dagger is explained in the report, as in the .docx.
+  expect_match(html, "\u2021", fixed = TRUE)
+  expect_match(html, "Fisher exact test.", fixed = TRUE)
   docx <- list.files(hvtiRutilities::study_dir("documents", root), pattern = "[.]docx$",
                      recursive = TRUE, full.names = TRUE)
   expect_length(docx, 1L)
