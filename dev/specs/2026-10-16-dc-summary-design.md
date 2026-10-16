@@ -1,8 +1,9 @@
 # `dc-summary`: the summary table before and after adjustment
 
 **Date:** 2026-10-16
-**Status:** draft. Section 2 is read from the SAS source. Everything in sections 4 and 5 waits
-on the 2026-10-16 meeting, whose transcript will settle the open questions in section 6.
+**Status:** draft. Section 2 is read from the SAS source. Section 5a records the 2026-10-16
+meeting, which reframes the request: read it before section 4. Section 6 says which questions
+the meeting settled.
 **Reads with:** `2026-09-16-standardized-difference-design.md` (`dc-stddiff`, which already
 owns the standardized differences); `2026-09-09-eda-templates-design.md` (`hv_tbl_summary()`
 as the `%summarytable` port); `2026-09-02-dp-dc-decomposition-design.md` (the `dc` qualifiers).
@@ -139,7 +140,57 @@ has half the job, and the meeting should rule them out on purpose rather than by
   catalog description reads "The balance table" and its default `TYPE` is `"balance"`.
   `adjusted` and `table1` were the alternatives considered.
 
+## 5a. What the 2026-10-16 meeting asked for
+
+Read from the "Umbrella project status review" transcript (2026-10-16, about 44 to 50 minutes in,
+with the table critique from 26 to 31 and 1:03 to 1:16). Speaker labels in that transcript are
+unreliable: one conference-room device carries several voices.
+
+**The request was not the three-panel table.** Matching and weighting were never mentioned. What
+was asked for is the `%summarytable` *shape*: one call, continuous and categorical variables
+together in ordered sections, by group, with p-values and the standardized difference in the
+same table. The team said it had stopped running separate tables and standardized-difference
+jobs and runs the summary macro instead, and that a standardized difference is never shown on
+its own: it always sits beside the means and frequencies. One table, one function with every
+option, was the stated preference. It was described in the meeting as a mix between `dc-tables`
+and `dc-stddiff`, which is accurate. The objection to `dc-stddiff` was that the summary macro
+treats nominal variables differently; section 3 shows the R difference column has the same
+problem (`gtsummary`'s SMD is not `%stddiff`'s).
+
+So the exemplar in section 2 is one *use* of the shape, run three times for an adjusted study.
+The shape itself is `dc-tables` plus `%stddiff`'s difference. That makes option 2 of section 4,
+extending `hv_tbl_summary()` and `dc-tables`, the closest fit to what was asked, and it turns
+the weighted panel into a later addition rather than the blocker.
+
+**Critique of `dc-tables` and `hv_tbl_summary()` raised in the same meeting**, all of which a
+`dc-summary` would inherit:
+
+1. A column with the variable's name, with an argument to drop it, so the report and the
+   manuscript come from one regenerated table and nobody edits a table by hand.
+2. The count of non-missing values as its own column, not stacked lines under each variable.
+   The header wording that a manuscript reviewer accepted was "number of non-missing data
+   available". A percent missing was asked about and not wanted.
+3. The rendered HTML and the saved Word table should be the same table. Today the HTML stacks
+   lines and the saved `.docx` splits them into manuscript columns.
+4. Categorical tests should switch to Fisher's exact automatically when expected cell counts
+   are small, as `%summarytable`'s `CUTEXACT=` did. Today chi-square is swapped by hand.
+5. Continuous tests stay nonparametric for every variable (Wilcoxon, or Kruskal-Wallis for
+   three or more groups). Nobody wanted the normal/non-normal test split.
+6. But the *display* must be chosen per variable: mean ± SD for some continuous variables and
+   median [P15, P85] for skewed ones, in the same manuscript table. `normal` in
+   `hv_tbl_summary()` couples mean ± SD to ANOVA today; the request is display without the test.
+7. In a report, `continuous_stat = "both"` should put N, mean ± SD and median side by side as
+   columns per group, blank for categorical rows, not stack them as sub-rows.
+8. P-value, standardized difference or both, as `compare` already offers.
+9. The gallery shows no saved `.docx` table, which is the artifact the team judges.
+
 ## 6. Open questions for the meeting
+
+After the transcript: 2 leans to option 2 (one function with every option); 3 is one table;
+1, 4, 5 and 7 were not raised, so the weighted panel, the saved differences, the matched-panel
+tests and the permutation intervals are out of a first version; 6 was not raised, and median
+[P15, P85] is the default. Still open: whether `dc-summary` is a new template or the name for
+an extended `dc-tables`.
 
 1. Is the weighted panel required? If so, hvtiRtables needs weighted summaries first.
    Weighted p-values will be seeded in R, so they will not reproduce a SAS run digit for
