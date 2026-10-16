@@ -59,6 +59,9 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   if (inherits(rendered, "error")) quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE)
 
   html <- paste(readLines(sub("[.]qmd$", ".html", job), warn = FALSE), collapse = "\n")
+  # The report, not its folded source: the code carries the same label and
+  # would match even if the table lost its column.
+  html <- gsub("(?s)<pre[^>]*>.*?</pre>", "", html, perl = TRUE)
   expect_match(html, "Std. Diff. (%)", fixed = TRUE)
   # The report prints the flextable that is saved, not gtsummary's working
   # object, whose cells carry the internal "N ||| stat" sentinel.
