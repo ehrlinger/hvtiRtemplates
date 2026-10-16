@@ -49,8 +49,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.6") {
-  stop("This job needs hvtiRtables >= 1.0.6 for hv_tbl_compare(), MEAN_SD and the Variable column; ",
+if (utils::packageVersion("hvtiRtables") < "1.0.7") {
+  stop("This job needs hvtiRtables >= 1.0.7 for hv_man_table_display() and hv_tbl_compare(); ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
@@ -398,14 +398,11 @@ if (STDDIFF) {
   tbl <- hvtiRtables::hv_tbl_compare(tbl, stddiff_values(d, BY, buckets, MEAN_SD, ORDINAL, GROUP_1),
                                      label = "Std. Diff. (%)")
 }
-# The table as it is saved to Word, so the report and the .docx are one table.
-# The saver writes its notes under the table; the report shows the same notes
-# as footer lines on a copy, so a mark such as a Fisher row's double dagger is
-# explained here too. ft itself is saved unchanged.
+# The table as it is saved to Word, so the report and the .docx are one table:
+# hv_man_table_display() adds the header marks, notes and abbreviation key the
+# saver writes, from the saver's own code. ft itself is what is saved.
 ft <- hvtiRtables::hv_man_table(tbl)
-notes <- attr(ft, "hv_footnotes", exact = TRUE)
-if (is.null(notes)) notes <- hvtiRtables::hv_man_footnotes()
-flextable::add_footer_lines(ft, paste(names(notes), unlist(notes, use.names = FALSE)))
+hvtiRtables::hv_man_table_display(ft, abbreviations = ABBREVIATIONS)
 if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
       !grepl("^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$", WORD_FILE)) {
   stop("WORD_FILE must be a plain .docx filename within this set.", call. = FALSE)
