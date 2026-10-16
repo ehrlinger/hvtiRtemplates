@@ -308,6 +308,14 @@ stddiff_values <- function(d, by, buckets, mean_sd = character(0), ordinal = cha
   if (length(seen) != 2L) {
     stop("STDDIFF needs exactly two values of ", by, "; the data hold ", length(seen), ".", call. = FALSE)
   }
+  if (is.null(group_1) && !(is.logical(seen) || all(as.character(seen) %in% c("0", "1")))) {
+    stop("STDDIFF needs GROUP_1 to name the treated value of ", by, ", one of: ",
+         paste(sort(as.character(seen)), collapse = ", "), ".", call. = FALSE)
+  }
+  if (!is.null(group_1) && !(as.character(group_1) %in% as.character(seen))) {
+    stop("GROUP_1 must be one of the values of ", by, ": ",
+         paste(sort(as.character(seen)), collapse = ", "), ".", call. = FALSE)
+  }
   if (length(setdiff(mean_sd, buckets$continuous))) {
     stop("MEAN_SD names variable(s) that are not continuous: ",
          paste(setdiff(mean_sd, buckets$continuous), collapse = ", "), call. = FALSE)
@@ -320,6 +328,15 @@ stddiff_values <- function(d, by, buckets, mean_sd = character(0), ordinal = cha
   # accepts Yes/No, so convert those, and only those, to logical first.
   for (v in buckets$binary) {
     if (is.character(d[[v]]) || is.factor(d[[v]])) d[[v]] <- toupper(as.character(d[[v]])) == "YES"
+  }
+  # %stddiff ranks an ordinal variable, so it needs the order: a factor's
+  # levels give it, and text does not.
+  for (v in intersect(ordinal, names(d))) {
+    if (is.factor(d[[v]])) {
+      d[[v]] <- as.integer(d[[v]])
+    } else if (!is.numeric(d[[v]])) {
+      stop("ORDINAL variable ", v, " must be numeric or a factor whose levels are in order.", call. = FALSE)
+    }
   }
   none <- function(x) if (length(x)) x else NULL
   r <- hvtiRpropensity::ps_stddiff(
@@ -362,7 +379,10 @@ tbl <- hvtiRtables::hv_tbl_summary(
   percentiles = PERCENTILES, continuous_stat = CONTINUOUS_STAT,
   mean_sd = MEAN_SD, show_variable = SHOW_VARIABLE
 )
-if (isTRUE(STDDIFF)) {
+if (!is.logical(STDDIFF) || length(STDDIFF) != 1L || is.na(STDDIFF)) {
+  stop("STDDIFF must be TRUE or FALSE.", call. = FALSE)
+}
+if (STDDIFF) {
   if (COMPARE %in% c("smd", "both")) {
     stop("STDDIFF adds %stddiff's difference; set COMPARE to \"pvalue\" or \"none\", ",
          "since COMPARE's \"smd\" is a different number for the same thing.", call. = FALSE)

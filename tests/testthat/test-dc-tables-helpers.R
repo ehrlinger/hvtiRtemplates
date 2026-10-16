@@ -128,3 +128,20 @@ test_that("stddiff_values refuses what %stddiff cannot compute", {
   expect_error(stddiff_values(sd_data, "grp", sd_buckets, ordinal = "age"), "ORDINAL")
   expect_error(stddiff_values(sd_data, "grp", sd_buckets, mean_sd = "nyha"), "MEAN_SD")
 })
+
+test_that("an ordered factor in ORDINAL is ranked by its level order", {
+  skip_if_not_installed("hvtiRpropensity")
+  as_factor <- transform(sd_data, nyha = factor(c("I", "II", "III", "IV")[nyha], levels = c("I", "II", "III", "IV")))
+  got <- stddiff_values(as_factor, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha")
+  want <- stddiff_values(sd_data, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha")
+  expect_identical(got, want)
+  as_text <- transform(sd_data, nyha = c("I", "II", "III", "IV")[nyha])
+  expect_error(stddiff_values(as_text, "grp", sd_buckets, ordinal = "nyha"), "ORDINAL.*factor")
+})
+
+test_that("a two-valued BY that is not 0/1 asks for GROUP_1 by name", {
+  skip_if_not_installed("hvtiRpropensity")
+  labelled <- transform(sd_data, grp = ifelse(grp == 1, "tavr", "savr"))
+  expect_error(stddiff_values(labelled, "grp", sd_buckets), "GROUP_1")
+  expect_error(stddiff_values(labelled, "grp", sd_buckets, group_1 = "tarv"), "GROUP_1")
+})
