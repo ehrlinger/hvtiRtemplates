@@ -300,6 +300,28 @@ test_that("EFFECT_VARIABLES may name a factor covariate alone", {
   expect_no_error(ggplot2::ggplot_build(env$p_effects[[1L]]))
 })
 
+test_that("each effects page is emitted at its own width and height", {
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  env <- nb_env(root)
+  # One vectorized sprintf() over both options once gave every page fig-height equal to its width.
+  emitted <- list()
+  local_mocked_bindings(knit_child = function(text, ...) {
+    emitted[[length(emitted) + 1L]] <<- text
+    ""
+  }, .package = "knitr")
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit", "tbl-fit", "tbl-fit-summary", "fig-importance",
+                                 "effects"), env, nb_choices(EFFECT_VARIABLES = "grp")))
+  expect_length(emitted, length(env$.effect_page))
+  for (i in seq_along(emitted)) {
+    size <- env$.effect_page[[i]]$size
+    expect_true(size$width != size$height)
+    expect_identical(grep("^#\\| fig-(width|height):", emitted[[i]], value = TRUE),
+                     c(sprintf("#| fig-width: %g", size$width), sprintf("#| fig-height: %g", size$height)))
+  }
+})
+
 test_that("visits all at one time draw no mean line, and say so", {
   nb_skip_unless_stack()
   traces <- data.frame(id = factor(rep(c("a", "b"), each = 2L)), time = 1, fitted = c(1, 2, 3, 4),
