@@ -1,9 +1,9 @@
 # `dc-summary`: the summary table before and after adjustment
 
 **Date:** 2026-10-16
-**Status:** draft. Section 2 is read from the SAS source. Section 5a records the 2026-10-16
-meeting, which reframes the request: read it before section 4. Section 6 says which questions
-the meeting settled.
+**Status:** decided 2026-10-16, see section 7: `dc-tables` is extended rather than a new
+template added. Section 2 is read from the SAS source. Section 5a records the meeting, which
+reframed the request.
 **Reads with:** `2026-09-16-standardized-difference-design.md` (`dc-stddiff`, which already
 owns the standardized differences); `2026-09-09-eda-templates-design.md` (`hv_tbl_summary()`
 as the `%summarytable` port); `2026-09-02-dp-dc-decomposition-design.md` (the `dc` qualifiers).
@@ -189,8 +189,28 @@ the weighted panel into a later addition rather than the blocker.
 After the transcript: 2 leans to option 2 (one function with every option); 3 is one table;
 1, 4, 5 and 7 were not raised, so the weighted panel, the saved differences, the matched-panel
 tests and the permutation intervals are out of a first version; 6 was not raised, and median
-[P15, P85] is the default. Still open: whether `dc-summary` is a new template or the name for
-an extended `dc-tables`.
+[P15, P85] is the default.
+
+## 7. Decision, 2026-10-16
+
+**Option 2. No separate `dc-summary` template: `hv_tbl_summary()` and `dc-tables` are extended
+instead.** The weighted panel is parked; hvtiRtables#76 is a draft that records its design.
+
+The work is in hvtiRtables first, then `dc-tables`:
+
+1. A standardized difference faithful to `%stddiff`. hvtiRtables takes no dependency on
+   hvtiRpropensity (tier 1 against tier 2), so it gains a seam that joins a caller-supplied
+   per-variable column, and `dc-tables` calls `hvtiRpropensity::ps_stddiff()` and passes the
+   result in. `compare = "smd"` keeps gtsummary's generic SMD and says so in its help.
+2. Fisher's exact chosen automatically by `%summarytable`'s `CUTEXACT=` rule.
+3. Mean ± SD or median chosen per variable for display, with one nonparametric test for all.
+4. The non-missing count as its own column, and `"both"` as side-by-side columns in a report.
+5. A variable-name column, with an argument to drop it.
+
+`dc-tables` then maps its study choices onto `ps_stddiff()`'s buckets as `%summarytable` did:
+the mean ± SD variables are `gaussian`; the other continuous variables, and ordinal ones, are
+`nong_ord`. That needs a way to name ordinal variables in `dc-tables`, which today folds them
+into `CATEGORICAL`.
 
 1. Is the weighted panel required? If so, hvtiRtables needs weighted summaries first.
    Weighted p-values will be seeded in R, so they will not reproduce a SAS run digit for
