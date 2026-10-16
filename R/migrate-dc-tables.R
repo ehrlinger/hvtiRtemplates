@@ -53,8 +53,9 @@
                                              paste0("[heading]: ", paste(parsed[[group]], collapse = ", ")),
                                              "Source comment heading and grouped rows."))
     }
-    exposure <- trimws(args[[i]]$exposure %||% "1")
-    if (exposure != "1") {
+    # A blank argument takes the macro's default, as SAS passes it.
+    exposure <- trimws(args[[i]]$exposure %||% "")
+    if (nzchar(exposure) && exposure != "1") {
       unresolved <- rbind(unresolved, record(calls[[i]]$start, paste0("exposure=", exposure),
                                              paste("%desc_tab treated the group as an outcome and printed incidence",
                                                    "by row; dc-tables does not reproduce it.")))
@@ -134,7 +135,9 @@
   if (length(buckets$continuous)) {
     continuous_calls <- which(types == "continuous")
     given <- unique(vapply(args[continuous_calls], function(x) {
-      paste(strsplit(trimws(x$perctile %||% "15 50 85"), "[[:space:]]+")[[1L]], collapse = " ")
+      given <- trimws(x$perctile %||% "")
+      if (!nzchar(given)) given <- "15 50 85"
+      paste(strsplit(given, "[[:space:]]+")[[1L]], collapse = " ")
     }, character(1L)))
     triple <- suppressWarnings(as.numeric(strsplit(given[[1L]], " ", fixed = TRUE)[[1L]]))
     if (length(given) == 1L && length(triple) == 3L && !anyNA(triple) && triple[[2L]] == 50 &&
@@ -151,6 +154,13 @@
       NA_integer_, "PCTLDEF=4",
       paste("%desc_tab computed percentiles with PROC STDIZE PCTLDEF=4; the R table uses SAS's default",
             "definition (PCTLDEF=5), so the low and high percentiles can differ in small groups. The median agrees.")
+    ))
+  }
+  if (nzchar(by) && length(buckets$category)) {
+    unresolved <- rbind(unresolved, record(
+      NA_integer_, "categorical test",
+      paste("%desc_tab always used chi-square; the R table uses Fisher's exact test when any expected cell",
+            "count is under 5, so p-values for sparse categorical rows differ.")
     ))
   }
   translated <- rbind(translated, record(calls[[1L]]$start,

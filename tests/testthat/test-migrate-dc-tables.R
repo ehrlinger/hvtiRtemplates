@@ -385,3 +385,19 @@ test_that("the report says %desc_tab's percentiles used PCTLDEF=4", {
   none <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);")
   expect_false(any(grepl("PCTLDEF", none$unresolved, fixed = TRUE)))
 })
+
+test_that("a blank exposure= or perctile= takes %desc_tab's default", {
+  got <- tables_config(
+    "%desc_tab(vartype=continuous,input=built,by=treatment,exposure=,perctile=,varlist=/* Demography */ age);"
+  )
+  expect_false(any(grepl("exposure=", got$unresolved, fixed = TRUE)))
+  expect_false(any(grepl("perctile=", got$unresolved, fixed = TRUE)))
+  expect_identical(got$env$PERCENTILES, c(15, 85))
+})
+
+test_that("a by-group job with categorical rows reports the Fisher difference", {
+  got <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);")
+  expect_true(any(grepl("chi-square", got$unresolved, fixed = TRUE) & grepl("Fisher", got$unresolved, fixed = TRUE)))
+  none <- tables_config("%desc_tab(vartype=category,input=built,by=,varlist=/* Demography */ female);")
+  expect_false(any(grepl("Fisher", none$unresolved, fixed = TRUE)))
+})
