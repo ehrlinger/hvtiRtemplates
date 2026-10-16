@@ -66,3 +66,91 @@ test_that("every variable lands in exactly one bucket", {
   b <- classify_buckets(d, names(d))
   expect_setequal(unlist(b, use.names = FALSE), names(d))
 })
+
+# ---- %stddiff's standardized difference --------------------------------------
+# %summarytable sent CON1 (mean +/- SD) to %stddiff as GAUSSIAN, CON2, CON3 and
+# ORD1 as NONG_ORD, CAT1 as BINARY and CAT2 as CATG. stddiff_values() must do the
+# same with dc-tables' buckets, MEAN_SD and ORDINAL, so each expectation below is
+# a direct ps_stddiff() call with the buckets the macro would have used.
+
+sd_data <- data.frame(
+  grp = rep(c(0, 1), each = 20),
+  age = c(seq(50, 69), seq(55, 93, by = 2)),
+  creat = c(exp(seq(0, 1.9, by = 0.1)), exp(seq(0.5, 2.4, by = 0.1))),
+  female = rep(c(0, 1, 1, 0, 1), 8),
+  smoker = rep(c("Yes", "No", "No", "No"), 10),
+  nyha = rep(c(1, 2, 3, 4, 2, 2, 3, 1), 5),
+  race = rep(c("W", "B", "W", "O", "W"), 8)
+)
+sd_buckets <- list(continuous = c("age", "creat"), binary = c("female", "smoker"),
+                   categorical = c("nyha", "race"))
+
+expected_stddiff <- function(data, gaussian, nong_ord, binary, categorical, treated_level = NULL) {
+  r <- hvtiRpropensity::ps_stddiff(data, treatment_col = "grp", gaussian = gaussian, nong_ord = nong_ord,
+                                   binary = binary, categorical = categorical, treated_level = treated_level)
+  s <- r$tables$stddiff
+  stats::setNames(sprintf("%.1f", 100 * s$stddiff), s$variable)
+}
+
+test_that("stddiff_values sends each bucket to the %stddiff type %summarytable used", {
+  skip_if_not_installed("hvtiRpropensity")
+  yes_no <- transform(sd_data, smoker = smoker == "Yes")
+  got <- stddiff_values(sd_data, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha")
+  want <- expected_stddiff(yes_no, gaussian = "age", nong_ord = c("creat", "nyha"),
+                           binary = c("female", "smoker"), categorical = "race")
+  expect_identical(got[names(want)], want)
+  expect_setequal(names(got), unlist(sd_buckets, use.names = FALSE))
+})
+
+test_that("a continuous variable not shown as mean +/- SD is ranked, not treated as Gaussian", {
+  skip_if_not_installed("hvtiRpropensity")
+  got <- stddiff_values(sd_data, "grp", sd_buckets, mean_sd = character(0), ordinal = character(0))
+  ranked <- expected_stddiff(transform(sd_data, smoker = smoker == "Yes"), gaussian = NULL,
+                             nong_ord = c("age", "creat"), binary = c("female", "smoker"),
+                             categorical = c("nyha", "race"))
+  expect_identical(got[["age"]], ranked[["age"]])
+  expect_identical(got[["nyha"]], ranked[["nyha"]])
+})
+
+test_that("GROUP_1 names the treated value of a two-valued group", {
+  skip_if_not_installed("hvtiRpropensity")
+  labeled <- transform(sd_data, grp = ifelse(grp == 1, "tavr", "savr"))
+  got <- stddiff_values(labeled, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha", group_1 = "tavr")
+  want <- stddiff_values(sd_data, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha")
+  expect_identical(got, want)
+})
+
+test_that("stddiff_values refuses what %stddiff cannot compute", {
+  skip_if_not_installed("hvtiRpropensity")
+  expect_error(stddiff_values(sd_data, NULL, sd_buckets), "BY")
+  three <- transform(sd_data, grp = rep(c(0, 1, 2, 1), 10))
+  expect_error(stddiff_values(three, "grp", sd_buckets), "exactly two")
+  expect_error(stddiff_values(sd_data, "grp", sd_buckets, ordinal = "age"), "ORDINAL")
+  expect_error(stddiff_values(sd_data, "grp", sd_buckets, mean_sd = "nyha"), "MEAN_SD")
+})
+
+test_that("an ordered factor in ORDINAL is ranked by its level order", {
+  skip_if_not_installed("hvtiRpropensity")
+  as_factor <- transform(sd_data, nyha = factor(c("I", "II", "III", "IV")[nyha], levels = c("I", "II", "III", "IV")))
+  got <- stddiff_values(as_factor, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha")
+  want <- stddiff_values(sd_data, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha")
+  expect_identical(got, want)
+  as_text <- transform(sd_data, nyha = c("I", "II", "III", "IV")[nyha])
+  expect_error(stddiff_values(as_text, "grp", sd_buckets, ordinal = "nyha"), "ORDINAL.*factor")
+})
+
+test_that("a two-valued BY that is not 0/1 asks for GROUP_1 by name", {
+  skip_if_not_installed("hvtiRpropensity")
+  labeled <- transform(sd_data, grp = ifelse(grp == 1, "tavr", "savr"))
+  expect_error(stddiff_values(labeled, "grp", sd_buckets), "GROUP_1")
+  expect_error(stddiff_values(labeled, "grp", sd_buckets, group_1 = "tarv"), "GROUP_1")
+})
+
+test_that("a 0/1 group stored as text or a factor needs no GROUP_1", {
+  skip_if_not_installed("hvtiRpropensity")
+  want <- stddiff_values(sd_data, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha")
+  for (as_type in list(as.character, function(x) factor(x, levels = c(0, 1)))) {
+    coded <- transform(sd_data, grp = as_type(grp))
+    expect_identical(stddiff_values(coded, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha"), want)
+  }
+})
