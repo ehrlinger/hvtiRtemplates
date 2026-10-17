@@ -10,10 +10,17 @@
     }, character(1L))
   }
   inputs <- unique(scalar("input"))
-  by <- unique(scalar("by"))
-  if (length(inputs) != 1L || length(by) != 1L) {
-    stop("All %desc_tab calls must use the same input and by; separate conflicting jobs.", call. = FALSE)
+  # tp.dc.tables.ods.sas writes each table twice, overall (by= blank) and by
+  # group. One R table holds both: BY names the group and its Overall column
+  # is the overall call. Only two different groups cannot be one table.
+  by_calls <- scalar("by")
+  overall_calls <- !nzchar(by_calls)
+  by <- unique(by_calls[!overall_calls])
+  if (length(inputs) != 1L || length(by) > 1L) {
+    stop("All %desc_tab calls must use the same input and one group (by=, or by= blank for the overall ",
+         "table); separate conflicting jobs.", call. = FALSE)
   }
+  if (!length(by)) by <- ""
   if (nzchar(by) && !grepl("^[a-z_][a-z0-9_]*$", by)) {
     stop("dc-tables requires one plain BY variable.", call. = FALSE)
   }
@@ -75,6 +82,12 @@
   }
   translated <- rbind(translated, record(calls[[1L]]$start, paste0("by=", by),
                                          "BY selects a column, not a comparison test or a subset of levels."))
+  if (nzchar(by) && any(overall_calls)) {
+    translated <- rbind(translated, record(
+      calls[[which(overall_calls)[[1L]]]]$start, "by= (blank)",
+      "The overall calls are the table's Overall column, beside the BY groups; one table replaces both RTFs."
+    ))
+  }
   d <- selection$data
   binary <- categorical <- character()
   unknown <- character()

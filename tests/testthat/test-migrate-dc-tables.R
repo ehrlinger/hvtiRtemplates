@@ -269,8 +269,9 @@ test_that("dc-tables merges repeated headings and rejects conflicting groups or 
   }
   for (second in c(
     "%desc_tab(vartype=category,input=built,varlist=/* D */ age);",
-    "%desc_tab(vartype=continuous,input=complete_cases,varlist=/* D */ bmi);",
-    "%desc_tab(vartype=continuous,input=built,varlist=/* D */ bmi,by=treatment);"
+    "%desc_tab(vartype=continuous,input=complete_cases,varlist=/* D */ bmi);"
+    # An overall call beside a by-group one is the ODS template's own shape and
+    # migrates; see "the overall and by-group calls of tp.dc.tables.ods.sas".
   )) {
     root <- migration_study_fixture("dc-tables")
     tables_source(root, c("%desc_tab(vartype=continuous,input=built,varlist=/* D */ age);", second))
@@ -409,4 +410,35 @@ test_that("a by-group job with continuous rows reports the Kruskal-Wallis differ
   expect_false(any(grepl("Kruskal-Wallis", none$unresolved, fixed = TRUE)))
   categorical <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);")
   expect_false(any(grepl("Kruskal-Wallis", categorical$unresolved, fixed = TRUE)))
+})
+
+# ---- the template's own shape: each table overall and by group ----------------
+
+test_that("the overall and by-group calls of tp.dc.tables.ods.sas migrate to one table", {
+  root <- migration_study_fixture("dc-tables")  # nolint: object_usage_linter.
+  file.copy(file.path(root, "descriptive", "dc.tables.ods.sas"),
+            file.path(root, "descriptive", "dc.tables.sas"), overwrite = TRUE)
+  out <- tables_migrate(root, evidence = FALSE)
+  env <- new.env()
+  eval(parse(text = tables_region(out, "dc-tables-config")), env)
+  expect_identical(env$BY, "treatment")
+  expect_identical(env$COMPARE, "pvalue")
+  expect_identical(env$CONTINUOUS_STAT, "both")
+  expect_identical(env$PERCENTILES, c(15, 85))
+  expect_identical(env$GROUPS, list(
+    Demography = c("female", "race_grp", "age", "bmi"),
+    Procedure = "repair", `Follow-up` = "iv_dead"
+  ))
+  report <- readLines(sub("[.]qmd$", "-migration.md", out))
+  translated <- report[seq.int(match("## Translated", report), match("## Unresolved", report) - 1L)]
+  expect_true(any(grepl("Overall column", translated, fixed = TRUE)))
+})
+
+test_that("calls naming two different groups still stop", {
+  root <- migration_study_fixture("dc-tables")  # nolint: object_usage_linter.
+  tables_source(root, c(
+    "%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);",
+    "%desc_tab(vartype=category,input=built,by=repair,varlist=/* Demography */ female);"
+  ))
+  expect_error(tables_migrate(root, evidence = FALSE), "same input and one group")
 })
