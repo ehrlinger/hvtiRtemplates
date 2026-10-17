@@ -1,9 +1,10 @@
 # `dc-summary`: the summary table before and after adjustment
 
 **Date:** 2026-10-16
-**Status:** decided 2026-10-16, see section 7: `dc-tables` is extended rather than a new
-template added. Section 2 is read from the SAS source. Section 5a records the meeting, which
-reframed the request.
+**Status:** shipped. Decided 2026-10-16 (section 7): `dc-tables` was extended rather than a
+`dc-summary` template added. Section 8 lists what shipped and where it differs from the plan.
+Section 2 is read from the SAS source; section 5a records the meeting, which reframed the
+request. The weighted panel remains parked.
 **Reads with:** `2026-09-16-standardized-difference-design.md` (`dc-stddiff`, which already
 owns the standardized differences); `2026-09-09-eda-templates-design.md` (`hv_tbl_summary()`
 as the `%summarytable` port); `2026-09-02-dp-dc-decomposition-design.md` (the `dc` qualifiers).
@@ -191,6 +192,17 @@ After the transcript: 2 leans to option 2 (one function with every option); 3 is
 tests and the permutation intervals are out of a first version; 6 was not raised, and median
 [P15, P85] is the default.
 
+1. Is the weighted panel required? If so, hvtiRtables needs weighted summaries first.
+   Weighted p-values will be seeded in R, so they will not reproduce a SAS run digit for
+   digit; SAS's were unseeded and never reproduced themselves either.
+2. Which of options 1 to 3?
+3. One Word file with three panels, three files, or one table with three column groups?
+4. Does the job save the joined standardized differences, as step 5 does, and who reads them?
+5. Do p-values stay in the matched and weighted panels? SAS runs unpaired tests on matched
+   pairs; keep that for parity, or change it?
+6. Is median (min, max) still wanted, or does median [15, 85] cover it?
+7. Are permutation intervals on the difference (the `stddiffci` sibling) part of this job?
+
 ## 7. Decision, 2026-10-16
 
 **Option 2. No separate `dc-summary` template: `hv_tbl_summary()` and `dc-tables` are extended
@@ -212,13 +224,29 @@ the mean ± SD variables are `gaussian`; the other continuous variables, and ord
 `nong_ord`. That needs a way to name ordinal variables in `dc-tables`, which today folds them
 into `CATEGORICAL`.
 
-1. Is the weighted panel required? If so, hvtiRtables needs weighted summaries first.
-   Weighted p-values will be seeded in R, so they will not reproduce a SAS run digit for
-   digit; SAS's were unseeded and never reproduced themselves either.
-2. Which of options 1 to 3?
-3. One Word file with three panels, three files, or one table with three column groups?
-4. Does the job save the joined standardized differences, as step 5 does, and who reads them?
-5. Do p-values stay in the matched and weighted panels? SAS runs unpaired tests on matched
-   pairs; keep that for parity, or change it?
-6. Is median (min, max) still wanted, or does median [15, 85] cover it?
-7. Are permutation intervals on the difference (the `stddiffci` sibling) part of this job?
+## 8. What shipped
+
+| piece | where | released |
+|---|---|---|
+| `hv_tbl_compare()`, `mean_sd`, `show_variable`, `cutexact`, side-by-side `"both"`, page fitting | ehrlinger/hvtiRtables#77 | hvtiRtables 1.0.6 (#78, tag `v1.0.6`) |
+| `hv_man_table_display()`: the saver's header marks, notes and key on a display copy | ehrlinger/hvtiRtables#79 | hvtiRtables 1.0.7 (#80, tag `v1.0.7`) |
+| `dc-tables`: `STDDIFF`, `MEAN_SD`, `ORDINAL`, `GROUP_1`, `SHOW_VARIABLE`; the report prints the saved table | #352, merged 2026-10-16 | hvtiRtemplates, next bump |
+| `migrate_job()` writes what `%desc_tab` printed, and reports what differs | #354, merged 2026-10-17 | hvtiRtemplates, next bump |
+| `dc-tables`' report shows the Word table's header marks, notes and abbreviation key | #355, merged 2026-10-17 | hvtiRtemplates, next bump |
+
+Where it differs from section 7:
+
+- **Fisher's exact test, item 2.** The default is `cutexact = "any"`, Fisher's exact test when any
+  expected cell is under 5, not `%summarytable`'s `CUTEXACT=50`. The meeting's complaint was the
+  hand-swapping of chi-square for Fisher that the SAS rule leaves behind, so following it
+  faithfully would have kept the complaint. `cutexact = 50` reproduces SAS on request.
+- **The count column, item 4.** It shipped as its own column under house rule 8's wording,
+  "Number of non-missing values". The meeting's "number of non-missing data available" was
+  not adopted, which was John's call on 2026-10-16.
+- **Percentile definition.** `hv_tbl_summary()` keeps SAS's default `PCTLDEF=5`, which
+  `%summarytable` used. A migrated `%desc_tab` job, which used `PCTLDEF=4`, is told so in its
+  migration report rather than given a new option. Decided 2026-10-16. The two-group continuous
+  test (Wilcoxon in R, Kruskal-Wallis in `%desc_tab`) is reported the same way.
+
+Still parked: the weighted panel (hvtiRtables#76, a draft design with measured parity against
+`VARDEF=WDF`), and questions 1, 4, 5 and 7 of section 6.
