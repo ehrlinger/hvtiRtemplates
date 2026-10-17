@@ -198,10 +198,13 @@ for continuous variables. The R job supplies both sets to one table. SAS
 comment banners become the names in `GROUPS`; `by=` and `byvalue=` become `BY`;
 and `perctile=15 50 85` becomes `continuous_stat = "both"` with percentiles 15
 and 85. A `by=` group gets a p-value, `COMPARE = "pvalue"`, as `%desc_tab`
-printed one. Two things differ on purpose: a categorical variable with sparse
+printed one. Three things differ on purpose: a categorical variable with sparse
 cells is tested with Fisher's exact test, where `%desc_tab` always used
-chi-square, and the low and high percentiles use SAS's default definition
-rather than the `PCTLDEF=4` `%desc_tab` set, so they can differ in small groups.
+chi-square; two groups of a continuous variable are compared with the Wilcoxon
+rank-sum test, exact in small groups, where `%desc_tab` reported the
+Kruskal-Wallis chi-square approximation; and the low and high percentiles use
+SAS's default definition rather than the `PCTLDEF=4` `%desc_tab` set, so they
+can differ in small groups.
 `migrate_job()` writes these choices and lists the differences in its report.
 The `dc.tables.ods_<topic>.sas` correlation variant becomes `CORR` in the same
 job.

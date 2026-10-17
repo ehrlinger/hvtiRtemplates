@@ -156,6 +156,14 @@
             "definition (PCTLDEF=5), so the low and high percentiles can differ in small groups. The median agrees.")
     ))
   }
+  if (nzchar(by) && length(buckets$continuous)) {
+    unresolved <- rbind(unresolved, record(
+      NA_integer_, "continuous test",
+      paste("%desc_tab reported the Kruskal-Wallis chi-square p-value for any number of groups; for two",
+            "groups the R table uses the Wilcoxon rank-sum test, exact in small groups, so p-values differ",
+            "(for groups 1-5 and 6-10: 0.0090 in SAS, 0.0079 in R).")
+    ))
+  }
   if (nzchar(by) && length(buckets$category)) {
     unresolved <- rbind(unresolved, record(
       NA_integer_, "categorical test",

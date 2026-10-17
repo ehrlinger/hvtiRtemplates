@@ -401,3 +401,12 @@ test_that("a by-group job with categorical rows reports the Fisher difference", 
   none <- tables_config("%desc_tab(vartype=category,input=built,by=,varlist=/* Demography */ female);")
   expect_false(any(grepl("Fisher", none$unresolved, fixed = TRUE)))
 })
+
+test_that("a by-group job with continuous rows reports the Kruskal-Wallis difference", {
+  got <- tables_config("%desc_tab(vartype=continuous,input=built,by=treatment,varlist=/* Demography */ age);")
+  expect_true(any(grepl("Kruskal-Wallis", got$unresolved, fixed = TRUE) & grepl("Wilcoxon", got$unresolved, fixed = TRUE)))
+  none <- tables_config("%desc_tab(vartype=continuous,input=built,by=,varlist=/* Demography */ age);")
+  expect_false(any(grepl("Kruskal-Wallis", none$unresolved, fixed = TRUE)))
+  categorical <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);")
+  expect_false(any(grepl("Kruskal-Wallis", categorical$unresolved, fixed = TRUE)))
+})
