@@ -10,10 +10,17 @@
     }, character(1L))
   }
   inputs <- unique(scalar("input"))
-  by <- unique(scalar("by"))
-  if (length(inputs) != 1L || length(by) != 1L) {
-    stop("All %desc_tab calls must use the same input and by; separate conflicting jobs.", call. = FALSE)
+  # tp.dc.tables.ods.sas writes each table twice, overall (by= blank) and by
+  # group. One R table holds both: BY names the group and its Overall column
+  # is the overall call. Only two different groups cannot be one table.
+  by_calls <- scalar("by")
+  overall_calls <- !nzchar(by_calls)
+  by <- unique(by_calls[!overall_calls])
+  if (length(inputs) != 1L || length(by) > 1L) {
+    stop("All %desc_tab calls must use the same input and one group (by=, or by= blank for the overall ",
+         "table); separate conflicting jobs.", call. = FALSE)
   }
+  if (!length(by)) by <- ""
   if (nzchar(by) && !grepl("^[a-z_][a-z0-9_]*$", by)) {
     stop("dc-tables requires one plain BY variable.", call. = FALSE)
   }
@@ -66,6 +73,18 @@
                                              "SAS presentation or unsupported option: review; no equivalent assumed."))
     }
   }
+  # An overall call may summarize the group variable itself. In the R table it
+  # is BY, so its levels are the columns and their counts the column headers;
+  # it cannot also be a row.
+  if (nzchar(by) && by %in% unlist(groups, use.names = FALSE)) {
+    groups <- lapply(groups, setdiff, y = by)
+    groups <- groups[lengths(groups) > 0L]
+    buckets <- lapply(buckets, setdiff, y = by)
+    translated <- rbind(translated, record(
+      calls[[which(overall_calls)[[1L]]]]$start, paste0(by, " (row)"),
+      paste0(by, " is BY: its levels are the columns and their counts the column headers, so it is not also a row.")
+    ))
+  }
   selection <- .dc_tables_dataset(evidence$root, inputs)
   selected <- record(calls[[1L]]$start, paste0("input=", inputs), selection$reason)
   if (is.na(selection$dataset)) {
@@ -76,6 +95,31 @@
   translated <- rbind(translated, record(calls[[1L]]$start, paste0("by=", by),
                                          "BY selects a column, not a comparison test or a subset of levels."))
   d <- selection$data
+  # The Overall column is the overall calls only when every patient has a
+  # group: hv_tbl_summary() leaves out rows whose BY is missing, and SAS's
+  # by= blank call counted them.
+  if (nzchar(by) && any(overall_calls)) {
+    overall_line <- calls[[which(overall_calls)[[1L]]]]$start
+    no_group <- if (!is.null(d) && by %in% names(d)) sum(is.na(d[[by]])) else NA_integer_
+    if (identical(no_group, 0L)) {
+      translated <- rbind(translated, record(
+        overall_line, "by= (blank)",
+        "The overall calls are the table's Overall column, beside the BY groups; one table replaces both RTFs."
+      ))
+    } else if (is.na(no_group)) {
+      unresolved <- rbind(unresolved, record(
+        overall_line, "by= (blank)",
+        paste("The registered data cannot show whether every patient has a", by, "value; the R table's",
+              "Overall column leaves out patients without one, which SAS's overall calls counted.")
+      ))
+    } else {
+      unresolved <- rbind(unresolved, record(
+        overall_line, "by= (blank)",
+        paste(no_group, "patients have no", by, "value. SAS's overall calls counted them; the R table's",
+              "Overall column leaves them out, so it is not the SAS overall table.")
+      ))
+    }
+  }
   binary <- categorical <- character()
   unknown <- character()
   for (variable in buckets$category) {
