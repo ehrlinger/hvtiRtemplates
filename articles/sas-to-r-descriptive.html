@@ -64,7 +64,7 @@
       <h1>From SAS descriptive jobs to R</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-10-16</p>
+      <p class="date">2026-10-17</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/vignettes/sas-to-r-descriptive.qmd" class="external-link"><code>vignettes/sas-to-r-descriptive.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -236,7 +236,7 @@ Unresolved markers remain. The numbers below are not a result.
 </section><section class="level2"><h2 id="descriptive-tables-and-correlations-dc-tables">Descriptive tables and correlations: <code>dc-tables</code>
 <a class="anchor" aria-label="anchor" href="#descriptive-tables-and-correlations-dc-tables"></a>
 </h2>
-<p>The SAS job commonly calls <code>%desc_tab</code> once for categorical variables and once for continuous variables. The R job supplies both sets to one table. SAS comment banners become the names in <code>GROUPS</code>; <code>by=</code> and <code>byvalue=</code> become <code>BY</code>; and <code>perctile=15 50 85</code> becomes <code>continuous_stat = "both"</code> with percentiles 15 and 85. The <code>dc.tables.ods_&lt;topic&gt;.sas</code> correlation variant becomes <code>CORR</code> in the same job.</p>
+<p>The SAS job commonly calls <code>%desc_tab</code> once for categorical variables and once for continuous variables. The R job supplies both sets to one table. SAS comment banners become the names in <code>GROUPS</code>; <code>by=</code> and <code>byvalue=</code> become <code>BY</code>; and <code>perctile=15 50 85</code> becomes <code>continuous_stat = "both"</code> with percentiles 15 and 85. A <code>by=</code> group gets a p-value, <code>COMPARE = "pvalue"</code>, as <code>%desc_tab</code> printed one. Three things differ on purpose: a categorical variable with sparse cells is tested with Fisher’s exact test, where <code>%desc_tab</code> always used chi-square; two groups of a continuous variable are compared with the Wilcoxon rank-sum test, exact in small groups, where <code>%desc_tab</code> reported the Kruskal-Wallis chi-square approximation; and the low and high percentiles use SAS’s default definition rather than the <code>PCTLDEF=4</code> <code>%desc_tab</code> set, so they can differ in small groups. <code><a href="../reference/migrate_job.html">migrate_job()</a></code> writes these choices and lists the differences in its report. The <code>dc.tables.ods_&lt;topic&gt;.sas</code> correlation variant becomes <code>CORR</code> in the same job.</p>
 <pre class="sas"><code>%desc_tab(vartype=category,   varlist=female diabetes nyha_pr);
 %desc_tab(vartype=continuous, varlist=age bmi, perctile=15 50 85);</code></pre>
 <div class="cell">
@@ -257,23 +257,23 @@ Unresolved markers remain. The numbers below are not a result.
 <span>  compare <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
-<div id="zsanzgoflr" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#zsanzgoflr table {
+<div id="mceqywldul" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#mceqywldul table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#zsanzgoflr thead, #zsanzgoflr tbody, #zsanzgoflr tfoot, #zsanzgoflr tr, #zsanzgoflr td, #zsanzgoflr th {
+#mceqywldul thead, #mceqywldul tbody, #mceqywldul tfoot, #mceqywldul tr, #mceqywldul td, #mceqywldul th {
   border-style: none;
 }
 
-#zsanzgoflr p {
+#mceqywldul p {
   margin: 0;
   padding: 0;
 }
 
-#zsanzgoflr .gt_table {
+#mceqywldul .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -299,12 +299,12 @@ Unresolved markers remain. The numbers below are not a result.
   border-left-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_caption {
+#mceqywldul .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#zsanzgoflr .gt_title {
+#mceqywldul .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -316,7 +316,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-width: 0;
 }
 
-#zsanzgoflr .gt_subtitle {
+#mceqywldul .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -328,7 +328,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-top-width: 0;
 }
 
-#zsanzgoflr .gt_heading {
+#mceqywldul .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -340,13 +340,13 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_bottom_border {
+#mceqywldul .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_col_headings {
+#mceqywldul .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -361,7 +361,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_col_heading {
+#mceqywldul .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -381,7 +381,7 @@ Unresolved markers remain. The numbers below are not a result.
   overflow-x: hidden;
 }
 
-#zsanzgoflr .gt_column_spanner_outer {
+#mceqywldul .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -393,15 +393,15 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 4px;
 }
 
-#zsanzgoflr .gt_column_spanner_outer:first-child {
+#mceqywldul .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#zsanzgoflr .gt_column_spanner_outer:last-child {
+#mceqywldul .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#zsanzgoflr .gt_column_spanner {
+#mceqywldul .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -413,11 +413,11 @@ Unresolved markers remain. The numbers below are not a result.
   width: 100%;
 }
 
-#zsanzgoflr .gt_spanner_row {
+#mceqywldul .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#zsanzgoflr .gt_group_heading {
+#mceqywldul .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -443,7 +443,7 @@ Unresolved markers remain. The numbers below are not a result.
   text-align: left;
 }
 
-#zsanzgoflr .gt_empty_group_heading {
+#mceqywldul .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -458,15 +458,15 @@ Unresolved markers remain. The numbers below are not a result.
   vertical-align: middle;
 }
 
-#zsanzgoflr .gt_from_md > :first-child {
+#mceqywldul .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#zsanzgoflr .gt_from_md > :last-child {
+#mceqywldul .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#zsanzgoflr .gt_row {
+#mceqywldul .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -485,7 +485,7 @@ Unresolved markers remain. The numbers below are not a result.
   overflow-x: hidden;
 }
 
-#zsanzgoflr .gt_stub {
+#mceqywldul .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -498,7 +498,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#zsanzgoflr .gt_stub_row_group {
+#mceqywldul .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -512,15 +512,15 @@ Unresolved markers remain. The numbers below are not a result.
   vertical-align: top;
 }
 
-#zsanzgoflr .gt_row_group_first td {
+#mceqywldul .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#zsanzgoflr .gt_row_group_first th {
+#mceqywldul .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#zsanzgoflr .gt_summary_row {
+#mceqywldul .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -530,16 +530,16 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#zsanzgoflr .gt_first_summary_row {
+#mceqywldul .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_first_summary_row.thick {
+#mceqywldul .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#zsanzgoflr .gt_last_summary_row {
+#mceqywldul .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -549,7 +549,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_grand_summary_row {
+#mceqywldul .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -559,7 +559,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#zsanzgoflr .gt_first_grand_summary_row {
+#mceqywldul .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -569,7 +569,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-top-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_last_grand_summary_row_top {
+#mceqywldul .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -579,11 +579,11 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_striped {
+#mceqywldul .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#zsanzgoflr .gt_table_body {
+#mceqywldul .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -592,7 +592,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_footnotes {
+#mceqywldul .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -606,7 +606,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_footnote {
+#mceqywldul .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -615,7 +615,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#zsanzgoflr .gt_sourcenotes {
+#mceqywldul .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -629,7 +629,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#zsanzgoflr .gt_sourcenote {
+#mceqywldul .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -637,72 +637,72 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#zsanzgoflr .gt_left {
+#mceqywldul .gt_left {
   text-align: left;
 }
 
-#zsanzgoflr .gt_center {
+#mceqywldul .gt_center {
   text-align: center;
 }
 
-#zsanzgoflr .gt_right {
+#mceqywldul .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#zsanzgoflr .gt_font_normal {
+#mceqywldul .gt_font_normal {
   font-weight: normal;
 }
 
-#zsanzgoflr .gt_font_bold {
+#mceqywldul .gt_font_bold {
   font-weight: bold;
 }
 
-#zsanzgoflr .gt_font_italic {
+#mceqywldul .gt_font_italic {
   font-style: italic;
 }
 
-#zsanzgoflr .gt_super {
+#mceqywldul .gt_super {
   font-size: 65%;
 }
 
-#zsanzgoflr .gt_footnote_marks {
+#mceqywldul .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#zsanzgoflr .gt_asterisk {
+#mceqywldul .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#zsanzgoflr .gt_indent_1 {
+#mceqywldul .gt_indent_1 {
   text-indent: 5px;
 }
 
-#zsanzgoflr .gt_indent_2 {
+#mceqywldul .gt_indent_2 {
   text-indent: 10px;
 }
 
-#zsanzgoflr .gt_indent_3 {
+#mceqywldul .gt_indent_3 {
   text-indent: 15px;
 }
 
-#zsanzgoflr .gt_indent_4 {
+#mceqywldul .gt_indent_4 {
   text-indent: 20px;
 }
 
-#zsanzgoflr .gt_indent_5 {
+#mceqywldul .gt_indent_5 {
   text-indent: 25px;
 }
 
-#zsanzgoflr .katex-display {
+#mceqywldul .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#zsanzgoflr div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#mceqywldul div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
