@@ -33,7 +33,7 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not_installed("hvtiRpropensity")
-  skip_if(utils::packageVersion("hvtiRtables") < "1.0.6", "needs hvtiRtables >= 1.0.6")
+  skip_if(utils::packageVersion("hvtiRtables") < "1.0.7", "needs hvtiRtables >= 1.0.7")
   withr::local_envvar(HVTI_TEMPLATE_STRICT = NA)
   root <- dc_tables_study()
   job <- add_job("dc", "cohort", "tables", qualifier = "tables", dir = root)
@@ -46,6 +46,7 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   lines <- set_choice(lines, "MEAN_SD", '"age"')
   lines <- set_choice(lines, "ORDINAL", '"nyha"')
   lines <- set_choice(lines, "STDDIFF", "TRUE")
+  lines <- set_choice(lines, "ABBREVIATIONS", 'c(NYHA = "New York Heart Association")')
   groups <- grep("^GROUPS <- list\\($", lines)
   lines <- c(lines[seq_len(groups)], '  Demography = c("age", "female", "race", "redo"),',
              '  Clinical = c("creat", "nyha")', ")", lines[-seq_len(groups + 3L)])
@@ -69,6 +70,9 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   # A Fisher row's double dagger is explained in the report, as in the .docx.
   expect_match(html, "\u2021", fixed = TRUE)
   expect_match(html, "Fisher exact test.", fixed = TRUE)
+  # The abbreviation key the .docx carries is in the report too.
+  expect_match(html, "Key:", fixed = TRUE)
+  expect_match(html, "New York Heart Association", fixed = TRUE)
   docx <- list.files(hvtiRutilities::study_dir("documents", root), pattern = "[.]docx$",
                      recursive = TRUE, full.names = TRUE)
   expect_length(docx, 1L)
