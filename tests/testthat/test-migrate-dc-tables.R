@@ -38,7 +38,7 @@ test_that("dc-tables blocks local DATA-step filters and transformed measurements
   root <- migration_study_fixture("dc-tables")
   tables_source(root, c(
     "data built; set built; if female=1; age=age+10; run;",
-    "%desc_tab(vartype=continuous,input=built,by=,",
+    "%desc_tab(vartype=continuous,input=built,by=treatment,",
     "          varlist=/* Demography */ age);"
   ))
   out <- tables_migrate(root, evidence = FALSE)
@@ -46,6 +46,9 @@ test_that("dc-tables blocks local DATA-step filters and transformed measurements
   eval(parse(text = c(tables_region(out, "dc-tables-data"), tables_region(out, "dc-tables-config"))), env)
   expect_true(is.na(env$DATASET))
   expect_identical(env$CONTINUOUS, character())
+  # Nothing mapped, so nothing about the comparison is claimed either.
+  expect_identical(env$COMPARE, "none")
+  expect_identical(env$CONTINUOUS_STAT, "median")
   expect_true(any(grepl("EDIT:.*source.*logic", readLines(out))))
   report <- readLines(sub("[.]qmd$", "-migration.md", out))
   translated <- report[seq.int(match("## Translated", report), match("## Unresolved", report) - 1L)]
@@ -70,7 +73,11 @@ test_that("dc-tables migrates desc_tab groups and types", {
     Demography = c("female", "race_grp", "age", "bmi"),
     Procedure = "repair", `Follow-up` = "iv_dead"
   ))
-  expect_identical(env$COMPARE, "none")
+  # %desc_tab printed a p-value whenever by= named a group, and both mean +/- SD
+  # and the percentiles for a continuous variable.
+  expect_identical(env$COMPARE, "pvalue")
+  expect_identical(env$CONTINUOUS_STAT, "both")
+  expect_identical(env$PERCENTILES, c(15, 85))
   report <- paste(readLines(sub("[.]qmd$", "-migration.md", out)), collapse = "\n")
   for (value in c("byvalue", "countpersig", "outrtf", 'title3 "[string]";', "[heading]: iv_dead")) {
     expect_match(report, value, fixed = TRUE)
@@ -320,4 +327,86 @@ test_that("dc-tables retains complete title statements and their starting lines"
   expect_match(report, 'line=1; text=title3\n  "[string]"\n  "[string]";', fixed = TRUE)
   expect_match(report, 'line=4; text=TiTlE4 "[string]";', fixed = TRUE)
   expect_false(grepl("Descriptive Analyses|Same-line title", report))
+})
+
+# ---- what %desc_tab printed ---------------------------------------------------
+
+tables_config <- function(lines) {
+  root <- migration_study_fixture("dc-tables")  # nolint: object_usage_linter.
+  tables_source(root, lines)
+  out <- tables_migrate(root, evidence = FALSE)
+  env <- new.env()
+  eval(parse(text = tables_region(out, "dc-tables-config")), env)
+  report <- readLines(sub("[.]qmd$", "-migration.md", out))
+  list(env = env, report = report,
+       unresolved = report[seq.int(match("## Unresolved", report), length(report))],
+       translated = report[seq.int(match("## Translated", report), match("## Unresolved", report) - 1L)])
+}
+
+test_that("a job with no group compares nothing, and a category-only job keeps the median default", {
+  got <- tables_config("%desc_tab(vartype=category,input=built,by=,varlist=/* Demography */ female);")
+  expect_identical(got$env$COMPARE, "none")
+  expect_identical(got$env$CONTINUOUS_STAT, "median")
+})
+
+test_that("perctile= sets PERCENTILES when every call agrees on a median-centered triple", {
+  got <- tables_config(c(
+    "%desc_tab(vartype=continuous,input=built,by=treatment,perctile=10 50 90,varlist=/* Demography */ age);",
+    "%desc_tab(vartype=continuous,input=built,by=treatment,perctile=10 50 90,varlist=/* Follow-up */ iv_dead);"
+  ))
+  expect_identical(got$env$PERCENTILES, c(10, 90))
+  expect_true(any(grepl("perctile=10 50 90", got$translated, fixed = TRUE)))
+  expect_false(any(grepl("perctile=", got$unresolved, fixed = TRUE)))
+})
+
+test_that("perctile= that cannot be expressed keeps the default and is left for review", {
+  for (lines in list(
+    c("%desc_tab(vartype=continuous,input=built,by=treatment,perctile=10 50 90,varlist=/* Demography */ age);",
+      "%desc_tab(vartype=continuous,input=built,by=treatment,perctile=25 50 75,varlist=/* Follow-up */ iv_dead);"),
+    "%desc_tab(vartype=continuous,input=built,by=treatment,perctile=25 75,varlist=/* Demography */ age);",
+    "%desc_tab(vartype=continuous,input=built,by=treatment,perctile=25 40 75,varlist=/* Demography */ age);"
+  )) {
+    got <- tables_config(lines)
+    expect_identical(got$env$PERCENTILES, c(15, 85), info = lines[[1L]])
+    expect_true(any(grepl("perctile=", got$unresolved, fixed = TRUE)), info = lines[[1L]])
+  }
+})
+
+test_that("exposure=0 is left unresolved, and exposure=1 is the table dc-tables draws", {
+  zero <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,exposure=0,varlist=/* Demography */ female);")
+  expect_true(any(grepl("exposure=0", zero$unresolved, fixed = TRUE) & grepl("outcome", zero$unresolved)))
+  one <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,exposure=1,varlist=/* Demography */ female);")
+  expect_false(any(grepl("exposure=", one$unresolved, fixed = TRUE)))
+})
+
+test_that("the report says %desc_tab's percentiles used PCTLDEF=4", {
+  got <- tables_config("%desc_tab(vartype=continuous,input=built,by=treatment,varlist=/* Demography */ age);")
+  expect_true(any(grepl("PCTLDEF=4", got$unresolved, fixed = TRUE)))
+  none <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);")
+  expect_false(any(grepl("PCTLDEF", none$unresolved, fixed = TRUE)))
+})
+
+test_that("a blank exposure= or perctile= takes %desc_tab's default", {
+  got <- tables_config(
+    "%desc_tab(vartype=continuous,input=built,by=treatment,exposure=,perctile=,varlist=/* Demography */ age);"
+  )
+  expect_false(any(grepl("exposure=", got$unresolved, fixed = TRUE)))
+  expect_false(any(grepl("perctile=", got$unresolved, fixed = TRUE)))
+  expect_identical(got$env$PERCENTILES, c(15, 85))
+})
+
+test_that("a by-group job with categorical rows reports the Fisher difference", {
+  got <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);")
+  expect_true(any(grepl("chi-square", got$unresolved, fixed = TRUE) & grepl("Fisher", got$unresolved, fixed = TRUE)))
+  none <- tables_config("%desc_tab(vartype=category,input=built,by=,varlist=/* Demography */ female);")
+  expect_false(any(grepl("Fisher", none$unresolved, fixed = TRUE)))
+})
+
+test_that("a by-group job with continuous rows reports the Kruskal-Wallis difference", {
+  got <- tables_config("%desc_tab(vartype=continuous,input=built,by=treatment,varlist=/* Demography */ age);")
+  expect_true(any(grepl("Kruskal-Wallis", got$unresolved, fixed = TRUE) & grepl("Wilcoxon", got$unresolved, fixed = TRUE)))
+  none <- tables_config("%desc_tab(vartype=continuous,input=built,by=,varlist=/* Demography */ age);")
+  expect_false(any(grepl("Kruskal-Wallis", none$unresolved, fixed = TRUE)))
+  categorical <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);")
+  expect_false(any(grepl("Kruskal-Wallis", categorical$unresolved, fixed = TRUE)))
 })
