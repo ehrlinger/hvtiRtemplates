@@ -49,9 +49,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.5") {
-  stop("This job needs hvtiRtables >= 1.0.5 for hv_correlation_table() and the %summarytable layout of ",
-       "hv_man_table_save(); ",
+if (utils::packageVersion("hvtiRtables") < "1.0.7") {
+  stop("This job needs hvtiRtables >= 1.0.7 for hv_man_table_display() and hv_tbl_compare(); ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
@@ -154,6 +153,26 @@ WORD_FILE <- "dc-tables.docx"  # EDIT: choose the Word filename within this set
 # EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you
 # want summarized as continuous: list(continuous = c("nyha_pr")). list() for none.
 OVERRIDES <- list()
+# EDIT: continuous variables to show as mean ± SD, where the rest show
+# CONTINUOUS_STAT: a manuscript table often wants age as a mean and length of
+# stay as a median. Display only: every continuous variable is still tested
+# with Wilcoxon (Kruskal-Wallis for three or more groups). character(0) for none.
+MEAN_SD <- character(0)
+# EDIT: categorical variables whose levels are ordered, such as NYHA class.
+# They are shown level by level like any other; only STDDIFF treats them
+# differently, ranking them as %stddiff did with ORD1=. character(0) for none.
+ORDINAL <- character(0)
+# EDIT: TRUE adds the standardized difference (%) %summarytable printed, from
+# %stddiff, beside COMPARE's column. It needs BY with exactly two values, and
+# COMPARE "pvalue" or "none": COMPARE's "smd" is gtsummary's generic
+# difference, not %stddiff's, and the two disagree for skewed and ordinal rows.
+STDDIFF <- FALSE
+# EDIT: with STDDIFF, the value of BY that is the treated group, such as
+# "tavr". NULL when BY is coded 0/1, where 1 is treated.
+GROUP_1 <- NULL
+# EDIT: FALSE drops the Variable column, the column name beside each label.
+# Keep it for the analysis report; drop it for a manuscript table.
+SHOW_VARIABLE <- TRUE
 # EDIT: NULL skips the correlation variant (dc.tables.ods_<topic>.sas). To run
 # it, name the numeric columns, the anchor to correlate them against (NULL for
 # every pair), and an optional stratum:
@@ -277,6 +296,62 @@ classify_buckets <- function(d, vars, overrides = list()) {
   }
   buckets
 }
+
+# The standardized difference %summarytable printed, from %stddiff by way of
+# hvtiRpropensity::ps_stddiff(), formatted as a percentage for hv_tbl_compare().
+# The macro sent its mean +/- SD variables to %stddiff as Gaussian, and its
+# other continuous and its ordinal variables as ranked; the buckets here follow
+# it, so a skewed variable is not scored as though it were normal.
+stddiff_values <- function(d, by, buckets, mean_sd = character(0), ordinal = character(0), group_1 = NULL) {
+  if (is.null(by)) stop("STDDIFF compares two groups, so BY must name the group column.", call. = FALSE)
+  seen <- unique(stats::na.omit(d[[by]]))
+  if (length(seen) != 2L) {
+    stop("STDDIFF needs exactly two values of ", by, "; the data hold ", length(seen), ".", call. = FALSE)
+  }
+  if (is.null(group_1) && !(is.logical(seen) || all(as.character(seen) %in% c("0", "1")))) {
+    stop("STDDIFF needs GROUP_1 to name the treated value of ", by, ", one of: ",
+         paste(sort(as.character(seen)), collapse = ", "), ".", call. = FALSE)
+  }
+  # A 0/1 group stored as text or a factor is the same group: 1 is treated,
+  # as it is for a numeric one, which ps_stddiff() needs to be told.
+  if (is.null(group_1) && !is.numeric(seen) && !is.logical(seen)) group_1 <- "1"
+  if (!is.null(group_1) && !(as.character(group_1) %in% as.character(seen))) {
+    stop("GROUP_1 must be one of the values of ", by, ": ",
+         paste(sort(as.character(seen)), collapse = ", "), ".", call. = FALSE)
+  }
+  if (length(setdiff(mean_sd, buckets$continuous))) {
+    stop("MEAN_SD names variable(s) that are not continuous: ",
+         paste(setdiff(mean_sd, buckets$continuous), collapse = ", "), call. = FALSE)
+  }
+  if (length(setdiff(ordinal, buckets$categorical))) {
+    stop("ORDINAL names variable(s) that are not categorical: ",
+         paste(setdiff(ordinal, buckets$categorical), collapse = ", "), call. = FALSE)
+  }
+  # ps_stddiff() takes a binary column as 0/1 or logical; the table also
+  # accepts Yes/No, so convert those, and only those, to logical first.
+  for (v in buckets$binary) {
+    if (is.character(d[[v]]) || is.factor(d[[v]])) d[[v]] <- toupper(as.character(d[[v]])) == "YES"
+  }
+  # %stddiff ranks an ordinal variable, so it needs the order: a factor's
+  # levels give it, and text does not.
+  for (v in intersect(ordinal, names(d))) {
+    if (is.factor(d[[v]])) {
+      d[[v]] <- as.integer(d[[v]])
+    } else if (!is.numeric(d[[v]])) {
+      stop("ORDINAL variable ", v, " must be numeric or a factor whose levels are in order.", call. = FALSE)
+    }
+  }
+  none <- function(x) if (length(x)) x else NULL
+  r <- hvtiRpropensity::ps_stddiff(
+    d, treatment_col = by, treated_level = group_1,
+    gaussian = none(intersect(buckets$continuous, mean_sd)),
+    nong_ord = none(c(setdiff(buckets$continuous, mean_sd), intersect(buckets$categorical, ordinal))),
+    binary = none(buckets$binary),
+    categorical = none(setdiff(buckets$categorical, ordinal))
+  )
+  s <- r$tables$stddiff
+  stats::setNames(sprintf("%.1f", 100 * s$stddiff), s$variable)
+}
 ```
 
 ## Table
@@ -304,10 +379,30 @@ if (all(vapply(explicit, is.null, logical(1)))) {
 tbl <- hvtiRtables::hv_tbl_summary(
   d, by = BY, groups = GROUPS, continuous = CONTINUOUS,
   binary = BINARY, categorical = CATEGORICAL, compare = COMPARE,
-  percentiles = PERCENTILES, continuous_stat = CONTINUOUS_STAT
+  percentiles = PERCENTILES, continuous_stat = CONTINUOUS_STAT,
+  mean_sd = MEAN_SD, show_variable = SHOW_VARIABLE
 )
-tbl
+if (!is.logical(STDDIFF) || length(STDDIFF) != 1L || is.na(STDDIFF)) {
+  stop("STDDIFF must be TRUE or FALSE.", call. = FALSE)
+}
+if (STDDIFF) {
+  if (COMPARE %in% c("smd", "both")) {
+    stop("STDDIFF adds %stddiff's difference; set COMPARE to \"pvalue\" or \"none\", ",
+         "since COMPARE's \"smd\" is a different number for the same thing.", call. = FALSE)
+  }
+  if (!requireNamespace("hvtiRpropensity", quietly = TRUE) ||
+        utils::packageVersion("hvtiRpropensity") < "0.2.0") {
+    stop("STDDIFF needs hvtiRpropensity >= 0.2.0 for ps_stddiff().", call. = FALSE)
+  }
+  buckets <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
+  tbl <- hvtiRtables::hv_tbl_compare(tbl, stddiff_values(d, BY, buckets, MEAN_SD, ORDINAL, GROUP_1),
+                                     label = "Std. Diff. (%)")
+}
+# The table as it is saved to Word, so the report and the .docx are one table:
+# hv_man_table_display() adds the header marks, notes and abbreviation key the
+# saver writes, from the saver's own code. ft itself is what is saved.
 ft <- hvtiRtables::hv_man_table(tbl)
+hvtiRtables::hv_man_table_display(ft, abbreviations = ABBREVIATIONS)
 if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
       !grepl("^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$", WORD_FILE)) {
   stop("WORD_FILE must be a plain .docx filename within this set.", call. = FALSE)

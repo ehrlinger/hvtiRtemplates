@@ -53,7 +53,14 @@
                                              paste0("[heading]: ", paste(parsed[[group]], collapse = ", ")),
                                              "Source comment heading and grouped rows."))
     }
-    presentation <- setdiff(names(args[[i]]), c("input", "by", "varlist", "vartype"))
+    # A blank argument takes the macro's default, as SAS passes it.
+    exposure <- trimws(args[[i]]$exposure %||% "")
+    if (nzchar(exposure) && exposure != "1") {
+      unresolved <- rbind(unresolved, record(calls[[i]]$start, paste0("exposure=", exposure),
+                                             paste("%desc_tab treated the group as an outcome and printed incidence",
+                                                   "by row; dc-tables does not reproduce it.")))
+    }
+    presentation <- setdiff(names(args[[i]]), c("input", "by", "varlist", "vartype", "perctile", "exposure"))
     for (name in presentation) {
       unresolved <- rbind(unresolved, record(calls[[i]]$start, paste0(name, "=", args[[i]][[name]]),
                                              "SAS presentation or unsupported option: review; no equivalent assumed."))
@@ -119,7 +126,55 @@
       unresolved <- rbind(unresolved, record(NA_integer_, path, "Output reference requires manual comparison."))
     }
   }
-  unresolved <- rbind(unresolved, record(NA_integer_, "compare, continuous_stat, percentiles, abbreviations, Word filename",
+  # What %desc_tab printed: a p-value whenever by= named a group, and both the
+  # mean +/- SD and three percentiles (perctile=, 15 50 85 by default) for each
+  # continuous variable.
+  compare <- if (nzchar(by)) "pvalue" else "none"
+  continuous_stat <- if (length(buckets$continuous)) "both" else "median"
+  percentiles <- c(15, 85)
+  if (length(buckets$continuous)) {
+    continuous_calls <- which(types == "continuous")
+    given <- unique(vapply(args[continuous_calls], function(x) {
+      given <- trimws(x$perctile %||% "")
+      if (!nzchar(given)) given <- "15 50 85"
+      paste(strsplit(given, "[[:space:]]+")[[1L]], collapse = " ")
+    }, character(1L)))
+    triple <- suppressWarnings(as.numeric(strsplit(given[[1L]], " ", fixed = TRUE)[[1L]]))
+    if (length(given) == 1L && length(triple) == 3L && !anyNA(triple) && triple[[2L]] == 50 &&
+          triple[[1L]] < 50 && triple[[3L]] > 50 && all(triple == round(triple))) {
+      percentiles <- triple[c(1L, 3L)]
+      translated <- rbind(translated, record(calls[[continuous_calls[[1L]]]]$start, paste0("perctile=", given),
+                                             "Low and high percentiles; the middle one is the median."))
+    } else {
+      unresolved <- rbind(unresolved, record(calls[[continuous_calls[[1L]]]]$start,
+                                             paste0("perctile=", paste(given, collapse = " | ")),
+                                             "Not one low/median/high triple across the calls; PERCENTILES keeps 15, 85."))
+    }
+    unresolved <- rbind(unresolved, record(
+      NA_integer_, "PCTLDEF=4",
+      paste("%desc_tab computed percentiles with PROC STDIZE PCTLDEF=4; the R table uses SAS's default",
+            "definition (PCTLDEF=5), so the low and high percentiles can differ in small groups. The median agrees.")
+    ))
+  }
+  if (nzchar(by) && length(buckets$continuous)) {
+    unresolved <- rbind(unresolved, record(
+      NA_integer_, "continuous test",
+      paste("%desc_tab reported the Kruskal-Wallis chi-square p-value for any number of groups; for two",
+            "groups the R table uses the Wilcoxon rank-sum test, exact in small groups, so p-values differ",
+            "(for groups 1-5 and 6-10: 0.0090 in SAS, 0.0079 in R).")
+    ))
+  }
+  if (nzchar(by) && length(buckets$category)) {
+    unresolved <- rbind(unresolved, record(
+      NA_integer_, "categorical test",
+      paste("%desc_tab always used chi-square; the R table uses Fisher's exact test when any expected cell",
+            "count is under 5, so p-values for sparse categorical rows differ.")
+    ))
+  }
+  translated <- rbind(translated, record(calls[[1L]]$start,
+                                         paste0("COMPARE: ", compare, "; CONTINUOUS_STAT: ", continuous_stat),
+                                         "What %desc_tab printed: a p-value when by= named a group; mean +/- SD and percentiles."))
+  unresolved <- rbind(unresolved, record(NA_integer_, "abbreviations, Word filename",
                                          "Template defaults require review; SAS options do not prove these choices."))
   statements <- .gfup_statements(evidence$source)
   # Only presentation statements and complete calls are accounted for above.
@@ -140,6 +195,9 @@
     selection$dataset <- NA_character_
     buckets$continuous <- binary <- categorical <- character()
     by <- ""
+    compare <- "none"
+    continuous_stat <- "median"
+    percentiles <- c(15, 85)
   }
   quote_r <- function(x) encodeString(x, quote = '"')
   vector_r <- function(x) if (length(x)) paste0("c(", paste(quote_r(x), collapse = ", "), ")") else "character(0)"
@@ -157,7 +215,8 @@
     "GROUPS <- list(", group_lines, ")",
     paste0("CONTINUOUS <- ", vector_r(buckets$continuous)),
     paste0("BINARY <- ", vector_r(binary)), paste0("CATEGORICAL <- ", vector_r(categorical)),
-    'COMPARE <- "none"', 'CONTINUOUS_STAT <- "median"', "PERCENTILES <- c(15, 85)",
+    paste0("COMPARE <- ", quote_r(compare)), paste0("CONTINUOUS_STAT <- ", quote_r(continuous_stat)),
+    paste0("PERCENTILES <- c(", paste(percentiles, collapse = ", "), ")"),
     "ABBREVIATIONS <- character(0)", 'WORD_FILE <- "dc-tables.docx"',
     "# EDIT: review SAS presentation choices in the migration report.",
     "# EDIT: confirm comparison, summaries, percentiles, abbreviations and Word filename."
