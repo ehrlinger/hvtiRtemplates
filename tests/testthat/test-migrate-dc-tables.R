@@ -442,3 +442,34 @@ test_that("calls naming two different groups still stop", {
   ))
   expect_error(tables_migrate(root, evidence = FALSE), "same input and one group")
 })
+
+test_that("an overall call beside a group with missing values is not reported as the Overall column", {
+  root <- migration_study_fixture("dc-tables")  # nolint: object_usage_linter.
+  built_path <- file.path(root, "datasets", "built.csv")
+  built <- utils::read.csv(built_path)
+  built$treatment[c(3L, 8L)] <- NA
+  utils::write.csv(built, built_path, row.names = FALSE)
+  withr::with_dir(root, suppressWarnings(suppressMessages(hvtiRutilities::update_manifest())))
+  file.copy(file.path(root, "descriptive", "dc.tables.ods.sas"),
+            file.path(root, "descriptive", "dc.tables.sas"), overwrite = TRUE)
+  out <- tables_migrate(root, evidence = FALSE)
+  report <- readLines(sub("[.]qmd$", "-migration.md", out))
+  translated <- report[seq.int(match("## Translated", report), match("## Unresolved", report) - 1L)]
+  unresolved <- report[seq.int(match("## Unresolved", report), length(report))]
+  # SAS's overall calls counted the 2 patients with no treatment; the R table's
+  # Overall column leaves them out, so the two are not the same table.
+  expect_false(any(grepl("Overall column", translated, fixed = TRUE)))
+  expect_true(any(grepl("treatment", unresolved, fixed = TRUE) & grepl("2 ", unresolved, fixed = TRUE) &
+                    grepl("Overall", unresolved, fixed = TRUE)))
+})
+
+test_that("the group variable summarized in an overall call is taken out of GROUPS", {
+  got <- tables_config(c(
+    "%desc_tab(vartype=category,input=built,by=,varlist=/* Demography */ treatment female);",
+    "%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);"
+  ))
+  expect_identical(got$env$BY, "treatment")
+  expect_identical(got$env$GROUPS, list(Demography = "female"))
+  expect_false("treatment" %in% c(got$env$BINARY, got$env$CATEGORICAL, got$env$CONTINUOUS))
+  expect_true(any(grepl("treatment", got$translated, fixed = TRUE) & grepl("column header", got$translated, fixed = TRUE)))
+})
