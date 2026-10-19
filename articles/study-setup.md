@@ -109,7 +109,7 @@ study_setup(
   study_tracker_id = 42L,
   adopt = TRUE
 )
-#> Study: /tmp/Rtmpwerz9l/file204c10f0ec26/legacy-study
+#> Study: /tmp/Rtmpow1bkZ/file1fb649beeb80/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,7 +183,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmpwerz9l/file204c10f0ec26/legacy-study
+#> Study: /tmp/Rtmpow1bkZ/file1fb649beeb80/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -221,6 +221,7 @@ register_data(
   built = "eda.csv",
   dataset = "eda",
   role = "named",
+  kind = "subset",
   population = "Patients age 50 or older"
 )
 ```
@@ -228,7 +229,11 @@ register_data(
 In a job that uses this subset, set `DATASET <- "eda"` and
 `ANALYSIS_SET <- NULL`. When the whole registered study dataset is the
 intended population, use `DATASET <- "built"` and `ANALYSIS_SET <- NULL`
-instead.
+instead. For a subset of the study dataset that several jobs share, an
+analysis set is the alternative: write it with
+[`hvtiRdatabuild::write_analysis_set()`](https://ehrlinger.github.io/hvtiRdatabuild/reference/write_analysis_set.html)
+and read it with `DATASET <- "built"` and the set’s name in
+`ANALYSIS_SET`.
 
 ## Create the descriptive and EDA jobs
 
@@ -305,15 +310,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/Rtmpwerz9l/file204c10f0ec26/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#> "/tmp/Rtmpow1bkZ/file1fb649beeb80/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
 #>                                                                                tables 
-#>  "/tmp/Rtmpwerz9l/file204c10f0ec26/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>  "/tmp/Rtmpow1bkZ/file1fb649beeb80/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/Rtmpwerz9l/file204c10f0ec26/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>    "/tmp/Rtmpow1bkZ/file1fb649beeb80/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
 #>                                                                                trends 
-#>  "/tmp/Rtmpwerz9l/file204c10f0ec26/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
+#>  "/tmp/Rtmpow1bkZ/file1fb649beeb80/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/Rtmpwerz9l/file204c10f0ec26/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
+#>     "/tmp/Rtmpow1bkZ/file1fb649beeb80/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output
