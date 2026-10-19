@@ -419,6 +419,7 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   set_choice("^RESPONSE <- ", "RESPONSE <- \"lvef\"")
   set_choice("^M  <- ", "M  <- 5")
   set_choice("^N_TRACES <- ", "N_TRACES <- 10")
+  set_choice("^CORES <- ", paste0("CORES <- ", nb_cores, "L"))
   # EDIT: markers remain, so this renders as a draft, with its warning and banner.
   render_job(job, quiet = TRUE)
   html <- sub("[.]qmd$", ".html", job)

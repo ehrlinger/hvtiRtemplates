@@ -118,9 +118,12 @@ nb_skip_unless_stack <- function() {
 }
 
 # M is five boosting steps: enough for every chunk to draw, and the fit and
-# partial.plot() both cost in proportion to it.
+# partial.plot() both cost in proportion to it. CORES is at most 2, because
+# R CMD check sets _R_CHECK_LIMIT_CORES_ and parallel then refuses the
+# template's 4; Windows, which cannot fork, gets 1 so boostmtree does not warn.
+nb_cores <- if (.Platform$OS.type == "windows") 1L else 2L
 nb_choices <- function(...) {
-  utils::modifyList(list(RESPONSE = "lvef", M = 5, SEED = 7), list(...))
+  utils::modifyList(list(RESPONSE = "lvef", M = 5, SEED = 7, CORES = nb_cores), list(...))
 }
 
 # The fit helpers below live here, not in the test file, so object_usage_linter
