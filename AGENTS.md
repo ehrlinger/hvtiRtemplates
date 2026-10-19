@@ -388,28 +388,38 @@ guess.
   **automatic Copilot code review**. A direct push to `main` is rejected
   by the server, which is the ruleset and not a local hook, and the fix
   is to branch, never to force past it. ⚠️ **Copilot review credits are
-  AVAILABLE again, measured 2026-09-09.** Three pull requests drew
-  reviews that day:
-  [\#95](https://github.com/ehrlinger/hvtiRtemplates/pull/95) and
-  [\#98](https://github.com/ehrlinger/hvtiRtemplates/pull/98) here, and
-  [hvtiR#57](https://github.com/ehrlinger/hvtiR/pull/57). None returned
-  a quota body. The maintainer’s report on 2026-09-03 was that the
-  exhaustion would last until October; it did not, and no explanation
-  for the early return is available from here. **Measure, do not reason
-  from either date.** ⚠️ **Latency is wider than the range recorded
-  below, and a slow bot invites a false conclusion.** Measured
-  2026-09-09: hvtiR#57 was reviewed 2m48s after opening, and \#98
-  12m46s, against the 14-seconds-to-6-minutes range below. \#98 looked
-  unrequested at the two-minute mark, was re-requested by script, and
-  produced a review at 12m46s. **Do not read that as the re-request
-  working.** The timeline shows the ruleset’s own
-  `review_requested -> Copilot` at 20:45:13Z, two seconds after the PR
-  opened, so an automatic request was already outstanding the whole time
-  and the scripted one is not distinguishable from waiting. Widen the
-  expectation to at least 15 minutes before concluding anything. ⚠️
-  **The timeline resolves “not requested” from “slow”, which the reviews
-  list cannot.** This is the better check, and it was not here before
-  2026-09-09:
+  EXHAUSTED again, measured 2026-10-19.** Every Copilot review here from
+  [\#315](https://github.com/ehrlinger/hvtiRtemplates/pull/315)
+  (2026-10-12) to
+  [\#357](https://github.com/ehrlinger/hvtiRtemplates/pull/357)
+  (2026-10-17) carries the quota body, with three exceptions:
+  [\#323](https://github.com/ehrlinger/hvtiRtemplates/pull/323)
+  (2026-10-13) and
+  [\#352](https://github.com/ehrlinger/hvtiRtemplates/pull/352) and
+  [\#353](https://github.com/ehrlinger/hvtiRtemplates/pull/353)
+  (2026-10-16), which drew real reviews.
+  [hvtiRtables#84](https://github.com/ehrlinger/hvtiRtables/pull/84) and
+  [\#85](https://github.com/ehrlinger/hvtiRtables/pull/85) drew the
+  quota body on 2026-10-18, so it is the account’s quota and covers the
+  family, not this repo alone. The exceptions mean credits can return
+  for a day and go again, and nothing available from here says when.
+  **Measure each pull request with the reviews command below; do not
+  reason from a date.** Until it reads `quota=false`, the local
+  `/code-review` is the only review a change gets.
+  _(History (superseded 2026-10-19): this paragraph read “Copilot review credits are AVAILABLE again, measured 2026-09-09”, citing \#95, \#98 and hvtiR#57, none of which returned a quota body. That was accurate when written.)
+  ⚠️ **Latency is wider than the range recorded below, and a slow bot
+  invites a false conclusion.** Measured 2026-09-09: hvtiR#57 was
+  reviewed 2m48s after opening, and \#98 12m46s, against the
+  14-seconds-to-6-minutes range below. \#98 looked unrequested at the
+  two-minute mark, was re-requested by script, and produced a review at
+  12m46s. **Do not read that as the re-request working.** The timeline
+  shows the ruleset’s own `review_requested -> Copilot` at 20:45:13Z,
+  two seconds after the PR opened, so an automatic request was already
+  outstanding the whole time and the scripted one is not distinguishable
+  from waiting. Widen the expectation to at least 15 minutes before
+  concluding anything. ⚠️ **The timeline resolves “not requested” from
+  “slow”, which the reviews list cannot.** This is the better check, and
+  it was not here before 2026-09-09:
 
   ``` sh
   gh api --paginate repos/<o>/<r>/issues/<n>/timeline \
