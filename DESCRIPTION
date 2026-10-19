@@ -47,7 +47,7 @@ Remotes:
 Suggests:
     arrow,
     bit64,
-    boostmtree (>= 2.0.3),
+    boostmtree (>= 2.0.4),
     broom,
     fs,
     ggBoostedTrees (>= 0.9.1),

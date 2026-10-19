@@ -74,6 +74,7 @@ nb_env <- function(root, parent = globalenv()) {
   if (requireNamespace("boostmtree", quietly = TRUE)) {
     env$boostmtree <- boostmtree::boostmtree
     env$vimp.boostmtree <- boostmtree::vimp.boostmtree
+    env$boostmtree.control <- boostmtree::boostmtree.control
     # partial.plot() is most of a chunk test's time, and nearly all of that is
     # its grid of 25 values per continuous covariate. Five still draws a curve,
     # and a factor is evaluated at its levels whatever n.points says. The
@@ -112,7 +113,7 @@ nb_mocked_setup <- function(pkg, version) {
 }
 
 nb_skip_unless_stack <- function() {
-  testthat::skip_if_not_installed("boostmtree", minimum_version = "2.0.2")
+  testthat::skip_if_not_installed("boostmtree", minimum_version = "2.0.4")
   testthat::skip_if_not_installed("ggBoostedTrees", minimum_version = "0.9.0")
 }
 

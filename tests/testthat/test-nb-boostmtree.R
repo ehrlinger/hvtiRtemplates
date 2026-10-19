@@ -120,9 +120,9 @@ test_that("the setup chunk passes when both packages meet their floors", {
   expect_no_error(nb_mocked_setup("neither", "0.0.0"))
 })
 
-test_that("boostmtree older than 2.0.2 is refused with the fork's install line", {
+test_that("boostmtree older than 2.0.4 is refused with the fork's install line", {
   nb_skip_unless_stack()
-  expect_error(nb_mocked_setup("boostmtree", "2.0.0"), "ehrlinger/boostmtree_src", fixed = TRUE)
+  expect_error(nb_mocked_setup("boostmtree", "2.0.3"), "ref = \"v2.0.4-ccf\"", fixed = TRUE)
 })
 
 test_that("ggBoostedTrees older than 0.9.0 is refused with its install line", {
@@ -208,6 +208,26 @@ test_that("the cache is reused unchanged, and a changed setting stops until REFI
                class = "hvtiRutilities_stale_cache")
   env3 <- nb_fit_in(root, choices = nb_choices(NU = 0.01, REFIT = TRUE))
   expect_s3_class(env3$fit, "boostmtree")
+})
+
+test_that("CORES reaches the fit, and changing it reuses the cache rather than stopping", {
+  nb_skip_unless_stack()
+  skip_on_os("windows")  # cannot fork, so boostmtree uses one core whatever CORES says
+  root <- nb_study()
+  seen <- NULL
+  env <- nb_env(root)
+  env$boostmtree.control <- function(...) {
+    seen <<- list(...)$cv.cores
+    boostmtree::boostmtree.control(...)
+  }
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices(CORES = 2L)))
+  expect_identical(seen, 2L)
+  cache <- file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree-fit.rds")
+  before <- list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache))
+  # The fit is identical on any number of cores, so CORES is left out of the cache key.
+  env2 <- nb_fit_in(root, choices = nb_choices(CORES = 1L))
+  expect_identical(list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache)), before)
+  expect_identical(env2$fit$id.unique, env$fit$id.unique)
 })
 
 test_that("every report chunk draws for every family, from a fresh fit and from the cache", {
