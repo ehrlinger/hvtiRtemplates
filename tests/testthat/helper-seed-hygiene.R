@@ -14,7 +14,7 @@
 seed_random_calls <- c(
   "rfsrc", "rfsrc.fast", "imbalanced", "isopro", "varpro", "cv.varpro", "uvarpro", "impute", "impute.rfsrc",
   "sidClustering", "mice", "partialpro", "gg_partial_varpro", "outpro", "get.beta.entropy", "vimp",
-  "tune.rfsrc", "boostmtree", "sample", "sample.int", "runif", "rnorm", "rbinom", "rpois", "rexp"
+  "tune.rfsrc", "boostmtree", "vimp.boostmtree", "sample", "sample.int", "runif", "rnorm", "rbinom", "rpois", "rexp"
 )
 
 # The subset that must also be handed a negative `seed =`: the randomForestSRC
