@@ -224,13 +224,17 @@ register_data(
   built = "eda.csv",
   dataset = "eda",
   role = "named",
+  kind = "subset",
   population = "Patients age 50 or older"
 )
 ```
 
 In a job that uses this subset, set `DATASET <- "eda"` and
 `ANALYSIS_SET <- NULL`. When the whole registered study dataset is the intended
-population, use `DATASET <- "built"` and `ANALYSIS_SET <- NULL` instead.
+population, use `DATASET <- "built"` and `ANALYSIS_SET <- NULL` instead. For a
+subset of the study dataset that several jobs share, an analysis set is the
+alternative: write it with `hvtiRdatabuild::write_analysis_set()` and read it
+with `DATASET <- "built"` and the set's name in `ANALYSIS_SET`.
 
 ## Create the descriptive and EDA jobs
 
