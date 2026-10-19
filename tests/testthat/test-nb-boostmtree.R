@@ -288,6 +288,35 @@ test_that("no report output prints an identifier", {
 })
 
 
+test_that("the partial effects are cached beside the fit, and changed EFFECT_VARIABLES stop until REFIT", {
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  labels <- c("set", "edit-study-choices", "tbl-data", "fit", "tbl-fit", "tbl-fit-summary", "fig-importance", "effects")
+  dir <- file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost")
+  partial <- file.path(dir, "nb-boostmtree-partial.rds")
+  stamp <- function(f) list(md5 = unname(tools::md5sum(f)), mtime = file.mtime(f))
+  choices <- nb_choices(EFFECT_VARIABLES = c("age", "grp"))
+  env <- nb_env(root)
+  utils::capture.output(nb_run(labels, env, choices))
+  expect_true(file.exists(partial))
+  before <- stamp(partial)
+  # The second render loads the effects rather than recomputing them.
+  env2 <- nb_env(root)
+  utils::capture.output(nb_run(labels, env2, choices))
+  expect_identical(stamp(partial), before)
+  expect_identical(env2$.partial, env$.partial)
+  # Another variable list is a stale cache, named as such, until REFIT; the fit is not refitted with it.
+  choices <- nb_choices(EFFECT_VARIABLES = "grp")
+  expect_error(utils::capture.output(nb_run(labels, nb_env(root), choices)), "inputs$.effect_vars", fixed = TRUE,
+               class = "hvtiRutilities_stale_cache")
+  fit_before <- stamp(file.path(dir, "nb-boostmtree-fit.rds"))
+  env3 <- nb_env(root)
+  utils::capture.output(nb_run(labels, env3, nb_choices(EFFECT_VARIABLES = "grp", REFIT = TRUE)))
+  expect_identical(as.character(unique(env3$p_effects[[1L]]$data$variable)), "grp")
+  expect_identical(stamp(file.path(dir, "nb-boostmtree-fit.rds")), fit_before)
+})
+
 test_that("EFFECT_VARIABLES may name a factor covariate alone", {
   nb_skip_unless_stack()
   local_child_chunks()

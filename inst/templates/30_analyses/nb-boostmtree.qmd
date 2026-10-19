@@ -403,7 +403,10 @@ p_calibration
 #| fig-height: 7
 # Importance of each predictor's main effect and its interaction with time; the
 # interaction is where a predictor whose effect changes over follow-up shows.
-vimp <- vimp.boostmtree(fit)
+# vimp.boostmtree() permutes each predictor at random, so it is seeded and
+# cached like the fit. Unseeded, the importances moved from render to render,
+# and with them the six variables the effects below are drawn for.
+vimp <- cache_fit("nb-boostmtree-vimp", vimp.boostmtree(fit), seed = SEED, dir = CACHE_DIR, refit = REFIT)
 # Free size: one row per predictor, and one panel per effect, at the 6.5 in page width.
 p_vimp <- plot(gg_boost_vimp(vimp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
@@ -436,7 +439,14 @@ if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unkno
                         envir = parent.frame(), quiet = TRUE), sep = "\n")
   cat("\n")
 }
-.effect <- gg_boost_effect(partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE))
+# partial.plot() is the slowest step after the fit: one prediction over every
+# patient per grid value, 25 values per continuous covariate. It is cached
+# beside the fit and keyed on it, so a re-render that changes only prose skips
+# it, and a refit or a changed EFFECT_VARIABLES stops until REFIT, as the fit does.
+.partial <- cache_fit("nb-boostmtree-partial",
+                      partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE),
+                      seed = SEED, dir = CACHE_DIR, refit = REFIT)
+.effect <- gg_boost_effect(.partial)
 .relabel <- .components[match(levels(.effect$response), .labels)]
 # A component ggBoostedTrees names differently from the fit would otherwise be
 # drawn under a blank label; stop and say so instead.
