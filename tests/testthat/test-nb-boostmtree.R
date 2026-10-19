@@ -212,20 +212,29 @@ test_that("the cache is reused unchanged, and a changed setting stops until REFI
 
 test_that("CORES reaches the fit, and changing it reuses the cache rather than stopping", {
   nb_skip_unless_stack()
-  skip_on_os("windows")  # cannot fork, so boostmtree uses one core whatever CORES says
   root <- nb_study()
   seen <- NULL
-  env <- nb_env(root)
-  env$boostmtree.control <- function(...) {
+  # Records what the template asked for, then fits on one core: boostmtree warns
+  # on Windows for more than one, and the fit is the same either way. Both
+  # renders use it, because cache_fit() keys on a function that is not a package's.
+  recording <- function(...) {
     seen <<- list(...)$cv.cores
-    boostmtree::boostmtree.control(...)
+    boostmtree::boostmtree.control(cv.cores = 1L)
   }
-  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices(CORES = 2L)))
+  fit_with <- function(cores) {
+    env <- nb_env(root)
+    env$boostmtree.control <- recording
+    utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices(CORES = cores)))
+    env
+  }
+  env <- fit_with(2L)
   expect_identical(seen, 2L)
   cache <- file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree-fit.rds")
   before <- list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache))
-  # The fit is identical on any number of cores, so CORES is left out of the cache key.
-  env2 <- nb_fit_in(root, choices = nb_choices(CORES = 1L))
+  # The fit is identical on any number of cores, so CORES is left out of the
+  # cache key: the second render loads the fit, and never calls the control.
+  env2 <- fit_with(1L)
+  expect_identical(seen, 2L)
   expect_identical(list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache)), before)
   expect_identical(env2$fit$id.unique, env$fit$id.unique)
 })

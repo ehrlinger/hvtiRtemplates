@@ -8,4 +8,6 @@
   scaffolded before this change keeps its own copy of the fit call, so its
   cached fit is unaffected until the job is upgraded; the first render after
   an upgrade finds the cached fit stale and stops until `REFIT = TRUE`,
-  because the call itself changed.
+  because the call itself changed. The upgraded job also carries `CORES` under
+  its own `EDIT:` marker, so it renders as a draft until the marker is
+  resolved.
