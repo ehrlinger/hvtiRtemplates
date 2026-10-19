@@ -120,9 +120,9 @@ test_that("the setup chunk passes when both packages meet their floors", {
   expect_no_error(nb_mocked_setup("neither", "0.0.0"))
 })
 
-test_that("boostmtree older than 2.0.2 is refused with the fork's install line", {
+test_that("boostmtree older than 2.0.4 is refused with the fork's install line", {
   nb_skip_unless_stack()
-  expect_error(nb_mocked_setup("boostmtree", "2.0.0"), "ehrlinger/boostmtree_src", fixed = TRUE)
+  expect_error(nb_mocked_setup("boostmtree", "2.0.3"), "ref = \"v2.0.4-ccf\"", fixed = TRUE)
 })
 
 test_that("ggBoostedTrees older than 0.9.0 is refused with its install line", {
@@ -208,6 +208,39 @@ test_that("the cache is reused unchanged, and a changed setting stops until REFI
                class = "hvtiRutilities_stale_cache")
   env3 <- nb_fit_in(root, choices = nb_choices(NU = 0.01, REFIT = TRUE))
   expect_s3_class(env3$fit, "boostmtree")
+})
+
+test_that("CORES reaches boostmtree.control()", {
+  nb_skip_unless_stack()
+  seen <- NULL
+  env <- nb_env(nb_study())
+  # Records what the template asked for, then fits on one core: boostmtree warns
+  # on Windows for more than one, and the fit is the same either way.
+  env$boostmtree.control <- function(...) {
+    seen <<- list(...)$cv.cores
+    boostmtree::boostmtree.control(cv.cores = 1L)
+  }
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices(CORES = 2L)))
+  expect_identical(seen, 2L)
+})
+
+test_that("changing CORES reuses the cached fit rather than stopping", {
+  nb_skip_unless_stack()
+  root <- nb_study()
+  # Unmocked, as a study runs it. Windows cannot fork and says so when asked
+  # for two cores; that notice, and nothing else, is muffled.
+  fit_with <- function(cores) {
+    withCallingHandlers(nb_fit_in(root, choices = nb_choices(CORES = cores)), warning = function(w) {
+      if (grepl("which Windows does not support", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+    })
+  }
+  env <- fit_with(2L)
+  cache <- file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree-fit.rds")
+  before <- list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache))
+  # The fit is identical on any number of cores, so CORES is left out of the cache key.
+  env2 <- fit_with(1L)
+  expect_identical(list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache)), before)
+  expect_identical(env2$fit$id.unique, env$fit$id.unique)
 })
 
 test_that("every report chunk draws for every family, from a fresh fit and from the cache", {
@@ -386,6 +419,7 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   set_choice("^RESPONSE <- ", "RESPONSE <- \"lvef\"")
   set_choice("^M  <- ", "M  <- 5")
   set_choice("^N_TRACES <- ", "N_TRACES <- 10")
+  set_choice("^CORES <- ", paste0("CORES <- ", nb_cores, "L"))
   # EDIT: markers remain, so this renders as a draft, with its warning and banner.
   render_job(job, quiet = TRUE)
   html <- sub("[.]qmd$", ".html", job)

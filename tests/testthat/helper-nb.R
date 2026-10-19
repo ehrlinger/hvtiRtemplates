@@ -74,6 +74,7 @@ nb_env <- function(root, parent = globalenv()) {
   if (requireNamespace("boostmtree", quietly = TRUE)) {
     env$boostmtree <- boostmtree::boostmtree
     env$vimp.boostmtree <- boostmtree::vimp.boostmtree
+    env$boostmtree.control <- boostmtree::boostmtree.control
     # partial.plot() is most of a chunk test's time, and nearly all of that is
     # its grid of 25 values per continuous covariate. Five still draws a curve,
     # and a factor is evaluated at its levels whatever n.points says. The
@@ -112,14 +113,17 @@ nb_mocked_setup <- function(pkg, version) {
 }
 
 nb_skip_unless_stack <- function() {
-  testthat::skip_if_not_installed("boostmtree", minimum_version = "2.0.2")
+  testthat::skip_if_not_installed("boostmtree", minimum_version = "2.0.4")
   testthat::skip_if_not_installed("ggBoostedTrees", minimum_version = "0.9.0")
 }
 
 # M is five boosting steps: enough for every chunk to draw, and the fit and
-# partial.plot() both cost in proportion to it.
+# partial.plot() both cost in proportion to it. CORES is at most 2, because
+# R CMD check sets _R_CHECK_LIMIT_CORES_ and parallel then refuses the
+# template's 4; Windows, which cannot fork, gets 1 so boostmtree does not warn.
+nb_cores <- if (.Platform$OS.type == "windows") 1L else 2L
 nb_choices <- function(...) {
-  utils::modifyList(list(RESPONSE = "lvef", M = 5, SEED = 7), list(...))
+  utils::modifyList(list(RESPONSE = "lvef", M = 5, SEED = 7, CORES = nb_cores), list(...))
 }
 
 # The fit helpers below live here, not in the test file, so object_usage_linter
