@@ -484,6 +484,21 @@ replaced with a mistyped column name leaves nothing to scan for. That case is
 covered separately, by assertions in `derive_cats()` and against `DERIVED`,
 which fail when a named column is not in the data.
 
+## Long-running jobs
+
+A fit that runs for hours does not survive a Workbench session that times out,
+and a chunk run in the console dies with the session. Run such a job in the
+background instead:
+
+    hvtiRtemplates::submit_job("analyses/nb.boostmtree.lvef.boost.qmd")
+    hvtiRtemplates::job_status("analyses/nb.boostmtree.lvef.boost.qmd")
+
+`submit_job()` renders the job detached from the session and returns at once;
+`<job>.run.log` holds the output and `<job>.run.yml` the state. A template whose
+fit is long calls `guard_long_fit()`, which refuses an uncached fit in an
+interactive session and names the `submit_job()` call to use. `nb-boostmtree`
+does so today. Once the fit is cached, its chunks run interactively and load it.
+
 ## What every report says about its run
 
 A template opens with one `setup` chunk, where it used to open with four
