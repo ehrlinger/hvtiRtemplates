@@ -165,7 +165,9 @@ test_that("add_job errors when the template lacks the SUBJECT/TYPE marker lines"
   # `.set_markers()` must fail loudly rather than hand back a job that looks
   # scaffolded but silently kept whatever the fake template happened to say.
   fake_template <- tempfile("fake-template-", fileext = ".qmd")
-  writeLines(c("---", "title: fake", "---", "no markers here"), fake_template)
+  # It has a setup chunk (add_job() reads its packages first) but no SUBJECT/TYPE lines.
+  writeLines(c("---", "title: fake", "---", "no markers here",
+               "```{r}", "#| label: setup", "library(hvtiRutilities)", "```"), fake_template)
   on.exit(unlink(fake_template), add = TRUE)
 
   # Mirrors template_list()'s real columns, `qualifier` included. A mock that
@@ -446,4 +448,38 @@ test_that("add_job refuses a job whose old spelling already exists", {
   file.copy(template_path("ac"), old)
   expect_error(add_job("ac", "dead_pa", "hz", dir = d), "dead_pa-hz-ac.qmd", fixed = TRUE)
   expect_false(file.exists(file.path(dirname(old), "ac.dead_pa.hz.qmd")))
+})
+
+test_that("add_job asks the study for the template's packages before writing", {
+  dir <- tempfile("addjob-need-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(
+    dir, study = "Need test", study_tracker_id = 1L, renv = FALSE
+  ))
+  seen <- NULL
+  testthat::local_mocked_bindings(
+    study_need = function(packages, root, caller, only_in_renv, ...) {
+      seen <<- list(packages = packages, caller = caller, only_in_renv = only_in_renv)
+      invisible(character(0))
+    },
+    .package = "hvtiRutilities"
+  )
+  add_job("rfc", "dead", "rfc", dir = dir, qualifier = "fit")
+  expect_identical(seen$packages, c("randomForestSRC", "ggRandomForests", "hvtiRutilities"))
+  expect_identical(seen$caller, "add_job")
+  expect_true(seen$only_in_renv)
+})
+
+test_that("add_job writes nothing when the study cannot get the packages", {
+  dir <- tempfile("addjob-need-refused-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(
+    dir, study = "Need refused test", study_tracker_id = 1L, renv = FALSE
+  ))
+  testthat::local_mocked_bindings(
+    study_need = function(...) stop("add_job(): needs randomForestSRC"),
+    .package = "hvtiRutilities"
+  )
+  expect_error(add_job("rfc", "dead", "rfc", dir = dir, qualifier = "fit"), "needs randomForestSRC")
+  expect_length(list.files(dir, pattern = "dead", recursive = TRUE), 0L)
 })

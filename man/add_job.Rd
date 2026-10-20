@@ -50,6 +50,10 @@ job: a job file accumulates a study's edits, and silently replacing one
 would discard them.
 }
 \details{
+\strong{Packages.} When the study is a renv project, the packages the template attaches are installed into
+its library and recorded in \code{renv.lock} before the job is written; if they cannot be had, nothing is written.
+Outside a renv project nothing is installed.
+
 \strong{What each argument decides.} \code{prefix} chooses the template,
 together with \code{qualifier} where a prefix carries several job types.
 \code{subject} and \code{type} are yours to choose. The catalog holds no
