@@ -49,12 +49,17 @@ test_that("dc-tables blocks local DATA-step filters and transformed measurements
   # Nothing mapped, so nothing about the comparison is claimed either.
   expect_identical(env$COMPARE, "none")
   expect_identical(env$CONTINUOUS_STAT, "median")
+  expect_identical(env$MANUSCRIPT_LAYOUT, "compare")
   expect_true(any(grepl("EDIT:.*source.*logic", readLines(out))))
   report <- readLines(sub("[.]qmd$", "-migration.md", out))
   translated <- report[seq.int(match("## Translated", report), match("## Unresolved", report) - 1L)]
   expect_false(any(grepl("input=built|continuous: age", translated)))
   expect_true(any(grepl("line=1; text=if female=1;", report, fixed = TRUE)))
   expect_true(any(grepl("line=1; text=age=age+10;", report, fixed = TRUE)))
+  # The layout row moved to Unresolved with the rest; its reason must be true
+  # after the reset to "compare", so it no longer says the statistic is both.
+  expect_true(any(grepl("MANUSCRIPT_LAYOUT: compare", report, fixed = TRUE)))
+  expect_false(any(grepl("CONTINUOUS_STAT is both", report, fixed = TRUE)))
 })
 
 test_that("dc-tables migrates desc_tab groups and types", {
@@ -172,11 +177,14 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   env$STDDIFF <- FALSE
   env$GROUP_1 <- NULL
   env$SHOW_VARIABLE <- TRUE
+  env$MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"
+  env$MANUSCRIPT_FILL <- "#CAEDFB"
   env$study_dir <- hvtiRutilities::study_dir
   env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   eval(parse(text = tables_region(out, "dc-tables-config")), env)
   eval(tables_chunk(out, "helpers"), env)
   invisible(eval(tables_chunk(out, "tbl-table"), env))
+  invisible(eval(tables_chunk(out, "word-file"), env))
   word <- file.path(root, "documents", "cohort-eda", "dc-tables.docx")
   expect_true(file.exists(word))
   expect_equal(nrow(hvtiRtables::hv_check_docx(word)), 0L)
@@ -189,7 +197,8 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   expect_error(eval(tables_chunk(out, "tbl-table"), env), "all three buckets")
   env$BINARY <- c("female", "repair")
   env$WORD_FILE <- "../escape.docx"
-  expect_error(invisible(eval(tables_chunk(out, "tbl-table"), env)), "plain .docx filename", fixed = TRUE)
+  invisible(eval(tables_chunk(out, "tbl-table"), env))
+  expect_error(invisible(eval(tables_chunk(out, "word-file"), env)), "plain .docx filename", fixed = TRUE)
   expect_false(file.exists(file.path(root, "documents", "escape.docx")))
 })
 
@@ -202,7 +211,7 @@ test_that("dc-tables stops on actual CORR structural findings", {
   ))
   print(doc, target = path)
   expect_gt(nrow(hvtiRtables::hv_check_docx(path)), 0L)
-  code <- tables_chunk(template_path("dc", "tables"), "tbl-table")
+  code <- tables_chunk(template_path("dc", "tables"), "word-file")
   start <- which(vapply(code, function(x) {
     is.call(x) && identical(x[[1L]], quote(`<-`)) && identical(x[[2L]], quote(check))
   }, logical(1)))
@@ -314,7 +323,7 @@ test_that("dc-tables retains complete title statements and their starting lines"
     c(source = file.path(root, "descriptive", "dc.tables.sas")), normalizePath(root)
   )
   result <- hvtiRtemplates:::.migrate_dc_tables(evidence, readLines(template_path("dc", "tables")))
-  titles <- result$unresolved[result$unresolved$reason == "Review title against the combined Word table.", ]
+  titles <- result$unresolved[result$unresolved$reason == "Review title against MANUSCRIPT_CAPTION, the Word table's caption.", ]
   expect_identical(titles$line, c(1L, 4L, 5L, 5L))
   expect_identical(titles$text, c(
     'title3\n  "General; Descriptive Analyses"\n  "continued title text";',
@@ -424,6 +433,7 @@ test_that("the overall and by-group calls of tp.dc.tables.ods.sas migrate to one
   expect_identical(env$BY, "treatment")
   expect_identical(env$COMPARE, "pvalue")
   expect_identical(env$CONTINUOUS_STAT, "both")
+  expect_identical(env$MANUSCRIPT_LAYOUT, "describe")
   expect_identical(env$PERCENTILES, c(15, 85))
   expect_identical(env$GROUPS, list(
     Demography = c("female", "race_grp", "age", "bmi"),
@@ -472,4 +482,87 @@ test_that("the group variable summarized in an overall call is taken out of GROU
   expect_identical(got$env$GROUPS, list(Demography = "female"))
   expect_false("treatment" %in% c(got$env$BINARY, got$env$CATEGORICAL, got$env$CONTINUOUS))
   expect_true(any(grepl("treatment", got$translated, fixed = TRUE) & grepl("column header", got$translated, fixed = TRUE)))
+})
+
+# ---- the Word table's layout --------------------------------------------------
+
+test_that("a migrated job lays its Word table out by what %desc_tab printed", {
+  # Mean +/- SD beside the percentiles is two statistics per group, which only
+  # the describe layout draws; hv_man_table() refuses it in the compare layout.
+  both <- tables_config("%desc_tab(vartype=continuous,input=built,by=treatment,varlist=/* Demography */ age);")
+  expect_identical(both$env$CONTINUOUS_STAT, "both")
+  expect_identical(both$env$MANUSCRIPT_LAYOUT, "describe")
+  expect_true(any(grepl("MANUSCRIPT_LAYOUT: describe", both$translated, fixed = TRUE)))
+  # One statistic per variable, by group or overall: the compare layout.
+  by_group <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);")
+  expect_identical(by_group$env$MANUSCRIPT_LAYOUT, "compare")
+  expect_true(any(grepl("MANUSCRIPT_LAYOUT: compare", by_group$translated, fixed = TRUE)))
+  overall <- tables_config("%desc_tab(vartype=category,input=built,by=,varlist=/* Demography */ female);")
+  expect_identical(overall$env$MANUSCRIPT_LAYOUT, "compare")
+  # The rule is the statistic, not the grouping: continuous rows with no by= are
+  # still mean +/- SD beside the percentiles, so they still need describe.
+  overall_continuous <- tables_config("%desc_tab(vartype=continuous,input=built,by=,varlist=/* Demography */ age);")
+  expect_identical(overall_continuous$env$CONTINUOUS_STAT, "both")
+  expect_identical(overall_continuous$env$MANUSCRIPT_LAYOUT, "describe")
+})
+
+test_that("the Word table is drawn in the manuscript style, under the study's caption, fill and layout", {
+  skip_on_cran()
+  root <- migration_study_fixture("dc-tables")
+  template <- template_path("dc", "tables")
+  env <- new.env()
+  env$.root <- root
+  env$SUBJECT <- "cohort"
+  env$TYPE <- "eda"
+  env$study_dir <- hvtiRutilities::study_dir
+  env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  env$GROUPS <- list(Demography = c("age", "female", "race_grp"), Procedure = "repair")
+  env$BY <- "treatment"
+  env$CONTINUOUS <- "age"
+  env$BINARY <- c("female", "repair")
+  env$CATEGORICAL <- "race_grp"
+  env$COMPARE <- "pvalue"
+  env$CONTINUOUS_STAT <- "median"
+  env$PERCENTILES <- c(15, 85)
+  env$ABBREVIATIONS <- character(0)
+  env$WORD_FILE <- "dc-tables.docx"
+  env$OVERRIDES <- list()
+  env$MEAN_SD <- env$ORDINAL <- character(0)
+  env$STDDIFF <- FALSE
+  env$GROUP_1 <- NULL
+  env$SHOW_VARIABLE <- TRUE
+  env$MANUSCRIPT_LAYOUT <- "compare"
+  env$MANUSCRIPT_CAPTION <- "Table 2. Operative details"
+  env$MANUSCRIPT_FILL <- "#A5C9EB"
+  eval(tables_chunk(template, "helpers"), env)
+  invisible(eval(tables_chunk(template, "tbl-table"), env))
+  invisible(eval(tables_chunk(template, "word-file"), env))
+  word <- file.path(root, "documents", "cohort-eda", "dc-tables.docx")
+  # The report keeps the Variable column; the Word table never has it.
+  expect_true("hv_variable" %in% env$ft$col_keys)
+  expect_false("hv_variable" %in% env$word_ft$col_keys)
+  expect_identical(attr(env$ft, "hv_style")$name, "report")
+  expect_identical(attr(env$word_ft, "hv_style")$name, "manuscript")
+  expect_identical(nrow(hvtiRtables::hv_check_docx(word, style = "manuscript")), 0L)
+  doc <- officer::docx_summary(officer::read_docx(word))
+  expect_identical(doc$text[doc$content_type == "paragraph"][[1L]], "Table 2. Operative details")
+  cells <- doc[doc$content_type == "table cell", ]
+  expect_identical(cells$text[cells$row_id == 1L][1:2], c("Characteristic", "n*"))
+  expect_false(any(cells$text == "Variable"))
+  xml <- xml2::read_xml(unzip(word, "word/document.xml", exdir = withr::local_tempdir()))
+  fills <- xml2::xml_attr(xml2::xml_find_all(xml, "//w:tc/w:tcPr/w:shd", xml2::xml_ns(xml)), "fill")
+  expect_true("A5C9EB" %in% fills)
+  expect_false("CAEDFB" %in% fills)
+  # The describe layout draws both statistics, with a count beside each group.
+  env$CONTINUOUS_STAT <- "both"
+  env$MANUSCRIPT_LAYOUT <- "describe"
+  invisible(eval(tables_chunk(template, "tbl-table"), env))
+  invisible(eval(tables_chunk(template, "word-file"), env))
+  cells <- officer::docx_summary(officer::read_docx(word))
+  cells <- cells[cells$content_type == "table cell" & cells$row_id == 2L, ]
+  expect_gt(sum(cells$text == "n*"), 1L)
+  expect_identical(nrow(hvtiRtables::hv_check_docx(word, style = "manuscript")), 0L)
+  # A manuscript table is never saved without its caption.
+  env$MANUSCRIPT_CAPTION <- NULL
+  expect_error(eval(tables_chunk(template, "word-file"), env), "needs `caption`", fixed = TRUE)
 })
