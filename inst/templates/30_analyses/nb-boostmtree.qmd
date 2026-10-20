@@ -181,9 +181,21 @@ M  <- 1000
 NU <- 0.05
 
 # EDIT: cores for the cross-validated fit, whose cost grows with the square of
-# the number of patients; most of it runs in parallel on this many cores. Each
-# core is a forked copy of R holding its own working data, so on a shared
-# server take what it can spare. Windows cannot fork and always uses one.
+# the number of patients; about 80% of it runs in parallel, so speed levels off
+# near 4 to 5 times however many cores you give it. Each core is a forked copy of
+# R holding its own working data, and memory, not speed, is what limits CORES on
+# a large study. Measured on the server (2026-10-19, ordinal, about 9 visits per
+# patient, M = 10): peak memory at M = 10, and hours scaled to M = 1000.
+#   patients   CORES   peak memory at M = 10   hours at M = 1000   session, at least
+#      1,000     4            6 GB                     7            Default (16 GB)
+#      1,000     8           11 GB                     5            Small (32 GB)
+#      2,000     8           30 GB                    22            Medium (64 GB)
+#      4,000     4           70 GB                   110            Large (128 GB); 8 cores ran out
+# Memory is an upper bound at M = 10 only. The fit keeps every step, about
+# 0.35 MB per step per 1,000 visits for an ordinal response, so at M = 1000 add
+# about 3 GB at 1,000 patients and 11 GB at 4,000, and possibly that much again
+# per core: not yet measured, so treat the sessions above as a floor. Hours scale
+# with M. CORES should never exceed the session's CPUs; Windows cannot fork.
 # Not part of the cache key: the fit is identical on any number of cores.
 CORES <- if (.Platform$OS.type == "windows") 1L else 4L
 
