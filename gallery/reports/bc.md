@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:48
+2026-10-20 14:59
 
 This job reports a bootstrap variable selection screen over a **Cox
 proportional hazards** model: how often each candidate survived stepwise
@@ -394,7 +394,7 @@ provenance
     9                                                                        0
     10                                                                     0.0
     11                                                           version:0.9.6
-    12 sha256:b55bc29fc6a44b5614ebcb32583a00f7987fe3365e94c2e4f86ac5aca8f4b708
+    12 sha256:07a531bb5b3525c53f3c98425c2929ae9d9c9efd0f99e1786859132b29776970
     13                                               1 distinct (listed below)
 
 Code
@@ -921,9 +921,9 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-20 13:48:28 EDT |
-|  | Ended | 2026-10-20 13:48:32 EDT |
-|  | Duration | 4 s |
+| Run | Started | 2026-10-20 14:59:26 EDT |
+|  | Ended | 2026-10-20 14:59:27 EDT |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -937,7 +937,7 @@ saveRDS(report, report_file)
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | b55bc29fc6a4 |
+|  | sha256 | 07a531bb5b35 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-boot/bc.rds` (bootstrap-bag), rendered not recorded, data built_20261020.parquet |
 | Reproducibility | renv | not active |

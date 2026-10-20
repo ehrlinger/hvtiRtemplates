@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:51
+2026-10-20 15:01
 
 Replaces `descriptive/dc.gfup`.
 
@@ -535,8 +535,8 @@ Table 4: dead by reop
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-20 13:51:02 EDT  |
-|                 | Ended            | 2026-10-20 13:51:03 EDT  |
+| Run             | Started          | 2026-10-20 15:01:56 EDT  |
+|                 | Ended            | 2026-10-20 15:01:57 EDT  |
 |                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -551,7 +551,7 @@ Table 4: dead by reop
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | b55bc29fc6a4             |
+|                 | sha256           | 07a531bb5b35             |
 |                 | Manifest         | current                  |
 | Reproducibility | renv             | not active               |
 |                 | renv.lock sha256 | d09f96b6cd21             |

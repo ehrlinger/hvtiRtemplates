@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:59
+2026-10-20 15:10
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -290,7 +290,7 @@ save_figure(.fig, "rfs-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/0c38bc19709b4f613db4be74f38e640c.png)
+![](assets/7258945dfaaa3634060b7b1496b3ad41.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -343,7 +343,7 @@ Code
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/4957184059b6d325cce63411e079ee46.png)
+![](assets/8dee6b83a2f6228cbec8420b1559607c.png)
 
 Figure 3: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -474,9 +474,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-20 13:58:07 EDT |
-|  | Ended | 2026-10-20 13:59:53 EDT |
-|  | Duration | 1 min 46 s |
+| Run | Started | 2026-10-20 15:08:57 EDT |
+|  | Ended | 2026-10-20 15:10:41 EDT |
+|  | Duration | 1 min 44 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -488,9 +488,9 @@ the spread of the partial effect at each level.
 | Dataset `built` | Version file | built_20261020.parquet |
 |  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
-|  | sha256 | b55bc29fc6a4 |
+|  | sha256 | 07a531bb5b35 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-20 13:57:54 -0400, data built_20261020.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-20 15:08:45 -0400, data built_20261020.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

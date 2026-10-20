@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:53
+2026-10-20 15:03
 
 Fits a binary outcome model and preserves the fitted model, predictions,
 and pooled inference. For stacked imputations, coefficients and
@@ -240,8 +240,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-20 13:53:06 EDT |
-|  | Ended | 2026-10-20 13:53:06 EDT |
+| Run | Started | 2026-10-20 15:03:54 EDT |
+|  | Ended | 2026-10-20 15:03:54 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -256,7 +256,7 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |  | Source file | built.rds |
 |  | Rows kept | 572 rows on 572 patients |
 |  | WHERE | `as.integer(format(dt_surg, "%Y")) < 2015` |
-|  | sha256 | b55bc29fc6a4 |
+|  | sha256 | 07a531bb5b35 |
 |  | Manifest | current |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

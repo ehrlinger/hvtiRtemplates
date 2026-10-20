@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:51
+2026-10-20 15:02
 
 Replaces `descriptive/dc.general`.
 
@@ -265,74 +265,76 @@ proc_contents(d)
 ```
 
     Observations: 800
-    Variables:    32
+    Variables:    33
 
        num     variable type format                                    label
     1    4          age  Num   <NA>                 Age at operation (years)
     2   25     approach Char   <NA>    Surgical or transcatheter replacement
     3    7          bmi  Num   <NA>                  Body mass index (kg/m2)
     4   30 complication  Num   <NA>         Major postoperative complication
-    5   13     creat_pr  Num   <NA>                       Creatinine (mg/dL)
-    6   14         dead  Num   <NA>                                    Death
-    7   24    discharge Char   <NA>                    Discharge destination
-    8    2      dt_surg  Num   <NA>                        Date of operation
-    9    5       female  Num   <NA>                                   Female
-    10   8       hx_chf  Num   <NA>                 History of heart failure
-    11   9        hx_dm  Num   <NA>                                 Diabetes
-    12  19    icu_hours  Num   <NA>                  Hours in intensive care
-    13  15      iv_dead  Num   <NA>  Follow-up to death or censoring (years)
-    14   3     iv_opyrs  Num   <NA>   Years from 1 January 1990 to operation
-    15  17      iv_reop  Num   <NA>         Follow-up to reoperation (years)
-    16  32      log_los  Num   <NA>  Postoperative length of stay (log days)
-    17  31          los  Num   <NA>      Postoperative length of stay (days)
-    18  11         lvef  Num   <NA>                 LV ejection fraction (%)
-    19  20         male  Num   <NA>                                     Male
-    20  29   match_pair  Num   <NA>            In a matched pair (simulated)
-    21  23     mr_grade Char   <NA> Postoperative mitral regurgitation grade
-    22  21     nonwhite  Num   <NA>                           Non-white race
-    23  10      nyha_pr  Num   <NA>                    NYHA functional class
-    24   1   patient_id Char   <NA>           Patient identifier (synthetic)
-    25  12     plvmassi  Num   <NA>                     LV mass index (g/m2)
-    26  28    prior_ops  Num   <NA>       Number of prior cardiac operations
-    27   6     race_grp Char   <NA>                                     Race
-    28  16         reop  Num   <NA>                              Reoperation
-    29  22       stroke Char   <NA>                     Postoperative stroke
-    30  26   valve_size Char   <NA>                          Prosthesis size
-    31  27   valve_type Char   <NA>                          Prosthesis type
-    32  18         vent  Num   <NA>                    Prolonged ventilation
+    5   33     cpb_time  Num   <NA>    Cardiopulmonary bypass time (minutes)
+    6   13     creat_pr  Num   <NA>                       Creatinine (mg/dL)
+    7   14         dead  Num   <NA>                                    Death
+    8   24    discharge Char   <NA>                    Discharge destination
+    9    2      dt_surg  Num   <NA>                        Date of operation
+    10   5       female  Num   <NA>                                   Female
+    11   8       hx_chf  Num   <NA>                 History of heart failure
+    12   9        hx_dm  Num   <NA>                                 Diabetes
+    13  19    icu_hours  Num   <NA>                  Hours in intensive care
+    14  15      iv_dead  Num   <NA>  Follow-up to death or censoring (years)
+    15   3     iv_opyrs  Num   <NA>   Years from 1 January 1990 to operation
+    16  17      iv_reop  Num   <NA>         Follow-up to reoperation (years)
+    17  32      log_los  Num   <NA>  Postoperative length of stay (log days)
+    18  31          los  Num   <NA>      Postoperative length of stay (days)
+    19  11         lvef  Num   <NA>                 LV ejection fraction (%)
+    20  20         male  Num   <NA>                                     Male
+    21  29   match_pair  Num   <NA>            In a matched pair (simulated)
+    22  23     mr_grade Char   <NA> Postoperative mitral regurgitation grade
+    23  21     nonwhite  Num   <NA>                           Non-white race
+    24  10      nyha_pr  Num   <NA>                    NYHA functional class
+    25   1   patient_id Char   <NA>           Patient identifier (synthetic)
+    26  12     plvmassi  Num   <NA>                     LV mass index (g/m2)
+    27  28    prior_ops  Num   <NA>       Number of prior cardiac operations
+    28   6     race_grp Char   <NA>                                     Race
+    29  16         reop  Num   <NA>                              Reoperation
+    30  22       stroke Char   <NA>                     Postoperative stroke
+    31  26   valve_size Char   <NA>                          Prosthesis size
+    32  27   valve_type Char   <NA>                          Prosthesis type
+    33  18         vent  Num   <NA>                    Prolonged ventilation
            class n_unique pct_missing
     1    numeric       65         0.0
     2  character        2         0.0
     3    numeric      190         0.0
     4    integer        2         0.0
-    5    numeric      147         9.4
-    6    integer        2         0.0
-    7  character        3         0.0
-    8       Date      766         0.0
-    9    integer        2         0.0
+    5    numeric      120         0.0
+    6    numeric      147         9.4
+    7    integer        2         0.0
+    8  character        3         0.0
+    9       Date      766         0.0
     10   integer        2         0.0
     11   integer        2         0.0
-    12   numeric       82         0.0
-    13   numeric      777         0.0
-    14   numeric      787         0.0
-    15   numeric      774         0.0
-    16   numeric       19         0.0
-    17   integer       19         0.0
-    18   numeric       53         0.0
-    19   integer        2         0.0
+    12   integer        2         0.0
+    13   numeric       82         0.0
+    14   numeric      777         0.0
+    15   numeric      787         0.0
+    16   numeric      774         0.0
+    17   numeric       19         0.0
+    18   integer       19         0.0
+    19   numeric       53         0.0
     20   integer        2         0.0
-    21 character        4         0.0
-    22   integer        2         0.0
-    23   numeric        4         0.0
-    24 character      800         0.0
-    25   numeric      141         0.0
-    26   integer        4         0.0
-    27 character        3         0.0
-    28   integer        2         0.0
-    29 character        2         0.0
-    30 character        3         0.0
+    21   integer        2         0.0
+    22 character        4         0.0
+    23   integer        2         0.0
+    24   numeric        4         0.0
+    25 character      800         0.0
+    26   numeric      141         0.0
+    27   integer        4         0.0
+    28 character        3         0.0
+    29   integer        2         0.0
+    30 character        2         0.0
     31 character        3         0.0
-    32   integer        2         0.0
+    32 character        3         0.0
+    33   integer        2         0.0
 
 Table 2: Contents of the data: each column, its type and its label
 
@@ -381,6 +383,7 @@ proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min",
     21 complication        Major postoperative complication 800     0   0.182500
     22          los     Postoperative length of stay (days) 800     0   6.317500
     23      log_los Postoperative length of stay (log days) 800     0   1.763026
+    24     cpb_time   Cardiopulmonary bypass time (minutes) 800     0 104.790000
               std      min      max       sum
     1   9.8319268  0.06600  34.9400 13945.911
     2  12.1764123 32.00000 100.0000 49901.000
@@ -405,6 +408,7 @@ proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min",
     21  0.3864977  0.00000   1.0000   146.000
     22  2.6249394  1.00000  19.0000  5054.000
     23  0.4032844  0.00000   2.9444  1410.421
+    24 24.6238973 35.00000 185.0000 83832.000
 
 Table 3: Summary statistics of the overall variables
 
@@ -720,8 +724,8 @@ unless `ID_COL` is set under Study choices.
 
 | Group           | Item             | Value                     |
 |:----------------|:-----------------|:--------------------------|
-| Run             | Started          | 2026-10-20 13:51:35 EDT   |
-|                 | Ended            | 2026-10-20 13:51:35 EDT   |
+| Run             | Started          | 2026-10-20 15:02:28 EDT   |
+|                 | Ended            | 2026-10-20 15:02:29 EDT   |
 |                 | Duration         | 0 s                       |
 |                 | Status           | final                     |
 |                 | Rendered by      | gallery                   |
@@ -736,7 +740,7 @@ unless `ID_COL` is set under Study choices.
 |                 | Source file      | built.rds                 |
 |                 | Rows kept        | 800 rows on 800 patients  |
 |                 | WHERE            | none                      |
-|                 | sha256           | b55bc29fc6a4              |
+|                 | sha256           | 07a531bb5b35              |
 |                 | Manifest         | current                   |
 | Reproducibility | renv             | not active                |
 |                 | renv.lock sha256 | d09f96b6cd21              |

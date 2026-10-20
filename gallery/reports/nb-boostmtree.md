@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:57
+2026-10-20 15:08
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -145,6 +145,13 @@ PREDICTORS <- NULL
 # the cross-validated best M should sit well inside it, not at its right edge.
 M  <- 200
 NU <- 0.05
+
+# Demo: predictors tried at each split of each tree, or NULL for every one of
+# them, boostmtree's default. Fewer than all makes the trees less alike, as in a
+# random forest, at the cost of a noisier single tree; set it to reproduce a
+# study that fitted with a smaller mtry. A different MTRY is a different fit, so
+# it is part of the cache key.
+MTRY <- NULL
 
 # Demo: cores for the cross-validated fit, whose cost grows with the square of
 # the number of patients; about 80% of it runs in parallel, so speed levels off
@@ -307,7 +314,7 @@ CACHE_DIR <- dirname(set_path("estimates", "nb-boostmtree.rds"))
 fit <- cache_fit(
   "nb-boostmtree-fit",
   boostmtree(x = d[.predictors], tm = d[[.time]], id = .patient, y = d[[.response]],
-             family = FAMILY, M = M, nu = NU, mod.grad = TRUE, cv.flag = TRUE, verbose = FALSE,
+             family = FAMILY, M = M, nu = NU, mtry = MTRY, mod.grad = TRUE, cv.flag = TRUE, verbose = FALSE,
              # get() keeps CORES out of cache_fit()'s key, which sees only the values
              # the call names directly: changing it must not mark an identical fit stale.
              control = boostmtree.control(cv.cores = get("CORES"))),
@@ -375,7 +382,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 141 | 0.8840127 |
+| l2 | lvef | 128 | 0.8839889 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -389,7 +396,7 @@ save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/30c26b53c1bf4b88057c2903b834d8e4.png)
+![](assets/e33cda953ab1b3b661266c088319471e.png)
 
 Figure 1: Cross-validated error by boosting iteration. The black solid
 line is the error after each iteration, and the black dashed vertical
@@ -404,7 +411,7 @@ save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/11dd35d745c703e3e6edcbf5f9c2e564.png)
+![](assets/271d5e10a82b74c3d5d01e76045c7d10.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
 per parameter. Each black solid line is the parameter’s fitted value
@@ -421,7 +428,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/9b9c2472dd59aa0127f5d32ead948378.png)
+![](assets/363d5c5c65c0ea2b4acfc2e9d73bac10.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins.
 Each gray horizontal segment spans a time bin at its observed mean, with
@@ -444,7 +451,7 @@ save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
-![](assets/f09ddb09bb1a4a6c1bed54b99cc6b618.png)
+![](assets/2636255b38496c64765e9e4d2fcc7e00.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time, one panel for each. Horizontal dark gray bars
@@ -548,12 +555,12 @@ Code
 .p
 ```
 
-![](assets/e8ea77ef7bcdfb4c999bf6f54113f36c.png)
+![](assets/a0558bce6bce52003f373e1e6e95fea2.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-1 of 2: nyha_pr, hx_chf, age, bmi.
+1 of 2: hx_chf, nyha_pr, age, hx_dm.
 
 Code
 
@@ -561,12 +568,12 @@ Code
 .p
 ```
 
-![](assets/8ada2539ee6b7c94976a365da28f5f51.png)
+![](assets/e077319d430e6e304eb6a119dcd42a1d.png)
 
 Figure 6: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-2 of 2: female, hx_dm.
+2 of 2: female, bmi.
 
 Code
 
@@ -611,7 +618,7 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/097b6baefdfb823645d5a826f313e5e6.png)
+![](assets/2331ee351d9b680b07c1d7c1a5d585a6.png)
 
 Figure 7: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time. Thin translucent black lines trace
@@ -639,9 +646,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 | Group           | Item             | Value                        |
 |:----------------|:-----------------|:-----------------------------|
-| Run             | Started          | 2026-10-20 13:53:59 EDT      |
-|                 | Ended            | 2026-10-20 13:57:48 EDT      |
-|                 | Duration         | 3 min 49 s                   |
+| Run             | Started          | 2026-10-20 15:04:45 EDT      |
+|                 | Ended            | 2026-10-20 15:08:38 EDT      |
+|                 | Duration         | 3 min 54 s                   |
 |                 | Status           | final                        |
 |                 | Rendered by      | gallery                      |
 |                 | Host             | gallery                      |

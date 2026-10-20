@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:52
+2026-10-20 15:03
 
 An `hs` job turns the risk-factor model an `hm` job fitted into
 **predictions for individual patients**, and sets those against the
@@ -561,8 +561,8 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-20 13:52:25 EDT |
-|  | Ended | 2026-10-20 13:52:26 EDT |
+| Run | Started | 2026-10-20 15:03:16 EDT |
+|  | Ended | 2026-10-20 15:03:16 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -577,9 +577,9 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | b55bc29fc6a4 |
+|  | sha256 | 07a531bb5b35 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-20 13:52:09 -0400, data built_20261020.parquet |
+|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-20 15:03:00 -0400, data built_20261020.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

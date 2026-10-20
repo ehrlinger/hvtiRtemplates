@@ -7,10 +7,10 @@ window.GALLERY = [
   "use": "Cuts a study's dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then the working file and its build record, registered as a dated version of the study dataset.",
   "deprecated_by": null,
   "call": "add_job(\"bd\", subject = \"study\", type = \"build\")",
-  "tables": 0,
+  "tables": 3,
   "figures": 0,
-  "seconds": null,
-  "report": false,
+  "seconds": 10.0,
+  "report": true,
   "issues": [],
   "note": ""
  },
@@ -23,7 +23,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.eda\", subject = \"cohort\", type = \"eda\")",
   "tables": 6,
   "figures": 10,
-  "seconds": 27.8,
+  "seconds": 27.0,
   "report": true,
   "issues": [],
   "note": "No grouping variable, which the legacy EDA report had."
@@ -37,7 +37,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.general\", subject = \"cohort\", type = \"eda\")",
   "tables": 14,
   "figures": 0,
-  "seconds": 5.0,
+  "seconds": 4.8,
   "report": true,
   "issues": [],
   "note": ""
@@ -51,7 +51,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.gfup\", subject = \"cohort\", type = \"eda\")",
   "tables": 4,
   "figures": 2,
-  "seconds": 5.8,
+  "seconds": 5.7,
   "report": true,
   "issues": [],
   "note": ""
@@ -79,7 +79,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.tables\", subject = \"cohort\", type = \"eda\")",
   "tables": 2,
   "figures": 0,
-  "seconds": 6.0,
+  "seconds": 6.2,
   "report": true,
   "issues": [],
   "note": "The session asked whether this should become a named Table 1 job."
@@ -93,7 +93,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.trends\", subject = \"cohort\", type = \"eda\")",
   "tables": 2,
   "figures": 4,
-  "seconds": 6.0,
+  "seconds": 6.2,
   "report": true,
   "issues": [],
   "note": ""
@@ -107,7 +107,7 @@ window.GALLERY = [
   "call": "add_job(\"lg\", subject = \"dead\", type = \"calibration\")",
   "tables": 5,
   "figures": 2,
-  "seconds": 9.0,
+  "seconds": 7.1,
   "report": true,
   "issues": [],
   "note": "Death against age and NYHA class on the constant-hazard link, with the scale chosen for each. A real study reads the figures before it fills chosen in."
@@ -121,7 +121,7 @@ window.GALLERY = [
   "call": "add_job(\"ac\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 8,
   "figures": 0,
-  "seconds": 5.1,
+  "seconds": 4.9,
   "report": true,
   "issues": [
    177,
@@ -138,7 +138,7 @@ window.GALLERY = [
   "call": "add_job(\"hz\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 8,
   "figures": 0,
-  "seconds": 8.5,
+  "seconds": 8.4,
   "report": true,
   "issues": [
    169,
@@ -156,7 +156,7 @@ window.GALLERY = [
   "call": "add_job(\"bc\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 16.9,
+  "seconds": 13.6,
   "report": true,
   "issues": [
    185,
@@ -175,7 +175,7 @@ window.GALLERY = [
   "call": "add_job(\"bh\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 131.5,
+  "seconds": 130.3,
   "report": true,
   "issues": [
    185,
@@ -195,7 +195,7 @@ window.GALLERY = [
   "call": "add_job(\"bl\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 13.5,
+  "seconds": 13.7,
   "report": true,
   "issues": [
    185,
@@ -213,7 +213,7 @@ window.GALLERY = [
   "call": "add_job(\"br\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 8.8,
+  "seconds": 8.5,
   "report": true,
   "issues": [
    185,
@@ -252,7 +252,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.balancing_count\", subject = \"exposure\", type = \"balancing\")",
   "tables": 6,
   "figures": 0,
-  "seconds": 4.8,
+  "seconds": 4.7,
   "report": true,
   "issues": [
    174
@@ -268,7 +268,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.binary\", subject = \"outcome\", type = \"analysis\")",
   "tables": 5,
   "figures": 0,
-  "seconds": 4.9,
+  "seconds": 4.6,
   "report": true,
   "issues": [
    174
@@ -284,7 +284,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.checkpred\", subject = \"outcome\", type = \"analysis\")",
   "tables": 3,
   "figures": 0,
-  "seconds": 4.5,
+  "seconds": 4.6,
   "report": true,
   "issues": [],
   "note": "AUC 0.75 and observed/expected 1.16 on the 2015-onward cohort."
@@ -298,7 +298,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.nominal\", subject = \"outcome\", type = \"analysis\")",
   "tables": 5,
   "figures": 0,
-  "seconds": 4.7,
+  "seconds": 4.9,
   "report": true,
   "issues": [
    174
@@ -314,7 +314,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.ordinal\", subject = \"outcome\", type = \"analysis\")",
   "tables": 5,
   "figures": 0,
-  "seconds": 4.8,
+  "seconds": 5.0,
   "report": true,
   "issues": [
    174
@@ -330,7 +330,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.propensity_binary\", subject = \"treatment\", type = \"propensity\")",
   "tables": 7,
   "figures": 0,
-  "seconds": 5.0,
+  "seconds": 4.8,
   "report": true,
   "issues": [
    174
@@ -346,7 +346,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.propensity_nominal\", subject = \"treatment\", type = \"propensity\")",
   "tables": 7,
   "figures": 0,
-  "seconds": 5.3,
+  "seconds": 4.9,
   "report": true,
   "issues": [
    174
@@ -362,7 +362,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.propensity_ordinal\", subject = \"treatment\", type = \"propensity\")",
   "tables": 9,
   "figures": 0,
-  "seconds": 5.0,
+  "seconds": 4.8,
   "report": true,
   "issues": [
    174
@@ -378,7 +378,7 @@ window.GALLERY = [
   "call": "add_job(\"nb.boostmtree\", subject = \"lvef\", type = \"boost\")",
   "tables": 3,
   "figures": 7,
-  "seconds": 234.1,
+  "seconds": 239.3,
   "report": true,
   "issues": [],
   "note": "Reads a synthetic echo series, 300 patients with 2 to 6 visits; M = 200, so it is the slowest job here."
@@ -392,7 +392,7 @@ window.GALLERY = [
   "call": "add_job(\"rfc.explain\", subject = \"dead\", type = \"rfc\")",
   "tables": 2,
   "figures": 5,
-  "seconds": 25.9,
+  "seconds": 24.2,
   "report": true,
   "issues": [
    166,
@@ -409,7 +409,7 @@ window.GALLERY = [
   "call": "add_job(\"rfc.fit\", subject = \"dead\", type = \"rfc\")",
   "tables": 2,
   "figures": 2,
-  "seconds": 11.6,
+  "seconds": 13.5,
   "report": true,
   "issues": [
    165,
@@ -427,7 +427,7 @@ window.GALLERY = [
   "call": "add_job(\"rfr.explain\", subject = \"los\", type = \"rfr\")",
   "tables": 2,
   "figures": 5,
-  "seconds": 26.0,
+  "seconds": 28.5,
   "report": true,
   "issues": [
    166,
@@ -444,7 +444,7 @@ window.GALLERY = [
   "call": "add_job(\"rfr.fit\", subject = \"los\", type = \"rfr\")",
   "tables": 2,
   "figures": 2,
-  "seconds": 9.6,
+  "seconds": 8.9,
   "report": true,
   "issues": [
    165,
@@ -462,7 +462,7 @@ window.GALLERY = [
   "call": "add_job(\"rfs.explain\", subject = \"dead\", type = \"rfs\")",
   "tables": 2,
   "figures": 6,
-  "seconds": 111.5,
+  "seconds": 110.9,
   "report": true,
   "issues": [
    166,
@@ -479,7 +479,7 @@ window.GALLERY = [
   "call": "add_job(\"rfs.fit\", subject = \"dead\", type = \"rfs\")",
   "tables": 2,
   "figures": 3,
-  "seconds": 13.4,
+  "seconds": 13.0,
   "report": true,
   "issues": [
    165,
@@ -495,10 +495,10 @@ window.GALLERY = [
   "use": "Least-squares balancing score for a continuous exposure: the averaged fitted value and its strata.",
   "deprecated_by": null,
   "call": "add_job(\"rm.balancing_continuous\", subject = \"exposure\", type = \"balancing\")",
-  "tables": 0,
+  "tables": 6,
   "figures": 0,
-  "seconds": null,
-  "report": false,
+  "seconds": 5.1,
+  "report": true,
   "issues": [],
   "note": ""
  },
@@ -509,10 +509,10 @@ window.GALLERY = [
   "use": "Ordinary least-squares outcome model with Rubin-pooled inference.",
   "deprecated_by": null,
   "call": "add_job(\"rm.linear\", subject = \"outcome\", type = \"linear\")",
-  "tables": 0,
-  "figures": 0,
-  "seconds": null,
-  "report": false,
+  "tables": 6,
+  "figures": 2,
+  "seconds": 10.2,
+  "report": true,
   "issues": [],
   "note": ""
  },
@@ -525,7 +525,7 @@ window.GALLERY = [
   "call": "add_job(\"hp\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 4,
   "figures": 3,
-  "seconds": 5.4,
+  "seconds": 5.2,
   "report": true,
   "issues": [
    177,
@@ -542,7 +542,7 @@ window.GALLERY = [
   "call": "add_job(\"hs.concordance\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 7,
   "figures": 0,
-  "seconds": 35.0,
+  "seconds": 33.0,
   "report": true,
   "issues": [
    227,
@@ -559,7 +559,7 @@ window.GALLERY = [
   "call": "add_job(\"hs.setup\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 5,
   "figures": 0,
-  "seconds": 5.9,
+  "seconds": 5.1,
   "report": true,
   "issues": [
    183,
@@ -576,7 +576,7 @@ window.GALLERY = [
   "call": "add_job(\"lp.mirror\", subject = \"treatment\", type = \"propensity\")",
   "tables": 3,
   "figures": 2,
-  "seconds": 7.0,
+  "seconds": 6.1,
   "report": true,
   "issues": [],
   "note": "Two figures, all patients and under the matching weights. A second gallery job, lp-mirror-matched, sets MATCH to a simulated flag and adds the matched figure."

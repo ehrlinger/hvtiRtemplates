@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:51
+2026-10-20 15:02
 
 An `lg` job decides which scale a covariate should enter a model on,
 before it goes into `PREDICTORS` in an `lm` job. A model of an event
@@ -512,8 +512,8 @@ PREDICTORS <- c("age", "nyha_pr")
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-20 13:51:46 EDT  |
-|                 | Ended            | 2026-10-20 13:51:50 EDT  |
+| Run             | Started          | 2026-10-20 15:02:39 EDT  |
+|                 | Ended            | 2026-10-20 15:02:42 EDT  |
 |                 | Duration         | 3 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -528,7 +528,7 @@ PREDICTORS <- c("age", "nyha_pr")
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | b55bc29fc6a4             |
+|                 | sha256           | 07a531bb5b35             |
 |                 | Manifest         | current                  |
 | Reproducibility | renv             | not active               |
 |                 | renv.lock sha256 | d09f96b6cd21             |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:51
+2026-10-20 15:02
 
 Replaces an older EDA report.
 
@@ -479,8 +479,9 @@ knitr::kable(.shown, row.names = FALSE)
 | complication | Num | Major postoperative complication | 2 | 0.0 |
 | los | Num | Postoperative length of stay (days) | 19 | 0.0 |
 | log_los | Num | Postoperative length of stay (log days) | 19 | 0.0 |
+| cpb_time | Num | Cardiopulmonary bypass time (minutes) | 120 | 0.0 |
 
-Table 2: Contents: 800 rows, 32 columns
+Table 2: Contents: 800 rows, 33 columns
 
 Code
 
@@ -764,7 +765,7 @@ Code
 figure_files <- c(figure_files, draw_section("continuous"))
 ```
 
-## Continuous variables (11)
+## Continuous variables (12)
 
 Code
 
@@ -785,6 +786,7 @@ knitr::kable(stats, digits = 2, row.names = FALSE)
 | icu_hours | Hours in intensive care | 800 | 0 | 33.92 | 20.15 | 4.00 | 10.00 | 34.00 | 56.00 | 108.00 |
 | los | Postoperative length of stay (days) | 800 | 0 | 6.32 | 2.62 | 1.00 | 4.00 | 6.00 | 9.00 | 19.00 |
 | log_los | Postoperative length of stay (log days) | 800 | 0 | 1.76 | 0.40 | 0.00 | 1.39 | 1.79 | 2.20 | 2.94 |
+| cpb_time | Cardiopulmonary bypass time (minutes) | 800 | 0 | 104.79 | 24.62 | 35.00 | 79.00 | 105.00 | 131.00 | 185.00 |
 
 Table 5: Continuous variables
 
@@ -814,13 +816,14 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/9572576ff2396b75bc4e267749b9358e.png)
+![](assets/525cba4a8bdc04c56f1bcd4ac61cf1a9.png)
 
 Figure 4: Continuous variables, page 2: Hours in intensive care,
 Postoperative length of stay (days), Postoperative length of stay (log
-days). Black filled circles mark patients, the solid blue line a LOESS
-smooth where a variable has enough distinct values, and gray ticks along
-the bottom the patients missing the variable.
+days), Cardiopulmonary bypass time (minutes). Black filled circles mark
+patients, the solid blue line a LOESS smooth where a variable has enough
+distinct values, and gray ticks along the bottom the patients missing
+the variable.
 
 Code
 
@@ -987,9 +990,9 @@ color alone; the categorical frequency table above names them.
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-20 13:51:08 EDT  |
-|                 | Ended            | 2026-10-20 13:51:28 EDT  |
-|                 | Duration         | 20 s                     |
+| Run             | Started          | 2026-10-20 15:02:02 EDT  |
+|                 | Ended            | 2026-10-20 15:02:21 EDT  |
+|                 | Duration         | 19 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -1003,7 +1006,7 @@ color alone; the categorical frequency table above names them.
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | b55bc29fc6a4             |
+|                 | sha256           | 07a531bb5b35             |
 |                 | Manifest         | current                  |
 | Reproducibility | renv             | not active               |
 |                 | renv.lock sha256 | d09f96b6cd21             |

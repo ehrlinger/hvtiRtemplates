@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:50
+2026-10-20 15:01
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -465,8 +465,8 @@ against an older figure by its shape and not point by point.
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-20 13:50:56 EDT  |
-|                 | Ended            | 2026-10-20 13:50:57 EDT  |
+| Run             | Started          | 2026-10-20 15:01:50 EDT  |
+|                 | Ended            | 2026-10-20 15:01:51 EDT  |
 |                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -481,7 +481,7 @@ against an older figure by its shape and not point by point.
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | b55bc29fc6a4             |
+|                 | sha256           | 07a531bb5b35             |
 |                 | Manifest         | current                  |
 | Reproducibility | renv             | not active               |
 |                 | renv.lock sha256 | d09f96b6cd21             |

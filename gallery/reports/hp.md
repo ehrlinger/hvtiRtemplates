@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:52
+2026-10-20 15:03
 
 An `hp` job **reads** its inputs and does not recompute them: the
 actuarial life table from the `ac` job and the parametric fit from the
@@ -500,9 +500,9 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-20 13:52:20 EDT |
-|  | Ended | 2026-10-20 13:52:20 EDT |
-|  | Duration | 1 s |
+| Run | Started | 2026-10-20 15:03:11 EDT |
+|  | Ended | 2026-10-20 15:03:11 EDT |
+|  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -516,9 +516,9 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | b55bc29fc6a4 |
+|  | sha256 | 07a531bb5b35 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-20 13:51:55 -0400, data built_20261020.parquet |
-|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-20 13:52:01 -0400, data built_20261020.parquet |
+| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-20 15:02:47 -0400, data built_20261020.parquet |
+|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-20 15:02:52 -0400, data built_20261020.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

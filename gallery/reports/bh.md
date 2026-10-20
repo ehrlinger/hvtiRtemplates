@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:50
+2026-10-20 15:01
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -371,7 +371,7 @@ provenance
     9                                                                        0
     10                                                                     0.1
     11                                                          version:1.2.16
-    12 sha256:b55bc29fc6a44b5614ebcb32583a00f7987fe3365e94c2e4f86ac5aca8f4b708
+    12 sha256:07a531bb5b3525c53f3c98425c2929ae9d9c9efd0f99e1786859132b29776970
     13                                               4 distinct (listed below)
 
 Code
@@ -917,8 +917,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-20 13:50:43 EDT |
-|  | Ended | 2026-10-20 13:50:44 EDT |
+| Run | Started | 2026-10-20 15:01:36 EDT |
+|  | Ended | 2026-10-20 15:01:37 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -933,7 +933,7 @@ saveRDS(report, report_file)
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | b55bc29fc6a4 |
+|  | sha256 | 07a531bb5b35 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261020.parquet |
 |  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261020.parquet |

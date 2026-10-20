@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 13:51
+2026-10-20 15:02
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -542,8 +542,8 @@ rather than balance, so it is not part of this job.
 
 | Group           | Item             | Value                           |
 |:----------------|:-----------------|:--------------------------------|
-| Run             | Started          | 2026-10-20 13:51:41 EDT         |
-|                 | Ended            | 2026-10-20 13:51:42 EDT         |
+| Run             | Started          | 2026-10-20 15:02:34 EDT         |
+|                 | Ended            | 2026-10-20 15:02:35 EDT         |
 |                 | Duration         | 1 s                             |
 |                 | Status           | final                           |
 |                 | Rendered by      | gallery                         |
@@ -558,7 +558,7 @@ rather than balance, so it is not part of this job.
 |                 | Source file      | built.rds                       |
 |                 | Rows kept        | 800 rows on 800 patients        |
 |                 | WHERE            | none                            |
-|                 | sha256           | b55bc29fc6a4                    |
+|                 | sha256           | 07a531bb5b35                    |
 |                 | Manifest         | current                         |
 | Reproducibility | Seed             | 20261006                        |
 |                 | renv             | not active                      |
