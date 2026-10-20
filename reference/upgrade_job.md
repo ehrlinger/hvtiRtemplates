@@ -98,7 +98,7 @@ either one is there.
 ``` r
 # \donttest{
 root <- file.path(tempdir(), "upgrade-job-example")
-invisible(hvtiRutilities::study_setup(root, "Example", 1L))
+invisible(hvtiRutilities::study_setup(root, "Example", 1L, renv = FALSE))
 job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
 # A study choice, made in the job.
 lines <- readLines(job)

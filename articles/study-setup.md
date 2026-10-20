@@ -103,13 +103,16 @@ The executable example uses its temporary directory instead:
 
 ``` r
 
+# A vignette builds a throwaway study; in a real study, run hvtiR::setup().
 study_setup(
   adopted_root,
   study = "Synthetic legacy study",
   study_tracker_id = 42L,
-  adopt = TRUE
+  adopt = TRUE,
+  cleanup = FALSE,
+  renv = FALSE
 )
-#> Study: /tmp/Rtmp8sVbaH/file20451cc87938/legacy-study
+#> Study: /tmp/Rtmp4gMoTO/file20445a14b9fd/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -183,7 +186,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp8sVbaH/file20451cc87938/legacy-study
+#> Study: /tmp/Rtmp4gMoTO/file20445a14b9fd/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -310,15 +313,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/Rtmp8sVbaH/file20451cc87938/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#> "/tmp/Rtmp4gMoTO/file20445a14b9fd/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
 #>                                                                                tables 
-#>  "/tmp/Rtmp8sVbaH/file20451cc87938/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>  "/tmp/Rtmp4gMoTO/file20445a14b9fd/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/Rtmp8sVbaH/file20451cc87938/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>    "/tmp/Rtmp4gMoTO/file20445a14b9fd/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
 #>                                                                                trends 
-#>  "/tmp/Rtmp8sVbaH/file20451cc87938/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
+#>  "/tmp/Rtmp4gMoTO/file20445a14b9fd/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/Rtmp8sVbaH/file20451cc87938/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
+#>     "/tmp/Rtmp4gMoTO/file20445a14b9fd/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output
