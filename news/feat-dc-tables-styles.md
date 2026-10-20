@@ -9,6 +9,6 @@
   a `%desc_tab` job that printed mean ± SD beside the percentiles, which the
   compare layout cannot draw. Needs hvtiRtables 1.0.8. A job scaffolded before
   this keeps working and keeps its report-style Word table; `upgrade_job()`
-  adds the three choices, each with its `EDIT:` marker. A migrated job with
+  adds the three choices, each with its `EDIT:` marker. An upgraded job with
   `CONTINUOUS_STAT "both"` stops at its Word table until `MANUSCRIPT_LAYOUT` is
   set to `"describe"`; hvtiRtables' error names the fix.
