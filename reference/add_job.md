@@ -60,6 +60,11 @@ correctly-declared job.
 
 ## Details
 
+**Packages.** When the study is a renv project, the packages the
+template attaches are installed into its library and recorded in
+`renv.lock` before the job is written; if they cannot be had, nothing is
+written. Outside a renv project nothing is installed.
+
 **What each argument decides.** `prefix` chooses the template, together
 with `qualifier` where a prefix carries several job types. `subject` and
 `type` are yours to choose. The catalog holds no list of valid values
@@ -161,7 +166,7 @@ tryCatch(add_job("dp.trends", subject = "cohort", type = "eda", dir = d),
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
 try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
-#> Error : add_job(): '/tmp/RtmpF1RLJf/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
+#> Error : add_job(): '/tmp/RtmpD10Zlo/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #> [1] "10_descriptive/dc.gfup.cohort.eda.qmd"
