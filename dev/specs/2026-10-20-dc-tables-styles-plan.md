@@ -152,7 +152,7 @@ Each has a default and its reason. The PR lists them for John.
    study chooses is hvtiRtables' `layout =`, so the choice takes that name. Defaults:
    `MANUSCRIPT_LAYOUT <- "compare"`, hvtiRtables' default and the shape of a Table 1 that
    compares groups; `MANUSCRIPT_FILL <- "#CAEDFB"`, the house default (design question 6).
-2. **The caption has a default value AND an `EDIT:` marker:**
+2. **The caption has a default value AND an `EDIT:` marker** (confirmed by John, 2026-10-20):
    `MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"`. `hv_man_table_save()` refuses a
    manuscript table without one, so a `NULL` default would stop every draft render, the demo
    study and the gallery, which resolve markers and keep defaults. The marker makes a final
