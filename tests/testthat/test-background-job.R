@@ -67,3 +67,58 @@ test_that(".write_status() leaves no temporary file and reads back", {
   expect_false(file.exists(paste0(f, ".tmp")))
   expect_identical(job_status(job, quiet = TRUE)$state, "finished")
 })
+
+wait_for <- function(job, states, seconds = 30) {
+  for (i in seq_len(seconds * 4)) {
+    st <- job_status(job, quiet = TRUE)
+    if (st$state %in% states) return(st)
+    Sys.sleep(0.25)
+  }
+  st
+}
+
+test_that("a submitted job returns at once, then runs to finished", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  out <- file.path(dirname(job), "done.txt")
+  t0 <- Sys.time()
+  .submit_job(job, final = FALSE, render_call = sprintf("Sys.sleep(2); writeLines('ok', %s)", deparse(out)),
+              root = dirname(job))
+  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 2)
+  st <- wait_for(job, c("finished", "failed", "vanished"))
+  expect_identical(st$state, "finished")
+  expect_identical(st$exit_code, 0L)
+  expect_true(file.exists(out))
+  expect_true(file.exists(.run_files(job)$log))
+})
+
+test_that("a job that errors reads failed with a non-zero exit code, and the log holds the error", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  .submit_job(job, final = FALSE, render_call = "stop('boom from the job')", root = dirname(job))
+  st <- wait_for(job, c("finished", "failed", "vanished"))
+  expect_identical(st$state, "failed")
+  expect_identical(st$exit_code, 1L)
+  expect_match(paste(readLines(.run_files(job)$log), collapse = "\n"), "boom from the job", fixed = TRUE)
+})
+
+test_that("a killed job reads vanished, and a running one cannot be submitted twice", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  .submit_job(job, final = FALSE, render_call = "Sys.sleep(60)", root = dirname(job))
+  st <- wait_for(job, "running")
+  expect_identical(st$state, "running")
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "already running")
+  ps::ps_kill(ps::ps_handle(as.integer(st$pid)))
+  expect_identical(wait_for(job, "vanished")$state, "vanished")
+})
+
+test_that("submit_job() refuses Windows and a path that is not a job", {
+  expect_error(submit_job(file.path(tempdir(), "no-such-job.qmd")), "existing job file")
+  local_mocked_bindings(.is_windows = function() TRUE)
+  job <- status_job()
+  expect_error(submit_job(job), "Windows")
+})

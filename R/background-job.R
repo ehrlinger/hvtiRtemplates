@@ -67,3 +67,81 @@ job_status <- function(path, quiet = FALSE) {
   }
   invisible(st)
 }
+
+.is_windows <- function() .Platform$OS.type == "windows"
+
+# The runner is a separate Rscript process, so it uses only yaml and base R. Its status writes are atomic
+# (write to .tmp, rename) because job_status() may read while it writes.
+.runner_lines <- function(path, status, final, render_call) {
+  c(sprintf("path <- %s", deparse(path)),
+    sprintf("status <- %s", deparse(status)),
+    sprintf("final <- %s", deparse(final)),
+    "put <- function(x) { tmp <- paste0(status, '.tmp'); yaml::write_yaml(x, tmp); invisible(file.rename(tmp, status)) }",
+    "started <- Sys.time()",
+    "stamp <- function(t) format(t, '%Y-%m-%dT%H:%M:%S%z')",
+    "base <- list(pid = Sys.getpid(), r_version = as.character(getRversion()), started = stamp(started))",
+    "put(c(list(state = 'running'), base))",
+    sprintf("ok <- tryCatch({ %s; TRUE }, error = function(e) { message('Error: ', conditionMessage(e)); FALSE })",
+            render_call),
+    "ended <- Sys.time()",
+    paste0("put(c(list(state = if (ok) 'finished' else 'failed', exit_code = if (ok) 0L else 1L), base, ",
+           "list(ended = stamp(ended), elapsed_s = round(as.numeric(difftime(ended, started, units = 'secs'))))))"),
+    "quit(save = 'no', status = if (ok) 0L else 1L)")
+}
+
+.submit_job <- function(path, final, render_call, root) {
+  files <- .run_files(path)
+  # "submitted" too: the gap before the runner records "running" must not let a second copy start.
+  if (job_status(path, quiet = TRUE)$state %in% c("submitted", "running")) {
+    stop("submit_job(): ", basename(path), " is already running; see job_status().", call. = FALSE)
+  }
+  writeLines(.runner_lines(path, files$status, final, render_call), files$runner)
+  .write_status(files$status, state = "submitted", submitted = .stamp())
+  rscript <- file.path(R.home("bin"), "Rscript")
+  setsid <- if (nzchar(Sys.which("setsid"))) "setsid " else ""
+  cmd <- sprintf("cd %s && exec %snohup %s %s > %s 2>&1 < /dev/null",
+                 shQuote(root), setsid, shQuote(rscript), shQuote(files$runner), shQuote(files$log))
+  system(cmd, wait = FALSE)  # wait = FALSE appends the "&" itself
+  invisible(job_status(path, quiet = TRUE))
+}
+
+#' Render a job in the background, detached from the session
+#'
+#' @description
+#' Starts \code{\link{render_job}} on the job in a separate process that
+#' outlives the R session, the way \code{nohup} from a terminal does, and
+#' returns at once. Use it for a job whose fit runs for hours: a Workbench
+#' session that times out takes a console run with it.
+#'
+#' @details
+#' The process runs the \code{Rscript} of the R that called
+#' \code{submit_job()}, from the study root, so the study's \code{renv} and
+#' \code{.Renviron} apply. It writes \code{<job>.run.log} (everything the render
+#' prints) and \code{<job>.run.yml} (its state) beside the job; read the state
+#' with \code{\link{job_status}}. A job already running is not started twice.
+#' Not available on Windows, which cannot detach a process this way.
+#'
+#' @param path Character(1). The job's \code{.qmd} file.
+#' @param final Logical(1). Passed to \code{\link{render_job}}.
+#' @return Invisibly, the job's status, as \code{\link{job_status}} returns it.
+#' @examples
+#' # Not run by check: it would start a real render.
+#' \dontrun{
+#' submit_job("analyses/nb.boostmtree.lvef.boost.qmd")
+#' }
+#' @export
+submit_job <- function(path, final = FALSE) {
+  if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
+    stop("submit_job(): `path` must be an existing job file.", call. = FALSE)
+  }
+  if (!is.logical(final) || length(final) != 1L || is.na(final)) {
+    stop("submit_job(): `final` must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (.is_windows()) {
+    stop("submit_job(): Windows cannot detach a process from the session; render from a terminal instead.",
+         call. = FALSE)
+  }
+  path <- normalizePath(path, winslash = "/")
+  root <- .find_study_root(dirname(path))
+  .submit_job(path, final, sprintf("hvtiRtemplates::render_job(path, final = %s)", deparse(final)), root)
+}
