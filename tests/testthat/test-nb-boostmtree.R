@@ -210,6 +210,24 @@ test_that("the cache is reused unchanged, and a changed setting stops until REFI
   expect_s3_class(env3$fit, "boostmtree")
 })
 
+test_that("MTRY reaches boostmtree(), and NULL leaves boostmtree's default", {
+  nb_skip_unless_stack()
+  seen <- list()
+  fit_with <- function(choices) {
+    env <- nb_env(nb_study())
+    env$boostmtree <- function(...) {
+      seen[[length(seen) + 1L]] <<- list(...)["mtry"]
+      boostmtree::boostmtree(...)
+    }
+    utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, choices))
+  }
+  fit_with(nb_choices(MTRY = 2L))
+  expect_identical(seen[[1L]]$mtry, 2L)
+  fit_with(nb_choices())
+  expect_true("mtry" %in% names(seen[[2L]]))
+  expect_null(seen[[2L]]$mtry)
+})
+
 test_that("CORES reaches boostmtree.control()", {
   nb_skip_unless_stack()
   seen <- NULL
