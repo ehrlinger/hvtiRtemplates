@@ -280,7 +280,7 @@
     "ABBREVIATIONS <- character(0)", 'WORD_FILE <- "dc-tables.docx"',
     paste0("MANUSCRIPT_LAYOUT <- ", quote_r(layout)),
     "# EDIT: review SAS presentation choices in the migration report.",
-    "# EDIT: confirm comparison, summaries, percentiles, abbreviations and Word filename."
+    "# EDIT: confirm comparison, summaries, percentiles, abbreviations, Word filename and Word table layout."
   )
   if (length(unknown) || is.null(d) || length(missing)) {
     config <- c(config, "# EDIT: resolve registered-data column checks and binary/categorical classification.")

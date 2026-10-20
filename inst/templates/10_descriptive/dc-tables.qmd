@@ -424,7 +424,9 @@ hvtiRtables::hv_man_table_display(ft, abbreviations = ABBREVIATIONS)
 #| label: word-file
 # unnumbered: writes the Word file; the table below shows what it holds
 # The same summary, drawn for the manuscript. MANUSCRIPT_CAPTION is written into
-# the .docx above the table; this report numbers its own tables.
+# the .docx above the table; this report numbers its own tables. The tbl-word
+# chunk below shows word_ft, so it cannot run without this chunk: if the Word
+# table stops here, fix MANUSCRIPT_LAYOUT rather than skipping the chunk.
 word_ft <- hvtiRtables::hv_man_table(
   tbl, style = hvtiRtables::hv_table_style("manuscript", fill = MANUSCRIPT_FILL),
   layout = MANUSCRIPT_LAYOUT

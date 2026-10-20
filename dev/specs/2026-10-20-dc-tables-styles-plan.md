@@ -176,9 +176,13 @@ Each has a default and its reason. The PR lists them for John.
 5. **The migrator maps `%desc_tab` to a layout by the statistics it printed:** `"describe"` when
    it writes `CONTINUOUS_STAT <- "both"` (every `%desc_tab` job with a continuous variable), since
    the compare layout refuses two statistics per group; `"compare"` otherwise, by group or
-   overall. A table with no `by=` takes `"compare"`, not `"describe"`: the design's
+   overall. A table with no `by=` and no continuous variable takes `"compare"`: the design's
    no-grouping shape (section 5.1, `Characteristic | n* | All patients (N = n)`) is what the
-   compare layout draws (probed), and nothing is side by side. A job whose source logic blocks
+   compare layout draws (probed), and nothing is side by side. **Amended 2026-10-20, after
+   implementation:** an earlier wording said every table with no `by=` takes `"compare"`. A
+   continuous one does not: `%desc_tab` printed both statistics, the migrator writes
+   `CONTINUOUS_STAT <- "both"`, and against hvtiRtables 1.0.8 `"describe"` is the only layout
+   that draws it, so the rule above governs and the job gets `"describe"`. A job whose source logic blocks
    the mapping gets the template default, `"compare"`, as every other choice falls back to it
    there.
 6. **The report also shows the Word table** (`tbl-word`, "The table as saved to Word, in the
