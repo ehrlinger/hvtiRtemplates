@@ -153,7 +153,7 @@
   titles <- .dc_tables_titles(evidence$source)
   for (i in seq_len(nrow(titles))) {
     unresolved <- rbind(unresolved, record(titles$line[[i]], titles$text[[i]],
-                                           "Review title against the combined Word table."))
+                                           "Review title against MANUSCRIPT_CAPTION, the Word table's caption."))
   }
   for (path in evidence$reference) {
     if (grepl("[.]rtf$", path, ignore.case = TRUE)) {
@@ -218,6 +218,15 @@
   translated <- rbind(translated, record(calls[[1L]]$start,
                                          paste0("COMPARE: ", compare, "; CONTINUOUS_STAT: ", continuous_stat),
                                          "What %desc_tab printed: a p-value when by= named a group; mean +/- SD and percentiles."))
+  # The Word table's layout. The compare layout draws one statistic per group,
+  # so %desc_tab's mean +/- SD beside its percentiles needs the describe layout.
+  layout <- if (identical(continuous_stat, "both")) "describe" else "compare"
+  layout_reason <- if (identical(layout, "describe")) {
+    "CONTINUOUS_STAT is both, which only the describe layout draws in the Word table."
+  } else {
+    "One statistic per variable: the compare layout, one n column beside the groups."
+  }
+  translated <- rbind(translated, record(calls[[1L]]$start, paste0("MANUSCRIPT_LAYOUT: ", layout), layout_reason))
   unresolved <- rbind(unresolved, record(NA_integer_, "abbreviations, Word filename",
                                          "Template defaults require review; SAS options do not prove these choices."))
   statements <- .gfup_statements(evidence$source)
@@ -242,6 +251,7 @@
     compare <- "none"
     continuous_stat <- "median"
     percentiles <- c(15, 85)
+    layout <- "compare"
   }
   quote_r <- function(x) encodeString(x, quote = '"')
   vector_r <- function(x) if (length(x)) paste0("c(", paste(quote_r(x), collapse = ", "), ")") else "character(0)"
@@ -262,6 +272,7 @@
     paste0("COMPARE <- ", quote_r(compare)), paste0("CONTINUOUS_STAT <- ", quote_r(continuous_stat)),
     paste0("PERCENTILES <- c(", paste(percentiles, collapse = ", "), ")"),
     "ABBREVIATIONS <- character(0)", 'WORD_FILE <- "dc-tables.docx"',
+    paste0("MANUSCRIPT_LAYOUT <- ", quote_r(layout)),
     "# EDIT: review SAS presentation choices in the migration report.",
     "# EDIT: confirm comparison, summaries, percentiles, abbreviations and Word filename."
   )

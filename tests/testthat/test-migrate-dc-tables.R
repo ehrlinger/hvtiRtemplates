@@ -49,6 +49,7 @@ test_that("dc-tables blocks local DATA-step filters and transformed measurements
   # Nothing mapped, so nothing about the comparison is claimed either.
   expect_identical(env$COMPARE, "none")
   expect_identical(env$CONTINUOUS_STAT, "median")
+  expect_identical(env$MANUSCRIPT_LAYOUT, "compare")
   expect_true(any(grepl("EDIT:.*source.*logic", readLines(out))))
   report <- readLines(sub("[.]qmd$", "-migration.md", out))
   translated <- report[seq.int(match("## Translated", report), match("## Unresolved", report) - 1L)]
@@ -314,7 +315,7 @@ test_that("dc-tables retains complete title statements and their starting lines"
     c(source = file.path(root, "descriptive", "dc.tables.sas")), normalizePath(root)
   )
   result <- hvtiRtemplates:::.migrate_dc_tables(evidence, readLines(template_path("dc", "tables")))
-  titles <- result$unresolved[result$unresolved$reason == "Review title against the combined Word table.", ]
+  titles <- result$unresolved[result$unresolved$reason == "Review title against MANUSCRIPT_CAPTION, the Word table's caption.", ]
   expect_identical(titles$line, c(1L, 4L, 5L, 5L))
   expect_identical(titles$text, c(
     'title3\n  "General; Descriptive Analyses"\n  "continued title text";',
@@ -424,6 +425,7 @@ test_that("the overall and by-group calls of tp.dc.tables.ods.sas migrate to one
   expect_identical(env$BY, "treatment")
   expect_identical(env$COMPARE, "pvalue")
   expect_identical(env$CONTINUOUS_STAT, "both")
+  expect_identical(env$MANUSCRIPT_LAYOUT, "describe")
   expect_identical(env$PERCENTILES, c(15, 85))
   expect_identical(env$GROUPS, list(
     Demography = c("female", "race_grp", "age", "bmi"),
@@ -472,4 +474,21 @@ test_that("the group variable summarized in an overall call is taken out of GROU
   expect_identical(got$env$GROUPS, list(Demography = "female"))
   expect_false("treatment" %in% c(got$env$BINARY, got$env$CATEGORICAL, got$env$CONTINUOUS))
   expect_true(any(grepl("treatment", got$translated, fixed = TRUE) & grepl("column header", got$translated, fixed = TRUE)))
+})
+
+# ---- the Word table's layout --------------------------------------------------
+
+test_that("a migrated job lays its Word table out by what %desc_tab printed", {
+  # Mean +/- SD beside the percentiles is two statistics per group, which only
+  # the describe layout draws; hv_man_table() refuses it in the compare layout.
+  both <- tables_config("%desc_tab(vartype=continuous,input=built,by=treatment,varlist=/* Demography */ age);")
+  expect_identical(both$env$CONTINUOUS_STAT, "both")
+  expect_identical(both$env$MANUSCRIPT_LAYOUT, "describe")
+  expect_true(any(grepl("MANUSCRIPT_LAYOUT: describe", both$translated, fixed = TRUE)))
+  # One statistic per variable, by group or overall: the compare layout.
+  by_group <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);")
+  expect_identical(by_group$env$MANUSCRIPT_LAYOUT, "compare")
+  expect_true(any(grepl("MANUSCRIPT_LAYOUT: compare", by_group$translated, fixed = TRUE)))
+  overall <- tables_config("%desc_tab(vartype=category,input=built,by=,varlist=/* Demography */ female);")
+  expect_identical(overall$env$MANUSCRIPT_LAYOUT, "compare")
 })

@@ -149,7 +149,13 @@ CONTINUOUS_STAT <- "median"   # EDIT: choose the continuous summary
 PERCENTILES <- c(15, 85)       # EDIT: choose the reported percentiles
 ABBREVIATIONS <- character(0) # EDIT: define abbreviations used in the table
 WORD_FILE <- "dc-tables.docx"  # EDIT: choose the Word filename within this set
+MANUSCRIPT_LAYOUT <- "compare" # EDIT: choose the Word table's layout
 # MIGRATE-END: dc-tables-config
+# The Word table is drawn in the manuscript style. MANUSCRIPT_LAYOUT, above,
+# says what the table does: "compare" puts one n column beside the groups it
+# compares; "describe" puts a count beside each group, for cohorts or repeated
+# measures shown side by side. "describe" is also the layout that draws
+# CONTINUOUS_STAT "both": "compare" has one statistic column per group.
 # EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you
 # want summarized as continuous: list(continuous = c("nyha_pr")). list() for none.
 OVERRIDES <- list()
