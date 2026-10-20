@@ -54,7 +54,7 @@ crashed is taken over automatically.
 \donttest{
 if (requireNamespace("quarto", quietly = TRUE) && quarto::quarto_available()) {
   root <- file.path(tempdir(), "render-job-example")
-  invisible(hvtiRutilities::study_setup(root, "Example", 1L))
+  invisible(hvtiRutilities::study_setup(root, "Example", 1L, renv = FALSE))
   d <- data.frame(ccfid = 1:6, dead = c(0, 1, 0, 1, 0, 0),
                   iv_dead = c(1.2, 0.4, 3.1, 2.2, 0.8, 4.5))
   utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),

@@ -38,7 +38,10 @@ bd_master <- function(n = 200L, .local_envir = parent.frame()) {
 
 bd_study <- function(.local_envir = parent.frame()) {
   root <- withr::local_tempdir("bd-study-", .local_envir = .local_envir)
-  suppressMessages(hvtiRutilities::study_setup(root, study = "bd test", study_tracker_id = 9L, adopt = TRUE))
+  suppressMessages(hvtiRutilities::study_setup(
+    root, study = "bd test", study_tracker_id = 9L,
+    adopt = TRUE, cleanup = FALSE, renv = FALSE
+  ))
   normalizePath(root)
 }
 

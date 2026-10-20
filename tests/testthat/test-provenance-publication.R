@@ -1,6 +1,6 @@
 make_hook_study <- function(root) {
   suppressMessages(hvtiRutilities::study_setup(
-    root, study = "Hook study", study_tracker_id = 42L, adopt = TRUE
+    root, study = "Hook study", study_tracker_id = 42L, adopt = TRUE, cleanup = FALSE, renv = FALSE
   ))
   data_path <- file.path(hvtiRutilities::study_dir("datasets", root), "cohort.csv")
   utils::write.csv(data.frame(id = 1L), data_path, row.names = FALSE)

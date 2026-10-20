@@ -20,7 +20,7 @@ migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame()) 
   suppressMessages(hvtiRutilities::study_setup(
     root, study = "Synthetic legacy study", study_tracker_id = 42L,
     umbrella = "Synthetic fixture", owner = "hvtiRtemplates tests",
-    irb_number = "SYNTHETIC", cvir_no = "SYNTHETIC", adopt = TRUE
+    irb_number = "SYNTHETIC", cvir_no = "SYNTHETIC", adopt = TRUE, cleanup = FALSE, renv = FALSE
   ))
   suppressMessages(hvtiRutilities::register_data(
     root, built = "built.csv",

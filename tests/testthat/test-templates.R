@@ -797,7 +797,7 @@ test_that("the root resolves to the study from any depth, and from the working d
   skip_if_not_installed("knitr")
   root <- tempfile("root-lookup-")
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
-  suppressMessages(hvtiRutilities::study_setup(root, study = "Root lookup", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Root lookup", study_tracker_id = 1L, renv = FALSE))
   root <- normalizePath(root)
   deep <- file.path(root, "30_analyses", "sub")
   dir.create(deep, recursive = TRUE)

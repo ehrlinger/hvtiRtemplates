@@ -88,7 +88,7 @@
 #' @examples
 #' \donttest{
 #' root <- file.path(tempdir(), "migrate-job-example")
-#' invisible(hvtiRutilities::study_setup(root, "Example", 1L))
+#' invisible(hvtiRutilities::study_setup(root, "Example", 1L, renv = FALSE))
 #' # A legacy follow-up job; the template is read from its name, dc.gfup.
 #' sas <- file.path(hvtiRutilities::study_dir("descriptive", root), "dc.gfup.sas")
 #' writeLines(c("data followup;", "  set built;", "run;",

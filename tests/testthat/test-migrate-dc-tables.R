@@ -110,7 +110,7 @@ test_that("dc-tables only classifies from the selected registered data", {
 test_that("the study dataset is selected as \"built\", by either name or by its file's stem", {
   # The study dataset's file is cohort.csv, so "built" cannot match a file stem.
   root <- withr::local_tempdir()
-  suppressMessages(hvtiRutilities::study_setup(root, "Built name", 42L, adopt = TRUE))
+  suppressMessages(hvtiRutilities::study_setup(root, "Built name", 42L, adopt = TRUE, cleanup = FALSE, renv = FALSE))
   utils::write.csv(data.frame(ccfid = 1:3), file.path(hvtiRutilities::study_dir("datasets", root), "cohort.csv"),
                    row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(root, built = "cohort.csv", role = "study"))
