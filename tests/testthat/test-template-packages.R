@@ -18,3 +18,8 @@ test_that("a template with no setup chunk is an error", {
   writeLines(c("```{r}", "x <- 1", "```"), file)
   expect_error(.template_packages(file), "no setup chunk")
 })
+
+test_that("a package checked with requireNamespace() counts, as dc-eda's patchwork does", {
+  pkgs <- .template_packages(template_path("dc", qualifier = "eda"))
+  expect_true("patchwork" %in% pkgs$package)
+})

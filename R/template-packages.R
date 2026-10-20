@@ -15,7 +15,10 @@
   hits <- hits[lengths(hits) == 3L]
   floor_pkg <- vapply(hits, `[[`, character(1), 2L)
   floor_val <- vapply(hits, `[[`, character(1), 3L)
-  package <- unique(c(attached, floor_pkg))
+  # A package the setup chunk only checks for, e.g. if (!requireNamespace("patchwork", quietly = TRUE)).
+  required <- unlist(regmatches(code, gregexpr('requireNamespace\\("[A-Za-z0-9.]+"', code)))
+  required <- sub('^requireNamespace\\("([A-Za-z0-9.]+)"$', "\\1", required)
+  package <- unique(c(attached, required, floor_pkg))
   data.frame(package = package, floor = floor_val[match(package, floor_pkg)],
              stringsAsFactors = FALSE)
 }

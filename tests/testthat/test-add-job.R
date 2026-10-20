@@ -473,13 +473,12 @@ test_that("add_job asks the study for the template's packages before writing", {
 test_that("add_job writes nothing when the study cannot get the packages", {
   dir <- tempfile("addjob-need-refused-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  suppressMessages(hvtiRutilities::study_setup(
-    dir, study = "Need refused test", study_tracker_id = 1L, renv = FALSE
-  ))
+  dir.create(dir)  # an empty root, so any folder add_job() makes shows up
   testthat::local_mocked_bindings(
     study_need = function(...) stop("add_job(): needs randomForestSRC"),
     .package = "hvtiRutilities"
   )
   expect_error(add_job("rfc", "dead", "rfc", dir = dir, qualifier = "fit"), "needs randomForestSRC")
   expect_length(list.files(dir, pattern = "dead", recursive = TRUE), 0L)
+  expect_length(list.files(dir, recursive = TRUE, include.dirs = TRUE, all.files = TRUE), 0L)
 })

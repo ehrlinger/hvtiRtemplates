@@ -161,7 +161,6 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   if (is.null(dir)) dir <- .default_study_root("add_job")
 
   out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = dir)
-  if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
   out <- .job_path(row, subject, type, dir)
   # A job that runs from a companion script gets that script too, named to
   # pair with the job. Both are checked before either is written, so a
@@ -206,7 +205,11 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   # does nothing, and the job's own setup chunk reports a missing package at
   # render time.
   needs <- .template_packages(row$file[[1L]])
-  hvtiRutilities::study_need(needs$package, root = dir, caller = "add_job", only_in_renv = TRUE)
+  # A root that does not exist yet cannot be a renv project, and study_need() requires one that does.
+  if (dir.exists(dir)) {
+    hvtiRutilities::study_need(needs$package, root = dir, caller = "add_job", only_in_renv = TRUE)
+  }
+  if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
   if (!file.copy(row$file[[1L]], out, overwrite = FALSE)) {
     stop("add_job(): failed to write '", out, "'.", call. = FALSE)
   }
