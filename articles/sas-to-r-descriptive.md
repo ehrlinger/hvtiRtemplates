@@ -205,9 +205,13 @@ reported the Kruskal-Wallis chi-square approximation; and the low and
 high percentiles use SAS’s default definition rather than the
 `PCTLDEF=4` `%desc_tab` set, so they can differ in small groups.
 [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
-writes these choices and lists the differences in its report. The
-`dc.tables.ods_<topic>.sas` correlation variant becomes `CORR` in the
-same job.
+writes these choices and lists the differences in its report. The report
+shows the table in the report style, with each variable’s column name;
+the Word file holds it in the manuscript style, under
+`MANUSCRIPT_CAPTION` and shaded in `MANUSCRIPT_FILL`. A migrated job
+that shows both statistics gets `MANUSCRIPT_LAYOUT <- "describe"`, the
+manuscript layout that draws them. The `dc.tables.ods_<topic>.sas`
+correlation variant becomes `CORR` in the same job.
 
 ``` sas
 %desc_tab(vartype=category,   varlist=female diabetes nyha_pr);

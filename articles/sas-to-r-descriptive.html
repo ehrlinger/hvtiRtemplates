@@ -236,7 +236,7 @@ Unresolved markers remain. The numbers below are not a result.
 </section><section class="level2"><h2 id="descriptive-tables-and-correlations-dc-tables">Descriptive tables and correlations: <code>dc-tables</code>
 <a class="anchor" aria-label="anchor" href="#descriptive-tables-and-correlations-dc-tables"></a>
 </h2>
-<p>The SAS job commonly calls <code>%desc_tab</code> once for categorical variables and once for continuous variables. The R job supplies both sets to one table. SAS comment banners become the names in <code>GROUPS</code>; <code>by=</code> and <code>byvalue=</code> become <code>BY</code>; and <code>perctile=15 50 85</code> becomes <code>continuous_stat = "both"</code> with percentiles 15 and 85. A <code>by=</code> group gets a p-value, <code>COMPARE = "pvalue"</code>, as <code>%desc_tab</code> printed one. Three things differ on purpose: a categorical variable with sparse cells is tested with Fisher’s exact test, where <code>%desc_tab</code> always used chi-square; two groups of a continuous variable are compared with the Wilcoxon rank-sum test, exact in small groups, where <code>%desc_tab</code> reported the Kruskal-Wallis chi-square approximation; and the low and high percentiles use SAS’s default definition rather than the <code>PCTLDEF=4</code> <code>%desc_tab</code> set, so they can differ in small groups. <code><a href="../reference/migrate_job.html">migrate_job()</a></code> writes these choices and lists the differences in its report. The <code>dc.tables.ods_&lt;topic&gt;.sas</code> correlation variant becomes <code>CORR</code> in the same job.</p>
+<p>The SAS job commonly calls <code>%desc_tab</code> once for categorical variables and once for continuous variables. The R job supplies both sets to one table. SAS comment banners become the names in <code>GROUPS</code>; <code>by=</code> and <code>byvalue=</code> become <code>BY</code>; and <code>perctile=15 50 85</code> becomes <code>continuous_stat = "both"</code> with percentiles 15 and 85. A <code>by=</code> group gets a p-value, <code>COMPARE = "pvalue"</code>, as <code>%desc_tab</code> printed one. Three things differ on purpose: a categorical variable with sparse cells is tested with Fisher’s exact test, where <code>%desc_tab</code> always used chi-square; two groups of a continuous variable are compared with the Wilcoxon rank-sum test, exact in small groups, where <code>%desc_tab</code> reported the Kruskal-Wallis chi-square approximation; and the low and high percentiles use SAS’s default definition rather than the <code>PCTLDEF=4</code> <code>%desc_tab</code> set, so they can differ in small groups. <code><a href="../reference/migrate_job.html">migrate_job()</a></code> writes these choices and lists the differences in its report. The report shows the table in the report style, with each variable’s column name; the Word file holds it in the manuscript style, under <code>MANUSCRIPT_CAPTION</code> and shaded in <code>MANUSCRIPT_FILL</code>. A migrated job that shows both statistics gets <code>MANUSCRIPT_LAYOUT &lt;- "describe"</code>, the manuscript layout that draws them. The <code>dc.tables.ods_&lt;topic&gt;.sas</code> correlation variant becomes <code>CORR</code> in the same job.</p>
 <pre class="sas"><code>%desc_tab(vartype=category,   varlist=female diabetes nyha_pr);
 %desc_tab(vartype=continuous, varlist=age bmi, perctile=15 50 85);</code></pre>
 <div class="cell">
@@ -257,23 +257,23 @@ Unresolved markers remain. The numbers below are not a result.
 <span>  compare <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
-<div id="cccscvzibh" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#cccscvzibh table {
+<div id="lbgmywcbbo" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#lbgmywcbbo table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#cccscvzibh thead, #cccscvzibh tbody, #cccscvzibh tfoot, #cccscvzibh tr, #cccscvzibh td, #cccscvzibh th {
+#lbgmywcbbo thead, #lbgmywcbbo tbody, #lbgmywcbbo tfoot, #lbgmywcbbo tr, #lbgmywcbbo td, #lbgmywcbbo th {
   border-style: none;
 }
 
-#cccscvzibh p {
+#lbgmywcbbo p {
   margin: 0;
   padding: 0;
 }
 
-#cccscvzibh .gt_table {
+#lbgmywcbbo .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -299,12 +299,12 @@ Unresolved markers remain. The numbers below are not a result.
   border-left-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_caption {
+#lbgmywcbbo .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#cccscvzibh .gt_title {
+#lbgmywcbbo .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -316,7 +316,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-width: 0;
 }
 
-#cccscvzibh .gt_subtitle {
+#lbgmywcbbo .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -328,7 +328,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-top-width: 0;
 }
 
-#cccscvzibh .gt_heading {
+#lbgmywcbbo .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -340,13 +340,13 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_bottom_border {
+#lbgmywcbbo .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_col_headings {
+#lbgmywcbbo .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -361,7 +361,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_col_heading {
+#lbgmywcbbo .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -381,7 +381,7 @@ Unresolved markers remain. The numbers below are not a result.
   overflow-x: hidden;
 }
 
-#cccscvzibh .gt_column_spanner_outer {
+#lbgmywcbbo .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -393,15 +393,15 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 4px;
 }
 
-#cccscvzibh .gt_column_spanner_outer:first-child {
+#lbgmywcbbo .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#cccscvzibh .gt_column_spanner_outer:last-child {
+#lbgmywcbbo .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#cccscvzibh .gt_column_spanner {
+#lbgmywcbbo .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -413,11 +413,11 @@ Unresolved markers remain. The numbers below are not a result.
   width: 100%;
 }
 
-#cccscvzibh .gt_spanner_row {
+#lbgmywcbbo .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#cccscvzibh .gt_group_heading {
+#lbgmywcbbo .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -443,7 +443,7 @@ Unresolved markers remain. The numbers below are not a result.
   text-align: left;
 }
 
-#cccscvzibh .gt_empty_group_heading {
+#lbgmywcbbo .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -458,15 +458,15 @@ Unresolved markers remain. The numbers below are not a result.
   vertical-align: middle;
 }
 
-#cccscvzibh .gt_from_md > :first-child {
+#lbgmywcbbo .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#cccscvzibh .gt_from_md > :last-child {
+#lbgmywcbbo .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#cccscvzibh .gt_row {
+#lbgmywcbbo .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -485,7 +485,7 @@ Unresolved markers remain. The numbers below are not a result.
   overflow-x: hidden;
 }
 
-#cccscvzibh .gt_stub {
+#lbgmywcbbo .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -498,7 +498,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#cccscvzibh .gt_stub_row_group {
+#lbgmywcbbo .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -512,15 +512,15 @@ Unresolved markers remain. The numbers below are not a result.
   vertical-align: top;
 }
 
-#cccscvzibh .gt_row_group_first td {
+#lbgmywcbbo .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#cccscvzibh .gt_row_group_first th {
+#lbgmywcbbo .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#cccscvzibh .gt_summary_row {
+#lbgmywcbbo .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -530,16 +530,16 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#cccscvzibh .gt_first_summary_row {
+#lbgmywcbbo .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_first_summary_row.thick {
+#lbgmywcbbo .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#cccscvzibh .gt_last_summary_row {
+#lbgmywcbbo .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -549,7 +549,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_grand_summary_row {
+#lbgmywcbbo .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -559,7 +559,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#cccscvzibh .gt_first_grand_summary_row {
+#lbgmywcbbo .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -569,7 +569,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-top-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_last_grand_summary_row_top {
+#lbgmywcbbo .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -579,11 +579,11 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_striped {
+#lbgmywcbbo .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#cccscvzibh .gt_table_body {
+#lbgmywcbbo .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -592,7 +592,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_footnotes {
+#lbgmywcbbo .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -606,7 +606,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_footnote {
+#lbgmywcbbo .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -615,7 +615,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#cccscvzibh .gt_sourcenotes {
+#lbgmywcbbo .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -629,7 +629,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#cccscvzibh .gt_sourcenote {
+#lbgmywcbbo .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -637,72 +637,72 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#cccscvzibh .gt_left {
+#lbgmywcbbo .gt_left {
   text-align: left;
 }
 
-#cccscvzibh .gt_center {
+#lbgmywcbbo .gt_center {
   text-align: center;
 }
 
-#cccscvzibh .gt_right {
+#lbgmywcbbo .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#cccscvzibh .gt_font_normal {
+#lbgmywcbbo .gt_font_normal {
   font-weight: normal;
 }
 
-#cccscvzibh .gt_font_bold {
+#lbgmywcbbo .gt_font_bold {
   font-weight: bold;
 }
 
-#cccscvzibh .gt_font_italic {
+#lbgmywcbbo .gt_font_italic {
   font-style: italic;
 }
 
-#cccscvzibh .gt_super {
+#lbgmywcbbo .gt_super {
   font-size: 65%;
 }
 
-#cccscvzibh .gt_footnote_marks {
+#lbgmywcbbo .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#cccscvzibh .gt_asterisk {
+#lbgmywcbbo .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#cccscvzibh .gt_indent_1 {
+#lbgmywcbbo .gt_indent_1 {
   text-indent: 5px;
 }
 
-#cccscvzibh .gt_indent_2 {
+#lbgmywcbbo .gt_indent_2 {
   text-indent: 10px;
 }
 
-#cccscvzibh .gt_indent_3 {
+#lbgmywcbbo .gt_indent_3 {
   text-indent: 15px;
 }
 
-#cccscvzibh .gt_indent_4 {
+#lbgmywcbbo .gt_indent_4 {
   text-indent: 20px;
 }
 
-#cccscvzibh .gt_indent_5 {
+#lbgmywcbbo .gt_indent_5 {
   text-indent: 25px;
 }
 
-#cccscvzibh .katex-display {
+#lbgmywcbbo .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#cccscvzibh div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#lbgmywcbbo div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
