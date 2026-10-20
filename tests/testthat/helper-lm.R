@@ -64,7 +64,7 @@ lm_mi_data <- function(n = 120L) {
 lm_study <- function(.local_envir = parent.frame(), data = lm_data()) {
   root <- withr::local_tempdir("lm-study-", .local_envir = .local_envir)
   suppressMessages(hvtiRutilities::study_setup(
-    root, study = "LM chunk test", study_tracker_id = 42L, adopt = TRUE
+    root, study = "LM chunk test", study_tracker_id = 42L, adopt = TRUE, cleanup = FALSE, renv = FALSE
   ))
   utils::write.csv(
     data,
@@ -84,7 +84,7 @@ lm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = c
   d <- if (is.null(data)) lm_data() else data
   d$time <- seq_len(nrow(d))
   suppressMessages(hvtiRutilities::study_setup(
-    root, study = "Synthetic lm study", study_tracker_id = 42L
+    root, study = "Synthetic lm study", study_tracker_id = 42L, renv = FALSE
   ))
   utils::write.csv(d, file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(

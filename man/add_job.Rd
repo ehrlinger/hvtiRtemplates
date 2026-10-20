@@ -123,7 +123,7 @@ under the new name, and \code{\link{open_job}} opens it.
 \examples{
 d <- file.path(tempdir(), "add-job-example")
 invisible(hvtiRutilities::study_setup(
-  d, study = "Example", study_tracker_id = 1L
+  d, study = "Example", study_tracker_id = 1L, renv = FALSE
 ))
 add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
 

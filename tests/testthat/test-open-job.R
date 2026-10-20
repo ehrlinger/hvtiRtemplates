@@ -1,6 +1,6 @@
 new_study <- function(pattern) {
   root <- tempfile(pattern)
-  suppressMessages(hvtiRutilities::study_setup(root, study = "Open job test", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Open job test", study_tracker_id = 1L, renv = FALSE))
   normalizePath(root, winslash = "/", mustWork = FALSE)
 }
 
@@ -81,7 +81,7 @@ test_that("open_job returns exactly the path add_job would write, qualified and 
     root <- tempfile("openjob-samepath-")
     on.exit(unlink(root, recursive = TRUE), add = TRUE)
     suppressMessages(hvtiRutilities::study_setup(
-      root, study = "Same path test", study_tracker_id = 1L
+      root, study = "Same path test", study_tracker_id = 1L, renv = FALSE
     ))
     root <- normalizePath(root)
 
@@ -99,7 +99,7 @@ test_that("open_job returns exactly the path add_job would write, qualified and 
 
 test_that("add_job() and open_job() accept a template stem", {
   root <- file.path(withr::local_tempdir(), "study")
-  suppressMessages(hvtiRutilities::study_setup(root, study = "Stem", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Stem", study_tracker_id = 1L, renv = FALSE))
   local_mocked_bindings(.open_in_editor = function(path) invisible(path))
   out <- add_job("dc-tables", subject = "dead", type = "eda", dir = root)
   expect_match(basename(out), "^dc[.]tables[.]dead[.]eda[.]qmd$")
@@ -111,7 +111,7 @@ test_that("add_job() and open_job() accept a template stem", {
 
 test_that("open_job opens a job scaffolded under the old spelling", {
   d <- file.path(withr::local_tempdir(), "study")
-  invisible(suppressMessages(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L)))
+  invisible(suppressMessages(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L, renv = FALSE)))
   old <- file.path(hvtiRutilities::study_dir("distributions", d), "dead_pa-hz-ac.qmd")
   dir.create(dirname(old), recursive = TRUE, showWarnings = FALSE)
   file.copy(template_path("ac"), old)

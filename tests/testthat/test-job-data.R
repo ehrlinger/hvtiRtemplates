@@ -158,7 +158,7 @@ test_that("rows must be unique on KEY; patients are counted on ID", {
 
 job_study <- function(data, .local_envir = parent.frame()) {
   root <- withr::local_tempdir(.local_envir = .local_envir)
-  suppressMessages(hvtiRutilities::study_setup(root, "Job data", 1L, adopt = TRUE))
+  suppressMessages(hvtiRutilities::study_setup(root, "Job data", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE))
   utils::write.csv(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(root, "built.csv"))
   hvtiRutilities::study_config(start = root)
@@ -904,7 +904,7 @@ test_that("an analysis set may be read with DATASET \"built\"", {
 join_study <- function(env = parent.frame(), echo_kind = "ancillary") {
   testthat::skip_if_not_installed("arrow")
   root <- file.path(withr::local_tempdir(.local_envir = env), "study")
-  suppressMessages(hvtiRutilities::study_setup(root, "Join", 42L))
+  suppressMessages(hvtiRutilities::study_setup(root, "Join", 42L, renv = FALSE))
   dd <- hvtiRutilities::study_dir("datasets", root)
   utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70), dt_surg = 100), file.path(dd, "built.csv"),
                    row.names = FALSE)
@@ -999,7 +999,7 @@ test_that("an unregistered key with no JOIN_KEY stops with both fixes", {
 test_that("a job KEY naming a joined column is kept though its values look like SSNs", {
   testthat::skip_if_not_installed("arrow")
   root <- file.path(withr::local_tempdir(), "study")
-  suppressMessages(hvtiRutilities::study_setup(root, "Join", 42L))
+  suppressMessages(hvtiRutilities::study_setup(root, "Join", 42L, renv = FALSE))
   dd <- hvtiRutilities::study_dir("datasets", root)
   utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70)), file.path(dd, "built.csv"), row.names = FALSE)
   # Twelve nine-digit record keys: enough distinct values for the SSN value rule.
@@ -1089,7 +1089,7 @@ test_that("a job that models one row per patient refuses a long join, before any
 test_that("WHERE may name a joined column that shares its name with a cohort column JOIN_VARS leaves out", {
   skip_if_not_installed("arrow")
   root <- file.path(withr::local_tempdir(), "study")
-  suppressMessages(hvtiRutilities::study_setup(root, "Shared name", 42L))
+  suppressMessages(hvtiRutilities::study_setup(root, "Shared name", 42L, renv = FALSE))
   dd <- hvtiRutilities::study_dir("datasets", root)
   # The cohort's ef is a baseline value; the echoes' ef is per record.
   utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70), ef = c(1, 1, 1)), file.path(dd, "built.csv"),
@@ -1251,7 +1251,7 @@ test_that("one handler turns an out-of-date message into a note, for a dataset a
 test_that("key = NULL, the default, reads the registered key, and the ID when none is registered", {
   expect_identical(attr(read_job_data(job_study(d0))$record, "selection")$key, "ccfid")
   root <- withr::local_tempdir()
-  suppressMessages(hvtiRutilities::study_setup(root, "Registered key", 1L, adopt = TRUE))
+  suppressMessages(hvtiRutilities::study_setup(root, "Registered key", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE))
   utils::write.csv(d0, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = c("ccfid", "age")))
   out <- read_job_data(hvtiRutilities::study_config(start = root))
@@ -1261,7 +1261,7 @@ test_that("key = NULL, the default, reads the registered key, and the ID when no
 
 test_that("a KEY of the ID is compared with the registered key as the ID resolved, after an MRN fallback", {
   root <- withr::local_tempdir()
-  suppressMessages(hvtiRutilities::study_setup(root, "Fallback", 1L, adopt = TRUE))
+  suppressMessages(hvtiRutilities::study_setup(root, "Fallback", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE))
   utils::write.csv(d0[-1], file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "mrn"))
   cfg <- hvtiRutilities::study_config(start = root)
@@ -1349,7 +1349,7 @@ test_that("a KEY naming a joined column is checked on the joined rows, so a visi
 stacked_study <- function(data, key, env = parent.frame()) {
   testthat::skip_if_not_installed("arrow")
   root <- file.path(withr::local_tempdir(.local_envir = env), "study")
-  suppressMessages(hvtiRutilities::study_setup(root, "Stacked", 42L))
+  suppressMessages(hvtiRutilities::study_setup(root, "Stacked", 42L, renv = FALSE))
   utils::write.csv(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = key))
   hvtiRutilities::study_config(root)
@@ -1407,7 +1407,7 @@ test_that("stacked integer64 IDs are paired by value, not by their bits", {
   # so every patient looked like the same one. Parquet is what hands R an integer64.
   i64_study <- function(data, key, env = parent.frame()) {
     root <- file.path(withr::local_tempdir(.local_envir = env), "study")
-    suppressMessages(hvtiRutilities::study_setup(root, "Integer64", 42L))
+    suppressMessages(hvtiRutilities::study_setup(root, "Integer64", 42L, renv = FALSE))
     arrow::write_parquet(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.parquet"))
     suppressMessages(hvtiRutilities::register_data(root, "built.parquet", key = key))
     hvtiRutilities::study_config(root)

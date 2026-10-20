@@ -4,7 +4,7 @@
 
 dc_tables_study <- function(.local_envir = parent.frame()) {
   root <- file.path(withr::local_tempdir(.local_envir = .local_envir), "dc-tables-study")
-  suppressMessages(hvtiRutilities::study_setup(root, study = "dc-tables render", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "dc-tables render", study_tracker_id = 1L, renv = FALSE))
   n <- 60L
   built <- data.frame(
     ccfid = seq_len(n),
