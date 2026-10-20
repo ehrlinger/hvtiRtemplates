@@ -9,7 +9,9 @@
 }
 
 .write_status <- function(file, ...) {
-  yaml::write_yaml(list(...), file)
+  tmp <- paste0(file, ".tmp")
+  yaml::write_yaml(list(...), tmp)
+  file.rename(tmp, file)
   invisible(file)
 }
 
@@ -36,7 +38,18 @@
 #' @export
 job_status <- function(path, quiet = FALSE) {
   files <- .run_files(path)
-  st <- if (file.exists(files$status)) yaml::read_yaml(files$status) else list(state = "none")
+  st <- if (file.exists(files$status)) {
+    tryCatch(yaml::read_yaml(files$status), error = function(e) NULL)
+  } else {
+    list(state = "none")
+  }
+  if (is.null(st) || !is.character(st$state) || length(st$state) != 1L) {
+    stop("job_status(): the status file ", files$status, " cannot be read or records no state.", call. = FALSE)
+  }
+  known <- c("none", "submitted", "running", "finished", "failed", "vanished")
+  if (!st$state %in% known) {
+    stop("job_status(): the status file ", files$status, " records an unexpected state \"", st$state, "\".", call. = FALSE)
+  }
   if (identical(st$state, "running") && !.pid_alive(st$pid)) st$state <- "vanished"
   if (identical(st$state, "submitted")) {
     at <- as.POSIXct(st$submitted, format = "%Y-%m-%dT%H:%M:%S%z")

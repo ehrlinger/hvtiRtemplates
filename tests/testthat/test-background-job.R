@@ -47,3 +47,23 @@ test_that("job_status() prints one line unless quiet", {
   expect_output(job_status(job), "none")
   expect_silent(job_status(job, quiet = TRUE))
 })
+
+test_that("an empty status file fails loud, naming the file", {
+  job <- status_job()
+  file.create(.run_files(job)$status)
+  expect_error(job_status(job, quiet = TRUE), "nb.boostmtree.x.boost.run.yml", fixed = TRUE)
+})
+
+test_that("an unknown state fails loud, naming it", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "nonsense")
+  expect_error(job_status(job, quiet = TRUE), "nonsense", fixed = TRUE)
+})
+
+test_that(".write_status() leaves no temporary file and reads back", {
+  job <- status_job()
+  f <- .run_files(job)$status
+  .write_status(f, state = "finished", elapsed_s = 3)
+  expect_false(file.exists(paste0(f, ".tmp")))
+  expect_identical(job_status(job, quiet = TRUE)$state, "finished")
+})
