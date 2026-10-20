@@ -31,6 +31,9 @@ The default is median (15th, 85th percentile).
 RTF files; `hv_tbl_summary()` writes one table with both. It describes; with
 `BY` set it separates the groups into columns. `COMPARE` chooses whether to
 test them; a p-value here is a prompt for an analysis, not a result.
+The report shows the table in the report style, with each variable's column
+name beside its label. The Word file holds the same table in the manuscript
+style, under its caption, as a journal receives it.
 
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. Every
@@ -49,8 +52,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.7") {
-  stop("This job needs hvtiRtables >= 1.0.7 for hv_man_table_display() and hv_tbl_compare(); ",
+if (utils::packageVersion("hvtiRtables") < "1.0.8") {
+  stop("This job needs hvtiRtables >= 1.0.8 for hv_table_style() and the manuscript Word table; ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
@@ -149,13 +152,19 @@ CONTINUOUS_STAT <- "median"   # EDIT: choose the continuous summary
 PERCENTILES <- c(15, 85)       # EDIT: choose the reported percentiles
 ABBREVIATIONS <- character(0) # EDIT: define abbreviations used in the table
 WORD_FILE <- "dc-tables.docx"  # EDIT: choose the Word filename within this set
-MANUSCRIPT_LAYOUT <- "compare" # EDIT: choose the Word table's layout
+MANUSCRIPT_LAYOUT <- "compare"  # EDIT: choose the Word table's layout
 # MIGRATE-END: dc-tables-config
 # The Word table is drawn in the manuscript style. MANUSCRIPT_LAYOUT, above,
 # says what the table does: "compare" puts one n column beside the groups it
 # compares; "describe" puts a count beside each group, for cohorts or repeated
 # measures shown side by side. "describe" is also the layout that draws
 # CONTINUOUS_STAT "both": "compare" has one statistic column per group.
+# EDIT: the Word table's caption, written in bold above it. A manuscript
+# table must carry one, so the title is never typed into Word by hand.
+MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"
+# EDIT: the shading of the Word table's section rows, one color "#RRGGBB".
+# Journals differ here; "#CAEDFB" is the house default.
+MANUSCRIPT_FILL <- "#CAEDFB"
 # EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you
 # want summarized as continuous: list(continuous = c("nyha_pr")). list() for none.
 OVERRIDES <- list()
@@ -176,8 +185,8 @@ STDDIFF <- FALSE
 # EDIT: with STDDIFF, the value of BY that is the treated group, such as
 # "tavr". NULL when BY is coded 0/1, where 1 is treated.
 GROUP_1 <- NULL
-# EDIT: FALSE drops the Variable column, the column name beside each label.
-# Keep it for the analysis report; drop it for a manuscript table.
+# EDIT: FALSE drops the Variable column, the column name beside each label,
+# from the report. The Word table never carries it, whatever this says.
 SHOW_VARIABLE <- TRUE
 # EDIT: NULL skips the correlation variant (dc.tables.ods_<topic>.sas). To run
 # it, name the numeric columns, the anchor to correlate them against (NULL for
@@ -364,7 +373,7 @@ stddiff_values <- function(d, by, buckets, mean_sd = character(0), ordinal = cha
 
 ```{r}
 #| label: tbl-table
-#| tbl-cap: "Summary statistics for the study cohort, as written to the Word file"
+#| tbl-cap: "Summary statistics for the study cohort"
 explicit <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
 if (all(vapply(explicit, is.null, logical(1)))) {
   b <- classify_buckets(d, unlist(GROUPS, use.names = FALSE), OVERRIDES)
@@ -404,20 +413,38 @@ if (STDDIFF) {
   tbl <- hvtiRtables::hv_tbl_compare(tbl, stddiff_values(d, BY, buckets, MEAN_SD, ORDINAL, GROUP_1),
                                      label = "Std. Diff. (%)")
 }
-# The table as it is saved to Word, so the report and the .docx are one table:
-# hv_man_table_display() adds the header marks, notes and abbreviation key the
-# saver writes, from the saver's own code. ft itself is what is saved.
+# The report's table, in the report style. hv_man_table_display() adds the
+# header marks, notes and abbreviation key the Word table carries, from the
+# saver's own code.
 ft <- hvtiRtables::hv_man_table(tbl)
 hvtiRtables::hv_man_table_display(ft, abbreviations = ABBREVIATIONS)
+```
+
+```{r}
+#| label: word-file
+# unnumbered: writes the Word file; the table below shows what it holds
+# The same summary, drawn for the manuscript. MANUSCRIPT_CAPTION is written into
+# the .docx above the table; this report numbers its own tables.
+word_ft <- hvtiRtables::hv_man_table(
+  tbl, style = hvtiRtables::hv_table_style("manuscript", fill = MANUSCRIPT_FILL),
+  layout = MANUSCRIPT_LAYOUT
+)
 if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
       !grepl("^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$", WORD_FILE)) {
   stop("WORD_FILE must be a plain .docx filename within this set.", call. = FALSE)
 }
 word_path <- file.path(study_dir("documents", .root), paste0(SUBJECT, "-", TYPE), WORD_FILE)
 dir.create(dirname(word_path), recursive = TRUE, showWarnings = FALSE)
-hvtiRtables::hv_man_table_save(ft, word_path, abbreviations = ABBREVIATIONS)
-check <- hvtiRtables::hv_check_docx(word_path)
+hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS, caption = MANUSCRIPT_CAPTION)
+# The manuscript style merges its header and section rows, and nothing else.
+check <- hvtiRtables::hv_check_docx(word_path, style = "manuscript")
 if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)
+```
+
+```{r}
+#| label: tbl-word
+#| tbl-cap: "The table as saved to Word, in the manuscript style"
+hvtiRtables::hv_man_table_display(word_ft, abbreviations = ABBREVIATIONS)
 ```
 
 ## Correlations

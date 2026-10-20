@@ -1,6 +1,6 @@
 # dc-tables end to end with the %summarytable shape: %stddiff's difference
-# beside the p-value, mean +/- SD for named variables, and the report showing
-# the table that is saved to Word.
+# beside the p-value, mean +/- SD for named variables, the report's table in the
+# report style, and the Word table in the manuscript style shown beneath it.
 
 dc_tables_study <- function(.local_envir = parent.frame()) {
   root <- file.path(withr::local_tempdir(.local_envir = .local_envir), "dc-tables-study")
@@ -33,7 +33,7 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not_installed("hvtiRpropensity")
-  skip_if(utils::packageVersion("hvtiRtables") < "1.0.7", "needs hvtiRtables >= 1.0.7")
+  skip_if(utils::packageVersion("hvtiRtables") < "1.0.8", "needs hvtiRtables >= 1.0.8")
   withr::local_envvar(HVTI_TEMPLATE_STRICT = NA)
   root <- dc_tables_study()
   job <- add_job("dc", "cohort", "tables", qualifier = "tables", dir = root)
@@ -73,8 +73,14 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   # The abbreviation key the .docx carries is in the report too.
   expect_match(html, "Key:", fixed = TRUE)
   expect_match(html, "New York Heart Association", fixed = TRUE)
+  # Both tables are in the report: the report style's count note, and the Word
+  # table's, which the manuscript style words differently.
+  expect_match(html, "Number of non-missing values.", fixed = TRUE)
+  expect_match(html, "Patients with non-missing data.", fixed = TRUE)
   docx <- list.files(hvtiRutilities::study_dir("documents", root), pattern = "[.]docx$",
                      recursive = TRUE, full.names = TRUE)
   expect_length(docx, 1L)
-  expect_identical(nrow(hvtiRtables::hv_check_docx(docx)), 0L)
+  expect_identical(nrow(hvtiRtables::hv_check_docx(docx, style = "manuscript")), 0L)
+  doc <- officer::docx_summary(officer::read_docx(docx))
+  expect_identical(doc$text[doc$content_type == "paragraph"][[1L]], "Table 1. Patient characteristics")
 })

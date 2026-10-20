@@ -243,6 +243,12 @@
       "Unsupported source logic; verify cohort and measurements in the registered data build."
     ))
     translated$reason <- paste("Candidate only; source logic prevents deterministic mapping.", translated$reason)
+    # Nothing is mapped, so the layout falls back to compare; its reason says so
+    # rather than naming a statistic that is no longer chosen.
+    at <- startsWith(translated$text, "MANUSCRIPT_LAYOUT: ")
+    translated$text[at] <- "MANUSCRIPT_LAYOUT: compare"
+    translated$reason[at] <- paste("Candidate only; source logic prevents deterministic mapping.",
+                                   "With nothing mapped, the layout is the compare layout, one n column beside the groups.")
     unresolved <- rbind(unresolved, translated)
     translated <- translated[FALSE, ]
     selection$dataset <- NA_character_
