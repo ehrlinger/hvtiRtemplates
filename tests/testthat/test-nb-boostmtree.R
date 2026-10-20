@@ -438,3 +438,12 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   expect_identical(payload$cohort$n_patients, length(unique(data$MRN)))
   expect_true(file.exists(sub("[.]qmd$", ".provenance.json", job)))
 })
+
+test_that("the fit chunk refuses to start an uncached fit interactively, and names submit_job()", {
+  nb_skip_unless_stack()
+  withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  env <- nb_env(nb_study())
+  env$guard_long_fit <- hvtiRtemplates::guard_long_fit
+  expect_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices())),
+               "submit_job(", fixed = TRUE)
+})
