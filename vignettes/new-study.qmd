@@ -98,7 +98,9 @@ temporary directory:
 
 ```{r}
 #| label: create-study
-study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L)
+# A vignette builds a throwaway study; in a real study, run hvtiR::setup().
+study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L,
+            renv = FALSE)
 sort(list.files(new_root))
 ```
 
