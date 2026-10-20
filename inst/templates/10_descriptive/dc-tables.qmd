@@ -152,7 +152,7 @@ CONTINUOUS_STAT <- "median"   # EDIT: choose the continuous summary
 PERCENTILES <- c(15, 85)       # EDIT: choose the reported percentiles
 ABBREVIATIONS <- character(0) # EDIT: define abbreviations used in the table
 WORD_FILE <- "dc-tables.docx"  # EDIT: choose the Word filename within this set
-MANUSCRIPT_LAYOUT <- "compare"  # EDIT: choose the Word table's layout
+MANUSCRIPT_LAYOUT <- "compare" # EDIT: choose the Word table's layout
 # MIGRATE-END: dc-tables-config
 # The Word table is drawn in the manuscript style. MANUSCRIPT_LAYOUT, above,
 # says what the table does: "compare" puts one n column beside the groups it
