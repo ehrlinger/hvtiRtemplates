@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:16
+2026-10-20 13:53
 
 An `hs-concordance` job predicts **every patient through every treatment
 group’s model**. Each group’s risk-factor model was fitted by its own
@@ -62,7 +62,7 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -165,7 +165,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -633,8 +633,8 @@ saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:16:17 EDT |
-|  | Ended | 2026-10-15 21:16:17 EDT |
+| Run | Started | 2026-10-20 13:53:01 EDT |
+|  | Ended | 2026-10-20 13:53:01 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -644,15 +644,16 @@ saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 |  | Subject | dead |
 |  | Type | approach |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-surgical/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-10-15 21:15:56 -0400, data built_20261015.parquet |
+|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-10-20 13:52:37 -0400, data built_20261020.parquet |
 |  | Handoff | `dead-transcatheter/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-10-15 21:16:10 -0400, data built_20261015.parquet |
+|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-10-20 13:52:53 -0400, data built_20261020.parquet |
 | Reproducibility | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

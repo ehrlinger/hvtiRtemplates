@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:15
+2026-10-20 13:51
 
 Replaces `descriptive/dc.general`.
 
@@ -42,7 +42,7 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -135,7 +135,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -718,24 +718,25 @@ unless `ID_COL` is set under Study choices.
 
 ## About this run
 
-| Group           | Item           | Value                     |
-|:----------------|:---------------|:--------------------------|
-| Run             | Started        | 2026-10-15 21:15:01 EDT   |
-|                 | Ended          | 2026-10-15 21:15:02 EDT   |
-|                 | Duration       | 0 s                       |
-|                 | Status         | final                     |
-|                 | Rendered by    | gallery                   |
-|                 | Host           | gallery                   |
-| Job             | File           | dc.general.cohort.eda.qmd |
-|                 | Template       | dc.general                |
-|                 | Subject        | cohort                    |
-|                 | Type           | eda                       |
-|                 | hvtiRtemplates | 1.4.1                     |
-| Dataset `built` | Version file   | built_20261015.parquet    |
-|                 | Registered     | 2026-10-15                |
-|                 | Source file    | built.rds                 |
-|                 | Rows kept      | 800 rows on 800 patients  |
-|                 | WHERE          | none                      |
-|                 | sha256         | b55bc29fc6a4              |
-|                 | Manifest       | current                   |
-| Reproducibility | renv           | not active                |
+| Group           | Item             | Value                     |
+|:----------------|:-----------------|:--------------------------|
+| Run             | Started          | 2026-10-20 13:51:35 EDT   |
+|                 | Ended            | 2026-10-20 13:51:35 EDT   |
+|                 | Duration         | 0 s                       |
+|                 | Status           | final                     |
+|                 | Rendered by      | gallery                   |
+|                 | Host             | gallery                   |
+| Job             | File             | dc.general.cohort.eda.qmd |
+|                 | Template         | dc.general                |
+|                 | Subject          | cohort                    |
+|                 | Type             | eda                       |
+|                 | hvtiRtemplates   | 1.4.1                     |
+| Dataset `built` | Version file     | built_20261020.parquet    |
+|                 | Registered       | 2026-10-20                |
+|                 | Source file      | built.rds                 |
+|                 | Rows kept        | 800 rows on 800 patients  |
+|                 | WHERE            | none                      |
+|                 | sha256           | b55bc29fc6a4              |
+|                 | Manifest         | current                   |
+| Reproducibility | renv             | not active                |
+|                 | renv.lock sha256 | d09f96b6cd21              |

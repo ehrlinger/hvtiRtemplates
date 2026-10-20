@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:24
+2026-10-20 14:00
 
 Gallery job on the synthetic cohort: major postoperative complication
 (complication, 0/1).
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -246,7 +246,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -439,25 +439,26 @@ saveRDS(forest, set_path("estimates", "rfc.rds"))
 
 ## About this run
 
-| Group           | Item           | Value                       |
-|:----------------|:---------------|:----------------------------|
-| Run             | Started        | 2026-10-15 21:23:56 EDT     |
-|                 | Ended          | 2026-10-15 21:24:00 EDT     |
-|                 | Duration       | 4 s                         |
-|                 | Status         | final                       |
-|                 | Rendered by    | gallery                     |
-|                 | Host           | gallery                     |
-| Job             | File           | rfc.fit.complication.rf.qmd |
-|                 | Template       | rfc.fit                     |
-|                 | Subject        | complication                |
-|                 | Type           | rf                          |
-|                 | hvtiRtemplates | 1.4.1                       |
-| Dataset `built` | Version file   | built_20261015.parquet      |
-|                 | Registered     | 2026-10-15                  |
-|                 | Source file    | built.rds                   |
-|                 | Rows kept      | 800 rows on 800 patients    |
-|                 | WHERE          | none                        |
-|                 | sha256         | b55bc29fc6a4                |
-|                 | Manifest       | current                     |
-| Reproducibility | Seed           | 2026                        |
-|                 | renv           | not active                  |
+| Group           | Item             | Value                       |
+|:----------------|:-----------------|:----------------------------|
+| Run             | Started          | 2026-10-20 13:59:59 EDT     |
+|                 | Ended            | 2026-10-20 14:00:04 EDT     |
+|                 | Duration         | 5 s                         |
+|                 | Status           | final                       |
+|                 | Rendered by      | gallery                     |
+|                 | Host             | gallery                     |
+| Job             | File             | rfc.fit.complication.rf.qmd |
+|                 | Template         | rfc.fit                     |
+|                 | Subject          | complication                |
+|                 | Type             | rf                          |
+|                 | hvtiRtemplates   | 1.4.1                       |
+| Dataset `built` | Version file     | built_20261020.parquet      |
+|                 | Registered       | 2026-10-20                  |
+|                 | Source file      | built.rds                   |
+|                 | Rows kept        | 800 rows on 800 patients    |
+|                 | WHERE            | none                        |
+|                 | sha256           | b55bc29fc6a4                |
+|                 | Manifest         | current                     |
+| Reproducibility | Seed             | 2026                        |
+|                 | renv             | not active                  |
+|                 | renv.lock sha256 | d09f96b6cd21                |

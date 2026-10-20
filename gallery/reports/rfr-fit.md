@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:24
+2026-10-20 14:00
 
 Gallery job on the synthetic cohort: postoperative length of stay,
 logged (log_los).
@@ -85,7 +85,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -242,7 +242,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -364,7 +364,7 @@ save_figure(.fig, "rfr-fit-diagnostics-predicted")
 .fig
 ```
 
-![](assets/6bf63df61a0110d578bd73d02acee30d.png)
+![](assets/4b77fa04cff76543b0caa5f648135c35.png)
 
 Figure 2: Out-of-bag predicted values. Black circles, jittered sideways,
 mark the individual predictions, and the unfilled notched box plot marks
@@ -392,25 +392,26 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 
 ## About this run
 
-| Group           | Item           | Value                    |
-|:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 21:24:28 EDT  |
-|                 | Ended          | 2026-10-15 21:24:32 EDT  |
-|                 | Duration       | 4 s                      |
-|                 | Status         | final                    |
-|                 | Rendered by    | gallery                  |
-|                 | Host           | gallery                  |
-| Job             | File           | rfr.fit.los.rf.qmd       |
-|                 | Template       | rfr.fit                  |
-|                 | Subject        | los                      |
-|                 | Type           | rf                       |
-|                 | hvtiRtemplates | 1.4.1                    |
-| Dataset `built` | Version file   | built_20261015.parquet   |
-|                 | Registered     | 2026-10-15               |
-|                 | Source file    | built.rds                |
-|                 | Rows kept      | 800 rows on 800 patients |
-|                 | WHERE          | none                     |
-|                 | sha256         | b55bc29fc6a4             |
-|                 | Manifest       | current                  |
-| Reproducibility | Seed           | 2026                     |
-|                 | renv           | not active               |
+| Group           | Item             | Value                    |
+|:----------------|:-----------------|:-------------------------|
+| Run             | Started          | 2026-10-20 14:00:36 EDT  |
+|                 | Ended            | 2026-10-20 14:00:40 EDT  |
+|                 | Duration         | 4 s                      |
+|                 | Status           | final                    |
+|                 | Rendered by      | gallery                  |
+|                 | Host             | gallery                  |
+| Job             | File             | rfr.fit.los.rf.qmd       |
+|                 | Template         | rfr.fit                  |
+|                 | Subject          | los                      |
+|                 | Type             | rf                       |
+|                 | hvtiRtemplates   | 1.4.1                    |
+| Dataset `built` | Version file     | built_20261020.parquet   |
+|                 | Registered       | 2026-10-20               |
+|                 | Source file      | built.rds                |
+|                 | Rows kept        | 800 rows on 800 patients |
+|                 | WHERE            | none                     |
+|                 | sha256           | b55bc29fc6a4             |
+|                 | Manifest         | current                  |
+| Reproducibility | Seed             | 2026                     |
+|                 | renv             | not active               |
+|                 | renv.lock sha256 | d09f96b6cd21             |

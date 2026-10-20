@@ -2198,6 +2198,83 @@ vertical-align: -.125em;
 .bi-globe-europe-africa-fill::before { content: "\f91e"; }
 </style>
 <link href="assets/6ebeda277a8c5d79b98b68fadbcf327b.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<style type="text/css">.tabwid {
+font-size: initial;
+padding-bottom: 1em;
+}
+.tabwid table{
+border-spacing:0px !important;
+border-collapse:collapse;
+line-height:1;
+margin-left:auto;
+margin-right:auto;
+border-width: 0;
+border-color: transparent;
+caption-side: top;
+}
+.tabwid-caption-bottom table{
+caption-side: bottom;
+}
+.tabwid_left table{
+margin-left:0;
+}
+.tabwid_right table{
+margin-right:0;
+}
+.tabwid td, .tabwid th {
+padding: 0;
+}
+.tabwid a {
+text-decoration: none;
+}
+.tabwid thead {
+background-color: transparent;
+}
+.tabwid tfoot {
+background-color: transparent;
+}
+.tabwid table tr {
+background-color: transparent;
+}
+.katex-display {
+margin: 0 0 !important;
+}
+</style>
+<script>document.addEventListener("DOMContentLoaded", function(event) {
+  var els = document.querySelectorAll(".tabwid");
+  var tabwid_link = document.querySelector('link[href*="tabwid.css"]')
+  if (tabwid_link === null) {
+    const tabwid_styles = document.evaluate("//style[contains(., 'tabwid')]", document, null, XPathResult.ANY_TYPE, null );
+    tabwid_link = tabwid_styles.iterateNext();
+  }
+
+  Array.prototype.forEach.call(els, function(template) {
+      if (template.querySelector("table.no-shadow-dom")) {
+        return;
+      }
+      const dest = document.createElement("div");
+      template.parentNode.insertBefore(dest, template.nextSibling)
+      dest.setAttribute("class", "flextable-shadow-host");
+      const fantome = dest.attachShadow({mode: 'open'});
+      fantome.appendChild(template);
+      if (tabwid_link !== null) {
+        fantome.appendChild(tabwid_link.cloneNode(true));
+      }
+  });
+
+  const shadowHosts = document.querySelectorAll('.flextable-shadow-host');
+  shadowHosts.forEach(host => {
+    if (host.shadowRoot) {
+      const spanElements = host.shadowRoot.querySelector('div > table > caption > span[id]');
+      if (spanElements) {
+        const id = spanElements.getAttribute("id");
+        host.setAttribute("id", id);
+      }
+    }
+  });
+
+});
+</script>
 
 
 </head>
@@ -2235,7 +2312,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-15 21:14</p>
+      <p class="date">2026-10-20 13:50</p>
     </div>
   </div>
   
@@ -2267,35 +2344,34 @@ vertical-align: -.125em;
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(hvtiPlotR)</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRtables&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;1.0.5&quot;</span>) {</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRtables &gt;= 1.0.5 for hv_correlation_table() and the %summarytable layout of &quot;</span>,</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;hv_man_table_save(); &quot;</span>,</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRtables&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.7.14&quot;</span>) {</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.7.14 for hv_correlation_matrix(); &quot;</span>,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># The study root is the nearest directory above this file holding _study.yml,</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># so the job renders the same from the Render button, quarto render, or</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># render_job(), at any depth, with no path in this document to edit.</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># To render a job you have not finished, leave a chunk out with the chunk</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># in a chunk to leave out everything below it. A draft lists each one in a</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># callout; a final render refuses them, as it refuses an unresolved marker.</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># ?stop_here has more.</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>.job <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_setup</span>(SUBJECT, TYPE, <span class="at">envir =</span> <span class="fu">environment</span>())</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>                                SAVE_FIGURES, FIGURES, linked)</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRtables&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;1.0.7&quot;</span>) {</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRtables &gt;= 1.0.7 for hv_man_table_display() and hv_tbl_compare(); &quot;</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRtables&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.7.14&quot;</span>) {</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.7.14 for hv_correlation_matrix(); &quot;</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># The study root is the nearest directory above this file holding _study.yml,</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># so the job renders the same from the Render button, quarto render, or</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># render_job(), at any depth, with no path in this document to edit.</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># To render a job you have not finished, leave a chunk out with the chunk</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># in a chunk to leave out everything below it. A draft lists each one in a</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># callout; a final render refuses them, as it refuses an unresolved marker.</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># ?stop_here has more.</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>.job <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_setup</span>(SUBJECT, TYPE, <span class="at">envir =</span> <span class="fu">environment</span>())</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>                                SAVE_FIGURES, FIGURES, linked)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="callout callout-style-simple callout-note no-icon">
 <div class="callout-body d-flex">
@@ -2303,7 +2379,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261015.parquet</code>, registered 2026-10-15 · rendered by gallery on gallery · hvtiRtemplates 1.4.1</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261020.parquet</code>, registered 2026-10-20 · rendered by gallery on gallery · hvtiRtemplates 1.4.1</p>
 </div>
 </div>
 </div>
@@ -2383,18 +2459,38 @@ vertical-align: -.125em;
 <span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: force a bucket where the data guess wrong, e.g. an ordinal score you</span></span>
 <span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co"># want summarized as continuous: list(continuous = c(&quot;nyha_pr&quot;)). list() for none.</span></span>
 <span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>OVERRIDES <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: NULL skips the correlation variant (dc.tables.ods_&lt;topic&gt;.sas). To run</span></span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># it, name the numeric columns, the anchor to correlate them against (NULL for</span></span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># every pair), and an optional stratum:</span></span>
-<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co">#   list(vars = c(&quot;glu_pr&quot;, &quot;creat_pr&quot;), with = &quot;a1c_pr&quot;, by = &quot;a1c_grp&quot;)</span></span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>CORR <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to descriptive/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: continuous variables to show as mean ± SD, where the rest show</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># CONTINUOUS_STAT: a manuscript table often wants age as a mean and length of</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># stay as a median. Display only: every continuous variable is still tested</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co"># with Wilcoxon (Kruskal-Wallis for three or more groups). character(0) for none.</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>MEAN_SD <span class="ot">&lt;-</span> <span class="fu">character</span>(<span class="dv">0</span>)</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: categorical variables whose levels are ordered, such as NYHA class.</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co"># They are shown level by level like any other; only STDDIFF treats them</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># differently, ranking them as %stddiff did with ORD1=. character(0) for none.</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>ORDINAL <span class="ot">&lt;-</span> <span class="fu">character</span>(<span class="dv">0</span>)</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: TRUE adds the standardized difference (%) %summarytable printed, from</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># %stddiff, beside COMPARE&#39;s column. It needs BY with exactly two values, and</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># COMPARE &quot;pvalue&quot; or &quot;none&quot;: COMPARE&#39;s &quot;smd&quot; is gtsummary&#39;s generic</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># difference, not %stddiff&#39;s, and the two disagree for skewed and ordinal rows.</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>STDDIFF <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: with STDDIFF, the value of BY that is the treated group, such as</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;tavr&quot;. NULL when BY is coded 0/1, where 1 is treated.</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>GROUP_1 <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: FALSE drops the Variable column, the column name beside each label.</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep it for the analysis report; drop it for a manuscript table.</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>SHOW_VARIABLE <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: NULL skips the correlation variant (dc.tables.ods_&lt;topic&gt;.sas). To run</span></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># it, name the numeric columns, the anchor to correlate them against (NULL for</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="co"># every pair), and an optional stratum:</span></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="co">#   list(vars = c(&quot;glu_pr&quot;, &quot;creat_pr&quot;), with = &quot;a1c_pr&quot;, by = &quot;a1c_grp&quot;)</span></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>CORR <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to descriptive/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2453,7 +2549,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261015.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261020.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2544,7 +2640,63 @@ Table 1: The data this job read
 <span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>    buckets[[bucket]] <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">c</span>(buckets[[bucket]], move))</span>
 <span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>  buckets</span>
-<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="co"># The standardized difference %summarytable printed, from %stddiff by way of</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="co"># hvtiRpropensity::ps_stddiff(), formatted as a percentage for hv_tbl_compare().</span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="co"># The macro sent its mean +/- SD variables to %stddiff as Gaussian, and its</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="co"># other continuous and its ordinal variables as ranked; the buckets here follow</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="co"># it, so a skewed variable is not scored as though it were normal.</span></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>stddiff_values <span class="ot">&lt;-</span> <span class="cf">function</span>(d, by, buckets, <span class="at">mean_sd =</span> <span class="fu">character</span>(<span class="dv">0</span>), <span class="at">ordinal =</span> <span class="fu">character</span>(<span class="dv">0</span>), <span class="at">group_1 =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(by)) <span class="fu">stop</span>(<span class="st">&quot;STDDIFF compares two groups, so BY must name the group column.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>  seen <span class="ot">&lt;-</span> <span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">na.omit</span>(d[[by]]))</span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(seen) <span class="sc">!=</span> <span class="dv">2</span>L) {</span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;STDDIFF needs exactly two values of &quot;</span>, by, <span class="st">&quot;; the data hold &quot;</span>, <span class="fu">length</span>(seen), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(group_1) <span class="sc">&amp;&amp;</span> <span class="sc">!</span>(<span class="fu">is.logical</span>(seen) <span class="sc">||</span> <span class="fu">all</span>(<span class="fu">as.character</span>(seen) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;0&quot;</span>, <span class="st">&quot;1&quot;</span>)))) {</span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;STDDIFF needs GROUP_1 to name the treated value of &quot;</span>, by, <span class="st">&quot;, one of: &quot;</span>,</span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste</span>(<span class="fu">sort</span>(<span class="fu">as.character</span>(seen)), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A 0/1 group stored as text or a factor is the same group: 1 is treated,</span></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>  <span class="co"># as it is for a numeric one, which ps_stddiff() needs to be told.</span></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(group_1) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.numeric</span>(seen) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.logical</span>(seen)) group_1 <span class="ot">&lt;-</span> <span class="st">&quot;1&quot;</span></span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(group_1) <span class="sc">&amp;&amp;</span> <span class="sc">!</span>(<span class="fu">as.character</span>(group_1) <span class="sc">%in%</span> <span class="fu">as.character</span>(seen))) {</span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;GROUP_1 must be one of the values of &quot;</span>, by, <span class="st">&quot;: &quot;</span>,</span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste</span>(<span class="fu">sort</span>(<span class="fu">as.character</span>(seen)), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(<span class="fu">setdiff</span>(mean_sd, buckets<span class="sc">$</span>continuous))) {</span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;MEAN_SD names variable(s) that are not continuous: &quot;</span>,</span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste</span>(<span class="fu">setdiff</span>(mean_sd, buckets<span class="sc">$</span>continuous), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(<span class="fu">setdiff</span>(ordinal, buckets<span class="sc">$</span>categorical))) {</span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;ORDINAL names variable(s) that are not categorical: &quot;</span>,</span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste</span>(<span class="fu">setdiff</span>(ordinal, buckets<span class="sc">$</span>categorical), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ps_stddiff() takes a binary column as 0/1 or logical; the table also</span></span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a>  <span class="co"># accepts Yes/No, so convert those, and only those, to logical first.</span></span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (v <span class="cf">in</span> buckets<span class="sc">$</span>binary) {</span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.character</span>(d[[v]]) <span class="sc">||</span> <span class="fu">is.factor</span>(d[[v]])) d[[v]] <span class="ot">&lt;-</span> <span class="fu">toupper</span>(<span class="fu">as.character</span>(d[[v]])) <span class="sc">==</span> <span class="st">&quot;YES&quot;</span></span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a>  <span class="co"># %stddiff ranks an ordinal variable, so it needs the order: a factor&#39;s</span></span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a>  <span class="co"># levels give it, and text does not.</span></span>
+<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (v <span class="cf">in</span> <span class="fu">intersect</span>(ordinal, <span class="fu">names</span>(d))) {</span>
+<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.factor</span>(d[[v]])) {</span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a>      d[[v]] <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(d[[v]])</span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.numeric</span>(d[[v]])) {</span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a>      <span class="fu">stop</span>(<span class="st">&quot;ORDINAL variable &quot;</span>, v, <span class="st">&quot; must be numeric or a factor whose levels are in order.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a>  none <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="cf">if</span> (<span class="fu">length</span>(x)) x <span class="cf">else</span> <span class="cn">NULL</span></span>
+<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a>  r <span class="ot">&lt;-</span> hvtiRpropensity<span class="sc">::</span><span class="fu">ps_stddiff</span>(</span>
+<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a>    d, <span class="at">treatment_col =</span> by, <span class="at">treated_level =</span> group_1,</span>
+<span id="cb5-101"><a href="#cb5-101" aria-hidden="true" tabindex="-1"></a>    <span class="at">gaussian =</span> <span class="fu">none</span>(<span class="fu">intersect</span>(buckets<span class="sc">$</span>continuous, mean_sd)),</span>
+<span id="cb5-102"><a href="#cb5-102" aria-hidden="true" tabindex="-1"></a>    <span class="at">nong_ord =</span> <span class="fu">none</span>(<span class="fu">c</span>(<span class="fu">setdiff</span>(buckets<span class="sc">$</span>continuous, mean_sd), <span class="fu">intersect</span>(buckets<span class="sc">$</span>categorical, ordinal))),</span>
+<span id="cb5-103"><a href="#cb5-103" aria-hidden="true" tabindex="-1"></a>    <span class="at">binary =</span> <span class="fu">none</span>(buckets<span class="sc">$</span>binary),</span>
+<span id="cb5-104"><a href="#cb5-104" aria-hidden="true" tabindex="-1"></a>    <span class="at">categorical =</span> <span class="fu">none</span>(<span class="fu">setdiff</span>(buckets<span class="sc">$</span>categorical, ordinal))</span>
+<span id="cb5-105"><a href="#cb5-105" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb5-106"><a href="#cb5-106" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> r<span class="sc">$</span>tables<span class="sc">$</span>stddiff</span>
+<span id="cb5-107"><a href="#cb5-107" aria-hidden="true" tabindex="-1"></a>  stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="fu">sprintf</span>(<span class="st">&quot;%.1f&quot;</span>, <span class="dv">100</span> <span class="sc">*</span> s<span class="sc">$</span>stddiff), s<span class="sc">$</span>variable)</span>
+<span id="cb5-108"><a href="#cb5-108" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2573,19 +2725,39 @@ Table 1: The data this job read
 <span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>tbl <span class="ot">&lt;-</span> hvtiRtables<span class="sc">::</span><span class="fu">hv_tbl_summary</span>(</span>
 <span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  d, <span class="at">by =</span> BY, <span class="at">groups =</span> GROUPS, <span class="at">continuous =</span> CONTINUOUS,</span>
 <span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">binary =</span> BINARY, <span class="at">categorical =</span> CATEGORICAL, <span class="at">compare =</span> COMPARE,</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">percentiles =</span> PERCENTILES, <span class="at">continuous_stat =</span> CONTINUOUS_STAT</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>tbl</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>ft <span class="ot">&lt;-</span> hvtiRtables<span class="sc">::</span><span class="fu">hv_man_table</span>(tbl)</span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(WORD_FILE) <span class="sc">!=</span> <span class="dv">1</span>L <span class="sc">||</span> <span class="fu">is.na</span>(WORD_FILE) <span class="sc">||</span></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">&quot;^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$&quot;</span>, WORD_FILE)) {</span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;WORD_FILE must be a plain .docx filename within this set.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>word_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">study_dir</span>(<span class="st">&quot;documents&quot;</span>, .root), <span class="fu">paste0</span>(SUBJECT, <span class="st">&quot;-&quot;</span>, TYPE), WORD_FILE)</span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="fu">dirname</span>(word_path), <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>hvtiRtables<span class="sc">::</span><span class="fu">hv_man_table_save</span>(ft, word_path, <span class="at">abbreviations =</span> ABBREVIATIONS)</span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>check <span class="ot">&lt;-</span> hvtiRtables<span class="sc">::</span><span class="fu">hv_check_docx</span>(word_path)</span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(check)) <span class="fu">stop</span>(<span class="st">&quot;Word output failed the CORR structural check&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">percentiles =</span> PERCENTILES, <span class="at">continuous_stat =</span> CONTINUOUS_STAT,</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">mean_sd =</span> MEAN_SD, <span class="at">show_variable =</span> SHOW_VARIABLE</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.logical</span>(STDDIFF) <span class="sc">||</span> <span class="fu">length</span>(STDDIFF) <span class="sc">!=</span> <span class="dv">1</span>L <span class="sc">||</span> <span class="fu">is.na</span>(STDDIFF)) {</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;STDDIFF must be TRUE or FALSE.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (STDDIFF) {</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (COMPARE <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;smd&quot;</span>, <span class="st">&quot;both&quot;</span>)) {</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;STDDIFF adds %stddiff&#39;s difference; set COMPARE to </span><span class="sc">\&quot;</span><span class="st">pvalue</span><span class="sc">\&quot;</span><span class="st"> or </span><span class="sc">\&quot;</span><span class="st">none</span><span class="sc">\&quot;</span><span class="st">, &quot;</span>,</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;since COMPARE&#39;s </span><span class="sc">\&quot;</span><span class="st">smd</span><span class="sc">\&quot;</span><span class="st"> is a different number for the same thing.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>) <span class="sc">||</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>        utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;0.2.0&quot;</span>) {</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;STDDIFF needs hvtiRpropensity &gt;= 0.2.0 for ps_stddiff().&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>  buckets <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">continuous =</span> CONTINUOUS, <span class="at">binary =</span> BINARY, <span class="at">categorical =</span> CATEGORICAL)</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>  tbl <span class="ot">&lt;-</span> hvtiRtables<span class="sc">::</span><span class="fu">hv_tbl_compare</span>(tbl, <span class="fu">stddiff_values</span>(d, BY, buckets, MEAN_SD, ORDINAL, GROUP_1),</span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">label =</span> <span class="st">&quot;Std. Diff. (%)&quot;</span>)</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a><span class="co"># The table as it is saved to Word, so the report and the .docx are one table:</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="co"># hv_man_table_display() adds the header marks, notes and abbreviation key the</span></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="co"># saver writes, from the saver&#39;s own code. ft itself is what is saved.</span></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>ft <span class="ot">&lt;-</span> hvtiRtables<span class="sc">::</span><span class="fu">hv_man_table</span>(tbl)</span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>hvtiRtables<span class="sc">::</span><span class="fu">hv_man_table_display</span>(ft, <span class="at">abbreviations =</span> ABBREVIATIONS)</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(WORD_FILE) <span class="sc">!=</span> <span class="dv">1</span>L <span class="sc">||</span> <span class="fu">is.na</span>(WORD_FILE) <span class="sc">||</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">&quot;^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$&quot;</span>, WORD_FILE)) {</span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;WORD_FILE must be a plain .docx filename within this set.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>word_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">study_dir</span>(<span class="st">&quot;documents&quot;</span>, .root), <span class="fu">paste0</span>(SUBJECT, <span class="st">&quot;-&quot;</span>, TYPE), WORD_FILE)</span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="fu">dirname</span>(word_path), <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>hvtiRtables<span class="sc">::</span><span class="fu">hv_man_table_save</span>(ft, word_path, <span class="at">abbreviations =</span> ABBREVIATIONS)</span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>check <span class="ot">&lt;-</span> hvtiRtables<span class="sc">::</span><span class="fu">hv_check_docx</span>(word_path)</span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(check)) <span class="fu">stop</span>(<span class="st">&quot;Word output failed the CORR structural check&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-table" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2594,506 +2766,7 @@ Table 2: Summary statistics for the study cohort, as written to the Word file
 </figcaption>
 <div aria-describedby="tbl-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<div id="eqrctdlter" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#eqrctdlter table {
-font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
--webkit-font-smoothing: antialiased;
--moz-osx-font-smoothing: grayscale;
-}
-#eqrctdlter thead, #eqrctdlter tbody, #eqrctdlter tfoot, #eqrctdlter tr, #eqrctdlter td, #eqrctdlter th {
-border-style: none;
-}
-#eqrctdlter p {
-margin: 0;
-padding: 0;
-}
-#eqrctdlter .gt_table {
-display: table;
-border-collapse: collapse;
-line-height: normal;
-margin-left: auto;
-margin-right: auto;
-color: #333333;
-font-size: 16px;
-font-weight: normal;
-font-style: normal;
-background-color: #FFFFFF;
-width: auto;
-border-top-style: solid;
-border-top-width: 2px;
-border-top-color: #A8A8A8;
-border-right-style: none;
-border-right-width: 2px;
-border-right-color: #D3D3D3;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #A8A8A8;
-border-left-style: none;
-border-left-width: 2px;
-border-left-color: #D3D3D3;
-}
-#eqrctdlter .gt_caption {
-padding-top: 4px;
-padding-bottom: 4px;
-}
-#eqrctdlter .gt_title {
-color: #333333;
-font-size: 125%;
-font-weight: initial;
-padding-top: 4px;
-padding-bottom: 4px;
-padding-left: 5px;
-padding-right: 5px;
-border-bottom-color: #FFFFFF;
-border-bottom-width: 0;
-}
-#eqrctdlter .gt_subtitle {
-color: #333333;
-font-size: 85%;
-font-weight: initial;
-padding-top: 3px;
-padding-bottom: 5px;
-padding-left: 5px;
-padding-right: 5px;
-border-top-color: #FFFFFF;
-border-top-width: 0;
-}
-#eqrctdlter .gt_heading {
-background-color: #FFFFFF;
-text-align: center;
-border-bottom-color: #FFFFFF;
-border-left-style: none;
-border-left-width: 1px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 1px;
-border-right-color: #D3D3D3;
-}
-#eqrctdlter .gt_bottom_border {
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-}
-#eqrctdlter .gt_col_headings {
-border-top-style: solid;
-border-top-width: 2px;
-border-top-color: #D3D3D3;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-border-left-style: none;
-border-left-width: 1px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 1px;
-border-right-color: #D3D3D3;
-}
-#eqrctdlter .gt_col_heading {
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: normal;
-text-transform: inherit;
-border-left-style: none;
-border-left-width: 1px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 1px;
-border-right-color: #D3D3D3;
-vertical-align: bottom;
-padding-top: 5px;
-padding-bottom: 6px;
-padding-left: 5px;
-padding-right: 5px;
-overflow-x: hidden;
-}
-#eqrctdlter .gt_column_spanner_outer {
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: normal;
-text-transform: inherit;
-padding-top: 0;
-padding-bottom: 0;
-padding-left: 4px;
-padding-right: 4px;
-}
-#eqrctdlter .gt_column_spanner_outer:first-child {
-padding-left: 0;
-}
-#eqrctdlter .gt_column_spanner_outer:last-child {
-padding-right: 0;
-}
-#eqrctdlter .gt_column_spanner {
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-vertical-align: bottom;
-padding-top: 5px;
-padding-bottom: 5px;
-overflow-x: hidden;
-display: inline-block;
-width: 100%;
-}
-#eqrctdlter .gt_spanner_row {
-border-bottom-style: hidden;
-}
-#eqrctdlter .gt_group_heading {
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: initial;
-text-transform: inherit;
-border-top-style: solid;
-border-top-width: 2px;
-border-top-color: #D3D3D3;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-border-left-style: none;
-border-left-width: 1px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 1px;
-border-right-color: #D3D3D3;
-vertical-align: middle;
-text-align: left;
-}
-#eqrctdlter .gt_empty_group_heading {
-padding: 0.5px;
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: initial;
-border-top-style: solid;
-border-top-width: 2px;
-border-top-color: #D3D3D3;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-vertical-align: middle;
-}
-#eqrctdlter .gt_from_md > :first-child {
-margin-top: 0;
-}
-#eqrctdlter .gt_from_md > :last-child {
-margin-bottom: 0;
-}
-#eqrctdlter .gt_row {
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-margin: 10px;
-border-top-style: solid;
-border-top-width: 1px;
-border-top-color: #D3D3D3;
-border-left-style: none;
-border-left-width: 1px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 1px;
-border-right-color: #D3D3D3;
-vertical-align: middle;
-overflow-x: hidden;
-}
-#eqrctdlter .gt_stub {
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: initial;
-text-transform: inherit;
-border-right-style: solid;
-border-right-width: 2px;
-border-right-color: #D3D3D3;
-padding-left: 5px;
-padding-right: 5px;
-}
-#eqrctdlter .gt_stub_row_group {
-color: #333333;
-background-color: #FFFFFF;
-font-size: 100%;
-font-weight: initial;
-text-transform: inherit;
-border-right-style: solid;
-border-right-width: 2px;
-border-right-color: #D3D3D3;
-padding-left: 5px;
-padding-right: 5px;
-vertical-align: top;
-}
-#eqrctdlter .gt_row_group_first td {
-border-top-width: 2px;
-}
-#eqrctdlter .gt_row_group_first th {
-border-top-width: 2px;
-}
-#eqrctdlter .gt_summary_row {
-color: #333333;
-background-color: #FFFFFF;
-text-transform: inherit;
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-}
-#eqrctdlter .gt_first_summary_row {
-border-top-style: solid;
-border-top-color: #D3D3D3;
-}
-#eqrctdlter .gt_first_summary_row.thick {
-border-top-width: 2px;
-}
-#eqrctdlter .gt_last_summary_row {
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-}
-#eqrctdlter .gt_grand_summary_row {
-color: #333333;
-background-color: #FFFFFF;
-text-transform: inherit;
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-}
-#eqrctdlter .gt_first_grand_summary_row {
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-border-top-style: double;
-border-top-width: 6px;
-border-top-color: #D3D3D3;
-}
-#eqrctdlter .gt_last_grand_summary_row_top {
-padding-top: 8px;
-padding-bottom: 8px;
-padding-left: 5px;
-padding-right: 5px;
-border-bottom-style: double;
-border-bottom-width: 6px;
-border-bottom-color: #D3D3D3;
-}
-#eqrctdlter .gt_striped {
-background-color: rgba(128, 128, 128, 0.05);
-}
-#eqrctdlter .gt_table_body {
-border-top-style: solid;
-border-top-width: 2px;
-border-top-color: #D3D3D3;
-border-bottom-style: solid;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-}
-#eqrctdlter .gt_footnotes {
-color: #333333;
-background-color: #FFFFFF;
-border-bottom-style: none;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-border-left-style: none;
-border-left-width: 2px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 2px;
-border-right-color: #D3D3D3;
-}
-#eqrctdlter .gt_footnote {
-margin: 0px;
-font-size: 90%;
-padding-top: 4px;
-padding-bottom: 4px;
-padding-left: 5px;
-padding-right: 5px;
-}
-#eqrctdlter .gt_sourcenotes {
-color: #333333;
-background-color: #FFFFFF;
-border-bottom-style: none;
-border-bottom-width: 2px;
-border-bottom-color: #D3D3D3;
-border-left-style: none;
-border-left-width: 2px;
-border-left-color: #D3D3D3;
-border-right-style: none;
-border-right-width: 2px;
-border-right-color: #D3D3D3;
-}
-#eqrctdlter .gt_sourcenote {
-font-size: 90%;
-padding-top: 4px;
-padding-bottom: 4px;
-padding-left: 5px;
-padding-right: 5px;
-}
-#eqrctdlter .gt_left {
-text-align: left;
-}
-#eqrctdlter .gt_center {
-text-align: center;
-}
-#eqrctdlter .gt_right {
-text-align: right;
-font-variant-numeric: tabular-nums;
-}
-#eqrctdlter .gt_font_normal {
-font-weight: normal;
-}
-#eqrctdlter .gt_font_bold {
-font-weight: bold;
-}
-#eqrctdlter .gt_font_italic {
-font-style: italic;
-}
-#eqrctdlter .gt_super {
-font-size: 65%;
-}
-#eqrctdlter .gt_footnote_marks {
-font-size: 75%;
-vertical-align: 0.4em;
-position: initial;
-}
-#eqrctdlter .gt_asterisk {
-font-size: 100%;
-vertical-align: 0;
-}
-#eqrctdlter .gt_indent_1 {
-text-indent: 5px;
-}
-#eqrctdlter .gt_indent_2 {
-text-indent: 10px;
-}
-#eqrctdlter .gt_indent_3 {
-text-indent: 15px;
-}
-#eqrctdlter .gt_indent_4 {
-text-indent: 20px;
-}
-#eqrctdlter .gt_indent_5 {
-text-indent: 25px;
-}
-#eqrctdlter .katex-display {
-display: inline-flex !important;
-margin-bottom: 0.75em !important;
-}
-#eqrctdlter div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
-height: 0px !important;
-}
-</style>
-
-<table class="gt_table cell caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
-<thead>
-<tr class="gt_col_headings header">
-<th id="label" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Characteristic</strong></th>
-<th id="stat_0" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>N = 800</strong><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
-</tr>
-</thead>
-<tbody class="gt_table_body">
-<tr class="gt_group_heading_row odd">
-<th colspan="2" id="Demography" class="gt_group_heading" data-quarto-table-cell-role="th" scope="colgroup">Demography</th>
-</tr>
-<tr class="gt_row_group_first even">
-<td class="gt_row gt_left" headers="Demography  label">Age at operation (years)</td>
-<td class="gt_row gt_center" headers="Demography  stat_0">800 ||| 63 (49, 75)</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Demography  label">Female</td>
-<td class="gt_row gt_center" headers="Demography  stat_0">800 ||| 299 (37)</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Demography  label">Race</td>
-<td class="gt_row gt_center" headers="Demography  stat_0"><br>
-</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Demography  label">    Black</td>
-<td class="gt_row gt_center" headers="Demography  stat_0">800 ||| 111 (14)</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Demography  label">    Other</td>
-<td class="gt_row gt_center" headers="Demography  stat_0">800 ||| 58 (7.3)</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Demography  label">    White</td>
-<td class="gt_row gt_center" headers="Demography  stat_0">800 ||| 631 (79)</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Demography  label">Body mass index (kg/m2)</td>
-<td class="gt_row gt_center" headers="Demography  stat_0">800 ||| 27.8 (23.2, 32.4)</td>
-</tr>
-<tr class="gt_group_heading_row odd">
-<th colspan="2" id="History" class="gt_group_heading" data-quarto-table-cell-role="th" scope="colgroup">History</th>
-</tr>
-<tr class="gt_row_group_first even">
-<td class="gt_row gt_left" headers="History  label">History of heart failure</td>
-<td class="gt_row gt_center" headers="History  stat_0">800 ||| 243 (30)</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="History  label">Diabetes</td>
-<td class="gt_row gt_center" headers="History  stat_0">800 ||| 175 (22)</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="History  label">NYHA functional class</td>
-<td class="gt_row gt_center" headers="History  stat_0"><br>
-</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="History  label">    1</td>
-<td class="gt_row gt_center" headers="History  stat_0">800 ||| 129 (16)</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="History  label">    2</td>
-<td class="gt_row gt_center" headers="History  stat_0">800 ||| 360 (45)</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="History  label">    3</td>
-<td class="gt_row gt_center" headers="History  stat_0">800 ||| 275 (34)</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="History  label">    4</td>
-<td class="gt_row gt_center" headers="History  stat_0">800 ||| 36 (4.5)</td>
-</tr>
-<tr class="gt_group_heading_row odd">
-<th colspan="2" id="Echo" class="gt_group_heading" data-quarto-table-cell-role="th" scope="colgroup">Echo</th>
-</tr>
-<tr class="gt_row_group_first even">
-<td class="gt_row gt_left" headers="Echo  label">LV ejection fraction (%)</td>
-<td class="gt_row gt_center" headers="Echo  stat_0">800 ||| 52 (42, 62)</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Echo  label">LV mass index (g/m2)</td>
-<td class="gt_row gt_center" headers="Echo  stat_0">800 ||| 121 (91, 152)</td>
-</tr>
-<tr class="gt_group_heading_row even">
-<th colspan="2" id="Laboratory" class="gt_group_heading" data-quarto-table-cell-role="th" scope="colgroup">Laboratory</th>
-</tr>
-<tr class="gt_row_group_first odd">
-<td class="gt_row gt_left" headers="Laboratory  label">Creatinine (mg/dL)</td>
-<td class="gt_row gt_center" headers="Laboratory  stat_0">725 ||| 1.02 (0.75, 1.43)</td>
-</tr>
-</tbody><tfoot>
-<tr class="gt_footnotes odd">
-<td colspan="2" class="gt_footnote"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span> N Non-missing ||| Median (15% Centile, 85% Centile); N Non-missing ||| n (%)</td>
-</tr>
-</tfoot>
-
-</table>
-
-</div>
+<div class="tabwid"><style>.cl-d8bad469{}.cl-40145a8d{font-family:'Times New Roman';font-size:12pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-0a2e06af{font-family:'Times New Roman';font-size:7.2pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;vertical-align:super;}.cl-fd7caf76{font-family:'Times New Roman';font-size:12pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-733a321e{font-family:'Times New Roman';font-size:7.2pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;vertical-align:super;}.cl-f4afa9ce{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:2pt;padding-top:2pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-df282d82{margin:0;text-align:center;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:2pt;padding-top:2pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-6477613b{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-a87b1e2d{margin:0;text-align:center;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-730e745b{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:15pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-278b8ce4{width:2.009in;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-af3f75e3{width:0.888in;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-8c51a2a0{width:0.54in;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-15a980c1{width:1.22in;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-2b9ed148{width:2.009in;background-color:rgba(202, 237, 251, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-c8dfed06{width:0.888in;background-color:rgba(202, 237, 251, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-b26c3840{width:0.54in;background-color:rgba(202, 237, 251, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-ed52cf07{width:1.22in;background-color:rgba(202, 237, 251, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-42f7b249{width:2.009in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-c6e9124a{width:0.888in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-eeef22b2{width:0.54in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0ee125fe{width:1.22in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-6964da01{width:2.009in;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-e413fd34{width:0.888in;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-28855145{width:0.54in;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-2f75173d{width:1.22in;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-386af4ff{width:2.009in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(255, 255, 255, 0.00);border-top: 0 solid rgba(255, 255, 255, 0.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-d5463c76{width:0.888in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(255, 255, 255, 0.00);border-top: 0 solid rgba(255, 255, 255, 0.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-dbca6b75{width:0.54in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(255, 255, 255, 0.00);border-top: 0 solid rgba(255, 255, 255, 0.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-b346a42e{width:1.22in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(255, 255, 255, 0.00);border-top: 0 solid rgba(255, 255, 255, 0.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style><table data-quarto-disable-processing="true" class="cl-d8bad469"><thead><tr style="overflow-wrap:break-word;"><th class="cl-278b8ce4"><p class="cl-f4afa9ce"><span class="cl-40145a8d">Characteristic</span></p></th><th class="cl-af3f75e3"><p class="cl-df282d82"><span class="cl-40145a8d">Variable</span></p></th><th class="cl-8c51a2a0"><p class="cl-df282d82"><span class="cl-40145a8d">No.</span><span class="cl-0a2e06af">*</span></p></th><th class="cl-15a980c1"><p class="cl-df282d82"><span class="cl-40145a8d">N = 800</span><span class="cl-0a2e06af">†</span></p></th></tr></thead><tbody><tr style="overflow-wrap:break-word;"><td class="cl-2b9ed148"><p class="cl-6477613b"><span class="cl-40145a8d">Demography</span></p></td><td class="cl-c8dfed06"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td><td class="cl-b26c3840"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td><td class="cl-ed52cf07"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-6477613b"><span class="cl-fd7caf76">Age at operation (years)</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">age</span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">63 [49, 75]</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-6477613b"><span class="cl-fd7caf76">Female</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">female</span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">299 (37)</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-6477613b"><span class="cl-fd7caf76">Race</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">race_grp</span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-730e745b"><span class="cl-fd7caf76">Black</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">111 (14)</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-730e745b"><span class="cl-fd7caf76">Other</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">58 (7.3)</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-730e745b"><span class="cl-fd7caf76">White</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">631 (79)</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-6477613b"><span class="cl-fd7caf76">Body mass index (kg/m2)</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">bmi</span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">28 [23, 32]</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-2b9ed148"><p class="cl-6477613b"><span class="cl-40145a8d">History</span></p></td><td class="cl-c8dfed06"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td><td class="cl-b26c3840"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td><td class="cl-ed52cf07"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-6477613b"><span class="cl-fd7caf76">History of heart failure</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">hx_chf</span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">243 (30)</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-6477613b"><span class="cl-fd7caf76">Diabetes</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">hx_dm</span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">175 (22)</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-6477613b"><span class="cl-fd7caf76">NYHA functional class</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">nyha_pr</span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-730e745b"><span class="cl-fd7caf76">1</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">129 (16)</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-730e745b"><span class="cl-fd7caf76">2</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">360 (45)</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-730e745b"><span class="cl-fd7caf76">3</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">275 (34)</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-730e745b"><span class="cl-fd7caf76">4</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76"></span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">36 (4.5)</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-2b9ed148"><p class="cl-6477613b"><span class="cl-40145a8d">Echo</span></p></td><td class="cl-c8dfed06"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td><td class="cl-b26c3840"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td><td class="cl-ed52cf07"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-6477613b"><span class="cl-fd7caf76">LV ejection fraction (%)</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">lvef</span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">52 [42, 62]</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-42f7b249"><p class="cl-6477613b"><span class="cl-fd7caf76">LV mass index (g/m2)</span></p></td><td class="cl-c6e9124a"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">plvmassi</span></p></td><td class="cl-eeef22b2"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">800</span></p></td><td class="cl-0ee125fe"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">121 [91, 152]</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-2b9ed148"><p class="cl-6477613b"><span class="cl-40145a8d">Laboratory</span></p></td><td class="cl-c8dfed06"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td><td class="cl-b26c3840"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td><td class="cl-ed52cf07"><p class="cl-a87b1e2d"><span class="cl-40145a8d"></span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-6964da01"><p class="cl-6477613b"><span class="cl-fd7caf76">Creatinine (mg/dL)</span></p></td><td class="cl-e413fd34"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">creat_pr</span></p></td><td class="cl-28855145"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">725</span></p></td><td class="cl-2f75173d"><p class="cl-a87b1e2d"><span class="cl-fd7caf76">1.0 [0.75, 1.4]</span></p></td></tr></tbody><tfoot><tr style="overflow-wrap:break-word;"><td colspan="4" class="cl-386af4ff"><p class="cl-6477613b"><span class="cl-733a321e">*</span><span class="cl-fd7caf76"> Number of non-missing values.</span></p></td></tr><tr style="overflow-wrap:break-word;"><td colspan="4" class="cl-386af4ff"><p class="cl-6477613b"><span class="cl-733a321e">†</span><span class="cl-fd7caf76"> No. (%) or Median [15th, 85th percentiles].</span></p></td></tr></tfoot></table></div>
 </div>
 </div>
 </figure>
@@ -3149,12 +2822,12 @@ height: 0px !important;
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-15 21:14:18 EDT</td>
+<td style="text-align: left;">2026-10-20 13:50:50 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-15 21:14:19 EDT</td>
+<td style="text-align: left;">2026-10-20 13:50:51 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3204,12 +2877,12 @@ height: 0px !important;
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261015.parquet</td>
+<td style="text-align: left;">built_20261020.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-15</td>
+<td style="text-align: left;">2026-10-20</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3241,10 +2914,15 @@ height: 0px !important;
 <td style="text-align: left;">renv</td>
 <td style="text-align: left;">not active</td>
 </tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">renv.lock sha256</td>
+<td style="text-align: left;">d09f96b6cd21</td>
+</tr>
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dc.tables.cohort.eda","rendered":"2026-10-16T01:14:19Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"base64enc","version":"0.1.6","source":"standard"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cards","version":"0.8.1","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"commonmark","version":"2.0.0","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.table","version":"1.18.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"flextable","version":"0.10.0","source":"CRAN"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"fs","version":"2.1.0","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gt","version":"1.3.0","source":"standard"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"gtsummary","version":"2.5.1","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.11","source":"github","sha":"8a09f713748050f3b9a35b7c95ed95a92f14b1a1"},{"package":"hvtiRtables","version":"1.0.5","source":"github","sha":"6d1aa14de07f3c206bef58ea94ebf0f79eb27515"},{"package":"hvtiRtemplates","version":"1.4.1","source":"github","sha":"d61ba9ae349c0988d5988b50b3e1f4f2ea972191"},{"package":"hvtiRutilities","version":"1.5.5","source":"github","sha":"226e6687538659b816198b6d285c7eb3bf872869"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"litedown","version":"0.10","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"markdown","version":"2.0","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"sass","version":"0.4.10","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261015.parquet","role":"analysis","bytes":57911,"mtime":"2026-10-16T01:11:44Z","sha256":"b55bc29fc6a44b5614ebcb32583a00f7987fe3365e94c2e4f86ac5aca8f4b708"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-10-15T21:14:18-0400","end":"2026-10-15T21:14:19-0400","time_zone":"EDT","duration_seconds":1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.tables.cohort.eda.qmd","template":"dc.tables","prefix":"dc","qualifier":"tables","subject":"cohort","type":"eda","hvtiRtemplates":"1.4.1"},"datasets":[{"name":"built","version_file":"built_20261015.parquet","registered":"2026-10-15","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b55bc29fc6a4","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"10_descriptive/dc.tables.cohort.eda.qmd",".hvti_render_id":"d48210e16dc930f2926dc946b920051d27a2f1a86b5f6a32704657f7c700f389",".hvti_source_sha256":"56a8fa27e00e4507ae9a074b25200c136d4ce16defa36fd74bdfa41d7de3d6a8"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"dc.tables.cohort.eda","rendered":"2026-10-20T17:50:51Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cards","version":"0.9.0","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.table","version":"1.18.6.1","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"flextable","version":"0.10.3","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"gtsummary","version":"2.6.1","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.14","source":"github","sha":"8eedac36a24ca44ed804e108fa622c614a2b6e98"},{"package":"hvtiRtables","version":"1.0.8","source":"github","sha":"a9bd1647225d46a59b7f1643ce323e5d32466ce3"},{"package":"hvtiRtemplates","version":"1.4.1","source":"github","sha":"ddba71fcb38683021fa881e1352e7daea2df720f"},{"package":"hvtiRutilities","version":"1.5.7","source":"github","sha":"12f456a6bf913a983343a5c6de90392b1fc1466f"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"standard"},{"package":"xfun","version":"0.62","source":"standard"},{"package":"xml2","version":"1.6.0","source":"standard"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261020.parquet","role":"analysis","bytes":57911,"mtime":"2026-10-20T17:47:57Z","sha256":"b55bc29fc6a44b5614ebcb32583a00f7987fe3365e94c2e4f86ac5aca8f4b708"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-10-20T13:50:50-0400","end":"2026-10-20T13:50:51-0400","time_zone":"EDT","duration_seconds":1.1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.tables.cohort.eda.qmd","template":"dc.tables","prefix":"dc","qualifier":"tables","subject":"cohort","type":"eda","hvtiRtemplates":"1.4.1"},"datasets":[{"name":"built","version_file":"built_20261020.parquet","registered":"2026-10-20","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b55bc29fc6a4","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"10_descriptive/dc.tables.cohort.eda.qmd",".hvti_render_id":"80e1c67781cf31a4c7b736dc33ce55e18425f094ade7a78adc92a7ea5d8f53b0",".hvti_source_sha256":"2b9282226e9b4f3fdf1983d1e490fb8d9d4b96ab3558be26d77c816f9f6f16ab"}</script>
 </section>
 
 </main>

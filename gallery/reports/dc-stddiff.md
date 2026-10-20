@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:15
+2026-10-20 13:51
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -66,7 +66,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -181,7 +181,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -540,25 +540,26 @@ rather than balance, so it is not part of this job.
 
 ## About this run
 
-| Group           | Item           | Value                           |
-|:----------------|:---------------|:--------------------------------|
-| Run             | Started        | 2026-10-15 21:15:07 EDT         |
-|                 | Ended          | 2026-10-15 21:15:08 EDT         |
-|                 | Duration       | 1 s                             |
-|                 | Status         | final                           |
-|                 | Rendered by    | gallery                         |
-|                 | Host           | gallery                         |
-| Job             | File           | dc.stddiff.approach.balance.qmd |
-|                 | Template       | dc.stddiff                      |
-|                 | Subject        | approach                        |
-|                 | Type           | balance                         |
-|                 | hvtiRtemplates | 1.4.1                           |
-| Dataset `built` | Version file   | built_20261015.parquet          |
-|                 | Registered     | 2026-10-15                      |
-|                 | Source file    | built.rds                       |
-|                 | Rows kept      | 800 rows on 800 patients        |
-|                 | WHERE          | none                            |
-|                 | sha256         | b55bc29fc6a4                    |
-|                 | Manifest       | current                         |
-| Reproducibility | Seed           | 20261006                        |
-|                 | renv           | not active                      |
+| Group           | Item             | Value                           |
+|:----------------|:-----------------|:--------------------------------|
+| Run             | Started          | 2026-10-20 13:51:41 EDT         |
+|                 | Ended            | 2026-10-20 13:51:42 EDT         |
+|                 | Duration         | 1 s                             |
+|                 | Status           | final                           |
+|                 | Rendered by      | gallery                         |
+|                 | Host             | gallery                         |
+| Job             | File             | dc.stddiff.approach.balance.qmd |
+|                 | Template         | dc.stddiff                      |
+|                 | Subject          | approach                        |
+|                 | Type             | balance                         |
+|                 | hvtiRtemplates   | 1.4.1                           |
+| Dataset `built` | Version file     | built_20261020.parquet          |
+|                 | Registered       | 2026-10-20                      |
+|                 | Source file      | built.rds                       |
+|                 | Rows kept        | 800 rows on 800 patients        |
+|                 | WHERE            | none                            |
+|                 | sha256           | b55bc29fc6a4                    |
+|                 | Manifest         | current                         |
+| Reproducibility | Seed             | 20261006                        |
+|                 | renv             | not active                      |
+|                 | renv.lock sha256 | d09f96b6cd21                    |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:16
+2026-10-20 13:53
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -54,7 +54,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -288,7 +288,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261015.parquet) |
+| Source              | dataset `study` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -452,8 +452,8 @@ if (!is.null(MATCH)) {
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:16:47 EDT |
-|  | Ended | 2026-10-15 21:16:48 EDT |
+| Run | Started | 2026-10-20 13:53:30 EDT |
+|  | Ended | 2026-10-20 13:53:31 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -463,12 +463,13 @@ if (!is.null(MATCH)) {
 |  | Subject | approach |
 |  | Type | propensity |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-15 21:16:41 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-20 13:53:25 -0400, data built_20261020.parquet |
 | Reproducibility | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

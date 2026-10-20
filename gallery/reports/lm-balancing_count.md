@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:17
+2026-10-20 13:53
 
 Fits a Poisson or negative-binomial balancing score for a count
 exposure. The distribution is a reviewed study choice; the template
@@ -34,7 +34,7 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 Code
@@ -116,7 +116,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTOR
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -246,24 +246,25 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 ## About this run
 
-| Group           | Item           | Value                                     |
-|:----------------|:---------------|:------------------------------------------|
-| Run             | Started        | 2026-10-15 21:17:08 EDT                   |
-|                 | Ended          | 2026-10-15 21:17:08 EDT                   |
-|                 | Duration       | 0 s                                       |
-|                 | Status         | final                                     |
-|                 | Rendered by    | gallery                                   |
-|                 | Host           | gallery                                   |
-| Job             | File           | lm.balancing_count.priorops.balancing.qmd |
-|                 | Template       | lm.balancing_count                        |
-|                 | Subject        | priorops                                  |
-|                 | Type           | balancing                                 |
-|                 | hvtiRtemplates | 1.4.1                                     |
-| Dataset `built` | Version file   | built_20261015.parquet                    |
-|                 | Registered     | 2026-10-15                                |
-|                 | Source file    | built.rds                                 |
-|                 | Rows kept      | 800 rows on 800 patients                  |
-|                 | WHERE          | none                                      |
-|                 | sha256         | b55bc29fc6a4                              |
-|                 | Manifest       | current                                   |
-| Reproducibility | renv           | not active                                |
+| Group           | Item             | Value                                     |
+|:----------------|:-----------------|:------------------------------------------|
+| Run             | Started          | 2026-10-20 13:53:54 EDT                   |
+|                 | Ended            | 2026-10-20 13:53:55 EDT                   |
+|                 | Duration         | 0 s                                       |
+|                 | Status           | final                                     |
+|                 | Rendered by      | gallery                                   |
+|                 | Host             | gallery                                   |
+| Job             | File             | lm.balancing_count.priorops.balancing.qmd |
+|                 | Template         | lm.balancing_count                        |
+|                 | Subject          | priorops                                  |
+|                 | Type             | balancing                                 |
+|                 | hvtiRtemplates   | 1.4.1                                     |
+| Dataset `built` | Version file     | built_20261020.parquet                    |
+|                 | Registered       | 2026-10-20                                |
+|                 | Source file      | built.rds                                 |
+|                 | Rows kept        | 800 rows on 800 patients                  |
+|                 | WHERE            | none                                      |
+|                 | sha256           | b55bc29fc6a4                              |
+|                 | Manifest         | current                                   |
+| Reproducibility | renv             | not active                                |
+|                 | renv.lock sha256 | d09f96b6cd21                              |

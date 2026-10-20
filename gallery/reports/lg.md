@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:15
+2026-10-20 13:51
 
 An `lg` job decides which scale a covariate should enter a model on,
 before it goes into `PREDICTORS` in an `lm` job. A model of an event
@@ -60,7 +60,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -186,7 +186,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -510,24 +510,25 @@ PREDICTORS <- c("age", "nyha_pr")
 
 ## About this run
 
-| Group           | Item           | Value                    |
-|:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 21:15:12 EDT  |
-|                 | Ended          | 2026-10-15 21:15:14 EDT  |
-|                 | Duration       | 3 s                      |
-|                 | Status         | final                    |
-|                 | Rendered by    | gallery                  |
-|                 | Host           | gallery                  |
-| Job             | File           | lg.dead.calibration.qmd  |
-|                 | Template       | lg                       |
-|                 | Subject        | dead                     |
-|                 | Type           | calibration              |
-|                 | hvtiRtemplates | 1.4.1                    |
-| Dataset `built` | Version file   | built_20261015.parquet   |
-|                 | Registered     | 2026-10-15               |
-|                 | Source file    | built.rds                |
-|                 | Rows kept      | 800 rows on 800 patients |
-|                 | WHERE          | none                     |
-|                 | sha256         | b55bc29fc6a4             |
-|                 | Manifest       | current                  |
-| Reproducibility | renv           | not active               |
+| Group           | Item             | Value                    |
+|:----------------|:-----------------|:-------------------------|
+| Run             | Started          | 2026-10-20 13:51:46 EDT  |
+|                 | Ended            | 2026-10-20 13:51:50 EDT  |
+|                 | Duration         | 3 s                      |
+|                 | Status           | final                    |
+|                 | Rendered by      | gallery                  |
+|                 | Host             | gallery                  |
+| Job             | File             | lg.dead.calibration.qmd  |
+|                 | Template         | lg                       |
+|                 | Subject          | dead                     |
+|                 | Type             | calibration              |
+|                 | hvtiRtemplates   | 1.4.1                    |
+| Dataset `built` | Version file     | built_20261020.parquet   |
+|                 | Registered       | 2026-10-20               |
+|                 | Source file      | built.rds                |
+|                 | Rows kept        | 800 rows on 800 patients |
+|                 | WHERE            | none                     |
+|                 | sha256           | b55bc29fc6a4             |
+|                 | Manifest         | current                  |
+| Reproducibility | renv             | not active               |
+|                 | renv.lock sha256 | d09f96b6cd21             |

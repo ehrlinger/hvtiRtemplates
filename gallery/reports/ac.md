@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:15
+2026-10-20 13:51
 
 An `ac` job produces life tables. Figures over the same estimates are an
 `hp` job, and the parametric fit is `hz`; neither belongs here.
@@ -43,7 +43,7 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -133,7 +133,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -630,24 +630,25 @@ for (outer in sort(unique(d$cat_b))) {
 
 ## About this run
 
-| Group           | Item           | Value                    |
-|:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 21:15:19 EDT  |
-|                 | Ended          | 2026-10-15 21:15:19 EDT  |
-|                 | Duration       | 0 s                      |
-|                 | Status         | final                    |
-|                 | Rendered by    | gallery                  |
-|                 | Host           | gallery                  |
-| Job             | File           | ac.dead.hz.qmd           |
-|                 | Template       | ac                       |
-|                 | Subject        | dead                     |
-|                 | Type           | hz                       |
-|                 | hvtiRtemplates | 1.4.1                    |
-| Dataset `built` | Version file   | built_20261015.parquet   |
-|                 | Registered     | 2026-10-15               |
-|                 | Source file    | built.rds                |
-|                 | Rows kept      | 725 rows on 725 patients |
-|                 | WHERE          | `!is.na(creat_pr)`       |
-|                 | sha256         | b55bc29fc6a4             |
-|                 | Manifest       | current                  |
-| Reproducibility | renv           | not active               |
+| Group           | Item             | Value                    |
+|:----------------|:-----------------|:-------------------------|
+| Run             | Started          | 2026-10-20 13:51:55 EDT  |
+|                 | Ended            | 2026-10-20 13:51:56 EDT  |
+|                 | Duration         | 0 s                      |
+|                 | Status           | final                    |
+|                 | Rendered by      | gallery                  |
+|                 | Host             | gallery                  |
+| Job             | File             | ac.dead.hz.qmd           |
+|                 | Template         | ac                       |
+|                 | Subject          | dead                     |
+|                 | Type             | hz                       |
+|                 | hvtiRtemplates   | 1.4.1                    |
+| Dataset `built` | Version file     | built_20261020.parquet   |
+|                 | Registered       | 2026-10-20               |
+|                 | Source file      | built.rds                |
+|                 | Rows kept        | 725 rows on 725 patients |
+|                 | WHERE            | `!is.na(creat_pr)`       |
+|                 | sha256           | b55bc29fc6a4             |
+|                 | Manifest         | current                  |
+| Reproducibility | renv             | not active               |
+|                 | renv.lock sha256 | d09f96b6cd21             |

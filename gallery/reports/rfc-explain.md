@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:24
+2026-10-20 14:00
 
 Explains the forest the `rfc-fit` job in this set saved: which
 predictors drive it, and how.
@@ -289,7 +289,7 @@ save_figure(.fig, "rfc-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/74bd2e97c62c83d9cab1fc398dcdb8c0.png)
+![](assets/b914d428f3c7f9d744d88b0702fe57fd.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -380,7 +380,7 @@ Code
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/7930bad67a298a3cef9c8d24bad1d468.png)
+![](assets/ab7fd6cf28e2600fa16bb271c6696715.png)
 
 Figure 3: Predicted class probability against each selected predictor,
 as observed, one panel per predictor. Points are individual patients,
@@ -478,9 +478,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:24:05 EDT |
-|  | Ended | 2026-10-15 21:24:23 EDT |
-|  | Duration | 18 s |
+| Run | Started | 2026-10-20 14:00:11 EDT |
+|  | Ended | 2026-10-20 14:00:30 EDT |
+|  | Duration | 20 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -489,11 +489,12 @@ the spread of the partial effect at each level.
 |  | Subject | complication |
 |  | Type | rf |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-15 21:23:56 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-20 13:59:59 -0400, data built_20261020.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

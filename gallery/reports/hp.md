@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:15
+2026-10-20 13:52
 
 An `hp` job **reads** its inputs and does not recompute them: the
 actuarial life table from the `ac` job and the parametric fit from the
@@ -191,7 +191,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261015.parquet) |
+| Source              | dataset `study` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -500,9 +500,9 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:15:41 EDT |
-|  | Ended | 2026-10-15 21:15:42 EDT |
-|  | Duration | 0 s |
+| Run | Started | 2026-10-20 13:52:20 EDT |
+|  | Ended | 2026-10-20 13:52:20 EDT |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -511,13 +511,14 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 |  | Subject | dead |
 |  | Type | hz |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-15 21:15:19 -0400, data built_20261015.parquet |
-|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-15 21:15:24 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-20 13:51:55 -0400, data built_20261020.parquet |
+|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-20 13:52:01 -0400, data built_20261020.parquet |
 | Reproducibility | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

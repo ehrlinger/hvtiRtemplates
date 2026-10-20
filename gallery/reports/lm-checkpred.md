@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:16
+2026-10-20 13:53
 
 Applies a saved `lm-binary` bundle to a declared validation cohort. This
 job never refits, updates, or overwrites the source model.
@@ -33,7 +33,7 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 Code
@@ -122,7 +122,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME)
 
 | Data |  |
 |:---|:---|
-| Source | dataset `built` (built_20261015.parquet) |
+| Source | dataset `built` (built_20261020.parquet) |
 | Rows read | 800 |
 | ID | `patient_id` |
 | Identifiers dropped | none |
@@ -272,8 +272,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:16:27 EDT |
-|  | Ended | 2026-10-15 21:16:27 EDT |
+| Run | Started | 2026-10-20 13:53:10 EDT |
+|  | Ended | 2026-10-20 13:53:11 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -283,12 +283,13 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 |  | Subject | stroke |
 |  | Type | model |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 228 rows on 228 patients |
 |  | WHERE | `as.integer(format(dt_surg, "%Y")) >= 2015` |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-15 21:16:22 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-20 13:53:06 -0400, data built_20261020.parquet |
 | Reproducibility | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:23
+2026-10-20 13:59
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -290,7 +290,7 @@ save_figure(.fig, "rfs-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/942fdb2570fc96442c1da09a11585b52.png)
+![](assets/0c38bc19709b4f613db4be74f38e640c.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -343,7 +343,7 @@ Code
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/e47adbcb916f5ebab43309bf636247bd.png)
+![](assets/4957184059b6d325cce63411e079ee46.png)
 
 Figure 3: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -474,9 +474,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:22:13 EDT |
-|  | Ended | 2026-10-15 21:23:50 EDT |
-|  | Duration | 1 min 36 s |
+| Run | Started | 2026-10-20 13:58:07 EDT |
+|  | Ended | 2026-10-20 13:59:53 EDT |
+|  | Duration | 1 min 46 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -485,11 +485,12 @@ the spread of the partial effect at each level.
 |  | Subject | dead |
 |  | Type | rf |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-15 21:22:01 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-20 13:57:54 -0400, data built_20261020.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

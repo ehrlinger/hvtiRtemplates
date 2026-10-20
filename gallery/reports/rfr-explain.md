@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:24
+2026-10-20 14:01
 
 Explains the forest the `rfr-fit` job in this set saved: which
 predictors drive it, and how.
@@ -284,7 +284,7 @@ save_figure(.fig, "rfr-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/265331c5dbf1063148f9a531f05dc301.png)
+![](assets/7902ba524026baca7505eb9fe6485a3d.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -437,9 +437,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:24:36 EDT |
-|  | Ended | 2026-10-15 21:24:54 EDT |
-|  | Duration | 18 s |
+| Run | Started | 2026-10-20 14:00:46 EDT |
+|  | Ended | 2026-10-20 14:01:06 EDT |
+|  | Duration | 20 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -448,11 +448,12 @@ the spread of the partial effect at each level.
 |  | Subject | los |
 |  | Type | rf |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-15 21:24:28 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-20 14:00:36 -0400, data built_20261020.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:15
+2026-10-20 13:52
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -22,6 +22,16 @@ suppressPackageStartupMessages({
   library(TemporalHazard)
   library(hvtiRutilities)
 })
+# numDeriv is a Suggests of TemporalHazard, not a hard dependency. Without it,
+# interval- or left-censored multiphase fits SILENTLY produce no standard
+# errors: the fit succeeds, `converged` is TRUE, and vcov() is simply absent.
+# A model reported without uncertainty is not a smaller result, it is a
+# different one -- so this is a hard stop rather than a warning.
+if (!requireNamespace("numDeriv", quietly = TRUE)) {
+  stop("numDeriv is not installed. Interval-censored multiphase fits will ",
+       "produce no standard errors, and will not tell you so. Install it ",
+       "before reading anything below.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -47,7 +57,7 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -138,7 +148,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -206,21 +216,6 @@ it passed on.
 `read_clinical_data()` infers binary columns as logical while `Surv()`
 requires a numeric status. The `as.numeric()` coercions below are not
 decoration.
-
-Code
-
-``` r
-# numDeriv is a Suggests of TemporalHazard, not a hard dependency. Without it,
-# interval- or left-censored multiphase fits SILENTLY produce no standard
-# errors: the fit succeeds, `converged` is TRUE, and vcov() is simply absent.
-# A model reported without uncertainty is not a smaller result, it is a
-# different one -- so this is a hard stop rather than a warning.
-if (!requireNamespace("numDeriv", quietly = TRUE)) {
-  stop("numDeriv is not installed. Interval-censored multiphase fits will ",
-       "produce no standard errors, and will not tell you so. Install it ",
-       "before reading anything below.", call. = FALSE)
-}
-```
 
 ## Model
 
@@ -730,24 +725,25 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 
 ## About this run
 
-| Group           | Item           | Value                    |
-|:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 21:15:24 EDT  |
-|                 | Ended          | 2026-10-15 21:15:27 EDT  |
-|                 | Duration       | 3 s                      |
-|                 | Status         | final                    |
-|                 | Rendered by    | gallery                  |
-|                 | Host           | gallery                  |
-| Job             | File           | hz.dead.hz.qmd           |
-|                 | Template       | hz                       |
-|                 | Subject        | dead                     |
-|                 | Type           | hz                       |
-|                 | hvtiRtemplates | 1.4.1                    |
-| Dataset `built` | Version file   | built_20261015.parquet   |
-|                 | Registered     | 2026-10-15               |
-|                 | Source file    | built.rds                |
-|                 | Rows kept      | 725 rows on 725 patients |
-|                 | WHERE          | `!is.na(creat_pr)`       |
-|                 | sha256         | b55bc29fc6a4             |
-|                 | Manifest       | current                  |
-| Reproducibility | renv           | not active               |
+| Group           | Item             | Value                    |
+|:----------------|:-----------------|:-------------------------|
+| Run             | Started          | 2026-10-20 13:52:01 EDT  |
+|                 | Ended            | 2026-10-20 13:52:04 EDT  |
+|                 | Duration         | 3 s                      |
+|                 | Status           | final                    |
+|                 | Rendered by      | gallery                  |
+|                 | Host             | gallery                  |
+| Job             | File             | hz.dead.hz.qmd           |
+|                 | Template         | hz                       |
+|                 | Subject          | dead                     |
+|                 | Type             | hz                       |
+|                 | hvtiRtemplates   | 1.4.1                    |
+| Dataset `built` | Version file     | built_20261020.parquet   |
+|                 | Registered       | 2026-10-20               |
+|                 | Source file      | built.rds                |
+|                 | Rows kept        | 725 rows on 725 patients |
+|                 | WHERE            | `!is.na(creat_pr)`       |
+|                 | sha256           | b55bc29fc6a4             |
+|                 | Manifest         | current                  |
+| Reproducibility | renv             | not active               |
+|                 | renv.lock sha256 | d09f96b6cd21             |

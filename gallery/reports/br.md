@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:12
+2026-10-20 13:48
 
 This job reports a bootstrap variable selection screen over a **linear**
 model: how often each candidate survived stepwise selection across
@@ -903,8 +903,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:12:00 EDT |
-|  | Ended | 2026-10-15 21:12:01 EDT |
+| Run | Started | 2026-10-20 13:48:15 EDT |
+|  | Ended | 2026-10-20 13:48:16 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -914,12 +914,13 @@ saveRDS(report, report_file)
 |  | Subject | icu |
 |  | Type | boot |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `icu-boot/br.rds` (bootstrap-bag), rendered not recorded, data built_20261015.parquet |
+| Upstream | Handoff | `icu-boot/br.rds` (bootstrap-bag), rendered not recorded, data built_20261020.parquet |
 | Reproducibility | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

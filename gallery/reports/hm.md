@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:15
+2026-10-20 13:52
 
 An `hm` job builds the risk-factor model **on top of** the shape
 parameters the `hz` job fitted. The shapes are not re-derived here; they
@@ -24,6 +24,16 @@ suppressPackageStartupMessages({
   library(TemporalHazard)
   library(hvtiRutilities)
 })
+# numDeriv is a Suggests of TemporalHazard, not a hard dependency. Without it,
+# interval- or left-censored multiphase fits SILENTLY produce no standard
+# errors: the fit succeeds, `converged` is TRUE, and vcov() is simply absent.
+# A model with forty covariates and no standard errors is not a smaller result,
+# it is a different one -- so this is a hard stop.
+if (!requireNamespace("numDeriv", quietly = TRUE)) {
+  stop("numDeriv is not installed. Interval-censored multiphase fits will ",
+       "produce no standard errors, and will not tell you so. Install it ",
+       "before reading anything below.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -138,7 +148,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261015.parquet) |
+| Source              | dataset `study` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -176,21 +186,6 @@ it passed on.
 requires a numeric status. The `as.numeric()` coercions below are not
 decoration — and see the covariate audit above for the same problem on
 the covariate side, where it changes the model rather than erroring.
-
-Code
-
-``` r
-# numDeriv is a Suggests of TemporalHazard, not a hard dependency. Without it,
-# interval- or left-censored multiphase fits SILENTLY produce no standard
-# errors: the fit succeeds, `converged` is TRUE, and vcov() is simply absent.
-# A model with forty covariates and no standard errors is not a smaller result,
-# it is a different one -- so this is a hard stop.
-if (!requireNamespace("numDeriv", quietly = TRUE)) {
-  stop("numDeriv is not installed. Interval-censored multiphase fits will ",
-       "produce no standard errors, and will not tell you so. Install it ",
-       "before reading anything below.", call. = FALSE)
-}
-```
 
 ## Covariates
 
@@ -964,9 +959,9 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:15:32 EDT |
-|  | Ended | 2026-10-15 21:15:36 EDT |
-|  | Duration | 5 s |
+| Run | Started | 2026-10-20 13:52:09 EDT |
+|  | Ended | 2026-10-20 13:52:15 EDT |
+|  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -975,12 +970,13 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 |  | Subject | dead |
 |  | Type | hz |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-15 21:15:24 -0400, data built_20261015.parquet |
+| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-20 13:52:01 -0400, data built_20261020.parquet |
 | Reproducibility | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

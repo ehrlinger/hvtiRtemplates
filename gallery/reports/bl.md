@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:11
+2026-10-20 13:48
 
 This job reports a bootstrap variable selection screen over a
 **logistic** model: how often each candidate survived stepwise selection
@@ -897,8 +897,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:11:51 EDT |
-|  | Ended | 2026-10-15 21:11:52 EDT |
+| Run | Started | 2026-10-20 13:48:06 EDT |
+|  | Ended | 2026-10-20 13:48:07 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -908,12 +908,13 @@ saveRDS(report, report_file)
 |  | Subject | vent |
 |  | Type | boot |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `vent-boot/bl.rds` (bootstrap-bag), rendered not recorded, data built_20261015.parquet |
+| Upstream | Handoff | `vent-boot/bl.rds` (bootstrap-bag), rendered not recorded, data built_20261020.parquet |
 | Reproducibility | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

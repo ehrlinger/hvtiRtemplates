@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:14
+2026-10-20 13:50
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -917,8 +917,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:14:12 EDT |
-|  | Ended | 2026-10-15 21:14:13 EDT |
+| Run | Started | 2026-10-20 13:50:43 EDT |
+|  | Ended | 2026-10-20 13:50:44 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -928,15 +928,16 @@ saveRDS(report, report_file)
 |  | Subject | dead |
 |  | Type | boot |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261015.parquet |
-|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261015.parquet |
-|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261015.parquet |
-|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261015.parquet |
+| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261020.parquet |
+|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261020.parquet |
+|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261020.parquet |
+|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261020.parquet |
 | Reproducibility | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

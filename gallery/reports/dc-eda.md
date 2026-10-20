@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:14
+2026-10-20 13:51
 
 Replaces an older EDA report.
 
@@ -69,7 +69,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -236,7 +236,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -796,7 +796,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/2f56fd055f8255238e9a225ca4b215f9.png)
+![](assets/b1474d2205acc2763739ed5012ba9ea8.png)
 
 Figure 3: Continuous variables, page 1: Years from 1 January 1990 to
 operation, Age at operation (years), Body mass index (kg/m2), LV
@@ -814,7 +814,7 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/72f0271574f47c0cdff4a8b43246654d.png)
+![](assets/9572576ff2396b75bc4e267749b9358e.png)
 
 Figure 4: Continuous variables, page 2: Hours in intensive care,
 Postoperative length of stay (days), Postoperative length of stay (log
@@ -985,24 +985,25 @@ color alone; the categorical frequency table above names them.
 
 ## About this run
 
-| Group           | Item           | Value                    |
-|:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 21:14:35 EDT  |
-|                 | Ended          | 2026-10-15 21:14:54 EDT  |
-|                 | Duration       | 20 s                     |
-|                 | Status         | final                    |
-|                 | Rendered by    | gallery                  |
-|                 | Host           | gallery                  |
-| Job             | File           | dc.eda.cohort.eda.qmd    |
-|                 | Template       | dc.eda                   |
-|                 | Subject        | cohort                   |
-|                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.4.1                    |
-| Dataset `built` | Version file   | built_20261015.parquet   |
-|                 | Registered     | 2026-10-15               |
-|                 | Source file    | built.rds                |
-|                 | Rows kept      | 800 rows on 800 patients |
-|                 | WHERE          | none                     |
-|                 | sha256         | b55bc29fc6a4             |
-|                 | Manifest       | current                  |
-| Reproducibility | renv           | not active               |
+| Group           | Item             | Value                    |
+|:----------------|:-----------------|:-------------------------|
+| Run             | Started          | 2026-10-20 13:51:08 EDT  |
+|                 | Ended            | 2026-10-20 13:51:28 EDT  |
+|                 | Duration         | 20 s                     |
+|                 | Status           | final                    |
+|                 | Rendered by      | gallery                  |
+|                 | Host             | gallery                  |
+| Job             | File             | dc.eda.cohort.eda.qmd    |
+|                 | Template         | dc.eda                   |
+|                 | Subject          | cohort                   |
+|                 | Type             | eda                      |
+|                 | hvtiRtemplates   | 1.4.1                    |
+| Dataset `built` | Version file     | built_20261020.parquet   |
+|                 | Registered       | 2026-10-20               |
+|                 | Source file      | built.rds                |
+|                 | Rows kept        | 800 rows on 800 patients |
+|                 | WHERE            | none                     |
+|                 | sha256           | b55bc29fc6a4             |
+|                 | Manifest         | current                  |
+| Reproducibility | renv             | not active               |
+|                 | renv.lock sha256 | d09f96b6cd21             |

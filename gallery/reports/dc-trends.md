@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:14
+2026-10-20 13:50
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -66,7 +66,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -179,7 +179,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -463,24 +463,25 @@ against an older figure by its shape and not point by point.
 
 ## About this run
 
-| Group           | Item           | Value                    |
-|:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 21:14:23 EDT  |
-|                 | Ended          | 2026-10-15 21:14:24 EDT  |
-|                 | Duration       | 1 s                      |
-|                 | Status         | final                    |
-|                 | Rendered by    | gallery                  |
-|                 | Host           | gallery                  |
-| Job             | File           | dc.trends.cohort.eda.qmd |
-|                 | Template       | dc.trends                |
-|                 | Subject        | cohort                   |
-|                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.4.1                    |
-| Dataset `built` | Version file   | built_20261015.parquet   |
-|                 | Registered     | 2026-10-15               |
-|                 | Source file    | built.rds                |
-|                 | Rows kept      | 800 rows on 800 patients |
-|                 | WHERE          | none                     |
-|                 | sha256         | b55bc29fc6a4             |
-|                 | Manifest       | current                  |
-| Reproducibility | renv           | not active               |
+| Group           | Item             | Value                    |
+|:----------------|:-----------------|:-------------------------|
+| Run             | Started          | 2026-10-20 13:50:56 EDT  |
+|                 | Ended            | 2026-10-20 13:50:57 EDT  |
+|                 | Duration         | 1 s                      |
+|                 | Status           | final                    |
+|                 | Rendered by      | gallery                  |
+|                 | Host             | gallery                  |
+| Job             | File             | dc.trends.cohort.eda.qmd |
+|                 | Template         | dc.trends                |
+|                 | Subject          | cohort                   |
+|                 | Type             | eda                      |
+|                 | hvtiRtemplates   | 1.4.1                    |
+| Dataset `built` | Version file     | built_20261020.parquet   |
+|                 | Registered       | 2026-10-20               |
+|                 | Source file      | built.rds                |
+|                 | Rows kept        | 800 rows on 800 patients |
+|                 | WHERE            | none                     |
+|                 | sha256           | b55bc29fc6a4             |
+|                 | Manifest         | current                  |
+| Reproducibility | renv             | not active               |
+|                 | renv.lock sha256 | d09f96b6cd21             |

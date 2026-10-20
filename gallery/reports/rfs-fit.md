@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:22
+2026-10-20 13:58
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261015.parquet`, registered 2026-10-15
+**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
 · rendered by gallery on gallery · hvtiRtemplates 1.4.1
 
 ## Study choices
@@ -239,7 +239,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261015.parquet) |
+| Source              | dataset `built` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -416,25 +416,26 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 ## About this run
 
-| Group           | Item           | Value                    |
-|:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-10-15 21:22:01 EDT  |
-|                 | Ended          | 2026-10-15 21:22:09 EDT  |
-|                 | Duration       | 8 s                      |
-|                 | Status         | final                    |
-|                 | Rendered by    | gallery                  |
-|                 | Host           | gallery                  |
-| Job             | File           | rfs.fit.dead.rf.qmd      |
-|                 | Template       | rfs.fit                  |
-|                 | Subject        | dead                     |
-|                 | Type           | rf                       |
-|                 | hvtiRtemplates | 1.4.1                    |
-| Dataset `built` | Version file   | built_20261015.parquet   |
-|                 | Registered     | 2026-10-15               |
-|                 | Source file    | built.rds                |
-|                 | Rows kept      | 800 rows on 800 patients |
-|                 | WHERE          | none                     |
-|                 | sha256         | b55bc29fc6a4             |
-|                 | Manifest       | current                  |
-| Reproducibility | Seed           | 2026                     |
-|                 | renv           | not active               |
+| Group           | Item             | Value                    |
+|:----------------|:-----------------|:-------------------------|
+| Run             | Started          | 2026-10-20 13:57:54 EDT  |
+|                 | Ended            | 2026-10-20 13:58:02 EDT  |
+|                 | Duration         | 8 s                      |
+|                 | Status           | final                    |
+|                 | Rendered by      | gallery                  |
+|                 | Host             | gallery                  |
+| Job             | File             | rfs.fit.dead.rf.qmd      |
+|                 | Template         | rfs.fit                  |
+|                 | Subject          | dead                     |
+|                 | Type             | rf                       |
+|                 | hvtiRtemplates   | 1.4.1                    |
+| Dataset `built` | Version file     | built_20261020.parquet   |
+|                 | Registered       | 2026-10-20               |
+|                 | Source file      | built.rds                |
+|                 | Rows kept        | 800 rows on 800 patients |
+|                 | WHERE            | none                     |
+|                 | sha256           | b55bc29fc6a4             |
+|                 | Manifest         | current                  |
+| Reproducibility | Seed             | 2026                     |
+|                 | renv             | not active               |
+|                 | renv.lock sha256 | d09f96b6cd21             |

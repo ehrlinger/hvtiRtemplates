@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-15 21:15
+2026-10-20 13:52
 
 An `hs` job turns the risk-factor model an `hm` job fitted into
 **predictions for individual patients**, and sets those against the
@@ -176,7 +176,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261015.parquet) |
+| Source              | dataset `study` (built_20261020.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -561,8 +561,8 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-15 21:15:46 EDT |
-|  | Ended | 2026-10-15 21:15:46 EDT |
+| Run | Started | 2026-10-20 13:52:25 EDT |
+|  | Ended | 2026-10-20 13:52:26 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -572,13 +572,14 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 |  | Subject | dead |
 |  | Type | hz |
 |  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261015.parquet |
-|  | Registered | 2026-10-15 |
+| Dataset `built` | Version file | built_20261020.parquet |
+|  | Registered | 2026-10-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b55bc29fc6a4 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-15 21:15:32 -0400, data built_20261015.parquet |
+|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-20 13:52:09 -0400, data built_20261020.parquet |
 | Reproducibility | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |
