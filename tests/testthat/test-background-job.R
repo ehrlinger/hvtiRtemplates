@@ -69,13 +69,21 @@ test_that("a submission that never started says so, and a log-less one says that
   expect_match(out, "(log missing or empty)", fixed = TRUE)
 })
 
+test_that("a log that cannot be written stops the submission before any process or status file", {
+  job <- status_job()
+  dir.create(.run_files(job)$log)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "cannot write the log file")
+  expect_false(file.exists(.run_files(job)$status))
+})
+
 test_that("a running job on another host is not downgraded to vanished", {
   job <- status_job()
   .write_status(.run_files(job)$status, state = "running", pid = 999999L, host = "some-other-host", started = "x")
   out <- utils::capture.output(st <- job_status(job))
   expect_identical(st$state, "running")
   expect_match(out, "some-other-host", fixed = TRUE)
-  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "already running")
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)),
+               .run_files(job)$status, fixed = TRUE)
 })
 
 test_that("an unknown state fails loud, naming it", {

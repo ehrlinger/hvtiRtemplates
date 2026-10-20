@@ -119,12 +119,19 @@ job_status <- function(path, quiet = FALSE) {
 .submit_job <- function(path, final, render_call, root) {
   files <- .run_files(path)
   # "submitted" too: the gap before the runner records "running" must not let a second copy start.
-  if (job_status(path, quiet = TRUE)$state %in% c("submitted", "running")) {
-    stop("submit_job(): ", basename(path), " is already running; see job_status().", call. = FALSE)
+  now <- job_status(path, quiet = TRUE)
+  if (now$state %in% c("submitted", "running")) {
+    other <- if (identical(now$state, "running") && is.character(now$host) && !identical(now$host, Sys.info()[["nodename"]])) {
+      paste0(" Recorded on host ", now$host, "; if that host is gone, confirm the job is not running there, then delete ",
+             files$status, " and submit again.")
+    } else {
+      ""
+    }
+    stop("submit_job(): ", basename(path), " is already running; see job_status().", other, call. = FALSE)
   }
   rscript <- file.path(R.home("bin"), "Rscript")
   if (file.access(rscript, 1L) != 0L) stop("submit_job(): cannot execute ", rscript, ".", call. = FALSE)
-  if (!file.create(files$log)) stop("submit_job(): cannot write the log file ", files$log, ".", call. = FALSE)
+  if (!suppressWarnings(file.create(files$log))) stop("submit_job(): cannot write the log file ", files$log, ".", call. = FALSE)
   writeLines(.runner_lines(path, files$status, final, render_call), files$runner)
   .write_status(files$status, state = "submitted", submitted = .stamp())
   setsid <- if (nzchar(Sys.which("setsid"))) "setsid " else ""
