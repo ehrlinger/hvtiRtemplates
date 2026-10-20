@@ -4,7 +4,7 @@
 \alias{guard_long_fit}
 \title{Stop a long fit from starting in an interactive session}
 \usage{
-guard_long_fit(name, dir, why)
+guard_long_fit(name, dir, why, refit = FALSE)
 }
 \arguments{
 \item{name}{Character(1). The \code{cache_fit()} name; the cache file is
@@ -13,6 +13,9 @@ guard_long_fit(name, dir, why)
 \item{dir}{Character(1). The \code{cache_fit()} directory.}
 
 \item{why}{Character(1). Why the fit is long, shown in the error.}
+
+\item{refit}{Logical(1). \code{TRUE} when the job will recompute the fit even though a cached file exists (the
+template's \code{REFIT}); the cached file then does not make the call safe, so it is refused too.}
 }
 \value{
 \code{invisible(FALSE)} when the fit may proceed; otherwise an error.

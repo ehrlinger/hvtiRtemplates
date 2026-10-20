@@ -331,7 +331,8 @@ CACHE_DIR <- dirname(set_path("estimates", "nb-boostmtree.rds"))
 # the session, so an uncached fit is refused there: run the job with
 # hvtiRtemplates::submit_job() instead. Once cached, these chunks load it.
 hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
-                               why = "a cross-validated boostmtree fit takes hours at study size")
+                               why = "a cross-validated boostmtree fit takes hours at study size",
+                               refit = REFIT)
 .patient <- hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root))
 fit <- cache_fit(
   "nb-boostmtree-fit",

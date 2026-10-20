@@ -11,7 +11,7 @@
 .write_status <- function(file, ...) {
   tmp <- paste0(file, ".tmp")
   yaml::write_yaml(list(...), tmp)
-  file.rename(tmp, file)
+  if (!file.rename(tmp, file)) stop(".write_status(): could not rename ", tmp, " to ", file, ".", call. = FALSE)
   invisible(file)
 }
 
@@ -43,25 +43,47 @@ job_status <- function(path, quiet = FALSE) {
   } else {
     list(state = "none")
   }
-  if (is.null(st) || !is.character(st$state) || length(st$state) != 1L) {
+  if (is.null(st) || !is.list(st) || !is.character(st$state) || length(st$state) != 1L) {
     stop("job_status(): the status file ", files$status, " cannot be read or records no state.", call. = FALSE)
   }
   known <- c("none", "submitted", "running", "finished", "failed", "vanished")
   if (!st$state %in% known) {
     stop("job_status(): the status file ", files$status, " records an unexpected state \"", st$state, "\".", call. = FALSE)
   }
-  if (identical(st$state, "running") && !.pid_alive(st$pid)) st$state <- "vanished"
+  never_started <- FALSE
+  other_host <- NULL
+  if (identical(st$state, "running")) {
+    host <- st$host
+    if (is.character(host) && length(host) == 1L && !is.na(host) && !identical(host, Sys.info()[["nodename"]])) {
+      other_host <- host  # sessions can land on different hosts; a pid can only be checked on its own
+    } else if (!.pid_alive(st$pid)) {
+      st$state <- "vanished"
+    }
+  }
   if (identical(st$state, "submitted")) {
     at <- as.POSIXct(st$submitted, format = "%Y-%m-%dT%H:%M:%S%z")
-    if (is.na(at) || difftime(Sys.time(), at, units = "secs") > 120) st$state <- "vanished"
+    if (is.na(at) || difftime(Sys.time(), at, units = "secs") > 120) {
+      st$state <- "vanished"
+      never_started <- TRUE
+    }
   }
   st$log <- files$log
   if (!isTRUE(quiet)) {
     detail <- switch(st$state,
-                     running = sprintf(" (process %s, since %s)", st$pid, st$started),
+                     running = if (is.null(other_host)) {
+                       sprintf(" (process %s, since %s)", st$pid, st$started)
+                     } else {
+                       sprintf(" (process %s, since %s, on host %s, so it cannot be checked from here)",
+                               st$pid, st$started, other_host)
+                     },
                      finished = sprintf(" in %s s", st$elapsed_s),
                      failed = sprintf(" with exit code %s; see %s", st$exit_code, files$log),
-                     vanished = sprintf(": the process is gone without recording an end; see %s", files$log),
+                     vanished = if (never_started) {
+                       sprintf(": never started: no 'running' within 120 s; see %s%s", files$log,
+                               if (!file.exists(files$log) || file.size(files$log) == 0L) " (log missing or empty)" else "")
+                     } else {
+                       sprintf(": the process is gone without recording an end; see %s", files$log)
+                     },
                      "")
     cat(basename(path), ": ", st$state, detail, "\n", sep = "")
   }
@@ -76,10 +98,15 @@ job_status <- function(path, quiet = FALSE) {
   c(sprintf("path <- %s", deparse(path)),
     sprintf("status <- %s", deparse(status)),
     sprintf("final <- %s", deparse(final)),
-    "put <- function(x) { tmp <- paste0(status, '.tmp'); yaml::write_yaml(x, tmp); invisible(file.rename(tmp, status)) }",
+    "put <- function(x) {",
+    "  tmp <- paste0(status, '.tmp'); yaml::write_yaml(x, tmp)",
+    "  if (!file.rename(tmp, status)) stop('could not rename ', tmp, ' to ', status)",
+    "  invisible(status)",
+    "}",
     "started <- Sys.time()",
     "stamp <- function(t) format(t, '%Y-%m-%dT%H:%M:%S%z')",
-    "base <- list(pid = Sys.getpid(), r_version = as.character(getRversion()), started = stamp(started))",
+    paste0("base <- list(pid = Sys.getpid(), host = Sys.info()[['nodename']], ",
+           "r_version = as.character(getRversion()), started = stamp(started))"),
     "put(c(list(state = 'running'), base))",
     sprintf("ok <- tryCatch({ %s; TRUE }, error = function(e) { message('Error: ', conditionMessage(e)); FALSE })",
             render_call),
@@ -95,9 +122,11 @@ job_status <- function(path, quiet = FALSE) {
   if (job_status(path, quiet = TRUE)$state %in% c("submitted", "running")) {
     stop("submit_job(): ", basename(path), " is already running; see job_status().", call. = FALSE)
   }
+  rscript <- file.path(R.home("bin"), "Rscript")
+  if (file.access(rscript, 1L) != 0L) stop("submit_job(): cannot execute ", rscript, ".", call. = FALSE)
+  if (!file.create(files$log)) stop("submit_job(): cannot write the log file ", files$log, ".", call. = FALSE)
   writeLines(.runner_lines(path, files$status, final, render_call), files$runner)
   .write_status(files$status, state = "submitted", submitted = .stamp())
-  rscript <- file.path(R.home("bin"), "Rscript")
   setsid <- if (nzchar(Sys.which("setsid"))) "setsid " else ""
   cmd <- sprintf("cd %s && exec %snohup %s %s > %s 2>&1 < /dev/null",
                  shQuote(root), setsid, shQuote(rscript), shQuote(files$runner), shQuote(files$log))

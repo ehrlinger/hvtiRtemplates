@@ -23,3 +23,12 @@ test_that("guard_long_fit() checks its arguments", {
   expect_error(guard_long_fit(c("a", "b"), dir = ".", why = "slow"), "`name`")
   expect_error(guard_long_fit("a", dir = NA_character_, why = "slow"), "`dir`")
 })
+
+test_that("refit = TRUE is refused even with a cached fit, and refit = FALSE passes", {
+  dir <- withr::local_tempdir()
+  withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  saveRDS(1, file.path(dir, "x.rds"))
+  expect_error(guard_long_fit("x", dir = dir, why = "slow", refit = TRUE), "REFIT")
+  expect_false(guard_long_fit("x", dir = dir, why = "slow", refit = FALSE))
+  expect_error(guard_long_fit("x", dir = dir, why = "slow", refit = NA), "`refit`")
+})

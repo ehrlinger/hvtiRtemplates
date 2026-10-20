@@ -54,6 +54,30 @@ test_that("an empty status file fails loud, naming the file", {
   expect_error(job_status(job, quiet = TRUE), "nb.boostmtree.x.boost.run.yml", fixed = TRUE)
 })
 
+test_that("a status file that is a bare scalar fails loud, naming the file", {
+  job <- status_job()
+  writeLines("foo", .run_files(job)$status)
+  expect_error(job_status(job, quiet = TRUE), "nb.boostmtree.x.boost.run.yml", fixed = TRUE)
+})
+
+test_that("a submission that never started says so, and a log-less one says that too", {
+  job <- status_job()
+  old <- format(Sys.time() - 600, "%Y-%m-%dT%H:%M:%S%z")
+  .write_status(.run_files(job)$status, state = "submitted", submitted = old)
+  out <- utils::capture.output(job_status(job))
+  expect_match(out, "never started", fixed = TRUE)
+  expect_match(out, "(log missing or empty)", fixed = TRUE)
+})
+
+test_that("a running job on another host is not downgraded to vanished", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "running", pid = 999999L, host = "some-other-host", started = "x")
+  out <- utils::capture.output(st <- job_status(job))
+  expect_identical(st$state, "running")
+  expect_match(out, "some-other-host", fixed = TRUE)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "already running")
+})
+
 test_that("an unknown state fails loud, naming it", {
   job <- status_job()
   .write_status(.run_files(job)$status, state = "nonsense")
