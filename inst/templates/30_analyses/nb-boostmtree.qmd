@@ -69,11 +69,11 @@ TYPE    <- "boost"
 # CRAN today. Should upstream release a 2.0.2 without the fix, this check would
 # pass it; read the installed package's NEWS if in doubt. 2.0.4 is the floor
 # because it adds boostmtree.control(cv.cores = ), which the fit below uses.
-# The install line names 2.0.5, whose cross-validation is faster for an
-# ordinal response; the fit is the same on either.
+# The install line names 2.0.6, whose workers need about a third of the memory,
+# so more cores fit in a session; the fit is the same on either.
 if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.4") {
   stop("This job needs boostmtree >= 2.0.4 from the CCF fork. Install it with\n",
-       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.5-ccf\")\n",
+       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.6-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
 if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.9.0") {
