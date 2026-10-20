@@ -64,6 +64,16 @@ suppressPackageStartupMessages({
   library(TemporalHazard)
   library(hvtiRutilities)
 })
+# numDeriv is a Suggests of TemporalHazard, not a hard dependency. Without it,
+# interval- or left-censored multiphase fits SILENTLY produce no standard
+# errors: the fit succeeds, `converged` is TRUE, and vcov() is simply absent.
+# A model reported without uncertainty is not a smaller result, it is a
+# different one -- so this is a hard stop rather than a warning.
+if (!requireNamespace("numDeriv", quietly = TRUE)) {
+  stop("numDeriv is not installed. Interval-censored multiphase fits will ",
+       "produce no standard errors, and will not tell you so. Install it ",
+       "before reading anything below.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -227,20 +237,6 @@ a gate that passes silently tells the reader nothing about what it passed on.
 **An event flag that is 0/1 in SAS may arrive as `logical`**, because
 `read_clinical_data()` infers binary columns as logical while `Surv()` requires
 a numeric status. The `as.numeric()` coercions below are not decoration.
-
-```{r}
-#| label: numderiv-gate
-# numDeriv is a Suggests of TemporalHazard, not a hard dependency. Without it,
-# interval- or left-censored multiphase fits SILENTLY produce no standard
-# errors: the fit succeeds, `converged` is TRUE, and vcov() is simply absent.
-# A model reported without uncertainty is not a smaller result, it is a
-# different one -- so this is a hard stop rather than a warning.
-if (!requireNamespace("numDeriv", quietly = TRUE)) {
-  stop("numDeriv is not installed. Interval-censored multiphase fits will ",
-       "produce no standard errors, and will not tell you so. Install it ",
-       "before reading anything below.", call. = FALSE)
-}
-```
 
 ## Model
 

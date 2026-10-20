@@ -23,3 +23,10 @@ test_that("a package checked with requireNamespace() counts, as dc-eda's patchwo
   pkgs <- .template_packages(template_path("dc", qualifier = "eda"))
   expect_true("patchwork" %in% pkgs$package)
 })
+
+test_that("hz and hm declare numDeriv in their setup chunk, so add_job() installs it", {
+  for (prefix in c("hz", "hm")) {
+    pkgs <- .template_packages(template_path(prefix))
+    expect_true("numDeriv" %in% pkgs$package, info = prefix)
+  }
+})
