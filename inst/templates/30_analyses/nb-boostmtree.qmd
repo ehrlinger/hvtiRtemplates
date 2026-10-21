@@ -336,6 +336,12 @@ if (!is.null(job_data$attrition)) {
 # several places, its base learners included, and every one of them is saved
 # with it. A digest still groups the visits; it cannot be read back.
 CACHE_DIR <- dirname(set_path("estimates", "nb-boostmtree.rds"))
+# The fit runs for hours at study size. Started from the console it dies with
+# the session, so an uncached fit is refused there: run the job with
+# hvtiRtemplates::submit_job() instead. Once cached, these chunks load it.
+hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
+                               why = "a cross-validated boostmtree fit takes hours at study size",
+                               refit = REFIT)
 .patient <- hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root))
 fit <- cache_fit(
   "nb-boostmtree-fit",
