@@ -197,3 +197,41 @@ test_that("an unreadable progress file is noted, and the state still comes from 
   expect_identical(st$state, "failed")
   expect_match(paste(out, collapse = "\n"), "cannot read", fixed = TRUE)
 })
+
+# A progress file that parses, but whose fields are not what the writer would have left.
+set_field <- function(field, value) {
+  function(p) {
+    p[field] <- list(value)
+    p
+  }
+}
+
+malformed_progress <- list(
+  "done is a number"       = set_field("done", 5L),
+  "done is a vector"       = set_field("done", c("a", "b")),
+  "done without a stage"   = set_field("done", list(list(elapsed_s = 3L))),
+  "step is text"           = set_field("step", "abc"),
+  "step without steps"     = set_field("steps", NULL),
+  "elapsed_s is text"      = set_field("done", list(list(stage = "tbl-data", elapsed_s = "foo"))),
+  "updated is no stamp"    = set_field("updated", "yesterday"),
+  "stage_started no stamp" = set_field("stage_started", "soon")
+)
+
+test_that("a malformed progress file is noted, never an error, and the state still comes from run.yml", {
+  local_clock(Sys.time())
+  for (case in names(malformed_progress)) {
+    job <- status_job_progress()
+    write_progress(job)
+    file <- .run_files(job)$progress
+    writeLines(yaml::as.yaml(malformed_progress[[case]](yaml::read_yaml(file))), file)
+    .write_status(.run_files(job)$status, state = "failed", exit_code = 1L, pid = 999999L)
+    out <- NULL
+    expect_no_error(out <- utils::capture.output(st <- job_status(job)), message = case)
+    expect_identical(st$state, "failed", label = case)
+    expect_match(paste(out, collapse = "\n"), "cannot read", fixed = TRUE, label = case)
+    unlink(.run_files(job)$status)
+    expect_no_error(out <- utils::capture.output(st <- job_status(job)), message = case)
+    expect_identical(st$state, "none", label = case)
+    expect_match(paste(out, collapse = "\n"), "cannot read", fixed = TRUE, label = case)
+  }
+})

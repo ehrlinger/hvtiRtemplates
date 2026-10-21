@@ -62,7 +62,14 @@ job_status <- function(path, quiet = FALSE) {
     stop("job_status(): the status file ", files$status, " records an unexpected state \"", st$state, "\".", call. = FALSE)
   }
   prog <- .progress_read(files$progress)
-  if (identical(st$state, "none") && is.list(prog) && is.null(prog$error)) st <- .state_from_progress(prog)
+  # Progress is advisory: whatever its file holds, it must not stop the report of the job's state.
+  unreadable <- list(error = paste0("cannot read ", files$progress, "; progress not shown"))
+  if (identical(st$state, "none") && is.list(prog) && is.null(prog$error)) {
+    st <- tryCatch(.state_from_progress(prog), error = function(e) {
+      prog <<- unreadable
+      st
+    })
+  }
   never_started <- FALSE
   other_host <- NULL
   if (identical(st$state, "running")) {
@@ -81,7 +88,7 @@ job_status <- function(path, quiet = FALSE) {
     }
   }
   st$log <- files$log
-  st$progress <- .progress_view(prog)
+  st$progress <- tryCatch(.progress_view(prog), error = function(e) unreadable)
   if (!isTRUE(quiet)) {
     detail <- switch(st$state,
                      running = if (is.null(other_host)) {
@@ -100,7 +107,7 @@ job_status <- function(path, quiet = FALSE) {
                      },
                      "")
     cat(basename(path), ": ", st$state, detail, "\n", sep = "")
-    lines <- .progress_lines(st$progress, st$state)
+    lines <- tryCatch(.progress_lines(st$progress, st$state), error = function(e) paste0("  progress: ", unreadable$error))
     if (length(lines)) cat(lines, sep = "\n")
   }
   invisible(st)

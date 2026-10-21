@@ -133,10 +133,25 @@
   .progress_step
 }
 
+# TRUE when x is absent or one finite number.
+.num1_or_null <- function(x) is.null(x) || (is.numeric(x) && length(x) == 1L && is.finite(x))
+
+# TRUE when the fields job_status() does arithmetic on have the shape the writer gives them.
+.progress_shape_ok <- function(p) {
+  stamp_ok <- function(x) is.character(x) && length(x) == 1L && !is.na(.parse_stamp(x))
+  done_ok <- is.null(p$done) || (is.list(p$done) && all(vapply(p$done, function(d) {
+    is.list(d) && is.character(d$stage) && length(d$stage) == 1L && is.numeric(d$elapsed_s) && length(d$elapsed_s) == 1L &&
+      is.finite(d$elapsed_s)
+  }, NA)))
+  stamp_ok(p$updated) && stamp_ok(p$started) && (is.null(p$stage_started) || stamp_ok(p$stage_started)) && done_ok &&
+    all(vapply(p[c("step", "steps", "stage_index", "stage_count")], .num1_or_null, NA)) &&
+    (is.null(p$step) || !is.null(p$steps)) && (is.null(p$stages) || is.character(p$stages))
+}
+
 .progress_read <- function(file) {
   if (!file.exists(file)) return(NULL)
   p <- tryCatch(yaml::read_yaml(file), error = function(e) NULL)
-  if (!is.list(p) || !is.character(p$updated) || !is.character(p$started)) {
+  if (!is.list(p) || !isTRUE(.progress_shape_ok(p))) {
     return(list(error = paste0("cannot read ", file, "; progress not shown")))
   }
   p
