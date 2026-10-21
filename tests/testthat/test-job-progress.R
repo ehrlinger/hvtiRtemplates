@@ -258,3 +258,31 @@ test_that("a malformed progress file is noted, never an error, and the state sti
     expect_match(paste(out, collapse = "\n"), "cannot read", fixed = TRUE, label = case)
   }
 })
+
+test_that("the progress path of a Quarto intermediate is the job's, beside it", {
+  job <- file.path("studies", "analyses", "nb.boostmtree.x.boost.qmd")
+  expect_identical(.progress_path(file.path("studies", "analyses", "nb.boostmtree.x.boost.rmarkdown")),
+                   .run_files(job)$progress)
+  expect_identical(.progress_path(job), .run_files(job)$progress)
+  expect_null(.progress_path(NULL))
+})
+
+test_that("a Quarto render leaves <job>.run.progress, which job_status() reads", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if(!nzchar(Sys.which("quarto")))
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "nb.boostmtree.x.boost.qmd")
+  writeLines(c("---", "title: x", "format: html", "---", "",
+               "```{r}", "#| label: setup",
+               "hvtiRtemplates:::.progress_install(hvtiRtemplates:::.progress_path(knitr::current_input(dir = TRUE)))",
+               "```", "",
+               "```{r}", "#| label: first", "1 + 1", "```", "",
+               "```{r}", "#| label: second", "2 + 2", "```"), job)
+  quarto::quarto_render(job, execute_dir = dir, quiet = TRUE)
+  expect_true(file.exists(file.path(dir, "nb.boostmtree.x.boost.run.progress")))
+  expect_length(list.files(dir, pattern = "rmarkdown[.]run[.]progress$"), 0L)
+  st <- job_status(job, quiet = TRUE)
+  expect_identical(st$progress$stages, c("first", "second"))
+  expect_identical(st$state, "finished")
+})

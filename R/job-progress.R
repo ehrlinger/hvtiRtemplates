@@ -38,6 +38,12 @@
 
 .progress_eta <- function(elapsed, step, steps) if (step > 0) elapsed / step * (steps - step) else NA_real_
 
+# Quarto knits through <stem>.rmarkdown, so the job's own name is put back before the path is made:
+# the file job_status() reads is <job>.run.progress, beside the .qmd.
+.progress_path <- function(input) {
+  if (is.null(input)) NULL else .run_files(file.path(dirname(input), .job_file_name(input)))$progress
+}
+
 .progress_log <- function(text) {
   cat(format(.now(), "%Y-%m-%d %H:%M"), "  ", text, "\n", sep = "", file = stderr())
   .progress_state$last_log <- .now()

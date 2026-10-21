@@ -51,7 +51,7 @@
                      .run_box(run, .box_dataset(root, input), box_data)), collapse = "\n")
   # A render records its stages and steps in <job>.run.progress; the
   # design is dev/specs/2026-10-21-job-progress-design.md.
-  progress <- .progress_install(if (is.null(input)) NULL else .run_files(input)$progress)
+  progress <- .progress_install(.progress_path(input))
   # Resolves from `envir`, not from the arguments, so a test or an author who
   # changes SUBJECT or TYPE afterward moves the set, as the old chunk's did.
   set_path <- function(kind, file) {
