@@ -85,12 +85,12 @@
 
 .progress_done_stages <- function(done) vapply(done, function(d) d$stage, "")
 
-# Records `stages` as done without having run, and says why: "skipped" after a stop_here(), else "cached".
-.progress_fill <- function(stages) {
+# Records `stages` as done without having run. They were reused from knitr's cache, or, when `skipped`, never reached
+# because a stop_here() ended the document.
+.progress_fill <- function(stages, skipped = FALSE) {
   s <- .progress_state
-  stopped <- any(vapply(.partial_state$points, function(p) identical(p$kind, "stop"), NA))
   for (m in setdiff(stages, .progress_done_stages(s$done))) {
-    s$done[[length(s$done) + 1L]] <- c(list(stage = m, elapsed_s = 0L), if (stopped) list(skipped = TRUE) else list(cached = TRUE))
+    s$done[[length(s$done) + 1L]] <- c(list(stage = m, elapsed_s = 0L), if (skipped) list(skipped = TRUE) else list(cached = TRUE))
   }
 }
 
@@ -119,7 +119,13 @@
   s <- .progress_state
   if (is.null(s$file)) return(invisible(NULL))
   if (!length(setdiff(s$stages, .progress_done_stages(s$done)))) return(invisible(NULL))
-  .progress_fill(s$stages)
+  # .guard_partial() records a stop_here() from the source scan before anything has stopped, so a stop point alone
+  # proves nothing. Stages before the last one that started were passed over, hence cached; only those after it,
+  # in a document with a stop, never ran because of the stop.
+  stopped <- any(vapply(.partial_state$points, function(p) identical(p$kind, "stop"), NA))
+  last <- if (is.null(s$stage)) 0L else match(s$stage, s$stages)
+  .progress_fill(s$stages[seq_len(last)])
+  .progress_fill(s$stages, skipped = stopped)
   .progress_write()
 }
 

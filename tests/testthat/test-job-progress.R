@@ -402,6 +402,23 @@ test_that("the state taken from progress refuses a pid that is not one number, s
   expect_identical(.state_from_progress(c(p, list(pid = 7L)))$state, "finished")
 })
 
+test_that("a cached stage before a stop_here() is cached, and only the stages after the stop are skipped", {
+  local_clock()
+  withr::defer(.partial_state$points <- NULL)
+  # .guard_partial() fills this from the source scan at setup, before anything has stopped.
+  .partial_state$points <- list(list(line = 12L, kind = "stop", reason = "x"))
+  file <- progress_file()
+  quietly(.progress_begin(file, c("a", "b", "stop", "c")))
+  quietly(.progress_stage("b", TRUE))
+  quietly(.progress_stage("b", FALSE))
+  quietly(.progress_stage("stop", TRUE))
+  .progress_finish()
+  done <- yaml::read_yaml(file)$done
+  how <- vapply(done, function(d) if (isTRUE(d$skipped)) "skipped" else if (isTRUE(d$cached)) "cached" else "ran", "")
+  names(how) <- vapply(done, `[[`, "", "stage")
+  expect_identical(how[c("a", "b", "stop", "c")], c(a = "cached", b = "ran", stop = "cached", c = "skipped"))
+})
+
 test_that("stages left after a stop_here() are skipped, not cached, and the stage table says so", {
   local_clock(Sys.time())
   withr::defer(.partial_state$points <- NULL)
