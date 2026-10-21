@@ -388,8 +388,8 @@ vp_add_noise <- function(d, predictors, n, seed) {
   } else {
     0L
   }
-  draw <- function(pool, k) if (k == 0L) character() else pool[sample.int(length(pool), k, replace = k > length(pool))]
   set.seed(abs(seed))
+  draw <- function(pool, k) if (k == 0L) character() else pool[sample.int(length(pool), k, replace = k > length(pool))]
   src <- c(draw(pools$categorical, n_cat), draw(pools$continuous, n - n_cat))
   for (i in seq_along(src)) {
     set.seed(abs(seed) + i)
@@ -510,7 +510,7 @@ knitr::kable(data.frame(
 #| fig-cap: "Importance against coverage for every eligible variable, one panel per kind. Black points are real
 #|   candidates and gray points permuted noise; the dashed horizontal line is the bar a real variable must beat and the
 #|   dotted vertical line the coverage below which a variable is untested."
-#| fig-width: 8
+#| fig-width: 6.5
 .plot_cov <- cov[cov$eligible & !is.na(cov$z), ]
 .plot_cov$source <- ifelse(.plot_cov$noise, "noise", "real")
 .bars <- unique(.plot_cov[!is.na(.plot_cov$bar), c("kind", "bar")])
@@ -522,7 +522,7 @@ knitr::kable(data.frame(
   ggplot2::scale_colour_manual(values = c(noise = "gray60", real = "black")) +
   ggplot2::labs(x = "Coverage (share of trees scored)", y = "Importance (z)") +
   hvtiPlotR::theme_hv_manuscript(base_size = 12)
-save_figure(.fig, "vp-fit-coverage", width = 8)
+save_figure(.fig, "vp-fit-coverage", width = 6.5)
 .fig
 ```
 
