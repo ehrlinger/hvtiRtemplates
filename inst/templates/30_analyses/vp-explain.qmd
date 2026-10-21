@@ -66,6 +66,10 @@ suppressPackageStartupMessages({
 # workers, which rf.cores does not reach.
 options(rf.cores = 1L, mc.cores = 1L)
 # The versions this template was verified against on 2026-10-21.
+if (utils::packageVersion("randomForestSRC") < "3.7.0") {
+  stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
 if (utils::packageVersion("varPro") < "3.2.0") {
   stop("This job needs varPro >= 3.2.0; ", utils::packageVersion("varPro"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
@@ -239,7 +243,7 @@ pv <- cache_fit("vp-partial",
                                   scale = if (.survival) SCALE else "auto", time = if (.survival) HORIZON else NULL),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
 # The manuscript theme hides the legend and its title, and the caption reads the line types from the legend.
-.cap <- paste("VarPro partial dependence on each selected predictor, one panel per predictor. For a",
+.cap <- paste("VarPro partial dependence on each drawn predictor, one panel per predictor. For a",
               "continuous predictor a black solid line marks the nonparametric partial effect and a black",
               "dashed line the parametric one, as in the legend; for a categorical predictor black box",
               "plots show the spread of the partial effect at each level.")

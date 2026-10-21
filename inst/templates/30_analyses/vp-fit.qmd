@@ -82,6 +82,10 @@ options(rf.cores = 1L, mc.cores = 1L)
 # The versions this template was verified against on 2026-10-21. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
+if (utils::packageVersion("randomForestSRC") < "3.7.0") {
+  stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
 if (utils::packageVersion("varPro") < "3.2.0") {
   stop("This job needs varPro >= 3.2.0; ", utils::packageVersion("varPro"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
@@ -400,6 +404,12 @@ vp_add_noise <- function(d, predictors, n, seed) {
 if (NOISE_N < 1) {
   stop("NOISE_N must be at least 1: the selection rule needs noise to beat.", call. = FALSE)
 }
+if (!(SUBSAMPLE > 0 && SUBSAMPLE < 1)) {
+  stop("SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).", call. = FALSE)
+}
+if (REPEATS > 0 && floor(SUBSAMPLE * nrow(d)) < 2) {
+  stop("SUBSAMPLE of ", nrow(d), " patients leaves fewer than 2 for a refit. Raise SUBSAMPLE or set REPEATS to 0.", call. = FALSE)
+}
 # The coverage table finds noise by the "noise" prefix, so a real candidate
 # named that way would be judged as noise.
 .noisy <- grep("^noise", PREDICTORS, value = TRUE)
@@ -439,10 +449,13 @@ environment(model) <- globalenv()
 # above 0, no continuous variable is selected, because nothing calibrates it.
 # The table names the bar each variable was judged against.
 vp_judge <- function(cov) {
+  # varpro_coverage() brings its own noise_cut and selected; this rule replaces both, so one bar remains.
+  cov$noise_cut <- NULL
   noise <- cov$noise & cov$tested
   # A bar is usable only above 0: noise that scores 0 bars nothing.
   bar_of <- function(k) {
     z <- cov$z[noise & cov$kind == k]
+    z <- z[!is.na(z)]
     if (length(z) && max(z) > 0) max(z) else NA_real_
   }
   bar_cont <- bar_of("continuous")
@@ -485,7 +498,14 @@ z beats the bar named in the last columns.
 #| tbl-cap: "Coverage, importance and selection of each candidate, most covered first"
 # varpro_coverage() samples release rules, so it is seeded too.
 set.seed(abs(SEED))
-cov <- vp_judge(ggRandomForests::varpro_coverage(fit, by = "variable", trim = TRIM, noise = "^noise"))
+# vp_judge() replaces varpro_coverage()'s own selection, which reads an empty noise check as "select every tested
+# row", so its warning about that case would mislead here: vp_judge() selects nothing then, and says so.
+cov <- vp_judge(withCallingHandlers(
+  ggRandomForests::varpro_coverage(fit, by = "variable", trim = TRIM, noise = "^noise"),
+  warning = function(w) {
+    if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+  }
+))
 .real <- cov[!cov$noise, ]
 knitr::kable(data.frame(
   variable = .real$variable, kind = .real$kind, eligible = .real$eligible, trees = .real$n_trees,
@@ -500,8 +520,9 @@ knitr::kable(data.frame(
 # A candidate varPro dropped from its data altogether, a constant column say,
 # is counted as a candidate and nothing more.
 knitr::kable(data.frame(
-  step = c("Candidates", "Eligible", "Tested", "Selected"),
-  variables = c(length(PREDICTORS), sum(.real$eligible), sum(.real$tested), sum(.real$selected))
+  step = c("Candidates", "Eligible", "Tested", "Selected", "Noise columns", "Noise tested"),
+  variables = c(length(PREDICTORS), sum(.real$eligible), sum(.real$tested), sum(.real$selected),
+                sum(cov$noise), sum(cov$noise & cov$tested))
 ))
 ```
 
@@ -564,13 +585,25 @@ if (REPEATS > 0) {
       seed = SEED + r, dir = CACHE_DIR, refit = REFIT
     )
     set.seed(abs(SEED) + r)
-    cr <- vp_judge(ggRandomForests::varpro_coverage(fr, by = "variable", trim = TRIM, noise = "^noise"))
+    # As for the full fit: vp_judge() makes the selection, so varpro_coverage()'s empty-noise warning is muffled.
+    cr <- vp_judge(withCallingHandlers(
+      ggRandomForests::varpro_coverage(fr, by = "variable", trim = TRIM, noise = "^noise"),
+      warning = function(w) {
+        if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+      }
+    ))
     cr <- cr[!cr$noise, ]
     data.frame(r = r, variable = cr$variable, selected = cr$selected, tested = cr$tested)
   }))
   .per <- tapply(.stab$selected, .stab$r, sum)
   cat("Selected per refit: ", min(.per), " to ", max(.per), " variables.\n", sep = "")
-  .freq <- stats::aggregate(cbind(share_tested = tested, share_selected = selected) ~ variable, data = .stab, FUN = mean)
+  # Over REPEATS, not over the refits a variable appears in: a refit that drops a variable counts against it.
+  .n_tested <- tapply(.stab$tested, .stab$variable, sum)
+  .freq <- data.frame(
+    variable = names(.n_tested),
+    share_tested = as.vector(.n_tested) / REPEATS,
+    share_selected = as.vector(tapply(.stab$selected, .stab$variable, sum)[names(.n_tested)]) / REPEATS
+  )
   .freq <- .freq[order(-.freq$share_selected, -.freq$share_tested), ]
   knitr::kable(.freq, digits = 2, row.names = FALSE)
 } else {
@@ -603,7 +636,8 @@ selected in the full fit but rarely in the refits is a weak candidate.
 # The product of this job, and what vp-explain reads: the fit, its judged
 # coverage and the selected set, in one file, so they cannot drift apart. It is
 # separate from the cache on purpose: cache_fit() stores a keyed record, so the
-# cache is this job's internals and this file is its interface.
+# cache is this job's internals and this file is its interface. `family` is
+# informational: vp-explain reads the family from the fit itself.
 vp_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   list(fit = fit, coverage = cov, selected = .real$variable[.real$selected], family = .family),
   data = .provenance_data,

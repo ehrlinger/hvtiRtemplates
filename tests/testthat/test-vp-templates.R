@@ -125,6 +125,54 @@ test_that("vp_judge borrows no bar from noise that scored zero", {
   expect_identical(out$bar_from[1:2], c("no usable noise bar", "no usable noise bar"))
 })
 
+test_that("vp_judge drops varpro_coverage()'s own bar, so one bar remains", {
+  cov <- vp_cov(
+    variable = c("x_real", "noise1_x"), kind = c("continuous", "continuous"),
+    noise = c(FALSE, TRUE), tested = c(TRUE, TRUE), z = c(2, 0.3)
+  )
+  cov$noise_cut <- 0
+  cov$selected <- TRUE
+  out <- vp_judge_fn()(cov)
+  expect_false("noise_cut" %in% names(out))
+  expect_identical(out$selected, c(TRUE, FALSE))
+})
+
+test_that("vp_judge ignores a tested noise row whose z is NA", {
+  cov <- vp_cov(
+    variable = c("x_real", "noise1_x", "noise2_x"), kind = rep("continuous", 3),
+    noise = c(FALSE, TRUE, TRUE), tested = c(TRUE, TRUE, TRUE), z = c(2, NA, 0.4)
+  )
+  out <- vp_judge_fn()(cov)
+  expect_identical(unique(out$bar), 0.4)
+})
+
+test_that("both varpro_coverage() calls in vp-fit muffle the empty-noise warning", {
+  lines <- readLines(template_path("vp", "fit"), warn = FALSE)
+  at <- grep("varpro_coverage\\(fit|varpro_coverage\\(fr", lines)
+  expect_length(at, 2L)
+  for (i in at) {
+    before <- paste(lines[max(1L, i - 3L):i], collapse = "\n")
+    expect_match(before, "withCallingHandlers", fixed = TRUE)
+    after <- paste(lines[i:min(length(lines), i + 4L)], collapse = "\n")
+    expect_match(after, "no noise variable was tested", fixed = TRUE)
+  }
+})
+
+test_that("vp-fit refuses a SUBSAMPLE that is not a share", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- rf_env(vp_data())
+  choices <- utils::modifyList(vp_choices, list(SUBSAMPLE = 1.5))
+  expect_error(rf_run("vp", "fit", c(vp_data_labels, "noise"), env, choices), "SUBSAMPLE must be a share")
+})
+
+test_that("vp-fit refuses a survival EVENT coded 1 and 2", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  d <- vp_data()
+  d$event <- d$event + 1L
+  env <- rf_env(d)
+  expect_error(rf_run("vp", "fit", vp_data_labels, env, vp_choices), "must be coded 0 and 1")
+})
+
 test_that("every varpro() call in vp-fit runs on one core", {
   # options(rf.cores) limits randomForestSRC's threads, not varPro's own
   # workers, which read `cores =` or mc.cores.
@@ -177,6 +225,8 @@ test_that("raising REPEATS computes only the new repeat", {
   expect_identical(file.mtime(first), stamp)
   expect_true(file.exists(file.path(env$CACHE_DIR, "vp-repeat-03.rds")))
   expect_setequal(unique(again$.stab$r), 1:3)
+  expect_true(all(again$.freq$share_tested >= 0 & again$.freq$share_selected <= 1))
+  expect_equal(again$.freq$share_selected * 3, round(again$.freq$share_selected * 3))
 })
 
 test_that("REPEATS = 0 skips the stability check", {
